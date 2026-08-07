@@ -20,6 +20,31 @@
       "description": "",
       "parameters": [],
       "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "format",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "custom",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "(...args: unknown[]) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
     }
   ]
 }

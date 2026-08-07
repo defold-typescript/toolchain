@@ -34,7 +34,10 @@
  * Every classifier here is one-sided on purpose. `missingMembers`/`missingFields` and
  * `phantomMembers`/`phantomFields` are name-set differences, `arityMismatches` compares
  * parameter *counts* for shared names (upstream Lua names its parameters, the fork
- * renames freely, and a rename is not the defect this measures), `coverage` is the
+ * renames freely, and a rename is not the defect this measures) — except where upstream
+ * is variadic, which has no fixed count to disagree with, so its named parameters are a
+ * floor the fork must meet and `variadicMembers` says how many members were only checked
+ * that way, `coverage` is the
  * fraction of upstream members that are declared *and* agree on arity, and
  * `fieldCoverage` the fraction of upstream fields that are declared at all — a phantom
  * enters neither, having no upstream member to be a fraction of. A non-empty list is a
@@ -75,6 +78,10 @@ export interface AuthoredParityReport {
   phantomMembers: string[];
   arityMismatches: AuthoredArityMismatch[];
   undocumentedMembers: number;
+  /** How many agreeing members were compared against a floor rather than an exact count,
+   * upstream being variadic. Recorded so a `callableCoverage` of 1 over a variadic
+   * surface cannot be read as fully verified. */
+  variadicMembers: number;
   /** Named for its axis, not for the module: neither this nor `fieldCoverage` is
    * "the" coverage of a target, and the two are never averaged into one. */
   callableCoverage: number;
@@ -204,6 +211,42 @@ export function classifyFieldAxis(input: FieldAxisInput): FieldAxis {
   };
 }
 
+/** One shared name's two parameter counts, and whether upstream's definition ends in
+ * `...`. A named object rather than three scalars: two of them are numbers, and a
+ * transposed call would compare the wrong pair silently. */
+export interface ArityInput {
+  upstreamNamed: number;
+  upstreamVariadic: boolean;
+  declared: number;
+}
+
+/** Whether the fork's count is acceptable, and whether saying so took a floor. */
+export interface ArityVerdict {
+  agrees: boolean;
+  floorChecked: boolean;
+}
+
+/**
+ * The arity comparison for one shared member, pure over the two counts.
+ *
+ * `function M.play(...)` names no parameters, so an exact comparison reads the fork's one
+ * rest parameter as a mismatch against zero — the instrument's defect, not the fork's. A
+ * variadic upstream member has no fixed count to disagree with, so its named parameters
+ * become a floor: the fork must declare at least them, and anything above is the rest.
+ *
+ * The softening stays visible. `floorChecked` is true whenever upstream is variadic —
+ * whether or not the floor was exceeded — so `variadicMembers` counts every member the
+ * weaker check covered rather than only the ones it changed the verdict for.
+ */
+export function classifyArity(input: ArityInput): ArityVerdict {
+  return {
+    agrees: input.upstreamVariadic
+      ? input.declared >= input.upstreamNamed
+      : input.declared === input.upstreamNamed,
+    floorChecked: input.upstreamVariadic,
+  };
+}
+
 /**
  * The parity report for one opted-in target, recomputed from the vendored upstream
  * Lua and the committed api-doc. Pure with respect to the working tree: it reads,
@@ -229,6 +272,7 @@ export function buildAuthoredParity(
   const missingMembers: string[] = [];
   const arityMismatches: AuthoredArityMismatch[] = [];
   let undocumentedMembers = 0;
+  let variadicMembers = 0;
   let correct = 0;
 
   for (const [name, member] of upstream) {
@@ -238,8 +282,14 @@ export function buildAuthoredParity(
       continue;
     }
     const upstreamParams = (member.params as string[]).length;
-    if (upstreamParams === match.params) correct += 1;
+    const verdict = classifyArity({
+      upstreamNamed: upstreamParams,
+      upstreamVariadic: member.varargs,
+      declared: match.params,
+    });
+    if (verdict.agrees) correct += 1;
     else arityMismatches.push({ name, upstream: upstreamParams, declared: match.params });
+    if (verdict.floorChecked) variadicMembers += 1;
     if (member.doc !== "" && !match.documented) undocumentedMembers += 1;
   }
 
@@ -262,6 +312,7 @@ export function buildAuthoredParity(
     phantomMembers: phantomMembers.sort(),
     arityMismatches: arityMismatches.sort((a, b) => a.name.localeCompare(b.name)),
     undocumentedMembers,
+    variadicMembers,
     callableCoverage: upstream.size === 0 ? 1 : round4(correct / upstream.size),
   };
 }

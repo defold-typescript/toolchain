@@ -7,13 +7,11 @@
   "phantomFields": [],
   "fieldCoverage": 1,
   "declaredGlobals": 0,
-  "declaredMembers": 2,
-  "missingMembers": [
-    "custom",
-    "format"
-  ],
+  "declaredMembers": 4,
+  "missingMembers": [],
   "phantomMembers": [],
   "arityMismatches": [],
-  "undocumentedMembers": 2,
-  "callableCoverage": 0.5
+  "undocumentedMembers": 3,
+  "variadicMembers": 0,
+  "callableCoverage": 1
 }

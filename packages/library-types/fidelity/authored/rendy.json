@@ -13,13 +13,11 @@
   "phantomFields": [],
   "fieldCoverage": 0,
   "declaredGlobals": 0,
-  "declaredMembers": 13,
+  "declaredMembers": 11,
   "missingMembers": [],
-  "phantomMembers": [
-    "animate",
-    "cancel_animations"
-  ],
+  "phantomMembers": [],
   "arityMismatches": [],
   "undocumentedMembers": 0,
+  "variadicMembers": 0,
   "callableCoverage": 1
 }

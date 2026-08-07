@@ -623,7 +623,7 @@ describe("loadApiSurface library pages", () => {
     expect(meta.importString).toBe('import * as rendy from "rendy.rendy"');
 
     const functions = rendy?.module.functions ?? [];
-    expect(functions).toHaveLength(13);
+    expect(functions).toHaveLength(11);
 
     const getStack = functions.find((f) => f.name === "get_stack");
     expect(getStack?.parameters ?? []).toHaveLength(2);
