@@ -5384,16 +5384,19 @@ more. Running the cost model on the still-open maintenance question gives
 *fork*: the ts-defold surface is five fully-typed functions in 34 lines,
 upstream is abandoned (its README redirects to a successor project) so the
 surface cannot churn, and the recorded loss was the README's, not the `.d.ts`'s.
-So the fork is **verbatim** — the identity diff makes fidelity 100% by
-construction, and the cutover ships no type change at all. Enrichment from
-upstream prose, if ever wanted, is a later and separately-auditable edit to a
-file this repo now owns.
+So the cutover itself was **verbatim** — the identity diff made fidelity 100% by
+construction, and it shipped no type change at all. The later and
+separately-auditable edit that anticipated has since landed: the fork now also
+declares `exists`, the sixth function upstream's Lua defines and ts-defold never
+had.
 
 Severing does not erase the markdown verdict. persist's `no-go`/`signature-loss`
 record and its README snapshot stay exactly as recorded, and the gate still
 re-derives the decision on every run — it just compares against the vendored
-fork instead of the deleted `fixtures/ts-defold/` snapshot, which is sound
-precisely because a verbatim fork is byte-identical to it. Keeping a dead
+fork instead of the deleted `fixtures/ts-defold/` snapshot. That is sound
+because the comparison is re-derived against whatever the fork now declares, not
+against an identity: adding `exists` moved two name-set terms and left the
+`no-go`/`signature-loss` decision exactly where it was. Keeping a dead
 `library-targets.json` row alive to feed that lookup would have been the wrong
 fix: it would make the file stop meaning *still ts-defold-sourced*, which is the
 signal the remaining Bucket-C libraries are measured against.

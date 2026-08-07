@@ -81,19 +81,16 @@ describe("every committed parity artifact is what the pass recomputes", () => {
 describe("the nakama.engine.defold parity findings", () => {
   const report = buildAuthoredParity(PACKAGE_ROOT, target("nakama.engine.defold"));
 
-  test("every upstream member is declared, so the gap is arity alone", () => {
+  test("every upstream member is declared, and the surface is still five wide", () => {
     expect(report.upstreamMembers).toBe(5);
     expect(report.declaredMembers).toBe(5);
     expect(report.missingMembers).toEqual([]);
     expect(report.phantomMembers).toEqual([]);
   });
 
-  test("`http` drops two upstream parameters and `socket_send` invents one", () => {
-    expect(report.arityMismatches).toEqual([
-      { name: "http", upstream: 8, declared: 6 },
-      { name: "socket_send", upstream: 2, declared: 3 },
-    ]);
-    expect(report.callableCoverage).toBe(0.6);
+  test("`http` carries upstream's eight parameters and `socket_send` its two", () => {
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
   });
 });
 
@@ -160,6 +157,40 @@ describe("the two forks exporting a name their pinned upstream does not define",
       "window_height",
       "window_width",
     ]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.fieldCoverage).toBe(0);
+  });
+});
+
+describe("the three forks that were missing members their pinned upstream defines", () => {
+  test("persist declares the sixth function upstream exports", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("persist"));
+    expect(report.upstreamMembers).toBe(6);
+    expect(report.declaredMembers).toBe(6);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+  });
+
+  // The three constants stay phantom fields: only the callable axis is corrected
+  // here, so a declaration that reached the field side would show up as movement.
+  test("bzAnim declares the three controller functions, and its field axis holds still", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("bzAnim"));
+    expect(report.upstreamMembers).toBe(9);
+    expect(report.declaredMembers).toBe(9);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.phantomFields).toEqual(["DEBUG_LEVEL", "INFO_LEVEL", "TRACE_LEVEL"]);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  test("defcon takes upstream's optional second parameter and keeps its three-field gap", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("defcon"));
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.missingFields).toEqual(["pprint", "print", "server"]);
     expect(report.phantomFields).toEqual([]);
     expect(report.fieldCoverage).toBe(0);
   });
@@ -405,14 +436,25 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(zzfx.arityMismatches).toEqual([]);
   });
 
-  // `in_triangle` is the proof that only the variadic cases moved: upstream defines the
-  // name twice at column 0, and Lua's last-definition-wins shadows the 8-parameter form
-  // the fork still declares. A softening that reached non-variadic members would take it.
-  test("defmath keeps the one mismatch that is not variadic", () => {
+  test("defmath's three variadic members reach a full coverage against their floor", () => {
     const report = buildAuthoredParity(PACKAGE_ROOT, target("defmath"));
     expect(report.variadicMembers).toBe(3);
-    expect(report.arityMismatches).toEqual([{ name: "in_triangle", upstream: 3, declared: 8 }]);
-    expect(report.callableCoverage).toBe(0.9737);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+  });
+
+  // The proof that only the variadic cases moved has to sit on a target no correction
+  // touches: orthographic.camera carries four exact-count mismatches at zero variadic
+  // members, so a softening that reached non-variadic members would empty this list.
+  test("a target with no variadic member keeps every exact-count mismatch", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("orthographic.camera"));
+    expect(report.variadicMembers).toBe(0);
+    expect(report.arityMismatches).toEqual([
+      { name: "add_projector", upstream: 0, declared: 2 },
+      { name: "get_projection_id", upstream: 0, declared: 1 },
+      { name: "use_projector", upstream: 0, declared: 2 },
+      { name: "world_to_screen", upstream: 2, declared: 3 },
+    ]);
   });
 
   test("the other thirty-two targets share no variadic member at all", () => {

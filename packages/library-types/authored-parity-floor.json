@@ -4,15 +4,15 @@
     "field": 1
   },
   "fidelity/authored/bzAnim.json": {
-    "callable": 0.6667,
+    "callable": 1,
     "field": 1
   },
   "fidelity/authored/defcon.json": {
-    "callable": 0.8333,
+    "callable": 1,
     "field": 0
   },
   "fidelity/authored/defmath.json": {
-    "callable": 0.9737,
+    "callable": 1,
     "field": 1
   },
   "fidelity/authored/defsave.json": {
@@ -92,7 +92,7 @@
     "field": 1
   },
   "fidelity/authored/nakama.engine.defold.json": {
-    "callable": 0.6,
+    "callable": 1,
     "field": 1
   },
   "fidelity/authored/nakama.json": {
@@ -108,7 +108,7 @@
     "field": 0.9474
   },
   "fidelity/authored/persist.json": {
-    "callable": 0.8333,
+    "callable": 1,
     "field": 1
   },
   "fidelity/authored/platypus.json": {

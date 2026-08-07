@@ -1146,7 +1146,7 @@
       "type": "FUNCTION",
       "name": "in_triangle",
       "brief": "Used to find a point in a triangle",
-      "description": "Used to find a point in a triangle\nx0, y0 are the points that are being checked against the rest to see if it's inside",
+      "description": "Used to find a point in a triangle\nx0, y0 are the points that are being checked against the rest to see if it's inside\narr must be 6 in length: top x/y, bottom right x/y, bottom left x/y",
       "parameters": [
         {
           "name": "x0",
@@ -1165,50 +1165,10 @@
           "is_optional": "False"
         },
         {
-          "name": "x1",
+          "name": "arr",
           "doc": "",
           "types": [
-            "number"
-          ],
-          "is_optional": "False"
-        },
-        {
-          "name": "y1",
-          "doc": "",
-          "types": [
-            "number"
-          ],
-          "is_optional": "False"
-        },
-        {
-          "name": "x2",
-          "doc": "",
-          "types": [
-            "number"
-          ],
-          "is_optional": "False"
-        },
-        {
-          "name": "y2",
-          "doc": "",
-          "types": [
-            "number"
-          ],
-          "is_optional": "False"
-        },
-        {
-          "name": "x3",
-          "doc": "",
-          "types": [
-            "number"
-          ],
-          "is_optional": "False"
-        },
-        {
-          "name": "y3",
-          "doc": "",
-          "types": [
-            "number"
+            "[ number, number, number, number, number, number ]"
           ],
           "is_optional": "False"
         }
@@ -1226,8 +1186,8 @@
     {
       "type": "FUNCTION",
       "name": "box_intersect",
-      "brief": "arr must be 6 in length: top x/y, bottom right x/y, bottom left x/y",
-      "description": "arr must be 6 in length: top x/y, bottom right x/y, bottom left x/y",
+      "brief": "box intersection of 2 square",
+      "description": "box intersection of 2 square",
       "parameters": [
         {
           "name": "ax",
