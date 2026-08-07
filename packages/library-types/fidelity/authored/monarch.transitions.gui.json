@@ -2,6 +2,10 @@
   "namespace": "monarch.transitions.gui",
   "upstreamMembers": 20,
   "upstreamFields": 0,
+  "declaredFields": 12,
+  "missingFields": [],
+  "phantomFields": [],
+  "fieldCoverage": 1,
   "declaredMembers": 8,
   "missingMembers": [
     "fade_in",
@@ -26,5 +30,5 @@
     }
   ],
   "undocumentedMembers": 1,
-  "coverage": 0.35
+  "callableCoverage": 0.35
 }

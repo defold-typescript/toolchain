@@ -2,6 +2,10 @@
   "namespace": "deftest",
   "upstreamMembers": 2,
   "upstreamFields": 0,
+  "declaredFields": 0,
+  "missingFields": [],
+  "phantomFields": [],
+  "fieldCoverage": 1,
   "declaredMembers": 32,
   "missingMembers": [],
   "phantomMembers": [
@@ -44,5 +48,5 @@
     }
   ],
   "undocumentedMembers": 2,
-  "coverage": 0.5
+  "callableCoverage": 0.5
 }

@@ -2,6 +2,10 @@
   "namespace": "yagames",
   "upstreamMembers": 68,
   "upstreamFields": 0,
+  "declaredFields": 0,
+  "missingFields": [],
+  "phantomFields": [],
+  "fieldCoverage": 1,
   "declaredMembers": 50,
   "missingMembers": [
     "device_info_is_tv",
@@ -41,5 +45,5 @@
     }
   ],
   "undocumentedMembers": 46,
-  "coverage": 0.6618
+  "callableCoverage": 0.6618
 }

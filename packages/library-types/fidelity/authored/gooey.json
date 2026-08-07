@@ -2,6 +2,10 @@
   "namespace": "gooey",
   "upstreamMembers": 20,
   "upstreamFields": 0,
+  "declaredFields": 0,
+  "missingFields": [],
+  "phantomFields": [],
+  "fieldCoverage": 1,
   "declaredMembers": 12,
   "missingMembers": [
     "acquire_input",
@@ -42,5 +46,5 @@
     }
   ],
   "undocumentedMembers": 2,
-  "coverage": 0.35
+  "callableCoverage": 0.35
 }

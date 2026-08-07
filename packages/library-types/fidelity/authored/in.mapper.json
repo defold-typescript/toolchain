@@ -2,10 +2,14 @@
   "namespace": "in.mapper",
   "upstreamMembers": 4,
   "upstreamFields": 0,
+  "declaredFields": 0,
+  "missingFields": [],
+  "phantomFields": [],
+  "fieldCoverage": 1,
   "declaredMembers": 4,
   "missingMembers": [],
   "phantomMembers": [],
   "arityMismatches": [],
   "undocumentedMembers": 4,
-  "coverage": 1
+  "callableCoverage": 1
 }
