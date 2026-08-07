@@ -3,11 +3,11 @@ import { type ApiDocElement, importUpstreamDocs, summarizeLuaDoc } from "./impor
 import type { LuaMember } from "./parse-lua-surface";
 
 function callable(name: string, doc: string): LuaMember {
-  return { name, params: [], varargs: false, doc };
+  return { name, params: [], varargs: false, doc, refusedDoc: false };
 }
 
 function field(name: string, doc: string): LuaMember {
-  return { name, varargs: false, doc };
+  return { name, varargs: false, doc, refusedDoc: false };
 }
 
 function members(...entries: LuaMember[]): Map<string, LuaMember> {
@@ -188,6 +188,47 @@ describe("importUpstreamDocs", () => {
       undefined,
       "upstream",
     ]);
+  });
+
+  test("drops a leading line that is only the member's own name", () => {
+    const [element] = importUpstreamDocs(
+      [fn("update_account")],
+      members(
+        callable(
+          "update_account",
+          "update_account\nUpdate fields in the current user's account.\n@param client",
+        ),
+      ),
+    ) as [ApiDocElement];
+    expect(element.brief).toBe("Update fields in the current user's account.");
+    expect(element.description).toBe("Update fields in the current user's account.");
+  });
+
+  test("imports nothing from a block that is only the member's own name", () => {
+    const original = fn("create_api_account");
+    const [element] = importUpstreamDocs(
+      [original],
+      members(callable("create_api_account", "create_api_account\n@param avatar_url")),
+    ) as [ApiDocElement];
+    expect(element).toEqual(original);
+    expect(element).not.toHaveProperty("docSource");
+  });
+
+  test("keeps a first line that merely contains the name", () => {
+    const [element] = importUpstreamDocs(
+      [fn("start")],
+      members(callable("start", "start the console\n@param port The port")),
+    ) as [ApiDocElement];
+    expect(element.brief).toBe("start the console");
+  });
+
+  test("the name comparison is exact, so a qualified element name strips nothing", () => {
+    const [element] = importUpstreamDocs(
+      [fn("orthographic.camera")],
+      members(callable("orthographic.camera", "camera\nControl a camera.")),
+    ) as [ApiDocElement];
+    expect(element.brief).toBe("camera");
+    expect(element.description).toBe("camera\nControl a camera.");
   });
 
   test("does not mutate the elements it is given", () => {

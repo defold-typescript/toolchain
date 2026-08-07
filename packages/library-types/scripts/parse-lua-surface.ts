@@ -33,8 +33,12 @@ export interface LuaMember {
   /** True when the definition ends in `...`, which is not a named parameter. */
   varargs: boolean;
   /** The `---` LuaDoc block immediately above the definition, comment markers
-   * stripped; empty when the block is absent or opens with a plain `--`. */
+   * stripped, one interior blank line crossed; empty when the block is absent or
+   * opens with a plain `--`. */
   doc: string;
+  /** True when a comment block *was* there and the `---` rule declined it, which `doc`
+   * alone cannot say — an empty `doc` otherwise means upstream documented nothing. */
+  refusedDoc: boolean;
 }
 
 export interface LuaSurface {
@@ -104,21 +108,42 @@ function readParams(
   return { params: raw.filter((part) => part !== "..."), varargs: raw.includes("...") };
 }
 
-/** The contiguous comment block ending at `index - 1`, kept only when it opens
- * with `---`. LuaDoc in this corpus is a `---` summary followed by plain `--`
- * `@param`/`@return` lines, so the marker on the *first* line is what decides. */
-function readDoc(lines: string[], index: number): string {
-  const block: string[] = [];
+/** The contiguous run of comment lines ending at `index - 1`, in source order. */
+function readSegment(lines: string[], index: number): string[] {
+  const segment: string[] = [];
   for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
     const line = (lines[cursor] as string).trim();
     if (!line.startsWith("--") || line.startsWith("--[[")) break;
-    block.unshift(line);
+    segment.unshift(line);
   }
-  if (block.length === 0 || !(block[0] as string).startsWith("---")) return "";
-  return block
+  return segment;
+}
+
+/** The contiguous comment block ending at `index - 1`, kept only when it opens
+ * with `---`. LuaDoc in this corpus is a `---` summary followed by plain `--`
+ * `@param`/`@return` lines, so the marker on the *first* line is what decides.
+ *
+ * A single blank line inside the run is crossed, and only when the segment
+ * attached to the definition opens no block of its own — upstream wraps a long
+ * `@param` list around a blank, which would otherwise truncate the block to its
+ * tag half and lose the summary above. A segment carrying its own `---` is never
+ * absorbed into the one below it, so a blank-separated section header stays out. */
+function readDoc(lines: string[], index: number): Pick<LuaMember, "doc" | "refusedDoc"> {
+  const attached = readSegment(lines, index);
+  if (attached.length === 0) return { doc: "", refusedDoc: false };
+  const above = index - attached.length - 1;
+  const block =
+    attached.some((line) => line.startsWith("---")) ||
+    above < 0 ||
+    (lines[above] as string).trim() !== ""
+      ? attached
+      : [...readSegment(lines, above), ...attached];
+  if (!(block[0] as string).startsWith("---")) return { doc: "", refusedDoc: true };
+  const doc = block
     .map((line) => line.replace(/^-+\s?/, "").trimEnd())
     .join("\n")
     .trim();
+  return { doc, refusedDoc: false };
 }
 
 /**
@@ -142,7 +167,7 @@ export function parseLuaSurface(source: string): LuaSurface {
     const defined = definition.exec(line);
     if (defined) {
       const { params, varargs } = readParams(line, defined[0].length - 1, index + 1);
-      record({ name: defined[1] as string, params, varargs, doc: readDoc(lines, index) });
+      record({ name: defined[1] as string, params, varargs, ...readDoc(lines, index) });
       continue;
     }
     const assigned = assignment.exec(line);
@@ -150,12 +175,12 @@ export function parseLuaSurface(source: string): LuaSurface {
     const name = assigned[1] as string;
     const rhs = assigned[2] as string;
     if (!assignedFunction.test(rhs)) {
-      record({ name, varargs: false, doc: readDoc(lines, index) });
+      record({ name, varargs: false, ...readDoc(lines, index) });
       continue;
     }
     const open = line.indexOf("(", line.length - rhs.length);
     const { params, varargs } = readParams(line, open, index + 1);
-    record({ name, params, varargs, doc: readDoc(lines, index) });
+    record({ name, params, varargs, ...readDoc(lines, index) });
   }
 
   return { moduleLocal, members: [...members.values()] };

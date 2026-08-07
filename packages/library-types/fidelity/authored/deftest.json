@@ -13,6 +13,7 @@
   "arityMismatches": [],
   "undocumentedMembers": 0,
   "importedDocs": 2,
+  "refusedDocBlocks": 0,
   "variadicMembers": 1,
   "callableCoverage": 1
 }

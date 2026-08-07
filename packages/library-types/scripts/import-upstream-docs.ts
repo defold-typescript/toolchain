@@ -11,7 +11,7 @@
  * exists to prove — that the emitted surface *is* the vendored fork — and imported
  * prose would be indistinguishable from fork prose forever after.
  *
- * Two rules carry the whole merge:
+ * Three rules carry the whole merge:
  *
  * - **Fork prose always wins.** An element the fork gave either a `brief` or a
  *   `description` is returned untouched and gains no `docSource`, so authoring the
@@ -22,6 +22,10 @@
  *   followed by `@param`/`@return` lines, and a tag's continuation lines carry no
  *   marker of their own, so truncating at the *first* `@` line is what keeps
  *   LuaDoc-derived types and parameter names out of the api-doc.
+ * - **A brief never restates its own symbol.** A leading line that is exactly the
+ *   element's name is upstream's heading, not prose, and is dropped before the brief is
+ *   taken. That is the importer's knowledge, not `summarizeLuaDoc`'s, which stays a pure
+ *   block-to-prose function.
  */
 
 import type { LuaMember } from "./parse-lua-surface";
@@ -53,6 +57,15 @@ export function summarizeLuaDoc(doc: string): string {
     summary.push(line);
   }
   return summary.join("\n").trim();
+}
+
+/** The summary without a leading line that is only the element's own name. nakama writes
+ * `--- <member_name>` above the real summary, and `briefOf` takes the first line, so
+ * leaving it in ships a brief that restates the symbol it sits under. The comparison is
+ * exact: a first line that merely mentions the name is prose and survives. */
+function withoutNameLine(summary: string, name: string): string {
+  const [first, ...rest] = summary.split("\n");
+  return (first as string).trim() === name ? rest.join("\n").trim() : summary;
 }
 
 /** The element with upstream's summary in place, `docSource` inserted immediately
@@ -105,7 +118,7 @@ export function importUpstreamDocs(
     if ((element.brief ?? "") !== "" || (element.description ?? "") !== "") return element;
     const member = members.get(element.name);
     if (member === undefined) return element;
-    const summary = summarizeLuaDoc(member.doc);
+    const summary = withoutNameLine(summarizeLuaDoc(member.doc), element.name);
     if (summary === "") return element;
     return withImportedDoc(element, summary);
   });
