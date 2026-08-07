@@ -10,6 +10,7 @@
     "TRACE_LEVEL"
   ],
   "fieldCoverage": 1,
+  "declaredGlobals": 0,
   "declaredMembers": 6,
   "missingMembers": [
     "registerController",

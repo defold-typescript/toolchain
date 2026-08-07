@@ -1,0 +1,16 @@
+{
+  "namespace": "in.accelerometer",
+  "upstreamMembers": 10,
+  "upstreamFields": 0,
+  "declaredFields": 0,
+  "missingFields": [],
+  "phantomFields": [],
+  "fieldCoverage": 1,
+  "declaredGlobals": 0,
+  "declaredMembers": 10,
+  "missingMembers": [],
+  "phantomMembers": [],
+  "arityMismatches": [],
+  "undocumentedMembers": 0,
+  "callableCoverage": 1
+}

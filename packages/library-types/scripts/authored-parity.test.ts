@@ -19,6 +19,19 @@ function target(namespace: string): AuthoredTarget {
   return found;
 }
 
+interface ApiDocElement {
+  type: string;
+  name: string;
+  global?: boolean;
+}
+
+function apiDocElements(entry: AuthoredTarget): ApiDocElement[] {
+  const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, entry.apiDoc), "utf8")) as {
+    elements: ApiDocElement[];
+  };
+  return doc.elements;
+}
+
 describe("the measured corpus is exactly the corpus without a verdict", () => {
   test("a target that declares no upstream Lua reads back as an empty list", () => {
     const unmeasured = TARGETS.filter((entry) => entry.upstreamLua.length === 0);
@@ -303,6 +316,95 @@ describe("the declared field side reads only api-doc VARIABLE elements", () => {
       const functions = new Set(declaredTypes(entry, "FUNCTION"));
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(report.missingFields.filter((name) => functions.has(name))).toEqual([]);
+    }
+  });
+});
+
+describe("the two callable-module targets the setmetatable reader lifted", () => {
+  test("in.accelerometer declares all ten upstream members at upstream arity", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("in.accelerometer"));
+    expect(report.upstreamMembers).toBe(10);
+    expect(report.declaredMembers).toBe(10);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+  });
+
+  test("boom declares one of six, the five lifecycle hooks its script calls being absent", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("boom"));
+    expect(report.upstreamMembers).toBe(6);
+    expect(report.declaredMembers).toBe(1);
+    expect(report.missingMembers).toEqual(["final", "init", "on_input", "on_message", "update"]);
+    expect(report.callableCoverage).toBe(0.1667);
+  });
+
+  // Without the global exclusion this list would hold 87 names upstream really does
+  // define, in `boom/gameobject/gameobject.lua` and its siblings.
+  test("boom's ambient globals are counted, not charged to it as invented members", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("boom"));
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.declaredGlobals).toBe(87);
+  });
+});
+
+describe("an ambient global is not a member of the module", () => {
+  test("deftest's thirty telescope assertions are globals, so none is a phantom member", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("deftest"));
+    expect(apiDocElements(target("deftest")).length).toBe(32);
+    expect(report.declaredMembers).toBe(2);
+    expect(report.phantomMembers).toEqual([]);
+  });
+
+  test("excluding them moves neither ratcheted figure", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("deftest"));
+    expect(report.callableCoverage).toBe(0.5);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  test("what was excluded stays visible: deftest counts thirty declared globals", () => {
+    expect(buildAuthoredParity(PACKAGE_ROOT, target("deftest")).declaredGlobals).toBe(30);
+  });
+
+  test("every report counts the global FUNCTION and VARIABLE elements of its api-doc", () => {
+    for (const entry of authoredParityTargets(PACKAGE_ROOT)) {
+      const globals = apiDocElements(entry).filter(
+        (element) =>
+          element.global === true && (element.type === "FUNCTION" || element.type === "VARIABLE"),
+      );
+      expect(
+        `${entry.namespace}: ${buildAuthoredParity(PACKAGE_ROOT, entry).declaredGlobals}`,
+      ).toBe(`${entry.namespace}: ${globals.length}`);
+    }
+  });
+
+  // By name, as `declaredMembers` is: `monarch.transitions.gui` declares `create` twice
+  // as overloads, which are one member of the surface rather than two.
+  test("the declared callable side is exactly the api-doc functions that are not global", () => {
+    for (const entry of authoredParityTargets(PACKAGE_ROOT)) {
+      const members = new Set(
+        apiDocElements(entry)
+          .filter((element) => element.type === "FUNCTION" && element.global !== true)
+          .map((element) => element.name),
+      );
+      expect(
+        `${entry.namespace}: ${buildAuthoredParity(PACKAGE_ROOT, entry).declaredMembers}`,
+      ).toBe(`${entry.namespace}: ${members.size}`);
+    }
+  });
+
+  test("no target reports a name its api-doc marks global as one the fork invented", () => {
+    for (const entry of authoredParityTargets(PACKAGE_ROOT)) {
+      const globals = new Set(
+        apiDocElements(entry)
+          .filter((element) => element.global === true)
+          .map((element) => element.name),
+      );
+      const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+      const compared = [...report.phantomMembers, ...report.phantomFields].filter((name) =>
+        globals.has(name),
+      );
+      expect(`${entry.namespace}: ${compared.join(", ")}`).toBe(`${entry.namespace}: `);
     }
   });
 });

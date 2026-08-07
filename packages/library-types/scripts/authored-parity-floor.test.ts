@@ -175,12 +175,16 @@ function driftRemedy(path: string): string {
 /** The pinned SHA-256 of every vendored upstream `.lua`, each taken at the `ref`
  * its `authored-targets.json` entry pins. */
 const UPSTREAM_LUA_HASHES: Record<string, string> = {
+  "fixtures/upstream-lua/boom/boom/boom.lua":
+    "0f033b071fc86c46c73a176205004c22b8c1eb74ea468ce66b3d326933a43811",
   "fixtures/upstream-lua/bzAnim/bzAnim/bzLibrary.lua":
     "989ea96f2c5922bb4a0b57d195658d495b439513d5349033322e15d7b8a24788",
   "fixtures/upstream-lua/defcon/defcon/console.lua":
     "6756f6f5c8ff7820ef6cf2fa9953df9ac68f86356eb0074f86c072fb36f5995b",
   "fixtures/upstream-lua/defmath/defmath/defmath.lua":
     "212a09cd57b1bac464d4a3cae52121780bf00cc900145e0f8d4114b78ccaa3e6",
+  "fixtures/upstream-lua/defold-input/in/accelerometer.lua":
+    "42a0b89d8ce0989fab9486a3b9dafda742d93d92e4b0097b9f1112cf9eefbc45",
   "fixtures/upstream-lua/defold-input/in/button.lua":
     "c975e2c842c1ff676bd13de2b5b52b76e5519242c8045dc6fd7b46c6cb22ab8f",
   "fixtures/upstream-lua/defold-input/in/cursor.lua":
