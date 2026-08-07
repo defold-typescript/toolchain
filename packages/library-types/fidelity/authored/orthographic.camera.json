@@ -11,6 +11,7 @@
     "ORTHOGRAPHIC_RENDER_SCRIPT_USED"
   ],
   "fieldCoverage": 0.9474,
+  "declaredGlobals": 0,
   "declaredMembers": 27,
   "missingMembers": [
     "final",

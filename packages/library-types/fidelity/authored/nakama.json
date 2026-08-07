@@ -19,6 +19,7 @@
   ],
   "phantomFields": [],
   "fieldCoverage": 0,
+  "declaredGlobals": 0,
   "declaredMembers": 166,
   "missingMembers": [
     "cancel",

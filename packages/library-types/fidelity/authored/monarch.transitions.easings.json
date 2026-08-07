@@ -6,6 +6,7 @@
   "missingFields": [],
   "phantomFields": [],
   "fieldCoverage": 1,
+  "declaredGlobals": 0,
   "declaredMembers": 11,
   "missingMembers": [],
   "phantomMembers": [

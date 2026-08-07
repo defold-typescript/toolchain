@@ -1,18 +1,22 @@
 {
-  "namespace": "persist",
+  "namespace": "boom",
   "upstreamMembers": 6,
   "upstreamFields": 0,
   "declaredFields": 0,
   "missingFields": [],
   "phantomFields": [],
   "fieldCoverage": 1,
-  "declaredGlobals": 0,
-  "declaredMembers": 5,
+  "declaredGlobals": 87,
+  "declaredMembers": 1,
   "missingMembers": [
-    "exists"
+    "final",
+    "init",
+    "on_input",
+    "on_message",
+    "update"
   ],
   "phantomMembers": [],
   "arityMismatches": [],
   "undocumentedMembers": 0,
-  "callableCoverage": 0.8333
+  "callableCoverage": 0.1667
 }

@@ -9,6 +9,12 @@
  * so the report measures the surface a user actually sees rather than an
  * intermediate the reader alone knows about.
  *
+ * The declared side is the module's *own* api-doc members. An element marked
+ * `global: true` is a file-scope declaration the library installs into the environment,
+ * defined upstream in files this target does not vendor, so it is a member of no module
+ * and is compared by neither axis — counting one would report real upstream API as
+ * invented. `declaredGlobals` records how many were set aside.
+ *
  * Both halves of the surface are compared, on two axes that are reported separately
  * and never averaged. The *callable* axis puts upstream members carrying a parameter
  * list against api-doc `FUNCTION` elements; the *field* axis puts upstream constants
@@ -59,6 +65,11 @@ export interface AuthoredParityReport {
   missingFields: string[];
   phantomFields: string[];
   fieldCoverage: number;
+  /** Declared names that are *not* members of this module — file-scope declarations the
+   * library installs into the environment, whose definitions live upstream in files this
+   * target does not vendor. Compared by neither axis, and recorded so a small
+   * `declaredMembers` beside a large api-doc is readable rather than surprising. */
+  declaredGlobals: number;
   declaredMembers: number;
   missingMembers: string[];
   phantomMembers: string[];
@@ -116,6 +127,7 @@ interface DeclaredSurface {
   /** Every `VARIABLE` name, raw: a name the fork also declares as a `FUNCTION` is still
    * here, and `classifyFieldAxis` is what subtracts it. */
   fields: Set<string>;
+  globals: number;
 }
 
 function declaredSurface(packageRoot: string, target: AuthoredTarget): DeclaredSurface {
@@ -123,6 +135,7 @@ function declaredSurface(packageRoot: string, target: AuthoredTarget): DeclaredS
     elements: {
       type: string;
       name: string;
+      global?: boolean;
       brief?: string;
       description?: string;
       parameters?: unknown[];
@@ -130,15 +143,21 @@ function declaredSurface(packageRoot: string, target: AuthoredTarget): DeclaredS
   };
   const callable = new Map<string, DeclaredMember>();
   const fields = new Set<string>();
+  let globals = 0;
   for (const element of doc.elements) {
+    if (element.type !== "FUNCTION" && element.type !== "VARIABLE") continue;
+    if (element.global === true) {
+      globals += 1;
+      continue;
+    }
     if (element.type === "FUNCTION") {
       callable.set(element.name, {
         params: element.parameters?.length ?? 0,
         documented: (element.brief ?? "") !== "" || (element.description ?? "") !== "",
       });
-    } else if (element.type === "VARIABLE") fields.add(element.name);
+    } else fields.add(element.name);
   }
-  return { callable, fields };
+  return { callable, fields, globals };
 }
 
 /** The four raw name sets of a target, callable and non-callable on both sides. */
@@ -195,7 +214,11 @@ export function buildAuthoredParity(
   target: AuthoredTarget,
 ): AuthoredParityReport {
   const { callable: upstream, fields: upstreamVariables } = upstreamSurface(packageRoot, target);
-  const { callable: declared, fields: declaredVariables } = declaredSurface(packageRoot, target);
+  const {
+    callable: declared,
+    fields: declaredVariables,
+    globals: declaredGlobals,
+  } = declaredSurface(packageRoot, target);
   const { upstreamFields, declaredFields, missingFields, phantomFields } = classifyFieldAxis({
     upstreamCallable: new Set(upstream.keys()),
     upstreamNonCallable: upstreamVariables,
@@ -233,6 +256,7 @@ export function buildAuthoredParity(
       upstreamFields.size === 0
         ? 1
         : round4((upstreamFields.size - missingFields.length) / upstreamFields.size),
+    declaredGlobals,
     declaredMembers: declared.size,
     missingMembers: missingMembers.sort(),
     phantomMembers: phantomMembers.sort(),

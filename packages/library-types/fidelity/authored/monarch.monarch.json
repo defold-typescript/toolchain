@@ -15,6 +15,7 @@
   ],
   "phantomFields": [],
   "fieldCoverage": 0.4667,
+  "declaredGlobals": 0,
   "declaredMembers": 36,
   "missingMembers": [],
   "phantomMembers": [],
