@@ -2,6 +2,23 @@
   "namespace": "nakama",
   "upstreamMembers": 156,
   "upstreamFields": 12,
+  "declaredFields": 0,
+  "missingFields": [
+    "APIOPERATOR_BEST",
+    "APIOPERATOR_DECREMENT",
+    "APIOPERATOR_INCREMENT",
+    "APIOPERATOR_NO_OVERRIDE",
+    "APIOPERATOR_SET",
+    "APISTOREENVIRONMENT_PRODUCTION",
+    "APISTOREENVIRONMENT_SANDBOX",
+    "APISTOREENVIRONMENT_UNKNOWN",
+    "APISTOREPROVIDER_APPLE_APP_STORE",
+    "APISTOREPROVIDER_FACEBOOK_INSTANT_STORE",
+    "APISTOREPROVIDER_GOOGLE_PLAY_STORE",
+    "APISTOREPROVIDER_HUAWEI_APP_GALLERY"
+  ],
+  "phantomFields": [],
+  "fieldCoverage": 0,
   "declaredMembers": 166,
   "missingMembers": [
     "cancel",
@@ -732,5 +749,5 @@
     }
   ],
   "undocumentedMembers": 96,
-  "coverage": 0.0256
+  "callableCoverage": 0.0256
 }

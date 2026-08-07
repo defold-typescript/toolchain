@@ -2,10 +2,17 @@
   "namespace": "platypus",
   "upstreamMembers": 1,
   "upstreamFields": 14,
+  "declaredFields": 12,
+  "missingFields": [
+    "SEPARATION_RAYS",
+    "SEPARATION_SHAPES"
+  ],
+  "phantomFields": [],
+  "fieldCoverage": 0.8571,
   "declaredMembers": 1,
   "missingMembers": [],
   "phantomMembers": [],
   "arityMismatches": [],
   "undocumentedMembers": 1,
-  "coverage": 1
+  "callableCoverage": 1
 }

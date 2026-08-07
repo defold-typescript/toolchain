@@ -2,6 +2,10 @@
   "namespace": "monarch.transitions.easings",
   "upstreamMembers": 10,
   "upstreamFields": 0,
+  "declaredFields": 0,
+  "missingFields": [],
+  "phantomFields": [],
+  "fieldCoverage": 1,
   "declaredMembers": 11,
   "missingMembers": [],
   "phantomMembers": [
@@ -9,5 +13,5 @@
   ],
   "arityMismatches": [],
   "undocumentedMembers": 0,
-  "coverage": 1
+  "callableCoverage": 1
 }

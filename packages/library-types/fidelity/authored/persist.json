@@ -2,6 +2,10 @@
   "namespace": "persist",
   "upstreamMembers": 6,
   "upstreamFields": 0,
+  "declaredFields": 0,
+  "missingFields": [],
+  "phantomFields": [],
+  "fieldCoverage": 1,
   "declaredMembers": 5,
   "missingMembers": [
     "exists"
@@ -9,5 +13,5 @@
   "phantomMembers": [],
   "arityMismatches": [],
   "undocumentedMembers": 0,
-  "coverage": 0.8333
+  "callableCoverage": 0.8333
 }

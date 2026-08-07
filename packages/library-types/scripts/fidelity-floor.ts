@@ -18,7 +18,11 @@
  * `totalTypeTokens` to be a fraction of, and their coverage means something else —
  * upstream members declared at the right arity, from `authored-parity.ts`. They get
  * their own ratchet in `authored-parity-floor.json`, so folding them in here would
- * only mean two incompatible denominators under one floor manifest.
+ * only mean two incompatible denominators under one floor manifest. That manifest
+ * also ratchets *two* axes per key (`callableCoverage` and `fieldCoverage`, never
+ * averaged), which a flat one-ratio-per-key manifest cannot express — a second,
+ * independent reason the two do not merge. Its entries are parsed by
+ * `parseAuthoredFloors`, not by `parseFloors` below.
  */
 
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";

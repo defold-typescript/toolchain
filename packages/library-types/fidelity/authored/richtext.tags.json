@@ -2,10 +2,14 @@
   "namespace": "richtext.tags",
   "upstreamMembers": 2,
   "upstreamFields": 0,
+  "declaredFields": 0,
+  "missingFields": [],
+  "phantomFields": [],
+  "fieldCoverage": 1,
   "declaredMembers": 2,
   "missingMembers": [],
   "phantomMembers": [],
   "arityMismatches": [],
   "undocumentedMembers": 0,
-  "coverage": 1
+  "callableCoverage": 1
 }

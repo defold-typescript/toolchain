@@ -2,10 +2,17 @@
   "namespace": "dicebag",
   "upstreamMembers": 11,
   "upstreamFields": 2,
+  "declaredFields": 0,
+  "missingFields": [
+    "bags",
+    "tables"
+  ],
+  "phantomFields": [],
+  "fieldCoverage": 0,
   "declaredMembers": 11,
   "missingMembers": [],
   "phantomMembers": [],
   "arityMismatches": [],
   "undocumentedMembers": 0,
-  "coverage": 1
+  "callableCoverage": 1
 }
