@@ -8,8 +8,9 @@
     {
       "type": "FUNCTION",
       "name": "create",
-      "brief": "",
-      "description": "",
+      "brief": "Create a platypus instance.",
+      "description": "Create a platypus instance.\nThis will provide all the functionality to control a game object in a\nplatformer game. The functions will operate on the game object attached\nto the script calling the functions.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "config",

@@ -1256,6 +1256,74 @@ describe("apiModuleSymbols", () => {
     }
   });
 
+  test("projects the upstream-documentation marker onto function and variable symbols", () => {
+    const symbols = apiModuleSymbols(
+      pageWith({
+        functions: [
+          {
+            name: "demo.start",
+            brief: "Start the console",
+            description: "Start the console",
+            docSource: "upstream",
+            parameters: [],
+            returnValues: [],
+          },
+          {
+            name: "demo.forked",
+            brief: "Ours.",
+            description: "",
+            parameters: [],
+            returnValues: [],
+          },
+        ],
+        variables: [
+          {
+            name: "demo.VERSION",
+            brief: "The version",
+            description: "",
+            types: ["string"],
+            docSource: "upstream",
+          },
+          { name: "demo.SIZE", brief: "Ours.", description: "", types: ["number"] },
+        ],
+      }),
+    );
+    const by = (name: string) => symbols.find((s) => s.name === name);
+
+    expect(by("demo.start")?.docSource).toBe("upstream");
+    expect(by("demo.VERSION")?.docSource).toBe("upstream");
+    for (const name of ["demo.forked", "demo.SIZE"]) {
+      expect(by(name)).toBeDefined();
+      expect(by(name)?.docSource).toBeUndefined();
+      expect(Object.keys(by(name) ?? {})).not.toContain("docSource");
+    }
+  });
+
+  test("an upstream-documented authored-override function marks every emitted row, not just the primary", () => {
+    const store: SignatureStore = {
+      "demo.play": { signatures: ["demo.play(a: number): void", "demo.play(a: string): void"] },
+    };
+    const symbols = apiModuleSymbols(
+      pageWith({
+        functions: [
+          {
+            name: "demo.play",
+            brief: "Play it",
+            description: "Play it",
+            docSource: "upstream",
+            parameters: [],
+            returnValues: [],
+          },
+        ],
+      }),
+      {},
+      store,
+    );
+    const rows = symbols.filter((s) => s.name === "demo.play");
+    expect(rows.length).toBe(2);
+    expect(rows.map((s) => s.docSource)).toEqual(["upstream", "upstream"]);
+  });
+
   test("a deprecated authored-override function tags every emitted row, not just the primary", () => {
     const store: SignatureStore = {
       "demo.stale": {

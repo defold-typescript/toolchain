@@ -54,8 +54,9 @@
     {
       "type": "FUNCTION",
       "name": "create",
-      "brief": "",
-      "description": "",
+      "brief": "Create an instance of the input state tracker",
+      "description": "Create an instance of the input state tracker",
+      "docSource": "upstream",
       "parameters": [],
       "returnvalues": [
         {
@@ -70,8 +71,9 @@
     {
       "type": "FUNCTION",
       "name": "acquire",
-      "brief": "",
-      "description": "",
+      "brief": "Acquire input focus for the current script and clear state",
+      "description": "Acquire input focus for the current script and clear state",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "url",
@@ -95,8 +97,9 @@
     {
       "type": "FUNCTION",
       "name": "release",
-      "brief": "",
-      "description": "",
+      "brief": "Release input focus for the current script and clear state",
+      "description": "Release input focus for the current script and clear state",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "url",
@@ -120,8 +123,9 @@
     {
       "type": "FUNCTION",
       "name": "is_pressed",
-      "brief": "",
-      "description": "",
+      "brief": "Check if an action is pressed/active",
+      "description": "Check if an action is pressed/active",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "action_id",
@@ -153,8 +157,9 @@
     {
       "type": "FUNCTION",
       "name": "update",
-      "brief": "",
-      "description": "",
+      "brief": "Forward any calls to on_input from scripts using this module",
+      "description": "Forward any calls to on_input from scripts using this module",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "action_id",
@@ -219,8 +224,9 @@
     {
       "type": "FUNCTION",
       "name": "clear",
-      "brief": "",
-      "description": "",
+      "brief": "Clear the state of any currently tracked input states",
+      "description": "Clear the state of any currently tracked input states",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "instance",

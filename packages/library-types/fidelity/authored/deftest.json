@@ -11,7 +11,8 @@
   "missingMembers": [],
   "phantomMembers": [],
   "arityMismatches": [],
-  "undocumentedMembers": 2,
+  "undocumentedMembers": 0,
+  "importedDocs": 2,
   "variadicMembers": 1,
   "callableCoverage": 1
 }

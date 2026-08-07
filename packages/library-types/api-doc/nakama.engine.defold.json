@@ -8,8 +8,9 @@
     {
       "type": "FUNCTION",
       "name": "uuid",
-      "brief": "",
-      "description": "",
+      "brief": "Returns a UUID from the device's mac address.",
+      "description": "Returns a UUID from the device's mac address.",
+      "docSource": "upstream",
       "parameters": [],
       "returnvalues": [
         {
@@ -24,8 +25,9 @@
     {
       "type": "FUNCTION",
       "name": "http",
-      "brief": "",
-      "description": "",
+      "brief": "Make a HTTP request.",
+      "description": "Make a HTTP request.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "config",
@@ -81,8 +83,9 @@
     {
       "type": "FUNCTION",
       "name": "socket_create",
-      "brief": "",
-      "description": "",
+      "brief": "Create a new socket with message handler.",
+      "description": "Create a new socket with message handler.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "config",
@@ -106,8 +109,9 @@
     {
       "type": "FUNCTION",
       "name": "socket_connect",
-      "brief": "",
-      "description": "",
+      "brief": "Connect a created socket using web sockets.",
+      "description": "Connect a created socket using web sockets.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "socket",
@@ -131,8 +135,9 @@
     {
       "type": "FUNCTION",
       "name": "socket_send",
-      "brief": "",
-      "description": "",
+      "brief": "Send a socket message.",
+      "description": "Send a socket message.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "socket",

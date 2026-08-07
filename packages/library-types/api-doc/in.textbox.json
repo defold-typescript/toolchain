@@ -29,24 +29,27 @@
     {
       "type": "FUNCTION",
       "name": "acquire",
-      "brief": "",
-      "description": "",
+      "brief": "Convenience function to acquire input focus",
+      "description": "Convenience function to acquire input focus",
+      "docSource": "upstream",
       "parameters": [],
       "returnvalues": []
     },
     {
       "type": "FUNCTION",
       "name": "release",
-      "brief": "",
-      "description": "",
+      "brief": "Convenience function to release input focus",
+      "description": "Convenience function to release input focus",
+      "docSource": "upstream",
       "parameters": [],
       "returnvalues": []
     },
     {
       "type": "FUNCTION",
       "name": "register",
-      "brief": "",
-      "description": "",
+      "brief": "Register box and text nodes and optional mask param",
+      "description": "Register box and text nodes and optional mask param\nUse is_mask = true if you want to show asterisks (*) instead of the text",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "box_node_or_string",
@@ -86,8 +89,9 @@
     {
       "type": "FUNCTION",
       "name": "unregister",
-      "brief": "",
-      "description": "",
+      "brief": "Unregister a previously registered node or all nodes",
+      "description": "Unregister a previously registered node or all nodes\nregistered from the calling script",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "node_or_string",
@@ -179,8 +183,9 @@
     {
       "type": "FUNCTION",
       "name": "on_input",
-      "brief": "",
-      "description": "",
+      "brief": "Forward on_input calls to this function to detect input",
+      "description": "Forward on_input calls to this function to detect input\nfor registered nodes",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "action_id",

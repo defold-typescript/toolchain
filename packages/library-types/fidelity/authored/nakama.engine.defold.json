@@ -22,7 +22,8 @@
       "declared": 3
     }
   ],
-  "undocumentedMembers": 5,
+  "undocumentedMembers": 0,
+  "importedDocs": 5,
   "variadicMembers": 0,
   "callableCoverage": 0.6
 }

@@ -3,6 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { parseDefoldApiDoc } from "@defold-typescript/types";
 import { extractApiDoc } from "./extract-api-doc";
+import { lowerAuthoredApiDoc, readAuthoredTargets } from "./sync-authored-types";
 import { readLualsTargets } from "./sync-luals-types";
 import { readMarkdownTargets } from "./sync-markdown-types";
 import { readScriptApiTargets } from "./sync-script-api-types";
@@ -654,14 +655,26 @@ declare module 'stub.stub' {
 
   // Drift guard, mirroring the codemodDeclaration guard in
   // sync-library-types.test.ts: the committed api-doc/<module>.json must be
-  // exactly what extractApiDoc produces from the current generated/<module>.d.ts.
-  describe("committed api-doc fixtures match extractApiDoc(generated)", () => {
+  // exactly what its lane lowers from the current generated/<module>.d.ts. The
+  // authored lane lowers `extractApiDoc` *plus* upstream's LuaDoc for the members
+  // its fork leaves blank, so it is compared through `lowerAuthoredApiDoc`; the
+  // fork-identity test pins its vendored source to the generated golden, so this
+  // is still a comparison against `generated/`.
+  describe("committed api-doc fixtures match what their lane lowers", () => {
+    const authored = new Map(
+      readAuthoredTargets(PACKAGE_ROOT).map((target) => [target.namespace, target]),
+    );
     for (const moduleName of generatedModules()) {
       test(moduleName, () => {
-        const source = readFileSync(join(PACKAGE_ROOT, "generated", `${moduleName}.d.ts`), "utf8");
         const committed = JSON.parse(
           readFileSync(join(PACKAGE_ROOT, "api-doc", `${moduleName}.json`), "utf8"),
         );
+        const target = authored.get(moduleName);
+        if (target) {
+          expect(JSON.parse(lowerAuthoredApiDoc(PACKAGE_ROOT, target))).toEqual(committed);
+          return;
+        }
+        const source = readFileSync(join(PACKAGE_ROOT, "generated", `${moduleName}.d.ts`), "utf8");
         expect(extractApiDoc(source, moduleName)).toEqual(committed);
       });
     }
