@@ -21,6 +21,8 @@ changes are called out first because the toolchain is pre-1.0.
 - Library surfaces corrected against their upstream pins, so code written to the old shapes stops type-checking until it is updated.
   - **[defsave](/api/defsave)** (`v1.2.6`) — `save` and `set` returned `void` and now return `boolean | undefined`, and `load` narrows from `unknown` to `boolean | undefined`. Code that assigned or asserted on those results may need updating.
   - **[druid](/api/druid)** — the drag callback declares the six parameters the runtime really passes, `(self, dx, dy, x, y, touch)` instead of `(self, touch)`, so a handler that read `touch` out of the second argument (actually `dx`) needs its parameter list updated; and `layout.on_size_changed.subscribe` takes the inherited [event](/api/event) signature `subscribe(callback, context?)` returning `boolean`, so calls passing a leading placeholder argument need it removed.
+  - **[monarch.transitions.easings](/api/monarch.transitions.easings)** (`6.0.2`) — `create` is gone; upstream keeps it private, so call the `BACK()`, `BOUNCE()`, `CIRC()` and other per-easing wrappers instead.
+  - **[rendy](/api/rendy)** (`b72ee24`) — `animate` and `cancel_animations` are gone; upstream defines neither at the pinned commit, so use `go.animate` and `go.cancel_animations` directly.
   - **[yagames](/api/yagames)** (`0.19.0`) — the banner functions are replaced by the sticky-banner API upstream documents: `banner_init`, `banner_create`, `banner_delete`, `banner_refresh` and `banner_set` are gone in favour of `adv_show_banner_adv`, `adv_hide_banner_adv` and `adv_get_banner_adv_status`.
 - [`wall`](./wall.md) judges a directory by its whole subtree rather than only the sources it directly holds, so a directory whose own files are one kind but whose subdirectories add another is no longer eligible. Wall the single-kind directories beneath it instead.
 
@@ -82,6 +84,7 @@ changes are called out first because the toolchain is pre-1.0.
 
 ### Fixed
 
+- [richtext.color](/api/richtext.color) and [nakama.util.log](/api/nakama.util.log) declare the members their upstream really defines: color parsing (`parse`, `parse_hex`, `parse_decimal`) and the two logging-mode setters (`custom`, `format`), none of which the previous bindings carried.
 - A dependency that ships modules across two of this repo's registry lanes now resolves and materializes every module; [`resolve`](./resolve.md) previously kept only the first lane's module and silently dropped the rest.
 - The upstream-migration fidelity gate is stricter about when a documentation source may replace a library's existing types, so no migration can quietly downgrade a surface you already depend on.
   - **No parameter or return types** — a source that names a library's functions but documents none of their signatures previously scored as a clean match and would have swapped a fully-typed surface for argument-less stubs. [persist](/api/persist) was the first library to hit this and keeps its existing types.

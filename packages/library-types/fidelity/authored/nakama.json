@@ -750,5 +750,6 @@
     }
   ],
   "undocumentedMembers": 96,
+  "variadicMembers": 0,
   "callableCoverage": 0.0256
 }

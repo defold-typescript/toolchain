@@ -12,11 +12,11 @@ declare const _v3: Vector3;
 
 declare const _hash: Hash;
 
-// The five assertions the retired block carried.
+// The assertions the retired block carried, less the `animate` call: upstream
+// defines no such member at the pinned ref, so the fork no longer declares one.
 const _rendyDisplay: Vector3 = rendy.get_display_size();
 const _rendyWindow: Vector3 = rendy.get_window_size();
 rendy.set("camera", _hash, 1);
-rendy.animate("camera", _hash, go.PLAYBACK_ONCE_FORWARD, _v3, go.EASING_LINEAR, 1);
 const _rendyWorld: Vector3 = rendy.screen_to_world("camera", _v3);
 
 // `CameraId` is a `Hash | string` union. The module declares nothing with

@@ -34,9 +34,9 @@ transitionsGui.slide_in_right(_tNode, _tV3, gui.EASING_LINEAR, 1);
 
 // monarch.transitions.easings — no core-type renames; its only external reference
 // is the `gui` engine global via `(typeof gui)[...]`, so resolution proves the
-// indexed gui-constant lookup type-checks. `create` accepts an easing name and
-// yields an `Easing` whose `IN`/`OUT` are `gui` easing constants.
-const _easing = easings.create("BACK");
+// indexed gui-constant lookup type-checks. Each `M.<EASING>()` wrapper yields an
+// `Easing` whose `IN`/`OUT` are `gui` easing constants.
+const _easing = easings.BACK();
 
 void _mHash;
 void _ok;

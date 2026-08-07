@@ -12,7 +12,7 @@
     "field": 0
   },
   "fidelity/authored/defmath.json": {
-    "callable": 0.8947,
+    "callable": 0.9737,
     "field": 1
   },
   "fidelity/authored/defsave.json": {
@@ -20,7 +20,7 @@
     "field": 1
   },
   "fidelity/authored/deftest.json": {
-    "callable": 0.5,
+    "callable": 1,
     "field": 1
   },
   "fidelity/authored/dicebag.json": {
@@ -100,7 +100,7 @@
     "field": 0
   },
   "fidelity/authored/nakama.util.log.json": {
-    "callable": 0.5,
+    "callable": 1,
     "field": 1
   },
   "fidelity/authored/orthographic.camera.json": {
@@ -120,7 +120,7 @@
     "field": 0
   },
   "fidelity/authored/richtext.color.json": {
-    "callable": 0.25,
+    "callable": 1,
     "field": 1
   },
   "fidelity/authored/richtext.richtext.json": {
@@ -136,7 +136,7 @@
     "field": 1
   },
   "fidelity/authored/zzfx.json": {
-    "callable": 0.5,
+    "callable": 1,
     "field": 1
   }
 }

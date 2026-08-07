@@ -61,5 +61,4 @@ declare module 'monarch.transitions.easings' {
 	export function QUART(): Easing;
 	export function QUINT(): Easing;
 	export function SINE(): Easing;
-	export function create(name: EasingIn | EasingOut): Easing;
 }

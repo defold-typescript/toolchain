@@ -7,4 +7,6 @@
 declare module 'nakama.util.log' {
   function print(): void;
   function silent(): void;
+  function format(): void;
+  function custom(fn: (...args: unknown[]) => void): void;
 }
