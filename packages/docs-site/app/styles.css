@@ -240,6 +240,10 @@
     position: relative;
     font-size: var(--prose-h1-size);
     line-height: 1.2;
+    /* A library heading is a namespace path, not prose: `anywhere` (not
+       `break-word`) so its min-content width stays small and a long name wraps
+       instead of widening the page. Explicit <wbr>s still win the break. */
+    overflow-wrap: anywhere;
     font-weight: 700;
     letter-spacing: -0.02em;
     margin-top: 0;

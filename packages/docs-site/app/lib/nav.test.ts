@@ -2,7 +2,13 @@ import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import type { GuidePage } from "./guide";
 import { listGuidePages } from "./guide-loader";
-import { activeCategoryId, buildNav, libraryCreatorGroups, type NavLink } from "./nav";
+import {
+  activeCategoryId,
+  buildNav,
+  libraryCreatorGroups,
+  libraryLineage,
+  type NavLink,
+} from "./nav";
 
 const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");
 
@@ -611,5 +617,37 @@ describe("libraryCreatorGroups", () => {
       { label: "saver.saver", route: "/api/saver.saver" },
       { label: "saver.storage", route: "/api/saver.storage" },
     ]);
+  });
+});
+
+// The library page heading resolves its own `creator/dir` lineage; drifting from
+// the grouping rule made an authored-here page title itself `<ns>/<ns>` while its
+// Libraries card read `<dir>/<ns>`.
+describe("libraryLineage", () => {
+  const ownerByDir = new Map([
+    ["monarch", "britzl"],
+    ["defold-input", "britzl"],
+  ]);
+
+  test("an authored-here namespace takes its top segment as the dir", () => {
+    expect(libraryLineage("monarch.transitions.easings", new Map(), ownerByDir)).toEqual({
+      creator: "britzl",
+      dir: "monarch",
+    });
+  });
+
+  test("a vendored namespace takes its upstream dir", () => {
+    const moduleDir = new Map([["in.button", "defold-input"]]);
+    expect(libraryLineage("in.button", moduleDir, ownerByDir)).toEqual({
+      creator: "britzl",
+      dir: "defold-input",
+    });
+  });
+
+  test("an uncredited dir stands in for its own creator", () => {
+    expect(libraryLineage("druid", new Map(), new Map())).toEqual({
+      creator: "druid",
+      dir: "druid",
+    });
   });
 });
