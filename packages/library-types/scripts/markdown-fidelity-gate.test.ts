@@ -1383,7 +1383,9 @@ const DICEBAG: LibraryRecord = {
 // the README names anywhere — the 7 `bz.<fn>(...)` calls in its Lua snippets —
 // into `### bzAnim.<fn>(...)` headings yields 7 elements and:
 //
-//   missingMembers          ["DEBUG_LEVEL", "INFO_LEVEL", "TRACE_LEVEL"]
+//   missingMembers          ["DEBUG_LEVEL", "INFO_LEVEL", "TRACE_LEVEL",
+//                            "registerController", "setMaxPoints",
+//                            "unregisterController"]
 //   addedMembers            ["setMaxPts"]
 //   signatureLossMembers    all 6 shared functions — every one emits `(): void`
 //   downgradedMembers       []
@@ -1393,12 +1395,14 @@ const DICEBAG: LibraryRecord = {
 // The README documents no parameter bullets anywhere, so every function collapses
 // to a zero-arity `void` stub, `animate`'s `string` return included.
 //
-// Two findings that do not move the verdict: the README's `bz.setMaxPts( 15 )`
-// does not exist upstream (`bzAnim/bzLibrary.lua` defines `bz.setMaxPoints`) and
-// the README omits `registerController`/`unregisterController` that the Lua
-// exports, so the document is not a faithful surface even on its own terms; and
-// `bzLibrary.lua` carries no LuaLS annotations, confirming the audit's Bucket-C
-// placement.
+// The document is not a faithful surface even on its own terms: its
+// `bz.setMaxPts( 15 )` does not exist upstream (`bzAnim/bzLibrary.lua` defines
+// `bz.setMaxPoints`), and it never mentions `registerController` or
+// `unregisterController` at all. Correcting the fork against that Lua turned all
+// three into `missingMembers` above; the recorded reason is unmoved, the decision
+// having been `no-go` on the three constants already. One further finding that
+// moves nothing: `bzLibrary.lua` carries no LuaLS annotations, confirming the
+// audit's Bucket-C placement.
 //
 // bzAnim is also the one target whose upstream filename and declared module
 // diverge — it ships `packages/bzAnim/bzAnim.bzAnim.d.ts` as module
@@ -1547,11 +1551,11 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
   "fixtures/authored/metrics.mem.d.ts":
     "e32ab0d3067bd569c69a11045bd6f84bd3562d0d8e73920e46022536874d30a2",
   "fixtures/authored/persist.persist.d.ts":
-    "f79845a7b47f57f4559d7b365c32ce5527ce12e778999e5eee4db3f45793c622",
+    "4ede94326945884649966cd0496316ba51bf243d06be2fbfc868789207df4be8",
   "fixtures/authored/gooey.gooey.d.ts":
     "467465c25b62170b0f179b5a7efea45ae260004498610d51d350b5c7faf16212",
   "fixtures/authored/bzAnim.bzLibrary.d.ts":
-    "ba5d870877ae990865553a0591651a9679963d18e2ff848c712f865a14537429",
+    "5ac9ea3a79428383dca86b3dbd85beff6a55413e2a52867b88079f97a21fbc69",
   "fixtures/authored/dicebag.dicebag.d.ts":
     "362638eb3d790cf3d2fe14b07a1b0c5fe66d08a3c1d9933e10e7194d537074c7",
   "fixtures/authored/platypus.platypus.d.ts":
@@ -1937,9 +1941,13 @@ describe("persist signature-loss evidence at pin b37f61040740f232d86f68e2606f27b
     expect(markdownMembers).toEqual(["create", "exists", "flush", "load", "save", "write"]);
   });
 
-  test("upstream documents a function ts-defold never declared, and loses no member", async () => {
+  // `exists` used to be the one name the README documented and the fork did not
+  // declare. Correcting the fork against the pinned Lua empties `addedMembers` and
+  // makes `exists` a shared member, which the parameter-less headings then collapse
+  // like the other five.
+  test("the two surfaces name the same six functions", async () => {
     const { addedMembers, missingMembers } = await comparisonFor(PERSIST, "persist");
-    expect(addedMembers).toEqual(["exists"]);
+    expect(addedMembers).toEqual([]);
     expect(missingMembers).toEqual([]);
   });
 
@@ -1951,7 +1959,7 @@ describe("persist signature-loss evidence at pin b37f61040740f232d86f68e2606f27b
     // zero-arity and every return collapses to `void`.
     expect(emitted).toContain("function create(): void;");
     expect(emitted).toContain("function load(): void;");
-    expect(signatureLossMembers).toEqual(["create", "flush", "load", "save", "write"]);
+    expect(signatureLossMembers).toEqual(["create", "exists", "flush", "load", "save", "write"]);
   });
 
   test("persist.persist is no-go on signature-loss, not on the richtext unknown-downgrade class", async () => {
@@ -2840,8 +2848,9 @@ describe("bzAnim no-signature-section evidence at tag v.1.2", () => {
   // The heading form `parse-markdown-api` reads as a signature section.
   const SIGNATURE_HEADING = /^#{2,3}\s+[A-Za-z_]\w*\.[A-Za-z_]\w*\(.*\)\s*$/;
 
-  // The 3 constants and 6 functions of the retained ts-defold surface, sorted as
-  // `compareFidelityToTsDefold` reports them.
+  // The 3 constants and 9 functions of the retained surface, sorted as
+  // `compareFidelityToTsDefold` reports them. The last three arrived when the fork
+  // was corrected against the pinned Lua; the README names none of them.
   const TS_DEFOLD_MEMBERS = [
     "DEBUG_LEVEL",
     "INFO_LEVEL",
@@ -2851,7 +2860,10 @@ describe("bzAnim no-signature-section evidence at tag v.1.2", () => {
     "cancel",
     "info",
     "isReady",
+    "registerController",
     "setDebugLevel",
+    "setMaxPoints",
+    "unregisterController",
   ];
 
   const SHARED_FUNCTIONS = [
@@ -2895,7 +2907,7 @@ describe("bzAnim no-signature-section evidence at tag v.1.2", () => {
     expect(headings.length).toBeGreaterThan(1);
   });
 
-  test("the ts-defold surface is 9 members and its entry points take an options table", () => {
+  test("the retained surface is 12 members and its entry points take an options table", () => {
     const tsDefold = readFileSync(
       join(PACKAGE_ROOT, targetFor("bzAnim.bzLibrary", severed).fixture),
       "utf8",
@@ -2924,8 +2936,16 @@ describe("bzAnim no-signature-section evidence at tag v.1.2", () => {
       "setMaxPts",
     ]);
     // Every constant is invisible to a flat signature parse, and `setMaxPts` is
-    // the README's own name for what upstream calls `setMaxPoints`.
-    expect(missingMembers).toEqual(["DEBUG_LEVEL", "INFO_LEVEL", "TRACE_LEVEL"]);
+    // the README's own name for what upstream calls `setMaxPoints` — so the three
+    // functions the document never mentions go missing beside the three constants.
+    expect(missingMembers).toEqual([
+      "DEBUG_LEVEL",
+      "INFO_LEVEL",
+      "TRACE_LEVEL",
+      "registerController",
+      "setMaxPoints",
+      "unregisterController",
+    ]);
     expect(addedMembers).toEqual(["setMaxPts"]);
     // Not a precision loss and not a lost optional — the document carries no
     // parameter bullets at all, so every shared function collapses whole.

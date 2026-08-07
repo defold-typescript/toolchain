@@ -31,4 +31,7 @@ declare module 'persist.persist' {
 	 * Returns an `object`, or `undefined` if the file does not exist.
 	 */
 	export function load(file_name: string): {} | undefined;
+
+	/** Checks if a file exists. */
+	export function exists(file_name: string): boolean;
 }

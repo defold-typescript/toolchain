@@ -10,21 +10,10 @@
   "declaredMembers": 5,
   "missingMembers": [],
   "phantomMembers": [],
-  "arityMismatches": [
-    {
-      "name": "http",
-      "upstream": 8,
-      "declared": 6
-    },
-    {
-      "name": "socket_send",
-      "upstream": 2,
-      "declared": 3
-    }
-  ],
+  "arityMismatches": [],
   "undocumentedMembers": 0,
   "importedDocs": 5,
   "refusedDocBlocks": 0,
   "variadicMembers": 0,
-  "callableCoverage": 0.6
+  "callableCoverage": 1
 }

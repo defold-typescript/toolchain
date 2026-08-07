@@ -137,6 +137,31 @@
           ]
         }
       ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "exists",
+      "brief": "Checks if a file exists.",
+      "description": "Checks if a file exists.",
+      "parameters": [
+        {
+          "name": "file_name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
     }
   ]
 }

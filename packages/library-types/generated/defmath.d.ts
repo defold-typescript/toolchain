@@ -179,11 +179,12 @@ declare module "defmath.defmath" {
   /**
    * Used to find a point in a triangle
    * x0, y0 are the points that are being checked against the rest to see if it's inside
+   * arr must be 6 in length: top x/y, bottom right x/y, bottom left x/y
    */
-  export function in_triangle(x0: number, y0: number, x1: number, y1: number, x2: number, y2: number, x3: number, y3: number): boolean;
+  export function in_triangle(x0: number, y0: number, arr: [number, number, number, number, number, number]): boolean;
 
   /**
-   * arr must be 6 in length: top x/y, bottom right x/y, bottom left x/y
+   * box intersection of 2 square
    */
   export function box_intersect(ax: number, ay: number, awidth: number, aheight: number, bx: number, by: number, bwidth: number, bheight: number): boolean;
 

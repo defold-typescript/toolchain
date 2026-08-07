@@ -10,16 +10,10 @@
   "declaredMembers": 38,
   "missingMembers": [],
   "phantomMembers": [],
-  "arityMismatches": [
-    {
-      "name": "in_triangle",
-      "upstream": 3,
-      "declared": 8
-    }
-  ],
+  "arityMismatches": [],
   "undocumentedMembers": 0,
   "importedDocs": 0,
   "refusedDocBlocks": 36,
   "variadicMembers": 3,
-  "callableCoverage": 0.9737
+  "callableCoverage": 1
 }

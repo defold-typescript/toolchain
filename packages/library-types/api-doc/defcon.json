@@ -55,6 +55,14 @@
             "unknown"
           ],
           "is_optional": "False"
+        },
+        {
+          "name": "name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
