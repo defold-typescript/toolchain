@@ -16,8 +16,9 @@
     {
       "type": "FUNCTION",
       "name": "authenticate_custom",
-      "brief": "",
-      "description": "",
+      "brief": "Authenticate a user with a custom id against the server.",
+      "description": "Authenticate a user with a custom id against the server.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -117,8 +118,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_account_custom",
-      "brief": "create_api_account_custom",
-      "description": "create_api_account_custom\nSend a custom ID to the server. Used with authenticate/link/unlink.",
+      "brief": "Send a custom ID to the server. Used with authenticate/link/unlink.",
+      "description": "Send a custom ID to the server. Used with authenticate/link/unlink.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -528,8 +529,8 @@
     {
       "type": "FUNCTION",
       "name": "create_group_user_list_group_user",
-      "brief": "create_group_user_list_group_user",
-      "description": "create_group_user_list_group_user\nA single user-role pair.",
+      "brief": "A single user-role pair.",
+      "description": "A single user-role pair.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -554,8 +555,8 @@
     {
       "type": "FUNCTION",
       "name": "create_user_group_list_user_group",
-      "brief": "create_user_group_list_user_group",
-      "description": "create_user_group_list_user_group\nA single group-role pair.",
+      "brief": "A single group-role pair.",
+      "description": "A single group-role pair.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -580,8 +581,8 @@
     {
       "type": "FUNCTION",
       "name": "create_write_leaderboard_record_request_leaderboard_record_write",
-      "brief": "create_write_leaderboard_record_request_leaderboard_record_write",
-      "description": "create_write_leaderboard_record_request_leaderboard_record_write\nRecord values to write.",
+      "brief": "Record values to write.",
+      "description": "Record values to write.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -622,8 +623,8 @@
     {
       "type": "FUNCTION",
       "name": "create_write_tournament_record_request_tournament_record_write",
-      "brief": "create_write_tournament_record_request_tournament_record_write",
-      "description": "create_write_tournament_record_request_tournament_record_write\nRecord values to write.",
+      "brief": "Record values to write.",
+      "description": "Record values to write.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -664,8 +665,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_account",
-      "brief": "create_api_account",
-      "description": "create_api_account\nA user with additional account details. Always the current user.",
+      "brief": "A user with additional account details. Always the current user.",
+      "description": "A user with additional account details. Always the current user.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -730,8 +731,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_account_apple",
-      "brief": "create_api_account_apple",
-      "description": "create_api_account_apple\nSend a Apple Sign In token to the server. Used with authenticate/link/unlink.",
+      "brief": "Send a Apple Sign In token to the server. Used with authenticate/link/unlink.",
+      "description": "Send a Apple Sign In token to the server. Used with authenticate/link/unlink.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -756,8 +757,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_account_device",
-      "brief": "create_api_account_device",
-      "description": "create_api_account_device\nSend a device to the server. Used with authenticate/link/unlink and user.",
+      "brief": "Send a device to the server. Used with authenticate/link/unlink and user.",
+      "description": "Send a device to the server. Used with authenticate/link/unlink and user.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -782,8 +783,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_account_email",
-      "brief": "create_api_account_email",
-      "description": "create_api_account_email\nSend an email with password to the server. Used with authenticate/link/unlink.",
+      "brief": "Send an email with password to the server. Used with authenticate/link/unlink.",
+      "description": "Send an email with password to the server. Used with authenticate/link/unlink.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -816,8 +817,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_account_facebook",
-      "brief": "create_api_account_facebook",
-      "description": "create_api_account_facebook\nSend a Facebook token to the server. Used with authenticate/link/unlink.",
+      "brief": "Send a Facebook token to the server. Used with authenticate/link/unlink.",
+      "description": "Send a Facebook token to the server. Used with authenticate/link/unlink.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -842,8 +843,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_account_facebook_instant_game",
-      "brief": "create_api_account_facebook_instant_game",
-      "description": "create_api_account_facebook_instant_game\nSend a Facebook Instant Game token to the server. Used with authenticate/link/unlink.",
+      "brief": "Send a Facebook Instant Game token to the server. Used with authenticate/link/unlink.",
+      "description": "Send a Facebook Instant Game token to the server. Used with authenticate/link/unlink.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -868,8 +869,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_account_game_center",
-      "brief": "create_api_account_game_center",
-      "description": "create_api_account_game_center\nSend Apple's Game Center account credentials to the server. Used with authenticate/link/unlink.\n\nhttps://developer.apple.com/documentation/gamekit/gklocalplayer/1515407-generateidentityverificationsign",
+      "brief": "Send Apple's Game Center account credentials to the server. Used with authenticate/link/unlink.",
+      "description": "Send Apple's Game Center account credentials to the server. Used with authenticate/link/unlink.\n\nhttps://developer.apple.com/documentation/gamekit/gklocalplayer/1515407-generateidentityverificationsign",
       "docSource": "upstream",
       "parameters": [
         {
@@ -934,8 +935,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_account_google",
-      "brief": "create_api_account_google",
-      "description": "create_api_account_google\nSend a Google token to the server. Used with authenticate/link/unlink.",
+      "brief": "Send a Google token to the server. Used with authenticate/link/unlink.",
+      "description": "Send a Google token to the server. Used with authenticate/link/unlink.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -960,8 +961,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_account_steam",
-      "brief": "create_api_account_steam",
-      "description": "create_api_account_steam\nSend a Steam token to the server. Used with authenticate/link/unlink.",
+      "brief": "Send a Steam token to the server. Used with authenticate/link/unlink.",
+      "description": "Send a Steam token to the server. Used with authenticate/link/unlink.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -986,8 +987,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_channel_message",
-      "brief": "create_api_channel_message",
-      "description": "create_api_channel_message\nA message sent on a channel.",
+      "brief": "A message sent on a channel.",
+      "description": "A message sent on a channel.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -1100,8 +1101,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_channel_message_list",
-      "brief": "create_api_channel_message_list",
-      "description": "create_api_channel_message_list\nA list of channel messages, usually a result of a list operation.",
+      "brief": "A list of channel messages, usually a result of a list operation.",
+      "description": "A list of channel messages, usually a result of a list operation.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -1142,8 +1143,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_create_group_request",
-      "brief": "create_api_create_group_request",
-      "description": "create_api_create_group_request\nCreate a group with the current user as owner.",
+      "brief": "Create a group with the current user as owner.",
+      "description": "Create a group with the current user as owner.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -1200,8 +1201,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_delete_storage_object_id",
-      "brief": "create_api_delete_storage_object_id",
-      "description": "create_api_delete_storage_object_id\nStorage objects to delete.",
+      "brief": "Storage objects to delete.",
+      "description": "Storage objects to delete.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -1234,8 +1235,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_delete_storage_objects_request",
-      "brief": "create_api_delete_storage_objects_request",
-      "description": "create_api_delete_storage_objects_request\nBatch delete storage objects.",
+      "brief": "Batch delete storage objects.",
+      "description": "Batch delete storage objects.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -1252,8 +1253,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_event",
-      "brief": "create_api_event",
-      "description": "create_api_event\nRepresents an event to be passed through the server to registered event handlers.",
+      "brief": "Represents an event to be passed through the server to registered event handlers.",
+      "description": "Represents an event to be passed through the server to registered event handlers.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -1294,8 +1295,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_friend",
-      "brief": "create_api_friend",
-      "description": "create_api_friend\nA friend of a user.",
+      "brief": "A friend of a user.",
+      "description": "A friend of a user.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -1328,8 +1329,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_friend_list",
-      "brief": "create_api_friend_list",
-      "description": "create_api_friend_list\nA collection of zero or more friends of the user.",
+      "brief": "A collection of zero or more friends of the user.",
+      "description": "A collection of zero or more friends of the user.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -1354,8 +1355,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_group",
-      "brief": "create_api_group",
-      "description": "create_api_group\nA group in the server.",
+      "brief": "A group in the server.",
+      "description": "A group in the server.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -1460,8 +1461,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_group_list",
-      "brief": "create_api_group_list",
-      "description": "create_api_group_list\nOne or more groups returned from a listing operation.",
+      "brief": "One or more groups returned from a listing operation.",
+      "description": "One or more groups returned from a listing operation.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -1486,8 +1487,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_group_user_list",
-      "brief": "create_api_group_user_list",
-      "description": "create_api_group_user_list\nA list of users belonging to a group, along with their role.",
+      "brief": "A list of users belonging to a group, along with their role.",
+      "description": "A list of users belonging to a group, along with their role.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -1512,8 +1513,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_leaderboard_record",
-      "brief": "create_api_leaderboard_record",
-      "description": "create_api_leaderboard_record\nRepresents a complete leaderboard record with all scores and associated metadata.",
+      "brief": "Represents a complete leaderboard record with all scores and associated metadata.",
+      "description": "Represents a complete leaderboard record with all scores and associated metadata.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -1618,8 +1619,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_leaderboard_record_list",
-      "brief": "create_api_leaderboard_record_list",
-      "description": "create_api_leaderboard_record_list\nA set of leaderboard records, may be part of a leaderboard records page or a batch of individual records.",
+      "brief": "A set of leaderboard records, may be part of a leaderboard records page or a batch of individual records.",
+      "description": "A set of leaderboard records, may be part of a leaderboard records page or a batch of individual records.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -1660,8 +1661,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_link_steam_request",
-      "brief": "create_api_link_steam_request",
-      "description": "create_api_link_steam_request\nLink Steam to the current user's account.",
+      "brief": "Link Steam to the current user's account.",
+      "description": "Link Steam to the current user's account.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -1686,8 +1687,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_match",
-      "brief": "create_api_match",
-      "description": "create_api_match\nRepresents a realtime match.",
+      "brief": "Represents a realtime match.",
+      "description": "Represents a realtime match.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -1744,8 +1745,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_match_list",
-      "brief": "create_api_match_list",
-      "description": "create_api_match_list\nA list of realtime matches.",
+      "brief": "A list of realtime matches.",
+      "description": "A list of realtime matches.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -1762,8 +1763,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_notification",
-      "brief": "create_api_notification",
-      "description": "create_api_notification\nA notification in the server.",
+      "brief": "A notification in the server.",
+      "description": "A notification in the server.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -1828,8 +1829,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_notification_list",
-      "brief": "create_api_notification_list",
-      "description": "create_api_notification_list\nA collection of zero or more notifications.",
+      "brief": "A collection of zero or more notifications.",
+      "description": "A collection of zero or more notifications.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -1854,8 +1855,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_read_storage_object_id",
-      "brief": "create_api_read_storage_object_id",
-      "description": "create_api_read_storage_object_id\nStorage objects to get.",
+      "brief": "Storage objects to get.",
+      "description": "Storage objects to get.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -1888,8 +1889,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_read_storage_objects_request",
-      "brief": "create_api_read_storage_objects_request",
-      "description": "create_api_read_storage_objects_request\nBatch get storage objects.",
+      "brief": "Batch get storage objects.",
+      "description": "Batch get storage objects.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -1906,8 +1907,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_rpc",
-      "brief": "create_api_rpc",
-      "description": "create_api_rpc\nExecute an Lua function on the server.",
+      "brief": "Execute an Lua function on the server.",
+      "description": "Execute an Lua function on the server.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -1940,8 +1941,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_session",
-      "brief": "create_api_session",
-      "description": "create_api_session\nA user's session used to authenticate messages.",
+      "brief": "A user's session used to authenticate messages.",
+      "description": "A user's session used to authenticate messages.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -1974,8 +1975,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_session_logout_request",
-      "brief": "create_api_session_logout_request",
-      "description": "create_api_session_logout_request\nLog out a session, invalidate a refresh token, or log out all sessions/refresh tokens for a user.",
+      "brief": "Log out a session, invalidate a refresh token, or log out all sessions/refresh tokens for a user.",
+      "description": "Log out a session, invalidate a refresh token, or log out all sessions/refresh tokens for a user.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -2000,8 +2001,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_session_refresh_request",
-      "brief": "create_api_session_refresh_request",
-      "description": "create_api_session_refresh_request\nAuthenticate against the server with a refresh token.",
+      "brief": "Authenticate against the server with a refresh token.",
+      "description": "Authenticate against the server with a refresh token.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -2026,8 +2027,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_storage_object",
-      "brief": "create_api_storage_object",
-      "description": "create_api_storage_object\nAn object within the storage engine.",
+      "brief": "An object within the storage engine.",
+      "description": "An object within the storage engine.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -2108,8 +2109,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_storage_object_ack",
-      "brief": "create_api_storage_object_ack",
-      "description": "create_api_storage_object_ack\nA storage acknowledgement.",
+      "brief": "A storage acknowledgement.",
+      "description": "A storage acknowledgement.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -2150,8 +2151,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_storage_object_acks",
-      "brief": "create_api_storage_object_acks",
-      "description": "create_api_storage_object_acks\nBatch of acknowledgements for the storage object write.",
+      "brief": "Batch of acknowledgements for the storage object write.",
+      "description": "Batch of acknowledgements for the storage object write.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -2168,8 +2169,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_storage_object_list",
-      "brief": "create_api_storage_object_list",
-      "description": "create_api_storage_object_list\nList of storage objects.",
+      "brief": "List of storage objects.",
+      "description": "List of storage objects.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -2194,8 +2195,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_storage_objects",
-      "brief": "create_api_storage_objects",
-      "description": "create_api_storage_objects\nBatch of storage objects.",
+      "brief": "Batch of storage objects.",
+      "description": "Batch of storage objects.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -2212,8 +2213,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_tournament",
-      "brief": "create_api_tournament",
-      "description": "create_api_tournament\nA tournament on the server.",
+      "brief": "A tournament on the server.",
+      "description": "A tournament on the server.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -2374,8 +2375,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_tournament_list",
-      "brief": "create_api_tournament_list",
-      "description": "create_api_tournament_list\nA list of tournaments.",
+      "brief": "A list of tournaments.",
+      "description": "A list of tournaments.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -2400,8 +2401,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_tournament_record_list",
-      "brief": "create_api_tournament_record_list",
-      "description": "create_api_tournament_record_list\nA set of tournament records which may be part of a tournament records page or a batch of individual records.",
+      "brief": "A set of tournament records which may be part of a tournament records page or a batch of individual records.",
+      "description": "A set of tournament records which may be part of a tournament records page or a batch of individual records.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -2442,8 +2443,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_update_account_request",
-      "brief": "create_api_update_account_request",
-      "description": "create_api_update_account_request\nUpdate a user's account details.",
+      "brief": "Update a user's account details.",
+      "description": "Update a user's account details.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -2557,8 +2558,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_user",
-      "brief": "create_api_user",
-      "description": "create_api_user\nA user in the server.",
+      "brief": "A user in the server.",
+      "description": "A user in the server.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -2711,8 +2712,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_user_group_list",
-      "brief": "create_api_user_group_list",
-      "description": "create_api_user_group_list\nA list of groups belonging to a user, along with the user's role in each group.",
+      "brief": "A list of groups belonging to a user, along with the user's role in each group.",
+      "description": "A list of groups belonging to a user, along with the user's role in each group.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -2737,8 +2738,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_users",
-      "brief": "create_api_users",
-      "description": "create_api_users\nA collection of zero or more users.",
+      "brief": "A collection of zero or more users.",
+      "description": "A collection of zero or more users.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -2755,9 +2756,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_validate_purchase_apple_request",
-      "brief": "create_api_validate_purchase_apple_request",
-      "description": "create_api_validate_purchase_apple_request",
-      "docSource": "upstream",
+      "brief": "",
+      "description": "",
       "parameters": [
         {
           "name": "receipt_str",
@@ -2773,9 +2773,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_validate_purchase_google_request",
-      "brief": "create_api_validate_purchase_google_request",
-      "description": "create_api_validate_purchase_google_request",
-      "docSource": "upstream",
+      "brief": "",
+      "description": "",
       "parameters": [
         {
           "name": "purchase_str",
@@ -2791,9 +2790,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_validate_purchase_huawei_request",
-      "brief": "create_api_validate_purchase_huawei_request",
-      "description": "create_api_validate_purchase_huawei_request",
-      "docSource": "upstream",
+      "brief": "",
+      "description": "",
       "parameters": [
         {
           "name": "purchase_str",
@@ -2817,8 +2815,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_validate_purchase_response",
-      "brief": "create_api_validate_purchase_response",
-      "description": "create_api_validate_purchase_response\nValidate IAP response.",
+      "brief": "Validate IAP response.",
+      "description": "Validate IAP response.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -2835,8 +2833,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_validated_purchase",
-      "brief": "create_api_validated_purchase",
-      "description": "create_api_validated_purchase\nValidated Purchase stored by Nakama.",
+      "brief": "Validated Purchase stored by Nakama.",
+      "description": "Validated Purchase stored by Nakama.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -2909,8 +2907,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_write_storage_object",
-      "brief": "create_api_write_storage_object",
-      "description": "create_api_write_storage_object\nThe object to store.",
+      "brief": "The object to store.",
+      "description": "The object to store.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -2967,8 +2965,8 @@
     {
       "type": "FUNCTION",
       "name": "create_api_write_storage_objects_request",
-      "brief": "create_api_write_storage_objects_request",
-      "description": "create_api_write_storage_objects_request\nWrite objects to the storage engine.",
+      "brief": "Write objects to the storage engine.",
+      "description": "Write objects to the storage engine.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -2985,9 +2983,8 @@
     {
       "type": "FUNCTION",
       "name": "create_protobuf_any",
-      "brief": "create_protobuf_any",
-      "description": "create_protobuf_any",
-      "docSource": "upstream",
+      "brief": "",
+      "description": "",
       "parameters": [
         {
           "name": "type_url_str",
@@ -3011,9 +3008,8 @@
     {
       "type": "FUNCTION",
       "name": "create_rpc_status",
-      "brief": "create_rpc_status",
-      "description": "create_rpc_status",
-      "docSource": "upstream",
+      "brief": "",
+      "description": "",
       "parameters": [
         {
           "name": "code_int",
@@ -3371,8 +3367,8 @@
     {
       "type": "FUNCTION",
       "name": "healthcheck",
-      "brief": "healthcheck",
-      "description": "healthcheck\nA healthcheck which load balancers can use to check the service.",
+      "brief": "A healthcheck which load balancers can use to check the service.",
+      "description": "A healthcheck which load balancers can use to check the service.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -3397,8 +3393,8 @@
     {
       "type": "FUNCTION",
       "name": "get_account",
-      "brief": "get_account",
-      "description": "get_account\nFetch the current user's account.",
+      "brief": "Fetch the current user's account.",
+      "description": "Fetch the current user's account.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -3423,8 +3419,9 @@
     {
       "type": "FUNCTION",
       "name": "update_account",
-      "brief": "",
-      "description": "",
+      "brief": "Update fields in the current user's account.",
+      "description": "Update fields in the current user's account.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -3456,8 +3453,9 @@
     {
       "type": "FUNCTION",
       "name": "authenticate_apple",
-      "brief": "",
-      "description": "",
+      "brief": "Authenticate a user with an Apple ID against the server.",
+      "description": "Authenticate a user with an Apple ID against the server.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -3505,8 +3503,9 @@
     {
       "type": "FUNCTION",
       "name": "authenticate_device",
-      "brief": "",
-      "description": "",
+      "brief": "Authenticate a user with a device id against the server.",
+      "description": "Authenticate a user with a device id against the server.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -3554,8 +3553,9 @@
     {
       "type": "FUNCTION",
       "name": "authenticate_email",
-      "brief": "",
-      "description": "",
+      "brief": "Authenticate a user with an email+password against the server.",
+      "description": "Authenticate a user with an email+password against the server.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -3603,8 +3603,9 @@
     {
       "type": "FUNCTION",
       "name": "authenticate_facebook",
-      "brief": "",
-      "description": "",
+      "brief": "Authenticate a user with a Facebook OAuth token against the server.",
+      "description": "Authenticate a user with a Facebook OAuth token against the server.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -3660,8 +3661,9 @@
     {
       "type": "FUNCTION",
       "name": "authenticate_facebook_instant_game",
-      "brief": "",
-      "description": "",
+      "brief": "Authenticate a user with a Facebook Instant Game token against the server.",
+      "description": "Authenticate a user with a Facebook Instant Game token against the server.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -3709,8 +3711,9 @@
     {
       "type": "FUNCTION",
       "name": "authenticate_game_center",
-      "brief": "",
-      "description": "",
+      "brief": "Authenticate a user with Apple's GameCenter against the server.",
+      "description": "Authenticate a user with Apple's GameCenter against the server.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -3758,8 +3761,9 @@
     {
       "type": "FUNCTION",
       "name": "authenticate_google",
-      "brief": "",
-      "description": "",
+      "brief": "Authenticate a user with Google against the server.",
+      "description": "Authenticate a user with Google against the server.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -3807,8 +3811,9 @@
     {
       "type": "FUNCTION",
       "name": "authenticate_steam",
-      "brief": "",
-      "description": "",
+      "brief": "Authenticate a user with Steam against the server.",
+      "description": "Authenticate a user with Steam against the server.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -3864,8 +3869,9 @@
     {
       "type": "FUNCTION",
       "name": "link_apple",
-      "brief": "",
-      "description": "",
+      "brief": "Add an Apple ID to the social profiles on the current user's account.",
+      "description": "Add an Apple ID to the social profiles on the current user's account.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -3897,8 +3903,9 @@
     {
       "type": "FUNCTION",
       "name": "link_custom",
-      "brief": "",
-      "description": "",
+      "brief": "Add a custom ID to the social profiles on the current user's account.",
+      "description": "Add a custom ID to the social profiles on the current user's account.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -3930,8 +3937,9 @@
     {
       "type": "FUNCTION",
       "name": "link_device",
-      "brief": "",
-      "description": "",
+      "brief": "Add a device ID to the social profiles on the current user's account.",
+      "description": "Add a device ID to the social profiles on the current user's account.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -3963,8 +3971,9 @@
     {
       "type": "FUNCTION",
       "name": "link_email",
-      "brief": "",
-      "description": "",
+      "brief": "Add an email+password to the social profiles on the current user's account.",
+      "description": "Add an email+password to the social profiles on the current user's account.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -3996,8 +4005,9 @@
     {
       "type": "FUNCTION",
       "name": "link_facebook",
-      "brief": "",
-      "description": "",
+      "brief": "Add Facebook to the social profiles on the current user's account.",
+      "description": "Add Facebook to the social profiles on the current user's account.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -4037,8 +4047,9 @@
     {
       "type": "FUNCTION",
       "name": "link_facebook_instant_game",
-      "brief": "",
-      "description": "",
+      "brief": "Add Facebook Instant Game to the social profiles on the current user's account.",
+      "description": "Add Facebook Instant Game to the social profiles on the current user's account.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -4070,8 +4081,9 @@
     {
       "type": "FUNCTION",
       "name": "link_game_center",
-      "brief": "",
-      "description": "",
+      "brief": "Add Apple's GameCenter to the social profiles on the current user's account.",
+      "description": "Add Apple's GameCenter to the social profiles on the current user's account.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -4103,8 +4115,9 @@
     {
       "type": "FUNCTION",
       "name": "link_google",
-      "brief": "",
-      "description": "",
+      "brief": "Add Google to the social profiles on the current user's account.",
+      "description": "Add Google to the social profiles on the current user's account.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -4136,8 +4149,9 @@
     {
       "type": "FUNCTION",
       "name": "link_steam",
-      "brief": "",
-      "description": "",
+      "brief": "Add Steam to the social profiles on the current user's account.",
+      "description": "Add Steam to the social profiles on the current user's account.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -4169,8 +4183,9 @@
     {
       "type": "FUNCTION",
       "name": "session_refresh",
-      "brief": "",
-      "description": "",
+      "brief": "Refresh a user's session using a refresh token retrieved from a previous authentication request.",
+      "description": "Refresh a user's session using a refresh token retrieved from a previous authentication request.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -4202,8 +4217,9 @@
     {
       "type": "FUNCTION",
       "name": "unlink_apple",
-      "brief": "",
-      "description": "",
+      "brief": "Remove the Apple ID from the social profiles on the current user's account.",
+      "description": "Remove the Apple ID from the social profiles on the current user's account.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -4235,8 +4251,9 @@
     {
       "type": "FUNCTION",
       "name": "unlink_custom",
-      "brief": "",
-      "description": "",
+      "brief": "Remove the custom ID from the social profiles on the current user's account.",
+      "description": "Remove the custom ID from the social profiles on the current user's account.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -4268,8 +4285,9 @@
     {
       "type": "FUNCTION",
       "name": "unlink_device",
-      "brief": "",
-      "description": "",
+      "brief": "Remove the device ID from the social profiles on the current user's account.",
+      "description": "Remove the device ID from the social profiles on the current user's account.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -4301,8 +4319,9 @@
     {
       "type": "FUNCTION",
       "name": "unlink_email",
-      "brief": "",
-      "description": "",
+      "brief": "Remove the email+password from the social profiles on the current user's account.",
+      "description": "Remove the email+password from the social profiles on the current user's account.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -4334,8 +4353,9 @@
     {
       "type": "FUNCTION",
       "name": "unlink_facebook",
-      "brief": "",
-      "description": "",
+      "brief": "Remove Facebook from the social profiles on the current user's account.",
+      "description": "Remove Facebook from the social profiles on the current user's account.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -4367,8 +4387,9 @@
     {
       "type": "FUNCTION",
       "name": "unlink_facebook_instant_game",
-      "brief": "",
-      "description": "",
+      "brief": "Remove Facebook Instant Game profile from the social profiles on the current user's account.",
+      "description": "Remove Facebook Instant Game profile from the social profiles on the current user's account.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -4400,8 +4421,9 @@
     {
       "type": "FUNCTION",
       "name": "unlink_game_center",
-      "brief": "",
-      "description": "",
+      "brief": "Remove Apple's GameCenter from the social profiles on the current user's account.",
+      "description": "Remove Apple's GameCenter from the social profiles on the current user's account.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -4433,8 +4455,9 @@
     {
       "type": "FUNCTION",
       "name": "unlink_google",
-      "brief": "",
-      "description": "",
+      "brief": "Remove Google from the social profiles on the current user's account.",
+      "description": "Remove Google from the social profiles on the current user's account.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -4466,8 +4489,9 @@
     {
       "type": "FUNCTION",
       "name": "unlink_steam",
-      "brief": "",
-      "description": "",
+      "brief": "Remove Steam from the social profiles on the current user's account.",
+      "description": "Remove Steam from the social profiles on the current user's account.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -4499,8 +4523,8 @@
     {
       "type": "FUNCTION",
       "name": "list_channel_messages",
-      "brief": "list_channel_messages",
-      "description": "list_channel_messages\nList a channel's message history.",
+      "brief": "List a channel's message history.",
+      "description": "List a channel's message history.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -4557,8 +4581,9 @@
     {
       "type": "FUNCTION",
       "name": "event",
-      "brief": "",
-      "description": "",
+      "brief": "Submit an event for processing in the server's registered runtime custom events handler.",
+      "description": "Submit an event for processing in the server's registered runtime custom events handler.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -4590,8 +4615,8 @@
     {
       "type": "FUNCTION",
       "name": "delete_friends",
-      "brief": "delete_friends",
-      "description": "delete_friends\nDelete one or more users by ID or username.",
+      "brief": "Delete one or more users by ID or username.",
+      "description": "Delete one or more users by ID or username.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -4632,8 +4657,8 @@
     {
       "type": "FUNCTION",
       "name": "list_friends",
-      "brief": "list_friends",
-      "description": "list_friends\nList all friends for the current user.",
+      "brief": "List all friends for the current user.",
+      "description": "List all friends for the current user.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -4682,8 +4707,8 @@
     {
       "type": "FUNCTION",
       "name": "add_friends",
-      "brief": "add_friends",
-      "description": "add_friends\nAdd friends by ID or username to a user's account.",
+      "brief": "Add friends by ID or username to a user's account.",
+      "description": "Add friends by ID or username to a user's account.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -4724,8 +4749,8 @@
     {
       "type": "FUNCTION",
       "name": "block_friends",
-      "brief": "block_friends",
-      "description": "block_friends\nBlock one or more users by ID or username.",
+      "brief": "Block one or more users by ID or username.",
+      "description": "Block one or more users by ID or username.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -4766,8 +4791,9 @@
     {
       "type": "FUNCTION",
       "name": "import_facebook_friends",
-      "brief": "",
-      "description": "",
+      "brief": "Import Facebook friends and add them to a user's account.",
+      "description": "Import Facebook friends and add them to a user's account.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -4807,8 +4833,9 @@
     {
       "type": "FUNCTION",
       "name": "import_steam_friends",
-      "brief": "",
-      "description": "",
+      "brief": "Import Steam friends and add them to a user's account.",
+      "description": "Import Steam friends and add them to a user's account.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -4848,8 +4875,8 @@
     {
       "type": "FUNCTION",
       "name": "list_groups",
-      "brief": "list_groups",
-      "description": "list_groups\nList groups based on given filters.",
+      "brief": "List groups based on given filters.",
+      "description": "List groups based on given filters.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -4922,8 +4949,9 @@
     {
       "type": "FUNCTION",
       "name": "create_group",
-      "brief": "",
-      "description": "",
+      "brief": "Create a new group with the current user as the owner.",
+      "description": "Create a new group with the current user as the owner.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -4955,8 +4983,8 @@
     {
       "type": "FUNCTION",
       "name": "delete_group",
-      "brief": "delete_group",
-      "description": "delete_group\nDelete a group by ID.",
+      "brief": "Delete a group by ID.",
+      "description": "Delete a group by ID.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -4989,8 +5017,8 @@
     {
       "type": "FUNCTION",
       "name": "update_group",
-      "brief": "update_group",
-      "description": "update_group\nUpdate fields in a given group.",
+      "brief": "Update fields in a given group.",
+      "description": "Update fields in a given group.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -5031,8 +5059,8 @@
     {
       "type": "FUNCTION",
       "name": "add_group_users",
-      "brief": "add_group_users",
-      "description": "add_group_users\nAdd users to a group.",
+      "brief": "Add users to a group.",
+      "description": "Add users to a group.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -5073,8 +5101,8 @@
     {
       "type": "FUNCTION",
       "name": "ban_group_users",
-      "brief": "ban_group_users",
-      "description": "ban_group_users\nBan a set of users from a group.",
+      "brief": "Ban a set of users from a group.",
+      "description": "Ban a set of users from a group.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -5115,8 +5143,8 @@
     {
       "type": "FUNCTION",
       "name": "demote_group_users",
-      "brief": "demote_group_users",
-      "description": "demote_group_users\nDemote a set of users in a group to the next role down.",
+      "brief": "Demote a set of users in a group to the next role down.",
+      "description": "Demote a set of users in a group to the next role down.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -5157,8 +5185,8 @@
     {
       "type": "FUNCTION",
       "name": "join_group",
-      "brief": "join_group",
-      "description": "join_group\nImmediately join an open group, or request to join a closed one.",
+      "brief": "Immediately join an open group, or request to join a closed one.",
+      "description": "Immediately join an open group, or request to join a closed one.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -5191,8 +5219,8 @@
     {
       "type": "FUNCTION",
       "name": "kick_group_users",
-      "brief": "kick_group_users",
-      "description": "kick_group_users\nKick a set of users from a group.",
+      "brief": "Kick a set of users from a group.",
+      "description": "Kick a set of users from a group.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -5233,8 +5261,8 @@
     {
       "type": "FUNCTION",
       "name": "leave_group",
-      "brief": "leave_group",
-      "description": "leave_group\nLeave a group the user is a member of.",
+      "brief": "Leave a group the user is a member of.",
+      "description": "Leave a group the user is a member of.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -5267,8 +5295,8 @@
     {
       "type": "FUNCTION",
       "name": "promote_group_users",
-      "brief": "promote_group_users",
-      "description": "promote_group_users\nPromote a set of users in a group to the next role up.",
+      "brief": "Promote a set of users in a group to the next role up.",
+      "description": "Promote a set of users in a group to the next role up.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -5309,8 +5337,8 @@
     {
       "type": "FUNCTION",
       "name": "list_group_users",
-      "brief": "list_group_users",
-      "description": "list_group_users\nList all users that are part of a group.",
+      "brief": "List all users that are part of a group.",
+      "description": "List all users that are part of a group.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -5367,8 +5395,9 @@
     {
       "type": "FUNCTION",
       "name": "validate_purchase_apple",
-      "brief": "",
-      "description": "",
+      "brief": "Validate Apple IAP Receipt",
+      "description": "Validate Apple IAP Receipt",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -5400,8 +5429,9 @@
     {
       "type": "FUNCTION",
       "name": "validate_purchase_google",
-      "brief": "",
-      "description": "",
+      "brief": "Validate Google IAP Receipt",
+      "description": "Validate Google IAP Receipt",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -5433,8 +5463,9 @@
     {
       "type": "FUNCTION",
       "name": "validate_purchase_huawei",
-      "brief": "",
-      "description": "",
+      "brief": "Validate Huawei IAP Receipt",
+      "description": "Validate Huawei IAP Receipt",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -5466,8 +5497,8 @@
     {
       "type": "FUNCTION",
       "name": "delete_leaderboard_record",
-      "brief": "delete_leaderboard_record",
-      "description": "delete_leaderboard_record\nDelete a leaderboard record.",
+      "brief": "Delete a leaderboard record.",
+      "description": "Delete a leaderboard record.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -5500,8 +5531,8 @@
     {
       "type": "FUNCTION",
       "name": "list_leaderboard_records",
-      "brief": "list_leaderboard_records",
-      "description": "list_leaderboard_records\nList leaderboard records.",
+      "brief": "List leaderboard records.",
+      "description": "List leaderboard records.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -5566,8 +5597,9 @@
     {
       "type": "FUNCTION",
       "name": "write_leaderboard_record",
-      "brief": "",
-      "description": "",
+      "brief": "Write a record to a leaderboard.",
+      "description": "Write a record to a leaderboard.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -5607,8 +5639,8 @@
     {
       "type": "FUNCTION",
       "name": "list_leaderboard_records_around_owner",
-      "brief": "list_leaderboard_records_around_owner",
-      "description": "list_leaderboard_records_around_owner\nList leaderboard records that belong to a user.",
+      "brief": "List leaderboard records that belong to a user.",
+      "description": "List leaderboard records that belong to a user.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -5665,8 +5697,8 @@
     {
       "type": "FUNCTION",
       "name": "list_matches",
-      "brief": "list_matches",
-      "description": "list_matches\nFetch list of running matches.",
+      "brief": "Fetch list of running matches.",
+      "description": "Fetch list of running matches.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -5739,8 +5771,8 @@
     {
       "type": "FUNCTION",
       "name": "delete_notifications",
-      "brief": "delete_notifications",
-      "description": "delete_notifications\nDelete one or more notifications for the current user.",
+      "brief": "Delete one or more notifications for the current user.",
+      "description": "Delete one or more notifications for the current user.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -5773,8 +5805,8 @@
     {
       "type": "FUNCTION",
       "name": "list_notifications",
-      "brief": "list_notifications",
-      "description": "list_notifications\nFetch list of notifications.",
+      "brief": "Fetch list of notifications.",
+      "description": "Fetch list of notifications.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -5815,8 +5847,8 @@
     {
       "type": "FUNCTION",
       "name": "rpc_func2",
-      "brief": "rpc_func2",
-      "description": "rpc_func2\nExecute a Lua function on the server.",
+      "brief": "Execute a Lua function on the server.",
+      "description": "Execute a Lua function on the server.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -5865,8 +5897,8 @@
     {
       "type": "FUNCTION",
       "name": "rpc_func",
-      "brief": "rpc_func",
-      "description": "rpc_func\nExecute a Lua function on the server.",
+      "brief": "Execute a Lua function on the server.",
+      "description": "Execute a Lua function on the server.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -5915,8 +5947,9 @@
     {
       "type": "FUNCTION",
       "name": "session_logout",
-      "brief": "",
-      "description": "",
+      "brief": "Log out a session, invalidate a refresh token, or log out all sessions/refresh tokens for a user.",
+      "description": "Log out a session, invalidate a refresh token, or log out all sessions/refresh tokens for a user.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -5948,8 +5981,9 @@
     {
       "type": "FUNCTION",
       "name": "read_storage_objects",
-      "brief": "",
-      "description": "",
+      "brief": "Get storage objects.",
+      "description": "Get storage objects.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -5981,8 +6015,9 @@
     {
       "type": "FUNCTION",
       "name": "write_storage_objects",
-      "brief": "",
-      "description": "",
+      "brief": "Write objects into the storage engine.",
+      "description": "Write objects into the storage engine.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -6014,8 +6049,9 @@
     {
       "type": "FUNCTION",
       "name": "delete_storage_objects",
-      "brief": "",
-      "description": "",
+      "brief": "Delete one or more objects by ID or username.",
+      "description": "Delete one or more objects by ID or username.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -6047,8 +6083,8 @@
     {
       "type": "FUNCTION",
       "name": "list_storage_objects",
-      "brief": "list_storage_objects",
-      "description": "list_storage_objects\nList publicly readable storage objects in a given collection.",
+      "brief": "List publicly readable storage objects in a given collection.",
+      "description": "List publicly readable storage objects in a given collection.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -6105,8 +6141,8 @@
     {
       "type": "FUNCTION",
       "name": "list_storage_objects2",
-      "brief": "list_storage_objects2",
-      "description": "list_storage_objects2\nList publicly readable storage objects in a given collection.",
+      "brief": "List publicly readable storage objects in a given collection.",
+      "description": "List publicly readable storage objects in a given collection.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -6163,8 +6199,8 @@
     {
       "type": "FUNCTION",
       "name": "list_tournaments",
-      "brief": "list_tournaments",
-      "description": "list_tournaments\nList current or upcoming tournaments.",
+      "brief": "List current or upcoming tournaments.",
+      "description": "List current or upcoming tournaments.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -6237,8 +6273,8 @@
     {
       "type": "FUNCTION",
       "name": "list_tournament_records",
-      "brief": "list_tournament_records",
-      "description": "list_tournament_records\nList tournament records.",
+      "brief": "List tournament records.",
+      "description": "List tournament records.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -6303,8 +6339,9 @@
     {
       "type": "FUNCTION",
       "name": "write_tournament_record2",
-      "brief": "",
-      "description": "",
+      "brief": "Write a record to a tournament.",
+      "description": "Write a record to a tournament.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -6344,8 +6381,9 @@
     {
       "type": "FUNCTION",
       "name": "write_tournament_record",
-      "brief": "",
-      "description": "",
+      "brief": "Write a record to a tournament.",
+      "description": "Write a record to a tournament.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "client",
@@ -6385,8 +6423,8 @@
     {
       "type": "FUNCTION",
       "name": "join_tournament",
-      "brief": "join_tournament",
-      "description": "join_tournament\nAttempt to join an open and running tournament.",
+      "brief": "Attempt to join an open and running tournament.",
+      "description": "Attempt to join an open and running tournament.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -6419,8 +6457,8 @@
     {
       "type": "FUNCTION",
       "name": "list_tournament_records_around_owner",
-      "brief": "list_tournament_records_around_owner",
-      "description": "list_tournament_records_around_owner\nList tournament records for a given owner.",
+      "brief": "List tournament records for a given owner.",
+      "description": "List tournament records for a given owner.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -6477,8 +6515,8 @@
     {
       "type": "FUNCTION",
       "name": "get_users",
-      "brief": "get_users",
-      "description": "get_users\nFetch zero or more users by ID and/or username.",
+      "brief": "Fetch zero or more users by ID and/or username.",
+      "description": "Fetch zero or more users by ID and/or username.",
       "docSource": "upstream",
       "parameters": [
         {
@@ -6527,8 +6565,8 @@
     {
       "type": "FUNCTION",
       "name": "list_user_groups",
-      "brief": "list_user_groups",
-      "description": "list_user_groups\nList groups the current user belongs to.",
+      "brief": "List groups the current user belongs to.",
+      "description": "List groups the current user belongs to.",
       "docSource": "upstream",
       "parameters": [
         {

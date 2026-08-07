@@ -172,7 +172,7 @@ describe("upstream LuaDoc import at api-doc lowering", () => {
     }
   });
 
-  test("the whole corpus imports 184 briefs across 14 targets", () => {
+  test("the whole corpus imports 222 briefs across 14 targets", () => {
     const counts = readAuthoredTargets(PACKAGE_ROOT)
       .map((target) => ({
         namespace: target.namespace,
@@ -180,7 +180,7 @@ describe("upstream LuaDoc import at api-doc lowering", () => {
       }))
       .filter((entry) => entry.imported > 0);
     expect(counts.length).toBe(14);
-    expect(counts.reduce((sum, entry) => sum + entry.imported, 0)).toBe(184);
+    expect(counts.reduce((sum, entry) => sum + entry.imported, 0)).toBe(222);
   });
 });
 

@@ -48,6 +48,7 @@ describe("parseLuaSurface over inline module shapes", () => {
       params: ["x", "y"],
       varargs: false,
       doc: "",
+      refusedDoc: false,
     });
   });
 
@@ -57,12 +58,13 @@ describe("parseLuaSurface over inline module shapes", () => {
       params: ["z"],
       varargs: false,
       doc: "",
+      refusedDoc: false,
     });
   });
 
   test("a non-callable field carries no params at all, so it is not a zero-arity function", () => {
     const c = byName(parseLuaSurface(source).members).get("c") as LuaMember;
-    expect(c).toEqual({ name: "c", varargs: false, doc: "" });
+    expect(c).toEqual({ name: "c", varargs: false, doc: "", refusedDoc: false });
     expect("params" in c).toBe(false);
   });
 
@@ -73,14 +75,18 @@ describe("parseLuaSurface over inline module shapes", () => {
       ),
     );
     expect(surface.moduleLocal).toBe("nakama");
-    expect(surface.members).toEqual([{ name: "ping", params: ["host"], varargs: false, doc: "" }]);
+    expect(surface.members).toEqual([
+      { name: "ping", params: ["host"], varargs: false, doc: "", refusedDoc: false },
+    ]);
   });
 
   test("a vararg tail sets `varargs` instead of counting as a named parameter", () => {
     const surface = parseLuaSurface(
       ["local M = {}", "function M.e(a, ...)", "end", "return M", ""].join("\n"),
     );
-    expect(surface.members).toEqual([{ name: "e", params: ["a"], varargs: true, doc: "" }]);
+    expect(surface.members).toEqual([
+      { name: "e", params: ["a"], varargs: true, doc: "", refusedDoc: false },
+    ]);
   });
 
   test("only column-0 definitions count, so an assignment inside a function body is not a member", () => {
@@ -195,7 +201,90 @@ describe("parseLuaSurface over the vendored nakama core", () => {
       name: "APIOPERATOR_BEST",
       varargs: false,
       doc: "",
+      refusedDoc: false,
     });
+  });
+});
+
+describe("one blank line inside a comment run does not end the block", () => {
+  function above(...comment: string[]): string {
+    return ["local M = {}", ...comment, "function M.x(a)", "end", "return M", ""].join("\n");
+  }
+
+  function docOf(source: string): string {
+    return (byName(parseLuaSurface(source).members).get("x") as LuaMember).doc;
+  }
+
+  test("a summary separated from its member by a blank reaches the reader", () => {
+    expect(
+      docOf(
+        above(
+          "--- update_account",
+          "-- Update the current user's account.",
+          "-- @param client",
+          "",
+          "-- @param callback",
+        ),
+      ),
+    ).toBe("update_account\nUpdate the current user's account.\n@param client\n@param callback");
+  });
+
+  test("a blank-separated header above a segment that opens its own block stays out", () => {
+    expect(
+      docOf(
+        above("-- transition messages", "", "--- Fired when a transition ends.", "-- @param a"),
+      ),
+    ).toBe("Fired when a transition ends.\n@param a");
+  });
+
+  test("only one blank is crossed, so a summary two segments up stays lost", () => {
+    expect(docOf(above("--- Summary way up", "", "-- @param a", "", "-- @param b"))).toBe("");
+  });
+
+  test("a run with no blank is read exactly as before, `---` tag lines included", () => {
+    expect(docOf(above("--- Summary", "--- @param a", "--- @return nothing"))).toBe(
+      "Summary\n@param a\n@return nothing",
+    );
+  });
+
+  test("crossing the blank still refuses a run in which no segment opens with `---`", () => {
+    expect(docOf(above("-- a plain note", "", "-- continued"))).toBe("");
+  });
+
+  test("a blank directly above the definition attaches nothing at all", () => {
+    expect(docOf(above("--- Summary", ""))).toBe("");
+  });
+
+  test("the vendored `update_account` recovers the summary its interior blank hid", () => {
+    const doc = byName(parseLuaSurface(vendored("nakama.lua")).members).get("update_account")?.doc;
+    expect(doc).toContain("Update fields in the current user's account.");
+  });
+});
+
+describe("a refused comment block is distinguishable from no comment at all", () => {
+  function member(...comment: string[]): LuaMember {
+    return byName(
+      parseLuaSurface(
+        ["local M = {}", ...comment, "function M.x(a)", "end", "return M", ""].join("\n"),
+      ).members,
+    ).get("x") as LuaMember;
+  }
+
+  test("a block opening with a plain `--` is recorded as refused, not as absent", () => {
+    expect(member("-- initialize boom")).toMatchObject({ doc: "", refusedDoc: true });
+  });
+
+  test("a member with no comment above it refused nothing", () => {
+    expect(member()).toMatchObject({ doc: "", refusedDoc: false });
+  });
+
+  test("an accepted block refused nothing", () => {
+    expect(member("--- Start the console.")).toMatchObject({ refusedDoc: false });
+  });
+
+  test("`format`'s `--`-only block in the vendored log module reads as refused", () => {
+    const format = byName(parseLuaSurface(vendored("util/log.lua")).members).get("format");
+    expect(format).toMatchObject({ doc: "", refusedDoc: true });
   });
 });
 
@@ -236,7 +325,9 @@ describe("a module closing with `return setmetatable(<name>, {…})` is the same
       ].join("\n"),
     );
     expect(inline.moduleLocal).toBe("M");
-    expect(inline.members).toEqual([{ name: "a", params: ["x"], varargs: false, doc: "" }]);
+    expect(inline.members).toEqual([
+      { name: "a", params: ["x"], varargs: false, doc: "", refusedDoc: false },
+    ]);
   });
 });
 

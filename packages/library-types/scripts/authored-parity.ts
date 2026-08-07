@@ -77,14 +77,22 @@ export interface AuthoredParityReport {
   missingMembers: string[];
   phantomMembers: string[];
   arityMismatches: AuthoredArityMismatch[];
-  /** Upstream prose that reached neither the fork nor the import — a member upstream
-   * documents whose block is nothing but tags, so there is no summary to lower. */
+  /** Upstream prose that reached neither the fork nor the import — a member whose block
+   * the reader accepted but which carries no summary to lower, being nothing but tags or
+   * nothing but the member's own name. Distinct from `refusedDocBlocks`, where prose does
+   * exist and the reader declined the block it sits in. */
   undocumentedMembers: number;
   /** Declared elements carrying upstream's own summary because the fork supplied none,
    * on both axes. Recorded beside `undocumentedMembers` because it is where that
    * shortfall went: without it, a target the import silently skipped and a target the
    * fork documents itself would read the same. */
   importedDocs: number;
+  /** Upstream comment blocks the reader declined because no segment opened with `---`.
+   * Such a block leaves no `doc` behind, so `undocumentedMembers` cannot charge it and
+   * the loss would otherwise read as a clean zero. Author the fork's own doc-comment to
+   * surface one: no parser rule separates upstream's prose blocks from its section
+   * headers, so the judgment is a human's. */
+  refusedDocBlocks: number;
   /** How many agreeing members were compared against a floor rather than an exact count,
    * upstream being variadic. Recorded so a `callableCoverage` of 1 over a variadic
    * surface cannot be read as fully verified. */
@@ -121,19 +129,24 @@ interface UpstreamSurface {
   /** Every non-callable name, raw: a name also defined with a parameter list is still
    * here, and `classifyFieldAxis` is what subtracts it. */
   fields: Set<string>;
+  /** Counted here rather than in the callable loop below, which never visits the field
+   * side: most refused blocks in this corpus sit above a constant. */
+  refusedDocs: number;
 }
 
 function upstreamSurface(packageRoot: string, target: AuthoredTarget): UpstreamSurface {
   const callable = new Map<string, LuaMember>();
   const fields = new Set<string>();
+  let refusedDocs = 0;
   for (const relative of target.upstreamLua) {
     const surface = parseLuaSurface(readFileSync(join(packageRoot, relative), "utf8"));
     for (const member of surface.members) {
+      if (member.refusedDoc) refusedDocs += 1;
       if (member.params === undefined) fields.add(member.name);
       else callable.set(member.name, member);
     }
   }
-  return { callable, fields };
+  return { callable, fields, refusedDocs };
 }
 
 interface DeclaredSurface {
@@ -270,7 +283,11 @@ export function buildAuthoredParity(
   packageRoot: string,
   target: AuthoredTarget,
 ): AuthoredParityReport {
-  const { callable: upstream, fields: upstreamVariables } = upstreamSurface(packageRoot, target);
+  const {
+    callable: upstream,
+    fields: upstreamVariables,
+    refusedDocs: refusedDocBlocks,
+  } = upstreamSurface(packageRoot, target);
   const {
     callable: declared,
     fields: declaredVariables,
@@ -328,6 +345,7 @@ export function buildAuthoredParity(
     arityMismatches: arityMismatches.sort((a, b) => a.name.localeCompare(b.name)),
     undocumentedMembers,
     importedDocs,
+    refusedDocBlocks,
     variadicMembers,
     callableCoverage: upstream.size === 0 ? 1 : round4(correct / upstream.size),
   };

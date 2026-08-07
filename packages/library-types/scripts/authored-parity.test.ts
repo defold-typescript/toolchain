@@ -558,15 +558,75 @@ describe("the shortfall the import absorbed is accounted for, not merely absent"
     buildAuthoredParity(PACKAGE_ROOT, entry),
   );
 
-  test("no upstream-documented member is left undocumented on any target", () => {
+  // The five are nakama's `create_api_validate_purchase_*`, `create_protobuf_any` and
+  // `create_rpc_status`, whose whole block is the member's own name. There is no prose
+  // to lower, so charging them is correct — the alternative the import used to ship was
+  // a brief that restated the symbol.
+  test("the only members left undocumented are the ones upstream never wrote prose for", () => {
     const stragglers = reports
       .filter((report) => report.undocumentedMembers > 0)
       .map((report) => `${report.namespace}: ${report.undocumentedMembers}`);
-    expect(stragglers).toEqual([]);
+    expect(stragglers).toEqual(["nakama: 5"]);
   });
 
-  test("the corpus imports 184 briefs", () => {
-    expect(reports.reduce((sum, report) => sum + report.importedDocs, 0)).toBe(184);
+  test("the corpus imports 222 briefs", () => {
+    expect(reports.reduce((sum, report) => sum + report.importedDocs, 0)).toBe(222);
+  });
+});
+
+// A block the reader declines leaves `member.doc === ""`, which `undocumentedMembers`
+// cannot charge — the prose is gone and every term reads clean. `refusedDocBlocks` is
+// what makes that loss visible, so a target the reader declined is distinguishable from
+// one upstream never documented.
+describe("upstream prose the reader declined is reported, not absent", () => {
+  const reports = authoredParityTargets(PACKAGE_ROOT).map((entry) =>
+    buildAuthoredParity(PACKAGE_ROOT, entry),
+  );
+
+  test("nakama.util.log charges `format`'s `--`-only block rather than reading clean", () => {
+    const report = reports.find((entry) => entry.namespace === "nakama.util.log");
+    expect(report?.refusedDocBlocks).toBe(1);
+    expect(report?.undocumentedMembers).toBe(0);
+  });
+
+  // Both axes, which is why the count is taken over the whole upstream surface rather
+  // than in the arity loop: `monarch.monarch`'s six and `rendy`'s thirteen sit above
+  // constants, which that loop never visits.
+  test("the term is non-zero on exactly the targets holding such a block", () => {
+    const charged = Object.fromEntries(
+      reports
+        .filter((report) => report.refusedDocBlocks > 0)
+        .map((report) => [report.namespace, report.refusedDocBlocks])
+        .sort(([a], [b]) => (a as string).localeCompare(b as string)),
+    );
+    expect(charged).toEqual({
+      boom: 5,
+      defcon: 1,
+      defmath: 36,
+      "in.onscreen": 1,
+      "in.textbox": 1,
+      "monarch.monarch": 6,
+      "monarch.transitions.gui": 1,
+      nakama: 3,
+      "nakama.util.log": 1,
+      persist: 5,
+      rendy: 13,
+      zzfx: 4,
+    });
+  });
+
+  // The module writes every one of its blocks with a plain `--`, so the reader declines
+  // all of them and the fork's api-doc renders no prose while the target reports a
+  // perfect field coverage. Without this term that reads as a documented module.
+  test("defmath, whose whole module is `--`-documented, is the corpus's largest loss", () => {
+    const report = reports.find((entry) => entry.namespace === "defmath");
+    expect(report?.refusedDocBlocks).toBe(36);
+    expect(report?.undocumentedMembers).toBe(0);
+  });
+
+  test("every other target reads 0, so the term is not a constant", () => {
+    const clean = reports.filter((report) => report.refusedDocBlocks === 0);
+    expect(clean.length).toBeGreaterThan(reports.length - clean.length);
   });
 });
 
