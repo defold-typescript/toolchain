@@ -1,0 +1,22 @@
+{
+  "namespace": "zzfx",
+  "upstreamMembers": 4,
+  "upstreamFields": 0,
+  "declaredMembers": 4,
+  "missingMembers": [],
+  "phantomMembers": [],
+  "arityMismatches": [
+    {
+      "name": "build_sample",
+      "upstream": 0,
+      "declared": 1
+    },
+    {
+      "name": "play",
+      "upstream": 0,
+      "declared": 1
+    }
+  ],
+  "undocumentedMembers": 0,
+  "coverage": 0.5
+}

@@ -1,0 +1,11 @@
+{
+  "namespace": "richtext.richtext",
+  "upstreamMembers": 8,
+  "upstreamFields": 7,
+  "declaredMembers": 8,
+  "missingMembers": [],
+  "phantomMembers": [],
+  "arityMismatches": [],
+  "undocumentedMembers": 0,
+  "coverage": 1
+}

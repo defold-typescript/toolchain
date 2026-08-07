@@ -1,0 +1,11 @@
+{
+  "namespace": "in.triggers",
+  "upstreamMembers": 3,
+  "upstreamFields": 168,
+  "declaredMembers": 3,
+  "missingMembers": [],
+  "phantomMembers": [],
+  "arityMismatches": [],
+  "undocumentedMembers": 0,
+  "coverage": 1
+}

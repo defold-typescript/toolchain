@@ -1,0 +1,15 @@
+{
+  "namespace": "richtext.color",
+  "upstreamMembers": 4,
+  "upstreamFields": 1,
+  "declaredMembers": 1,
+  "missingMembers": [
+    "parse",
+    "parse_decimal",
+    "parse_hex"
+  ],
+  "phantomMembers": [],
+  "arityMismatches": [],
+  "undocumentedMembers": 0,
+  "coverage": 0.25
+}

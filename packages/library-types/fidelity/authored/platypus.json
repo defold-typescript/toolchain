@@ -1,0 +1,11 @@
+{
+  "namespace": "platypus",
+  "upstreamMembers": 1,
+  "upstreamFields": 14,
+  "declaredMembers": 1,
+  "missingMembers": [],
+  "phantomMembers": [],
+  "arityMismatches": [],
+  "undocumentedMembers": 1,
+  "coverage": 1
+}
