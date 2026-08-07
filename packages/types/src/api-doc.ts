@@ -58,6 +58,14 @@ export interface ApiFunction {
    * is never written as `false`.
    */
   global?: true;
+  /**
+   * Present exactly when this symbol's prose was imported from the upstream
+   * source rather than written in the declaration — the authored/forked library
+   * lane lowers upstream's own LuaDoc summary for a member its fork documents
+   * nowhere. Absence is the only encoding of first-party prose, so every engine
+   * and hand-authored symbol reads as before.
+   */
+  docSource?: "upstream";
 }
 
 export interface ApiParameter {
@@ -94,11 +102,20 @@ export interface ApiVariable {
   deprecated?: string;
   /** See {@link ApiFunction.global}. */
   global?: true;
+  /** See {@link ApiFunction.docSource}. */
+  docSource?: "upstream";
 }
 
 /** The `{ global }` key to spread onto a parsed element, empty for a module member. */
 function globalKey(element: Record<string, unknown>): { global?: true } {
   return element.global === true ? { global: true } : {};
+}
+
+/** The `{ docSource }` key to spread onto a parsed element, empty for first-party
+ * prose. Only the one recognised value yields a key: an unknown provenance would
+ * otherwise reach a page with no marker the render layer knows how to draw. */
+function docSourceKey(element: Record<string, unknown>): { docSource?: "upstream" } {
+  return element.docSource === "upstream" ? { docSource: "upstream" } : {};
 }
 
 export function parseDefoldApiDoc(input: unknown): ApiModule {
@@ -193,6 +210,7 @@ function parseFunction(element: Record<string, unknown>): ApiFunction {
     ...(typeof element.generics === "string" ? { generics: element.generics } : {}),
     ...(typeof element.deprecated === "string" ? { deprecated: element.deprecated } : {}),
     ...globalKey(element),
+    ...docSourceKey(element),
   };
 }
 
@@ -205,6 +223,7 @@ function parseVariable(element: Record<string, unknown>): ApiVariable {
     ...(element.is_optional === "True" ? { isOptional: true } : {}),
     ...(typeof element.deprecated === "string" ? { deprecated: element.deprecated } : {}),
     ...globalKey(element),
+    ...docSourceKey(element),
   };
 }
 

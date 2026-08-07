@@ -472,8 +472,9 @@
     {
       "type": "FUNCTION",
       "name": "create",
-      "brief": "",
-      "description": "",
+      "brief": "Create a gesture instance. Use this if you need multiple gesture detectors that each needs",
+      "description": "Create a gesture instance. Use this if you need multiple gesture detectors that each needs\nunique settings",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "settings",
@@ -555,8 +556,9 @@
     {
       "type": "FUNCTION",
       "name": "on_input",
-      "brief": "",
-      "description": "",
+      "brief": "Forward calls to on_input to this function to detect supported gestures",
+      "description": "Forward calls to on_input to this function to detect supported gestures",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "this",

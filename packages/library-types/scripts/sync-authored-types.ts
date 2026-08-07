@@ -1,6 +1,8 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { extractApiDoc } from "./extract-api-doc";
+import { type ApiDocElement, importUpstreamDocs } from "./import-upstream-docs";
+import { type LuaMember, parseLuaSurface } from "./parse-lua-surface";
 
 /**
  * The authored/forked front-end: a fourth `library-types` corpus mode beside the
@@ -15,7 +17,11 @@ import { extractApiDoc } from "./extract-api-doc";
  * '<moduleId>'` ambient — so the lane is light: it emits the vendored source
  * verbatim as the `generated/<namespace>.d.ts` golden and runs
  * `extractApiDoc` for the `api-doc/<namespace>.json` the docs-site consumes. The
- * emitted surface *is* the vendored authored source, so the go/no-go gate is a
+ * api-doc alone carries one thing the fork does not: where a target vendors its
+ * upstream `.lua` and the fork documents a member nowhere, upstream's own LuaDoc
+ * summary is lowered in, marked `docSource: "upstream"` (see
+ * `import-upstream-docs.ts`). The *emitted* surface is still the vendored authored
+ * source untouched, so the go/no-go gate is a
  * forked-vs-generated identity diff (see the golden loop) — emission fidelity.
  * There is no *type* coverage comparison because upstream declares no types; the
  * *surface* is another matter, and a target that vendors its upstream `.lua` under
@@ -183,11 +189,40 @@ export function emitAuthoredDeclaration(packageRoot: string, target: AuthoredTar
   return readAuthoredSource(packageRoot, target);
 }
 
-/** `extractApiDoc` the vendored `.d.ts` under the pinned publish namespace,
- * pretty-printed as the `api-doc/<namespace>.json` golden. */
+/** The pinned upstream members by name, the way `authored-parity.ts` builds them:
+ * a later definition of a name wins, matching Lua. Empty for a target that vendors
+ * no upstream `.lua`, which is then never parsed. */
+function upstreamMembers(packageRoot: string, target: AuthoredTarget): Map<string, LuaMember> {
+  const members = new Map<string, LuaMember>();
+  for (const relative of target.upstreamLua) {
+    for (const member of parseLuaSurface(readFileSync(join(packageRoot, relative), "utf8")).members)
+      members.set(member.name, member);
+  }
+  return members;
+}
+
+/**
+ * `extractApiDoc` the vendored `.d.ts` under the pinned publish namespace, plus
+ * upstream's own LuaDoc for the members the fork documents nowhere, pretty-printed
+ * as the `api-doc/<namespace>.json` golden.
+ *
+ * The api-doc is therefore the fork *plus* imported upstream prose, and it is the
+ * only artifact that is: the emitted `generated/<namespace>.d.ts` stays the vendored
+ * source verbatim, so the identity diff still proves the emit is lossless. An
+ * imported element carries `docSource: "upstream"` through to the docs-site, which
+ * marks it rather than presenting it as first-party. See `import-upstream-docs.ts`
+ * for the merge rules.
+ */
 export function lowerAuthoredApiDoc(packageRoot: string, target: AuthoredTarget): string {
-  const doc = extractApiDoc(readAuthoredSource(packageRoot, target), target.namespace);
-  return `${JSON.stringify(doc, null, 2)}\n`;
+  // `extractApiDoc` returns `unknown`; the merge needs the element list, and
+  // overwriting the existing `elements` key by spread keeps it in place, so the
+  // golden's key order is unchanged.
+  const doc = extractApiDoc(readAuthoredSource(packageRoot, target), target.namespace) as Record<
+    string,
+    unknown
+  > & { elements: ApiDocElement[] };
+  const elements = importUpstreamDocs(doc.elements, upstreamMembers(packageRoot, target));
+  return `${JSON.stringify({ ...doc, elements }, null, 2)}\n`;
 }
 
 if (import.meta.main) {

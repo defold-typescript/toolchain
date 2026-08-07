@@ -8,8 +8,9 @@
     {
       "type": "FUNCTION",
       "name": "start",
-      "brief": "",
-      "description": "",
+      "brief": "Start the console",
+      "description": "Start the console",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "port",
@@ -25,24 +26,27 @@
     {
       "type": "FUNCTION",
       "name": "stop",
-      "brief": "",
-      "description": "",
+      "brief": "Stop the server",
+      "description": "Stop the server",
+      "docSource": "upstream",
       "parameters": [],
       "returnvalues": []
     },
     {
       "type": "FUNCTION",
       "name": "update",
-      "brief": "",
-      "description": "",
+      "brief": "Update the server",
+      "description": "Update the server\nPreferably call this once per frame",
+      "docSource": "upstream",
       "parameters": [],
       "returnvalues": []
     },
     {
       "type": "FUNCTION",
       "name": "register_module",
-      "brief": "",
-      "description": "",
+      "brief": "Register a module. All functions on the module will be exposed to",
+      "description": "Register a module. All functions on the module will be exposed to\nthe console",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "module",
@@ -58,8 +62,9 @@
     {
       "type": "FUNCTION",
       "name": "register_command",
-      "brief": "",
-      "description": "",
+      "brief": "Register a console command",
+      "description": "Register a console command",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "command",
@@ -91,8 +96,9 @@
     {
       "type": "FUNCTION",
       "name": "set_environment",
-      "brief": "",
-      "description": "",
+      "brief": "Set the global environment table used for commands ran as Lua code and inspect.",
+      "description": "Set the global environment table used for commands ran as Lua code and inspect.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "env",

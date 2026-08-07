@@ -218,8 +218,9 @@
     {
       "type": "FUNCTION",
       "name": "in_right_out_left",
-      "brief": "",
-      "description": "",
+      "brief": "Create transition where the screen slides in from the right when shown and out",
+      "description": "Create transition where the screen slides in from the right when shown and out\nto the left when hidden (and the reverse when going back)",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "node",
