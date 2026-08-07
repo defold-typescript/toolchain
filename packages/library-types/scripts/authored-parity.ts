@@ -21,6 +21,9 @@
  * is the case that forces this: it declares twelve upstream *functions* as `VARIABLE`,
  * which the callable axis already reports as `missingMembers` — calling them phantom
  * fields as well would both double-count and describe an upstream name as invented.
+ * The rule lives in `classifyFieldAxis`, and that target is the only corpus case for
+ * it, pinning one of its four clauses; the other three are pinned by synthetic name
+ * sets, no measured target producing the shape they guard against.
  *
  * Every classifier here is one-sided on purpose. `missingMembers`/`missingFields` and
  * `phantomMembers`/`phantomFields` are name-set differences, `arityMismatches` compares
@@ -90,8 +93,8 @@ function round4(value: number): number {
 
 interface UpstreamSurface {
   callable: Map<string, LuaMember>;
-  /** Field names, minus any name that is callable somewhere in the target's
-   * sources — a name defined both ways is compared, not counted as unexamined. */
+  /** Every non-callable name, raw: a name also defined with a parameter list is still
+   * here, and `classifyFieldAxis` is what subtracts it. */
   fields: Set<string>;
 }
 
@@ -105,14 +108,13 @@ function upstreamSurface(packageRoot: string, target: AuthoredTarget): UpstreamS
       else callable.set(member.name, member);
     }
   }
-  for (const name of callable.keys()) fields.delete(name);
   return { callable, fields };
 }
 
 interface DeclaredSurface {
   callable: Map<string, DeclaredMember>;
-  /** `VARIABLE` names, minus any name the fork also declares as a `FUNCTION` — the
-   * mirror of the subtraction `upstreamSurface` applies to its own fields. */
+  /** Every `VARIABLE` name, raw: a name the fork also declares as a `FUNCTION` is still
+   * here, and `classifyFieldAxis` is what subtracts it. */
   fields: Set<string>;
 }
 
@@ -136,8 +138,51 @@ function declaredSurface(packageRoot: string, target: AuthoredTarget): DeclaredS
       });
     } else if (element.type === "VARIABLE") fields.add(element.name);
   }
-  for (const name of callable.keys()) fields.delete(name);
   return { callable, fields };
+}
+
+/** The four raw name sets of a target, callable and non-callable on both sides. */
+export interface FieldAxisInput {
+  upstreamCallable: ReadonlySet<string>;
+  upstreamNonCallable: ReadonlySet<string>;
+  declaredCallable: ReadonlySet<string>;
+  declaredVariables: ReadonlySet<string>;
+}
+
+/** The field axis of one target: the two examined sets and their two differences. */
+export interface FieldAxis {
+  upstreamFields: Set<string>;
+  declaredFields: Set<string>;
+  missingFields: string[];
+  phantomFields: string[];
+}
+
+/**
+ * The whole either-side rule, in one place and pure over name sets: a name callable on
+ * either side belongs to the callable axis and is never counted as a field.
+ *
+ * Four clauses enforce it — a subtraction per side, then a filter per difference — and
+ * only one of them has a case in the measured corpus, so the rest are pinned by
+ * synthetic sets rather than by any target. `missingFields` re-tests `declaredCallable`
+ * even though `declaredFields` already excludes those names: a name the fork declares
+ * *only* as a `FUNCTION` never enters `declaredFields` to begin with, and that is the
+ * corner the clause exists for.
+ */
+export function classifyFieldAxis(input: FieldAxisInput): FieldAxis {
+  const upstreamFields = new Set(input.upstreamNonCallable);
+  for (const name of input.upstreamCallable) upstreamFields.delete(name);
+  const declaredFields = new Set(input.declaredVariables);
+  for (const name of input.declaredCallable) declaredFields.delete(name);
+  return {
+    upstreamFields,
+    declaredFields,
+    missingFields: [...upstreamFields]
+      .filter((name) => !declaredFields.has(name) && !input.declaredCallable.has(name))
+      .sort(),
+    phantomFields: [...declaredFields]
+      .filter((name) => !upstreamFields.has(name) && !input.upstreamCallable.has(name))
+      .sort(),
+  };
 }
 
 /**
@@ -149,8 +194,14 @@ export function buildAuthoredParity(
   packageRoot: string,
   target: AuthoredTarget,
 ): AuthoredParityReport {
-  const { callable: upstream, fields: upstreamFields } = upstreamSurface(packageRoot, target);
-  const { callable: declared, fields: declaredFields } = declaredSurface(packageRoot, target);
+  const { callable: upstream, fields: upstreamVariables } = upstreamSurface(packageRoot, target);
+  const { callable: declared, fields: declaredVariables } = declaredSurface(packageRoot, target);
+  const { upstreamFields, declaredFields, missingFields, phantomFields } = classifyFieldAxis({
+    upstreamCallable: new Set(upstream.keys()),
+    upstreamNonCallable: upstreamVariables,
+    declaredCallable: new Set(declared.keys()),
+    declaredVariables,
+  });
 
   const missingMembers: string[] = [];
   const arityMismatches: AuthoredArityMismatch[] = [];
@@ -171,22 +222,13 @@ export function buildAuthoredParity(
 
   const phantomMembers = [...declared.keys()].filter((name) => !upstream.has(name));
 
-  // Each side's two halves are unioned before the difference, so a name present on
-  // both axes lands on the callable one alone (see the module note).
-  const missingFields = [...upstreamFields].filter(
-    (name) => !declaredFields.has(name) && !declared.has(name),
-  );
-  const phantomFields = [...declaredFields].filter(
-    (name) => !upstreamFields.has(name) && !upstream.has(name),
-  );
-
   return {
     namespace: target.namespace,
     upstreamMembers: upstream.size,
     upstreamFields: upstreamFields.size,
     declaredFields: declaredFields.size,
-    missingFields: missingFields.sort(),
-    phantomFields: phantomFields.sort(),
+    missingFields,
+    phantomFields,
     fieldCoverage:
       upstreamFields.size === 0
         ? 1
