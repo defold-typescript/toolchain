@@ -77,7 +77,14 @@ export interface AuthoredParityReport {
   missingMembers: string[];
   phantomMembers: string[];
   arityMismatches: AuthoredArityMismatch[];
+  /** Upstream prose that reached neither the fork nor the import — a member upstream
+   * documents whose block is nothing but tags, so there is no summary to lower. */
   undocumentedMembers: number;
+  /** Declared elements carrying upstream's own summary because the fork supplied none,
+   * on both axes. Recorded beside `undocumentedMembers` because it is where that
+   * shortfall went: without it, a target the import silently skipped and a target the
+   * fork documents itself would read the same. */
+  importedDocs: number;
   /** How many agreeing members were compared against a floor rather than an exact count,
    * upstream being variadic. Recorded so a `callableCoverage` of 1 over a variadic
    * surface cannot be read as fully verified. */
@@ -135,6 +142,10 @@ interface DeclaredSurface {
    * here, and `classifyFieldAxis` is what subtracts it. */
   fields: Set<string>;
   globals: number;
+  /** Elements carrying `docSource: "upstream"`, counted across both axes — the field
+   * side has no `documented` bookkeeping of its own, and the count is about provenance
+   * rather than callability. */
+  imported: number;
 }
 
 function declaredSurface(packageRoot: string, target: AuthoredTarget): DeclaredSurface {
@@ -145,18 +156,21 @@ function declaredSurface(packageRoot: string, target: AuthoredTarget): DeclaredS
       global?: boolean;
       brief?: string;
       description?: string;
+      docSource?: string;
       parameters?: unknown[];
     }[];
   };
   const callable = new Map<string, DeclaredMember>();
   const fields = new Set<string>();
   let globals = 0;
+  let imported = 0;
   for (const element of doc.elements) {
     if (element.type !== "FUNCTION" && element.type !== "VARIABLE") continue;
     if (element.global === true) {
       globals += 1;
       continue;
     }
+    if (element.docSource === "upstream") imported += 1;
     if (element.type === "FUNCTION") {
       callable.set(element.name, {
         params: element.parameters?.length ?? 0,
@@ -164,7 +178,7 @@ function declaredSurface(packageRoot: string, target: AuthoredTarget): DeclaredS
       });
     } else fields.add(element.name);
   }
-  return { callable, fields, globals };
+  return { callable, fields, globals, imported };
 }
 
 /** The four raw name sets of a target, callable and non-callable on both sides. */
@@ -261,6 +275,7 @@ export function buildAuthoredParity(
     callable: declared,
     fields: declaredVariables,
     globals: declaredGlobals,
+    imported: importedDocs,
   } = declaredSurface(packageRoot, target);
   const { upstreamFields, declaredFields, missingFields, phantomFields } = classifyFieldAxis({
     upstreamCallable: new Set(upstream.keys()),
@@ -312,6 +327,7 @@ export function buildAuthoredParity(
     phantomMembers: phantomMembers.sort(),
     arityMismatches: arityMismatches.sort((a, b) => a.name.localeCompare(b.name)),
     undocumentedMembers,
+    importedDocs,
     variadicMembers,
     callableCoverage: upstream.size === 0 ? 1 : round4(correct / upstream.size),
   };

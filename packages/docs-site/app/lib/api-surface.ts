@@ -278,6 +278,13 @@ export interface ApiSymbol {
    * before.
    */
   global?: true;
+  /**
+   * Present when this symbol's prose was imported from the library's upstream
+   * source rather than written in the fork, carried from the api-doc. Absent for
+   * first-party prose, and the render layer marks only what is present — an
+   * imported brief is never presented as the fork's own.
+   */
+  docSource?: "upstream";
 }
 
 export interface ApiSymbolGroup {
@@ -768,6 +775,9 @@ export function apiModuleSymbols(
     // Ambient-global-ness is a fact about the declaration, not about one overload
     // identity, so every authored-override row below carries it too.
     if (fn.global) symbol.global = true;
+    // Prose provenance is likewise a fact about the declaration: every row of an
+    // authored override renders the same imported text, so every row is marked.
+    if (fn.docSource) symbol.docSource = fn.docSource;
     // The join keys off the raw ref-doc overload signature — the exact value
     // `api-availability.json` was derived with — so a badge lands on the one
     // overload it identifies. Authored-override extra rows below share the raw
@@ -799,6 +809,7 @@ export function apiModuleSymbols(
           returnValues: entry ? projectParams(entry.returnValues, mapType) : [],
           ...(fn.deprecated !== undefined ? { deprecated: fn.deprecated } : {}),
           ...(fn.global ? { global: true } : {}),
+          ...(fn.docSource ? { docSource: fn.docSource } : {}),
         });
       }
     }
@@ -819,6 +830,7 @@ export function apiModuleSymbols(
     if (av) symbol.availability = av;
     if (v.deprecated !== undefined) symbol.deprecated = v.deprecated;
     if (v.global) symbol.global = true;
+    if (v.docSource) symbol.docSource = v.docSource;
     symbols.push(symbol);
   }
 

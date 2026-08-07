@@ -1648,8 +1648,9 @@
     {
       "type": "FUNCTION",
       "name": "input",
-      "brief": "",
-      "description": "",
+      "brief": "Input text",
+      "description": "Input text\n(from dirty larry with modifications)",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "node_id",
@@ -1747,8 +1748,9 @@
     {
       "type": "FUNCTION",
       "name": "group",
-      "brief": "",
-      "description": "",
+      "brief": "A group of components",
+      "description": "A group of components\nUse this to collect input consume state from multiple components in a convenient way",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "group_id",

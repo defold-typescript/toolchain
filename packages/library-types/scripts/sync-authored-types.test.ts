@@ -39,6 +39,20 @@ function apiDocElements(namespace: string): Record<string, unknown>[] {
   return elements;
 }
 
+interface ImportedElement {
+  type: string;
+  name: string;
+  brief?: string;
+  description?: string;
+  docSource?: string;
+}
+
+function authoredTarget(namespace: string): AuthoredTarget {
+  const found = readAuthoredTargets(PACKAGE_ROOT).find((entry) => entry.namespace === namespace);
+  if (!found) throw new Error(`authored-targets.json declares no ${namespace}`);
+  return found;
+}
+
 function writeConfig(config: unknown): string {
   const root = mkdtempSync(join(tmpdir(), "authored-targets-config-"));
   writeFileSync(join(root, "authored-targets.json"), JSON.stringify(config));
@@ -101,6 +115,72 @@ describe("lowerAuthoredApiDoc", () => {
     const names = doc.elements.map((e) => e.name);
     expect(names).toContain("start");
     expect(names).toContain("register_command");
+  });
+});
+
+// The api-doc is the fork plus upstream's own prose where the fork supplies none.
+// The vendored `.d.ts` and its emitted golden are untouched by the import, so an
+// imported brief is only ever visible through this lowering and the `/api` page it
+// feeds.
+describe("upstream LuaDoc import at api-doc lowering", () => {
+  function loweredElements(target: AuthoredTarget): ImportedElement[] {
+    const { elements } = JSON.parse(lowerAuthoredApiDoc(PACKAGE_ROOT, target)) as {
+      elements: ImportedElement[];
+    };
+    return elements;
+  }
+
+  function element(target: AuthoredTarget, name: string): ImportedElement {
+    const found = loweredElements(target).find((entry) => entry.name === name);
+    if (!found) throw new Error(`${target.namespace} lowers no element named ${name}`);
+    return found;
+  }
+
+  test("defcon takes upstream's summary for the six members its fork leaves blank", () => {
+    const imported = loweredElements(DEFCON).filter((e) => e.docSource === "upstream");
+    expect(imported.map((e) => e.name).sort()).toEqual([
+      "register_command",
+      "register_module",
+      "set_environment",
+      "start",
+      "stop",
+      "update",
+    ]);
+  });
+
+  test("defcon.start's imported description drops the @param line", () => {
+    const start = element(DEFCON, "start");
+    expect(start.description).toBe("Start the console");
+    expect(start.brief).toBe("Start the console");
+  });
+
+  test("orthographic.camera keeps the fork's own prose over upstream's", () => {
+    const target = authoredTarget("orthographic.camera");
+    const getZoom = element(target, "get_zoom");
+    expect(getZoom.brief).toBe("Get the current zoom level of the camera.");
+    expect(getZoom.docSource).toBeUndefined();
+  });
+
+  test("a target with no vendored upstream imports nothing", () => {
+    for (const target of readAuthoredTargets(PACKAGE_ROOT)) {
+      if (target.upstreamLua.length > 0) continue;
+      const imported = loweredElements(target).filter((e) => e.docSource !== undefined);
+      expect({ namespace: target.namespace, imported: imported.map((e) => e.name) }).toEqual({
+        namespace: target.namespace,
+        imported: [],
+      });
+    }
+  });
+
+  test("the whole corpus imports 184 briefs across 14 targets", () => {
+    const counts = readAuthoredTargets(PACKAGE_ROOT)
+      .map((target) => ({
+        namespace: target.namespace,
+        imported: loweredElements(target).filter((e) => e.docSource === "upstream").length,
+      }))
+      .filter((entry) => entry.imported > 0);
+    expect(counts.length).toBe(14);
+    expect(counts.reduce((sum, entry) => sum + entry.imported, 0)).toBe(184);
   });
 });
 

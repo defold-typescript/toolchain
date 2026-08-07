@@ -8,8 +8,9 @@
     {
       "type": "FUNCTION",
       "name": "bind",
-      "brief": "",
-      "description": "",
+      "brief": "Bind an input trigger to an action, optionally associating the binding",
+      "description": "Bind an input trigger to an action, optionally associating the binding\nto a specific player",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "trigger",
@@ -57,8 +58,9 @@
     {
       "type": "FUNCTION",
       "name": "unbind",
-      "brief": "",
-      "description": "",
+      "brief": "Unbind (remove) an existing input binding",
+      "description": "Unbind (remove) an existing input binding",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "trigger",
@@ -82,8 +84,9 @@
     {
       "type": "FUNCTION",
       "name": "unbind_all",
-      "brief": "",
-      "description": "",
+      "brief": "Unbind (remove) all input trigger bindings",
+      "description": "Unbind (remove) all input trigger bindings",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "player",
@@ -99,8 +102,9 @@
     {
       "type": "FUNCTION",
       "name": "on_input",
-      "brief": "",
-      "description": "",
+      "brief": "Handle incoming input trigger from a script by finding an binding and",
+      "description": "Handle incoming input trigger from a script by finding an binding and\nreturning the bound action",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "trigger",

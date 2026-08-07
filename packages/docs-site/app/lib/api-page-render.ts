@@ -179,6 +179,15 @@ function globalDot(symbol: ApiSymbol): string {
   return '<span class="api-badge-dot api-badge-dot--global" aria-label="Ambient global" title="Ambient global">G</span>';
 }
 
+// The heading marker for a symbol whose prose came from the library's upstream
+// source rather than from the fork, on the same `api-badge-dot` terms as
+// `globalDot`. The page's provenance block already names the repo and ref the text
+// came from, so the marker points at a source the reader can already see.
+function upstreamDot(symbol: ApiSymbol): string {
+  if (!symbol.docSource) return "";
+  return '<span class="api-badge-dot api-badge-dot--upstream" aria-label="Documentation imported from upstream" title="Documentation imported from upstream">U</span>';
+}
+
 const COUNT_KINDS: {
   readonly flag: keyof NamespaceBadgeCounts;
   readonly kind: string;
@@ -395,7 +404,9 @@ export function apiPageMarkdown(
     const dots =
       (combinedMarkers
         ? badgeDots(badgeCategory(symbol.availability, page.availability?.versions ?? []))
-        : "") + globalDot(symbol);
+        : "") +
+      globalDot(symbol) +
+      upstreamDot(symbol);
     lines.push(symbolBlock(linkified, badges, dots), "");
   };
   for (const { kind, label } of KIND_SECTIONS) {

@@ -8,16 +8,18 @@
     {
       "type": "FUNCTION",
       "name": "print",
-      "brief": "",
-      "description": "",
+      "brief": "Print all log messages to the default system output.",
+      "description": "Print all log messages to the default system output.",
+      "docSource": "upstream",
       "parameters": [],
       "returnvalues": []
     },
     {
       "type": "FUNCTION",
       "name": "silent",
-      "brief": "",
-      "description": "",
+      "brief": "Silence all logging.",
+      "description": "Silence all logging.",
+      "docSource": "upstream",
       "parameters": [],
       "returnvalues": []
     },
@@ -32,8 +34,9 @@
     {
       "type": "FUNCTION",
       "name": "custom",
-      "brief": "",
-      "description": "",
+      "brief": "Set a custom log function.",
+      "description": "Set a custom log function.",
+      "docSource": "upstream",
       "parameters": [
         {
           "name": "fn",

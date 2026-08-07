@@ -5099,7 +5099,8 @@ The **callable** axis, upstream members carrying a parameter list against api-do
 | `missingMembers` | Upstream members the fork does not declare at all. |
 | `phantomMembers` | Declared members upstream does not have. |
 | `arityMismatches` | Shared names whose parameter *counts* disagree, each with both numbers. Names are not compared — a fork may rename parameters freely. |
-| `undocumentedMembers` | Shared members carrying upstream LuaDoc that the fork's api-doc does not reproduce. |
+| `undocumentedMembers` | Upstream prose that reached neither the fork nor the import — a member whose upstream block is nothing but tags, leaving no summary to lower. |
+| `importedDocs` | Declared elements carrying upstream's own summary because the fork supplied none. Counted on both axes. |
 | `variadicMembers` | Shared members compared against a floor rather than an exact count, upstream being variadic. |
 | `callableCoverage` | Fraction of upstream members that are declared *and* agree on arity. |
 
@@ -5152,6 +5153,32 @@ declares **none** of upstream's 12 constants.
 writes. The gap is real and recorded, but read it beside `declaredGlobals`: nearly
 the whole library reaches its users as ambient globals, which this axis does not
 measure.
+
+##### Upstream LuaDoc import
+
+A measured target's api-doc does not stop at the fork. Where the fork leaves a
+member's `brief` and `description` both empty and upstream documents it, upstream's
+own LuaDoc summary is lowered into `api-doc/<namespace>.json` and rendered on
+[/api](/api), marked so a reader can tell it apart from the fork's own prose.
+
+Three rules bound it:
+
+- **Tags never come with the summary.** The block is truncated at the first line
+  starting with `@`, and a tag's unmarked continuation lines go with it. No
+  parameter name, type, or `@return` text from LuaDoc ever reaches the api-doc.
+- **Fork prose always wins.** A member the fork documents — with either a `brief`
+  or a `description` — keeps exactly what the fork wrote. Writing the member's
+  doc-comment in the fork is therefore how you opt it out; there is no exclusion
+  list, because the only thing one would add is "show no prose at all", which is
+  worse than writing the correct brief.
+- **The import is the api-doc's alone.** `fixtures/authored/<moduleId>.d.ts` and
+  the `generated/<namespace>.d.ts` golden are untouched, so the forked-vs-generated
+  identity diff still proves the emit is lossless and imported prose stays
+  distinguishable from the fork's forever after.
+
+An imported symbol's `/api` heading carries a `U` dot labelled *Documentation
+imported from upstream*, beside the `G` dot an ambient global carries. The page's
+provenance block already names the repo and `ref` the text came from.
 
 ##### Why the two axes are never averaged
 
