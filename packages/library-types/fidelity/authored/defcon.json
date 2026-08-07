@@ -23,6 +23,7 @@
   ],
   "undocumentedMembers": 0,
   "importedDocs": 6,
+  "refusedDocBlocks": 1,
   "variadicMembers": 0,
   "callableCoverage": 0.8333
 }
