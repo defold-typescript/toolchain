@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { ApiModule } from "@defold-typescript/types";
 import type { ApiPage, LibraryMeta } from "../lib/api-surface";
-import { LibraryIndex } from "./api-index";
+import { LibraryIndex, LibraryPath } from "./api-index";
 
 function libraryPage(namespace: string, route: string, authoredHere: boolean): ApiPage {
   const module: ApiModule = {
@@ -69,5 +69,28 @@ describe("LibraryIndex — authored-library card pin", () => {
 
   test("the total pin count equals the authored-page count", () => {
     expect(count(render(), '<span class="authored-pin"')).toBe(1);
+  });
+});
+
+// A dot between letters and a path slash are both non-breaking under UAX #14, so
+// without explicit break hints a long namespace overflows its heading and widens
+// the page horizontally.
+describe("LibraryPath — wrap opportunities", () => {
+  const html = (creator: string, dir: string, namespace: string) =>
+    String(LibraryPath({ creator, dir, namespace }));
+
+  test("every dot in the namespace carries a following <wbr>", () => {
+    const rendered = html("britzl", "monarch", "monarch.transitions.easings");
+    expect(count(rendered, "<wbr")).toBe(count(rendered, ".") + 2);
+    expect(rendered).toContain("monarch.<wbr");
+    expect(rendered).toContain("transitions.<wbr");
+  });
+
+  test("each path slash carries a following <wbr>", () => {
+    expect(count(html("Insality", "druid", "druid"), "<wbr")).toBe(2);
+  });
+
+  test("a dropped creator segment drops its slash break too", () => {
+    expect(count(html("druid", "druid", "druid"), "<wbr")).toBe(1);
   });
 });

@@ -219,6 +219,20 @@ export function libraryGroupKey(namespace: string): string {
   return namespace.split(".")[0] ?? namespace;
 }
 
+// A namespace's `creator/dir` lineage, resolved the one way the nav resolves it:
+// a vendored module takes its upstream dir from `moduleDir`, an authored-here one
+// falls back to its top namespace segment. The library page heading and the
+// Libraries grouping share this so a page cannot title itself `<ns>/<ns>` while
+// its own card reads `monarch/monarch.transitions.easings`.
+export function libraryLineage(
+  namespace: string,
+  moduleDir: Map<string, string>,
+  ownerByDir: Map<string, string>,
+): { creator: string; dir: string } {
+  const dir = moduleDir.get(namespace) ?? libraryGroupKey(namespace);
+  return { creator: ownerByDir.get(dir) || dir, dir };
+}
+
 // Group vendored library pages by creator, upstream `dir`, then namespace for
 // the Libraries tab. Labels stay slash-free: owner handle, dir, and namespace.
 export function libraryCreatorGroups(
@@ -228,8 +242,7 @@ export function libraryCreatorGroups(
 ): LibraryCreatorGroup[] {
   const byCreator = new Map<string, Map<string, Namespace[]>>();
   for (const page of pages) {
-    const dir = moduleDir.get(page.namespace) ?? libraryGroupKey(page.namespace);
-    const creator = ownerByDir.get(dir) || dir;
+    const { creator, dir } = libraryLineage(page.namespace, moduleDir, ownerByDir);
     const libraries = byCreator.get(creator) ?? new Map<string, Namespace[]>();
     const modules = libraries.get(dir) ?? [];
     modules.push({ label: page.namespace, route: page.route });

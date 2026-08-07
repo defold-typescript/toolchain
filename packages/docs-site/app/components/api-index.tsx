@@ -284,6 +284,24 @@ export function GuidesIndex({ pages }: { pages: GuidePage[] }) {
 // with the namespace itself emphasised (mono, accent), so a card or page header
 // carries the whole tree the sidebar shows without a separate level per line.
 // The `creator` segment is dropped when it equals the dir (a dir with no owner).
+// Neither a dot between letters nor a path slash is a line-break opportunity
+// under UAX #14, so a long dotted namespace (`monarch.transitions.easings`)
+// would ride off the edge of a heading and widen the page. Emit an explicit
+// `<wbr>` after each dot so the path wraps at its own segment boundaries.
+function dottedSegments(text: string) {
+  const parts = text.split(".");
+  return parts.map((part, index) =>
+    index === parts.length - 1 ? (
+      part
+    ) : (
+      <>
+        {part}.
+        <wbr />
+      </>
+    ),
+  );
+}
+
 export function LibraryPath({
   creator,
   dir,
@@ -297,13 +315,15 @@ export function LibraryPath({
     <>
       {creator && creator !== dir ? (
         <>
-          <span class="font-normal text-text-muted">{creator}</span>
+          <span class="font-normal text-text-muted">{dottedSegments(creator)}</span>
           <span class="font-normal text-text-faint/25">/</span>
+          <wbr />
         </>
       ) : null}
-      <span class="font-normal text-text-muted">{dir}</span>
+      <span class="font-normal text-text-muted">{dottedSegments(dir)}</span>
       <span class="font-normal text-text-faint/25">/</span>
-      <span class="font-mono font-semibold text-accent">{namespace}</span>
+      <wbr />
+      <span class="font-mono font-semibold text-accent">{dottedSegments(namespace)}</span>
     </>
   );
 }

@@ -30,6 +30,7 @@ import { withBase } from "../../lib/base";
 import { namespaceBadgeCounts } from "../../lib/combined-surface";
 import { pageHeadings } from "../../lib/headings";
 import { AUTHORED_LIBRARY_HINT, authoredLibraryPin, renderMarkdown } from "../../lib/markdown";
+import { libraryLineage } from "../../lib/nav";
 import { COMBINED_VERSION_ID } from "../../lib/version-switch";
 
 // The library page heading: the styled `creator/dir/namespace` path, plus the
@@ -117,8 +118,7 @@ export default createRoute(
     // Library pages render their heading as the styled `creator/dir/namespace`
     // path (matching the /libraries index), so the markdown body omits its H1.
     if (page.category === "library") {
-      const dir = libraryDirs().get(page.namespace) ?? page.namespace;
-      const creator = libraryOwners().get(dir) ?? dir;
+      const { creator, dir } = libraryLineage(page.namespace, libraryDirs(), libraryOwners());
       const body = await renderMarkdown(
         apiPageMarkdown(page, linkify, { omitHeading: true, resolveReplacement }),
         { highlightSignatureHeadings: true, signatureSymbolLinks },
