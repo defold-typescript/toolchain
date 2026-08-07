@@ -242,29 +242,53 @@ describe("loadApiSurface library pages", () => {
     expect(noLib.some((p) => p.category === "library")).toBe(false);
   });
 
-  // The real-data proof that a still-vendored library reports the shared
-  // ts-defold pin rather than an upstream tag. The subject moves with each
-  // Bucket-C severance — it was `monarch.monarch`, then `gooey.gooey` until
-  // gooey severed — and retires once `library-targets.json` reaches zero rows.
-  // With rendy severed, nakama is the last row, so that retirement is one
-  // severance away.
-  test("builds a structured libraryMeta with author/upstream repo, commit pin, import, and license", () => {
-    const nakama = libraryPages.find((p) => p.namespace === "nakama.nakama");
+  // `library-targets.json` reached zero rows, so nothing shipping is
+  // ts-defold-sourced any more and the still-vendored exemplar this test used to
+  // carry (it was `monarch.monarch`, then `gooey.gooey`, then `nakama.nakama`)
+  // has no subject left. The inverse is the honest real-corpus claim; the
+  // vendored branch keeps a witness against the fixture corpus in
+  // `api-surface-loader.test.ts`.
+  test("no library page is ts-defold-sourced any more", () => {
+    expect(libraryPages.length).toBeGreaterThan(0);
+    for (const page of libraryPages) {
+      const meta = page.libraryMeta;
+      expect(meta).toBeDefined();
+      expect(meta?.authoredHere).toBe(true);
+      expect(meta?.commit).not.toBe("2fe3aed3352a913d2859e6e85d34a8b23d821368");
+      expect(meta?.sourceUrl ?? "").not.toContain("ts-defold/library");
+    }
+  });
+
+  test("builds a structured libraryMeta with author/upstream repo, tag pin, import, and license", () => {
+    const nakama = libraryPages.find((p) => p.namespace === "nakama");
     expect(nakama).toBeDefined();
+    expect(nakama?.route).toBe("/api/nakama");
     const meta = nakama?.libraryMeta;
     expect(meta).toBeDefined();
     if (!meta) return;
-    expect(meta.author).toBe("Heroic Labs");
+    expect(meta.authoredHere).toBe(true);
     expect(meta.authorUrl).toBe("https://github.com/heroiclabs/nakama-defold");
-    expect(meta.commit).toBe("2fe3aed3352a913d2859e6e85d34a8b23d821368");
-    // Links to the exact `.d.ts` the types were generated from, at the pin.
-    expect(meta.sourceUrl).toBe(
-      "https://github.com/ts-defold/library/blob/2fe3aed3352a913d2859e6e85d34a8b23d821368/packages/nakama-defold/nakama.nakama.d.ts",
-    );
+    expect(meta.commit).toBe("v3.4.0");
+    // The bare namespace changes the route but not the import: the alias was
+    // already derived as `nakama` from the dotted namespace.
     expect(meta.importString).toBe('import * as nakama from "nakama.nakama"');
-    expect(meta.license).toBe("MIT");
+    expect(meta.license).toBe("Apache-2.0");
     expect("commitUrl" in meta).toBe(false);
     expect("attribution" in meta).toBe(false);
+  });
+
+  test("the nakama page keeps a description once its classification dir is gone", () => {
+    const nakama = libraryPages.find((p) => p.namespace === "nakama");
+    expect(nakama).toBeDefined();
+    // The module JSDoc is `@see` + `@noResolution` only, so the intro comes from
+    // the description fallback. With no `nakama-defold` dir left, the fallback
+    // keys on the namespace and only the override supplies it. The
+    // `nakama.nakama` half is what catches a half-finished cutover that kept the
+    // dotted module mapped to its old dir.
+    const dirs = libraryModuleDirs(REAL_LIBRARY_TYPES_DIR);
+    expect(dirs.has("nakama.nakama")).toBe(false);
+    expect(dirs.has("nakama")).toBe(false);
+    expect((nakama?.module.description ?? "").length).toBeGreaterThan(0);
   });
 
   // orthographic severed to the authored lane under its dotted namespace, so its

@@ -349,6 +349,16 @@
       "namespace": "rendy",
       "generated": "generated/rendy.d.ts",
       "apiDoc": "api-doc/rendy.json"
+    },
+    {
+      "repo": "https://github.com/heroiclabs/nakama-defold",
+      "ref": "v3.4.0",
+      "license": "Apache-2.0",
+      "authored": "fixtures/authored/nakama.nakama.d.ts",
+      "moduleId": "nakama.nakama",
+      "namespace": "nakama",
+      "generated": "generated/nakama.d.ts",
+      "apiDoc": "api-doc/nakama.json"
     }
   ]
 }

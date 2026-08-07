@@ -684,9 +684,9 @@ describe("apiPageMarkdown library provenance block", () => {
     expect(md).not.toContain("ts-defold/library");
   });
 
-  test("each forked nakama helper page pins to heroiclabs/nakama-defold, not the ts-defold/library corpus", () => {
+  test("every forked nakama page pins to heroiclabs/nakama-defold, not the ts-defold/library corpus", () => {
     const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-    for (const namespace of ["nakama.engine.defold", "nakama.util.log"]) {
+    for (const namespace of ["nakama", "nakama.engine.defold", "nakama.util.log"]) {
       const page = pages.find((p) => p.namespace === namespace);
       expect(page).toBeDefined();
       if (!page) continue;

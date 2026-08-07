@@ -4,12 +4,5 @@
     "commit": "2fe3aed3352a913d2859e6e85d34a8b23d821368",
     "license": "MIT"
   },
-  "targets": [
-    {
-      "module": "nakama.nakama",
-      "path": "packages/nakama-defold/nakama.nakama.d.ts",
-      "fixture": "fixtures/ts-defold/nakama.nakama.d.ts",
-      "generated": "generated/nakama.nakama.d.ts"
-    }
-  ]
+  "targets": []
 }

@@ -5035,10 +5035,16 @@ generated lanes use:
   your authored artifacts.
 - Remove the `./<moduleId>` subpath from `package.json` `exports` if present —
   authored libraries carry none, matching the LuaLS libraries.
-- Add `generated/<namespace>.d.ts` to the `include` list in
-  `tsconfig.dts-check.json` (the `dts-declaration-validity` gate type-checks it
-  under `skipLibCheck: false`), and remove any hand-written block for the old
-  dotted specifier from `test-d/library-types.test-d.ts`.
+- Add `generated/<namespace>.d.ts` and `test-d/<library>-usage.test-d.ts` to the
+  `include` list in `tsconfig.dts-check.json` (the `dts-declaration-validity`
+  gate type-checks both under `skipLibCheck: false`), moving any hand-written
+  block for the old dotted specifier into that per-library compile proof.
+
+The ts-defold registry is now empty: every library it once carried has severed,
+so `library-targets.json` holds `"targets": []`. The file stays committed anyway
+— the CLI's registry loader treats a *missing* file as "no vendored libraries at
+all" and would drop the LuaLS, script_api and authored lanes with it, and
+`library-classification.json` pins its commit against that `source` block.
 
 The docs-site fourth `maintainedHere` loader reads `authored-targets.json`, so the
 namespace becomes **authored-here** — absent from the ts-defold classification and
