@@ -413,6 +413,96 @@
     },
     {
       "type": "FUNCTION",
+      "name": "player_get_paying_status",
+      "brief": "Returns four possible values (type: string) depending on the frequency and volume of the user's purchases.",
+      "description": "Returns four possible values (type: string) depending on the frequency and volume of the user's purchases.",
+      "docSource": "upstream",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "'paying' | 'partially_paying' | 'not_paying' | 'unknown'"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "PlayerPersonalInfo"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "player_get_personal_info",
+      "brief": "Returns a table with player data",
+      "description": "Returns a table with player data",
+      "docSource": "upstream",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "PlayerPersonalInfo | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "player_get_signature",
+      "brief": "Returns string with the user's data from player's Yandex profile and the signature.",
+      "description": "Returns string with the user's data from player's Yandex profile and the signature.\nIt consists of two Base64-encoded strings.",
+      "docSource": "upstream",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "player_get_mode",
+      "brief": "Return the user's auth mode.",
+      "description": "Return the user's auth mode.",
+      "docSource": "upstream",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "'lite' | ''"
+          ]
+        }
+      ],
+      "deprecated": "Use `player_is_authorized` instead."
+    },
+    {
+      "type": "FUNCTION",
+      "name": "player_is_authorized",
+      "brief": "Return the user's auth mode.",
+      "description": "Return the user's auth mode.",
+      "docSource": "upstream",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
       "name": "payments_init",
       "brief": "Initializes the in-game purchases system.",
       "description": "Initializes the in-game purchases system.",
@@ -500,6 +590,14 @@
       "description": "Get a list of available purchases and their cost.",
       "docSource": "upstream",
       "parameters": [
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "PaymentsCatalogOptions | undefined"
+          ],
+          "is_optional": "False"
+        },
         {
           "name": "callback",
           "doc": "",
@@ -701,6 +799,85 @@
       "returnvalues": []
     },
     {
+      "type": "FUNCTION",
+      "name": "features_loadingapi_ready",
+      "brief": "Informs the SDK that the game has loaded and is ready to play.",
+      "description": "Informs the SDK that the game has loaded and is ready to play.",
+      "docSource": "upstream",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "features_gameplayapi_start",
+      "brief": "The method should be called when the player starts or resumes gameplay.",
+      "description": "The method should be called when the player starts or resumes gameplay.",
+      "docSource": "upstream",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "features_gameplayapi_stop",
+      "brief": "The method should be called when the player stops or pauses gameplay.",
+      "description": "The method should be called when the player stops or pauses gameplay.",
+      "docSource": "upstream",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "GamesApiAllGamesCallback"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "features_gamesapi_get_all_games",
+      "brief": "Get information about all your games available on the current platform and domain.",
+      "description": "Get information about all your games available on the current platform and domain.",
+      "docSource": "upstream",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "GamesApiAllGamesCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "GamesApiGameByIdCallback"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "features_gamesapi_get_game_by_id",
+      "brief": "Get a game by ID.",
+      "description": "Get a game by ID.",
+      "docSource": "upstream",
+      "parameters": [
+        {
+          "name": "app_id",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "GamesApiGameByIdCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
       "type": "TYPEDEF",
       "name": "FeedbackCanReviewCallback"
     },
@@ -840,6 +1017,23 @@
     },
     {
       "type": "FUNCTION",
+      "name": "device_info_is_tv",
+      "brief": "Checks the user's device and returns \"true\" if it's a TV.",
+      "description": "Checks the user's device and returns \"true\" if it's a TV.",
+      "docSource": "upstream",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
       "name": "environment",
       "brief": "Returns a table with game environment variables.",
       "description": "Returns a table with game environment variables.",
@@ -902,6 +1096,50 @@
           "doc": "",
           "types": [
             "ApiCallback"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ShortcutCanShowCallback"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "shortcut_can_show_prompt",
+      "brief": "Check if a shortcut can be added.",
+      "description": "Check if a shortcut can be added.",
+      "docSource": "upstream",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ShortcutCanShowCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ShortcutShowPromptCallback"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "shortcut_show_prompt",
+      "brief": "Show a prompt to the user to add a shortcut to the game.",
+      "description": "Show a prompt to the user to add a shortcut to the game.",
+      "docSource": "upstream",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "ShortcutShowPromptCallback"
           ],
           "is_optional": "True"
         }
@@ -1049,13 +1287,96 @@
       ]
     },
     {
+      "type": "TYPEDEF",
+      "name": "FlagsCallback"
+    },
+    {
       "type": "FUNCTION",
-      "name": "add_domain",
-      "brief": "",
-      "description": "",
+      "name": "flags_get",
+      "brief": "Asynchronously get remote config data",
+      "description": "Asynchronously get remote config data",
+      "docSource": "upstream",
       "parameters": [
         {
-          "name": "domain",
+          "name": "options",
+          "doc": "",
+          "types": [
+            "FlagsOptions | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "FlagsCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "event_on",
+      "brief": "Add an event listener.",
+      "description": "Add an event listener.",
+      "docSource": "upstream",
+      "parameters": [
+        {
+          "name": "event_name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "listener",
+          "doc": "",
+          "types": [
+            "ApiCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "event_off",
+      "brief": "Remove an event listener.",
+      "description": "Remove an event listener.",
+      "docSource": "upstream",
+      "parameters": [
+        {
+          "name": "event_name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "listener",
+          "doc": "",
+          "types": [
+            "ApiCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "event_dispatch",
+      "brief": "Dispatch an event.",
+      "description": "Dispatch an event.",
+      "docSource": "upstream",
+      "parameters": [
+        {
+          "name": "event_name",
           "doc": "",
           "types": [
             "string"
@@ -1066,49 +1387,114 @@
       "returnvalues": []
     },
     {
-      "type": "FUNCTION",
-      "name": "verify_domain",
-      "brief": "",
-      "description": "",
-      "parameters": [],
-      "returnvalues": [
-        {
-          "name": "",
-          "doc": "",
-          "types": [
-            "boolean"
-          ]
-        }
-      ]
+      "type": "TYPEDEF",
+      "name": "MultiplayerSessionsInitCallback"
     },
     {
       "type": "FUNCTION",
-      "name": "get_current_domain",
-      "brief": "",
-      "description": "",
-      "parameters": [],
-      "returnvalues": [
+      "name": "multiplayer_sessions_init",
+      "brief": "Initialize the multiplayer sessions. If `isEventBased` is true, you must subscribe to the events `multiplayer-sessions-transaction` and `multiplayer-sessions-finish` through `yagames.event_on(event_name, listener)`, and the SDK itself will load the session and events at the specified timestamps.",
+      "description": "Initialize the multiplayer sessions. If `isEventBased` is true, you must subscribe to the events `multiplayer-sessions-transaction` and `multiplayer-sessions-finish` through `yagames.event_on(event_name, listener)`, and the SDK itself will load the session and events at the specified timestamps.\nNote: To load sessions, you must set at least one of the 3 `meta`-parameters, and the `count` parameter must be greater than zero. Otherwise, the multiplayer will be initialized only for **writing** data.",
+      "docSource": "upstream",
+      "parameters": [
         {
-          "name": "",
+          "name": "options",
+          "doc": "",
+          "types": [
+            "MultiplayerSessionsInitOptions"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "MultiplayerSessionsInitCallback"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "multiplayer_sessions_commit",
+      "brief": "Commit the multiplayer session",
+      "description": "Commit the multiplayer session",
+      "docSource": "upstream",
+      "parameters": [
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "Record<string, unknown>"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "multiplayer_sessions_push",
+      "brief": "Push the multiplayer session",
+      "description": "Push the multiplayer session",
+      "docSource": "upstream",
+      "parameters": [
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "MultiplayerSessionsPushMeta"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "AvailableMethodCallback"
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_available_method",
+      "brief": "Checks if the method is available to call",
+      "description": "Checks if the method is available to call",
+      "docSource": "upstream",
+      "parameters": [
+        {
+          "name": "name",
           "doc": "",
           "types": [
             "string"
-          ]
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "AvailableMethodCallback"
+          ],
+          "is_optional": "False"
         }
-      ]
+      ],
+      "returnvalues": []
     },
     {
       "type": "FUNCTION",
-      "name": "is_release_build",
-      "brief": "",
-      "description": "",
+      "name": "server_time",
+      "brief": "Get server time in UNIX format.",
+      "description": "Get server time in UNIX format.",
+      "docSource": "upstream",
       "parameters": [],
       "returnvalues": [
         {
           "name": "",
           "doc": "",
           "types": [
-            "boolean"
+            "number"
           ]
         }
       ]
@@ -1261,6 +1647,21 @@
     },
     {
       "type": "TYPEDEF",
+      "name": "PaymentsCatalogOptions",
+      "properties": [
+        {
+          "name": "getPriceCurrencyImage",
+          "brief": "",
+          "description": "",
+          "types": [
+            "'medium' | 'small' | 'svg'"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
       "name": "LeaderboardsGetPlayerEntryOptions",
       "properties": [
         {
@@ -1363,6 +1764,52 @@
     },
     {
       "type": "TYPEDEF",
+      "name": "GamesApiGame",
+      "properties": [
+        {
+          "name": "appID",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "title",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "url",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "coverURL",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "iconURL",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
       "name": "EnvironmentResults",
       "properties": [
         {
@@ -1433,6 +1880,177 @@
           "description": "",
           "types": [
             "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FlagsOptions",
+      "properties": [
+        {
+          "name": "defaultFlags",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Record<string, string>"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "clientFeatures",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Array<FlagsClientFeature>"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "MultiplayerSessionsInitOptions",
+      "properties": [
+        {
+          "name": "count",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "isEventBased",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "maxOpponentTurnTime",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "meta",
+          "brief": "",
+          "description": "",
+          "types": [
+            "MultiplayerSessionsMeta"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "MultiplayerSession",
+      "properties": [
+        {
+          "name": "id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "meta1",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "meta2",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "meta3",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "player",
+          "brief": "",
+          "description": "",
+          "types": [
+            "{ avatar: string; name: string; }"
+          ],
+          "fields": [
+            {
+              "name": "avatar",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "name",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            }
+          ]
+        },
+        {
+          "name": "timeline",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Array<MultiplayerSessionEvent>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "MultiplayerSessionsPushMeta",
+      "properties": [
+        {
+          "name": "meta1",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "meta2",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "meta3",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
           ],
           "is_optional": "True"
         }
