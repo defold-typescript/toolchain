@@ -1,22 +1,32 @@
 {
-  "namespace": "orthographic.camera",
-  "upstreamMembers": 35,
-  "upstreamFields": 19,
-  "declaredFields": 20,
-  "missingFields": [
-    "MSG_SET_AUTOMATIC_ZOOM"
+  "boom": [
+    {
+      "name": "final",
+      "kind": "script-lifecycle",
+      "reason": "upstream comments it `-- called from boom.script` (boom.lua:76): the library's own script calls it, not a consumer"
+    },
+    {
+      "name": "init",
+      "kind": "script-lifecycle",
+      "reason": "upstream comments it `-- called from boom.script` (boom.lua:45): the library's own script calls it, not a consumer"
+    },
+    {
+      "name": "on_input",
+      "kind": "script-lifecycle",
+      "reason": "upstream comments it `-- called from boom.script` (boom.lua:100): the library's own script calls it, not a consumer"
+    },
+    {
+      "name": "on_message",
+      "kind": "script-lifecycle",
+      "reason": "upstream comments it `-- called from boom.script` (boom.lua:93): the library's own script calls it, not a consumer"
+    },
+    {
+      "name": "update",
+      "kind": "script-lifecycle",
+      "reason": "upstream comments it `-- called from boom.script` (boom.lua:85): the library's own script calls it, not a consumer"
+    }
   ],
-  "phantomFields": [
-    "MSG_USE_PROJECTION",
-    "ORTHOGRAPHIC_RENDER_SCRIPT_USED"
-  ],
-  "fieldCoverage": 0.9474,
-  "declaredGlobals": 0,
-  "declaredMembers": 26,
-  "missingMembers": [],
-  "phantomMembers": [],
-  "arityMismatches": [],
-  "parityExceptions": [
+  "orthographic.camera": [
     {
       "name": "add_projector",
       "kind": "deprecated-stub",
@@ -62,10 +72,5 @@
       "kind": "deprecated-stub",
       "reason": "upstream's whole body is `error(\"world_to_window() is deprecated\")` (camera.lua:95)"
     }
-  ],
-  "undocumentedMembers": 0,
-  "importedDocs": 0,
-  "refusedDocBlocks": 0,
-  "variadicMembers": 0,
-  "callableCoverage": 1
+  ]
 }

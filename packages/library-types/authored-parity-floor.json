@@ -1,6 +1,6 @@
 {
   "fidelity/authored/boom.json": {
-    "callable": 0.1667,
+    "callable": 1,
     "field": 1
   },
   "fidelity/authored/bzAnim.json": {
@@ -104,7 +104,7 @@
     "field": 1
   },
   "fidelity/authored/orthographic.camera.json": {
-    "callable": 0.6571,
+    "callable": 1,
     "field": 0.9474
   },
   "fidelity/authored/persist.json": {

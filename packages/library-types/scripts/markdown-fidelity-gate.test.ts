@@ -60,18 +60,21 @@ describe("tsDefoldMembers sees bare export-less declarations", () => {
 describe("orthographic markdown-vs-ts-defold fidelity gate", () => {
   test("reports the ts-defold members the markdown parse does not cover", async () => {
     const { missingMembers } = await comparison();
-    // Functions in the ts-defold surface absent from the README API table.
+    // Functions in the fork's surface absent from the README API table. The signature
+    // correction withdrew `add_projector`, `get_projection_id` and `use_projector` —
+    // deprecated stubs whose upstream body only `error()`s — so they are no longer in
+    // the fork to be missing from anything.
     for (const fn of [
-      "add_projector",
       "get_cameras",
-      "get_projection_id",
       "project",
       "set_window_scaling_factor",
       "unproject",
-      "use_projector",
       "window_to_world",
     ]) {
       expect(missingMembers).toContain(fn);
+    }
+    for (const withdrawn of ["add_projector", "get_projection_id", "use_projector"]) {
+      expect(missingMembers).not.toContain(withdrawn);
     }
     // Every ts-defold constant is a member the flat signature parser cannot see.
     for (const constant of [
@@ -84,10 +87,13 @@ describe("orthographic markdown-vs-ts-defold fidelity gate", () => {
     }
   });
 
-  test("surfaces the members the newer README adds over ts-defold", async () => {
+  // `get_automatic_zoom` and `set_automatic_zoom` were the whole of this term: the
+  // README documented them and the inherited ts-defold surface did not. The signature
+  // correction declared both from the pinned `camera.lua`, which is what draining the
+  // term means — the gap the comparison named was closed in the fork, not hidden.
+  test("the README now adds nothing over the fork, the automatic-zoom pair having landed", async () => {
     const { addedMembers } = await comparison();
-    expect(addedMembers).toContain("get_automatic_zoom");
-    expect(addedMembers).toContain("set_automatic_zoom");
+    expect(addedMembers).toEqual([]);
   });
 
   test("the README's matrix-returning members are no longer downgraded", async () => {
@@ -1545,7 +1551,7 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
   "fixtures/authored/monarch.transitions.gui.d.ts":
     "ea0f15ee04f747f6253e9a91652b3dc94e2ecf47b6ad3b352c12b8e3256f7c6b",
   "fixtures/authored/orthographic.camera.d.ts":
-    "08f9162be44fc457b05401a1105201c8f324755a3b1726763e8ca2cec0f6b657",
+    "c9805a47417ed0b733e6e692f6f1936095417519730a396b4904d7145ff1a5b0",
   "fixtures/authored/metrics.fps.d.ts":
     "ca4d65be8b9e254972998fa3e143651bbc86235765ba8603f34c3fb34081ac58",
   "fixtures/authored/metrics.mem.d.ts":
