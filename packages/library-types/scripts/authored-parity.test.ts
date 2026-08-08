@@ -228,6 +228,37 @@ describe("gooey declares the whole callable surface gooey.lua defines", () => {
   });
 });
 
+// Sixty-eight of sixty-eight, corrected rather than justified. The fork was short 22
+// whole feature areas — the events trio, the multiplayer-sessions trio, the five
+// `features_*`, five `player_*` getters, the shortcut pair, `flags_get`,
+// `is_available_method`, `server_time` and `device_info_is_tv` — declared
+// `payments_get_catalog` with a lone callback where upstream takes `(options, callback)`,
+// and carried four `//* Sitelock` names the pinned `yagames.lua` never exports.
+describe("yagames declares the whole callable surface yagames.lua defines", () => {
+  const report = buildAuthoredParity(PACKAGE_ROOT, target("yagames"));
+
+  test("every upstream member is declared at upstream arity, none of it excepted", () => {
+    expect(report.upstreamMembers).toBe(68);
+    expect(report.declaredMembers).toBe(68);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.parityExceptions).toEqual([]);
+  });
+
+  // The scope line of this slice, in the same shape gooey's carries: `fieldCoverage`
+  // alone could not fail here — upstream declares no constants, so the ratio short-
+  // circuits to 1 — and it is `declaredFields`/`phantomFields` that move if a
+  // correction reached the field side.
+  test("the field axis did not move: this slice touched one axis", () => {
+    expect(report.upstreamFields).toBe(0);
+    expect(report.declaredFields).toBe(0);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.fieldCoverage).toBe(1);
+  });
+});
+
 describe("the nakama core parity findings", () => {
   const report = buildAuthoredParity(PACKAGE_ROOT, target("nakama"));
 
@@ -939,8 +970,8 @@ describe("the shortfall the import absorbed is accounted for, not merely absent"
     expect(stragglers).toEqual(["nakama: 5"]);
   });
 
-  test("the corpus imports 222 briefs", () => {
-    expect(reports.reduce((sum, report) => sum + report.importedDocs, 0)).toBe(222);
+  test("the corpus imports 244 briefs", () => {
+    expect(reports.reduce((sum, report) => sum + report.importedDocs, 0)).toBe(244);
   });
 });
 

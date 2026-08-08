@@ -80,6 +80,24 @@ declare module 'yagames.yagames' {
 
   export function player_get_photo(size: 'small' | 'medium' | 'large'): string;
 
+  export function player_get_paying_status(): 'paying' | 'partially_paying' | 'not_paying' | 'unknown';
+
+  /**
+ * Upstream types the result as "table or nil" and publishes no field list for the
+ * SDK's `_personalInfo` object, so the shape stays open rather than invented.
+ */
+  export type PlayerPersonalInfo = Record<string, unknown>;
+  export function player_get_personal_info(): PlayerPersonalInfo | undefined;
+
+  export function player_get_signature(): string | undefined;
+
+  /**
+ * @deprecated Use `player_is_authorized` instead.
+ */
+  export function player_get_mode(): 'lite' | '';
+
+  export function player_is_authorized(): boolean;
+
   //* In-Game Purchases
 
   export function payments_init(options: { signed?: boolean } | undefined, callback: ApiCallback): void;
@@ -115,7 +133,10 @@ declare module 'yagames.yagames' {
     priceValue: string;
     priceCurrencyCode: string;
   }>) => void;
-  export function payments_get_catalog(callback: PaymentsCatalogCallback): void;
+  export interface PaymentsCatalogOptions {
+    getPriceCurrencyImage?: 'medium' | 'small' | 'svg';
+  }
+  export function payments_get_catalog(options: PaymentsCatalogOptions | undefined, callback: PaymentsCatalogCallback): void;
 
   export function payments_consume_purchase(purchase_token: string, callback: ApiCallback): void;
 
@@ -195,6 +216,33 @@ declare module 'yagames.yagames' {
 
   export function leaderboards_set_score(leaderboard_name: string, score: number, extra_data: string, callback: ApiCallback): void;
 
+  //* Features
+
+  export function features_loadingapi_ready(): void;
+
+  export function features_gameplayapi_start(): void;
+
+  export function features_gameplayapi_stop(): void;
+
+  export interface GamesApiGame {
+    appID: string;
+    title: string;
+    url: string;
+    coverURL: string;
+    iconURL: string;
+  }
+  export type GamesApiAllGamesCallback = (ctx: Context, err?: string, result?: {
+    games: Array<GamesApiGame>;
+    developerURL: string;
+  }) => void;
+  export function features_gamesapi_get_all_games(callback: GamesApiAllGamesCallback): void;
+
+  export type GamesApiGameByIdCallback = (ctx: Context, err?: string, result?: {
+    isAvailable: boolean;
+    game?: GamesApiGame;
+  }) => void;
+  export function features_gamesapi_get_game_by_id(app_id: number, callback: GamesApiGameByIdCallback): void;
+
   //* Feedback
 
   export type FeedbackCanReviewCallback = (ctx: Context, err?: string, data?: {
@@ -222,6 +270,8 @@ declare module 'yagames.yagames' {
 
   export function device_info_is_tablet(): boolean;
 
+  export function device_info_is_tv(): boolean;
+
   //* Environment
 
   export interface EnvironmentResults {
@@ -247,6 +297,18 @@ declare module 'yagames.yagames' {
   
   export function screen_fullscreen_exit(callback?: ApiCallback): void;
 
+  //* Shortcuts
+
+  export type ShortcutCanShowCallback = (ctx: Context, err?: string, result?: {
+    canShow: boolean;
+  }) => void;
+  export function shortcut_can_show_prompt(callback: ShortcutCanShowCallback): void;
+
+  export type ShortcutShowPromptCallback = (ctx: Context, err?: string, result?: {
+    outcome: string;
+  }) => void;
+  export function shortcut_show_prompt(callback?: ShortcutShowPromptCallback): void;
+
   //* Safe Storage
 
   export function storage_init(callback: ApiCallback): void;
@@ -263,14 +325,77 @@ declare module 'yagames.yagames' {
 
   export function storage_length(): number;
 
-  //* Sitelock
-  
-  export function add_domain(domain: string): void;
-  
-  export function verify_domain(): boolean;
-  
-  export function get_current_domain(): string;
-  
-  export function is_release_build(): boolean;
+  //* Remote Config
+
+  export interface FlagsClientFeature {
+    name: string;
+    value: string;
+  }
+  export interface FlagsOptions {
+    defaultFlags?: Record<string, string>;
+    clientFeatures?: Array<FlagsClientFeature>;
+  }
+  export type FlagsCallback = (ctx: Context, err?: string, flags?: Record<string, string>) => void;
+  export function flags_get(options: FlagsOptions | undefined, callback: FlagsCallback): void;
+
+  //* Events
+
+  export function event_on(event_name: string, listener: ApiCallback): void;
+
+  export function event_off(event_name: string, listener: ApiCallback): void;
+
+  export function event_dispatch(event_name: string): void;
+
+  //* Multiplayer Sessions
+
+  export interface MultiplayerSessionsMetaRange {
+    min: number;
+    max: number;
+  }
+  export interface MultiplayerSessionsMeta {
+    meta1?: MultiplayerSessionsMetaRange;
+    meta2?: MultiplayerSessionsMetaRange;
+    meta3?: MultiplayerSessionsMetaRange;
+  }
+  export interface MultiplayerSessionsInitOptions {
+    count: number;
+    isEventBased: boolean;
+    maxOpponentTurnTime?: number;
+    meta: MultiplayerSessionsMeta;
+  }
+  export interface MultiplayerSessionEvent {
+    id: string;
+    payload: Record<string, unknown>;
+    time: number;
+  }
+  export interface MultiplayerSession {
+    id: string;
+    meta1?: number;
+    meta2?: number;
+    meta3?: number;
+    player: {
+      avatar: string;
+      name: string;
+    }
+    timeline: Array<MultiplayerSessionEvent>;
+  }
+  export type MultiplayerSessionsInitCallback = (ctx: Context, err?: string, result?: Array<MultiplayerSession>) => void;
+  export function multiplayer_sessions_init(options: MultiplayerSessionsInitOptions, callback: MultiplayerSessionsInitCallback): void;
+
+  export function multiplayer_sessions_commit(data: Record<string, unknown>): void;
+
+  export interface MultiplayerSessionsPushMeta {
+    meta1?: number;
+    meta2?: number;
+    meta3?: number;
+  }
+  export function multiplayer_sessions_push(data: MultiplayerSessionsPushMeta): void;
+
+  //* Miscellaneous
+
+  export type AvailableMethodCallback = (ctx: Context, err?: string, result?: boolean) => void;
+  export function is_available_method(name: string, callback: AvailableMethodCallback): void;
+
+  export function server_time(): number;
 
  }
