@@ -4994,6 +4994,12 @@ own cadence rather than inherited from a third-party vendoring.
 - **Keep** — leave the library ts-defold-sourced. Correct when the surface is
   large or churns often, so the manual-maintenance cost outweighs the
   provenance gain, or when a generated lane is likely to become available.
+  **Spent for the current corpus**: every library the ts-defold registry once
+  carried has severed and `library-targets.json` holds `"targets": []` (see
+  [5. Cut the library over and validate](#5-cut-the-library-over-and-validate)),
+  so a library reaching this
+  decision today has no ts-defold binding to keep — the real choice is fork
+  versus hand-author.
 
 #### 1. Add an `authored-targets.json` entry
 

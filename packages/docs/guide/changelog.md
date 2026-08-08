@@ -14,6 +14,12 @@ Entries are curated by hand from the git history; the most recent releases are
 listed per-patch, older releases are rolled up per minor version. Breaking
 changes are called out first because the toolchain is pre-1.0.
 
+## v0.24.1
+
+### Fixed
+
+- The [Libraries](/libraries) index no longer credits the `ts-defold/library` project for its type definitions. Every library has been maintained in this repo since v0.24.0, generated from upstream sources that ship machine-readable types or hand-forked where upstream ships none.
+
 ## v0.24.0
 
 ### Breaking

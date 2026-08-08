@@ -355,8 +355,9 @@ export function LibraryIndex({
         <p>
           Third-party library API blocks.
           <br />
-          They are built on the TypeScript definitions maintained by the{" "}
-          <a href="https://github.com/ts-defold/library">ts-defold/library</a> project.
+          Their TypeScript definitions are maintained in this repo — generated from the upstream
+          sources that ship machine-readable types, and hand-forked where upstream ships none — each
+          pinned to an upstream commit or tag.
           <br />
           <span class="mt-1 block text-sm text-text-faint">
             {total} namespace{total === 1 ? "" : "s"} documented.
