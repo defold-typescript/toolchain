@@ -1468,6 +1468,8 @@
     {
       "type": "VARIABLE",
       "name": "rgb.RED",
+      "brief": "Red color. rgb(1, 0, 0, 1)",
+      "description": "Red color. rgb(1, 0, 0, 1)",
       "types": [
         "ColorComp"
       ],
@@ -1476,6 +1478,8 @@
     {
       "type": "VARIABLE",
       "name": "rgb.GREEN",
+      "brief": "Green color. rgb(0, 1, 0, 1)",
+      "description": "Green color. rgb(0, 1, 0, 1)",
       "types": [
         "ColorComp"
       ],
@@ -1484,6 +1488,8 @@
     {
       "type": "VARIABLE",
       "name": "rgb.BLUE",
+      "brief": "Blue color. rgb(0, 0, 1, 1)",
+      "description": "Blue color. rgb(0, 0, 1, 1)",
       "types": [
         "ColorComp"
       ],
@@ -1492,6 +1498,8 @@
     {
       "type": "VARIABLE",
       "name": "rgb.BLACK",
+      "brief": "Black color. rgb(0, 0, 0, 1)",
+      "description": "Black color. rgb(0, 0, 0, 1)",
       "types": [
         "ColorComp"
       ],
@@ -1500,6 +1508,8 @@
     {
       "type": "VARIABLE",
       "name": "rgb.WHITE",
+      "brief": "White color. rgb(1, 1, 1, 1)",
+      "description": "White color. rgb(1, 1, 1, 1)",
       "types": [
         "ColorComp"
       ],
@@ -1534,6 +1544,8 @@
     {
       "type": "VARIABLE",
       "name": "RED",
+      "brief": "Red color. rgb(1, 0, 0, 1)",
+      "description": "Red color. rgb(1, 0, 0, 1)",
       "types": [
         "ColorComp"
       ],
@@ -1542,6 +1554,8 @@
     {
       "type": "VARIABLE",
       "name": "GREEN",
+      "brief": "Green color. rgb(0, 1, 0, 1)",
+      "description": "Green color. rgb(0, 1, 0, 1)",
       "types": [
         "ColorComp"
       ],
@@ -1550,6 +1564,8 @@
     {
       "type": "VARIABLE",
       "name": "BLUE",
+      "brief": "Blue color. rgb(0, 0, 1, 1)",
+      "description": "Blue color. rgb(0, 0, 1, 1)",
       "types": [
         "ColorComp"
       ],
@@ -1558,6 +1574,8 @@
     {
       "type": "VARIABLE",
       "name": "BLACK",
+      "brief": "Black color. rgb(0, 0, 0, 1)",
+      "description": "Black color. rgb(0, 0, 0, 1)",
       "types": [
         "ColorComp"
       ],
@@ -1566,6 +1584,8 @@
     {
       "type": "VARIABLE",
       "name": "WHITE",
+      "brief": "White color. rgb(1, 1, 1, 1)",
+      "description": "White color. rgb(1, 1, 1, 1)",
       "types": [
         "ColorComp"
       ],
@@ -1750,6 +1770,8 @@
     {
       "type": "VARIABLE",
       "name": "vec2.UP",
+      "brief": "UP vector Vec2(0, 1)",
+      "description": "UP vector Vec2(0, 1)",
       "types": [
         "Vec2"
       ],
@@ -1758,6 +1780,8 @@
     {
       "type": "VARIABLE",
       "name": "vec2.RIGHT",
+      "brief": "RIGHT vector Vec2(1, 0)",
+      "description": "RIGHT vector Vec2(1, 0)",
       "types": [
         "Vec2"
       ],
@@ -1766,6 +1790,8 @@
     {
       "type": "VARIABLE",
       "name": "vec2.DOWN",
+      "brief": "DOWN vector Vec2(0, -1)",
+      "description": "DOWN vector Vec2(0, -1)",
       "types": [
         "Vec2"
       ],
@@ -1774,6 +1800,8 @@
     {
       "type": "VARIABLE",
       "name": "vec2.LEFT",
+      "brief": "LEFT vector Vec2(-1, 0)",
+      "description": "LEFT vector Vec2(-1, 0)",
       "types": [
         "Vec2"
       ],
@@ -1782,6 +1810,8 @@
     {
       "type": "VARIABLE",
       "name": "UP",
+      "brief": "UP vector Vec2(0, 1)",
+      "description": "UP vector Vec2(0, 1)",
       "types": [
         "Vec2"
       ],
@@ -1790,6 +1820,8 @@
     {
       "type": "VARIABLE",
       "name": "RIGHT",
+      "brief": "RIGHT vector Vec2(1, 0)",
+      "description": "RIGHT vector Vec2(1, 0)",
       "types": [
         "Vec2"
       ],
@@ -1798,6 +1830,8 @@
     {
       "type": "VARIABLE",
       "name": "DOWN",
+      "brief": "DOWN vector Vec2(0, -1)",
+      "description": "DOWN vector Vec2(0, -1)",
       "types": [
         "Vec2"
       ],
@@ -1806,6 +1840,8 @@
     {
       "type": "VARIABLE",
       "name": "LEFT",
+      "brief": "LEFT vector Vec2(-1, 0)",
+      "description": "LEFT vector Vec2(-1, 0)",
       "types": [
         "Vec2"
       ],

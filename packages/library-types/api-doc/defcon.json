@@ -8,6 +8,8 @@
     {
       "type": "VARIABLE",
       "name": "print",
+      "brief": "The engine's own `print`, captured at load. `start()` replaces the global with a",
+      "description": "The engine's own `print`, captured at load. `start()` replaces the global with a\nlogging wrapper that calls this, and `stop()` restores the global from it.",
       "types": [
         "(...args: unknown[]) => void"
       ]
@@ -15,6 +17,8 @@
     {
       "type": "VARIABLE",
       "name": "pprint",
+      "brief": "The engine's own `pprint`, captured at load. `start()` replaces the global with a",
+      "description": "The engine's own `pprint`, captured at load. `start()` replaces the global with a\nlogging wrapper that calls this, and `stop()` restores the global from it.",
       "types": [
         "(...args: unknown[]) => void"
       ]
@@ -22,6 +26,8 @@
     {
       "type": "VARIABLE",
       "name": "server",
+      "brief": "The `defnet` http_server the console listens on. A router-only stand-in until",
+      "description": "The `defnet` http_server the console listens on. A router-only stand-in until\n`start()` creates the real one; opaque here, `defnet` not being vendored by this\ntarget.",
       "types": [
         "unknown"
       ]

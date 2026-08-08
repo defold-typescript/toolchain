@@ -819,6 +819,8 @@
     {
       "type": "VARIABLE",
       "name": "PROJECTOR",
+      "brief": "",
+      "description": "",
       "types": [
         "{ FIXED_ZOOM: Hash; DEFAULT: Hash; FIXED_AUTO: Hash; }"
       ],
@@ -852,6 +854,8 @@
     {
       "type": "VARIABLE",
       "name": "SHAKE_BOTH",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -859,6 +863,8 @@
     {
       "type": "VARIABLE",
       "name": "SHAKE_VERTICAL",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -866,6 +872,8 @@
     {
       "type": "VARIABLE",
       "name": "SHAKE_HORIZONTAL",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -873,6 +881,8 @@
     {
       "type": "VARIABLE",
       "name": "MSG_DISABLE",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -880,6 +890,8 @@
     {
       "type": "VARIABLE",
       "name": "MSG_UNFOLLOW",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -887,6 +899,8 @@
     {
       "type": "VARIABLE",
       "name": "MSG_FOLLOW",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -894,6 +908,8 @@
     {
       "type": "VARIABLE",
       "name": "MSG_FOLLOW_OFFSET",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -901,6 +917,8 @@
     {
       "type": "VARIABLE",
       "name": "MSG_RECOIL",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -908,6 +926,8 @@
     {
       "type": "VARIABLE",
       "name": "MSG_SHAKE",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -915,6 +935,8 @@
     {
       "type": "VARIABLE",
       "name": "MSG_SHAKE_COMPLETED",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -922,6 +944,8 @@
     {
       "type": "VARIABLE",
       "name": "MSG_STOP_SHAKING",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -929,6 +953,8 @@
     {
       "type": "VARIABLE",
       "name": "MSG_DEADZONE",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -936,6 +962,8 @@
     {
       "type": "VARIABLE",
       "name": "MSG_BOUNDS",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -943,6 +971,8 @@
     {
       "type": "VARIABLE",
       "name": "MSG_UPDATE_CAMERA",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -950,6 +980,8 @@
     {
       "type": "VARIABLE",
       "name": "MSG_ZOOM_TO",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -957,6 +989,8 @@
     {
       "type": "VARIABLE",
       "name": "MSG_SET_AUTOMATIC_ZOOM",
+      "brief": "Posted to a camera to turn automatic zoom on or off.",
+      "description": "Posted to a camera to turn automatic zoom on or off.",
       "types": [
         "Hash"
       ]
@@ -964,6 +998,8 @@
     {
       "type": "VARIABLE",
       "name": "MSG_VIEWPORT",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -971,6 +1007,8 @@
     {
       "type": "VARIABLE",
       "name": "MSG_ENABLE",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]

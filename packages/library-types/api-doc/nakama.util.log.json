@@ -26,8 +26,8 @@
     {
       "type": "FUNCTION",
       "name": "format",
-      "brief": "",
-      "description": "",
+      "brief": "Route logging through `string.format`, so a call takes a format string",
+      "description": "Route logging through `string.format`, so a call takes a format string\nfollowed by its arguments and prints the formatted result.",
       "parameters": [],
       "returnvalues": []
     },

@@ -405,10 +405,10 @@ describe("the field axis compares the non-callable surface", () => {
     expect(report.missingFields).toEqual([]);
     expect(report.phantomFields).toEqual([]);
     expect(report.fieldCoverage).toBe(1);
-    // The term counts upstream comment blocks, so declaring members beneath the
+    // The raw term counts upstream comment blocks, so declaring members beneath the
     // `-- transition messages` / `-- focus messages` headers must charge no new
     // prose loss. Asserted from the same pass rather than assumed.
-    expect(report.refusedDocBlocks).toBe(6);
+    expect(report.refusedDocBlocksTotal).toBe(6);
   });
 
   // `register` is upstream's `M.register = M.register_proxy` (`monarch.lua:292`) — a
@@ -1361,14 +1361,15 @@ describe("the two callable-module targets the setmetatable reader lifted", () =>
   });
 
   // The five `--` blocks the reader refuses are exactly the five excepted members, so
-  // the ledger carries as a checkable reason the prose the reader cannot import. Both
-  // terms are recomputed here, so a ledger that quietly declared members would move
-  // them.
+  // the ledger carries as a checkable reason the prose the reader cannot import — and
+  // charges none of them, the fork declaring no element to hang a brief on. Both terms
+  // are recomputed here, so a ledger that quietly declared members would move them.
   test("boom's ambient globals are counted, not charged to it as invented members", () => {
     const report = buildAuthoredParity(PACKAGE_ROOT, target("boom"));
     expect(report.phantomMembers).toEqual([]);
     expect(report.declaredGlobals).toBe(87);
-    expect(report.refusedDocBlocks).toBe(5);
+    expect(report.refusedDocBlocksTotal).toBe(5);
+    expect(report.refusedDocBlocks).toBe(0);
   });
 });
 
@@ -1456,40 +1457,41 @@ describe("the shortfall the import absorbed is accounted for, not merely absent"
     expect(stragglers).toEqual(["nakama: 9"]);
   });
 
-  // Three more than the callable rollout left: nakama's three run-leading constants,
-  // whose fork doc-comments `extractApiDoc` drops because they sit on a `VARIABLE`
-  // element. `sync-authored-types.test.ts` pins that gap directly.
-  test("the corpus imports 257 briefs", () => {
-    expect(reports.reduce((sum, report) => sum + report.importedDocs, 0)).toBe(257);
+  // Exactly what the callable rollout left: nakama's three run-leading constants no
+  // longer import, now that `extractApiDoc` carries a fork doc-comment onto a
+  // `VARIABLE` element. `sync-authored-types.test.ts` pins that opt-out directly.
+  test("the corpus imports 254 briefs", () => {
+    expect(reports.reduce((sum, report) => sum + report.importedDocs, 0)).toBe(254);
   });
 });
 
 // A block the reader declines leaves `member.doc === ""`, which `undocumentedMembers`
-// cannot charge — the prose is gone and every term reads clean. `refusedDocBlocks` is
-// what makes that loss visible, so a target the reader declined is distinguishable from
-// one upstream never documented.
+// cannot charge — the prose is gone and every term reads clean. `refusedDocBlocksTotal`
+// is what makes that refusal visible, so a target the reader declined stays
+// distinguishable from one upstream never documented even once every block is answered
+// and the narrowed `refusedDocBlocks` reads 0.
 describe("upstream prose the reader declined is reported, not absent", () => {
   const reports = authoredParityTargets(PACKAGE_ROOT).map((entry) =>
     buildAuthoredParity(PACKAGE_ROOT, entry),
   );
 
-  test("nakama.util.log charges `format`'s `--`-only block rather than reading clean", () => {
+  test("nakama.util.log records `format`'s `--`-only block rather than reading clean", () => {
     const report = reports.find((entry) => entry.namespace === "nakama.util.log");
-    expect(report?.refusedDocBlocks).toBe(1);
+    expect(report?.refusedDocBlocksTotal).toBe(1);
     expect(report?.undocumentedMembers).toBe(0);
   });
 
   // Both axes, which is why the count is taken over the whole upstream surface rather
   // than in the arity loop: `monarch.monarch`'s six and `rendy`'s thirteen sit above
   // constants, which that loop never visits.
-  test("the term is non-zero on exactly the targets holding such a block", () => {
-    const charged = Object.fromEntries(
+  test("the raw term is non-zero on exactly the targets holding such a block", () => {
+    const refused = Object.fromEntries(
       reports
-        .filter((report) => report.refusedDocBlocks > 0)
-        .map((report) => [report.namespace, report.refusedDocBlocks])
+        .filter((report) => report.refusedDocBlocksTotal > 0)
+        .map((report) => [report.namespace, report.refusedDocBlocksTotal])
         .sort(([a], [b]) => (a as string).localeCompare(b as string)),
     );
-    expect(charged).toEqual({
+    expect(refused).toEqual({
       boom: 5,
       defcon: 1,
       defmath: 36,
@@ -1503,20 +1505,173 @@ describe("upstream prose the reader declined is reported, not absent", () => {
       rendy: 13,
       zzfx: 4,
     });
+    expect(Object.values(refused).reduce<number>((sum, n) => sum + (n as number), 0)).toBe(77);
   });
 
   // The module writes every one of its blocks with a plain `--`, so the reader declines
-  // all of them and the fork's api-doc renders no prose while the target reports a
-  // perfect field coverage. Without this term that reads as a documented module.
-  test("defmath, whose whole module is `--`-documented, is the corpus's largest loss", () => {
+  // all of them; the fork answers every one in its own api-doc, which is why the
+  // narrowed term reads 0 while the raw one still reports the largest refusal in the
+  // corpus. Without the raw term that reads as a module upstream never documented.
+  test("defmath, whose whole module is `--`-documented, is the corpus's largest refusal", () => {
     const report = reports.find((entry) => entry.namespace === "defmath");
-    expect(report?.refusedDocBlocks).toBe(36);
+    expect(report?.refusedDocBlocksTotal).toBe(36);
+    expect(report?.refusedDocBlocks).toBe(0);
     expect(report?.undocumentedMembers).toBe(0);
   });
 
-  test("every other target reads 0, so the term is not a constant", () => {
-    const clean = reports.filter((report) => report.refusedDocBlocks === 0);
+  test("every other target reads 0, so the raw term is not a constant", () => {
+    const clean = reports.filter((report) => report.refusedDocBlocksTotal === 0);
     expect(clean.length).toBeGreaterThan(reports.length - clean.length);
+  });
+});
+
+// `refusedDocBlocks` counts a property of the *reader*, which no fork edit can move,
+// so the remedy the guide names cannot drive it to 0. Narrowed to "refused *and*
+// unanswered" it measures documentation actually missing from `/api`, while
+// `refusedDocBlocksTotal` keeps the raw refusal count so a 0 cannot be misread as
+// upstream writing no `--`-only blocks.
+describe("only a refusal the fork left unanswered is charged", () => {
+  const reports = authoredParityTargets(PACKAGE_ROOT).map((entry) =>
+    buildAuthoredParity(PACKAGE_ROOT, entry),
+  );
+
+  // Four refused blocks over four dispositions the term has to tell apart: answered by
+  // the fork, answered by nobody, excused by the ledger, and missing from the fork
+  // entirely. The corpus has no instance of the last, so it is pinned here.
+  function syntheticReport(exceptions: AuthoredParityException[]) {
+    const root = mkdtempSync(join(tmpdir(), "authored-parity-refusal-"));
+    mkdirSync(join(root, "api-doc"), { recursive: true });
+    mkdirSync(join(root, "upstream"), { recursive: true });
+    writeFileSync(
+      join(root, "upstream/mod.lua"),
+      [
+        "local M = {}",
+        "",
+        "-- the fork answers this one",
+        'M.DOCUMENTED = hash("DOCUMENTED")',
+        "",
+        "-- nobody answers this one",
+        'M.BARE = hash("BARE")',
+        "",
+        "-- called from mod.script",
+        "function M.excepted(a)",
+        "end",
+        "",
+        "-- upstream prose the fork never declared a home for",
+        "function M.absent(a)",
+        "end",
+        "",
+        "return M",
+        "",
+      ].join("\n"),
+    );
+    writeFileSync(
+      join(root, "api-doc/mod.json"),
+      JSON.stringify({
+        elements: [
+          {
+            type: "VARIABLE",
+            name: "DOCUMENTED",
+            brief: "The fork's own words.",
+            description: "The fork's own words.",
+          },
+          { type: "VARIABLE", name: "BARE", brief: "", description: "" },
+        ],
+      }),
+    );
+    return buildAuthoredParity(
+      root,
+      {
+        repo: "",
+        ref: "",
+        license: "",
+        authored: "fixtures/authored/mod.d.ts",
+        moduleId: "mod",
+        namespace: "mod",
+        generated: "generated/mod.d.ts",
+        apiDoc: "api-doc/mod.json",
+        fidelity: "fidelity/mod.json",
+        upstreamLua: ["upstream/mod.lua"],
+      },
+      { mod: exceptions },
+    );
+  }
+
+  const EXCUSED: AuthoredParityException = {
+    name: "excepted",
+    kind: "script-lifecycle",
+    reason: "mod.lua:9 — the engine calls it, the fork does not declare it",
+  };
+
+  test("the synthetic surface holds four refused blocks, so the corner is real", () => {
+    expect(syntheticReport([EXCUSED]).refusedDocBlocksTotal).toBe(4);
+  });
+
+  test("a block the fork's own prose answers is not charged", () => {
+    const report = syntheticReport([EXCUSED]);
+    expect(report.missingMembers).toEqual(["absent"]);
+    expect(report.refusedDocBlocks).toBe(2);
+  });
+
+  test("a recorded parityException excuses its block; a merely missing name does not", () => {
+    const excused = syntheticReport([EXCUSED]);
+    const unexcused = syntheticReport([]);
+    expect(excused.parityExceptions.map((entry) => entry.name)).toEqual(["excepted"]);
+    expect(excused.refusedDocBlocks).toBe(2);
+    // Dropping the ledger entry turns the same member into a plain missing name, and the
+    // charge goes up by exactly one: the excuse is the entry, never the absence.
+    expect(unexcused.missingMembers).toEqual(["absent", "excepted"]);
+    expect(unexcused.refusedDocBlocks).toBe(3);
+    expect(unexcused.refusedDocBlocksTotal).toBe(4);
+  });
+
+  // The narrowing can only ever subtract: a corpus where the two terms agreed on every
+  // target would mean the filter never fired and the reclassification is not in effect.
+  test("the corpus charge is a strict narrowing of the refusals, never an addition", () => {
+    for (const report of reports) {
+      expect(report.refusedDocBlocks).toBeLessThanOrEqual(report.refusedDocBlocksTotal);
+    }
+    const narrowed = reports.filter(
+      (report) => report.refusedDocBlocks < report.refusedDocBlocksTotal,
+    );
+    expect(narrowed.map((report) => report.namespace).sort()).toEqual([
+      "boom",
+      "defcon",
+      "defmath",
+      "in.onscreen",
+      "in.textbox",
+      "monarch.monarch",
+      "monarch.transitions.gui",
+      "nakama",
+      "nakama.util.log",
+      "persist",
+      "rendy",
+      "zzfx",
+    ]);
+  });
+
+  // The axis closes: every refused block is now answered by the fork's own words or
+  // excused by the ledger, and no target is left charging one. The raw term holding at
+  // 77 is what makes that a closure rather than a target quietly dropping out of the
+  // pass — a fork brief deleted, or a file un-vendored, moves one of the two.
+  test("no target charges a refusal, while the reader diagnostic still reads 77", () => {
+    expect(reports.filter((report) => report.refusedDocBlocks > 0)).toEqual([]);
+    expect(reports.reduce((sum, report) => sum + report.refusedDocBlocksTotal, 0)).toBe(77);
+  });
+
+  // The one target whose zero comes entirely from the ledger rather than from authored
+  // prose, so the two excuses stay visibly distinct.
+  test("boom's five are excused by their ledger entries, none of them declared", () => {
+    const report = reports.find((entry) => entry.namespace === "boom");
+    expect(report?.refusedDocBlocksTotal).toBe(5);
+    expect(report?.refusedDocBlocks).toBe(0);
+    expect(report?.parityExceptions.map((entry) => entry.name).sort()).toEqual([
+      "final",
+      "init",
+      "on_input",
+      "on_message",
+      "update",
+    ]);
   });
 });
 

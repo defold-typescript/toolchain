@@ -20,16 +20,17 @@
     {
       "type": "VARIABLE",
       "name": "APIOPERATOR_NO_OVERRIDE",
+      "brief": "Operator that can be used to override the one set in the leaderboard.",
+      "description": "Operator that can be used to override the one set in the leaderboard.\n\n- NO_OVERRIDE: Do not override the leaderboard operator.\n- BEST: Override the leaderboard operator with BEST.\n- SET: Override the leaderboard operator with SET.\n- INCREMENT: Override the leaderboard operator with INCREMENT.\n- DECREMENT: Override the leaderboard operator with DECREMENT.",
       "types": [
         "\"NO_OVERRIDE\""
-      ],
-      "description": "api_operator\nOperator that can be used to override the one set in the leaderboard.\n\n- NO_OVERRIDE: Do not override the leaderboard operator.\n- BEST: Override the leaderboard operator with BEST.\n- SET: Override the leaderboard operator with SET.\n- INCREMENT: Override the leaderboard operator with INCREMENT.\n- DECREMENT: Override the leaderboard operator with DECREMENT.",
-      "docSource": "upstream",
-      "brief": "api_operator"
+      ]
     },
     {
       "type": "VARIABLE",
       "name": "APIOPERATOR_BEST",
+      "brief": "",
+      "description": "",
       "types": [
         "\"BEST\""
       ]
@@ -37,6 +38,8 @@
     {
       "type": "VARIABLE",
       "name": "APIOPERATOR_SET",
+      "brief": "",
+      "description": "",
       "types": [
         "\"SET\""
       ]
@@ -44,6 +47,8 @@
     {
       "type": "VARIABLE",
       "name": "APIOPERATOR_INCREMENT",
+      "brief": "",
+      "description": "",
       "types": [
         "\"INCREMENT\""
       ]
@@ -51,6 +56,8 @@
     {
       "type": "VARIABLE",
       "name": "APIOPERATOR_DECREMENT",
+      "brief": "",
+      "description": "",
       "types": [
         "\"DECREMENT\""
       ]
@@ -58,16 +65,17 @@
     {
       "type": "VARIABLE",
       "name": "APISTOREENVIRONMENT_UNKNOWN",
+      "brief": "- UNKNOWN: Unknown environment.",
+      "description": "- UNKNOWN: Unknown environment.\n- SANDBOX: Sandbox/test environment.\n- PRODUCTION: Production environment.",
       "types": [
         "\"UNKNOWN\""
-      ],
-      "description": "api_store_environment\n- UNKNOWN: Unknown environment.\n- SANDBOX: Sandbox/test environment.\n- PRODUCTION: Production environment.",
-      "docSource": "upstream",
-      "brief": "api_store_environment"
+      ]
     },
     {
       "type": "VARIABLE",
       "name": "APISTOREENVIRONMENT_SANDBOX",
+      "brief": "",
+      "description": "",
       "types": [
         "\"SANDBOX\""
       ]
@@ -75,6 +83,8 @@
     {
       "type": "VARIABLE",
       "name": "APISTOREENVIRONMENT_PRODUCTION",
+      "brief": "",
+      "description": "",
       "types": [
         "\"PRODUCTION\""
       ]
@@ -82,16 +92,17 @@
     {
       "type": "VARIABLE",
       "name": "APISTOREPROVIDER_APPLE_APP_STORE",
+      "brief": "- APPLE_APP_STORE: Apple App Store",
+      "description": "- APPLE_APP_STORE: Apple App Store\n- GOOGLE_PLAY_STORE: Google Play Store\n- HUAWEI_APP_GALLERY: Huawei App Gallery\n- FACEBOOK_INSTANT_STORE: Facebook Instant Store",
       "types": [
         "\"APPLE_APP_STORE\""
-      ],
-      "description": "api_store_provider\n- APPLE_APP_STORE: Apple App Store\n- GOOGLE_PLAY_STORE: Google Play Store\n- HUAWEI_APP_GALLERY: Huawei App Gallery\n- FACEBOOK_INSTANT_STORE: Facebook Instant Store",
-      "docSource": "upstream",
-      "brief": "api_store_provider"
+      ]
     },
     {
       "type": "VARIABLE",
       "name": "APISTOREPROVIDER_GOOGLE_PLAY_STORE",
+      "brief": "",
+      "description": "",
       "types": [
         "\"GOOGLE_PLAY_STORE\""
       ]
@@ -99,6 +110,8 @@
     {
       "type": "VARIABLE",
       "name": "APISTOREPROVIDER_HUAWEI_APP_GALLERY",
+      "brief": "",
+      "description": "",
       "types": [
         "\"HUAWEI_APP_GALLERY\""
       ]
@@ -106,6 +119,8 @@
     {
       "type": "VARIABLE",
       "name": "APISTOREPROVIDER_FACEBOOK_INSTANT_STORE",
+      "brief": "",
+      "description": "",
       "types": [
         "\"FACEBOOK_INSTANT_STORE\""
       ]
@@ -113,8 +128,8 @@
     {
       "type": "FUNCTION",
       "name": "cancel",
-      "brief": "",
-      "description": "",
+      "brief": "Cancel a token, stopping the API calls it was passed to.",
+      "description": "Cancel a token, stopping the API calls it was passed to.",
       "parameters": [
         {
           "name": "token",
@@ -130,8 +145,8 @@
     {
       "type": "FUNCTION",
       "name": "cancellation_token",
-      "brief": "",
-      "description": "",
+      "brief": "Create a cancellation token. Pass it to {@link sync} or to any API call to be",
+      "description": "Create a cancellation token. Pass it to {@link sync} or to any API call to be\nable to cancel an ongoing call, or a whole sequence of them, later.",
       "parameters": [],
       "returnvalues": [
         {
@@ -146,12 +161,12 @@
     {
       "type": "FUNCTION",
       "name": "sync",
-      "brief": "",
-      "description": "",
+      "brief": "Run `fn` inside a coroutine, so the API calls it makes can yield.",
+      "description": "Run `fn` inside a coroutine, so the API calls it makes can yield.",
       "parameters": [
         {
           "name": "fn",
-          "doc": "",
+          "doc": "The code to run.",
           "types": [
             "() => void"
           ],
@@ -159,7 +174,7 @@
         },
         {
           "name": "cancellation_token",
-          "doc": "",
+          "doc": "Optional token that cancels the running code.",
           "types": [
             "CancellationToken"
           ],
