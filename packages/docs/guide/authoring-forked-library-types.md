@@ -221,7 +221,7 @@ The **callable** axis, upstream members carrying a parameter list against api-do
 | `refusedDocBlocks` | Upstream comment blocks the reader declined, no segment of them opening with `---`. Counted on both axes, and the one term that reports prose the import never saw. |
 | `variadicMembers` | Shared members compared against a floor rather than an exact count, upstream being variadic. |
 | `overloadedMembers` | Shared members the fork declares as several overloads, so the comparison had a set of counts to accept rather than one. |
-| `placeholderMembers` | Shared members whose upstream definition ends in a bare `_`, dropped before the counts were compared. |
+| `placeholderMembers` | Shared members whose upstream definition ends in a bare `_` with no `...` after it, dropped before the counts were compared. |
 | `callableCoverage` | Fraction of upstream members that are declared *and* agree on arity. |
 
 An upstream definition ending in `...` has no fixed parameter count to disagree
@@ -247,7 +247,9 @@ codegen/generate-rest.go"* and 66 of its exports end that way. A trailing discar
 is not a parameter a consumer can pass meaningfully, so charging the fork for
 omitting it would report the instrument's defect as the fork's. It is dropped
 before the counts are compared, and only when it is *last*: a `_` upstream names in
-the middle still has to be passed for the parameters after it to land.
+the middle still has to be passed for the parameters after it to land. A `_` written
+before a `...` tail is last only in appearance — a caller fills that slot for any
+vararg to land — so it is still charged.
 `placeholderMembers` counts every member the drop covered, whether or not it
 changed the verdict. The drop is not merely subtractive — a fork that declared the
 discard as a real parameter disagrees once it is gone, which is how
