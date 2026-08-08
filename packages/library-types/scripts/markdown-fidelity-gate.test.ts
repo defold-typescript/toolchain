@@ -671,6 +671,12 @@ const DEFOLD_INPUT: LibraryRecord = {
 // (`hash` -> `Hash`, `vmath.vector3` -> `Vector3`) and
 // `compareFidelityToTsDefold` scores no type token (`sync-markdown-types.ts:610`).
 // If a term does move, re-measure and record why — never relax the assertion.
+//
+// The `transitions.gui` fork has since gained twelve declared functions, upstream's
+// transition constructors having been corrected from `const`s of a callable alias. Its
+// verdict is unmoved and carries no name-set term to re-measure: `no-signature-section`
+// is a *parser refusal* on `README_TRANSITIONS.md`, so no comparison against the fork is
+// ever built and the decision is derived from the markdown side alone.
 const MONARCH: LibraryRecord = {
   library: "monarch",
   repo: "https://github.com/britzl/monarch",
@@ -884,19 +890,25 @@ const YAGAMES: LibraryRecord = {
 // `### gooey.<fn>(...)` headings, `**PARAMETERS**`/`**RETURN**`, and
 // `* \`name\` (type) - doc` bullets — exactly the corpus convention — so the
 // parser returns 8 elements rather than refusing. This is a structural fidelity
-// judgment, not a tooling gap. Against a 12-function ts-defold surface:
+// judgment, not a tooling gap. Against the fork's 20-function surface:
 //
-//   surface-loss    4 missing members. `horizontal_dynamic_list`,
+//   surface-loss    12 missing members. Four — `horizontal_dynamic_list`,
 //                   `vertical_dynamic_list`, `horizontal_static_list` and
-//                   `vertical_static_list` are documented at `#####` under a
+//                   `vertical_static_list` — are documented at `#####` under a
 //                   `**HORIZONTAL AND VERTICAL LISTS**` prose block, and
-//                   `HEADER` accepts `#{2,3}` only.
+//                   `HEADER` accepts `#{2,3}` only. The other eight —
+//                   `is_enabled`, `acquire_input`, `release_input`,
+//                   `create_theme`, `mask_text`, `radiogroup`,
+//                   `horizontal_scrollbar` and `set_focus` — the parity
+//                   correction took from `gooey.lua`, and the README documents
+//                   none of them at any header level.
 //   type downgrade  8 of 8 parsed members. The README's vocabulary is bare Lua
 //                   tokens — `table`, `function`, and `bool` (an upstream typo
-//                   for `boolean`) — against ts-defold's six hand-written state
+//                   for `boolean`) — against the fork's hand-written state
 //                   interfaces threaded through typed callbacks.
-//   signature loss  1 member. `dynamic_list`'s heading names 11 arguments but
-//                   its `**PARAMETERS**` list documents 10; `root_id` is absent.
+//   signature loss  1 member, `vertical_scrollbar`: `gooey.lua:149` takes
+//                   `config` between `action` and `fn` and the README documents
+//                   the six-parameter form that predates it.
 //
 // Widening `HEADER` past `#{2,3}` cannot flip the verdict, on three independent
 // counts: the four `#####` sections have empty bodies, so parsing them would emit
@@ -916,16 +928,28 @@ const YAGAMES: LibraryRecord = {
 // added — recorded here so that loud-fail is not later read as a regression.
 //
 // Since the severance the snapshot every term above is read from is the authored
-// fork, not the retired `fixtures/ts-defold/` copy. The fork also carries one
-// correction: `gooey.lua:191` declares `M.group(id, action_id, action, fn)` where
-// ts-defold bound two parameters, matching the LDoc block above that function —
-// which lists only `@param id` and `@param fn` — rather than the signature. That
-// correction is scored by nothing. Signature loss fires only when the markdown
-// side is the poorer one, and `group` runs the other way (4 documented against 2
-// declared before, 4 against 4 after), while the other three terms are
-// member-level and blind to arity. All four were re-measured against the
-// corrected fork and every one is unchanged. The `no-go` still stands on the four
-// undocumented `#####` list variants and the 8 type downgrades.
+// fork, not the retired `fixtures/ts-defold/` copy. Two rounds of parity
+// corrections have moved it since, each re-measured here rather than assumed:
+//
+// The first was `group`. `gooey.lua:191` declares `M.group(id, action_id, action,
+// fn)` where ts-defold bound two parameters, matching the LDoc block above that
+// function — which lists only `@param id` and `@param fn` — rather than the
+// signature. That correction is scored by nothing: signature loss fires only when
+// the markdown side is the poorer one, and `group` ran the other way (4 documented
+// against 2 declared before, 4 against 4 after).
+//
+// The second completed the fork against `gooey.lua` — eight members declared, five
+// parameter lists corrected — and moved two terms. Surface-loss went 4 -> 12, the
+// eight new members being undocumented in the README. Signature loss stayed at one
+// member but changed which: `dynamic_list` left it, because the `root_id` its
+// heading named and its `**PARAMETERS**` run omitted was never in `gooey.lua` and
+// the fork dropped it, leaving the markdown side the wider one by a parameter;
+// `vertical_scrollbar` entered it, the fork having taken upstream's `config`.
+// Type downgrade and `addedMembers` are unmoved — both are member-level over the
+// 8 parsed names, which neither correction touched.
+//
+// The `no-go` stands either way, and now on a wider surface loss than when it was
+// first recorded.
 const GOOEY: LibraryRecord = {
   library: "gooey",
   repo: "https://github.com/britzl/gooey",
@@ -1549,7 +1573,7 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
   "fixtures/authored/monarch.transitions.easings.d.ts":
     "5ceaab6e08ef808a91a7a23052d638a407e9b5fe2042bd20a5b4de7919836b77",
   "fixtures/authored/monarch.transitions.gui.d.ts":
-    "ea0f15ee04f747f6253e9a91652b3dc94e2ecf47b6ad3b352c12b8e3256f7c6b",
+    "95baa41fc59bb2495d47c4207089ad12dbf5b968cb947143b1391bedc82f5ca8",
   "fixtures/authored/orthographic.camera.d.ts":
     "c9805a47417ed0b733e6e692f6f1936095417519730a396b4904d7145ff1a5b0",
   "fixtures/authored/metrics.fps.d.ts":
@@ -1559,7 +1583,7 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
   "fixtures/authored/persist.persist.d.ts":
     "4ede94326945884649966cd0496316ba51bf243d06be2fbfc868789207df4be8",
   "fixtures/authored/gooey.gooey.d.ts":
-    "467465c25b62170b0f179b5a7efea45ae260004498610d51d350b5c7faf16212",
+    "8544aa267709580c194a9fb52bf740048a6bca90fa8d4b8332f25d78a49e825f",
   "fixtures/authored/bzAnim.bzLibrary.d.ts":
     "5ac9ea3a79428383dca86b3dbd85beff6a55413e2a52867b88079f97a21fbc69",
   "fixtures/authored/dicebag.dicebag.d.ts":
@@ -2096,15 +2120,25 @@ describe("gooey surface-loss evidence at tag 10.5.3", () => {
     expect(decision).toBe("no-go");
   });
 
-  test("the four `#####` list variants are the leading term — 4 missing members", async () => {
+  // The four `#####` list variants, plus the eight members the parity correction added
+  // from `gooey.lua` — the README documents none of them under any header level.
+  test("the undocumented members are the leading term — 12 missing members", async () => {
     const { missingMembers, addedMembers } = await comparisonFor(GOOEY, "gooey");
     expect(missingMembers).toEqual([
+      "acquire_input",
+      "create_theme",
       "horizontal_dynamic_list",
+      "horizontal_scrollbar",
       "horizontal_static_list",
+      "is_enabled",
+      "mask_text",
+      "radiogroup",
+      "release_input",
+      "set_focus",
       "vertical_dynamic_list",
       "vertical_static_list",
     ]);
-    // Upstream adds no member ts-defold lacks, so the loss is one-directional.
+    // Upstream adds no member the fork lacks, so the loss is one-directional.
     expect(addedMembers).toEqual([]);
   });
 
@@ -2113,22 +2147,22 @@ describe("gooey surface-loss evidence at tag 10.5.3", () => {
     expect([...downgradedMembers].sort()).toEqual([...PARSED_MEMBERS].sort());
   });
 
-  // Why the term fires on this member alone: the `### gooey.dynamic_list(...)`
-  // heading declares 11 arguments, and the contiguous bullet run after its
-  // `**PARAMETERS**` marker documents 10 of them — `root_id` is named in the
-  // heading and never in the list. (The run ends at the blank line before "The
-  // `config` table can contain the following values:", whose own two bullets are
-  // option keys rather than parameters; a boundary drawn at `**RETURN**` would
-  // read the list as 12.)
-  test("dynamic_list's PARAMETERS block documents one argument fewer than its heading", async () => {
+  // The term moved with the correction, and both ends of that move are the README
+  // trailing `gooey.lua`. It used to fire on `dynamic_list`, whose `###` heading named
+  // 11 arguments while its `**PARAMETERS**` run documented 10 — but `root_id` was never
+  // in `gooey.lua` either, so the fork dropped it and the heading is now the wider side
+  // by one, which this term does not score. It now fires on `vertical_scrollbar`: the
+  // pinned source takes `config` between `action` and `fn` (`gooey.lua:149`) and the
+  // README documents the six-parameter form the library shipped before it.
+  test("vertical_scrollbar's documented signature is one parameter short of upstream's", async () => {
     const { signatureLossMembers } = await comparisonFor(GOOEY, "gooey");
-    expect(signatureLossMembers).toEqual(["dynamic_list"]);
+    expect(signatureLossMembers).toEqual(["vertical_scrollbar"]);
   });
 
   // Read through `targetFor` rather than a hard-coded `fixtures/ts-defold/` path
-  // so the severance moves the snapshot with it. An arity change moves no name,
-  // so the same 12 are expected against the corrected fork.
-  test("the ts-defold surface the comparison runs against is these 12 functions", () => {
+  // so the severance moves the snapshot with it. The parity correction took the fork
+  // from the 12 ts-defold functions to the 20 `gooey.lua` defines.
+  test("the surface the comparison runs against is the fork's 20 functions", () => {
     const surface = tsDefoldMembers(
       readFileSync(
         join(PACKAGE_ROOT, targetFor("gooey.gooey", severedFor(GOOEY, "gooey")).fixture),
@@ -2136,14 +2170,22 @@ describe("gooey surface-loss evidence at tag 10.5.3", () => {
       ),
     );
     expect(surface).toEqual([
+      "acquire_input",
       "button",
       "checkbox",
+      "create_theme",
       "dynamic_list",
       "group",
       "horizontal_dynamic_list",
+      "horizontal_scrollbar",
       "horizontal_static_list",
       "input",
+      "is_enabled",
+      "mask_text",
       "radio",
+      "radiogroup",
+      "release_input",
+      "set_focus",
       "static_list",
       "vertical_dynamic_list",
       "vertical_scrollbar",

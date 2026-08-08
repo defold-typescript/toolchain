@@ -132,88 +132,688 @@
       "name": "TransitionOutFn"
     },
     {
-      "type": "VARIABLE",
+      "type": "FUNCTION",
       "name": "slide_in_right",
-      "types": [
-        "TransitionInFn"
-      ]
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\">"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "to",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "easing",
+          "doc": "",
+          "types": [
+            "GuiEasing"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "delay",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "complete_function",
+          "doc": "",
+          "types": [
+            "(this: any, node: Opaque<\"node\">) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
     },
     {
-      "type": "VARIABLE",
+      "type": "FUNCTION",
       "name": "slide_in_left",
-      "types": [
-        "TransitionInFn"
-      ]
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\">"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "to",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "easing",
+          "doc": "",
+          "types": [
+            "GuiEasing"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "delay",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "complete_function",
+          "doc": "",
+          "types": [
+            "(this: any, node: Opaque<\"node\">) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
     },
     {
-      "type": "VARIABLE",
+      "type": "FUNCTION",
       "name": "slide_in_top",
-      "types": [
-        "TransitionInFn"
-      ]
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\">"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "to",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "easing",
+          "doc": "",
+          "types": [
+            "GuiEasing"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "delay",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "complete_function",
+          "doc": "",
+          "types": [
+            "(this: any, node: Opaque<\"node\">) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
     },
     {
-      "type": "VARIABLE",
+      "type": "FUNCTION",
       "name": "slide_in_bottom",
-      "types": [
-        "TransitionInFn"
-      ]
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\">"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "to",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "easing",
+          "doc": "",
+          "types": [
+            "GuiEasing"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "delay",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "complete_function",
+          "doc": "",
+          "types": [
+            "(this: any, node: Opaque<\"node\">) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
     },
     {
-      "type": "VARIABLE",
+      "type": "FUNCTION",
       "name": "slide_out_right",
-      "types": [
-        "TransitionOutFn"
-      ]
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\">"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "from",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "easing",
+          "doc": "",
+          "types": [
+            "GuiEasing"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "delay",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "complete_function",
+          "doc": "",
+          "types": [
+            "(this: any, node: Opaque<\"node\">) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
     },
     {
-      "type": "VARIABLE",
+      "type": "FUNCTION",
       "name": "slide_out_left",
-      "types": [
-        "TransitionOutFn"
-      ]
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\">"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "from",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "easing",
+          "doc": "",
+          "types": [
+            "GuiEasing"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "delay",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "complete_function",
+          "doc": "",
+          "types": [
+            "(this: any, node: Opaque<\"node\">) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
     },
     {
-      "type": "VARIABLE",
+      "type": "FUNCTION",
       "name": "slide_out_top",
-      "types": [
-        "TransitionOutFn"
-      ]
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\">"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "from",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "easing",
+          "doc": "",
+          "types": [
+            "GuiEasing"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "delay",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "complete_function",
+          "doc": "",
+          "types": [
+            "(this: any, node: Opaque<\"node\">) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
     },
     {
-      "type": "VARIABLE",
+      "type": "FUNCTION",
       "name": "slide_out_bottom",
-      "types": [
-        "TransitionOutFn"
-      ]
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\">"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "from",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "easing",
+          "doc": "",
+          "types": [
+            "GuiEasing"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "delay",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "complete_function",
+          "doc": "",
+          "types": [
+            "(this: any, node: Opaque<\"node\">) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
     },
     {
-      "type": "VARIABLE",
+      "type": "FUNCTION",
       "name": "scale_in",
-      "types": [
-        "TransitionInFn"
-      ]
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\">"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "to",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "easing",
+          "doc": "",
+          "types": [
+            "GuiEasing"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "delay",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "complete_function",
+          "doc": "",
+          "types": [
+            "(this: any, node: Opaque<\"node\">) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
     },
     {
-      "type": "VARIABLE",
+      "type": "FUNCTION",
       "name": "scale_out",
-      "types": [
-        "TransitionOutFn"
-      ]
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\">"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "from",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "easing",
+          "doc": "",
+          "types": [
+            "GuiEasing"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "delay",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "complete_function",
+          "doc": "",
+          "types": [
+            "(this: any, node: Opaque<\"node\">) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
     },
     {
-      "type": "VARIABLE",
+      "type": "FUNCTION",
       "name": "fade_in",
-      "types": [
-        "TransitionInFn"
-      ]
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\">"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "from",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "easing",
+          "doc": "",
+          "types": [
+            "GuiEasing"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "delay",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "complete_function",
+          "doc": "",
+          "types": [
+            "(this: any, node: Opaque<\"node\">) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
     },
     {
-      "type": "VARIABLE",
+      "type": "FUNCTION",
       "name": "fade_out",
-      "types": [
-        "TransitionOutFn"
-      ]
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\">"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "from",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "easing",
+          "doc": "",
+          "types": [
+            "GuiEasing"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "delay",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "complete_function",
+          "doc": "",
+          "types": [
+            "(this: any, node: Opaque<\"node\">) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
     },
     {
       "type": "FUNCTION",

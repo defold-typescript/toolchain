@@ -16,5 +16,6 @@
   "importedDocs": 0,
   "refusedDocBlocks": 36,
   "variadicMembers": 3,
+  "overloadedMembers": 0,
   "callableCoverage": 1
 }
