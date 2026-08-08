@@ -1028,13 +1028,21 @@ const GOOEY: LibraryRecord = {
 // the three module-level members upstream really defines — `M.update`, `M.fps`
 // (`M.mem` in `metrics.mem`) and `M.draw`, delegating to a `local singleton =
 // M.create()` at `metrics/fps.lua:42` and `metrics/mem.lua:34` — so
-// `tsDefoldMembers` is now the four `["create","draw","<mod>","update"]` and
 // `addedMembers` has collapsed from three names to `[]`. That is the whole of
 // the movement, and it is the correction's proof; every other term is unchanged,
 // which is why `addedMembers: []` must not be read as metrics having become a
 // `go`. The `no-go` stands exactly where it did: on `create`'s `table` return,
 // scored as `downgradedMembers: ["create"]`, plus the unscored-until-now
 // optionality loss on the same member.
+//
+// The field correction then declared upstream's three drawing defaults —
+// `POSITION`, `FORMAT` and `COLOR` — in each fork, so `tsDefoldMembers` is the
+// seven `["COLOR","FORMAT","POSITION","create","draw","<mod>","update"]` and
+// `missingMembers` is the three constant names the README documents nowhere.
+// `MEMBER_DECL` matches a bare or exported `const`, which is the only reason a
+// field declaration reaches this comparison at all; and no other term can move,
+// because the three signature/downgrade/optionality terms all return early
+// unless both sides hold the name as a function.
 const METRICS: LibraryRecord = {
   library: "metrics",
   repo: "https://github.com/britzl/defold-metrics",
@@ -1580,9 +1588,9 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
   "fixtures/authored/orthographic.camera.d.ts":
     "c9805a47417ed0b733e6e692f6f1936095417519730a396b4904d7145ff1a5b0",
   "fixtures/authored/metrics.fps.d.ts":
-    "ca4d65be8b9e254972998fa3e143651bbc86235765ba8603f34c3fb34081ac58",
+    "20e3d51b21591de2adf9c65432eb3ea7afa9efccc1b1d8e85f60e51dd276a4a9",
   "fixtures/authored/metrics.mem.d.ts":
-    "e32ab0d3067bd569c69a11045bd6f84bd3562d0d8e73920e46022536874d30a2",
+    "ccd0b76336aef4130b7f2a43c3ea071b14f30dd57a6c94a3a38710359ef39c91",
   "fixtures/authored/persist.persist.d.ts":
     "4ede94326945884649966cd0496316ba51bf243d06be2fbfc868789207df4be8",
   "fixtures/authored/gooey.gooey.d.ts":
@@ -1590,19 +1598,22 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
   "fixtures/authored/bzAnim.bzLibrary.d.ts":
     "5ac9ea3a79428383dca86b3dbd85beff6a55413e2a52867b88079f97a21fbc69",
   "fixtures/authored/dicebag.dicebag.d.ts":
-    "362638eb3d790cf3d2fe14b07a1b0c5fe66d08a3c1d9933e10e7194d537074c7",
+    "51649de912a91815fd2bd8aeeda3390689c114ff3d7702d11dc201b29d6a44a8",
   "fixtures/authored/platypus.platypus.d.ts":
     "94e41a19cc35e9943d3633e2db9a3bd5913364e156feba88ff3b3a0f4ce49c4a",
   "fixtures/authored/rendy.rendy.d.ts":
-    "de1ba409e454a8edf72e6ec4a255d4299ff3e7d55bbc0133a04abd7b04de8d51",
+    "838b7d62ec4fe12bde657bdb76c7444faa3da5cecaff56e0966d83b8bd3b8e0f",
   // The one entry whose verdict comes from the openapi lane rather than
   // markdown: `openapi-fidelity-gate.test.ts` scores this fork against the
   // pinned swagger + proto and records `no-go`. Re-pinned with the signature
   // correction that took the fork to upstream's own 156 members, in the same
   // commit and after that gate was re-derived against the edited fork: the
   // decision held and its missing set narrowed to the client-lifecycle helpers.
+  // Re-pinned again with the field correction that declared upstream's 12 enum
+  // constants, on the same terms: the gate was re-derived first, the decision held,
+  // and the missing set took the 12 names the swagger emits no constant for.
   "fixtures/authored/nakama.nakama.d.ts":
-    "a2840297b03d550eccc800bce19306b0f3ea0a45a2ca9f4537015ab6982f9f35",
+    "05528cc200a78c77b206f663fbbf921d89ae1f3a4cadb34c0dffa083ac97814f",
   "fixtures/authored/richtext.color.d.ts":
     "fdacac61ee40f105f63c7a15745520630818b9d14ee0ffa077912f899b2f1999",
   "fixtures/authored/richtext.richtext.d.ts":
@@ -2245,8 +2256,11 @@ describe("metrics shared-README evidence at tag 1.2.1", () => {
 
   // `addedMembers` is `[]` here only because the authored correction landed: the
   // three module-level members the README documents are now in the fork this
-  // comparison reads. Every other term is the one recorded before the severance,
-  // and the verdict is still `no-go` on `create`'s `table` return.
+  // comparison reads. `missingMembers` is the three constants the later field
+  // correction declared, which the README documents nowhere — a growing missing
+  // set only reinforces a verdict already `no-go`. Every other term is the one
+  // recorded before the severance, and the verdict still rests on `create`'s
+  // `table` return rather than on the constants.
   test.each([
     "fps",
     "mem",
@@ -2259,7 +2273,7 @@ describe("metrics shared-README evidence at tag 1.2.1", () => {
     );
 
     expect(decision).toBe("no-go");
-    expect(missingMembers).toEqual([]);
+    expect(missingMembers).toEqual(["COLOR", "FORMAT", "POSITION"]);
     expect(signatureLossMembers).toEqual([]);
     expect(downgradedMembers).toEqual(["create"]);
     expect(addedMembers).toEqual([]);
@@ -2274,12 +2288,13 @@ describe("metrics shared-README evidence at tag 1.2.1", () => {
   });
 
   // The snapshot this reads is the authored fork the severance moved the verdict
-  // onto, so the surface is the corrected one: the factory plus the three
-  // module-level members. `Metrics` is still outside `MEMBER_DECL`'s surface and
-  // still never enters the comparison, which is why it is absent from the list.
+  // onto, so the surface is the corrected one: the factory, the three
+  // module-level members, and the three drawing defaults the field correction
+  // declared. `Metrics` is still outside `MEMBER_DECL`'s surface and still never
+  // enters the comparison, which is why it is absent from the list.
   test.each([
-    ["fps", ["create", "draw", "fps", "update"]],
-    ["mem", ["create", "draw", "mem", "update"]],
+    ["fps", ["COLOR", "FORMAT", "POSITION", "create", "draw", "fps", "update"]],
+    ["mem", ["COLOR", "FORMAT", "POSITION", "create", "draw", "mem", "update"]],
   ])("the severed surface of metrics.%s is the factory plus the corrected members", (module, members) => {
     const fixture = targetFor(`metrics.${module}`, severedFor(METRICS, module as string)).fixture;
     expect(tsDefoldMembers(readFileSync(join(PACKAGE_ROOT, fixture), "utf8"))).toEqual(
@@ -2297,6 +2312,14 @@ describe("metrics shared-README evidence at tag 1.2.1", () => {
 // on a parameter name — never on a type name. So all six terms below must read
 // exactly as they did before the lane move; a moved term is a bug to stop and
 // record, never a digest or expectation to re-baseline.
+//
+// One term has since moved, and only by a deliberate authored edit: the field
+// correction declared upstream's five exposed variables, which the README
+// documents nowhere, so `missingMembers` is those five. `MEMBER_DECL` matches a
+// bare `const`, which is why they reach this comparison at all, and no other term
+// can follow them — the signature, downgrade and optionality predicates each
+// return early unless both sides hold the name as a function. The recorded
+// `signature-loss` reason is unchanged, still resting on the 11 zero-arity stubs.
 describe("rendy signature-loss evidence at pin b72ee2419f2cd5e1a2281e1eed5cc4081b5cbcc3", () => {
   const readme = () => fixtureText(RENDY, decisionFor(RENDY, "rendy"));
 
@@ -2324,9 +2347,19 @@ describe("rendy signature-loss evidence at pin b72ee2419f2cd5e1a2281e1eed5cc4081
   // The fork used to declare `animate` and `cancel_animations`, which the README
   // documents nowhere and `rendy.lua` defines in no form at this pin; correcting
   // the fork against the Lua emptied both name-set terms rather than moving them.
-  test("both sides now name the same members, the two go.animate stand-ins being gone", async () => {
+  // `missingMembers` then took upstream's five exposed variables, which the field
+  // correction declared and the README documents nowhere either — the one term a
+  // `const` can move, `MEMBER_DECL` matching a bare `const` and every other
+  // predicate requiring a function on both sides.
+  test("the two go.animate stand-ins are gone, and only the five variables are missing", async () => {
     const { missingMembers, addedMembers } = await comparisonFor(RENDY, "rendy");
-    expect(missingMembers).toEqual([]);
+    expect(missingMembers).toEqual([
+      "cameras",
+      "display_height",
+      "display_width",
+      "window_height",
+      "window_width",
+    ]);
     expect(addedMembers).toEqual([]);
     // Neither name appears anywhere in the README — not as a heading, not in
     // prose. The only near-match is the word "animated" in the shake section.
@@ -2791,7 +2824,7 @@ describe("dicebag type-downgrade evidence at tag 0.3", () => {
   const severed = severedFor(DICEBAG, "dicebag");
 
   // The 11 documented functions, sorted as `compareFidelityToTsDefold` reports
-  // them. Both surfaces carry exactly these.
+  // them. The whole markdown surface, and the callable half of the fork's.
   const FUNCTIONS = [
     "bag_create",
     "bag_draw",
@@ -2820,16 +2853,21 @@ describe("dicebag type-downgrade evidence at tag 0.3", () => {
     expect([...doc.elements.map((e) => e.name.split(".").pop())].sort()).toEqual(FUNCTIONS);
   });
 
-  test("the surfaces match one-for-one", async () => {
+  // The callable surfaces match one-for-one; the two names that do not are the
+  // state tables the field correction declared, which the README documents
+  // nowhere. A `const` reaches this comparison because `MEMBER_DECL` matches one,
+  // and it can move no term but the name set: the signature, downgrade and
+  // optionality predicates all require the name to be a function on both sides.
+  test("the callable surfaces match one-for-one, the two declared tables aside", async () => {
     const {
       missingMembers,
       addedMembers,
       markdownMembers,
       tsDefoldMembers: tsMembers,
     } = await comparisonFor(DICEBAG, "dicebag");
-    expect(missingMembers).toEqual([]);
+    expect(missingMembers).toEqual(["bags", "tables"]);
     expect(addedMembers).toEqual([]);
-    expect(tsMembers).toEqual(FUNCTIONS);
+    expect(tsMembers).toEqual([...FUNCTIONS, "bags", "tables"].sort());
     expect(markdownMembers).toEqual(FUNCTIONS);
   });
 

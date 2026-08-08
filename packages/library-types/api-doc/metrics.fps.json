@@ -6,6 +6,27 @@
   },
   "elements": [
     {
+      "type": "VARIABLE",
+      "name": "POSITION",
+      "types": [
+        "Vector3"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "FORMAT",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "COLOR",
+      "types": [
+        "Vector4"
+      ]
+    },
+    {
       "type": "FUNCTION",
       "name": "create",
       "brief": "",
@@ -31,7 +52,7 @@
           "name": "position",
           "doc": "",
           "types": [
-            "string"
+            "Vector3"
           ],
           "is_optional": "True"
         },
@@ -39,7 +60,7 @@
           "name": "color",
           "doc": "",
           "types": [
-            "string"
+            "Vector4"
           ],
           "is_optional": "True"
         }

@@ -301,8 +301,8 @@ types that pair with them — `cancel` and `cancellation_token` — were themsel
 among the 16 members it never declared. 26 declared names were not on this module
 at all: 25 of them the realtime socket surface, which the pinned `nakama.lua`
 `require`s privately and exposes only through `create_socket`, and one a request
-constructor upstream no longer generates. It still declares **none** of upstream's
-12 constants, which is the field axis and a separate piece of work.
+constructor upstream no longer generates. The field axis then closed on the same
+terms: all 12 of upstream's enum constants are declared, so both axes read 1.
 
 `boom` is the opposite shape: it declares **one** of the six members
 `boom/boom.lua` defines, the other five being the `final`/`init`/`on_input`/

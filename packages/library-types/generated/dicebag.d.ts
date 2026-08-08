@@ -7,6 +7,31 @@
  */
 declare module "dicebag.dicebag" {
   /**
+   * Every marble bag `bag_create` has made, keyed by its identifier. `bag_draw` reads
+   * and decrements the counts here; `bag_reset` restores them from the `full_*` pair.
+   */
+  export const bags: LuaMap<
+    string | number | Hash,
+    {
+      success: number;
+      fail: number;
+      full_success: number;
+      full_fail: number;
+      reset_on_success: boolean;
+    }
+  >;
+
+  /**
+   * Every rollable table `table_create` has made, keyed by its identifier. `active` is
+   * what `table_roll` draws from and removes as it goes; `original` is the untouched
+   * copy `table_reset` restores from.
+   */
+  export const tables: LuaMap<
+    string | number | Hash,
+    { active: Array<[number, any, boolean?]>; original: Array<[number, any, boolean?]> }
+  >;
+
+  /**
    * Sets up the randomseed and clears the first number of random rolls.
    * @param seed optional seed, if not specified a seed will be generated using socket.gettime().
    * @returns the number used to seed the random function.
