@@ -9,7 +9,7 @@
   },
   "fidelity/authored/defcon.json": {
     "callable": 1,
-    "field": 0
+    "field": 1
   },
   "fidelity/authored/defmath.json": {
     "callable": 1,
@@ -25,7 +25,7 @@
   },
   "fidelity/authored/dicebag.json": {
     "callable": 1,
-    "field": 0
+    "field": 1
   },
   "fidelity/authored/gooey.json": {
     "callable": 1,
@@ -73,11 +73,11 @@
   },
   "fidelity/authored/metrics.fps.json": {
     "callable": 1,
-    "field": 0
+    "field": 1
   },
   "fidelity/authored/metrics.mem.json": {
     "callable": 1,
-    "field": 0
+    "field": 1
   },
   "fidelity/authored/monarch.monarch.json": {
     "callable": 1,
@@ -97,7 +97,7 @@
   },
   "fidelity/authored/nakama.json": {
     "callable": 1,
-    "field": 0
+    "field": 1
   },
   "fidelity/authored/nakama.util.log.json": {
     "callable": 1,
@@ -117,7 +117,7 @@
   },
   "fidelity/authored/rendy.json": {
     "callable": 1,
-    "field": 0
+    "field": 1
   },
   "fidelity/authored/richtext.color.json": {
     "callable": 1,

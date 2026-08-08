@@ -2,14 +2,10 @@
   "namespace": "metrics.mem",
   "upstreamMembers": 4,
   "upstreamFields": 3,
-  "declaredFields": 0,
-  "missingFields": [
-    "COLOR",
-    "FORMAT",
-    "POSITION"
-  ],
+  "declaredFields": 3,
+  "missingFields": [],
   "phantomFields": [],
-  "fieldCoverage": 0,
+  "fieldCoverage": 1,
   "declaredGlobals": 0,
   "declaredMembers": 4,
   "missingMembers": [],

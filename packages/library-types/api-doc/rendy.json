@@ -10,6 +10,41 @@
       "name": "CameraId"
     },
     {
+      "type": "VARIABLE",
+      "name": "cameras",
+      "types": [
+        "LuaMap<CameraId, unknown>"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "display_width",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "display_height",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "window_width",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "window_height",
+      "types": [
+        "number"
+      ]
+    },
+    {
       "type": "FUNCTION",
       "name": "create_camera",
       "brief": "Creates a camera. This function is called automatically by the rendy.go game object.",

@@ -18,6 +18,99 @@
       "name": "RetryPolicy"
     },
     {
+      "type": "VARIABLE",
+      "name": "APIOPERATOR_NO_OVERRIDE",
+      "types": [
+        "\"NO_OVERRIDE\""
+      ],
+      "description": "api_operator\nOperator that can be used to override the one set in the leaderboard.\n\n- NO_OVERRIDE: Do not override the leaderboard operator.\n- BEST: Override the leaderboard operator with BEST.\n- SET: Override the leaderboard operator with SET.\n- INCREMENT: Override the leaderboard operator with INCREMENT.\n- DECREMENT: Override the leaderboard operator with DECREMENT.",
+      "docSource": "upstream",
+      "brief": "api_operator"
+    },
+    {
+      "type": "VARIABLE",
+      "name": "APIOPERATOR_BEST",
+      "types": [
+        "\"BEST\""
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "APIOPERATOR_SET",
+      "types": [
+        "\"SET\""
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "APIOPERATOR_INCREMENT",
+      "types": [
+        "\"INCREMENT\""
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "APIOPERATOR_DECREMENT",
+      "types": [
+        "\"DECREMENT\""
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "APISTOREENVIRONMENT_UNKNOWN",
+      "types": [
+        "\"UNKNOWN\""
+      ],
+      "description": "api_store_environment\n- UNKNOWN: Unknown environment.\n- SANDBOX: Sandbox/test environment.\n- PRODUCTION: Production environment.",
+      "docSource": "upstream",
+      "brief": "api_store_environment"
+    },
+    {
+      "type": "VARIABLE",
+      "name": "APISTOREENVIRONMENT_SANDBOX",
+      "types": [
+        "\"SANDBOX\""
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "APISTOREENVIRONMENT_PRODUCTION",
+      "types": [
+        "\"PRODUCTION\""
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "APISTOREPROVIDER_APPLE_APP_STORE",
+      "types": [
+        "\"APPLE_APP_STORE\""
+      ],
+      "description": "api_store_provider\n- APPLE_APP_STORE: Apple App Store\n- GOOGLE_PLAY_STORE: Google Play Store\n- HUAWEI_APP_GALLERY: Huawei App Gallery\n- FACEBOOK_INSTANT_STORE: Facebook Instant Store",
+      "docSource": "upstream",
+      "brief": "api_store_provider"
+    },
+    {
+      "type": "VARIABLE",
+      "name": "APISTOREPROVIDER_GOOGLE_PLAY_STORE",
+      "types": [
+        "\"GOOGLE_PLAY_STORE\""
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "APISTOREPROVIDER_HUAWEI_APP_GALLERY",
+      "types": [
+        "\"HUAWEI_APP_GALLERY\""
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "APISTOREPROVIDER_FACEBOOK_INSTANT_STORE",
+      "types": [
+        "\"FACEBOOK_INSTANT_STORE\""
+      ]
+    },
+    {
       "type": "FUNCTION",
       "name": "cancel",
       "brief": "",

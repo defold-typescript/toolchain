@@ -67,9 +67,28 @@ describe("nakama openapi-vs-ts-defold fidelity gate", () => {
   // over an empty surface and prove nothing. The proto parser is unchanged and still
   // covers them; there is simply no member on this module left to read the claim off.
   // Recorded here rather than deleted silently: the surface was withdrawn, not fixed.
-  test("what remains missing is exactly the client-lifecycle surface", async () => {
+  //
+  // The field correction then declared upstream's 12 enum constants in the fork.
+  // The swagger's `apiOperator` definition and its two siblings resolve inline at
+  // every use site and emit no module-level constant at all, so all 12 enter this
+  // comparison's missing set beside the six lifecycle names. Only the name set can
+  // move: `compareFidelityToTsDefold`'s signature, downgrade and optionality
+  // predicates each return early unless both sides hold the name as a function.
+  test("what remains missing is the client-lifecycle surface and the 12 enum constants", async () => {
     const { missingMembers, decision } = await comparison();
     expect([...missingMembers].sort()).toEqual([
+      "APIOPERATOR_BEST",
+      "APIOPERATOR_DECREMENT",
+      "APIOPERATOR_INCREMENT",
+      "APIOPERATOR_NO_OVERRIDE",
+      "APIOPERATOR_SET",
+      "APISTOREENVIRONMENT_PRODUCTION",
+      "APISTOREENVIRONMENT_SANDBOX",
+      "APISTOREENVIRONMENT_UNKNOWN",
+      "APISTOREPROVIDER_APPLE_APP_STORE",
+      "APISTOREPROVIDER_FACEBOOK_INSTANT_STORE",
+      "APISTOREPROVIDER_GOOGLE_PLAY_STORE",
+      "APISTOREPROVIDER_HUAWEI_APP_GALLERY",
       "cancel",
       "cancellation_token",
       "create_client",

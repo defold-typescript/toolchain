@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { extractApiDoc } from "./extract-api-doc";
 import {
   type AuthoredTarget,
   emitAuthoredDeclaration,
@@ -172,7 +173,32 @@ describe("upstream LuaDoc import at api-doc lowering", () => {
     }
   });
 
-  test("the whole corpus imports 254 briefs across 14 targets", () => {
+  // The importer's opt-out is documented as "an element the fork gave either a `brief`
+  // or a `description` is returned untouched", and it does not work on the field axis:
+  // `extractApiDoc` carries a doc comment onto a `FUNCTION` element and never onto a
+  // `VARIABLE` one, so a constant the fork documents still arrives here with no prose
+  // and still imports. nakama's three run-leading constants are the corpus's only case,
+  // and what they import is upstream's LuaDoc *heading* — a snake_case type name, which
+  // `withoutNameLine` does not strip because it is not the member's own name.
+  //
+  // This pins the defect rather than the intent. Fixing `extract-api-doc.ts` reds it,
+  // which is correct: the fix has to re-record what these three publish.
+  test("a fork doc-comment on a constant does not opt the member out of the import", () => {
+    const documented = extractApiDoc(
+      `declare module "x.y" {\n  /** A documented constant. */\n  export const A: number;\n}\n`,
+      "x.y",
+    ) as { elements: { name: string; brief?: string; description?: string }[] };
+    const a = documented.elements.find((element) => element.name === "A");
+    expect(a).toBeDefined();
+    expect(a?.brief).toBeUndefined();
+    expect(a?.description).toBeUndefined();
+
+    const operator = element(authoredTarget("nakama"), "APIOPERATOR_NO_OVERRIDE");
+    expect(operator.docSource).toBe("upstream");
+    expect(operator.brief).toBe("api_operator");
+  });
+
+  test("the whole corpus imports 257 briefs across 14 targets", () => {
     const counts = readAuthoredTargets(PACKAGE_ROOT)
       .map((target) => ({
         namespace: target.namespace,
@@ -180,7 +206,7 @@ describe("upstream LuaDoc import at api-doc lowering", () => {
       }))
       .filter((entry) => entry.imported > 0);
     expect(counts.length).toBe(14);
-    expect(counts.reduce((sum, entry) => sum + entry.imported, 0)).toBe(254);
+    expect(counts.reduce((sum, entry) => sum + entry.imported, 0)).toBe(257);
   });
 });
 
@@ -1934,13 +1960,16 @@ describe("nakama.nakama migration integrity", () => {
     expect(session).toContain("created: boolean;");
   });
 
-  test("the api-doc publishes all 162 elements under the bare namespace with the override description", () => {
+  // 174 from the callable rollout's 162: the field correction declared upstream's
+  // 12 enum constants, each lowering to one `VARIABLE` element.
+  test("the api-doc publishes all 174 elements under the bare namespace with the override description", () => {
     const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, "api-doc/nakama.json"), "utf8")) as {
       info: { namespace: string; description?: string };
       elements: { name: string; type: string }[];
     };
     expect(doc.info.namespace).toBe("nakama");
-    expect(doc.elements).toHaveLength(162);
+    expect(doc.elements).toHaveLength(174);
+    expect(doc.elements.filter((e) => e.type === "VARIABLE")).toHaveLength(12);
     for (const member of VERDICT_MEMBERS) {
       expect(doc.elements.some((e) => e.name === member)).toBe(true);
     }

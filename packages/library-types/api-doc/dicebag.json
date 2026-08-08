@@ -6,6 +6,20 @@
   },
   "elements": [
     {
+      "type": "VARIABLE",
+      "name": "bags",
+      "types": [
+        "LuaMap<string | number | Hash, { success: number; fail: number; full_success: number; full_fail: number; reset_on_success: boolean; }>"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "tables",
+      "types": [
+        "LuaMap<string | number | Hash, { active: Array<[ number, any, boolean? ]>; original: Array<[ number, any, boolean? ]>; }>"
+      ]
+    },
+    {
       "type": "FUNCTION",
       "name": "set_up_rng",
       "brief": "Sets up the randomseed and clears the first number of random rolls.",
