@@ -197,6 +197,55 @@
     },
     {
       "type": "VARIABLE",
+      "name": "TRANSITION_DONE",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "TRANSITION_SHOW_IN",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "TRANSITION_SHOW_OUT",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "TRANSITION_BACK_IN",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "TRANSITION_BACK_OUT",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "FOCUS_GAINED",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "FOCUS_LOST",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
       "name": "TRANSITION",
       "types": [
         "{ DONE: Hash; SHOW_IN: Hash; SHOW_OUT: Hash; BACK_IN: Hash; BACK_OUT: Hash; }"
@@ -242,7 +291,8 @@
           ],
           "is_optional": "False"
         }
-      ]
+      ],
+      "deprecated": "Use the flat `TRANSITION_*` constants instead — Monarch marks\nthis grouping deprecated in its own source."
     },
     {
       "type": "VARIABLE",
@@ -267,7 +317,8 @@
           ],
           "is_optional": "False"
         }
-      ]
+      ],
+      "deprecated": "Use the flat `FOCUS_*` constants instead — Monarch marks this\ngrouping deprecated in its own source."
     },
     {
       "type": "VARIABLE",
@@ -469,6 +520,13 @@
         }
       ],
       "returnvalues": []
+    },
+    {
+      "type": "VARIABLE",
+      "name": "register",
+      "types": [
+        "typeof register_proxy"
+      ]
     },
     {
       "type": "FUNCTION",

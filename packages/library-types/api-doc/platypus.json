@@ -81,6 +81,20 @@
       ]
     },
     {
+      "type": "VARIABLE",
+      "name": "SEPARATION_RAYS",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "SEPARATION_SHAPES",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
       "type": "TYPEDEF",
       "name": "Direction"
     },
