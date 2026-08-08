@@ -177,3 +177,60 @@ jobs:
               ( cd "packages/$pkg" && npm publish --access public )
             fi
           done
+
+  # Closing phase of the release. The docs site deploys on push to `main`, which
+  # necessarily happens before this tag exists (the publish job above refuses to
+  # run without CI green on the pushed SHA), so /changelog renders the
+  # just-released `## vX.Y.Z` section as "Unreleased" until a deploy runs with the
+  # tag visible. This job is that deploy.
+  #
+  # It dispatches deploy-docs.yml onto `main` rather than deploying from here: the
+  # github-pages environment only permits the default branch, so a run whose ref
+  # is refs/tags/v* is rejected at the deploy step.
+  #
+  # A separate job, not a step, for two reasons: it does not start until `publish`
+  # concludes (so a slow npm publish costs it nothing), and it keeps `actions:
+  # write` off the publish job, which holds `id-token: write` for OIDC.
+  docs:
+    needs: publish
+    runs-on: ubuntu-latest
+    # Observed deploy-docs duration is 106-142s; this is generous headroom, with
+    # the job timeout as the backstop if the dispatch never lands.
+    timeout-minutes: 30
+    permissions:
+      actions: write
+    steps:
+      - name: Deploy the docs so /changelog carries this tag's date
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          before=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          gh workflow run deploy-docs.yml --ref main --repo "$REPO"
+
+          # `gh workflow run` returns no run id, so find the dispatch just created.
+          id=""
+          for _ in $(seq 1 24); do
+            sleep 5
+            id=$(gh run list --repo "$REPO" --workflow deploy-docs.yml \
+                   --event workflow_dispatch --limit 5 \
+                   --json databaseId,createdAt \
+                   --jq "[.[] | select(.createdAt >= \"$before\")] | .[0].databaseId // empty")
+            [ -n "$id" ] && break
+          done
+          if [ -z "$id" ]; then
+            echo "::error::deploy-docs dispatch never appeared; deploy the docs manually."
+            exit 1
+          fi
+
+          # Poll rather than `gh run watch`: watch's refresh loop is TTY-gated and
+          # returns a single snapshot with exit 0 on a non-TTY runner — a false green.
+          until [ "$(gh run view "$id" --repo "$REPO" --json status --jq .status)" = "completed" ]; do
+            sleep 20
+          done
+          conclusion=$(gh run view "$id" --repo "$REPO" --json conclusion --jq .conclusion)
+          echo "deploy-docs $id: $conclusion"
+          if [ "$conclusion" != "success" ]; then
+            echo "::error::docs deploy concluded $conclusion — /changelog may still read Unreleased."
+            exit 1
+          fi
