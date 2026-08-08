@@ -135,6 +135,38 @@ declare module 'gooey.gooey' {
 		total_width: number;
 	};
 
+	/** What `create_theme` hands back: the helpers it installs, over any component
+	 * carrying a node. `is_enabled` and `set_enabled` return nothing when it does not. */
+	type Theme = {
+		is_enabled: (component: { node?: Opaque<"node"> }) => boolean | undefined;
+		set_enabled: (component: { node?: Opaque<"node"> }, enabled: boolean) => void;
+		acquire_input: () => void;
+		release_input: () => void;
+		group: (
+			group_id: Hash | string,
+			action_id: Hash,
+			action: table,
+			group_fn: () => void,
+		) => table;
+	};
+
+	/**
+	 * Check if a node is enabled. This is done by not only looking at the state of the
+	 * node itself but also it's ancestors all the way up the hierarchy.
+	 */
+	export function is_enabled(node: Opaque<"node">): boolean;
+
+	/** Convenience function to acquire input focus */
+	export function acquire_input(): void;
+
+	/** Convenience function to release input focus */
+	export function release_input(): void;
+
+	export function create_theme(): Theme;
+
+	/** Mask text by replacing every character with a mask character */
+	export function mask_text(text: string, mask: string): string;
+
 	export function button(
 		node_id: Hash | string,
 		action_id: Hash,
@@ -150,6 +182,15 @@ declare module 'gooey.gooey' {
 		fn: (checkbox: CheckboxState) => void,
 		refresh_fn?: (checkbox: CheckboxState) => void,
 	): CheckboxState;
+
+	/** Wraps the `gooey.radio` calls of one group; `fn` receives the group's id and the
+	 * input it was called with, not a radio state (`README.md:265`). */
+	export function radiogroup(
+		group_id: Hash | string,
+		action_id: Hash,
+		action: table,
+		fn: (group_id: Hash | string, action_id: Hash, action: table) => void,
+	): table;
 
 	export function radio(
 		node_id: Hash | string,
@@ -169,12 +210,10 @@ declare module 'gooey.gooey' {
 		config: { horizontal?: boolean } | undefined,
 		fn: (list: ListState) => void,
 		refresh_fn?: (list: ListState) => void,
-		is_horizontal?: boolean,
 	): ListState;
 
 	export function dynamic_list(
 		list_id: string,
-		root_id: string,
 		stencil_id: Hash | string,
 		item_id: Hash | string,
 		data: table,
@@ -183,12 +222,10 @@ declare module 'gooey.gooey' {
 		config: { horizontal?: boolean; carousel?: boolean } | undefined,
 		fn: (list: ListState) => void,
 		refresh_fn?: (list: ListState) => void,
-		is_horizontal?: boolean,
 	): ListState;
 
 	export function horizontal_dynamic_list(
 		list_id: string,
-		root_id: string,
 		stencil_id: Hash | string,
 		item_id: Hash | string,
 		data: table,
@@ -201,7 +238,6 @@ declare module 'gooey.gooey' {
 
 	export function vertical_dynamic_list(
 		list_id: string,
-		root_id: string,
 		stencil_id: Hash | string,
 		item_id: Hash | string,
 		data: table,
@@ -239,6 +275,17 @@ declare module 'gooey.gooey' {
 		bounds_id: Hash | string,
 		action_id: Hash,
 		action: table,
+		config: table | undefined,
+		fn: (scrollbar: ScrollbarState) => void,
+		refresh_fn?: (scrollbar: ScrollbarState) => void,
+	): ScrollbarState;
+
+	export function horizontal_scrollbar(
+		handle_id: Hash | string,
+		bounds_id: Hash | string,
+		action_id: Hash,
+		action: table,
+		config: table | undefined,
 		fn: (scrollbar: ScrollbarState) => void,
 		refresh_fn?: (scrollbar: ScrollbarState) => void,
 	): ScrollbarState;
@@ -263,4 +310,7 @@ declare module 'gooey.gooey' {
 		action: table,
 		group_fn: () => void,
 	): table;
+
+	/** Move a group's focus to the component at `index`, refreshing it. */
+	export function set_focus(group: table, index: number): void;
 }

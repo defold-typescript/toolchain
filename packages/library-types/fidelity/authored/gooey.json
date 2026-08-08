@@ -7,49 +7,15 @@
   "phantomFields": [],
   "fieldCoverage": 1,
   "declaredGlobals": 0,
-  "declaredMembers": 12,
-  "missingMembers": [
-    "acquire_input",
-    "create_theme",
-    "horizontal_scrollbar",
-    "is_enabled",
-    "mask_text",
-    "radiogroup",
-    "release_input",
-    "set_focus"
-  ],
+  "declaredMembers": 20,
+  "missingMembers": [],
   "phantomMembers": [],
-  "arityMismatches": [
-    {
-      "name": "dynamic_list",
-      "upstream": 9,
-      "declared": 11
-    },
-    {
-      "name": "horizontal_dynamic_list",
-      "upstream": 9,
-      "declared": 10
-    },
-    {
-      "name": "static_list",
-      "upstream": 8,
-      "declared": 9
-    },
-    {
-      "name": "vertical_dynamic_list",
-      "upstream": 9,
-      "declared": 10
-    },
-    {
-      "name": "vertical_scrollbar",
-      "upstream": 7,
-      "declared": 6
-    }
-  ],
+  "arityMismatches": [],
   "parityExceptions": [],
   "undocumentedMembers": 0,
   "importedDocs": 2,
   "refusedDocBlocks": 0,
   "variadicMembers": 0,
-  "callableCoverage": 0.35
+  "overloadedMembers": 0,
+  "callableCoverage": 1
 }
