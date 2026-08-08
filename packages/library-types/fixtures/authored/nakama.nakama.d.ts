@@ -34,6 +34,41 @@ declare module 'nakama.nakama' {
     cancel(this: void): void;
   }
 
+  /**
+   * Operator that can be used to override the one set in the leaderboard.
+   *
+   * - NO_OVERRIDE: Do not override the leaderboard operator.
+   * - BEST: Override the leaderboard operator with BEST.
+   * - SET: Override the leaderboard operator with SET.
+   * - INCREMENT: Override the leaderboard operator with INCREMENT.
+   * - DECREMENT: Override the leaderboard operator with DECREMENT.
+   */
+  export const APIOPERATOR_NO_OVERRIDE: "NO_OVERRIDE";
+  export const APIOPERATOR_BEST: "BEST";
+  export const APIOPERATOR_SET: "SET";
+  export const APIOPERATOR_INCREMENT: "INCREMENT";
+  export const APIOPERATOR_DECREMENT: "DECREMENT";
+
+  /**
+   * - UNKNOWN: Unknown environment.
+   * - SANDBOX: Sandbox/test environment.
+   * - PRODUCTION: Production environment.
+   */
+  export const APISTOREENVIRONMENT_UNKNOWN: "UNKNOWN";
+  export const APISTOREENVIRONMENT_SANDBOX: "SANDBOX";
+  export const APISTOREENVIRONMENT_PRODUCTION: "PRODUCTION";
+
+  /**
+   * - APPLE_APP_STORE: Apple App Store
+   * - GOOGLE_PLAY_STORE: Google Play Store
+   * - HUAWEI_APP_GALLERY: Huawei App Gallery
+   * - FACEBOOK_INSTANT_STORE: Facebook Instant Store
+   */
+  export const APISTOREPROVIDER_APPLE_APP_STORE: "APPLE_APP_STORE";
+  export const APISTOREPROVIDER_GOOGLE_PLAY_STORE: "GOOGLE_PLAY_STORE";
+  export const APISTOREPROVIDER_HUAWEI_APP_GALLERY: "HUAWEI_APP_GALLERY";
+  export const APISTOREPROVIDER_FACEBOOK_INSTANT_STORE: "FACEBOOK_INSTANT_STORE";
+
   export function cancel(token: CancellationToken): void;
   export function cancellation_token(): CancellationToken;
   export function sync(fn: () => void, cancellation_token?: CancellationToken): void;

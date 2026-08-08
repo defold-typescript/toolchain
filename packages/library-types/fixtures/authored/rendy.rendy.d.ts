@@ -10,6 +10,39 @@ declare module 'rendy.rendy' {
 	type CameraId = Hash | string;
 
 	/**
+	 * Every camera except the GUI camera, keyed by camera id. Exposed only because the
+	 * rendy.render_script file needs write-access to it; reach for `set` and `get`
+	 * rather than accessing or manipulating it directly.
+	 */
+	const cameras: LuaMap<CameraId, unknown>;
+
+	/**
+	 * Initial width of the window, specified in the game.project file. Exposed only
+	 * because the rendy.render_script file needs write-access to it; it is unset until
+	 * that script has run.
+	 */
+	const display_width: number;
+
+	/**
+	 * Initial height of the window, specified in the game.project file. Exposed only
+	 * because the rendy.render_script file needs write-access to it; it is unset until
+	 * that script has run.
+	 */
+	const display_height: number;
+
+	/**
+	 * Current width of the window. Exposed only because the rendy.render_script file
+	 * needs write-access to it; it is unset until that script has run.
+	 */
+	const window_width: number;
+
+	/**
+	 * Current height of the window. Exposed only because the rendy.render_script file
+	 * needs write-access to it; it is unset until that script has run.
+	 */
+	const window_height: number;
+
+	/**
 	 * Creates a camera. This function is called automatically by the rendy.go game object.
 	 * @param camera_id - The identifier for the camera.
 	 */

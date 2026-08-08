@@ -6,6 +6,27 @@
   },
   "elements": [
     {
+      "type": "VARIABLE",
+      "name": "print",
+      "types": [
+        "(...args: unknown[]) => void"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "pprint",
+      "types": [
+        "(...args: unknown[]) => void"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "server",
+      "types": [
+        "unknown"
+      ]
+    },
+    {
       "type": "FUNCTION",
       "name": "start",
       "brief": "Start the console",

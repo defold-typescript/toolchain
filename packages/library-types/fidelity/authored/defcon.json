@@ -2,14 +2,10 @@
   "namespace": "defcon",
   "upstreamMembers": 6,
   "upstreamFields": 3,
-  "declaredFields": 0,
-  "missingFields": [
-    "pprint",
-    "print",
-    "server"
-  ],
+  "declaredFields": 3,
+  "missingFields": [],
   "phantomFields": [],
-  "fieldCoverage": 0,
+  "fieldCoverage": 1,
   "declaredGlobals": 0,
   "declaredMembers": 6,
   "missingMembers": [],
