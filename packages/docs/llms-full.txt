@@ -5124,7 +5124,8 @@ The **callable** axis, upstream members carrying a parameter list against api-do
 | `arityMismatches` | Shared names whose parameter *counts* disagree, each with both numbers — the fork's being the widest signature it declares. Names are not compared — a fork may rename parameters freely. |
 | `undocumentedMembers` | Upstream prose that reached neither the fork nor the import — a member whose accepted block carries no summary to lower, being nothing but tags or nothing but the member's own name. |
 | `importedDocs` | Declared elements carrying upstream's own summary because the fork supplied none. Counted on both axes. |
-| `refusedDocBlocks` | Upstream comment blocks the reader declined, no segment of them opening with `---`. Counted on both axes, and the one term that reports prose the import never saw. |
+| `refusedDocBlocks` | Refused upstream blocks the fork left **unanswered** — neither documented in the fork's own words nor excused by a recorded `parityException`. Counted on both axes, and the one term that reports prose the import never saw. Authoring the brief clears the charge. |
+| `refusedDocBlocksTotal` | The raw refusal count, before the answered and excused ones are subtracted. Kept so a `refusedDocBlocks` of 0 cannot be misread as upstream writing no `--`-only blocks. |
 | `variadicMembers` | Shared members compared against a floor rather than an exact count, upstream being variadic. |
 | `overloadedMembers` | Shared members the fork declares as several overloads, so the comparison had a set of counts to accept rather than one. |
 | `placeholderMembers` | Shared members whose upstream definition ends in a bare `_` with no `...` after it, dropped before the counts were compared. |
@@ -5288,13 +5289,21 @@ Five rules bound it:
   distinguishable from the fork's forever after.
 
 A block whose every segment opens with a plain `--` rather than `---` is **refused**,
-and counted as `refusedDocBlocks` on the target's parity report. Nothing distinguishes
-such a block from a section header sitting above a run of constants — `monarch`'s
-`-- transition messages` and `boom`'s `-- initialize boom` are the same shape to any
-parser — so admitting the class would attach one member's heading to another's
-documentation. The remedy is to author that member's doc-comment in the fork, where a
-human makes the judgment and the result correctly renders as first-party. The count is
-what makes the loss visible: `defmath` writes all 36 of its blocks that way.
+and counted as `refusedDocBlocksTotal` on the target's parity report. Nothing
+distinguishes such a block from a section header sitting above a run of constants —
+`monarch`'s `-- transition messages` and `boom`'s `-- initialize boom` are the same
+shape to any parser — so admitting the class would attach one member's heading to
+another's documentation. The remedy is to author that member's doc-comment in the fork,
+where a human makes the judgment and the result correctly renders as first-party.
+
+`refusedDocBlocks` charges only the refusals still **unanswered**, so the remedy
+actually clears it: write the brief and the member stops counting. A member the fork
+deliberately does not declare is excused by its `parityException` instead — there is no
+element to hang a brief on, and the ledger already carries a human's reading of that
+same comment, which is why `boom`'s five lifecycle blocks charge nothing. A merely
+`missingMembers` name is *not* excused: its remedy is declaring it. The raw term is
+what keeps the refusal itself visible — `defmath` writes all 36 of its blocks that way
+and charges none of them, every one being answered in the fork's own words.
 
 An imported symbol's `/api` heading carries a `U` dot labelled *Documentation
 imported from upstream*, beside the `G` dot an ambient global carries. The page's

@@ -8,6 +8,8 @@
     {
       "type": "VARIABLE",
       "name": "POSITION",
+      "brief": "Where `draw()` places the text, and the default `create()` uses when given no position.",
+      "description": "Where `draw()` places the text, and the default `create()` uses when given no position.",
       "types": [
         "Vector3"
       ]
@@ -15,6 +17,8 @@
     {
       "type": "VARIABLE",
       "name": "FORMAT",
+      "brief": "The `string.format` pattern the FPS reading is rendered through.",
+      "description": "The `string.format` pattern the FPS reading is rendered through.",
       "types": [
         "string"
       ]
@@ -22,6 +26,8 @@
     {
       "type": "VARIABLE",
       "name": "COLOR",
+      "brief": "The colour `draw()` renders the text in, and the default `create()` uses when given no colour.",
+      "description": "The colour `draw()` renders the text in, and the default `create()` uses when given no colour.",
       "types": [
         "Vector4"
       ]

@@ -121,6 +121,10 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
         elements.push({ ...functionElement(stmt, name, sf), ...mark });
         emittedNames.add(name);
       } else if (ts.isVariableStatement(stmt) && gate(stmt)) {
+        // The `VariableStatement` carries the JSDoc, not the declaration, so both the
+        // summary and the deprecation tag are read once from the statement and shared
+        // by every declarator under it.
+        const summary = jsDocSummary(stmt);
         for (const decl of stmt.declarationList.declarations) {
           if (decl.type) typeNodes.push(decl.type);
           const fields = objectFields(decl.type, sf);
@@ -128,9 +132,12 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
           elements.push({
             type: "VARIABLE",
             name,
+            // Unconditional, matching `functionElement`: an absent key and an empty one
+            // would be two shapes the docs-site had to tell apart for no gain.
+            brief: briefOf(summary),
+            description: summary,
             types: decl.type ? [typeText(decl.type, sf)] : [],
             ...(fields ? { fields } : {}),
-            // The `VariableStatement` carries the JSDoc, not the declaration.
             ...deprecatedKey(stmt),
             ...mark,
           });

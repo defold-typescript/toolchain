@@ -32,6 +32,11 @@ declare module 'in.onscreen' {
 		on_input: (action_id: Hash, action: {}) => boolean;
 	};
 
+	/**
+	 * Create an instance of the onscreen controls.
+	 * @param config Optional settings. `touch` is the action id bound to single touch.
+	 * @returns The instance the register and input functions operate on.
+	 */
 	function create(config?: { touch: Hash }): OnscreenInstance;
 
 	export function reset(instance?: OnscreenInstance): void;

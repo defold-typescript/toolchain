@@ -34,6 +34,8 @@
     {
       "type": "VARIABLE",
       "name": "FALLING",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -41,6 +43,8 @@
     {
       "type": "VARIABLE",
       "name": "GROUND_CONTACT",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -48,6 +52,8 @@
     {
       "type": "VARIABLE",
       "name": "WALL_CONTACT",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -55,6 +61,8 @@
     {
       "type": "VARIABLE",
       "name": "JUMP",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -62,6 +70,8 @@
     {
       "type": "VARIABLE",
       "name": "WALL_JUMP",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -69,6 +79,8 @@
     {
       "type": "VARIABLE",
       "name": "DOUBLE_JUMP",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -76,6 +88,8 @@
     {
       "type": "VARIABLE",
       "name": "WALL_SLIDE",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -83,6 +97,8 @@
     {
       "type": "VARIABLE",
       "name": "SEPARATION_RAYS",
+      "brief": "Value for `collisions.separation` selecting raycast separation.",
+      "description": "Value for `collisions.separation` selecting raycast separation.",
       "types": [
         "Hash"
       ]
@@ -90,6 +106,8 @@
     {
       "type": "VARIABLE",
       "name": "SEPARATION_SHAPES",
+      "brief": "Value for `collisions.separation` selecting shape separation. Platypus warns",
+      "description": "Value for `collisions.separation` selecting shape separation. Platypus warns\nat runtime that this mode is no longer supported and only raycast separation\nis; the constant still exists.",
       "types": [
         "Hash"
       ]
@@ -101,6 +119,8 @@
     {
       "type": "VARIABLE",
       "name": "DIR_UP",
+      "brief": "",
+      "description": "",
       "types": [
         "Direction"
       ]
@@ -108,6 +128,8 @@
     {
       "type": "VARIABLE",
       "name": "DIR_LEFT",
+      "brief": "",
+      "description": "",
       "types": [
         "Direction"
       ]
@@ -115,6 +137,8 @@
     {
       "type": "VARIABLE",
       "name": "DIR_RIGHT",
+      "brief": "",
+      "description": "",
       "types": [
         "Direction"
       ]
@@ -122,6 +146,8 @@
     {
       "type": "VARIABLE",
       "name": "DIR_DOWN",
+      "brief": "",
+      "description": "",
       "types": [
         "Direction"
       ]
@@ -129,6 +155,8 @@
     {
       "type": "VARIABLE",
       "name": "DIR_ALL",
+      "brief": "",
+      "description": "",
       "types": [
         "Direction"
       ]
