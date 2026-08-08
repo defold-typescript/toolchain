@@ -26,6 +26,21 @@ const _group = gooey.group("group1", _hash, {}, () => {});
 // @ts-expect-error `group` takes four arguments, not two.
 gooey.group("group1", () => {});
 
+// A corrected list form: `gooey.lua:125` names nine parameters and neither a
+// `root_id` after `list_id` nor a trailing `is_horizontal`, so the nine-argument
+// call compiles...
+const _list = gooey.dynamic_list("list", "stencil", "item", {}, _hash, {}, undefined, () => {});
+
+// ...and the invented `root_id` no longer type-checks in its old second slot.
+// @ts-expect-error `dynamic_list` takes no `root_id`, so `"root"` lands on `stencil_id`.
+gooey.dynamic_list("list", "root", "stencil", "item", {}, _hash, {}, undefined, () => {});
+
+// A newly declared member, narrowed rather than widened: `mask_text` takes two
+// strings and returns one (`gooey.lua:66`).
+const _masked: string = gooey.mask_text("secret", "*");
+
 void _node;
 void _nodeId;
 void _group;
+void _list;
+void _masked;

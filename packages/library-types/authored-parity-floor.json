@@ -28,7 +28,7 @@
     "field": 0
   },
   "fidelity/authored/gooey.json": {
-    "callable": 0.35,
+    "callable": 1,
     "field": 1
   },
   "fidelity/authored/in.accelerometer.json": {
@@ -88,7 +88,7 @@
     "field": 1
   },
   "fidelity/authored/monarch.transitions.gui.json": {
-    "callable": 0.35,
+    "callable": 1,
     "field": 1
   },
   "fidelity/authored/nakama.engine.defold.json": {

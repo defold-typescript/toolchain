@@ -5098,11 +5098,12 @@ The **callable** axis, upstream members carrying a parameter list against api-do
 | `declaredMembers` | Functions the fork declares. |
 | `missingMembers` | Upstream members the fork does not declare at all. |
 | `phantomMembers` | Declared members upstream does not have. |
-| `arityMismatches` | Shared names whose parameter *counts* disagree, each with both numbers. Names are not compared — a fork may rename parameters freely. |
+| `arityMismatches` | Shared names whose parameter *counts* disagree, each with both numbers — the fork's being the widest signature it declares. Names are not compared — a fork may rename parameters freely. |
 | `undocumentedMembers` | Upstream prose that reached neither the fork nor the import — a member whose accepted block carries no summary to lower, being nothing but tags or nothing but the member's own name. |
 | `importedDocs` | Declared elements carrying upstream's own summary because the fork supplied none. Counted on both axes. |
 | `refusedDocBlocks` | Upstream comment blocks the reader declined, no segment of them opening with `---`. Counted on both axes, and the one term that reports prose the import never saw. |
 | `variadicMembers` | Shared members compared against a floor rather than an exact count, upstream being variadic. |
+| `overloadedMembers` | Shared members the fork declares as several overloads, so the comparison had a set of counts to accept rather than one. |
 | `callableCoverage` | Fraction of upstream members that are declared *and* agree on arity. |
 
 An upstream definition ending in `...` has no fixed parameter count to disagree
@@ -5110,6 +5111,17 @@ with, so `function M.play(...)` is compared against its *named* parameters as a
 floor: the fork must declare at least them, and anything beyond is the rest.
 `variadicMembers` says how many shared members that weaker check covered, so a
 `callableCoverage` of 1 over a variadic surface cannot be read as fully verified.
+
+A fork may also declare one name as several overloads, modelling an upstream body
+that branches on whether an argument was passed — `monarch.transitions.gui.create`
+declares `create(node)` and `create()` against upstream's single `M.create(node)`
+and its `if node then` branch. That is a *set* of call shapes, and the member agrees
+when any one of them meets the rule above; reading a single count would charge a
+correct fork for whichever overload the api-doc happened to list last. A
+disagreement is still reported as one number, the widest shape the fork offers.
+`overloadedMembers` counts every member compared that way, for the same reason
+`variadicMembers` exists: agreeing because *one* shape matched is a weaker result
+than agreeing outright.
 
 The **field** axis, upstream constants (`M.SOME_CONSTANT = "X"`) against api-doc
 `VARIABLE` elements. A `TYPEDEF` is a type rather than a runtime member and enters
@@ -5124,11 +5136,12 @@ neither axis:
 | `fieldCoverage` | Fraction of upstream fields the fork declares. |
 
 A name that is callable on **either** side belongs to the callable axis and is
-never also counted as a field, so one defect is never charged twice.
-`monarch.transitions.gui` is the case that forces the rule: it declares its twelve
-transitions as `VARIABLE` while upstream defines them as functions, which the
-callable axis already reports as twelve `missingMembers`. Listing them as phantom
-fields too would double-count and describe an upstream name as invented.
+never also counted as a field, so one defect is never charged twice. A fork that
+declared an upstream *function* as a constant of a callable type would otherwise be
+charged on both axes at once — once as a missing member, once as a phantom field —
+and the second charge would describe an upstream name as invented. No measured
+target produces the shape today, the one that did having since been corrected, so
+the rule stands on the classifier rather than on any corpus case.
 
 `authored-parity-floor.json` ratchets **both** axes per artifact, each against its
 own floor: either may rise, neither may fall. A regeneration that lowers either
