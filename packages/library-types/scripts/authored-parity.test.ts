@@ -9,6 +9,7 @@ import {
   buildAuthoredParity,
   classifyArity,
   classifyFieldAxis,
+  hasTrailingDiscard,
   parseAuthoredExceptions,
   readAuthoredExceptions,
   renderAuthoredParity,
@@ -799,15 +800,13 @@ describe("a generated trailing discard is dropped before the counts are compared
 
   // Only the *last* parameter is unreachable by position: a `_` upstream names in the
   // middle still has to be passed for the ones after it to land, so the fork declares it.
-  test("a discard that is not last is still a parameter the fork must declare", () => {
-    expect(
-      classifyArity({
-        upstreamNamed: 3,
-        upstreamVariadic: false,
-        upstreamPlaceholder: false,
-        declared: [3],
-      }),
-    ).toMatchObject({ agrees: true, placeholderChecked: false });
+  // The same argument decides the `...` case, because `readParams` filters the tail out of
+  // the list: a `_` written before it only *looks* trailing, and a caller fills that slot
+  // for any vararg to land.
+  test("only a positionally unreachable discard is dropped", () => {
+    expect(hasTrailingDiscard(["a", "_", "b"], false)).toBe(false);
+    expect(hasTrailingDiscard(["a", "_"], false)).toBe(true);
+    expect(hasTrailingDiscard(["a", "_"], true)).toBe(false);
   });
 
   test("placeholderChecked is true whether or not the drop changed the verdict", () => {

@@ -270,14 +270,30 @@ export function classifyFieldAxis(input: FieldAxisInput): FieldAxis {
   };
 }
 
+/**
+ * Whether upstream's parameter list ends in a discard the comparison should drop.
+ *
+ * Only a *trailing* `_` is unreachable by position: one upstream names in the middle
+ * still has to be passed for the parameters after it to land, so the fork declares it.
+ *
+ * `varargs` decides the case the list alone cannot show. `readParams` filters a `...` tail
+ * out of `params` and reports it separately, so `function M.f(a, _, ...)` arrives here with
+ * `params` ending in `_` — and that `_` is still passed for any vararg to land, which is
+ * the same positional argument again.
+ */
+export function hasTrailingDiscard(params: readonly string[], varargs: boolean): boolean {
+  return !varargs && params.at(-1) === "_";
+}
+
 /** One shared name's two parameter counts, and whether upstream's definition ends in
  * `...`. A named object rather than three scalars: two of them are numbers, and a
  * transposed call would compare the wrong pair silently. */
 export interface ArityInput {
   upstreamNamed: number;
   upstreamVariadic: boolean;
-  /** True when upstream's last named parameter is a bare `_` — a generated discard no
-   * body reads and no consumer can pass meaningfully, so it is not counted. */
+  /** True when upstream's last named parameter is a generated discard no body reads and no
+   * consumer can pass meaningfully, so it is not counted — `hasTrailingDiscard` is the
+   * derivation, and reads more than the last entry of the list. */
   upstreamPlaceholder: boolean;
   /** Every parameter count the fork declares for this name — one entry per overload,
    * and never empty. */
@@ -491,7 +507,7 @@ export function buildAuthoredParity(
       continue;
     }
     const params = member.params as string[];
-    const placeholder = params.at(-1) === "_";
+    const placeholder = hasTrailingDiscard(params, member.varargs);
     // The count actually compared, so `arityMismatches` reports the number the fork has
     // to meet rather than the one upstream's line reads.
     const upstreamParams = params.length - (placeholder ? 1 : 0);
