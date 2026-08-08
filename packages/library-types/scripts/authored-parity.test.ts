@@ -149,22 +149,19 @@ describe("the two forks exporting a name their pinned upstream does not define",
     expect(report.callableCoverage).toBe(1);
   });
 
-  // The field axis is out of this slice, so rendy's five missing constants have to be
-  // seen not to have moved: an edit that declared or invented one would show up here.
-  test("rendy drops the two go.animate replacements without touching its field gap", () => {
+  // The callable half is what this block records; the five constants are declared now,
+  // and a declaration that reached the callable side instead would show up as a
+  // phantom member here rather than as a field shortfall.
+  test("rendy drops the two go.animate replacements and declares its five variables", () => {
     const report = buildAuthoredParity(PACKAGE_ROOT, target("rendy"));
     expect(report.phantomMembers).toEqual([]);
     expect(report.declaredMembers).toBe(11);
     expect(report.callableCoverage).toBe(1);
-    expect(report.missingFields).toEqual([
-      "cameras",
-      "display_height",
-      "display_width",
-      "window_height",
-      "window_width",
-    ]);
+    expect(report.upstreamFields).toBe(5);
+    expect(report.declaredFields).toBe(5);
+    expect(report.missingFields).toEqual([]);
     expect(report.phantomFields).toEqual([]);
-    expect(report.fieldCoverage).toBe(0);
+    expect(report.fieldCoverage).toBe(1);
   });
 });
 
@@ -192,13 +189,23 @@ describe("the three forks that were missing members their pinned upstream define
     expect(report.fieldCoverage).toBe(1);
   });
 
-  test("defcon takes upstream's optional second parameter and keeps its three-field gap", () => {
+  // `print` and `pprint` hold the *engine's* original functions, which `start()`
+  // replaces and `stop()` restores from them, so the shape is a `const` of function
+  // type. `declaredFields: 3` is what makes that shape provable: declaring either as
+  // `export function` empties `missingFields` all the same — `classifyFieldAxis` drops
+  // a name the fork declares as a `FUNCTION` from the missing set — so
+  // `fieldCoverage: 1` alone would pass over the wrong declaration. The count cannot,
+  // and `phantomMembers` names it on the axis it wrongly reached.
+  test("defcon takes upstream's optional second parameter and closes its three-field gap", () => {
     const report = buildAuthoredParity(PACKAGE_ROOT, target("defcon"));
     expect(report.arityMismatches).toEqual([]);
     expect(report.callableCoverage).toBe(1);
-    expect(report.missingFields).toEqual(["pprint", "print", "server"]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.upstreamFields).toBe(3);
+    expect(report.declaredFields).toBe(3);
+    expect(report.missingFields).toEqual([]);
     expect(report.phantomFields).toEqual([]);
-    expect(report.fieldCoverage).toBe(0);
+    expect(report.fieldCoverage).toBe(1);
   });
 });
 
@@ -320,27 +327,31 @@ describe("a callable coverage figure cannot be read as completeness", () => {
     expect(thin).toContain("platypus");
   });
 
-  // The signature rollout took the callable axis to 1 and left the field axis exactly
-  // where it was, which is the scope line the two axes exist to keep visible: twelve
-  // upstream constants, none of them declared.
-  test("nakama pairs a full callable coverage with a field axis that never moved", () => {
+  // The signature rollout took the callable axis to 1 and left the field axis at zero;
+  // the field slice closed the second half without moving either callable term, which
+  // is the scope line the two axes exist to keep visible.
+  test("nakama reaches both axes: twelve declared constants beside its 156 members", () => {
     const report = buildAuthoredParity(PACKAGE_ROOT, target("nakama"));
     expect(report.upstreamFields).toBe(12);
+    expect(report.declaredFields).toBe(12);
     expect(report.upstreamMembers).toBe(156);
     expect(report.callableCoverage).toBe(1);
-    expect(report.missingFields.length).toBe(12);
-    expect(report.fieldCoverage).toBe(0);
+    expect(report.missingFields).toEqual([]);
+    expect(report.fieldCoverage).toBe(1);
   });
 });
 
 describe("the field axis compares the non-callable surface", () => {
-  test("nakama declares none of the twelve constants upstream defines", () => {
+  // `declaredFields` is the pinned term, not the ratio: declaring one of these as a
+  // `FUNCTION` also empties `missingFields` and also reads `fieldCoverage: 1`, while
+  // leaving the count short and pushing the name onto the callable axis.
+  test("nakama declares each of the twelve constants upstream defines", () => {
     const report = buildAuthoredParity(PACKAGE_ROOT, target("nakama"));
     expect(report.upstreamFields).toBe(12);
-    expect(report.declaredFields).toBe(0);
-    expect(report.missingFields.length).toBe(12);
-    expect(report.missingFields).toContain("APIOPERATOR_BEST");
-    expect(report.fieldCoverage).toBe(0);
+    expect(report.declaredFields).toBe(12);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.fieldCoverage).toBe(1);
   });
 
   test("platypus pairs its perfect callable coverage with a real field gap", () => {
@@ -374,6 +385,83 @@ describe("the field axis compares the non-callable surface", () => {
     const report = buildAuthoredParity(PACKAGE_ROOT, target("monarch.transitions.gui"));
     expect(report.upstreamFields).toBe(0);
     expect(report.fieldCoverage).toBe(1);
+  });
+});
+
+// The six forks that declared not one upstream constant, corrected by declaring all
+// 28 rather than excepting any: the ledger throws on a name the callable map does not
+// hold, so a field exception is not expressible, and a `.d.ts` describes what the
+// module exposes whether or not upstream advises against reaching for it.
+//
+// Every assertion pins `declaredFields === upstreamFields` rather than the ratio.
+// `classifyFieldAxis` filters `missingFields` on `declaredCallable` too, so a constant
+// declared as a `FUNCTION` empties the missing set and reads `fieldCoverage: 1` while
+// leaving `declaredFields` short — the one wrong shape the ratio cannot see.
+describe("the constants the metrics and dicebag forks left undeclared", () => {
+  test.each([
+    "metrics.fps",
+    "metrics.mem",
+  ])("%s declares upstream's three drawing defaults", (namespace) => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target(namespace));
+    expect(report.upstreamFields).toBe(3);
+    expect(report.declaredFields).toBe(3);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  test("dicebag declares the two tables upstream keeps its bag and roll state in", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("dicebag"));
+    expect(report.upstreamFields).toBe(2);
+    expect(report.declaredFields).toBe(2);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  // A declaration that landed on the callable side would show up here rather than in
+  // the field terms above: `phantomMembers` gains the name, because upstream holds it
+  // as a variable and the comparison is over the callable map.
+  test.each([
+    ["nakama", 156],
+    ["metrics.fps", 4],
+    ["metrics.mem", 4],
+    ["dicebag", 11],
+  ])("the callable axis of %s is unmoved at %i members", (namespace, members) => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target(namespace as string));
+    expect(report.upstreamMembers).toBe(members);
+    expect(report.declaredMembers).toBe(members);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+  });
+});
+
+// The boundary against the sibling goal: three targets below 1 on the field axis that
+// this slice does not edit. An edit that wandered into one of them reds here, since
+// every figure is asserted exactly rather than as a floor.
+describe("the field correction stops at the three partially-covered targets", () => {
+  test("monarch.monarch, platypus and orthographic.camera are unmoved on both axes", () => {
+    const monarch = buildAuthoredParity(PACKAGE_ROOT, target("monarch.monarch"));
+    expect(monarch.declaredFields).toBe(7);
+    expect(monarch.missingFields.length).toBe(8);
+    expect(monarch.fieldCoverage).toBe(0.4667);
+    expect(monarch.callableCoverage).toBe(1);
+
+    const platypus = buildAuthoredParity(PACKAGE_ROOT, target("platypus"));
+    expect(platypus.missingFields).toEqual(["SEPARATION_RAYS", "SEPARATION_SHAPES"]);
+    expect(platypus.fieldCoverage).toBe(0.8571);
+    expect(platypus.callableCoverage).toBe(1);
+
+    const orthographic = buildAuthoredParity(PACKAGE_ROOT, target("orthographic.camera"));
+    expect(orthographic.missingFields).toEqual(["MSG_SET_AUTOMATIC_ZOOM"]);
+    expect(orthographic.phantomFields).toEqual([
+      "MSG_USE_PROJECTION",
+      "ORTHOGRAPHIC_RENDER_SCRIPT_USED",
+    ]);
+    expect(orthographic.fieldCoverage).toBe(0.9474);
+    expect(orthographic.callableCoverage).toBe(1);
   });
 });
 
@@ -1082,19 +1170,18 @@ describe("the declared field side reads only api-doc VARIABLE elements", () => {
     return doc.elements.filter((element) => element.type === type).map((element) => element.name);
   }
 
-  test("a TYPEDEF is never counted as a declared field", () => {
-    const nakama = target("nakama");
-    expect(declaredTypes(nakama, "TYPEDEF").length).toBeGreaterThan(0);
-    expect(buildAuthoredParity(PACKAGE_ROOT, nakama).declaredFields).toBe(0);
-
-    // The positive half needs a target that declares both kinds and no global, so the
-    // `VARIABLE` count is the whole of `declaredFields`. `platypus` is this file's
-    // field-axis exemplar and its shape is structural rather than a pending correction.
-    const platypus = target("platypus");
-    expect(declaredTypes(platypus, "TYPEDEF").length).toBeGreaterThan(0);
-    expect(buildAuthoredParity(PACKAGE_ROOT, platypus).declaredFields).toBe(
-      declaredTypes(platypus, "VARIABLE").length,
-    );
+  // Both targets declare each kind and no global, so the `VARIABLE` count is the whole
+  // of `declaredFields` and a counted `TYPEDEF` would push the figure past it. The
+  // second assertion names where such a name would surface: upstream holds no field by
+  // any of these type names, so a counted one becomes a phantom field.
+  test.each(["nakama", "platypus"])("%s's TYPEDEFs are not counted as declared fields", (name) => {
+    const entry = target(name);
+    const typedefs = declaredTypes(entry, "TYPEDEF");
+    expect(typedefs.length).toBeGreaterThan(0);
+    const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+    expect(report.declaredGlobals).toBe(0);
+    expect(report.declaredFields).toBe(declaredTypes(entry, "VARIABLE").length);
+    expect(report.phantomFields.filter((field) => typedefs.includes(field))).toEqual([]);
   });
 
   // Vacuous today — no measured target declares an upstream field as a `FUNCTION`, so
@@ -1238,8 +1325,11 @@ describe("the shortfall the import absorbed is accounted for, not merely absent"
     expect(stragglers).toEqual(["nakama: 9"]);
   });
 
-  test("the corpus imports 254 briefs", () => {
-    expect(reports.reduce((sum, report) => sum + report.importedDocs, 0)).toBe(254);
+  // Three more than the callable rollout left: nakama's three run-leading constants,
+  // whose fork doc-comments `extractApiDoc` drops because they sit on a `VARIABLE`
+  // element. `sync-authored-types.test.ts` pins that gap directly.
+  test("the corpus imports 257 briefs", () => {
+    expect(reports.reduce((sum, report) => sum + report.importedDocs, 0)).toBe(257);
   });
 });
 
