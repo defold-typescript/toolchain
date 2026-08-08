@@ -8,18 +8,39 @@
   "fieldCoverage": 1,
   "declaredGlobals": 87,
   "declaredMembers": 1,
-  "missingMembers": [
-    "final",
-    "init",
-    "on_input",
-    "on_message",
-    "update"
-  ],
+  "missingMembers": [],
   "phantomMembers": [],
   "arityMismatches": [],
+  "parityExceptions": [
+    {
+      "name": "final",
+      "kind": "script-lifecycle",
+      "reason": "upstream comments it `-- called from boom.script` (boom.lua:76): the library's own script calls it, not a consumer"
+    },
+    {
+      "name": "init",
+      "kind": "script-lifecycle",
+      "reason": "upstream comments it `-- called from boom.script` (boom.lua:45): the library's own script calls it, not a consumer"
+    },
+    {
+      "name": "on_input",
+      "kind": "script-lifecycle",
+      "reason": "upstream comments it `-- called from boom.script` (boom.lua:100): the library's own script calls it, not a consumer"
+    },
+    {
+      "name": "on_message",
+      "kind": "script-lifecycle",
+      "reason": "upstream comments it `-- called from boom.script` (boom.lua:93): the library's own script calls it, not a consumer"
+    },
+    {
+      "name": "update",
+      "kind": "script-lifecycle",
+      "reason": "upstream comments it `-- called from boom.script` (boom.lua:85): the library's own script calls it, not a consumer"
+    }
+  ],
   "undocumentedMembers": 0,
   "importedDocs": 0,
   "refusedDocBlocks": 5,
   "variadicMembers": 0,
-  "callableCoverage": 0.1667
+  "callableCoverage": 1
 }

@@ -2,11 +2,15 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import {
+  AUTHORED_EXCEPTIONS_MANIFEST_FILE,
+  type AuthoredParityException,
   authoredParityPath,
   authoredParityTargets,
   buildAuthoredParity,
   classifyArity,
   classifyFieldAxis,
+  parseAuthoredExceptions,
+  readAuthoredExceptions,
   renderAuthoredParity,
 } from "./authored-parity";
 import { type AuthoredTarget, readAuthoredTargets } from "./sync-authored-types";
@@ -377,6 +381,14 @@ describe("the either-side rule holds on name sets the corpus never produces", ()
 // can only ever show the floor being exceeded. The declared-below-floor corner and the
 // exact-agreement corner have no measured case at all, and are pinned here on scalars
 // driven straight through the classifier `buildAuthoredParity` itself calls.
+//
+// These scalars are now the *sole* guard that the softening never reached a
+// non-variadic member. The proof used to be parked on a measured target — orthographic
+// carried four exact-count mismatches at zero variadic members, so a leaking rule would
+// have emptied its list — and the signature-correction rollout has since emptied it by
+// correcting the fork. Any corpus-parasitic form of this claim dies the same way: the
+// rollout's own success removes the last mismatch to park it on, so the claim belongs on
+// scalars that no correction can take away.
 describe("a variadic upstream member is measured against a floor, not a count", () => {
   test("a non-variadic member still agrees on an exact count and disagrees otherwise", () => {
     expect(classifyArity({ upstreamNamed: 2, upstreamVariadic: false, declared: 2 })).toEqual({
@@ -443,20 +455,6 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
-  // The proof that only the variadic cases moved has to sit on a target no correction
-  // touches: orthographic.camera carries four exact-count mismatches at zero variadic
-  // members, so a softening that reached non-variadic members would empty this list.
-  test("a target with no variadic member keeps every exact-count mismatch", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("orthographic.camera"));
-    expect(report.variadicMembers).toBe(0);
-    expect(report.arityMismatches).toEqual([
-      { name: "add_projector", upstream: 0, declared: 2 },
-      { name: "get_projection_id", upstream: 0, declared: 1 },
-      { name: "use_projector", upstream: 0, declared: 2 },
-      { name: "world_to_screen", upstream: 2, declared: 3 },
-    ]);
-  });
-
   test("the other thirty-two targets share no variadic member at all", () => {
     const moved = new Set(["deftest", "defmath", "zzfx"]);
     const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
@@ -466,6 +464,170 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     for (const entry of untouched) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
+    }
+  });
+});
+
+// The ledger is what makes *corrected or justified* a real disjunction. A divergence
+// upstream's own comments justify is counted correct rather than charged as missing,
+// and stays named in the report with the reason — so a target reaching 1 by
+// justification reads differently from one reaching 1 by declaring everything.
+//
+// The synthetic entries below run through the same production pass as the manifest,
+// against a target whose real upstream and fork this slice does not touch.
+describe("a justified divergence is counted correct and stays named", () => {
+  const GUI = "monarch.transitions.gui";
+
+  function excepting(entries: AuthoredParityException[]) {
+    return buildAuthoredParity(PACKAGE_ROOT, target(GUI), { [GUI]: entries });
+  }
+
+  const SYNTHETIC: AuthoredParityException = {
+    name: "slide_in_right",
+    kind: "script-lifecycle",
+    reason: "synthetic entry, exercising the ledger against a real surface",
+  };
+
+  test("an excepted member the fork omits is counted correct instead of missing", () => {
+    const measured = buildAuthoredParity(PACKAGE_ROOT, target(GUI));
+    expect(measured.missingMembers).toContain("slide_in_right");
+    expect(measured.callableCoverage).toBe(0.35);
+
+    const report = excepting([SYNTHETIC]);
+    expect(report.missingMembers).not.toContain("slide_in_right");
+    expect(report.missingMembers.length).toBe(measured.missingMembers.length - 1);
+    // 8 of 20 rather than 7: the exception moved the member across, it did not hide it.
+    expect(report.callableCoverage).toBe(0.4);
+  });
+
+  test("the exception stays in the report, carrying its kind and its reason", () => {
+    expect(excepting([SYNTHETIC]).parityExceptions).toEqual([SYNTHETIC]);
+  });
+
+  test("the reported list is sorted by name, as every other list is", () => {
+    const report = excepting([
+      { ...SYNTHETIC, name: "slide_out_top" },
+      SYNTHETIC,
+      { ...SYNTHETIC, name: "fade_in" },
+    ]);
+    expect(report.parityExceptions.map((entry) => entry.name)).toEqual([
+      "fade_in",
+      "slide_in_right",
+      "slide_out_top",
+    ]);
+  });
+
+  test("a target with no ledger entry reports an empty list", () => {
+    const excepted = new Set(Object.keys(readAuthoredExceptions(PACKAGE_ROOT)));
+    const plain = authoredParityTargets(PACKAGE_ROOT).filter(
+      (entry) => !excepted.has(entry.namespace),
+    );
+    expect(plain.length).toBeGreaterThan(0);
+    for (const entry of plain) {
+      const report = buildAuthoredParity(PACKAGE_ROOT, entry);
+      expect(`${entry.namespace}: ${report.parityExceptions.length}`).toBe(`${entry.namespace}: 0`);
+    }
+  });
+});
+
+// An exception outlives nothing. Each throw names the entry, because a ledger that
+// silently ignored a stale line would keep crediting a defect that no longer exists —
+// or, worse, credit a member the fork has since declared and count it twice.
+describe("the ledger cannot outlive the defect it justifies", () => {
+  const GUI = "monarch.transitions.gui";
+
+  test("an entry naming a member upstream does not export throws, naming it", () => {
+    expect(() =>
+      buildAuthoredParity(PACKAGE_ROOT, target(GUI), {
+        [GUI]: [{ name: "slide_in_diagonal", kind: "script-lifecycle", reason: "stale" }],
+      }),
+    ).toThrow(/monarch\.transitions\.gui.*slide_in_diagonal.*upstream/s);
+  });
+
+  test("an entry for a member the fork does declare throws, naming it", () => {
+    expect(() =>
+      buildAuthoredParity(PACKAGE_ROOT, target(GUI), {
+        [GUI]: [{ name: "create", kind: "script-lifecycle", reason: "unnecessary" }],
+      }),
+    ).toThrow(/monarch\.transitions\.gui.*create.*declares/s);
+  });
+
+  test("a kind outside the closed set throws, naming the namespace and the member", () => {
+    expect(() =>
+      parseAuthoredExceptions(
+        { boom: [{ name: "init", kind: "inconvenient", reason: "…" }] },
+        AUTHORED_EXCEPTIONS_MANIFEST_FILE,
+      ),
+    ).toThrow(/boom\.init.*inconvenient/s);
+  });
+
+  test("a malformed manifest throws rather than reaching the pass as an empty ledger", () => {
+    const malformed: [unknown, RegExp][] = [
+      [[], /expected a JSON object/],
+      [{ boom: { name: "init" } }, /must be an array/],
+      [{ boom: [{ kind: "script-lifecycle", reason: "…" }] }, /"name"/],
+      [{ boom: [{ name: "init", kind: "script-lifecycle" }] }, /"reason"/],
+      [{ boom: [{ name: "init", kind: "script-lifecycle", reason: "" }] }, /"reason"/],
+    ];
+    for (const [raw, message] of malformed) {
+      expect(() => parseAuthoredExceptions(raw, AUTHORED_EXCEPTIONS_MANIFEST_FILE)).toThrow(
+        message,
+      );
+    }
+  });
+});
+
+// The two classes the ledger was built for, both read out of the pinned `camera.lua`:
+// three members whose LuaDoc says the camera.script calls them, and six one-line stubs
+// whose whole body is `error("… is deprecated")`. Declaring a member that throws on
+// every call is worse than not declaring it, so all six are absent from the fork.
+describe("orthographic.camera declares upstream's live surface and none of its dead one", () => {
+  const report = buildAuthoredParity(PACKAGE_ROOT, target("orthographic.camera"));
+
+  test("every upstream member is now declared or justified", () => {
+    expect(report.upstreamMembers).toBe(35);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+  });
+
+  test("the nine exceptions are the three lifecycle hooks and the six dead stubs", () => {
+    const byKind = (kind: string) =>
+      report.parityExceptions.filter((entry) => entry.kind === kind).map((entry) => entry.name);
+    expect(byKind("script-lifecycle")).toEqual(["final", "init", "update"]);
+    expect(byKind("deprecated-stub")).toEqual([
+      "add_projector",
+      "get_projection_id",
+      "send_view_projection",
+      "set_dpi_ratio",
+      "use_projector",
+      "world_to_window",
+    ]);
+    expect(report.parityExceptions.length).toBe(9);
+  });
+
+  // The scope line of this slice, not a restatement of the phantom-field case below:
+  // that one proves a phantom never drags a field score down, this one proves the
+  // callable corrections reached no constant on the way past.
+  test("the field axis did not move: this slice touched one axis", () => {
+    expect(report.fieldCoverage).toBe(0.9474);
+    expect(report.missingFields).toEqual(["MSG_SET_AUTOMATIC_ZOOM"]);
+    expect(report.phantomFields).toEqual(["MSG_USE_PROJECTION", "ORTHOGRAPHIC_RENDER_SCRIPT_USED"]);
+  });
+
+  // `world_to_screen`'s third parameter was silently ignored at runtime — upstream's
+  // body delegates to `camera.world_to_screen(world, component_url)` (camera.lua:730)
+  // and its own `@param` block names two. The count agreeing is what says so.
+  test("the automatic-zoom pair is declared and world_to_screen reads two parameters", () => {
+    const declared = new Set(
+      apiDocElements(target("orthographic.camera"))
+        .filter((element) => element.type === "FUNCTION")
+        .map((element) => element.name),
+    );
+    expect(declared).toContain("get_automatic_zoom");
+    expect(declared).toContain("set_automatic_zoom");
+    for (const dead of ["add_projector", "get_projection_id", "use_projector"]) {
+      expect(declared).not.toContain(dead);
     }
   });
 });
@@ -513,20 +675,37 @@ describe("the two callable-module targets the setmetatable reader lifted", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
+  // The classification the name states is now what the ledger acts on: `M.boom` is the
+  // one member upstream tells a consumer to call, and the other five carry
+  // `-- called from boom.script`. The target reaches a full callable coverage with no
+  // edit to its fork at all, which is the clearest statement of what an entry means.
   test("boom declares one of six, the five lifecycle hooks its script calls being absent", () => {
     const report = buildAuthoredParity(PACKAGE_ROOT, target("boom"));
     expect(report.upstreamMembers).toBe(6);
     expect(report.declaredMembers).toBe(1);
-    expect(report.missingMembers).toEqual(["final", "init", "on_input", "on_message", "update"]);
-    expect(report.callableCoverage).toBe(0.1667);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.parityExceptions.map((entry) => entry.name)).toEqual([
+      "final",
+      "init",
+      "on_input",
+      "on_message",
+      "update",
+    ]);
+    expect(report.parityExceptions.map((entry) => entry.kind)).toEqual(
+      Array(5).fill("script-lifecycle"),
+    );
+    expect(report.callableCoverage).toBe(1);
   });
 
-  // Without the global exclusion this list would hold 87 names upstream really does
-  // define, in `boom/gameobject/gameobject.lua` and its siblings.
+  // The five `--` blocks the reader refuses are exactly the five excepted members, so
+  // the ledger carries as a checkable reason the prose the reader cannot import. Both
+  // terms are recomputed here, so a ledger that quietly declared members would move
+  // them.
   test("boom's ambient globals are counted, not charged to it as invented members", () => {
     const report = buildAuthoredParity(PACKAGE_ROOT, target("boom"));
     expect(report.phantomMembers).toEqual([]);
     expect(report.declaredGlobals).toBe(87);
+    expect(report.refusedDocBlocks).toBe(5);
   });
 });
 
@@ -682,6 +861,8 @@ describe("the artifact shape is diff-stable", () => {
       expect(report.phantomFields).toEqual([...report.phantomFields].sort());
       const names = report.arityMismatches.map((mismatch) => mismatch.name);
       expect(names).toEqual([...names].sort());
+      const excepted = report.parityExceptions.map((entry) => entry.name);
+      expect(excepted).toEqual([...excepted].sort());
     }
   });
 

@@ -5151,9 +5151,46 @@ declares **none** of upstream's 12 constants.
 `boom` is the opposite shape: it declares **one** of the six members
 `boom/boom.lua` defines, the other five being the `final`/`init`/`on_input`/
 `on_message`/`update` lifecycle hooks `boom.script` calls rather than API a user
-writes. The gap is real and recorded, but read it beside `declaredGlobals`: nearly
-the whole library reaches its users as ambient globals, which this axis does not
-measure.
+writes. Those five are justified rather than missing — see below — so the target
+reports `callableCoverage: 1` with no fork edit at all. Read that beside
+`declaredGlobals`: nearly the whole library reaches its users as ambient globals,
+which this axis does not measure.
+
+##### Corrected or justified
+
+Some divergences are not defects. When upstream's own source says a member is not
+for consumers, declaring it would widen the published surface with a function
+nobody should call — so the fork is right to omit it, and the report should say so
+rather than charge it as a gap.
+
+`authored-parity-exceptions.json` is where that is recorded. It maps each namespace
+to an array of `{ name, kind, reason }` entries sorted by `name`. An excepted member
+counts as **correct**, is absent from `missingMembers`, and appears in the artifact's
+`parityExceptions` carrying its reason — so a target that reached `1` by
+justification reads differently from one that reached `1` by declaring everything.
+
+`kind` is a closed set, in the same shape as `parityVerdict`'s `reason`:
+
+| `kind` | When it applies |
+| ------ | --------------- |
+| `script-lifecycle` | Upstream exports the member for the library's own bundled `.script` and says so in its own comment. `boom`'s five hooks carry `-- called from boom.script`; `orthographic.camera`'s `init`, `final` and `update` say *"called automatically from … the camera.script"* in LuaDoc. |
+| `deprecated-stub` | Upstream's body is nothing but `error("… is deprecated")`, so the member cannot succeed if called. `orthographic.camera` keeps ten such one-line stubs; six are excepted here. |
+
+`reason` must cite upstream's file and line, so the entry can be re-checked against
+the pin instead of taken on trust. An arity or phantom exception is deliberately not
+expressible — no kind is added before a real case asks for one.
+
+An entry cannot outlive the defect it justifies. Three throws enforce that, each
+naming the offending entry:
+
+- an unknown `kind`, rejected at parse time;
+- an entry naming a member the pinned upstream does not define — the member was
+  renamed or removed, and the entry is stale;
+- an entry for a member the fork **does** declare — the exception is unnecessary and
+  must be deleted rather than left to rot.
+
+The ledger is not a way to skip a correction. It is the other half of *correct it or
+justify it*, and every entry is a claim about upstream that the next reader can check.
 
 ##### Upstream LuaDoc import
 
@@ -5435,6 +5472,18 @@ singular `target: Hash | Url`. On a file this repo now owns, widening it to
 moves no recorded gate number — the fidelity comparison scores member names, the
 `unknown` token, parameter *count*, return `void`-ness, and optionality, and a
 rename plus a union widening touches none of them.
+
+The third diff is the signature correction, and unlike the second it does move name
+sets. The fork gained `get_automatic_zoom` and `set_automatic_zoom` (live API upstream
+defines and ts-defold never had), lost `add_projector`, `get_projection_id` and
+`use_projector` (deprecated stubs whose upstream body only `error()`s), and
+`world_to_screen` narrowed to the `(camera_id, world)` upstream actually reads — its
+third `adjust_mode` argument was silently ignored at runtime, so narrowing it is
+breaking on purpose. With nine ledger entries covering the withdrawn stubs and the
+three camera.script lifecycle hooks, the target reaches `callableCoverage: 1`. The
+markdown verdict is re-derived over the new export list and lands on the same
+`no-go`: the twenty constants and five functions the README's API table does not
+cover are still the surface loss that drove it.
 
 ### API docs vs. ts-defold-types
 

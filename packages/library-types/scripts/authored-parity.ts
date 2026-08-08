@@ -77,6 +77,11 @@ export interface AuthoredParityReport {
   missingMembers: string[];
   phantomMembers: string[];
   arityMismatches: AuthoredArityMismatch[];
+  /** Upstream members the fork deliberately does not declare, each with the reason
+   * upstream's own source gives. Counted as correct, so a target can reach a full
+   * `callableCoverage` by justification rather than by declaring everything — and named
+   * here, so that justification stays readable instead of vanishing into the ratio. */
+  parityExceptions: AuthoredParityException[];
   /** Upstream prose that reached neither the fork nor the import — a member whose block
    * the reader accepted but which carries no summary to lower, being nothing but tags or
    * nothing but the member's own name. Distinct from `refusedDocBlocks`, where prose does
@@ -274,6 +279,93 @@ export function classifyArity(input: ArityInput): ArityVerdict {
   };
 }
 
+export const AUTHORED_EXCEPTIONS_MANIFEST_FILE = "authored-parity-exceptions.json";
+
+/**
+ * Why the fork is right not to declare an upstream member. Closed, and both members
+ * were introduced by a real case rather than anticipated: a speculative kind would
+ * read as a licence to except anything.
+ *
+ * `script-lifecycle` — upstream exports it for the library's own bundled `.script`,
+ * saying so in its own comment; a consumer never calls it, and declaring it would
+ * widen the published surface with functions no consumer should reach.
+ * `deprecated-stub` — upstream's body is nothing but `error("… is deprecated")`, so
+ * declaring the member offers a call that cannot succeed.
+ *
+ * An arity or phantom exception is deliberately not expressible here. `nakama`'s 26
+ * phantoms are the case that will ask for one, and it states its own shape.
+ */
+export const AUTHORED_EXCEPTION_KINDS = ["deprecated-stub", "script-lifecycle"] as const;
+
+export type AuthoredExceptionKind = (typeof AUTHORED_EXCEPTION_KINDS)[number];
+
+/** One justified divergence. `reason` cites upstream's own file and line, so the
+ * entry can be re-checked against the pin rather than taken on trust. */
+export interface AuthoredParityException {
+  name: string;
+  kind: AuthoredExceptionKind;
+  reason: string;
+}
+
+function exceptionField(entry: Record<string, unknown>, field: string, path: string, at: string) {
+  const value = entry[field];
+  if (typeof value !== "string" || value === "") {
+    throw new Error(`${path}: ${at} needs a non-empty string "${field}", got ${describe(value)}`);
+  }
+  return value;
+}
+
+/**
+ * The exceptions manifest's parse-time contract: a plain object mapping each namespace
+ * to an array of `{ name, kind, reason }` entries. Modelled on `parseAuthoredFloors` —
+ * pure over `raw`, so the caller owns the read — and on the `parityVerdict` closed set,
+ * whose unknown-reason throw this mirrors.
+ */
+export function parseAuthoredExceptions(
+  raw: unknown,
+  path: string,
+): Record<string, AuthoredParityException[]> {
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
+    throw new Error(`${path}: expected a JSON object of exceptions, got ${describe(raw)}`);
+  }
+  const manifest: Record<string, AuthoredParityException[]> = {};
+  for (const [namespace, entries] of Object.entries(raw)) {
+    if (!Array.isArray(entries)) {
+      throw new Error(
+        `${path}: "${namespace}" must be an array of entries, got ${describe(entries)}`,
+      );
+    }
+    manifest[namespace] = entries.map((entry) => {
+      if (entry === null || typeof entry !== "object" || Array.isArray(entry)) {
+        throw new Error(`${path}: "${namespace}" holds a non-object entry ${describe(entry)}`);
+      }
+      const record = entry as Record<string, unknown>;
+      const name = exceptionField(record, "name", path, `an entry of "${namespace}"`);
+      const at = `"${namespace}.${name}"`;
+      const kind = record.kind;
+      if (!AUTHORED_EXCEPTION_KINDS.includes(kind as AuthoredExceptionKind)) {
+        throw new Error(
+          `${path}: ${at} has unknown kind ${describe(kind)} — expected one of ${AUTHORED_EXCEPTION_KINDS.join(", ")}`,
+        );
+      }
+      return {
+        name,
+        kind: kind as AuthoredExceptionKind,
+        reason: exceptionField(record, "reason", path, at),
+      };
+    });
+  }
+  return manifest;
+}
+
+/** The committed ledger, read from the package root the parity pass measures. */
+export function readAuthoredExceptions(
+  packageRoot: string,
+): Record<string, AuthoredParityException[]> {
+  const path = AUTHORED_EXCEPTIONS_MANIFEST_FILE;
+  return parseAuthoredExceptions(JSON.parse(readFileSync(join(packageRoot, path), "utf8")), path);
+}
+
 /**
  * The parity report for one opted-in target, recomputed from the vendored upstream
  * Lua and the committed api-doc. Pure with respect to the working tree: it reads,
@@ -282,6 +374,7 @@ export function classifyArity(input: ArityInput): ArityVerdict {
 export function buildAuthoredParity(
   packageRoot: string,
   target: AuthoredTarget,
+  exceptions: Record<string, AuthoredParityException[]> = readAuthoredExceptions(packageRoot),
 ): AuthoredParityReport {
   const {
     callable: upstream,
@@ -301,7 +394,27 @@ export function buildAuthoredParity(
     declaredVariables,
   });
 
+  // Checked ahead of the loop rather than inside it, so a stale entry throws on the
+  // entry's own terms — an entry naming nothing upstream is never reached by a loop
+  // over upstream members at all.
+  const excepted = new Map<string, AuthoredParityException>();
+  for (const exception of exceptions[target.namespace] ?? []) {
+    const at = `${target.namespace}.${exception.name}`;
+    if (!upstream.has(exception.name)) {
+      throw new Error(
+        `${AUTHORED_EXCEPTIONS_MANIFEST_FILE}: "${at}" excepts a member upstream does not define — delete the entry`,
+      );
+    }
+    if (declared.has(exception.name)) {
+      throw new Error(
+        `${AUTHORED_EXCEPTIONS_MANIFEST_FILE}: "${at}" is unnecessary, the fork declares it — delete the entry`,
+      );
+    }
+    excepted.set(exception.name, exception);
+  }
+
   const missingMembers: string[] = [];
+  const parityExceptions: AuthoredParityException[] = [];
   const arityMismatches: AuthoredArityMismatch[] = [];
   let undocumentedMembers = 0;
   let variadicMembers = 0;
@@ -310,7 +423,12 @@ export function buildAuthoredParity(
   for (const [name, member] of upstream) {
     const match = declared.get(name);
     if (match === undefined) {
-      missingMembers.push(name);
+      const exception = excepted.get(name);
+      if (exception === undefined) missingMembers.push(name);
+      else {
+        parityExceptions.push(exception);
+        correct += 1;
+      }
       continue;
     }
     const upstreamParams = (member.params as string[]).length;
@@ -343,6 +461,7 @@ export function buildAuthoredParity(
     missingMembers: missingMembers.sort(),
     phantomMembers: phantomMembers.sort(),
     arityMismatches: arityMismatches.sort((a, b) => a.name.localeCompare(b.name)),
+    parityExceptions: parityExceptions.sort((a, b) => a.name.localeCompare(b.name)),
     undocumentedMembers,
     importedDocs,
     refusedDocBlocks,

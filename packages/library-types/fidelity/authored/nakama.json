@@ -749,6 +749,7 @@
       "declared": 4
     }
   ],
+  "parityExceptions": [],
   "undocumentedMembers": 5,
   "importedDocs": 134,
   "refusedDocBlocks": 3,
