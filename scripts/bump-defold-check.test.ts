@@ -301,7 +301,9 @@ describe("bump:defold --check command — stale artifact exit code", () => {
       rmSync(freshRoot, { recursive: true, force: true });
       rmSync(staleRoot, { recursive: true, force: true });
     }
-  });
+    // Two full `bun scripts/bump-defold.ts --check` subprocesses: the default
+    // 5s budget is what this costs on a Windows runner, not headroom above it.
+  }, 30_000);
 });
 
 describe("offline discipline", () => {
