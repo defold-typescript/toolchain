@@ -1140,3 +1140,26 @@ you do not select it.
 Cutting the npm release is **decoupled** from the bump: `mise run release` is its
 own networked step, run when you choose to publish. It is not part of completing a
 version bump.
+
+### Knowing a bump is due
+
+Neither `bump:defold --check` nor `release-readiness` looks upstream — both gate
+the evidence for a bump *already made*. The trigger comes from the
+`Defold upstream release check` workflow, which runs weekly and can be dispatched by
+hand:
+
+```sh
+bun run upstream:release-check --json
+```
+
+It resolves the upstream stable channel head (`d.defold.com/stable/info.json`),
+compares it to `CURRENT_STABLE_DEFOLD_VERSION`, and opens a GitHub issue naming
+the transition and the command to run. Drift exits `0` — only an unreachable
+channel fails. Three heads are deliberately ignored: one equal to the pin, one
+*behind* it (a channel rollback would otherwise ask for a downgrade the release
+model cannot express), and any prerelease. The stable channel is the source
+precisely because it never advertises the `-beta`/`-alpha` tags that would
+otherwise fire this every few weeks.
+
+The issue title is keyed on the upstream version alone, so reruns before the bump
+lands find the existing issue instead of filing duplicates.

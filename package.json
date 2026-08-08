@@ -29,6 +29,7 @@
     "ref-doc-delta": "bun --cwd packages/types run ref-doc-delta",
     "import-defold-release": "bun packages/types/scripts/import-defold-release.ts",
     "release-readiness": "bun scripts/defold-release-readiness.ts --check",
+    "upstream:release-check": "bun scripts/defold-upstream-check.ts",
     "changelog:commits": "bun scripts/changelog-commits.ts"
   },
   "devDependencies": {
