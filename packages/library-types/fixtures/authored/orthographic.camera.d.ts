@@ -55,6 +55,24 @@ declare module 'orthographic.camera' {
 	): void;
 
 	/**
+	 * Get if the camera is configured to use automatic zoom level.
+	 * @param camera_id undefined for the first camera
+	 */
+	export function get_automatic_zoom(
+		camera_id: Hash | Url | undefined,
+	): boolean;
+
+	/**
+	 * Set if the camera should use automatic zoom level.
+	 * @param camera_id undefined for the first camera
+	 * @param enabled True if automatic zoom should be enabled
+	 */
+	export function set_automatic_zoom(
+		camera_id: Hash | Url | undefined,
+		enabled: boolean,
+	): void;
+
+	/**
 	 * Shake the camera.
 	 * @param camera_id undefined for the first camera
 	 * @param intensity Intensity of the shake, in percent of screen. Defaults to 0.05
@@ -134,12 +152,6 @@ declare module 'orthographic.camera' {
 	): Matrix4;
 
 	/**
-	 * Get the current projection id of the camera.
-	 * @param camera_id undefined for the first camera
-	 */
-	export function get_projection_id(camera_id: Hash | Url | undefined): Hash;
-
-	/**
 	 * Apply a recoil effect to the camera. The recoil will decay using linear interpolation.
 	 * @param camera_id
 	 * @param offset Offset to apply to the camera. Defaults to 0.05
@@ -214,18 +226,13 @@ declare module 'orthographic.camera' {
 	): Vector4;
 
 	/**
-	 * Translate world coordinates to screen coordinates, based on the view and projection of the camera, optionally taking into account an adjust mode. This is useful when manually culling game objects and you need to determine if a world coordinate will be visible or not. It can also be used to position gui nodes on top of game objects.
+	 * Translate world coordinates to screen coordinates, based on the view and projection of the camera. This is useful when manually culling game objects and you need to determine if a world coordinate will be visible or not. It can also be used to position gui nodes on top of game objects.
 	 * @param camera_id undefined for the first camera
 	 * @param world World coordinates to convert
-	 * @param adjust_mode One of gui.ADJUST_FIT, gui.ADJUST_ZOOM and gui.ADJUST_STRETCH, or undefined to not take into account the adjust mode.
 	 */
 	export function world_to_screen(
 		camera_id: Hash | Url | undefined,
 		world: Vector3,
-		adjust_mode?:
-			| typeof gui.ADJUST_FIT
-			| typeof gui.ADJUST_STRETCH
-			| typeof gui.ADJUST_ZOOM,
 	): Vector3;
 
 	/**
@@ -251,26 +258,6 @@ declare module 'orthographic.camera' {
 		projection: Matrix4,
 		world: Vector3,
 	): Vector3;
-
-	/**
-	 * Add a custom projector that can be used by cameras in your project (see configuration above).
-	 * @param projector_id  Id of the projector. Used as a value in the projection field of the camera script.
-	 * @param projector_fn The function to call when a projection matrix is needed for the camera. The function will receive the id, near_z and far_z values of the camera.
-	 */
-	export function add_projector(
-		projector_id: Hash,
-		projector_fn: (id: Hash, near_z: number, far_z: number) => void,
-	): void;
-
-	/**
-	 * Set a specific projector for a camera. This must be either one of the predefined projectors (see above) or a custom projector added using `camera.add_projector()`.
-	 * @param camera_id undefined for the first camera
-	 * @param projector_id  Id of the projector.
-	 */
-	export function use_projector(
-		camera_id: Hash | Url | undefined,
-		projector_id: Hash,
-	): void;
 
 	/**
 	 * Set window scaling factor (basically retina or no retina screen). There is no built-in way to detect if Defold is running on a retina or non retina screen. This information combined with the High DPI setting in game.project can be used to ensure that the zoom behaves the same way regardless of screen type and High DPI setting. You can use an extension such as DefOS to get the window scaling factor.

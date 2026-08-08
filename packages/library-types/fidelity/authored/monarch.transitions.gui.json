@@ -30,6 +30,7 @@
       "declared": 0
     }
   ],
+  "parityExceptions": [],
   "undocumentedMembers": 0,
   "importedDocs": 1,
   "refusedDocBlocks": 1,

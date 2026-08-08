@@ -45,6 +45,7 @@
       "declared": 1
     }
   ],
+  "parityExceptions": [],
   "undocumentedMembers": 0,
   "importedDocs": 46,
   "refusedDocBlocks": 0,
