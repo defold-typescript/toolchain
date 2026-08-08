@@ -79,6 +79,8 @@ changes are called out first because the toolchain is pre-1.0.
 
 - The [agent runbooks](./agent-runbooks.md) now warn that the script lifecycle factory needs a *value* import — the `import type` plus `declare const` form builds `ok: true` while leaving the hooks unerased — and route Defold's resulting `FORMAT_ERROR` resource cascade back to that fix.
 
+- The [agent runbooks](./agent-runbooks.md) document a new `bun scripts/ratchet-backlog.ts <source>` probe that lists every library-types coverage floor still short of its `1.0` target. The floor gates only catch coverage that *falls*, so a floor parked under target passes silently — the probe is what makes that remaining work visible.
+
 - [`wall`](./wall.md) understands nested walls, so you declare one at the boundary you actually mean instead of at every leaf.
   - **Inheritance** — a wall can be declared on a parent directory that holds no sources of its own, and it narrows every directory beneath it; a subdirectory added later is covered with no second `wall` run.
   - **Override** — a nested wall now fully replaces the one it sits inside, instead of leaving its files in the outer program where their kind's namespaces leaked upward and let `gui.*` type-check inside a `script` wall.
