@@ -1,0 +1,59 @@
+# Checks upstream Defold for a stable release the pinned target has not adopted.
+#
+# Every other workflow here is event-driven, so nothing otherwise looks outward:
+# `bump:defold --check` and `release-readiness` both gate evidence for a bump
+# already made. This is the only job that discovers that a bump is *due*.
+#
+# Two GitHub scheduling facts this depends on: a `schedule:` trigger only ever
+# runs on the default branch (so edits must land on main to take effect), and it
+# is auto-disabled after 60 days without repository activity — `workflow_dispatch`
+# is kept so a maintainer can always run it by hand.
+
+name: Defold upstream release check
+
+on:
+  schedule:
+    # Weekly, Monday 06:00 UTC. Defold cuts stable releases roughly monthly, so
+    # polling harder only spends Actions minutes to learn the same thing.
+    - cron: "0 6 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+
+      # Invoked as a file rather than through `bun run` so nothing but the report
+      # can reach stdout. Exit 1 here means the channel was unreachable, which is
+      # a real failure; drift itself exits 0 and is read out of the JSON below.
+      - name: Resolve the upstream stable head
+        run: bun scripts/defold-upstream-check.ts --json > upstream.json
+
+      - name: Open an issue when the pin has drifted
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cat upstream.json
+          if [ "$(jq -r '.actionable' upstream.json)" != "true" ]; then
+            echo "no actionable drift ($(jq -r '.reason' upstream.json))"
+            exit 0
+          fi
+          title=$(jq -r '.issueTitle' upstream.json)
+          # The title is keyed on the upstream version alone, so this finds the
+          # issue a previous run opened and stays a no-op until the bump lands.
+          existing=$(gh issue list --state open --limit 100 --json number,title \
+            --jq "[.[] | select(.title == \"$title\") | .number] | first // empty")
+          if [ -n "$existing" ]; then
+            echo "already tracked as #$existing"
+            exit 0
+          fi
+          jq -r '.issueBody' upstream.json > issue-body.md
+          gh issue create --title "$title" --body-file issue-body.md
