@@ -2855,6 +2855,26 @@ keep such scripts off the game's Lua build path:
 See the [Helper scripts](./helper-scripts.md) guide for the full rationale and a
 copy-pasteable config.
 
+#### Surface the ratchet backlog
+
+`bun scripts/ratchet-backlog.ts <source>` lists every library-types coverage
+floor still sitting below its `1.0` target, one slot per line, for either
+`fidelity-floor` or `authored-parity-floor`. A line reads
+`<manifest>.json: <key> <axis> <value> (target 1)` — the manifest it came from,
+the artifact whose floor is short, which axis is short, and by how much. No
+output means that manifest is entirely at target.
+
+A below-target floor is **backlog, not a gate failure**. Both floor gates assert
+`coverage >= floor`, so a floor parked under `1.0` keeps passing by
+construction — the ratchet only ever catches coverage that *falls*. That makes
+the remaining climb invisible to CI, which is exactly the gap this probe fills.
+Coverage dropping below its floor still reds the gate immediately, as before.
+
+Run the probe as part of any planning pass that asks "what is left to do?".
+Because the gates stay green, an agent that consults only CI concludes there is
+nothing outstanding; the probe is the signal that says otherwise. Treat a
+printed line as work to schedule, and no output as that manifest being done.
+
 #### Verify against the real API surface
 
 This section governs every runbook below it. Before answering any "how do I…"
