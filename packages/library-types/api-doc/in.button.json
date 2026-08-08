@@ -8,6 +8,8 @@
     {
       "type": "VARIABLE",
       "name": "TOUCH",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]

@@ -8,8 +8,8 @@
     {
       "type": "FUNCTION",
       "name": "play",
-      "brief": "",
-      "description": "",
+      "brief": "Build a sample from a ZzFX parameter list and play it in one call.",
+      "description": "Build a sample from a ZzFX parameter list and play it in one call.",
       "parameters": [
         {
           "name": "args",
@@ -25,8 +25,8 @@
     {
       "type": "FUNCTION",
       "name": "samplerate",
-      "brief": "",
-      "description": "",
+      "brief": "Set the sample rate used to render subsequent samples. Defaults to 44100.",
+      "description": "Set the sample rate used to render subsequent samples. Defaults to 44100.",
       "parameters": [
         {
           "name": "rate",
@@ -42,8 +42,8 @@
     {
       "type": "FUNCTION",
       "name": "play_sample",
-      "brief": "",
-      "description": "",
+      "brief": "Play a sample previously returned by {@link build_sample}.",
+      "description": "Play a sample previously returned by {@link build_sample}.",
       "parameters": [
         {
           "name": "sample",
@@ -59,8 +59,8 @@
     {
       "type": "FUNCTION",
       "name": "build_sample",
-      "brief": "",
-      "description": "",
+      "brief": "Build a reusable sample from a ZzFX parameter list, without playing it.",
+      "description": "Build a reusable sample from a ZzFX parameter list, without playing it.",
       "parameters": [
         {
           "name": "args",

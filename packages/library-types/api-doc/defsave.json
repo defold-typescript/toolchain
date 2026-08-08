@@ -8,6 +8,8 @@
     {
       "type": "VARIABLE",
       "name": "autosave",
+      "brief": "Set to true to autosave all loaded files that are changed on a timer",
+      "description": "Set to true to autosave all loaded files that are changed on a timer",
       "types": [
         "boolean"
       ]
@@ -15,6 +17,8 @@
     {
       "type": "VARIABLE",
       "name": "autosave_timer",
+      "brief": "Amount of seconds between autosaves if changes have been made",
+      "description": "Amount of seconds between autosaves if changes have been made",
       "types": [
         "number"
       ]
@@ -22,6 +26,8 @@
     {
       "type": "VARIABLE",
       "name": "timer",
+      "brief": "Current timer value, only increases if autosave is enabled",
+      "description": "Current timer value, only increases if autosave is enabled",
       "types": [
         "number"
       ]
@@ -29,6 +35,8 @@
     {
       "type": "VARIABLE",
       "name": "changed",
+      "brief": "Locally used but can be useful to have exposed",
+      "description": "Locally used but can be useful to have exposed",
       "types": [
         "boolean"
       ]
@@ -36,6 +44,8 @@
     {
       "type": "VARIABLE",
       "name": "verbose",
+      "brief": "If true then more information will be printed, such as autosaves",
+      "description": "If true then more information will be printed, such as autosaves",
       "types": [
         "boolean"
       ]
@@ -43,6 +53,8 @@
     {
       "type": "VARIABLE",
       "name": "block_reloading",
+      "brief": "If true then files already loaded will never be overwritten with a reload",
+      "description": "If true then files already loaded will never be overwritten with a reload",
       "types": [
         "boolean"
       ]
@@ -50,6 +62,8 @@
     {
       "type": "VARIABLE",
       "name": "appname",
+      "brief": "Determines part of the path for saving files to",
+      "description": "Determines part of the path for saving files to",
       "types": [
         "string"
       ]
@@ -57,6 +71,8 @@
     {
       "type": "VARIABLE",
       "name": "loaded",
+      "brief": "List of files currently loaded",
+      "description": "List of files currently loaded",
       "types": [
         "LuaMap<string, unknown>"
       ]
@@ -64,6 +80,8 @@
     {
       "type": "VARIABLE",
       "name": "sysinfo",
+      "brief": "System information captured at module load",
+      "description": "System information captured at module load",
       "types": [
         "ReturnType<typeof sys.get_sys_info>"
       ]
@@ -71,6 +89,8 @@
     {
       "type": "VARIABLE",
       "name": "use_default_data",
+      "brief": "If true will attempt to load default data from the default_data table when loading an empty file",
+      "description": "If true will attempt to load default data from the default_data table when loading an empty file",
       "types": [
         "boolean"
       ]
@@ -78,6 +98,8 @@
     {
       "type": "VARIABLE",
       "name": "enable_encryption",
+      "brief": "If true then all data saved and loaded will be encrypted with AES - SLOWER",
+      "description": "If true then all data saved and loaded will be encrypted with AES - SLOWER",
       "types": [
         "boolean"
       ]
@@ -85,6 +107,8 @@
     {
       "type": "VARIABLE",
       "name": "encryption_key",
+      "brief": "Pick an encryption key to use if you're using encryption",
+      "description": "Pick an encryption key to use if you're using encryption",
       "types": [
         "string"
       ]
@@ -92,6 +116,8 @@
     {
       "type": "VARIABLE",
       "name": "enable_obfuscation",
+      "brief": "If true then all data saved and loaded will be XOR obfuscated - FASTER",
+      "description": "If true then all data saved and loaded will be XOR obfuscated - FASTER",
       "types": [
         "boolean"
       ]
@@ -99,6 +125,8 @@
     {
       "type": "VARIABLE",
       "name": "obfuscation_key",
+      "brief": "Pick an obfuscation key to use if you're using obfuscation; the longer the key the better",
+      "description": "Pick an obfuscation key to use if you're using obfuscation; the longer the key the better",
       "types": [
         "string"
       ]
@@ -106,6 +134,8 @@
     {
       "type": "VARIABLE",
       "name": "use_serialize",
+      "brief": "If true then data is serialized with sys.serialize rather than encoded as JSON",
+      "description": "If true then data is serialized with sys.serialize rather than encoded as JSON",
       "types": [
         "boolean"
       ]
@@ -113,6 +143,8 @@
     {
       "type": "VARIABLE",
       "name": "default_data",
+      "brief": "Default data to set files to if any cannot be loaded",
+      "description": "Default data to set files to if any cannot be loaded",
       "types": [
         "LuaMap<string, unknown>"
       ]

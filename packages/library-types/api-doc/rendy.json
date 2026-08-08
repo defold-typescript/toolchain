@@ -12,6 +12,8 @@
     {
       "type": "VARIABLE",
       "name": "cameras",
+      "brief": "Every camera except the GUI camera, keyed by camera id. Exposed only because the",
+      "description": "Every camera except the GUI camera, keyed by camera id. Exposed only because the\nrendy.render_script file needs write-access to it; reach for `set` and `get`\nrather than accessing or manipulating it directly.",
       "types": [
         "LuaMap<CameraId, unknown>"
       ]
@@ -19,6 +21,8 @@
     {
       "type": "VARIABLE",
       "name": "display_width",
+      "brief": "Initial width of the window, specified in the game.project file. Exposed only",
+      "description": "Initial width of the window, specified in the game.project file. Exposed only\nbecause the rendy.render_script file needs write-access to it; it is unset until\nthat script has run.",
       "types": [
         "number"
       ]
@@ -26,6 +30,8 @@
     {
       "type": "VARIABLE",
       "name": "display_height",
+      "brief": "Initial height of the window, specified in the game.project file. Exposed only",
+      "description": "Initial height of the window, specified in the game.project file. Exposed only\nbecause the rendy.render_script file needs write-access to it; it is unset until\nthat script has run.",
       "types": [
         "number"
       ]
@@ -33,6 +39,8 @@
     {
       "type": "VARIABLE",
       "name": "window_width",
+      "brief": "Current width of the window. Exposed only because the rendy.render_script file",
+      "description": "Current width of the window. Exposed only because the rendy.render_script file\nneeds write-access to it; it is unset until that script has run.",
       "types": [
         "number"
       ]
@@ -40,6 +48,8 @@
     {
       "type": "VARIABLE",
       "name": "window_height",
+      "brief": "Current height of the window. Exposed only because the rendy.render_script file",
+      "description": "Current height of the window. Exposed only because the rendy.render_script file\nneeds write-access to it; it is unset until that script has run.",
       "types": [
         "number"
       ]

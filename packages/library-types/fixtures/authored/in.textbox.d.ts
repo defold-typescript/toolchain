@@ -18,6 +18,10 @@ declare module 'in.textbox' {
 	): Opaque<"node">;
 	export function unregister(node_or_string?: Opaque<"node"> | string): void;
 	export function effect(node: Opaque<"node">, scale: { x: number; y: number }): void;
+	/**
+	 * Get a registered textbox's text, or set it first when `text` is given.
+	 * Returns the text the box holds after the call.
+	 */
 	export function text(
 		node_or_string: Opaque<"node"> | string,
 		text?: string,

@@ -88,6 +88,10 @@ declare module 'monarch.monarch' {
 	};
 
 	// listener messages
+	/**
+	 * Sent to every url registered with `add_listener` when a screen begins
+	 * transitioning in, carrying `screen` and `previous_screen` ids.
+	 */
 	export const SCREEN_TRANSITION_IN_STARTED: Hash;
 	export const SCREEN_TRANSITION_IN_FINISHED: Hash;
 	export const SCREEN_TRANSITION_OUT_STARTED: Hash;

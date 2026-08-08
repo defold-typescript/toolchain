@@ -688,6 +688,8 @@
     {
       "type": "VARIABLE",
       "name": "ALIGN_LEFT",
+      "brief": "",
+      "description": "",
       "types": [
         "Alignment"
       ]
@@ -695,6 +697,8 @@
     {
       "type": "VARIABLE",
       "name": "ALIGN_CENTER",
+      "brief": "",
+      "description": "",
       "types": [
         "Alignment"
       ]
@@ -702,6 +706,8 @@
     {
       "type": "VARIABLE",
       "name": "ALIGN_RIGHT",
+      "brief": "",
+      "description": "",
       "types": [
         "Alignment"
       ]
@@ -709,6 +715,8 @@
     {
       "type": "VARIABLE",
       "name": "ALIGN_JUSTIFY",
+      "brief": "",
+      "description": "",
       "types": [
         "Alignment"
       ]
@@ -716,6 +724,8 @@
     {
       "type": "VARIABLE",
       "name": "VALIGN_TOP",
+      "brief": "",
+      "description": "",
       "types": [
         "VAlignment"
       ]
@@ -723,6 +733,8 @@
     {
       "type": "VARIABLE",
       "name": "VALIGN_MIDDLE",
+      "brief": "",
+      "description": "",
       "types": [
         "VAlignment"
       ]
@@ -730,6 +742,8 @@
     {
       "type": "VARIABLE",
       "name": "VALIGN_BOTTOM",
+      "brief": "",
+      "description": "",
       "types": [
         "VAlignment"
       ]

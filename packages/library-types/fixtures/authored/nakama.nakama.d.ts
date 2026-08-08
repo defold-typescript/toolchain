@@ -69,8 +69,18 @@ declare module 'nakama.nakama' {
   export const APISTOREPROVIDER_HUAWEI_APP_GALLERY: "HUAWEI_APP_GALLERY";
   export const APISTOREPROVIDER_FACEBOOK_INSTANT_STORE: "FACEBOOK_INSTANT_STORE";
 
+  /** Cancel a token, stopping the API calls it was passed to. */
   export function cancel(token: CancellationToken): void;
+  /**
+   * Create a cancellation token. Pass it to {@link sync} or to any API call to be
+   * able to cancel an ongoing call, or a whole sequence of them, later.
+   */
   export function cancellation_token(): CancellationToken;
+  /**
+   * Run `fn` inside a coroutine, so the API calls it makes can yield.
+   * @param fn The code to run.
+   * @param cancellation_token Optional token that cancels the running code.
+   */
   export function sync(fn: () => void, cancellation_token?: CancellationToken): void;
   export function create_group_user_list_group_user(state_int: number, user_api_user: unknown): void;
   export function create_user_group_list_user_group(group_api_group: unknown, state_int: number): void;

@@ -173,32 +173,30 @@ describe("upstream LuaDoc import at api-doc lowering", () => {
     }
   });
 
-  // The importer's opt-out is documented as "an element the fork gave either a `brief`
-  // or a `description` is returned untouched", and it does not work on the field axis:
-  // `extractApiDoc` carries a doc comment onto a `FUNCTION` element and never onto a
-  // `VARIABLE` one, so a constant the fork documents still arrives here with no prose
-  // and still imports. nakama's three run-leading constants are the corpus's only case,
-  // and what they import is upstream's LuaDoc *heading* — a snake_case type name, which
-  // `withoutNameLine` does not strip because it is not the member's own name.
-  //
-  // This pins the defect rather than the intent. Fixing `extract-api-doc.ts` reds it,
-  // which is correct: the fix has to re-record what these three publish.
-  test("a fork doc-comment on a constant does not opt the member out of the import", () => {
+  // The importer's opt-out is "an element the fork gave either a `brief` or a
+  // `description` is returned untouched", and it now works on the field axis too:
+  // `extractApiDoc` carries a doc comment onto a `VARIABLE` element as well as a
+  // `FUNCTION` one, so a constant the fork documents keeps the fork's words. nakama's
+  // three run-leading constants are the corpus's only case; each used to import
+  // upstream's LuaDoc *heading* instead — a snake_case type name `withoutNameLine`
+  // does not strip, because it is not the member's own name.
+  test("a fork doc-comment on a constant opts the member out of the import", () => {
     const documented = extractApiDoc(
       `declare module "x.y" {\n  /** A documented constant. */\n  export const A: number;\n}\n`,
       "x.y",
     ) as { elements: { name: string; brief?: string; description?: string }[] };
     const a = documented.elements.find((element) => element.name === "A");
-    expect(a).toBeDefined();
-    expect(a?.brief).toBeUndefined();
-    expect(a?.description).toBeUndefined();
+    expect(a?.brief).toBe("A documented constant.");
+    expect(a?.description).toBe("A documented constant.");
 
     const operator = element(authoredTarget("nakama"), "APIOPERATOR_NO_OVERRIDE");
-    expect(operator.docSource).toBe("upstream");
-    expect(operator.brief).toBe("api_operator");
+    expect(operator.docSource).toBeUndefined();
+    expect(operator.brief).toBe(
+      "Operator that can be used to override the one set in the leaderboard.",
+    );
   });
 
-  test("the whole corpus imports 257 briefs across 14 targets", () => {
+  test("the whole corpus imports 254 briefs across 14 targets", () => {
     const counts = readAuthoredTargets(PACKAGE_ROOT)
       .map((target) => ({
         namespace: target.namespace,
@@ -206,7 +204,7 @@ describe("upstream LuaDoc import at api-doc lowering", () => {
       }))
       .filter((entry) => entry.imported > 0);
     expect(counts.length).toBe(14);
-    expect(counts.reduce((sum, entry) => sum + entry.imported, 0)).toBe(257);
+    expect(counts.reduce((sum, entry) => sum + entry.imported, 0)).toBe(254);
   });
 });
 
