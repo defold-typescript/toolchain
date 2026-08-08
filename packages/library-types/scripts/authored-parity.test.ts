@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import {
   AUTHORED_EXCEPTIONS_MANIFEST_FILE,
@@ -354,12 +355,18 @@ describe("the field axis compares the non-callable surface", () => {
     expect(report.fieldCoverage).toBe(1);
   });
 
-  test("platypus pairs its perfect callable coverage with a real field gap", () => {
+  // The corpus's most field-heavy target: fourteen constants around a single
+  // `create`, so a module can be almost entirely non-callable and still be measured
+  // on both axes rather than read through the one member the callable axis sees.
+  test("platypus declares both separation modes beside its single callable member", () => {
     const report = buildAuthoredParity(PACKAGE_ROOT, target("platypus"));
-    expect(report.callableCoverage).toBe(1);
     expect(report.upstreamFields).toBe(14);
-    expect(report.missingFields).toEqual(["SEPARATION_RAYS", "SEPARATION_SHAPES"]);
-    expect(report.fieldCoverage).toBe(0.8571);
+    expect(report.declaredFields).toBe(14);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.fieldCoverage).toBe(1);
+    expect(report.upstreamMembers).toBe(1);
+    expect(report.callableCoverage).toBe(1);
   });
 
   test("in.triggers agrees on all 168 fields, so a large surface can still score 1", () => {
@@ -370,15 +377,54 @@ describe("the field axis compares the non-callable surface", () => {
     expect(report.fieldCoverage).toBe(1);
   });
 
-  // The only target carrying genuine phantoms *and* a missing field at once: names
-  // the fork invented that upstream has in neither half, beside a real gap. Coverage
-  // stays the missing-side fraction (18 of 19), so a phantom cannot drag a field
-  // score down the way a missing member does.
-  test("orthographic.camera reports invented fields without charging them to coverage", () => {
+  // The corpus's last two invented field names — `MSG_USE_PROJECTION` and
+  // `ORTHOGRAPHIC_RENDER_SCRIPT_USED`, neither of which the pinned `camera.lua`
+  // defines anywhere — were deleted rather than excepted, so both name sets are now
+  // empty at once. The pair is re-checked against the fork text below, because an
+  // empty `phantomFields` alone cannot tell a deleted declaration from a name the
+  // reader stopped seeing.
+  test("orthographic.camera declares upstream's nineteen constants and invents none", () => {
     const report = buildAuthoredParity(PACKAGE_ROOT, target("orthographic.camera"));
-    expect(report.missingFields).toEqual(["MSG_SET_AUTOMATIC_ZOOM"]);
-    expect(report.phantomFields).toEqual(["MSG_USE_PROJECTION", "ORTHOGRAPHIC_RENDER_SCRIPT_USED"]);
-    expect(report.fieldCoverage).toBe(0.9474);
+    expect(report.upstreamFields).toBe(19);
+    expect(report.declaredFields).toBe(19);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  // Upstream defines each transition and focus hash twice — flat at
+  // `monarch.lua:25-33` and again as the `M.TRANSITION.*`/`M.FOCUS.*` grouping at
+  // `:1369-1386`, where every grouped form carries `--- @deprecated`. The fork had
+  // only the deprecated grouping, so the gap was an inversion rather than an
+  // omission: the seven live names are declared and the grouping stays, upstream
+  // still defining it.
+  test("monarch.monarch declares the live transition and focus hashes it inverted", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("monarch.monarch"));
+    expect(report.upstreamFields).toBe(15);
+    expect(report.declaredFields).toBe(15);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.fieldCoverage).toBe(1);
+    // The term counts upstream comment blocks, so declaring members beneath the
+    // `-- transition messages` / `-- focus messages` headers must charge no new
+    // prose loss. Asserted from the same pass rather than assumed.
+    expect(report.refusedDocBlocks).toBe(6);
+  });
+
+  // `register` is upstream's `M.register = M.register_proxy` (`monarch.lua:292`) — a
+  // field whose *value* is a function. Declaring it `export function register` would
+  // also empty `missingFields` and also read `fieldCoverage: 1`, while leaving
+  // `declaredFields` at 14 and pushing the name onto the callable axis as a phantom
+  // member. All three terms come from one pass over the real artifact.
+  test("monarch's register alias is declared on the field axis, not the callable one", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("monarch.monarch"));
+    expect(report.declaredFields).toBe(15);
+    expect(report.declaredMembers).toBe(36);
+    expect(report.upstreamMembers).toBe(36);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
   });
 
   test("an empty upstream field surface scores 1, as the callable axis already does", () => {
@@ -438,30 +484,114 @@ describe("the constants the metrics and dicebag forks left undeclared", () => {
   });
 });
 
-// The boundary against the sibling goal: three targets below 1 on the field axis that
-// this slice does not edit. An edit that wandered into one of them reds here, since
-// every figure is asserted exactly rather than as a floor.
-describe("the field correction stops at the three partially-covered targets", () => {
-  test("monarch.monarch, platypus and orthographic.camera are unmoved on both axes", () => {
-    const monarch = buildAuthoredParity(PACKAGE_ROOT, target("monarch.monarch"));
-    expect(monarch.declaredFields).toBe(7);
-    expect(monarch.missingFields.length).toBe(8);
-    expect(monarch.fieldCoverage).toBe(0.4667);
-    expect(monarch.callableCoverage).toBe(1);
+// What the three per-target assertions above become once none of them is a special
+// case: every target the lane measures — those declaring `upstreamLua` rather than a
+// `parityVerdict` — declares every constant its pinned upstream defines. Stated at
+// corpus scope on purpose. Per-target floors accept a new fork at whatever value it
+// happens to measure, so a library added tomorrow with an unexplained field gap would
+// pass every figure above while this reds and names it.
+describe("no measured target sits below 1 on the field axis", () => {
+  const reports = authoredParityTargets(PACKAGE_ROOT).map((entry) =>
+    buildAuthoredParity(PACKAGE_ROOT, entry),
+  );
 
-    const platypus = buildAuthoredParity(PACKAGE_ROOT, target("platypus"));
-    expect(platypus.missingFields).toEqual(["SEPARATION_RAYS", "SEPARATION_SHAPES"]);
-    expect(platypus.fieldCoverage).toBe(0.8571);
-    expect(platypus.callableCoverage).toBe(1);
+  test("the corpus is non-empty, so the invariant cannot hold vacuously", () => {
+    expect(reports.length).toBeGreaterThan(0);
+    expect(reports.some((report) => report.upstreamFields > 0)).toBe(true);
+  });
 
-    const orthographic = buildAuthoredParity(PACKAGE_ROOT, target("orthographic.camera"));
-    expect(orthographic.missingFields).toEqual(["MSG_SET_AUTOMATIC_ZOOM"]);
-    expect(orthographic.phantomFields).toEqual([
-      "MSG_USE_PROJECTION",
-      "ORTHOGRAPHIC_RENDER_SCRIPT_USED",
-    ]);
-    expect(orthographic.fieldCoverage).toBe(0.9474);
-    expect(orthographic.callableCoverage).toBe(1);
+  test("every target declares every constant its upstream defines", () => {
+    const below = reports
+      .filter((report) => report.missingFields.length > 0 || report.fieldCoverage !== 1)
+      .map(
+        (report) =>
+          `${report.namespace}: ${report.fieldCoverage} over ${report.upstreamFields} upstream fields — missing ${report.missingFields.join(", ") || "none"}`,
+      );
+    expect(below).toEqual([]);
+  });
+
+  // The other half of the axis, censused rather than asserted empty: `bzAnim` declares
+  // three constants its README names and `bzLibrary.lua` defines nowhere, which is a
+  // correction of its own and not this one. Named here so it stays visible and so a
+  // *new* invented name cannot arrive unremarked behind a corpus-wide zero that was
+  // never true.
+  test("bzAnim's three README constants are the corpus's only invented fields", () => {
+    const inventing = Object.fromEntries(
+      reports
+        .filter((report) => report.phantomFields.length > 0)
+        .map((report) => [report.namespace, report.phantomFields]),
+    );
+    expect(inventing).toEqual({ bzAnim: ["DEBUG_LEVEL", "INFO_LEVEL", "TRACE_LEVEL"] });
+  });
+});
+
+// `orthographic.camera` was the corpus's witness for this until its two invented names
+// were deleted. `bzAnim` still carries three, but its `upstreamFields` is 0, so its
+// score of 1 comes from the empty-surface guard rather than from the formula — leaving
+// the formula's phantom-independence with no measured case at all, and a production
+// edit charging phantoms to `fieldCoverage` would pass every corpus assertion above.
+// The figure is computed inside `buildAuthoredParity` rather than in a pure helper, so
+// the corner is pinned by driving that function over a synthetic target instead of by
+// restating its formula.
+describe("a phantom field enters neither side of the coverage figure", () => {
+  const SYNTHETIC_UPSTREAM = ["KEPT", "ALSO_KEPT", "THIRD"];
+
+  function syntheticReport(declared: string[]) {
+    const root = mkdtempSync(join(tmpdir(), "authored-parity-field-axis-"));
+    mkdirSync(join(root, "api-doc"), { recursive: true });
+    mkdirSync(join(root, "upstream"), { recursive: true });
+    const lua = [
+      "local M = {}",
+      ...SYNTHETIC_UPSTREAM.map((n) => `M.${n} = hash("${n}")`),
+      "return M",
+    ];
+    writeFileSync(join(root, "upstream/mod.lua"), `${lua.join("\n")}\n`);
+    writeFileSync(
+      join(root, "api-doc/mod.json"),
+      JSON.stringify({ elements: declared.map((name) => ({ type: "VARIABLE", name })) }),
+    );
+    return buildAuthoredParity(
+      root,
+      {
+        repo: "",
+        ref: "",
+        license: "",
+        authored: "fixtures/authored/mod.d.ts",
+        moduleId: "mod",
+        namespace: "mod",
+        generated: "generated/mod.d.ts",
+        apiDoc: "api-doc/mod.json",
+        fidelity: "fidelity/mod.json",
+        upstreamLua: ["upstream/mod.lua"],
+      },
+      {},
+    );
+  }
+
+  test("the synthetic surface reads back as three upstream fields, so the corner is real", () => {
+    const report = syntheticReport(SYNTHETIC_UPSTREAM);
+    expect(report.upstreamFields).toBe(3);
+    expect(report.declaredFields).toBe(3);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  test("an invented name is reported without moving a full score off 1", () => {
+    const report = syntheticReport([...SYNTHETIC_UPSTREAM, "INVENTED"]);
+    expect(report.phantomFields).toEqual(["INVENTED"]);
+    expect(report.missingFields).toEqual([]);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  // The discriminating case: one missing name and one invented one over three upstream
+  // fields. The score is the missing-side fraction 2/3 — charging the phantom would
+  // read 1/3, and taking the denominator from the declared side would read 2/3 only by
+  // coincidence, which the asymmetric counts here rule out.
+  test("a missing name and an invented one score the missing side alone", () => {
+    const report = syntheticReport(["KEPT", "ALSO_KEPT", "INVENTED"]);
+    expect(report.missingFields).toEqual(["THIRD"]);
+    expect(report.phantomFields).toEqual(["INVENTED"]);
+    expect(report.declaredFields).toBe(3);
+    expect(report.fieldCoverage).toBe(0.6667);
   });
 });
 
@@ -1136,13 +1266,14 @@ describe("orthographic.camera declares upstream's live surface and none of its d
     expect(report.parityExceptions.length).toBe(9);
   });
 
-  // The scope line of this slice, not a restatement of the phantom-field case below:
-  // that one proves a phantom never drags a field score down, this one proves the
-  // callable corrections reached no constant on the way past.
-  test("the field axis did not move: this slice touched one axis", () => {
-    expect(report.fieldCoverage).toBe(0.9474);
-    expect(report.missingFields).toEqual(["MSG_SET_AUTOMATIC_ZOOM"]);
-    expect(report.phantomFields).toEqual(["MSG_USE_PROJECTION", "ORTHOGRAPHIC_RENDER_SCRIPT_USED"]);
+  // The nine exceptions are a callable-axis instrument and stay one: the field
+  // correction that closed this target's constants neither added an entry nor made an
+  // existing one unnecessary, which the ledger would have thrown on outright.
+  test("closing the field axis left the callable exceptions untouched", () => {
+    expect(report.fieldCoverage).toBe(1);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.parityExceptions.length).toBe(9);
   });
 
   // `world_to_screen`'s third parameter was silently ignored at runtime — upstream's

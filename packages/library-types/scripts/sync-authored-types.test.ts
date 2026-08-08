@@ -1513,6 +1513,9 @@ describe("platypus.platypus migration integrity", () => {
     "WALL_SLIDE",
   ];
   const DIRECTIONS = ["DIR_UP", "DIR_LEFT", "DIR_RIGHT", "DIR_DOWN", "DIR_ALL"];
+  // Also `Hash`-typed, and declared by the field correction rather than by the
+  // severance, so the exhaustive count below is over both runs.
+  const SEPARATION_MODES = ["SEPARATION_RAYS", "SEPARATION_SHAPES"];
 
   test("platypus is registered in authored-targets.json under its bare namespace", () => {
     const targets = readAuthoredTargets(PACKAGE_ROOT);
@@ -1564,7 +1567,9 @@ describe("platypus.platypus migration integrity", () => {
     expect(fork).toContain("move(velocity: Vector3): void;");
     expect(fork).toContain("offset?: Vector3;");
     expect(fork).toContain("on_message(message_id: Hash, message: AnyNotNil): void;");
-    expect(fork.match(/export const \w+: Hash;/g)?.length).toBe(MESSAGE_HASHES.length);
+    expect(fork.match(/export const \w+: Hash;/g)?.length).toBe(
+      MESSAGE_HASHES.length + SEPARATION_MODES.length,
+    );
     expect(fork).not.toContain(": hash");
     expect(fork).not.toContain("vmath.vector3");
   });
@@ -1584,7 +1589,7 @@ describe("platypus.platypus migration integrity", () => {
       expect(fork).toMatch(new RegExp(`\\b${method}\\(`));
     }
     expect(fork).toContain("export function create(config: PlatypusConfig): PlatypusInstance;");
-    for (const constant of MESSAGE_HASHES) {
+    for (const constant of [...MESSAGE_HASHES, ...SEPARATION_MODES]) {
       expect(fork).toContain(`export const ${constant}: Hash;`);
     }
     for (const constant of DIRECTIONS) {

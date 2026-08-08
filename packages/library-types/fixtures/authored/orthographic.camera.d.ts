@@ -275,8 +275,6 @@ declare module 'orthographic.camera' {
 	export const SHAKE_VERTICAL: Hash;
 	export const SHAKE_HORIZONTAL: Hash;
 
-	export const ORTHOGRAPHIC_RENDER_SCRIPT_USED: boolean;
-
 	export const MSG_DISABLE: Hash;
 	export const MSG_UNFOLLOW: Hash;
 	export const MSG_FOLLOW: Hash;
@@ -289,7 +287,8 @@ declare module 'orthographic.camera' {
 	export const MSG_BOUNDS: Hash;
 	export const MSG_UPDATE_CAMERA: Hash;
 	export const MSG_ZOOM_TO: Hash;
-	export const MSG_USE_PROJECTION: Hash;
+	/** Posted to a camera to turn automatic zoom on or off. */
+	export const MSG_SET_AUTOMATIC_ZOOM: Hash;
 	export const MSG_VIEWPORT: Hash;
 	export const MSG_ENABLE: Hash;
 }
