@@ -96,7 +96,7 @@
     "field": 1
   },
   "fidelity/authored/nakama.json": {
-    "callable": 0.0256,
+    "callable": 1,
     "field": 0
   },
   "fidelity/authored/nakama.util.log.json": {

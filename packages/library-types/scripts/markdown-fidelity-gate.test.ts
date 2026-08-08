@@ -1597,11 +1597,12 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "de1ba409e454a8edf72e6ec4a255d4299ff3e7d55bbc0133a04abd7b04de8d51",
   // The one entry whose verdict comes from the openapi lane rather than
   // markdown: `openapi-fidelity-gate.test.ts` scores this fork against the
-  // pinned swagger + proto and records `no-go`. Pinned in the same commit as the
-  // severance that moved it here, so the digest describes the snapshot the
-  // verdict was measured on.
+  // pinned swagger + proto and records `no-go`. Re-pinned with the signature
+  // correction that took the fork to upstream's own 156 members, in the same
+  // commit and after that gate was re-derived against the edited fork: the
+  // decision held and its missing set narrowed to the client-lifecycle helpers.
   "fixtures/authored/nakama.nakama.d.ts":
-    "20c6fc93273c7de321d19de8803bc8895d0cb7f46d5f9fbc0b62a5e77f900031",
+    "a2840297b03d550eccc800bce19306b0f3ea0a45a2ca9f4537015ab6982f9f35",
   "fixtures/authored/richtext.color.d.ts":
     "fdacac61ee40f105f63c7a15745520630818b9d14ee0ffa077912f899b2f1999",
   "fixtures/authored/richtext.richtext.d.ts":

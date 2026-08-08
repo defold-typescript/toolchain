@@ -28,6 +28,7 @@ interface ApiDocElement {
   type: string;
   name: string;
   global?: boolean;
+  parameters?: unknown[];
 }
 
 function apiDocElements(entry: AuthoredTarget): ApiDocElement[] {
@@ -259,19 +260,38 @@ describe("yagames declares the whole callable surface yagames.lua defines", () =
   });
 });
 
+// The corpus's worst case, and the last target below 1: `nakama` scored 0.0256 over 4 of
+// 156 agreeing members, declared 26 names the pinned module never exported — `socket_send`
+// among them, reachable only through `nakama.socket`, which this target does not vendor —
+// and left 16 upstream members undeclared. Every one of the three is now a correction
+// rather than a figure, so the assertions state what the fork reaches instead.
 describe("the nakama core parity findings", () => {
   const report = buildAuthoredParity(PACKAGE_ROOT, target("nakama"));
 
-  test("the fork declares members upstream does not have", () => {
-    expect(report.phantomMembers).toContain("socket_send");
-    expect(report.phantomMembers).toContain("create_match_create_message");
+  test("the fork declares exactly the callable surface the pinned module exports", () => {
+    expect(report.upstreamMembers).toBe(156);
+    expect(report.declaredMembers).toBe(156);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
   });
 
-  test("almost nothing in the fork matches upstream arity", () => {
-    expect(report.upstreamMembers).toBe(156);
-    expect(report.declaredMembers).toBe(166);
-    expect(report.arityMismatches.length).toBe(136);
-    expect(report.callableCoverage).toBeLessThan(0.03);
+  // Nothing here is justified rather than declared: the rollout anticipated `nakama`
+  // asking the ledger for an arity or phantom kind, and correcting the fork per member
+  // is what makes that unnecessary.
+  test("the coverage is reached by correction, with no ledger entry", () => {
+    expect(report.parityExceptions).toEqual([]);
+  });
+
+  // The one door upstream exposes to the realtime surface, kept while the 26 members
+  // that pretended to be on this module go.
+  test("socket_send is gone and create_socket stays", () => {
+    const declared = apiDocElements(target("nakama"))
+      .filter((element) => element.type === "FUNCTION")
+      .map((element) => element.name);
+    expect(declared).not.toContain("socket_send");
+    expect(declared).toContain("create_socket");
   });
 });
 
@@ -299,11 +319,16 @@ describe("a callable coverage figure cannot be read as completeness", () => {
     expect(thin).toContain("platypus");
   });
 
-  test("nakama gains the field count without moving its recorded coverage", () => {
+  // The signature rollout took the callable axis to 1 and left the field axis exactly
+  // where it was, which is the scope line the two axes exist to keep visible: twelve
+  // upstream constants, none of them declared.
+  test("nakama pairs a full callable coverage with a field axis that never moved", () => {
     const report = buildAuthoredParity(PACKAGE_ROOT, target("nakama"));
     expect(report.upstreamFields).toBe(12);
     expect(report.upstreamMembers).toBe(156);
-    expect(report.callableCoverage).toBeLessThan(0.03);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.missingFields.length).toBe(12);
+    expect(report.fieldCoverage).toBe(0);
   });
 });
 
@@ -441,16 +466,32 @@ describe("the either-side rule holds on name sets the corpus never produces", ()
 // scalars that no correction can take away.
 describe("a variadic upstream member is measured against a floor, not a count", () => {
   test("a non-variadic member still agrees on an exact count and disagrees otherwise", () => {
-    expect(classifyArity({ upstreamNamed: 2, upstreamVariadic: false, declared: [2] })).toEqual({
+    expect(
+      classifyArity({
+        upstreamNamed: 2,
+        upstreamVariadic: false,
+        upstreamPlaceholder: false,
+        declared: [2],
+      }),
+    ).toEqual({
       agrees: true,
       floorChecked: false,
       overloadChecked: false,
+      placeholderChecked: false,
       declaredWidest: 2,
     });
-    expect(classifyArity({ upstreamNamed: 2, upstreamVariadic: false, declared: [1] })).toEqual({
+    expect(
+      classifyArity({
+        upstreamNamed: 2,
+        upstreamVariadic: false,
+        upstreamPlaceholder: false,
+        declared: [1],
+      }),
+    ).toEqual({
       agrees: false,
       floorChecked: false,
       overloadChecked: false,
+      placeholderChecked: false,
       declaredWidest: 1,
     });
   });
@@ -458,43 +499,83 @@ describe("a variadic upstream member is measured against a floor, not a count", 
   test("a variadic member with no named parameters agrees at any declared count", () => {
     for (const declared of [0, 1, 4]) {
       expect(
-        classifyArity({ upstreamNamed: 0, upstreamVariadic: true, declared: [declared] }),
+        classifyArity({
+          upstreamNamed: 0,
+          upstreamVariadic: true,
+          upstreamPlaceholder: false,
+          declared: [declared],
+        }),
       ).toEqual({
         agrees: true,
         floorChecked: true,
         overloadChecked: false,
+        placeholderChecked: false,
         declaredWidest: declared,
       });
     }
   });
 
   test("named parameters stay a floor the fork must meet", () => {
-    expect(classifyArity({ upstreamNamed: 2, upstreamVariadic: true, declared: [2] })).toEqual({
+    expect(
+      classifyArity({
+        upstreamNamed: 2,
+        upstreamVariadic: true,
+        upstreamPlaceholder: false,
+        declared: [2],
+      }),
+    ).toEqual({
       agrees: true,
       floorChecked: true,
       overloadChecked: false,
+      placeholderChecked: false,
       declaredWidest: 2,
     });
-    expect(classifyArity({ upstreamNamed: 2, upstreamVariadic: true, declared: [3] })).toEqual({
+    expect(
+      classifyArity({
+        upstreamNamed: 2,
+        upstreamVariadic: true,
+        upstreamPlaceholder: false,
+        declared: [3],
+      }),
+    ).toEqual({
       agrees: true,
       floorChecked: true,
       overloadChecked: false,
+      placeholderChecked: false,
       declaredWidest: 3,
     });
-    expect(classifyArity({ upstreamNamed: 2, upstreamVariadic: true, declared: [1] })).toEqual({
+    expect(
+      classifyArity({
+        upstreamNamed: 2,
+        upstreamVariadic: true,
+        upstreamPlaceholder: false,
+        declared: [1],
+      }),
+    ).toEqual({
       agrees: false,
       floorChecked: true,
       overloadChecked: false,
+      placeholderChecked: false,
       declaredWidest: 1,
     });
   });
 
   test("only a floor-checked member is one the count can report", () => {
     expect(
-      classifyArity({ upstreamNamed: 1, upstreamVariadic: false, declared: [1] }).floorChecked,
+      classifyArity({
+        upstreamNamed: 1,
+        upstreamVariadic: false,
+        upstreamPlaceholder: false,
+        declared: [1],
+      }).floorChecked,
     ).toBe(false);
     expect(
-      classifyArity({ upstreamNamed: 1, upstreamVariadic: true, declared: [1] }).floorChecked,
+      classifyArity({
+        upstreamNamed: 1,
+        upstreamVariadic: true,
+        upstreamPlaceholder: false,
+        declared: [1],
+      }).floorChecked,
     ).toBe(true);
   });
 });
@@ -510,16 +591,32 @@ describe("a variadic upstream member is measured against a floor, not a count", 
 // `overloadedMembers` keeps the softening visible exactly as `variadicMembers` does.
 describe("a fork offering several call shapes is measured against the set", () => {
   test("a single declared count still compares exactly, and reports no overload", () => {
-    expect(classifyArity({ upstreamNamed: 3, upstreamVariadic: false, declared: [3] })).toEqual({
+    expect(
+      classifyArity({
+        upstreamNamed: 3,
+        upstreamVariadic: false,
+        upstreamPlaceholder: false,
+        declared: [3],
+      }),
+    ).toEqual({
       agrees: true,
       floorChecked: false,
       overloadChecked: false,
+      placeholderChecked: false,
       declaredWidest: 3,
     });
-    expect(classifyArity({ upstreamNamed: 3, upstreamVariadic: false, declared: [4] })).toEqual({
+    expect(
+      classifyArity({
+        upstreamNamed: 3,
+        upstreamVariadic: false,
+        upstreamPlaceholder: false,
+        declared: [4],
+      }),
+    ).toEqual({
       agrees: false,
       floorChecked: false,
       overloadChecked: false,
+      placeholderChecked: false,
       declaredWidest: 4,
     });
   });
@@ -527,40 +624,74 @@ describe("a fork offering several call shapes is measured against the set", () =
   test("a declared set agrees when upstream's count is any member of it", () => {
     for (const upstreamNamed of [0, 1]) {
       expect(
-        classifyArity({ upstreamNamed, upstreamVariadic: false, declared: [0, 1] }),
+        classifyArity({
+          upstreamNamed,
+          upstreamVariadic: false,
+          upstreamPlaceholder: false,
+          declared: [0, 1],
+        }),
       ).toMatchObject({ agrees: true, overloadChecked: true });
     }
   });
 
   test("a declared set disagrees when upstream's count is none of them", () => {
     expect(
-      classifyArity({ upstreamNamed: 2, upstreamVariadic: false, declared: [0, 1] }),
+      classifyArity({
+        upstreamNamed: 2,
+        upstreamVariadic: false,
+        upstreamPlaceholder: false,
+        declared: [0, 1],
+      }),
     ).toMatchObject({ agrees: false, overloadChecked: true });
   });
 
   test("the floor rule applies per declared shape, so a variadic set meets it on any", () => {
-    expect(classifyArity({ upstreamNamed: 2, upstreamVariadic: true, declared: [0, 3] })).toEqual({
+    expect(
+      classifyArity({
+        upstreamNamed: 2,
+        upstreamVariadic: true,
+        upstreamPlaceholder: false,
+        declared: [0, 3],
+      }),
+    ).toEqual({
       agrees: true,
       floorChecked: true,
       overloadChecked: true,
+      placeholderChecked: false,
       declaredWidest: 3,
     });
-    expect(classifyArity({ upstreamNamed: 4, upstreamVariadic: true, declared: [0, 3] })).toEqual({
+    expect(
+      classifyArity({
+        upstreamNamed: 4,
+        upstreamVariadic: true,
+        upstreamPlaceholder: false,
+        declared: [0, 3],
+      }),
+    ).toEqual({
       agrees: false,
       floorChecked: true,
       overloadChecked: true,
+      placeholderChecked: false,
       declaredWidest: 3,
     });
   });
 
   test("overloadChecked is true whenever the set holds more than one count", () => {
     expect(
-      classifyArity({ upstreamNamed: 1, upstreamVariadic: false, declared: [0, 1] })
-        .overloadChecked,
+      classifyArity({
+        upstreamNamed: 1,
+        upstreamVariadic: false,
+        upstreamPlaceholder: false,
+        declared: [0, 1],
+      }).overloadChecked,
     ).toBe(true);
     expect(
-      classifyArity({ upstreamNamed: 9, upstreamVariadic: false, declared: [0, 1] })
-        .overloadChecked,
+      classifyArity({
+        upstreamNamed: 9,
+        upstreamVariadic: false,
+        upstreamPlaceholder: false,
+        declared: [0, 1],
+      }).overloadChecked,
     ).toBe(true);
   });
 
@@ -571,13 +702,28 @@ describe("a fork offering several call shapes is measured against the set", () =
   // otherwise be invisible.
   test("a disagreeing set collapses to the widest declared shape, a single count to itself", () => {
     expect(
-      classifyArity({ upstreamNamed: 2, upstreamVariadic: false, declared: [0, 1] }).declaredWidest,
+      classifyArity({
+        upstreamNamed: 2,
+        upstreamVariadic: false,
+        upstreamPlaceholder: false,
+        declared: [0, 1],
+      }).declaredWidest,
     ).toBe(1);
     expect(
-      classifyArity({ upstreamNamed: 2, upstreamVariadic: false, declared: [5, 3] }).declaredWidest,
+      classifyArity({
+        upstreamNamed: 2,
+        upstreamVariadic: false,
+        upstreamPlaceholder: false,
+        declared: [5, 3],
+      }).declaredWidest,
     ).toBe(5);
     expect(
-      classifyArity({ upstreamNamed: 2, upstreamVariadic: false, declared: [4] }).declaredWidest,
+      classifyArity({
+        upstreamNamed: 2,
+        upstreamVariadic: false,
+        upstreamPlaceholder: false,
+        declared: [4],
+      }).declaredWidest,
     ).toBe(4);
   });
 
@@ -609,6 +755,126 @@ describe("a fork offering several call shapes is measured against the set", () =
       .filter((report) => report.overloadedMembers > 0)
       .map((report) => `${report.namespace}: ${report.overloadedMembers}`);
     expect(overloaded).toEqual(["monarch.transitions.gui: 1"]);
+  });
+});
+
+// `nakama.lua` opens *"Code generated by codegen/generate-rest.go. DO NOT EDIT."*, and 66
+// of its exports end in a bare `_` — `create_api_account_apple(token_str, vars_obj, _)`.
+// No body reads it and no LuaDoc block documents it: it is the generator's trailing
+// discard, not a parameter a consumer can pass meaningfully, so charging the fork for
+// omitting it is the instrument's defect. Same shape as the variadic floor above, same
+// treatment — the reader keeps transcribing upstream faithfully, the *comparison* drops
+// the discard before counting, and `placeholderMembers` keeps the softening visible.
+describe("a generated trailing discard is dropped before the counts are compared", () => {
+  test("a trailing discard is not charged as a parameter, a real one still is", () => {
+    expect(
+      classifyArity({
+        upstreamNamed: 3,
+        upstreamVariadic: false,
+        upstreamPlaceholder: true,
+        declared: [2],
+      }),
+    ).toEqual({
+      agrees: true,
+      floorChecked: false,
+      overloadChecked: false,
+      placeholderChecked: true,
+      declaredWidest: 2,
+    });
+    expect(
+      classifyArity({
+        upstreamNamed: 3,
+        upstreamVariadic: false,
+        upstreamPlaceholder: false,
+        declared: [2],
+      }),
+    ).toEqual({
+      agrees: false,
+      floorChecked: false,
+      overloadChecked: false,
+      placeholderChecked: false,
+      declaredWidest: 2,
+    });
+  });
+
+  // Only the *last* parameter is unreachable by position: a `_` upstream names in the
+  // middle still has to be passed for the ones after it to land, so the fork declares it.
+  test("a discard that is not last is still a parameter the fork must declare", () => {
+    expect(
+      classifyArity({
+        upstreamNamed: 3,
+        upstreamVariadic: false,
+        upstreamPlaceholder: false,
+        declared: [3],
+      }),
+    ).toMatchObject({ agrees: true, placeholderChecked: false });
+  });
+
+  test("placeholderChecked is true whether or not the drop changed the verdict", () => {
+    expect(
+      classifyArity({
+        upstreamNamed: 3,
+        upstreamVariadic: false,
+        upstreamPlaceholder: true,
+        declared: [1],
+      }),
+    ).toMatchObject({ agrees: false, placeholderChecked: true });
+    expect(
+      classifyArity({
+        upstreamNamed: 1,
+        upstreamVariadic: false,
+        upstreamPlaceholder: true,
+        declared: [0],
+      }),
+    ).toMatchObject({ agrees: true, placeholderChecked: true });
+  });
+
+  test("the drop happens before the floor, so a variadic member softens too", () => {
+    expect(
+      classifyArity({
+        upstreamNamed: 3,
+        upstreamVariadic: true,
+        upstreamPlaceholder: true,
+        declared: [2],
+      }),
+    ).toEqual({
+      agrees: true,
+      floorChecked: true,
+      overloadChecked: false,
+      placeholderChecked: true,
+      declaredWidest: 2,
+    });
+  });
+
+  // 66 is every discard upstream writes, and the term reaches it only because the fork
+  // now declares all 156 members: it counts *compared* members, as `variadicMembers` and
+  // `overloadedMembers` beside it do, so it read 59 while seven discard-carrying
+  // constructors were still among the sixteen the fork left undeclared.
+  test("nakama's generated discards are the whole softening the corpus carries", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("nakama"));
+    expect(report.placeholderMembers).toBe(66);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+  });
+
+  // The softening is not merely subtractive, which is the check that it is honest rather
+  // than convenient: the fork declared the discard as a real second parameter
+  // (`value_str: any`), so dropping `_` exposed that as the defect it was instead of
+  // hiding it — and correcting it is why the member now agrees at upstream's one.
+  test("create_protobuf_any agrees at the one parameter upstream names", () => {
+    const declared = apiDocElements(target("nakama")).filter(
+      (element) => element.type === "FUNCTION" && element.name === "create_protobuf_any",
+    );
+    expect(declared.length).toBe(1);
+    expect(declared[0]?.parameters?.length).toBe(1);
+  });
+
+  test("no other measured target carries the generated shape", () => {
+    const softened = authoredParityTargets(PACKAGE_ROOT)
+      .map((entry) => buildAuthoredParity(PACKAGE_ROOT, entry))
+      .filter((report) => report.placeholderMembers > 0)
+      .map((report) => `${report.namespace}: ${report.placeholderMembers}`);
+    expect(softened).toEqual(["nakama: 66"]);
   });
 });
 
@@ -959,19 +1225,22 @@ describe("the shortfall the import absorbed is accounted for, not merely absent"
     buildAuthoredParity(PACKAGE_ROOT, entry),
   );
 
-  // The five are nakama's `create_api_validate_purchase_*`, `create_protobuf_any` and
-  // `create_rpc_status`, whose whole block is the member's own name. There is no prose
-  // to lower, so charging them is correct — the alternative the import used to ship was
-  // a brief that restated the symbol.
+  // The nine are nakama's `create_api_validate_purchase_*` and
+  // `create_api_validate_subscription_*` requests, `create_api_validated_subscription`,
+  // `create_protobuf_any` and `create_rpc_status`, whose whole block is the member's own
+  // name above a run of `@param` tags. There is no prose to lower, so charging them is
+  // correct — the alternative the import used to ship was a brief that restated the
+  // symbol. Four joined the list when the fork declared the subscriptions area upstream
+  // had and it did not.
   test("the only members left undocumented are the ones upstream never wrote prose for", () => {
     const stragglers = reports
       .filter((report) => report.undocumentedMembers > 0)
       .map((report) => `${report.namespace}: ${report.undocumentedMembers}`);
-    expect(stragglers).toEqual(["nakama: 5"]);
+    expect(stragglers).toEqual(["nakama: 9"]);
   });
 
-  test("the corpus imports 244 briefs", () => {
-    expect(reports.reduce((sum, report) => sum + report.importedDocs, 0)).toBe(244);
+  test("the corpus imports 254 briefs", () => {
+    expect(reports.reduce((sum, report) => sum + report.importedDocs, 0)).toBe(254);
   });
 });
 
