@@ -77,14 +77,27 @@ describe("orthographic markdown-vs-ts-defold fidelity gate", () => {
       expect(missingMembers).not.toContain(withdrawn);
     }
     // Every ts-defold constant is a member the flat signature parser cannot see.
-    for (const constant of [
-      "PROJECTOR",
-      "SHAKE_BOTH",
-      "MSG_SHAKE",
-      "ORTHOGRAPHIC_RENDER_SCRIPT_USED",
-    ]) {
+    // `MSG_SET_AUTOMATIC_ZOOM` joined them with the field correction that declared it
+    // from `camera.lua:18`.
+    for (const constant of ["PROJECTOR", "SHAKE_BOTH", "MSG_SHAKE", "MSG_SET_AUTOMATIC_ZOOM"]) {
       expect(missingMembers).toContain(constant);
     }
+  });
+
+  // The same correction deleted two declarations the pinned `camera.lua` defines
+  // nowhere: reading either returned `nil` and posting `MSG_USE_PROJECTION` reached
+  // nothing. An empty comparison term alone cannot tell a deleted declaration from a
+  // name the reader stopped seeing, so the fork text is re-read here.
+  test("the two invented constants are gone from the fork and from every comparison term", async () => {
+    const { missingMembers, addedMembers, decision } = await comparison();
+    const fork = readFileSync(join(PACKAGE_ROOT, AUTHORED_SNAPSHOT), "utf8");
+    for (const invented of ["MSG_USE_PROJECTION", "ORTHOGRAPHIC_RENDER_SCRIPT_USED"]) {
+      expect(fork).not.toContain(invented);
+      expect(missingMembers).not.toContain(invented);
+      expect(addedMembers).not.toContain(invented);
+    }
+    expect(addedMembers).toEqual([]);
+    expect(decision).toBe("no-go");
   });
 
   // `get_automatic_zoom` and `set_automatic_zoom` were the whole of this term: the
@@ -1579,14 +1592,24 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "d593c00d318d387b0e57535323d03314cb4d807427839ceef784a1cd3fc4179f",
   "fixtures/authored/in.triggers.d.ts":
     "277cc01d2ddcfdc47878f47ced9fadcaacc2a449d9830b72d8edc346c3cb32de",
+  // Re-pinned with the field correction that declared upstream's seven live
+  // transition/focus hashes and its `register` alias, and carried upstream's own
+  // `@deprecated` onto the grouped forms it had been steering consumers at. The
+  // `surface-loss` verdict was re-derived against the edited fork first: it held,
+  // and its missing set took the eight names README_API.md documents nowhere.
   "fixtures/authored/monarch.monarch.d.ts":
-    "3e3d4db9b74dbd75d1755dc966b37035ee8abefefb0e9143609dd2f5a2794f39",
+    "960b11d80c18a586621a28221d37c011c1088fa99a89a091843b29a55937180d",
   "fixtures/authored/monarch.transitions.easings.d.ts":
     "5ceaab6e08ef808a91a7a23052d638a407e9b5fe2042bd20a5b4de7919836b77",
   "fixtures/authored/monarch.transitions.gui.d.ts":
     "95baa41fc59bb2495d47c4207089ad12dbf5b968cb947143b1391bedc82f5ca8",
+  // Re-pinned with the field correction that declared `MSG_SET_AUTOMATIC_ZOOM` and
+  // deleted `MSG_USE_PROJECTION` and `ORTHOGRAPHIC_RENDER_SCRIPT_USED`, neither of
+  // which the pinned `camera.lua` defines anywhere. The `no-go` was re-derived
+  // against the edited fork first: it held, the README still adds nothing, and the
+  // missing set traded the two invented names for the declared one.
   "fixtures/authored/orthographic.camera.d.ts":
-    "c9805a47417ed0b733e6e692f6f1936095417519730a396b4904d7145ff1a5b0",
+    "8e2714a0f506d073c7b9044f6d439c53ba9653892f288ee67d483ef3d1195f05",
   "fixtures/authored/metrics.fps.d.ts":
     "20e3d51b21591de2adf9c65432eb3ea7afa9efccc1b1d8e85f60e51dd276a4a9",
   "fixtures/authored/metrics.mem.d.ts":
@@ -1599,8 +1622,13 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "5ac9ea3a79428383dca86b3dbd85beff6a55413e2a52867b88079f97a21fbc69",
   "fixtures/authored/dicebag.dicebag.d.ts":
     "51649de912a91815fd2bd8aeeda3390689c114ff3d7702d11dc201b29d6a44a8",
+  // Re-pinned with the field correction that declared the two `SEPARATION_*` modes
+  // from `platypus.lua:27-28`. The `shared-document` verdict was re-derived against
+  // the edited fork first: both documented readings held their `no-go`, `create` is
+  // still the only downgrade, and the two names joined the constants the flat
+  // signature parse cannot see.
   "fixtures/authored/platypus.platypus.d.ts":
-    "94e41a19cc35e9943d3633e2db9a3bd5913364e156feba88ff3b3a0f4ce49c4a",
+    "896068c523d89641edcd8a7684e957adb94605537d36c1259b616ff06848918d",
   "fixtures/authored/rendy.rendy.d.ts":
     "838b7d62ec4fe12bde657bdb76c7444faa3da5cecaff56e0966d83b8bd3b8e0f",
   // The one entry whose verdict comes from the openapi lane rather than
@@ -1796,6 +1824,29 @@ describe("monarch surface-loss evidence at tag 6.0.2", () => {
       expect(missingMembers).toContain(constant);
     }
     expect(decision).toBe("no-go");
+  });
+
+  // The field correction grew this fork by eight names — the seven live transition and
+  // focus hashes upstream defines flat at `monarch.lua:25-33`, and the `register` alias
+  // at `:292`. README_API.md documents none of them, so each widens the loss the
+  // recorded `surface-loss` verdict rests on rather than narrowing it.
+  test("the eight names the field correction declared all widen the recorded loss", async () => {
+    const { missingMembers, addedMembers, decision } = await comparisonFor(MONARCH, "monarch");
+    for (const name of [
+      "FOCUS_GAINED",
+      "FOCUS_LOST",
+      "TRANSITION_BACK_IN",
+      "TRANSITION_BACK_OUT",
+      "TRANSITION_DONE",
+      "TRANSITION_SHOW_IN",
+      "TRANSITION_SHOW_OUT",
+      "register",
+    ]) {
+      expect(missingMembers).toContain(name);
+      expect(addedMembers).not.toContain(name);
+    }
+    expect(decision).toBe("no-go");
+    expect(decisionFor(MONARCH, "monarch").reason).toBe("surface-loss");
   });
 
   // The `addedMembers`/`missingMembers` pair below is a README typo, not an
@@ -2419,8 +2470,9 @@ describe("platypus shared-document evidence at tag 4.3.1", () => {
   const readme = () => fixtureText(PLATYPUS, decisionFor(PLATYPUS, "platypus"));
   const severed = severedFor(PLATYPUS, "platypus");
 
-  // The 12 ts-defold constants, sorted as `compareFidelityToTsDefold` reports
-  // them: the 7 message hashes and the 5 `DIR_*` direction values.
+  // The 14 fork constants, sorted as `compareFidelityToTsDefold` reports them: the 7
+  // message hashes, the 5 `DIR_*` direction values, and the 2 `SEPARATION_*` modes the
+  // field correction declared from `platypus.lua:27-28`.
   const CONSTANTS = [
     "DIR_ALL",
     "DIR_DOWN",
@@ -2431,6 +2483,8 @@ describe("platypus shared-document evidence at tag 4.3.1", () => {
     "FALLING",
     "GROUND_CONTACT",
     "JUMP",
+    "SEPARATION_RAYS",
+    "SEPARATION_SHAPES",
     "WALL_CONTACT",
     "WALL_JUMP",
     "WALL_SLIDE",

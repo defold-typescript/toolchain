@@ -402,10 +402,12 @@ folding them into one mean would let each mask the other — exactly the reading
 split exists to prevent.
 
 `platypus` is the worked case. It defines one module function and 14 constants, so
-its `callableCoverage` is `1` over a single comparison. That figure used to sit
-beside a bare count of 14 unexamined fields and a warning to read it as thin;
-it now sits beside `fieldCoverage: 0.8571` and a named gap of `SEPARATION_RAYS`
-and `SEPARATION_SHAPES` — a second real number rather than a caveat.
+its `callableCoverage` is `1` over a single comparison while its `fieldCoverage` is
+`1` over fourteen. Both read the same, and they are not the same result: one is a
+single `create` agreeing on arity, the other is fourteen constants each found by
+name. Averaged into one figure the module would look uniformly verified, and the
+single number would move by a fourteenth for a defect on either side — which is why
+the two are reported separately whether they agree or not.
 
 Read the two together. A perfect `callableCoverage` over a handful of functions
 still says nothing about a large `upstreamFields`, and a perfect `fieldCoverage`
@@ -638,5 +640,12 @@ third `adjust_mode` argument was silently ignored at runtime, so narrowing it is
 breaking on purpose. With nine ledger entries covering the withdrawn stubs and the
 three camera.script lifecycle hooks, the target reaches `callableCoverage: 1`. The
 markdown verdict is re-derived over the new export list and lands on the same
-`no-go`: the twenty constants and five functions the README's API table does not
-cover are still the surface loss that drove it.
+`no-go`.
+
+The fourth diff is the field correction, which moves the constants half of that
+same list: `MSG_SET_AUTOMATIC_ZOOM` was declared from the pinned `camera.lua`, and
+`MSG_USE_PROJECTION` and `ORTHOGRAPHIC_RENDER_SCRIPT_USED` were deleted, upstream
+defining neither anywhere — reading either returned `nil`, so the deletion is
+breaking on paper only. The verdict is re-derived a second time and holds: the
+nineteen constants and five functions the README's API table does not cover are
+still the surface loss that drove it.

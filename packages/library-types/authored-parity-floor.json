@@ -81,7 +81,7 @@
   },
   "fidelity/authored/monarch.monarch.json": {
     "callable": 1,
-    "field": 0.4667
+    "field": 1
   },
   "fidelity/authored/monarch.transitions.easings.json": {
     "callable": 1,
@@ -105,7 +105,7 @@
   },
   "fidelity/authored/orthographic.camera.json": {
     "callable": 1,
-    "field": 0.9474
+    "field": 1
   },
   "fidelity/authored/persist.json": {
     "callable": 1,
@@ -113,7 +113,7 @@
   },
   "fidelity/authored/platypus.json": {
     "callable": 1,
-    "field": 0.8571
+    "field": 1
   },
   "fidelity/authored/rendy.json": {
     "callable": 1,

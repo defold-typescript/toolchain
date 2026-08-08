@@ -67,6 +67,15 @@ declare module 'platypus.platypus' {
 	export const DOUBLE_JUMP: Hash;
 	export const WALL_SLIDE: Hash;
 
+	/** Value for `collisions.separation` selecting raycast separation. */
+	export const SEPARATION_RAYS: Hash;
+	/**
+	 * Value for `collisions.separation` selecting shape separation. Platypus warns
+	 * at runtime that this mode is no longer supported and only raycast separation
+	 * is; the constant still exists.
+	 */
+	export const SEPARATION_SHAPES: Hash;
+
 	type Direction = number;
 	export const DIR_UP: Direction;
 	export const DIR_LEFT: Direction;
