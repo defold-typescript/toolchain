@@ -18,13 +18,30 @@ const _nakamaClient = nakama.create_client({
   engine: {},
 });
 const _nakamaAccount: { id: string; vars: unknown } = nakama.create_api_account_custom("user", {});
-const _nakamaSession = nakama.authenticate_custom(_nakamaClient, _nakamaAccount, true, "user");
+// The pinned module takes the request body as positional parameters — an id and a
+// vars table, not a table holding both — so a caller written against the collapsed
+// shape passed a table where upstream reads a string and failed at runtime.
+const _nakamaSession = nakama.authenticate_custom(_nakamaClient, "user", {}, true, "user");
 nakama.set_bearer_token(_nakamaClient, _nakamaSession.token);
 
 // The hand-written surface the openapi source cannot describe: the recorded
 // `no-go` counts `sync` among the members the swagger and proto have no source
 // for, so its callback shape has to survive the lane move.
 nakama.sync(() => {});
+
+// Every call that can retry accepts upstream's trailing token pair, and the token
+// carries the `cancel` upstream builds onto it.
+const _nakamaToken = nakama.cancellation_token();
+nakama.sync(() => {}, _nakamaToken);
+nakama.get_account(_nakamaClient, () => {}, undefined, _nakamaToken);
+_nakamaToken.cancel();
+nakama.cancel(_nakamaToken);
+
+// The socket surface belongs to `nakama.socket`, which the pinned module requires
+// privately and never re-exports; `create_socket` is the one door it does expose.
+const _nakamaSocket = nakama.create_socket(_nakamaClient);
+// @ts-expect-error socket_send is not a member of this module
+nakama.socket_send(_nakamaSocket, "{}", () => {});
 
 const _nakamaCreated: boolean = _nakamaSession.created;
 
@@ -34,9 +51,8 @@ const _nakamaCreated: boolean = _nakamaSession.created;
 // @ts-expect-error a bare string is not a SessionToken
 nakama.set_bearer_token(_nakamaClient, _nakamaSession.token as unknown as string);
 
-// `callback` is the surface's one optional parameter, so it must compile both
-// ways.
-nakama.authenticate_custom(_nakamaClient, _nakamaAccount, true, "user", () => {});
+// `callback` is optional on every REST call, so each must compile both ways.
+nakama.authenticate_custom(_nakamaClient, "user", {}, true, "user", () => {});
 
 // `use_ssl` is the only optional field on ClientConfig; the other five are
 // required, so an emit that erased the config shape would make this legal.

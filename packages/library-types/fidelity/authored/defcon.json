@@ -21,5 +21,6 @@
   "refusedDocBlocks": 1,
   "variadicMembers": 0,
   "overloadedMembers": 0,
+  "placeholderMembers": 0,
   "callableCoverage": 1
 }
