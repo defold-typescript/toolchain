@@ -49,6 +49,39 @@ yagames.adv_show_banner_adv((self, err, result) => {
 // @ts-expect-error the banner_* family was replaced by the sticky-banner API
 yagames.banner_create("rtb-id", {});
 
+// The events API upstream documents at `0.19.0`, which the fork had never declared.
+// The listener carries the file's `ApiCallback` shape, so the pause/resume data is
+// reachable without a cast.
+const _pauseListener: yagames.ApiCallback = (self, err, data) => {
+  void self;
+  void err;
+  void data;
+};
+yagames.event_on("game_api_pause", _pauseListener);
+yagames.event_off("game_api_pause", _pauseListener);
+yagames.event_dispatch("EXIT");
+
+// `payments_get_catalog` takes upstream's `(options, callback)`; the lone-callback
+// form the fork used to declare passed the callback as `options` and never fired.
+yagames.payments_get_catalog({ getPriceCurrencyImage: "medium" }, (self, err, data) => {
+  void self;
+  void err;
+  if (data) {
+    const _firstPrice: string | undefined = data[0]?.price;
+    void _firstPrice;
+  }
+});
+yagames.payments_get_catalog(undefined, (self, err, data) => {
+  void self;
+  void err;
+  void data;
+});
+
+// The sitelock family is withdrawn: the pinned `yagames/yagames.lua` exports none of
+// it, so `require("yagames.yagames").add_domain` is `nil` at this ref.
+// @ts-expect-error the sitelock members are not exported by the yagames module
+yagames.add_domain("example.com");
+
 void _playerId;
 void _device;
 void _storageLength;
