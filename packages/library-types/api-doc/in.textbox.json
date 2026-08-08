@@ -8,6 +8,8 @@
     {
       "type": "VARIABLE",
       "name": "TOUCH",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -15,6 +17,8 @@
     {
       "type": "VARIABLE",
       "name": "TYPE",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -22,6 +26,8 @@
     {
       "type": "VARIABLE",
       "name": "BACKSPACE",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -150,8 +156,8 @@
     {
       "type": "FUNCTION",
       "name": "text",
-      "brief": "",
-      "description": "",
+      "brief": "Get a registered textbox's text, or set it first when `text` is given.",
+      "description": "Get a registered textbox's text, or set it first when `text` is given.\nReturns the text the box holds after the call.",
       "parameters": [
         {
           "name": "node_or_string",

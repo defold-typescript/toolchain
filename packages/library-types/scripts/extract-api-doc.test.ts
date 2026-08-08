@@ -318,7 +318,7 @@ describe("extractApiDoc interface-backed module exports", () => {
       },
       elements: [
         { type: "TYPEDEF", name: "Thing" },
-        { type: "VARIABLE", name: "VERSION", types: ["number"] },
+        { type: "VARIABLE", name: "VERSION", brief: "", description: "", types: ["number"] },
         {
           type: "FUNCTION",
           name: "run",
@@ -589,6 +589,101 @@ describe("extractApiDoc @deprecated carrier", () => {
   });
 });
 
+// A fork-authored constant's prose: a multi-line summary whose brief must be only
+// its first line, an undocumented control, and a two-declarator statement — the one
+// shape where the JSDoc is reachable from the statement but not from every
+// declaration under it.
+const CONST_DOCS = `/**
+ * Constant docs demo.
+ * @noResolution
+ */
+declare module 'cd.cd' {
+	/**
+	 * The window's width in pixels.
+	 * Reads the display config, not the current surface.
+	 */
+	export const WIDTH: number;
+
+	/** A single-line constant. */
+	export const HEIGHT: number;
+
+	export const UNDOCUMENTED: number;
+
+	/** Shared by both edges. */
+	export const LEFT: number, RIGHT: number;
+
+	/**
+	 * Kept for old callers.
+	 * @deprecated Use \`WIDTH\`.
+	 */
+	export const OLD_WIDTH: number;
+}
+`;
+
+describe("extractApiDoc constant prose", () => {
+  const only = (source: string, moduleName: string, name: string) => {
+    const { elements } = extractApiDoc(source, moduleName) as {
+      elements: Array<Record<string, unknown>>;
+    };
+    return (elements.find((e) => e.type === "VARIABLE" && e.name === name) ?? {}) as Record<
+      string,
+      unknown
+    >;
+  };
+
+  test("carries a const's whole summary as description and its first line as brief", () => {
+    const width = only(CONST_DOCS, "cd.cd", "WIDTH");
+    expect(width.description).toBe(
+      "The window's width in pixels.\nReads the display config, not the current surface.",
+    );
+    expect(width.brief).toBe("The window's width in pixels.");
+  });
+
+  test("gives a multi-line summary a brief strictly shorter than its description", () => {
+    const width = only(CONST_DOCS, "cd.cd", "WIDTH");
+    expect((width.brief as string).length).toBeLessThan((width.description as string).length);
+  });
+
+  test("reads the summary off the statement, so every declarator under it carries the prose", () => {
+    for (const name of ["LEFT", "RIGHT"]) {
+      const element = only(CONST_DOCS, "cd.cd", name);
+      expect(element.brief).toBe("Shared by both edges.");
+      expect(element.description).toBe("Shared by both edges.");
+    }
+  });
+
+  test("emits both keys as empty strings for an undocumented const", () => {
+    const undocumented = only(CONST_DOCS, "cd.cd", "UNDOCUMENTED");
+    expect(Object.hasOwn(undocumented, "brief")).toBe(true);
+    expect(Object.hasOwn(undocumented, "description")).toBe(true);
+    expect(undocumented.brief).toBe("");
+    expect(undocumented.description).toBe("");
+  });
+
+  test("orders the new keys the way the sibling lower-api-doc lane emits them", () => {
+    expect(Object.keys(only(CONST_DOCS, "cd.cd", "HEIGHT"))).toEqual([
+      "type",
+      "name",
+      "brief",
+      "description",
+      "types",
+    ]);
+  });
+
+  test("keeps a deprecated const's tag alongside its new prose", () => {
+    const old = only(CONST_DOCS, "cd.cd", "OLD_WIDTH");
+    expect(old.brief).toBe("Kept for old callers.");
+    expect(old.deprecated).toBe("Use `WIDTH`.");
+  });
+
+  test("keeps the global marker on an ambient const that carries prose", () => {
+    const count = only(FILE_SCOPE, "fs.fs", "COUNT");
+    expect(count.global).toBe(true);
+    expect(count.brief).toBe("How many frames.");
+    expect(count.description).toBe("How many frames.");
+  });
+});
+
 describe("extractApiDoc", () => {
   test("emits an { info, elements } object matching the parseDefoldApiDoc schema", () => {
     const emitted = extractApiDoc(DEMO, "demo.demo") as {
@@ -604,7 +699,13 @@ describe("extractApiDoc", () => {
     expect(typedef).toEqual({ type: "TYPEDEF", name: "Thing" });
 
     const variable = emitted.elements.find((e) => e.type === "VARIABLE");
-    expect(variable).toEqual({ type: "VARIABLE", name: "VERSION", types: ["number"] });
+    expect(variable).toEqual({
+      type: "VARIABLE",
+      name: "VERSION",
+      brief: "",
+      description: "",
+      types: ["number"],
+    });
 
     const fn = emitted.elements.find((e) => e.type === "FUNCTION");
     expect(fn).toEqual({

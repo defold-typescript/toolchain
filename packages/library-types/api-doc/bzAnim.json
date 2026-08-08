@@ -8,16 +8,22 @@
     {
       "type": "VARIABLE",
       "name": "INFO_LEVEL",
+      "brief": "",
+      "description": "",
       "types": []
     },
     {
       "type": "VARIABLE",
       "name": "DEBUG_LEVEL",
+      "brief": "",
+      "description": "",
       "types": []
     },
     {
       "type": "VARIABLE",
       "name": "TRACE_LEVEL",
+      "brief": "",
+      "description": "",
       "types": []
     },
     {

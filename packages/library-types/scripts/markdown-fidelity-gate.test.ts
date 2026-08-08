@@ -1584,12 +1584,20 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "e18b39a30caf3432e54d7808a74a30e7537776eb3cec8fed1eb24015b5d0e59b",
   "fixtures/authored/in.mapper.d.ts":
     "d52500f818de9d3b5c36ea878ee2b853ab26e4478eea4039948bb808529c93a8",
+  // Re-pinned with the doc-comment the fork now owes `create`, whose upstream block
+  // the `---` reader declines. A doc-comment declares no member and renames none, and
+  // this module's `no-signature-section` verdict is a parser refusal on `in/onscreen.md`
+  // that builds no comparison against the fork at all — so there was no term to move.
+  // Re-derived against the edited fork first regardless: it held.
   "fixtures/authored/in.onscreen.d.ts":
-    "cedd87bf4dbf910b8819bee3cbc72627f7305c6e83815a8f59479b71fe3a2c37",
+    "899e19927d012feb909c20b923be00605b0fa59954c043939bc04ecaaa27a899",
   "fixtures/authored/in.state.d.ts":
     "23764519e7e88f8bd4bbc0ecfc6f06eba54e5e58c490ee29fa10a0e120330a8f",
+  // Re-pinned on the same terms as `in.onscreen` above, for the doc-comment the fork
+  // now owes `text`: `no-signature-section` is a refusal on `in/textbox.md`, so no
+  // comparison against the fork exists to move. Re-derived first; it held.
   "fixtures/authored/in.textbox.d.ts":
-    "d593c00d318d387b0e57535323d03314cb4d807427839ceef784a1cd3fc4179f",
+    "490e845229a3185febc37e802ede17e0fa17a93858cdfc5a63ecea92bb84f089",
   "fixtures/authored/in.triggers.d.ts":
     "277cc01d2ddcfdc47878f47ced9fadcaacc2a449d9830b72d8edc346c3cb32de",
   // Re-pinned with the field correction that declared upstream's seven live
@@ -1597,8 +1605,13 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
   // `@deprecated` onto the grouped forms it had been steering consumers at. The
   // `surface-loss` verdict was re-derived against the edited fork first: it held,
   // and its missing set took the eight names README_API.md documents nowhere.
+  // Re-pinned again with the doc-comment the fork now owes
+  // `SCREEN_TRANSITION_IN_STARTED`, whose `-- listener messages` header the reader
+  // declines. `surface-loss` turns on the member *names* either side declares, and a
+  // doc-comment adds none — re-derived first all the same: the decision held and the
+  // missing set is unchanged.
   "fixtures/authored/monarch.monarch.d.ts":
-    "960b11d80c18a586621a28221d37c011c1088fa99a89a091843b29a55937180d",
+    "2c2d2000c4cc654f334632028d726be6240abcc1896c3f481bc55e5dab872246",
   "fixtures/authored/monarch.transitions.easings.d.ts":
     "5ceaab6e08ef808a91a7a23052d638a407e9b5fe2042bd20a5b4de7919836b77",
   "fixtures/authored/monarch.transitions.gui.d.ts":
@@ -1640,8 +1653,12 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
   // Re-pinned again with the field correction that declared upstream's 12 enum
   // constants, on the same terms: the gate was re-derived first, the decision held,
   // and the missing set took the 12 names the swagger emits no constant for.
+  // Re-pinned a third time with the doc-comments the fork now owes `cancel`,
+  // `cancellation_token` and `sync`, whose upstream blocks the reader declines. Same
+  // terms as before: the gate was re-derived first, the decision held, and the missing
+  // set is unchanged — a doc-comment declares no member for the swagger to match.
   "fixtures/authored/nakama.nakama.d.ts":
-    "05528cc200a78c77b206f663fbbf921d89ae1f3a4cadb34c0dffa083ac97814f",
+    "2306ada7aeb519b17fadee53aa6592bfe8463048f4893e3d05817e8d298b39c5",
   "fixtures/authored/richtext.color.d.ts":
     "fdacac61ee40f105f63c7a15745520630818b9d14ee0ffa077912f899b2f1999",
   "fixtures/authored/richtext.richtext.d.ts":

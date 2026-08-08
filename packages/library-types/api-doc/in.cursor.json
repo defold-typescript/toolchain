@@ -8,6 +8,8 @@
     {
       "type": "VARIABLE",
       "name": "OVER",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -15,6 +17,8 @@
     {
       "type": "VARIABLE",
       "name": "OUT",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -22,6 +26,8 @@
     {
       "type": "VARIABLE",
       "name": "PRESSED",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -29,6 +35,8 @@
     {
       "type": "VARIABLE",
       "name": "RELEASED",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -36,6 +44,8 @@
     {
       "type": "VARIABLE",
       "name": "DRAG",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -43,6 +53,8 @@
     {
       "type": "VARIABLE",
       "name": "DRAG_END",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -50,6 +62,8 @@
     {
       "type": "VARIABLE",
       "name": "DRAG_START",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -57,6 +71,8 @@
     {
       "type": "VARIABLE",
       "name": "CLICKED",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -64,6 +80,8 @@
     {
       "type": "VARIABLE",
       "name": "RESET",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -71,6 +89,8 @@
     {
       "type": "VARIABLE",
       "name": "START_DRAGGING",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -78,6 +98,8 @@
     {
       "type": "VARIABLE",
       "name": "DRAG_MODE_HORIZONTAL",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -85,6 +107,8 @@
     {
       "type": "VARIABLE",
       "name": "DRAG_MODE_VERTICAL",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]
@@ -92,6 +116,8 @@
     {
       "type": "VARIABLE",
       "name": "DRAG_MODE_FREE",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]

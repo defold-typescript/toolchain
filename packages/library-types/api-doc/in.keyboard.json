@@ -8,6 +8,8 @@
     {
       "type": "VARIABLE",
       "name": "KEYBOARD_INPUT",
+      "brief": "",
+      "description": "",
       "types": [
         "Hash"
       ]

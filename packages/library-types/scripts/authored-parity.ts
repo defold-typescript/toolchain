@@ -99,12 +99,23 @@ export interface AuthoredParityReport {
    * shortfall went: without it, a target the import silently skipped and a target the
    * fork documents itself would read the same. */
   importedDocs: number;
-  /** Upstream comment blocks the reader declined because no segment opened with `---`.
-   * Such a block leaves no `doc` behind, so `undocumentedMembers` cannot charge it and
-   * the loss would otherwise read as a clean zero. Author the fork's own doc-comment to
-   * surface one: no parser rule separates upstream's prose blocks from its section
-   * headers, so the judgment is a human's. */
+  /** Upstream comment blocks the reader declined *and* the fork left unanswered. Such a
+   * block leaves no `doc` behind, so `undocumentedMembers` cannot charge it and the loss
+   * would otherwise read as a clean zero. Narrowed to the unanswered ones so it measures
+   * documentation actually missing from `/api` rather than a reader property no fork
+   * edit can move: authoring the fork's own doc-comment clears the charge. A member the
+   * fork documents is answered — the prose cannot have come from the refused block,
+   * which imports nothing, so no `docSource` check is needed. A recorded
+   * `parityException` is excused too: the member is deliberately undeclared, so there is
+   * no element to hang a brief on and the ledger already carries a human's reading of
+   * that same comment. A merely missing name is not excused — its remedy is declaring
+   * it, and `callableCoverage` charging it there is a different loss. */
   refusedDocBlocks: number;
+  /** The raw refusal count, before the answered and excused ones are subtracted. Kept
+   * beside `refusedDocBlocks` so a corpus reading 0 cannot be mistaken for upstream
+   * writing no `--`-only blocks, and the reader diagnostic that justifies the `---` rule
+   * stays legible. */
+  refusedDocBlocksTotal: number;
   /** How many agreeing members were compared against a floor rather than an exact count,
    * upstream being variadic. Recorded so a `callableCoverage` of 1 over a variadic
    * surface cannot be read as fully verified. */
@@ -152,19 +163,21 @@ interface UpstreamSurface {
   /** Every non-callable name, raw: a name also defined with a parameter list is still
    * here, and `classifyFieldAxis` is what subtracts it. */
   fields: Set<string>;
-  /** Counted here rather than in the callable loop below, which never visits the field
-   * side: most refused blocks in this corpus sit above a constant. */
-  refusedDocs: number;
+  /** The *names* whose block the reader declined, gathered here rather than in the
+   * callable loop below, which never visits the field side: most refused blocks in this
+   * corpus sit above a constant. Names rather than a count, so each one can be asked
+   * whether the fork answered it. */
+  refusedDocs: Set<string>;
 }
 
 function upstreamSurface(packageRoot: string, target: AuthoredTarget): UpstreamSurface {
   const callable = new Map<string, LuaMember>();
   const fields = new Set<string>();
-  let refusedDocs = 0;
+  const refusedDocs = new Set<string>();
   for (const relative of target.upstreamLua) {
     const surface = parseLuaSurface(readFileSync(join(packageRoot, relative), "utf8"));
     for (const member of surface.members) {
-      if (member.refusedDoc) refusedDocs += 1;
+      if (member.refusedDoc) refusedDocs.add(member.name);
       if (member.params === undefined) fields.add(member.name);
       else callable.set(member.name, member);
     }
@@ -182,6 +195,10 @@ interface DeclaredSurface {
    * side has no `documented` bookkeeping of its own, and the count is about provenance
    * rather than callability. */
   imported: number;
+  /** Every name whose element carries prose, across both axes. `DeclaredMember` tracks
+   * the same thing for the callable side alone; `refusedDocBlocks` has to ask the
+   * question of a constant too, most of this corpus's refused blocks sitting above one. */
+  documented: Set<string>;
 }
 
 function declaredSurface(packageRoot: string, target: AuthoredTarget): DeclaredSurface {
@@ -198,6 +215,7 @@ function declaredSurface(packageRoot: string, target: AuthoredTarget): DeclaredS
   };
   const callable = new Map<string, DeclaredMember>();
   const fields = new Set<string>();
+  const documented = new Set<string>();
   let globals = 0;
   let imported = 0;
   for (const element of doc.elements) {
@@ -207,6 +225,9 @@ function declaredSurface(packageRoot: string, target: AuthoredTarget): DeclaredS
       continue;
     }
     if (element.docSource === "upstream") imported += 1;
+    if ((element.brief ?? "") !== "" || (element.description ?? "") !== "") {
+      documented.add(element.name);
+    }
     if (element.type === "FUNCTION") {
       // Merged rather than overwritten: the api-doc holds one `FUNCTION` element per
       // overload, and keeping only the last read a correctly-modelled pair as whichever
@@ -223,7 +244,7 @@ function declaredSurface(packageRoot: string, target: AuthoredTarget): DeclaredS
       });
     } else fields.add(element.name);
   }
-  return { callable, fields, globals, imported };
+  return { callable, fields, globals, imported, documented };
 }
 
 /** The four raw name sets of a target, callable and non-callable on both sides. */
@@ -452,13 +473,14 @@ export function buildAuthoredParity(
   const {
     callable: upstream,
     fields: upstreamVariables,
-    refusedDocs: refusedDocBlocks,
+    refusedDocs: refused,
   } = upstreamSurface(packageRoot, target);
   const {
     callable: declared,
     fields: declaredVariables,
     globals: declaredGlobals,
     imported: importedDocs,
+    documented: declaredDocumented,
   } = declaredSurface(packageRoot, target);
   const { upstreamFields, declaredFields, missingFields, phantomFields } = classifyFieldAxis({
     upstreamCallable: new Set(upstream.keys()),
@@ -485,6 +507,10 @@ export function buildAuthoredParity(
     }
     excepted.set(exception.name, exception);
   }
+
+  const refusedDocBlocks = [...refused].filter(
+    (name) => !declaredDocumented.has(name) && !excepted.has(name),
+  ).length;
 
   const missingMembers: string[] = [];
   const parityExceptions: AuthoredParityException[] = [];
@@ -547,6 +573,7 @@ export function buildAuthoredParity(
     undocumentedMembers,
     importedDocs,
     refusedDocBlocks,
+    refusedDocBlocksTotal: refused.size,
     variadicMembers,
     overloadedMembers,
     placeholderMembers,

@@ -8,6 +8,8 @@
     {
       "type": "VARIABLE",
       "name": "bags",
+      "brief": "Every marble bag `bag_create` has made, keyed by its identifier. `bag_draw` reads",
+      "description": "Every marble bag `bag_create` has made, keyed by its identifier. `bag_draw` reads\nand decrements the counts here; `bag_reset` restores them from the `full_*` pair.",
       "types": [
         "LuaMap<string | number | Hash, { success: number; fail: number; full_success: number; full_fail: number; reset_on_success: boolean; }>"
       ]
@@ -15,6 +17,8 @@
     {
       "type": "VARIABLE",
       "name": "tables",
+      "brief": "Every rollable table `table_create` has made, keyed by its identifier. `active` is",
+      "description": "Every rollable table `table_create` has made, keyed by its identifier. `active` is\nwhat `table_roll` draws from and removes as it goes; `original` is the untouched\ncopy `table_reset` restores from.",
       "types": [
         "LuaMap<string | number | Hash, { active: Array<[ number, any, boolean? ]>; original: Array<[ number, any, boolean? ]>; }>"
       ]
