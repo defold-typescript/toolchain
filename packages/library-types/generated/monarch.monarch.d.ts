@@ -40,6 +40,36 @@ declare module 'monarch.monarch' {
 	type Callback = () => void;
 
 	// transition messages
+	/**
+	 * Post this back to Monarch from a transition listener once the transition
+	 * has finished. Monarch will not proceed until it arrives.
+	 */
+	export const TRANSITION_DONE: Hash;
+	/** Sent to a screen's transition url when the screen should transition in. */
+	export const TRANSITION_SHOW_IN: Hash;
+	/** Sent to a screen's transition url when the screen should transition out. */
+	export const TRANSITION_SHOW_OUT: Hash;
+	/**
+	 * Sent to a screen's transition url when the screen above it was popped and
+	 * this screen should transition back in.
+	 */
+	export const TRANSITION_BACK_IN: Hash;
+	/**
+	 * Sent to a screen's transition url when this screen is being popped and
+	 * should transition back out.
+	 */
+	export const TRANSITION_BACK_OUT: Hash;
+
+	// focus messages
+	/** Sent to a screen's focus url when the screen gains focus. */
+	export const FOCUS_GAINED: Hash;
+	/** Sent to a screen's focus url when the screen loses focus. */
+	export const FOCUS_LOST: Hash;
+
+	/**
+	 * @deprecated Use the flat `TRANSITION_*` constants instead — Monarch marks
+	 * this grouping deprecated in its own source.
+	 */
 	export const TRANSITION: {
 		DONE: Hash;
 		SHOW_IN: Hash;
@@ -48,7 +78,10 @@ declare module 'monarch.monarch' {
 		BACK_OUT: Hash;
 	};
 
-	// focus messages
+	/**
+	 * @deprecated Use the flat `FOCUS_*` constants instead — Monarch marks this
+	 * grouping deprecated in its own source.
+	 */
 	export const FOCUS: {
 		GAINED: Hash;
 		LOST: Hash;
@@ -125,6 +158,12 @@ declare module 'monarch.monarch' {
 		proxy: Url,
 		settings: RegisterProxyOptions,
 	): void;
+
+	/**
+	 * Alias of {@link register_proxy}, kept for the pre-factory API.
+	 * Typed through the function it aliases so the two cannot drift apart.
+	 */
+	export const register: typeof register_proxy;
 
 	/**
 	 * Register a new screen contained in a collection factory.

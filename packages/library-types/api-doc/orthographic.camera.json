@@ -872,13 +872,6 @@
     },
     {
       "type": "VARIABLE",
-      "name": "ORTHOGRAPHIC_RENDER_SCRIPT_USED",
-      "types": [
-        "boolean"
-      ]
-    },
-    {
-      "type": "VARIABLE",
       "name": "MSG_DISABLE",
       "types": [
         "Hash"
@@ -963,7 +956,7 @@
     },
     {
       "type": "VARIABLE",
-      "name": "MSG_USE_PROJECTION",
+      "name": "MSG_SET_AUTOMATIC_ZOOM",
       "types": [
         "Hash"
       ]

@@ -2,15 +2,10 @@
   "namespace": "orthographic.camera",
   "upstreamMembers": 35,
   "upstreamFields": 19,
-  "declaredFields": 20,
-  "missingFields": [
-    "MSG_SET_AUTOMATIC_ZOOM"
-  ],
-  "phantomFields": [
-    "MSG_USE_PROJECTION",
-    "ORTHOGRAPHIC_RENDER_SCRIPT_USED"
-  ],
-  "fieldCoverage": 0.9474,
+  "declaredFields": 19,
+  "missingFields": [],
+  "phantomFields": [],
+  "fieldCoverage": 1,
   "declaredGlobals": 0,
   "declaredMembers": 26,
   "missingMembers": [],
