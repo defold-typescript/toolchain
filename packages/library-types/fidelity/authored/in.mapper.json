@@ -11,6 +11,7 @@
   "missingMembers": [],
   "phantomMembers": [],
   "arityMismatches": [],
+  "parityExceptions": [],
   "undocumentedMembers": 0,
   "importedDocs": 4,
   "refusedDocBlocks": 0,
