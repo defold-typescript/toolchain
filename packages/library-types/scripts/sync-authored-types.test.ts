@@ -172,7 +172,7 @@ describe("upstream LuaDoc import at api-doc lowering", () => {
     }
   });
 
-  test("the whole corpus imports 244 briefs across 14 targets", () => {
+  test("the whole corpus imports 254 briefs across 14 targets", () => {
     const counts = readAuthoredTargets(PACKAGE_ROOT)
       .map((target) => ({
         namespace: target.namespace,
@@ -180,7 +180,7 @@ describe("upstream LuaDoc import at api-doc lowering", () => {
       }))
       .filter((entry) => entry.imported > 0);
     expect(counts.length).toBe(14);
-    expect(counts.reduce((sum, entry) => sum + entry.imported, 0)).toBe(244);
+    expect(counts.reduce((sum, entry) => sum + entry.imported, 0)).toBe(254);
   });
 });
 
@@ -1818,26 +1818,23 @@ describe("rendy.rendy migration integrity", () => {
 describe("nakama.nakama migration integrity", () => {
   const AUTHORED = "fixtures/authored/nakama.nakama.d.ts";
   // Every member `compareFidelityToTsDefold` reports missing from the openapi
-  // emit, measured at the severance. `openapi-fidelity-gate.test.ts` re-derives
-  // the set from the real emitter; this list is what the fork must still carry
-  // for that verdict to keep describing it.
+  // emit. `openapi-fidelity-gate.test.ts` re-derives the set from the real
+  // emitter; this list is what the fork must still carry for that verdict to keep
+  // describing it.
+  //
+  // Measured at the severance the list also held the ten `on_*` listeners,
+  // `socket_connect`/`socket_send` and `create_api_update_group_request`. The
+  // signature correction withdrew all thirteen — the pinned module exports no socket
+  // member (it `require`s `nakama.socket` privately and exposes only `create_socket`)
+  // and no longer generates that request constructor — so what remains is exactly the
+  // client-lifecycle surface the structured sources never carried, which is the
+  // verdict's own reason.
   const VERDICT_MEMBERS = [
-    "create_api_update_group_request",
+    "cancel",
+    "cancellation_token",
     "create_client",
     "create_socket",
-    "on_channelmessage",
-    "on_channelpresence",
-    "on_disconnect",
-    "on_matchdata",
-    "on_matchmakermatched",
-    "on_matchpresence",
-    "on_notification",
-    "on_statuspresence",
-    "on_streamdata",
-    "on_streampresence",
     "set_bearer_token",
-    "socket_connect",
-    "socket_send",
     "sync",
   ];
 
@@ -1904,7 +1901,11 @@ describe("nakama.nakama migration integrity", () => {
     }
     expect(fork).toContain("export function create_client(config: ClientConfig): Client;");
     expect(fork).toContain("export function set_bearer_token(client: Client, token: SessionToken)");
-    expect(fork).toContain("export function sync(fn: () => void): void;");
+    // `sync` takes upstream's optional cancellation token as its second parameter
+    // (`nakama.lua:47`); the helper itself is otherwise unmoved.
+    expect(fork).toContain(
+      "export function sync(fn: () => void, cancellation_token?: CancellationToken): void;",
+    );
   });
 
   test("the fork declares the client brands and the config and session shapes", () => {
@@ -1933,13 +1934,13 @@ describe("nakama.nakama migration integrity", () => {
     expect(session).toContain("created: boolean;");
   });
 
-  test("the api-doc publishes all 170 elements under the bare namespace with the override description", () => {
+  test("the api-doc publishes all 162 elements under the bare namespace with the override description", () => {
     const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, "api-doc/nakama.json"), "utf8")) as {
       info: { namespace: string; description?: string };
       elements: { name: string; type: string }[];
     };
     expect(doc.info.namespace).toBe("nakama");
-    expect(doc.elements).toHaveLength(170);
+    expect(doc.elements).toHaveLength(162);
     for (const member of VERDICT_MEMBERS) {
       expect(doc.elements.some((e) => e.name === member)).toBe(true);
     }

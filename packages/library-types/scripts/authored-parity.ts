@@ -39,7 +39,9 @@
  * floor the fork must meet and `variadicMembers` says how many members were only checked
  * that way, and except where the fork declares several overloads, which offer a *set* of
  * counts rather than one and where `overloadedMembers` says how many were compared that
- * way, `coverage` is the
+ * way, and except where upstream's own generator left a trailing discard, which is
+ * dropped before counting and where `placeholderMembers` says how many carried one,
+ * `coverage` is the
  * fraction of upstream members that are declared *and* agree on arity, and
  * `fieldCoverage` the fraction of upstream fields that are declared at all — a phantom
  * enters neither, having no upstream member to be a fraction of. A non-empty list is a
@@ -112,6 +114,10 @@ export interface AuthoredParityReport {
    * the same reason: a member that agrees because *one* of its shapes matches is a
    * weaker result than one that agrees outright. */
   overloadedMembers: number;
+  /** How many members upstream defines with a trailing bare `_` the comparison dropped
+   * before counting. A generated-module artefact: recorded so a `callableCoverage` over
+   * such a surface cannot be read as agreement on every parameter upstream wrote. */
+  placeholderMembers: number;
   /** Named for its axis, not for the module: neither this nor `fieldCoverage` is
    * "the" coverage of a target, and the two are never averaged into one. */
   callableCoverage: number;
@@ -270,6 +276,9 @@ export function classifyFieldAxis(input: FieldAxisInput): FieldAxis {
 export interface ArityInput {
   upstreamNamed: number;
   upstreamVariadic: boolean;
+  /** True when upstream's last named parameter is a bare `_` — a generated discard no
+   * body reads and no consumer can pass meaningfully, so it is not counted. */
+  upstreamPlaceholder: boolean;
   /** Every parameter count the fork declares for this name — one entry per overload,
    * and never empty. */
   declared: number[];
@@ -281,6 +290,7 @@ export interface ArityVerdict {
   agrees: boolean;
   floorChecked: boolean;
   overloadChecked: boolean;
+  placeholderChecked: boolean;
   /** The widest shape the fork offers — what `arityMismatches` reports, so the list
    * stays one number per name whether or not the member is overloaded. */
   declaredWidest: number;
@@ -299,18 +309,29 @@ export interface ArityVerdict {
  * member agrees when any one of them meets the rule above — reading a single count would
  * charge a correct fork for whichever shape the reader happened to keep.
  *
- * Both softenings stay visible. `floorChecked` is true whenever upstream is variadic and
- * `overloadChecked` whenever the fork declares more than one shape — in each case whether
- * or not it changed the verdict — so `variadicMembers` and `overloadedMembers` count every
- * member the weaker check covered rather than only the ones it rescued.
+ * A generated module adds a third case. `nakama.lua` is written by
+ * `codegen/generate-rest.go`, and 66 of its exports end in a bare `_` that no body reads
+ * and no LuaDoc documents — the generator's trailing discard rather than a parameter a
+ * consumer can pass. Only a *trailing* one is unreachable by position, so only a trailing
+ * one is dropped, and it is dropped before either branch above: a variadic member's floor
+ * is the count that remains. The reader is untouched by this — it transcribes what
+ * upstream wrote, and the interpretation belongs here.
+ *
+ * All three softenings stay visible. `floorChecked` is true whenever upstream is variadic,
+ * `overloadChecked` whenever the fork declares more than one shape, and
+ * `placeholderChecked` whenever a discard was dropped — in each case whether or not it
+ * changed the verdict — so `variadicMembers`, `overloadedMembers` and `placeholderMembers`
+ * count every member the weaker check covered rather than only the ones it rescued.
  */
 export function classifyArity(input: ArityInput): ArityVerdict {
+  const upstreamNamed = input.upstreamNamed - (input.upstreamPlaceholder ? 1 : 0);
   const meets = (declared: number) =>
-    input.upstreamVariadic ? declared >= input.upstreamNamed : declared === input.upstreamNamed;
+    input.upstreamVariadic ? declared >= upstreamNamed : declared === upstreamNamed;
   return {
     agrees: input.declared.some(meets),
     floorChecked: input.upstreamVariadic,
     overloadChecked: input.declared.length > 1,
+    placeholderChecked: input.upstreamPlaceholder,
     declaredWidest: Math.max(...input.declared),
   };
 }
@@ -455,6 +476,7 @@ export function buildAuthoredParity(
   let undocumentedMembers = 0;
   let variadicMembers = 0;
   let overloadedMembers = 0;
+  let placeholderMembers = 0;
   let correct = 0;
 
   for (const [name, member] of upstream) {
@@ -468,16 +490,22 @@ export function buildAuthoredParity(
       }
       continue;
     }
-    const upstreamParams = (member.params as string[]).length;
+    const params = member.params as string[];
+    const placeholder = params.at(-1) === "_";
+    // The count actually compared, so `arityMismatches` reports the number the fork has
+    // to meet rather than the one upstream's line reads.
+    const upstreamParams = params.length - (placeholder ? 1 : 0);
     const verdict = classifyArity({
-      upstreamNamed: upstreamParams,
+      upstreamNamed: params.length,
       upstreamVariadic: member.varargs,
+      upstreamPlaceholder: placeholder,
       declared: match.params,
     });
     if (verdict.agrees) correct += 1;
     else arityMismatches.push({ name, upstream: upstreamParams, declared: verdict.declaredWidest });
     if (verdict.floorChecked) variadicMembers += 1;
     if (verdict.overloadChecked) overloadedMembers += 1;
+    if (verdict.placeholderChecked) placeholderMembers += 1;
     if (member.doc !== "" && !match.documented) undocumentedMembers += 1;
   }
 
@@ -505,6 +533,7 @@ export function buildAuthoredParity(
     refusedDocBlocks,
     variadicMembers,
     overloadedMembers,
+    placeholderMembers,
     callableCoverage: upstream.size === 0 ? 1 : round4(correct / upstream.size),
   };
 }

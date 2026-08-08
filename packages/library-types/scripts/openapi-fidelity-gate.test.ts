@@ -58,19 +58,25 @@ describe("nakama openapi-vs-ts-defold fidelity gate", () => {
     expect(target.decision).toBe(decision);
   });
 
-  test("the three status constructors are now source-backed, not missing", async () => {
-    // Once the proto parser flattens the tail after `Ping {}`, these three exist
-    // in the emitted surface and leave the missing set; the hand-written helpers
-    // keep the decision no-go.
+  // What this used to measure is gone. The claim was that the proto parser, once it
+  // flattened the tail after `Ping {}`, put `create_status_follow_message` and its two
+  // siblings into the emitted surface so they left the missing set. The fork no longer
+  // declares them — the pinned `nakama.lua` exports no socket member at all, requiring
+  // `nakama.socket` privately and exposing only `create_socket` — and the snapshot side
+  // of this comparison is that fork, so a `not.toContain` over the three would now pass
+  // over an empty surface and prove nothing. The proto parser is unchanged and still
+  // covers them; there is simply no member on this module left to read the claim off.
+  // Recorded here rather than deleted silently: the surface was withdrawn, not fixed.
+  test("what remains missing is exactly the client-lifecycle surface", async () => {
     const { missingMembers, decision } = await comparison();
-    for (const ctor of [
-      "create_status_follow_message",
-      "create_status_unfollow_message",
-      "create_status_update_message",
-    ]) {
-      expect(missingMembers).not.toContain(ctor);
-    }
-    expect(missingMembers).toContain("create_client");
+    expect([...missingMembers].sort()).toEqual([
+      "cancel",
+      "cancellation_token",
+      "create_client",
+      "create_socket",
+      "set_bearer_token",
+      "sync",
+    ]);
     expect(decision).toBe("no-go");
   });
 });
