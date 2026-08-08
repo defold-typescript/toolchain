@@ -2,38 +2,20 @@
   "namespace": "monarch.transitions.gui",
   "upstreamMembers": 20,
   "upstreamFields": 0,
-  "declaredFields": 12,
+  "declaredFields": 0,
   "missingFields": [],
   "phantomFields": [],
   "fieldCoverage": 1,
   "declaredGlobals": 0,
-  "declaredMembers": 8,
-  "missingMembers": [
-    "fade_in",
-    "fade_out",
-    "scale_in",
-    "scale_out",
-    "slide_in_bottom",
-    "slide_in_left",
-    "slide_in_right",
-    "slide_in_top",
-    "slide_out_bottom",
-    "slide_out_left",
-    "slide_out_right",
-    "slide_out_top"
-  ],
+  "declaredMembers": 20,
+  "missingMembers": [],
   "phantomMembers": [],
-  "arityMismatches": [
-    {
-      "name": "create",
-      "upstream": 1,
-      "declared": 0
-    }
-  ],
+  "arityMismatches": [],
   "parityExceptions": [],
   "undocumentedMembers": 0,
   "importedDocs": 1,
   "refusedDocBlocks": 1,
   "variadicMembers": 0,
-  "callableCoverage": 0.35
+  "overloadedMembers": 1,
+  "callableCoverage": 1
 }

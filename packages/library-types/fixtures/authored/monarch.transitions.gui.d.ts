@@ -135,18 +135,102 @@ declare module 'monarch.transitions.gui' {
 		complete_function?: (this: any, node: Opaque<"node">) => void,
 	) => void;
 
-	export const slide_in_right: TransitionInFn;
-	export const slide_in_left: TransitionInFn;
-	export const slide_in_top: TransitionInFn;
-	export const slide_in_bottom: TransitionInFn;
-	export const slide_out_right: TransitionOutFn;
-	export const slide_out_left: TransitionOutFn;
-	export const slide_out_top: TransitionOutFn;
-	export const slide_out_bottom: TransitionOutFn;
-	export const scale_in: TransitionInFn;
-	export const scale_out: TransitionOutFn;
-	export const fade_in: TransitionInFn;
-	export const fade_out: TransitionOutFn;
+	export function slide_in_right(
+		node: Opaque<"node">,
+		to: Vector3,
+		easing: GuiEasing,
+		duration: number,
+		delay?: number,
+		complete_function?: (this: any, node: Opaque<"node">) => void,
+	): void;
+	export function slide_in_left(
+		node: Opaque<"node">,
+		to: Vector3,
+		easing: GuiEasing,
+		duration: number,
+		delay?: number,
+		complete_function?: (this: any, node: Opaque<"node">) => void,
+	): void;
+	export function slide_in_top(
+		node: Opaque<"node">,
+		to: Vector3,
+		easing: GuiEasing,
+		duration: number,
+		delay?: number,
+		complete_function?: (this: any, node: Opaque<"node">) => void,
+	): void;
+	export function slide_in_bottom(
+		node: Opaque<"node">,
+		to: Vector3,
+		easing: GuiEasing,
+		duration: number,
+		delay?: number,
+		complete_function?: (this: any, node: Opaque<"node">) => void,
+	): void;
+	export function slide_out_right(
+		node: Opaque<"node">,
+		from: Vector3,
+		easing: GuiEasing,
+		duration: number,
+		delay?: number,
+		complete_function?: (this: any, node: Opaque<"node">) => void,
+	): void;
+	export function slide_out_left(
+		node: Opaque<"node">,
+		from: Vector3,
+		easing: GuiEasing,
+		duration: number,
+		delay?: number,
+		complete_function?: (this: any, node: Opaque<"node">) => void,
+	): void;
+	export function slide_out_top(
+		node: Opaque<"node">,
+		from: Vector3,
+		easing: GuiEasing,
+		duration: number,
+		delay?: number,
+		complete_function?: (this: any, node: Opaque<"node">) => void,
+	): void;
+	export function slide_out_bottom(
+		node: Opaque<"node">,
+		from: Vector3,
+		easing: GuiEasing,
+		duration: number,
+		delay?: number,
+		complete_function?: (this: any, node: Opaque<"node">) => void,
+	): void;
+	export function scale_in(
+		node: Opaque<"node">,
+		to: Vector3,
+		easing: GuiEasing,
+		duration: number,
+		delay?: number,
+		complete_function?: (this: any, node: Opaque<"node">) => void,
+	): void;
+	export function scale_out(
+		node: Opaque<"node">,
+		from: Vector3,
+		easing: GuiEasing,
+		duration: number,
+		delay?: number,
+		complete_function?: (this: any, node: Opaque<"node">) => void,
+	): void;
+	export function fade_in(
+		node: Opaque<"node">,
+		from: Vector3,
+		easing: GuiEasing,
+		duration: number,
+		delay?: number,
+		complete_function?: (this: any, node: Opaque<"node">) => void,
+	): void;
+	export function fade_out(
+		node: Opaque<"node">,
+		from: Vector3,
+		easing: GuiEasing,
+		duration: number,
+		delay?: number,
+		complete_function?: (this: any, node: Opaque<"node">) => void,
+	): void;
 
 	export function in_right_out_left(
 		node: Opaque<"node">,

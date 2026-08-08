@@ -852,6 +852,142 @@
       ]
     },
     {
+      "type": "TYPEDEF",
+      "name": "Theme",
+      "properties": [
+        {
+          "name": "is_enabled",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(component: { node?: Opaque<\"node\">; }) => boolean | undefined"
+          ]
+        },
+        {
+          "name": "set_enabled",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(component: { node?: Opaque<\"node\">; }, enabled: boolean) => void"
+          ]
+        },
+        {
+          "name": "acquire_input",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ]
+        },
+        {
+          "name": "release_input",
+          "brief": "",
+          "description": "",
+          "types": [
+            "() => void"
+          ]
+        },
+        {
+          "name": "group",
+          "brief": "",
+          "description": "",
+          "types": [
+            "(group_id: Hash | string, action_id: Hash, action: table, group_fn: () => void) => table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_enabled",
+      "brief": "Check if a node is enabled. This is done by not only looking at the state of the",
+      "description": "Check if a node is enabled. This is done by not only looking at the state of the\nnode itself but also it's ancestors all the way up the hierarchy.",
+      "parameters": [
+        {
+          "name": "node",
+          "doc": "",
+          "types": [
+            "Opaque<\"node\">"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "acquire_input",
+      "brief": "Convenience function to acquire input focus",
+      "description": "Convenience function to acquire input focus",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "release_input",
+      "brief": "Convenience function to release input focus",
+      "description": "Convenience function to release input focus",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create_theme",
+      "brief": "",
+      "description": "",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Theme"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mask_text",
+      "brief": "Mask text by replacing every character with a mask character",
+      "description": "Mask text by replacing every character with a mask character",
+      "parameters": [
+        {
+          "name": "text",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "mask",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
       "type": "FUNCTION",
       "name": "button",
       "brief": "",
@@ -961,6 +1097,55 @@
           "doc": "",
           "types": [
             "CheckboxState"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "radiogroup",
+      "brief": "Wraps the `gooey.radio` calls of one group; `fn` receives the group's id and the",
+      "description": "Wraps the `gooey.radio` calls of one group; `fn` receives the group's id and the\ninput it was called with, not a radio state (`README.md:265`).",
+      "parameters": [
+        {
+          "name": "group_id",
+          "doc": "",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action_id",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "(group_id: Hash | string, action_id: Hash, action: table) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "table"
           ]
         }
       ]
@@ -1099,14 +1284,6 @@
             "(list: ListState) => void"
           ],
           "is_optional": "True"
-        },
-        {
-          "name": "is_horizontal",
-          "doc": "",
-          "types": [
-            "boolean"
-          ],
-          "is_optional": "True"
         }
       ],
       "returnvalues": [
@@ -1127,14 +1304,6 @@
       "parameters": [
         {
           "name": "list_id",
-          "doc": "",
-          "types": [
-            "string"
-          ],
-          "is_optional": "False"
-        },
-        {
-          "name": "root_id",
           "doc": "",
           "types": [
             "string"
@@ -1204,14 +1373,6 @@
             "(list: ListState) => void"
           ],
           "is_optional": "True"
-        },
-        {
-          "name": "is_horizontal",
-          "doc": "",
-          "types": [
-            "boolean"
-          ],
-          "is_optional": "True"
         }
       ],
       "returnvalues": [
@@ -1232,14 +1393,6 @@
       "parameters": [
         {
           "name": "list_id",
-          "doc": "",
-          "types": [
-            "string"
-          ],
-          "is_optional": "False"
-        },
-        {
-          "name": "root_id",
           "doc": "",
           "types": [
             "string"
@@ -1329,14 +1482,6 @@
       "parameters": [
         {
           "name": "list_id",
-          "doc": "",
-          "types": [
-            "string"
-          ],
-          "is_optional": "False"
-        },
-        {
-          "name": "root_id",
           "doc": "",
           "types": [
             "string"
@@ -1619,6 +1764,87 @@
           "is_optional": "False"
         },
         {
+          "name": "config",
+          "doc": "",
+          "types": [
+            "table | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "",
+          "types": [
+            "(scrollbar: ScrollbarState) => void"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "refresh_fn",
+          "doc": "",
+          "types": [
+            "(scrollbar: ScrollbarState) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "ScrollbarState"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "horizontal_scrollbar",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "handle_id",
+          "doc": "",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "bounds_id",
+          "doc": "",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action_id",
+          "doc": "",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "action",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "config",
+          "doc": "",
+          "types": [
+            "table | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
           "name": "fn",
           "doc": "",
           "types": [
@@ -1794,6 +2020,31 @@
           ]
         }
       ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_focus",
+      "brief": "Move a group's focus to the component at `index`, refreshing it.",
+      "description": "Move a group's focus to the component at `index`, refreshing it.",
+      "parameters": [
+        {
+          "name": "group",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "index",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
     }
   ]
 }

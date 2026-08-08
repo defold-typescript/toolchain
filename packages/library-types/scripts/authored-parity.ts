@@ -24,12 +24,12 @@
  *
  * A name that is callable on *either* side belongs to the callable axis and is never
  * counted as a field, so one defect cannot be charged twice. `monarch.transitions.gui`
- * is the case that forces this: it declares twelve upstream *functions* as `VARIABLE`,
- * which the callable axis already reports as `missingMembers` — calling them phantom
- * fields as well would both double-count and describe an upstream name as invented.
- * The rule lives in `classifyFieldAxis`, and that target is the only corpus case for
- * it, pinning one of its four clauses; the other three are pinned by synthetic name
- * sets, no measured target producing the shape they guard against.
+ * was the case that forced this — it declared twelve upstream *functions* as `VARIABLE`,
+ * which the callable axis already reported as `missingMembers`, and calling them phantom
+ * fields as well would both double-count and describe an upstream name as invented. That
+ * fork has since been corrected, so the rule now stands on `classifyFieldAxis` alone: no
+ * measured target produces any of its four clauses, and all four are pinned by synthetic
+ * name sets.
  *
  * Every classifier here is one-sided on purpose. `missingMembers`/`missingFields` and
  * `phantomMembers`/`phantomFields` are name-set differences, `arityMismatches` compares
@@ -37,7 +37,9 @@
  * renames freely, and a rename is not the defect this measures) — except where upstream
  * is variadic, which has no fixed count to disagree with, so its named parameters are a
  * floor the fork must meet and `variadicMembers` says how many members were only checked
- * that way, `coverage` is the
+ * that way, and except where the fork declares several overloads, which offer a *set* of
+ * counts rather than one and where `overloadedMembers` says how many were compared that
+ * way, `coverage` is the
  * fraction of upstream members that are declared *and* agree on arity, and
  * `fieldCoverage` the fraction of upstream fields that are declared at all — a phantom
  * enters neither, having no upstream member to be a fraction of. A non-empty list is a
@@ -54,6 +56,9 @@ export const AUTHORED_PARITY_DIR = "fidelity/authored";
 export interface AuthoredArityMismatch {
   name: string;
   upstream: number;
+  /** The widest signature the fork offers for this name — the same number for a member
+   * declared once, and the largest of the set for one declared as overloads. One number
+   * per name is what keeps this list a diff-stable correction list. */
   declared: number;
 }
 
@@ -102,13 +107,20 @@ export interface AuthoredParityReport {
    * upstream being variadic. Recorded so a `callableCoverage` of 1 over a variadic
    * surface cannot be read as fully verified. */
   variadicMembers: number;
+  /** How many members the fork declares as several overloads, so the comparison had a
+   * set of counts to accept rather than one. Recorded beside `variadicMembers` and for
+   * the same reason: a member that agrees because *one* of its shapes matches is a
+   * weaker result than one that agrees outright. */
+  overloadedMembers: number;
   /** Named for its axis, not for the module: neither this nor `fieldCoverage` is
    * "the" coverage of a target, and the two are never averaged into one. */
   callableCoverage: number;
 }
 
 interface DeclaredMember {
-  params: number;
+  /** Every declared signature's parameter count, ascending. A name the api-doc holds
+   * once yields one entry; an overload pair yields both. */
+  params: number[];
   documented: boolean;
 }
 
@@ -190,9 +202,18 @@ function declaredSurface(packageRoot: string, target: AuthoredTarget): DeclaredS
     }
     if (element.docSource === "upstream") imported += 1;
     if (element.type === "FUNCTION") {
+      // Merged rather than overwritten: the api-doc holds one `FUNCTION` element per
+      // overload, and keeping only the last read a correctly-modelled pair as whichever
+      // shape happened to come last. `documented` is true when *any* of them carries
+      // prose — the docs-site renders the group, not the element.
+      const documented = (element.brief ?? "") !== "" || (element.description ?? "") !== "";
+      const existing = callable.get(element.name);
+      const params = [...(existing?.params ?? []), element.parameters?.length ?? 0].sort(
+        (a, b) => a - b,
+      );
       callable.set(element.name, {
-        params: element.parameters?.length ?? 0,
-        documented: (element.brief ?? "") !== "" || (element.description ?? "") !== "",
+        params,
+        documented: (existing?.documented ?? false) || documented,
       });
     } else fields.add(element.name);
   }
@@ -249,33 +270,48 @@ export function classifyFieldAxis(input: FieldAxisInput): FieldAxis {
 export interface ArityInput {
   upstreamNamed: number;
   upstreamVariadic: boolean;
-  declared: number;
+  /** Every parameter count the fork declares for this name — one entry per overload,
+   * and never empty. */
+  declared: number[];
 }
 
-/** Whether the fork's count is acceptable, and whether saying so took a floor. */
+/** Whether the fork's count is acceptable, whether saying so took a floor or a set, and
+ * the single count a disagreement is reported at. */
 export interface ArityVerdict {
   agrees: boolean;
   floorChecked: boolean;
+  overloadChecked: boolean;
+  /** The widest shape the fork offers — what `arityMismatches` reports, so the list
+   * stays one number per name whether or not the member is overloaded. */
+  declaredWidest: number;
 }
 
 /**
- * The arity comparison for one shared member, pure over the two counts.
+ * The arity comparison for one shared member, pure over the counts.
  *
  * `function M.play(...)` names no parameters, so an exact comparison reads the fork's one
  * rest parameter as a mismatch against zero — the instrument's defect, not the fork's. A
  * variadic upstream member has no fixed count to disagree with, so its named parameters
  * become a floor: the fork must declare at least them, and anything above is the rest.
  *
- * The softening stays visible. `floorChecked` is true whenever upstream is variadic —
- * whether or not the floor was exceeded — so `variadicMembers` counts every member the
- * weaker check covered rather than only the ones it changed the verdict for.
+ * A fork may also declare several overloads for one name, modelling an upstream body that
+ * branches on whether an argument was passed. That is a *set* of call shapes, and the
+ * member agrees when any one of them meets the rule above — reading a single count would
+ * charge a correct fork for whichever shape the reader happened to keep.
+ *
+ * Both softenings stay visible. `floorChecked` is true whenever upstream is variadic and
+ * `overloadChecked` whenever the fork declares more than one shape — in each case whether
+ * or not it changed the verdict — so `variadicMembers` and `overloadedMembers` count every
+ * member the weaker check covered rather than only the ones it rescued.
  */
 export function classifyArity(input: ArityInput): ArityVerdict {
+  const meets = (declared: number) =>
+    input.upstreamVariadic ? declared >= input.upstreamNamed : declared === input.upstreamNamed;
   return {
-    agrees: input.upstreamVariadic
-      ? input.declared >= input.upstreamNamed
-      : input.declared === input.upstreamNamed,
+    agrees: input.declared.some(meets),
     floorChecked: input.upstreamVariadic,
+    overloadChecked: input.declared.length > 1,
+    declaredWidest: Math.max(...input.declared),
   };
 }
 
@@ -418,6 +454,7 @@ export function buildAuthoredParity(
   const arityMismatches: AuthoredArityMismatch[] = [];
   let undocumentedMembers = 0;
   let variadicMembers = 0;
+  let overloadedMembers = 0;
   let correct = 0;
 
   for (const [name, member] of upstream) {
@@ -438,8 +475,9 @@ export function buildAuthoredParity(
       declared: match.params,
     });
     if (verdict.agrees) correct += 1;
-    else arityMismatches.push({ name, upstream: upstreamParams, declared: match.params });
+    else arityMismatches.push({ name, upstream: upstreamParams, declared: verdict.declaredWidest });
     if (verdict.floorChecked) variadicMembers += 1;
+    if (verdict.overloadChecked) overloadedMembers += 1;
     if (member.doc !== "" && !match.documented) undocumentedMembers += 1;
   }
 
@@ -466,6 +504,7 @@ export function buildAuthoredParity(
     importedDocs,
     refusedDocBlocks,
     variadicMembers,
+    overloadedMembers,
     callableCoverage: upstream.size === 0 ? 1 : round4(correct / upstream.size),
   };
 }

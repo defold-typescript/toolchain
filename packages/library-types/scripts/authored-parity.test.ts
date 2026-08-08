@@ -200,6 +200,34 @@ describe("the three forks that were missing members their pinned upstream define
   });
 });
 
+// Twenty of twenty, corrected rather than justified: eight members the fork never
+// declared, and five parameter lists that disagreed — three `*dynamic_list` forms
+// carrying an invented `root_id`, `dynamic_list` and `static_list` an invented trailing
+// `is_horizontal`, and `vertical_scrollbar` dropping upstream's `config`, which silently
+// shifted every argument after `action`.
+describe("gooey declares the whole callable surface gooey.lua defines", () => {
+  const report = buildAuthoredParity(PACKAGE_ROOT, target("gooey"));
+
+  test("every upstream member is declared at upstream arity, none of it excepted", () => {
+    expect(report.upstreamMembers).toBe(20);
+    expect(report.declaredMembers).toBe(20);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.parityExceptions).toEqual([]);
+  });
+
+  // The scope line of this slice: the callable corrections reached no constant on the
+  // way past, and upstream defines none for them to have reached.
+  test("the field axis did not move: this slice touched one axis", () => {
+    expect(report.upstreamFields).toBe(0);
+    expect(report.declaredFields).toBe(0);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.fieldCoverage).toBe(1);
+  });
+});
+
 describe("the nakama core parity findings", () => {
   const report = buildAuthoredParity(PACKAGE_ROOT, target("nakama"));
 
@@ -293,17 +321,6 @@ describe("the field axis compares the non-callable surface", () => {
 });
 
 describe("a name callable on either side is compared, never counted as a field", () => {
-  // monarch.transitions.gui declares its twelve transitions as `VARIABLE` while
-  // upstream defines them as functions. They are already the target's twelve
-  // `missingMembers`; reporting them as phantom fields too would count one defect
-  // on both axes and label an upstream name "invented".
-  test("a declared field that is an upstream function is not a phantom field", () => {
-    const report = buildAuthoredParity(PACKAGE_ROOT, target("monarch.transitions.gui"));
-    expect(report.declaredFields).toBe(12);
-    expect(report.phantomFields).toEqual([]);
-    expect(report.missingMembers).toContain("slide_in_right");
-  });
-
   test("no report charges the same name to both axes", () => {
     for (const entry of authoredParityTargets(PACKAGE_ROOT)) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
@@ -316,10 +333,12 @@ describe("a name callable on either side is compared, never counted as a field",
   });
 });
 
-// The corpus exercises one half of the either-side rule — `monarch.transitions.gui`,
-// the only target declaring upstream functions as `VARIABLE`. The other three clauses
-// have no corpus case at all, so they are pinned here on synthetic name sets driven
-// straight through the classifier `buildAuthoredParity` itself calls.
+// No measured target produces any of the four clauses any more. The last one that did
+// — `monarch.transitions.gui`, which declared upstream's twelve functions as `VARIABLE`
+// — has since been corrected to declare them as functions, and a corpus-parasitic form
+// of this claim cannot survive a rollout that corrects every target. All four are
+// therefore pinned on synthetic name sets driven straight through the classifier
+// `buildAuthoredParity` itself calls.
 describe("the either-side rule holds on name sets the corpus never produces", () => {
   test("an undeclared upstream field is missing, an unmatched declared variable is phantom", () => {
     const axis = classifyFieldAxis({
@@ -391,47 +410,174 @@ describe("the either-side rule holds on name sets the corpus never produces", ()
 // scalars that no correction can take away.
 describe("a variadic upstream member is measured against a floor, not a count", () => {
   test("a non-variadic member still agrees on an exact count and disagrees otherwise", () => {
-    expect(classifyArity({ upstreamNamed: 2, upstreamVariadic: false, declared: 2 })).toEqual({
+    expect(classifyArity({ upstreamNamed: 2, upstreamVariadic: false, declared: [2] })).toEqual({
       agrees: true,
       floorChecked: false,
+      overloadChecked: false,
+      declaredWidest: 2,
     });
-    expect(classifyArity({ upstreamNamed: 2, upstreamVariadic: false, declared: 1 })).toEqual({
+    expect(classifyArity({ upstreamNamed: 2, upstreamVariadic: false, declared: [1] })).toEqual({
       agrees: false,
       floorChecked: false,
+      overloadChecked: false,
+      declaredWidest: 1,
     });
   });
 
   test("a variadic member with no named parameters agrees at any declared count", () => {
     for (const declared of [0, 1, 4]) {
-      expect(classifyArity({ upstreamNamed: 0, upstreamVariadic: true, declared })).toEqual({
+      expect(
+        classifyArity({ upstreamNamed: 0, upstreamVariadic: true, declared: [declared] }),
+      ).toEqual({
         agrees: true,
         floorChecked: true,
+        overloadChecked: false,
+        declaredWidest: declared,
       });
     }
   });
 
   test("named parameters stay a floor the fork must meet", () => {
-    expect(classifyArity({ upstreamNamed: 2, upstreamVariadic: true, declared: 2 })).toEqual({
+    expect(classifyArity({ upstreamNamed: 2, upstreamVariadic: true, declared: [2] })).toEqual({
       agrees: true,
       floorChecked: true,
+      overloadChecked: false,
+      declaredWidest: 2,
     });
-    expect(classifyArity({ upstreamNamed: 2, upstreamVariadic: true, declared: 3 })).toEqual({
+    expect(classifyArity({ upstreamNamed: 2, upstreamVariadic: true, declared: [3] })).toEqual({
       agrees: true,
       floorChecked: true,
+      overloadChecked: false,
+      declaredWidest: 3,
     });
-    expect(classifyArity({ upstreamNamed: 2, upstreamVariadic: true, declared: 1 })).toEqual({
+    expect(classifyArity({ upstreamNamed: 2, upstreamVariadic: true, declared: [1] })).toEqual({
       agrees: false,
       floorChecked: true,
+      overloadChecked: false,
+      declaredWidest: 1,
     });
   });
 
   test("only a floor-checked member is one the count can report", () => {
     expect(
-      classifyArity({ upstreamNamed: 1, upstreamVariadic: false, declared: 1 }).floorChecked,
+      classifyArity({ upstreamNamed: 1, upstreamVariadic: false, declared: [1] }).floorChecked,
     ).toBe(false);
     expect(
-      classifyArity({ upstreamNamed: 1, upstreamVariadic: true, declared: 1 }).floorChecked,
+      classifyArity({ upstreamNamed: 1, upstreamVariadic: true, declared: [1] }).floorChecked,
     ).toBe(true);
+  });
+});
+
+// A fork that models upstream's optional-argument branch as two overloads offers a
+// *set* of call shapes where the comparison used to read one count — and the one it
+// read was whichever api-doc element came last. `monarch.transitions.gui.create` is the
+// case: upstream's `M.create(node)` carries an `if node then` branch, the fork declares
+// `create(node)` and `create()`, and last-overload-wins charged it as a mismatch
+// against zero. A correctly-modelled overload pair is not correctable in the fork and
+// is not a ledger entry either — an exception claims the fork is right to *omit* a
+// member, and the fork omits nothing. So the rule moves into the classifier, and
+// `overloadedMembers` keeps the softening visible exactly as `variadicMembers` does.
+describe("a fork offering several call shapes is measured against the set", () => {
+  test("a single declared count still compares exactly, and reports no overload", () => {
+    expect(classifyArity({ upstreamNamed: 3, upstreamVariadic: false, declared: [3] })).toEqual({
+      agrees: true,
+      floorChecked: false,
+      overloadChecked: false,
+      declaredWidest: 3,
+    });
+    expect(classifyArity({ upstreamNamed: 3, upstreamVariadic: false, declared: [4] })).toEqual({
+      agrees: false,
+      floorChecked: false,
+      overloadChecked: false,
+      declaredWidest: 4,
+    });
+  });
+
+  test("a declared set agrees when upstream's count is any member of it", () => {
+    for (const upstreamNamed of [0, 1]) {
+      expect(
+        classifyArity({ upstreamNamed, upstreamVariadic: false, declared: [0, 1] }),
+      ).toMatchObject({ agrees: true, overloadChecked: true });
+    }
+  });
+
+  test("a declared set disagrees when upstream's count is none of them", () => {
+    expect(
+      classifyArity({ upstreamNamed: 2, upstreamVariadic: false, declared: [0, 1] }),
+    ).toMatchObject({ agrees: false, overloadChecked: true });
+  });
+
+  test("the floor rule applies per declared shape, so a variadic set meets it on any", () => {
+    expect(classifyArity({ upstreamNamed: 2, upstreamVariadic: true, declared: [0, 3] })).toEqual({
+      agrees: true,
+      floorChecked: true,
+      overloadChecked: true,
+      declaredWidest: 3,
+    });
+    expect(classifyArity({ upstreamNamed: 4, upstreamVariadic: true, declared: [0, 3] })).toEqual({
+      agrees: false,
+      floorChecked: true,
+      overloadChecked: true,
+      declaredWidest: 3,
+    });
+  });
+
+  test("overloadChecked is true whenever the set holds more than one count", () => {
+    expect(
+      classifyArity({ upstreamNamed: 1, upstreamVariadic: false, declared: [0, 1] })
+        .overloadChecked,
+    ).toBe(true);
+    expect(
+      classifyArity({ upstreamNamed: 9, upstreamVariadic: false, declared: [0, 1] })
+        .overloadChecked,
+    ).toBe(true);
+  });
+
+  // `arityMismatches` reports one number per name, so a disagreeing set has to collapse
+  // to one — the widest shape the fork offers, which is the one a reader corrects
+  // against. Computed in the verdict rather than at the call site: the corpus holds no
+  // disagreeing overloaded member to pin it on, and a `declared[0]` regression would
+  // otherwise be invisible.
+  test("a disagreeing set collapses to the widest declared shape, a single count to itself", () => {
+    expect(
+      classifyArity({ upstreamNamed: 2, upstreamVariadic: false, declared: [0, 1] }).declaredWidest,
+    ).toBe(1);
+    expect(
+      classifyArity({ upstreamNamed: 2, upstreamVariadic: false, declared: [5, 3] }).declaredWidest,
+    ).toBe(5);
+    expect(
+      classifyArity({ upstreamNamed: 2, upstreamVariadic: false, declared: [4] }).declaredWidest,
+    ).toBe(4);
+  });
+
+  test("monarch.transitions.gui declares upstream's twenty members and agrees on every one", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("monarch.transitions.gui"));
+    expect(report.upstreamMembers).toBe(20);
+    expect(report.declaredMembers).toBe(20);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.overloadedMembers).toBe(1);
+    expect(report.callableCoverage).toBe(1);
+  });
+
+  // The twelve transitions moved from `VARIABLE` to `FUNCTION`, so the field axis has
+  // to be seen not to have gained anything on the way past: upstream defines no
+  // constant in this module at all.
+  test("the transitions left the field axis rather than being counted on both", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("monarch.transitions.gui"));
+    expect(report.declaredFields).toBe(0);
+    expect(report.upstreamFields).toBe(0);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  test("the term is 0 on every target whose api-doc names each function once", () => {
+    const overloaded = authoredParityTargets(PACKAGE_ROOT)
+      .map((entry) => buildAuthoredParity(PACKAGE_ROOT, entry))
+      .filter((report) => report.overloadedMembers > 0)
+      .map((report) => `${report.namespace}: ${report.overloadedMembers}`);
+    expect(overloaded).toEqual(["monarch.transitions.gui: 1"]);
   });
 });
 
@@ -474,30 +620,34 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
 // justification reads differently from one reaching 1 by declaring everything.
 //
 // The synthetic entries below run through the same production pass as the manifest,
-// against a target whose real upstream and fork this slice does not touch.
+// hosted on `boom` — whose five omissions are `script-lifecycle` and therefore
+// permanent by design. A host that is merely *awaiting* correction stops providing the
+// shape the moment the rollout reaches it, which is how this suite lost its first host.
 describe("a justified divergence is counted correct and stays named", () => {
-  const GUI = "monarch.transitions.gui";
+  const BOOM = "boom";
 
   function excepting(entries: AuthoredParityException[]) {
-    return buildAuthoredParity(PACKAGE_ROOT, target(GUI), { [GUI]: entries });
+    return buildAuthoredParity(PACKAGE_ROOT, target(BOOM), { [BOOM]: entries });
   }
 
   const SYNTHETIC: AuthoredParityException = {
-    name: "slide_in_right",
+    name: "init",
     kind: "script-lifecycle",
     reason: "synthetic entry, exercising the ledger against a real surface",
   };
 
   test("an excepted member the fork omits is counted correct instead of missing", () => {
-    const measured = buildAuthoredParity(PACKAGE_ROOT, target(GUI));
-    expect(measured.missingMembers).toContain("slide_in_right");
-    expect(measured.callableCoverage).toBe(0.35);
+    // The committed ledger already excepts all five, so the un-excepted baseline is
+    // the empty override rather than the measured artifact.
+    const bare = buildAuthoredParity(PACKAGE_ROOT, target(BOOM), {});
+    expect(bare.missingMembers).toContain("init");
+    expect(bare.callableCoverage).toBe(0.1667);
 
     const report = excepting([SYNTHETIC]);
-    expect(report.missingMembers).not.toContain("slide_in_right");
-    expect(report.missingMembers.length).toBe(measured.missingMembers.length - 1);
-    // 8 of 20 rather than 7: the exception moved the member across, it did not hide it.
-    expect(report.callableCoverage).toBe(0.4);
+    expect(report.missingMembers).not.toContain("init");
+    expect(report.missingMembers.length).toBe(bare.missingMembers.length - 1);
+    // 2 of 6 rather than 1: the exception moved the member across, it did not hide it.
+    expect(report.callableCoverage).toBe(0.3333);
   });
 
   test("the exception stays in the report, carrying its kind and its reason", () => {
@@ -506,15 +656,11 @@ describe("a justified divergence is counted correct and stays named", () => {
 
   test("the reported list is sorted by name, as every other list is", () => {
     const report = excepting([
-      { ...SYNTHETIC, name: "slide_out_top" },
+      { ...SYNTHETIC, name: "update" },
       SYNTHETIC,
-      { ...SYNTHETIC, name: "fade_in" },
+      { ...SYNTHETIC, name: "final" },
     ]);
-    expect(report.parityExceptions.map((entry) => entry.name)).toEqual([
-      "fade_in",
-      "slide_in_right",
-      "slide_out_top",
-    ]);
+    expect(report.parityExceptions.map((entry) => entry.name)).toEqual(["final", "init", "update"]);
   });
 
   test("a target with no ledger entry reports an empty list", () => {
@@ -534,22 +680,22 @@ describe("a justified divergence is counted correct and stays named", () => {
 // silently ignored a stale line would keep crediting a defect that no longer exists —
 // or, worse, credit a member the fork has since declared and count it twice.
 describe("the ledger cannot outlive the defect it justifies", () => {
-  const GUI = "monarch.transitions.gui";
+  const BOOM = "boom";
 
   test("an entry naming a member upstream does not export throws, naming it", () => {
     expect(() =>
-      buildAuthoredParity(PACKAGE_ROOT, target(GUI), {
-        [GUI]: [{ name: "slide_in_diagonal", kind: "script-lifecycle", reason: "stale" }],
+      buildAuthoredParity(PACKAGE_ROOT, target(BOOM), {
+        [BOOM]: [{ name: "on_reload", kind: "script-lifecycle", reason: "stale" }],
       }),
-    ).toThrow(/monarch\.transitions\.gui.*slide_in_diagonal.*upstream/s);
+    ).toThrow(/boom\.on_reload.*upstream/s);
   });
 
   test("an entry for a member the fork does declare throws, naming it", () => {
     expect(() =>
-      buildAuthoredParity(PACKAGE_ROOT, target(GUI), {
-        [GUI]: [{ name: "create", kind: "script-lifecycle", reason: "unnecessary" }],
+      buildAuthoredParity(PACKAGE_ROOT, target(BOOM), {
+        [BOOM]: [{ name: "boom", kind: "script-lifecycle", reason: "unnecessary" }],
       }),
-    ).toThrow(/monarch\.transitions\.gui.*create.*declares/s);
+    ).toThrow(/boom\.boom.*declares/s);
   });
 
   test("a kind outside the closed set throws, naming the namespace and the member", () => {
@@ -645,10 +791,13 @@ describe("the declared field side reads only api-doc VARIABLE elements", () => {
     expect(declaredTypes(nakama, "TYPEDEF").length).toBeGreaterThan(0);
     expect(buildAuthoredParity(PACKAGE_ROOT, nakama).declaredFields).toBe(0);
 
-    const gui = target("monarch.transitions.gui");
-    expect(declaredTypes(gui, "TYPEDEF").length).toBeGreaterThan(0);
-    expect(buildAuthoredParity(PACKAGE_ROOT, gui).declaredFields).toBe(
-      declaredTypes(gui, "VARIABLE").length,
+    // The positive half needs a target that declares both kinds and no global, so the
+    // `VARIABLE` count is the whole of `declaredFields`. `platypus` is this file's
+    // field-axis exemplar and its shape is structural rather than a pending correction.
+    const platypus = target("platypus");
+    expect(declaredTypes(platypus, "TYPEDEF").length).toBeGreaterThan(0);
+    expect(buildAuthoredParity(PACKAGE_ROOT, platypus).declaredFields).toBe(
+      declaredTypes(platypus, "VARIABLE").length,
     );
   });
 
