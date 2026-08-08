@@ -15,7 +15,7 @@ jobs:
     steps:
       # fetch-depth/fetch-tags: bun run build runs build-changelog-dates.ts, which
       # fails loud on a tagless checkout (the /changelog date map is git-tag-sourced).
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           fetch-tags: true
@@ -33,7 +33,7 @@ jobs:
     steps:
       # fetch-depth/fetch-tags: bun run build runs build-changelog-dates.ts, which
       # fails loud on a tagless checkout (the /changelog date map is git-tag-sourced).
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           fetch-tags: true

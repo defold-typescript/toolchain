@@ -32,7 +32,7 @@ jobs:
     steps:
       # fetch-depth: 0 + fetch-tags pull every `v*` tag; build-changelog-dates.ts
       # reads them for the /changelog dates and fails loud on an empty tag set.
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           fetch-tags: true

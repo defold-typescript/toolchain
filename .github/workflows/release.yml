@@ -52,7 +52,7 @@ jobs:
       contents: read
       checks: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -62,7 +62,7 @@ jobs:
       # npm performs the OIDC publish (bun cannot). Node 24 ships npm new enough
       # for trusted publishing; registry-url + no token is the OIDC setup.
       - name: Setup Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
