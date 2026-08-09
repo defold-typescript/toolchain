@@ -11,4 +11,5 @@ API routes, one live and one retired:
 [a route the site emits](/api/live_module) and
 [a route it does not](/api/retired.retired#anchor-ignored).
 
-A non-api absolute route stays out of scope: [libraries](/libraries).
+Static routes, one the site serves and one it does not:
+[libraries](/libraries) and [a retired page](/retired-route).
