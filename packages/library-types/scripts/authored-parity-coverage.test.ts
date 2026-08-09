@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import {
@@ -41,10 +41,15 @@ describe("every authored target declares a parity decision", () => {
     expect(undecided).toEqual([]);
   });
 
-  test("the corpus is non-trivial, so the bijection cannot pass vacuously", () => {
+  // The corpus now carries no verdict at all, so the exclusivity below can only be
+  // read off the measured side. The verdict side keeps its teeth through the
+  // synthetic registries further down, which drive `readAuthoredTargets` directly.
+  test("the corpus is non-trivial and wholly measured — no entry rests on an excuse", () => {
     expect(TARGETS.length).toBeGreaterThan(0);
-    expect(TARGETS.filter((entry) => entry.upstreamLua.length > 0).length).toBeGreaterThan(0);
-    expect(TARGETS.filter((entry) => entry.parityVerdict !== undefined).length).toBeGreaterThan(0);
+    expect(TARGETS.filter((entry) => entry.upstreamLua.length > 0).length).toBe(TARGETS.length);
+    expect(
+      TARGETS.filter((entry) => entry.parityVerdict !== undefined).map((entry) => entry.moduleId),
+    ).toEqual([]);
   });
 
   test("a measured target carries no verdict — the two declarations are exclusive", () => {
@@ -118,18 +123,28 @@ describe("a parity verdict is a chosen category, not free prose", () => {
   });
 });
 
-describe("the concrete targets the survey could not measure", () => {
+describe("the concrete targets whose excuses the survey retired", () => {
   function verdict(moduleId: string) {
     const found = TARGETS.find((entry) => entry.moduleId === moduleId);
     if (!found) throw new Error(`authored-targets.json declares no ${moduleId}`);
     return found;
   }
 
-  test("starly.starly records an unresolved path, not an empty measurement", () => {
+  test("starly.starly is measured against a vendored upstream, not an excuse", () => {
     const starly = verdict("starly.starly");
-    expect(starly.upstreamLua).toEqual([]);
-    expect(starly.parityVerdict?.reason).toBe("unresolved-path");
-    expect(starly.parityVerdict?.note).not.toBe("");
+    expect(starly.parityVerdict).toBeUndefined();
+    expect(starly.upstreamLua).toEqual(["fixtures/upstream-lua/starly/starly/starly.lua"]);
+    for (const path of starly.upstreamLua) {
+      expect(existsSync(join(PACKAGE_ROOT, path))).toBe(true);
+    }
+  });
+
+  // The owner account went away rather than the repository, so no rename redirect
+  // fires and the same history has to be named at its new slug by hand.
+  test("starly.starly pins the relocated slug at the commit it always pinned", () => {
+    const starly = verdict("starly.starly");
+    expect(starly.repo).toBe("https://github.com/c0d3r9/starly");
+    expect(starly.ref).toBe("85d1b2af8bf0618e7f297da41d03eb55d27e49b6");
   });
 
   test("the callable-module sources are measured now, their excuse having been retired", () => {

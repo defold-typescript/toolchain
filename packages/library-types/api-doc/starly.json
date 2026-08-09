@@ -15,49 +15,49 @@
     },
     {
       "type": "VARIABLE",
-      "name": "c_display_width",
+      "name": "g_display_width",
       "types": [
         "number"
       ]
     },
     {
       "type": "VARIABLE",
-      "name": "c_display_height",
+      "name": "g_display_height",
       "types": [
         "number"
       ]
     },
     {
       "type": "VARIABLE",
-      "name": "c_display_ratio",
+      "name": "g_display_ratio",
       "types": [
         "number"
       ]
     },
     {
       "type": "VARIABLE",
-      "name": "c_behavior_center",
+      "name": "g_behavior_center",
       "types": [
         "Hash"
       ]
     },
     {
       "type": "VARIABLE",
-      "name": "c_behavior_expand",
+      "name": "g_behavior_expand",
       "types": [
         "Hash"
       ]
     },
     {
       "type": "VARIABLE",
-      "name": "c_behavior_mixed",
+      "name": "g_behavior_mixed",
       "types": [
         "Hash"
       ]
     },
     {
       "type": "VARIABLE",
-      "name": "c_behavior_stretch",
+      "name": "g_behavior_stretch",
       "types": [
         "Hash"
       ]

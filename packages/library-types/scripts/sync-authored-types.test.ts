@@ -765,7 +765,7 @@ describe("starly.starly migration integrity", () => {
     const starly = targets.find((t) => t.namespace === "starly");
     expect(starly).toBeDefined();
     expect(starly?.moduleId).toBe("starly.starly");
-    expect(starly?.repo).toBe("https://github.com/VowSoftware/starly");
+    expect(starly?.repo).toBe("https://github.com/c0d3r9/starly");
     expect(starly?.ref).toBe("85d1b2af8bf0618e7f297da41d03eb55d27e49b6");
     expect(starly?.license).toBe("Zlib");
     expect(starly?.authored).toBe("fixtures/authored/starly.starly.d.ts");
@@ -815,11 +815,14 @@ describe("starly.starly migration integrity", () => {
       join(PACKAGE_ROOT, "fixtures/authored/starly.starly.d.ts"),
       "utf8",
     );
-    expect(authored).toContain("c_behavior_center: Hash;");
+    expect(authored).toContain("g_behavior_center: Hash;");
     expect(authored).toContain("positions: Vector3[]");
     expect(authored).toContain("export = exportThis;");
     expect(authored).not.toContain(": hash;");
     expect(authored).not.toContain("vmath.vector3");
+    // The constant names are upstream's, not ts-defold's respelling of them —
+    // the one place the fork corrects the golden rather than copying it.
+    expect(authored).not.toContain("c_behavior_center");
   });
 
   // `export =` is the reason this one is worth asserting: the 21 members live
@@ -837,13 +840,13 @@ describe("starly.starly migration integrity", () => {
         .sort();
 
     expect(named("VARIABLE")).toEqual([
-      "c_behavior_center",
-      "c_behavior_expand",
-      "c_behavior_mixed",
-      "c_behavior_stretch",
-      "c_display_height",
-      "c_display_ratio",
-      "c_display_width",
+      "g_behavior_center",
+      "g_behavior_expand",
+      "g_behavior_mixed",
+      "g_behavior_stretch",
+      "g_display_height",
+      "g_display_ratio",
+      "g_display_width",
     ]);
     expect(named("FUNCTION")).toEqual([
       "activate",

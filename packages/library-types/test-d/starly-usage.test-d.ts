@@ -20,10 +20,11 @@ declare const _position: Vector3;
 const _view: Matrix4 = starly.get_view(_id);
 const _shaking: boolean = starly.is_shaking(_id);
 
-// The `Readonly<CoreModule>` half: the 7 `c_*` constants the markdown lane could
-// never reach are typed members here, not prose.
-const _behavior: Hash = starly.c_behavior_center;
-const _ratio: number = starly.c_display_ratio;
+// The `Readonly<CoreModule>` half: the 7 `g_*` constants the markdown lane could
+// never reach are typed members here, not prose — under the names `starly.lua`
+// exports rather than the `c_*` respelling the fork inherited.
+const _behavior: Hash = starly.g_behavior_center;
+const _ratio: number = starly.g_display_ratio;
 
 // `durationScalar`/`radiusScalar` are optional, so the 4-argument call compiles —
 // the optionality the generous markdown reading lost.

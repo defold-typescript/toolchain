@@ -363,7 +363,7 @@ describe("loadApiSurface library pages", () => {
     expect(meta).toBeDefined();
     if (!meta) return;
     expect(meta.authoredHere).toBe(true);
-    expect(meta.authorUrl).toBe("https://github.com/VowSoftware/starly");
+    expect(meta.authorUrl).toBe("https://github.com/c0d3r9/starly");
     expect(meta.commit).toBe("85d1b2af8bf0618e7f297da41d03eb55d27e49b6");
     expect(meta.importString).toBe('import * as starly from "starly.starly"');
   });
