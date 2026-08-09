@@ -382,7 +382,7 @@ declare module 'ns.ns' {
 }
 `;
 
-// A `export =` module (`squid`, `starly`): the surface is the re-exported
+// A `export =` module (`squid`): the surface is the re-exported
 // value's interface, so a bare internal helper stays unemitted.
 const EXPORT_ASSIGN = `/**
  * Export-assign module.

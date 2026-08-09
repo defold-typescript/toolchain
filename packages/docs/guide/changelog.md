@@ -18,12 +18,12 @@ changes are called out first because the toolchain is pre-1.0.
 
 ### Breaking
 
-- **[starly](/api/starly)** — the seven module constants take the names upstream exports: `c_display_width`/`c_display_height`/`c_display_ratio` and the four `c_behavior_*` hashes become `g_display_width`/`g_display_height`/`g_display_ratio` and `g_behavior_*`. The old spellings named members that do not exist at runtime, so any code reading them was already getting `nil`.
+- **starly** is no longer part of the library corpus: its types, its reference page and its entry in the resolvable set are gone. The library was withdrawn upstream — its repository and its author's account were both deleted, it never published a release, and the only surviving copy is an unaffiliated third-party mirror — so no one can obtain a runtime for the declarations. For an orthographic camera, use [orthographic](/api/orthographic.camera) or [rendy](/api/rendy), both actively maintained and already covered here.
 
 ### Fixed
 
 - The [Libraries](/libraries) index no longer credits the `ts-defold/library` project for its type definitions. Every library has been maintained in this repo since v0.24.0, generated from upstream sources that ship machine-readable types or hand-forked where upstream ships none.
-- [starly](/api/starly)'s upstream had moved to a new owner rather than disappeared, so its provenance links resolve again and its types are now measured against upstream like every other library — all 36 cover their upstream's whole function and constant surface.
+- [persist](/api/persist) and [rendy](/api/rendy) are credited to their author's current GitHub account, so the attribution links no longer depend on a rename redirect.
 
 ## v0.24.0
 
@@ -46,7 +46,7 @@ changes are called out first because the toolchain is pre-1.0.
 ### Improved
 
 - Every library's types are now maintained in this repo, forked from upstream where no usable structured source exists: declare the dependency and [`resolve`](./resolve.md) materializes them. Imports and type surfaces carry over unchanged except as noted here.
-  - **Reference pages moved** — a single-module library now lives at its bare namespace: `/api/nakama`, `/api/persist`, `/api/yagames`, `/api/starly`, `/api/gooey`, `/api/bzAnim`, `/api/platypus`, `/api/dicebag` and `/api/rendy`. [bzAnim](/api/bzAnim)'s documented import becomes `import * as bzAnim`, over the same `"bzAnim.bzLibrary"` path.
+  - **Reference pages moved** — a single-module library now lives at its bare namespace: `/api/nakama`, `/api/persist`, `/api/yagames`, `/api/gooey`, `/api/bzAnim`, `/api/platypus`, `/api/dicebag` and `/api/rendy`. [bzAnim](/api/bzAnim)'s documented import becomes `import * as bzAnim`, over the same `"bzAnim.bzLibrary"` path.
   - **[defsave](/api/defsave)** — the previous binding declared about half the module, so the fork adds seven functions (`obfuscate`, `get_file_path`, `key_exists`, `isset`, `reset_to_default`, `is_loaded`, `final`), the config fields, and `save`'s `force` argument.
   - **[boom](/api/boom)** — the pin moves off the `1.0.0` tag, which predates the camera helpers `to_screen` and `to_world`; both are declared now.
   - **[orthographic](/api/orthographic.camera)** — `camera.follow` accepts an array of game objects as well as a single one, and `get_view` and `get_projection` return [`Matrix4`](/api/Matrix4) instead of `unknown`.
@@ -55,12 +55,12 @@ changes are called out first because the toolchain is pre-1.0.
   - **[yagames](/api/yagames)** — `player_get_id` keeps a correctly spelled pointer to `player_get_unique_id`, and `leaderboards_init` is marked deprecated as upstream marks it.
   - **[monarch](/api/monarch.monarch)** — upstream's README documents the focus listener as `on_focus_change`; the function the runtime defines, and the one these types bind, is `on_focus_changed`.
 - **[panthera](/api/panthera)** (`Insality/panthera`) joins the corpus: declare the dependency and [`resolve`](./resolve.md) materializes a typed `panthera.panthera` covering `create_go`/`create_gui`/`create`, `play`/`play_tweener` and the animation-state shape. `defold-tweener` is a runtime companion only — panthera's types resolve without it.
-- Every forked library is measured against its own upstream Lua on two separately ratcheted axes, functions and constants, so one nobody has checked can no longer read as clean: 35 of the 36 modules now cover their upstream's whole surface on both, and only [starly](/api/starly) records why it could not be measured. Generated libraries carry a committed coverage floor too, so regenerating one can no longer quietly type less of it than before.
+- Every forked library is measured against its own upstream Lua on two separately ratcheted axes, functions and constants, so one nobody has checked can no longer read as clean: 35 of the 35 modules now cover their upstream's whole surface on both. Generated libraries carry a committed coverage floor too, so regenerating one can no longer quietly type less of it than before.
 - More of each generated library's surface carries a real type where it previously fell back to `unknown`.
   - **Callback parameters** — arguments documented only as `function` in [event](/api/event), [lang](/api/lang) and [druid](/api/druid) are callable types, so you can pass a typed function literal and call the value back without a cast.
-  - **Nullable unions** — values documented as a union with nil, such as [bridge](/api/bridge.bridge)'s `platform.id` and `player.name`, type as `string | undefined`, so a null check is enough.
+  - **Nullable unions** — values documented as a union with nil, such as [bridge](/api/bridge)'s `platform.id` and `player.name`, type as `string | undefined`, so a null check is enough.
   - **[druid](/api/druid)** — `druid.button`'s six style hooks and `druid.drag`'s `init` callback name their real parameter types, `druid.layout`'s `rows` is a `druid_layout_row_data[]`, and a multi-return call such as `druid.layout.get_content_size` returns a `LuaMultiReturn` tuple. Component callback fields like `on_click` and `on_hover` are [event](/api/event) objects you can `subscribe` to — declare `defold-event` alongside druid so the type resolves.
-  - **[log](/api/log.log)** — `get_default_logger_name` takes the real `debug.getinfo()` table, so reading `short_src` off it type-checks.
+  - **[log](/api/log)** — `get_default_logger_name` takes the real `debug.getinfo()` table, so reading `short_src` off it type-checks.
   - **[decore](/api/decore)** — `ecs.world` returns a rest tuple you can spread instead of a fixed pair whose second slot was a single anonymous `unknown`.
 - A library's API reference page shows more of what its types actually say.
   - **Constants and briefs** — a forked library's page documents constants as well as functions: 61 constants gained the description their fork already carried, eleven members were written up in the fork's own words, and 254 members across 14 libraries fall back to upstream's prose under a `U` dot marking it as borrowed.
@@ -98,7 +98,7 @@ changes are called out first because the toolchain is pre-1.0.
 - A library whose types are generated from its README reads an argument bracketed across a comma (`data [, overwrite]`) or through an escaped bracket (`duration \[, scaler]`) as optional rather than required, and marks every argument inside a multi-argument group optional.
 - A library reference page with a dotted namespace, such as [monarch.transitions.easings](/api/monarch.transitions.easings), titles itself `britzl/monarch/monarch.transitions.easings` again — matching its Libraries card — instead of repeating the namespace twice with the author dropped, and its heading wraps at the dots rather than scrolling the page sideways.
 - [narrator](/api/narrator)'s `Story.observe` callback parameter is named `value`, after the argument the library actually passes it.
-- A documentation source can no longer replace a library's existing types with a weaker surface: a source documenting no parameter or return types, one whose comparison surface was truncated, and one hidden behind a single exported handle were all scoring as clean matches. [persist](/api/persist), [yagames](/api/yagames) and [starly](/api/starly) keep the types they had.
+- A documentation source can no longer replace a library's existing types with a weaker surface: a source documenting no parameter or return types, one whose comparison surface was truncated, and one hidden behind a single exported handle were all scoring as clean matches. [persist](/api/persist) and [yagames](/api/yagames) keep the types they had.
 
 ## v0.23.0
 
@@ -106,26 +106,26 @@ changes are called out first because the toolchain is pre-1.0.
 
 - More libraries' types are now maintained in this repo — each regenerated from its upstream source through the shared LuaLS / ref-doc pipeline (as with [druid](/api/druid) and [decore](/api/decore)) and marked with the maintained-here pin in the docs; each surface now follows upstream, so it differs from the previous hand-written binding.
   - **[tweener](/api/tweener)** (`Insality/defold-tweener`, tag `6`) — per-easing helpers are no longer module-level constants.
-  - **[bridge.bridge](/api/bridge.bridge)** (`Playgama/bridge-defold`, `v2.0.0`) — regenerated from its committed `.script_api` as an importable `declare module`.
-  - **[event](/api/event.event)** (`Insality/defold-event`, tag `19`) — the former untyped `any` passthrough now carries real types (`event.create`, subscribe/trigger, promise and queue instances).
-  - **[lang](/api/lang.lang)** (`Insality/defold-lang`, tag `5`) — the twelve typed functions are tightened, and `load_langs`, the state getters, and typed `lang.data`/`lang.state` are added.
-  - **[log](/api/log.log)** (`Insality/defold-log`, tag `6`) — `get_logger`'s name argument is now optional and its forced-level argument a plain `string`, and the logger's level methods now require their `data` argument.
-  - **[proto](/api/proto.proto)** (`Insality/defold-proto`, tag `1`) — `get`/`decode`/`verify` return the native `LuaTable`, `set_logger` takes a typed `proto_logger`, and the full encoding API is surfaced.
+  - **[bridge.bridge](/api/bridge)** (`Playgama/bridge-defold`, `v2.0.0`) — regenerated from its committed `.script_api` as an importable `declare module`.
+  - **[event](/api/event)** (`Insality/defold-event`, tag `19`) — the former untyped `any` passthrough now carries real types (`event.create`, subscribe/trigger, promise and queue instances).
+  - **[lang](/api/lang)** (`Insality/defold-lang`, tag `5`) — the twelve typed functions are tightened, and `load_langs`, the state getters, and typed `lang.data`/`lang.state` are added.
+  - **[log](/api/log)** (`Insality/defold-log`, tag `6`) — `get_logger`'s name argument is now optional and its forced-level argument a plain `string`, and the logger's level methods now require their `data` argument.
+  - **[proto](/api/proto)** (`Insality/defold-proto`, tag `1`) — `get`/`decode`/`verify` return the native `LuaTable`, `set_logger` takes a typed `proto_logger`, and the full encoding API is surfaced.
   - **[saver.saver](/api/saver.saver)** and **[saver.storage](/api/saver.storage)** (`Insality/defold-saver`, tag `8`) — `init`, `save_game_state`, `get_save_path`, and `set_logger` take their typed optional arguments and the full save and key-value storage APIs are surfaced.
-  - **[immutable](/api/immutable.immutable)** (`paweljarosz/lua-immutable`, tag `v1.1`) — `make` returns the typed `Immutable` interface rather than a generic `Readonly<T>`.
-  - **[squid](/api/squid.squid)** (`paweljarosz/squid`, tag `1.2`) — the previous binding typed only `save_logs`/`get_config().is_enabled`; the surface now exports the module log-level constants and logging API, a typed `get_config`/`SquidConfig`, and a typed `SquidInstance` from `new()`.
+  - **[immutable](/api/immutable)** (`paweljarosz/lua-immutable`, tag `v1.1`) — `make` returns the typed `Immutable` interface rather than a generic `Readonly<T>`.
+  - **[squid](/api/squid)** (`paweljarosz/squid`, tag `1.2`) — the previous binding typed only `save_logs`/`get_config().is_enabled`; the surface now exports the module log-level constants and logging API, a typed `get_config`/`SquidConfig`, and a typed `SquidInstance` from `new()`.
   - **[narrator](/api/narrator)** (`astrochili/narrator`, tag `1.8`) — replaces the hand-written passthrough with the upstream parser plus the `Narrator.Story` runtime API, made runtime-faithful: `parse_content` takes its `inclusions` argument optionally, `continue()` returns a single paragraph or an array of them, and the internal `Object`/`constructor` tables no longer leak into the surface.
 
 ### Improved
 
 - The editor-scripting authoring path is now documented: a [Core-concepts guide page](./editor-scripts.md) walks through `defineEditorScript`, the `<name>.ts.editor_script` artifact, and the editor's auto-load discovery, with a worked custom-command example.
-- LuaLS library types ([druid](/api/druid), [decore](/api/decore), [tweener](/api/tweener), [event](/api/event.event), [lang](/api/lang.lang)) now emit every nil-bearing trailing argument — both `T | nil` unions and type-suffix `T?` params — as optional, and nilable interface fields (`function | nil`, `string?`) as omittable object properties. Faithful upstream calls like `event.create()`, `instance.subscribe(cb)`, `lang.set_lang("en")`, `lang.set_next_lang()`, and `lang.init([{ id, path }])` now type-check instead of demanding an explicit `undefined`, and object literals may drop fields like `loader` they faithfully omit. Event and promise instances are also callable now (`instance(payload)`), matching their runtime `__call`.
+- LuaLS library types ([druid](/api/druid), [decore](/api/decore), [tweener](/api/tweener), [event](/api/event), [lang](/api/lang)) now emit every nil-bearing trailing argument — both `T | nil` unions and type-suffix `T?` params — as optional, and nilable interface fields (`function | nil`, `string?`) as omittable object properties. Faithful upstream calls like `event.create()`, `instance.subscribe(cb)`, `lang.set_lang("en")`, `lang.set_next_lang()`, and `lang.init([{ id, path }])` now type-check instead of demanding an explicit `undefined`, and object literals may drop fields like `loader` they faithfully omit. Event and promise instances are also callable now (`instance(payload)`), matching their runtime `__call`.
 
 ### Fixed
 
-- Installed packages can now resolve the [bridge.bridge](/api/bridge.bridge) library again — its script_api resolve manifest was missing from the published tarball, so the [`resolve`](./resolve.md) command silently dropped `bridge` on a real install.
+- Installed packages can now resolve the [bridge.bridge](/api/bridge) library again — its script_api resolve manifest was missing from the published tarball, so the [`resolve`](./resolve.md) command silently dropped `bridge` on a real install.
 - A script_api library whose types reference engine handles ([Hash](/api/Hash), [Vector3](/api/Vector3), [Url](/api/Url), ...) now emits an importable `declare module` instead of a broken module augmentation, so `import { ... } from "<library>"` resolves instead of failing with `TS2307`.
-- LuaLS library types ([druid](/api/druid), [event](/api/event.event), [log](/api/log.log), [tweener](/api/tweener)) no longer leak non-public members: fields and methods marked `@private`/`@protected`/`@package` (and methods marked `@local`) are hidden from the generated declarations, the `/api` docs, and the fidelity report alike, so the three surfaces describe one identical public set. For example the `log` logger drops `_last_gc_memory`/`_last_message_time`/`format`/`log`, and druid components drop the base's protected lifecycle hooks and `get_uid`.
+- LuaLS library types ([druid](/api/druid), [event](/api/event), [log](/api/log), [tweener](/api/tweener)) no longer leak non-public members: fields and methods marked `@private`/`@protected`/`@package` (and methods marked `@local`) are hidden from the generated declarations, the `/api` docs, and the fidelity report alike, so the three surfaces describe one identical public set. For example the `log` logger drops `_last_gc_memory`/`_last_message_time`/`format`/`log`, and druid components drop the base's protected lifecycle hooks and `get_uid`.
 - A dependency that ships several modules from one repository (for example defold-saver's [saver](/api/saver.saver) and [storage](/api/saver.storage)) is now fully handled: the [`resolve`](./resolve.md) command materializes every module instead of keeping only the first, and the docs-site Libraries navigation groups them into a single entry instead of one per module.
 - The LuaLS front-end now reliably infers a constructor's return type and instance methods when the function-local class declares extra locals, and a stale `---@type fun(...)` method annotation no longer attaches across intervening lines to a later member key — a latent mis-emit fixed before any maintained library shipped it.
 

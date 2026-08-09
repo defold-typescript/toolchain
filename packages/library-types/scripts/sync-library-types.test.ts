@@ -252,10 +252,11 @@ describe("NOTICE", () => {
     }
   });
 
-  // The credit and the pin are separate files, and starly's upstream moved owner
-  // after both were written — so a relocation that touches only one of them leaves
-  // the shipped attribution pointing at a slug that no longer resolves.
-  test("a forked library's credit names the repo its authored-targets entry pins", () => {
+  // The credit and the pin live in separate files, so an upstream that moves — or a
+  // target re-pointed at a different slug — can leave the shipped attribution naming
+  // a repository that no longer resolves. Keyed on the credited dir matching the
+  // pinned repo's own basename, which is the only join the two files share.
+  test("every forked library's credit names the repo its authored-targets entry pins", () => {
     const notice = readFileSync(join(PACKAGE_ROOT, "NOTICE"), "utf8");
     const credited = new Map(
       [...notice.matchAll(/^\s+- (\S+)\s+— .+, (https:\/\/github\.com\/\S+)$/gm)].map((m) => [
@@ -263,9 +264,18 @@ describe("NOTICE", () => {
         m[2] as string,
       ]),
     );
-    const starly = readAuthoredTargets(PACKAGE_ROOT).find((entry) => entry.namespace === "starly");
-    expect(starly?.repo).toBeDefined();
-    expect(credited.get("starly")).toBe(starly?.repo);
+    const mismatched: string[] = [];
+    let compared = 0;
+    for (const entry of readAuthoredTargets(PACKAGE_ROOT)) {
+      const basename = entry.repo.split("/").pop() ?? "";
+      const credit = credited.get(basename);
+      if (credit === undefined) continue;
+      compared += 1;
+      if (credit !== entry.repo)
+        mismatched.push(`${basename}: NOTICE ${credit} vs pin ${entry.repo}`);
+    }
+    expect(mismatched).toEqual([]);
+    expect(compared).toBeGreaterThan(5);
   });
 });
 

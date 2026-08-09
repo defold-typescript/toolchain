@@ -437,8 +437,8 @@ function describeLibraryDecisions(record: LibraryRecord): void {
 
       // Whether the ts-defold golden dies with the row depends on the namespace
       // the fork publishes under, so the assertion cannot be unconditional. A
-      // library that collapses to a bare namespace (starly's `starly.starly` ->
-      // `starly`) leaves `generated/<moduleId>.d.ts` behind as a dead path; a
+      // library that collapses to a bare namespace (yagames' `yagames.yagames` ->
+      // `yagames`) leaves `generated/<moduleId>.d.ts` behind as a dead path; a
       // dotted severance that keeps `namespace === moduleId` (defold-input's ten)
       // overwrites that exact golden in place, so requiring its absence would
       // demand deleting the file the fork still emits.
@@ -529,9 +529,9 @@ function describeLibraryDecisions(record: LibraryRecord): void {
 //   doc-dialect          the `.md` does document signature sections, but in a
 //                        markdown convention the front-end does not parse, so it
 //                        loud-fails all the same. The convention need not be
-//                        unreadable — starly's headings are well-formed
-//                        `<recv>.<fn>(...)` signatures that happen to be wrapped
-//                        in backticks — only unmatched. Recorded only alongside
+//                        unreadable — a heading can carry a well-formed
+//                        `<recv>.<fn>(...)` signature and still go unmatched for
+//                        how it is wrapped or punctuated. Recorded only alongside
 //                        independent evidence that a dialect-aware parse would
 //                        not change the decision.
 //   shared-document      the parser reads the `.md`'s convention fine, but one
@@ -1224,117 +1224,6 @@ const PLATYPUS: LibraryRecord = {
   ],
 };
 
-// The recorded decision for `c0d3r9/starly` at commit
-// `85d1b2af8bf0618e7f297da41d03eb55d27e49b6` — the tenth Bucket-C library, one
-// module, and the third SHA pin (the repo publishes no tags and no releases).
-// The PRD named `whiteboxdev/library-defold-starly`, which 404s; the ts-defold
-// fixture's own `@see` pointed at `VowSoftware/starly`, which this record was
-// first taken against and which has since 404'd in turn — the *owner account*
-// went away, so no rename redirect fires. The same history, at this same commit,
-// resolves at the `c0d3r9` slug used here.
-//
-// `## Function API` carries 14 signature headings, every one backtick-wrapped —
-// ``### `m_starly.create(id)` `` — which `HEADER` does not match, so the as-is
-// parse refuses the document outright. Five axes diverge in total:
-//
-//   1. headings wrapped in backticks
-//   2. mixed-case `**Parameters**` / `**Returns**` markers (the regexes are
-//      uppercase-only)
-//   3. colon-typed bullets — `* \`id\`: \`hash\` doc` rather than
-//      `* \`id\` (hash) - doc`
-//   4. type-only return bullets (`* \`boolean\``, `* \`vector3\` or \`nil\``)
-//      that name no slot at all
-//   5. a blank line between each marker and its bullet run, which closes the
-//      list before a single bullet is read
-//
-// The receiver alias `m_starly` is *not* one of them — `retargetDoc` rewrites it
-// onto `starly.starly` exactly as it rewrites orthographic's `camera`.
-//
-// Under a maximally generous reading — all five axes rewritten, and
-// `[visible = false]` reduced to `[visible]` so `bracketedArgs` reads it — the
-// parse yields all 14 functions and the verdict does not move:
-//
-//   elements parsed        14
-//   tsDefoldMembers        `CoreModule`'s 21 — 14 methods and 7 `g_*` constants
-//   missingMembers         the 7 `g_*` constants
-//   addedMembers           []
-//   downgradedMembers      ["get_tight_world_area"]
-//   signatureLossMembers   ["screen_to_world", "world_to_screen"]
-//   optionalityLossMembers ["shake"]
-//
-// This record was first taken against a surface of one member, and was re-derived
-// when the extractor learned to read an `export =` handle. The snapshot publishes
-// through `interface CoreModule` + `type CameraMap`
-// + `const exportThis: Starley; export = exportThis;`. While `MEMBER_DECL` read
-// only top-level `function`/`const`, `tsDefoldMembers` was `["exportThis"]`,
-// `missingMembers` was `["exportThis"]`, `addedMembers` was all 14 markdown
-// functions, and the three signature terms were empty for want of any shared
-// member — `opaqueTsDefoldSurface` carried the whole verdict. `tsDefoldSurface`
-// now resolves the handle through its alias, its intersection and `Readonly<>` to
-// `CoreModule`'s members, so the terms above are read off the real surface and the
-// `no-go` rests on them. The verdict and its `doc-dialect` reason are unchanged.
-//
-// starly is the only `export =` fixture in the corpus, and the guard stays for a
-// handle that resolves to nothing: were the handle a *type* rather than a const,
-// `tsMembers` would still be empty and the decision would otherwise read `go`
-// against nothing. This record is why `opaqueTsDefoldSurface` exists.
-//
-// The losses behind those terms — and the one the comparator still cannot see:
-//
-//   - 7 module constants — `display_width`/`display_height`/`display_ratio` and
-//     the four `behavior_*` hashes are `**Module Variables**` bullets under
-//     `## Variable API`, never signature headings, so a flat parse cannot reach
-//     them, and they are the whole of `missingMembers`. ts-defold had additionally
-//     renamed them `c_*`; the fork now declares them under the `g_*` names
-//     `starly.lua` actually exports, which is what the names above are.
-//   - 3 dropped parameters across 2 members — the headings declare
-//     `screen_to_world(id, screen_x, screen_y, [visible])` and
-//     `world_to_screen(id, world_position, [visible])`, but both `**Parameters**`
-//     lists document only `id` and `visible`, so the generous emit is
-//     `screen_to_world(id: Hash, visible?: boolean)`.
-//   - 1 type downgrade — `get_tight_world_area`'s `positions: table` emits
-//     `Record<string | number, unknown>` against ts-defold's `vmath.vector3[]`.
-//   - 2 optional parameters lost — `shake`'s bullets repeat the heading's
-//     brackets in the *name* (`* \`[duration_scalar]\`: \`number\``), which is no
-//     identifier, so even the generous emit renames them `arg4`/`arg5` and drops
-//     their optionality.
-//   - 8 `CameraMap` fields — `starly[id].behavior`/`viewport_*`/`near`/`far`/
-//     `zoom` are a `LuaMap<hash, {...}>` value, not members of the module object,
-//     so they stay outside the comparison: a flat signature surface cannot express
-//     an indexed map. This one is still measurable only by hand.
-//
-// The 14 documented functions do match ts-defold's 14 one-for-one, so this is not
-// gooey's member-count loss. The decision is driven by the dialect refusal plus
-// the constants, the map, and the dropped parameters.
-//
-// starly has since severed, so the snapshot every term above is read from is the
-// authored fork rather than the retired `fixtures/ts-defold/` copy. The terms are
-// unchanged across that move because the fork is the *mapped* golden and
-// `compareFidelityToTsDefold` scores no type token — it tests for an introduced
-// `unknown`, counts parameters and `void` returns, and reads `?`, none of which a
-// `hash` -> `Hash` respelling touches. The relocation to `c0d3r9` moves nothing
-// either: the snapshot is the same file at the same commit.
-const STARLY: LibraryRecord = {
-  library: "starly",
-  repo: "https://github.com/c0d3r9/starly",
-  ref: "85d1b2af8bf0618e7f297da41d03eb55d27e49b6",
-  license: "Zlib",
-  prefix: "starly.",
-  classificationDir: "starly",
-  decisions: [
-    {
-      module: "starly",
-      decision: "no-go",
-      reason: "doc-dialect",
-      markdown: "README.md",
-      severedSource: {
-        path: "packages/starly/starly.starly.d.ts",
-        fixture: "fixtures/authored/starly.starly.d.ts",
-      },
-    },
-  ],
-};
-
 // The recorded decision for `8bitskull/dicebag` at tag `0.3` (commit
 // `2d966260ff3185393c4244714c7fb7d8b7c2fe63`) — the eleventh Bucket-C library and
 // one module. The PRD named `white-star-dev/dicebag`; the ts-defold fixture's own
@@ -1517,7 +1406,6 @@ const LIBRARY_RECORDS = [
   METRICS,
   RENDY,
   PLATYPUS,
-  STARLY,
   DICEBAG,
   BZANIM,
 ];
@@ -1670,15 +1558,6 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "35b06ed582b027ae84e395856afd015ba74bc76c05460e63c4f0adfd3da6457b",
   "fixtures/authored/richtext.tags.d.ts":
     "722f9bcd88d44a5c17e5b1b49d9060759be46467658599c3fe2fae3f172b8b11",
-  // Re-pinned with the field correction that took the seven module constants from
-  // ts-defold's `c_*` respelling to the `g_*` names the pinned `starly.lua`
-  // exports, and with the `@see` link repointed at the relocated upstream. The
-  // `no-go`/`doc-dialect` verdict was re-derived against the edited fork first: it
-  // held, every loss term is unchanged, and `missingMembers` is the same seven
-  // constants under their real names — the README documents them as prose bullets
-  // either way, so no reading of it reaches them.
-  "fixtures/authored/starly.starly.d.ts":
-    "235f3a637c928d5f122aa58f1e66ddb6991a0a83640903b0f4bcdc864f1c14ec",
   "fixtures/authored/yagames.yagames.d.ts":
     "2fde3ee97ce24ba40de2fea7b21040882b3bbae94a8a08875417d070bd603b06",
   "fixtures/markdown/bzAnim.bzLibrary.md":
@@ -1721,8 +1600,6 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "3f00ba31525ec646be07899a66a2545fb4d321f0aac4e23d83d00318e5d17d1a",
   "fixtures/markdown/richtext.richtext.md":
     "c5cdd5e925f00d3e5ab61ddaa1b219cb9d082392c2b84294abf88a565d15808f",
-  "fixtures/markdown/starly.starly.md":
-    "2499999d90adccc01b253e41da1a6adfb97ee4f3d46481a61f5ae7b362fe0aa7",
   "fixtures/markdown/yagames.yagames.md":
     "2e62c65b4324e5fa1878cdefaea71dbf7e0e4951ac7094ba24a659754f6a8f3e",
 };
@@ -2679,226 +2556,6 @@ describe("platypus shared-document evidence at tag 4.3.1", () => {
     const instance = doc.elements.find((e) => e.name === "PlatypusInstance");
     expect(instance).toBeDefined();
     expect((instance?.functions ?? []).map((f) => f.name).sort()).toEqual(INSTANCE_METHODS);
-  });
-});
-
-describe("starly doc-dialect evidence at commit 85d1b2a", () => {
-  const readme = () => fixtureText(STARLY, decisionFor(STARLY, "starly"));
-
-  // The 14 documented functions, sorted as `compareFidelityToTsDefold` reports
-  // them.
-  const FUNCTIONS = [
-    "activate",
-    "cancel_shake",
-    "create",
-    "destroy",
-    "get_offset",
-    "get_projection",
-    "get_tight_world_area",
-    "get_view",
-    "get_viewport",
-    "get_world_area",
-    "is_shaking",
-    "screen_to_world",
-    "shake",
-    "world_to_screen",
-  ];
-
-  // The 7 constants `CoreModule` declares, sorted as the comparator reports them.
-  const CONSTANT_MEMBERS = [
-    "g_behavior_center",
-    "g_behavior_expand",
-    "g_behavior_mixed",
-    "g_behavior_stretch",
-    "g_display_height",
-    "g_display_ratio",
-    "g_display_width",
-  ];
-
-  // The most generous reading available: rewrite all five dialect axes and reduce
-  // `[name = default]` to `[name]` so `bracketedArgs` reads the optional slots.
-  // Test-local for gooey's reason — the verdict this produces shows a
-  // dialect-aware front-end would buy five new parser branches and no decision
-  // change.
-  const generous = () =>
-    readme()
-      .split("\n")
-      .map((line) =>
-        line
-          .replace(/^(#{2,3}\s+)`(.+)`\s*$/, "$1$2")
-          .replace(/^(#{2,3}\s+.*)$/, (heading) =>
-            heading.replace(/\[\s*([A-Za-z_]\w*)\s*=[^\]]*\]/g, "[$1]"),
-          )
-          .replace(/^\*\*Parameters\*\*\s*$/, "**PARAMETERS**")
-          .replace(/^\*\*Returns\*\*\s*$/, "**RETURN**")
-          .replace(/^\*\s+`([^`]+)`:\s*`([^`]+)`\s*(.*)$/, "* `$1` ($2) - $3")
-          .replace(/^\*\s+`([^`]+)`(?:\s+or\s+`([^`]+)`)?\s*$/, (_match, first, second) =>
-            second === undefined
-              ? `* \`result\` (${first}) - `
-              : `* \`result\` (${first}|${second}) - `,
-          ),
-      )
-      .join("\n")
-      .replace(/^(\*\*(?:PARAMETERS|RETURN)\*\*)\n\n/gm, "$1\n");
-
-  test("the front-end refuses the snapshot — no heading reads as a signature", () => {
-    expect(() => parseMarkdownApi(readme(), "starly.starly")).toThrow(/no .*API signature section/);
-  });
-
-  test("the dialect, not the content, is the blocker — 14 wrapped headings for 14 functions", () => {
-    const wrapped = readme()
-      .split("\n")
-      .filter((line) => /^#{2,3}\s+`[A-Za-z_]\w*\.[A-Za-z_]\w*\(.*\)`\s*$/.test(line));
-    // Tied to `FUNCTIONS` by name rather than by tally, so this reading of the
-    // snapshot has to agree with the surface the generous parse below recovers.
-    expect(wrapped.map((line) => line.replace(/^#{2,3}\s+`\w+\.(\w+)\(.*$/, "$1")).sort()).toEqual(
-      FUNCTIONS,
-    );
-    expect(wrapped.every((line) => line.startsWith("### `m_starly."))).toBe(true);
-  });
-
-  test("the marker and bullet axes are the corpus concepts in spellings the parser does not match", () => {
-    const text = readme();
-    expect(/^\*\*Parameters\*\*\s*$/m.test(text)).toBe(true);
-    expect(/^\*\*Returns\*\*\s*$/m.test(text)).toBe(true);
-    expect(/^\*\*PARAMETERS\*\*\s*$/m.test(text)).toBe(false);
-    expect(/^\*\*RETURN\*\*\s*$/m.test(text)).toBe(false);
-    // Typed bullets are colon-typed, never the `(type) - ` form `TYPED_BULLET`
-    // accepts.
-    expect(/^\*\s+`id`:\s*`hash`/m.test(text)).toBe(true);
-    expect(/^\*\s+`[^`]+`\s*\([^)]*\)/m.test(text)).toBe(false);
-  });
-
-  test("every marker is separated from its bullets by a blank line, which closes the list", () => {
-    const lines = readme().split("\n");
-    const markers = lines.filter((line) => /^\*\*(?:Parameters|Returns)\*\*\s*$/.test(line));
-    expect(markers.length).toBeGreaterThan(0);
-    lines.forEach((line, index) => {
-      if (/^\*\*(?:Parameters|Returns)\*\*\s*$/.test(line)) expect(lines[index + 1]).toBe("");
-    });
-  });
-
-  test("the generous reading lifts all 14 functions and is still no-go", async () => {
-    const {
-      doc,
-      decision,
-      missingMembers,
-      addedMembers,
-      downgradedMembers,
-      signatureLossMembers,
-      optionalityLossMembers,
-    } = await comparisonForMarkdown(generous(), "starly.starly", severedFor(STARLY, "starly"));
-    expect([...doc.elements.map((e) => e.name.split(".").pop())].sort()).toEqual(FUNCTIONS);
-    // The README documents the constants as prose bullets only, so no reading of
-    // it reaches them; the 14 lifted headings match `CoreModule`'s 14 methods by
-    // name, which is why nothing is added.
-    expect(missingMembers).toEqual(CONSTANT_MEMBERS);
-    expect(addedMembers).toEqual([]);
-    // `positions: vmath.vector3[]` emits as `Record<string | number, unknown>`.
-    expect(downgradedMembers).toEqual(["get_tight_world_area"]);
-    // Both drop their coordinate parameters — 4 and 3 slots emit as 2.
-    expect(signatureLossMembers).toEqual(["screen_to_world", "world_to_screen"]);
-    // `durationScalar?`/`radiusScalar?` emit as required `arg4`/`arg5`.
-    expect(optionalityLossMembers).toEqual(["shake"]);
-    expect(decision).toBe("no-go");
-  });
-
-  test("the `export =` handle resolves, so the verdict rests on named loss terms", () => {
-    const tsDefold = readFileSync(
-      join(PACKAGE_ROOT, targetFor("starly.starly", severedFor(STARLY, "starly")).fixture),
-      "utf8",
-    );
-    expect(tsDefold).toContain("export = exportThis;");
-    // `Starley = CameraMap & Readonly<CoreModule>`: the 21 real members live
-    // inside `CoreModule` and reach the comparison through the handle, while the
-    // 8 fields inside `CameraMap`'s `LuaMap` value stay out of it.
-    expect(tsDefoldMembers(tsDefold)).toEqual([...FUNCTIONS, ...CONSTANT_MEMBERS].sort());
-    const { opaqueTsDefoldSurface } = compareFidelityToTsDefold(
-      "function create(): void;",
-      tsDefold,
-    );
-    expect(opaqueTsDefoldSurface).toBe(false);
-  });
-
-  test("the constants and the camera map are unreachable under every reading", () => {
-    const text = readme();
-    for (const constant of [
-      "display_width",
-      "display_height",
-      "display_ratio",
-      "behavior_center",
-      "behavior_expand",
-      "behavior_mixed",
-      "behavior_stretch",
-    ]) {
-      expect(text).toContain(`* \`starly.${constant}\`:`);
-      expect(new RegExp(`^#{2,3}.*starly\\.${constant}\\(`, "m").test(text)).toBe(false);
-    }
-    for (const field of ["behavior", "viewport_x", "near", "far", "zoom"]) {
-      expect(text).toContain(`* \`starly[id].${field}\`:`);
-    }
-  });
-
-  test("even the generous emit drops 3 parameters across 2 members", async () => {
-    const { emitted } = await comparisonForMarkdown(
-      generous(),
-      "starly.starly",
-      severedFor(STARLY, "starly"),
-    );
-    // Both headings declare more arguments than their `**Parameters**` list
-    // documents, so the emit keeps only the documented ones.
-    expect(emitted).toContain("function screen_to_world(id: Hash, visible?: boolean)");
-    expect(emitted).toContain("function world_to_screen(id: Hash, visible?: boolean)");
-    expect(readme()).toContain("screen_to_world(id, screen_x, screen_y, [visible = false])");
-    expect(readme()).toContain("world_to_screen(id, world_position, [visible = false])");
-  });
-
-  test("`shake`'s bracketed bullet names cost both their identity and their optionality", async () => {
-    const { emitted } = await comparisonForMarkdown(
-      generous(),
-      "starly.starly",
-      severedFor(STARLY, "starly"),
-    );
-    // The bullets repeat the heading's brackets in the name — `* \`[duration_scalar]\`:
-    // \`number\`` — which is no identifier, so the emitter synthesizes positional
-    // names and `bracketedArgs` never marks the slots optional.
-    expect(readme()).toContain("* `[duration_scalar]`: `number`");
-    expect(emitted).toContain(
-      "function shake(id: Hash, count: number, duration: number, radius: number, arg4: number, arg5: number)",
-    );
-  });
-
-  test("`get_tight_world_area` downgrades its `table` parameter", async () => {
-    const { emitted } = await comparisonForMarkdown(
-      generous(),
-      "starly.starly",
-      severedFor(STARLY, "starly"),
-    );
-    expect(emitted).toContain("positions: Record<string | number, unknown>");
-    // The forked snapshot is the mapped golden, so the surface the downgrade is
-    // measured against spells the upstream `vmath.vector3[]` as `Vector3[]`. The
-    // comparison scores no type token, so the term itself is unmoved.
-    expect(
-      readFileSync(
-        join(PACKAGE_ROOT, targetFor("starly.starly", severedFor(STARLY, "starly")).fixture),
-        "utf8",
-      ),
-    ).toContain("positions: Vector3[]");
-  });
-
-  // Without the dropped row the lookup would throw, so the recorded verdict is
-  // only resolvable because `severedSource` supplies both fields it used to read.
-  test("the verdict still resolves once the ts-defold row is gone", () => {
-    expect(targetFor("starly.starly", severedFor(STARLY, "starly")).fixture).toBe(
-      "fixtures/authored/starly.starly.d.ts",
-    );
-    expect(classificationModule("starly.starly", severedFor(STARLY, "starly"))).toBe(
-      "starly.starly",
-    );
-  });
-
-  test("the recorded reason is doc-dialect", () => {
-    expect(decisionFor(STARLY, "starly").reason).toBe("doc-dialect");
   });
 });
 

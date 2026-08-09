@@ -352,22 +352,6 @@ describe("loadApiSurface library pages", () => {
     expect(meta.importString).toBe('import * as yagames from "yagames.yagames"');
   });
 
-  // starly severed under the bare namespace like yagames, and is the corpus's one
-  // `export =` surface — so this also proves the handle's members survive the
-  // authored lane far enough to render a page at all.
-  test("the severed export-handle library renders as maintained-here at its pin", () => {
-    const starly = libraryPages.find((p) => p.namespace === "starly");
-    expect(starly).toBeDefined();
-    expect(starly?.route).toBe("/api/starly");
-    const meta = starly?.libraryMeta;
-    expect(meta).toBeDefined();
-    if (!meta) return;
-    expect(meta.authoredHere).toBe(true);
-    expect(meta.authorUrl).toBe("https://github.com/c0d3r9/starly");
-    expect(meta.commit).toBe("85d1b2af8bf0618e7f297da41d03eb55d27e49b6");
-    expect(meta.importString).toBe('import * as starly from "starly.starly"');
-  });
-
   // defold-input severed all ten modules at once under `namespace === moduleId`,
   // so unlike every prior severance no page moved: the routes and import strings
   // are the ones the ts-defold rows already published, and only the provenance
@@ -691,25 +675,15 @@ describe("loadApiSurface library descriptions", () => {
 
   // Same fallback, exercised at the bare namespace: deleting the `defold-yagames`
   // classification dir kills the dir-keyed lookup, so without a namespace-keyed
-  // entry the page would render description-less.
+  // entry the page would render description-less. The dir map is keyed by *module*
+  // (`yagames.yagames`) and never by the bare namespace, so the dir half cannot be
+  // what resolves this — asserted rather than assumed.
   test("a description-less api-doc page (yagames) gets its description from the vendored map", () => {
     const yagames = libraryPages.find((p) => p.namespace === "yagames");
     expect(yagames).toBeDefined();
     expect(yagames?.module.description).toBe(descByDir.yagames);
     expect(yagames?.module.description?.length ?? 0).toBeGreaterThan(0);
-  });
-
-  // starly is the case where the classification dir and the publish namespace are
-  // the same string, so no `library-description-overrides.json` key was needed.
-  // That coincidence does not make the dir half of the fallback sufficient: the
-  // dir map is keyed by *module* (`starly.starly`), never by the bare namespace,
-  // so `dir` is undefined here and the namespace half is what carries the text.
-  test("a description-less api-doc page (starly) resolves through the namespace half alone", () => {
-    const starly = libraryPages.find((p) => p.namespace === "starly");
-    expect(starly).toBeDefined();
-    expect(starly?.module.description).toBe(descByDir.starly);
-    expect(starly?.module.description?.length ?? 0).toBeGreaterThan(0);
-    expect(libraryModuleDirs(REAL_LIBRARY_TYPES_DIR).get("starly")).toBeUndefined();
+    expect(libraryModuleDirs(REAL_LIBRARY_TYPES_DIR).get("yagames")).toBeUndefined();
   });
 
   // Ten pages whose description was keyed on the `defold-input` classification

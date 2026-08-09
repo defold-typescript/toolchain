@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { canonicalNamespaces } from "./api-content";
+import { versionedApiParams } from "./api-page-render";
+import { combinedRedirect } from "./api-redirect";
+import { versionsWithDiskFixtures } from "./api-surface-loader";
 import { renderGuidePage } from "./content";
 import { parseFrontmatter } from "./frontmatter";
 import { listGuidePages } from "./guide-loader";
@@ -8,6 +12,10 @@ import { renderMarkdown } from "./markdown";
 
 const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");
 const FIXTURES = join(import.meta.dir, "__fixtures__");
+// `api-content`'s own TYPES_DIR is cwd-relative, which resolves differently under
+// root `bun test` than under the docs-site build, so the dirs are passed in.
+const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
+const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
 
 // Heading ids are read back out of the rendered page rather than recomputed
 // here: `markdown.ts`'s `slugify-headings` ruler is the only thing that decides
@@ -37,11 +45,44 @@ function linkTargets(markdown: string): string[] {
   );
 }
 
-// Absolute `/api/...` routes are the site's rendered API pages, which have no
-// on-disk counterpart under the guide directory; they are resolved by the API
-// surface loader and its own tests, not here.
-function isExempt(target: string): boolean {
-  return /^https?:\/\//.test(target) || target.startsWith("mailto:") || target.startsWith("/");
+function isApiRoute(target: string): boolean {
+  return target === "/api" || target.startsWith("/api/");
+}
+
+// Absolute routes have no on-disk counterpart under the guide directory, so the
+// file/anchor walk below cannot speak to them. `/api/...` is checked separately
+// against the routes the API route files really emit (see `emittedApiRoutes`);
+// the other absolute routes (`/libraries`, `/get-started`, `/search`) are their
+// own route files and stay unchecked.
+function isExempt(target: string, checkApi: boolean): boolean {
+  if (/^https?:\/\//.test(target) || target.startsWith("mailto:")) return true;
+  if (!target.startsWith("/")) return false;
+  return !(checkApi && isApiRoute(target));
+}
+
+// Every `/api…` path the site materializes, assembled from the same production
+// enumerators the route files hand to `ssgParams` — so a namespace that stops
+// being emitted reds the links pointing at it rather than shipping a 404:
+//
+//   /api                                `routes/api.tsx`
+//   /api/<namespace>                    `routes/api/[namespace].tsx`
+//   /api/<version>                      same route, known-version-id branch
+//   /api/<version>/<namespace>          `routes/api/[version]/[namespace].tsx`
+//   /api/combined[/<namespace>]         the materialized redirect stubs
+//
+// A new *kind* of API route would have to be added here too; until it is, its
+// links read as unknown, which fails loudly instead of passing silently.
+export function emittedApiRoutes(typesDir: string, libraryTypesDir: string): Set<string> {
+  const routes = new Set<string>(["/api", combinedRedirect().from]);
+  for (const namespace of canonicalNamespaces(typesDir, libraryTypesDir)) {
+    routes.add(`/api/${namespace}`);
+    routes.add(combinedRedirect(namespace).from);
+  }
+  for (const version of versionsWithDiskFixtures(typesDir)) routes.add(`/api/${version.id}`);
+  for (const { version, namespace } of versionedApiParams(typesDir)) {
+    routes.add(`/api/${version}/${namespace}`);
+  }
+  return routes;
 }
 
 type Renderer = (dir: string, file: string) => Promise<string>;
@@ -71,7 +112,7 @@ async function pageAnchors(dir: string, file: string, render: Renderer): Promise
 interface Broken {
   page: string;
   target: string;
-  reason: "missing file" | "unknown anchor";
+  reason: "missing file" | "unknown anchor" | "unknown api route";
 }
 
 interface CorpusReport {
@@ -79,7 +120,11 @@ interface CorpusReport {
   inspected: { page: string; target: string }[];
 }
 
-async function checkCorpus(dir: string, render: Renderer = bareRenderer): Promise<CorpusReport> {
+async function checkCorpus(
+  dir: string,
+  render: Renderer = bareRenderer,
+  apiRoutes?: Set<string>,
+): Promise<CorpusReport> {
   const pages = readdirSync(dir).filter((f) => f.endsWith(".md"));
   const anchors = new Map<string, Set<string>>();
   for (const page of pages) anchors.set(page, await pageAnchors(dir, page, render));
@@ -89,8 +134,16 @@ async function checkCorpus(dir: string, render: Renderer = bareRenderer): Promis
   for (const page of pages) {
     const markdown = readFileSync(join(dir, page), "utf8");
     for (const target of linkTargets(markdown)) {
-      if (!target || isExempt(target)) continue;
+      if (!target || isExempt(target, apiRoutes !== undefined)) continue;
       inspected.push({ page, target });
+      // An `/api…` link names a rendered route, not a file: only the path is
+      // resolvable here, and its `#fragment` is a heading the API renderer emits
+      // rather than one this walk can read off a guide page.
+      if (apiRoutes !== undefined && isApiRoute(target)) {
+        const route = target.split("#")[0] ?? "";
+        if (!apiRoutes.has(route)) broken.push({ page, target, reason: "unknown api route" });
+        continue;
+      }
       const hash = target.indexOf("#");
       const path = hash === -1 ? target : target.slice(0, hash);
       const fragment = hash === -1 ? "" : target.slice(hash + 1);
@@ -116,7 +169,8 @@ function format(broken: Broken[]): string {
 
 // The production path highlights every fence on every guide page; three tests
 // read the same report, so it is rendered once.
-const siteReport = checkCorpus(GUIDE_DIR, siteRenderer(GUIDE_DIR));
+const API_ROUTES = emittedApiRoutes(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+const siteReport = checkCorpus(GUIDE_DIR, siteRenderer(GUIDE_DIR), API_ROUTES);
 
 describe("docs/guide link and anchor resolution", () => {
   test("every relative link target resolves to a file under the guide directory", async () => {
@@ -131,6 +185,41 @@ describe("docs/guide link and anchor resolution", () => {
     const unknown = broken.filter((b) => b.reason === "unknown anchor");
     if (unknown.length > 0) throw new Error(`unresolvable guide anchors:\n${format(unknown)}`);
     expect(unknown).toEqual([]);
+  });
+
+  test("every /api link resolves to a route the API route files really emit", async () => {
+    const { broken } = await siteReport;
+    const unknown = broken.filter((b) => b.reason === "unknown api route");
+    if (unknown.length > 0) throw new Error(`unresolvable api routes:\n${format(unknown)}`);
+    expect(unknown).toEqual([]);
+  });
+
+  // Non-vacuity for the check above, at each route shape it has to understand: a
+  // bare namespace, a versioned page, and a global type. Without this a narrowed
+  // `isApiRoute` — or a guide that stopped linking the API at all — would leave
+  // the check passing over nothing.
+  test("the api guard inspected every route shape the guide actually links", async () => {
+    const { inspected } = await siteReport;
+    const api = inspected.filter((i) => isApiRoute(i.target)).map((i) => i.target);
+    expect(api.length).toBeGreaterThan(20);
+    expect(api.some((t) => /^\/api\/[a-z_]+$/.test(t))).toBe(true);
+    expect(api.some((t) => /^\/api\/defold-\d+\.\d+\.\d+\//.test(t))).toBe(true);
+    expect(api).toContain("/api/Vector3");
+  });
+
+  // The emitted set is what the routes hand `ssgParams`, so it has to carry every
+  // shape the guide links — asserted against the enumerators rather than a count,
+  // which would drift with the corpus.
+  test("the emitted route set spans the index, namespaces and versioned pages", () => {
+    expect(API_ROUTES.has("/api")).toBe(true);
+    expect(API_ROUTES.has("/api/combined")).toBe(true);
+    expect(API_ROUTES.has("/api/go")).toBe(true);
+    expect(API_ROUTES.has("/api/combined/go")).toBe(true);
+    expect([...API_ROUTES].some((r) => /^\/api\/defold-\d+\.\d+\.\d+$/.test(r))).toBe(true);
+    expect([...API_ROUTES].some((r) => /^\/api\/defold-\d+\.\d+\.\d+\/go$/.test(r))).toBe(true);
+    // A library dropped from the corpus takes its route with it, which is what
+    // makes a link to a retired page fail rather than linger.
+    expect(API_ROUTES.has("/api/starly")).toBe(false);
   });
 
   test("the guard actually inspected links across more than one page", async () => {
@@ -178,6 +267,27 @@ describe("docs/guide link and anchor resolution", () => {
       "alpha.md ./missing.md missing file",
       "beta.md ./alpha.md#absent unknown anchor",
     ]);
+  });
+
+  // The same corpus walked with a route set: the retired route is reported, the
+  // live one is not, an `/api` fragment is ignored rather than resolved against a
+  // guide heading, and a non-`/api` absolute route stays out of scope. Driven by a
+  // synthetic set so the case holds whatever the real corpus contains.
+  test("a dead api route is reported, and only when a route set is supplied", async () => {
+    const dir = join(FIXTURES, "guide-links-broken");
+    const routes = new Set(["/api", "/api/live_module"]);
+    const withRoutes = await checkCorpus(dir, bareRenderer, routes);
+    expect(
+      withRoutes.broken
+        .filter((b) => b.reason === "unknown api route")
+        .map((b) => `${b.page} ${b.target}`),
+    ).toEqual(["alpha.md /api/retired.retired#anchor-ignored"]);
+    expect(withRoutes.inspected.map((i) => i.target)).toContain("/api/live_module");
+    expect(withRoutes.inspected.map((i) => i.target)).not.toContain("/libraries");
+
+    const withoutRoutes = await checkCorpus(dir);
+    expect(withoutRoutes.broken.some((b) => b.reason === "unknown api route")).toBe(false);
+    expect(withoutRoutes.inspected.some((i) => i.target.startsWith("/api"))).toBe(false);
   });
 
   test("the same walk over a sound corpus reports nothing", async () => {

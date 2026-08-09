@@ -80,7 +80,7 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
   // vendors both `export function` and bare `function` for the same intent
   // (`rendy.rendy`, `in.onscreen`). With an `export =`, the bare declarations
   // are internal plumbing behind the re-exported value, so they stay unemitted
-  // and the value's interface drives the surface instead (`squid`, `starly`).
+  // and the value's interface drives the surface instead (`squid`).
   const emitBare = !statements.some(ts.isExportAssignment);
 
   const elements: Record<string, unknown>[] = [];

@@ -28,13 +28,12 @@ Attributed upstream libraries (by their directory in ts-defold/library):
     - defold-lang         — Insality, https://github.com/Insality/defold-lang
     - defold-saver        — Insality, https://github.com/Insality/defold-saver
     - defsave             — subsoap, https://github.com/subsoap/defsave
-    - library-defold-persist — klaytonkowalski, https://github.com/klaytonkowalski/library-defold-persist
+    - library-defold-persist — whiteboxdev, https://github.com/whiteboxdev/library-defold-persist
     - defold-proto        — Insality, https://github.com/Insality/defold-proto
     - defmath             — subsoap, https://github.com/subsoap/defmath
     - dicebag             — 8bitskull, https://github.com/8bitskull/dicebag
     - defold-tweener      — Insality, https://github.com/Insality/defold-tweener
     - squid               — paweljarosz, https://github.com/paweljarosz/squid
-    - starly              — VowSoftware, https://github.com/c0d3r9/starly
     - defold-log          — Insality, https://github.com/Insality/defold-log
     - defold-metrics      — Britzl, https://github.com/britzl/defold-metrics
     - deftest             — Britzl, https://github.com/britzl/deftest
@@ -45,7 +44,7 @@ Attributed upstream libraries (by their directory in ts-defold/library):
     - defold-zzfx         — thejustinwalsh, https://github.com/thejustinwalsh/defold-zzfx
     - boom                — Britzl, https://github.com/britzl/boom
     - bzAnim              — jbp4444, https://github.com/jbp4444/bzAnim
-    - library-defold-rendy — klaytonkowalski, https://github.com/klaytonkowalski/library-defold-rendy
+    - library-defold-rendy — whiteboxdev, https://github.com/whiteboxdev/library-defold-rendy
 
 Each upstream library is distributed under its own license by its original
 author. The ts-defold/library MIT license covers the TypeScript definition

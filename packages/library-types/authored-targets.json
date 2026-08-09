@@ -122,17 +122,6 @@
       "upstreamLua": ["fixtures/upstream-lua/defold-yagames/yagames/yagames.lua"]
     },
     {
-      "repo": "https://github.com/c0d3r9/starly",
-      "ref": "85d1b2af8bf0618e7f297da41d03eb55d27e49b6",
-      "license": "Zlib",
-      "authored": "fixtures/authored/starly.starly.d.ts",
-      "moduleId": "starly.starly",
-      "namespace": "starly",
-      "generated": "generated/starly.d.ts",
-      "apiDoc": "api-doc/starly.json",
-      "upstreamLua": ["fixtures/upstream-lua/starly/starly/starly.lua"]
-    },
-    {
       "repo": "https://github.com/britzl/defold-input",
       "ref": "4.7.1",
       "license": "MIT",

@@ -747,131 +747,11 @@ describe("yagames.yagames migration integrity", () => {
   });
 });
 
-// The fourth Bucket-C severance and the third to take the bare namespace. Two
-// things make starly the library where the fork-the-golden rule bites: the
-// ts-defold fixture and the golden are *not* byte-identical (the golden maps
-// `hash` -> `Hash`, `vmath.vector3` -> `Vector3`, `vmath.matrix4` -> `Matrix4`
-// across ~21 sites), so forking the raw snapshot would ship the unmapped
-// spelling to every consumer; and the surface publishes through `const
-// exportThis: CameraMap & Readonly<CoreModule>; export = exportThis;`, the only
-// `export =` in the corpus, so its 21 members reach `extractApiDoc` through the
-// handle rather than as top-level declarations.
-//
-// The fork is verbatim — starly has no recorded upstream divergences — so unlike
-// yagames there are no correction assertions, only the mapped-spelling proof.
-describe("starly.starly migration integrity", () => {
-  test("starly is registered in authored-targets.json under its bare namespace", () => {
-    const targets = readAuthoredTargets(PACKAGE_ROOT);
-    const starly = targets.find((t) => t.namespace === "starly");
-    expect(starly).toBeDefined();
-    expect(starly?.moduleId).toBe("starly.starly");
-    expect(starly?.repo).toBe("https://github.com/c0d3r9/starly");
-    expect(starly?.ref).toBe("85d1b2af8bf0618e7f297da41d03eb55d27e49b6");
-    expect(starly?.license).toBe("Zlib");
-    expect(starly?.authored).toBe("fixtures/authored/starly.starly.d.ts");
-    expect(starly?.generated).toBe("generated/starly.d.ts");
-    expect(starly?.apiDoc).toBe("api-doc/starly.json");
-  });
-
-  test("starly.starly is no longer a ts-defold library-targets row", () => {
-    const { targets } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-targets.json"), "utf8"),
-    ) as { targets: { module: string }[] };
-    expect(targets.some((t) => t.module === "starly.starly")).toBe(false);
-  });
-
-  test("the starly dir is gone from library-classification.json", () => {
-    const { dirs } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "library-classification.json"), "utf8"),
-    ) as { dirs: { dir: string }[] };
-    expect(dirs.some((c) => c.dir === "starly")).toBe(false);
-  });
-
-  test("the retired ts-defold fixture, dotted golden, dotted api-doc and subpath are gone", () => {
-    expect(existsSync(join(PACKAGE_ROOT, "fixtures/ts-defold/starly.starly.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "generated/starly.starly.d.ts"))).toBe(false);
-    expect(existsSync(join(PACKAGE_ROOT, "api-doc/starly.starly.json"))).toBe(false);
-    const { exports } = JSON.parse(readFileSync(join(PACKAGE_ROOT, "package.json"), "utf8")) as {
-      exports: Record<string, unknown>;
-    };
-    expect("./starly.starly" in exports).toBe(false);
-  });
-
-  test("the bare-namespace golden replaced the retired compile proof in the dts-check include", () => {
-    const { include } = JSON.parse(
-      readFileSync(join(PACKAGE_ROOT, "tsconfig.dts-check.json"), "utf8"),
-    ) as { include: string[] };
-    expect(include).toContain("generated/starly.d.ts");
-    expect(include).toContain("test-d/starly-usage.test-d.ts");
-    expect(include).not.toContain("generated/starly.starly.d.ts");
-  });
-
-  // The lane-guidance rule in its one load-bearing instance: a fork copies the
-  // *golden*, so the mapped spelling is what ships. Asserting only that the
-  // mapped names appear would pass on the raw ts-defold snapshot too if it were
-  // ever appended to, so the unmapped spellings are excluded as well.
-  test("the authored fork took the mapped golden, not the ts-defold spelling", () => {
-    const authored = readFileSync(
-      join(PACKAGE_ROOT, "fixtures/authored/starly.starly.d.ts"),
-      "utf8",
-    );
-    expect(authored).toContain("g_behavior_center: Hash;");
-    expect(authored).toContain("positions: Vector3[]");
-    expect(authored).toContain("export = exportThis;");
-    expect(authored).not.toContain(": hash;");
-    expect(authored).not.toContain("vmath.vector3");
-    // The constant names are upstream's, not ts-defold's respelling of them —
-    // the one place the fork corrects the golden rather than copying it.
-    expect(authored).not.toContain("c_behavior_center");
-  });
-
-  // `export =` is the reason this one is worth asserting: the 21 members live
-  // behind the handle's alias and intersection, so a lowering that only reads
-  // top-level declarations would emit an api-doc of two typedefs and nothing
-  // else — and the page would render empty rather than fail.
-  test("the api-doc carries all 21 members, so the `export =` surface survives lowering", () => {
-    const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, "api-doc/starly.json"), "utf8")) as {
-      elements: Array<{ name: string; type: string }>;
-    };
-    const named = (type: string) =>
-      doc.elements
-        .filter((e) => e.type === type)
-        .map((e) => e.name)
-        .sort();
-
-    expect(named("VARIABLE")).toEqual([
-      "g_behavior_center",
-      "g_behavior_expand",
-      "g_behavior_mixed",
-      "g_behavior_stretch",
-      "g_display_height",
-      "g_display_ratio",
-      "g_display_width",
-    ]);
-    expect(named("FUNCTION")).toEqual([
-      "activate",
-      "cancel_shake",
-      "create",
-      "destroy",
-      "get_offset",
-      "get_projection",
-      "get_tight_world_area",
-      "get_view",
-      "get_viewport",
-      "get_world_area",
-      "is_shaking",
-      "screen_to_world",
-      "shake",
-      "world_to_screen",
-    ]);
-  });
-});
-
 // The fifth Bucket-C severance and the first multi-module one: ten `in.<mod>`
 // modules move at once, keeping `namespace === moduleId` so every `/api` route,
 // export subpath and import string stays byte-identical and the goldens are
 // overwritten in place rather than renamed. `in` is a reserved word, which is
-// why a bare `in` namespace is not an option here the way `starly` was.
+// why a bare `in` namespace is not an option here the way `yagames` was.
 //
 // Nine of the ten ts-defold fixtures differ from their goldens (`in.triggers` on
 // 171 lines), so this is also the severance where forking the raw snapshot would
@@ -1264,7 +1144,7 @@ describe("metrics migration integrity", () => {
   });
 });
 
-// The ninth Bucket-C severance, on the starly bare-namespace template: the
+// The ninth Bucket-C severance, on the yagames bare-namespace template: the
 // ts-defold fixture and the golden are *not* byte-identical (the golden maps
 // `hash` -> `Hash`, `node` -> `Opaque<"node">` and `vmath.vector3` -> `Vector3`
 // across the seven state interfaces), so the fork has to be taken from the

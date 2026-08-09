@@ -41,9 +41,10 @@ function apiDocElements(entry: AuthoredTarget): ApiDocElement[] {
 }
 
 describe("the measured corpus is exactly the corpus without a verdict", () => {
-  // The last unmeasured target was starly, whose upstream turned out to have moved
-  // rather than died. Nothing sits outside the measurement now, so the corpus-wide
-  // reading of this is an emptiness claim rather than a per-entry one.
+  // The last unmeasured target was starly, and it was dropped from the corpus rather
+  // than measured: its upstream and its author's account are both gone. Nothing sits
+  // outside the measurement now, so the corpus-wide reading of this is an emptiness
+  // claim rather than a per-entry one.
   test("no target sits outside the measurement", () => {
     const unmeasured = TARGETS.filter((entry) => entry.upstreamLua.length === 0).map(
       (entry) => entry.moduleId,
@@ -269,34 +270,6 @@ describe("yagames declares the whole callable surface yagames.lua defines", () =
   test("the field axis did not move: this slice touched one axis", () => {
     expect(report.upstreamFields).toBe(0);
     expect(report.declaredFields).toBe(0);
-    expect(report.phantomFields).toEqual([]);
-    expect(report.fieldCoverage).toBe(1);
-  });
-});
-
-// The 36th target, and the one the corpus could not reach at all until its upstream was
-// found at a new owner. The callable axis was already whole before the target was
-// measurable — 14 functions, matching arity — so the whole of what measuring exposed
-// sits on the field axis: the fork inherited ts-defold's `c_*` respelling of upstream's
-// seven `g_*` module constants, naming seven members that do not exist at runtime. The
-// assertions state the corrected surface, so restoring any `c_*` name reds both lists.
-describe("starly declares the surface the relocated starly.lua exports", () => {
-  const report = buildAuthoredParity(PACKAGE_ROOT, target("starly"));
-
-  test("every upstream member is declared at upstream arity", () => {
-    expect(report.upstreamMembers).toBe(14);
-    expect(report.declaredMembers).toBe(14);
-    expect(report.missingMembers).toEqual([]);
-    expect(report.phantomMembers).toEqual([]);
-    expect(report.arityMismatches).toEqual([]);
-    expect(report.callableCoverage).toBe(1);
-    expect(report.parityExceptions).toEqual([]);
-  });
-
-  test("the seven module constants are declared under the names upstream exports", () => {
-    expect(report.upstreamFields).toBe(7);
-    expect(report.declaredFields).toBe(7);
-    expect(report.missingFields).toEqual([]);
     expect(report.phantomFields).toEqual([]);
     expect(report.fieldCoverage).toBe(1);
   });
@@ -1148,12 +1121,12 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
-  test("the other thirty-three targets share no variadic member at all", () => {
+  test("the other thirty-two targets share no variadic member at all", () => {
     const moved = new Set(["deftest", "defmath", "zzfx"]);
     const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
       (entry) => !moved.has(entry.namespace),
     );
-    expect(untouched.length).toBe(33);
+    expect(untouched.length).toBe(32);
     for (const entry of untouched) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
