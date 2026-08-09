@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { canonicalNamespaces } from "./api-content";
 import { versionedApiParams } from "./api-page-render";
@@ -16,6 +17,7 @@ const FIXTURES = join(import.meta.dir, "__fixtures__");
 // root `bun test` than under the docs-site build, so the dirs are passed in.
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
 const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
+const REAL_ROUTES_DIR = join(import.meta.dir, "../routes");
 
 // Heading ids are read back out of the rendered page rather than recomputed
 // here: `markdown.ts`'s `slugify-headings` ruler is the only thing that decides
@@ -50,14 +52,13 @@ function isApiRoute(target: string): boolean {
 }
 
 // Absolute routes have no on-disk counterpart under the guide directory, so the
-// file/anchor walk below cannot speak to them. `/api/...` is checked separately
-// against the routes the API route files really emit (see `emittedApiRoutes`);
-// the other absolute routes (`/libraries`, `/get-started`, `/search`) are their
-// own route files and stay unchecked.
-function isExempt(target: string, checkApi: boolean): boolean {
+// file/anchor walk below cannot speak to them. They are checked instead against
+// the routes the site really emits — `/api/...` against `emittedApiRoutes`, the
+// rest against `staticRoutes` — and stay exempt when no route sets are supplied.
+function isExempt(target: string, checkRoutes: boolean): boolean {
   if (/^https?:\/\//.test(target) || target.startsWith("mailto:")) return true;
   if (!target.startsWith("/")) return false;
-  return !(checkApi && isApiRoute(target));
+  return !checkRoutes;
 }
 
 // Every `/api…` path the site materializes, assembled from the same production
@@ -83,6 +84,29 @@ export function emittedApiRoutes(typesDir: string, libraryTypesDir: string): Set
     routes.add(`/api/${version}/${namespace}`);
   }
   return routes;
+}
+
+// Honox routes flat, so `app/routes/*.tsx` is the static route table: each file
+// is the page at its own name, `index` is `/`, a leading `_` is a layout rather
+// than a page, and a bracketed name is a catch-all whose paths come from the
+// enumerator it hands `ssgParams` — for `[slug].tsx` that is `listGuidePages`,
+// read here rather than recomputed. `api.tsx` lands in this set too, but no
+// `/api…` target is ever looked up in it: those dispatch to `emittedApiRoutes`.
+export function staticRoutes(routesDir: string, guideDir: string): Set<string> {
+  const routes = new Set<string>();
+  for (const file of readdirSync(routesDir)) {
+    if (!file.endsWith(".tsx")) continue;
+    const name = file.slice(0, -".tsx".length);
+    if (name.startsWith("_") || name.includes("[")) continue;
+    routes.add(name === "index" ? "/" : `/${name}`);
+  }
+  for (const page of listGuidePages(guideDir)) routes.add(page.route);
+  return routes;
+}
+
+interface RouteSets {
+  api: Set<string>;
+  static: Set<string>;
 }
 
 type Renderer = (dir: string, file: string) => Promise<string>;
@@ -112,7 +136,7 @@ async function pageAnchors(dir: string, file: string, render: Renderer): Promise
 interface Broken {
   page: string;
   target: string;
-  reason: "missing file" | "unknown anchor" | "unknown api route";
+  reason: "missing file" | "unknown anchor" | "unknown api route" | "unknown route";
 }
 
 interface CorpusReport {
@@ -123,7 +147,7 @@ interface CorpusReport {
 async function checkCorpus(
   dir: string,
   render: Renderer = bareRenderer,
-  apiRoutes?: Set<string>,
+  routes?: RouteSets,
 ): Promise<CorpusReport> {
   const pages = readdirSync(dir).filter((f) => f.endsWith(".md"));
   const anchors = new Map<string, Set<string>>();
@@ -134,14 +158,18 @@ async function checkCorpus(
   for (const page of pages) {
     const markdown = readFileSync(join(dir, page), "utf8");
     for (const target of linkTargets(markdown)) {
-      if (!target || isExempt(target, apiRoutes !== undefined)) continue;
+      if (!target || isExempt(target, routes !== undefined)) continue;
       inspected.push({ page, target });
-      // An `/api…` link names a rendered route, not a file: only the path is
-      // resolvable here, and its `#fragment` is a heading the API renderer emits
-      // rather than one this walk can read off a guide page.
-      if (apiRoutes !== undefined && isApiRoute(target)) {
+      // An absolute link names a rendered route, not a file: only the path is
+      // resolvable here, and its `#fragment` is a heading the API or guide
+      // renderer emits rather than one this walk can read off a guide page.
+      if (routes !== undefined && target.startsWith("/")) {
         const route = target.split("#")[0] ?? "";
-        if (!apiRoutes.has(route)) broken.push({ page, target, reason: "unknown api route" });
+        if (isApiRoute(target)) {
+          if (!routes.api.has(route)) broken.push({ page, target, reason: "unknown api route" });
+        } else if (!routes.static.has(route)) {
+          broken.push({ page, target, reason: "unknown route" });
+        }
         continue;
       }
       const hash = target.indexOf("#");
@@ -167,10 +195,14 @@ function format(broken: Broken[]): string {
   return broken.map((b) => `  ${b.page} -> ${b.target} (${b.reason})`).join("\n");
 }
 
-// The production path highlights every fence on every guide page; three tests
+// The production path highlights every fence on every guide page; several tests
 // read the same report, so it is rendered once.
 const API_ROUTES = emittedApiRoutes(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-const siteReport = checkCorpus(GUIDE_DIR, siteRenderer(GUIDE_DIR), API_ROUTES);
+const STATIC_ROUTES = staticRoutes(REAL_ROUTES_DIR, GUIDE_DIR);
+const siteReport = checkCorpus(GUIDE_DIR, siteRenderer(GUIDE_DIR), {
+  api: API_ROUTES,
+  static: STATIC_ROUTES,
+});
 
 describe("docs/guide link and anchor resolution", () => {
   test("every relative link target resolves to a file under the guide directory", async () => {
@@ -222,6 +254,56 @@ describe("docs/guide link and anchor resolution", () => {
     expect(API_ROUTES.has("/api/starly")).toBe(false);
   });
 
+  test("every absolute link target resolves to a route the site really serves", async () => {
+    const { broken } = await siteReport;
+    const unknown = broken.filter((b) => b.reason === "unknown route");
+    if (unknown.length > 0) throw new Error(`unresolvable guide routes:\n${format(unknown)}`);
+    expect(unknown).toEqual([]);
+  });
+
+  // Non-vacuity for the check above: a widened `isExempt` — or a guide that
+  // stopped linking the site's own pages — would otherwise leave it passing
+  // over nothing.
+  test("the route guard inspected the non-api absolute links the guide carries", async () => {
+    const { inspected } = await siteReport;
+    const absolute = inspected
+      .map((i) => i.target)
+      .filter((t) => t.startsWith("/") && !isApiRoute(t));
+    expect(absolute.length).toBeGreaterThan(0);
+    expect(absolute).toContain("/libraries");
+  });
+
+  // The static set is read off the route directory and the guide directory, so a
+  // route file renamed or deleted without its links being fixed reds the check
+  // above rather than shipping a 404.
+  test("the static route set spans the route files and the guide pages", () => {
+    expect(STATIC_ROUTES.has("/libraries")).toBe(true);
+    expect(STATIC_ROUTES.has("/get-started")).toBe(true);
+    expect(STATIC_ROUTES.has("/guides")).toBe(true);
+    expect(STATIC_ROUTES.has("/search")).toBe(true);
+    expect(STATIC_ROUTES.has("/")).toBe(true);
+    expect(STATIC_ROUTES.has("/resolve")).toBe(true);
+    // The catch-all and the renderer are not paths anyone can navigate to.
+    expect(STATIC_ROUTES.has("/_renderer")).toBe(false);
+    expect([...STATIC_ROUTES].some((r) => r.includes("["))).toBe(false);
+  });
+
+  test("the static route set tracks the route directory rather than a literal", () => {
+    const routesDir = mkdtempSync(join(tmpdir(), "guide-routes-"));
+    const guideDir = mkdtempSync(join(tmpdir(), "guide-pages-"));
+    try {
+      writeFileSync(join(routesDir, "libraries.tsx"), "");
+      writeFileSync(join(routesDir, "_renderer.tsx"), "");
+      const routes = staticRoutes(routesDir, guideDir);
+      expect(routes.has("/libraries")).toBe(true);
+      expect(routes.has("/search")).toBe(false);
+      expect(routes.has("/_renderer")).toBe(false);
+    } finally {
+      rmSync(routesDir, { recursive: true, force: true });
+      rmSync(guideDir, { recursive: true, force: true });
+    }
+  });
+
   test("the guard actually inspected links across more than one page", async () => {
     const { inspected } = await siteReport;
     expect(inspected.length).toBeGreaterThan(0);
@@ -269,25 +351,34 @@ describe("docs/guide link and anchor resolution", () => {
     ]);
   });
 
-  // The same corpus walked with a route set: the retired route is reported, the
-  // live one is not, an `/api` fragment is ignored rather than resolved against a
-  // guide heading, and a non-`/api` absolute route stays out of scope. Driven by a
-  // synthetic set so the case holds whatever the real corpus contains.
-  test("a dead api route is reported, and only when a route set is supplied", async () => {
+  // The same corpus walked with a route set: each retired route is reported and
+  // its live sibling is not, an `/api` fragment is ignored rather than resolved
+  // against a guide heading, and both halves stay opt-in. Driven by synthetic
+  // sets so the case holds whatever the real corpus contains.
+  test("a dead route is reported on both halves, and only when a route set is supplied", async () => {
     const dir = join(FIXTURES, "guide-links-broken");
-    const routes = new Set(["/api", "/api/live_module"]);
+    const routes = {
+      api: new Set(["/api", "/api/live_module"]),
+      static: new Set(["/libraries"]),
+    };
     const withRoutes = await checkCorpus(dir, bareRenderer, routes);
     expect(
       withRoutes.broken
         .filter((b) => b.reason === "unknown api route")
         .map((b) => `${b.page} ${b.target}`),
     ).toEqual(["alpha.md /api/retired.retired#anchor-ignored"]);
+    expect(
+      withRoutes.broken
+        .filter((b) => b.reason === "unknown route")
+        .map((b) => `${b.page} ${b.target}`),
+    ).toEqual(["alpha.md /retired-route"]);
     expect(withRoutes.inspected.map((i) => i.target)).toContain("/api/live_module");
-    expect(withRoutes.inspected.map((i) => i.target)).not.toContain("/libraries");
+    expect(withRoutes.inspected.map((i) => i.target)).toContain("/libraries");
 
     const withoutRoutes = await checkCorpus(dir);
     expect(withoutRoutes.broken.some((b) => b.reason === "unknown api route")).toBe(false);
-    expect(withoutRoutes.inspected.some((i) => i.target.startsWith("/api"))).toBe(false);
+    expect(withoutRoutes.broken.some((b) => b.reason === "unknown route")).toBe(false);
+    expect(withoutRoutes.inspected.some((i) => i.target.startsWith("/"))).toBe(false);
   });
 
   test("the same walk over a sound corpus reports nothing", async () => {
