@@ -1,19 +1,19 @@
 /** @noSelfInFile **/
 
 /**
- * @see {@link https://github.com/VowSoftware/starly|Github Source}
+ * @see {@link https://github.com/c0d3r9/starly|Github Source}
  * @example `import * as starly from 'starly.starly'`
  * @noResolution
  */
 declare module 'starly.starly' {
 	interface CoreModule {
-		c_display_width: number;
-		c_display_height: number;
-		c_display_ratio: number;
-		c_behavior_center: Hash;
-		c_behavior_expand: Hash;
-		c_behavior_mixed: Hash;
-		c_behavior_stretch: Hash;
+		g_display_width: number;
+		g_display_height: number;
+		g_display_ratio: number;
+		g_behavior_center: Hash;
+		g_behavior_expand: Hash;
+		g_behavior_mixed: Hash;
+		g_behavior_stretch: Hash;
 
 		/**
 		 * Creates a camera. This function is called automatically in the game object's script component.

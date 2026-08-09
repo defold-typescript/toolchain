@@ -245,6 +245,8 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
     "a25f86f26b1600d08e0ec1f06eddbd24527b8d1c0b66fb727bd2a6afbf785562",
   "fixtures/upstream-lua/platypus/platypus/platypus.lua":
     "c2fa3bad2ccc15921282ead96d843c8078f71e2ac1d715ee51584bbaed5b49f5",
+  "fixtures/upstream-lua/starly/starly/starly.lua":
+    "5fc984a342bb027d7b49af6c0e986ab5f7c85cc957a91cec4b6ba0de5f65001d",
 };
 
 describe("the vendored upstream Lua the parity reports were measured against", () => {
