@@ -22,7 +22,7 @@ import {
 const classification: LibraryClassification = {
   dirs: [
     { dir: "boom", classification: "already-vendored", modules: ["boom.boom"] },
-    { dir: "starly", classification: "pure-lua", modules: ["starly.starly"] },
+    { dir: "gooey", classification: "pure-lua", modules: ["gooey.gooey"] },
     { dir: "AppLovin-MAX-Defold", classification: "native", modules: ["applovin"] },
     { dir: "future-lib", classification: "covered-by-goal", modules: ["future.future"] },
   ],
@@ -30,7 +30,7 @@ const classification: LibraryClassification = {
 const targets: LibraryTargets = {
   targets: [
     { module: "boom.boom", path: "packages/boom/boom.boom.d.ts" },
-    { module: "starly.starly", path: "packages/starly/starly.starly.d.ts" },
+    { module: "gooey.gooey", path: "packages/gooey/gooey.gooey.d.ts" },
     { module: "applovin", path: "packages/AppLovin-MAX-Defold/applovin.d.ts" },
     { module: "future.future", path: "packages/future-lib/future.future.d.ts" },
   ],
@@ -94,7 +94,7 @@ describe("buildLibraryRegistry", () => {
     const registry = buildLibraryRegistry(classification, targets);
     expect(registry).toEqual([
       { sourceId: "boom", modules: ["boom.boom"] },
-      { sourceId: "starly", modules: ["starly.starly"] },
+      { sourceId: "gooey", modules: ["gooey.gooey"] },
     ]);
   });
 

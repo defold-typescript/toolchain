@@ -130,23 +130,6 @@ describe("the concrete targets whose excuses the survey retired", () => {
     return found;
   }
 
-  test("starly.starly is measured against a vendored upstream, not an excuse", () => {
-    const starly = verdict("starly.starly");
-    expect(starly.parityVerdict).toBeUndefined();
-    expect(starly.upstreamLua).toEqual(["fixtures/upstream-lua/starly/starly/starly.lua"]);
-    for (const path of starly.upstreamLua) {
-      expect(existsSync(join(PACKAGE_ROOT, path))).toBe(true);
-    }
-  });
-
-  // The owner account went away rather than the repository, so no rename redirect
-  // fires and the same history has to be named at its new slug by hand.
-  test("starly.starly pins the relocated slug at the commit it always pinned", () => {
-    const starly = verdict("starly.starly");
-    expect(starly.repo).toBe("https://github.com/c0d3r9/starly");
-    expect(starly.ref).toBe("85d1b2af8bf0618e7f297da41d03eb55d27e49b6");
-  });
-
   test("the callable-module sources are measured now, their excuse having been retired", () => {
     for (const [moduleId, upstream] of [
       ["boom.boom", "fixtures/upstream-lua/boom/boom/boom.lua"],
@@ -155,7 +138,23 @@ describe("the concrete targets whose excuses the survey retired", () => {
       const entry = verdict(moduleId);
       expect(entry.parityVerdict).toBeUndefined();
       expect(entry.upstreamLua).toEqual([upstream]);
+      expect(existsSync(join(PACKAGE_ROOT, upstream))).toBe(true);
     }
+  });
+
+  // The reason the corpus now carries no verdict at all: `starly.starly` was the last
+  // target holding one, and it was dropped rather than measured — its upstream and its
+  // author's account are both gone, and the only surviving copy is an unaffiliated
+  // third-party mirror. A registry that names it again would be shipping types for a
+  // library nobody can obtain.
+  test("`unresolved-path` survives with no corpus user, its one holder having been dropped", () => {
+    expect(PARITY_VERDICT_REASONS).toContain("unresolved-path");
+    expect(TARGETS.map((entry) => entry.namespace)).not.toContain("starly");
+    expect(
+      TARGETS.filter((entry) => entry.parityVerdict?.reason === "unresolved-path").map(
+        (entry) => entry.moduleId,
+      ),
+    ).toEqual([]);
   });
 
   test("`unparseable-shape` survives with no corpus user, now describing a refused metatable", () => {

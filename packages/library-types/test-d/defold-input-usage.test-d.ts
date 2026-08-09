@@ -12,7 +12,7 @@ import * as state from "in.state";
 import * as textbox from "in.textbox";
 import * as triggers from "in.triggers";
 
-// Compile-only proof (mirroring starly-usage.test-d.ts) for the ten severed
+// Compile-only proof (mirroring yagames-usage.test-d.ts) for the ten severed
 // `in.<mod>` goldens. Until the severance none of them was compiled under
 // `skipLibCheck: false` — the four blocks retired from library-types.test-d.ts
 // covered only accelerometer, button, state and triggers, and the other six had

@@ -5363,14 +5363,14 @@ say what was actually looked at:
 
 | `reason` | When it applies |
 | -------- | --------------- |
-| `unresolved-path` | The `moduleId`-derived path does not resolve at the pinned `ref`, including a repository that no longer exists there. No corpus target carries this verdict: `starly.starly` once did, and was lifted into measurement when its upstream turned out to have moved to a new owner rather than been deleted — so check for a relocation before recording it. |
+| `unresolved-path` | The `moduleId`-derived path does not resolve at the pinned `ref`, including a repository that no longer exists there. No corpus target carries this verdict. Before recording it, check whether the upstream merely moved — an account rename usually redirects, and the same history may be reachable under a new owner. If it is genuinely gone, prefer dropping the library over shipping types nobody can obtain a runtime for. |
 | `no-module-file` | Upstream resolves, but declares no single module file this target could be measured against. |
 | `unparseable-shape` | The module file exists but closes in a way the reader refuses — a metatable carrying `__index`, or one it cannot read the keys of, either of which could delegate members no column-0 scan would find. No corpus target carries this verdict: `boom.boom` and `in.accelerometer` once did, and were lifted into measurement when the reader learned the `return setmetatable(M, { __call = … })` form they close with. |
 
 A verdict is a recorded finding, not a way to skip the work. It says someone
 looked and what stopped them, which is exactly what an absent declaration cannot
-say. The corpus currently carries no verdict of any kind — all 36 targets are
-measured — so both reasons above are described rather than exemplified.
+say. The corpus currently carries no verdict of any kind — all 35 targets are
+measured — so every reason above is described rather than exemplified.
 
 #### 5. Cut the library over and validate
 
