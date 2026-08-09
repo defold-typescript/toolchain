@@ -14,11 +14,16 @@ Entries are curated by hand from the git history; the most recent releases are
 listed per-patch, older releases are rolled up per minor version. Breaking
 changes are called out first because the toolchain is pre-1.0.
 
-## v0.24.1
+## v0.25.0
+
+### Breaking
+
+- **[starly](/api/starly)** — the seven module constants take the names upstream exports: `c_display_width`/`c_display_height`/`c_display_ratio` and the four `c_behavior_*` hashes become `g_display_width`/`g_display_height`/`g_display_ratio` and `g_behavior_*`. The old spellings named members that do not exist at runtime, so any code reading them was already getting `nil`.
 
 ### Fixed
 
 - The [Libraries](/libraries) index no longer credits the `ts-defold/library` project for its type definitions. Every library has been maintained in this repo since v0.24.0, generated from upstream sources that ship machine-readable types or hand-forked where upstream ships none.
+- [starly](/api/starly)'s upstream had moved to a new owner rather than disappeared, so its provenance links resolve again and its types are now measured against upstream like every other library — all 36 cover their upstream's whole function and constant surface.
 
 ## v0.24.0
 

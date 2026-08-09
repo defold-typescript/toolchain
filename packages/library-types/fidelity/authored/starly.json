@@ -1,0 +1,23 @@
+{
+  "namespace": "starly",
+  "upstreamMembers": 14,
+  "upstreamFields": 7,
+  "declaredFields": 7,
+  "missingFields": [],
+  "phantomFields": [],
+  "fieldCoverage": 1,
+  "declaredGlobals": 0,
+  "declaredMembers": 14,
+  "missingMembers": [],
+  "phantomMembers": [],
+  "arityMismatches": [],
+  "parityExceptions": [],
+  "undocumentedMembers": 0,
+  "importedDocs": 0,
+  "refusedDocBlocks": 0,
+  "refusedDocBlocksTotal": 0,
+  "variadicMembers": 0,
+  "overloadedMembers": 0,
+  "placeholderMembers": 0,
+  "callableCoverage": 1
+}

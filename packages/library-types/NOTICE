@@ -34,7 +34,7 @@ Attributed upstream libraries (by their directory in ts-defold/library):
     - dicebag             — 8bitskull, https://github.com/8bitskull/dicebag
     - defold-tweener      — Insality, https://github.com/Insality/defold-tweener
     - squid               — paweljarosz, https://github.com/paweljarosz/squid
-    - starly              — VowSoftware, https://github.com/VowSoftware/starly
+    - starly              — VowSoftware, https://github.com/c0d3r9/starly
     - defold-log          — Insality, https://github.com/Insality/defold-log
     - defold-metrics      — Britzl, https://github.com/britzl/defold-metrics
     - deftest             — Britzl, https://github.com/britzl/deftest

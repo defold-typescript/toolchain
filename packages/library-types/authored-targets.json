@@ -122,7 +122,7 @@
       "upstreamLua": ["fixtures/upstream-lua/defold-yagames/yagames/yagames.lua"]
     },
     {
-      "repo": "https://github.com/VowSoftware/starly",
+      "repo": "https://github.com/c0d3r9/starly",
       "ref": "85d1b2af8bf0618e7f297da41d03eb55d27e49b6",
       "license": "Zlib",
       "authored": "fixtures/authored/starly.starly.d.ts",
@@ -130,10 +130,7 @@
       "namespace": "starly",
       "generated": "generated/starly.d.ts",
       "apiDoc": "api-doc/starly.json",
-      "parityVerdict": {
-        "reason": "unresolved-path",
-        "note": "VowSoftware/starly does not resolve at the pinned SHA 85d1b2af — the repository itself returns 404, so neither starly/starly.lua nor any other upstream path can be vendored at this ref."
-      }
+      "upstreamLua": ["fixtures/upstream-lua/starly/starly/starly.lua"]
     },
     {
       "repo": "https://github.com/britzl/defold-input",

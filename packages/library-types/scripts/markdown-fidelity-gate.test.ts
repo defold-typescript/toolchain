@@ -1224,11 +1224,14 @@ const PLATYPUS: LibraryRecord = {
   ],
 };
 
-// The recorded decision for `VowSoftware/starly` at commit
+// The recorded decision for `c0d3r9/starly` at commit
 // `85d1b2af8bf0618e7f297da41d03eb55d27e49b6` — the tenth Bucket-C library, one
 // module, and the third SHA pin (the repo publishes no tags and no releases).
 // The PRD named `whiteboxdev/library-defold-starly`, which 404s; the ts-defold
-// fixture's own `@see` already pointed at the `VowSoftware` slug used here.
+// fixture's own `@see` pointed at `VowSoftware/starly`, which this record was
+// first taken against and which has since 404'd in turn — the *owner account*
+// went away, so no rename redirect fires. The same history, at this same commit,
+// resolves at the `c0d3r9` slug used here.
 //
 // `## Function API` carries 14 signature headings, every one backtick-wrapped —
 // ``### `m_starly.create(id)` `` — which `HEADER` does not match, so the as-is
@@ -1252,8 +1255,8 @@ const PLATYPUS: LibraryRecord = {
 // parse yields all 14 functions and the verdict does not move:
 //
 //   elements parsed        14
-//   tsDefoldMembers        `CoreModule`'s 21 — 14 methods and 7 `c_*` constants
-//   missingMembers         the 7 `c_*` constants
+//   tsDefoldMembers        `CoreModule`'s 21 — 14 methods and 7 `g_*` constants
+//   missingMembers         the 7 `g_*` constants
 //   addedMembers           []
 //   downgradedMembers      ["get_tight_world_area"]
 //   signatureLossMembers   ["screen_to_world", "world_to_screen"]
@@ -1281,8 +1284,9 @@ const PLATYPUS: LibraryRecord = {
 //   - 7 module constants — `display_width`/`display_height`/`display_ratio` and
 //     the four `behavior_*` hashes are `**Module Variables**` bullets under
 //     `## Variable API`, never signature headings, so a flat parse cannot reach
-//     them. ts-defold additionally renames them `c_*`, and they are the whole of
-//     `missingMembers`.
+//     them, and they are the whole of `missingMembers`. ts-defold had additionally
+//     renamed them `c_*`; the fork now declares them under the `g_*` names
+//     `starly.lua` actually exports, which is what the names above are.
 //   - 3 dropped parameters across 2 members — the headings declare
 //     `screen_to_world(id, screen_x, screen_y, [visible])` and
 //     `world_to_screen(id, world_position, [visible])`, but both `**Parameters**`
@@ -1308,10 +1312,11 @@ const PLATYPUS: LibraryRecord = {
 // unchanged across that move because the fork is the *mapped* golden and
 // `compareFidelityToTsDefold` scores no type token — it tests for an introduced
 // `unknown`, counts parameters and `void` returns, and reads `?`, none of which a
-// `hash` -> `Hash` respelling touches.
+// `hash` -> `Hash` respelling touches. The relocation to `c0d3r9` moves nothing
+// either: the snapshot is the same file at the same commit.
 const STARLY: LibraryRecord = {
   library: "starly",
-  repo: "https://github.com/VowSoftware/starly",
+  repo: "https://github.com/c0d3r9/starly",
   ref: "85d1b2af8bf0618e7f297da41d03eb55d27e49b6",
   license: "Zlib",
   prefix: "starly.",
@@ -1665,8 +1670,15 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "35b06ed582b027ae84e395856afd015ba74bc76c05460e63c4f0adfd3da6457b",
   "fixtures/authored/richtext.tags.d.ts":
     "722f9bcd88d44a5c17e5b1b49d9060759be46467658599c3fe2fae3f172b8b11",
+  // Re-pinned with the field correction that took the seven module constants from
+  // ts-defold's `c_*` respelling to the `g_*` names the pinned `starly.lua`
+  // exports, and with the `@see` link repointed at the relocated upstream. The
+  // `no-go`/`doc-dialect` verdict was re-derived against the edited fork first: it
+  // held, every loss term is unchanged, and `missingMembers` is the same seven
+  // constants under their real names — the README documents them as prose bullets
+  // either way, so no reading of it reaches them.
   "fixtures/authored/starly.starly.d.ts":
-    "79bad0b84c801c6b57e03d2f208af6aea1248eeda99383f88b1bcf9b7e340e21",
+    "235f3a637c928d5f122aa58f1e66ddb6991a0a83640903b0f4bcdc864f1c14ec",
   "fixtures/authored/yagames.yagames.d.ts":
     "2fde3ee97ce24ba40de2fea7b21040882b3bbae94a8a08875417d070bd603b06",
   "fixtures/markdown/bzAnim.bzLibrary.md":
@@ -2694,13 +2706,13 @@ describe("starly doc-dialect evidence at commit 85d1b2a", () => {
 
   // The 7 constants `CoreModule` declares, sorted as the comparator reports them.
   const CONSTANT_MEMBERS = [
-    "c_behavior_center",
-    "c_behavior_expand",
-    "c_behavior_mixed",
-    "c_behavior_stretch",
-    "c_display_height",
-    "c_display_ratio",
-    "c_display_width",
+    "g_behavior_center",
+    "g_behavior_expand",
+    "g_behavior_mixed",
+    "g_behavior_stretch",
+    "g_display_height",
+    "g_display_ratio",
+    "g_display_width",
   ];
 
   // The most generous reading available: rewrite all five dialect axes and reduce

@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { readAuthoredTargets } from "./sync-authored-types";
 import {
   type ClassificationEntry,
   checkDescriptions,
@@ -249,6 +250,22 @@ describe("NOTICE", () => {
     for (const dir of dirs) {
       expect(notice).toContain(dir);
     }
+  });
+
+  // The credit and the pin are separate files, and starly's upstream moved owner
+  // after both were written — so a relocation that touches only one of them leaves
+  // the shipped attribution pointing at a slug that no longer resolves.
+  test("a forked library's credit names the repo its authored-targets entry pins", () => {
+    const notice = readFileSync(join(PACKAGE_ROOT, "NOTICE"), "utf8");
+    const credited = new Map(
+      [...notice.matchAll(/^\s+- (\S+)\s+— .+, (https:\/\/github\.com\/\S+)$/gm)].map((m) => [
+        m[1] as string,
+        m[2] as string,
+      ]),
+    );
+    const starly = readAuthoredTargets(PACKAGE_ROOT).find((entry) => entry.namespace === "starly");
+    expect(starly?.repo).toBeDefined();
+    expect(credited.get("starly")).toBe(starly?.repo);
   });
 });
 
