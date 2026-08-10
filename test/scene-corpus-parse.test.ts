@@ -1,7 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { parseSceneTextFormat, type SceneMessage } from "../packages/types/src/scene-text-format";
+import {
+  parseSceneTextFormat,
+  type SceneMessage,
+} from "../packages/transpiler/src/scene-text-format";
 
 const repoRoot = join(import.meta.dir, "..");
 const examplesDir = join(repoRoot, "docs/examples");
