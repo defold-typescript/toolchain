@@ -109,10 +109,18 @@ function stamp(worktree: string, version: string): void {
   }
 }
 
-// Read one entry out of an uncompressed (already-gunzipped) tar by walking its
-// 512-byte ustar headers. `package/package.json` is short, so the 100-byte name
-// field suffices — no prefix/long-name handling. Returns null when absent.
-export function readTarEntry(tar: Uint8Array, name: string): string | null {
+export interface TarEntry {
+  readonly name: string;
+  readonly data: Uint8Array;
+}
+
+// Walk an uncompressed (already-gunzipped) tar's 512-byte ustar headers and
+// yield every regular file, so a whole tarball can be materialized in-process —
+// repo tooling must stay portable and never shell out to `tar`. The ustar
+// `prefix` field is honored because a deep packed path outruns the 100-byte name
+// field; directories and pax/GNU metadata blocks carry no file content and are
+// skipped rather than written out.
+export function* iterateTarEntries(tar: Uint8Array): Generator<TarEntry> {
   const decoder = new TextDecoder();
   const trimNul = (s: string): string => {
     const i = s.indexOf("\0");
@@ -121,14 +129,28 @@ export function readTarEntry(tar: Uint8Array, name: string): string | null {
   let offset = 0;
   while (offset + 512 <= tar.length) {
     const header = tar.subarray(offset, offset + 512);
-    const entryName = trimNul(decoder.decode(header.subarray(0, 100)));
-    if (entryName === "") break; // trailing all-zero block
+    const name = trimNul(decoder.decode(header.subarray(0, 100)));
+    if (name === "") break; // trailing all-zero block
     const size = Number.parseInt(trimNul(decoder.decode(header.subarray(124, 136))).trim(), 8);
+    const typeFlag = trimNul(decoder.decode(header.subarray(156, 157)));
+    const prefix = trimNul(decoder.decode(header.subarray(345, 500)));
     const dataStart = offset + 512;
-    if (entryName === name) {
-      return decoder.decode(tar.subarray(dataStart, dataStart + size));
+    if (typeFlag === "" || typeFlag === "0") {
+      yield {
+        name: prefix === "" ? name : `${prefix}/${name}`,
+        data: tar.subarray(dataStart, dataStart + size),
+      };
     }
     offset = dataStart + Math.ceil(size / 512) * 512;
+  }
+}
+
+// Read one entry out of an uncompressed (already-gunzipped) tar. Returns null
+// when absent.
+export function readTarEntry(tar: Uint8Array, name: string): string | null {
+  const decoder = new TextDecoder();
+  for (const entry of iterateTarEntries(tar)) {
+    if (entry.name === name) return decoder.decode(entry.data);
   }
   return null;
 }

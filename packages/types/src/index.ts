@@ -87,11 +87,6 @@ export {
   wrapAsModule,
 } from "./publish-dts";
 export {
-  parseSceneTextFormat,
-  type SceneMessage,
-  SceneTextFormatError,
-} from "./scene-text-format";
-export {
   lookupSignature,
   type SignatureOverride,
   type SignatureStore,

@@ -127,11 +127,6 @@ export {
 } from "./src/lifecycle";
 export { type WrapOptions, wrapAsAmbientGlobal } from "./src/publish-dts";
 export {
-  parseSceneTextFormat,
-  type SceneMessage,
-  SceneTextFormatError,
-} from "./src/scene-text-format";
-export {
   lookupSignature,
   type SignatureOverride,
   type SignatureStore,
