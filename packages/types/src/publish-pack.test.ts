@@ -19,6 +19,17 @@ function packedPaths(cwd: string): string[] {
     .filter((path): path is string => path !== undefined);
 }
 
+function exportTargets(node: unknown, out: Set<string> = new Set()): Set<string> {
+  if (typeof node === "string") {
+    if (node.startsWith("./")) out.add(node.slice(2));
+    return out;
+  }
+  if (node !== null && typeof node === "object") {
+    for (const value of Object.values(node)) exportTargets(value, out);
+  }
+  return out;
+}
+
 describe("@defold-typescript/types publish surface", () => {
   const paths = packedPaths(PKG_DIR);
 
@@ -54,6 +65,20 @@ describe("@defold-typescript/types publish surface", () => {
       if (path.startsWith("scripts/")) {
         expect(path).not.toMatch(/\.test\.ts$/);
       }
+    }
+  });
+
+  test("exports the url-parameters.json subpath", async () => {
+    const manifest = await Bun.file(resolve(PKG_DIR, "package.json")).json();
+    expect(manifest.exports?.["./url-parameters.json"]).toBe("./url-parameters.json");
+  });
+
+  test("ships every target reachable through exports", async () => {
+    const manifest = await Bun.file(resolve(PKG_DIR, "package.json")).json();
+    const targets = [...exportTargets(manifest.exports)];
+    expect(targets.length).toBeGreaterThan(0);
+    for (const target of targets) {
+      expect(paths).toContain(target);
     }
   });
 
