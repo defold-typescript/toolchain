@@ -384,6 +384,17 @@
       "generated": "generated/nakama.d.ts",
       "apiDoc": "api-doc/nakama.json",
       "upstreamLua": ["fixtures/upstream-lua/nakama-defold/nakama/nakama.lua"]
+    },
+    {
+      "repo": "https://github.com/Klaleus/defold-shutter",
+      "ref": "2ed27b50cda551650b01b80c1ccb5dd3f4e161fc",
+      "license": "Zlib",
+      "authored": "fixtures/authored/shutter.shutter.d.ts",
+      "moduleId": "shutter.shutter",
+      "namespace": "shutter",
+      "generated": "generated/shutter.d.ts",
+      "apiDoc": "api-doc/shutter.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-shutter/shutter/shutter.lua"]
     }
   ]
 }

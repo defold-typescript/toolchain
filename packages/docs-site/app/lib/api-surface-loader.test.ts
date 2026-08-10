@@ -288,6 +288,22 @@ describe("loadLibraryProvenance — authored/forked libraries", () => {
     expect(meta.sourceUrl).not.toContain("ts-defold/library");
   });
 
+  // A library that was never in ts-defold's tree, so nothing about it is derived from
+  // a vendored classification dir — the maintained-here reading has to come from the
+  // authored-targets entry alone. Upstream publishes no tags, hence a commit pin.
+  test("attributes shutter to Klaleus/defold-shutter as an authored-here forked library", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("shutter");
+    expect(meta.authoredHere).toBe(true);
+    expect(meta.commit).toBe("2ed27b50cda551650b01b80c1ccb5dd3f4e161fc");
+    expect(meta.authorUrl).toBe("https://github.com/Klaleus/defold-shutter");
+    expect(meta.sourceUrl).toBe(
+      "https://github.com/Klaleus/defold-shutter/tree/2ed27b50cda551650b01b80c1ccb5dd3f4e161fc",
+    );
+    expect(meta.license).toBe("Zlib");
+    expect(meta.importString).toBe('import * as shutter from "shutter.shutter"');
+    expect(meta.sourceUrl).not.toContain("ts-defold/library");
+  });
+
   test("renders defcon's import with the namespace alias but the moduleId module path", () => {
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("defcon");
     expect(meta.importString).toBe('import * as defcon from "defcon.console"');
