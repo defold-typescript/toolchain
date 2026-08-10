@@ -38,6 +38,7 @@
     },
     "./api-availability.json": "./api-availability.json",
     "./api-signatures.json": "./api-signatures.json",
+    "./url-parameters.json": "./url-parameters.json",
     "./package.json": "./package.json"
   },
   "files": [
@@ -48,6 +49,7 @@
     "api-migrations.json",
     "api-availability.json",
     "api-signatures.json",
+    "url-parameters.json",
     "index.d.ts",
     "!src/**/*.test.ts",
     "!scripts/**/*.test.ts",
