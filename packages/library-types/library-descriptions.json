@@ -44,6 +44,7 @@
   "richtext.tags": "Rich-text rendering for Defold: styled spans, embedded tags, and per-color text runs.",
   "saver.saver": "Persistent save helpers for Defold: typed tables, versioned slots, and atomic writes.",
   "saver.storage": "Key-value storage over the Defold saver state: typed number, string, and boolean getters and setters.",
+  "shutter": "Shutter is a library for 2D camera functionality in a Defold game engine project.",
   "squid": "Squid is a standalone injectable system for saveable logging of user logs, errors and crashes for Defold.",
   "yagames": "YaGames is the Yandex.Games SDK implementation for the Defold game engine."
 }

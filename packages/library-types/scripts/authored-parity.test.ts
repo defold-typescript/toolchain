@@ -1121,12 +1121,12 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
-  test("the other thirty-two targets share no variadic member at all", () => {
+  test("the other thirty-three targets share no variadic member at all", () => {
     const moved = new Set(["deftest", "defmath", "zzfx"]);
     const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
       (entry) => !moved.has(entry.namespace),
     );
-    expect(untouched.length).toBe(32);
+    expect(untouched.length).toBe(33);
     for (const entry of untouched) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
@@ -1678,6 +1678,57 @@ describe("only a refusal the fork left unanswered is charged", () => {
       "on_message",
       "update",
     ]);
+  });
+});
+
+// Built live rather than read off `fidelity/authored/shutter.json`, so an edit to the
+// hand-authored fork reds here immediately instead of waiting for a regen. The library
+// is new to the corpus and has no ts-defold binding behind it, which makes the measured
+// agreement with upstream the only thing standing behind the declarations.
+describe("shutter.shutter declares the whole of its upstream module", () => {
+  const report = buildAuthoredParity(PACKAGE_ROOT, target("shutter"));
+
+  test("both axes close, with nothing missing and nothing invented", () => {
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  // The counts are the half of the claim coverage alone cannot make: a fork that
+  // declared nothing and an upstream that exported nothing would also read 1.
+  test("the measured surface is upstream's twelve callables and four constants", () => {
+    expect(report.upstreamMembers).toBe(12);
+    expect(report.declaredMembers).toBe(12);
+    expect(report.upstreamFields).toBe(4);
+    expect(report.declaredFields).toBe(4);
+  });
+
+  // `create`/`destroy` are the pair starly's withdrawn fork declared. shutter builds
+  // `camera_table` from its own script's `init`/`final` instead, so declaring them here
+  // would be a phantom rather than a convenience.
+  test("nothing is excepted and the lifecycle pair upstream lacks stays undeclared", () => {
+    expect(report.parityExceptions).toEqual([]);
+    const declared = new Set(
+      apiDocElements(target("shutter"))
+        .filter((element) => element.type === "FUNCTION")
+        .map((element) => element.name),
+    );
+    expect(declared).not.toContain("create");
+    expect(declared).not.toContain("destroy");
+    expect(declared).toContain("screen_to_world");
+  });
+
+  // Upstream writes only `--` comments and none sits directly above a member, so the
+  // reader has nothing to import and nothing to refuse. A non-zero term here would mean
+  // a brief on the fork is answering upstream prose rather than being written fresh.
+  test("no upstream doc block is imported or refused, every brief being first-party", () => {
+    expect(report.refusedDocBlocksTotal).toBe(0);
+    expect(report.refusedDocBlocks).toBe(0);
+    expect(report.importedDocs).toBe(0);
   });
 });
 
