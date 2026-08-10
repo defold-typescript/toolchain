@@ -1,5 +1,14 @@
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
+// The dedicated subpath, not the package root: `bun build --packages=external`
+// leaves this specifier for `node` to resolve at runtime, and the root entry
+// pulls in the whole ambient-global graph whose relative imports carry no file
+// extension. This module is self-contained, so plain `node` can load it.
+import {
+  parseSceneTextFormat,
+  type SceneMessage,
+  SceneTextFormatError,
+} from "@defold-typescript/types/scene-text-format";
 import { scanFilesSync } from "./scan";
 
 // A `component:` entry in a `.go`/`.collection` must reference a Defold
@@ -24,10 +33,28 @@ function isSkipped(rel: string): boolean {
   return rel.split(/[/\\]/).some((segment) => SCAN_SKIP_SEGMENTS.has(segment));
 }
 
-// Matches `component: "/path"` in a standalone `.go` and the escaped
-// `component: \"/path\"` form inside a collection's `embedded_instances`
-// `data:` string. The path holds no quote or backslash.
-const COMPONENT_REF_RE = /component:\s*\\?"([^"\\]+)/g;
+// Every `component:` the document declares, at any message depth, plus those
+// inside each `data:` payload — an `embedded_instances` `data:` is a whole
+// escaped `.go`, and its own `embedded_components` escape again, so each level
+// is re-parsed rather than unescaped in one greedy pass. A payload that does
+// not parse contributes nothing, matching how an unreadable file is skipped.
+function collectComponentRefs(message: SceneMessage, into: string[]): void {
+  for (const value of message.fields.get("component") ?? []) {
+    into.push(value);
+  }
+  for (const payload of message.fields.get("data") ?? []) {
+    try {
+      collectComponentRefs(parseSceneTextFormat(payload), into);
+    } catch (error) {
+      if (!(error instanceof SceneTextFormatError)) throw error;
+    }
+  }
+  for (const nested of message.messages.values()) {
+    for (const child of nested) {
+      collectComponentRefs(child, into);
+    }
+  }
+}
 
 // Scan every `.go`/`.collection` for a `component:` that points at a mesh source
 // asset instead of a wrapping component. Warn-only: this cannot be auto-fixed
@@ -56,11 +83,14 @@ export function scanSceneResourceRefs(cwd: string): string[] {
     } catch {
       continue;
     }
-    for (const match of content.matchAll(COMPONENT_REF_RE)) {
-      const refPath = match[1];
-      if (refPath === undefined) {
-        continue;
-      }
+    const refs: string[] = [];
+    try {
+      collectComponentRefs(parseSceneTextFormat(content), refs);
+    } catch (error) {
+      if (!(error instanceof SceneTextFormatError)) throw error;
+      continue;
+    }
+    for (const refPath of refs) {
       const wrapper = SOURCE_ASSET_WRAPPERS.get(path.extname(refPath).toLowerCase());
       if (wrapper !== undefined) {
         warnings.push(
