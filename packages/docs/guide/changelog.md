@@ -26,7 +26,6 @@ changes are called out first because the toolchain is pre-1.0.
 
 ### Fixed
 
-- The CLI installed from npm no longer crashes on startup under plain `node` with `ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`, which made every command unreachable — `--help` included — for anyone not running it through Bun. The scene parser it loads now ships as compiled JavaScript.
 - The [Libraries](/libraries) index no longer credits the `ts-defold/library` project for its type definitions. Every library has been maintained in this repo since v0.24.0, generated from upstream sources that ship machine-readable types or hand-forked where upstream ships none.
 - [persist](/api/persist) and [rendy](/api/rendy) are credited to their author's current GitHub account, so the attribution links no longer depend on a rename redirect.
 
