@@ -49,6 +49,7 @@ describe("@defold-typescript/types publish surface", () => {
     expect(paths).toContain("scripts/doc-source.ts");
     expect(paths).toContain("scripts/sync-api-docs.ts");
     expect(paths).toContain("api-targets.json");
+    expect(paths).toContain("url-parameters.json");
     for (const path of paths) {
       if (path.startsWith("scripts/")) {
         expect(path).not.toMatch(/\.test\.ts$/);
