@@ -87,6 +87,18 @@ describe("@defold-typescript/transpiler publish surface", () => {
     expect(manifest.license).toBe("MIT");
   });
 
+  test("ships the scene text-format source the bun condition reaches", () => {
+    expect(paths).toContain("src/scene-text-format.ts");
+    expect(paths).toContain("dist/scene-text-format.d.ts");
+  });
+
+  test("the built index exports the scene parser the CLI imports at runtime", async () => {
+    const built = await import(resolve(PKG_DIR, "dist/index.js"));
+
+    expect(typeof built.parseSceneTextFormat).toBe("function");
+    expect(typeof built.SceneTextFormatError).toBe("function");
+  });
+
   test("built entry has no extensionless relative imports", () => {
     for (const specifier of relativeImportSpecifiers(resolve(PKG_DIR, "dist/index.js"))) {
       expect(specifier).toMatch(/\.js$/);

@@ -1,14 +1,15 @@
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
-// The dedicated subpath, not the package root: `bun build --packages=external`
-// leaves this specifier for `node` to resolve at runtime, and the root entry
-// pulls in the whole ambient-global graph whose relative imports carry no file
-// extension. This module is self-contained, so plain `node` can load it.
+// `bun build --packages=external` leaves this specifier for `node` to resolve at
+// runtime, out of an installed `node_modules` tree, so it must resolve to
+// *compiled JavaScript*: node refuses to strip types from any file under
+// `node_modules`, however self-contained that file is. `transpiler` ships built
+// JS; the typings-only `types` package does not.
 import {
   parseSceneTextFormat,
   type SceneMessage,
   SceneTextFormatError,
-} from "@defold-typescript/types/scene-text-format";
+} from "@defold-typescript/transpiler";
 import { scanFilesSync } from "./scan";
 
 // A `component:` entry in a `.go`/`.collection` must reference a Defold

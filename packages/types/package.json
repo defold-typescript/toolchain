@@ -33,10 +33,6 @@
     "./lifecycle": {
       "types": "./src/lifecycle.ts"
     },
-    "./scene-text-format": {
-      "types": "./src/scene-text-format.ts",
-      "default": "./src/scene-text-format.ts"
-    },
     "./timers": {
       "types": "./src/timers.d.ts"
     },
