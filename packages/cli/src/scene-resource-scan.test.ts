@@ -71,6 +71,16 @@ describe("scanSceneResourceRefs", () => {
     expect(warnings[0]).toContain("legacy.dae");
   });
 
+  test("skips a scene it cannot parse without warning or throwing", () => {
+    writeFile("broken.go", 'components {\n  id: "unterminated\n');
+    writeFile("ok.go", 'components {\n  component: "/m/x.gltf"\n}\n');
+
+    const warnings = scanSceneResourceRefs(cwd);
+
+    expect(warnings.length).toBe(1);
+    expect(warnings[0]).toContain("ok.go");
+  });
+
   test("skips build/ and node_modules/ so extracted and vendored files are ignored", () => {
     const bad = 'component: "/m/x.gltf"\n';
     writeFile("build/default/_generated_0.go", bad);
