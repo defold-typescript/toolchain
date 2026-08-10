@@ -1868,3 +1868,149 @@ describe("nakama.nakama migration integrity", () => {
     expect(overrides.nakama?.length).toBeGreaterThan(0);
   });
 });
+
+// Upstream is plain Lua with no annotations of any kind, so parity — which compares
+// names, counts and arities — is the whole of what can be derived mechanically. These
+// are the claims only a reading of the body supports, asserted against the lowered
+// api-doc model the golden and the docs-site are both built from rather than against
+// the fork's text, so the emit path is exercised rather than restated.
+describe("shutter.shutter type claims upstream states only in its body", () => {
+  const AUTHORED = "fixtures/authored/shutter.shutter.d.ts";
+  const FUNCTIONS = [
+    "activate",
+    "cancel_shake",
+    "deactivate",
+    "force_update",
+    "get_distance",
+    "get_frustum",
+    "get_projection",
+    "get_view",
+    "get_viewport",
+    "screen_to_world",
+    "shake",
+    "world_to_screen",
+  ];
+
+  function element(name: string): Record<string, unknown> {
+    const found = apiDocElements("shutter").find((entry) => entry.name === name);
+    if (!found) throw new Error(`api-doc/shutter.json declares no ${name}`);
+    return found;
+  }
+
+  function returnTypes(name: string): string[] {
+    const { returnvalues } = element(name) as {
+      returnvalues?: { types: string[] }[];
+    };
+    return (returnvalues ?? []).flatMap((value) => value.types);
+  }
+
+  function parameters(name: string): { name: string; types: string[]; is_optional: string }[] {
+    const { parameters } = element(name) as {
+      parameters?: { name: string; types: string[]; is_optional: string }[];
+    };
+    return parameters ?? [];
+  }
+
+  test("shutter is registered under its bare namespace and measures rather than asserts", () => {
+    const entry = readAuthoredTargets(PACKAGE_ROOT).find((t) => t.namespace === "shutter");
+    expect(entry).toBeDefined();
+    expect(entry?.moduleId).toBe("shutter.shutter");
+    expect(entry?.repo).toBe("https://github.com/Klaleus/defold-shutter");
+    expect(entry?.ref).toBe("2ed27b50cda551650b01b80c1ccb5dd3f4e161fc");
+    expect(entry?.license).toBe("Zlib");
+    expect(entry?.authored).toBe(AUTHORED);
+    expect(entry?.generated).toBe("generated/shutter.d.ts");
+    expect(entry?.apiDoc).toBe("api-doc/shutter.json");
+    expect(entry?.parityVerdict).toBeUndefined();
+    expect(entry?.upstreamLua).toEqual([
+      "fixtures/upstream-lua/defold-shutter/shutter/shutter.lua",
+    ]);
+  });
+
+  // `return viewport_x, viewport_y, viewport_width, viewport_height` — four values, not
+  // a vector and not one number. Typed as a single `number` the call would still
+  // compile and silently discard three quarters of the viewport.
+  test("get_viewport returns four numbers as one multi-return", () => {
+    expect(returnTypes("get_viewport")).toEqual([
+      "LuaMultiReturn<[ number, number, number, number ]>",
+    ]);
+  });
+
+  // Both guard on `visible` and bail with a bare `return`, so nil reaches the caller.
+  // Narrowing either to `Vector3` would hand a consumer an unchecked value.
+  test("the two clip-space conversions admit the nil upstream returns", () => {
+    for (const name of ["screen_to_world", "world_to_screen"]) {
+      expect(returnTypes(name)).toEqual(["Vector3 | undefined"]);
+    }
+  });
+
+  // `shutter.script` keys the table with `go.get_id()`, so the index is a `Hash`. A
+  // `string` key would typecheck at every call site and miss at runtime.
+  test("camera_table is a map indexed by Hash, not by string", () => {
+    const field = element("camera_table") as { type: string; types: string[] };
+    expect(field.type).toBe("VARIABLE");
+    expect(field.types).toEqual(["LuaMap<Hash, ShutterCamera>"]);
+  });
+
+  // The optional tail is what upstream defaults (`x = x or 1`) or truthy-tests; the
+  // required head is not. Marking `parent` optional on `shake` would be wrong in the
+  // other direction — three required parameters follow it.
+  test("only the parameters upstream defaults or truthy-tests are optional", () => {
+    const optional = (name: string) =>
+      parameters(name)
+        .filter((p) => p.is_optional === "True")
+        .map((p) => p.name);
+    expect(optional("shake")).toEqual(["duration_scalar", "radius_scalar"]);
+    expect(optional("cancel_shake")).toEqual(["parent"]);
+    expect(optional("get_distance")).toEqual(["absolute"]);
+    expect(optional("screen_to_world")).toEqual(["visible"]);
+    expect(optional("world_to_screen")).toEqual(["visible"]);
+    expect(parameters("shake").map((p) => p.name)).toEqual([
+      "object",
+      "parent",
+      "count",
+      "duration",
+      "radius",
+      "duration_scalar",
+      "radius_scalar",
+    ]);
+  });
+
+  // Every member is keyed by the game object the camera lives on, which the script
+  // registers as a `Hash`. A `Url` or `string` here would diverge from the table key.
+  test("every camera member takes its object as a Hash", () => {
+    for (const name of FUNCTIONS) {
+      if (name === "deactivate") continue;
+      expect(parameters(name)[0]).toMatchObject({ name: "object", types: ["Hash"] });
+    }
+    expect(parameters("deactivate")).toEqual([]);
+  });
+
+  test("the api-doc publishes the twelve functions, four constants and the camera typedef", () => {
+    const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, "api-doc/shutter.json"), "utf8")) as {
+      info: { namespace: string; description?: string };
+      elements: { name: string; type: string }[];
+    };
+    expect(doc.info.namespace).toBe("shutter");
+    expect(
+      doc.elements
+        .filter((e) => e.type === "FUNCTION")
+        .map((e) => e.name)
+        .sort(),
+    ).toEqual(FUNCTIONS);
+    expect(
+      doc.elements
+        .filter((e) => e.type === "VARIABLE")
+        .map((e) => e.name)
+        .sort(),
+    ).toEqual(["camera_table", "center_behavior", "expand_behavior", "stretch_behavior"]);
+    expect(doc.elements.find((e) => e.name === "ShutterCamera")?.type).toBe("TYPEDEF");
+    // Upstream ships no README and the fork's module JSDoc is `@see` + `@noResolution`
+    // only, so the page intro comes from the namespace-keyed description instead.
+    expect((doc.info.description ?? "").length).toBe(0);
+    const descriptions = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-descriptions.json"), "utf8"),
+    ) as Record<string, string>;
+    expect(descriptions.shutter?.length).toBeGreaterThan(0);
+  });
+});

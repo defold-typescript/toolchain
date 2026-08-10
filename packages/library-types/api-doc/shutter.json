@@ -1,0 +1,551 @@
+{
+  "info": {
+    "namespace": "shutter",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "camera_table",
+      "brief": "Every live camera, keyed by the id of the game object it lives on. The",
+      "description": "Every live camera, keyed by the id of the game object it lives on. The\nshutter.script file writes to it; read from it rather than manipulating it\ndirectly.",
+      "types": [
+        "LuaMap<Hash, ShutterCamera>"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "center_behavior",
+      "brief": "Keeps the projection fixed and shrinks the viewport to preserve the display",
+      "description": "Keeps the projection fixed and shrinks the viewport to preserve the display\nratio, letterboxing or pillarboxing the remainder.",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "expand_behavior",
+      "brief": "Keeps the viewport filling the window and widens the projection as the window",
+      "description": "Keeps the viewport filling the window and widens the projection as the window\ngrows, showing more of the game world rather than scaling it.",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "stretch_behavior",
+      "brief": "Keeps both the viewport and the projection filling the window, so the game world",
+      "description": "Keeps both the viewport and the projection filling the window, so the game world\ndistorts with the window ratio.",
+      "types": [
+        "Hash"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "activate",
+      "brief": "Installs a camera's viewport, view matrix and projection matrix into the render",
+      "description": "Installs a camera's viewport, view matrix and projection matrix into the render\ncontext. Call it from a render script before drawing the world.",
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "The game object the camera lives on.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The camera's frustum, for passing to `render.draw`.",
+          "types": [
+            "Matrix4"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "deactivate",
+      "brief": "Restores the viewport and matrices Defold's GUI system expects, sized to the",
+      "description": "Restores the viewport and matrices Defold's GUI system expects, sized to the\ncurrent window. Call it before drawing GUI.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The frustum matching the restored matrices.",
+          "types": [
+            "Matrix4"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "force_update",
+      "brief": "Recalculates a camera's viewport, view matrix and projection matrix immediately.",
+      "description": "Recalculates a camera's viewport, view matrix and projection matrix immediately.\nThe shutter.script game object already does this once per frame; call it directly\nonly after changing a camera property mid-frame.",
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "The game object the camera lives on.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_viewport",
+      "brief": "Calculates the camera's viewport in window coordinates, scaled from the",
+      "description": "Calculates the camera's viewport in window coordinates, scaled from the\ngame.project display size and, under center behavior, shrunk and centered to\npreserve the display ratio.",
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "The game object the camera lives on.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The viewport's x, y, width and height.",
+          "types": [
+            "LuaMultiReturn<[ number, number, number, number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_view",
+      "brief": "Calculates the camera's view matrix from the inverse of its game object's world",
+      "description": "Calculates the camera's view matrix from the inverse of its game object's world\ntransform.",
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "The game object the camera lives on.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Matrix4"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_projection",
+      "brief": "Calculates the camera's orthographic projection matrix, sized from the display",
+      "description": "Calculates the camera's orthographic projection matrix, sized from the display\nunder center and stretch behavior and from the window under expand behavior.",
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "The game object the camera lives on.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Matrix4"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_frustum",
+      "brief": "Returns the camera's frustum, the product of its last calculated projection and",
+      "description": "Returns the camera's frustum, the product of its last calculated projection and\nview matrices.",
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "The game object the camera lives on.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Matrix4"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_distance",
+      "brief": "Converts a screen distance into the world distance an object must travel to cover",
+      "description": "Converts a screen distance into the world distance an object must travel to cover\nit, accounting for the camera's zoom and, under center and stretch behavior, for\nthe viewport no longer mapping to physical screen coordinates.",
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "The game object the camera lives on.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "distance",
+          "doc": "The screen distance to convert.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "absolute",
+          "doc": "Skip rotating the result by the camera's rotation.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Vector3"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "shake",
+      "brief": "Starts a camera shake animation, cancelling and restarting any shake already",
+      "description": "Starts a camera shake animation, cancelling and restarting any shake already\nrunning on this camera.",
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "The game object the camera lives on.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "parent",
+          "doc": "Shake the camera object's parent instead of the camera itself.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "count",
+          "doc": "How many times to displace the camera before stopping.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration",
+          "doc": "Seconds each displacement takes.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "radius",
+          "doc": "How far each displacement moves the camera.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "duration_scalar",
+          "doc": "Multiplies the duration after each displacement. Defaults to 1.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "radius_scalar",
+          "doc": "Multiplies the radius after each displacement. Defaults to 1.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "cancel_shake",
+      "brief": "Stops a running camera shake and returns the shaken object to where it started.",
+      "description": "Stops a running camera shake and returns the shaken object to where it started.\nDoes nothing if no shake is running.",
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "The game object the camera lives on.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "parent",
+          "doc": "Whether the shake was started against the camera object's parent.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "screen_to_world",
+      "brief": "Converts a screen position to its world position through the inverse of the",
+      "description": "Converts a screen position to its world position through the inverse of the\ncamera's frustum.",
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "The game object the camera lives on.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "x",
+          "doc": "The screen position's x coordinate.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "y",
+          "doc": "The screen position's y coordinate.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "visible",
+          "doc": "Return `nil` instead when the position falls outside the camera's view.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The world position, or `nil` if `visible` filtered it out.",
+          "types": [
+            "Vector3 | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "world_to_screen",
+      "brief": "Converts a world position to its screen position through the camera's frustum.",
+      "description": "Converts a world position to its screen position through the camera's frustum.",
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "The game object the camera lives on.",
+          "types": [
+            "Hash"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "position",
+          "doc": "The world position to convert.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "visible",
+          "doc": "Return `nil` instead when the position falls outside the camera's view.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The screen position, or `nil` if `visible` filtered it out.",
+          "types": [
+            "Vector3 | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ShutterCamera",
+      "properties": [
+        {
+          "name": "behavior",
+          "brief": "One of `center_behavior`, `expand_behavior` or `stretch_behavior`.",
+          "description": "One of `center_behavior`, `expand_behavior` or `stretch_behavior`.",
+          "types": [
+            "Hash"
+          ]
+        },
+        {
+          "name": "viewport_x",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "viewport_y",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "viewport_width",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "viewport_height",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "near",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "far",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "zoom",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "viewport_x_adjusted",
+          "brief": "Viewport left edge after the window scale and any letterboxing margin.",
+          "description": "Viewport left edge after the window scale and any letterboxing margin.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "viewport_y_adjusted",
+          "brief": "Viewport bottom edge after the window scale and any pillarboxing margin.",
+          "description": "Viewport bottom edge after the window scale and any pillarboxing margin.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "viewport_width_adjusted",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "viewport_height_adjusted",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "view",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Matrix4"
+          ]
+        },
+        {
+          "name": "projection",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Matrix4"
+          ]
+        },
+        {
+          "name": "shake_origin",
+          "brief": "Where the shaken object sat before the shake began, and `nil` while no shake",
+          "description": "Where the shaken object sat before the shake began, and `nil` while no shake\nis running. `cancel_shake` restores the object to it.",
+          "types": [
+            "Vector3"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

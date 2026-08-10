@@ -131,6 +131,10 @@
     "callable": 1,
     "field": 1
   },
+  "fidelity/authored/shutter.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/authored/yagames.json": {
     "callable": 1,
     "field": 1

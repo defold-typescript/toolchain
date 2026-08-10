@@ -18,7 +18,11 @@ changes are called out first because the toolchain is pre-1.0.
 
 ### Breaking
 
-- **starly** is no longer part of the library corpus: its types, its reference page and its entry in the resolvable set are gone. The library was withdrawn upstream — its repository and its author's account were both deleted, it never published a release, and the only surviving copy is an unaffiliated third-party mirror — so no one can obtain a runtime for the declarations. For an orthographic camera, use [orthographic](/api/orthographic.camera) or [rendy](/api/rendy), both actively maintained and already covered here.
+- **starly** is no longer part of the library corpus: its types, its reference page and its entry in the resolvable set are gone. The library was withdrawn upstream — its repository and its author's account were both deleted, it never published a release, and the only surviving copy is an unaffiliated third-party mirror — so no one can obtain a runtime for the declarations. For a 2D camera, use [shutter](/api/shutter), added this release as the closest replacement, or the longer-standing [orthographic](/api/orthographic.camera) and [rendy](/api/rendy).
+
+### Improved
+
+- **[shutter](/api/shutter)** (`Klaleus/defold-shutter`) joins the corpus as a 2D camera library, covering the ground starly's withdrawal left open: declare the dependency and [`resolve`](./resolve.md) materializes a typed `shutter.shutter` spanning the camera table, the three viewport behaviors, the screen/world conversions and the shake helpers.
 
 ### Fixed
 
