@@ -69,3 +69,49 @@ export function enumerateDeclaredSymbols(
   visit(sourceFile);
   return out;
 }
+
+/**
+ * The parameter names each declared function accepts, keyed by full dotted
+ * namespace path. Same namespace-frame walk as {@link enumerateDeclaredSymbols},
+ * but overloads **merge** rather than first-wins: a slot declared on only one
+ * signature of an overload set still counts as declared.
+ */
+export function enumerateDeclaredParameters(
+  source: string,
+  fileName = "surface.d.ts",
+): Map<string, Set<string>> {
+  const out = new Map<string, Set<string>>();
+  const sourceFile = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true);
+
+  const stack: string[] = [];
+
+  const visit = (node: ts.Node): void => {
+    if (ts.isModuleDeclaration(node)) {
+      const isGlobalAugmentation = (node.flags & ts.NodeFlags.GlobalAugmentation) !== 0;
+      const named = ts.isIdentifier(node.name) && !isGlobalAugmentation;
+      if (named) stack.push(node.name.text);
+      if (node.body) visit(node.body);
+      if (named) stack.pop();
+      return;
+    }
+    if (ts.isModuleBlock(node)) {
+      for (const stmt of node.statements) visit(stmt);
+      return;
+    }
+    if (ts.isFunctionDeclaration(node)) {
+      if (node.name) {
+        const key = [...stack, node.name.text].join(".");
+        const names = out.get(key) ?? new Set<string>();
+        for (const parameter of node.parameters) {
+          if (ts.isIdentifier(parameter.name)) names.add(parameter.name.text);
+        }
+        out.set(key, names);
+      }
+      return;
+    }
+    ts.forEachChild(node, visit);
+  };
+
+  visit(sourceFile);
+  return out;
+}

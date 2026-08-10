@@ -1,0 +1,187 @@
+[
+  {
+    "fqn": "go.get_position",
+    "parameter": "id",
+    "class": "game-object",
+    "source": "generated",
+    "evidence": "id of the game object instance to get the position for"
+  },
+  {
+    "fqn": "go.get_rotation",
+    "parameter": "id",
+    "class": "game-object",
+    "source": "generated",
+    "evidence": "id of the game object instance to get the rotation for"
+  },
+  {
+    "fqn": "go.get_scale",
+    "parameter": "id",
+    "class": "game-object",
+    "source": "generated",
+    "evidence": "id of the game object instance to get the scale for"
+  },
+  {
+    "fqn": "go.get_scale_uniform",
+    "parameter": "id",
+    "class": "game-object",
+    "source": "generated",
+    "evidence": "id of the game object instance to get the uniform scale for"
+  },
+  {
+    "fqn": "go.set_position",
+    "parameter": "id",
+    "class": "game-object",
+    "source": "generated",
+    "evidence": "id of the game object instance to set the position for"
+  },
+  {
+    "fqn": "go.set_rotation",
+    "parameter": "id",
+    "class": "game-object",
+    "source": "generated",
+    "evidence": "id of the game object instance to get the rotation for"
+  },
+  {
+    "fqn": "go.set_scale",
+    "parameter": "id",
+    "class": "game-object",
+    "source": "generated",
+    "evidence": "id of the game object instance to get the scale for"
+  },
+  {
+    "fqn": "go.set_scale_xy",
+    "parameter": "id",
+    "class": "game-object",
+    "source": "generated",
+    "evidence": "id of the game object instance to get the scale for"
+  },
+  {
+    "fqn": "go.set_parent",
+    "parameter": "id",
+    "class": "game-object",
+    "source": "generated",
+    "evidence": "id of the game object instance to set parent for"
+  },
+  {
+    "fqn": "go.set_parent",
+    "parameter": "parent_id",
+    "class": "game-object",
+    "source": "generated",
+    "evidence": "id of the new parent game object"
+  },
+  {
+    "fqn": "go.get_parent",
+    "parameter": "id",
+    "class": "game-object",
+    "source": "generated",
+    "evidence": "id of the game object instance to get parent for"
+  },
+  {
+    "fqn": "go.get_world_position",
+    "parameter": "id",
+    "class": "game-object",
+    "source": "generated",
+    "evidence": "id of the game object instance to get the world position for"
+  },
+  {
+    "fqn": "go.get_world_rotation",
+    "parameter": "id",
+    "class": "game-object",
+    "source": "generated",
+    "evidence": "id of the game object instance to get the world rotation for"
+  },
+  {
+    "fqn": "go.get_world_scale",
+    "parameter": "id",
+    "class": "game-object",
+    "source": "generated",
+    "evidence": "id of the game object instance to get the world scale for"
+  },
+  {
+    "fqn": "go.get_world_scale_uniform",
+    "parameter": "id",
+    "class": "game-object",
+    "source": "generated",
+    "evidence": "id of the game object instance to get the world scale for"
+  },
+  {
+    "fqn": "go.get_world_transform",
+    "parameter": "id",
+    "class": "game-object",
+    "source": "generated",
+    "evidence": "id of the game object instance to get the world transform for"
+  },
+  {
+    "fqn": "go.update_world_transform",
+    "parameter": "id",
+    "class": "game-object",
+    "source": "generated",
+    "evidence": "id of the game object instance to update"
+  },
+  {
+    "fqn": "go.delete",
+    "parameter": "id",
+    "class": "game-object",
+    "source": "generated",
+    "evidence": "id or table of id's of the instance(s) to delete"
+  },
+  {
+    "fqn": "go.exists",
+    "parameter": "url",
+    "class": "game-object",
+    "source": "generated",
+    "evidence": "url of the game object to check"
+  },
+  {
+    "fqn": "go.world_to_local_position",
+    "parameter": "url",
+    "class": "game-object",
+    "source": "generated",
+    "evidence": "url of the game object which coordinate system convert to"
+  },
+  {
+    "fqn": "go.world_to_local_transform",
+    "parameter": "url",
+    "class": "game-object",
+    "source": "generated",
+    "evidence": "url of the game object which coordinate system convert to"
+  },
+  {
+    "fqn": "go.animate",
+    "parameter": "url",
+    "class": "either",
+    "source": "generated",
+    "evidence": "url of the game object or component having the property"
+  },
+  {
+    "fqn": "go.cancel_animations",
+    "parameter": "url",
+    "class": "either",
+    "source": "generated",
+    "evidence": "url of the game object or component"
+  },
+  {
+    "fqn": "go.get",
+    "parameter": "url",
+    "class": "either",
+    "source": "src/go-overloads.d.ts"
+  },
+  {
+    "fqn": "go.set",
+    "parameter": "url",
+    "class": "either",
+    "source": "src/go-overloads.d.ts"
+  },
+  {
+    "fqn": "msg.post",
+    "parameter": "receiver",
+    "class": "either",
+    "source": "src/msg-overloads.d.ts"
+  },
+  {
+    "fqn": "msg.url",
+    "parameter": "urlstring",
+    "class": "either",
+    "source": "src/msg-overloads.d.ts"
+  }
+]

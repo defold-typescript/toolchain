@@ -91,3 +91,12 @@ export {
   type SignatureOverride,
   type SignatureStore,
 } from "./signature-store";
+export {
+  classifyUrlParameter,
+  collectUrlParameterSlots,
+  type UrlParameterClass,
+  type UrlParameterEntry,
+  type UrlParameterSlot,
+  type UrlParameterSource,
+  type UrlParameterTable,
+} from "./url-parameters";
