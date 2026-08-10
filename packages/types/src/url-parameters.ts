@@ -11,7 +11,10 @@ export interface UrlParameterEntry {
   parameter: string;
   class: UrlParameterClass;
   // `"generated"` for a slot the emitter derives from the ref-doc, otherwise a
-  // repo-relative path to the hand-authored `.d.ts` that declares it.
+  // package-relative path to the hand-authored `.d.ts` that declares it,
+  // resolved against the `packages/types` package root. Not repo-relative: the
+  // table ships inside `@defold-typescript/types`, so a published consumer has
+  // no repo root to resolve a `packages/types/` prefix against.
   source: string;
   // A verbatim phrase from the ref-doc `doc` the classification was judged from;
   // required whenever `source` is `"generated"`, absent for hand-authored slots
