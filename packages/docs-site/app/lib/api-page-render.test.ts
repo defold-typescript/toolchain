@@ -480,6 +480,31 @@ describe("apiPageMarkdown library provenance block", () => {
     expect(md).toMatchSnapshot();
   });
 
+  // Projected through the real committed corpus, so a clause that survives extraction
+  // but is lost in the render still reds. The boom pair is also the collapse proof: its
+  // declaration spans five source lines and must render as one, and the second form is
+  // a typedef method rather than a module function.
+  test("the authored generic pages declare the type parameter their signatures reference", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const md = (namespace: string) => {
+      const page = pages.find((p) => p.namespace === namespace);
+      expect(page).toBeDefined();
+      return page ? apiPageMarkdown(page, apiLinkify(pages)) : "";
+    };
+
+    expect(md("checkpoint")).toContain(
+      "read<T = unknown>(path: string): LuaMultiReturn<[ T | false, string | undefined ]>",
+    );
+    expect(md("deftest")).toContain("assert_equal<T>(a: T, b: T)");
+    const boom = md("boom");
+    expect(boom).toContain(
+      "add<T extends (BoomComponent | BoomTag)[]>(comps: T): BoomGameObject<T>",
+    );
+    expect(boom).toContain(
+      "BoomBlankGameObject.add<T extends (BoomComponent | BoomTag)[]>(comps: T): BoomGameObject<T>",
+    );
+  });
+
   test("the migrated tweener page pins to Insality/defold-tweener, not the ts-defold/library corpus", () => {
     const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
     const tweener = pages.find((p) => p.namespace === "tweener");

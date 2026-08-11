@@ -34,6 +34,7 @@ changes are called out first because the toolchain is pre-1.0.
 
 - The [Libraries](/libraries) index no longer credits the `ts-defold/library` project for its type definitions. Every library has been maintained in this repo since v0.24.0, generated from upstream sources that ship machine-readable types or hand-forked where upstream ships none.
 - [persist](/api/persist) and [rendy](/api/rendy) are credited to their author's current GitHub account, so the attribution links no longer depend on a rename redirect.
+- The [boom](/api/boom) and [deftest](/api/deftest) reference pages now show the type parameter their generic helpers take, instead of a signature naming a `T` it never declares.
 
 ## v0.24.0
 

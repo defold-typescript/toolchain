@@ -684,6 +684,91 @@ describe("extractApiDoc constant prose", () => {
   });
 });
 
+// A module covering every shape a declared type parameter list takes: a bare
+// parameter, a defaulted one, a constrained one, two parameters where the second
+// constrains against the first, a non-generic control, and a referenced
+// interface whose method is generic (the TYPEDEF path, which shares
+// `functionElement` with the top-level one).
+const GENERICS = `/**
+ * Generics demo.
+ * @noResolution
+ */
+declare module 'gen.gen' {
+	/** Read a stored value. */
+	export function read<T = unknown>(path: string): T | false;
+
+	/** Pick a shaped value. */
+	export function pick<T extends Shape>(x: T): T;
+
+	/** Pair two values. */
+	export function pair<A, B extends A>(a: A, b: B): void;
+
+	/** Run it. */
+	export function run(): void;
+
+	/** Make a store. */
+	export function make(): Store;
+
+	interface Store {
+		/** Save a value. */
+		save<T>(v: T): boolean;
+		/** Store tag. */
+		tag: string;
+	}
+}
+`;
+
+describe("extractApiDoc generic clauses", () => {
+  const elements = () =>
+    (extractApiDoc(GENERICS, "gen.gen") as { elements: Array<Record<string, unknown>> }).elements;
+
+  const fn = (name: string) =>
+    elements().find((e) => e.type === "FUNCTION" && e.name === name) as Record<string, unknown>;
+
+  const method = (typedefName: string, name: string) => {
+    const typedef = elements().find((e) => e.type === "TYPEDEF" && e.name === typedefName) as {
+      functions?: Array<Record<string, unknown>>;
+    };
+    return (typedef.functions ?? []).find((f) => f.name === name) as Record<string, unknown>;
+  };
+
+  test("keeps a bare type parameter", () => {
+    expect(method("Store", "save").generics).toBe("<T>");
+  });
+
+  test("keeps a type parameter's default rather than stripping it", () => {
+    expect(fn("read").generics).toBe("<T = unknown>");
+  });
+
+  test("keeps a type parameter's constraint rather than stripping it", () => {
+    expect(fn("pick").generics).toBe("<T extends Shape>");
+  });
+
+  test("joins two type parameters with a comma and keeps their order", () => {
+    expect(fn("pair").generics).toBe("<A, B extends A>");
+  });
+
+  test("emits no generics key at all for a non-generic function", () => {
+    expect(Object.hasOwn(fn("run"), "generics")).toBe(false);
+  });
+
+  test("carries the clause on a typedef method, so it is not a second lane", () => {
+    expect(Object.hasOwn(method("Store", "save"), "generics")).toBe(true);
+  });
+
+  test("orders the new key the way the sibling lower-api-doc lane emits it", () => {
+    expect(Object.keys(fn("read"))).toEqual([
+      "type",
+      "name",
+      "brief",
+      "description",
+      "generics",
+      "parameters",
+      "returnvalues",
+    ]);
+  });
+});
+
 describe("extractApiDoc", () => {
   test("emits an { info, elements } object matching the parseDefoldApiDoc schema", () => {
     const emitted = extractApiDoc(DEMO, "demo.demo") as {
