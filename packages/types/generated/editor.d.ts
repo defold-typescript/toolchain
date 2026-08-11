@@ -32,7 +32,7 @@ declare global {
      * For the full documentation of the available commands and options, see the bob manual.
      *
      * @param options - table of command line options for bob, without the leading dashes (`--`). You can use snake_case instead of kebab-case for option keys. Only long option names are supported (i.e. `output`, not `o`). Supported value types are strings, integers and booleans. If an option takes no arguments, use a boolean (i.e. `true`). If an option may be repeated, you can use an array of values.
-     * @param arg1 - bob commands, e.g. `"resolve"` or `"build"`
+     * @param commands - bob commands, e.g. `"resolve"` or `"build"`
      * @example
      * ```ts
      * // Print help in the console:
@@ -52,7 +52,7 @@ declare global {
      * editor.bob(bundleOpts, "distclean", "resolve", "build");
      * ```
      */
-    function bob(options?: Record<string | number, unknown>, arg1?: string): void;
+    function bob(options?: Record<string | number, unknown>, ...commands: string[]): void;
     /**
      * Open a URL in the default browser or a registered application
      *
@@ -159,7 +159,7 @@ declare global {
      * By default, after this shell command is executed, the editor will reload resources from disk.
      *
      * @param command - Shell command name to execute
-     * @param arg1 - Optional shell command arguments
+     * @param args - Optional shell command arguments
      * @param options - Optional options table. Supported entries:
      * - boolean `reload_resources`: make the editor reload the resources from disk after the command is executed, default `true`
      * - string `out`: standard output mode, either:
@@ -183,7 +183,7 @@ declare global {
      * });
      * ```
      */
-    function execute(command: string, arg1?: string, options?: { reload_resources?: boolean; out?: string; err?: string }): undefined | string;
+    function execute(command: string, ...args: (string | { reload_resources?: boolean; out?: string; err?: string })[]): undefined | string;
     /**
      * Query information about file system path
      *
@@ -239,7 +239,7 @@ declare global {
        * @param property - Either `"path"`, `"text"`, or a property from the Outline view (hover the label to see its editor script name)
        * @param value - Added item for the property, a table from property key to either a valid `editor.tx.set()`-able value, or an array of valid `editor.tx.add()`-able values
        */
-      function add(node: string | Opaque<"userdata">, property: string, value: unknown): void;
+      function add(node: string | Opaque<"userdata">, property: string, value: unknown): Opaque<"transaction_step">;
       /**
        * Create a transaction step that will remove all items from node's list property when transacted with `editor.transact()`.
        *
