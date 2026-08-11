@@ -14,6 +14,19 @@ const ONE_COMMAND = [
   "",
 ].join("\n");
 
+// Identical to ONE_COMMAND but through the walled per-kind entrypoint — the form
+// the guide teaches, because the bare main entry pulls the runtime namespaces in.
+const SUBPATH_COMMAND = [
+  'import { defineEditorScript } from "@defold-typescript/types/editor-script";',
+  "",
+  "export default defineEditorScript({",
+  "  get_commands: () => [",
+  '    { label: "Say Hi", locations: ["Edit"], run: () => print("hi") },',
+  "  ],",
+  "});",
+  "",
+].join("\n");
+
 const COMBINED_IMPORT = [
   'import { defineEditorScript, type EditorCommand } from "@defold-typescript/types";',
   "",
@@ -70,6 +83,15 @@ describe("editor-script erasure", () => {
     `);
   });
 
+  test("lowers a subpath-imported factory to the same chunk-level return", () => {
+    const result = transpile(SUBPATH_COMMAND);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).not.toContain("require(");
+    expect(result.lua).not.toContain("defineEditorScript");
+    expect(result.lua).toContain("return {get_commands =");
+    expect(result.lua).toBe(transpile(ONE_COMMAND).lua);
+  });
+
   test("erases a combined factory+type import (no require of the types package)", () => {
     const result = transpile(COMBINED_IMPORT);
     expect(result.diagnostics).toEqual([]);
@@ -120,5 +142,30 @@ describe("isEditorFactoryOnlyImport", () => {
   test("a bare factory import is erasable (regression)", () => {
     const node = parseImport('import { defineEditorScript } from "@defold-typescript/types";');
     expect(isEditorFactoryOnlyImport(node)).toBe(true);
+  });
+
+  test("a bare factory import through the editor-script subpath is erasable", () => {
+    const node = parseImport(
+      'import { defineEditorScript } from "@defold-typescript/types/editor-script";',
+    );
+    expect(isEditorFactoryOnlyImport(node)).toBe(true);
+  });
+
+  test("the subpath form rejects the same negatives as the main entry", () => {
+    const negatives = [
+      'import { defineEditorScript, EditorCommand } from "@defold-typescript/types/editor-script";',
+      'import type { defineEditorScript } from "@defold-typescript/types/editor-script";',
+      'import { type EditorCommand } from "@defold-typescript/types/editor-script";',
+    ];
+    for (const source of negatives) {
+      expect(isEditorFactoryOnlyImport(parseImport(source))).toBe(false);
+    }
+  });
+
+  test("a runtime kind's subpath is not the editor factory entrypoint", () => {
+    const node = parseImport(
+      'import { defineEditorScript } from "@defold-typescript/types/script";',
+    );
+    expect(isEditorFactoryOnlyImport(node)).toBe(false);
   });
 });

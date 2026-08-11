@@ -13,6 +13,7 @@ import {
   MODULE_MANIFEST,
   VERSIONED_MODULE_MANIFEST,
 } from "../scripts/regen";
+import { parseDefoldApiDoc } from "../src/api-doc";
 
 const GENERATED = resolve(import.meta.dir, "..", "generated");
 
@@ -163,6 +164,56 @@ describe("editor namespace emit", () => {
     expect(contents).toContain('function transact(txs: Opaque<"transaction_step">[]): void;');
     expect(contents).not.toContain('"transaction_step["');
     expect(contents).not.toContain("transaction_step[;");
+  });
+
+  test("emits a documented vararg as a rest parameter under its own name", () => {
+    const { contents } = generateModuleDeclaration(editorEntry());
+    expect(contents).toContain(
+      "function bob(options?: Record<string | number, unknown>, ...commands: string[]): void;",
+    );
+    expect(contents).not.toContain("arg1");
+  });
+
+  // TS1266 forbids a positional parameter after a rest, so `editor.execute`'s
+  // trailing options table has to fold into the rest's element union.
+  test("folds a parameter trailing a vararg into the rest element union", () => {
+    const { contents } = generateModuleDeclaration(editorEntry());
+    expect(contents).toContain(
+      "function execute(command: string, " +
+        "...args: (string | { reload_resources?: boolean; out?: string; err?: string })[]" +
+        "): undefined | string;",
+    );
+  });
+
+  test("every editor.tx.* builder returns a transaction step", () => {
+    const { contents } = generateModuleDeclaration(editorEntry());
+    const opened = contents.slice(contents.indexOf("namespace tx {"));
+    const body = opened.slice(0, opened.indexOf("\n    }"));
+    const returns = [...body.matchAll(/^ *function (\w+)\([^\n]*\): ([^;\n]+);$/gm)].map(
+      ([, name, type]) => [name, type] as const,
+    );
+    expect(returns.length).toBeGreaterThan(1);
+    expect(returns.map(([, type]) => type)).toEqual(
+      returns.map(() => 'Opaque<"transaction_step">'),
+    );
+    expect(returns.map(([name]) => name)).toContain("add");
+  });
+
+  // The rest-parameter rule only fires on a `...`-prefixed ref-doc parameter
+  // name, and no committed runtime doc declares one — so it provably cannot move
+  // any runtime namespace's emitted surface. Read from the shipped manifests, so
+  // a future runtime doc introducing a vararg reds this instead of silently
+  // reshaping a signature.
+  test("no committed runtime module doc declares a vararg parameter", () => {
+    const offenders: string[] = [];
+    for (const entry of [...MODULE_MANIFEST, ...VERSIONED_MODULE_MANIFEST]) {
+      for (const fn of parseDefoldApiDoc(entry.doc).functions) {
+        for (const param of fn.parameters) {
+          if (param.name.startsWith("...")) offenders.push(`${fn.name}(${param.name})`);
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
   });
 
   test.each(
