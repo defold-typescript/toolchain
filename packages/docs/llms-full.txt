@@ -1369,11 +1369,16 @@ Defold scopes two namespaces to a script kind: `gui.*` resolves only inside a `.
 
 The default `@defold-typescript/types` entrypoint aggregates *all* namespaces, so it never rejects a call the engine would allow at runtime — but it also can't catch a `gui.*` use in a plain `.script`. To get the engine's wall at compile time, pin the entrypoint matching the file's script kind in that file's `tsconfig`:
 
-| Script kind      | `types` entrypoint                       | Namespaces           |
-| ---------------- | ---------------------------------------- | -------------------- |
-| `.script`        | `@defold-typescript/types/script`        | universal only       |
-| `.gui_script`    | `@defold-typescript/types/gui-script`    | universal + `gui`    |
-| `.render_script` | `@defold-typescript/types/render-script` | universal + `render` |
+| Script kind      | `types` entrypoint                        | Namespaces           |
+| ---------------- | ----------------------------------------- | -------------------- |
+| `.script`        | `@defold-typescript/types/script`         | universal only       |
+| `.gui_script`    | `@defold-typescript/types/gui-script`     | universal + `gui`    |
+| `.render_script` | `@defold-typescript/types/render-script`  | universal + `render` |
+| `.editor_script` | `@defold-typescript/types/editor-script`  | `editor` only        |
+
+`.editor_script` is not a runtime kind at all — it runs in the editor's Lua VM,
+so its entrypoint carries `editor.*` and none of the runtime namespaces. See
+[Editor scripts](./editor-scripts.md).
 
 ```jsonc
 // tsconfig for a .gui_script source tree
@@ -1697,7 +1702,27 @@ Each `EditorCommand` returned by `get_commands` has:
 - `active` (optional) — decides whether the command is currently enabled; omit to always enable.
 - `run` — invoked when the command is chosen.
 
-> [!NOTE] `run` and `active` receive a loosely-typed opts bag for now. The full typed `editor.*` global API and a per-kind [wall](./wall.md) entrypoint are deferred follow-ups, so there is no `@defold-typescript/types` editor-script subpath yet and `wall` does not target editor-script directories.
+> [!NOTE] `query`, `run`, and `active` receive a loosely-typed opts bag for now. Typing them is a deferred follow-up.
+
+#### The `editor.*` API
+
+Editor scripts run in the editor's own Lua VM, so none of the runtime namespaces (`go`, `msg`, `vmath`, …) exist there. What does exist is `editor.*`, and it ships as its own entrypoint. Point a `tsconfig` covering your editor-script sources at it by hand:
+
+```jsonc
+// tsconfig for an editor-script source tree
+{
+  "compilerOptions": {
+    "types": ["@defold-typescript/types/editor-script"]
+  }
+}
+```
+
+Under that config `editor.get`, `editor.command`, `editor.transact` and the `editor.tx.*` builders type-check, while `go.*` / `msg.*` / `vmath.*` are compile errors — the same two-way [wall](./wall.md) the runtime kinds get.
+
+Two things are deliberately not in yet:
+
+- **The editor VM's own libraries.** Its `http`, `json`, `zip`, `zlib`, `pprint` and `tilemap.tiles` are documented alongside `editor.*` upstream but are separate globals, and they are not typed yet. Neither are `editor.ui.*` and `editor.prefs.*`.
+- **Automatic walling.** Because that surface is incomplete, [`wall`](./wall.md) does not offer editor-script directories as a target — narrowing one today would reject calls the editor accepts. Setting `types` by hand, as above, is the opt-in.
 
 ### Init
 
@@ -2314,11 +2339,17 @@ at compile time, opt in with `wall`.
 A wall is a composite `tsconfig.json` written into a single-kind source directory
 that narrows `compilerOptions.types` to that kind's subpath:
 
-| Script kind      | `types` entrypoint                       | Namespaces           |
-| ---------------- | ---------------------------------------- | -------------------- |
-| `.script`        | `@defold-typescript/types/script`        | universal only       |
-| `.gui_script`    | `@defold-typescript/types/gui-script`    | universal + `gui`    |
-| `.render_script` | `@defold-typescript/types/render-script` | universal + `render` |
+| Script kind      | `types` entrypoint                        | Namespaces           |
+| ---------------- | ----------------------------------------- | -------------------- |
+| `.script`        | `@defold-typescript/types/script`         | universal only       |
+| `.gui_script`    | `@defold-typescript/types/gui-script`     | universal + `gui`    |
+| `.render_script` | `@defold-typescript/types/render-script`  | universal + `render` |
+| `.editor_script` | `@defold-typescript/types/editor-script`  | `editor` only        |
+
+`.editor_script` is the odd one out: it runs in the editor's own Lua VM, so its
+surface is disjoint from the runtime kinds rather than a narrowing of them — no
+`go`, `msg` or `vmath`. `wall` does not offer it as a target yet; set `types` to
+that subpath by hand, as [editor scripts](./editor-scripts.md) describes.
 
 The root `tsconfig.json` references each walled directory and excludes it from the
 root program, so `tsc -b --noEmit` builds every walled directory against only its

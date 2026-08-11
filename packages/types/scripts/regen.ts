@@ -2,7 +2,12 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import messagesDoc from "../fixtures/messages_doc.json" with { type: "json" };
 import { type ApiModule, parseDefoldApiDoc } from "../src/api-doc";
-import { emitDeclarations, emitSymbolSignatures, type SymbolSignature } from "../src/emit-dts";
+import {
+  defaultMapType,
+  emitDeclarations,
+  emitSymbolSignatures,
+  type SymbolSignature,
+} from "../src/emit-dts";
 import {
   applyMessageDeprecations,
   emitBuiltinMessages,
@@ -89,10 +94,16 @@ export interface ModuleManifestEntry {
   readonly namespace: string;
   readonly doc: unknown;
   readonly outFile: string;
+  // Each item drops one member: an exact stripped local (`get`), or — when it
+  // ends in `.` — a segment prefix dropping everything beneath it (`ui.`).
   readonly skipFunctions?: readonly string[];
   readonly importsFrom?: string;
   readonly moduleId?: string;
   readonly sourceProvenance?: DocSourceProvenance;
+  // Overrides the shared token -> TS type mapping for this entry alone. Reserved
+  // for tokens no runtime namespace uses, so `DEFOLD_TYPE_MAP` keeps describing
+  // only the runtime surface.
+  readonly mapType?: (token: string) => string;
 }
 
 export interface ResolveTargetOptions {
@@ -158,6 +169,59 @@ const FIDELITY_BASELINE_TARGET = DEFAULT_TARGET;
 export const FIDELITY_BASELINE_MANIFEST: readonly ModuleManifestEntry[] =
   loadTargetModules(FIDELITY_BASELINE_TARGET);
 
+// Handle tokens the editor VM alone exposes. `transaction_step[` is what
+// upstream literally emits for `transaction_step[]` — the ref-doc's own type
+// string loses the closing bracket — so it is repaired here, per entry, rather
+// than in the parser: no runtime namespace carries it, and normalizing a
+// truncated bracket globally would silently reinterpret any future token of that
+// shape. The doc's other truncated token, `string[`, is deliberately left to map
+// to `unknown`: it covers both a plain path list and `create_resources`' mixed
+// path/[path, content] entries, so `string[]` would be wrong at one of its two
+// slots.
+const EDITOR_TYPE_MAP: Readonly<Record<string, string>> = {
+  command: 'Opaque<"command">',
+  transaction_step: 'Opaque<"transaction_step">',
+  "transaction_step[": 'Opaque<"transaction_step">[]',
+};
+
+function mapEditorType(token: string): string {
+  return EDITOR_TYPE_MAP[token] ?? defaultMapType(token);
+}
+
+// The editor VM's own `http`/`json`/`zip`/`zlib`/`pprint`/`localization`/
+// `tilemap.tiles` sit in this same upstream document under their own top-level
+// namespaces. Emitting them here would misname them as `editor.*`; splitting the
+// fixture per namespace is the next slice, so they are dropped for now — as are
+// `editor.ui.*` and `editor.prefs.*`, which are out of scope for this goal.
+const EDITOR_SKIP_FUNCTIONS: readonly string[] = [
+  "ui.",
+  "prefs.",
+  "http.",
+  "json.",
+  "localization.",
+  "pprint",
+  "tilemap.",
+  "zip.",
+  "zlib.",
+];
+
+// The editor-scripting surface. Vendored and emitted through the same pipeline
+// as MODULE_MANIFEST but deliberately separate from it: MODULE_MANIFEST drives
+// every runtime kind's universal imports, the per-version targets and the
+// published API artifacts, none of which describe the editor VM. Reached only
+// through the `editor-script` kind index.
+export const EDITOR_MODULE_MANIFEST: readonly ModuleManifestEntry[] = [
+  {
+    namespace: "editor",
+    doc: JSON.parse(
+      readFileSync(resolve(PACKAGE_ROOT, "fixtures", "defold-1.13.0", "editor_doc.json"), "utf8"),
+    ),
+    outFile: "editor.d.ts",
+    skipFunctions: EDITOR_SKIP_FUNCTIONS,
+    mapType: mapEditorType,
+  },
+];
+
 export interface MessagesManifestEntry {
   readonly doc: unknown;
   readonly outFile: string;
@@ -222,6 +286,7 @@ interface PreparedGeneratedModule {
   knownConstantFqns: ReadonlySet<string>;
   translations: TranslationStore;
   urlParameters: UrlParameterTable;
+  mapType: ((token: string) => string) | undefined;
   dropped: string[];
 }
 
@@ -236,10 +301,12 @@ function prepareGeneratedModule(
   const module = parseDefoldApiDoc(entry.doc);
   const prefix = `${module.namespace}.`;
   const dropped: string[] = [];
-  const skip = new Set(entry.skipFunctions ?? []);
+  const rules = entry.skipFunctions ?? [];
+  const exact = new Set(rules.filter((rule) => !rule.endsWith(".")));
+  const segments = rules.filter((rule) => rule.endsWith("."));
   module.functions = module.functions.filter((fn) => {
     const local = fn.name.startsWith(prefix) ? fn.name.slice(prefix.length) : fn.name;
-    if (skip.has(local)) {
+    if (exact.has(local) || segments.some((segment) => local.startsWith(segment))) {
       dropped.push(fn.name);
       return false;
     }
@@ -248,16 +315,28 @@ function prepareGeneratedModule(
   const knownConstantFqns = options?.knownConstantFqns ?? collectConstantFqns();
   const translations = options?.translations ?? loadTranslations();
   const urlParameters = options?.urlParameters ?? committedUrlParameters();
-  return { module, knownConstantFqns, translations, urlParameters, dropped };
+  return {
+    module,
+    knownConstantFqns,
+    translations,
+    urlParameters,
+    mapType: entry.mapType,
+    dropped,
+  };
 }
 
 export function generateModuleDeclaration(
   entry: ModuleManifestEntry,
   options?: GenerateOptions,
 ): GenerateResult {
-  const { module, knownConstantFqns, translations, urlParameters, dropped } =
+  const { module, knownConstantFqns, translations, urlParameters, mapType, dropped } =
     prepareGeneratedModule(entry, options);
-  const emitted = emitDeclarations(module, { knownConstantFqns, translations, urlParameters });
+  const emitted = emitDeclarations(module, {
+    knownConstantFqns,
+    translations,
+    urlParameters,
+    ...(mapType ? { mapType } : {}),
+  });
   const importsFrom = entry.importsFrom ?? "../src/core-types";
   const contents = entry.moduleId
     ? wrapAsModule({ namespace: module.namespace, emitted, importsFrom, moduleId: entry.moduleId })
@@ -273,8 +352,15 @@ export function generateModuleSignatures(
   entry: ModuleManifestEntry,
   options?: GenerateOptions,
 ): SymbolSignature[] {
-  const { module, knownConstantFqns, urlParameters } = prepareGeneratedModule(entry, options);
-  return emitSymbolSignatures(module, { knownConstantFqns, urlParameters });
+  const { module, knownConstantFqns, urlParameters, mapType } = prepareGeneratedModule(
+    entry,
+    options,
+  );
+  return emitSymbolSignatures(module, {
+    knownConstantFqns,
+    urlParameters,
+    ...(mapType ? { mapType } : {}),
+  });
 }
 
 export interface VersionedModuleManifestEntry extends ModuleManifestEntry {
@@ -298,9 +384,11 @@ export const RESTRICTED_NAMESPACES: Readonly<Record<string, string>> = {
 
 // The Lua standard library rides every per-kind subpath the same as the full
 // entrypoint. Triple-slash directives must precede the first statement, so they
-// lead the generated kind index.
-export const LUA_STDLIB_REFERENCES =
-  '/// <reference types="lua-types/5.1" />\n/// <reference types="lua-types/special/jit-only" />\n';
+// lead the generated kind index. The two lines select independently: the game
+// runtime is LuaJIT, but the editor VM is plain Lua 5.1 and has no `bit`.
+const LUA_51_REFERENCE = '/// <reference types="lua-types/5.1" />\n';
+const LUA_JIT_ONLY_REFERENCE = '/// <reference types="lua-types/special/jit-only" />\n';
+export const LUA_STDLIB_REFERENCES = `${LUA_51_REFERENCE}${LUA_JIT_ONLY_REFERENCE}`;
 
 const UNIVERSAL_EXTRA_IMPORTS: readonly string[] = [
   "../builtin-messages",
@@ -313,17 +401,45 @@ const UNIVERSAL_EXTRA_IMPORTS: readonly string[] = [
   "../../src/vmath-overloads",
 ];
 
+const DEFAULT_FACTORY_MODULE = "../../src/lifecycle";
+
 export interface KindManifestEntry {
   readonly kind: string;
   readonly restricted?: string;
   readonly factory: string;
+  // Replaces the universal import set with exactly these generated modules. A
+  // kind that names one is disjoint from the runtime surface, not a narrowing
+  // of it, so it takes none of the universal extras either.
+  readonly only?: readonly string[];
+  // Where the factory (and, when emitted, the script-property helper types) is
+  // re-exported from. Defaults to the runtime lifecycle module.
+  readonly factoryFrom?: string;
+  // Whether the kind has script properties at all. Editor scripts do not.
+  readonly propertyTypes?: boolean;
+  // Whether the kind's VM is LuaJIT. The editor runs plain Lua 5.1.
+  readonly jit?: boolean;
 }
 
 export const KIND_MODULE_MANIFEST: readonly KindManifestEntry[] = [
   { kind: "script", factory: "defineScript" },
   { kind: "gui-script", restricted: "gui", factory: "defineGuiScript" },
   { kind: "render-script", restricted: "render", factory: "defineRenderScript" },
+  {
+    kind: "editor-script",
+    only: ["editor"],
+    factory: "defineEditorScript",
+    factoryFrom: "../../src/editor",
+    propertyTypes: false,
+    jit: false,
+  },
 ];
+
+// The kinds a materialized *versioned* surface can carry. An `only` kind names
+// generated modules built from MODULE_MANIFEST targets, which never contain the
+// editor VM, so it has no versioned form.
+export const RUNTIME_KIND_MANIFEST: readonly KindManifestEntry[] = KIND_MODULE_MANIFEST.filter(
+  (entry) => entry.only === undefined,
+);
 
 export function generateKindIndex(kind: string): string {
   const entry = KIND_MODULE_MANIFEST.find((e) => e.kind === kind);
@@ -331,11 +447,18 @@ export function generateKindIndex(kind: string): string {
   const universalNamespaces = MODULE_MANIFEST.filter(
     (m) => !Object.hasOwn(RESTRICTED_NAMESPACES, m.namespace),
   ).map((m) => `../${m.outFile.replace(/\.d\.ts$/, "")}`);
-  const lines = [
-    ...new Set([...universalNamespaces.sort(), ...[...UNIVERSAL_EXTRA_IMPORTS].sort()]),
-  ].map((path) => `import "${path}";`);
+  const modules = entry.only
+    ? entry.only.map((namespace) => `../${namespace}`)
+    : [...new Set([...universalNamespaces.sort(), ...[...UNIVERSAL_EXTRA_IMPORTS].sort()])];
+  const lines = modules.map((path) => `import "${path}";`);
   if (entry.restricted) lines.push(`import "../${entry.restricted}";`);
-  return `${LUA_STDLIB_REFERENCES}${lines.join("\n")}\n\nexport { ${entry.factory} } from "../../src/lifecycle";\nexport type { ScriptProperties, ScriptProperty } from "../../src/lifecycle";\n`;
+  const references = `${LUA_51_REFERENCE}${entry.jit === false ? "" : LUA_JIT_ONLY_REFERENCE}`;
+  const from = entry.factoryFrom ?? DEFAULT_FACTORY_MODULE;
+  const properties =
+    entry.propertyTypes === false
+      ? ""
+      : `\nexport type { ScriptProperties, ScriptProperty } from "${from}";`;
+  return `${references}${lines.join("\n")}\n\nexport { ${entry.factory} } from "${from}";${properties}\n`;
 }
 
 export function generateVersionIndex(
@@ -353,7 +476,7 @@ export function generateVersionIndex(
 
 if (import.meta.main) {
   const generated = resolve(import.meta.dir, "..", "generated");
-  for (const entry of MODULE_MANIFEST) {
+  for (const entry of [...MODULE_MANIFEST, ...EDITOR_MODULE_MANIFEST]) {
     const { contents, dropped } = generateModuleDeclaration(entry);
     if (dropped.length > 0) {
       console.log(`note: dropped skipped member(s) from ${entry.namespace}: ${dropped.join(", ")}`);

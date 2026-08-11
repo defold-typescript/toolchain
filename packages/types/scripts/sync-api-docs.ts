@@ -122,7 +122,6 @@ const LUA_NAMESPACE = /^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)*$/;
 // `EMPTY_BY_UPSTREAM` allowlist shape). The upstream-coverage guard treats these
 // as covered. Adding a namespace here is a deliberate, reviewed act.
 export const IGNORED_UPSTREAM: ReadonlyMap<string, string> = new Map([
-  ["editor", "editor-scripting API (editor.apidoc), not a runtime game namespace"],
   ["engine", "CLI/engine env doc, not a runtime Lua namespace"],
   [
     "builtins",
@@ -156,6 +155,17 @@ export const LUA_STDLIB_MANIFEST: readonly SyncManifestEntry[] = [
   entry("debug", "doc/lua_debug.doc_h_doc.json"),
   entry("io", "doc/lua_io.doc_h_doc.json"),
   entry("package", "doc/lua_package.doc_h_doc.json"),
+];
+
+// The editor-scripting API. It runs in the Defold *editor's* Lua VM, not the
+// game runtime, so it is deliberately not a `MODULE_MANIFEST` citizen: that
+// manifest drives every runtime kind's universal import set, the per-version
+// targets, `api-availability.json` / `api-signatures.json` and the docs-site API
+// pages, none of which describe the editor. It still syncs and emits through the
+// same machinery (`EDITOR_MODULE_MANIFEST` in regen.ts writes
+// `generated/editor.d.ts`), reached only through the `editor-script` kind index.
+export const EDITOR_MANIFEST: readonly SyncManifestEntry[] = [
+  entry("editor", "doc/editor.apidoc_doc.json"),
 ];
 
 function entry(
@@ -195,6 +205,21 @@ function ext(namespace: string, repo: string, tag: string, path: string): Extens
     fixture: `fixtures/defold-1.13.0/${namespace}_doc.json`,
   };
 }
+
+// Every vendored fixture set the coverage report audits, and the namespaces it
+// counts as reached from upstream. Composed once here so the `--check` run and
+// the guard over it cannot disagree about which sets are in scope.
+export const COVERAGE_MANIFEST: readonly { readonly namespace: string }[] = [
+  ...SYNC_MANIFEST,
+  ...EXTENSION_MANIFEST,
+  ...EDITOR_MANIFEST,
+];
+
+export const UPSTREAM_MAPPED_NAMESPACES: ReadonlySet<string> = new Set(
+  [...SYNC_MANIFEST, ...EXTENSION_MANIFEST, ...LUA_STDLIB_MANIFEST, ...EDITOR_MANIFEST].map(
+    (e) => e.namespace,
+  ),
+);
 
 export const extensionRawUrl = (e: ExtensionManifestEntry): string =>
   `https://raw.githubusercontent.com/${e.repo}/${e.tag}/${e.path}`;
@@ -602,24 +627,24 @@ if (import.meta.main) {
   const coreFixtures = extractFixtures(zip);
   const extensionFixtures = await downloadExtensionFixtures();
   const luaStdlibFixtures = extractFixtures(zip, LUA_STDLIB_MANIFEST);
+  const editorFixtures = extractFixtures(zip, EDITOR_MANIFEST);
   const results = [
     ...syncExtractedFixtures(coreFixtures, { check }),
     ...syncExtractedFixtures(extensionFixtures, { check }),
     ...syncExtractedFixtures(luaStdlibFixtures, { check }),
+    ...syncExtractedFixtures(editorFixtures, { check }),
   ];
   const syncedDocs = [...coreFixtures, ...extensionFixtures].map((f) => ({
     namespace: f.namespace,
     doc: JSON.parse(f.contents),
   }));
   const report = buildCoverageReport({
-    manifest: [...SYNC_MANIFEST, ...EXTENSION_MANIFEST],
+    manifest: COVERAGE_MANIFEST,
     moduleManifest: MODULE_MANIFEST,
     unmapped: UNMAPPED,
     syncedDocs,
     upstream: collectUpstreamNamespaces(zip),
-    upstreamMapped: new Set(
-      [...SYNC_MANIFEST, ...EXTENSION_MANIFEST, ...LUA_STDLIB_MANIFEST].map((e) => e.namespace),
-    ),
+    upstreamMapped: UPSTREAM_MAPPED_NAMESPACES,
     ignoredUpstream: IGNORED_UPSTREAM,
   });
   printReport(results, report, check);

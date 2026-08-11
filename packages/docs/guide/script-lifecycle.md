@@ -163,11 +163,16 @@ Defold scopes two namespaces to a script kind: `gui.*` resolves only inside a `.
 
 The default `@defold-typescript/types` entrypoint aggregates *all* namespaces, so it never rejects a call the engine would allow at runtime — but it also can't catch a `gui.*` use in a plain `.script`. To get the engine's wall at compile time, pin the entrypoint matching the file's script kind in that file's `tsconfig`:
 
-| Script kind      | `types` entrypoint                       | Namespaces           |
-| ---------------- | ---------------------------------------- | -------------------- |
-| `.script`        | `@defold-typescript/types/script`        | universal only       |
-| `.gui_script`    | `@defold-typescript/types/gui-script`    | universal + `gui`    |
-| `.render_script` | `@defold-typescript/types/render-script` | universal + `render` |
+| Script kind      | `types` entrypoint                        | Namespaces           |
+| ---------------- | ----------------------------------------- | -------------------- |
+| `.script`        | `@defold-typescript/types/script`         | universal only       |
+| `.gui_script`    | `@defold-typescript/types/gui-script`     | universal + `gui`    |
+| `.render_script` | `@defold-typescript/types/render-script`  | universal + `render` |
+| `.editor_script` | `@defold-typescript/types/editor-script`  | `editor` only        |
+
+`.editor_script` is not a runtime kind at all — it runs in the editor's Lua VM,
+so its entrypoint carries `editor.*` and none of the runtime namespaces. See
+[Editor scripts](./editor-scripts.md).
 
 ```jsonc
 // tsconfig for a .gui_script source tree

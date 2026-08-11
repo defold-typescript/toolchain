@@ -25,11 +25,17 @@ at compile time, opt in with `wall`.
 A wall is a composite `tsconfig.json` written into a single-kind source directory
 that narrows `compilerOptions.types` to that kind's subpath:
 
-| Script kind      | `types` entrypoint                       | Namespaces           |
-| ---------------- | ---------------------------------------- | -------------------- |
-| `.script`        | `@defold-typescript/types/script`        | universal only       |
-| `.gui_script`    | `@defold-typescript/types/gui-script`    | universal + `gui`    |
-| `.render_script` | `@defold-typescript/types/render-script` | universal + `render` |
+| Script kind      | `types` entrypoint                        | Namespaces           |
+| ---------------- | ----------------------------------------- | -------------------- |
+| `.script`        | `@defold-typescript/types/script`         | universal only       |
+| `.gui_script`    | `@defold-typescript/types/gui-script`     | universal + `gui`    |
+| `.render_script` | `@defold-typescript/types/render-script`  | universal + `render` |
+| `.editor_script` | `@defold-typescript/types/editor-script`  | `editor` only        |
+
+`.editor_script` is the odd one out: it runs in the editor's own Lua VM, so its
+surface is disjoint from the runtime kinds rather than a narrowing of them — no
+`go`, `msg` or `vmath`. `wall` does not offer it as a target yet; set `types` to
+that subpath by hand, as [editor scripts](./editor-scripts.md) describes.
 
 The root `tsconfig.json` references each walled directory and excludes it from the
 root program, so `tsc -b --noEmit` builds every walled directory against only its

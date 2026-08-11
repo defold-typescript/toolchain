@@ -6,8 +6,10 @@ import { parseDefoldApiDoc } from "../src/api-doc";
 import { MODULE_MANIFEST } from "./regen";
 import {
   buildCoverageReport,
+  COVERAGE_MANIFEST,
   collectUpstreamNamespaces,
   DEFOLD_VERSION,
+  EDITOR_MANIFEST,
   EXTENSION_MANIFEST,
   extractFixtures,
   IGNORED_UPSTREAM,
@@ -20,6 +22,7 @@ import {
   scriptApiToFixtureJson,
   syncFixtures,
   UNMAPPED,
+  UPSTREAM_MAPPED_NAMESPACES,
   type ZipAccessor,
 } from "./sync-api-docs";
 
@@ -188,7 +191,52 @@ describe("LUA_STDLIB_MANIFEST", () => {
     for (const [namespace] of [...CORE_FIVE_STDLIB, ...SANDBOXED_THREE]) {
       expect(IGNORED_UPSTREAM.has(namespace)).toBe(false);
     }
-    expect([...IGNORED_UPSTREAM.keys()].sort()).toEqual(["builtins", "editor", "engine"]);
+    expect([...IGNORED_UPSTREAM.keys()].sort()).toEqual(["builtins", "engine"]);
+  });
+});
+
+describe("EDITOR_MANIFEST", () => {
+  test("maps the editor namespace to its ref-doc.zip entry and versioned fixture", () => {
+    const editor = EDITOR_MANIFEST.find((e) => e.namespace === "editor");
+    expect(editor?.zipEntry).toBe("doc/editor.apidoc_doc.json");
+    expect(editor?.fixture).toBe(`fixtures/defold-${DEFOLD_VERSION}/editor_doc.json`);
+  });
+
+  test("no EDITOR_MANIFEST namespace appears in MODULE_MANIFEST (the editor VM is not a runtime kind's surface)", () => {
+    for (const entry of EDITOR_MANIFEST) {
+      expect(MODULE_MANIFEST.some((m) => m.namespace === entry.namespace)).toBe(false);
+    }
+  });
+
+  test("editor is no longer allowlisted as ignored upstream — it is vendored instead", () => {
+    for (const entry of EDITOR_MANIFEST) {
+      expect(IGNORED_UPSTREAM.has(entry.namespace)).toBe(false);
+    }
+  });
+
+  test("the coverage wiring audits every EDITOR_MANIFEST namespace and counts it as upstream-mapped", () => {
+    for (const entry of EDITOR_MANIFEST) {
+      expect(COVERAGE_MANIFEST.some((e) => e.namespace === entry.namespace)).toBe(true);
+      expect(UPSTREAM_MAPPED_NAMESPACES.has(entry.namespace)).toBe(true);
+    }
+  });
+
+  test("buildCoverageReport classifies editor as fixture-only, never wired or unmapped", () => {
+    const report = buildCoverageReport({
+      manifest: COVERAGE_MANIFEST,
+      moduleManifest: MODULE_MANIFEST,
+      unmapped: UNMAPPED,
+      syncedDocs: [],
+      upstream: [
+        { namespace: "editor", functionCount: 93, zipEntry: "doc/editor.apidoc_doc.json" },
+      ],
+      upstreamMapped: UPSTREAM_MAPPED_NAMESPACES,
+      ignoredUpstream: IGNORED_UPSTREAM,
+    });
+    expect(report.fixtureOnly).toContain("editor");
+    expect(report.wired).not.toContain("editor");
+    expect(report.missingMapping).not.toContain("editor");
+    expect(report.unmappedUpstream.map((u) => u.namespace)).not.toContain("editor");
   });
 });
 
