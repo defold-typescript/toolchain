@@ -259,7 +259,7 @@ declare global {
      * go.animate("go", "position.y", go.PLAYBACK_LOOP_PINGPONG, 100, vec, 2.0);
      * ```
      */
-    export function animate(url: string | Hash | Url, property: string | Hash, playback: number & { readonly __brand: "go.PLAYBACK_ONCE_FORWARD" } | number & { readonly __brand: "go.PLAYBACK_ONCE_BACKWARD" } | number & { readonly __brand: "go.PLAYBACK_ONCE_PINGPONG" } | number & { readonly __brand: "go.PLAYBACK_LOOP_FORWARD" } | number & { readonly __brand: "go.PLAYBACK_LOOP_BACKWARD" } | number & { readonly __brand: "go.PLAYBACK_LOOP_PINGPONG" }, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | number & { readonly __brand: "go.EASING_INBACK" } | number & { readonly __brand: "go.EASING_INBOUNCE" } | number & { readonly __brand: "go.EASING_INCIRC" } | number & { readonly __brand: "go.EASING_INCUBIC" } | number & { readonly __brand: "go.EASING_INELASTIC" } | number & { readonly __brand: "go.EASING_INEXPO" } | number & { readonly __brand: "go.EASING_INOUTBACK" } | number & { readonly __brand: "go.EASING_INOUTBOUNCE" } | number & { readonly __brand: "go.EASING_INOUTCIRC" } | number & { readonly __brand: "go.EASING_INOUTCUBIC" } | number & { readonly __brand: "go.EASING_INOUTELASTIC" } | number & { readonly __brand: "go.EASING_INOUTEXPO" } | number & { readonly __brand: "go.EASING_INOUTQUAD" } | number & { readonly __brand: "go.EASING_INOUTQUART" } | number & { readonly __brand: "go.EASING_INOUTQUINT" } | number & { readonly __brand: "go.EASING_INOUTSINE" } | number & { readonly __brand: "go.EASING_INQUAD" } | number & { readonly __brand: "go.EASING_INQUART" } | number & { readonly __brand: "go.EASING_INQUINT" } | number & { readonly __brand: "go.EASING_INSINE" } | number & { readonly __brand: "go.EASING_LINEAR" } | number & { readonly __brand: "go.EASING_OUTBACK" } | number & { readonly __brand: "go.EASING_OUTBOUNCE" } | number & { readonly __brand: "go.EASING_OUTCIRC" } | number & { readonly __brand: "go.EASING_OUTCUBIC" } | number & { readonly __brand: "go.EASING_OUTELASTIC" } | number & { readonly __brand: "go.EASING_OUTEXPO" } | number & { readonly __brand: "go.EASING_OUTINBACK" } | number & { readonly __brand: "go.EASING_OUTINBOUNCE" } | number & { readonly __brand: "go.EASING_OUTINCIRC" } | number & { readonly __brand: "go.EASING_OUTINCUBIC" } | number & { readonly __brand: "go.EASING_OUTINELASTIC" } | number & { readonly __brand: "go.EASING_OUTINEXPO" } | number & { readonly __brand: "go.EASING_OUTINQUAD" } | number & { readonly __brand: "go.EASING_OUTINQUART" } | number & { readonly __brand: "go.EASING_OUTINQUINT" } | number & { readonly __brand: "go.EASING_OUTINSINE" } | number & { readonly __brand: "go.EASING_OUTQUAD" } | number & { readonly __brand: "go.EASING_OUTQUART" } | number & { readonly __brand: "go.EASING_OUTQUINT" } | number & { readonly __brand: "go.EASING_OUTSINE" }, duration: number, delay?: number, complete_function?: (self: unknown, url: unknown, property: unknown) => void): void;
+    export function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: number & { readonly __brand: "go.PLAYBACK_ONCE_FORWARD" } | number & { readonly __brand: "go.PLAYBACK_ONCE_BACKWARD" } | number & { readonly __brand: "go.PLAYBACK_ONCE_PINGPONG" } | number & { readonly __brand: "go.PLAYBACK_LOOP_FORWARD" } | number & { readonly __brand: "go.PLAYBACK_LOOP_BACKWARD" } | number & { readonly __brand: "go.PLAYBACK_LOOP_PINGPONG" }, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | number & { readonly __brand: "go.EASING_INBACK" } | number & { readonly __brand: "go.EASING_INBOUNCE" } | number & { readonly __brand: "go.EASING_INCIRC" } | number & { readonly __brand: "go.EASING_INCUBIC" } | number & { readonly __brand: "go.EASING_INELASTIC" } | number & { readonly __brand: "go.EASING_INEXPO" } | number & { readonly __brand: "go.EASING_INOUTBACK" } | number & { readonly __brand: "go.EASING_INOUTBOUNCE" } | number & { readonly __brand: "go.EASING_INOUTCIRC" } | number & { readonly __brand: "go.EASING_INOUTCUBIC" } | number & { readonly __brand: "go.EASING_INOUTELASTIC" } | number & { readonly __brand: "go.EASING_INOUTEXPO" } | number & { readonly __brand: "go.EASING_INOUTQUAD" } | number & { readonly __brand: "go.EASING_INOUTQUART" } | number & { readonly __brand: "go.EASING_INOUTQUINT" } | number & { readonly __brand: "go.EASING_INOUTSINE" } | number & { readonly __brand: "go.EASING_INQUAD" } | number & { readonly __brand: "go.EASING_INQUART" } | number & { readonly __brand: "go.EASING_INQUINT" } | number & { readonly __brand: "go.EASING_INSINE" } | number & { readonly __brand: "go.EASING_LINEAR" } | number & { readonly __brand: "go.EASING_OUTBACK" } | number & { readonly __brand: "go.EASING_OUTBOUNCE" } | number & { readonly __brand: "go.EASING_OUTCIRC" } | number & { readonly __brand: "go.EASING_OUTCUBIC" } | number & { readonly __brand: "go.EASING_OUTELASTIC" } | number & { readonly __brand: "go.EASING_OUTEXPO" } | number & { readonly __brand: "go.EASING_OUTINBACK" } | number & { readonly __brand: "go.EASING_OUTINBOUNCE" } | number & { readonly __brand: "go.EASING_OUTINCIRC" } | number & { readonly __brand: "go.EASING_OUTINCUBIC" } | number & { readonly __brand: "go.EASING_OUTINELASTIC" } | number & { readonly __brand: "go.EASING_OUTINEXPO" } | number & { readonly __brand: "go.EASING_OUTINQUAD" } | number & { readonly __brand: "go.EASING_OUTINQUART" } | number & { readonly __brand: "go.EASING_OUTINQUINT" } | number & { readonly __brand: "go.EASING_OUTINSINE" } | number & { readonly __brand: "go.EASING_OUTQUAD" } | number & { readonly __brand: "go.EASING_OUTQUART" } | number & { readonly __brand: "go.EASING_OUTQUINT" } | number & { readonly __brand: "go.EASING_OUTSINE" }, duration: number, delay?: number, complete_function?: (self: unknown, url: unknown, property: unknown) => void): void;
     /**
      * By calling this function, all or specified stored property animations of the game object or component will be canceled.
      * See the properties guide for which properties can be animated and the animation guide for how to animate them.
@@ -278,7 +278,7 @@ declare global {
      * go.cancel_animations("#sprite");
      * ```
      */
-    export function cancel_animations(url: string | Hash | Url, property?: string | Hash): void;
+    export function cancel_animations(url: SceneAddress | Hash | Url, property?: string | Hash): void;
     /**
      * Delete one or more game objects identified by id. Deletion is asynchronous meaning that
      * the game object(s) are scheduled for deletion which will happen at the end of the current
@@ -313,7 +313,7 @@ declare global {
      * go.delete(ids2, true);
      * ```
      */
-    function _delete(id?: string | Hash | Url | (string | Hash | Url)[], recursive?: boolean): void;
+    function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[], recursive?: boolean): void;
     /**
      * This function can check for game objects in any collection by specifying
      * the collection name in the URL.
@@ -329,7 +329,7 @@ declare global {
      * go.exists("other_collection:/my_game_object");
      * ```
      */
-    export function exists(url: string | Hash | Url): boolean;
+    export function exists(url: SceneGameObjectAddress | Hash | Url): boolean;
     /**
      * This is a callback-function, which is called by the engine when a script component is finalized (destroyed). It can
      * be used to e.g. take some last action, report the finalization to other game object instances, delete spawned objects
@@ -396,7 +396,7 @@ declare global {
      * const parent_id2 = go.get_parent("x");
      * ```
      */
-    export function get_parent(id?: string | Hash | Url): Hash | undefined;
+    export function get_parent(id?: SceneGameObjectAddress | Hash | Url): Hash | undefined;
     /**
      * The position is relative the parent (if any). Use go.get_world_position to retrieve the global world position.
      *
@@ -411,7 +411,7 @@ declare global {
      * const pos = go.get_position("my_gameobject");
      * ```
      */
-    export function get_position(id?: string | Hash | Url): Vector3;
+    export function get_position(id?: SceneGameObjectAddress | Hash | Url): Vector3;
     /**
      * The rotation is relative to the parent (if any). Use go.get_world_rotation to retrieve the global world rotation.
      *
@@ -426,7 +426,7 @@ declare global {
      * const r2 = go.get_rotation("x");
      * ```
      */
-    export function get_rotation(id?: string | Hash | Url): Quaternion;
+    export function get_rotation(id?: SceneGameObjectAddress | Hash | Url): Quaternion;
     /**
      * The scale is relative the parent (if any). Use go.get_world_scale to retrieve the global world 3D scale factor.
      *
@@ -441,7 +441,7 @@ declare global {
      * const s2 = go.get_scale("x");
      * ```
      */
-    export function get_scale(id?: string | Hash | Url): Vector3;
+    export function get_scale(id?: SceneGameObjectAddress | Hash | Url): Vector3;
     /**
      * The uniform scale is relative the parent (if any). If the underlying scale vector is non-uniform the min element of the vector is returned as the uniform scale factor.
      *
@@ -456,7 +456,7 @@ declare global {
      * const s2 = go.get_scale_uniform("x");
      * ```
      */
-    export function get_scale_uniform(id?: string | Hash | Url): number;
+    export function get_scale_uniform(id?: SceneGameObjectAddress | Hash | Url): number;
     /**
      * The function will return the world position calculated at the end of the previous frame.
      * To recalculate it within the current frame, use go.update_world_transform on the instance before calling this.
@@ -473,7 +473,7 @@ declare global {
      * const p2 = go.get_world_position("x");
      * ```
      */
-    export function get_world_position(id?: string | Hash | Url): Vector3;
+    export function get_world_position(id?: SceneGameObjectAddress | Hash | Url): Vector3;
     /**
      * The function will return the world rotation calculated at the end of the previous frame.
      * To recalculate it within the current frame, use go.update_world_transform on the instance before calling this.
@@ -490,7 +490,7 @@ declare global {
      * const r2 = go.get_world_rotation("x");
      * ```
      */
-    export function get_world_rotation(id?: string | Hash | Url): Quaternion;
+    export function get_world_rotation(id?: SceneGameObjectAddress | Hash | Url): Quaternion;
     /**
      * The function will return the world 3D scale factor calculated at the end of the previous frame.
      * To recalculate it within the current frame, use go.update_world_transform on the instance before calling this.
@@ -509,7 +509,7 @@ declare global {
      * const s2 = go.get_world_scale("x");
      * ```
      */
-    export function get_world_scale(id?: string | Hash | Url): Vector3;
+    export function get_world_scale(id?: SceneGameObjectAddress | Hash | Url): Vector3;
     /**
      * The function will return the world scale factor calculated at the end of the previous frame.
      * To recalculate it within the current frame, use go.update_world_transform on the instance before calling this.
@@ -526,7 +526,7 @@ declare global {
      * const s2 = go.get_world_scale_uniform("x");
      * ```
      */
-    export function get_world_scale_uniform(id?: string | Hash | Url): number;
+    export function get_world_scale_uniform(id?: SceneGameObjectAddress | Hash | Url): number;
     /**
      * The function will return the world transform matrix calculated at the end of the previous frame.
      * To recalculate it within the current frame, use go.update_world_transform on the instance before calling this.
@@ -542,7 +542,7 @@ declare global {
      * const m2 = go.get_world_transform("x");
      * ```
      */
-    export function get_world_transform(id?: string | Hash | Url): Matrix4;
+    export function get_world_transform(id?: SceneGameObjectAddress | Hash | Url): Matrix4;
     /**
      * This is a callback-function, which is called by the engine when a script component is initialized. It can be used
      * to set the initial state of the script.
@@ -879,7 +879,7 @@ declare global {
      * go.set_parent(go.get_id("my_instance"));
      * ```
      */
-    export function set_parent(id?: string | Hash | Url, parent_id?: string | Hash | Url, keep_world_transform?: boolean): void;
+    export function set_parent(id?: SceneGameObjectAddress | Hash | Url, parent_id?: SceneGameObjectAddress | Hash | Url, keep_world_transform?: boolean): void;
     /**
      * The position is relative to the parent (if any). The global world position cannot be manually set.
      *
@@ -897,7 +897,7 @@ declare global {
      * go.set_position(p, "x");
      * ```
      */
-    export function set_position(position: Vector3, id?: string | Hash | Url): void;
+    export function set_position(position: Vector3, id?: SceneGameObjectAddress | Hash | Url): void;
     /**
      * The rotation is relative to the parent (if any). The global world rotation cannot be manually set.
      *
@@ -915,7 +915,7 @@ declare global {
      * go.set_rotation(r, "x");
      * ```
      */
-    export function set_rotation(rotation: Quaternion, id?: string | Hash | Url): void;
+    export function set_rotation(rotation: Quaternion, id?: SceneGameObjectAddress | Hash | Url): void;
     /**
      * The scale factor is relative to the parent (if any). The global world scale factor cannot be manually set.
      * See manual to know how physics affected when setting scale from this function.
@@ -933,7 +933,7 @@ declare global {
      * go.set_scale(s2, "obj_id");
      * ```
      */
-    export function set_scale(scale: number | Vector3, id?: string | Hash | Url): void;
+    export function set_scale(scale: number | Vector3, id?: SceneGameObjectAddress | Hash | Url): void;
     /**
      * The scale factor is relative to the parent (if any). The global world scale factor cannot be manually set.
      * See manual to know how physics affected when setting scale from this function.
@@ -951,7 +951,7 @@ declare global {
      * go.set_scale_xy(s2, "obj_id"); // z will not be set here, only x and y
      * ```
      */
-    export function set_scale_xy(scale: number | Vector3, id?: string | Hash | Url): void;
+    export function set_scale_xy(scale: number | Vector3, id?: SceneGameObjectAddress | Hash | Url): void;
     /**
      * This is a callback-function, which is called by the engine every frame to update the state of a script component.
      * It can be used to perform any kind of game related tasks, e.g. moving the game object instance.
@@ -994,7 +994,7 @@ declare global {
      * go.update_world_transform("/other");
      * ```
      */
-    export function update_world_transform(id?: string | Hash | Url): void;
+    export function update_world_transform(id?: SceneGameObjectAddress | Hash | Url): void;
     /**
      * The function uses world transformation calculated at the end of previous frame.
      *
@@ -1009,7 +1009,7 @@ declare global {
      * const new_position = go.world_to_local_position(test_pos, "/child");
      * ```
      */
-    export function world_to_local_position(position: Vector3, url: string | Hash | Url): Vector3;
+    export function world_to_local_position(position: Vector3, url: SceneGameObjectAddress | Hash | Url): Vector3;
     /**
      * The function uses world transformation calculated at the end of previous frame.
      *
@@ -1024,7 +1024,7 @@ declare global {
      * const result_transform = go.world_to_local_transform(test_transform, "/child");
      * ```
      */
-    export function world_to_local_transform(transformation: Matrix4, url: string | Hash | Url): Matrix4;
+    export function world_to_local_transform(transformation: Matrix4, url: SceneGameObjectAddress | Hash | Url): Matrix4;
     export { _delete as delete };
     export interface properties {
       /**

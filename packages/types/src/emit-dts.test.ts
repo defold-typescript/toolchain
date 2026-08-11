@@ -23,6 +23,7 @@ import sysDoc from "../fixtures/sys_doc.json" with { type: "json" };
 import tilemapDoc from "../fixtures/tilemap_doc.json" with { type: "json" };
 import typesDoc from "../fixtures/types_doc.json" with { type: "json" };
 import vmathDoc from "../fixtures/vmath_doc.json" with { type: "json" };
+import urlParameterTable from "../url-parameters.json" with { type: "json" };
 import { type ApiFunction, type ApiModule, parseDefoldApiDoc } from "./api-doc";
 import {
   ARBITRARY_TABLE_SLOTS,
@@ -30,6 +31,7 @@ import {
   buildTableDocResolver,
   collectHandleMethodGroups,
   emitDeclarations,
+  emitSymbolSignatures,
   HOMOGENEOUS_ARRAY_SLOTS,
   inlineTableType,
   MAPPING_TABLE_SLOTS,
@@ -40,6 +42,7 @@ import {
   SLOT_LEVEL_LIST_PROSE,
   TABLE_SLOT_CURATIONS,
 } from "./emit-dts";
+import type { UrlParameterTable } from "./url-parameters";
 
 function requireFunction(module: ApiModule, name: string): ApiFunction {
   const fn = module.functions.find((candidate) => candidate.name === name);
@@ -3132,5 +3135,67 @@ describe("slot-level array-of-object recovery", () => {
     // would at the top level rather than a dropped/void signature.
     expect(toipLine).toContain("LuaMultiReturn<[");
     expect(toipLine).not.toContain(": void");
+  });
+});
+
+describe("url-parameter address retyping", () => {
+  const committed = urlParameterTable as UrlParameterTable;
+
+  function signatureLine(out: string, marker: string): string {
+    const line = out.split("\n").find((candidate) => candidate.includes(marker));
+    if (line === undefined) throw new Error(`no emitted line contains ${marker}`);
+    return line.trim();
+  }
+
+  test("a classified game-object slot swaps only its string member for the address alias", () => {
+    const module = parseDefoldApiDoc(goDoc);
+    const out = emitDeclarations(module, { urlParameters: committed });
+    expect(signatureLine(out, "function get_position(")).toBe(
+      "export function get_position(id?: SceneGameObjectAddress | Hash | Url): Vector3;",
+    );
+  });
+
+  test("omitting the table leaves every module byte-identical to an un-retyped emit", () => {
+    for (const doc of [goDoc, modelDoc]) {
+      const module = parseDefoldApiDoc(doc);
+      expect(emitDeclarations(module)).toBe(emitDeclarations(module, { urlParameters: [] }));
+    }
+  });
+
+  test("the class decides the alias — component and either are distinct types", () => {
+    const module = parseDefoldApiDoc(goDoc);
+    const table: UrlParameterTable = [
+      { fqn: "go.get_position", parameter: "id", class: "component", source: "generated" },
+      { fqn: "go.get_rotation", parameter: "id", class: "either", source: "generated" },
+      { fqn: "go.get_scale", parameter: "id", class: "none", source: "generated" },
+    ];
+    const out = emitDeclarations(module, { urlParameters: table });
+    expect(signatureLine(out, "function get_position(")).toContain(
+      "id?: SceneComponentAddress | Hash | Url",
+    );
+    expect(signatureLine(out, "function get_rotation(")).toContain(
+      "id?: SceneAddress | Hash | Url",
+    );
+    // Explicitly classified `none` is the default, so the slot is untouched.
+    expect(signatureLine(out, "function get_scale(")).toContain("id?: string | Hash | Url");
+  });
+
+  test("a triple-typed slot the committed table leaves unclassified keeps its string member", () => {
+    const module = parseDefoldApiDoc(modelDoc);
+    const out = emitDeclarations(module, { urlParameters: committed });
+    // `model.get_mesh_enabled` carries the `string | hash | url` triple on both
+    // slots, and the table classifies neither: the triple alone must not retype.
+    expect(signatureLine(out, "function get_mesh_enabled(")).toBe(
+      "function get_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash | Url): boolean;",
+    );
+  });
+
+  test("emitSymbolSignatures retypes the same slots as the declaration", () => {
+    const module = parseDefoldApiDoc(goDoc);
+    const signatures = emitSymbolSignatures(module, { urlParameters: committed });
+    const entry = signatures.find((candidate) => candidate.identity.name === "go.get_position");
+    expect(entry?.tsSignature).toBe(
+      "function get_position(id?: SceneGameObjectAddress | Hash | Url): Vector3;",
+    );
   });
 });

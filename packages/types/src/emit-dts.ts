@@ -16,6 +16,7 @@ import {
 } from "./doc-comment";
 import type { TranslationStore } from "./example-store";
 import { hashExampleSource, lookupTranslation } from "./example-store";
+import { classifyUrlParameter, type UrlParameterTable } from "./url-parameters";
 
 export interface EmitOptions {
   mapType?: (defoldType: string) => string;
@@ -30,6 +31,12 @@ export interface EmitOptions {
   // `examples/translations.json`. Loading lives in `scripts/example-store-io.ts`
   // so this module stays node-free for downstream consumers.
   translations?: TranslationStore;
+  // Which parameters address the scene graph, so their `string` member emits a
+  // scene-derived address alias instead. Defaults to an empty table — every
+  // slot classifies `none` and the output is byte-identical to an un-retyped
+  // emit. `regen` supplies the committed `url-parameters.json`; the table
+  // arrives as data so this module stays free of `node:fs` (bug-88).
+  urlParameters?: UrlParameterTable;
 }
 
 export const TS_IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
@@ -1426,6 +1433,7 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
   const constantFqns = new Set(module.constants.map((c) => c.name));
   const knownConstantFqns = options?.knownConstantFqns;
   const translations = options?.translations ?? {};
+  const urlParameters = options?.urlParameters ?? [];
   const baseMapType = options?.mapType ?? defaultMapType;
   const mapType = (token: string): string =>
     constantFqns.has(token) || knownConstantFqns?.has(token)
@@ -1525,7 +1533,7 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
       for (const docLine of functionDocLines(fn.original, translations, handleIndent)) {
         lines.push(docLine);
       }
-      lines.push(`${handleIndent}${emitMethod(fn, mapType, resolver)}`);
+      lines.push(`${handleIndent}${emitMethod(fn, mapType, resolver, urlParameters)}`);
     }
     lines.push(`${INDENT}}`);
   }
@@ -1554,7 +1562,7 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
     const reserved = TS_RESERVED_NAMES.has(fn.name);
     const emitName = aliasName(fn.name, aliases);
     for (const docLine of functionDocLines(fn.original, translations)) lines.push(docLine);
-    const line = emitFunction(fn, emitName, mapType, resolver);
+    const line = emitFunction(fn, emitName, mapType, resolver, urlParameters);
     lines.push(`${INDENT}${reserved ? "" : decl}${line}`);
   }
 
@@ -1579,7 +1587,7 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
         lines.push(docLine);
       }
       lines.push(
-        `${nestedIndent}${reserved ? "" : segmentDecl}${emitFunction(fn, emitName, mapType, resolver)}`,
+        `${nestedIndent}${reserved ? "" : segmentDecl}${emitFunction(fn, emitName, mapType, resolver, urlParameters)}`,
       );
     }
     for (const alias of [...segmentAliases].sort((a, b) => a.public.localeCompare(b.public))) {
@@ -1623,6 +1631,7 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
   const prefix = `${module.namespace}.`;
   const constantFqns = new Set(module.constants.map((c) => c.name));
   const knownConstantFqns = options?.knownConstantFqns;
+  const urlParameters = options?.urlParameters ?? [];
   const baseMapType = options?.mapType ?? defaultMapType;
   const mapType = (token: string): string =>
     constantFqns.has(token) || knownConstantFqns?.has(token)
@@ -1649,7 +1658,13 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
     if (prepared === null) continue;
     out.push({
       identity: fnIdentity(fn),
-      tsSignature: emitFunction(prepared, emitName(prepared.name), mapType, resolver),
+      tsSignature: emitFunction(
+        prepared,
+        emitName(prepared.name),
+        mapType,
+        resolver,
+        urlParameters,
+      ),
     });
   }
 
@@ -1662,7 +1677,7 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
     if (prepared === null) continue;
     out.push({
       identity: fnIdentity(fn),
-      tsSignature: emitFunction(prepared, prepared.name, mapType, resolver),
+      tsSignature: emitFunction(prepared, prepared.name, mapType, resolver, urlParameters),
     });
   }
 
@@ -1671,7 +1686,7 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
     for (const prepared of group) {
       out.push({
         identity: fnIdentity(prepared.original),
-        tsSignature: emitMethod(prepared, mapType, resolver),
+        tsSignature: emitMethod(prepared, mapType, resolver, urlParameters),
       });
     }
   }
@@ -1813,12 +1828,13 @@ function memberSignature(
   name: string,
   mapType: (t: string) => string,
   resolver: TableDocResolver,
+  urlParameters: UrlParameterTable,
 ): string {
   const original = prepared.original.parameters;
   const elementName = prepared.original.name;
   const cutoff = trailingOptionalCutoff(original);
   const params = original
-    .map((p, i) => emitParameter(p, i, i >= cutoff, mapType, resolver, elementName))
+    .map((p, i) => emitParameter(p, i, i >= cutoff, mapType, resolver, elementName, urlParameters))
     .join(", ");
   const ret = emitReturn(prepared.original.returnValues, mapType, resolver, elementName);
   const predicateToken = TYPE_PREDICATES.get(elementName);
@@ -1839,8 +1855,9 @@ function emitFunction(
   name: string,
   mapType: (t: string) => string,
   resolver: TableDocResolver,
+  urlParameters: UrlParameterTable,
 ): string {
-  return `function ${memberSignature(prepared, name, mapType, resolver)}`;
+  return `function ${memberSignature(prepared, name, mapType, resolver, urlParameters)}`;
 }
 
 // A colon-method member of a handle interface: identical signature machinery to a
@@ -1850,8 +1867,9 @@ function emitMethod(
   prepared: PreparedFunction,
   mapType: (t: string) => string,
   resolver: TableDocResolver,
+  urlParameters: UrlParameterTable,
 ): string {
-  return memberSignature(prepared, prepared.name, mapType, resolver);
+  return memberSignature(prepared, prepared.name, mapType, resolver, urlParameters);
 }
 
 // Build the indented JSDoc lines for a function from its ref-doc prose. The
@@ -1928,6 +1946,20 @@ function trailingOptionalCutoff(params: readonly ApiParameter[]): number {
   return cutoff;
 }
 
+const SCENE_ADDRESS_ALIASES: Readonly<Record<string, string>> = {
+  "game-object": "SceneGameObjectAddress",
+  component: "SceneComponentAddress",
+  either: "SceneAddress",
+};
+
+// A classified address slot keeps every mapped member except `string`, which
+// becomes the matching scene-derived alias. Wrapping `mapType` rather than
+// rewriting the finished union leaves `mapSlotUnion`'s member ordering and
+// de-duplication in charge, so only the one token moves.
+function addressMapType(mapType: (t: string) => string, alias: string): (t: string) => string {
+  return (token) => (token === "string" ? alias : mapType(token));
+}
+
 function emitParameter(
   p: ApiParameter,
   index: number,
@@ -1935,12 +1967,17 @@ function emitParameter(
   mapType: (t: string) => string,
   resolver: TableDocResolver,
   elementName: string,
+  urlParameters: UrlParameterTable,
 ): string {
   const name = safeParamName(p.name, index);
   const concrete = p.types.filter((t) => t !== "nil");
+  // The table is keyed by the *raw* ref-doc parameter name, not the emitted
+  // `safeParamName` fallback.
+  const alias = SCENE_ADDRESS_ALIASES[classifyUrlParameter(urlParameters, elementName, p.name)];
+  const slotMapType = alias === undefined ? mapType : addressMapType(mapType, alias);
   const ts =
     concrete.length > 0
-      ? mapSlotUnion(concrete, p.doc, mapType, true, resolver, elementName, "param", p.name)
+      ? mapSlotUnion(concrete, p.doc, slotMapType, true, resolver, elementName, "param", p.name)
       : "unknown";
   // An interior doc-optional param (a required param follows, so the trailing-`?`
   // projection cannot mark it) keeps its optionality as `| undefined` — TSTL
