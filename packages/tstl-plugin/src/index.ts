@@ -81,7 +81,13 @@ export default function init(modules: { typescript: typeof import("typescript") 
         return prior;
       }
       const slot = resolveAddressSlotAtPosition({ program, table, fileName, position });
-      if (!slot) {
+      // A slot resolves for a caret anywhere inside the quotes, but an entry's
+      // `replacementSpan` only ever covers the fragment — so offering one to a
+      // caret in the path would edit text the author is not standing on. `<`
+      // not `<=`: at `fragmentStart` the fragment is merely empty, which is
+      // where it is most often typed. Above the walk, so a caret in the path
+      // costs no `.go`/`.collection` parse.
+      if (!slot || slot.fragmentStart === -1 || position < slot.fragmentStart) {
         return prior;
       }
       const serverHost = info.serverHost as SceneReadHost | undefined;

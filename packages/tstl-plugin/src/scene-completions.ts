@@ -28,6 +28,21 @@ export function buildSceneCompletionEntries(input: {
   const offered = new Set(baseEntries.map((base) => base.name));
   const prefix = slot.text.slice(0, fragmentOffset);
 
+  // `sortText` is compared as a string, and TypeScript's own priorities are
+  // "10"–"18" with `"z"`-prefixed deprecated variants, so "z18" is the greatest
+  // key it produces. A string that strictly extends the greatest key present
+  // sorts after it, and therefore after every key at or below it — which is how
+  // one derived key lands the contributed entries last however the base list is
+  // keyed, including keys no host of ours chose. The "zz" seed is the floor for
+  // an empty base, where there is no maximum to extend: above everything
+  // TypeScript emits, rather than below it the way a bare "z" would be. One
+  // shared key for every entry, so their alphabetical order survives a tie
+  // broken on the label.
+  const sortText = `${baseEntries.reduce(
+    (greatest, base) => (base.sortText > greatest ? base.sortText : greatest),
+    "zz",
+  )}0`;
+
   return [...ids]
     .sort()
     .filter((id) => !offered.has(`${prefix}${id}`))
@@ -35,7 +50,7 @@ export function buildSceneCompletionEntries(input: {
       name: id,
       kind: STRING_KIND,
       kindModifiers: "",
-      sortText: "0",
+      sortText,
       replacementSpan,
     }));
 }
