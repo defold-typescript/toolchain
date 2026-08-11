@@ -47,10 +47,10 @@ declare module 'nakama.socket' {
       reliable: boolean,
       callback?: (message: unknown) => void,
     ): unknown;
-    match_create(name: string, callback?: (message: unknown) => void): unknown;
+    match_create(name: string | undefined, callback?: (message: unknown) => void): unknown;
     match_join(
-      match_id: string,
-      token: string,
+      match_id: string | undefined,
+      token: string | undefined,
       metadata: unknown,
       callback?: (message: unknown) => void,
     ): unknown;
@@ -307,12 +307,13 @@ declare module 'nakama.socket' {
    */
   function match_create(
     socket: Socket,
-    name: string,
+    name: string | undefined,
     callback?: (message: unknown) => void,
   ): unknown;
 
   /**
-   * Joins a match by id, or by the token a matchmaker result carried.
+   * Joins a match by id, or by the token a matchmaker result carried. Exactly one of the
+   * two identifiers is set; the other is nil.
    * @param socket A socket created with `create`.
    * @param match_id The match to join.
    * @param token The match token, when joining a matchmaker result.
@@ -322,8 +323,8 @@ declare module 'nakama.socket' {
    */
   function match_join(
     socket: Socket,
-    match_id: string,
-    token: string,
+    match_id: string | undefined,
+    token: string | undefined,
     metadata: unknown,
     callback?: (message: unknown) => void,
   ): unknown;
