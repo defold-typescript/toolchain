@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { readdirSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import * as path from "node:path";
 import { AMBIENT_FILES, transpile } from "./transpile";
@@ -44,6 +44,24 @@ describe("ambient surface smoke", () => {
     );
     const seeded = new Set(Object.keys(AMBIENT_FILES));
     const missing = expected.filter((key) => !seeded.has(key));
+    expect(missing).toEqual([]);
+  });
+
+  // The published per-kind subpaths need a seeded shim of their own: without one
+  // a walled source's `@defold-typescript/types/<kind>` factory import does not
+  // resolve in the virtual program and lowers to a broken `require`. Derived from
+  // the shipped `exports` map so a newly-published kind cannot drop out.
+  test("every published per-kind subpath has a seeded shim", () => {
+    const exports = JSON.parse(readFileSync(path.join(TYPES_PKG_ROOT, "package.json"), "utf8"))
+      .exports as Record<string, { types?: string }>;
+    const kinds = Object.entries(exports)
+      .filter(([, target]) => target?.types?.startsWith("./generated/kinds/") === true)
+      .map(([key]) => key.replace(/^\.\//, ""));
+    expect(kinds.length).toBeGreaterThan(0);
+    const seeded = new Set(Object.keys(AMBIENT_FILES));
+    const missing = kinds.filter(
+      (kind) => !seeded.has(`node_modules/@defold-typescript/types/${kind}.d.ts`),
+    );
     expect(missing).toEqual([]);
   });
 });
