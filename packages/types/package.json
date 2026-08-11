@@ -27,6 +27,9 @@
     "./render-script": {
       "types": "./generated/kinds/render-script.d.ts"
     },
+    "./editor-script": {
+      "types": "./generated/kinds/editor-script.d.ts"
+    },
     "./core-types": {
       "types": "./src/core-types.ts"
     },

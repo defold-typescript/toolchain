@@ -2,11 +2,13 @@ import { describe, expect, test } from "bun:test";
 import { readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import {
+  EDITOR_MODULE_MANIFEST,
   generateBuiltinMessagesDeclaration,
   generateKindIndex,
   generateModuleDeclaration,
   generateVersionIndex,
   KIND_MODULE_MANIFEST,
+  type KindManifestEntry,
   MESSAGES_MANIFEST,
   MODULE_MANIFEST,
   VERSIONED_MODULE_MANIFEST,
@@ -14,9 +16,14 @@ import {
 
 const GENERATED = resolve(import.meta.dir, "..", "generated");
 
+// Every entry `regen` writes into `generated/` as a namespace declaration. The
+// editor set rides the same emit pipeline as the runtime modules while staying
+// out of MODULE_MANIFEST, so the drift/syntax/JSDoc guards must span both.
+const COMMITTED_MODULES = [...MODULE_MANIFEST, ...EDITOR_MODULE_MANIFEST];
+
 describe("regen drift guard", () => {
   test.each(
-    MODULE_MANIFEST.map((entry) => [entry.namespace, entry] as const),
+    COMMITTED_MODULES.map((entry) => [entry.namespace, entry] as const),
   )("%s: committed generated file matches a fresh pipeline run byte-for-byte", async (_namespace, entry) => {
     const { contents: fresh } = generateModuleDeclaration(entry);
     const committed = await Bun.file(resolve(GENERATED, entry.outFile)).text();
@@ -27,7 +34,7 @@ describe("regen drift guard", () => {
   });
 
   test.each(
-    MODULE_MANIFEST.map((entry) => [entry.outFile, entry] as const),
+    COMMITTED_MODULES.map((entry) => [entry.outFile, entry] as const),
   )("%s: committed generated file is syntactically-valid TypeScript", async (_outFile, entry) => {
     const content = await Bun.file(resolve(GENERATED, entry.outFile)).text();
     const transpiler = new Bun.Transpiler({ loader: "ts" });
@@ -35,7 +42,7 @@ describe("regen drift guard", () => {
   });
 
   test.each(
-    MODULE_MANIFEST.map((entry) => [entry.outFile, entry] as const),
+    COMMITTED_MODULES.map((entry) => [entry.outFile, entry] as const),
   )("%s: committed generated namespace has a JSDoc block", async (_outFile, entry) => {
     const content = await Bun.file(resolve(GENERATED, entry.outFile)).text();
     expect(content).toContain(`  namespace ${entry.namespace} {`);
@@ -47,7 +54,7 @@ describe("regen drift guard", () => {
   });
 
   test("every MODULE_MANIFEST entry has a committed generated file", () => {
-    for (const entry of MODULE_MANIFEST) {
+    for (const entry of COMMITTED_MODULES) {
       const path = resolve(GENERATED, entry.outFile);
       const exists = Bun.file(path).size > 0;
       if (!exists) {
@@ -62,7 +69,7 @@ describe("regen drift guard", () => {
   test("every committed generated/*.d.ts is referenced by exactly one manifest entry", () => {
     const onDisk = readdirSync(GENERATED).filter((f) => f.endsWith(".d.ts"));
     for (const file of onDisk) {
-      const moduleMatches = MODULE_MANIFEST.filter((e) => e.outFile === file).length;
+      const moduleMatches = COMMITTED_MODULES.filter((e) => e.outFile === file).length;
       const messagesMatches = MESSAGES_MANIFEST.outFile === file ? 1 : 0;
       const total = moduleMatches + messagesMatches;
       if (total !== 1) {
@@ -110,6 +117,58 @@ describe("reserved-name member recovery", () => {
     const { contents, dropped } = generateModuleDeclaration(json);
     expect(dropped).toEqual([]);
     expect(contents).toContain("export { _null as null };");
+  });
+});
+
+describe("editor namespace emit", () => {
+  const editorEntry = () => {
+    const entry = EDITOR_MODULE_MANIFEST.find((e) => e.namespace === "editor");
+    if (!entry) throw new Error("editor manifest entry missing");
+    return entry;
+  };
+
+  test("emits the in-scope command/transaction surface including a nested tx namespace", () => {
+    const { contents } = generateModuleDeclaration(editorEntry());
+    expect(contents).toContain("function get(");
+    expect(contents).toContain("function command(");
+    expect(contents).toContain("function transact(");
+    expect(contents).toContain("namespace tx {");
+    expect(contents).toContain("function set(");
+  });
+
+  test("emits no ui/prefs surface and reports the skipped members through dropped", () => {
+    const { contents, dropped } = generateModuleDeclaration(editorEntry());
+    expect(contents).not.toContain("namespace ui");
+    expect(contents).not.toContain("namespace prefs");
+    expect(dropped).toContain("editor.ui.label");
+    expect(dropped).toContain("editor.prefs.get");
+  });
+
+  test("emits none of the deferred editor-VM libraries that share the fixture", () => {
+    const { contents, dropped } = generateModuleDeclaration(editorEntry());
+    for (const name of ["function pprint(", "namespace http", "namespace json", "namespace zip"]) {
+      expect(contents).not.toContain(name);
+    }
+    expect(dropped).toContain("pprint");
+    expect(dropped).toContain("http.request");
+    expect(dropped).toContain("json.decode");
+  });
+
+  test("maps the editor handle tokens to opaque types and repairs the mangled array token", () => {
+    const { contents } = generateModuleDeclaration(editorEntry());
+    expect(contents).toContain(
+      'function command(opts: Record<string | number, unknown>): Opaque<"command">;',
+    );
+    expect(contents).toMatch(/function set\([^)]*\): Opaque<"transaction_step">;/);
+    expect(contents).toContain('function transact(txs: Opaque<"transaction_step">[]): void;');
+    expect(contents).not.toContain('"transaction_step["');
+    expect(contents).not.toContain("transaction_step[;");
+  });
+
+  test.each(
+    KIND_MODULE_MANIFEST.filter((e) => e.kind !== "editor-script").map((e) => [e.kind]),
+  )("%s: the runtime kind index never imports the editor namespace", (kind) => {
+    expect(generateKindIndex(kind)).not.toContain('import "../editor";');
   });
 });
 
@@ -171,38 +230,82 @@ describe("per-kind regen drift guard", () => {
 });
 
 describe("per-kind factory re-export", () => {
-  const KIND_FACTORY: Readonly<Record<string, string>> = {
-    script: "defineScript",
-    "gui-script": "defineGuiScript",
-    "render-script": "defineRenderScript",
-  };
-  const ALL_FACTORIES = ["defineScript", "defineGuiScript", "defineRenderScript"] as const;
+  // The manifest entry is the single source of truth for which factory a kind
+  // ships and where it comes from; a test-local table would let the two drift.
+  const factoryModule = (entry: KindManifestEntry): string =>
+    entry.factoryFrom ?? "../../src/lifecycle";
+  const ALL_FACTORIES = KIND_MODULE_MANIFEST.map((entry) => entry.factory);
 
   test.each(
-    KIND_MODULE_MANIFEST.map((entry) => [entry.kind] as const),
-  )("%s: generateKindIndex re-exports the matching factory and property helper types", (kind) => {
-    const factory = KIND_FACTORY[kind];
-    if (!factory) throw new Error(`no expected factory for kind ${kind}`);
-    const fresh = generateKindIndex(kind);
-    const reexport = `export { ${factory} } from "../../src/lifecycle";`;
-    expect(fresh).toContain(
-      `${reexport}\nexport type { ScriptProperties, ScriptProperty } from "../../src/lifecycle";`,
-    );
-    const occurrences = fresh.split(reexport).length - 1;
-    expect(occurrences).toBe(1);
+    KIND_MODULE_MANIFEST.map((entry) => [entry.kind, entry] as const),
+  )("%s: generateKindIndex re-exports its factory exactly once, from its own module", (_kind, entry) => {
+    const fresh = generateKindIndex(entry.kind);
+    const reexport = `export { ${entry.factory} } from "${factoryModule(entry)}";`;
+    expect(fresh).toContain(reexport);
+    expect(fresh.split(reexport).length - 1).toBe(1);
     expect(fresh).not.toContain("export {};");
   });
 
   test.each(
-    KIND_MODULE_MANIFEST.map((entry) => [entry.kind] as const),
-  )("%s: generateKindIndex re-exports neither non-matching factory", (kind) => {
-    const factory = KIND_FACTORY[kind];
-    if (!factory) throw new Error(`no expected factory for kind ${kind}`);
-    const fresh = generateKindIndex(kind);
+    KIND_MODULE_MANIFEST.map((entry) => [entry.kind, entry] as const),
+  )("%s: script-property helper types ride only the kinds that have script properties", (_kind, entry) => {
+    const fresh = generateKindIndex(entry.kind);
+    if (entry.propertyTypes === false) {
+      expect(fresh).not.toContain("ScriptProperty");
+      return;
+    }
+    expect(fresh).toContain(
+      `export { ${entry.factory} } from "${factoryModule(entry)}";\n` +
+        `export type { ScriptProperties, ScriptProperty } from "${factoryModule(entry)}";`,
+    );
+  });
+
+  test.each(
+    KIND_MODULE_MANIFEST.map((entry) => [entry.kind, entry] as const),
+  )("%s: generateKindIndex re-exports no other kind's factory", (_kind, entry) => {
+    const fresh = generateKindIndex(entry.kind);
     for (const other of ALL_FACTORIES) {
-      if (other === factory) continue;
+      if (other === entry.factory) continue;
       expect(fresh).not.toContain(other);
     }
+  });
+});
+
+describe("editor-script kind index", () => {
+  const importPaths = (index: string): string[] =>
+    [...index.matchAll(/^import "([^"]+)";$/gm)].map((match) => match[1] as string);
+
+  test("imports the editor namespace and nothing any runtime kind index imports", () => {
+    const runtime = new Set(
+      KIND_MODULE_MANIFEST.filter((entry) => entry.only === undefined).flatMap((entry) =>
+        importPaths(generateKindIndex(entry.kind)),
+      ),
+    );
+    expect(runtime.size).toBeGreaterThan(0);
+    expect(runtime.has("../editor")).toBe(false);
+
+    const editor = importPaths(generateKindIndex("editor-script"));
+    expect(editor).toEqual(["../editor"]);
+    for (const path of editor) expect(runtime.has(path)).toBe(false);
+  });
+
+  test("re-exports defineEditorScript and none of the runtime lifecycle surface", () => {
+    const fresh = generateKindIndex("editor-script");
+    expect(fresh).toContain('export { defineEditorScript } from "../../src/editor";');
+    for (const name of [
+      "ScriptProperty",
+      "defineScript",
+      "defineGuiScript",
+      "defineRenderScript",
+    ]) {
+      expect(fresh).not.toContain(name);
+    }
+  });
+
+  test("references the Lua 5.1 stdlib without the LuaJIT-only surface", () => {
+    const fresh = generateKindIndex("editor-script");
+    expect(fresh).toContain('/// <reference types="lua-types/5.1" />');
+    expect(fresh).not.toContain("jit-only");
   });
 });
 

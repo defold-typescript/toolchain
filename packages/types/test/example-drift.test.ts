@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { loadTranslations } from "../scripts/example-store-io";
-import { MODULE_MANIFEST } from "../scripts/regen";
+import { EDITOR_MODULE_MANIFEST, MODULE_MANIFEST } from "../scripts/regen";
 import { parseDefoldApiDoc } from "../src/api-doc";
 import { htmlToCodeText } from "../src/doc-comment";
 import { hashExampleSource, lookupTranslation } from "../src/example-store";
@@ -11,10 +11,12 @@ const EXAMPLES_DIR = resolve(import.meta.dir, "..", "examples");
 const GENERATED_DIR = resolve(import.meta.dir, "..", "generated");
 
 // FQN -> every distinct post-htmlToCodeText example body carried by an element
-// with that name (overloads can carry differing bodies under one FQN).
+// with that name (overloads can carry differing bodies under one FQN). Spans the
+// editor manifest too: its emitted members carry translations, so their stored
+// source hashes need a fixture body to match against or they read as stale.
 function exampleSourcesByFqn(): Map<string, Set<string>> {
   const byFqn = new Map<string, Set<string>>();
-  for (const entry of MODULE_MANIFEST) {
+  for (const entry of [...MODULE_MANIFEST, ...EDITOR_MODULE_MANIFEST]) {
     for (const fn of parseDefoldApiDoc(entry.doc).functions) {
       const lua = htmlToCodeText(fn.examples ?? "");
       if (lua === "") continue;
