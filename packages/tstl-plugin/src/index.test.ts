@@ -34,8 +34,16 @@ const SCENE_DOCUMENTS: Record<string, string> = {
   "main/hud.go": 'components {\n  id: "hud"\n  component: "/main/hud.gui"\n}\n',
 };
 
-function completionEntry(name: string): ts.CompletionEntry {
-  return { name, kind: "string" as ts.ScriptElementKind, kindModifiers: "", sortText: "0" };
+// `ts.Completions.SortText` values, which the public API does not export:
+// `LocationPriority` and `Deprecated(JavascriptIdentifiers)`, the greatest key
+// TypeScript itself produces.
+const LOCATION_PRIORITY = "11";
+const DEPRECATED_IDENTIFIER = "z18";
+
+// `sortText` is explicit at every call site on purpose: a shared hardcoded key
+// is what let contributed entries outrank the base service unnoticed.
+function completionEntry(name: string, sortText: string): ts.CompletionEntry {
+  return { name, kind: "string" as ts.ScriptElementKind, kindModifiers: "", sortText };
 }
 
 function completionInfo(entries: ts.CompletionEntry[]): ts.WithMetadata<ts.CompletionInfo> {
@@ -80,6 +88,12 @@ function completionProxy(options: {
 const ADDRESS_SOURCE = 'msg.post("#", "hello");\n';
 const FRAGMENT_POSITION = ADDRESS_SOURCE.indexOf('"#"') + 2;
 const NON_ADDRESS_POSITION = ADDRESS_SOURCE.indexOf('"hello"') + 1;
+
+// A literal with both halves populated, so a caret can sit in the path — the
+// case `ADDRESS_SOURCE` cannot express, since its fragment starts immediately.
+const PATH_FRAGMENT_SOURCE = 'msg.post("/enemy#sprite", "hello");\n';
+const PATH_POSITION = PATH_FRAGMENT_SOURCE.indexOf("/enemy") + 3;
+const SPRITE_POSITION = PATH_FRAGMENT_SOURCE.indexOf("#sprite") + 1;
 
 describe("tstl-plugin", () => {
   test("appends transpiler diagnostics to the base service's", () => {
@@ -129,7 +143,10 @@ describe("tstl-plugin", () => {
   });
 
   test("appends the project's component ids after the base entries, in order", () => {
-    const base = completionInfo([completionEntry("zzz"), completionEntry("#other")]);
+    const base = completionInfo([
+      completionEntry("zzz", LOCATION_PRIORITY),
+      completionEntry("#other", DEPRECATED_IDENTIFIER),
+    ]);
     const service = completionProxy({ source: ADDRESS_SOURCE, base });
     const result = service.getCompletionsAtPosition("main.ts", FRAGMENT_POSITION, undefined);
     expect(result?.entries.slice(0, 2)).toEqual(base.entries);
@@ -147,15 +164,57 @@ describe("tstl-plugin", () => {
   });
 
   test("returns the base result untouched outside an address slot", () => {
-    const base = completionInfo([completionEntry("zzz")]);
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
     const service = completionProxy({ source: ADDRESS_SOURCE, base });
     expect(service.getCompletionsAtPosition("main.ts", NON_ADDRESS_POSITION, undefined)).toBe(base);
   });
 
   test("degrades to the base result when the editor host cannot be read", () => {
-    const base = completionInfo([completionEntry("zzz")]);
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
     const service = completionProxy({ source: ADDRESS_SOURCE, base, serverHost: false });
     expect(service.getCompletionsAtPosition("main.ts", FRAGMENT_POSITION, undefined)).toBe(base);
+  });
+
+  test("returns the base result itself for a caret before the `#`", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const service = completionProxy({ source: PATH_FRAGMENT_SOURCE, base });
+    expect(service.getCompletionsAtPosition("main.ts", PATH_POSITION, undefined)).toBe(base);
+  });
+
+  test("offers ids for a caret at the fragment's first character, replacing only the fragment", () => {
+    const base = completionInfo([
+      completionEntry("zzz", LOCATION_PRIORITY),
+      completionEntry("#other", DEPRECATED_IDENTIFIER),
+    ]);
+    const service = completionProxy({ source: PATH_FRAGMENT_SOURCE, base });
+    const result = service.getCompletionsAtPosition("main.ts", SPRITE_POSITION, undefined);
+    expect(result?.entries.slice(0, 2)).toEqual(base.entries);
+    expect(result?.entries[0]).toBe(base.entries[0] as ts.CompletionEntry);
+    expect(result?.entries[1]).toBe(base.entries[1] as ts.CompletionEntry);
+    expect(result?.entries.map((e) => e.name)).toEqual(["zzz", "#other", "board", "hud"]);
+    for (const built of result?.entries.slice(2) ?? []) {
+      expect(built.replacementSpan).toEqual({ start: SPRITE_POSITION, length: "sprite".length });
+    }
+  });
+
+  test("merges without re-keying the base entries, and keys its own above them", () => {
+    const base = completionInfo([
+      completionEntry("zzz", LOCATION_PRIORITY),
+      completionEntry("#other", DEPRECATED_IDENTIFIER),
+    ]);
+    const service = completionProxy({ source: ADDRESS_SOURCE, base });
+    const result = service.getCompletionsAtPosition("main.ts", FRAGMENT_POSITION, undefined);
+    expect(result?.entries[0]).toBe(base.entries[0] as ts.CompletionEntry);
+    expect(result?.entries[1]).toBe(base.entries[1] as ts.CompletionEntry);
+    for (const appended of result?.entries.slice(2) ?? []) {
+      expect(appended.sortText > LOCATION_PRIORITY).toBe(true);
+      expect(appended.sortText > DEPRECATED_IDENTIFIER).toBe(true);
+    }
+  });
+
+  test("synthesizes nothing for a caret before the `#` when the base offers nothing", () => {
+    const service = completionProxy({ source: PATH_FRAGMENT_SOURCE, base: undefined });
+    expect(service.getCompletionsAtPosition("main.ts", PATH_POSITION, undefined)).toBeUndefined();
   });
 
   test("still suggests while the id universe has gaps — a suggestion claims no absence", () => {
