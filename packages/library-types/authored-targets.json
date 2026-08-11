@@ -417,6 +417,17 @@
       "generated": "generated/shutter.d.ts",
       "apiDoc": "api-doc/shutter.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-shutter/shutter/shutter.lua"]
+    },
+    {
+      "repo": "https://github.com/Klaleus/defold-checkpoint",
+      "ref": "e4268ffba8f4f968f3c27a1a066ac9660bef3a73",
+      "license": "Zlib",
+      "authored": "fixtures/authored/checkpoint.checkpoint.d.ts",
+      "moduleId": "checkpoint.checkpoint",
+      "namespace": "checkpoint",
+      "generated": "generated/checkpoint.d.ts",
+      "apiDoc": "api-doc/checkpoint.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-checkpoint/checkpoint/checkpoint.lua"]
     }
   ]
 }

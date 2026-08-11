@@ -1,0 +1,126 @@
+{
+  "info": {
+    "namespace": "checkpoint",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "project_title",
+      "brief": "The `project.title` from game.project, read once when the module loads. It is",
+      "description": "The `project.title` from game.project, read once when the module loads. It is\nthe name the save directory is derived from.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "project_save_path",
+      "brief": "The absolute path of the project's save directory, resolved once when the",
+      "description": "The absolute path of the project's save directory, resolved once when the\nmodule loads. Every path the other members take is relative to it, and `list`\nreturns paths relative to it. Ends with a separator, e.g.\n`/home/klaleus/.local/share/defold-checkpoint/`.",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "read",
+      "brief": "Loads a saved file. A path ending in `.json` is read as text and decoded with",
+      "description": "Loads a saved file. A path ending in `.json` is read as text and decoded with\n`json.decode`; anything else is loaded with `sys.load`. On success the loaded\nvalue is returned alone, so the error slot is absent; on any failure — the file\nmissing, unreadable, or holding invalid content — the first value is `false` and\nthe second is the error string. Name the saved shape through the type parameter\nto avoid casting at the call site.",
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "Path relative to `project_save_path`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The loaded value, or `false` and the error that stopped it.",
+          "types": [
+            "LuaMultiReturn<[ T | false, string | undefined ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "write",
+      "brief": "Saves a value, creating any missing directories along the path first. A path",
+      "description": "Saves a value, creating any missing directories along the path first. A path\nending in `.json` is encoded with `json.encode` and written as text and flushed\nimmediately; anything else is written with `sys.save`. Creating the directories\ngoes through `lfs`, so the project needs `britzl/defold-lfs` as a dependency;\nthis corpus does not type it.",
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "Path relative to `project_save_path`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "data",
+          "doc": "The value to save.",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "`true`, or `false` and the error that stopped it.",
+          "types": [
+            "LuaMultiReturn<[ boolean, string | undefined ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "exists",
+      "brief": "Whether a saved file exists. Returns a real boolean rather than the underlying",
+      "description": "Whether a saved file exists. Returns a real boolean rather than the underlying\nfile attributes, so it reads directly as a condition. Goes through `lfs`, so the\nproject needs `britzl/defold-lfs` as a dependency.",
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "Path relative to `project_save_path`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "list",
+      "brief": "Every saved file, found by walking the save directory breadth-first. Directories",
+      "description": "Every saved file, found by walking the save directory breadth-first. Directories\nare descended into rather than listed. Goes through `lfs`, so the project needs\n`britzl/defold-lfs` as a dependency.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The file paths, relative to `project_save_path`.",
+          "types": [
+            "string[]"
+          ]
+        }
+      ]
+    }
+  ]
+}
