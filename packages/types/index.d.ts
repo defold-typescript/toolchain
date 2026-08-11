@@ -131,3 +131,8 @@ export {
   type SignatureOverride,
   type SignatureStore,
 } from "./src/signature-store";
+export type {
+  UrlParameterClass,
+  UrlParameterEntry,
+  UrlParameterTable,
+} from "./src/url-parameters";
