@@ -6,6 +6,7 @@
 import type { UrlParameterTable } from "@defold-typescript/types";
 import * as ts from "typescript";
 import type { SceneComponentIndex } from "./scene-component-index";
+import { addressClassOfArgument } from "./url-address-slots";
 
 export interface UrlFragmentFinding {
   readonly fileName: string;
@@ -21,41 +22,6 @@ export type UrlFragmentReport =
 
 function isAmbient(fileName: string): boolean {
   return /[\\/]node_modules[\\/]/.test(fileName) || /(^|[\\/])lib\.[^\\/]*\.d\.ts$/.test(fileName);
-}
-
-function addresses(table: UrlParameterTable, fqn: string, parameter: string): boolean {
-  for (const entry of table) {
-    if (entry.fqn === fqn && entry.parameter === parameter) return entry.class !== "none";
-  }
-  return false;
-}
-
-// `getFullyQualifiedName` reports an ambient namespace member as
-// `global.msg.post`, while the table is keyed on the Lua-side `msg.post`.
-function tableKey(
-  checker: ts.TypeChecker,
-  callee: ts.PropertyAccessExpression,
-): string | undefined {
-  const symbol = checker.getSymbolAtLocation(callee.name);
-  if (!symbol) return undefined;
-  const fqn = checker.getFullyQualifiedName(symbol);
-  return fqn.startsWith("global.") ? fqn.slice("global.".length) : fqn;
-}
-
-// The parameter this literal occupies, or `undefined` when the call does not
-// resolve to a signature with a named parameter at that index. A rest parameter
-// and a missing one both count as unresolved: neither can be classified, and
-// guessing would report a fragment the project may well declare.
-function parameterName(
-  checker: ts.TypeChecker,
-  call: ts.CallExpression,
-  index: number,
-): string | undefined {
-  const declaration = checker.getResolvedSignature(call)?.declaration;
-  if (!declaration || !ts.isFunctionLike(declaration)) return undefined;
-  const parameter = declaration.parameters[index];
-  if (!parameter || parameter.dotDotDotToken || !ts.isIdentifier(parameter.name)) return undefined;
-  return parameter.name.text;
 }
 
 // Report every address-slot string literal — quoted or backtick-quoted, the two
@@ -84,27 +50,19 @@ export function checkUrlFragmentReachability(input: {
     if (isAmbient(sourceFile.fileName)) continue;
 
     const visit = (node: ts.Node): void => {
-      if (ts.isStringLiteralLike(node) && ts.isCallExpression(node.parent)) {
-        const call = node.parent;
-        const argumentIndex = call.arguments.indexOf(node);
-        if (argumentIndex !== -1 && ts.isPropertyAccessExpression(call.expression)) {
-          const fqn = tableKey(checker, call.expression);
-          const parameter = parameterName(checker, call, argumentIndex);
-          if (fqn !== undefined && parameter !== undefined && addresses(table, fqn, parameter)) {
-            const hash = node.text.indexOf("#");
-            const fragment = hash === -1 ? "" : node.text.slice(hash + 1);
-            if (fragment !== "" && !index.ids.has(fragment)) {
-              findings.push({
-                fileName: sourceFile.fileName,
-                start: node.getStart(sourceFile),
-                length: node.getWidth(sourceFile),
-                fragment,
-                message:
-                  `no \`.go\` or \`.collection\` in this project declares a component with the id ` +
-                  `"${fragment}", so this address cannot resolve at runtime`,
-              });
-            }
-          }
+      if (ts.isStringLiteralLike(node) && addressClassOfArgument(checker, table, node) !== "none") {
+        const hash = node.text.indexOf("#");
+        const fragment = hash === -1 ? "" : node.text.slice(hash + 1);
+        if (fragment !== "" && !index.ids.has(fragment)) {
+          findings.push({
+            fileName: sourceFile.fileName,
+            start: node.getStart(sourceFile),
+            length: node.getWidth(sourceFile),
+            fragment,
+            message:
+              `no \`.go\` or \`.collection\` in this project declares a component with the id ` +
+              `"${fragment}", so this address cannot resolve at runtime`,
+          });
         }
       }
       ts.forEachChild(node, visit);
