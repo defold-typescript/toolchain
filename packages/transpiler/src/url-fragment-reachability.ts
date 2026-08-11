@@ -58,8 +58,11 @@ function parameterName(
   return parameter.name.text;
 }
 
-// Report every address-slot string literal whose `#fragment` names a component
-// no `.go`/`.collection` in the project declares. A path is never reported:
+// Report every address-slot string literal — quoted or backtick-quoted, the two
+// kinds whose text is statically known — whose `#fragment` names a component no
+// `.go`/`.collection` in the project declares. A substituted template is out for
+// that same reason: its fragment is only known at runtime, so no absence in the
+// project's scene files can contradict it. A path is never reported:
 // `factory.create` can produce a game object at any path, but it can never
 // invent a component, which is what makes only the fragment decidable.
 export function checkUrlFragmentReachability(input: {
@@ -81,7 +84,7 @@ export function checkUrlFragmentReachability(input: {
     if (isAmbient(sourceFile.fileName)) continue;
 
     const visit = (node: ts.Node): void => {
-      if (ts.isStringLiteral(node) && ts.isCallExpression(node.parent)) {
+      if (ts.isStringLiteralLike(node) && ts.isCallExpression(node.parent)) {
         const call = node.parent;
         const argumentIndex = call.arguments.indexOf(node);
         if (argumentIndex !== -1 && ts.isPropertyAccessExpression(call.expression)) {

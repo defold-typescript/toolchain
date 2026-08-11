@@ -93,6 +93,39 @@ describe("checkUrlFragmentReachability", () => {
     expect(findingsOf('msg.url("/a", "#unknown");\n', universe("sprite"))).toEqual([]);
   });
 
+  test("judges a backtick address literal exactly as its quoted twin", () => {
+    const source = 'msg.post(`#unknown`, "hello");\n';
+    const findings = findingsOf(source, universe("sprite"));
+    expect(findings).toHaveLength(1);
+    const [finding] = findings;
+    expect(finding?.fragment).toBe("unknown");
+    expect(finding?.fileName).toBe("main.ts");
+    expect(finding?.start).toBe(source.indexOf("`#unknown`"));
+    expect(finding?.length).toBe("`#unknown`".length);
+  });
+
+  test("the table still decides which slot addresses for a backtick literal", () => {
+    const source = "const url = msg.url();\nmodel.get_mesh_enabled(url, `#torso`);\n";
+    expect(findingsOf(source, universe("sprite"))).toEqual([]);
+  });
+
+  test("the fragment rules still apply to a backtick literal", () => {
+    for (const call of [
+      'msg.post(`#`, "hello");',
+      'msg.post(`.`, "hello");',
+      'go.get(`/enemy`, "position");',
+      'msg.post(`hello`, "hello");',
+    ]) {
+      expect(findingsOf(`${call}\n`, universe("sprite"))).toEqual([]);
+    }
+    expect(findingsOf('msg.post(`#unknown`, "hello");\n', universe("unknown"))).toEqual([]);
+  });
+
+  test("never examines a substituted template", () => {
+    const source = `const id = "x";\nmsg.post(\`#\${id}\`, "hello");\n`;
+    expect(check(source, universe("sprite"))).toEqual({ kind: "checked", findings: [] });
+  });
+
   test("withholds every finding while the universe has gaps", () => {
     const reasons = ["main.collection: could not be parsed (line 3)"];
     const report = check('msg.post("#unknown", "hello");\n', {
