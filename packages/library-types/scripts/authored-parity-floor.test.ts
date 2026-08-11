@@ -243,6 +243,10 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
     "1e2d9ccb5d21a2837e559ece46fb2f0f79110f1dde740cea50edadd823782fc5",
   "fixtures/upstream-lua/nakama-defold/nakama/nakama.lua":
     "41bcfda63ef8122bb2d4e307c5ab6e1b30e254cff50c8f2d4b491a9c2711c501",
+  "fixtures/upstream-lua/nakama-defold/nakama/session.lua":
+    "fd72a6a981b0f0cf686fecd614aa25cb908de8ddca5243a84384552051541d54",
+  "fixtures/upstream-lua/nakama-defold/nakama/socket.lua":
+    "83429232422c2228e5938d7e7e86e1a41a7895952020e40499a11d4eb9dbba74",
   "fixtures/upstream-lua/nakama-defold/nakama/util/log.lua":
     "a25f86f26b1600d08e0ec1f06eddbd24527b8d1c0b66fb727bd2a6afbf785562",
   "fixtures/upstream-lua/platypus/platypus/platypus.lua":

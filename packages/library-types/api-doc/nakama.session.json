@@ -1,0 +1,315 @@
+{
+  "info": {
+    "namespace": "nakama.session",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "is_token_expired_soon",
+      "brief": "Whether the session's access token expires within the next twenty-four hours.",
+      "description": "Whether the session's access token expires within the next twenty-four hours.\nRefresh the session while this is true rather than waiting for it to expire.",
+      "parameters": [
+        {
+          "name": "session",
+          "doc": "A session created with `create`.",
+          "types": [
+            "Session"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_token_expired",
+      "brief": "Whether the session's access token has already expired.",
+      "description": "Whether the session's access token has already expired.",
+      "parameters": [
+        {
+          "name": "session",
+          "doc": "A session created with `create`.",
+          "types": [
+            "Session"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "expired",
+      "brief": "Upstream's backwards-compatible alias of `is_token_expired`, kept because older",
+      "description": "Upstream's backwards-compatible alias of `is_token_expired`, kept because older\ncode calls it. New code should call `is_token_expired`.",
+      "parameters": [
+        {
+          "name": "session",
+          "doc": "A session created with `create`.",
+          "types": [
+            "Session"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "is_refresh_token_expired",
+      "brief": "Whether the session's refresh token has expired. A session created without a",
+      "description": "Whether the session's refresh token has expired. A session created without a\nrefresh token counts as expired, there being nothing left to refresh with.",
+      "parameters": [
+        {
+          "name": "session",
+          "doc": "A session created with `create`.",
+          "types": [
+            "Session"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create",
+      "brief": "Builds a session from an authentication response, decoding the tokens it carries",
+      "description": "Builds a session from an authentication response, decoding the tokens it carries\nto read their expiry, username, user id and session variables.",
+      "parameters": [
+        {
+          "name": "data",
+          "doc": "The authentication response, which must carry a `token`.",
+          "types": [
+            "SessionData"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Session"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "store",
+      "brief": "Writes a session to disk under the project title, so it survives a restart.",
+      "description": "Writes a session to disk under the project title, so it survives a restart.",
+      "parameters": [
+        {
+          "name": "session",
+          "doc": "The session to store.",
+          "types": [
+            "Session"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "id",
+          "doc": "Names the saved session. Defaults to `nakama`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Whether the save succeeded.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "restore",
+      "brief": "Reads back a session written by `store`.",
+      "description": "Reads back a session written by `store`.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "The name the session was stored under. Defaults to `nakama`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The stored session, or `nil` if nothing usable was stored under that name.",
+          "types": [
+            "Session | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Session",
+      "properties": [
+        {
+          "name": "created",
+          "brief": "When `create` built this session, from `os.time()`.",
+          "description": "When `create` built this session, from `os.time()`.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "token",
+          "brief": "The access token the server issued, as the JWT string it arrived as.",
+          "description": "The access token the server issued, as the JWT string it arrived as.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "expires",
+          "brief": "The access token's `exp` claim, in seconds since the epoch.",
+          "description": "The access token's `exp` claim, in seconds since the epoch.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "username",
+          "brief": "The username the access token's `usn` claim carries.",
+          "description": "The username the access token's `usn` claim carries.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "user_id",
+          "brief": "The user id the access token's `uid` claim carries.",
+          "description": "The user id the access token's `uid` claim carries.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "vars",
+          "brief": "The session variables the access token's `vrs` claim carries, if any.",
+          "description": "The session variables the access token's `vrs` claim carries, if any.",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "refresh_token",
+          "brief": "The refresh token the server issued, if the response carried one.",
+          "description": "The refresh token the server issued, if the response carried one.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "refresh_token_expires",
+          "brief": "The refresh token's `exp` claim, in seconds since the epoch.",
+          "description": "The refresh token's `exp` claim, in seconds since the epoch.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "refresh_token_username",
+          "brief": "The username the refresh token's `usn` claim carries.",
+          "description": "The username the refresh token's `usn` claim carries.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "refresh_token_user_id",
+          "brief": "The user id the refresh token's `uid` claim carries.",
+          "description": "The user id the refresh token's `uid` claim carries.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "refresh_token_vars",
+          "brief": "The session variables the refresh token's `vrs` claim carries.",
+          "description": "The session variables the refresh token's `vrs` claim carries.",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "SessionData",
+      "properties": [
+        {
+          "name": "token",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "refresh_token",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}
