@@ -304,6 +304,22 @@ describe("loadLibraryProvenance — authored/forked libraries", () => {
     expect(meta.sourceUrl).not.toContain("ts-defold/library");
   });
 
+  // The same never-in-ts-defold shape as shutter, and the same author, so the
+  // maintained-here reading again comes from the authored-targets entry alone rather
+  // than from a vendored classification dir. Upstream publishes no tags or releases.
+  test("attributes checkpoint to Klaleus/defold-checkpoint as an authored-here forked library", () => {
+    const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("checkpoint");
+    expect(meta.authoredHere).toBe(true);
+    expect(meta.commit).toBe("e4268ffba8f4f968f3c27a1a066ac9660bef3a73");
+    expect(meta.authorUrl).toBe("https://github.com/Klaleus/defold-checkpoint");
+    expect(meta.sourceUrl).toBe(
+      "https://github.com/Klaleus/defold-checkpoint/tree/e4268ffba8f4f968f3c27a1a066ac9660bef3a73",
+    );
+    expect(meta.license).toBe("Zlib");
+    expect(meta.importString).toBe('import * as checkpoint from "checkpoint.checkpoint"');
+    expect(meta.sourceUrl).not.toContain("ts-defold/library");
+  });
+
   test("renders defcon's import with the namespace alias but the moduleId module path", () => {
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("defcon");
     expect(meta.importString).toBe('import * as defcon from "defcon.console"');
