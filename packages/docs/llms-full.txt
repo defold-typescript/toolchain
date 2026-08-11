@@ -1674,10 +1674,10 @@ An editor script extends the Defold **editor** itself — custom menu commands, 
 
 #### The factory
 
-Import `defineEditorScript` from `@defold-typescript/types` and `export default` a hooks table. The factory is an identity at runtime — it exists only to type the table — and the transpiler erases the import, so nothing of `@defold-typescript/types` reaches the emitted chunk.
+Import `defineEditorScript` from `@defold-typescript/types/editor-script` and `export default` a hooks table. The factory is an identity at runtime — it exists only to type the table — and the transpiler erases the import, so nothing of `@defold-typescript/types` reaches the emitted chunk.
 
 ```ts
-import { defineEditorScript } from "@defold-typescript/types";
+import { defineEditorScript } from "@defold-typescript/types/editor-script";
 
 export default defineEditorScript({
   get_commands: () => [
@@ -1685,6 +1685,8 @@ export default defineEditorScript({
   ],
 });
 ```
+
+The subpath, not the bare `@defold-typescript/types` main entry: the main entry re-exports the same factory but also pulls `go` / `msg` / `vmath` back into scope, which would defeat the wall the next section sets up. Both specifiers erase identically, so the only difference is what stays visible to the type checker.
 
 #### Artifact and discovery
 
@@ -1706,7 +1708,7 @@ Each `EditorCommand` returned by `get_commands` has:
 
 #### The `editor.*` API
 
-Editor scripts run in the editor's own Lua VM, so none of the runtime namespaces (`go`, `msg`, `vmath`, …) exist there. What does exist is `editor.*`, and it ships as its own entrypoint. Point a `tsconfig` covering your editor-script sources at it by hand:
+Editor scripts run in the editor's own Lua VM, so none of the runtime namespaces (`go`, `msg`, `vmath`, …) exist there. What does exist is `editor.*`, and it ships as the ambient half of the same `@defold-typescript/types/editor-script` entrypoint the factory above is imported from. Name it in `types` on a `tsconfig` covering your editor-script sources to bring that half in:
 
 ```jsonc
 // tsconfig for an editor-script source tree

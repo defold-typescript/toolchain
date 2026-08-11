@@ -225,7 +225,13 @@ export const MAPPING_TABLE_SLOTS: ReadonlyMap<string, { key: string; value: stri
 // honest, ts-defold-matching shape. Per-FQN, not a blanket "empty returnvalues
 // -> unknown" rule: `gui.set` also has empty returnvalues and `void` is correct
 // there.
-export const RETURN_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([["gui.get", "unknown"]]);
+export const RETURN_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
+  ["gui.get", "unknown"],
+  // Upstream documents the returned transaction step in prose only — its
+  // `returnvalues` is empty while every sibling `editor.tx.*` builder declares
+  // one, and `editor.transact()` takes exactly that.
+  ["editor.tx.add", 'Opaque<"transaction_step">'],
+]);
 
 // FQN-keyed allowlist of the `types.is_*` checks that genuinely narrow their
 // argument, mapped to the `DEFOLD_TYPE_MAP` token whose interface they prove.
@@ -1833,9 +1839,18 @@ function memberSignature(
   const original = prepared.original.parameters;
   const elementName = prepared.original.name;
   const cutoff = trailingOptionalCutoff(original);
-  const params = original
-    .map((p, i) => emitParameter(p, i, i >= cutoff, mapType, resolver, elementName, urlParameters))
-    .join(", ");
+  const varargIndex = original.findIndex(isVarargParameter);
+  const positional = (varargIndex === -1 ? original : original.slice(0, varargIndex)).map((p, i) =>
+    emitParameter(p, i, i >= cutoff, mapType, resolver, elementName, urlParameters),
+  );
+  const params = (
+    varargIndex === -1
+      ? positional
+      : [
+          ...positional,
+          emitRestParameter(original, varargIndex, mapType, resolver, elementName, urlParameters),
+        ]
+  ).join(", ");
   const ret = emitReturn(prepared.original.returnValues, mapType, resolver, elementName);
   const predicateToken = TYPE_PREDICATES.get(elementName);
   const soleParam = original[0];
@@ -1875,8 +1890,10 @@ function emitMethod(
 // Build the indented JSDoc lines for a function from its ref-doc prose. The
 // summary prefers the full `description`, falling back to the one-line `brief`;
 // each `@param` name is the parameter's *emitted* name (the `arg<index>`
-// fallback applies to non-identifier names, matching `emitParameter`) so the tag
-// resolves on hover; a single documented return becomes `@returns`. Returns `[]`
+// fallback applies to non-identifier names and a vararg drops its dots, matching
+// `emitParameter` and `emitRestParameter`) so the tag resolves on hover; a
+// parameter folded into a rest element union keeps its own tag, so the prose
+// documenting it survives. A single documented return becomes `@returns`. Returns `[]`
 // for a fully-undocumented function, leaving its emission byte-identical.
 function functionDocLines(
   fn: ApiFunction,
@@ -1884,7 +1901,7 @@ function functionDocLines(
   indent: string = INDENT,
 ): string[] {
   const params = fn.parameters.map((p, index) => ({
-    name: safeParamName(p.name, index),
+    name: emittedParamName(p, index),
     doc: htmlToDocText(p.doc),
   }));
   const onlyReturn = fn.returnValues.length === 1 ? fn.returnValues[0] : undefined;
@@ -1960,6 +1977,69 @@ function addressMapType(mapType: (t: string) => string, alias: string): (t: stri
   return (token) => (token === "string" ? alias : mapType(token));
 }
 
+// The mapped slot type of a parameter, without the name, `?` or `| undefined`
+// decoration — so a parameter folded into a rest element union contributes its
+// type alone.
+function parameterType(
+  p: ApiParameter,
+  mapType: (t: string) => string,
+  resolver: TableDocResolver,
+  elementName: string,
+  urlParameters: UrlParameterTable,
+): string {
+  const concrete = p.types.filter((t) => t !== "nil");
+  // The table is keyed by the *raw* ref-doc parameter name, not the emitted
+  // `safeParamName` fallback.
+  const alias = SCENE_ADDRESS_ALIASES[classifyUrlParameter(urlParameters, elementName, p.name)];
+  const slotMapType = alias === undefined ? mapType : addressMapType(mapType, alias);
+  return concrete.length > 0
+    ? mapSlotUnion(concrete, p.doc, slotMapType, true, resolver, elementName, "param", p.name)
+    : "unknown";
+}
+
+const VARARG_PREFIX = "...";
+
+function isVarargParameter(p: ApiParameter): boolean {
+  return p.name.startsWith(VARARG_PREFIX);
+}
+
+// A vararg's emitted name is its documented name minus the dots (`...commands`
+// -> `commands`); a bare `...` carries none, so it becomes `args`.
+function varargParamName(rawName: string, index: number): string {
+  const named = rawName.slice(VARARG_PREFIX.length);
+  return named === "" ? "args" : safeParamName(named, index);
+}
+
+function emittedParamName(p: ApiParameter, index: number): string {
+  return isVarargParameter(p) ? varargParamName(p.name, index) : safeParamName(p.name, index);
+}
+
+// TS1266 forbids a positional parameter after a rest one, so every parameter
+// documented *after* the vararg folds into the rest's element union — which is
+// the only shape that types `editor.execute("git", "log", { out: "capture" })`,
+// where upstream documents a trailing options table behind the vararg.
+function emitRestParameter(
+  params: readonly ApiParameter[],
+  varargIndex: number,
+  mapType: (t: string) => string,
+  resolver: TableDocResolver,
+  elementName: string,
+  urlParameters: UrlParameterTable,
+): string {
+  const vararg = params[varargIndex];
+  if (vararg === undefined) return "";
+  const members = [
+    ...new Set(
+      params
+        .slice(varargIndex)
+        .map((p) => parameterType(p, mapType, resolver, elementName, urlParameters)),
+    ),
+  ];
+  const first = members[0] ?? "unknown";
+  const element = members.length > 1 ? `(${members.join(" | ")})` : first;
+  return `...${varargParamName(vararg.name, varargIndex)}: ${element}[]`;
+}
+
 function emitParameter(
   p: ApiParameter,
   index: number,
@@ -1970,15 +2050,7 @@ function emitParameter(
   urlParameters: UrlParameterTable,
 ): string {
   const name = safeParamName(p.name, index);
-  const concrete = p.types.filter((t) => t !== "nil");
-  // The table is keyed by the *raw* ref-doc parameter name, not the emitted
-  // `safeParamName` fallback.
-  const alias = SCENE_ADDRESS_ALIASES[classifyUrlParameter(urlParameters, elementName, p.name)];
-  const slotMapType = alias === undefined ? mapType : addressMapType(mapType, alias);
-  const ts =
-    concrete.length > 0
-      ? mapSlotUnion(concrete, p.doc, slotMapType, true, resolver, elementName, "param", p.name)
-      : "unknown";
+  const ts = parameterType(p, mapType, resolver, elementName, urlParameters);
   // An interior doc-optional param (a required param follows, so the trailing-`?`
   // projection cannot mark it) keeps its optionality as `| undefined` — TSTL
   // lowers `undefined` to `nil`, the faithful call. Trailing optionals keep the

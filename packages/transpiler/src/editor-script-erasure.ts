@@ -8,9 +8,12 @@ import {
 
 export const EDITOR_FACTORY_MODULE = "@defold-typescript/types";
 export const EDITOR_FACTORY_NAME = "defineEditorScript";
-// Only the bare main entry for now; the walled `@defold-typescript/types/editor-script`
-// subpath import arrives with the per-kind editor wall (a deferred slice).
-const EDITOR_FACTORY_SPECIFIERS = new Set([EDITOR_FACTORY_MODULE]);
+// The bare main entry and the walled per-kind subpath the guide teaches; the
+// other kinds' subpaths export their own factories, never this one.
+const EDITOR_FACTORY_SPECIFIERS = new Set([
+  EDITOR_FACTORY_MODULE,
+  `${EDITOR_FACTORY_MODULE}/editor-script`,
+]);
 
 function resolvesToEditorFactoryExport(callee: ts.Expression, checker: ts.TypeChecker): boolean {
   let symbol = checker.getSymbolAtLocation(callee);
