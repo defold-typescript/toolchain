@@ -1179,12 +1179,12 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
-  test("the other thirty-five targets share no variadic member at all", () => {
+  test("the other thirty-six targets share no variadic member at all", () => {
     const moved = new Set(["deftest", "defmath", "zzfx"]);
     const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
       (entry) => !moved.has(entry.namespace),
     );
-    expect(untouched.length).toBe(35);
+    expect(untouched.length).toBe(36);
     for (const entry of untouched) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
@@ -1557,6 +1557,9 @@ describe("upstream prose the reader declined is reported, not absent", () => {
     );
     expect(refused).toEqual({
       boom: 5,
+      // The `-- Example: /home/klaleus/...` line above `project_save_path`, the module's
+      // only comment sitting directly on a member.
+      checkpoint: 1,
       defcon: 1,
       defmath: 36,
       "in.onscreen": 1,
@@ -1574,7 +1577,7 @@ describe("upstream prose the reader declined is reported, not absent", () => {
       rendy: 13,
       zzfx: 4,
     });
-    expect(Object.values(refused).reduce<number>((sum, n) => sum + (n as number), 0)).toBe(91);
+    expect(Object.values(refused).reduce<number>((sum, n) => sum + (n as number), 0)).toBe(92);
   });
 
   // The module writes every one of its blocks with a plain `--`, so the reader declines
@@ -1705,6 +1708,7 @@ describe("only a refusal the fork left unanswered is charged", () => {
     );
     expect(narrowed.map((report) => report.namespace).sort()).toEqual([
       "boom",
+      "checkpoint",
       "defcon",
       "defmath",
       "in.onscreen",
@@ -1723,11 +1727,11 @@ describe("only a refusal the fork left unanswered is charged", () => {
 
   // The axis closes: every refused block is now answered by the fork's own words or
   // excused by the ledger, and no target is left charging one. The raw term holding at
-  // 91 is what makes that a closure rather than a target quietly dropping out of the
+  // 92 is what makes that a closure rather than a target quietly dropping out of the
   // pass — a fork brief deleted, or a file un-vendored, moves one of the two.
-  test("no target charges a refusal, while the reader diagnostic still reads 91", () => {
+  test("no target charges a refusal, while the reader diagnostic still reads 92", () => {
     expect(reports.filter((report) => report.refusedDocBlocks > 0)).toEqual([]);
-    expect(reports.reduce((sum, report) => sum + report.refusedDocBlocksTotal, 0)).toBe(91);
+    expect(reports.reduce((sum, report) => sum + report.refusedDocBlocksTotal, 0)).toBe(92);
   });
 
   // The one target whose zero comes entirely from the ledger rather than from authored
@@ -1799,6 +1803,59 @@ describe("shutter.shutter declares the whole of its upstream module", () => {
     expect(report.refusedDocBlocksTotal).toBe(0);
     expect(report.refusedDocBlocks).toBe(0);
     expect(report.importedDocs).toBe(0);
+  });
+});
+
+// Built live from the target entry rather than read off `fidelity/authored/checkpoint.json`,
+// on the shutter precedent: an edit to either input this suite reads -- the committed
+// `api-doc/checkpoint.json` or the vendored `checkpoint/checkpoint.lua` -- reds here
+// instead of waiting for a regen. checkpoint is the successor `persist` abandoned, and
+// it arrives with no ts-defold binding behind it, so the measured agreement with
+// upstream is the only thing standing behind the declarations.
+describe("checkpoint.checkpoint declares the whole of its upstream module", () => {
+  const report = buildAuthoredParity(PACKAGE_ROOT, target("checkpoint"));
+
+  test("both axes close, with nothing missing and nothing invented", () => {
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.fieldCoverage).toBe(1);
+  });
+
+  // The counts are the half of the claim coverage alone cannot make: a fork that
+  // declared nothing and an upstream that exported nothing would also read 1.
+  test("the measured surface is upstream's four callables and two constants", () => {
+    expect(report.upstreamMembers).toBe(4);
+    expect(report.declaredMembers).toBe(4);
+    expect(report.upstreamFields).toBe(2);
+    expect(report.declaredFields).toBe(2);
+  });
+
+  // `create_directories` is a file-local `local function` the module never exposes, so
+  // declaring it would be a phantom rather than a convenience. `write` calls it, which
+  // is exactly what makes it look like a member from the outside.
+  test("nothing is excepted and the file-local helper stays undeclared", () => {
+    expect(report.parityExceptions).toEqual([]);
+    const declared = new Set(
+      apiDocElements(target("checkpoint"))
+        .filter((element) => element.type === "FUNCTION")
+        .map((element) => element.name),
+    );
+    expect(declared).not.toContain("create_directories");
+    expect(declared).toEqual(new Set(["exists", "list", "read", "write"]));
+  });
+
+  // The one `--` block upstream writes sits above `project_save_path`, and the reader
+  // declines it. The fork answers it with its own brief, so the narrowed term reads 0
+  // while the raw one keeps the refusal visible rather than reading as undocumented.
+  test("upstream's one declined block is answered by the fork rather than charged", () => {
+    expect(report.refusedDocBlocksTotal).toBe(1);
+    expect(report.refusedDocBlocks).toBe(0);
+    expect(report.importedDocs).toBe(0);
+    expect(report.undocumentedMembers).toBe(0);
   });
 });
 

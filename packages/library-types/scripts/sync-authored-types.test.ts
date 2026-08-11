@@ -2015,6 +2015,107 @@ describe("shutter.shutter type claims upstream states only in its body", () => {
   });
 });
 
+// Parity compares names, counts and arities, so every claim below is invisible to it:
+// plain Lua states these only by what its `return` statements carry. Asserted against
+// the lowered api-doc model the golden and the docs-site are both built from rather
+// than against the fork's text, so the emit path is exercised rather than restated.
+describe("checkpoint.checkpoint type claims upstream states only in its body", () => {
+  const AUTHORED = "fixtures/authored/checkpoint.checkpoint.d.ts";
+
+  function element(name: string): Record<string, unknown> {
+    const found = apiDocElements("checkpoint").find((entry) => entry.name === name);
+    if (!found) throw new Error(`api-doc/checkpoint.json declares no ${name}`);
+    return found;
+  }
+
+  function returnTypes(name: string): string[] {
+    const { returnvalues } = element(name) as { returnvalues?: { types: string[] }[] };
+    return (returnvalues ?? []).flatMap((value) => value.types);
+  }
+
+  test("checkpoint is registered under its bare namespace and measures rather than asserts", () => {
+    const entry = readAuthoredTargets(PACKAGE_ROOT).find((t) => t.namespace === "checkpoint");
+    expect(entry).toBeDefined();
+    expect(entry?.moduleId).toBe("checkpoint.checkpoint");
+    expect(entry?.repo).toBe("https://github.com/Klaleus/defold-checkpoint");
+    expect(entry?.ref).toBe("e4268ffba8f4f968f3c27a1a066ac9660bef3a73");
+    expect(entry?.license).toBe("Zlib");
+    expect(entry?.authored).toBe(AUTHORED);
+    expect(entry?.generated).toBe("generated/checkpoint.d.ts");
+    expect(entry?.apiDoc).toBe("api-doc/checkpoint.json");
+    expect(entry?.parityVerdict).toBeUndefined();
+    expect(entry?.upstreamLua).toEqual([
+      "fixtures/upstream-lua/defold-checkpoint/checkpoint/checkpoint.lua",
+    ]);
+  });
+
+  // Every failure path is `return false, err` and the success path is a bare
+  // `return data`, so the second slot is genuinely absent on success. Collapsing the
+  // first slot to `unknown` would hide the `false` arm a caller has to narrow against.
+  test("read carries the loaded value beside the false arm and an optional error", () => {
+    expect(returnTypes("read")).toEqual(["LuaMultiReturn<[ T | false, string | undefined ]>"]);
+    const { parameters } = element("read") as {
+      parameters?: { name: string; types: string[]; is_optional: string }[];
+    };
+    expect(parameters?.length).toBe(1);
+    expect(parameters?.[0]).toMatchObject({
+      name: "path",
+      types: ["string"],
+      is_optional: "False",
+    });
+  });
+
+  // `return true` on success, `return false, err` on each of the four failure paths.
+  // A bare `boolean` would compile at every call site and drop the error string.
+  test("write returns the success flag paired with an optional error", () => {
+    expect(returnTypes("write")).toEqual(["LuaMultiReturn<[ boolean, string | undefined ]>"]);
+  });
+
+  // `lfs.attributes(...) and true or false` — a real boolean, not the attributes table
+  // and not a truthy value, which is what makes `if exists(path)` safe to write.
+  test("exists returns a boolean and list returns save-relative path strings", () => {
+    expect(returnTypes("exists")).toEqual(["boolean"]);
+    expect(returnTypes("list")).toEqual(["string[]"]);
+  });
+
+  // Both resolve once at load from `sys.get_config_string` and `sys.get_save_file`, so
+  // they are string constants rather than accessors.
+  test("the two module constants are strings", () => {
+    for (const name of ["project_title", "project_save_path"]) {
+      const field = element(name) as { type: string; types: string[] };
+      expect(field.type).toBe("VARIABLE");
+      expect(field.types).toEqual(["string"]);
+    }
+  });
+
+  test("the api-doc publishes the four functions and two constants", () => {
+    const doc = JSON.parse(readFileSync(join(PACKAGE_ROOT, "api-doc/checkpoint.json"), "utf8")) as {
+      info: { namespace: string; description?: string };
+      elements: { name: string; type: string }[];
+    };
+    expect(doc.info.namespace).toBe("checkpoint");
+    expect(
+      doc.elements
+        .filter((e) => e.type === "FUNCTION")
+        .map((e) => e.name)
+        .sort(),
+    ).toEqual(["exists", "list", "read", "write"]);
+    expect(
+      doc.elements
+        .filter((e) => e.type === "VARIABLE")
+        .map((e) => e.name)
+        .sort(),
+    ).toEqual(["project_save_path", "project_title"]);
+    // The module JSDoc is `@see` + `@noResolution` only, as with shutter, so the page
+    // intro comes from the namespace-keyed description instead.
+    expect((doc.info.description ?? "").length).toBe(0);
+    const descriptions = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "library-descriptions.json"), "utf8"),
+    ) as Record<string, string>;
+    expect(descriptions.checkpoint?.length).toBeGreaterThan(0);
+  });
+});
+
 describe("nakama.session type claims upstream states only in its body", () => {
   function element(name: string): Record<string, unknown> {
     const found = apiDocElements("nakama.session").find((entry) => entry.name === name);
