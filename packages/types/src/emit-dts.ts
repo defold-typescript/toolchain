@@ -2230,7 +2230,7 @@ export function isKnownDefoldTypeToken(token: string): boolean {
   );
 }
 
-function defaultMapType(token: string): string {
+export function defaultMapType(token: string): string {
   if (Object.hasOwn(DEFOLD_TYPE_MAP, token)) {
     const mapped = DEFOLD_TYPE_MAP[token];
     if (typeof mapped === "string") return mapped;

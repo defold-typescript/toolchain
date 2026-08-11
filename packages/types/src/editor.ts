@@ -3,10 +3,11 @@
 // makes them a fourth, disjoint script kind — lowered to a chunk-level
 // `return <hooks table>` rather than the runtime kinds' flat top-level globals.
 //
-// This is the keystone surface only. The full typed `editor.*` global
-// (`get`/`transact`/`command` + the editor-VM `http`/`json`/`zip`) and the
-// per-kind API walls are a later slice, so a command's `run`/`active` receive a
-// loosely-typed opts bag for now.
+// The typed `editor.*` global (`get`/`transact`/`command`) and the walled
+// `@defold-typescript/types/editor-script` entrypoint ship alongside this file.
+// Still a later slice: the editor VM's own `http`/`json`/`zip` libraries, and
+// typing a command's `query`/`active`/`run`, so those receive a loosely-typed
+// opts bag for now.
 
 /**
  * A single command an editor script contributes: a label, the editor UI

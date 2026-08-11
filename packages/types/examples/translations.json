@@ -149,6 +149,42 @@
       "ts": "compute.set_textures(\"/my_compute.computec\", { my_texture: resource.texture() });"
     }
   ],
+  "editor.bob": [
+    {
+      "sourceHash": "3d4699538f2b8207",
+      "ts": "// Print help in the console:\neditor.bob({ help: true });\n\n// Bundle the game for the host platform:\nconst opts = { archive: true, platform: editor.platform };\neditor.bob(opts, \"distclean\", \"resolve\", \"build\", \"bundle\");\n\n// Using snake_cased and repeated options:\nconst bundleOpts = {\n  archive: true,\n  platform: editor.platform,\n  build_server: \"https://build.my-company.com\",\n  settings: [\"test.ini\", \"headless.ini\"],\n};\neditor.bob(bundleOpts, \"distclean\", \"resolve\", \"build\");"
+    }
+  ],
+  "editor.command": [
+    {
+      "sourceHash": "41caebab7bdd6774",
+      "ts": "// Print Git history for a file:\neditor.command({\n  label: \"Git History\",\n  query: { selection: { type: \"resource\", cardinality: \"one\" } },\n  run: (opts) => {\n    editor.execute(\"git\", \"log\", \"--follow\", `.${editor.get(opts.selection, \"path\")}`, {\n      reload_resources: false,\n    });\n  },\n});"
+    }
+  ],
+  "editor.create_directory": [
+    {
+      "sourceHash": "0a8ce244797b5428",
+      "ts": "editor.create_directory(\"/assets/gen\");"
+    }
+  ],
+  "editor.create_resources": [
+    {
+      "sourceHash": "b650f0d98eccb0fd",
+      "ts": "// Create a single resource from template:\neditor.create_resources([\"/npc.go\"]);\n\n// Create multiple resources:\neditor.create_resources([\"/npc.go\", \"/levels/1.collection\", \"/levels/2.collection\"]);\n\n// Create a resource with custom content:\neditor.create_resources([[\"/npc.script\", \"go.property('hp', 100)\"]]);"
+    }
+  ],
+  "editor.delete_directory": [
+    {
+      "sourceHash": "48be8868842c3e45",
+      "ts": "editor.delete_directory(\"/assets/gen\");"
+    }
+  ],
+  "editor.execute": [
+    {
+      "sourceHash": "b22ea40a2a3595b2",
+      "ts": "// Make a directory with spaces in it:\neditor.execute(\"mkdir\", \"new dir\");\n\n// Read the git status:\nconst status = editor.execute(\"git\", \"status\", \"--porcelain\", {\n  reload_resources: false,\n  out: \"capture\",\n});"
+    }
+  ],
   "factory.create": [
     {
       "sourceHash": "d2cd2037a9127ec6",

@@ -247,7 +247,7 @@ interface MaterializeVersionedSurfaceModule {
     universalModules: readonly string[];
     restrictedModule: string | null;
   }) => string;
-  readonly KIND_MODULE_MANIFEST: readonly KindManifestEntry[];
+  readonly RUNTIME_KIND_MANIFEST: readonly KindManifestEntry[];
 }
 
 // gui/render are the only kind-restricted namespaces; every other module is
@@ -310,7 +310,7 @@ export async function materializeRefDocSurface(
     const universalModules = surfaceModules.filter((base) => !RESTRICTED_NAMESPACES.has(base));
     const kindsDir = path.join(absDir, "kinds");
     mkdirSync(kindsDir, { recursive: true });
-    for (const entry of mod.KIND_MODULE_MANIFEST) {
+    for (const entry of mod.RUNTIME_KIND_MANIFEST) {
       const restrictedModule =
         entry.restricted && surfaceModules.includes(entry.restricted) ? entry.restricted : null;
       writeFileSync(
@@ -324,7 +324,7 @@ export async function materializeRefDocSurface(
     pkg.exports = {
       ".": { types: "./index.d.ts" },
       ...Object.fromEntries(
-        mod.KIND_MODULE_MANIFEST.map((entry) => [
+        mod.RUNTIME_KIND_MANIFEST.map((entry) => [
           `./${entry.kind}`,
           { types: `./kinds/${entry.kind}.d.ts` },
         ]),

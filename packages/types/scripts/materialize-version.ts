@@ -4,13 +4,13 @@ import {
   type ApiTarget,
   generateModuleDeclaration,
   generateVersionIndex,
-  KIND_MODULE_MANIFEST,
   LUA_STDLIB_REFERENCES,
   type ResolveTargetOptions,
+  RUNTIME_KIND_MANIFEST,
   resolveTargetModules,
 } from "./regen";
 
-export { KIND_MODULE_MANIFEST } from "./regen";
+export { RUNTIME_KIND_MANIFEST } from "./regen";
 
 export interface RenderMaterializedKindIndexOptions {
   readonly kind: string;
@@ -23,7 +23,7 @@ export interface RenderMaterializedKindIndexOptions {
 // `@defold-typescript/types/lifecycle` subpath (the materialized surface has no
 // relative `src/lifecycle` to reach). Pure: returns a string, no FS.
 export function renderMaterializedKindIndex(opts: RenderMaterializedKindIndexOptions): string {
-  const entry = KIND_MODULE_MANIFEST.find((e) => e.kind === opts.kind);
+  const entry = RUNTIME_KIND_MANIFEST.find((e) => e.kind === opts.kind);
   if (!entry) throw new Error(`unknown script kind: ${opts.kind}`);
   const universal = [...new Set(["engine-globals", ...opts.universalModules])].sort();
   const lines = universal.map((mod) => `import "../${mod}";`);

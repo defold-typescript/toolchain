@@ -35,4 +35,24 @@ Each `EditorCommand` returned by `get_commands` has:
 - `active` (optional) — decides whether the command is currently enabled; omit to always enable.
 - `run` — invoked when the command is chosen.
 
-> [!NOTE] `run` and `active` receive a loosely-typed opts bag for now. The full typed `editor.*` global API and a per-kind [wall](./wall.md) entrypoint are deferred follow-ups, so there is no `@defold-typescript/types` editor-script subpath yet and `wall` does not target editor-script directories.
+> [!NOTE] `query`, `run`, and `active` receive a loosely-typed opts bag for now. Typing them is a deferred follow-up.
+
+## The `editor.*` API
+
+Editor scripts run in the editor's own Lua VM, so none of the runtime namespaces (`go`, `msg`, `vmath`, …) exist there. What does exist is `editor.*`, and it ships as its own entrypoint. Point a `tsconfig` covering your editor-script sources at it by hand:
+
+```jsonc
+// tsconfig for an editor-script source tree
+{
+  "compilerOptions": {
+    "types": ["@defold-typescript/types/editor-script"]
+  }
+}
+```
+
+Under that config `editor.get`, `editor.command`, `editor.transact` and the `editor.tx.*` builders type-check, while `go.*` / `msg.*` / `vmath.*` are compile errors — the same two-way [wall](./wall.md) the runtime kinds get.
+
+Two things are deliberately not in yet:
+
+- **The editor VM's own libraries.** Its `http`, `json`, `zip`, `zlib`, `pprint` and `tilemap.tiles` are documented alongside `editor.*` upstream but are separate globals, and they are not typed yet. Neither are `editor.ui.*` and `editor.prefs.*`.
+- **Automatic walling.** Because that surface is incomplete, [`wall`](./wall.md) does not offer editor-script directories as a target — narrowing one today would reject calls the editor accepts. Setting `types` by hand, as above, is the opt-in.

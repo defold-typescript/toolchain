@@ -14,8 +14,11 @@ import {
 
 // The kinds a wall may narrow against. Must stay in sync with
 // `KIND_MODULE_MANIFEST` (regen.ts). Also gates source-wall eligibility: a kind
-// recognized for emit but absent here (e.g. `editor-script`, which has no
-// per-kind entrypoint yet) is never offered as a wall target.
+// recognized for emit but absent here is never offered as a wall target.
+// `editor-script` is absent on purpose: its entrypoint exists but does not yet
+// carry the editor VM's `http`/`json`/`zip` libraries, so auto-walling an
+// editor-script directory would remove working API from an author's program.
+// It stays opt-in until that library split lands.
 const PINNED_KIND_SUBPATHS: readonly string[] = ["script", "gui-script", "render-script"];
 
 // `materializeRefDocSurface` writes the per-kind modules at

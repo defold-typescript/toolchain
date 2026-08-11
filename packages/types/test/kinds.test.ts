@@ -49,6 +49,17 @@ describe("per-kind ambient API wall — consumer tsconfig proof", () => {
     expect(exitCode).toBe(0);
   });
 
+  test("editor-script surface accepts editor.* and walls off the runtime namespaces", () => {
+    const { exitCode, output } = typecheck("tsconfig.editor-script.json");
+    if (exitCode !== 0) {
+      throw new Error(
+        `editor-script surface proof failed — either go/vmath/msg/editor.ui leaked in ` +
+          `(unused @ts-expect-error) or an editor.* call did not resolve:\n${output}`,
+      );
+    }
+    expect(exitCode).toBe(0);
+  });
+
   test("script surface ships ambient hash() unified with the imported branded Hash", () => {
     const { exitCode, output } = typecheck("tsconfig.unified-hash.json");
     if (exitCode !== 0) {
