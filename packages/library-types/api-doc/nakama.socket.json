@@ -589,7 +589,7 @@
           "name": "name",
           "doc": "The match name, or nil to let the server generate one.",
           "types": [
-            "string"
+            "string | undefined"
           ],
           "is_optional": "False"
         },
@@ -615,8 +615,8 @@
     {
       "type": "FUNCTION",
       "name": "match_join",
-      "brief": "Joins a match by id, or by the token a matchmaker result carried.",
-      "description": "Joins a match by id, or by the token a matchmaker result carried.",
+      "brief": "Joins a match by id, or by the token a matchmaker result carried. Exactly one of the",
+      "description": "Joins a match by id, or by the token a matchmaker result carried. Exactly one of the\ntwo identifiers is set; the other is nil.",
       "parameters": [
         {
           "name": "socket",
@@ -630,7 +630,7 @@
           "name": "match_id",
           "doc": "The match to join.",
           "types": [
-            "string"
+            "string | undefined"
           ],
           "is_optional": "False"
         },
@@ -638,7 +638,7 @@
           "name": "token",
           "doc": "The match token, when joining a matchmaker result.",
           "types": [
-            "string"
+            "string | undefined"
           ],
           "is_optional": "False"
         },
@@ -2293,7 +2293,7 @@
               "name": "name",
               "doc": "",
               "types": [
-                "string"
+                "string | undefined"
               ],
               "is_optional": "False"
             },
@@ -2326,7 +2326,7 @@
               "name": "match_id",
               "doc": "",
               "types": [
-                "string"
+                "string | undefined"
               ],
               "is_optional": "False"
             },
@@ -2334,7 +2334,7 @@
               "name": "token",
               "doc": "",
               "types": [
-                "string"
+                "string | undefined"
               ],
               "is_optional": "False"
             },
