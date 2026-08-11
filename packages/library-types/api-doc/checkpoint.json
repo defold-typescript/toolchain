@@ -28,6 +28,7 @@
       "name": "read",
       "brief": "Loads a saved file. A path ending in `.json` is read as text and decoded with",
       "description": "Loads a saved file. A path ending in `.json` is read as text and decoded with\n`json.decode`; anything else is loaded with `sys.load`. On success the loaded\nvalue is returned alone, so the error slot is absent; on any failure — the file\nmissing, unreadable, or holding invalid content — the first value is `false` and\nthe second is the error string. Name the saved shape through the type parameter\nto avoid casting at the call site.",
+      "generics": "<T = unknown>",
       "parameters": [
         {
           "name": "path",

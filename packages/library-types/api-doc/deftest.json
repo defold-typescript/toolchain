@@ -162,6 +162,7 @@
       "name": "assert_equal",
       "brief": "",
       "description": "",
+      "generics": "<T>",
       "parameters": [
         {
           "name": "a",
@@ -480,6 +481,7 @@
       "name": "assert_type",
       "brief": "",
       "description": "",
+      "generics": "<T>",
       "parameters": [
         {
           "name": "a",
@@ -542,6 +544,7 @@
       "name": "assert_not_equal",
       "brief": "",
       "description": "",
+      "generics": "<T>",
       "parameters": [
         {
           "name": "a",
@@ -716,6 +719,7 @@
       "name": "assert_not_type",
       "brief": "",
       "description": "",
+      "generics": "<T>",
       "parameters": [
         {
           "name": "a",
