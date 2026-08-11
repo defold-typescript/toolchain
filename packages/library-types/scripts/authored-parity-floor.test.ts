@@ -183,6 +183,8 @@ const UPSTREAM_LUA_HASHES: Record<string, string> = {
     "6756f6f5c8ff7820ef6cf2fa9953df9ac68f86356eb0074f86c072fb36f5995b",
   "fixtures/upstream-lua/defmath/defmath/defmath.lua":
     "212a09cd57b1bac464d4a3cae52121780bf00cc900145e0f8d4114b78ccaa3e6",
+  "fixtures/upstream-lua/defold-checkpoint/checkpoint/checkpoint.lua":
+    "2d204c5da4edd7e41d781a5c4f01471aad8c955036c957bf027238f00b266e02",
   "fixtures/upstream-lua/defold-input/in/accelerometer.lua":
     "42a0b89d8ce0989fab9486a3b9dafda742d93d92e4b0097b9f1112cf9eefbc45",
   "fixtures/upstream-lua/defold-input/in/button.lua":
