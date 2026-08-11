@@ -128,6 +128,64 @@ describe("the nakama.util.log parity findings", () => {
   });
 });
 
+// Built live from the vendored `nakama/session.lua` and the committed
+// `api-doc/nakama.session.json` rather than read off `fidelity/authored/nakama.session.json`,
+// so a fork edit reds here at once instead of waiting for a regen. The module exports no
+// constant at all, which is why the field axis reads 1 over an empty denominator — the
+// `nakama.util.log` artifact is the precedent for that reading.
+describe("the nakama.session parity findings", () => {
+  const report = buildAuthoredParity(PACKAGE_ROOT, target("nakama.session"));
+
+  test("all seven upstream members are declared, at upstream arity", () => {
+    expect(report.upstreamMembers).toBe(7);
+    expect(report.declaredMembers).toBe(7);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+  });
+
+  // `decode_token` and `get_session_save_filename` are `local function`s the module never
+  // assigns to `M`; declaring either would show up here as a phantom rather than as a
+  // convenience.
+  test("the module exports no constant, and nothing is invented on either axis", () => {
+    expect(report.upstreamFields).toBe(0);
+    expect(report.declaredFields).toBe(0);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.fieldCoverage).toBe(1);
+    expect(report.parityExceptions).toEqual([]);
+  });
+});
+
+// The largest surface the nakama family adds, and the one where a dropped member is
+// easiest to miss by eye: `party_*` alone runs to eleven calls of near-identical shape.
+// Built live from the vendored `nakama/socket.lua` and the committed api-doc for the
+// same reason as the session report above.
+describe("the nakama.socket parity findings", () => {
+  const report = buildAuthoredParity(PACKAGE_ROOT, target("nakama.socket"));
+
+  test("all forty-five upstream members are declared, at upstream arity", () => {
+    expect(report.upstreamMembers).toBe(45);
+    expect(report.declaredMembers).toBe(45);
+    expect(report.missingMembers).toEqual([]);
+    expect(report.phantomMembers).toEqual([]);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+  });
+
+  // `on_socket_message` and `socket_send` are `local function`s the module never assigns
+  // to `M`, so either one declared would read here as a phantom.
+  test("upstream's twelve constants are all declared, and nothing is invented", () => {
+    expect(report.upstreamFields).toBe(12);
+    expect(report.declaredFields).toBe(12);
+    expect(report.missingFields).toEqual([]);
+    expect(report.phantomFields).toEqual([]);
+    expect(report.fieldCoverage).toBe(1);
+    expect(report.parityExceptions).toEqual([]);
+  });
+});
+
 describe("the richtext.color parity findings", () => {
   const report = buildAuthoredParity(PACKAGE_ROOT, target("richtext.color"));
 
@@ -1121,12 +1179,12 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
-  test("the other thirty-three targets share no variadic member at all", () => {
+  test("the other thirty-five targets share no variadic member at all", () => {
     const moved = new Set(["deftest", "defmath", "zzfx"]);
     const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
       (entry) => !moved.has(entry.namespace),
     );
-    expect(untouched.length).toBe(33);
+    expect(untouched.length).toBe(35);
     for (const entry of untouched) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
@@ -1506,12 +1564,17 @@ describe("upstream prose the reader declined is reported, not absent", () => {
       "monarch.monarch": 6,
       "monarch.transitions.gui": 1,
       nakama: 3,
+      // Twelve of socket's thirteen sit above a constant, and the thirteenth is
+      // `channel_join`, whose `---` block runs straight on from the `-- messages`
+      // section header above it with no blank line between them.
+      "nakama.session": 1,
+      "nakama.socket": 13,
       "nakama.util.log": 1,
       persist: 5,
       rendy: 13,
       zzfx: 4,
     });
-    expect(Object.values(refused).reduce<number>((sum, n) => sum + (n as number), 0)).toBe(77);
+    expect(Object.values(refused).reduce<number>((sum, n) => sum + (n as number), 0)).toBe(91);
   });
 
   // The module writes every one of its blocks with a plain `--`, so the reader declines
@@ -1649,6 +1712,8 @@ describe("only a refusal the fork left unanswered is charged", () => {
       "monarch.monarch",
       "monarch.transitions.gui",
       "nakama",
+      "nakama.session",
+      "nakama.socket",
       "nakama.util.log",
       "persist",
       "rendy",
@@ -1658,11 +1723,11 @@ describe("only a refusal the fork left unanswered is charged", () => {
 
   // The axis closes: every refused block is now answered by the fork's own words or
   // excused by the ledger, and no target is left charging one. The raw term holding at
-  // 77 is what makes that a closure rather than a target quietly dropping out of the
+  // 91 is what makes that a closure rather than a target quietly dropping out of the
   // pass — a fork brief deleted, or a file un-vendored, moves one of the two.
-  test("no target charges a refusal, while the reader diagnostic still reads 77", () => {
+  test("no target charges a refusal, while the reader diagnostic still reads 91", () => {
     expect(reports.filter((report) => report.refusedDocBlocks > 0)).toEqual([]);
-    expect(reports.reduce((sum, report) => sum + report.refusedDocBlocksTotal, 0)).toBe(77);
+    expect(reports.reduce((sum, report) => sum + report.refusedDocBlocksTotal, 0)).toBe(91);
   });
 
   // The one target whose zero comes entirely from the ledger rather than from authored
@@ -1759,5 +1824,92 @@ describe("the artifact shape is diff-stable", () => {
       expect(report.fieldCoverage).toBeLessThanOrEqual(1);
       expect(report.fieldCoverage === 1).toBe(report.missingFields.length === 0);
     }
+  });
+});
+
+// The residual signature-correction slice withdrew 26 members from `nakama`, and the
+// goal this file closes claims that was a relocation for eleven of them and a correction
+// for the other fifteen. The claim is only worth as much as it is checkable, so it is
+// resolved here against the three committed api-docs rather than restated as prose: a
+// relocated name must be declared on `nakama.socket` under its upstream spelling, and an
+// unmatched name must be declared on none of the three. Re-declaring any of the 26 on any
+// nakama target reds this.
+describe("the twenty-six members nakama withdrew are accounted for", () => {
+  const RELOCATED: Record<string, string> = {
+    socket_connect: "connect",
+    socket_send: "send",
+    on_disconnect: "on_disconnect",
+    on_channelmessage: "on_channel_message",
+    on_channelpresence: "on_channel_presence_event",
+    on_matchdata: "on_match_data",
+    on_matchmakermatched: "on_matchmaker_matched",
+    on_matchpresence: "on_match_presence_event",
+    on_notification: "on_notifications",
+    on_statuspresence: "on_status_presence_event",
+    on_streamdata: "on_stream_data",
+  };
+
+  // `on_streampresence` has no stream-presence listener at the pin; the thirteen
+  // constructors are message tables `nakama.socket` now builds inline, upstream exporting
+  // no constructor for any of them; and `create_api_update_group_request` is the REST
+  // constructor upstream's codegen stopped emitting. All fifteen were phantoms on the
+  // older nakama-defold the fork was written against.
+  const UNMATCHED = [
+    "create_api_update_group_request",
+    "create_channel_join_message",
+    "create_channel_leave_message",
+    "create_channel_message_remove_message",
+    "create_channel_message_send_message",
+    "create_channel_message_update_message",
+    "create_match_create_message",
+    "create_match_data_message",
+    "create_match_leave_message",
+    "create_matchmaker_add_message",
+    "create_matchmaker_remove_message",
+    "create_status_follow_message",
+    "create_status_unfollow_message",
+    "create_status_update_message",
+    "on_streampresence",
+  ];
+
+  function declared(namespace: string): Set<string> {
+    return new Set(
+      apiDocElements(target(namespace))
+        .filter((element) => element.type === "FUNCTION" || element.type === "VARIABLE")
+        .map((element) => element.name),
+    );
+  }
+
+  const socket = declared("nakama.socket");
+  const session = declared("nakama.session");
+  const core = declared("nakama");
+
+  test("the ledger accounts for every one of the twenty-six, exactly once", () => {
+    const accounted = [...Object.keys(RELOCATED), ...UNMATCHED].sort();
+    expect(accounted.length).toBe(26);
+    expect(new Set(accounted).size).toBe(26);
+  });
+
+  test("each relocated member is declared on nakama.socket under its upstream name", () => {
+    const unresolved = Object.entries(RELOCATED)
+      .filter(([, counterpart]) => !socket.has(counterpart))
+      .map(([withdrawn, counterpart]) => `${withdrawn} -> ${counterpart}`);
+    expect(unresolved).toEqual([]);
+  });
+
+  // The core module requires `nakama.socket` privately and re-exports none of it, so a
+  // relocated name reappearing on `nakama` would mean the withdrawal was undone rather
+  // than settled. `on_disconnect` keeps its spelling across the move, which is why the
+  // check is against the core module rather than against all three.
+  test("no relocated member was re-declared on the core nakama module", () => {
+    const readded = Object.keys(RELOCATED).filter((name) => core.has(name));
+    expect(readded).toEqual([]);
+  });
+
+  test("the fifteen unmatched names are declared on none of the three", () => {
+    const resurfaced = UNMATCHED.filter(
+      (name) => core.has(name) || socket.has(name) || session.has(name),
+    );
+    expect(resurfaced).toEqual([]);
   });
 });

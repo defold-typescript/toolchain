@@ -1,0 +1,3356 @@
+{
+  "info": {
+    "namespace": "nakama.socket",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "CHANNELTYPE_UNSPECIFIED",
+      "brief": "Unspecified channel type. The server treats it as a room.",
+      "description": "Unspecified channel type. The server treats it as a room.",
+      "types": [
+        "0"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "CHANNELTYPE_ROOM",
+      "brief": "A room anyone can join to chat in.",
+      "description": "A room anyone can join to chat in.",
+      "types": [
+        "1"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "CHANNELTYPE_DIRECT_MESSAGE",
+      "brief": "A private channel for one-to-one chat.",
+      "description": "A private channel for one-to-one chat.",
+      "types": [
+        "2"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "CHANNELTYPE_GROUP",
+      "brief": "A channel for group chat.",
+      "description": "A channel for group chat.",
+      "types": [
+        "3"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ERROR_RUNTIME_EXCEPTION",
+      "brief": "An unexpected result from the server.",
+      "description": "An unexpected result from the server.",
+      "types": [
+        "0"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ERROR_UNRECOGNIZED_PAYLOAD",
+      "brief": "The server received a message it does not recognise.",
+      "description": "The server received a message it does not recognise.",
+      "types": [
+        "1"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ERROR_MISSING_PAYLOAD",
+      "brief": "A message was expected but contains no content.",
+      "description": "A message was expected but contains no content.",
+      "types": [
+        "2"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ERROR_BAD_INPUT",
+      "brief": "Fields in the message have an invalid format.",
+      "description": "Fields in the message have an invalid format.",
+      "types": [
+        "3"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ERROR_MATCH_NOT_FOUND",
+      "brief": "The match id was not found.",
+      "description": "The match id was not found.",
+      "types": [
+        "4"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ERROR_MATCH_JOIN_REJECTED",
+      "brief": "The match join was rejected.",
+      "description": "The match join was rejected.",
+      "types": [
+        "5"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ERROR_RUNTIME_FUNCTION_NOT_FOUND",
+      "brief": "The runtime function does not exist on the server.",
+      "description": "The runtime function does not exist on the server.",
+      "types": [
+        "6"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "ERROR_RUNTIME_FUNCTION_EXCEPTION",
+      "brief": "The runtime function executed with an error.",
+      "description": "The runtime function executed with an error.",
+      "types": [
+        "7"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create",
+      "brief": "Creates a realtime socket for a client, and binds every other export of this module",
+      "description": "Creates a realtime socket for a client, and binds every other export of this module\nonto it. `nakama.create_socket` is the same call reached through the core module.",
+      "parameters": [
+        {
+          "name": "client",
+          "doc": "A client created with `nakama.create_client`.",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "Socket"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "connect",
+      "brief": "Opens the socket's websocket connection to the server.",
+      "description": "Opens the socket's websocket connection to the server.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives whether the connection succeeded, and the error if it did not.",
+          "types": [
+            "(success: boolean, error?: string) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The result, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "send",
+      "brief": "Sends a prepared message table on the socket. The calls below build their own",
+      "description": "Sends a prepared message table on the socket. The calls below build their own\nmessage tables and pass them through here.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "message",
+          "doc": "The message table to send.",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's response.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The response, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_disconnect",
+      "brief": "Registers the function to call when the connection drops. It is called with no",
+      "description": "Registers the function to call when the connection drops. It is called with no\narguments, and replaces the socket's bound `on_disconnect` method.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "Called on disconnect.",
+          "types": [
+            "() => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "channel_join",
+      "brief": "Joins a chat channel.",
+      "description": "Joins a chat channel.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "target",
+          "doc": "The room name, group id or user id to join, depending on `type`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "type",
+          "doc": "One of the `CHANNELTYPE_*` constants.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "persistence",
+          "doc": "Store the channel's messages on the server.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "hidden",
+          "doc": "Join without appearing in the channel's presence list.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's response.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The response, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "channel_leave",
+      "brief": "Leaves a chat channel.",
+      "description": "Leaves a chat channel.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "channel_id",
+          "doc": "The channel to leave.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's response.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The response, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "channel_message_send",
+      "brief": "Sends a message to a joined chat channel.",
+      "description": "Sends a message to a joined chat channel.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "channel_id",
+          "doc": "The channel to send to.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "content",
+          "doc": "The message content, as a JSON string.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's response.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The response, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "channel_message_remove",
+      "brief": "Removes a message previously sent to a chat channel.",
+      "description": "Removes a message previously sent to a chat channel.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "channel_id",
+          "doc": "The channel the message is in.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "message_id",
+          "doc": "The message to remove.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's response.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The response, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "channel_message_update",
+      "brief": "Replaces the content of a message previously sent to a chat channel.",
+      "description": "Replaces the content of a message previously sent to a chat channel.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "channel_id",
+          "doc": "The channel the message is in.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "message_id",
+          "doc": "The message to update.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "content",
+          "doc": "The replacement content, as a JSON string.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's response.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The response, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "match_data_send",
+      "brief": "Sends data to a joined match. The data is base64-encoded on the way out and decoded",
+      "description": "Sends data to a joined match. The data is base64-encoded on the way out and decoded\nagain for the receiving `on_match_data` listener.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "match_id",
+          "doc": "The match to send to.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "op_code",
+          "doc": "The application-defined operation code.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "data",
+          "doc": "The payload.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "presences",
+          "doc": "The presences to send to, or nil for everyone in the match.",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "reliable",
+          "doc": "Send over the reliable channel.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's response.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The response, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "match_create",
+      "brief": "Creates a new authoritative-relayed match.",
+      "description": "Creates a new authoritative-relayed match.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "name",
+          "doc": "The match name, or nil to let the server generate one.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's response.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The response, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "match_join",
+      "brief": "Joins a match by id, or by the token a matchmaker result carried.",
+      "description": "Joins a match by id, or by the token a matchmaker result carried.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "match_id",
+          "doc": "The match to join.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "token",
+          "doc": "The match token, when joining a matchmaker result.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "metadata",
+          "doc": "Metadata to present to the match's other members.",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's response.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The response, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "match_leave",
+      "brief": "Leaves a joined match.",
+      "description": "Leaves a joined match.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "match_id",
+          "doc": "The match to leave.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's response.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The response, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "matchmaker_add",
+      "brief": "Joins the matchmaker pool. The ticket the server returns is what",
+      "description": "Joins the matchmaker pool. The ticket the server returns is what\n`matchmaker_remove` cancels with, and a match arrives through `on_matchmaker_matched`.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "min_count",
+          "doc": "The smallest acceptable match size.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "max_count",
+          "doc": "The largest acceptable match size.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "query",
+          "doc": "The matchmaker query to filter candidates by.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "string_properties",
+          "doc": "This user's string properties, for other queries to match on.",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "numeric_properties",
+          "doc": "This user's numeric properties, for other queries to match on.",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "count_multiple",
+          "doc": "Only form matches whose size is a multiple of this.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's response.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The response, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "matchmaker_remove",
+      "brief": "Leaves the matchmaker pool.",
+      "description": "Leaves the matchmaker pool.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "ticket",
+          "doc": "The ticket `matchmaker_add` returned.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's response.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The response, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "party_create",
+      "brief": "Creates a party and makes this user its leader.",
+      "description": "Creates a party and makes this user its leader.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "open",
+          "doc": "Let users join without a join request.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "max_size",
+          "doc": "The largest number of members the party accepts.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's response.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The response, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "party_join",
+      "brief": "Joins a party, or requests to join one that is not open.",
+      "description": "Joins a party, or requests to join one that is not open.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "party_id",
+          "doc": "The party to join.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's response.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The response, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "party_leave",
+      "brief": "Leaves a party.",
+      "description": "Leaves a party.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "party_id",
+          "doc": "The party to leave.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's response.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The response, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "party_promote",
+      "brief": "Promotes a party member to leader.",
+      "description": "Promotes a party member to leader.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "party_id",
+          "doc": "The party the member is in.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "presence",
+          "doc": "The member's presence.",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's response.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The response, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "party_accept",
+      "brief": "Accepts a pending join request, as party leader.",
+      "description": "Accepts a pending join request, as party leader.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "party_id",
+          "doc": "The party the request is for.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "presence",
+          "doc": "The requesting user's presence.",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's response.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The response, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "party_remove",
+      "brief": "Removes a member from the party, or rejects a pending join request.",
+      "description": "Removes a member from the party, or rejects a pending join request.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "party_id",
+          "doc": "The party to remove from.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "presence",
+          "doc": "The member's presence.",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's response.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The response, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "party_close",
+      "brief": "Closes the party to new members and disbands it, as party leader.",
+      "description": "Closes the party to new members and disbands it, as party leader.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "party_id",
+          "doc": "The party to close.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's response.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The response, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "party_join_request_list",
+      "brief": "Lists the party's pending join requests.",
+      "description": "Lists the party's pending join requests.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "party_id",
+          "doc": "The party to list requests for.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's response.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The response, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "party_matchmaker_add",
+      "brief": "Joins the matchmaker pool as a whole party, as party leader.",
+      "description": "Joins the matchmaker pool as a whole party, as party leader.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "party_id",
+          "doc": "The party to match with.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "min_count",
+          "doc": "The smallest acceptable match size.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "max_count",
+          "doc": "The largest acceptable match size.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "query",
+          "doc": "The matchmaker query to filter candidates by.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "string_properties",
+          "doc": "The party's string properties, for other queries to match on.",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "numeric_properties",
+          "doc": "The party's numeric properties, for other queries to match on.",
+          "types": [
+            "unknown"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "count_multiple",
+          "doc": "Only form matches whose size is a multiple of this.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's response.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The response, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "party_matchmaker_remove",
+      "brief": "Takes the party back out of the matchmaker pool.",
+      "description": "Takes the party back out of the matchmaker pool.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "party_id",
+          "doc": "The party to cancel for.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "ticket",
+          "doc": "The ticket `party_matchmaker_add` returned.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's response.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The response, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "party_data_send",
+      "brief": "Sends data to every member of a party.",
+      "description": "Sends data to every member of a party.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "party_id",
+          "doc": "The party to send to.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "op_code",
+          "doc": "The application-defined operation code.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "data",
+          "doc": "The payload.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's response.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The response, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "status_follow",
+      "brief": "Subscribes to the status updates of the given users.",
+      "description": "Subscribes to the status updates of the given users.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "user_ids",
+          "doc": "The user ids to follow.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "usernames",
+          "doc": "The usernames to follow.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's response.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The response, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "status_unfollow",
+      "brief": "Unsubscribes from the status updates of the given users.",
+      "description": "Unsubscribes from the status updates of the given users.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "user_ids",
+          "doc": "The user ids to unfollow.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's response.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The response, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "status_update",
+      "brief": "Sets this user's status message, or clears it when the status is empty.",
+      "description": "Sets this user's status message, or clears it when the status is empty.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "status",
+          "doc": "The status message to publish to followers.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "callback",
+          "doc": "Receives the server's response.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The response, when no callback is given.",
+          "types": [
+            "unknown"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_channel_presence_event",
+      "brief": "Registers the function to call when someone joins or leaves a joined chat channel.",
+      "description": "Registers the function to call when someone joins or leaves a joined chat channel.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "Receives the channel presence event.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_match_presence_event",
+      "brief": "Registers the function to call when someone joins or leaves a joined match.",
+      "description": "Registers the function to call when someone joins or leaves a joined match.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "Receives the match presence event.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_match_data",
+      "brief": "Registers the function to call when match data arrives. The payload is",
+      "description": "Registers the function to call when match data arrives. The payload is\nbase64-decoded before the listener sees it.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "Receives the match data.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_match",
+      "brief": "Registers the function to call when a match is created or joined.",
+      "description": "Registers the function to call when a match is created or joined.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "Receives the match.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_matchmaker_matched",
+      "brief": "Registers the function to call when the matchmaker finds a match. Its token is what",
+      "description": "Registers the function to call when the matchmaker finds a match. Its token is what\n`match_join` takes.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "Receives the matchmaker result.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_notifications",
+      "brief": "Registers the function to call when notifications arrive for this user.",
+      "description": "Registers the function to call when notifications arrive for this user.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "Receives the notifications.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_party_presence_event",
+      "brief": "Registers the function to call when someone joins or leaves a joined party.",
+      "description": "Registers the function to call when someone joins or leaves a joined party.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "Receives the party presence event.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_party",
+      "brief": "Registers the function to call when a party is created or joined.",
+      "description": "Registers the function to call when a party is created or joined.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "Receives the party.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_party_data",
+      "brief": "Registers the function to call when party data arrives.",
+      "description": "Registers the function to call when party data arrives.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "Receives the party data.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_party_join_request",
+      "brief": "Registers the function to call when someone asks to join a party this user leads.",
+      "description": "Registers the function to call when someone asks to join a party this user leads.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "Receives the join request.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_party_leader",
+      "brief": "Registers the function to call when a party changes leader.",
+      "description": "Registers the function to call when a party changes leader.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "Receives the new leader.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_status_presence_event",
+      "brief": "Registers the function to call when a followed user comes online or goes offline.",
+      "description": "Registers the function to call when a followed user comes online or goes offline.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "Receives the status presence event.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_status",
+      "brief": "Registers the function to call when a followed user changes their status message.",
+      "description": "Registers the function to call when a followed user changes their status message.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "Receives the status.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_stream_data",
+      "brief": "Registers the function to call when data arrives on a subscribed stream.",
+      "description": "Registers the function to call when data arrives on a subscribed stream.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "Receives the stream data.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_error",
+      "brief": "Registers the function to call when the server reports an error. Its code is one of",
+      "description": "Registers the function to call when the server reports an error. Its code is one of\nthe `ERROR_*` constants.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "Receives the error.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "on_channel_message",
+      "brief": "Registers the function to call when a message arrives on a joined chat channel.",
+      "description": "Registers the function to call when a message arrives on a joined chat channel.",
+      "parameters": [
+        {
+          "name": "socket",
+          "doc": "A socket created with `create`.",
+          "types": [
+            "Socket"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "fn",
+          "doc": "Receives the channel message.",
+          "types": [
+            "(message: unknown) => void"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "Socket",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "connect",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(success: boolean, error?: string) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "send",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "message",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_disconnect",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "fn",
+              "doc": "",
+              "types": [
+                "() => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "channel_join",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "target",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "type",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "persistence",
+              "doc": "",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "hidden",
+              "doc": "",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "channel_leave",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "channel_id",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "channel_message_send",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "channel_id",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "content",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "channel_message_remove",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "channel_id",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "message_id",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "channel_message_update",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "channel_id",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "message_id",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "content",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "match_data_send",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "match_id",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "op_code",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "data",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "presences",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "reliable",
+              "doc": "",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "match_create",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "name",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "match_join",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "match_id",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "token",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "metadata",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "match_leave",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "match_id",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "matchmaker_add",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "min_count",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "max_count",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "query",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "string_properties",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "numeric_properties",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "count_multiple",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "matchmaker_remove",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "ticket",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "party_create",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "open",
+              "doc": "",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "max_size",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "party_join",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "party_id",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "party_leave",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "party_id",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "party_promote",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "party_id",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "presence",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "party_accept",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "party_id",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "presence",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "party_remove",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "party_id",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "presence",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "party_close",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "party_id",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "party_join_request_list",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "party_id",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "party_matchmaker_add",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "party_id",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "min_count",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "max_count",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "query",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "string_properties",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "numeric_properties",
+              "doc": "",
+              "types": [
+                "unknown"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "count_multiple",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "party_matchmaker_remove",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "party_id",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "ticket",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "party_data_send",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "party_id",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "op_code",
+              "doc": "",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "data",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "status_follow",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "user_ids",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "usernames",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "status_unfollow",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "user_ids",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "status_update",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "status",
+              "doc": "",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "callback",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_channel_presence_event",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "fn",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_match_presence_event",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "fn",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_match_data",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "fn",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_match",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "fn",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_matchmaker_matched",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "fn",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_notifications",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "fn",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_party_presence_event",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "fn",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_party",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "fn",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_party_data",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "fn",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_party_join_request",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "fn",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_party_leader",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "fn",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_status_presence_event",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "fn",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_status",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "fn",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_stream_data",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "fn",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_error",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "fn",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "on_channel_message",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "fn",
+              "doc": "",
+              "types": [
+                "(message: unknown) => void"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        }
+      ]
+    }
+  ]
+}

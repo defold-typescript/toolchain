@@ -99,6 +99,14 @@
     "callable": 1,
     "field": 1
   },
+  "fidelity/authored/nakama.session.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/nakama.socket.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/authored/nakama.util.log.json": {
     "callable": 1,
     "field": 1
