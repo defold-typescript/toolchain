@@ -6330,24 +6330,24 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 - function final(self: Opaque<"userdata">): void;
 - function fixed_update(self: Opaque<"userdata">, dt: number): void;
-- function animate(url: string | Hash | Url, property: string | Hash, playback: number & { readonly __brand: "go.PLAYBACK_ONCE_FORWARD" } | number & { readonly __brand: "go.PLAYBACK_ONCE_BACKWARD" } | number & { readonly __brand: "go.PLAYBACK_ONCE_PINGPONG" } | number & { readonly __brand: "go.PLAYBACK_LOOP_FORWARD" } | number & { readonly __brand: "go.PLAYBACK_LOOP_BACKWARD" } | number & { readonly __brand: "go.PLAYBACK_LOOP_PINGPONG" }, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | number & { readonly __brand: "go.EASING_INBACK" } | number & { readonly __brand: "go.EASING_INBOUNCE" } | number & { readonly __brand: "go.EASING_INCIRC" } | number & { readonly __brand: "go.EASING_INCUBIC" } | number & { readonly __brand: "go.EASING_INELASTIC" } | number & { readonly __brand: "go.EASING_INEXPO" } | number & { readonly __brand: "go.EASING_INOUTBACK" } | number & { readonly __brand: "go.EASING_INOUTBOUNCE" } | number & { readonly __brand: "go.EASING_INOUTCIRC" } | number & { readonly __brand: "go.EASING_INOUTCUBIC" } | number & { readonly __brand: "go.EASING_INOUTELASTIC" } | number & { readonly __brand: "go.EASING_INOUTEXPO" } | number & { readonly __brand: "go.EASING_INOUTQUAD" } | number & { readonly __brand: "go.EASING_INOUTQUART" } | number & { readonly __brand: "go.EASING_INOUTQUINT" } | number & { readonly __brand: "go.EASING_INOUTSINE" } | number & { readonly __brand: "go.EASING_INQUAD" } | number & { readonly __brand: "go.EASING_INQUART" } | number & { readonly __brand: "go.EASING_INQUINT" } | number & { readonly __brand: "go.EASING_INSINE" } | number & { readonly __brand: "go.EASING_LINEAR" } | number & { readonly __brand: "go.EASING_OUTBACK" } | number & { readonly __brand: "go.EASING_OUTBOUNCE" } | number & { readonly __brand: "go.EASING_OUTCIRC" } | number & { readonly __brand: "go.EASING_OUTCUBIC" } | number & { readonly __brand: "go.EASING_OUTELASTIC" } | number & { readonly __brand: "go.EASING_OUTEXPO" } | number & { readonly __brand: "go.EASING_OUTINBACK" } | number & { readonly __brand: "go.EASING_OUTINBOUNCE" } | number & { readonly __brand: "go.EASING_OUTINCIRC" } | number & { readonly __brand: "go.EASING_OUTINCUBIC" } | number & { readonly __brand: "go.EASING_OUTINELASTIC" } | number & { readonly __brand: "go.EASING_OUTINEXPO" } | number & { readonly __brand: "go.EASING_OUTINQUAD" } | number & { readonly __brand: "go.EASING_OUTINQUART" } | number & { readonly __brand: "go.EASING_OUTINQUINT" } | number & { readonly __brand: "go.EASING_OUTINSINE" } | number & { readonly __brand: "go.EASING_OUTQUAD" } | number & { readonly __brand: "go.EASING_OUTQUART" } | number & { readonly __brand: "go.EASING_OUTQUINT" } | number & { readonly __brand: "go.EASING_OUTSINE" }, duration: number, delay?: number, complete_function?: (self: unknown, url: unknown, property: unknown) => void): void;
-- function cancel_animations(url: string | Hash | Url, property?: string | Hash): void;
-- function _delete(id?: string | Hash | Url | (string | Hash | Url)[], recursive?: boolean): void;
-- function exists(url: string | Hash | Url): boolean;
-- go.get<P>(): <K extends keyof P>(url: string | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]
-- go.get<K extends keyof go.properties>(url: string | Hash | Url, property: K, options?: GoPropertyOptions): go.properties[K]
-- go.get(url: string | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion | Opaque<"resource">
+- function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: number & { readonly __brand: "go.PLAYBACK_ONCE_FORWARD" } | number & { readonly __brand: "go.PLAYBACK_ONCE_BACKWARD" } | number & { readonly __brand: "go.PLAYBACK_ONCE_PINGPONG" } | number & { readonly __brand: "go.PLAYBACK_LOOP_FORWARD" } | number & { readonly __brand: "go.PLAYBACK_LOOP_BACKWARD" } | number & { readonly __brand: "go.PLAYBACK_LOOP_PINGPONG" }, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | number & { readonly __brand: "go.EASING_INBACK" } | number & { readonly __brand: "go.EASING_INBOUNCE" } | number & { readonly __brand: "go.EASING_INCIRC" } | number & { readonly __brand: "go.EASING_INCUBIC" } | number & { readonly __brand: "go.EASING_INELASTIC" } | number & { readonly __brand: "go.EASING_INEXPO" } | number & { readonly __brand: "go.EASING_INOUTBACK" } | number & { readonly __brand: "go.EASING_INOUTBOUNCE" } | number & { readonly __brand: "go.EASING_INOUTCIRC" } | number & { readonly __brand: "go.EASING_INOUTCUBIC" } | number & { readonly __brand: "go.EASING_INOUTELASTIC" } | number & { readonly __brand: "go.EASING_INOUTEXPO" } | number & { readonly __brand: "go.EASING_INOUTQUAD" } | number & { readonly __brand: "go.EASING_INOUTQUART" } | number & { readonly __brand: "go.EASING_INOUTQUINT" } | number & { readonly __brand: "go.EASING_INOUTSINE" } | number & { readonly __brand: "go.EASING_INQUAD" } | number & { readonly __brand: "go.EASING_INQUART" } | number & { readonly __brand: "go.EASING_INQUINT" } | number & { readonly __brand: "go.EASING_INSINE" } | number & { readonly __brand: "go.EASING_LINEAR" } | number & { readonly __brand: "go.EASING_OUTBACK" } | number & { readonly __brand: "go.EASING_OUTBOUNCE" } | number & { readonly __brand: "go.EASING_OUTCIRC" } | number & { readonly __brand: "go.EASING_OUTCUBIC" } | number & { readonly __brand: "go.EASING_OUTELASTIC" } | number & { readonly __brand: "go.EASING_OUTEXPO" } | number & { readonly __brand: "go.EASING_OUTINBACK" } | number & { readonly __brand: "go.EASING_OUTINBOUNCE" } | number & { readonly __brand: "go.EASING_OUTINCIRC" } | number & { readonly __brand: "go.EASING_OUTINCUBIC" } | number & { readonly __brand: "go.EASING_OUTINELASTIC" } | number & { readonly __brand: "go.EASING_OUTINEXPO" } | number & { readonly __brand: "go.EASING_OUTINQUAD" } | number & { readonly __brand: "go.EASING_OUTINQUART" } | number & { readonly __brand: "go.EASING_OUTINQUINT" } | number & { readonly __brand: "go.EASING_OUTINSINE" } | number & { readonly __brand: "go.EASING_OUTQUAD" } | number & { readonly __brand: "go.EASING_OUTQUART" } | number & { readonly __brand: "go.EASING_OUTQUINT" } | number & { readonly __brand: "go.EASING_OUTSINE" }, duration: number, delay?: number, complete_function?: (self: unknown, url: unknown, property: unknown) => void): void;
+- function cancel_animations(url: SceneAddress | Hash | Url, property?: string | Hash): void;
+- function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[], recursive?: boolean): void;
+- function exists(url: SceneGameObjectAddress | Hash | Url): boolean;
+- go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]
+- go.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions): go.properties[K]
+- go.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion | Opaque<"resource">
 - function get_id(path?: string): Hash;
-- function get_parent(id?: string | Hash | Url): Hash | undefined;
-- function get_position(id?: string | Hash | Url): Vector3;
-- function get_rotation(id?: string | Hash | Url): Quaternion;
-- function get_scale(id?: string | Hash | Url): Vector3;
-- function get_scale_uniform(id?: string | Hash | Url): number;
-- function get_world_position(id?: string | Hash | Url): Vector3;
-- function get_world_rotation(id?: string | Hash | Url): Quaternion;
-- function get_world_scale(id?: string | Hash | Url): Vector3;
-- function get_world_scale_uniform(id?: string | Hash | Url): number;
-- function get_world_transform(id?: string | Hash | Url): Matrix4;
+- function get_parent(id?: SceneGameObjectAddress | Hash | Url): Hash | undefined;
+- function get_position(id?: SceneGameObjectAddress | Hash | Url): Vector3;
+- function get_rotation(id?: SceneGameObjectAddress | Hash | Url): Quaternion;
+- function get_scale(id?: SceneGameObjectAddress | Hash | Url): Vector3;
+- function get_scale_uniform(id?: SceneGameObjectAddress | Hash | Url): number;
+- function get_world_position(id?: SceneGameObjectAddress | Hash | Url): Vector3;
+- function get_world_rotation(id?: SceneGameObjectAddress | Hash | Url): Quaternion;
+- function get_world_scale(id?: SceneGameObjectAddress | Hash | Url): Vector3;
+- function get_world_scale_uniform(id?: SceneGameObjectAddress | Hash | Url): number;
+- function get_world_transform(id?: SceneGameObjectAddress | Hash | Url): Matrix4;
 - go.property(name: string, value: number): ScriptProperty<number>
 - go.property(name: string, value: boolean): ScriptProperty<boolean>
 - go.property(name: string, value: Hash): ScriptProperty<Hash>
@@ -6356,17 +6356,17 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - go.property(name: string, value: Vector4): ScriptProperty<Vector4>
 - go.property(name: string, value: Quaternion): ScriptProperty<Quaternion>
 - go.property(name: string, value: Opaque<"resource">): ScriptProperty<Opaque<"resource">>
-- go.set<P>(): <K extends keyof P>(url: string | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void
-- go.set<K extends keyof go.properties>(url: string | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void
-- go.set(url: string | Hash | Url, property: string | Hash, value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion | Opaque<"resource">, options?: GoPropertyOptions): void
-- function set_parent(id?: string | Hash | Url, parent_id?: string | Hash | Url, keep_world_transform?: boolean): void;
-- function set_position(position: Vector3, id?: string | Hash | Url): void;
-- function set_rotation(rotation: Quaternion, id?: string | Hash | Url): void;
-- function set_scale(scale: number | Vector3, id?: string | Hash | Url): void;
-- function set_scale_xy(scale: number | Vector3, id?: string | Hash | Url): void;
-- function update_world_transform(id?: string | Hash | Url): void;
-- function world_to_local_position(position: Vector3, url: string | Hash | Url): Vector3;
-- function world_to_local_transform(transformation: Matrix4, url: string | Hash | Url): Matrix4;
+- go.set<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void
+- go.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void
+- go.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion | Opaque<"resource">, options?: GoPropertyOptions): void
+- function set_parent(id?: SceneGameObjectAddress | Hash | Url, parent_id?: SceneGameObjectAddress | Hash | Url, keep_world_transform?: boolean): void;
+- function set_position(position: Vector3, id?: SceneGameObjectAddress | Hash | Url): void;
+- function set_rotation(rotation: Quaternion, id?: SceneGameObjectAddress | Hash | Url): void;
+- function set_scale(scale: number | Vector3, id?: SceneGameObjectAddress | Hash | Url): void;
+- function set_scale_xy(scale: number | Vector3, id?: SceneGameObjectAddress | Hash | Url): void;
+- function update_world_transform(id?: SceneGameObjectAddress | Hash | Url): void;
+- function world_to_local_position(position: Vector3, url: SceneGameObjectAddress | Hash | Url): Vector3;
+- function world_to_local_transform(transformation: Matrix4, url: SceneGameObjectAddress | Hash | Url): Matrix4;
 - function init(self: Opaque<"userdata">): void;
 - function late_update(self: Opaque<"userdata">, dt: number): void;
 - function on_input(self: Opaque<"userdata">, action_id: Hash, action: { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }): boolean | undefined;
@@ -6897,10 +6897,10 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### msg
 
-- msg.post<K extends string>(receiver: string | Url | Hash, message_id: K, message?: MsgPostPayload<K>): void
-- msg.post(receiver: string | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void
+- msg.post<K extends string>(receiver: SceneAddress | Url | Hash, message_id: K, message?: MsgPostPayload<K>): void
+- msg.post(receiver: SceneAddress | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void
 - msg.url(): Url
-- msg.url(urlstring: string): Url
+- msg.url(urlstring: SceneAddress): Url
 - msg.url(socket: string | Hash, path: string | Hash, fragment: string | Hash): Url
 
 ### particlefx

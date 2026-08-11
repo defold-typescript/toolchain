@@ -31,12 +31,12 @@ declare global {
      * ```
      */
     function post<K extends string>(
-      receiver: string | Url | Hash,
+      receiver: SceneAddress | Url | Hash,
       message_id: K,
       message?: MsgPostPayload<K>,
     ): void;
     function post(
-      receiver: string | Url | Hash,
+      receiver: SceneAddress | Url | Hash,
       message_id: Hash,
       message?: Record<string | number, unknown>,
     ): void;
@@ -76,7 +76,7 @@ declare global {
      * ```
      */
     function url(): Url;
-    function url(urlstring: string): Url;
+    function url(urlstring: SceneAddress): Url;
     function url(socket: string | Hash, path: string | Hash, fragment: string | Hash): Url;
   }
 }

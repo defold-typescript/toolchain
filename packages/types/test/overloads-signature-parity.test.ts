@@ -80,8 +80,8 @@ const NAMESPACES: readonly OverloadNamespace[] = [
     },
     driftSignature: {
       fqn: "msg.url",
-      from: "function url(urlstring: string): Url;",
-      to: "function url(urlstring: string | Hash): Url;",
+      from: "function url(urlstring: SceneAddress): Url;",
+      to: "function url(urlstring: SceneAddress | Hash): Url;",
     },
     driftDoc: {
       fqn: "msg.url",
@@ -317,13 +317,13 @@ describe("curried and multi-paragraph overload rendering", () => {
 
   test("go.get's curried overload renders as a one-line function return type", () => {
     expect(goSignatures["go.get"]?.[0]).toBe(
-      "go.get<P>(): <K extends keyof P>(url: string | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]",
+      "go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]",
     );
   });
 
   test("go.set's curried overload renders as a one-line function return type", () => {
     expect(goSignatures["go.set"]?.[0]).toBe(
-      "go.set<P>(): <K extends keyof P>(url: string | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void",
+      "go.set<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void",
     );
   });
 
