@@ -2299,4 +2299,37 @@ describe("nakama.socket type claims upstream states only in its body", () => {
       .map((entry) => entry.name);
     expect(widened).toEqual([]);
   });
+
+  // `MatchCreate.name` is documented optional upstream and `MatchJoin` declares
+  // `oneof id { match_id, token }`, so each of the three slots is skippable while the
+  // `metadata` and `callback` behind them stay reachable. Declaring them bare `string`
+  // makes an unnamed match and a token-only matchmaker join uncallable.
+  test("the match identifiers admit the nil alternative on both call forms", () => {
+    const shape = (fn: DocFunction | undefined) =>
+      (fn?.parameters ?? []).map((p) => `${p.name}:${p.types.join(" | ")}`);
+    const moduleFunction = (name: string) => moduleFunctions().find((fn) => fn.name === name);
+    const socketMethod = (name: string) => socketMethods().find((fn) => fn.name === name);
+    expect(shape(moduleFunction("match_create"))).toEqual([
+      "socket:Socket",
+      "name:string | undefined",
+      "callback:(message: unknown) => void",
+    ]);
+    expect(shape(socketMethod("match_create"))).toEqual([
+      "name:string | undefined",
+      "callback:(message: unknown) => void",
+    ]);
+    expect(shape(moduleFunction("match_join"))).toEqual([
+      "socket:Socket",
+      "match_id:string | undefined",
+      "token:string | undefined",
+      "metadata:unknown",
+      "callback:(message: unknown) => void",
+    ]);
+    expect(shape(socketMethod("match_join"))).toEqual([
+      "match_id:string | undefined",
+      "token:string | undefined",
+      "metadata:unknown",
+      "callback:(message: unknown) => void",
+    ]);
+  });
 });
