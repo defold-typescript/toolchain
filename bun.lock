@@ -85,6 +85,7 @@
       "version": "0.0.0",
       "dependencies": {
         "@defold-typescript/transpiler": "workspace:*",
+        "@defold-typescript/types": "workspace:*",
       },
       "peerDependencies": {
         "typescript": ">=5.0.0 <7",

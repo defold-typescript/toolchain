@@ -20,6 +20,14 @@ The plugin is added as a managed devDependency at the same time, pinned in locks
 
 The plugin runs the **same TypeScript-to-Lua diagnostic pass the `build` command uses** against the program your editor already has open, and reports anything the transpiler cannot lower — directly on the offending source span. You see the squiggle in the editor as you type, instead of discovering the failure when you run `build`. Because editor and build share one diagnostic source, they cannot disagree about what is unsupported.
 
+## Component id completions inside an address `#fragment`
+
+Type `#` inside an address argument — [`msg.post`](/api/msg)'s `receiver`, [`go.get`](/api/go)'s `url`, any of the slots the reference types as an address — and the plugin offers the component ids your project declares. The list is read from the project's own `.go` and `.collection` files each time you ask, so a component you added a moment ago is already there; Defold's `build/` output is skipped, since those are generated copies of the same scenes.
+
+The completions are **strictly additive**. Whatever your editor already offers stays, in its original order, and the component ids are appended after it; an id the editor already offers as a whole address literal is not repeated. If the plugin cannot read the project, you simply get the editor's own list back.
+
+The slice is the fragment only: the path *before* the `#` is not completed, because a game object can be created at any path at runtime, while a component id can only come from a scene file. Unlike a diagnostic, a suggestion claims nothing about what is absent, so ids are still offered when some scene file could not be read.
+
 ## It is advisory, not blocking
 
 Every diagnostic the plugin appends carries the `Suggestion` category, never `Error`. It adds editor signal; it never turns valid code red. In particular it **never blocks `tsc --noEmit`** — a project that type-checks clean stays clean in CI even with the plugin active. The plugin is an editor convenience layer; the build path remains the source of truth for what compiles.
