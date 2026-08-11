@@ -2054,6 +2054,10 @@ describe("checkpoint.checkpoint type claims upstream states only in its body", (
   // first slot to `unknown` would hide the `false` arm a caller has to narrow against.
   test("read carries the loaded value beside the false arm and an optional error", () => {
     expect(returnTypes("read")).toEqual(["LuaMultiReturn<[ T | false, string | undefined ]>"]);
+    // The published artifact must declare the `T` its own return type references;
+    // `write` is the neighbour that declares none, so absence stays the encoding.
+    expect(element("read").generics).toBe("<T = unknown>");
+    expect(Object.hasOwn(element("write"), "generics")).toBe(false);
     const { parameters } = element("read") as {
       parameters?: { name: string; types: string[]; is_optional: string }[];
     };

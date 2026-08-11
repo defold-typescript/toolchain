@@ -27,6 +27,7 @@
       "name": "add",
       "brief": "Add a game object with a set of components.",
       "description": "Add a game object with a set of components.",
+      "generics": "<T extends (BoomComponent | BoomTag)[]>",
       "parameters": [
         {
           "name": "comps",
@@ -2304,6 +2305,7 @@
           "name": "add",
           "brief": "Add a game object as a child of this game object",
           "description": "Add a game object as a child of this game object\nby composing it with components.",
+          "generics": "<T extends (BoomComponent | BoomTag)[]>",
           "parameters": [
             {
               "name": "comps",
