@@ -36,8 +36,21 @@ function slotIn(source: string, literal: string): AddressSlot {
   return slot;
 }
 
-function entry(name: string): ts.CompletionEntry {
-  return { name, kind: "string" as ts.ScriptElementKind, kindModifiers: "", sortText: "0" };
+// `ts.Completions.SortText` values, which the public API does not export:
+// `LocationPriority`, `GlobalsOrKeywords`, `AutoImportSuggestions`, and
+// `Deprecated(JavascriptIdentifiers)` — the greatest key TypeScript itself
+// produces. `ABOVE_HOST` is beyond all of them, as another contributor's entry
+// could be; only a derived key can sort after it.
+const LOCATION_PRIORITY = "11";
+const GLOBALS_OR_KEYWORDS = "15";
+const AUTO_IMPORT_SUGGESTIONS = "16";
+const DEPRECATED_IDENTIFIER = "z18";
+const ABOVE_HOST = "zzzz";
+
+// `sortText` is explicit at every call site on purpose: a shared hardcoded key
+// is what let contributed entries outrank the base service unnoticed.
+function entry(name: string, sortText: string): ts.CompletionEntry {
+  return { name, kind: "string" as ts.ScriptElementKind, kindModifiers: "", sortText };
 }
 
 describe("buildSceneCompletionEntries", () => {
@@ -75,7 +88,7 @@ describe("buildSceneCompletionEntries", () => {
 
   test("an id the base already offers is dropped from ours, never from the base's", () => {
     const slot = slotIn('msg.post("#bo", "hello");\n', '"#bo"');
-    const baseEntries = [entry("#board"), entry("#other")];
+    const baseEntries = [entry("#board", LOCATION_PRIORITY), entry("#other", LOCATION_PRIORITY)];
     const entries = buildSceneCompletionEntries({
       slot,
       ids: new Set(["board", "hud"]),
@@ -83,5 +96,63 @@ describe("buildSceneCompletionEntries", () => {
     });
     expect(entries.map((e) => e.name)).toEqual(["hud"]);
     expect(baseEntries.map((e) => e.name)).toEqual(["#board", "#other"]);
+  });
+
+  test("every contributed key sorts after every base key in the same call", () => {
+    const slot = slotIn('msg.post("#bo", "hello");\n', '"#bo"');
+    const baseEntries = [
+      entry("#a", LOCATION_PRIORITY),
+      entry("#b", GLOBALS_OR_KEYWORDS),
+      entry("#c", DEPRECATED_IDENTIFIER),
+    ];
+    const entries = buildSceneCompletionEntries({
+      slot,
+      ids: new Set(["hud", "board"]),
+      baseEntries,
+    });
+    expect(entries.map((e) => e.name)).toEqual(["board", "hud"]);
+    for (const built of entries) {
+      for (const base of baseEntries) {
+        expect(built.sortText > base.sortText).toBe(true);
+      }
+    }
+    expect(baseEntries.map((e) => e.sortText)).toEqual([
+      LOCATION_PRIORITY,
+      GLOBALS_OR_KEYWORDS,
+      DEPRECATED_IDENTIFIER,
+    ]);
+  });
+
+  test("a base-less call still keys above every priority the host produces", () => {
+    const slot = slotIn('msg.post("#bo", "hello");\n', '"#bo"');
+    const entries = buildSceneCompletionEntries({
+      slot,
+      ids: new Set(["hud", "board"]),
+      baseEntries: [],
+    });
+    expect(entries).toHaveLength(2);
+    for (const built of entries) {
+      for (const priority of [
+        LOCATION_PRIORITY,
+        GLOBALS_OR_KEYWORDS,
+        AUTO_IMPORT_SUGGESTIONS,
+        DEPRECATED_IDENTIFIER,
+      ]) {
+        expect(built.sortText > priority).toBe(true);
+      }
+    }
+  });
+
+  test("a base key above every host priority still sorts first — the key is derived, not constant", () => {
+    const slot = slotIn('msg.post("#bo", "hello");\n', '"#bo"');
+    const entries = buildSceneCompletionEntries({
+      slot,
+      ids: new Set(["hud", "board"]),
+      baseEntries: [entry("#x", ABOVE_HOST)],
+    });
+    expect(entries).toHaveLength(2);
+    for (const built of entries) {
+      expect(built.sortText > ABOVE_HOST).toBe(true);
+    }
   });
 });
