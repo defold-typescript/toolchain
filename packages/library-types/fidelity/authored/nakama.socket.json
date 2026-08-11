@@ -1,0 +1,23 @@
+{
+  "namespace": "nakama.socket",
+  "upstreamMembers": 45,
+  "upstreamFields": 12,
+  "declaredFields": 12,
+  "missingFields": [],
+  "phantomFields": [],
+  "fieldCoverage": 1,
+  "declaredGlobals": 0,
+  "declaredMembers": 45,
+  "missingMembers": [],
+  "phantomMembers": [],
+  "arityMismatches": [],
+  "parityExceptions": [],
+  "undocumentedMembers": 0,
+  "importedDocs": 0,
+  "refusedDocBlocks": 0,
+  "refusedDocBlocksTotal": 13,
+  "variadicMembers": 0,
+  "overloadedMembers": 0,
+  "placeholderMembers": 0,
+  "callableCoverage": 1
+}

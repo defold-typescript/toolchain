@@ -2014,3 +2014,188 @@ describe("shutter.shutter type claims upstream states only in its body", () => {
     expect(descriptions.shutter?.length).toBeGreaterThan(0);
   });
 });
+
+describe("nakama.session type claims upstream states only in its body", () => {
+  function element(name: string): Record<string, unknown> {
+    const found = apiDocElements("nakama.session").find((entry) => entry.name === name);
+    if (!found) throw new Error(`api-doc/nakama.session.json declares no ${name}`);
+    return found;
+  }
+
+  function returnTypes(name: string): string[] {
+    const { returnvalues } = element(name) as { returnvalues?: { types: string[] }[] };
+    return (returnvalues ?? []).flatMap((value) => value.types);
+  }
+
+  function parameters(name: string): { name: string; types: string[]; is_optional?: string }[] {
+    const { parameters } = element(name) as {
+      parameters?: { name: string; types: string[]; is_optional?: string }[];
+    };
+    return parameters ?? [];
+  }
+
+  function properties(name: string): { name: string; types: string[]; is_optional?: string }[] {
+    const { properties } = element(name) as {
+      properties?: { name: string; types: string[]; is_optional?: string }[];
+    };
+    return properties ?? [];
+  }
+
+  test("the target is registered at the family pin and measures rather than asserts", () => {
+    const entry = authoredTarget("nakama.session");
+    expect(entry.moduleId).toBe("nakama.session");
+    expect(entry.repo).toBe("https://github.com/heroiclabs/nakama-defold");
+    expect(entry.ref).toBe("v3.4.0");
+    expect(entry.license).toBe("Apache-2.0");
+    expect(entry.authored).toBe("fixtures/authored/nakama.session.d.ts");
+    expect(entry.generated).toBe("generated/nakama.session.d.ts");
+    expect(entry.apiDoc).toBe("api-doc/nakama.session.json");
+    expect(entry.parityVerdict).toBeUndefined();
+    expect(entry.upstreamLua).toEqual(["fixtures/upstream-lua/nakama-defold/nakama/session.lua"]);
+  });
+
+  // `if not session.token then return nil end` — the stored file can be missing or hold
+  // something that is not a session, and a caller reading `.expires` off the narrowed
+  // return would index nil at runtime.
+  test("restore admits the nil upstream returns when nothing was stored", () => {
+    expect(returnTypes("restore")).toEqual(["Session | undefined"]);
+  });
+
+  // `sys.save` returns a success boolean upstream passes straight through, and
+  // `get_session_save_filename(id or "nakama")` supplies the default id.
+  test("store returns sys.save's boolean and defaults its id", () => {
+    expect(returnTypes("store")).toEqual(["boolean"]);
+    expect(parameters("store").map((p) => `${p.name}:${p.is_optional ?? "False"}`)).toEqual([
+      "session:False",
+      "id:True",
+    ]);
+    expect(parameters("restore").map((p) => `${p.name}:${p.is_optional ?? "False"}`)).toEqual([
+      "id:True",
+    ]);
+  });
+
+  // `create` fills the refresh half only inside `if data.refresh_token then`, and `vars`
+  // comes from a JWT claim that need not be present. Declaring any of the six as required
+  // would let a consumer read them without a check.
+  test("only the fields create writes conditionally are optional", () => {
+    const optional = properties("Session")
+      .filter((p) => p.is_optional === "True")
+      .map((p) => p.name)
+      .sort();
+    expect(optional).toEqual([
+      "refresh_token",
+      "refresh_token_expires",
+      "refresh_token_user_id",
+      "refresh_token_username",
+      "refresh_token_vars",
+      "vars",
+    ]);
+    const required = properties("Session")
+      .filter((p) => p.is_optional !== "True")
+      .map((p) => p.name);
+    expect(required).toEqual(["created", "token", "expires", "username", "user_id"]);
+  });
+
+  // `assert(data.token, "You must provide a token")` is the only field `create` requires;
+  // `refresh_token` is read behind a truthy test and every other key is ignored.
+  test("the create input requires a token and nothing else", () => {
+    expect(parameters("create").flatMap((p) => p.types)).toEqual(["SessionData"]);
+    expect(properties("SessionData").map((p) => `${p.name}:${p.is_optional ?? "False"}`)).toEqual([
+      "token:False",
+      "refresh_token:True",
+    ]);
+  });
+});
+
+describe("nakama.socket type claims upstream states only in its body", () => {
+  interface DocFunction {
+    name: string;
+    parameters?: { name: string; types: string[]; is_optional?: string }[];
+  }
+
+  function element(name: string): Record<string, unknown> {
+    const found = apiDocElements("nakama.socket").find((entry) => entry.name === name);
+    if (!found) throw new Error(`api-doc/nakama.socket.json declares no ${name}`);
+    return found;
+  }
+
+  function moduleFunctions(): DocFunction[] {
+    return apiDocElements("nakama.socket").filter(
+      (entry) => entry.type === "FUNCTION",
+    ) as unknown as DocFunction[];
+  }
+
+  function socketMethods(): DocFunction[] {
+    const { functions } = element("Socket") as { functions?: DocFunction[] };
+    return functions ?? [];
+  }
+
+  test("the target is registered at the family pin and measures rather than asserts", () => {
+    const entry = authoredTarget("nakama.socket");
+    expect(entry.moduleId).toBe("nakama.socket");
+    expect(entry.repo).toBe("https://github.com/heroiclabs/nakama-defold");
+    expect(entry.ref).toBe("v3.4.0");
+    expect(entry.license).toBe("Apache-2.0");
+    expect(entry.authored).toBe("fixtures/authored/nakama.socket.d.ts");
+    expect(entry.generated).toBe("generated/nakama.socket.d.ts");
+    expect(entry.apiDoc).toBe("api-doc/nakama.socket.json");
+    expect(entry.parityVerdict).toBeUndefined();
+    expect(entry.upstreamLua).toEqual(["fixtures/upstream-lua/nakama-defold/nakama/socket.lua"]);
+  });
+
+  // `for name,fn in pairs(M) do ... socket[name] = function(...) return fn(socket, ...) end`
+  // binds every export but `create` onto the instance, with the socket already applied. A
+  // `Socket` that only carried the fields would compile away the entire bound-method form
+  // upstream's own README uses.
+  test("Socket carries every module export but create, at one parameter fewer", () => {
+    const methods = new Map(socketMethods().map((fn) => [fn.name, fn]));
+    const modules = moduleFunctions().filter((fn) => fn.name !== "create");
+    expect(modules.length).toBe(44);
+    expect(methods.size).toBe(44);
+    const mismatched = modules
+      .filter(
+        (fn) =>
+          (methods.get(fn.name)?.parameters ?? []).length !== (fn.parameters ?? []).length - 1,
+      )
+      .map((fn) => fn.name);
+    expect(mismatched).toEqual([]);
+    expect([...methods.keys()].filter((name) => name === "create")).toEqual([]);
+  });
+
+  // `socket_send(socket, message, callback)` branches on the callback and returns through
+  // `async` when none is given, so the parameter is genuinely optional at every call that
+  // reaches it. Marking one required would make the async form uncallable.
+  test("every message-sending call takes its callback last and optional", () => {
+    const withCallback = moduleFunctions().filter((fn) =>
+      (fn.parameters ?? []).some((p) => p.name === "callback"),
+    );
+    expect(withCallback.length).toBe(27);
+    const wrong = withCallback
+      .filter((fn) => {
+        const params = fn.parameters ?? [];
+        const last = params[params.length - 1];
+        return last?.name !== "callback" || last.is_optional !== "True";
+      })
+      .map((fn) => fn.name);
+    expect(wrong).toEqual([]);
+  });
+
+  // The constants are the wire values a consumer passes back to `channel_join` and reads
+  // off an `on_error` payload. Widened to `number` they stop distinguishing anything, and
+  // the `@ts-expect-error` arm of the compile proof would start compiling.
+  test("the twelve constants keep their numeric literal types", () => {
+    const literal = (name: string) => (element(name) as { types: string[] }).types;
+    expect(literal("CHANNELTYPE_UNSPECIFIED")).toEqual(["0"]);
+    expect(literal("CHANNELTYPE_ROOM")).toEqual(["1"]);
+    expect(literal("CHANNELTYPE_DIRECT_MESSAGE")).toEqual(["2"]);
+    expect(literal("CHANNELTYPE_GROUP")).toEqual(["3"]);
+    expect(literal("ERROR_RUNTIME_EXCEPTION")).toEqual(["0"]);
+    expect(literal("ERROR_MATCH_NOT_FOUND")).toEqual(["4"]);
+    expect(literal("ERROR_RUNTIME_FUNCTION_EXCEPTION")).toEqual(["7"]);
+    const widened = apiDocElements("nakama.socket")
+      .filter((entry) => entry.type === "VARIABLE")
+      .filter((entry) => (entry as { types: string[] }).types.includes("number"))
+      .map((entry) => entry.name);
+    expect(widened).toEqual([]);
+  });
+});

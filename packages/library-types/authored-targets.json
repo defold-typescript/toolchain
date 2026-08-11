@@ -111,6 +111,28 @@
       "upstreamLua": ["fixtures/upstream-lua/nakama-defold/nakama/util/log.lua"]
     },
     {
+      "repo": "https://github.com/heroiclabs/nakama-defold",
+      "ref": "v3.4.0",
+      "license": "Apache-2.0",
+      "authored": "fixtures/authored/nakama.session.d.ts",
+      "moduleId": "nakama.session",
+      "namespace": "nakama.session",
+      "generated": "generated/nakama.session.d.ts",
+      "apiDoc": "api-doc/nakama.session.json",
+      "upstreamLua": ["fixtures/upstream-lua/nakama-defold/nakama/session.lua"]
+    },
+    {
+      "repo": "https://github.com/heroiclabs/nakama-defold",
+      "ref": "v3.4.0",
+      "license": "Apache-2.0",
+      "authored": "fixtures/authored/nakama.socket.d.ts",
+      "moduleId": "nakama.socket",
+      "namespace": "nakama.socket",
+      "generated": "generated/nakama.socket.d.ts",
+      "apiDoc": "api-doc/nakama.socket.json",
+      "upstreamLua": ["fixtures/upstream-lua/nakama-defold/nakama/socket.lua"]
+    },
+    {
       "repo": "https://github.com/indiesoftby/defold-yagames",
       "ref": "0.19.0",
       "license": "MIT",

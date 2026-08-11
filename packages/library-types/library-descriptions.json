@@ -33,6 +33,8 @@
   "nakama": "Nakama Defold Client SDK",
   "nakama-defold": "Nakama Defold Client SDK",
   "nakama.engine.defold": "Defold engine adapter for the Nakama client: UUID, HTTP, and realtime socket helpers.",
+  "nakama.session": "Create, check, store and restore Nakama sessions from their JWT tokens.",
+  "nakama.socket": "Realtime Nakama socket: chat channels, matches, matchmaking, parties, status and their event listeners.",
   "nakama.util.log": "Logging helpers for the Nakama Defold client.",
   "narrator": "The Ink language parser and runtime implementation in Lua",
   "orthographic.camera": "Orthographic camera functionality for the Defold game engine",

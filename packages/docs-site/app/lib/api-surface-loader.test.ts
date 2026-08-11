@@ -409,12 +409,19 @@ describe("loadLibraryProvenance — authored/forked libraries", () => {
     expect(meta.importString).toBe('import * as defsave from "defsave.defsave"');
   });
 
-  test("attributes all three nakama modules to heroiclabs/nakama-defold as authored-here", () => {
+  test("attributes all five nakama modules to heroiclabs/nakama-defold as authored-here", () => {
     // The core module joined its two helpers on the authored lane, so the
     // provenance boundary this describe used to draw through `nakama-defold` is
-    // gone: one repo, one tag, one license across all three.
+    // gone: one repo, one tag, one license across all five, the realtime socket
+    // and the session helpers included.
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
-    for (const namespace of ["nakama", "nakama.engine.defold", "nakama.util.log"]) {
+    for (const namespace of [
+      "nakama",
+      "nakama.engine.defold",
+      "nakama.session",
+      "nakama.socket",
+      "nakama.util.log",
+    ]) {
       const m = meta(namespace);
       expect(m.authoredHere).toBe(true);
       expect(m.commit).toBe("v3.4.0");
@@ -490,8 +497,8 @@ describe("loadApiSurface — multi-module same-repo library grouping (real corpu
     );
   });
 
-  test("merges all three nakama modules into one heroiclabs card once the split lane is gone", () => {
-    // All three nakama modules record the same `heroiclabs/nakama-defold` origin,
+  test("merges all five nakama modules into one heroiclabs card once the split lane is gone", () => {
+    // All five nakama modules record the same `heroiclabs/nakama-defold` origin,
     // so they group as one library rather than splitting on namespace shape.
     const groups = libraryGroups();
     const heroiclabs = groups.find((group) => group.owner === "heroiclabs");
@@ -503,17 +510,25 @@ describe("loadApiSurface — multi-module same-repo library grouping (real corpu
     expect(nakama?.modules.map((m) => m.label)).toEqual([
       "nakama",
       "nakama.engine.defold",
+      "nakama.session",
+      "nakama.socket",
       "nakama.util.log",
     ]);
   });
 
-  test("the merged card distinguishes each of the three pages by its own leaf", () => {
+  test("the merged card distinguishes each of the five pages by its own leaf", () => {
     const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
     expect(pages.find((p) => p.namespace === "nakama.engine.defold")?.displayName).toBe(
       "heroiclabs / nakama-defold · defold",
     );
     expect(pages.find((p) => p.namespace === "nakama.util.log")?.displayName).toBe(
       "heroiclabs / nakama-defold · log",
+    );
+    expect(pages.find((p) => p.namespace === "nakama.session")?.displayName).toBe(
+      "heroiclabs / nakama-defold · session",
+    );
+    expect(pages.find((p) => p.namespace === "nakama.socket")?.displayName).toBe(
+      "heroiclabs / nakama-defold · socket",
     );
     // The core page's leaf is its namespace, which the repo name does not repeat,
     // so it keeps a suffix too.
