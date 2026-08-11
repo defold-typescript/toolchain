@@ -56,6 +56,35 @@ socket.channel_leave(_socket, socket.CHANNELTYPE_ROOM);
 const _channelType: 1 = socket.CHANNELTYPE_ROOM;
 const _errorCode: 4 = socket.ERROR_MATCH_NOT_FOUND;
 
+// An unnamed match lets the server generate the name, so the `name` slot has to accept
+// the nil alternative on both call forms — with and without the callback tail.
+socket.match_create(_socket, undefined);
+socket.match_create(_socket, undefined, (message) => {
+  const _payload: unknown = message;
+});
+_socket.match_create(undefined);
+
+// `match_id` and `token` are an upstream `oneof`: a matchmaker join carries the token and
+// no id, a direct join carries the id and no token. Both arms have to compile, and the
+// trailing `metadata` and `callback` stay reachable across them.
+socket.match_join(_socket, undefined, "matchmaker-token", undefined);
+_socket.match_join(undefined, "matchmaker-token", undefined, (message) => {
+  const _payload: unknown = message;
+});
+socket.match_join(_socket, "match-id", undefined, undefined);
+
+// The nil alternative is `string | undefined`, not `unknown`: a callback may not slide
+// into an identifier slot. Widening further would leave these two directives unused,
+// which is itself an error. Each call stays on one line so the directive lands on the
+// argument it is about.
+const _handler = (message: unknown) => {
+  void message;
+};
+// @ts-expect-error a callback is not a match name
+socket.match_create(_socket, _handler);
+// @ts-expect-error a callback is not a match id
+_socket.match_join(_handler, undefined, undefined);
+
 // `create` is the one export the instance does not carry: the bound-method loop skips it
 // by name.
 // @ts-expect-error create is not bound onto the socket instance
