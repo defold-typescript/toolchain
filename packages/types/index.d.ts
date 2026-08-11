@@ -5,6 +5,7 @@ import "./src/msg-overloads";
 import "./src/message-guard";
 import "./src/window-event-guard";
 import "./src/message-dispatch";
+import "./src/scene-addresses";
 import "./src/engine-globals";
 import "./generated/b2d";
 import "./generated/b2d_body";

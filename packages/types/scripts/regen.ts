@@ -10,6 +10,7 @@ import {
 } from "../src/emit-messages";
 import type { TranslationStore } from "../src/example-store";
 import { wrapAsAmbientGlobal, wrapAsModule } from "../src/publish-dts";
+import type { UrlParameterTable } from "../src/url-parameters";
 import {
   type DocSourceProvenance,
   type DownloadRefDoc,
@@ -194,15 +195,33 @@ export function collectConstantFqns(
   return fqns;
 }
 
+const URL_PARAMETERS_PATH = resolve(PACKAGE_ROOT, "url-parameters.json");
+
+// The committed classification table, read once. Both the `.d.ts` emit and the
+// authoritative-signature emit default to it, so the two surfaces cannot
+// disagree about which slots address the scene graph.
+export function loadUrlParameters(path: string = URL_PARAMETERS_PATH): UrlParameterTable {
+  return JSON.parse(readFileSync(path, "utf8")) as UrlParameterTable;
+}
+
+let urlParametersCache: UrlParameterTable | null = null;
+
+function committedUrlParameters(): UrlParameterTable {
+  urlParametersCache ??= loadUrlParameters();
+  return urlParametersCache;
+}
+
 export interface GenerateOptions {
   knownConstantFqns?: ReadonlySet<string>;
   translations?: TranslationStore;
+  urlParameters?: UrlParameterTable;
 }
 
 interface PreparedGeneratedModule {
   module: ApiModule;
   knownConstantFqns: ReadonlySet<string>;
   translations: TranslationStore;
+  urlParameters: UrlParameterTable;
   dropped: string[];
 }
 
@@ -228,18 +247,17 @@ function prepareGeneratedModule(
   });
   const knownConstantFqns = options?.knownConstantFqns ?? collectConstantFqns();
   const translations = options?.translations ?? loadTranslations();
-  return { module, knownConstantFqns, translations, dropped };
+  const urlParameters = options?.urlParameters ?? committedUrlParameters();
+  return { module, knownConstantFqns, translations, urlParameters, dropped };
 }
 
 export function generateModuleDeclaration(
   entry: ModuleManifestEntry,
   options?: GenerateOptions,
 ): GenerateResult {
-  const { module, knownConstantFqns, translations, dropped } = prepareGeneratedModule(
-    entry,
-    options,
-  );
-  const emitted = emitDeclarations(module, { knownConstantFqns, translations });
+  const { module, knownConstantFqns, translations, urlParameters, dropped } =
+    prepareGeneratedModule(entry, options);
+  const emitted = emitDeclarations(module, { knownConstantFqns, translations, urlParameters });
   const importsFrom = entry.importsFrom ?? "../src/core-types";
   const contents = entry.moduleId
     ? wrapAsModule({ namespace: module.namespace, emitted, importsFrom, moduleId: entry.moduleId })
@@ -255,8 +273,8 @@ export function generateModuleSignatures(
   entry: ModuleManifestEntry,
   options?: GenerateOptions,
 ): SymbolSignature[] {
-  const { module, knownConstantFqns } = prepareGeneratedModule(entry, options);
-  return emitSymbolSignatures(module, { knownConstantFqns });
+  const { module, knownConstantFqns, urlParameters } = prepareGeneratedModule(entry, options);
+  return emitSymbolSignatures(module, { knownConstantFqns, urlParameters });
 }
 
 export interface VersionedModuleManifestEntry extends ModuleManifestEntry {
@@ -290,6 +308,7 @@ const UNIVERSAL_EXTRA_IMPORTS: readonly string[] = [
   "../../src/msg-overloads",
   "../../src/message-guard",
   "../../src/window-event-guard",
+  "../../src/scene-addresses",
   "../../src/go-overloads",
   "../../src/vmath-overloads",
 ];

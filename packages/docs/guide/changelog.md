@@ -23,6 +23,7 @@ changes are called out first because the toolchain is pre-1.0.
 ### Improved
 
 - **[shutter](/api/shutter)** (`Klaleus/defold-shutter`) joins the corpus as a 2D camera library, covering the ground starly's withdrawal left open: declare the dependency and [`resolve`](./resolve.md) materializes a typed `shutter.shutter` spanning the camera table, the three viewport behaviors, the screen/world conversions and the shake helpers.
+- **Address slots say what they address.** The 27 URL parameters that name a scene object — [go](/api/go)'s `id`/`url` slots, [msg](/api/msg)'s `receiver` and `urlstring` — read `SceneGameObjectAddress`, `SceneComponentAddress` or `SceneAddress` instead of `string`, so the reference distinguishes a game-object path from a component one. The aliases accept every string, so nothing that compiles today stops compiling.
 
 ### Fixed
 
