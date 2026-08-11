@@ -3,13 +3,17 @@ import ts from "typescript";
 const printer = ts.createPrinter({ removeComments: true });
 
 /**
- * A type node's text as a single comment-free line. The printer re-emits the
- * AST (so a `//`/`/*` inside a string-literal type is never mistaken for a
+ * Any node's text as a single comment-free line. The printer re-emits the AST
+ * (so a `//`/`/*` inside a string-literal type is never mistaken for a
  * comment), then interior whitespace is collapsed so multi-line object literals
  * and wrapped unions no longer leak newlines or member JSDoc into `/api`.
  */
-function typeText(node: ts.TypeNode, sf: ts.SourceFile): string {
+function oneLineText(node: ts.Node, sf: ts.SourceFile): string {
   return printer.printNode(ts.EmitHint.Unspecified, node, sf).replace(/\s+/g, " ").trim();
+}
+
+function typeText(node: ts.TypeNode, sf: ts.SourceFile): string {
+  return oneLineText(node, sf);
 }
 
 interface Field {
@@ -250,6 +254,21 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
   };
 }
 
+/**
+ * A declaration's type parameter list as the pre-rendered string the sibling
+ * `lower-api-doc` lane emits (`<T>`, `<T = unknown>`, `<A, B extends A>`), or
+ * `""` when there is none — absence of the key, not an empty string, is how the
+ * model encodes "takes no type arguments".
+ */
+function genericClause(
+  decl: ts.FunctionDeclaration | ts.MethodSignature,
+  sf: ts.SourceFile,
+): string {
+  const params = decl.typeParameters;
+  if (!params || params.length === 0) return "";
+  return `<${params.map((p) => oneLineText(p, sf)).join(", ")}>`;
+}
+
 function functionElement(
   decl: ts.FunctionDeclaration | ts.MethodSignature,
   name: string,
@@ -284,11 +303,13 @@ function functionElement(
         ];
 
   const example = exampleText(decl);
+  const generics = genericClause(decl, sf);
   return {
     type: "FUNCTION",
     name,
     brief: briefOf(summary),
     description: summary,
+    ...(generics === "" ? {} : { generics }),
     parameters,
     returnvalues,
     ...(example === "" ? {} : { examples: example }),
