@@ -71,6 +71,47 @@ describe("url-parameters.json generated entries", () => {
     expect(slots.get("gui.get_node#id")?.types).toEqual(["string", "hash"]);
   });
 
+  test("the animation-id class is recorded against the one slot that carries it", () => {
+    const animations = table
+      .filter((entry) => entry.class === "animation")
+      .map((entry) => `${entry.fqn}#${entry.parameter}`);
+    expect(animations).toEqual(["sprite.play_flipbook#id"]);
+    expect(slots.get("sprite.play_flipbook#id")?.types).toEqual(["string", "hash"]);
+  });
+
+  test("every animation entry names an address companion that is a live sibling slot", () => {
+    // The companion is what scopes the candidate set. A typo here would not fail
+    // anything at runtime — it would silently disable every suggestion — so the
+    // name is checked against the same slot universe the classes are.
+    const unresolved: string[] = [];
+    for (const entry of table.filter((candidate) => candidate.class === "animation")) {
+      const key = `${entry.fqn}#${entry.parameter}`;
+      if (entry.addressParameter === undefined) {
+        unresolved.push(`${key}: an animation entry must name an addressParameter`);
+        continue;
+      }
+      const companion = slots.get(`${entry.fqn}#${entry.addressParameter}`);
+      if (!companion) {
+        unresolved.push(`${key}: ${entry.fqn} declares no ${entry.addressParameter} parameter`);
+        continue;
+      }
+      if (!parameterTypesSatisfyClass(companion.types, "component")) {
+        unresolved.push(
+          `${key}: ${entry.addressParameter} is ${JSON.stringify(companion.types)}, which cannot address a component`,
+        );
+      }
+    }
+    expect(unresolved).toEqual([]);
+  });
+
+  test("only an animation entry carries an address companion", () => {
+    expect(
+      table
+        .filter((entry) => entry.class !== "animation" && entry.addressParameter !== undefined)
+        .map((entry) => `${entry.fqn}#${entry.parameter}`),
+    ).toEqual([]);
+  });
+
   test("every entry's recorded evidence still reads in the ref-doc prose", () => {
     const stale: string[] = [];
     for (const entry of generated) {

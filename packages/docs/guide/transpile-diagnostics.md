@@ -34,6 +34,14 @@ Put the caret inside [`gui.get_node`](/api/gui)'s argument and the plugin offers
 
 Scoping is deliberately strict: a scene owns a script by naming it, so the ids come from the **one** `.gui` whose `script` field names the `.gui_script` your file generates — resolved through the same `outDir` and `include` rules the build uses, so a project with a separate output tree completes too. A script no scene names, or one that two scenes both name, offers nothing — an id `gui.get_node` could not resolve at runtime is worse than no suggestion. Only the scene's top-level nodes are offered; nodes that exist solely as a layout override or inside a template are not.
 
+## Animation id completions inside `sprite.play_flipbook`
+
+Put the caret inside [`sprite.play_flipbook`](/api/sprite)'s `id` argument and the plugin offers the animation names declared by the atlas or tile source that sprite uses. Like a node id, an animation name is not an address, so the whole quoted name is completed at once and a `#` inside one is never reported as an unreachable component.
+
+This slot is the first one scoped by a *sibling* argument, so it asks for more: the address must be the same-object `"#id"` literal form. A path such as `"/other#sprite"`, a variable, a `msg.url(…)` call, or a `hash(…)` argument all offer nothing, because the component they name is not decidable from the file you are editing. The chain runs from the script you are editing, to the **one** game object whose `components` name it, to that object's sprite with the addressed id, to its `tile_set`, to that atlas's declared animations — resolved through the same `outDir` and `include` rules the build uses. Any link that cannot be settled, including a script two game objects both claim, offers nothing.
+
+Only blocks declared as `animations { id: … }` are offered. A bare image in an atlas is not, and neither are [`gui.play_flipbook`](/api/gui) or [`model.play_anim`](/api/model), whose names come from elsewhere.
+
 ## It is advisory, not blocking
 
 Every diagnostic the plugin appends carries the `Suggestion` category, never `Error`. It adds editor signal; it never turns valid code red. In particular it **never blocks `tsc --noEmit`** — a project that type-checks clean stays clean in CI even with the plugin active. The plugin is an editor convenience layer; the build path remains the source of truth for what compiles.

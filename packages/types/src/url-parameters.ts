@@ -5,13 +5,27 @@ import type { ApiModule } from "./api-doc";
 // sufficient (`model.get_mesh_enabled#mesh_id` carries the address triple while
 // naming a mesh inside the model asset), so a slot is classified only
 // deliberately. The first three address the scene graph; `gui-node` names a node
-// inside the one `.gui` that owns the script, which is not an address at all.
-export type UrlParameterClass = "none" | "game-object" | "component" | "either" | "gui-node";
+// inside the one `.gui` that owns the script, which is not an address at all;
+// `animation` names a block inside the atlas of a component a *sibling*
+// argument addresses, which is why it is the one class needing a companion.
+export type UrlParameterClass =
+  | "none"
+  | "game-object"
+  | "component"
+  | "either"
+  | "gui-node"
+  | "animation";
 
 export interface UrlParameterEntry {
   fqn: string;
   parameter: string;
   class: UrlParameterClass;
+  // The parameter of the *same* function whose literal names the component the
+  // candidates are scoped to. Required for `animation` and absent otherwise —
+  // enforced by the drift guard rather than the type, because a per-class entry
+  // shape would fan the table's one interface out into a union for a single
+  // optional field.
+  addressParameter?: string;
   // `"generated"` for a slot the emitter derives from the ref-doc, otherwise a
   // package-relative path to the hand-authored `.d.ts` that declares it,
   // resolved against the `packages/types` package root. Not repo-relative: the
@@ -50,6 +64,7 @@ export const REQUIRED_TYPES: Record<Exclude<UrlParameterClass, "none">, readonly
   component: ADDRESS_TYPES,
   either: ADDRESS_TYPES,
   "gui-node": ["string", "hash"],
+  animation: ["string", "hash"],
 };
 
 function bareName(fqn: string): string {
