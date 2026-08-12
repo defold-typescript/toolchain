@@ -32,7 +32,7 @@ The slice is the fragment only: the path *before* the `#` is not completed, beca
 
 Put the caret inside [`gui.get_node`](/api/gui)'s argument and the plugin offers the node ids of the `.gui` scene that owns the script you are editing. A node id is not an address, so the whole quoted name is completed at once rather than a `#fragment`, and typing `#` inside one is never reported as an unreachable component.
 
-Scoping is deliberately strict: a scene owns a script by naming it, so the ids come from the **one** `.gui` whose `script` field points at the file you are in. A script no scene names, or one that two scenes both name, offers nothing — an id `gui.get_node` could not resolve at runtime is worse than no suggestion. Only the scene's top-level nodes are offered; nodes that exist solely as a layout override or inside a template are not.
+Scoping is deliberately strict: a scene owns a script by naming it, so the ids come from the **one** `.gui` whose `script` field names the `.gui_script` your file generates — resolved through the same `outDir` and `include` rules the build uses, so a project with a separate output tree completes too. A script no scene names, or one that two scenes both name, offers nothing — an id `gui.get_node` could not resolve at runtime is worse than no suggestion. Only the scene's top-level nodes are offered; nodes that exist solely as a layout override or inside a template are not.
 
 ## It is advisory, not blocking
 
