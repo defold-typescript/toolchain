@@ -6,15 +6,34 @@
 import type { UrlParameterClass, UrlParameterTable } from "@defold-typescript/types";
 import * as ts from "typescript";
 
-// A string literal sitting in an argument slot the classification table marks as
-// addressing. Offsets are absolute source offsets: `textStart` is the first
-// character inside the quotes, and `fragmentStart` is the first character after
-// the last `#`, or -1 when the literal carries no fragment.
-export interface AddressSlot {
+// A string literal sitting in an argument slot the classification table
+// classifies as anything but `none`. Offsets are absolute source offsets:
+// `textStart` is the first character inside the quotes, and `fragmentStart` is
+// the first character after the last `#`, or -1 when the literal carries no
+// fragment.
+export interface ClassifiedSlot {
   readonly class: UrlParameterClass;
   readonly text: string;
   readonly textStart: number;
   readonly fragmentStart: number;
+}
+
+// The classes that name something in the scene graph by address. A `gui-node`
+// is classified but is not one: its `#` is part of a node's name, so treating it
+// as an address would read that name as an unresolvable component fragment. The
+// exhaustive `satisfies` makes a future class a type error here rather than a
+// silent membership decision, which is why the set is spelled out instead of
+// tested with `!== "none"`. Local by necessity — see the bug-88 note above.
+const ADDRESS_CLASSES = {
+  "game-object": true,
+  component: true,
+  either: true,
+  "gui-node": false,
+  none: false,
+} satisfies Record<UrlParameterClass, boolean>;
+
+export function isAddressClass(parameterClass: UrlParameterClass): boolean {
+  return ADDRESS_CLASSES[parameterClass];
 }
 
 function classOf(table: UrlParameterTable, fqn: string, parameter: string): UrlParameterClass {
@@ -86,15 +105,15 @@ function innermostLiteralAt(
   return found;
 }
 
-// The address slot a cursor sits in, or `undefined` when it sits anywhere else.
-// The cursor must be inside the quotes — including the append position at the
-// very end of the text, which is where a fragment is most often typed.
-export function resolveAddressSlotAtPosition(input: {
+// The classified slot a cursor sits in, or `undefined` when it sits anywhere
+// else. The cursor must be inside the quotes — including the append position at
+// the very end of the text, which is where a fragment is most often typed.
+export function resolveClassifiedSlotAtPosition(input: {
   program: ts.Program;
   table: UrlParameterTable;
   fileName: string;
   position: number;
-}): AddressSlot | undefined {
+}): ClassifiedSlot | undefined {
   const { program, table, fileName, position } = input;
   const sourceFile = program.getSourceFile(fileName);
   if (!sourceFile) return undefined;

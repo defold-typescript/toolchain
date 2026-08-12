@@ -28,6 +28,12 @@ The completions are **strictly additive**. Whatever your editor already offers s
 
 The slice is the fragment only: the path *before* the `#` is not completed, because a game object can be created at any path at runtime, while a component id can only come from a scene file. Unlike a diagnostic, a suggestion claims nothing about what is absent, so ids are still offered when some scene file could not be read.
 
+## Node id completions inside `gui.get_node`
+
+Put the caret inside [`gui.get_node`](/api/gui)'s argument and the plugin offers the node ids of the `.gui` scene that owns the script you are editing. A node id is not an address, so the whole quoted name is completed at once rather than a `#fragment`, and typing `#` inside one is never reported as an unreachable component.
+
+Scoping is deliberately strict: a scene owns a script by naming it, so the ids come from the **one** `.gui` whose `script` field points at the file you are in. A script no scene names, or one that two scenes both name, offers nothing — an id `gui.get_node` could not resolve at runtime is worse than no suggestion. Only the scene's top-level nodes are offered; nodes that exist solely as a layout override or inside a template are not.
+
 ## It is advisory, not blocking
 
 Every diagnostic the plugin appends carries the `Suggestion` category, never `Error`. It adds editor signal; it never turns valid code red. In particular it **never blocks `tsc --noEmit`** — a project that type-checks clean stays clean in CI even with the plugin active. The plugin is an editor convenience layer; the build path remains the source of truth for what compiles.

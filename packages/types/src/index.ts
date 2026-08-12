@@ -93,7 +93,10 @@ export {
 } from "./signature-store";
 export {
   classifyUrlParameter,
+  collectParameterSlots,
   collectUrlParameterSlots,
+  parameterTypesSatisfyClass,
+  REQUIRED_TYPES,
   type UrlParameterClass,
   type UrlParameterEntry,
   type UrlParameterSlot,

@@ -1,14 +1,19 @@
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import {
+  buildGuiNodeIndex,
   buildSceneComponentIndex,
+  type ClassifiedSlot,
   getProgramDiagnostics,
-  resolveAddressSlotAtPosition,
+  isAddressClass,
+  resolveClassifiedSlotAtPosition,
 } from "@defold-typescript/transpiler";
 import type { UrlParameterTable } from "@defold-typescript/types";
 import type * as ts from "typescript";
-import { buildSceneCompletionEntries } from "./scene-completions";
-import { readSceneDocuments, type SceneReadHost } from "./scene-documents";
+import { buildGuiNodeCompletionEntries, buildSceneCompletionEntries } from "./scene-completions";
+import { displayPathOf, readSceneDocuments, type SceneReadHost } from "./scene-documents";
+
+const GUI_EXTENSIONS = [".gui"];
 
 const requireFromHere = createRequire(import.meta.url);
 
@@ -29,6 +34,48 @@ function loadUrlParameterTable(): UrlParameterTable | undefined {
     }
   }
   return urlParameterTable;
+}
+
+// A slot resolves for a caret anywhere inside the quotes, but a component
+// entry's `replacementSpan` only ever covers the fragment — so offering one to
+// a caret in the path would edit text the author is not standing on. `<` not
+// `<=`: at `fragmentStart` the fragment is merely empty, which is where it is
+// most often typed. The guard is above the walk, so a caret in the path costs no
+// `.go`/`.collection` parse.
+function componentEntries(
+  slot: ClassifiedSlot,
+  position: number,
+  host: SceneReadHost,
+  projectRoot: string,
+  baseEntries: readonly ts.CompletionEntry[],
+): ts.CompletionEntry[] {
+  if (slot.fragmentStart === -1 || position < slot.fragmentStart) {
+    return [];
+  }
+  const { documents } = readSceneDocuments(host, projectRoot);
+  // A partial universe still suggests — unlike the reachability report, a
+  // suggestion claims nothing about what is absent.
+  return buildSceneCompletionEntries({
+    slot,
+    ids: buildSceneComponentIndex(documents).ids,
+    baseEntries,
+  });
+}
+
+// No caret guard: the span is the whole literal, so an entry is well-formed
+// wherever inside the quotes the caret sits. Node ids are scoped to the single
+// `.gui` that names this file as its script — a project-wide union would offer
+// ids `gui.get_node` could never resolve at runtime.
+function nodeEntries(
+  slot: ClassifiedSlot,
+  host: SceneReadHost,
+  projectRoot: string,
+  fileName: string,
+  baseEntries: readonly ts.CompletionEntry[],
+): ts.CompletionEntry[] {
+  const { documents } = readSceneDocuments(host, projectRoot, GUI_EXTENSIONS);
+  const ids = buildGuiNodeIndex(documents).byScript.get(displayPathOf(projectRoot, fileName));
+  return ids === undefined ? [] : buildGuiNodeCompletionEntries({ slot, ids, baseEntries });
 }
 
 // A TS language-service plugin is loaded by package name and its main is called
@@ -80,33 +127,25 @@ export default function init(modules: { typescript: typeof import("typescript") 
       if (!program || !table) {
         return prior;
       }
-      const slot = resolveAddressSlotAtPosition({ program, table, fileName, position });
-      // A slot resolves for a caret anywhere inside the quotes, but an entry's
-      // `replacementSpan` only ever covers the fragment — so offering one to a
-      // caret in the path would edit text the author is not standing on. `<`
-      // not `<=`: at `fragmentStart` the fragment is merely empty, which is
-      // where it is most often typed. Above the walk, so a caret in the path
-      // costs no `.go`/`.collection` parse.
-      if (!slot || slot.fragmentStart === -1 || position < slot.fragmentStart) {
+      const slot = resolveClassifiedSlotAtPosition({ program, table, fileName, position });
+      if (!slot) {
         return prior;
       }
       const serverHost = info.serverHost as SceneReadHost | undefined;
       if (!serverHost?.readDirectory) {
         return prior;
       }
+      const projectRoot = info.project.getCurrentDirectory();
 
-      // Rebuilt per request, deliberately: completions only fire inside an
-      // address slot, and a cache without watch facilities would go stale
+      // Rebuilt per request, deliberately: completions only fire inside a
+      // classified slot, and a cache without watch facilities would go stale
       // exactly the way a generated declaration does.
-      const { documents } = readSceneDocuments(serverHost, info.project.getCurrentDirectory());
-      // A partial universe still suggests — unlike the reachability report,
-      // a suggestion claims nothing about what is absent.
-      const index = buildSceneComponentIndex(documents);
-      const entries = buildSceneCompletionEntries({
-        slot,
-        ids: index.ids,
-        baseEntries: prior?.entries ?? [],
-      });
+      const baseEntries = prior?.entries ?? [];
+      const entries = isAddressClass(slot.class)
+        ? componentEntries(slot, position, serverHost, projectRoot, baseEntries)
+        : slot.class === "gui-node"
+          ? nodeEntries(slot, serverHost, projectRoot, fileName, baseEntries)
+          : [];
       if (entries.length === 0) {
         return prior;
       }

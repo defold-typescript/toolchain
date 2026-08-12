@@ -2,13 +2,13 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
-  type AddressSlot,
+  type ClassifiedSlot,
   createTranspileSession,
-  resolveAddressSlotAtPosition,
+  resolveClassifiedSlotAtPosition,
 } from "@defold-typescript/transpiler";
 import type { UrlParameterTable } from "@defold-typescript/types";
 import type ts from "typescript";
-import { buildSceneCompletionEntries } from "./scene-completions";
+import { buildGuiNodeCompletionEntries, buildSceneCompletionEntries } from "./scene-completions";
 
 const TABLE: UrlParameterTable = JSON.parse(
   readFileSync(join(import.meta.dir, "../../types/url-parameters.json"), "utf8"),
@@ -16,7 +16,7 @@ const TABLE: UrlParameterTable = JSON.parse(
 
 // Slots come from the production resolver rather than a hand-built offset
 // table, so a span this test accepts is a span the editor would really be given.
-function slotIn(source: string, literal: string): AddressSlot {
+function slotIn(source: string, literal: string): ClassifiedSlot {
   const session = createTranspileSession();
   session.update({ "main.ts": source });
   const program = session.getProgram();
@@ -24,7 +24,7 @@ function slotIn(source: string, literal: string): AddressSlot {
     throw new Error("session produced no program");
   }
   const start = source.indexOf(literal);
-  const slot = resolveAddressSlotAtPosition({
+  const slot = resolveClassifiedSlotAtPosition({
     program,
     table: TABLE,
     fileName: "main.ts",
@@ -153,6 +153,85 @@ describe("buildSceneCompletionEntries", () => {
     expect(entries).toHaveLength(2);
     for (const built of entries) {
       expect(built.sortText > ABOVE_HOST).toBe(true);
+    }
+  });
+});
+
+describe("buildGuiNodeCompletionEntries", () => {
+  const NODE_SOURCE = 'gui.get_node("sco");\n';
+
+  test("offers every node id, replacing the whole literal rather than a fragment", () => {
+    const slot = slotIn(NODE_SOURCE, '"sco"');
+    expect(slot.class).toBe("gui-node");
+    const entries = buildGuiNodeCompletionEntries({
+      slot,
+      ids: new Set(["score", "level"]),
+      baseEntries: [],
+    });
+    expect(entries.map((e) => e.name)).toEqual(["level", "score"]);
+    for (const built of entries) {
+      expect(built.kind).toBe("string" as ts.ScriptElementKind);
+      expect(built.replacementSpan).toEqual({ start: slot.textStart, length: "sco".length });
+    }
+  });
+
+  test("an empty literal replaces nothing — the span is the caret", () => {
+    const slot = slotIn('gui.get_node("");\n', '""');
+    const [built] = buildGuiNodeCompletionEntries({
+      slot,
+      ids: new Set(["score"]),
+      baseEntries: [],
+    });
+    expect(built?.replacementSpan).toEqual({ start: slot.textStart, length: 0 });
+  });
+
+  test("an id the base already offers is dropped from ours, never from the base's", () => {
+    const slot = slotIn(NODE_SOURCE, '"sco"');
+    const baseEntries = [entry("score", LOCATION_PRIORITY)];
+    const entries = buildGuiNodeCompletionEntries({
+      slot,
+      ids: new Set(["score", "level"]),
+      baseEntries,
+    });
+    expect(entries.map((e) => e.name)).toEqual(["level"]);
+    expect(baseEntries.map((e) => e.name)).toEqual(["score"]);
+  });
+
+  test("one shared key sorts every node id after every base key", () => {
+    const slot = slotIn(NODE_SOURCE, '"sco"');
+    const baseEntries = [
+      entry("a", LOCATION_PRIORITY),
+      entry("b", DEPRECATED_IDENTIFIER),
+      entry("c", ABOVE_HOST),
+    ];
+    const entries = buildGuiNodeCompletionEntries({
+      slot,
+      ids: new Set(["score", "level"]),
+      baseEntries,
+    });
+    expect(new Set(entries.map((e) => e.sortText)).size).toBe(1);
+    for (const built of entries) {
+      for (const base of baseEntries) {
+        expect(built.sortText > base.sortText).toBe(true);
+      }
+    }
+  });
+
+  test("a base-less call still keys above every priority the host produces", () => {
+    const slot = slotIn(NODE_SOURCE, '"sco"');
+    const entries = buildGuiNodeCompletionEntries({
+      slot,
+      ids: new Set(["score"]),
+      baseEntries: [],
+    });
+    for (const priority of [
+      LOCATION_PRIORITY,
+      GLOBALS_OR_KEYWORDS,
+      AUTO_IMPORT_SUGGESTIONS,
+      DEPRECATED_IDENTIFIER,
+    ]) {
+      expect(entries[0]?.sortText ?? "").toBeTruthy();
+      expect((entries[0]?.sortText ?? "") > priority).toBe(true);
     }
   });
 });
