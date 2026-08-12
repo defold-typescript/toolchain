@@ -1,6 +1,14 @@
 export type { GuiNodeIndex } from "./gui-node-index";
 export { buildGuiNodeIndex } from "./gui-node-index";
 export { findMainEntryFactoryImports } from "./main-entry-factory-imports";
+export type { BuildConfig, ScriptKind, SourceOutputKind } from "./output-paths";
+export {
+  computeOutputRel,
+  DEFAULT_INCLUDE,
+  parseBuildConfig,
+  SCRIPT_SUFFIX_BY_KIND,
+  stripIncludeBase,
+} from "./output-paths";
 export { getProgramDiagnostics } from "./program-diagnostics";
 export type { SceneComponentIndex } from "./scene-component-index";
 export { buildSceneComponentIndex } from "./scene-component-index";
