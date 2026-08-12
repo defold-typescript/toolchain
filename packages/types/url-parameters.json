@@ -190,5 +190,13 @@
     "class": "gui-node",
     "source": "generated",
     "evidence": "id of the node to retrieve"
+  },
+  {
+    "fqn": "sprite.play_flipbook",
+    "parameter": "id",
+    "class": "animation",
+    "addressParameter": "url",
+    "source": "generated",
+    "evidence": "hashed id of the animation to play"
   }
 ]

@@ -3,7 +3,9 @@ import { createRequire } from "node:module";
 import {
   buildGuiNodeIndex,
   buildSceneComponentIndex,
+  buildSpriteAnimationIndex,
   type ClassifiedSlot,
+  componentIdOfSameObjectAddress,
   computeOutputRel,
   getProgramDiagnostics,
   isAddressClass,
@@ -12,10 +14,17 @@ import {
 import type { UrlParameterTable } from "@defold-typescript/types";
 import type * as ts from "typescript";
 import { readBuildConfigFromHost } from "./build-config";
-import { buildGuiNodeCompletionEntries, buildSceneCompletionEntries } from "./scene-completions";
+import {
+  buildSceneCompletionEntries,
+  buildWholeLiteralCompletionEntries,
+} from "./scene-completions";
 import { displayPathOf, readSceneDocuments, type SceneReadHost } from "./scene-documents";
 
 const GUI_EXTENSIONS = [".gui"];
+
+// A third extension set, disjoint from the other two: an atlas declares
+// animation names, not component ids or node ids.
+const ANIMATION_ASSET_EXTENSIONS = [".atlas", ".tilesource", ".sprite"];
 
 const requireFromHere = createRequire(import.meta.url);
 
@@ -82,7 +91,34 @@ function nodeEntries(
   const config = readBuildConfigFromHost(host, projectRoot);
   const resource = computeOutputRel(displayPathOf(projectRoot, fileName), config, "gui-script");
   const ids = buildGuiNodeIndex(documents).byScriptResource.get(resource);
-  return ids === undefined ? [] : buildGuiNodeCompletionEntries({ slot, ids, baseEntries });
+  return ids === undefined ? [] : buildWholeLiteralCompletionEntries({ slot, ids, baseEntries });
+}
+
+// Also no caret guard, and the same forward output-path mapping — but scoped
+// one step further than a node id: to the sprite component the slot's *sibling*
+// literal addresses on the one game object that owns this script. Every
+// unresolved link returns nothing rather than a project-wide guess, because a
+// `sprite.play_flipbook` id the addressed atlas does not declare is a runtime
+// crash.
+function animationEntries(
+  slot: ClassifiedSlot,
+  host: SceneReadHost,
+  projectRoot: string,
+  fileName: string,
+  baseEntries: readonly ts.CompletionEntry[],
+): ts.CompletionEntry[] {
+  const component = componentIdOfSameObjectAddress(slot.addressText ?? "");
+  if (component === undefined) {
+    return [];
+  }
+  const { documents: scenes } = readSceneDocuments(host, projectRoot);
+  const { documents: assets } = readSceneDocuments(host, projectRoot, ANIMATION_ASSET_EXTENSIONS);
+  const config = readBuildConfigFromHost(host, projectRoot);
+  const resource = computeOutputRel(displayPathOf(projectRoot, fileName), config, "script");
+  const ids = buildSpriteAnimationIndex({ scenes, assets })
+    .byScriptResource.get(resource)
+    ?.get(component);
+  return ids === undefined ? [] : buildWholeLiteralCompletionEntries({ slot, ids, baseEntries });
 }
 
 // A TS language-service plugin is loaded by package name and its main is called
@@ -152,7 +188,9 @@ export default function init(modules: { typescript: typeof import("typescript") 
         ? componentEntries(slot, position, serverHost, projectRoot, baseEntries)
         : slot.class === "gui-node"
           ? nodeEntries(slot, serverHost, projectRoot, fileName, baseEntries)
-          : [];
+          : slot.class === "animation"
+            ? animationEntries(slot, serverHost, projectRoot, fileName, baseEntries)
+            : [];
       if (entries.length === 0) {
         return prior;
       }

@@ -19,6 +19,7 @@ import pushDoc from "../fixtures/push_doc.json" with { type: "json" };
 import renderDoc from "../fixtures/render_doc.json" with { type: "json" };
 import resourceDoc from "../fixtures/resource_doc.json" with { type: "json" };
 import socketDoc from "../fixtures/socket_doc.json" with { type: "json" };
+import spriteDoc from "../fixtures/sprite_doc.json" with { type: "json" };
 import sysDoc from "../fixtures/sys_doc.json" with { type: "json" };
 import tilemapDoc from "../fixtures/tilemap_doc.json" with { type: "json" };
 import typesDoc from "../fixtures/types_doc.json" with { type: "json" };
@@ -3199,6 +3200,20 @@ describe("url-parameter address retyping", () => {
       'function get_node(id: string | Hash): Opaque<"node">;',
     );
     expect(out).not.toContain('SceneGameObjectAddress | Hash): Opaque<"node">');
+  });
+
+  test("a classified animation-id slot is inert, and so is its address companion", () => {
+    const module = parseDefoldApiDoc(spriteDoc);
+    const out = emitDeclarations(module, { urlParameters: committed });
+    // `sprite.play_flipbook#id` is classified `animation` in the committed
+    // table and names `url` as its address companion. Neither is in the alias
+    // map, so the whole signature must emit exactly as it did unclassified.
+    expect(signatureLine(out, "function play_flipbook(url")).toBe(
+      "function play_flipbook(url: string | Hash | Url, id: string | Hash, " +
+        "complete_function?: (self: unknown, message_id: unknown, message: unknown, sender: unknown) => void, " +
+        "play_properties?: { offset?: number; playback_rate?: number }): void;",
+    );
+    expect(out).not.toContain("SceneComponentAddress");
   });
 
   test("emitSymbolSignatures retypes the same slots as the declaration", () => {
