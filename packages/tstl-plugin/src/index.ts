@@ -4,12 +4,14 @@ import {
   buildGuiNodeIndex,
   buildSceneComponentIndex,
   type ClassifiedSlot,
+  computeOutputRel,
   getProgramDiagnostics,
   isAddressClass,
   resolveClassifiedSlotAtPosition,
 } from "@defold-typescript/transpiler";
 import type { UrlParameterTable } from "@defold-typescript/types";
 import type * as ts from "typescript";
+import { readBuildConfigFromHost } from "./build-config";
 import { buildGuiNodeCompletionEntries, buildSceneCompletionEntries } from "./scene-completions";
 import { displayPathOf, readSceneDocuments, type SceneReadHost } from "./scene-documents";
 
@@ -64,8 +66,11 @@ function componentEntries(
 
 // No caret guard: the span is the whole literal, so an entry is well-formed
 // wherever inside the quotes the caret sits. Node ids are scoped to the single
-// `.gui` that names this file as its script — a project-wide union would offer
-// ids `gui.get_node` could never resolve at runtime.
+// `.gui` that names this file's generated script — a project-wide union would
+// offer ids `gui.get_node` could never resolve at runtime. A scene names an
+// output resource, and an output path cannot say which include base produced it,
+// so the file being edited is mapped forward through the build's own math rather
+// than the resource being mapped back.
 function nodeEntries(
   slot: ClassifiedSlot,
   host: SceneReadHost,
@@ -74,7 +79,9 @@ function nodeEntries(
   baseEntries: readonly ts.CompletionEntry[],
 ): ts.CompletionEntry[] {
   const { documents } = readSceneDocuments(host, projectRoot, GUI_EXTENSIONS);
-  const ids = buildGuiNodeIndex(documents).byScript.get(displayPathOf(projectRoot, fileName));
+  const config = readBuildConfigFromHost(host, projectRoot);
+  const resource = computeOutputRel(displayPathOf(projectRoot, fileName), config, "gui-script");
+  const ids = buildGuiNodeIndex(documents).byScriptResource.get(resource);
   return ids === undefined ? [] : buildGuiNodeCompletionEntries({ slot, ids, baseEntries });
 }
 
