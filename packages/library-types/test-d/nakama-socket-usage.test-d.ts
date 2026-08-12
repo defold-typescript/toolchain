@@ -66,12 +66,14 @@ _socket.match_create(undefined);
 
 // `match_id` and `token` are an upstream `oneof`: a matchmaker join carries the token and
 // no id, a direct join carries the id and no token. Both arms have to compile, and the
-// trailing `metadata` and `callback` stay reachable across them.
+// trailing `metadata` and `callback` stay reachable across them. Each arm is written in
+// both call forms, so neither the module signature nor the bound one can narrow alone.
 socket.match_join(_socket, undefined, "matchmaker-token", undefined);
 _socket.match_join(undefined, "matchmaker-token", undefined, (message) => {
   const _payload: unknown = message;
 });
 socket.match_join(_socket, "match-id", undefined, undefined);
+_socket.match_join("match-id", undefined, undefined);
 
 // The nil alternative is `string | undefined`, not `unknown`: a callback may not slide
 // into an identifier slot. Widening further would leave these two directives unused,
