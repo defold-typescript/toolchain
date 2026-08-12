@@ -107,6 +107,47 @@ describe("readSceneDocuments", () => {
     ]);
   });
 
+  test("the animation asset set is a third universe the default walk never touches", () => {
+    const paths = [
+      `${PROJECT_ROOT}/main/board.go`,
+      `${PROJECT_ROOT}/main/main.collection`,
+      `${PROJECT_ROOT}/assets/player.atlas`,
+      `${PROJECT_ROOT}/assets/level.tilesource`,
+      `${PROJECT_ROOT}/assets/hero.sprite`,
+    ];
+    const host = hostReturning(paths, () => "");
+    expect([
+      ...readSceneDocuments(host, PROJECT_ROOT, [
+        ".atlas",
+        ".tilesource",
+        ".sprite",
+      ]).documents.keys(),
+    ]).toEqual(["assets/player.atlas", "assets/level.tilesource", "assets/hero.sprite"]);
+    // Folding the asset extensions into the default set would feed atlas text
+    // to `buildSceneComponentIndex`, whose universe is component ids alone.
+    expect([...readSceneDocuments(host, PROJECT_ROOT).documents.keys()]).toEqual([
+      "main/board.go",
+      "main/main.collection",
+    ]);
+  });
+
+  test("build output is dropped from an asset walk too", () => {
+    const host = hostReturning(
+      [
+        `${PROJECT_ROOT}/assets/player.atlas`,
+        `${PROJECT_ROOT}/build/default_bundle/_generated_x.sprite`,
+      ],
+      () => "",
+    );
+    expect([
+      ...readSceneDocuments(host, PROJECT_ROOT, [
+        ".atlas",
+        ".tilesource",
+        ".sprite",
+      ]).documents.keys(),
+    ]).toEqual(["assets/player.atlas"]);
+  });
+
   test("a host that cannot enumerate files yields no documents and a reason", () => {
     const { documents, unreadable } = readSceneDocuments({ readFile: () => "" }, PROJECT_ROOT);
     expect(documents.size).toBe(0);

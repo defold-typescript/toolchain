@@ -117,6 +117,60 @@ describe("resolveClassifiedSlotAtPosition", () => {
     // biome-ignore lint/style/noNonNullAssertion: the assertions above already failed if it did not resolve
     expect(isAddressClass(slot!.class)).toBe(false);
   });
+
+  test("an animation slot resolves with the component its sibling literal addresses", () => {
+    const source = 'sprite.play_flipbook("#sprite", "wa");\n';
+    const slot = slotAt(source, insideOf(source, '"wa"'));
+    expect(slot?.class).toBe("animation");
+    expect(slot?.text).toBe("wa");
+    expect(slot?.textStart).toBe(source.indexOf("wa"));
+    expect(slot?.fragmentStart).toBe(-1);
+    expect(slot?.addressText).toBe("#sprite");
+    // biome-ignore lint/style/noNonNullAssertion: the assertions above already failed if it did not resolve
+    expect(isAddressClass(slot!.class)).toBe(false);
+  });
+
+  test("the animation slot's own address parameter stays unclassified", () => {
+    const source = 'sprite.play_flipbook("#sprite", "wa");\n';
+    expect(slotAt(source, insideOf(source, '"#sprite"'))).toBeUndefined();
+  });
+
+  test("only a string literal is read as the address — every other form leaves it unknown", () => {
+    for (const call of [
+      'const url = msg.url("#sprite");\nsprite.play_flipbook(url, "wa");',
+      `const id = "sprite";\nsprite.play_flipbook(\`#\${id}\`, "wa");`,
+      'sprite.play_flipbook(msg.url("#sprite"), "wa");',
+    ]) {
+      const source = `${call}\n`;
+      const slot = slotAt(source, insideOf(source, '"wa"'));
+      expect(slot?.class).toBe("animation");
+      expect(slot?.addressText).toBeUndefined();
+    }
+  });
+
+  test("the address is read by parameter name, not by argument position", () => {
+    // The committed table cannot prove this: its one companion is the parameter
+    // at index 0, so a fixed `arguments[0]` reading would satisfy every case
+    // above. Here the companion is the *second* parameter, and the caret sits in
+    // the first.
+    const source = 'sprite.play_flipbook("#sprite", "walk");\n';
+    const slot = resolveClassifiedSlotAtPosition({
+      program: programFor(source),
+      table: [
+        {
+          fqn: "sprite.play_flipbook",
+          parameter: "url",
+          class: "animation",
+          source: "generated",
+          addressParameter: "id",
+        },
+      ],
+      fileName: "main.ts",
+      position: insideOf(source, '"#sprite"'),
+    });
+    expect(slot?.text).toBe("#sprite");
+    expect(slot?.addressText).toBe("walk");
+  });
 });
 
 describe("isAddressClass", () => {
@@ -125,6 +179,7 @@ describe("isAddressClass", () => {
     expect(isAddressClass("component")).toBe(true);
     expect(isAddressClass("either")).toBe(true);
     expect(isAddressClass("gui-node")).toBe(false);
+    expect(isAddressClass("animation")).toBe(false);
     expect(isAddressClass("none")).toBe(false);
   });
 });

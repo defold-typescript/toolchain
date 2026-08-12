@@ -3,19 +3,26 @@
 // here would survive `--packages=external` into the packed CLI and fail under
 // plain node exactly the way bug-88 did. The table arrives as a parameter and
 // the lookup below stands in for `classifyUrlParameter`.
-import type { UrlParameterClass, UrlParameterTable } from "@defold-typescript/types";
+import type {
+  UrlParameterClass,
+  UrlParameterEntry,
+  UrlParameterTable,
+} from "@defold-typescript/types";
 import * as ts from "typescript";
 
 // A string literal sitting in an argument slot the classification table
 // classifies as anything but `none`. Offsets are absolute source offsets:
 // `textStart` is the first character inside the quotes, and `fragmentStart` is
 // the first character after the last `#`, or -1 when the literal carries no
-// fragment.
+// fragment. `addressText` is the statically-known text of the sibling argument
+// the entry names as its address companion — present only for a class that
+// declares one, and only when that argument is a plain string literal.
 export interface ClassifiedSlot {
   readonly class: UrlParameterClass;
   readonly text: string;
   readonly textStart: number;
   readonly fragmentStart: number;
+  readonly addressText?: string;
 }
 
 // The classes that name something in the scene graph by address. A `gui-node`
@@ -29,18 +36,12 @@ const ADDRESS_CLASSES = {
   component: true,
   either: true,
   "gui-node": false,
+  animation: false,
   none: false,
 } satisfies Record<UrlParameterClass, boolean>;
 
 export function isAddressClass(parameterClass: UrlParameterClass): boolean {
   return ADDRESS_CLASSES[parameterClass];
-}
-
-function classOf(table: UrlParameterTable, fqn: string, parameter: string): UrlParameterClass {
-  for (const entry of table) {
-    if (entry.fqn === fqn && entry.parameter === parameter) return entry.class;
-  }
-  return "none";
 }
 
 // `getFullyQualifiedName` reports an ambient namespace member as
@@ -71,24 +72,63 @@ function parameterName(
   return parameter.name.text;
 }
 
+// The table entry governing the argument slot this literal occupies, together
+// with the call it sits in — `undefined` when the call, the parameter, or the
+// lookup does not resolve. The judgment is the table's alone: the parameter's
+// declared type never participates, because an address slot and a `mesh_id`
+// carry the same triple.
+function classifiedEntryOfArgument(
+  checker: ts.TypeChecker,
+  table: UrlParameterTable,
+  literal: ts.StringLiteralLike,
+): { entry: UrlParameterEntry; call: ts.CallExpression } | undefined {
+  const call = literal.parent;
+  if (!ts.isCallExpression(call)) return undefined;
+  const argumentIndex = call.arguments.indexOf(literal);
+  if (argumentIndex === -1 || !ts.isPropertyAccessExpression(call.expression)) return undefined;
+  const fqn = tableKey(checker, call.expression);
+  if (fqn === undefined) return undefined;
+  const parameter = parameterName(checker, call, argumentIndex);
+  if (parameter === undefined) return undefined;
+  for (const entry of table) {
+    if (entry.fqn === fqn && entry.parameter === parameter) return { entry, call };
+  }
+  return undefined;
+}
+
 // How the committed table classifies the argument slot this literal occupies —
-// `"none"` when the call, the parameter, or the lookup does not resolve. The
-// judgment is the table's alone: the parameter's declared type never
-// participates, because an address slot and a `mesh_id` carry the same triple.
+// `"none"` when nothing resolves.
 export function addressClassOfArgument(
   checker: ts.TypeChecker,
   table: UrlParameterTable,
   literal: ts.StringLiteralLike,
 ): UrlParameterClass {
-  const call = literal.parent;
-  if (!ts.isCallExpression(call)) return "none";
-  const argumentIndex = call.arguments.indexOf(literal);
-  if (argumentIndex === -1 || !ts.isPropertyAccessExpression(call.expression)) return "none";
-  const fqn = tableKey(checker, call.expression);
-  if (fqn === undefined) return "none";
-  const parameter = parameterName(checker, call, argumentIndex);
-  if (parameter === undefined) return "none";
-  return classOf(table, fqn, parameter);
+  return classifiedEntryOfArgument(checker, table, literal)?.entry.class ?? "none";
+}
+
+// The text of the sibling argument the entry names as its address companion.
+// The parameter is found by *name* in the resolved signature — the companion is
+// not at a fixed offset from the classified slot — and only a plain string
+// literal counts: a variable, a `msg.url(…)` call and a substituted template
+// are all unknown until runtime, and guessing would scope the candidates to the
+// wrong component.
+function addressTextOf(
+  checker: ts.TypeChecker,
+  entry: UrlParameterEntry,
+  call: ts.CallExpression,
+): string | undefined {
+  if (entry.addressParameter === undefined) return undefined;
+  const declaration = checker.getResolvedSignature(call)?.declaration;
+  if (!declaration || !ts.isFunctionLike(declaration)) return undefined;
+  const index = declaration.parameters.findIndex(
+    (parameter) =>
+      !parameter.dotDotDotToken &&
+      ts.isIdentifier(parameter.name) &&
+      parameter.name.text === entry.addressParameter,
+  );
+  if (index === -1) return undefined;
+  const argument = call.arguments[index];
+  return argument && ts.isStringLiteralLike(argument) ? argument.text : undefined;
 }
 
 function innermostLiteralAt(
@@ -129,14 +169,17 @@ export function resolveClassifiedSlotAtPosition(input: {
   const textStart = literal.getStart(sourceFile) + 1;
   if (position < textStart || position > textStart + literal.text.length) return undefined;
 
-  const slotClass = addressClassOfArgument(program.getTypeChecker(), table, literal);
-  if (slotClass === "none") return undefined;
+  const checker = program.getTypeChecker();
+  const classified = classifiedEntryOfArgument(checker, table, literal);
+  if (!classified || classified.entry.class === "none") return undefined;
 
   const hash = literal.text.lastIndexOf("#");
+  const addressText = addressTextOf(checker, classified.entry, classified.call);
   return {
-    class: slotClass,
+    class: classified.entry.class,
     text: literal.text,
     textStart,
     fragmentStart: hash === -1 ? -1 : textStart + hash + 1,
+    ...(addressText === undefined ? {} : { addressText }),
   };
 }

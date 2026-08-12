@@ -16,6 +16,11 @@ export type { SceneMessage } from "./scene-text-format";
 export { parseSceneTextFormat, SceneTextFormatError } from "./scene-text-format";
 export type { TranspileSession } from "./session";
 export { createTranspileSession } from "./session";
+export type { SpriteAnimationIndex } from "./sprite-animation-index";
+export {
+  buildSpriteAnimationIndex,
+  componentIdOfSameObjectAddress,
+} from "./sprite-animation-index";
 export type {
   TranspileDiagnostic,
   TranspileProjectInput,

@@ -8,7 +8,10 @@ import {
 } from "@defold-typescript/transpiler";
 import type { UrlParameterTable } from "@defold-typescript/types";
 import type ts from "typescript";
-import { buildGuiNodeCompletionEntries, buildSceneCompletionEntries } from "./scene-completions";
+import {
+  buildSceneCompletionEntries,
+  buildWholeLiteralCompletionEntries,
+} from "./scene-completions";
 
 const TABLE: UrlParameterTable = JSON.parse(
   readFileSync(join(import.meta.dir, "../../types/url-parameters.json"), "utf8"),
@@ -157,13 +160,32 @@ describe("buildSceneCompletionEntries", () => {
   });
 });
 
-describe("buildGuiNodeCompletionEntries", () => {
+describe("buildWholeLiteralCompletionEntries", () => {
   const NODE_SOURCE = 'gui.get_node("sco");\n';
+  const ANIMATION_SOURCE = 'sprite.play_flipbook("#sprite", "wa");\n';
+
+  test("an animation slot gets the identical whole-literal treatment as a node id", () => {
+    // One builder serves both kinds: an id and a node name have the same span
+    // rule, so a second exported builder would only be a copy free to drift.
+    const slot = slotIn(ANIMATION_SOURCE, '"wa"');
+    expect(slot.class).toBe("animation");
+    const entries = buildWholeLiteralCompletionEntries({
+      slot,
+      ids: new Set(["walk", "jump"]),
+      baseEntries: [entry("walk", LOCATION_PRIORITY)],
+    });
+    expect(entries.map((e) => e.name)).toEqual(["jump"]);
+    expect(new Set(entries.map((e) => e.sortText)).size).toBe(1);
+    for (const built of entries) {
+      expect(built.replacementSpan).toEqual({ start: slot.textStart, length: "wa".length });
+      expect(built.sortText > LOCATION_PRIORITY).toBe(true);
+    }
+  });
 
   test("offers every node id, replacing the whole literal rather than a fragment", () => {
     const slot = slotIn(NODE_SOURCE, '"sco"');
     expect(slot.class).toBe("gui-node");
-    const entries = buildGuiNodeCompletionEntries({
+    const entries = buildWholeLiteralCompletionEntries({
       slot,
       ids: new Set(["score", "level"]),
       baseEntries: [],
@@ -177,7 +199,7 @@ describe("buildGuiNodeCompletionEntries", () => {
 
   test("an empty literal replaces nothing — the span is the caret", () => {
     const slot = slotIn('gui.get_node("");\n', '""');
-    const [built] = buildGuiNodeCompletionEntries({
+    const [built] = buildWholeLiteralCompletionEntries({
       slot,
       ids: new Set(["score"]),
       baseEntries: [],
@@ -188,7 +210,7 @@ describe("buildGuiNodeCompletionEntries", () => {
   test("an id the base already offers is dropped from ours, never from the base's", () => {
     const slot = slotIn(NODE_SOURCE, '"sco"');
     const baseEntries = [entry("score", LOCATION_PRIORITY)];
-    const entries = buildGuiNodeCompletionEntries({
+    const entries = buildWholeLiteralCompletionEntries({
       slot,
       ids: new Set(["score", "level"]),
       baseEntries,
@@ -204,7 +226,7 @@ describe("buildGuiNodeCompletionEntries", () => {
       entry("b", DEPRECATED_IDENTIFIER),
       entry("c", ABOVE_HOST),
     ];
-    const entries = buildGuiNodeCompletionEntries({
+    const entries = buildWholeLiteralCompletionEntries({
       slot,
       ids: new Set(["score", "level"]),
       baseEntries,
@@ -219,7 +241,7 @@ describe("buildGuiNodeCompletionEntries", () => {
 
   test("a base-less call still keys above every priority the host produces", () => {
     const slot = slotIn(NODE_SOURCE, '"sco"');
-    const entries = buildGuiNodeCompletionEntries({
+    const entries = buildWholeLiteralCompletionEntries({
       slot,
       ids: new Set(["score"]),
       baseEntries: [],

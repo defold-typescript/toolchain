@@ -65,10 +65,12 @@ export function buildSceneCompletionEntries(input: {
   });
 }
 
-// One entry per node id. Unlike an address, a node id has no path half to keep:
-// the whole inside-quotes text is the name, so accepting an entry replaces all
-// of it and no caret guard is needed.
-export function buildGuiNodeCompletionEntries(input: {
+// One entry per id, for the kinds whose literal is the name outright — a `.gui`
+// node id and an atlas animation id. Unlike an address, neither has a path half
+// to keep: the whole inside-quotes text is the name, so accepting an entry
+// replaces all of it and no caret guard is needed. One builder rather than two,
+// because a second copy would be free to drift on span or dedup.
+export function buildWholeLiteralCompletionEntries(input: {
   slot: ClassifiedSlot;
   ids: ReadonlySet<string>;
   baseEntries: readonly ts.CompletionEntry[];

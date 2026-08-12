@@ -103,6 +103,19 @@ describe("collectParameterSlots", () => {
     expect(allKeys(currentTargetSources(["go"]))).toContain("go.exists#url");
   });
 
+  test("keeps an animation-id parameter the address filter drops, carrying its declared types", () => {
+    const sources = currentTargetSources(["sprite"]);
+    const slot = collectParameterSlots(sources).find(
+      (candidate) => candidate.fqn === "sprite.play_flipbook" && candidate.parameter === "id",
+    );
+    expect(slot?.types).toEqual(["string", "hash"]);
+    expect(slot?.doc).toBe("hashed id of the animation to play");
+    expect(keys(sources)).not.toContain("sprite.play_flipbook#id");
+    // The address companion is a live slot of the same function, and the only
+    // one on it carrying the triple.
+    expect(keys(sources)).toContain("sprite.play_flipbook#url");
+  });
+
   test("omits every function the target hands to the authored overloads", () => {
     const slots = allKeys(currentTargetSources(["msg"]));
     expect(slots).not.toContain("msg.post#receiver");
@@ -115,6 +128,12 @@ describe("parameterTypesSatisfyClass", () => {
     expect(parameterTypesSatisfyClass(["string", "hash"], "gui-node")).toBe(true);
     expect(parameterTypesSatisfyClass(["string", "hash", "url"], "gui-node")).toBe(true);
     expect(parameterTypesSatisfyClass(["url"], "gui-node")).toBe(false);
+  });
+
+  test("an animation-id class needs the string/hash pair, not the address triple", () => {
+    expect(parameterTypesSatisfyClass(["string", "hash"], "animation")).toBe(true);
+    expect(parameterTypesSatisfyClass(["string", "hash", "url"], "animation")).toBe(true);
+    expect(parameterTypesSatisfyClass(["string"], "animation")).toBe(false);
   });
 
   test("an address class needs the whole triple", () => {
