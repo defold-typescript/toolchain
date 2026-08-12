@@ -28,10 +28,14 @@ function decoratedService(source: string): {
   return { service: plugin.create(info), base };
 }
 
-// Two scene sources declaring the ids the completion cases expect to be offered.
+// Two scene sources declaring the ids the completion cases expect to be offered,
+// plus the `.gui` that owns `main.ts` — the program's only file, which
+// `displayPathOf` reports under that name because it sits at the project root.
 const SCENE_DOCUMENTS: Record<string, string> = {
   "main/board.go": 'components {\n  id: "board"\n  component: "/main/board.gui"\n}\n',
   "main/hud.go": 'components {\n  id: "hud"\n  component: "/main/hud.gui"\n}\n',
+  "main/hud.gui":
+    'script: "/main.ts.gui_script"\nnodes {\n  id: "score"\n}\nnodes {\n  id: "level"\n}\n',
 };
 
 // `ts.Completions.SortText` values, which the public API does not export:
@@ -73,8 +77,13 @@ function completionProxy(options: {
     getSemanticDiagnostics: () => [],
     getCompletionsAtPosition: () => options.base,
   } as unknown as ts.LanguageService;
+  // The real host filters by the extensions it is handed; a fake that ignored
+  // them could not tell the `.go` walk from the `.gui` one.
   const serverHost = {
-    readDirectory: () => Object.keys(documents).map((path) => `/project/${path}`),
+    readDirectory: (_path: string, extensions?: readonly string[]) =>
+      Object.keys(documents)
+        .filter((path) => extensions === undefined || extensions.some((ext) => path.endsWith(ext)))
+        .map((path) => `/project/${path}`),
     readFile: (path: string) => documents[path.replace("/project/", "")],
   };
   const info = {
@@ -94,6 +103,11 @@ const NON_ADDRESS_POSITION = ADDRESS_SOURCE.indexOf('"hello"') + 1;
 const PATH_FRAGMENT_SOURCE = 'msg.post("/enemy#sprite", "hello");\n';
 const PATH_POSITION = PATH_FRAGMENT_SOURCE.indexOf("/enemy") + 3;
 const SPRITE_POSITION = PATH_FRAGMENT_SOURCE.indexOf("#sprite") + 1;
+
+// An empty node-id literal: the caret sits between the quotes, which is both the
+// start and the end of the text, so the replacement span is a pure insertion.
+const NODE_SOURCE = 'gui.get_node("");\n';
+const NODE_POSITION = NODE_SOURCE.indexOf('""') + 1;
 
 describe("tstl-plugin", () => {
   test("appends transpiler diagnostics to the base service's", () => {
@@ -225,5 +239,51 @@ describe("tstl-plugin", () => {
     });
     const result = service.getCompletionsAtPosition("main.ts", FRAGMENT_POSITION, undefined);
     expect(result?.entries.map((e) => e.name)).toEqual(["board", "hud"]);
+  });
+
+  test("appends the owning scene's node ids after the base entries, in order", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const service = completionProxy({ source: NODE_SOURCE, base });
+    const result = service.getCompletionsAtPosition("main.ts", NODE_POSITION, undefined);
+    expect(result?.entries[0]).toBe(base.entries[0] as ts.CompletionEntry);
+    expect(result?.entries.map((e) => e.name)).toEqual(["zzz", "level", "score"]);
+    for (const built of result?.entries.slice(1) ?? []) {
+      expect(built.replacementSpan).toEqual({ start: NODE_POSITION, length: 0 });
+      expect(built.sortText > LOCATION_PRIORITY).toBe(true);
+    }
+  });
+
+  test("an address slot still offers component ids, never a node id", () => {
+    const service = completionProxy({ source: ADDRESS_SOURCE, base: undefined });
+    const result = service.getCompletionsAtPosition("main.ts", FRAGMENT_POSITION, undefined);
+    expect(result?.entries.map((e) => e.name)).toEqual(["board", "hud"]);
+  });
+
+  test("a script no single scene owns offers nothing — node ids are not a project union", () => {
+    const contested = {
+      ...SCENE_DOCUMENTS,
+      "main/other.gui": 'script: "/main.ts.gui_script"\nnodes {\n  id: "rival"\n}\n',
+    };
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const service = completionProxy({ source: NODE_SOURCE, base, documents: contested });
+    expect(service.getCompletionsAtPosition("main.ts", NODE_POSITION, undefined)).toBe(base);
+  });
+
+  test("a file no scene owns returns the base result untouched", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const service = completionProxy({
+      source: NODE_SOURCE,
+      base,
+      documents: {
+        "main/hud.gui": 'script: "/src/elsewhere.ts.gui_script"\nnodes {\n  id: "score"\n}\n',
+      },
+    });
+    expect(service.getCompletionsAtPosition("main.ts", NODE_POSITION, undefined)).toBe(base);
+  });
+
+  test("a host that cannot enumerate files degrades to the base result", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const service = completionProxy({ source: NODE_SOURCE, base, serverHost: false });
+    expect(service.getCompletionsAtPosition("main.ts", NODE_POSITION, undefined)).toBe(base);
   });
 });

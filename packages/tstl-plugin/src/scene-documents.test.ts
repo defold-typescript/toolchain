@@ -6,9 +6,15 @@ import { readSceneDocuments, type SceneReadHost } from "./scene-documents";
 
 const PROJECT_ROOT = "/project";
 
+// The real `ts.server.ServerHost.readDirectory` filters by the extensions it is
+// handed, so the fake does too — a fake that ignored them could not tell a walk
+// that asks for `.gui` from one that asks for everything.
 function hostReturning(paths: string[], text: (path: string) => string | undefined): SceneReadHost {
   return {
-    readDirectory: () => paths,
+    readDirectory: (_path, extensions) =>
+      extensions === undefined
+        ? paths
+        : paths.filter((candidate) => extensions.some((ext) => candidate.endsWith(ext))),
     readFile: text,
   };
 }
@@ -72,6 +78,33 @@ describe("readSceneDocuments", () => {
     const index = buildSceneComponentIndex(documents);
     expect(index.incomplete).toEqual([]);
     expect([...index.ids].sort()).toEqual(["board", "hud"]);
+  });
+
+  test("an explicit extension set walks only those files", () => {
+    const paths = [
+      `${PROJECT_ROOT}/main/board.go`,
+      `${PROJECT_ROOT}/main/hud.gui`,
+      `${PROJECT_ROOT}/main/main.collection`,
+    ];
+    const host = hostReturning(paths, () => "");
+    expect([...readSceneDocuments(host, PROJECT_ROOT, [".gui"]).documents.keys()]).toEqual([
+      "main/hud.gui",
+    ]);
+    // The default is unchanged, so a `.gui` never reaches the component walk.
+    expect([...readSceneDocuments(host, PROJECT_ROOT).documents.keys()]).toEqual([
+      "main/board.go",
+      "main/main.collection",
+    ]);
+  });
+
+  test("build output is dropped from a `.gui` walk too", () => {
+    const host = hostReturning(
+      [`${PROJECT_ROOT}/main/hud.gui`, `${PROJECT_ROOT}/build/default/_generated_x.gui`],
+      () => "",
+    );
+    expect([...readSceneDocuments(host, PROJECT_ROOT, [".gui"]).documents.keys()]).toEqual([
+      "main/hud.gui",
+    ]);
   });
 
   test("a host that cannot enumerate files yields no documents and a reason", () => {

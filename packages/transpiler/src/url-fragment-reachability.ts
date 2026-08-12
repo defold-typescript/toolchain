@@ -6,7 +6,7 @@
 import type { UrlParameterTable } from "@defold-typescript/types";
 import * as ts from "typescript";
 import type { SceneComponentIndex } from "./scene-component-index";
-import { addressClassOfArgument } from "./url-address-slots";
+import { addressClassOfArgument, isAddressClass } from "./url-address-slots";
 
 export interface UrlFragmentFinding {
   readonly fileName: string;
@@ -50,7 +50,10 @@ export function checkUrlFragmentReachability(input: {
     if (isAmbient(sourceFile.fileName)) continue;
 
     const visit = (node: ts.Node): void => {
-      if (ts.isStringLiteralLike(node) && addressClassOfArgument(checker, table, node) !== "none") {
+      if (
+        ts.isStringLiteralLike(node) &&
+        isAddressClass(addressClassOfArgument(checker, table, node))
+      ) {
         const hash = node.text.indexOf("#");
         const fragment = hash === -1 ? "" : node.text.slice(hash + 1);
         if (fragment !== "" && !index.ids.has(fragment)) {
