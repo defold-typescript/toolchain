@@ -135,6 +135,16 @@ describe("checkUrlFragmentReachability", () => {
     ]);
   });
 
+  test("an animation-id slot is never an address, so its `#` is not a component fragment", () => {
+    // An animation id names a block inside an atlas, not a component: adding
+    // `animation` to the address set would report one carrying a `#` as an
+    // unreachable component while its own address slot stays unexamined.
+    const source = 'sprite.play_flipbook("#sprite", "no#pe");\nmsg.post("#missing", "hello");\n';
+    expect(findingsOf(source, universe("sprite")).map((f) => f.start)).toEqual([
+      source.indexOf('"#missing"'),
+    ]);
+  });
+
   test("withholds every finding while the universe has gaps", () => {
     const reasons = ["main.collection: could not be parsed (line 3)"];
     const report = check('msg.post("#unknown", "hello");\n', {

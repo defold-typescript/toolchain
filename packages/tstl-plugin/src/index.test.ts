@@ -111,6 +111,36 @@ const SPRITE_POSITION = PATH_FRAGMENT_SOURCE.indexOf("#sprite") + 1;
 const NODE_SOURCE = 'gui.get_node("");\n';
 const NODE_POSITION = NODE_SOURCE.indexOf('""') + 1;
 
+// An animation slot scoped through its sibling address literal. The caret sits
+// in the second literal; the first names the sprite the ids come from.
+const ANIMATION_SOURCE = 'sprite.play_flipbook("#sprite", "");\n';
+const ANIMATION_POSITION = ANIMATION_SOURCE.indexOf('""') + 1;
+const ANIMATION_ADDRESS_POSITION = ANIMATION_SOURCE.indexOf('"#sprite"') + 1;
+
+// One level of the escaping a `.collection` uses to carry a whole `.go`, and a
+// `.go` to carry a whole component — applied twice for an embedded sprite.
+function escapePayload(payload: string): string {
+  return payload.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n");
+}
+
+// The platformer's shape at one remove: a collection whose embedded game object
+// names `main.ts`'s generated script and carries one sprite, plus the atlas
+// that sprite's `tile_set` names.
+function collectionOwning(script: string, component: string, tileSet: string): string {
+  const object =
+    `components {\n  id: "self"\n  component: "${script}"\n}\n` +
+    `embedded_components {\n  id: "${component}"\n  type: "sprite"\n` +
+    `  data: "${escapePayload(`tile_set: "${tileSet}"\n`)}"\n}\n`;
+  return `embedded_instances {\n  id: "player"\n  data: "${escapePayload(object)}"\n}\n`;
+}
+
+const ANIMATION_DOCUMENTS: Record<string, string> = {
+  "game/player.collection": collectionOwning("/main.ts.script", "sprite", "/assets/player.atlas"),
+  "assets/player.atlas":
+    'images {\n  image: "/assets/loose.png"\n}\n' +
+    'animations {\n  id: "walk"\n}\nanimations {\n  id: "jump"\n}\n',
+};
+
 describe("tstl-plugin", () => {
   test("appends transpiler diagnostics to the base service's", () => {
     const { service, base } = decoratedService(UNSUPPORTED_SOURCE);
@@ -307,5 +337,85 @@ describe("tstl-plugin", () => {
     const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
     const service = completionProxy({ source: NODE_SOURCE, base, serverHost: false });
     expect(service.getCompletionsAtPosition("main.ts", NODE_POSITION, undefined)).toBe(base);
+  });
+
+  test("appends the addressed sprite's animation ids after the base entries, in order", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const service = completionProxy({
+      source: ANIMATION_SOURCE,
+      base,
+      documents: ANIMATION_DOCUMENTS,
+    });
+    const result = service.getCompletionsAtPosition("main.ts", ANIMATION_POSITION, undefined);
+    expect(result?.entries[0]).toBe(base.entries[0] as ts.CompletionEntry);
+    expect(result?.entries.map((e) => e.name)).toEqual(["zzz", "jump", "walk"]);
+    for (const built of result?.entries.slice(1) ?? []) {
+      expect(built.replacementSpan).toEqual({ start: ANIMATION_POSITION, length: 0 });
+      expect(built.sortText > LOCATION_PRIORITY).toBe(true);
+    }
+  });
+
+  test("the sibling address slot itself is untouched — it is not a classified slot", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const service = completionProxy({
+      source: ANIMATION_SOURCE,
+      base,
+      documents: ANIMATION_DOCUMENTS,
+    });
+    expect(service.getCompletionsAtPosition("main.ts", ANIMATION_ADDRESS_POSITION, undefined)).toBe(
+      base,
+    );
+  });
+
+  test("an address that names another object, or nothing statically, offers nothing", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    for (const source of [
+      'sprite.play_flipbook("/other#sprite", "");\n',
+      'const url = msg.url("#sprite");\nsprite.play_flipbook(url, "");\n',
+      'sprite.play_flipbook("#missing", "");\n',
+    ]) {
+      const service = completionProxy({ source, base, documents: ANIMATION_DOCUMENTS });
+      expect(service.getCompletionsAtPosition("main.ts", source.indexOf('""') + 1, undefined)).toBe(
+        base,
+      );
+    }
+  });
+
+  test("a script no game object owns offers no animation id — they are not a project union", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const service = completionProxy({
+      source: ANIMATION_SOURCE,
+      base,
+      documents: {
+        ...ANIMATION_DOCUMENTS,
+        "game/other.collection": collectionOwning(
+          "/main.ts.script",
+          "sprite",
+          "/assets/player.atlas",
+        ),
+      },
+    });
+    expect(service.getCompletionsAtPosition("main.ts", ANIMATION_POSITION, undefined)).toBe(base);
+  });
+
+  test("an animation caret degrades to the base result on a host that cannot enumerate", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const service = completionProxy({
+      source: ANIMATION_SOURCE,
+      base,
+      documents: ANIMATION_DOCUMENTS,
+      serverHost: false,
+    });
+    expect(service.getCompletionsAtPosition("main.ts", ANIMATION_POSITION, undefined)).toBe(base);
+  });
+
+  test("an address slot still offers component ids, never an animation id", () => {
+    const service = completionProxy({
+      source: ADDRESS_SOURCE,
+      base: undefined,
+      documents: { ...SCENE_DOCUMENTS, ...ANIMATION_DOCUMENTS },
+    });
+    const result = service.getCompletionsAtPosition("main.ts", FRAGMENT_POSITION, undefined);
+    expect(result?.entries.map((e) => e.name)).toEqual(["board", "hud", "self", "sprite"]);
   });
 });
