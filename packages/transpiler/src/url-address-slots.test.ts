@@ -4,7 +4,7 @@ import { join } from "node:path";
 import type { UrlParameterTable } from "@defold-typescript/types";
 import type * as ts from "typescript";
 import { createTranspileSession } from "./session";
-import { resolveAddressSlotAtPosition } from "./url-address-slots";
+import { isAddressClass, resolveClassifiedSlotAtPosition } from "./url-address-slots";
 
 // The committed classification table, exactly as `@defold-typescript/types`
 // ships it — a table written into the test would prove nothing about the slots
@@ -24,7 +24,7 @@ function programFor(source: string): ts.Program {
 }
 
 function slotAt(source: string, position: number) {
-  return resolveAddressSlotAtPosition({
+  return resolveClassifiedSlotAtPosition({
     program: programFor(source),
     table: TABLE,
     fileName: "main.ts",
@@ -43,7 +43,7 @@ function insideOf(source: string, literal: string): number {
   return start + 1;
 }
 
-describe("resolveAddressSlotAtPosition", () => {
+describe("resolveClassifiedSlotAtPosition", () => {
   test("resolves an address slot, reporting the span strictly inside the quotes", () => {
     const source = 'msg.post("#sprite", "hello");\n';
     const slot = slotAt(source, insideOf(source, '"#sprite"'));
@@ -105,5 +105,26 @@ describe("resolveAddressSlotAtPosition", () => {
   test("an unresolvable call is not a slot", () => {
     const source = '(undefined as any)("#x");\n';
     expect(slotAt(source, insideOf(source, '"#x"'))).toBeUndefined();
+  });
+
+  test("a node-id slot resolves as its own class, not as an address", () => {
+    const source = 'gui.get_node("score");\n';
+    const slot = slotAt(source, insideOf(source, '"score"'));
+    expect(slot?.class).toBe("gui-node");
+    expect(slot?.text).toBe("score");
+    expect(slot?.textStart).toBe(source.indexOf("score"));
+    expect(slot?.fragmentStart).toBe(-1);
+    // biome-ignore lint/style/noNonNullAssertion: the assertions above already failed if it did not resolve
+    expect(isAddressClass(slot!.class)).toBe(false);
+  });
+});
+
+describe("isAddressClass", () => {
+  test("only the three address classes are addresses", () => {
+    expect(isAddressClass("game-object")).toBe(true);
+    expect(isAddressClass("component")).toBe(true);
+    expect(isAddressClass("either")).toBe(true);
+    expect(isAddressClass("gui-node")).toBe(false);
+    expect(isAddressClass("none")).toBe(false);
   });
 });

@@ -3190,6 +3190,17 @@ describe("url-parameter address retyping", () => {
     );
   });
 
+  test("a classified node-id slot is inert — only the address classes have an alias", () => {
+    const module = parseDefoldApiDoc(guiDoc);
+    const out = emitDeclarations(module, { urlParameters: committed });
+    // `gui.get_node#id` is classified `gui-node` in the committed table, and the
+    // alias map is a lookup: an unmapped class must retype nothing.
+    expect(signatureLine(out, "function get_node(")).toBe(
+      'function get_node(id: string | Hash): Opaque<"node">;',
+    );
+    expect(out).not.toContain('SceneGameObjectAddress | Hash): Opaque<"node">');
+  });
+
   test("emitSymbolSignatures retypes the same slots as the declaration", () => {
     const module = parseDefoldApiDoc(goDoc);
     const signatures = emitSymbolSignatures(module, { urlParameters: committed });

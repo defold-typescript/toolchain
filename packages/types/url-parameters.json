@@ -183,5 +183,12 @@
     "parameter": "urlstring",
     "class": "either",
     "source": "src/msg-overloads.d.ts"
+  },
+  {
+    "fqn": "gui.get_node",
+    "parameter": "id",
+    "class": "gui-node",
+    "source": "generated",
+    "evidence": "id of the node to retrieve"
   }
 ]
