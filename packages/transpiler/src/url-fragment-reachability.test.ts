@@ -126,6 +126,15 @@ describe("checkUrlFragmentReachability", () => {
     expect(check(source, universe("sprite"))).toEqual({ kind: "checked", findings: [] });
   });
 
+  test("a node-id slot is never an address, so its `#` is not a component fragment", () => {
+    // `gui.get_node` is classified, but as a node id — a `#` inside it is part
+    // of the node's name, and no `.go`/`.collection` could ever declare it.
+    const source = 'gui.get_node("nope#missing");\nmsg.post("#missing", "hello");\n';
+    expect(findingsOf(source, universe("sprite")).map((f) => f.start)).toEqual([
+      source.indexOf('"#missing"'),
+    ]);
+  });
+
   test("withholds every finding while the universe has gaps", () => {
     const reasons = ["main.collection: could not be parsed (line 3)"];
     const report = check('msg.post("#unknown", "hello");\n', {

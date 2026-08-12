@@ -9,7 +9,10 @@ export interface SceneReadHost {
 
 const SCENE_EXTENSIONS = [".go", ".collection"];
 
-function displayPathOf(projectRoot: string, filePath: string): string {
+// The project-relative name a file is keyed by — the same name the editor
+// reports for a program file, so a scene's claim on a script can be looked up
+// against the file being edited.
+export function displayPathOf(projectRoot: string, filePath: string): string {
   const path = filePath.replace(/\\/g, "/");
   const root = projectRoot.replace(/\\/g, "/").replace(/\/+$/, "");
   return path.startsWith(`${root}/`) ? path.slice(root.length + 1) : path;
@@ -23,13 +26,18 @@ function isBuildOutput(displayPath: string): boolean {
   return displayPath.split("/").includes("build");
 }
 
-// Read the project's own `.go`/`.collection` sources through the editor host.
-// Keys are project-relative display paths, matching what `buildSceneComponentIndex`
-// reports in `incomplete`, and every file that could not be read is named in
-// `unreadable` — a universe with a silent hole cannot be reasoned about.
+// Read the project's own scene sources through the editor host — by default the
+// `.go`/`.collection` set the component-id universe is built from, or whatever
+// `extensions` names instead. The two universes stay disjoint: a `.gui` declares
+// node ids, not component ids, so folding it into the default would feed gui
+// text to `buildSceneComponentIndex`. Keys are project-relative display paths,
+// matching what `buildSceneComponentIndex` reports in `incomplete`, and every
+// file that could not be read is named in `unreadable` — a universe with a
+// silent hole cannot be reasoned about.
 export function readSceneDocuments(
   host: SceneReadHost,
   projectRoot: string,
+  extensions: readonly string[] = SCENE_EXTENSIONS,
 ): { documents: Map<string, string>; unreadable: string[] } {
   const documents = new Map<string, string>();
   const unreadable: string[] = [];
@@ -39,7 +47,7 @@ export function readSceneDocuments(
     return { documents, unreadable };
   }
 
-  for (const filePath of host.readDirectory(projectRoot, SCENE_EXTENSIONS)) {
+  for (const filePath of host.readDirectory(projectRoot, extensions)) {
     const displayPath = displayPathOf(projectRoot, filePath);
     if (isBuildOutput(displayPath)) continue;
     const text = host.readFile(filePath);

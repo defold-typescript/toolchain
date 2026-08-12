@@ -3,7 +3,9 @@ import { loadApiTargets, loadTargetModules } from "../scripts/regen";
 import { type ApiModule, parseDefoldApiDoc } from "./api-doc";
 import {
   classifyUrlParameter,
+  collectParameterSlots,
   collectUrlParameterSlots,
+  parameterTypesSatisfyClass,
   type UrlParameterSource,
   type UrlParameterTable,
 } from "./url-parameters";
@@ -21,6 +23,10 @@ function currentTargetSources(namespaces?: readonly string[]): UrlParameterSourc
 
 function keys(sources: readonly UrlParameterSource[]): string[] {
   return collectUrlParameterSlots(sources).map((slot) => `${slot.fqn}#${slot.parameter}`);
+}
+
+function allKeys(sources: readonly UrlParameterSource[]): string[] {
+  return collectParameterSlots(sources).map((slot) => `${slot.fqn}#${slot.parameter}`);
 }
 
 function moduleWith(namespace: string, fn: ApiModule["functions"][number]): ApiModule {
@@ -79,6 +85,51 @@ describe("collectUrlParameterSlots", () => {
     );
     expect(slot?.module).toBe("go");
     expect(slot?.doc).toBe("url of the game object to check");
+  });
+});
+
+describe("collectParameterSlots", () => {
+  test("keeps a node-id parameter the address filter drops, carrying its declared types", () => {
+    const sources = currentTargetSources(["gui"]);
+    const slot = collectParameterSlots(sources).find(
+      (candidate) => candidate.fqn === "gui.get_node" && candidate.parameter === "id",
+    );
+    expect(slot?.types).toEqual(["string", "hash"]);
+    expect(slot?.doc).toBe("id of the node to retrieve");
+    expect(keys(sources)).not.toContain("gui.get_node#id");
+  });
+
+  test("keeps the triple-typed parameters the address filter keeps", () => {
+    expect(allKeys(currentTargetSources(["go"]))).toContain("go.exists#url");
+  });
+
+  test("omits every function the target hands to the authored overloads", () => {
+    const slots = allKeys(currentTargetSources(["msg"]));
+    expect(slots).not.toContain("msg.post#receiver");
+    expect(slots).not.toContain("msg.url#urlstring");
+  });
+});
+
+describe("parameterTypesSatisfyClass", () => {
+  test("a node-id class needs the string/hash pair, not the address triple", () => {
+    expect(parameterTypesSatisfyClass(["string", "hash"], "gui-node")).toBe(true);
+    expect(parameterTypesSatisfyClass(["string", "hash", "url"], "gui-node")).toBe(true);
+    expect(parameterTypesSatisfyClass(["url"], "gui-node")).toBe(false);
+  });
+
+  test("an address class needs the whole triple", () => {
+    for (const addressClass of ["game-object", "component", "either"] as const) {
+      expect(parameterTypesSatisfyClass(["string", "hash", "url"], addressClass)).toBe(true);
+      expect(parameterTypesSatisfyClass(["string", "hash"], addressClass)).toBe(false);
+    }
+  });
+
+  test("matches ref-doc type tokens case-insensitively", () => {
+    expect(parameterTypesSatisfyClass(["String", "Hash", "URL"], "either")).toBe(true);
+  });
+
+  test("an unclassified slot is satisfied by any shape", () => {
+    expect(parameterTypesSatisfyClass([], "none")).toBe(true);
   });
 });
 

@@ -4,7 +4,8 @@ import { resolve } from "node:path";
 import { loadApiTargets, loadTargetModules } from "../scripts/regen";
 import { parseDefoldApiDoc } from "../src/api-doc";
 import {
-  collectUrlParameterSlots,
+  collectParameterSlots,
+  parameterTypesSatisfyClass,
   type UrlParameterSlot,
   type UrlParameterSource,
   type UrlParameterTable,
@@ -25,8 +26,11 @@ const sources: UrlParameterSource[] = loadTargetModules(target).map((entry) => (
   ...(entry.skipFunctions ? { skipFunctions: entry.skipFunctions } : {}),
 }));
 
+// Every parameter slot, not just the address-triple ones: two class shapes now
+// share the table, and `parameterTypesSatisfyClass` is what re-imposes the type
+// requirement the address filter used to carry on its own.
 const slots = new Map<string, UrlParameterSlot>(
-  collectUrlParameterSlots(sources).map((slot) => [`${slot.fqn}#${slot.parameter}`, slot]),
+  collectParameterSlots(sources).map((slot) => [`${slot.fqn}#${slot.parameter}`, slot]),
 );
 
 const skippedFqns = new Set(
@@ -39,11 +43,32 @@ const generated = table.filter((entry) => entry.source === "generated");
 const authored = table.filter((entry) => entry.source !== "generated");
 
 describe("url-parameters.json generated entries", () => {
-  test("every entry still resolves to a live triple-typed slot", () => {
+  test("every entry still resolves to a live slot", () => {
     const missing = generated
       .filter((entry) => !slots.has(`${entry.fqn}#${entry.parameter}`))
       .map((entry) => `${entry.fqn}#${entry.parameter}`);
     expect(missing).toEqual([]);
+  });
+
+  test("every entry's class is one the slot's declared types can carry", () => {
+    const mismatched: string[] = [];
+    for (const entry of generated) {
+      const key = `${entry.fqn}#${entry.parameter}`;
+      const slot = slots.get(key);
+      if (!slot) continue;
+      if (!parameterTypesSatisfyClass(slot.types, entry.class)) {
+        mismatched.push(`${key}: ${entry.class} on ${JSON.stringify(slot.types)}`);
+      }
+    }
+    expect(mismatched).toEqual([]);
+  });
+
+  test("the node-id class is recorded against the one slot that carries it", () => {
+    const nodeIds = table
+      .filter((entry) => entry.class === "gui-node")
+      .map((entry) => `${entry.fqn}#${entry.parameter}`);
+    expect(nodeIds).toEqual(["gui.get_node#id"]);
+    expect(slots.get("gui.get_node#id")?.types).toEqual(["string", "hash"]);
   });
 
   test("every entry's recorded evidence still reads in the ref-doc prose", () => {
