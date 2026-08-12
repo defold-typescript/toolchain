@@ -64,9 +64,11 @@ function completionProxy(options: {
   base: ts.WithMetadata<ts.CompletionInfo> | undefined;
   documents?: Record<string, string>;
   serverHost?: boolean;
+  fileName?: string;
 }): ts.LanguageService {
+  const fileName = options.fileName ?? "main.ts";
   const session = createTranspileSession();
-  session.update({ "main.ts": options.source });
+  session.update({ [fileName]: options.source });
   const program = session.getProgram();
   if (!program) {
     throw new Error("session produced no program");
@@ -257,6 +259,26 @@ describe("tstl-plugin", () => {
     const service = completionProxy({ source: ADDRESS_SOURCE, base: undefined });
     const result = service.getCompletionsAtPosition("main.ts", FRAGMENT_POSITION, undefined);
     expect(result?.entries.map((e) => e.name)).toEqual(["board", "hud"]);
+  });
+
+  test("resolves ownership through the build's output paths under a configured outDir", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const service = completionProxy({
+      source: NODE_SOURCE,
+      base,
+      fileName: "src/hud.ts",
+      documents: {
+        "tsconfig.json": JSON.stringify({
+          compilerOptions: { outDir: "build" },
+          include: ["src/**/*.ts"],
+        }),
+        "main/hud.gui":
+          'script: "/build/hud.ts.gui_script"\nnodes {\n  id: "score"\n}\nnodes {\n  id: "level"\n}\n',
+      },
+    });
+    const result = service.getCompletionsAtPosition("src/hud.ts", NODE_POSITION, undefined);
+    expect(result?.entries[0]).toBe(base.entries[0] as ts.CompletionEntry);
+    expect(result?.entries.map((e) => e.name)).toEqual(["zzz", "level", "score"]);
   });
 
   test("a script no single scene owns offers nothing — node ids are not a project union", () => {

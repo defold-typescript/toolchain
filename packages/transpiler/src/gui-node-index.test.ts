@@ -17,21 +17,30 @@ function indexOf(documents: Record<string, string>) {
 }
 
 function idsFor(documents: Record<string, string>, key: string): string[] {
-  return [...(indexOf(documents).byScript.get(key) ?? [])].sort();
+  return [...(indexOf(documents).byScriptResource.get(key) ?? [])].sort();
 }
 
 describe("buildGuiNodeIndex", () => {
-  test("keys the owning script's source path to that scene's node ids", () => {
+  test("keys the resource the scene names, verbatim", () => {
     const index = indexOf({
       "main/hud.gui": gui("/src/hud.ts.gui_script", "score", "level", "gameover"),
     });
-    expect([...index.byScript.keys()]).toEqual(["src/hud.ts"]);
-    expect([...(index.byScript.get("src/hud.ts") ?? [])].sort()).toEqual([
+    expect([...index.byScriptResource.keys()]).toEqual(["src/hud.ts.gui_script"]);
+    expect([...(index.byScriptResource.get("src/hud.ts.gui_script") ?? [])].sort()).toEqual([
       "gameover",
       "level",
       "score",
     ]);
     expect(index.unresolved).toEqual([]);
+  });
+
+  test("a re-rooted output resource is keyed as itself, not as a source path", () => {
+    const index = indexOf({
+      "main/hud.gui": gui("/build/hud.ts.gui_script", "score"),
+    });
+    expect([...index.byScriptResource.keys()]).toEqual(["build/hud.ts.gui_script"]);
+    expect(index.byScriptResource.has("build/hud.ts")).toBe(false);
+    expect(index.byScriptResource.has("src/hud.ts")).toBe(false);
   });
 
   test("a scene with no script, or one naming no gui script at all, owns nothing", () => {
@@ -40,29 +49,28 @@ describe("buildGuiNodeIndex", () => {
       "main/other.gui": gui("/src/hud.lua", "b"),
       "main/empty.gui": gui("", "c"),
     });
-    expect([...index.byScript.keys()]).toEqual([]);
+    expect([...index.byScriptResource.keys()]).toEqual([]);
     expect(index.unresolved).toEqual([]);
   });
 
-  test("a hand-written Lua gui script keys to a path no TypeScript source can be", () => {
-    // The suffix is stripped without asserting `.ts`, so this scene does claim a
-    // key — but the key is `src/legacy`, and the caller looks up a `.ts` display
-    // path, which can never equal it.
+  test("a hand-written Lua gui script keys to a resource no computed name can be", () => {
+    // It claims its own key, but every name the build computes ends
+    // `.ts.gui_script`, so no edited source ever looks this one up.
     const index = indexOf({ "main/legacy.gui": gui("/src/legacy.gui_script", "b") });
-    expect([...index.byScript.keys()]).toEqual(["src/legacy"]);
-    expect(index.byScript.has("src/legacy.ts")).toBe(false);
+    expect([...index.byScriptResource.keys()]).toEqual(["src/legacy.gui_script"]);
+    expect(index.byScriptResource.has("src/legacy.ts.gui_script")).toBe(false);
   });
 
-  test("two scenes claiming one script own it jointly, which is to say not at all", () => {
+  test("two scenes claiming one resource own it jointly, which is to say not at all", () => {
     const index = indexOf({
       "main/a.gui": gui("/src/hud.ts.gui_script", "score"),
       "main/b.gui": gui("/src/hud.ts.gui_script", "level"),
     });
-    expect(index.byScript.has("src/hud.ts")).toBe(false);
+    expect(index.byScriptResource.has("src/hud.ts.gui_script")).toBe(false);
     expect(index.unresolved).toHaveLength(1);
     expect(index.unresolved[0]).toContain("main/a.gui");
     expect(index.unresolved[0]).toContain("main/b.gui");
-    expect(index.unresolved[0]).toContain("src/hud.ts");
+    expect(index.unresolved[0]).toContain("src/hud.ts.gui_script");
   });
 
   test("a node with no id, or an empty one, contributes nothing but keeps the key", () => {
@@ -73,7 +81,7 @@ describe("buildGuiNodeIndex", () => {
         'nodes {\n  id: ""\n}\n' +
         node("score"),
     };
-    expect(idsFor(documents, "src/hud.ts")).toEqual(["score"]);
+    expect(idsFor(documents, "src/hud.ts.gui_script")).toEqual(["score"]);
   });
 
   test("only top-level nodes count — a layout override is the same node twice", () => {
@@ -82,7 +90,7 @@ describe("buildGuiNodeIndex", () => {
         `${gui("/src/hud.ts.gui_script", "score")}` +
         'layouts {\n  name: "Landscape"\n  nodes {\n    id: "landscape_only"\n  }\n}\n',
     };
-    expect(idsFor(documents, "src/hud.ts")).toEqual(["score"]);
+    expect(idsFor(documents, "src/hud.ts.gui_script")).toEqual(["score"]);
   });
 
   test("an unreadable scene is named, and never silences the ones that parse", () => {
@@ -90,7 +98,7 @@ describe("buildGuiNodeIndex", () => {
       "main/broken.gui": 'script: "/src/broken.ts.gui_script"\nnodes {\n  id: "x"\n',
       "main/hud.gui": gui("/src/hud.ts.gui_script", "score"),
     });
-    expect([...index.byScript.keys()]).toEqual(["src/hud.ts"]);
+    expect([...index.byScriptResource.keys()]).toEqual(["src/hud.ts.gui_script"]);
     expect(index.unresolved).toHaveLength(1);
     expect(index.unresolved[0]).toContain("main/broken.gui");
   });
@@ -108,11 +116,11 @@ describe("buildGuiNodeIndex", () => {
     );
     const index = buildGuiNodeIndex(documents);
     expect(index.unresolved).toEqual([]);
-    expect([...(index.byScript.get("src/hud.ts") ?? [])].sort()).toEqual([
+    expect([...(index.byScriptResource.get("src/hud.ts.gui_script") ?? [])].sort()).toEqual([
       "gameover",
       "level",
       "score",
     ]);
-    expect([...(index.byScript.get("src/board.ts") ?? [])]).toEqual([]);
+    expect([...(index.byScriptResource.get("src/board.ts.gui_script") ?? [])]).toEqual([]);
   });
 });

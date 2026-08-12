@@ -1,21 +1,18 @@
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
-import type { TranspileDiagnostic } from "@defold-typescript/transpiler";
-import type { ScriptKind } from "./script-kind";
+import {
+  type BuildConfig,
+  computeOutputRel,
+  parseBuildConfig,
+  type ScriptKind,
+  type SourceOutputKind,
+  stripIncludeBase,
+  type TranspileDiagnostic,
+} from "@defold-typescript/transpiler";
 
-export interface BuildConfig {
-  readonly outDir: string | undefined;
-  readonly include: string[];
-}
+export type { BuildConfig, SourceOutputKind };
+export { computeOutputRel, parseBuildConfig, stripIncludeBase };
 
-interface TsConfig {
-  compilerOptions?: {
-    outDir?: string;
-  };
-  include?: string[];
-}
-
-const DEFAULT_INCLUDE = ["src/**/*.ts"];
 const PROJECT_BUCKET = "<project>";
 
 export function toPosix(p: string, sep: string = path.sep): string {
@@ -39,10 +36,7 @@ export function readBuildConfig(cwd: string): BuildConfig {
     );
   }
 
-  const tsconfig = JSON.parse(raw) as TsConfig;
-  const outDir = tsconfig.compilerOptions?.outDir;
-  const include = tsconfig.include?.length ? tsconfig.include : DEFAULT_INCLUDE;
-  return { outDir, include };
+  return parseBuildConfig(raw);
 }
 
 function globToRegex(pattern: string): RegExp {
@@ -79,25 +73,6 @@ export function isFileIncluded(rel: string, include: readonly string[]): boolean
   return include.some((pattern) => globToRegex(pattern).test(posix));
 }
 
-export function stripIncludeBase(pattern: string): string {
-  const firstWildcard = pattern.search(/[*?[]/);
-  if (firstWildcard === -1) {
-    return pattern.endsWith("/") ? pattern : `${path.posix.dirname(pattern)}/`;
-  }
-  const upToWildcard = pattern.slice(0, firstWildcard);
-  const lastSlash = upToWildcard.lastIndexOf("/");
-  return lastSlash === -1 ? "" : upToWildcard.slice(0, lastSlash + 1);
-}
-
-const SCRIPT_SUFFIX_BY_KIND: Record<ScriptKind, string> = {
-  script: ".ts.script",
-  "gui-script": ".ts.gui_script",
-  "render-script": ".ts.render_script",
-  "editor-script": ".ts.editor_script",
-};
-
-export type SourceOutputKind = ScriptKind | "module";
-
 // Excluding parens from the type-argument body keeps a later call expression on
 // the same line from being swallowed into it; one nesting level covers `Box<T>`.
 const TYPE_ARGS = String.raw`(?:<(?:[^<>()]|<[^<>()]*>)*>\s*)?`;
@@ -132,28 +107,6 @@ export function detectSourceOutputKind(source: string): SourceOutputKind {
 export function detectSourceScriptKind(source: string): ScriptKind {
   const kind = detectSourceOutputKind(source);
   return kind === "module" ? "script" : kind;
-}
-
-function relUnderOutDir(rel: string, config: BuildConfig): string {
-  const { outDir, include } = config;
-  if (outDir === undefined || outDir === "" || outDir === ".") {
-    return rel;
-  }
-  const includeBase =
-    include
-      .map(stripIncludeBase)
-      .filter((base) => rel.startsWith(base))
-      .sort((a, b) => b.length - a.length)[0] ?? "";
-  const relUnderBase = rel.slice(includeBase.length);
-  return path.posix.join(outDir, relUnderBase);
-}
-
-export function computeOutputRel(rel: string, config: BuildConfig, kind: SourceOutputKind): string {
-  const baseRel = relUnderOutDir(rel, config);
-  if (kind === "module") {
-    return baseRel.replace(/\.ts$/, ".lua");
-  }
-  return baseRel.replace(/\.ts$/, SCRIPT_SUFFIX_BY_KIND[kind]);
 }
 
 // Defold resolves `require("lualib_bundle")` to `lualib_bundle.lua` at the
