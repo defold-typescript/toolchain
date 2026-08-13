@@ -1,0 +1,59 @@
+{
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "json.decode",
+      "brief": "decode JSON string to Lua value",
+      "description": "Decode JSON string to Lua value",
+      "returnvalues": [],
+      "parameters": [
+        { "name": "json", "doc": "json data", "types": ["string"], "is_optional": "False" },
+        {
+          "name": "options",
+          "doc": "A table with the following keys:<dl><dt><code>all <small>boolean</small></code></dt><dd>if <code>true</code>, decodes all json values in a string and returns an array</dd></dl>",
+          "types": ["table"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "json.encode",
+      "brief": "encode Lua value to JSON string",
+      "description": "Encode Lua value to JSON string",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "any Lua value that may be represented as JSON",
+          "types": ["any"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "json",
+    "name": "Editor",
+    "brief": "Editor scripting documentation",
+    "description": "Editor scripting documentation",
+    "path": "engine/docs/editor.apidoc",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  }
+}
