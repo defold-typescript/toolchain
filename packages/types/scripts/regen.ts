@@ -193,9 +193,11 @@ function mapEditorType(token: string): string {
 
 // The editor VM's own `http`/`json`/`zip`/`zlib`/`pprint`/`localization`/
 // `tilemap.tiles` sit in this same upstream document under their own top-level
-// namespaces. Emitting them here would misname them as `editor.*`; splitting the
-// fixture per namespace is the next slice, so they are dropped for now — as are
-// `editor.ui.*` and `editor.prefs.*`, which are out of scope for this goal.
+// namespaces. They are emitted from their own per-namespace fixtures through
+// EDITOR_VM_MODULE_MANIFEST, and skipped here so this entry cannot misname them
+// as `editor.*` — `pprint`, a flat identifier, would otherwise land as
+// `editor.pprint`. `localization.`, `editor.ui.*` and `editor.prefs.*` have no
+// second home yet and are simply dropped.
 const EDITOR_SKIP_FUNCTIONS: readonly string[] = [
   // Unlike every other entry here, this is not a dropped namespace prefix: the
   // hand-authored `src/editor-overloads.d.ts` supplies `editor.command` with a
@@ -229,6 +231,36 @@ export const EDITOR_MODULE_MANIFEST: readonly ModuleManifestEntry[] = [
     mapType: mapEditorType,
   },
 ];
+
+// The namespace-shaped libraries the editor VM exposes alongside `editor`. They
+// emit into `generated/editor-vm/` rather than beside the runtime modules for a
+// hard reason: `tsconfig.json` includes the flat glob `generated/*.d.ts`, so an
+// editor `http.d.ts` there would share a program with the runtime one and
+// declare `namespace http` twice. A subdirectory keeps them out of that glob,
+// the same escape `generated/versions/` and `generated/kinds/` already use.
+const EDITOR_VM_NAMESPACES: readonly string[] = ["http", "json", "zip", "zlib", "tilemap.tiles"];
+
+const editorVmSlug = (namespace: string): string => namespace.replace(/\./g, "_");
+
+export const EDITOR_VM_MODULE_MANIFEST: readonly ModuleManifestEntry[] = EDITOR_VM_NAMESPACES.map(
+  (namespace) => ({
+    namespace,
+    doc: JSON.parse(
+      readFileSync(
+        resolve(
+          PACKAGE_ROOT,
+          "fixtures",
+          "defold-1.13.0",
+          `editor_${editorVmSlug(namespace)}_doc.json`,
+        ),
+        "utf8",
+      ),
+    ),
+    outFile: `editor-vm/${editorVmSlug(namespace)}.d.ts`,
+    importsFrom: "../../src/core-types",
+    mapType: mapEditorType,
+  }),
+);
 
 export interface MessagesManifestEntry {
   readonly doc: unknown;
@@ -443,7 +475,14 @@ export const KIND_MODULE_MANIFEST: readonly KindManifestEntry[] = [
   {
     kind: "editor-script",
     only: ["editor"],
-    extraModules: ["../../src/editor-overloads"],
+    // `only` holds namespaces and builds `../${namespace}`, which would produce
+    // `../http` (the runtime module) and `../tilemap.tiles` (not a path). The
+    // editor VM modules come through as explicit relative paths instead.
+    extraModules: [
+      ...EDITOR_VM_MODULE_MANIFEST.map((entry) => `../${entry.outFile.replace(/\.d\.ts$/, "")}`),
+      "../../src/editor-overloads",
+      "../../src/editor-vm-globals",
+    ],
     factory: "defineEditorScript",
     extraExports: ["defineEditorCommand"],
     extraTypeExports: ["EditorCommandQuery", "EditorNode"],
@@ -499,7 +538,12 @@ export function generateVersionIndex(
 
 if (import.meta.main) {
   const generated = resolve(import.meta.dir, "..", "generated");
-  for (const entry of [...MODULE_MANIFEST, ...EDITOR_MODULE_MANIFEST]) {
+  mkdirSync(resolve(generated, "editor-vm"), { recursive: true });
+  for (const entry of [
+    ...MODULE_MANIFEST,
+    ...EDITOR_MODULE_MANIFEST,
+    ...EDITOR_VM_MODULE_MANIFEST,
+  ]) {
     const { contents, dropped } = generateModuleDeclaration(entry);
     if (dropped.length > 0) {
       console.log(`note: dropped skipped member(s) from ${entry.namespace}: ${dropped.join(", ")}`);
