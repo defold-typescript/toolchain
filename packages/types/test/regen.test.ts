@@ -3,6 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   EDITOR_MODULE_MANIFEST,
+  EDITOR_VM_MODULE_MANIFEST,
   generateBuiltinMessagesDeclaration,
   generateKindIndex,
   generateModuleDeclaration,
@@ -14,13 +15,18 @@ import {
   VERSIONED_MODULE_MANIFEST,
 } from "../scripts/regen";
 import { parseDefoldApiDoc } from "../src/api-doc";
+import { unexpressedFixtureNames } from "./declared-fqns";
 
 const GENERATED = resolve(import.meta.dir, "..", "generated");
 
 // Every entry `regen` writes into `generated/` as a namespace declaration. The
-// editor set rides the same emit pipeline as the runtime modules while staying
-// out of MODULE_MANIFEST, so the drift/syntax/JSDoc guards must span both.
-const COMMITTED_MODULES = [...MODULE_MANIFEST, ...EDITOR_MODULE_MANIFEST];
+// editor sets ride the same emit pipeline as the runtime modules while staying
+// out of MODULE_MANIFEST, so the drift/syntax/JSDoc guards must span all three.
+const COMMITTED_MODULES = [
+  ...MODULE_MANIFEST,
+  ...EDITOR_MODULE_MANIFEST,
+  ...EDITOR_VM_MODULE_MANIFEST,
+];
 
 describe("regen drift guard", () => {
   test.each(
@@ -155,7 +161,7 @@ describe("editor namespace emit", () => {
     expect(dropped).toContain("editor.prefs.get");
   });
 
-  test("emits none of the deferred editor-VM libraries that share the fixture", () => {
+  test("leaves the editor-VM libraries that share the fixture to their own manifest", () => {
     const { contents, dropped } = generateModuleDeclaration(editorEntry());
     for (const name of ["function pprint(", "namespace http", "namespace json", "namespace zip"]) {
       expect(contents).not.toContain(name);
@@ -330,6 +336,69 @@ describe("per-kind factory re-export", () => {
   });
 });
 
+describe("editor VM module emit", () => {
+  // The upstream elements the emitter cannot express, per module. Both entries
+  // are two-segment VARIABLEs: the nested pass groups functions only, so a
+  // constant table under a namespace has nowhere to land. Every other editor VM
+  // module reaches its whole fixture. Shrinking a list means the nested pass
+  // learned a shape and `src/editor-vm-globals.d.ts` should give it up; growing
+  // one means a new upstream shape started falling out unnoticed.
+  const UNEXPRESSED: Readonly<Record<string, readonly string[]>> = {
+    http: ["http.server.local_url", "http.server.port", "http.server.url"],
+    json: [],
+    zip: [
+      "zip.METHOD.DEFLATED",
+      "zip.METHOD.STORED",
+      "zip.ON_CONFLICT.ERROR",
+      "zip.ON_CONFLICT.OVERWRITE",
+      "zip.ON_CONFLICT.SKIP",
+    ],
+    zlib: [],
+    "tilemap.tiles": [],
+  };
+
+  test("the manifest covers exactly the namespace-shaped editor VM libraries", () => {
+    expect(EDITOR_VM_MODULE_MANIFEST.map((entry) => entry.namespace).sort()).toEqual(
+      Object.keys(UNEXPRESSED).sort(),
+    );
+  });
+
+  test.each(
+    EDITOR_VM_MODULE_MANIFEST.map((entry) => [entry.namespace, entry] as const),
+  )("%s: every fixture element reaches the emit except the pinned unexpressible ones", (namespace, entry) => {
+    const { contents } = generateModuleDeclaration(entry);
+    expect(unexpressedFixtureNames(entry.doc, contents)).toEqual([
+      ...(UNEXPRESSED[namespace] ?? []),
+    ]);
+  });
+
+  test("each module lands under its own subdirectory path, dots flattened", () => {
+    for (const entry of EDITOR_VM_MODULE_MANIFEST) {
+      expect(entry.outFile).toBe(`editor-vm/${entry.namespace.replace(/\./g, "_")}.d.ts`);
+    }
+  });
+
+  test("tilemap.tiles emits as a dotted namespace and recovers its reserved-name member", () => {
+    const entry = EDITOR_VM_MODULE_MANIFEST.find((e) => e.namespace === "tilemap.tiles");
+    if (!entry) throw new Error("tilemap.tiles editor VM manifest entry missing");
+    const { contents } = generateModuleDeclaration(entry);
+    expect(contents).toContain("namespace tilemap.tiles {");
+    expect(contents).toContain("export { _new as new };");
+  });
+
+  test("no editor VM module rides the runtime or universal surface", () => {
+    const outFiles = new Set(EDITOR_VM_MODULE_MANIFEST.map((entry) => entry.outFile));
+    for (const entry of MODULE_MANIFEST) expect(outFiles.has(entry.outFile)).toBe(false);
+    const namespaces = new Set(EDITOR_VM_MODULE_MANIFEST.map((entry) => entry.namespace));
+    for (const entry of MODULE_MANIFEST) {
+      // `http` and `json` exist on both surfaces; the editor VM copies must not
+      // be the ones a runtime kind resolves.
+      if (!namespaces.has(entry.namespace)) continue;
+      expect(entry.outFile).not.toContain("editor-vm/");
+    }
+  });
+});
+
 describe("editor-script kind index", () => {
   const importPaths = (index: string): string[] =>
     [...index.matchAll(/^import "([^"]+)";$/gm)].map((match) => match[1] as string);
@@ -343,12 +412,30 @@ describe("editor-script kind index", () => {
     expect(runtime.size).toBeGreaterThan(0);
     expect(runtime.has("../editor")).toBe(false);
 
-    // The overload file rides alongside the namespace: it is what makes
-    // `editor.command` resolve at all, since an `only` kind takes none of
+    // The overload and hand-authored global files ride alongside the emitted
+    // namespaces: they are what make `editor.command`, `pprint` and the `zip`
+    // constant tables resolve at all, since an `only` kind takes none of
     // UNIVERSAL_EXTRA_IMPORTS.
     const editor = importPaths(generateKindIndex("editor-script"));
-    expect(editor).toEqual(["../editor", "../../src/editor-overloads"]);
+    expect(editor).toEqual([
+      "../editor",
+      ...EDITOR_VM_MODULE_MANIFEST.map((entry) => `../${entry.outFile.replace(/\.d\.ts$/, "")}`),
+      "../../src/editor-overloads",
+      "../../src/editor-vm-globals",
+    ]);
     for (const path of editor) expect(runtime.has(path)).toBe(false);
+  });
+
+  test("every editor VM module is reachable from the editor-script index and no other kind", () => {
+    const editor = new Set(importPaths(generateKindIndex("editor-script")));
+    for (const entry of EDITOR_VM_MODULE_MANIFEST) {
+      const path = `../${entry.outFile.replace(/\.d\.ts$/, "")}`;
+      expect(editor.has(path)).toBe(true);
+      for (const other of KIND_MODULE_MANIFEST) {
+        if (other.kind === "editor-script") continue;
+        expect(importPaths(generateKindIndex(other.kind))).not.toContain(path);
+      }
+    }
   });
 
   test("re-exports both editor factories and none of the runtime lifecycle surface", () => {
