@@ -152,6 +152,23 @@ describe("readSceneDocuments", () => {
     ]).toEqual(["assets/player.atlas"]);
   });
 
+  test("an ignored directory is never read, not merely dropped from the result", () => {
+    const read: string[] = [];
+    const host: SceneReadHost = {
+      readDirectory: () => [
+        `${PROJECT_ROOT}/node_modules/some-pkg/fixture.go`,
+        `${PROJECT_ROOT}/main/board.go`,
+      ],
+      readFile: (path) => {
+        read.push(path);
+        return "";
+      },
+    };
+    const { documents } = readSceneDocuments(host, PROJECT_ROOT);
+    expect([...documents.keys()]).toEqual(["main/board.go"]);
+    expect(read).toEqual([`${PROJECT_ROOT}/main/board.go`]);
+  });
+
   test("a host that cannot enumerate files yields no documents and a reason", () => {
     const { documents, unreadable } = readSceneDocuments({ readFile: () => "" }, PROJECT_ROOT);
     expect(documents.size).toBe(0);
@@ -210,6 +227,31 @@ describe("listProjectResourcePaths", () => {
       "/main/hero.atlas",
     ]);
     expect(read).toEqual([]);
+  });
+
+  test("the directories the scaffolded `.defignore` names are not offered", () => {
+    const host = hostReturning(
+      [
+        `${PROJECT_ROOT}/main/hero.atlas`,
+        `${PROJECT_ROOT}/node_modules/some-pkg/fixture.atlas`,
+        `${PROJECT_ROOT}/.defold-types/sample.atlas`,
+        `${PROJECT_ROOT}/.vscode/scratch.atlas`,
+        `${PROJECT_ROOT}/build/default/_generated_x.atlas`,
+      ],
+      () => "",
+    );
+    expect([...listProjectResourcePaths(host, PROJECT_ROOT, [".atlas"])]).toEqual([
+      "/main/hero.atlas",
+    ]);
+  });
+
+  test("the `.defignore` exclusion is root-anchored, not any-segment", () => {
+    // A root-relative `.defignore` line does not name a nested directory, so
+    // Defold loads this atlas and the slot must still offer it.
+    const host = hostReturning([`${PROJECT_ROOT}/assets/node_modules/tiles.atlas`], () => "");
+    expect([...listProjectResourcePaths(host, PROJECT_ROOT, [".atlas"])]).toEqual([
+      "/assets/node_modules/tiles.atlas",
+    ]);
   });
 
   test("a host that cannot enumerate files yields nothing", () => {
