@@ -198,5 +198,53 @@
     "addressParameter": "url",
     "source": "generated",
     "evidence": "hashed id of the animation to play"
+  },
+  {
+    "fqn": "resource.atlas",
+    "parameter": "path",
+    "class": "resource-path",
+    "resourceExtensions": [".atlas"],
+    "source": "generated",
+    "evidence": "optional resource path string to the resource"
+  },
+  {
+    "fqn": "resource.buffer",
+    "parameter": "path",
+    "class": "resource-path",
+    "resourceExtensions": [".buffer"],
+    "source": "generated",
+    "evidence": "optional resource path string to the resource"
+  },
+  {
+    "fqn": "resource.font",
+    "parameter": "path",
+    "class": "resource-path",
+    "resourceExtensions": [".font"],
+    "source": "generated",
+    "evidence": "optional resource path string to the resource"
+  },
+  {
+    "fqn": "resource.material",
+    "parameter": "path",
+    "class": "resource-path",
+    "resourceExtensions": [".material"],
+    "source": "generated",
+    "evidence": "optional resource path string to the resource"
+  },
+  {
+    "fqn": "resource.texture",
+    "parameter": "path",
+    "class": "resource-path",
+    "resourceExtensions": [".png"],
+    "source": "generated",
+    "evidence": "optional resource path string to the resource"
+  },
+  {
+    "fqn": "resource.tile_source",
+    "parameter": "path",
+    "class": "resource-path",
+    "resourceExtensions": [".tilesource"],
+    "source": "generated",
+    "evidence": "optional resource path string to the resource"
   }
 ]

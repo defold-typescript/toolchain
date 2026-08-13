@@ -104,6 +104,60 @@ describe("url-parameters.json generated entries", () => {
     expect(unresolved).toEqual([]);
   });
 
+  test("the resource-path class is recorded against exactly the six constructors", () => {
+    const resourcePaths = table
+      .filter((entry) => entry.class === "resource-path")
+      .map((entry) => `${entry.fqn}#${entry.parameter}`);
+    expect(resourcePaths).toEqual([
+      "resource.atlas#path",
+      "resource.buffer#path",
+      "resource.font#path",
+      "resource.material#path",
+      "resource.texture#path",
+      "resource.tile_source#path",
+    ]);
+  });
+
+  test("every resource-path extension reads in its own function's ref-doc example", () => {
+    // The parameter doc says *resource path* without saying which kind, so the
+    // only refutable evidence for the extension is the example the ref-doc
+    // writes. Matching the path-ending form pins `.png` to `/texture.png"` and
+    // not to a `.pngsomething` mentioned in prose.
+    const unproven: string[] = [];
+    for (const entry of table.filter((candidate) => candidate.class === "resource-path")) {
+      const key = `${entry.fqn}#${entry.parameter}`;
+      const slot = slots.get(key);
+      if (!slot) continue;
+      for (const extension of entry.resourceExtensions ?? []) {
+        if (!slot.examples.includes(`${extension}&quot;`)) {
+          unproven.push(`${key}: no example ends a path with ${extension}`);
+        }
+      }
+    }
+    expect(unproven).toEqual([]);
+  });
+
+  test("every resource-path entry declares the extensions it accepts", () => {
+    expect(
+      table
+        .filter(
+          (entry) =>
+            entry.class === "resource-path" && (entry.resourceExtensions?.length ?? 0) === 0,
+        )
+        .map((entry) => `${entry.fqn}#${entry.parameter}`),
+    ).toEqual([]);
+  });
+
+  test("only a resource-path entry carries accepted extensions", () => {
+    expect(
+      table
+        .filter(
+          (entry) => entry.class !== "resource-path" && entry.resourceExtensions !== undefined,
+        )
+        .map((entry) => `${entry.fqn}#${entry.parameter}`),
+    ).toEqual([]);
+  });
+
   test("only an animation entry carries an address companion", () => {
     expect(
       table
