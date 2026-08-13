@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parseDefoldApiDoc } from "../src/api-doc";
-import { EXTENSION_MANIFEST, SYNC_MANIFEST } from "./sync-api-docs";
+import { EDITOR_VM_MANIFEST, EXTENSION_MANIFEST, SYNC_MANIFEST } from "./sync-api-docs";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 
@@ -42,6 +42,14 @@ describe("fixture completeness", () => {
       } else {
         expect(count).toBeGreaterThan(0);
       }
+    });
+  }
+
+  // Split fixtures share their namespace with a runtime entry, so they are named
+  // by fixture path: a split that silently yields zero elements must fail loudly.
+  for (const entry of EDITOR_VM_MANIFEST) {
+    test(`${entry.fixture} parses to at least one element`, () => {
+      expect(elementCount(entry.fixture)).toBeGreaterThan(0);
     });
   }
 });

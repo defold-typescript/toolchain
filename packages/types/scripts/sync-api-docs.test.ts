@@ -10,6 +10,7 @@ import {
   collectUpstreamNamespaces,
   DEFOLD_VERSION,
   EDITOR_MANIFEST,
+  EDITOR_VM_MANIFEST,
   EXTENSION_MANIFEST,
   extractFixtures,
   IGNORED_UPSTREAM,
@@ -494,6 +495,108 @@ describe("extractFixtures merge", () => {
     const [fixture] = extractFixtures(zip, manifest);
     const module = parseDefoldApiDoc(JSON.parse(fixture?.contents ?? ""));
     expect(module.functions.map((f) => f.name)).toEqual(["sys.a", "sys.b"]);
+  });
+});
+
+describe("extractFixtures split", () => {
+  const SPLIT_SOURCE = JSON.stringify({
+    info: { namespace: "editor", brief: "the editor VM" },
+    elements: [
+      { type: "FUNCTION", name: "editor.get", parameters: [], returnvalues: [] },
+      { type: "FUNCTION", name: "http.request", parameters: [], returnvalues: [] },
+      { type: "FUNCTION", name: "http.server.route", parameters: [], returnvalues: [] },
+      { type: "FUNCTION", name: "json.decode", parameters: [], returnvalues: [] },
+      { type: "FUNCTION", name: "pprint", parameters: [], returnvalues: [] },
+      { type: "FUNCTION", name: "pprintx", parameters: [], returnvalues: [] },
+      { type: "FUNCTION", name: "tilemap.tiles.get_tile", parameters: [], returnvalues: [] },
+      { type: "FUNCTION", name: "tilemap.set_tile", parameters: [], returnvalues: [] },
+    ],
+  });
+
+  function splitOnce(namespace: string): {
+    info: { namespace: string };
+    elements: { name: string }[];
+  } {
+    const manifest: SyncManifestEntry[] = [
+      {
+        namespace,
+        zipEntry: "doc/editor.apidoc_doc.json",
+        fixture: `fixtures/editor_${namespace.replace(/\./g, "_")}_doc.json`,
+        split: true,
+      },
+    ];
+    const zip = fakeZip({ "doc/editor.apidoc_doc.json": SPLIT_SOURCE });
+    const [fixture] = extractFixtures(zip, manifest);
+    return JSON.parse(fixture?.contents ?? "");
+  }
+
+  test("keeps only the split namespace's elements and rewrites info.namespace", () => {
+    const doc = splitOnce("http");
+    expect(doc.info.namespace).toBe("http");
+    expect(doc.elements.map((e) => e.name)).toEqual(["http.request", "http.server.route"]);
+  });
+
+  test("a bare-name namespace owns its exact element, not a same-prefix sibling", () => {
+    const doc = splitOnce("pprint");
+    expect(doc.elements.map((e) => e.name)).toEqual(["pprint"]);
+  });
+
+  test("a dotted namespace owns its own segment, not its parent's siblings", () => {
+    const doc = splitOnce("tilemap.tiles");
+    expect(doc.info.namespace).toBe("tilemap.tiles");
+    expect(doc.elements.map((e) => e.name)).toEqual(["tilemap.tiles.get_tile"]);
+  });
+
+  test("an entry without split vendors the source document byte for byte", () => {
+    const manifest: SyncManifestEntry[] = [
+      {
+        namespace: "editor",
+        zipEntry: "doc/editor.apidoc_doc.json",
+        fixture: "fixtures/editor_doc.json",
+      },
+    ];
+    const zip = fakeZip({ "doc/editor.apidoc_doc.json": SPLIT_SOURCE });
+    const [fixture] = extractFixtures(zip, manifest);
+    expect(fixture?.contents).toBe(SPLIT_SOURCE);
+  });
+});
+
+describe("EDITOR_VM_MANIFEST", () => {
+  test("covers the six editor-VM namespaces, each split off the editor apidoc", () => {
+    expect(EDITOR_VM_MANIFEST.map((e) => e.namespace)).toEqual([
+      "http",
+      "json",
+      "zip",
+      "zlib",
+      "pprint",
+      "tilemap.tiles",
+    ]);
+    for (const entry of EDITOR_VM_MANIFEST) {
+      expect(entry.split).toBe(true);
+      expect(entry.zipEntry).toBe("doc/editor.apidoc_doc.json");
+    }
+  });
+
+  test("each fixture path is editor-prefixed so it cannot collide with a runtime fixture", () => {
+    for (const entry of EDITOR_VM_MANIFEST) {
+      const slug = entry.namespace.replace(/\./g, "_");
+      expect(entry.fixture).toBe(`fixtures/defold-${DEFOLD_VERSION}/editor_${slug}_doc.json`);
+      expect(SYNC_MANIFEST.some((s) => s.fixture === entry.fixture)).toBe(false);
+    }
+  });
+
+  // `http`, `json` and `zlib` name a runtime namespace too, and those runtime
+  // SYNC_MANIFEST rows legitimately register everywhere. Only the editor-VM-only
+  // namespaces can prove the split entries stayed out of the runtime wiring.
+  test("an editor-VM-only namespace never registers as runtime-wired or upstream-mapped", () => {
+    const runtime = new Set(SYNC_MANIFEST.map((e) => e.namespace));
+    const editorOnly = EDITOR_VM_MANIFEST.filter((e) => !runtime.has(e.namespace));
+    expect(editorOnly.map((e) => e.namespace)).toEqual(["zip", "pprint", "tilemap.tiles"]);
+    for (const entry of editorOnly) {
+      expect(COVERAGE_MANIFEST.some((e) => e.namespace === entry.namespace)).toBe(false);
+      expect(UPSTREAM_MAPPED_NAMESPACES.has(entry.namespace)).toBe(false);
+      expect(MODULE_MANIFEST.some((m) => m.namespace === entry.namespace)).toBe(false);
+    }
   });
 });
 
