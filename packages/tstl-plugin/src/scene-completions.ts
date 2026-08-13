@@ -65,6 +65,28 @@ export function buildSceneCompletionEntries(input: {
   });
 }
 
+// One entry per game-object path, each replacing only the path half inside the
+// quotes — the mirror image of `buildSceneCompletionEntries`, which keeps the
+// path and edits the fragment. A literal carrying no `#` is all path, so its
+// span is the whole text; `offeredName` re-attaches the surviving fragment so
+// the dedup compares the literal an accepted entry would produce, not a bare id.
+export function buildAddressPathCompletionEntries(input: {
+  slot: ClassifiedSlot;
+  paths: ReadonlySet<string>;
+  baseEntries: readonly ts.CompletionEntry[];
+}): ts.CompletionEntry[] {
+  const { slot, paths, baseEntries } = input;
+  // `fragmentStart` is the first character *after* the `#`, so the separator
+  // itself belongs to the surviving suffix rather than to the replaced span.
+  const length =
+    slot.fragmentStart === -1 ? slot.text.length : slot.fragmentStart - slot.textStart - 1;
+  const suffix = slot.text.slice(length);
+  return entriesFor(paths, (path) => `${path}${suffix}`, baseEntries, {
+    start: slot.textStart,
+    length,
+  });
+}
+
 // One entry per id, for the kinds whose literal is the name outright — a `.gui`
 // node id and an atlas animation id. Unlike an address, neither has a path half
 // to keep: the whole inside-quotes text is the name, so accepting an entry

@@ -13,6 +13,8 @@ export { getProgramDiagnostics } from "./program-diagnostics";
 export { isDefignoredPath, SCAFFOLDED_DEFIGNORE_LINES } from "./project-resources";
 export type { SceneComponentIndex } from "./scene-component-index";
 export { buildSceneComponentIndex } from "./scene-component-index";
+export type { SceneObjectPathIndex } from "./scene-object-path-index";
+export { buildSceneObjectPathIndex } from "./scene-object-path-index";
 export type { SceneMessage } from "./scene-text-format";
 export { parseSceneTextFormat, SceneTextFormatError } from "./scene-text-format";
 export type { TranspileSession } from "./session";
