@@ -1761,17 +1761,20 @@ The same entrypoint also carries the libraries the editor VM exposes as their ow
 | Global | What it covers |
 | --- | --- |
 | `http` | `http.request`, and the `http.server.route`/`response` builders plus the server's `url`, `local_url` and `port` |
-| `json` | `json.decode` / `json.encode` |
-| `zip` | `zip.pack` / `zip.unpack`, with the `zip.METHOD.*` and `zip.ON_CONFLICT.*` option constants |
+| `json` | `json.decode`, returning the decoded value to narrow at the point of use, and `json.encode`, returning the document string |
+| `zip` | `zip.pack(archive, ["build"])` / `zip.unpack(archive)`, with the `zip.METHOD.*` and `zip.ON_CONFLICT.*` option constants |
 | `zlib` | `zlib.deflate` / `zlib.inflate` |
 | `pprint` | the pretty-printer, a bare global function |
 | `tilemap.tiles` | the unbounded tile grid: `new`, `get_tile`, `get_info`, `set`, `remove`, `clear`, `iterator` |
 
 ```ts
 const archive = "build.zip";
-zip.pack(archive, { method: zip.METHOD.STORED }, "build");
+zip.pack(archive, ["build", "game.project"]);
+zip.unpack(archive, { on_conflict: zip.ON_CONFLICT.OVERWRITE });
 print(`packed at ${http.server.url}`);
 ```
+
+`http.server.route`, `zip.pack` and `zip.unpack` take optional arguments *before* their required ones, which TypeScript cannot spell as a single signature — each shape Defold documents is a separate overload, so short calls like the two above are accepted without padding the skipped slots.
 
 These are editor-only. `zip` and `tilemap.tiles` have no runtime form at all, and the `http`, `json`, `zlib` and `pprint` a game script sees are the *engine's*, with different signatures — which is why the two surfaces never share a `tsconfig`.
 

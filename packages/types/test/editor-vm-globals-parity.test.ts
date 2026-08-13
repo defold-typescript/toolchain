@@ -73,6 +73,12 @@ describe("hand-authored editor VM globals parity", () => {
     const members = expectedMembers();
     expect(members).toContain("pprint");
     expect(members).toContain("zip.METHOD.DEFLATED");
+    // One deliberately skipped function per shape the emitter cannot render:
+    // a return upstream records as empty, and optionals before a required
+    // argument. Naming them keeps un-skipping a function without dropping its
+    // hand-authored form a failure by name, not only through the derived set.
+    expect(members).toContain("json.decode");
+    expect(members).toContain("zip.unpack");
     expect(members.length).toBeGreaterThan(5);
   });
 

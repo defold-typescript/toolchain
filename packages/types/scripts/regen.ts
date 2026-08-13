@@ -240,6 +240,21 @@ export const EDITOR_MODULE_MANIFEST: readonly ModuleManifestEntry[] = [
 // the same escape `generated/versions/` and `generated/kinds/` already use.
 const EDITOR_VM_NAMESPACES: readonly string[] = ["http", "json", "zip", "zlib", "tilemap.tiles"];
 
+// The functions whose vendored signature the emitter cannot render soundly, so
+// they are withheld here and hand-authored in `src/editor-vm-globals.d.ts`
+// instead. Two causes, both of them the fixture's positional model being a lossy
+// description of the Lua function its own `examples` block calls: an optional
+// parameter sitting *before* a required one (TypeScript cannot mark a middle
+// parameter `?`, so the emit renders it `T | undefined` and rejects every
+// documented short form), and an empty `returnvalues` on a function upstream's
+// own prose says returns a value. Rules are local names — the `<namespace>.`
+// prefix is stripped before matching.
+const EDITOR_VM_SKIP_FUNCTIONS: Readonly<Record<string, readonly string[]>> = {
+  http: ["server.route"],
+  json: ["decode", "encode"],
+  zip: ["pack", "unpack"],
+};
+
 const editorVmSlug = (namespace: string): string => namespace.replace(/\./g, "_");
 
 export const EDITOR_VM_MODULE_MANIFEST: readonly ModuleManifestEntry[] = EDITOR_VM_NAMESPACES.map(
@@ -259,6 +274,9 @@ export const EDITOR_VM_MODULE_MANIFEST: readonly ModuleManifestEntry[] = EDITOR_
     outFile: `editor-vm/${editorVmSlug(namespace)}.d.ts`,
     importsFrom: "../../src/core-types",
     mapType: mapEditorType,
+    ...(EDITOR_VM_SKIP_FUNCTIONS[namespace]
+      ? { skipFunctions: EDITOR_VM_SKIP_FUNCTIONS[namespace] }
+      : {}),
   }),
 );
 
