@@ -185,6 +185,7 @@ export const EDITOR_MANIFEST: readonly SyncManifestEntry[] = [
 export const EDITOR_VM_MANIFEST: readonly SyncManifestEntry[] = [
   editorVm("http"),
   editorVm("json"),
+  editorVm("localization"),
   editorVm("zip"),
   editorVm("zlib"),
   editorVm("pprint"),

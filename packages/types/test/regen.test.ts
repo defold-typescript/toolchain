@@ -345,6 +345,7 @@ describe("editor VM module emit", () => {
   const EMITTER_GAP: Readonly<Record<string, readonly string[]>> = {
     http: ["http.server.local_url", "http.server.port", "http.server.url"],
     json: [],
+    localization: [],
     zip: [
       "zip.METHOD.DEFLATED",
       "zip.METHOD.STORED",
@@ -366,6 +367,7 @@ describe("editor VM module emit", () => {
   const DELIBERATE_SKIP: Readonly<Record<string, readonly string[]>> = {
     http: ["http.server.route"],
     json: ["json.decode", "json.encode"],
+    localization: [],
     zip: ["zip.pack", "zip.unpack"],
     zlib: [],
     "tilemap.tiles": [],
