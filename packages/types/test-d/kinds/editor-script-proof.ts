@@ -99,6 +99,35 @@ editor.command({
   run: (opts) => void opts.argument,
 });
 
+// The editor VM libraries, reachable only from this surface. Returns bind to
+// explicitly annotated consts so a regression to `unknown` reds here.
+const _response: Record<string | number, unknown> = http.request("http://localhost", {
+  method: "GET",
+});
+const _serverUrl: string = http.server.url;
+const _serverPort: number = http.server.port;
+http.server.route("/files/{*file}", "GET", "json", undefined, (request) => void request);
+void _response;
+void _serverUrl;
+void _serverPort;
+
+json.decode('{"a":1}', { all: true });
+json.encode({ a: 1 });
+
+zip.pack("build.zip", { method: zip.METHOD.STORED }, "build");
+zip.unpack("build.zip", "out", { on_conflict: zip.ON_CONFLICT.OVERWRITE });
+// @ts-expect-error the constant table has no DEFLATE member (it is DEFLATED)
+void zip.METHOD.DEFLATE;
+
+const _inflated: string = zlib.inflate(zlib.deflate("payload"));
+void _inflated;
+
+const _tiles = tilemap.tiles.new();
+const _tile: number = tilemap.tiles.get_tile(tilemap.tiles.set(_tiles, 1, 1, 2), 1, 1);
+void _tile;
+
+pprint({ a: 1 });
+
 // @ts-expect-error go.* is absent on the editor-script surface
 go.get_position();
 // @ts-expect-error vmath.* is absent on the editor-script surface
