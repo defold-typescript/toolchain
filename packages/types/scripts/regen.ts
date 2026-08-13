@@ -185,6 +185,13 @@ const EDITOR_TYPE_MAP: Readonly<Record<string, string>> = {
   command: 'Opaque<"command">',
   transaction_step: 'Opaque<"transaction_step">',
   "transaction_step[": 'Opaque<"transaction_step">[]',
+  // The handle every `localization` function returns: a userdata whose only
+  // documented use is being stringified or nested into another pattern.
+  message: 'Opaque<"message">',
+  // Repaired per entry for the same reason as `transaction_step[` above. Unlike
+  // `string[`, this token means one thing everywhere it appears — a list of
+  // values to render — so `unknown[]` is sound at all three of its slots.
+  "any[": "unknown[]",
 };
 
 function mapEditorType(token: string): string {
@@ -196,8 +203,8 @@ function mapEditorType(token: string): string {
 // namespaces. They are emitted from their own per-namespace fixtures through
 // EDITOR_VM_MODULE_MANIFEST, and skipped here so this entry cannot misname them
 // as `editor.*` — `pprint`, a flat identifier, would otherwise land as
-// `editor.pprint`. `localization.`, `editor.ui.*` and `editor.prefs.*` have no
-// second home yet and are simply dropped.
+// `editor.pprint`. `editor.ui.*` and `editor.prefs.*` have no second home yet
+// and are simply dropped.
 const EDITOR_SKIP_FUNCTIONS: readonly string[] = [
   // Unlike every other entry here, this is not a dropped namespace prefix: the
   // hand-authored `src/editor-overloads.d.ts` supplies `editor.command` with a
@@ -238,7 +245,14 @@ export const EDITOR_MODULE_MANIFEST: readonly ModuleManifestEntry[] = [
 // editor `http.d.ts` there would share a program with the runtime one and
 // declare `namespace http` twice. A subdirectory keeps them out of that glob,
 // the same escape `generated/versions/` and `generated/kinds/` already use.
-const EDITOR_VM_NAMESPACES: readonly string[] = ["http", "json", "zip", "zlib", "tilemap.tiles"];
+const EDITOR_VM_NAMESPACES: readonly string[] = [
+  "http",
+  "json",
+  "localization",
+  "zip",
+  "zlib",
+  "tilemap.tiles",
+];
 
 // The functions whose vendored signature the emitter cannot render soundly, so
 // they are withheld here and hand-authored in `src/editor-vm-globals.d.ts`
