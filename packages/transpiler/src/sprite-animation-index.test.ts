@@ -136,6 +136,54 @@ describe("buildSpriteAnimationIndex", () => {
     expect(index.unresolved[0]).toContain("main/hero.go");
   });
 
+  test("two sprite components on one object keep their animations apart", () => {
+    // The embedded and the referenced chain on one object, so the two halves of
+    // `spriteTileSets` cannot feed each other.
+    const index = indexOf(
+      {
+        "main/hero.go": gameObject(
+          "/src/hero.ts.script",
+          embeddedSprite("body", "/assets/body.atlas"),
+          spriteComponent("cape", "/assets/cape.sprite"),
+        ),
+      },
+      {
+        "assets/body.atlas": atlas("idle", "run"),
+        "assets/cape.sprite": 'tile_set: "/assets/cape.atlas"\ndefault_animation: "flap"\n',
+        "assets/cape.atlas": atlas("flap", "furl"),
+      },
+    );
+    expect([...(index.byScriptResource.get("src/hero.ts.script")?.keys() ?? [])]).toEqual([
+      "body",
+      "cape",
+    ]);
+    expect(animationsFor(index, "src/hero.ts.script", "body")).toEqual(["idle", "run"]);
+    expect(animationsFor(index, "src/hero.ts.script", "cape")).toEqual(["flap", "furl"]);
+    expect(index.unresolved).toEqual([]);
+  });
+
+  test("one object's animations never reach another object's script", () => {
+    const index = indexOf(
+      {
+        "main/hero.go": gameObject(
+          "/src/hero.ts.script",
+          embeddedSprite("body", "/assets/body.atlas"),
+        ),
+        "main/foe.go": gameObject(
+          "/src/foe.ts.script",
+          embeddedSprite("body", "/assets/foe.atlas"),
+        ),
+      },
+      {
+        "assets/body.atlas": atlas("idle", "run"),
+        "assets/foe.atlas": atlas("lunge"),
+      },
+    );
+    expect(animationsFor(index, "src/hero.ts.script", "body")).toEqual(["idle", "run"]);
+    expect(animationsFor(index, "src/foe.ts.script", "body")).toEqual(["lunge"]);
+    expect(index.unresolved).toEqual([]);
+  });
+
   test("two game objects claiming one script own it jointly, which is to say not at all", () => {
     const index = indexOf(
       {
