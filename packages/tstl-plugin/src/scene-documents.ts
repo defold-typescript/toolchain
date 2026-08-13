@@ -1,3 +1,5 @@
+import { isDefignoredPath } from "@defold-typescript/transpiler";
+
 // The narrow slice of `ts.server.ServerHost` this needs: the real host
 // satisfies it structurally, and a test fake is two methods rather than a whole
 // server. `readDirectory` is optional because a host may not provide it, and a
@@ -18,10 +20,17 @@ export function displayPathOf(projectRoot: string, filePath: string): string {
   return path.startsWith(`${root}/`) ? path.slice(root.length + 1) : path;
 }
 
+// What both walks exclude is what Defold does not load as a project resource:
+// `build/` output, plus the directories the scaffolded `.defignore` names
+// (`isDefignoredPath`, root-anchored because a `.defignore` line is a
+// root-relative path).
+//
 // Bob writes `_generated_*.go` copies of the project's scenes under `build/`;
 // reading them would report every id twice, against files no author edits. The
 // segment test runs on the project-relative path, so a project that itself
-// lives under a directory named `build` is not excluded wholesale.
+// lives under a directory named `build` is not excluded wholesale — a different
+// rule from `.defignore`'s, because bob writes those copies below whatever
+// depth it is pointed at.
 function isBuildOutput(displayPath: string): boolean {
   return displayPath.split("/").includes("build");
 }
@@ -50,6 +59,7 @@ export function readSceneDocuments(
   for (const filePath of host.readDirectory(projectRoot, extensions)) {
     const displayPath = displayPathOf(projectRoot, filePath);
     if (isBuildOutput(displayPath)) continue;
+    if (isDefignoredPath(displayPath)) continue;
     const text = host.readFile(filePath);
     if (text === undefined) {
       unreadable.push(`${displayPath}: could not be read`);
@@ -80,6 +90,7 @@ export function listProjectResourcePaths(
   for (const filePath of host.readDirectory(projectRoot, extensions)) {
     const displayPath = displayPathOf(projectRoot, filePath);
     if (isBuildOutput(displayPath)) continue;
+    if (isDefignoredPath(displayPath)) continue;
     if (!extensions.some((extension) => displayPath.endsWith(extension))) continue;
     paths.push(`/${displayPath}`);
   }
