@@ -22,7 +22,7 @@ The plugin runs the **same TypeScript-to-Lua diagnostic pass the `build` command
 
 ## Address completions — game-object paths and component ids
 
-Type `#` inside an address argument — [`msg.post`](/api/msg)'s `receiver`, [`go.get`](/api/go)'s `url`, any of the slots the reference types as an address — and the plugin offers the component ids your project declares. The list is read from the project's own `.go` and `.collection` files each time you ask, so a component you added a moment ago is already there; Defold's `build/` output is skipped, since those are generated copies of the same scenes.
+Type `#` inside an address argument — [`msg.post`](/api/msg)'s `receiver`, [`go.get`](/api/go)'s `url`, any of the slots the reference types as an address — and the plugin offers the component ids your project declares. The list is read from the project's own `.go` and `.collection` files; Defold's `build/` output is skipped, since those are generated copies of the same scenes. Suggestions come from an index the plugin keeps across requests and refreshes whenever a scene file changes, so typing on in the same slot costs no repeat walk of your project, and a component you added a moment ago is offered without restarting the editor.
 
 The completions are **strictly additive**. Whatever your editor already offers stays, in its original order, and the component ids are appended after it; an id the editor already offers as a whole address literal is not repeated. If the plugin cannot read the project, you simply get the editor's own list back.
 
