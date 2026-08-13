@@ -42,6 +42,14 @@ This slot is the first one scoped by a *sibling* argument, so it asks for more: 
 
 Only blocks declared as `animations { id: … }` are offered. A bare image in an atlas is not, and neither are [`gui.play_flipbook`](/api/gui) or [`model.play_anim`](/api/model), whose names come from elsewhere.
 
+## Resource path completions inside the `go.property` resource constructors
+
+Put the caret inside the argument of [`resource.atlas`](/api/resource), `resource.buffer`, `resource.font`, `resource.material`, `resource.texture` or `resource.tile_source` — the constructors that declare a resource property — and the plugin offers the project's own files of the one kind that constructor accepts. A `resource.font("")` caret offers your `.font` files and nothing else; `resource.texture` offers `.png`, the extension Defold's own reference documents for it.
+
+Paths are offered in the `/`-prefixed project-relative form Defold resolves, the whole quoted text is replaced at once, and `build/` output is skipped the way it is everywhere else. This is the one completion kind that reads no scene file at all: the candidates are a directory walk, so nothing has to resolve ownership and no `.go`, `.collection` or `.gui` is parsed.
+
+Not offered: the built-path slots ([`collectionfactory.set_prototype`](/api/collectionfactory) and [`collectionproxy.set_collection`](/api/collectionproxy)), whose literals name `c`-suffixed build outputs rather than source files, and the extension-less loaders ([`resource.load`](/api/resource), [`sys.load_resource`](/api/sys)), which accept any resource and so have no kind to filter by.
+
 ## It is advisory, not blocking
 
 Every diagnostic the plugin appends carries the `Suggestion` category, never `Error`. It adds editor signal; it never turns valid code red. In particular it **never blocks `tsc --noEmit`** — a project that type-checks clean stays clean in CI even with the plugin active. The plugin is an editor convenience layer; the build path remains the source of truth for what compiles.

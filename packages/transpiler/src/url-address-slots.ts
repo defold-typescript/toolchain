@@ -17,12 +17,15 @@ import * as ts from "typescript";
 // fragment. `addressText` is the statically-known text of the sibling argument
 // the entry names as its address companion — present only for a class that
 // declares one, and only when that argument is a plain string literal.
+// `resourceExtensions` is the same shape for the file extensions a resource slot
+// accepts: present only when the entry declares them.
 export interface ClassifiedSlot {
   readonly class: UrlParameterClass;
   readonly text: string;
   readonly textStart: number;
   readonly fragmentStart: number;
   readonly addressText?: string;
+  readonly resourceExtensions?: readonly string[];
 }
 
 // The classes that name something in the scene graph by address. A `gui-node`
@@ -37,6 +40,7 @@ const ADDRESS_CLASSES = {
   either: true,
   "gui-node": false,
   animation: false,
+  "resource-path": false,
   none: false,
 } satisfies Record<UrlParameterClass, boolean>;
 
@@ -181,5 +185,8 @@ export function resolveClassifiedSlotAtPosition(input: {
     textStart,
     fragmentStart: hash === -1 ? -1 : textStart + hash + 1,
     ...(addressText === undefined ? {} : { addressText }),
+    ...(classified.entry.resourceExtensions === undefined
+      ? {}
+      : { resourceExtensions: classified.entry.resourceExtensions }),
   };
 }

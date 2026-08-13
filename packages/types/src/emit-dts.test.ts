@@ -3216,6 +3216,16 @@ describe("url-parameter address retyping", () => {
     expect(out).not.toContain("SceneComponentAddress");
   });
 
+  test("a classified resource-path slot is inert — a fourth class widens nothing", () => {
+    const module = parseDefoldApiDoc(resourceDoc);
+    const out = emitDeclarations(module, { urlParameters: committed });
+    // `resource.atlas#path` is classified `resource-path` in the committed
+    // table. The alias map is a partial record, so the slot keeps the plain
+    // `string` the ref-doc declares.
+    expect(signatureLine(out, "function atlas(")).toBe("function atlas(path?: string): Hash;");
+    expect(out).not.toContain("SceneGameObjectAddress");
+  });
+
   test("emitSymbolSignatures retypes the same slots as the declaration", () => {
     const module = parseDefoldApiDoc(goDoc);
     const signatures = emitSymbolSignatures(module, { urlParameters: committed });

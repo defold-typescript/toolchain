@@ -121,6 +121,22 @@ const ANIMATION_ADDRESS_POSITION = ANIMATION_SOURCE.indexOf('"#sprite"') + 1;
 const CAPE_SOURCE = 'sprite.play_flipbook("#cape", "");\n';
 const CAPE_POSITION = CAPE_SOURCE.indexOf('""') + 1;
 
+// A resource slot, whose candidates are project files rather than anything a
+// scene declares — the caret sits in an empty literal, so the span is again a
+// pure insertion.
+const ATLAS_SOURCE = 'go.property("my_atlas", resource.atlas(""));\n';
+const ATLAS_POSITION = ATLAS_SOURCE.indexOf('""') + 1;
+
+const FONT_SOURCE = 'go.property("my_font", resource.font(""));\n';
+const FONT_POSITION = FONT_SOURCE.indexOf('""') + 1;
+
+// Two resources of different kinds, so a slot that offered both would be
+// visible. The values are never read: a path is the whole suggestion.
+const RESOURCE_DOCUMENTS: Record<string, string> = {
+  "main/hero.atlas": "",
+  "ui/icons.font": "",
+};
+
 // One level of the escaping a `.collection` uses to carry a whole `.go`, and a
 // `.go` to carry a whole component — applied twice for an embedded sprite.
 function escapePayload(payload: string): string {
@@ -465,5 +481,62 @@ describe("tstl-plugin", () => {
     });
     const result = service.getCompletionsAtPosition("main.ts", FRAGMENT_POSITION, undefined);
     expect(result?.entries.map((e) => e.name)).toEqual(["board", "hud", "self", "sprite"]);
+  });
+
+  test("appends the project's resources of that one kind after the base entries", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const service = completionProxy({
+      source: ATLAS_SOURCE,
+      base,
+      documents: RESOURCE_DOCUMENTS,
+    });
+    const result = service.getCompletionsAtPosition("main.ts", ATLAS_POSITION, undefined);
+    expect(result?.entries[0]).toBe(base.entries[0] as ts.CompletionEntry);
+    expect(result?.entries.map((e) => e.name)).toEqual(["zzz", "/main/hero.atlas"]);
+    for (const built of result?.entries.slice(1) ?? []) {
+      expect(built.replacementSpan).toEqual({ start: ATLAS_POSITION, length: 0 });
+      expect(built.sortText > LOCATION_PRIORITY).toBe(true);
+    }
+  });
+
+  test("the slot's own entry decides the kind — a font caret offers no atlas", () => {
+    const service = completionProxy({
+      source: FONT_SOURCE,
+      base: undefined,
+      documents: RESOURCE_DOCUMENTS,
+    });
+    const result = service.getCompletionsAtPosition("main.ts", FONT_POSITION, undefined);
+    expect(result?.entries.map((e) => e.name)).toEqual(["/ui/icons.font"]);
+  });
+
+  test("a resource caret with no base result still offers the project's files", () => {
+    const service = completionProxy({
+      source: ATLAS_SOURCE,
+      base: undefined,
+      documents: RESOURCE_DOCUMENTS,
+    });
+    const result = service.getCompletionsAtPosition("main.ts", ATLAS_POSITION, undefined);
+    expect(result?.entries.map((e) => e.name)).toEqual(["/main/hero.atlas"]);
+  });
+
+  test("a project holding no resource of that kind returns the base result untouched", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const service = completionProxy({
+      source: ATLAS_SOURCE,
+      base,
+      documents: { "ui/icons.font": "" },
+    });
+    expect(service.getCompletionsAtPosition("main.ts", ATLAS_POSITION, undefined)).toBe(base);
+  });
+
+  test("a resource caret degrades to the base result on a host that cannot enumerate", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const service = completionProxy({
+      source: ATLAS_SOURCE,
+      base,
+      documents: RESOURCE_DOCUMENTS,
+      serverHost: false,
+    });
+    expect(service.getCompletionsAtPosition("main.ts", ATLAS_POSITION, undefined)).toBe(base);
   });
 });

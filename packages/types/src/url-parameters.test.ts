@@ -116,6 +116,25 @@ describe("collectParameterSlots", () => {
     expect(keys(sources)).toContain("sprite.play_flipbook#url");
   });
 
+  test("keeps a resource-path parameter the address filter drops, carrying its declared types", () => {
+    const sources = currentTargetSources(["resource"]);
+    const slot = collectParameterSlots(sources).find(
+      (candidate) => candidate.fqn === "resource.atlas" && candidate.parameter === "path",
+    );
+    expect(slot?.types).toEqual(["string"]);
+    expect(slot?.doc).toBe("optional resource path string to the resource");
+    expect(keys(sources)).not.toContain("resource.atlas#path");
+  });
+
+  test("carries the function's ref-doc examples onto every slot it declares", () => {
+    const slot = collectParameterSlots(currentTargetSources(["resource"])).find(
+      (candidate) => candidate.fqn === "resource.atlas" && candidate.parameter === "path",
+    );
+    // The extension claim is refutable only against the example, so the guard
+    // needs the example text on the slot it is checking.
+    expect(slot?.examples).toContain(".atlas&quot;");
+  });
+
   test("omits every function the target hands to the authored overloads", () => {
     const slots = allKeys(currentTargetSources(["msg"]));
     expect(slots).not.toContain("msg.post#receiver");
@@ -134,6 +153,12 @@ describe("parameterTypesSatisfyClass", () => {
     expect(parameterTypesSatisfyClass(["string", "hash"], "animation")).toBe(true);
     expect(parameterTypesSatisfyClass(["string", "hash", "url"], "animation")).toBe(true);
     expect(parameterTypesSatisfyClass(["string"], "animation")).toBe(false);
+  });
+
+  test("a resource-path class needs only a string", () => {
+    expect(parameterTypesSatisfyClass(["string"], "resource-path")).toBe(true);
+    expect(parameterTypesSatisfyClass(["string", "hash"], "resource-path")).toBe(true);
+    expect(parameterTypesSatisfyClass(["hash"], "resource-path")).toBe(false);
   });
 
   test("an address class needs the whole triple", () => {

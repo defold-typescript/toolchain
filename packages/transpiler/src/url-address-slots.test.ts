@@ -148,6 +148,33 @@ describe("resolveClassifiedSlotAtPosition", () => {
     }
   });
 
+  test("a resource-path slot resolves with the extensions its entry declares", () => {
+    const source = 'go.property("my_atlas", resource.atlas(""));\n';
+    const slot = slotAt(source, insideOf(source, '""'));
+    expect(slot?.class).toBe("resource-path");
+    expect(slot?.text).toBe("");
+    expect(slot?.fragmentStart).toBe(-1);
+    expect(slot?.resourceExtensions).toEqual([".atlas"]);
+    // biome-ignore lint/style/noNonNullAssertion: the assertions above already failed if it did not resolve
+    expect(isAddressClass(slot!.class)).toBe(false);
+  });
+
+  test("the extensions track the entry, not one hardcoded value", () => {
+    const source = 'go.property("my_font", resource.font("/ui/main.font"));\n';
+    const slot = slotAt(source, insideOf(source, '"/ui/main.font"'));
+    expect(slot?.class).toBe("resource-path");
+    expect(slot?.resourceExtensions).toEqual([".font"]);
+  });
+
+  test("a slot whose entry declares no extensions carries none", () => {
+    const source = 'msg.post("#sprite", "hello");\n';
+    const slot = slotAt(source, insideOf(source, '"#sprite"'));
+    expect(slot?.class).not.toBe("none");
+    expect(slot?.resourceExtensions).toBeUndefined();
+    // The second argument is an unclassified `string`, so nothing resolves there.
+    expect(slotAt(source, insideOf(source, '"hello"'))).toBeUndefined();
+  });
+
   test("the address is read by parameter name, not by argument position", () => {
     // The committed table cannot prove this: its one companion is the parameter
     // at index 0, so a fixed `arguments[0]` reading would satisfy every case
@@ -180,6 +207,7 @@ describe("isAddressClass", () => {
     expect(isAddressClass("either")).toBe(true);
     expect(isAddressClass("gui-node")).toBe(false);
     expect(isAddressClass("animation")).toBe(false);
+    expect(isAddressClass("resource-path")).toBe(false);
     expect(isAddressClass("none")).toBe(false);
   });
 });
