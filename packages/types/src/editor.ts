@@ -55,6 +55,14 @@ export type EditorCommandOpts<Q extends EditorCommandQuery> = ("selection" exten
  * locations it appears in (e.g. `"Edit"`, `"Assets"`, `"Outline"`, `"View"`),
  * and optional `active`/`run` hooks the editor calls with the context bag its
  * own `query` declared.
+ *
+ * The editor calls `active`/`run` as plain functions, so they must emit no
+ * leading self parameter. `@noSelf` has to sit here, on the enclosing
+ * interface: TSTL resolves a hook's self context from its contextual signature,
+ * and the property-signature branch consults only this interface — it returns
+ * before `noImplicitSelf` or a file-level `@noSelfInFile` is ever considered.
+ *
+ * @noSelf
  */
 export interface EditorCommand<Q extends EditorCommandQuery = EditorCommandQuery> {
   /** Menu/label text shown for the command. */
