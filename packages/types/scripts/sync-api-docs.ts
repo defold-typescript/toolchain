@@ -24,6 +24,10 @@ export interface SyncManifestEntry {
   // docs (e.g. `sys`) is reassembled before parse, so the emitter still sees one
   // fixture, one namespace.
   readonly mergeEntries?: readonly string[];
+  // Extract only this namespace's elements from `zipEntry` and rewrite
+  // `info.namespace`. One upstream document that carries several top-level
+  // namespaces (the editor apidoc) becomes one fixture per namespace.
+  readonly split?: true;
 }
 
 // namespace -> ref-doc.zip entry. Entry paths do not match the namespace (gui ->
@@ -167,6 +171,34 @@ export const LUA_STDLIB_MANIFEST: readonly SyncManifestEntry[] = [
 export const EDITOR_MANIFEST: readonly SyncManifestEntry[] = [
   entry("editor", "doc/editor.apidoc_doc.json"),
 ];
+
+// The non-`editor.*` namespaces the same editor apidoc carries. Each is split
+// out of that one document into its own fixture; the `editor` entry above keeps
+// vendoring the document whole, so `editor_doc.json` is unaffected.
+//
+// Deliberately absent from `COVERAGE_MANIFEST`, `UPSTREAM_MAPPED_NAMESPACES`
+// and `syncedDocs`: these exist only in the editor VM, so marking them mapped
+// would tell the upstream-coverage guard the *runtime* covers `zip`, `pprint`
+// and `tilemap.tiles` and silently suppress a future real miss. Fixture paths
+// are explicit because the default would collide with the unrelated runtime
+// `http_doc.json` / `json_doc.json` / `zlib_doc.json`.
+export const EDITOR_VM_MANIFEST: readonly SyncManifestEntry[] = [
+  editorVm("http"),
+  editorVm("json"),
+  editorVm("zip"),
+  editorVm("zlib"),
+  editorVm("pprint"),
+  editorVm("tilemap.tiles"),
+];
+
+function editorVm(namespace: string): SyncManifestEntry {
+  return {
+    namespace,
+    zipEntry: "doc/editor.apidoc_doc.json",
+    fixture: `fixtures/defold-${DEFOLD_VERSION}/editor_${namespace.replace(/\./g, "_")}_doc.json`,
+    split: true,
+  };
+}
 
 function entry(
   namespace: string,
@@ -353,6 +385,21 @@ function normalizedArguments(value: unknown): string {
   );
 }
 
+// Segment-wise ownership: `pprint` owns `pprint` and `pprint.x` but never
+// `pprintx`, and `tilemap.tiles` never claims `tilemap.set_tile`.
+function ownsElement(name: string, namespace: string): boolean {
+  return name === namespace || name.startsWith(`${namespace}.`);
+}
+
+function splitNamespace(contents: string, namespace: string): string {
+  const doc = JSON.parse(contents);
+  const elements = (Array.isArray(doc.elements) ? doc.elements : []).filter(
+    (element: unknown) =>
+      isRecord(element) && typeof element.name === "string" && ownsElement(element.name, namespace),
+  );
+  return JSON.stringify({ ...doc, info: { ...doc.info, namespace }, elements });
+}
+
 export function extractFixtures(
   zip: ZipAccessor,
   manifest: readonly SyncManifestEntry[] = SYNC_MANIFEST,
@@ -364,10 +411,11 @@ export function extractFixtures(
         throw new Error(`zip is missing entry ${source} for namespace ${item.namespace}`);
       }
     }
-    const contents =
+    const merged =
       item.mergeEntries === undefined
         ? zip.read(item.zipEntry)
         : JSON.stringify(mergeApiDocs(sources.map((source) => JSON.parse(zip.read(source)))));
+    const contents = item.split ? splitNamespace(merged, item.namespace) : merged;
     return { namespace: item.namespace, fixture: item.fixture, contents };
   });
 }
@@ -628,11 +676,13 @@ if (import.meta.main) {
   const extensionFixtures = await downloadExtensionFixtures();
   const luaStdlibFixtures = extractFixtures(zip, LUA_STDLIB_MANIFEST);
   const editorFixtures = extractFixtures(zip, EDITOR_MANIFEST);
+  const editorVmFixtures = extractFixtures(zip, EDITOR_VM_MANIFEST);
   const results = [
     ...syncExtractedFixtures(coreFixtures, { check }),
     ...syncExtractedFixtures(extensionFixtures, { check }),
     ...syncExtractedFixtures(luaStdlibFixtures, { check }),
     ...syncExtractedFixtures(editorFixtures, { check }),
+    ...syncExtractedFixtures(editorVmFixtures, { check }),
   ];
   const syncedDocs = [...coreFixtures, ...extensionFixtures].map((f) => ({
     namespace: f.namespace,
