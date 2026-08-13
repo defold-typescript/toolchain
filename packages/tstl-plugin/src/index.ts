@@ -18,7 +18,12 @@ import {
   buildSceneCompletionEntries,
   buildWholeLiteralCompletionEntries,
 } from "./scene-completions";
-import { displayPathOf, readSceneDocuments, type SceneReadHost } from "./scene-documents";
+import {
+  displayPathOf,
+  listProjectResourcePaths,
+  readSceneDocuments,
+  type SceneReadHost,
+} from "./scene-documents";
 
 const GUI_EXTENSIONS = [".gui"];
 
@@ -121,6 +126,24 @@ function animationEntries(
   return ids === undefined ? [] : buildWholeLiteralCompletionEntries({ slot, ids, baseEntries });
 }
 
+// The one kind needing no scene at all: the candidates are the project's own
+// files of the extensions the slot's entry declares, so there is nothing to
+// resolve ownership through and no document to parse. Same whole-literal span as
+// a node id — a resource path is the entire text between the quotes.
+function resourceEntries(
+  slot: ClassifiedSlot,
+  host: SceneReadHost,
+  projectRoot: string,
+  baseEntries: readonly ts.CompletionEntry[],
+): ts.CompletionEntry[] {
+  const extensions = slot.resourceExtensions;
+  if (extensions === undefined || extensions.length === 0) {
+    return [];
+  }
+  const ids = listProjectResourcePaths(host, projectRoot, extensions);
+  return buildWholeLiteralCompletionEntries({ slot, ids, baseEntries });
+}
+
 // A TS language-service plugin is loaded by package name and its main is called
 // as this `init` factory; the editor passes its own `typescript` instance so the
 // plugin shares the editor's `ts` (notably `DiagnosticCategory`).
@@ -190,7 +213,9 @@ export default function init(modules: { typescript: typeof import("typescript") 
           ? nodeEntries(slot, serverHost, projectRoot, fileName, baseEntries)
           : slot.class === "animation"
             ? animationEntries(slot, serverHost, projectRoot, fileName, baseEntries)
-            : [];
+            : slot.class === "resource-path"
+              ? resourceEntries(slot, serverHost, projectRoot, baseEntries)
+              : [];
       if (entries.length === 0) {
         return prior;
       }
