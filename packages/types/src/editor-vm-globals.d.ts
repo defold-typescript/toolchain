@@ -152,6 +152,9 @@ declare global {
      *
      * // Create archive without compression:
      * zip.pack("build.zip", { method: zip.METHOD.STORED }, ["build", "resources"]);
+     *
+     * // Don't compress one of the folders:
+     * zip.pack("build.zip", [{ 1: "assets", method: zip.METHOD.STORED }, "build/wasm-web"]);
      * ```
      */
     function pack(output_path: string, entries: ZipEntries): void;
