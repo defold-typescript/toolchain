@@ -78,12 +78,16 @@ describe("eligibleWalls", () => {
     expect(eligibleWalls(cwd)).toEqual([]);
   });
 
-  test("omits an editor-script-only directory (no per-kind entrypoint to narrow to)", () => {
+  test("offers an editor-script-only directory beside the runtime kinds", () => {
     writeRootTsconfig({ include: ["src/**/*.ts"] });
     touch("src/ui/hud.ts", "export default defineGuiScript({});");
     touch("src/render/cam.ts", "export default defineRenderScript({});");
     touch("src/editor/menu.ts", "export default defineEditorScript({});");
-    expect(eligibleWalls(cwd).map((w) => w.dir)).toEqual(["src/render", "src/ui"]);
+    expect(eligibleWalls(cwd).map((w) => [w.dir, w.kind])).toEqual([
+      ["src/editor", "editor-script"],
+      ["src/render", "render-script"],
+      ["src/ui", "gui-script"],
+    ]);
   });
 });
 
@@ -176,12 +180,15 @@ describe("applyWallSelection", () => {
     expect("references" in readRootTsconfig()).toBe(false);
   });
 
-  test("selecting an editor-script-only directory is rejected and writes nothing", () => {
+  test("selecting an editor-script-only directory writes its wall against the editor entrypoint", () => {
     writeRootTsconfig({ compilerOptions: { strict: true }, include: ["src/**/*.ts"] });
     touch("src/editor/menu.ts", "export default defineEditorScript({});");
 
-    expect(() => applyWallSelection(cwd, ["src/editor"])).toThrow(/single-kind source directory/);
-    expect(existsSync(path.join(cwd, "src/editor/tsconfig.json"))).toBe(false);
-    expect("references" in readRootTsconfig()).toBe(false);
+    expect(applyWallSelection(cwd, ["src/editor"]).map((w) => w.dir)).toEqual(["src/editor"]);
+    const child = JSON.parse(readFileSync(path.join(cwd, "src/editor/tsconfig.json"), "utf8")) as {
+      compilerOptions: { types: string[] };
+    };
+    expect(child.compilerOptions.types).toEqual(["@defold-typescript/types/editor-script"]);
+    expect(readRootTsconfig().references).toEqual([{ path: "src/editor" }]);
   });
 });

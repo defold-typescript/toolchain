@@ -79,11 +79,14 @@ describe("buildWallChoices", () => {
     ]);
   });
 
-  test("a single-kind directory whose kind has no wall subpath is not offered", () => {
+  test("an editor-script directory is offered with its kind, like every other wallable kind", () => {
     writeRootTsconfig({ include: ["src/**/*.ts"] });
     touch("src/editor/menu.ts", "export default defineEditorScript({});");
 
-    expect(buildWallChoices(cwd)).toEqual([]);
+    expect(buildWallChoices(cwd)).toEqual([
+      { value: "src", name: "src (editor-script)", checked: false },
+      { value: "src/editor", name: "src/editor (editor-script)", checked: false },
+    ]);
   });
 });
 
