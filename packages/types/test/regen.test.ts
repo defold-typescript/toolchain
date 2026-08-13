@@ -337,13 +337,12 @@ describe("per-kind factory re-export", () => {
 });
 
 describe("editor VM module emit", () => {
-  // The upstream elements the emitter cannot express, per module. Both entries
-  // are two-segment VARIABLEs: the nested pass groups functions only, so a
-  // constant table under a namespace has nowhere to land. Every other editor VM
-  // module reaches its whole fixture. Shrinking a list means the nested pass
-  // learned a shape and `src/editor-vm-globals.d.ts` should give it up; growing
-  // one means a new upstream shape started falling out unnoticed.
-  const UNEXPRESSED: Readonly<Record<string, readonly string[]>> = {
+  // The upstream elements the emitter cannot express, per module. Every entry is
+  // a two-segment VARIABLE: the nested pass groups functions only, so a constant
+  // table under a namespace has nowhere to land. Shrinking a list means the
+  // nested pass learned a shape and `src/editor-vm-globals.d.ts` should give it
+  // up; growing one means a new upstream shape started falling out unnoticed.
+  const EMITTER_GAP: Readonly<Record<string, readonly string[]>> = {
     http: ["http.server.local_url", "http.server.port", "http.server.url"],
     json: [],
     zip: [
@@ -357,19 +356,43 @@ describe("editor VM module emit", () => {
     "tilemap.tiles": [],
   };
 
+  // The functions withheld from the emit on purpose, because the fixture's
+  // positional parameter model describes them in a way TypeScript cannot render
+  // soundly: optionals sitting before a required argument, and returns upstream
+  // records as empty while its own prose names a value. They are hand-authored
+  // in `src/editor-vm-globals.d.ts` instead. Kept apart from EMITTER_GAP so the
+  // two causes stay distinguishable — a deliberate skip going missing is a
+  // different defect from a new upstream shape falling out.
+  const DELIBERATE_SKIP: Readonly<Record<string, readonly string[]>> = {
+    http: ["http.server.route"],
+    json: ["json.decode", "json.encode"],
+    zip: ["zip.pack", "zip.unpack"],
+    zlib: [],
+    "tilemap.tiles": [],
+  };
+
   test("the manifest covers exactly the namespace-shaped editor VM libraries", () => {
     expect(EDITOR_VM_MODULE_MANIFEST.map((entry) => entry.namespace).sort()).toEqual(
-      Object.keys(UNEXPRESSED).sort(),
+      Object.keys(EMITTER_GAP).sort(),
     );
+    expect(Object.keys(DELIBERATE_SKIP).sort()).toEqual(Object.keys(EMITTER_GAP).sort());
+  });
+
+  test.each(
+    EDITOR_VM_MODULE_MANIFEST.map((entry) => [entry.namespace, entry] as const),
+  )("%s: exactly the pinned functions are withheld from the emit", (namespace, entry) => {
+    expect(generateModuleDeclaration(entry).dropped.sort()).toEqual([
+      ...(DELIBERATE_SKIP[namespace] ?? []),
+    ]);
   });
 
   test.each(
     EDITOR_VM_MODULE_MANIFEST.map((entry) => [entry.namespace, entry] as const),
   )("%s: every fixture element reaches the emit except the pinned unexpressible ones", (namespace, entry) => {
     const { contents } = generateModuleDeclaration(entry);
-    expect(unexpressedFixtureNames(entry.doc, contents)).toEqual([
-      ...(UNEXPRESSED[namespace] ?? []),
-    ]);
+    expect(unexpressedFixtureNames(entry.doc, contents)).toEqual(
+      [...(EMITTER_GAP[namespace] ?? []), ...(DELIBERATE_SKIP[namespace] ?? [])].sort(),
+    );
   });
 
   test("each module lands under its own subdirectory path, dots flattened", () => {
