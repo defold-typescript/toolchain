@@ -1,6 +1,4 @@
-import * as path from "node:path";
 import type { ScriptKind } from "@defold-typescript/transpiler";
-import { scanFilesSync } from "./scan";
 
 export type { ScriptKind };
 
@@ -32,49 +30,6 @@ export function isComponentPath(relPath: string): boolean {
     return false;
   }
   return Object.keys(KIND_BY_EXT).some((ext) => relPath.endsWith(ext));
-}
-
-export function detectScriptKinds(cwd: string): Set<ScriptKind> {
-  const kinds = new Set<ScriptKind>();
-  for (const [ext, kind] of Object.entries(KIND_BY_EXT)) {
-    for (const match of scanFilesSync(cwd, `**/*${ext}`)) {
-      if (!isSkipped(match) && !isGeneratedScript(match)) {
-        kinds.add(kind);
-        break;
-      }
-    }
-  }
-  return kinds;
-}
-
-export function groupScriptKindsByDirectory(cwd: string): Map<string, Set<ScriptKind>> {
-  const byDir = new Map<string, Set<ScriptKind>>();
-  for (const [ext, kind] of Object.entries(KIND_BY_EXT)) {
-    for (const match of scanFilesSync(cwd, `**/*${ext}`)) {
-      if (isSkipped(match) || isGeneratedScript(match)) {
-        continue;
-      }
-      const dir = path.posix.dirname(match.split(path.sep).join("/"));
-      let set = byDir.get(dir);
-      if (set === undefined) {
-        set = new Set<ScriptKind>();
-        byDir.set(dir, set);
-      }
-      set.add(kind);
-    }
-  }
-  return byDir;
-}
-
-export function selectDirectoryWalls(cwd: string): Map<string, ScriptKind> {
-  const walls = new Map<string, ScriptKind>();
-  for (const [dir, kinds] of groupScriptKindsByDirectory(cwd)) {
-    const kind = selectScriptKind(kinds);
-    if (kind !== null) {
-      walls.set(dir, kind);
-    }
-  }
-  return walls;
 }
 
 export function selectScriptKind(kinds: Set<ScriptKind>): ScriptKind | null {
