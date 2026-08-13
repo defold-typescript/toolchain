@@ -59,13 +59,31 @@ function completionInfo(entries: ts.CompletionEntry[]): ts.WithMetadata<ts.Compl
   };
 }
 
-function completionProxy(options: {
+// The host handle a test needs to see the plugin's filesystem work and the
+// watchers it registered: `documents` is mutable so a scene can change under a
+// live proxy, and `fireDirectory` stands in for the editor reporting it.
+interface ProxyHost {
+  documents: Record<string, string>;
+  directoryReads: string[][];
+  openWatchers: number;
+  fireDirectory(hostPath: string): void;
+}
+
+interface CompletionSetup {
+  service: ts.LanguageService;
+  host: ProxyHost;
+  baseDisposeCalls(): number;
+}
+
+function completionSetup(options: {
   source: string;
   base: ts.WithMetadata<ts.CompletionInfo> | undefined;
   documents?: Record<string, string>;
   serverHost?: boolean;
+  watch?: boolean;
+  baseDispose?: boolean;
   fileName?: string;
-}): ts.LanguageService {
+}): CompletionSetup {
   const fileName = options.fileName ?? "main.ts";
   const session = createTranspileSession();
   session.update({ [fileName]: options.source });
@@ -73,27 +91,78 @@ function completionProxy(options: {
   if (!program) {
     throw new Error("session produced no program");
   }
-  const documents = options.documents ?? SCENE_DOCUMENTS;
+  let baseDisposeCalls = 0;
   const languageService = {
     getProgram: () => program,
     getSemanticDiagnostics: () => [],
     getCompletionsAtPosition: () => options.base,
+    ...(options.baseDispose
+      ? {
+          dispose: () => {
+            baseDisposeCalls += 1;
+          },
+        }
+      : {}),
   } as unknown as ts.LanguageService;
+
+  let directoryCallback: ((hostPath: string) => void) | undefined;
+  const host: ProxyHost = {
+    documents: { ...(options.documents ?? SCENE_DOCUMENTS) },
+    directoryReads: [],
+    openWatchers: 0,
+    fireDirectory: (hostPath) => directoryCallback?.(hostPath),
+  };
+  const watcher = (onClose: () => void): ts.FileWatcher => {
+    host.openWatchers += 1;
+    return {
+      close: () => {
+        host.openWatchers -= 1;
+        onClose();
+      },
+    };
+  };
   // The real host filters by the extensions it is handed; a fake that ignored
   // them could not tell the `.go` walk from the `.gui` one.
   const serverHost = {
-    readDirectory: (_path: string, extensions?: readonly string[]) =>
-      Object.keys(documents)
+    readDirectory: (_path: string, extensions?: readonly string[]) => {
+      host.directoryReads.push([...(extensions ?? [])]);
+      return Object.keys(host.documents)
         .filter((path) => extensions === undefined || extensions.some((ext) => path.endsWith(ext)))
-        .map((path) => `/project/${path}`),
-    readFile: (path: string) => documents[path.replace("/project/", "")],
+        .map((path) => `/project/${path}`);
+    },
+    readFile: (path: string) => host.documents[path.replace("/project/", "")],
+    ...(options.watch === false
+      ? {}
+      : {
+          watchDirectory: (_path: string, callback: (hostPath: string) => void) => {
+            directoryCallback = callback;
+            return watcher(() => {
+              directoryCallback = undefined;
+            });
+          },
+          watchFile: () => watcher(() => {}),
+        }),
   };
   const info = {
     languageService,
     project: { getCurrentDirectory: () => "/project" },
     ...(options.serverHost === false ? {} : { serverHost }),
   } as unknown as ts.server.PluginCreateInfo;
-  return init({ typescript: ts }).create(info);
+  return {
+    service: init({ typescript: ts }).create(info),
+    host,
+    baseDisposeCalls: () => baseDisposeCalls,
+  };
+}
+
+function completionProxy(options: {
+  source: string;
+  base: ts.WithMetadata<ts.CompletionInfo> | undefined;
+  documents?: Record<string, string>;
+  serverHost?: boolean;
+  fileName?: string;
+}): ts.LanguageService {
+  return completionSetup(options).service;
 }
 
 const ADDRESS_SOURCE = 'msg.post("#", "hello");\n';
@@ -602,5 +671,79 @@ describe("tstl-plugin", () => {
       serverHost: false,
     });
     expect(service.getCompletionsAtPosition("main.ts", ATLAS_POSITION, undefined)).toBe(base);
+  });
+
+  test("a second completion in the same slot walks nothing — every kind shares one index", () => {
+    const cases: { source: string; position: number; documents: Record<string, string> }[] = [
+      { source: ADDRESS_SOURCE, position: FRAGMENT_POSITION, documents: SCENE_DOCUMENTS },
+      { source: PATH_FRAGMENT_SOURCE, position: PATH_POSITION, documents: PATH_DOCUMENTS },
+      { source: NODE_SOURCE, position: NODE_POSITION, documents: SCENE_DOCUMENTS },
+      { source: ANIMATION_SOURCE, position: ANIMATION_POSITION, documents: ANIMATION_DOCUMENTS },
+      { source: ATLAS_SOURCE, position: ATLAS_POSITION, documents: RESOURCE_DOCUMENTS },
+    ];
+    for (const { source, position, documents } of cases) {
+      const { service, host } = completionSetup({ source, base: undefined, documents });
+      const first = service.getCompletionsAtPosition("main.ts", position, undefined);
+      const walks = host.directoryReads.length;
+      expect(walks).toBeGreaterThan(0);
+      const second = service.getCompletionsAtPosition("main.ts", position, undefined);
+      expect(second?.entries.map((e) => e.name)).toEqual((first?.entries ?? []).map((e) => e.name));
+      expect((second?.entries ?? []).length).toBeGreaterThan(0);
+      expect(host.directoryReads).toHaveLength(walks);
+    }
+  });
+
+  test("a scene gaining a component id is offered once the host reports the change", () => {
+    const { service, host } = completionSetup({ source: ADDRESS_SOURCE, base: undefined });
+    const before = service.getCompletionsAtPosition("main.ts", FRAGMENT_POSITION, undefined);
+    expect(before?.entries.map((e) => e.name)).toEqual(["board", "hud"]);
+
+    host.documents["main/enemy.go"] = 'components {\n  id: "enemy"\n}\n';
+    host.fireDirectory("/project/main/enemy.go");
+
+    const after = service.getCompletionsAtPosition("main.ts", FRAGMENT_POSITION, undefined);
+    expect(after?.entries.map((e) => e.name)).toEqual(["board", "enemy", "hud"]);
+  });
+
+  test("`dispose` closes every watcher the host handed out and tears the base service down", () => {
+    const { service, host, baseDisposeCalls } = completionSetup({
+      source: ADDRESS_SOURCE,
+      base: undefined,
+      baseDispose: true,
+    });
+    service.getCompletionsAtPosition("main.ts", FRAGMENT_POSITION, undefined);
+    expect(host.openWatchers).toBeGreaterThan(0);
+
+    service.dispose();
+
+    expect(host.openWatchers).toBe(0);
+    expect(baseDisposeCalls()).toBe(1);
+  });
+
+  test("`dispose` on a base service that has none does not throw", () => {
+    const { service, host } = completionSetup({ source: ADDRESS_SOURCE, base: undefined });
+    service.getCompletionsAtPosition("main.ts", FRAGMENT_POSITION, undefined);
+    expect(() => service.dispose()).not.toThrow();
+    expect(host.openWatchers).toBe(0);
+  });
+
+  test("a host without watch facilities offers the same entries, walking every time", () => {
+    const { service, host } = completionSetup({
+      source: ADDRESS_SOURCE,
+      base: undefined,
+      watch: false,
+    });
+    const first = service.getCompletionsAtPosition("main.ts", FRAGMENT_POSITION, undefined);
+    const second = service.getCompletionsAtPosition("main.ts", FRAGMENT_POSITION, undefined);
+    expect(first?.entries.map((e) => e.name)).toEqual(["board", "hud"]);
+    expect(second?.entries.map((e) => e.name)).toEqual(["board", "hud"]);
+    expect(host.directoryReads).toHaveLength(2);
+    expect(host.openWatchers).toBe(0);
+  });
+
+  test("a project whose scenes declare nothing returns the base result untouched", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const { service } = completionSetup({ source: ADDRESS_SOURCE, base, documents: {} });
+    expect(service.getCompletionsAtPosition("main.ts", FRAGMENT_POSITION, undefined)).toBe(base);
   });
 });

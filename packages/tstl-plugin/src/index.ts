@@ -20,12 +20,12 @@ import {
   buildSceneCompletionEntries,
   buildWholeLiteralCompletionEntries,
 } from "./scene-completions";
+import { displayPathOf } from "./scene-documents";
 import {
-  displayPathOf,
-  listProjectResourcePaths,
-  readSceneDocuments,
-  type SceneReadHost,
-} from "./scene-documents";
+  createSceneIndexCache,
+  type SceneIndexCache,
+  type SceneWatchHost,
+} from "./scene-index-cache";
 
 const GUI_EXTENSIONS = [".gui"];
 
@@ -63,19 +63,20 @@ function loadUrlParameterTable(): UrlParameterTable | undefined {
 function componentEntries(
   slot: ClassifiedSlot,
   position: number,
-  host: SceneReadHost,
-  projectRoot: string,
+  cache: SceneIndexCache,
   baseEntries: readonly ts.CompletionEntry[],
 ): ts.CompletionEntry[] {
   if (slot.fragmentStart === -1 || position < slot.fragmentStart) {
     return [];
   }
-  const { documents } = readSceneDocuments(host, projectRoot);
   // A partial universe still suggests — unlike the reachability report, a
   // suggestion claims nothing about what is absent.
   return buildSceneCompletionEntries({
     slot,
-    ids: buildSceneComponentIndex(documents).ids,
+    ids: cache.derived(
+      "component-ids",
+      () => buildSceneComponentIndex(cache.documents().documents).ids,
+    ),
     baseEntries,
   });
 }
@@ -89,17 +90,18 @@ function componentEntries(
 function objectPathEntries(
   slot: ClassifiedSlot,
   position: number,
-  host: SceneReadHost,
-  projectRoot: string,
+  cache: SceneIndexCache,
   baseEntries: readonly ts.CompletionEntry[],
 ): ts.CompletionEntry[] {
   if (slot.fragmentStart !== -1 && position >= slot.fragmentStart) {
     return [];
   }
-  const { documents } = readSceneDocuments(host, projectRoot);
   return buildAddressPathCompletionEntries({
     slot,
-    paths: buildSceneObjectPathIndex(documents).paths,
+    paths: cache.derived(
+      "object-paths",
+      () => buildSceneObjectPathIndex(cache.documents().documents).paths,
+    ),
     baseEntries,
   });
 }
@@ -113,15 +115,17 @@ function objectPathEntries(
 // than the resource being mapped back.
 function nodeEntries(
   slot: ClassifiedSlot,
-  host: SceneReadHost,
-  projectRoot: string,
+  cache: SceneIndexCache,
   fileName: string,
   baseEntries: readonly ts.CompletionEntry[],
 ): ts.CompletionEntry[] {
-  const { documents } = readSceneDocuments(host, projectRoot, GUI_EXTENSIONS);
-  const config = readBuildConfigFromHost(host, projectRoot);
+  const { projectRoot } = cache;
+  const index = cache.derived("gui-nodes", () =>
+    buildGuiNodeIndex(cache.documents(GUI_EXTENSIONS).documents),
+  );
+  const config = readBuildConfigFromHost(cache.host, projectRoot);
   const resource = computeOutputRel(displayPathOf(projectRoot, fileName), config, "gui-script");
-  const ids = buildGuiNodeIndex(documents).byScriptResource.get(resource);
+  const ids = index.byScriptResource.get(resource);
   return ids === undefined ? [] : buildWholeLiteralCompletionEntries({ slot, ids, baseEntries });
 }
 
@@ -133,8 +137,7 @@ function nodeEntries(
 // crash.
 function animationEntries(
   slot: ClassifiedSlot,
-  host: SceneReadHost,
-  projectRoot: string,
+  cache: SceneIndexCache,
   fileName: string,
   baseEntries: readonly ts.CompletionEntry[],
 ): ts.CompletionEntry[] {
@@ -142,13 +145,16 @@ function animationEntries(
   if (component === undefined) {
     return [];
   }
-  const { documents: scenes } = readSceneDocuments(host, projectRoot);
-  const { documents: assets } = readSceneDocuments(host, projectRoot, ANIMATION_ASSET_EXTENSIONS);
-  const config = readBuildConfigFromHost(host, projectRoot);
+  const { projectRoot } = cache;
+  const index = cache.derived("sprite-animations", () =>
+    buildSpriteAnimationIndex({
+      scenes: cache.documents().documents,
+      assets: cache.documents(ANIMATION_ASSET_EXTENSIONS).documents,
+    }),
+  );
+  const config = readBuildConfigFromHost(cache.host, projectRoot);
   const resource = computeOutputRel(displayPathOf(projectRoot, fileName), config, "script");
-  const ids = buildSpriteAnimationIndex({ scenes, assets })
-    .byScriptResource.get(resource)
-    ?.get(component);
+  const ids = index.byScriptResource.get(resource)?.get(component);
   return ids === undefined ? [] : buildWholeLiteralCompletionEntries({ slot, ids, baseEntries });
 }
 
@@ -158,15 +164,14 @@ function animationEntries(
 // a node id — a resource path is the entire text between the quotes.
 function resourceEntries(
   slot: ClassifiedSlot,
-  host: SceneReadHost,
-  projectRoot: string,
+  cache: SceneIndexCache,
   baseEntries: readonly ts.CompletionEntry[],
 ): ts.CompletionEntry[] {
   const extensions = slot.resourceExtensions;
   if (extensions === undefined || extensions.length === 0) {
     return [];
   }
-  const ids = listProjectResourcePaths(host, projectRoot, extensions);
+  const ids = cache.resourcePaths(extensions);
   return buildWholeLiteralCompletionEntries({ slot, ids, baseEntries });
 }
 
@@ -189,6 +194,23 @@ export default function init(modules: { typescript: typeof import("typescript") 
         writable[key] = (...args: unknown[]) => fn.apply(base, args);
       }
     }
+
+    // One index for the life of this language service, shared by every
+    // completion surface. A host that cannot enumerate files gets none at all —
+    // the same early return the completion path already takes.
+    const serverHost = info.serverHost as SceneWatchHost | undefined;
+    const cache = serverHost?.readDirectory
+      ? createSceneIndexCache(serverHost, info.project.getCurrentDirectory())
+      : undefined;
+
+    // Set after the member-copy loop, which would otherwise leave `dispose`
+    // forwarding straight to the base — closing the project without ever closing
+    // a watcher, and silently, because the forwarder does exist.
+    proxy.dispose = () => {
+      cache?.dispose();
+      const disposeBase = (base as Partial<ts.LanguageService>).dispose;
+      disposeBase?.call(base);
+    };
 
     proxy.getSemanticDiagnostics = (fileName: string): ts.Diagnostic[] => {
       const prior = base.getSemanticDiagnostics(fileName);
@@ -223,27 +245,27 @@ export default function init(modules: { typescript: typeof import("typescript") 
       if (!slot) {
         return prior;
       }
-      const serverHost = info.serverHost as SceneReadHost | undefined;
-      if (!serverHost?.readDirectory) {
+      if (!cache) {
         return prior;
       }
-      const projectRoot = info.project.getCurrentDirectory();
 
-      // Rebuilt per request, deliberately: completions only fire inside a
-      // classified slot, and a cache without watch facilities would go stale
-      // exactly the way a generated declaration does.
+      // Read through the index the host's own watchers invalidate, so a slot the
+      // author keeps typing in costs no walk after the first — and still reflects
+      // a scene edited, added or removed. On a host missing either watch
+      // facility the cache delegates straight through, walking per request the
+      // way this path always did.
       const baseEntries = prior?.entries ?? [];
       const entries = isAddressClass(slot.class)
         ? [
-            ...componentEntries(slot, position, serverHost, projectRoot, baseEntries),
-            ...objectPathEntries(slot, position, serverHost, projectRoot, baseEntries),
+            ...componentEntries(slot, position, cache, baseEntries),
+            ...objectPathEntries(slot, position, cache, baseEntries),
           ]
         : slot.class === "gui-node"
-          ? nodeEntries(slot, serverHost, projectRoot, fileName, baseEntries)
+          ? nodeEntries(slot, cache, fileName, baseEntries)
           : slot.class === "animation"
-            ? animationEntries(slot, serverHost, projectRoot, fileName, baseEntries)
+            ? animationEntries(slot, cache, fileName, baseEntries)
             : slot.class === "resource-path"
-              ? resourceEntries(slot, serverHost, projectRoot, baseEntries)
+              ? resourceEntries(slot, cache, baseEntries)
               : [];
       if (entries.length === 0) {
         return prior;
