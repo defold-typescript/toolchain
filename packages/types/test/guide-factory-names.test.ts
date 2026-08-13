@@ -14,8 +14,9 @@ const FACTORIES = [...Object.keys(lifecycle), ...Object.keys(editor)]
   .sort();
 
 // `defineScriptType` in a guide's `import type { defineScript as … }` line is a
-// local alias, not a claimed export, so the identifier must end at `Script`.
-const GUIDE_FACTORY_RE = /\bdefine\w*Script\b/g;
+// local alias, not a claimed export, so the identifier must end at `Script` (or
+// at `Command`, the editor-command factory's suffix).
+const GUIDE_FACTORY_RE = /\bdefine\w*(?:Script|Command)\b/g;
 
 function guidePages(): { page: string; body: string }[] {
   return readdirSync(GUIDE)
