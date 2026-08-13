@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { EDITOR_VM_MODULE_MANIFEST, generateModuleDeclaration } from "../scripts/regen";
+import { EDITOR_VM_MANIFEST } from "../scripts/sync-api-docs";
 import { htmlToDocText } from "../src/doc-comment";
 import { collectDeclaredFqns, type FixtureDoc, unexpressedFixtureNames } from "./declared-fqns";
 
@@ -80,6 +81,23 @@ describe("hand-authored editor VM globals parity", () => {
     expect(members).toContain("json.decode");
     expect(members).toContain("zip.unpack");
     expect(members.length).toBeGreaterThan(5);
+  });
+
+  // A namespace split out of the editor apidoc has exactly two places to land:
+  // emitted as its own module, or — when it is a bare function with no namespace
+  // to hang off, as `pprint` — declared here by hand. Landing in neither leaves a
+  // vendored fixture nothing consumes, which the emit-side manifest pins cannot
+  // see because they never read the sync manifest.
+  test("every namespace the sync splits out is consumed by one of the two lanes", () => {
+    const emitted = new Set(EDITOR_VM_MODULE_MANIFEST.map((entry) => entry.namespace));
+    const declared = collectDeclaredFqns(readFileSync(GLOBALS_PATH, "utf8"));
+    const synced = EDITOR_VM_MANIFEST.map((entry) => entry.namespace);
+    expect(synced.filter((name) => !emitted.has(name) && !declared.has(name))).toEqual([]);
+    // Both lanes stay genuinely populated, so the filter above cannot pass by
+    // one of them having quietly emptied out.
+    expect(emitted.has("pprint")).toBe(false);
+    expect(declared.has("pprint")).toBe(true);
+    expect(emitted.size).toBeGreaterThan(0);
   });
 
   test("documents each member with its own upstream description, run through the shared HTML lowering", () => {

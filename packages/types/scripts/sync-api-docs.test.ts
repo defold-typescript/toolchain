@@ -562,10 +562,11 @@ describe("extractFixtures split", () => {
 });
 
 describe("EDITOR_VM_MANIFEST", () => {
-  test("covers the six editor-VM namespaces, each split off the editor apidoc", () => {
+  test("covers the seven editor-VM namespaces, each split off the editor apidoc", () => {
     expect(EDITOR_VM_MANIFEST.map((e) => e.namespace)).toEqual([
       "http",
       "json",
+      "localization",
       "zip",
       "zlib",
       "pprint",
@@ -591,7 +592,12 @@ describe("EDITOR_VM_MANIFEST", () => {
   test("an editor-VM-only namespace never registers as runtime-wired or upstream-mapped", () => {
     const runtime = new Set(SYNC_MANIFEST.map((e) => e.namespace));
     const editorOnly = EDITOR_VM_MANIFEST.filter((e) => !runtime.has(e.namespace));
-    expect(editorOnly.map((e) => e.namespace)).toEqual(["zip", "pprint", "tilemap.tiles"]);
+    expect(editorOnly.map((e) => e.namespace)).toEqual([
+      "localization",
+      "zip",
+      "pprint",
+      "tilemap.tiles",
+    ]);
     for (const entry of editorOnly) {
       expect(COVERAGE_MANIFEST.some((e) => e.namespace === entry.namespace)).toBe(false);
       expect(UPSTREAM_MAPPED_NAMESPACES.has(entry.namespace)).toBe(false);
