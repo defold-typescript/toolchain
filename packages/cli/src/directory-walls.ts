@@ -15,11 +15,24 @@ import {
 // The kinds a wall may narrow against. Must stay in sync with
 // `KIND_MODULE_MANIFEST` (regen.ts). Also gates source-wall eligibility: a kind
 // recognized for emit but absent here is never offered as a wall target.
-// `editor-script` is absent on purpose: its entrypoint exists but does not yet
-// carry the editor VM's `http`/`json`/`zip` libraries, so auto-walling an
-// editor-script directory would remove working API from an author's program.
-// It stays opt-in until that library split lands.
-const PINNED_KIND_SUBPATHS: readonly string[] = ["script", "gui-script", "render-script"];
+export const PINNED_KIND_SUBPATHS: readonly string[] = [
+  "script",
+  "gui-script",
+  "render-script",
+  "editor-script",
+];
+
+// The subset a materialized surface can actually resolve. Mirrors
+// `RUNTIME_KIND_MANIFEST` (regen.ts), which drops any `only` kind because such a
+// kind names modules a versioned surface never builds. A wall on a kind outside
+// this set keeps the installed package entrypoint even under a pinned surface —
+// pointing it at `<surface>/<kind>` would name a subpath the surface never
+// wrote.
+export const MATERIALIZED_KIND_SUBPATHS: readonly string[] = [
+  "script",
+  "gui-script",
+  "render-script",
+];
 
 // `materializeRefDocSurface` writes the per-kind modules at
 // `<surface>/kinds/<kind>.d.ts`. Under `typeRoots`/`types`, TypeScript resolves
@@ -33,7 +46,7 @@ const PINNED_KIND_SUBPATHS: readonly string[] = ["script", "gui-script", "render
 // No-op when the surface already exposes the per-kind layout.
 function ensurePinnedKindSubpaths(cwd: string, surface: string): void {
   const surfaceDir = path.join(cwd, MATERIALIZED_ROOT, surface);
-  for (const kind of PINNED_KIND_SUBPATHS) {
+  for (const kind of MATERIALIZED_KIND_SUBPATHS) {
     const kindDir = path.join(surfaceDir, kind);
     const indexPath = path.join(kindDir, "index.d.ts");
     if (existsSync(indexPath)) {
@@ -219,7 +232,7 @@ export function directoryWallTsconfig(
 ): WallTsconfig {
   const depth = wall.dir.split("/").length;
   const exclude = nestedExcludes(wall.dir, nestedWallDirs);
-  if (pinnedSurface === null) {
+  if (pinnedSurface === null || !MATERIALIZED_KIND_SUBPATHS.includes(wall.kind)) {
     return {
       extends: `${"../".repeat(depth)}tsconfig.json`,
       compilerOptions: { composite: true, typeRoots: null, types: [wall.typesEntrypoint] },

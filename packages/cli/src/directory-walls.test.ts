@@ -189,17 +189,40 @@ describe("planSourceDirectoryWalls", () => {
     expect(planSourceDirectoryWalls(cwd)).toEqual([]);
   });
 
-  test("an editor-script-only directory yields no descriptor even though single-kind", () => {
+  test("an editor-script-only directory yields an editor-script descriptor", () => {
     writeTsconfig(["src/**/*.ts"]);
     touch("src/editor/menu.ts", "export default defineEditorScript({});");
+    expect(planSourceDirectoryWalls(cwd)).toEqual([
+      {
+        dir: "src",
+        kind: "editor-script",
+        typesEntrypoint: "@defold-typescript/types/editor-script",
+      },
+      {
+        dir: "src/editor",
+        kind: "editor-script",
+        typesEntrypoint: "@defold-typescript/types/editor-script",
+      },
+    ] satisfies DirectoryWall[]);
+  });
+
+  test("a directory mixing an editor script with a runtime script yields no wall", () => {
+    writeTsconfig(["src/**/*.ts"]);
+    touch("src/tools/menu.ts", "export default defineEditorScript({});");
+    touch("src/tools/logic.ts", "export default defineScript({});");
     expect(planSourceDirectoryWalls(cwd)).toEqual([]);
   });
 
-  test("an editor directory beside a gui-script directory yields only the gui-script wall", () => {
+  test("an editor directory beside a gui-script directory yields both walls but no shared ancestor", () => {
     writeTsconfig(["src/**/*.ts"]);
     touch("src/editor/menu.ts", "export default defineEditorScript({});");
     touch("src/ui/hud.ts", "export default defineGuiScript({});");
     expect(planSourceDirectoryWalls(cwd)).toEqual([
+      {
+        dir: "src/editor",
+        kind: "editor-script",
+        typesEntrypoint: "@defold-typescript/types/editor-script",
+      },
       {
         dir: "src/ui",
         kind: "gui-script",
@@ -248,10 +271,14 @@ describe("planSourceDirectoryWalls", () => {
     ]);
   });
 
-  test("an editor-script-only subtree yields no ancestor descriptor either", () => {
+  test("an editor-script-only subtree rolls up into ancestor descriptors", () => {
     writeTsconfig(["src/**/*.ts"]);
     touch("src/editor/tools/menu.ts", "export default defineEditorScript({});");
-    expect(planSourceDirectoryWalls(cwd)).toEqual([]);
+    expect(planSourceDirectoryWalls(cwd).map((w) => [w.dir, w.kind])).toEqual([
+      ["src", "editor-script"],
+      ["src/editor", "editor-script"],
+      ["src/editor/tools", "editor-script"],
+    ]);
   });
 
   test("a helper-only subtree neither walls itself nor blocks its ancestor's roll-up", () => {
@@ -434,6 +461,24 @@ describe("directoryWallTsconfig", () => {
     ).toEqual([]);
   });
 
+  test("an editor-script wall keeps the installed entrypoint even under a pinned surface", () => {
+    expect(
+      directoryWallTsconfig(
+        wall("src/editor", "editor-script", "@defold-typescript/types/editor-script"),
+        "1.9.8",
+      ),
+    ).toEqual({
+      extends: "../../tsconfig.json",
+      compilerOptions: {
+        composite: true,
+        typeRoots: null,
+        types: ["@defold-typescript/types/editor-script"],
+      },
+      include: ["**/*.ts"],
+      exclude: [],
+    });
+  });
+
   test("a null pinned surface keeps the installed-package form", () => {
     expect(
       directoryWallTsconfig(
@@ -510,6 +555,31 @@ describe("writeDirectoryWallTsconfigs", () => {
 
   test("writes nothing for an empty wall list", () => {
     expect(writeDirectoryWallTsconfigs(cwd, [])).toEqual([]);
+  });
+
+  test("an editor-script wall names the editor entrypoint and leaves its subtree out of the root program", () => {
+    touch("tsconfig.json", JSON.stringify({ include: ["src/**/*.ts"] }));
+    touch("src/editor/menu.ts", "export default defineEditorScript({});");
+    const walls = [wall("src/editor", "editor-script", "@defold-typescript/types/editor-script")];
+    expect(writeDirectoryWallTsconfigs(cwd, walls)).toEqual(["src/editor/tsconfig.json"]);
+    expect(JSON.parse(readFileSync(path.join(cwd, "src/editor/tsconfig.json"), "utf8"))).toEqual(
+      directoryWallTsconfig(walls[0] as DirectoryWall),
+    );
+    expect(
+      (
+        JSON.parse(readFileSync(path.join(cwd, "src/editor/tsconfig.json"), "utf8")) as {
+          compilerOptions: { types: string[] };
+        }
+      ).compilerOptions.types,
+    ).toEqual(["@defold-typescript/types/editor-script"]);
+
+    wireWallReferences(cwd, walls);
+    expect(JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8"))).toEqual({
+      include: ["src/**/*.ts"],
+      references: [{ path: "src/editor" }],
+      exclude: ["src/editor"],
+      files: [],
+    });
   });
 
   test("an ancestor wall excludes its declared descendants so they are not in its program", () => {
