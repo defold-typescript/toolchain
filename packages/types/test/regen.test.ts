@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { readdirSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   EDITOR_MODULE_MANIFEST,
@@ -131,10 +131,20 @@ describe("editor namespace emit", () => {
   test("emits the in-scope command/transaction surface including a nested tx namespace", () => {
     const { contents } = generateModuleDeclaration(editorEntry());
     expect(contents).toContain("function get(");
-    expect(contents).toContain("function command(");
     expect(contents).toContain("function transact(");
     expect(contents).toContain("namespace tx {");
     expect(contents).toContain("function set(");
+  });
+
+  test("hands editor.command to the hand-authored overload file instead of emitting it", () => {
+    const { contents, dropped } = generateModuleDeclaration(editorEntry());
+    expect(dropped).toContain("editor.command");
+    expect(contents).not.toContain("function command(");
+    const overloads = readFileSync(
+      resolve(import.meta.dir, "..", "src", "editor-overloads.d.ts"),
+      "utf8",
+    );
+    expect(overloads).toMatch(/function command<const Q extends EditorCommandQuery/);
   });
 
   test("emits no ui/prefs surface and reports the skipped members through dropped", () => {
@@ -157,9 +167,6 @@ describe("editor namespace emit", () => {
 
   test("maps the editor handle tokens to opaque types and repairs the mangled array token", () => {
     const { contents } = generateModuleDeclaration(editorEntry());
-    expect(contents).toContain(
-      'function command(opts: Record<string | number, unknown>): Opaque<"command">;',
-    );
     expect(contents).toMatch(/function set\([^)]*\): Opaque<"transaction_step">;/);
     expect(contents).toContain('function transact(txs: Opaque<"transaction_step">[]): void;');
     expect(contents).not.toContain('"transaction_step["');
@@ -291,7 +298,8 @@ describe("per-kind factory re-export", () => {
     KIND_MODULE_MANIFEST.map((entry) => [entry.kind, entry] as const),
   )("%s: generateKindIndex re-exports its factory exactly once, from its own module", (_kind, entry) => {
     const fresh = generateKindIndex(entry.kind);
-    const reexport = `export { ${entry.factory} } from "${factoryModule(entry)}";`;
+    const names = [entry.factory, ...(entry.extraExports ?? [])].join(", ");
+    const reexport = `export { ${names} } from "${factoryModule(entry)}";`;
     expect(fresh).toContain(reexport);
     expect(fresh.split(reexport).length - 1).toBe(1);
     expect(fresh).not.toContain("export {};");
@@ -335,14 +343,22 @@ describe("editor-script kind index", () => {
     expect(runtime.size).toBeGreaterThan(0);
     expect(runtime.has("../editor")).toBe(false);
 
+    // The overload file rides alongside the namespace: it is what makes
+    // `editor.command` resolve at all, since an `only` kind takes none of
+    // UNIVERSAL_EXTRA_IMPORTS.
     const editor = importPaths(generateKindIndex("editor-script"));
-    expect(editor).toEqual(["../editor"]);
+    expect(editor).toEqual(["../editor", "../../src/editor-overloads"]);
     for (const path of editor) expect(runtime.has(path)).toBe(false);
   });
 
-  test("re-exports defineEditorScript and none of the runtime lifecycle surface", () => {
+  test("re-exports both editor factories and none of the runtime lifecycle surface", () => {
     const fresh = generateKindIndex("editor-script");
-    expect(fresh).toContain('export { defineEditorScript } from "../../src/editor";');
+    expect(fresh).toContain(
+      'export { defineEditorScript, defineEditorCommand } from "../../src/editor";',
+    );
+    expect(fresh).toContain(
+      'export type { EditorCommandQuery, EditorNode } from "../../src/editor";',
+    );
     for (const name of [
       "ScriptProperty",
       "defineScript",
