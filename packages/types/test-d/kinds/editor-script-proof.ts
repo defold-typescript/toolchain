@@ -1,5 +1,6 @@
 import type { EditorNode } from "@defold-typescript/types/editor-script";
 import { defineEditorCommand, defineEditorScript } from "@defold-typescript/types/editor-script";
+import type { Opaque } from "../../src/core-types";
 
 export default defineEditorScript({
   get_commands: () => [
@@ -159,6 +160,22 @@ const _tile: number = tilemap.tiles.get_tile(tilemap.tiles.set(_tiles, 1, 1, 2),
 void _tile;
 
 pprint({ a: 1 });
+
+// Every `localization` function hands back the same opaque `message` handle, so
+// the returns bind to explicitly annotated consts: a regression to `unknown`
+// (the shape an unmapped token emits) reds here.
+const _greeting: Opaque<"message"> = localization.message("greeting", { name: "a" });
+const _bareKey: Opaque<"message"> = localization.message("greeting");
+const _joined: Opaque<"message"> = localization.concat(["a", "b"], ", ");
+const _andList: Opaque<"message"> = localization.and_list(["a", "b"]);
+const _orList: Opaque<"message"> = localization.or_list(["a", "b"]);
+// @ts-expect-error a localization key is the string name an `.editor_localization` file defines
+localization.message(1);
+void _greeting;
+void _bareKey;
+void _joined;
+void _andList;
+void _orList;
 
 // @ts-expect-error go.* is absent on the editor-script surface
 go.get_position();
