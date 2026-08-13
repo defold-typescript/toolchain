@@ -7,14 +7,17 @@ import type { ApiModule } from "./api-doc";
 // deliberately. The first three address the scene graph; `gui-node` names a node
 // inside the one `.gui` that owns the script, which is not an address at all;
 // `animation` names a block inside the atlas of a component a *sibling*
-// argument addresses, which is why it is the one class needing a companion.
+// argument addresses, which is why it is the one class needing a companion;
+// `resource-path` names a project file outright, so it is scoped by the
+// extensions its entry declares rather than by anything in the scene graph.
 export type UrlParameterClass =
   | "none"
   | "game-object"
   | "component"
   | "either"
   | "gui-node"
-  | "animation";
+  | "animation"
+  | "resource-path";
 
 export interface UrlParameterEntry {
   fqn: string;
@@ -26,6 +29,12 @@ export interface UrlParameterEntry {
   // shape would fan the table's one interface out into a union for a single
   // optional field.
   addressParameter?: string;
+  // The file extensions this slot's literal may name, each written with its
+  // leading dot. Required for `resource-path` and absent otherwise — enforced by
+  // the drift guard for the same reason `addressParameter` is. Recorded per
+  // entry rather than per class because the six constructors sharing the class
+  // each accept a different one.
+  resourceExtensions?: readonly string[];
   // `"generated"` for a slot the emitter derives from the ref-doc, otherwise a
   // package-relative path to the hand-authored `.d.ts` that declares it,
   // resolved against the `packages/types` package root. Not repo-relative: the
@@ -51,6 +60,11 @@ export interface UrlParameterSlot {
   module: string;
   doc: string;
   types: readonly string[];
+  // The declaring function's ref-doc examples, verbatim. The parameter prose
+  // alone cannot refute a `resource-path` extension — every one of the six reads
+  // "optional resource path string to the resource" — so the example is the only
+  // place the claim is checkable.
+  examples: string;
 }
 
 const ADDRESS_TYPES = ["string", "hash", "url"] as const;
@@ -65,6 +79,7 @@ export const REQUIRED_TYPES: Record<Exclude<UrlParameterClass, "none">, readonly
   either: ADDRESS_TYPES,
   "gui-node": ["string", "hash"],
   animation: ["string", "hash"],
+  "resource-path": ["string"],
 };
 
 function bareName(fqn: string): string {
@@ -109,6 +124,7 @@ export function collectParameterSlots(sources: readonly UrlParameterSource[]): U
           module: module.namespace,
           doc: parameter.doc,
           types: parameter.types,
+          examples: fn.examples ?? "",
         });
       }
     }

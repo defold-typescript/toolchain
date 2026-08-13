@@ -2,7 +2,11 @@ import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { buildSceneComponentIndex } from "@defold-typescript/transpiler";
-import { readSceneDocuments, type SceneReadHost } from "./scene-documents";
+import {
+  listProjectResourcePaths,
+  readSceneDocuments,
+  type SceneReadHost,
+} from "./scene-documents";
 
 const PROJECT_ROOT = "/project";
 
@@ -152,5 +156,63 @@ describe("readSceneDocuments", () => {
     const { documents, unreadable } = readSceneDocuments({ readFile: () => "" }, PROJECT_ROOT);
     expect(documents.size).toBe(0);
     expect(unreadable).toHaveLength(1);
+  });
+});
+
+describe("listProjectResourcePaths", () => {
+  test("returns the project's files of that kind as sorted, `/`-prefixed paths", () => {
+    const host = hostReturning(
+      [
+        `${PROJECT_ROOT}/ui/icons.atlas`,
+        `${PROJECT_ROOT}/main/hero.atlas`,
+        `${PROJECT_ROOT}/ui/main.font`,
+      ],
+      () => "",
+    );
+    expect([...listProjectResourcePaths(host, PROJECT_ROOT, [".atlas"])]).toEqual([
+      "/main/hero.atlas",
+      "/ui/icons.atlas",
+    ]);
+  });
+
+  test("re-filters by extension rather than trusting the host", () => {
+    // A host that ignores its `extensions` argument would otherwise turn a
+    // `.font` slot into a project-wide file dump.
+    const ignoresExtensions: SceneReadHost = {
+      readDirectory: () => [`${PROJECT_ROOT}/main/hero.atlas`, `${PROJECT_ROOT}/ui/main.font`],
+      readFile: () => "",
+    };
+    expect([...listProjectResourcePaths(ignoresExtensions, PROJECT_ROOT, [".atlas"])]).toEqual([
+      "/main/hero.atlas",
+    ]);
+  });
+
+  test("build output is excluded the way the scene walk excludes it", () => {
+    const host = hostReturning(
+      [`${PROJECT_ROOT}/main/hero.atlas`, `${PROJECT_ROOT}/build/default/_generated_x.atlas`],
+      () => "",
+    );
+    expect([...listProjectResourcePaths(host, PROJECT_ROOT, [".atlas"])]).toEqual([
+      "/main/hero.atlas",
+    ]);
+  });
+
+  test("reads no file contents — the path is the whole suggestion", () => {
+    const read: string[] = [];
+    const host: SceneReadHost = {
+      readDirectory: () => [`${PROJECT_ROOT}/main/hero.atlas`],
+      readFile: (path) => {
+        read.push(path);
+        return "";
+      },
+    };
+    expect([...listProjectResourcePaths(host, PROJECT_ROOT, [".atlas"])]).toEqual([
+      "/main/hero.atlas",
+    ]);
+    expect(read).toEqual([]);
+  });
+
+  test("a host that cannot enumerate files yields nothing", () => {
+    expect(listProjectResourcePaths({ readFile: () => "" }, PROJECT_ROOT, [".atlas"]).size).toBe(0);
   });
 });

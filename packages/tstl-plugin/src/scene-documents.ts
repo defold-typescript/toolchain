@@ -60,3 +60,29 @@ export function readSceneDocuments(
 
   return { documents, unreadable };
 }
+
+// The project's own files of the given kinds, as the `/`-prefixed
+// project-relative paths a Defold resource property names. Nothing is read: a
+// resource path is the whole suggestion, so the walk is the entire universe.
+//
+// The extension filter is re-applied rather than trusted. `readSceneDocuments`
+// can take the host at its word because a wrong document merely contributes no
+// ids, but here a wrong file *is* the suggestion — a host that ignored its
+// `extensions` argument would turn a `.font` slot into a project-wide file dump.
+export function listProjectResourcePaths(
+  host: SceneReadHost,
+  projectRoot: string,
+  extensions: readonly string[],
+): Set<string> {
+  if (!host.readDirectory) return new Set();
+
+  const paths: string[] = [];
+  for (const filePath of host.readDirectory(projectRoot, extensions)) {
+    const displayPath = displayPathOf(projectRoot, filePath);
+    if (isBuildOutput(displayPath)) continue;
+    if (!extensions.some((extension) => displayPath.endsWith(extension))) continue;
+    paths.push(`/${displayPath}`);
+  }
+
+  return new Set(paths.sort());
+}
