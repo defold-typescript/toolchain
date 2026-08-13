@@ -9,7 +9,7 @@ export interface SceneReadHost {
   readFile(path: string): string | undefined;
 }
 
-const SCENE_EXTENSIONS = [".go", ".collection"];
+export const SCENE_EXTENSIONS = [".go", ".collection"];
 
 // The project-relative name a file is keyed by — the same name the editor
 // reports for a program file, so a scene's claim on a script can be looked up
@@ -35,6 +35,14 @@ function isBuildOutput(displayPath: string): boolean {
   return displayPath.split("/").includes("build");
 }
 
+// The single rule, exported because the index cache filters watch events with
+// it: a copy in the watcher could drift from what the walks exclude, and an
+// event the walk would have ignored is exactly the event that must not throw the
+// cache away — bob writes `_generated_*.go` throughout a build.
+export function isExcludedProjectPath(displayPath: string): boolean {
+  return isBuildOutput(displayPath) || isDefignoredPath(displayPath);
+}
+
 // Read the project's own scene sources through the editor host — by default the
 // `.go`/`.collection` set the component-id universe is built from, or whatever
 // `extensions` names instead. The two universes stay disjoint: a `.gui` declares
@@ -42,33 +50,36 @@ function isBuildOutput(displayPath: string): boolean {
 // text to `buildSceneComponentIndex`. Keys are project-relative display paths,
 // matching what `buildSceneComponentIndex` reports in `incomplete`, and every
 // file that could not be read is named in `unreadable` — a universe with a
-// silent hole cannot be reasoned about.
+// silent hole cannot be reasoned about. `paths` names the host paths actually
+// read — what a watcher must be registered on, which cannot be reconstructed
+// from a display path for a file outside the project root.
 export function readSceneDocuments(
   host: SceneReadHost,
   projectRoot: string,
   extensions: readonly string[] = SCENE_EXTENSIONS,
-): { documents: Map<string, string>; unreadable: string[] } {
+): { documents: Map<string, string>; unreadable: string[]; paths: string[] } {
   const documents = new Map<string, string>();
   const unreadable: string[] = [];
+  const paths: string[] = [];
 
   if (!host.readDirectory) {
     unreadable.push("the editor host cannot enumerate project files, so no scene source was read");
-    return { documents, unreadable };
+    return { documents, unreadable, paths };
   }
 
   for (const filePath of host.readDirectory(projectRoot, extensions)) {
     const displayPath = displayPathOf(projectRoot, filePath);
-    if (isBuildOutput(displayPath)) continue;
-    if (isDefignoredPath(displayPath)) continue;
+    if (isExcludedProjectPath(displayPath)) continue;
     const text = host.readFile(filePath);
     if (text === undefined) {
       unreadable.push(`${displayPath}: could not be read`);
       continue;
     }
     documents.set(displayPath, text);
+    paths.push(filePath);
   }
 
-  return { documents, unreadable };
+  return { documents, unreadable, paths };
 }
 
 // The project's own files of the given kinds, as the `/`-prefixed
@@ -89,8 +100,7 @@ export function listProjectResourcePaths(
   const paths: string[] = [];
   for (const filePath of host.readDirectory(projectRoot, extensions)) {
     const displayPath = displayPathOf(projectRoot, filePath);
-    if (isBuildOutput(displayPath)) continue;
-    if (isDefignoredPath(displayPath)) continue;
+    if (isExcludedProjectPath(displayPath)) continue;
     if (!extensions.some((extension) => displayPath.endsWith(extension))) continue;
     paths.push(`/${displayPath}`);
   }

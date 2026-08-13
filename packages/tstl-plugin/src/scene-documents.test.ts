@@ -75,6 +75,22 @@ describe("readSceneDocuments", () => {
     expect(unreadable[0]).toContain("main/hud.go");
   });
 
+  test("reports the host paths it actually read, skipped and unreadable files aside", () => {
+    const host = hostReturning(
+      [
+        `${PROJECT_ROOT}/main/board.go`,
+        `${PROJECT_ROOT}/build/default/_generated_x.go`,
+        `${PROJECT_ROOT}/node_modules/some-pkg/fixture.go`,
+        `${PROJECT_ROOT}/main/hud.go`,
+      ],
+      (path) => (path.endsWith("hud.go") ? undefined : ""),
+    );
+    // Host paths, not display paths: a watcher is registered on what the host
+    // named, which reconstruction from a display path would get wrong for a file
+    // outside the project root.
+    expect(readSceneDocuments(host, PROJECT_ROOT).paths).toEqual([`${PROJECT_ROOT}/main/board.go`]);
+  });
+
   test("feeds a whole component-id universe from the committed example project", () => {
     const root = join(import.meta.dir, "../../../docs/examples/tetris-tutorial");
     const { documents, unreadable } = readSceneDocuments(fsHost(root), root);
