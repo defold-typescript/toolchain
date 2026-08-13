@@ -8,7 +8,6 @@ import {
   groupSourceScriptKindsByDirectory,
   groupSourceScriptKindsBySubtree,
   nearestWall,
-  planDirectoryWalls,
   planSourceDirectoryWalls,
   type ResolvedDirectoryWall,
   resolveActivePinnedSurface,
@@ -38,47 +37,6 @@ function touch(rel: string, contents = ""): void {
 function writeTsconfig(include: string[]): void {
   touch("tsconfig.json", JSON.stringify({ include }));
 }
-
-describe("planDirectoryWalls", () => {
-  test("turns each single-kind directory into a narrowing descriptor, sorted by dir", () => {
-    touch("ui/hud.gui_script");
-    touch("render/cam.render_script");
-    expect(planDirectoryWalls(cwd)).toEqual([
-      {
-        dir: "render",
-        kind: "render-script",
-        typesEntrypoint: "@defold-typescript/types/render-script",
-      },
-      {
-        dir: "ui",
-        kind: "gui-script",
-        typesEntrypoint: "@defold-typescript/types/gui-script",
-      },
-    ] satisfies DirectoryWall[]);
-  });
-
-  test("a root-level single-kind component yields a '.' descriptor", () => {
-    touch("main.script");
-    expect(planDirectoryWalls(cwd)).toEqual([
-      {
-        dir: ".",
-        kind: "script",
-        typesEntrypoint: "@defold-typescript/types/script",
-      },
-    ]);
-  });
-
-  test("a mixed-kind directory produces no descriptor", () => {
-    touch("a/x.script");
-    touch("a/y.gui_script");
-    expect(planDirectoryWalls(cwd)).toEqual([]);
-  });
-
-  test("a component-free tree yields no descriptors", () => {
-    touch("readme.txt");
-    expect(planDirectoryWalls(cwd)).toEqual([]);
-  });
-});
 
 describe("groupSourceScriptKindsByDirectory", () => {
   test("buckets each source's factory-detected kind by its immediate directory", () => {
@@ -290,6 +248,24 @@ describe("planSourceDirectoryWalls", () => {
       "src/gui",
       "src/gui/hud",
     ]);
+  });
+
+  test("a wall's kind comes from the directory's TypeScript source, not its co-located Defold component", () => {
+    writeTsconfig(["src/**/*.ts"]);
+    touch("src/ui/hud.ts", "export default defineScript({});");
+    touch("src/ui/hud.gui_script");
+    expect(planSourceDirectoryWalls(cwd)).toEqual([
+      {
+        dir: "src",
+        kind: "script",
+        typesEntrypoint: "@defold-typescript/types/script",
+      },
+      {
+        dir: "src/ui",
+        kind: "script",
+        typesEntrypoint: "@defold-typescript/types/script",
+      },
+    ] satisfies DirectoryWall[]);
   });
 });
 

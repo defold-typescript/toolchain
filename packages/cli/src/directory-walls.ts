@@ -7,7 +7,6 @@ import { scanFilesSync } from "./scan";
 import {
   isSkipped,
   type ScriptKind,
-  selectDirectoryWalls,
   selectScriptKind,
   selectScriptKindEntrypoint,
 } from "./script-kind";
@@ -73,12 +72,6 @@ function describeWall(dir: string, kind: ScriptKind): DirectoryWall {
     kind,
     typesEntrypoint: selectScriptKindEntrypoint(new Set([kind])),
   };
-}
-
-export function planDirectoryWalls(cwd: string): DirectoryWall[] {
-  return [...selectDirectoryWalls(cwd)]
-    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-    .map(([dir, kind]) => describeWall(dir, kind));
 }
 
 export function groupSourceScriptKindsByDirectory(cwd: string): Map<string, Set<ScriptKind>> {
