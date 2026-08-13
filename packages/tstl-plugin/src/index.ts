@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import {
   buildGuiNodeIndex,
   buildSceneComponentIndex,
+  buildSceneObjectPathIndex,
   buildSpriteAnimationIndex,
   type ClassifiedSlot,
   componentIdOfSameObjectAddress,
@@ -15,6 +16,7 @@ import type { UrlParameterTable } from "@defold-typescript/types";
 import type * as ts from "typescript";
 import { readBuildConfigFromHost } from "./build-config";
 import {
+  buildAddressPathCompletionEntries,
   buildSceneCompletionEntries,
   buildWholeLiteralCompletionEntries,
 } from "./scene-completions";
@@ -74,6 +76,30 @@ function componentEntries(
   return buildSceneCompletionEntries({
     slot,
     ids: buildSceneComponentIndex(documents).ids,
+    baseEntries,
+  });
+}
+
+// The exact complement of `componentEntries`' guard, so precisely one of the two
+// universes answers any caret in an address: component ids from `fragmentStart`
+// on, game-object paths everywhere before it — including a literal carrying no
+// `#` at all, which is all path. Project-wide like the component universe, and
+// for the same reason: what a path resolves to at runtime depends on the
+// collection that was loaded, which the file being edited does not say.
+function objectPathEntries(
+  slot: ClassifiedSlot,
+  position: number,
+  host: SceneReadHost,
+  projectRoot: string,
+  baseEntries: readonly ts.CompletionEntry[],
+): ts.CompletionEntry[] {
+  if (slot.fragmentStart !== -1 && position >= slot.fragmentStart) {
+    return [];
+  }
+  const { documents } = readSceneDocuments(host, projectRoot);
+  return buildAddressPathCompletionEntries({
+    slot,
+    paths: buildSceneObjectPathIndex(documents).paths,
     baseEntries,
   });
 }
@@ -208,7 +234,10 @@ export default function init(modules: { typescript: typeof import("typescript") 
       // exactly the way a generated declaration does.
       const baseEntries = prior?.entries ?? [];
       const entries = isAddressClass(slot.class)
-        ? componentEntries(slot, position, serverHost, projectRoot, baseEntries)
+        ? [
+            ...componentEntries(slot, position, serverHost, projectRoot, baseEntries),
+            ...objectPathEntries(slot, position, serverHost, projectRoot, baseEntries),
+          ]
         : slot.class === "gui-node"
           ? nodeEntries(slot, serverHost, projectRoot, fileName, baseEntries)
           : slot.class === "animation"

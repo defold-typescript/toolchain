@@ -9,6 +9,7 @@ import {
 import type { UrlParameterTable } from "@defold-typescript/types";
 import type ts from "typescript";
 import {
+  buildAddressPathCompletionEntries,
   buildSceneCompletionEntries,
   buildWholeLiteralCompletionEntries,
 } from "./scene-completions";
@@ -81,7 +82,7 @@ describe("buildSceneCompletionEntries", () => {
     expect(built?.replacementSpan).toEqual({ start: slot.fragmentStart, length: 0 });
   });
 
-  test("a slot with no fragment offers nothing — path completion is not this slice", () => {
+  test("a slot with no fragment offers no component id — the path half is a different builder", () => {
     const slot = slotIn('go.get("/enemy", "position");\n', '"/enemy"');
     expect(slot.fragmentStart).toBe(-1);
     expect(buildSceneCompletionEntries({ slot, ids: new Set(["board"]), baseEntries: [] })).toEqual(
@@ -157,6 +158,93 @@ describe("buildSceneCompletionEntries", () => {
     for (const built of entries) {
       expect(built.sortText > ABOVE_HOST).toBe(true);
     }
+  });
+});
+
+describe("buildAddressPathCompletionEntries", () => {
+  const PATH_AND_FRAGMENT = 'msg.post("/enemy#sprite", "hello");\n';
+
+  test("replaces the path half alone, leaving the fragment the caret is not in", () => {
+    const slot = slotIn(PATH_AND_FRAGMENT, '"/enemy#sprite"');
+    const entries = buildAddressPathCompletionEntries({
+      slot,
+      paths: new Set(["/hero", "/hud"]),
+      baseEntries: [],
+    });
+    expect(entries.map((e) => e.name)).toEqual(["/hero", "/hud"]);
+    for (const built of entries) {
+      expect(built.kind).toBe("string" as ts.ScriptElementKind);
+      expect(built.replacementSpan).toEqual({
+        start: slot.textStart,
+        length: "/enemy".length,
+      });
+    }
+  });
+
+  test("a path the base already offers as the whole literal is dropped from ours", () => {
+    const slot = slotIn(PATH_AND_FRAGMENT, '"/enemy#sprite"');
+    const baseEntries = [entry("/hero#sprite", LOCATION_PRIORITY), entry("/hero", ABOVE_HOST)];
+    const entries = buildAddressPathCompletionEntries({
+      slot,
+      paths: new Set(["/hero", "/hud"]),
+      baseEntries,
+    });
+    // `/hero` alone is not the literal this entry would produce, so it is not
+    // the duplicate — only the whole-literal `/hero#sprite` is.
+    expect(entries.map((e) => e.name)).toEqual(["/hud"]);
+    expect(baseEntries.map((e) => e.name)).toEqual(["/hero#sprite", "/hero"]);
+  });
+
+  test("every contributed key sorts after every base key in the same call", () => {
+    const slot = slotIn(PATH_AND_FRAGMENT, '"/enemy#sprite"');
+    const baseEntries = [
+      entry("a", LOCATION_PRIORITY),
+      entry("b", DEPRECATED_IDENTIFIER),
+      entry("c", ABOVE_HOST),
+    ];
+    const entries = buildAddressPathCompletionEntries({
+      slot,
+      paths: new Set(["/hero", "/hud"]),
+      baseEntries,
+    });
+    expect(new Set(entries.map((e) => e.sortText)).size).toBe(1);
+    for (const built of entries) {
+      for (const base of baseEntries) {
+        expect(built.sortText > base.sortText).toBe(true);
+      }
+    }
+  });
+
+  test("a slot carrying no fragment replaces the whole inside-quotes text", () => {
+    const slot = slotIn('go.get("/enemy", "position");\n', '"/enemy"');
+    expect(slot.fragmentStart).toBe(-1);
+    const entries = buildAddressPathCompletionEntries({
+      slot,
+      paths: new Set(["/hero"]),
+      baseEntries: [entry("/hero", LOCATION_PRIORITY)],
+    });
+    // With no fragment to keep, the offered literal is the bare path — so the
+    // base entry of that exact name *is* the duplicate here.
+    expect(entries).toEqual([]);
+    const offered = buildAddressPathCompletionEntries({
+      slot,
+      paths: new Set(["/hero"]),
+      baseEntries: [],
+    });
+    expect(offered[0]?.replacementSpan).toEqual({
+      start: slot.textStart,
+      length: "/enemy".length,
+    });
+  });
+
+  test("an empty literal replaces nothing — the span is the caret", () => {
+    const slot = slotIn('go.get("", "position");\n', '""');
+    const [built] = buildAddressPathCompletionEntries({
+      slot,
+      paths: new Set(["/hero"]),
+      baseEntries: [],
+    });
+    expect(built?.replacementSpan).toEqual({ start: slot.textStart, length: 0 });
   });
 });
 
