@@ -136,6 +136,7 @@ void (_decoded as Record<string, unknown>).a;
 zip.pack("build.zip", ["build", "game.project"]);
 zip.pack("build.zip", [["build/wasm-web", "."]]);
 zip.pack("build.zip", { method: zip.METHOD.STORED }, ["build", "resources"]);
+zip.pack("build.zip", [{ 1: "assets", method: zip.METHOD.STORED }, "build/wasm-web"]);
 // @ts-expect-error an archive with no entries is not an archive
 zip.pack("build.zip");
 
