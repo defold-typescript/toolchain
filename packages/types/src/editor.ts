@@ -4,8 +4,9 @@
 // `return <hooks table>` rather than the runtime kinds' flat top-level globals.
 //
 // The typed `editor.*` global (`get`/`transact`/`command`) and the walled
-// `@defold-typescript/types/editor-script` entrypoint ship alongside this file.
-// Still a later slice: the editor VM's own `http`/`json`/`zip` libraries.
+// `@defold-typescript/types/editor-script` entrypoint ship alongside this file,
+// as do the editor VM's own `http`/`json`/`zip`/`zlib`/`tilemap.tiles`
+// libraries. Still a later slice: `editor.ui.*` and `editor.prefs.*`.
 
 import type { Opaque } from "./core-types";
 

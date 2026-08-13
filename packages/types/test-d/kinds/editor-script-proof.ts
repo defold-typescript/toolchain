@@ -106,16 +106,47 @@ const _response: Record<string | number, unknown> = http.request("http://localho
 });
 const _serverUrl: string = http.server.url;
 const _serverPort: number = http.server.port;
-http.server.route("/files/{*file}", "GET", "json", undefined, (request) => void request);
+// Every call shape upstream's own `examples` block shows, translated to
+// TypeScript. An optional parameter sitting before a required one has no direct
+// rendering, so these forms exist only as hand-authored overloads.
+http.server.route("/users/{user}/orders", (request) => void request);
+http.server.route("/json", "POST", "json", (request) => void request);
+// @ts-expect-error a route without a handler is not a route
+http.server.route("/files/{*file}");
+// @ts-expect-error the handler is the last argument, never the method
+http.server.route("/files/{*file}", (request) => void request, "json");
 void _response;
 void _serverUrl;
 void _serverPort;
 
+// Upstream records no return value for either function while its own prose names
+// one, so both are hand-authored. `ReturnType` binding an `unknown` is what a
+// regression to the emitted `void` rejects.
+const _encoded: string = json.encode({ a: 1 });
+const _decoded: ReturnType<typeof json.decode> = 1 as unknown;
 json.decode('{"a":1}', { all: true });
-json.encode({ a: 1 });
+// @ts-expect-error an encoded document is a string, not a number
+const _encodedBad: number = json.encode({ a: 1 });
+// @ts-expect-error a decoded value is `unknown` until the caller narrows it
+void _decoded.a;
+void _encoded;
+void _encodedBad;
+void (_decoded as Record<string, unknown>).a;
 
-zip.pack("build.zip", { method: zip.METHOD.STORED }, "build");
-zip.unpack("build.zip", "out", { on_conflict: zip.ON_CONFLICT.OVERWRITE });
+zip.pack("build.zip", ["build", "game.project"]);
+zip.pack("build.zip", [["build/wasm-web", "."]]);
+zip.pack("build.zip", { method: zip.METHOD.STORED }, ["build", "resources"]);
+// @ts-expect-error an archive with no entries is not an archive
+zip.pack("build.zip");
+
+// `unpack`'s second slot is a target path, an options table or a paths table;
+// the two table forms are told apart by shape.
+zip.unpack("build.zip");
+zip.unpack("build.zip", "build/dev/tmp");
+zip.unpack("build.zip", { on_conflict: zip.ON_CONFLICT.OVERWRITE });
+zip.unpack("build.zip", ["config.json"]);
+// @ts-expect-error slot two is a path, an options table or a paths table
+zip.unpack("build.zip", 42);
 // @ts-expect-error the constant table has no DEFLATE member (it is DEFLATED)
 void zip.METHOD.DEFLATE;
 
