@@ -1733,7 +1733,7 @@ export default defineEditorScript({
 
 A `"one"` selection binds `opts.selection` to a single `EditorNode` — a resource path or an internal node id, the argument `editor.get` and the `editor.tx.*` builders take. A `"many"` selection binds it to `EditorNode[]`. Reading a member the query never declared — `opts.argument` on either command above — is a compile error, and so is passing a `"many"` selection where a single node is expected.
 
-The wrapper is needed because TypeScript cannot infer a separate type argument per element of an array literal; `defineEditorCommand` gives each command its own inference site. It is an identity at runtime and returns the query-erased entry type, so precisely-typed and bare-literal commands coexist in one `get_commands` list — the plain literal in the first example above still compiles unchanged.
+The wrapper is needed because TypeScript cannot infer a separate type argument per element of an array literal; `defineEditorCommand` gives each command its own inference site. It returns the query-erased entry type, so precisely-typed and bare-literal commands coexist in one `get_commands` list — the plain literal in the first example above still compiles unchanged. Like `defineEditorScript`, it costs nothing at runtime: the transpiler unwraps the call to the plain command table and erases the import.
 
 `editor.command`, which registers a command directly rather than through `get_commands`, couples its opts bag the same way and needs no wrapper: it is generic over the `query` you pass it.
 

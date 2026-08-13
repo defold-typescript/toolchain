@@ -40,6 +40,51 @@ const COMBINED_IMPORT = [
   "",
 ].join("\n");
 
+// The guide's `defineEditorCommand` snippet verbatim (packages/docs/guide/editor-scripts.md).
+const GUIDE_COMMAND_SNIPPET = [
+  'import { defineEditorCommand, defineEditorScript } from "@defold-typescript/types/editor-script";',
+  "",
+  "export default defineEditorScript({",
+  "  get_commands: () => [",
+  "    defineEditorCommand({",
+  '      label: "Git History",',
+  '      locations: ["Assets"],',
+  '      query: { selection: { type: "resource", cardinality: "one" } },',
+  '      run: (opts) => print(editor.get(opts.selection, "path")),',
+  "    }),",
+  "    defineEditorCommand({",
+  '      label: "Count Selection",',
+  '      locations: ["Assets"],',
+  '      query: { selection: { type: "resource", cardinality: "many" } },',
+  "      run: (opts) => print(opts.selection.length),",
+  "    }),",
+  "  ],",
+  "});",
+  "",
+].join("\n");
+
+const DIRECT_EDITOR_COMMAND = [
+  "editor.command({",
+  '  label: "Git History",',
+  '  locations: ["Assets"],',
+  '  query: { selection: { type: "resource", cardinality: "one" } },',
+  "  active: (opts) => opts.selection !== undefined,",
+  '  run: (opts) => print(editor.get(opts.selection, "path")),',
+  "});",
+  "",
+].join("\n");
+
+const DEFAULT_EXPORTED_COMMAND = [
+  'import { defineEditorCommand } from "@defold-typescript/types/editor-script";',
+  "",
+  "export default defineEditorCommand({",
+  '  label: "Say Hi",',
+  '  locations: ["Edit"],',
+  '  run: () => print("hi"),',
+  "});",
+  "",
+].join("\n");
+
 function parseImport(source: string): ts.ImportDeclaration {
   const sourceFile = ts.createSourceFile(
     "t.ts",
@@ -112,6 +157,64 @@ describe("editor-script erasure", () => {
       "
     `);
   });
+
+  test("builds the guide's defineEditorCommand snippet into loadable editor Lua", () => {
+    const result = transpile(GUIDE_COMMAND_SNIPPET);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).not.toContain("require(");
+    expect(result.lua).not.toContain("defineEditorCommand");
+    expect(result.lua).not.toContain("defineEditorScript");
+    expect(result.lua).toContain("return {get_commands =");
+  });
+
+  test("snapshots the guide snippet's two raw command tables inline in the returned list", () => {
+    expect(transpile(GUIDE_COMMAND_SNIPPET).lua).toMatchInlineSnapshot(`
+      "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+      local ____exports = {}
+      return {get_commands = function() return {
+          {
+              label = "Git History",
+              locations = {"Assets"},
+              query = {selection = {type = "resource", cardinality = "one"}},
+              run = function(opts) return print(editor.get(opts.selection, "path")) end
+          },
+          {
+              label = "Count Selection",
+              locations = {"Assets"},
+              query = {selection = {type = "resource", cardinality = "many"}},
+              run = function(opts) return print(#opts.selection) end
+          }
+      } end}
+      "
+    `);
+  });
+
+  test("delegates a direct editor.command call unchanged", () => {
+    const result = transpile(DIRECT_EDITOR_COMMAND);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toContain("editor.command(");
+  });
+
+  test("a default-exported command table is not lowered to a chunk-level return", () => {
+    const result = transpile(DEFAULT_EXPORTED_COMMAND);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).not.toContain("return {label =");
+  });
+});
+
+describe("editor command hook self context", () => {
+  test("a defineEditorCommand hook emits no leading self parameter", () => {
+    const result = transpile(GUIDE_COMMAND_SNIPPET);
+    expect(result.lua).toContain("run = function(opts)");
+    expect(result.lua).not.toContain("function(____");
+  });
+
+  test("a direct editor.command hook emits no leading self parameter", () => {
+    const result = transpile(DIRECT_EDITOR_COMMAND);
+    expect(result.lua).toContain("active = function(opts)");
+    expect(result.lua).toContain("run = function(opts)");
+    expect(result.lua).not.toContain("function(____");
+  });
 });
 
 describe("isEditorFactoryOnlyImport", () => {
@@ -156,6 +259,38 @@ describe("isEditorFactoryOnlyImport", () => {
       'import { defineEditorScript, EditorCommand } from "@defold-typescript/types/editor-script";',
       'import type { defineEditorScript } from "@defold-typescript/types/editor-script";',
       'import { type EditorCommand } from "@defold-typescript/types/editor-script";',
+    ];
+    for (const source of negatives) {
+      expect(isEditorFactoryOnlyImport(parseImport(source))).toBe(false);
+    }
+  });
+
+  test("the combined command+script factory clause is erasable", () => {
+    const node = parseImport(
+      'import { defineEditorCommand, defineEditorScript } from "@defold-typescript/types/editor-script";',
+    );
+    expect(isEditorFactoryOnlyImport(node)).toBe(true);
+  });
+
+  test("a bare defineEditorCommand import is erasable", () => {
+    const node = parseImport(
+      'import { defineEditorCommand } from "@defold-typescript/types/editor-script";',
+    );
+    expect(isEditorFactoryOnlyImport(node)).toBe(true);
+  });
+
+  test("defineEditorCommand with a trailing type-only specifier is erasable", () => {
+    const node = parseImport(
+      'import { defineEditorCommand, type EditorCommandQuery } from "@defold-typescript/types/editor-script";',
+    );
+    expect(isEditorFactoryOnlyImport(node)).toBe(true);
+  });
+
+  test("defineEditorCommand keeps the existing negatives", () => {
+    const negatives = [
+      'import { defineEditorCommand, EditorCommandQuery } from "@defold-typescript/types/editor-script";',
+      'import type { defineEditorCommand } from "@defold-typescript/types/editor-script";',
+      'import { defineEditorCommand } from "@defold-typescript/types/script";',
     ];
     for (const source of negatives) {
       expect(isEditorFactoryOnlyImport(parseImport(source))).toBe(false);
