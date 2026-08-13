@@ -106,6 +106,16 @@ const PATH_FRAGMENT_SOURCE = 'msg.post("/enemy#sprite", "hello");\n';
 const PATH_POSITION = PATH_FRAGMENT_SOURCE.indexOf("/enemy") + 3;
 const SPRITE_POSITION = PATH_FRAGMENT_SOURCE.indexOf("#sprite") + 1;
 
+// The `.go`-only `SCENE_DOCUMENTS` declares no game object at all, so the two
+// bug-90 cases above assert on a project with an empty path universe. This adds
+// the one collection that gives the path half something to offer.
+const PATH_DOCUMENTS: Record<string, string> = {
+  ...SCENE_DOCUMENTS,
+  "main/main.collection":
+    'instances {\n  id: "hero"\n  prototype: "/main/board.go"\n  children: "cape"\n}\n' +
+    'instances {\n  id: "cape"\n  prototype: "/main/hud.go"\n}\n',
+};
+
 // An empty node-id literal: the caret sits between the quotes, which is both the
 // start and the end of the text, so the replacement span is a pure insertion.
 const NODE_SOURCE = 'gui.get_node("");\n';
@@ -305,6 +315,60 @@ describe("tstl-plugin", () => {
   test("synthesizes nothing for a caret before the `#` when the base offers nothing", () => {
     const service = completionProxy({ source: PATH_FRAGMENT_SOURCE, base: undefined });
     expect(service.getCompletionsAtPosition("main.ts", PATH_POSITION, undefined)).toBeUndefined();
+  });
+
+  test("appends the project's game-object paths for a caret in the path half", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const service = completionProxy({
+      source: PATH_FRAGMENT_SOURCE,
+      base,
+      documents: PATH_DOCUMENTS,
+    });
+    const result = service.getCompletionsAtPosition("main.ts", PATH_POSITION, undefined);
+    expect(result?.entries[0]).toBe(base.entries[0] as ts.CompletionEntry);
+    expect(result?.entries.map((e) => e.name)).toEqual(["zzz", "/cape", "/hero"]);
+    for (const built of result?.entries.slice(1) ?? []) {
+      expect(built.replacementSpan).toEqual({
+        start: PATH_FRAGMENT_SOURCE.indexOf("/enemy"),
+        length: "/enemy".length,
+      });
+      expect(built.sortText > LOCATION_PRIORITY).toBe(true);
+    }
+  });
+
+  test("exactly one universe answers any caret — the boundary is `fragmentStart` itself", () => {
+    const service = completionProxy({
+      source: PATH_FRAGMENT_SOURCE,
+      base: undefined,
+      documents: PATH_DOCUMENTS,
+    });
+    const inPath = service.getCompletionsAtPosition("main.ts", SPRITE_POSITION - 1, undefined);
+    expect(inPath?.entries.map((e) => e.name)).toEqual(["/cape", "/hero"]);
+    const atFragment = service.getCompletionsAtPosition("main.ts", SPRITE_POSITION, undefined);
+    expect(atFragment?.entries.map((e) => e.name)).toEqual(["board", "hud"]);
+    const inFragment = service.getCompletionsAtPosition("main.ts", SPRITE_POSITION + 3, undefined);
+    expect(inFragment?.entries.map((e) => e.name)).toEqual(["board", "hud"]);
+  });
+
+  test("an address carrying no fragment offers paths for its whole text", () => {
+    const source = 'go.get("/ene", "position");\n';
+    const service = completionProxy({
+      source,
+      base: undefined,
+      documents: PATH_DOCUMENTS,
+    });
+    const result = service.getCompletionsAtPosition(
+      "main.ts",
+      source.indexOf("/ene") + 2,
+      undefined,
+    );
+    expect(result?.entries.map((e) => e.name)).toEqual(["/cape", "/hero"]);
+    for (const built of result?.entries ?? []) {
+      expect(built.replacementSpan).toEqual({
+        start: source.indexOf("/ene"),
+        length: "/ene".length,
+      });
+    }
   });
 
   test("still suggests while the id universe has gaps — a suggestion claims no absence", () => {
