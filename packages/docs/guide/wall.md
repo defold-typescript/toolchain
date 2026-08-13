@@ -34,8 +34,15 @@ that narrows `compilerOptions.types` to that kind's subpath:
 
 `.editor_script` is the odd one out: it runs in the editor's own Lua VM, so its
 surface is disjoint from the runtime kinds rather than a narrowing of them — no
-`go`, `msg` or `vmath`. `wall` does not offer it as a target yet; set `types` to
-that subpath by hand, as [editor scripts](./editor-scripts.md) describes.
+`go`, `msg` or `vmath`. It is offered like any other kind, so a directory holding
+only editor scripts is eligible and walls to that subpath; see
+[editor scripts](./editor-scripts.md).
+
+A pinned Defold surface is the one exception. `pin` materializes only the runtime
+kinds, so an editor-script wall keeps naming the installed
+`@defold-typescript/types/editor-script` package entrypoint even in a pinned
+project, while its runtime siblings narrow to the pinned surface. The editor VM's
+API does not vary with the pinned engine version, so there is nothing to pin.
 
 The root `tsconfig.json` references each walled directory and excludes it from the
 root program, so `tsc -b --noEmit` builds every walled directory against only its

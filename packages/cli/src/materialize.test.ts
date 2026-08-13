@@ -534,6 +534,37 @@ describe("materializeRefDocSurface per-kind subpaths", () => {
 
     rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
   });
+
+  test("the editor kind is absent from the versioned manifest, so a surface carries no editor subpath", async () => {
+    const { RUNTIME_KIND_MANIFEST } = (await import(
+      path.resolve(import.meta.dir, "../../types/scripts/regen.ts")
+    )) as { RUNTIME_KIND_MANIFEST: ReadonlyArray<{ kind: string }> };
+    expect(RUNTIME_KIND_MANIFEST.map((entry) => entry.kind)).not.toContain("editor-script");
+
+    const resolveOpts = labelRefDocResolveOpts();
+    await materializeRefDocSurface({ cwd, surfaceId: "defold-1.9.8", resolveOpts });
+
+    const dir = path.join(cwd, ".defold-types", "defold-1.9.8");
+    expect(existsSync(path.join(dir, "kinds", "editor-script.d.ts"))).toBe(false);
+    const pkg = JSON.parse(readFileSync(path.join(dir, "package.json"), "utf8")) as {
+      exports: Record<string, unknown>;
+    };
+    expect(Object.keys(pkg.exports)).not.toContain("./editor-script");
+
+    rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
+  });
+
+  test("the wall's materialized-kind list is exactly the versioned manifest's wallable kinds", async () => {
+    const { RUNTIME_KIND_MANIFEST } = (await import(
+      path.resolve(import.meta.dir, "../../types/scripts/regen.ts")
+    )) as { RUNTIME_KIND_MANIFEST: ReadonlyArray<{ kind: string }> };
+    const { MATERIALIZED_KIND_SUBPATHS, PINNED_KIND_SUBPATHS } = await import("./directory-walls");
+    expect([...MATERIALIZED_KIND_SUBPATHS].sort()).toEqual(
+      RUNTIME_KIND_MANIFEST.map((entry) => entry.kind)
+        .filter((kind) => PINNED_KIND_SUBPATHS.includes(kind))
+        .sort(),
+    );
+  });
 });
 
 describe("materializeRefDocSurface consumer proof", () => {

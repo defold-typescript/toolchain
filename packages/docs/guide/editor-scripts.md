@@ -85,6 +85,8 @@ Editor scripts run in the editor's own Lua VM, so none of the runtime namespaces
 
 Under that config `editor.get`, `editor.command`, `editor.transact` and the `editor.tx.*` builders type-check, while `go.*` / `msg.*` / `vmath.*` are compile errors — the same two-way [wall](./wall.md) the runtime kinds get.
 
+You rarely need to write that `tsconfig` yourself: [`wall`](./wall.md) now offers an editor-script-only directory as a target like any other kind and writes the same config for you. Mixing an editor script and a runtime script in one directory still leaves it ineligible — no single narrowing covers both.
+
 ## The editor VM's own libraries
 
 The same entrypoint also carries the libraries the editor VM exposes as their own globals, beside `editor.*`:
@@ -106,7 +108,4 @@ print(`packed at ${http.server.url}`);
 
 These are editor-only. `zip` and `tilemap.tiles` have no runtime form at all, and the `http`, `json`, `zlib` and `pprint` a game script sees are the *engine's*, with different signatures — which is why the two surfaces never share a `tsconfig`.
 
-Two things are deliberately not in yet:
-
-- **`editor.ui.*` and `editor.prefs.*`.** Both hang their members off constant tables (`editor.ui.COLOR`, `editor.prefs.SCOPE`) that the generator cannot express yet.
-- **Automatic walling.** Because that surface is incomplete, [`wall`](./wall.md) does not offer editor-script directories as a target — narrowing one today would reject calls the editor accepts. Setting `types` by hand, as above, is the opt-in.
+One thing is deliberately not in yet: **`editor.ui.*` and `editor.prefs.*`**. Both hang their members off constant tables (`editor.ui.COLOR`, `editor.prefs.SCOPE`) that the generator cannot express yet.
