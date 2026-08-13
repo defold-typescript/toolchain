@@ -158,8 +158,11 @@ function buildAmbientFiles(): Record<string, string> {
       'export { defineGuiScript } from "./src/lifecycle.js";\nexport type { ScriptProperties, ScriptProperty } from "./src/lifecycle.js";\n',
     "node_modules/@defold-typescript/types/render-script.d.ts":
       'export { defineRenderScript } from "./src/lifecycle.js";\nexport type { ScriptProperties, ScriptProperty } from "./src/lifecycle.js";\n',
-    "node_modules/@defold-typescript/types/editor-script.d.ts":
-      'export { defineEditorScript } from "./src/editor.js";\n',
+    "node_modules/@defold-typescript/types/editor-script.d.ts": [
+      'export { defineEditorCommand, defineEditorScript } from "./src/editor.js";',
+      'export type { EditorCommandQuery, EditorNode } from "./src/editor.js";',
+      "",
+    ].join("\n"),
   };
   // Seed the Lua 5.1 standard library (math/os/string/table/coroutine + base
   // globals) so user code can call e.g. `math.randomseed(os.time())`.

@@ -1,36 +1,46 @@
 import * as ts from "typescript";
 import {
   createReturnStatement,
+  type Expression,
   type Plugin,
   type Statement,
   type TransformationContext,
 } from "typescript-to-lua";
 
 export const EDITOR_FACTORY_MODULE = "@defold-typescript/types";
-export const EDITOR_FACTORY_NAME = "defineEditorScript";
+export const EDITOR_SCRIPT_FACTORY_NAME = "defineEditorScript";
+export const EDITOR_COMMAND_FACTORY_NAME = "defineEditorCommand";
+const EDITOR_FACTORY_NAMES: ReadonlySet<string> = new Set([
+  EDITOR_SCRIPT_FACTORY_NAME,
+  EDITOR_COMMAND_FACTORY_NAME,
+]);
 // The bare main entry and the walled per-kind subpath the guide teaches; the
-// other kinds' subpaths export their own factories, never this one.
+// other kinds' subpaths export their own factories, never these.
 const EDITOR_FACTORY_SPECIFIERS = new Set([
   EDITOR_FACTORY_MODULE,
   `${EDITOR_FACTORY_MODULE}/editor-script`,
 ]);
 
-function resolvesToEditorFactoryExport(callee: ts.Expression, checker: ts.TypeChecker): boolean {
+function resolveEditorFactoryExport(
+  callee: ts.Expression,
+  checker: ts.TypeChecker,
+): string | undefined {
   let symbol = checker.getSymbolAtLocation(callee);
   if (symbol === undefined) {
-    return false;
+    return undefined;
   }
   if (symbol.flags & ts.SymbolFlags.Alias) {
     symbol = checker.getAliasedSymbol(symbol);
   }
-  if (symbol.getName() !== EDITOR_FACTORY_NAME) {
-    return false;
+  const name = symbol.getName();
+  if (!EDITOR_FACTORY_NAMES.has(name)) {
+    return undefined;
   }
   const declaration = symbol.valueDeclaration ?? symbol.declarations?.[0];
   if (declaration === undefined) {
-    return false;
+    return undefined;
   }
-  return declaration.getSourceFile().fileName.includes(EDITOR_FACTORY_MODULE);
+  return declaration.getSourceFile().fileName.includes(EDITOR_FACTORY_MODULE) ? name : undefined;
 }
 
 // Unlike the runtime kinds (lowered to flat top-level lifecycle globals), the
@@ -44,7 +54,12 @@ function lowerEditorFactoryCall(
   if (!ts.isCallExpression(expression)) {
     return undefined;
   }
-  if (!resolvesToEditorFactoryExport(expression.expression, context.checker)) {
+  // Only the module factory owns the chunk-level return; a command factory call
+  // is unwrapped in place by the `CallExpression` visitor below.
+  if (
+    resolveEditorFactoryExport(expression.expression, context.checker) !==
+    EDITOR_SCRIPT_FACTORY_NAME
+  ) {
     return undefined;
   }
   const module = expression.arguments[0];
@@ -80,8 +95,8 @@ export function isEditorFactoryOnlyImport(node: ts.ImportDeclaration): boolean {
   if (runtime.length === 0) {
     return false;
   }
-  return runtime.every(
-    (element) => (element.propertyName ?? element.name).text === EDITOR_FACTORY_NAME,
+  return runtime.every((element) =>
+    EDITOR_FACTORY_NAMES.has((element.propertyName ?? element.name).text),
   );
 }
 
@@ -98,6 +113,19 @@ export const editorScriptErasurePlugin: Plugin = {
         }
       }
       return context.superTransformStatements(node);
+    },
+    // `defineEditorCommand` is a compile-time identity with no runtime
+    // counterpart once its import is erased, so the call must collapse to the
+    // command table it wraps rather than survive as a nil-global call.
+    [ts.SyntaxKind.CallExpression]: (node, context): Expression => {
+      const command = node.arguments[0];
+      if (
+        command !== undefined &&
+        resolveEditorFactoryExport(node.expression, context.checker) === EDITOR_COMMAND_FACTORY_NAME
+      ) {
+        return context.transformExpression(command);
+      }
+      return context.superTransformExpression(node);
     },
     [ts.SyntaxKind.ImportDeclaration]: (node, context) =>
       isEditorFactoryOnlyImport(node) ? [] : context.superTransformStatements(node),
