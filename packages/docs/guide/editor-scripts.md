@@ -85,7 +85,28 @@ Editor scripts run in the editor's own Lua VM, so none of the runtime namespaces
 
 Under that config `editor.get`, `editor.command`, `editor.transact` and the `editor.tx.*` builders type-check, while `go.*` / `msg.*` / `vmath.*` are compile errors — the same two-way [wall](./wall.md) the runtime kinds get.
 
+## The editor VM's own libraries
+
+The same entrypoint also carries the libraries the editor VM exposes as their own globals, beside `editor.*`:
+
+| Global | What it covers |
+| --- | --- |
+| `http` | `http.request`, and the `http.server.route`/`response` builders plus the server's `url`, `local_url` and `port` |
+| `json` | `json.decode` / `json.encode` |
+| `zip` | `zip.pack` / `zip.unpack`, with the `zip.METHOD.*` and `zip.ON_CONFLICT.*` option constants |
+| `zlib` | `zlib.deflate` / `zlib.inflate` |
+| `pprint` | the pretty-printer, a bare global function |
+| `tilemap.tiles` | the unbounded tile grid: `new`, `get_tile`, `get_info`, `set`, `remove`, `clear`, `iterator` |
+
+```ts
+const archive = "build.zip";
+zip.pack(archive, { method: zip.METHOD.STORED }, "build");
+print(`packed at ${http.server.url}`);
+```
+
+These are editor-only. `zip` and `tilemap.tiles` have no runtime form at all, and the `http`, `json`, `zlib` and `pprint` a game script sees are the *engine's*, with different signatures — which is why the two surfaces never share a `tsconfig`.
+
 Two things are deliberately not in yet:
 
-- **The editor VM's own libraries.** Its `http`, `json`, `zip`, `zlib`, `pprint` and `tilemap.tiles` are documented alongside `editor.*` upstream but are separate globals, and they are not typed yet. Neither are `editor.ui.*` and `editor.prefs.*`.
+- **`editor.ui.*` and `editor.prefs.*`.** Both hang their members off constant tables (`editor.ui.COLOR`, `editor.prefs.SCOPE`) that the generator cannot express yet.
 - **Automatic walling.** Because that surface is incomplete, [`wall`](./wall.md) does not offer editor-script directories as a target — narrowing one today would reject calls the editor accepts. Setting `types` by hand, as above, is the opt-in.
