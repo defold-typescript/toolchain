@@ -117,6 +117,10 @@ const ANIMATION_SOURCE = 'sprite.play_flipbook("#sprite", "");\n';
 const ANIMATION_POSITION = ANIMATION_SOURCE.indexOf('""') + 1;
 const ANIMATION_ADDRESS_POSITION = ANIMATION_SOURCE.indexOf('"#sprite"') + 1;
 
+// The same slot addressing the sibling component instead.
+const CAPE_SOURCE = 'sprite.play_flipbook("#cape", "");\n';
+const CAPE_POSITION = CAPE_SOURCE.indexOf('""') + 1;
+
 // One level of the escaping a `.collection` uses to carry a whole `.go`, and a
 // `.go` to carry a whole component — applied twice for an embedded sprite.
 function escapePayload(payload: string): string {
@@ -124,21 +128,45 @@ function escapePayload(payload: string): string {
 }
 
 // The platformer's shape at one remove: a collection whose embedded game object
-// names `main.ts`'s generated script and carries one sprite, plus the atlas
-// that sprite's `tile_set` names.
-function collectionOwning(script: string, component: string, tileSet: string): string {
+// names `main.ts`'s generated script and carries the given sprites, plus the
+// atlases their `tile_set`s name.
+function collectionOwning(script: string, ...sprites: (readonly [string, string])[]): string {
   const object =
     `components {\n  id: "self"\n  component: "${script}"\n}\n` +
-    `embedded_components {\n  id: "${component}"\n  type: "sprite"\n` +
-    `  data: "${escapePayload(`tile_set: "${tileSet}"\n`)}"\n}\n`;
+    sprites
+      .map(
+        ([component, tileSet]) =>
+          `embedded_components {\n  id: "${component}"\n  type: "sprite"\n` +
+          `  data: "${escapePayload(`tile_set: "${tileSet}"\n`)}"\n}\n`,
+      )
+      .join("");
   return `embedded_instances {\n  id: "player"\n  data: "${escapePayload(object)}"\n}\n`;
 }
 
-const ANIMATION_DOCUMENTS: Record<string, string> = {
-  "game/player.collection": collectionOwning("/main.ts.script", "sprite", "/assets/player.atlas"),
-  "assets/player.atlas":
+// The leading `images` block is a bare image the atlas exposes without an
+// animation of its own, so it must never reach a suggestion.
+function atlasDocument(...ids: string[]): string {
+  return (
     'images {\n  image: "/assets/loose.png"\n}\n' +
-    'animations {\n  id: "walk"\n}\nanimations {\n  id: "jump"\n}\n',
+    ids.map((id) => `animations {\n  id: "${id}"\n}\n`).join("")
+  );
+}
+
+const ANIMATION_DOCUMENTS: Record<string, string> = {
+  "game/player.collection": collectionOwning("/main.ts.script", ["sprite", "/assets/player.atlas"]),
+  "assets/player.atlas": atlasDocument("walk", "jump"),
+};
+
+// The same object carrying a second resolved sprite, so a caret can tell the
+// addressed component's ids from its sibling's.
+const SIBLING_SPRITE_DOCUMENTS: Record<string, string> = {
+  "game/player.collection": collectionOwning(
+    "/main.ts.script",
+    ["sprite", "/assets/player.atlas"],
+    ["cape", "/assets/cape.atlas"],
+  ),
+  "assets/player.atlas": atlasDocument("walk", "jump"),
+  "assets/cape.atlas": atlasDocument("flap", "furl"),
 };
 
 describe("tstl-plugin", () => {
@@ -355,6 +383,27 @@ describe("tstl-plugin", () => {
     }
   });
 
+  test("an address selects one sibling sprite's animations, never both", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const addressed = completionProxy({
+      source: ANIMATION_SOURCE,
+      base,
+      documents: SIBLING_SPRITE_DOCUMENTS,
+    });
+    const forSprite = addressed.getCompletionsAtPosition("main.ts", ANIMATION_POSITION, undefined);
+    expect(forSprite?.entries[0]).toBe(base.entries[0] as ts.CompletionEntry);
+    expect(forSprite?.entries.map((e) => e.name)).toEqual(["zzz", "jump", "walk"]);
+
+    const sibling = completionProxy({
+      source: CAPE_SOURCE,
+      base,
+      documents: SIBLING_SPRITE_DOCUMENTS,
+    });
+    const forCape = sibling.getCompletionsAtPosition("main.ts", CAPE_POSITION, undefined);
+    expect(forCape?.entries[0]).toBe(base.entries[0] as ts.CompletionEntry);
+    expect(forCape?.entries.map((e) => e.name)).toEqual(["zzz", "flap", "furl"]);
+  });
+
   test("the sibling address slot itself is untouched — it is not a classified slot", () => {
     const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
     const service = completionProxy({
@@ -388,11 +437,10 @@ describe("tstl-plugin", () => {
       base,
       documents: {
         ...ANIMATION_DOCUMENTS,
-        "game/other.collection": collectionOwning(
-          "/main.ts.script",
+        "game/other.collection": collectionOwning("/main.ts.script", [
           "sprite",
           "/assets/player.atlas",
-        ),
+        ]),
       },
     });
     expect(service.getCompletionsAtPosition("main.ts", ANIMATION_POSITION, undefined)).toBe(base);
