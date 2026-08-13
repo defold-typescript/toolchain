@@ -179,6 +179,9 @@ export const FIDELITY_BASELINE_MANIFEST: readonly ModuleManifestEntry[] =
 // path/[path, content] entries, so `string[]` would be wrong at one of its two
 // slots.
 const EDITOR_TYPE_MAP: Readonly<Record<string, string>> = {
+  // `editor.command` — the token's only consumer today — is skipped in favour of
+  // the hand-authored overload file, which returns the same `Opaque<"command">`.
+  // The entry stays so a future `command`-returning function maps identically.
   command: 'Opaque<"command">',
   transaction_step: 'Opaque<"transaction_step">',
   "transaction_step[": 'Opaque<"transaction_step">[]',
@@ -194,6 +197,11 @@ function mapEditorType(token: string): string {
 // fixture per namespace is the next slice, so they are dropped for now — as are
 // `editor.ui.*` and `editor.prefs.*`, which are out of scope for this goal.
 const EDITOR_SKIP_FUNCTIONS: readonly string[] = [
+  // Unlike every other entry here, this is not a dropped namespace prefix: the
+  // hand-authored `src/editor-overloads.d.ts` supplies `editor.command` with a
+  // generic signature that couples a command's opts bag to its own query, which
+  // the emitter cannot express.
+  "command",
   "ui.",
   "prefs.",
   "http.",
@@ -411,6 +419,14 @@ export interface KindManifestEntry {
   // kind that names one is disjoint from the runtime surface, not a narrowing
   // of it, so it takes none of the universal extras either.
   readonly only?: readonly string[];
+  // Hand-authored ambient modules the kind imports on top of `only`. A kind
+  // naming `only` takes none of `UNIVERSAL_EXTRA_IMPORTS`, so it cannot ride
+  // that set to reach an overload file.
+  readonly extraModules?: readonly string[];
+  // Extra value exports the factory module contributes to the kind subpath.
+  readonly extraExports?: readonly string[];
+  // Extra type-only exports the factory module contributes to the kind subpath.
+  readonly extraTypeExports?: readonly string[];
   // Where the factory (and, when emitted, the script-property helper types) is
   // re-exported from. Defaults to the runtime lifecycle module.
   readonly factoryFrom?: string;
@@ -427,7 +443,10 @@ export const KIND_MODULE_MANIFEST: readonly KindManifestEntry[] = [
   {
     kind: "editor-script",
     only: ["editor"],
+    extraModules: ["../../src/editor-overloads"],
     factory: "defineEditorScript",
+    extraExports: ["defineEditorCommand"],
+    extraTypeExports: ["EditorCommandQuery", "EditorNode"],
     factoryFrom: "../../src/editor",
     propertyTypes: false,
     jit: false,
@@ -448,17 +467,21 @@ export function generateKindIndex(kind: string): string {
     (m) => !Object.hasOwn(RESTRICTED_NAMESPACES, m.namespace),
   ).map((m) => `../${m.outFile.replace(/\.d\.ts$/, "")}`);
   const modules = entry.only
-    ? entry.only.map((namespace) => `../${namespace}`)
+    ? [...entry.only.map((namespace) => `../${namespace}`), ...(entry.extraModules ?? [])]
     : [...new Set([...universalNamespaces.sort(), ...[...UNIVERSAL_EXTRA_IMPORTS].sort()])];
   const lines = modules.map((path) => `import "${path}";`);
   if (entry.restricted) lines.push(`import "../${entry.restricted}";`);
   const references = `${LUA_51_REFERENCE}${entry.jit === false ? "" : LUA_JIT_ONLY_REFERENCE}`;
   const from = entry.factoryFrom ?? DEFAULT_FACTORY_MODULE;
+  const values = [entry.factory, ...(entry.extraExports ?? [])].join(", ");
+  const typeExports = entry.extraTypeExports?.length
+    ? `\nexport type { ${entry.extraTypeExports.join(", ")} } from "${from}";`
+    : "";
   const properties =
     entry.propertyTypes === false
       ? ""
       : `\nexport type { ScriptProperties, ScriptProperty } from "${from}";`;
-  return `${references}${lines.join("\n")}\n\nexport { ${entry.factory} } from "${from}";${properties}\n`;
+  return `${references}${lines.join("\n")}\n\nexport { ${values} } from "${from}";${typeExports}${properties}\n`;
 }
 
 export function generateVersionIndex(

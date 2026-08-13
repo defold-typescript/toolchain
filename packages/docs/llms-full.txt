@@ -1704,7 +1704,38 @@ Each `EditorCommand` returned by `get_commands` has:
 - `active` (optional) — decides whether the command is currently enabled; omit to always enable.
 - `run` — invoked when the command is chosen.
 
-> [!NOTE] `query`, `run`, and `active` receive a loosely-typed opts bag for now. Typing them is a deferred follow-up.
+##### Coupling `active` / `run` to the command's own `query`
+
+The editor resolves a command's `query` and passes the result to `active` and `run`. Wrap a command in `defineEditorCommand` and that opts bag is typed from that command's own query — exactly the members it declared, nothing more:
+
+```ts
+import { defineEditorCommand, defineEditorScript } from "@defold-typescript/types/editor-script";
+
+export default defineEditorScript({
+  get_commands: () => [
+    defineEditorCommand({
+      label: "Git History",
+      locations: ["Assets"],
+      query: { selection: { type: "resource", cardinality: "one" } },
+      // `opts.selection` is a single node, because cardinality is "one".
+      run: (opts) => print(editor.get(opts.selection, "path")),
+    }),
+    defineEditorCommand({
+      label: "Count Selection",
+      locations: ["Assets"],
+      query: { selection: { type: "resource", cardinality: "many" } },
+      // `opts.selection` is a node *list*, because cardinality is "many".
+      run: (opts) => print(opts.selection.length),
+    }),
+  ],
+});
+```
+
+A `"one"` selection binds `opts.selection` to a single `EditorNode` — a resource path or an internal node id, the argument `editor.get` and the `editor.tx.*` builders take. A `"many"` selection binds it to `EditorNode[]`. Reading a member the query never declared — `opts.argument` on either command above — is a compile error, and so is passing a `"many"` selection where a single node is expected.
+
+The wrapper is needed because TypeScript cannot infer a separate type argument per element of an array literal; `defineEditorCommand` gives each command its own inference site. It is an identity at runtime and returns the query-erased entry type, so precisely-typed and bare-literal commands coexist in one `get_commands` list — the plain literal in the first example above still compiles unchanged.
+
+`editor.command`, which registers a command directly rather than through `get_commands`, couples its opts bag the same way and needs no wrapper: it is generic over the `query` you pass it.
 
 #### The `editor.*` API
 
