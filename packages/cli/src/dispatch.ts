@@ -53,6 +53,7 @@ export interface DispatchIo {
 export interface DispatchInternals {
   readonly watcherFactory?: WatcherFactory;
   readonly editorClient?: WatchEditorClient;
+  readonly editorProbeTimeoutMs?: number;
   readonly componentWatcherFactory?: WatcherFactory;
   readonly debounceMs?: number;
   readonly onWatchStart?: (handle: RunWatchHandle) => void;
@@ -102,6 +103,9 @@ export interface DispatchInternals {
 const USAGE =
   "Usage: defold-typescript <init|init-agents|build|watch|wall|setup-debug|resolve|bob|run> [path]\n";
 const BOB_USAGE = "Usage: defold-typescript bob <resolve|build|bundle|status|run> [path]\n";
+
+/** How long `build` waits for an editor to identify itself before giving up on it. */
+const EDITOR_PROBE_TIMEOUT_MS = 2000;
 
 function parseScriptFlag(argv: string[]): { script: string | undefined; rest: string[] } {
   let script: string | undefined;
@@ -573,7 +577,25 @@ function dispatchCommand(
       if (!json) {
         const { resolveEditor } = await import("./editor-attach");
         const editorClient = internals?.editorClient;
-        const endpoint = editorClient ? await editorClient.resolve(cwd) : await resolveEditor(cwd);
+        // Bounded: a stale port file can name a process that listens but never
+        // answers, and this probe's only product is one human status line -- it
+        // must never be able to hold the build. A timed-out probe is silent,
+        // exactly as a missing editor is.
+        const probe = new AbortController();
+        const timeoutMs = internals?.editorProbeTimeoutMs ?? EDITOR_PROBE_TIMEOUT_MS;
+        let timer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+          timer = null;
+          probe.abort();
+        }, timeoutMs);
+        const endpoint = await Promise.race([
+          editorClient
+            ? editorClient.resolve(cwd, probe.signal)
+            : resolveEditor(cwd, undefined, probe.signal),
+          new Promise<null>((resolve) => {
+            probe.signal.addEventListener("abort", () => resolve(null));
+          }),
+        ]).catch(() => null);
+        if (timer !== null) clearTimeout(timer);
         if (endpoint !== null) {
           io.stderr.write(
             `defold-typescript build: attached to Defold editor at ${endpoint.baseUrl}\n`,

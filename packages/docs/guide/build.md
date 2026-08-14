@@ -29,6 +29,8 @@ one-shot command, so nothing is streamed and nothing is posted to the editor; fo
 the loop that surfaces the running game's runtime errors as they happen, see
 [`watch`](./watch.md#runtime-errors-in-the-terminal). With no editor open — the
 ordinary case in CI — `build` prints nothing extra and behaves exactly as before.
+The probe is time-bounded: an editor that does not answer promptly is treated as
+absent and the build carries on, so a stale port file can never hold it up.
 
 When a source uses a runtime helper TypeScript-to-Lua provides (`Object.keys`,
 object spread, and similar), the build also writes a `lualib_bundle.lua` at the

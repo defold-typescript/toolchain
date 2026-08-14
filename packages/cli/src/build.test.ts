@@ -520,14 +520,18 @@ interface BuildEditor {
   resolveCount(): number;
   consoleOpenCount(): number;
   postCount(): number;
+  /** The signal production handed the most recent resolve, if any. */
+  lastResolveSignal(): AbortSignal | undefined;
 }
 
 function makeBuildEditor(baseUrl: string | null): BuildEditor {
   const counts = { resolves: 0, consoles: 0, posts: 0 };
+  let lastSignal: AbortSignal | undefined;
   return {
     client: {
-      resolve() {
+      resolve(_cwd, signal) {
         counts.resolves += 1;
+        lastSignal = signal;
         return Promise.resolve(baseUrl === null ? null : { baseUrl });
       },
       postCommand() {
@@ -542,6 +546,34 @@ function makeBuildEditor(baseUrl: string | null): BuildEditor {
     resolveCount: () => counts.resolves,
     consoleOpenCount: () => counts.consoles,
     postCount: () => counts.posts,
+    lastResolveSignal: () => lastSignal,
+  };
+}
+
+/** An editor that answers its port probe but never finishes resolving. */
+function makeHungBuildEditor(): BuildEditor {
+  const counts = { resolves: 0, consoles: 0, posts: 0 };
+  let lastSignal: AbortSignal | undefined;
+  return {
+    client: {
+      resolve(_cwd, signal) {
+        counts.resolves += 1;
+        lastSignal = signal;
+        return new Promise<never>(() => {});
+      },
+      postCommand() {
+        counts.posts += 1;
+        return Promise.resolve("accepted" as const);
+      },
+      openConsole() {
+        counts.consoles += 1;
+        return Promise.resolve(null);
+      },
+    },
+    resolveCount: () => counts.resolves,
+    consoleOpenCount: () => counts.consoles,
+    postCount: () => counts.posts,
+    lastResolveSignal: () => lastSignal,
   };
 }
 
@@ -579,6 +611,48 @@ describe("build editor attach", () => {
     expect(headless.out()).toBe(attached.out());
     expect(headless.err()).toBe("");
     expect(headlessEditor.resolveCount()).toBe(1);
+  });
+
+  test("an editor that never answers is treated as absent rather than blocking the build", async () => {
+    const attached = captureStreams();
+    const attachedCode = await dispatch(["build", cwd], attached.io, {
+      editorClient: makeBuildEditor(null).client,
+    });
+
+    const hung = makeHungBuildEditor();
+    const probed = captureStreams();
+    const probedCode = await dispatch(["build", cwd], probed.io, {
+      editorClient: hung.client,
+      editorProbeTimeoutMs: 10,
+    });
+
+    expect(probedCode).toBe(attachedCode);
+    expect(probed.out()).toBe(attached.out());
+    expect(probed.err()).toBe("");
+    expect(hung.resolveCount()).toBe(1);
+  });
+
+  test("the probe timeout releases the request instead of leaving it in flight", async () => {
+    const hung = makeHungBuildEditor();
+    const { io } = captureStreams();
+
+    await dispatch(["build", cwd], io, {
+      editorClient: hung.client,
+      editorProbeTimeoutMs: 10,
+    });
+
+    expect(hung.lastResolveSignal()?.aborted).toBe(true);
+  });
+
+  test("a responsive editor's probe is never aborted", async () => {
+    const editor = makeBuildEditor("http://localhost:4242");
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd], io, { editorClient: editor.client });
+
+    expect(code).toBe(0);
+    expect(countMatches(err(), /http:\/\/localhost:4242/g)).toBe(1);
+    expect(editor.lastResolveSignal()?.aborted).toBe(false);
   });
 
   test("build --json emits no free-text attach line", async () => {

@@ -41,21 +41,28 @@ export type WatcherFactory = (root: string, onEvent: (e: WatchEvent) => void) =>
 export type EditorReloadCommand = "hot-reload" | "reload-extensions";
 
 export interface WatchEditorClient {
-  resolve(cwd: string): Promise<EditorEndpoint | null>;
+  resolve(cwd: string, signal?: AbortSignal): Promise<EditorEndpoint | null>;
   postCommand(cwd: string, name: EditorReloadCommand): Promise<ReloadOutcome>;
-  /** Live console lines with the replayed history already dropped, or null when the stream will not open. */
-  openConsole(endpoint: EditorEndpoint): Promise<AsyncIterable<string> | null>;
+  /**
+   * Live console lines with the replayed history already dropped, or null when
+   * the stream will not open. Optional: console streaming is additive, so a
+   * client that only resolves and posts still drives a watch.
+   */
+  openConsole?(
+    endpoint: EditorEndpoint,
+    signal?: AbortSignal,
+  ): Promise<AsyncIterable<string> | null>;
 }
 
 export function createWatchEditorClient(transport?: EditorTransport): WatchEditorClient {
   return {
-    resolve: (cwd) => resolveEditor(cwd, transport),
+    resolve: (cwd, signal) => resolveEditor(cwd, transport, signal),
     postCommand: (cwd, name) => postCommand(cwd, name, transport),
-    async openConsole(endpoint) {
+    async openConsole(endpoint, signal) {
       // The watermark is read before the stream opens: /console/stream replays
       // the whole session, so without it every attach reprints history as news.
-      const skip = await consoleWatermark(endpoint, transport);
-      const chunks = await openConsoleStream(endpoint, transport);
+      const skip = await consoleWatermark(endpoint, transport, signal);
+      const chunks = await openConsoleStream(endpoint, transport, signal);
       return chunks === null ? null : consoleLines(chunks, skip);
     },
   };
@@ -253,6 +260,11 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   let attachedBaseUrl: string | null = null;
   let detachNoticed = false;
   let consoleRunning = false;
+  // A parked async iterator cannot be closed from the consumer side, so
+  // cancellation has to reach the transport: this is what unparks an idle
+  // console stream when the watch stops.
+  const editorAbort = new AbortController();
+  let consoleReader: AsyncIterator<string> | null = null;
 
   function noteAttached(baseUrl: string): void {
     if (attachedBaseUrl === baseUrl) return;
@@ -290,11 +302,14 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
    * must stay pure NDJSON, and dropping the errors there instead would leave
    * `--json` strictly less informative with nothing put in their place.
    */
-  async function drainConsole(lines: AsyncIterable<string>): Promise<void> {
+  async function drainConsole(reader: AsyncIterator<string>): Promise<void> {
     try {
       let inError = false;
-      for await (const line of lines) {
+      for (;;) {
+        const next = await reader.next();
+        if (next.done === true) break;
         if (stopped) return;
+        const line = next.value;
         if (isConsoleErrorHeader(line)) {
           inError = true;
         } else if (!inError || !isConsoleContinuation(line)) {
@@ -303,9 +318,13 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
         }
         stderr.write(`${CONSOLE_PREFIX}${line}\n`);
       }
+    } catch {
+      // An aborted stream rejects rather than ending; that is the ordinary stop
+      // path, not a watch failure.
     } finally {
       // The stream ending is the editor quitting, not a watch failure: fall back
       // to unattached so the next rebuild can attach to whatever starts next.
+      if (consoleReader === reader) consoleReader = null;
       consoleRunning = false;
       attachedBaseUrl = null;
     }
@@ -324,19 +343,25 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   // reload is *posted*, not whether the editor's console is watched.
   async function ensureAttached(announce = true): Promise<EditorEndpoint | null> {
     const client = opts.editorClient ?? defaultEditorClient;
-    const endpoint = await client.resolve(cwd);
+    const endpoint = await client.resolve(cwd, editorAbort.signal);
+    // Every await below re-checks: a watch stopped mid-discovery must claim no
+    // attachment and acquire no stream.
+    if (stopped) return null;
     if (endpoint === null) {
       noteDetached();
       return null;
     }
     if (announce) noteAttached(endpoint.baseUrl);
-    if (!consoleRunning) {
+    if (client.openConsole !== undefined && !consoleRunning) {
       consoleRunning = true;
-      const lines = await client.openConsole(endpoint);
-      if (lines === null) {
+      const lines = await client.openConsole(endpoint, editorAbort.signal);
+      if (lines === null || stopped) {
         consoleRunning = false;
+        if (lines !== null) void lines[Symbol.asyncIterator]().return?.(undefined);
       } else {
-        void drainConsole(lines);
+        const reader = lines[Symbol.asyncIterator]();
+        consoleReader = reader;
+        void drainConsole(reader);
       }
     }
     return endpoint;
@@ -509,6 +534,12 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     }
     watcher.close();
     componentWatcher?.close();
+    // Order matters: the abort is what unparks a stream waiting on the socket,
+    // and `return()` is the ordinary close for one that is mid-chunk.
+    editorAbort.abort();
+    const reader = consoleReader;
+    consoleReader = null;
+    void reader?.return?.(undefined);
     if (opts.json) {
       stdout.write(renderWatchEvent({ event: "stop" }));
     }
