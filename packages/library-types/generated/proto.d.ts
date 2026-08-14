@@ -78,28 +78,28 @@ declare module 'proto.proto' {
 		package(): void;
 		"import"(): void;
 		message(): void;
-		enum(): void;
+		"enum"(): void;
 		option(): void;
 		extend(): void;
 		service(): void;
 		package(): void;
 		"import"(): void;
 		message(): void;
-		enum(): void;
+		"enum"(): void;
 		option(): void;
 		extend(): void;
 		service(): void;
 	}
 	interface msg_body {
 		message(): void;
-		enum(): void;
+		"enum"(): void;
 		extend(): void;
 		extensions(): void;
 		reserved(): void;
 		oneof(): void;
 		option(): void;
 		message(): void;
-		enum(): void;
+		"enum"(): void;
 		extend(): void;
 		extensions(): void;
 		reserved(): void;

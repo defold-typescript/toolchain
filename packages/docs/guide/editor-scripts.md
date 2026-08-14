@@ -83,7 +83,7 @@ Editor scripts run in the editor's own Lua VM, so none of the runtime namespaces
 }
 ```
 
-Under that config `editor.get`, `editor.command`, `editor.transact` and the `editor.tx.*` builders type-check, while `go.*` / `msg.*` / `vmath.*` are compile errors — the same two-way [wall](./wall.md) the runtime kinds get.
+Under that config `editor.get`, `editor.command`, `editor.transact`, the `editor.tx.*` builders, the `editor.ui.*` toolkit and `editor.prefs.*` all type-check, while `go.*` / `msg.*` / `vmath.*` are compile errors — the same two-way [wall](./wall.md) the runtime kinds get.
 
 You rarely need to write that `tsconfig` yourself: [`wall`](./wall.md) now offers an editor-script-only directory as a target like any other kind and writes the same config for you. Mixing an editor script and a runtime script in one directory still leaves it ineligible — no single narrowing covers both.
 
@@ -112,4 +112,26 @@ print(`packed at ${http.server.url}`);
 
 These are editor-only. `zip` and `tilemap.tiles` have no runtime form at all, and the `http`, `json`, `zlib` and `pprint` a game script sees are the *engine's*, with different signatures — which is why the two surfaces never share a `tsconfig`.
 
-One thing is deliberately not in yet: **`editor.ui.*` and `editor.prefs.*`**. Both hang their members off constant tables (`editor.ui.COLOR`, `editor.prefs.SCOPE`) that the generator cannot express yet.
+## Dialogs and preferences
+
+`editor.ui.*` and `editor.prefs.*` live under `editor`, not as globals of their own, so the table above does not change — they arrive with the rest of `editor.*`. Every `editor.ui.*` builder returns the same nominal `component` handle, and `editor.ui.show_dialog` is the only thing that consumes one, so a component assembled out of order is a compile error rather than a runtime surprise:
+
+```ts
+const dialog = editor.ui.dialog({
+  title: "Delete unused",
+  content: editor.ui.vertical({
+    children: [editor.ui.paragraph({ text: "This cannot be undone.", color: editor.ui.COLOR.HINT })],
+  }),
+  buttons: [
+    editor.ui.dialog_button({ text: "Cancel", cancel: true, result: false }),
+    editor.ui.dialog_button({ text: "Delete", default: true, result: true }),
+  ],
+});
+if (editor.ui.show_dialog(dialog) === true) {
+  editor.prefs.set("cleanup.confirmed", true);
+}
+```
+
+The constant tables (`editor.ui.COLOR`, `editor.ui.ALIGNMENT`, `editor.prefs.SCOPE`, …) are real namespaces, so a misspelled member is caught, and `editor.prefs.schema.*` — including `editor.prefs.schema.enum` — resolves as its own nested group.
+
+A component's `props` is an untyped table. Upstream documents every builder as taking `props: table` without describing the keys, so nothing is checked inside the bag; the per-builder prop keys are listed in each function's own hover documentation, which is generated from that same upstream prose.

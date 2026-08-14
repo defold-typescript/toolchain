@@ -183,5 +183,31 @@ go.get_position();
 vmath.vector3(1, 2, 3);
 // @ts-expect-error msg.* is absent on the editor-script surface
 msg.post("#", "hello");
-// @ts-expect-error editor.ui.* is out of scope for this slice
-editor.ui.label({ text: "x" });
+
+// The UI toolkit. Every builder hands back the same nominal component handle, so
+// the bindings are explicitly annotated: a regression to the default token
+// mapping (`unknown`) reds here, and so does one that leaves `show_dialog`
+// taking something else.
+const _heading: Opaque<"component"> = editor.ui.heading({
+  text: "Confirm",
+  color: editor.ui.COLOR.TEXT,
+});
+const _confirm: Opaque<"component"> = editor.ui.button({ text: "OK", result: true });
+const _confirmDialog: Opaque<"component"> = editor.ui.dialog({
+  title: "Confirm",
+  content: editor.ui.vertical({ children: [_heading] }),
+  buttons: [_confirm],
+});
+void editor.ui.show_dialog(_confirmDialog);
+// @ts-expect-error the constant table is a namespace, not an index signature
+void editor.ui.COLOR.TEX;
+
+// Preferences, including the second-level schema group. `enum` is a reserved
+// word, so it is reachable only through the emitted export alias.
+editor.prefs.set("my.key", 1);
+const _pref: unknown = editor.prefs.get("my.key");
+const _isSet: boolean = editor.prefs.is_set("my.key");
+void editor.prefs.schema.integer({ default: 0, scope: editor.prefs.SCOPE.PROJECT });
+void editor.prefs.schema.enum({ values: ["a", "b"] });
+void _pref;
+void _isSet;
