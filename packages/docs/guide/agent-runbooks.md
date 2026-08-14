@@ -767,10 +767,10 @@ re-run `bunx @defold-typescript/cli build --json`, and clear the Defold project'
 
 ## Hot reload the running game
 
-**Goal:** get an edit into the *already running* game and find out whether the
-reloaded code ran, without opening the editor and without holding a foreground
-watcher. This is the fast inner loop for an agent: change a `.ts`, rebuild,
-reload, read the result, decide.
+**Goal:** get an edit into the *already running* game and find out whether an
+error surfaced on the editor console while the command watched, without opening
+the editor and without holding a foreground watcher. This is the fast inner loop
+for an agent: change a `.ts`, rebuild, reload, read the result, decide.
 
 **Commands (run from the project root):**
 
@@ -788,21 +788,25 @@ post with HTTP 202 — *queued* — and a Lua error in the reloaded chunk reache
 console, never that response. Its single JSON line is:
 
 ```json
-{"command":"reload","ok":false,"written":[],"error":"the reloaded code reported an error","outcome":"accepted","consoleErrors":["ERROR:SCRIPT: /main/main.script:12: attempt to index a nil value"]}
+{"command":"reload","ok":false,"written":[],"error":"the reloaded code reported an error","outcome":"accepted","consoleErrors":["ERROR:SCRIPT: /main/main.script:12: attempt to index a nil value"],"consoleObserved":true}
 ```
 
-Branch on `outcome` first, then `ok`:
+Branch on `outcome` first, then `consoleObserved`, then `ok`:
 
-- `outcome: "unavailable"` — no editor is running. Nothing was posted; start the
-  editor and the game before retrying.
+- `outcome: "unavailable"` — no editor is running, or it never answered within
+  the attach deadline. Nothing was posted; start the editor and the game before
+  retrying.
 - `outcome: "skipped"` — the editor is running but declined: usually no game is
   running, or nothing was dirty. Press **Build** in the editor once to get a game
   under it.
-- `outcome: "accepted"` with `ok: true` — the reload landed and nothing appeared
-  on the console during the window.
-- `outcome: "accepted"` with `ok: false` — the reload landed and the new code
-  threw. `consoleErrors` carries the header and its traceback frames in order;
-  that is your stack trace.
+- `outcome: "accepted"` with `consoleObserved: false` and `ok: false` — the post
+  was accepted but the console never opened, so nothing was watched. Retry, or
+  pass `--wait 0` to accept that trade deliberately.
+- `outcome: "accepted"` with `ok: true` — the post was accepted and nothing
+  appeared on the console during the window.
+- `outcome: "accepted"` with `ok: false` and `consoleObserved: true` — the post
+  was accepted and the new code threw. `consoleErrors` carries the header and its
+  traceback frames in order; that is your stack trace.
 
 **`ok: true` is not proof the reload succeeded.** The window is a heuristic: an
 error thrown after it closes, or on a frame the game has not reached, is missed.
@@ -811,8 +815,8 @@ classes never reach the console at all — Defold's own build errors (a bad
 component reference, a missing atlas, a Lua syntax error) go to the editor's
 Build Errors tab.
 
-When the reload lands but the game behaves as before, check `on_reload` rather
-than the reload: hot reload runs the **new code against the old state** and does
+When `reload` reports no error but the game behaves as before, check `on_reload`
+rather than the reload: hot reload runs the **new code against the old state** and does
 not re-run `init`, so state seeded in `init` keeps its old values. See
 [Script lifecycle](./script-lifecycle.md#hot-reload-and-on_reload).
 
