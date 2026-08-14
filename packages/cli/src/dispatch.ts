@@ -205,7 +205,12 @@ function dispatchCommand(
   const frozen = argv.includes("--frozen");
   const failOnDrift = argv.includes("--fail-on-drift");
   const hotReload = argv.includes("--hot-reload");
-  const { value: defoldTargetFlag, rest: afterTargetArgs } = parseValueFlag(argv, "defold-target");
+  const reloadExtensions = argv.includes("--extensions");
+  const { value: waitFlag, rest: afterWaitArgs } = parseValueFlag(argv, "wait");
+  const { value: defoldTargetFlag, rest: afterTargetArgs } = parseValueFlag(
+    afterWaitArgs,
+    "defold-target",
+  );
   const { script: scriptFlag, rest: afterScriptArgs } = parseScriptFlag(afterTargetArgs);
   const { value: javaFlag, rest: afterJavaArgs } = parseValueFlag(afterScriptArgs, "java");
   const { value: buildServerFlag, rest: afterBuildServerArgs } = parseValueFlag(
@@ -226,6 +231,7 @@ function dispatchCommand(
       a !== "--frozen" &&
       a !== "--fail-on-drift" &&
       a !== "--hot-reload" &&
+      a !== "--extensions" &&
       a !== "--detected" &&
       a !== "--detect",
   );
@@ -1033,6 +1039,26 @@ function dispatchCommand(
       }
       const drifted = result.extensions.filter((e) => e.pinStatus === "drift");
       return frozen && drifted.length > 0 ? 1 : 0;
+    })();
+  }
+
+  if (command === "reload") {
+    return (async (): Promise<number> => {
+      const { runReload } = await import("./reload");
+      const parsedWait = waitFlag === undefined ? undefined : Number(waitFlag);
+      if (parsedWait !== undefined && (!Number.isFinite(parsedWait) || parsedWait < 0)) {
+        io.stderr.write(`defold-typescript reload: --wait expects milliseconds, got ${waitFlag}\n`);
+        return 1;
+      }
+      return runReload({
+        cwd,
+        stdout: io.stdout,
+        stderr: io.stderr,
+        ...(json ? { json: true } : {}),
+        ...(reloadExtensions ? { extensions: true } : {}),
+        ...(parsedWait === undefined ? {} : { waitMs: parsedWait }),
+        ...(internals?.editorClient ? { editorClient: internals.editorClient } : {}),
+      });
     })();
   }
 

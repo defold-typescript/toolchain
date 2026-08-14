@@ -32,6 +32,7 @@ Only guide pages are inlined into `llms-full.txt`; pages marked `llms-full: fals
 - [init](guide/init.md)
 - [upgrade](guide/upgrade.md)
 - [watch](guide/watch.md)
+- [reload](guide/reload.md)
 - [build](guide/build.md)
 - [run](guide/run.md)
 - [bob](guide/bob.md)
