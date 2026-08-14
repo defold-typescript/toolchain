@@ -270,6 +270,21 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   }
 
   /**
+   * A refused reload is not a vanished editor -- discovery just probed this
+   * endpoint -- so the wording names it, but both states leave hot reload idle
+   * and share the one-notice latch.
+   */
+  function noteReloadFailed(baseUrl: string): void {
+    attachedBaseUrl = null;
+    if (detachNoticed) return;
+    detachNoticed = true;
+    if (!opts.json)
+      stderr.write(
+        `defold-typescript watch: Defold editor at ${baseUrl} did not accept the reload\n`,
+      );
+  }
+
+  /**
    * Runtime failures from the running game are content, not status, so they go
    * to stderr in both modes: under `--json` stdout is the machine stream and
    * must stay pure NDJSON, and dropping the errors there instead would leave
@@ -307,14 +322,14 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
 
   // Reading the editor is unconditional -- `--hot-reload` governs whether a
   // reload is *posted*, not whether the editor's console is watched.
-  async function ensureAttached(): Promise<EditorEndpoint | null> {
+  async function ensureAttached(announce = true): Promise<EditorEndpoint | null> {
     const client = opts.editorClient ?? defaultEditorClient;
     const endpoint = await client.resolve(cwd);
     if (endpoint === null) {
       noteDetached();
       return null;
     }
-    noteAttached(endpoint.baseUrl);
+    if (announce) noteAttached(endpoint.baseUrl);
     if (!consoleRunning) {
       consoleRunning = true;
       const lines = await client.openConsole(endpoint);
@@ -338,13 +353,21 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
 
   async function pushReload(commands: readonly EditorReloadCommand[]): Promise<void> {
     const client = opts.editorClient ?? defaultEditorClient;
-    const endpoint = await ensureAttached();
+    // On this path attachment is the post's outcome, not the probe's: announcing
+    // it up front would claim an attachment a refused reload cannot back.
+    const endpoint = await ensureAttached(false);
     if (endpoint === null) {
       emitReloadEvent("unavailable");
       return;
     }
     for (const name of commands) {
-      emitReloadEvent(await client.postCommand(cwd, name));
+      const outcome = await client.postCommand(cwd, name);
+      if (outcome === "unavailable") {
+        noteReloadFailed(endpoint.baseUrl);
+      } else {
+        noteAttached(endpoint.baseUrl);
+      }
+      emitReloadEvent(outcome);
     }
   }
 
