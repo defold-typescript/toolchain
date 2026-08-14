@@ -2,8 +2,15 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { Writable } from "node:stream";
 import { runBuild } from "./build";
 import { GENERATED_BANNER } from "./build-output";
+import { dispatch } from "./dispatch";
+import type { WatchEditorClient } from "./watch";
+
+function countMatches(haystack: string, needle: RegExp): number {
+  return haystack.match(needle)?.length ?? 0;
+}
 
 let cwd: string;
 
@@ -488,5 +495,103 @@ describe("runBuild outDir tree mirroring", () => {
     // Never re-rooted under the source subtree.
     expect(result.written).not.toContain("build/lua/world/lualib_bundle.lua");
     expect(result.written).not.toContain("build/lua/world/defold_typescript_timers.lua");
+  });
+});
+
+function captureStreams() {
+  const outChunks: Buffer[] = [];
+  const errChunks: Buffer[] = [];
+  const collect = (chunks: Buffer[]) =>
+    new Writable({
+      write(chunk, _enc, cb) {
+        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+        cb();
+      },
+    });
+  return {
+    io: { stdout: collect(outChunks), stderr: collect(errChunks) },
+    out: () => Buffer.concat(outChunks).toString("utf8"),
+    err: () => Buffer.concat(errChunks).toString("utf8"),
+  };
+}
+
+interface BuildEditor {
+  readonly client: WatchEditorClient;
+  resolveCount(): number;
+  consoleOpenCount(): number;
+  postCount(): number;
+}
+
+function makeBuildEditor(baseUrl: string | null): BuildEditor {
+  const counts = { resolves: 0, consoles: 0, posts: 0 };
+  return {
+    client: {
+      resolve() {
+        counts.resolves += 1;
+        return Promise.resolve(baseUrl === null ? null : { baseUrl });
+      },
+      postCommand() {
+        counts.posts += 1;
+        return Promise.resolve("accepted" as const);
+      },
+      openConsole() {
+        counts.consoles += 1;
+        return Promise.resolve(null);
+      },
+    },
+    resolveCount: () => counts.resolves,
+    consoleOpenCount: () => counts.consoles,
+    postCount: () => counts.posts,
+  };
+}
+
+describe("build editor attach", () => {
+  beforeEach(() => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/main.ts", MAIN_SCRIPT);
+  });
+
+  test("a running editor is named once, and no console stream or command is opened", async () => {
+    const editor = makeBuildEditor("http://localhost:4242");
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd], io, { editorClient: editor.client });
+
+    expect(code).toBe(0);
+    expect(countMatches(err(), /http:\/\/localhost:4242/g)).toBe(1);
+    expect(editor.consoleOpenCount()).toBe(0);
+    expect(editor.postCount()).toBe(0);
+  });
+
+  test("no editor leaves stdout and the exit code exactly as an attached run, and adds no stderr", async () => {
+    const attached = captureStreams();
+    const attachedCode = await dispatch(["build", cwd], attached.io, {
+      editorClient: makeBuildEditor("http://localhost:4242").client,
+    });
+
+    const headlessEditor = makeBuildEditor(null);
+    const headless = captureStreams();
+    const headlessCode = await dispatch(["build", cwd], headless.io, {
+      editorClient: headlessEditor.client,
+    });
+
+    expect(headlessCode).toBe(attachedCode);
+    expect(headless.out()).toBe(attached.out());
+    expect(headless.err()).toBe("");
+    expect(headlessEditor.resolveCount()).toBe(1);
+  });
+
+  test("build --json emits no free-text attach line", async () => {
+    const editor = makeBuildEditor("http://localhost:4242");
+    const { io, out, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--json"], io, { editorClient: editor.client });
+
+    expect(code).toBe(0);
+    for (const line of out().trimEnd().split("\n")) {
+      expect(() => JSON.parse(line) as unknown).not.toThrow();
+    }
+    expect(out()).not.toContain("http://localhost:4242");
+    expect(err()).not.toContain("http://localhost:4242");
   });
 });

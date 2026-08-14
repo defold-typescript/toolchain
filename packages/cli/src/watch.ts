@@ -10,7 +10,11 @@ import {
 } from "./build-output";
 import { type BuildSession, createBuildSession } from "./build-session";
 import {
+  consoleLines,
+  consoleWatermark,
   type EditorEndpoint,
+  type EditorTransport,
+  openConsoleStream,
   postCommand,
   type ReloadOutcome,
   resolveEditor,
@@ -39,12 +43,25 @@ export type EditorReloadCommand = "hot-reload" | "reload-extensions";
 export interface WatchEditorClient {
   resolve(cwd: string): Promise<EditorEndpoint | null>;
   postCommand(cwd: string, name: EditorReloadCommand): Promise<ReloadOutcome>;
+  /** Live console lines with the replayed history already dropped, or null when the stream will not open. */
+  openConsole(endpoint: EditorEndpoint): Promise<AsyncIterable<string> | null>;
 }
 
-export const defaultEditorClient: WatchEditorClient = {
-  resolve: (cwd) => resolveEditor(cwd),
-  postCommand: (cwd, name) => postCommand(cwd, name),
-};
+export function createWatchEditorClient(transport?: EditorTransport): WatchEditorClient {
+  return {
+    resolve: (cwd) => resolveEditor(cwd, transport),
+    postCommand: (cwd, name) => postCommand(cwd, name, transport),
+    async openConsole(endpoint) {
+      // The watermark is read before the stream opens: /console/stream replays
+      // the whole session, so without it every attach reprints history as news.
+      const skip = await consoleWatermark(endpoint, transport);
+      const chunks = await openConsoleStream(endpoint, transport);
+      return chunks === null ? null : consoleLines(chunks, skip);
+    },
+  };
+}
+
+export const defaultEditorClient: WatchEditorClient = createWatchEditorClient();
 
 const EDITOR_SCRIPT_SUFFIX = SCRIPT_SUFFIX_BY_KIND["editor-script"];
 
@@ -109,6 +126,20 @@ function formatFailureLine(entry: {
   return entry.line !== undefined && entry.column !== undefined
     ? `  ${entry.file}:${entry.line}:${entry.column}: ${entry.message}`
     : `  ${entry.file}: ${entry.message}`;
+}
+
+const CONSOLE_PREFIX = "defold-typescript watch: editor: ";
+
+// The engine tags every console line with its level, so the level is the filter:
+// a watch that echoed the whole stream would drown in per-frame INFO lines.
+function isConsoleErrorHeader(line: string): boolean {
+  return /^(?:ERROR|WARNING):/.test(line);
+}
+
+// A traceback frame is indented and carries no level of its own, so it is only
+// meaningful as a continuation of the header above it.
+function isConsoleContinuation(line: string): boolean {
+  return /^\s/.test(line) || /^stack traceback/i.test(line);
 }
 
 function rewrapInitError(err: unknown): Error {
@@ -204,12 +235,13 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   let syncBusy = false;
   let resolveBusy = false;
   let reloadBusy = false;
+  let attachBusy = false;
   let stopped = false;
   let idleResolvers: Array<() => void> = [];
   const pending = new Set<string>();
 
   function notifyIdle(): void {
-    if (rebuildBusy || syncBusy || resolveBusy || reloadBusy) return;
+    if (rebuildBusy || syncBusy || resolveBusy || reloadBusy || attachBusy) return;
     const resolvers = idleResolvers;
     idleResolvers = [];
     for (const resolve of resolvers) resolve();
@@ -220,20 +252,47 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   // or restart at any point during a watch, and only the change is worth a line.
   let attachedBaseUrl: string | null = null;
   let detachNoticed = false;
+  let consoleRunning = false;
 
   function noteAttached(baseUrl: string): void {
     if (attachedBaseUrl === baseUrl) return;
     attachedBaseUrl = baseUrl;
     detachNoticed = false;
-    if (!opts.json) stderr.write(`defold-typescript watch: hot reload attached to ${baseUrl}\n`);
+    if (!opts.json)
+      stderr.write(`defold-typescript watch: attached to Defold editor at ${baseUrl}\n`);
   }
 
   function noteDetached(): void {
     attachedBaseUrl = null;
     if (detachNoticed) return;
     detachNoticed = true;
-    if (!opts.json) {
-      stderr.write("defold-typescript watch: no Defold editor detected; hot reload is idle\n");
+    if (!opts.json) stderr.write("defold-typescript watch: no Defold editor detected\n");
+  }
+
+  /**
+   * Runtime failures from the running game are content, not status, so they go
+   * to stderr in both modes: under `--json` stdout is the machine stream and
+   * must stay pure NDJSON, and dropping the errors there instead would leave
+   * `--json` strictly less informative with nothing put in their place.
+   */
+  async function drainConsole(lines: AsyncIterable<string>): Promise<void> {
+    try {
+      let inError = false;
+      for await (const line of lines) {
+        if (stopped) return;
+        if (isConsoleErrorHeader(line)) {
+          inError = true;
+        } else if (!inError || !isConsoleContinuation(line)) {
+          inError = false;
+          continue;
+        }
+        stderr.write(`${CONSOLE_PREFIX}${line}\n`);
+      }
+    } finally {
+      // The stream ending is the editor quitting, not a watch failure: fall back
+      // to unattached so the next rebuild can attach to whatever starts next.
+      consoleRunning = false;
+      attachedBaseUrl = null;
     }
   }
 
@@ -246,15 +305,44 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     );
   }
 
-  async function pushReload(commands: readonly EditorReloadCommand[]): Promise<void> {
+  // Reading the editor is unconditional -- `--hot-reload` governs whether a
+  // reload is *posted*, not whether the editor's console is watched.
+  async function ensureAttached(): Promise<EditorEndpoint | null> {
     const client = opts.editorClient ?? defaultEditorClient;
     const endpoint = await client.resolve(cwd);
     if (endpoint === null) {
       noteDetached();
+      return null;
+    }
+    noteAttached(endpoint.baseUrl);
+    if (!consoleRunning) {
+      consoleRunning = true;
+      const lines = await client.openConsole(endpoint);
+      if (lines === null) {
+        consoleRunning = false;
+      } else {
+        void drainConsole(lines);
+      }
+    }
+    return endpoint;
+  }
+
+  function scheduleAttach(): void {
+    if (attachBusy) return;
+    attachBusy = true;
+    void ensureAttached().finally(() => {
+      attachBusy = false;
+      notifyIdle();
+    });
+  }
+
+  async function pushReload(commands: readonly EditorReloadCommand[]): Promise<void> {
+    const client = opts.editorClient ?? defaultEditorClient;
+    const endpoint = await ensureAttached();
+    if (endpoint === null) {
       emitReloadEvent("unavailable");
       return;
     }
-    noteAttached(endpoint.baseUrl);
     for (const name of commands) {
       emitReloadEvent(await client.postCommand(cwd, name));
     }
@@ -311,6 +399,9 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       reportFailure(err, "rebuild");
     }
     if (!opts.json) stdout.write(BUILD_FINISHED_LINE);
+    // A posted reload attaches on its own; this covers the rebuilds that post
+    // nothing, so an editor started mid-watch is still picked up.
+    if (!reloadBusy) scheduleAttach();
     rebuildBusy = false;
     notifyIdle();
   }
@@ -402,16 +493,21 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     syncBusy = false;
     resolveBusy = false;
     reloadBusy = false;
+    attachBusy = false;
     notifyIdle();
     resolveDone(0);
   }
 
   function waitForIdle(): Promise<void> {
-    if (!rebuildBusy && !syncBusy && !resolveBusy && !reloadBusy) return Promise.resolve();
+    if (!rebuildBusy && !syncBusy && !resolveBusy && !reloadBusy && !attachBusy) {
+      return Promise.resolve();
+    }
     return new Promise<void>((resolve) => {
       idleResolvers.push(resolve);
     });
   }
+
+  scheduleAttach();
 
   return { stop, done, waitForIdle };
 }

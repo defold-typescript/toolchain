@@ -428,6 +428,12 @@ Hot reload replaces code, not state: the reloaded script keeps the state the old
 
 Without hot reload the manual path still stands: rebuild with `bunx @defold-typescript/cli build` (or keep plain `watch` running) and press **Build** in the editor to run the new code.
 
+##### Runtime errors in your terminal
+
+While the editor is open, `watch` also reads its console and prints runtime errors — the ones a script throws while the game runs — into your terminal, with their stack tracebacks. This happens with or without `--hot-reload`, and `build` prints a line naming the editor it found.
+
+An attached editor means the CLI can read the editor, not that the editor is checking your project in the background. Defold's own build errors — a missing atlas, a bad component reference — are produced by pressing **Build** and appear in the editor's Build Errors tab, never in the console. See [`watch`](./watch.md#runtime-errors-in-the-terminal).
+
 ### TypeScript vs Lua
 
 A translation cheat sheet for Defold developers who already know Lua. Lua on the
@@ -2086,6 +2092,25 @@ It does **not** bootstrap that surface: run `resolve` once before `watch` so the
 initial extension types exist; `watch` only reconciles later `[dependencies]`
 edits.
 
+#### Runtime errors in the terminal
+
+While a Defold editor is open on this project, `watch` reads its console and
+prints the `ERROR:` and `WARNING:` lines — with their stack tracebacks — into the
+same terminal you are already watching. That covers the failures the transpiler
+cannot see: code that compiles clean and then throws in the running game. It
+needs no flag, because `--hot-reload` governs whether a reload is *posted*, not
+whether the editor is read.
+
+Ordinary `INFO:`/`DEBUG:` frame logging is filtered out, and console history
+recorded before `watch` attached is skipped — attaching mid-session prints the
+next error rather than replaying old ones. Under `--json` these lines stay on
+stderr and never enter the event stream on stdout.
+
+What this does **not** surface is Defold's own build errors, such as a bad
+component reference or a missing atlas. Those are produced by pressing **Build**
+in the editor and go to its Build Errors tab, never to the console; a Lua syntax
+error lands there too. So silence here is not proof that a reload succeeded.
+
 #### Hot reload
 
 `--hot-reload` pushes each successful rebuild into the game running under the
@@ -2158,6 +2183,13 @@ or reference by hand, only ever the `src/util.ts` you author. Your `import`
 becomes a Lua `require` that resolves against that emitted module, so a shared
 module must be built before the script importing it will run. Open the project in
 the [Defold editor](./defold-editor.md) (or run it headlessly, below) to play it.
+
+If a Defold editor is open on this project, `build` names it on stderr
+(`attached to Defold editor at http://localhost:<port>`) and moves on. It is a
+one-shot command, so nothing is streamed and nothing is posted to the editor; for
+the loop that surfaces the running game's runtime errors as they happen, see
+[`watch`](./watch.md#runtime-errors-in-the-terminal). With no editor open — the
+ordinary case in CI — `build` prints nothing extra and behaves exactly as before.
 
 When a source uses a runtime helper TypeScript-to-Lua provides (`Object.keys`,
 object spread, and similar), the build also writes a `lualib_bundle.lua` at the
