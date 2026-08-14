@@ -1639,8 +1639,11 @@ export interface SymbolSignature {
  * availability matrix joins on. This is the single declaration-backed source for
  * the shared `api-signatures.json` artifact: the same `mapType` (constant
  * branding) and table-doc resolver produce text that appears verbatim in the
- * committed `.d.ts`. The caller applies the same `skipFunctions` filter the
- * `.d.ts` generation does, so a dropped member never yields a signature.
+ * committed `.d.ts`, and nested members come from the same
+ * {@link collectNestedGroups} tree the declaration emitter walks, so neither
+ * surface can decide on its own which members are nested or how deep they go.
+ * The caller applies the same `skipFunctions` filter the `.d.ts` generation
+ * does, so a dropped member never yields a signature.
  */
 export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): SymbolSignature[] {
   const prefix = `${module.namespace}.`;
@@ -1683,16 +1686,22 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
     });
   }
 
-  const nestedFunctionLocal = /^[A-Za-z_$][\w$]*\.[A-Za-z_$][\w$]*$/;
-  for (const fn of module.functions) {
-    const local = stripPrefix(fn.name, prefix);
-    if (!nestedFunctionLocal.test(local)) continue;
-    const segment = local.slice(0, local.indexOf("."));
-    const prepared = prepareFunction(fn, `${module.namespace}.${segment}.`);
-    if (prepared === null) continue;
+  const nested = flattenNestedGroups(collectNestedGroups(module, prefix));
+  for (const v of nested.variables) {
     out.push({
-      identity: fnIdentity(fn),
-      tsSignature: emitFunction(prepared, prepared.name, mapType, resolver, urlParameters),
+      identity: {
+        namespace: module.namespace,
+        kind: "VARIABLE",
+        name: v.original.name,
+        signature: "",
+      },
+      tsSignature: emitVariable(v, emitName(v.name), mapType),
+    });
+  }
+  for (const fn of nested.functions) {
+    out.push({
+      identity: fnIdentity(fn.original),
+      tsSignature: emitFunction(fn, emitName(fn.name), mapType, resolver, urlParameters),
     });
   }
 
@@ -1820,6 +1829,28 @@ function collectNestedGroups(module: ApiModule, prefix: string): Map<string, Nes
   };
   sortLevel(root);
   return root;
+}
+
+// Every member a nested tree holds, at any depth, in the order the declaration
+// emitter walks it (segments sorted, each group's own members before its
+// children). Callers that need no per-segment container read the tree through
+// this rather than re-deriving which members are nested and how deep.
+function flattenNestedGroups(level: ReadonlyMap<string, NestedGroup>): {
+  variables: PreparedVariable[];
+  functions: PreparedFunction[];
+} {
+  const variables: PreparedVariable[] = [];
+  const functions: PreparedFunction[] = [];
+  const walk = (current: ReadonlyMap<string, NestedGroup>): void => {
+    for (const segment of [...current.keys()].sort((a, b) => a.localeCompare(b))) {
+      const group = current.get(segment) as NestedGroup;
+      variables.push(...group.variables);
+      functions.push(...group.functions);
+      walk(group.children);
+    }
+  };
+  walk(level);
+  return { variables, functions };
 }
 
 function prepareFunction(fn: ApiFunction, prefix: string): PreparedFunction | null {
