@@ -1712,6 +1712,193 @@ describe("runWatch hot reload failure reporting", () => {
     handle.stop();
     await handle.done;
   });
+
+  test("a compile failure after a refused reload does not re-announce the attachment", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor("http://localhost:4242");
+    editor.setOutcome("unavailable");
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    writeProjectFile("src/main.ts", scriptSource(2));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    const beforeFailure = err();
+    writeProjectFile("src/main.ts", 'const x: number = "oops";\n');
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    expect(err().slice(beforeFailure.length)).not.toContain("attached to Defold editor");
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("a rebuild that writes nothing after a refused reload does not re-announce the attachment", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    writeProjectFile("src/helper.ts", moduleSource(1));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor("http://localhost:4242");
+    editor.setOutcome("unavailable");
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    writeProjectFile("src/main.ts", scriptSource(2));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    const beforeEmptyEmit = err();
+    rmSync(path.join(cwd, "src/helper.ts"));
+    factory.trigger("rename", "src/helper.ts");
+    await handle.waitForIdle();
+
+    expect(err().slice(beforeEmptyEmit.length)).not.toContain("attached to Defold editor");
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("a post-less rebuild between two refusals does not repeat the refusal notice", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    writeProjectFile("src/helper.ts", moduleSource(1));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor("http://localhost:4242");
+    editor.setOutcome("unavailable");
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    writeProjectFile("src/main.ts", scriptSource(2));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    rmSync(path.join(cwd, "src/helper.ts"));
+    factory.trigger("rename", "src/helper.ts");
+    await handle.waitForIdle();
+
+    writeProjectFile("src/main.ts", scriptSource(3));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    expect(countMatches(err(), /did not accept the reload/g)).toBe(1);
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("a reload accepted after a post-less rebuild still re-announces the attachment", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    writeProjectFile("src/helper.ts", moduleSource(1));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor("http://localhost:4242");
+    editor.setOutcome("unavailable");
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    writeProjectFile("src/main.ts", scriptSource(2));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    rmSync(path.join(cwd, "src/helper.ts"));
+    factory.trigger("rename", "src/helper.ts");
+    await handle.waitForIdle();
+
+    const beforeRecovery = err();
+    editor.setOutcome("accepted");
+    writeProjectFile("src/main.ts", scriptSource(3));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    expect(err().slice(beforeRecovery.length)).toContain(
+      "attached to Defold editor at http://localhost:4242",
+    );
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("an editor that quits and returns after a refusal is announced as a new session", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    writeProjectFile("src/helper.ts", moduleSource(1));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor("http://localhost:4242");
+    editor.setOutcome("unavailable");
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    writeProjectFile("src/main.ts", scriptSource(2));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    editor.setBaseUrl(null);
+    writeProjectFile("src/main.ts", scriptSource(3));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    const beforeReturn = err();
+    editor.setBaseUrl("http://localhost:4242");
+    rmSync(path.join(cwd, "src/helper.ts"));
+    factory.trigger("rename", "src/helper.ts");
+    await handle.waitForIdle();
+
+    expect(err().slice(beforeReturn.length)).toContain(
+      "attached to Defold editor at http://localhost:4242",
+    );
+
+    handle.stop();
+    await handle.done;
+  });
 });
 
 function makeEditorTransport(historyLines: number, stream: FakeConsole): EditorTransport {
