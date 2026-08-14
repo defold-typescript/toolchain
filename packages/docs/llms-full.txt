@@ -1781,7 +1781,7 @@ These are editor-only. `zip` and `tilemap.tiles` have no runtime form at all, an
 
 #### Dialogs and preferences
 
-`editor.ui.*` and `editor.prefs.*` live under `editor`, not as globals of their own, so the table above does not change — they arrive with the rest of `editor.*`. Every `editor.ui.*` builder returns the same nominal `component` handle, and `editor.ui.show_dialog` is the only thing that consumes one, so a component assembled out of order is a compile error rather than a runtime surprise:
+`editor.ui.*` and `editor.prefs.*` live under `editor`, not as globals of their own, so the table above does not change — they arrive with the rest of `editor.*`. Every `editor.ui.*` builder returns the same nominal `component` handle, and `editor.ui.show_dialog` is the only thing that consumes one: `show_dialog` rejects anything that is not a component handle, but the types draw no line between a dialog and a button, do not check assembly order, and — as below — do not look inside `props`. The editor VM decides those three at runtime:
 
 ```ts
 const dialog = editor.ui.dialog({
