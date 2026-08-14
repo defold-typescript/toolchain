@@ -33,6 +33,25 @@ It does **not** bootstrap that surface: run `resolve` once before `watch` so the
 initial extension types exist; `watch` only reconciles later `[dependencies]`
 edits.
 
+## Runtime errors in the terminal
+
+While a Defold editor is open on this project, `watch` reads its console and
+prints the `ERROR:` and `WARNING:` lines — with their stack tracebacks — into the
+same terminal you are already watching. That covers the failures the transpiler
+cannot see: code that compiles clean and then throws in the running game. It
+needs no flag, because `--hot-reload` governs whether a reload is *posted*, not
+whether the editor is read.
+
+Ordinary `INFO:`/`DEBUG:` frame logging is filtered out, and console history
+recorded before `watch` attached is skipped — attaching mid-session prints the
+next error rather than replaying old ones. Under `--json` these lines stay on
+stderr and never enter the event stream on stdout.
+
+What this does **not** surface is Defold's own build errors, such as a bad
+component reference or a missing atlas. Those are produced by pressing **Build**
+in the editor and go to its Build Errors tab, never to the console; a Lua syntax
+error lands there too. So silence here is not proof that a reload succeeded.
+
 ## Hot reload
 
 `--hot-reload` pushes each successful rebuild into the game running under the

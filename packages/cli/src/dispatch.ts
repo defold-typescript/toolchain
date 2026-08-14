@@ -565,6 +565,22 @@ function dispatchCommand(
         }
         return 1;
       }
+      // One-shot: resolve, name the editor, move on. No console stream and no
+      // retry -- `build` finishes in under a second, replaying a console that
+      // predates the command would say nothing about it, and a missing editor is
+      // the ordinary case in CI. Under `--json` the probe is skipped outright,
+      // since its only product is a human line the machine stream must not carry.
+      if (!json) {
+        const { resolveEditor } = await import("./editor-attach");
+        const editorClient = internals?.editorClient;
+        const endpoint = editorClient ? await editorClient.resolve(cwd) : await resolveEditor(cwd);
+        if (endpoint !== null) {
+          io.stderr.write(
+            `defold-typescript build: attached to Defold editor at ${endpoint.baseUrl}\n`,
+          );
+        }
+      }
+
       const surface = selectApiSurface(head.version);
       const apiSurface = surface.surfaceId;
       const refDocResolveOpts = refDocOptsFor(head);
