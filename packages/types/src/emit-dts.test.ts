@@ -3323,3 +3323,92 @@ describe("url-parameter address retyping", () => {
     );
   });
 });
+
+describe("nested member signature parity", () => {
+  const nestedModule: ApiModule = {
+    namespace: "sock",
+    brief: "",
+    description: "",
+    functions: [
+      {
+        name: "sock.gettime",
+        brief: "",
+        description: "",
+        parameters: [],
+        returnValues: [{ name: "", doc: "", types: ["number"], isOptional: false }],
+      },
+      {
+        name: "sock.dns.toip",
+        brief: "",
+        description: "",
+        parameters: [{ name: "address", doc: "", types: ["string"], isOptional: false }],
+        returnValues: [{ name: "", doc: "", types: ["string"], isOptional: false }],
+      },
+      {
+        name: "sock.a.b.c",
+        brief: "",
+        description: "",
+        parameters: [{ name: "opts", doc: "", types: ["table"], isOptional: false }],
+        returnValues: [{ name: "", doc: "", types: ["string"], isOptional: false }],
+      },
+      {
+        name: "sock.schema.enum",
+        brief: "",
+        description: "",
+        parameters: [],
+        returnValues: [{ name: "", doc: "", types: ["string"], isOptional: false }],
+      },
+      {
+        name: "sock.deep.p.q.r",
+        brief: "",
+        description: "",
+        parameters: [],
+        returnValues: [{ name: "", doc: "", types: ["string"], isOptional: false }],
+      },
+      {
+        name: "sock.9bad.x",
+        brief: "",
+        description: "",
+        parameters: [],
+        returnValues: [{ name: "", doc: "", types: ["string"], isOptional: false }],
+      },
+    ],
+    variables: [
+      { name: "sock.GROUP.MEMBER", brief: "", description: "", types: ["string"] },
+      { name: "sock.OUTER.INNER.LEAF", brief: "", description: "", types: ["number"] },
+    ],
+    constants: [],
+    properties: [],
+    typedefs: [],
+  };
+
+  test("every signature the module emits appears verbatim in its declarations", () => {
+    const declarations = emitDeclarations(nestedModule);
+    const signatures = emitSymbolSignatures(nestedModule);
+    const missing = signatures
+      .filter((entry) => !declarations.includes(entry.tsSignature))
+      .map((entry) => entry.tsSignature);
+    expect(missing).toEqual([]);
+  });
+
+  test("the identity set covers each nested member by element name and stops at two levels", () => {
+    const names = emitSymbolSignatures(nestedModule).map((entry) => entry.identity.name);
+    expect(names).toContain("sock.dns.toip");
+    expect(names).toContain("sock.a.b.c");
+    expect(names).toContain("sock.GROUP.MEMBER");
+    expect(names).toContain("sock.OUTER.INNER.LEAF");
+    expect(names).toContain("sock.schema.enum");
+    expect(names).not.toContain("sock.deep.p.q.r");
+    expect(names).not.toContain("sock.9bad.x");
+  });
+
+  test("a nested reserved-name member signs as the aliased form the declaration carries", () => {
+    const declarations = emitDeclarations(nestedModule);
+    const entry = emitSymbolSignatures(nestedModule).find(
+      (candidate) => candidate.identity.name === "sock.schema.enum",
+    );
+    expect(entry?.tsSignature).toBe("function _enum(): string;");
+    expect(declarations).toContain("    function _enum(): string;");
+    expect(declarations).not.toContain("function enum(");
+  });
+});
