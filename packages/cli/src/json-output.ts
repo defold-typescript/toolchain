@@ -75,6 +75,7 @@ export interface RenderResultInput {
   readonly handedOff?: boolean;
   readonly outcome?: string;
   readonly consoleErrors?: readonly string[];
+  readonly consoleObserved?: boolean;
 }
 
 export function renderResult(input: RenderResultInput): string {
@@ -144,8 +145,12 @@ export function renderResult(input: RenderResultInput): string {
   const withHandedOff = "handedOff" in input ? { ...withTo, handedOff: input.handedOff } : withTo;
   const withOutcome =
     "outcome" in input ? { ...withHandedOff, outcome: input.outcome } : withHandedOff;
-  const payload =
+  const withConsoleErrors =
     "consoleErrors" in input ? { ...withOutcome, consoleErrors: input.consoleErrors } : withOutcome;
+  const payload =
+    "consoleObserved" in input
+      ? { ...withConsoleErrors, consoleObserved: input.consoleObserved }
+      : withConsoleErrors;
   return `${JSON.stringify(payload)}\n`;
 }
 

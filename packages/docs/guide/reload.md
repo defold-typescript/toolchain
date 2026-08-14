@@ -5,7 +5,8 @@ toc-title: reload
 
 `reload` pushes one reload into the game running under the
 [Defold editor](./defold-editor.md#hot-reload-while-it-runs), then reads that
-editor's console for a moment to tell you whether the reloaded code actually ran.
+editor's console for a moment to tell you whether an error surfaced there while
+it watched.
 
 ```sh
 bunx @defold-typescript/cli reload
@@ -32,8 +33,8 @@ session's.
 ## What the exit code means
 
 - **0** — the editor accepted the reload and no error appeared during the window.
-- **1** — no editor was running, the editor refused the reload, or an error
-  appeared during the window.
+- **1** — no editor was running, the editor refused the reload, an error appeared
+  during the window, or a console window was requested and could not be opened.
 
 Exit 0 is **not** proof that the reload succeeded. The window is a heuristic: an
 error thrown after it closes, or on a frame the game has not reached yet, is
@@ -52,7 +53,9 @@ to the editor's Build Errors tab, never to the console.
   one matching what you rebuilt.
 - `--wait <ms>` — how long to read the console for errors. Defaults to `2000`.
   `0` posts the reload and returns immediately without reading the console at
-  all, which trades the error report for speed.
+  all, which trades the error report for speed. With any non-zero value the
+  console must actually open: if it cannot, the command exits 1 rather than
+  reporting the window as quiet.
 - `--json` — write a single result line instead of human output. See below.
 
 ## Machine-readable output
@@ -60,14 +63,17 @@ to the editor's Build Errors tab, never to the console.
 `--json` writes exactly one JSON object to stdout:
 
 ```json
-{"command":"reload","ok":false,"written":[],"error":"the reloaded code reported an error","outcome":"accepted","consoleErrors":["ERROR:SCRIPT: /main/main.script:12: attempt to index a nil value"]}
+{"command":"reload","ok":false,"written":[],"error":"the reloaded code reported an error","outcome":"accepted","consoleErrors":["ERROR:SCRIPT: /main/main.script:12: attempt to index a nil value"],"consoleObserved":true}
 ```
 
 `outcome` is the editor's answer to the post — `accepted`, `skipped` (the editor
 declined: no game running, or nothing to reload), or `unavailable` (no editor
 found). `consoleErrors` carries the captured lines in the order they arrived.
-Note that `ok` is `false` while `outcome` is `accepted` when the post landed and
-the reloaded code then threw — the two fields answer different questions.
+`consoleObserved` says whether the console was actually read: `false` under
+`--wait 0`, and `false` with an error when a requested window could not be
+opened, so an empty `consoleErrors` is only meaningful when it is `true`. Note
+that `ok` is `false` while `outcome` is `accepted` when the post landed and the
+reloaded code then threw — the two fields answer different questions.
 
 ## Pairing it with build
 
@@ -78,10 +84,11 @@ bunx @defold-typescript/cli build && bunx @defold-typescript/cli reload
 ```
 
 `build` fails on a compile error and `reload` never runs, so the game stays on the
-last code that actually built. When `reload` exits 0, the new Lua is in the
-running game and nothing complained during the window. See
+last code that actually built. When `reload` exits 0, the editor accepted the
+post and nothing complained on the console during the window. See
 [Agent runbooks](./agent-runbooks.md#hot-reload-the-running-game) for the full
-procedure, including what to check when the reload lands but nothing changes.
+procedure, including what to check when `reload` reports no error but nothing
+changes.
 
 Hot reload runs the **new code against the old state** and does not re-run `init`.
 See [Script lifecycle](./script-lifecycle.md#hot-reload-and-on_reload) for what
