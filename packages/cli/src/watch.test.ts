@@ -1503,6 +1503,174 @@ describe("runWatch hot reload coalescing and diagnostics", () => {
   });
 });
 
+describe("runWatch hot reload failure reporting", () => {
+  test("a rebuild whose post is refused reports the endpoint and claims no new attachment", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor("http://localhost:4242");
+    editor.setOutcome("unavailable");
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    const beforeReload = err();
+    writeProjectFile("src/main.ts", scriptSource(2));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    const afterReload = err().slice(beforeReload.length);
+    expect(afterReload).toContain("http://localhost:4242");
+    expect(afterReload).toMatch(/did not accept the reload/);
+    expect(afterReload).not.toContain("attached to Defold editor");
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("a persistently refused reload writes its notice once, not once per rebuild", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+    editor.setOutcome("unavailable");
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    for (const value of [2, 3, 4]) {
+      writeProjectFile("src/main.ts", scriptSource(value));
+      factory.trigger("change", "src/main.ts");
+      await handle.waitForIdle();
+    }
+
+    expect(countMatches(err(), /did not accept the reload/g)).toBe(1);
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("a reload accepted after a refusal re-announces the attachment", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor("http://localhost:4242");
+    editor.setOutcome("unavailable");
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    writeProjectFile("src/main.ts", scriptSource(2));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    const beforeRecovery = err();
+    editor.setOutcome("accepted");
+    writeProjectFile("src/main.ts", scriptSource(3));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    expect(err().slice(beforeRecovery.length)).toContain(
+      "attached to Defold editor at http://localhost:4242",
+    );
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("a skipped reload is a success: one attach line and no refusal notice", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+    editor.setOutcome("skipped");
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    for (const value of [2, 3]) {
+      writeProjectFile("src/main.ts", scriptSource(value));
+      factory.trigger("change", "src/main.ts");
+      await handle.waitForIdle();
+    }
+
+    expect(countMatches(err(), /attached to Defold editor/g)).toBe(1);
+    expect(err()).not.toMatch(/did not accept the reload/);
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("json mode reports a refused post as a reload event and writes nothing to stderr", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, out, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+    editor.setOutcome("unavailable");
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      json: true,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    writeProjectFile("src/main.ts", scriptSource(2));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    const reloads = out()
+      .trimEnd()
+      .split("\n")
+      .map((line) => JSON.parse(line) as Record<string, unknown>)
+      .filter((event) => event.event === "reload");
+    expect(reloads.length).toBe(1);
+    expect((reloads[0] as Record<string, unknown>).ok).toBe(false);
+    expect(typeof (reloads[0] as Record<string, unknown>).error).toBe("string");
+    expect(err()).toBe("");
+
+    handle.stop();
+    await handle.done;
+  });
+});
+
 function makeEditorTransport(historyLines: number, stream: FakeConsole): EditorTransport {
   const ok = (text: string): Promise<{ status: number; text(): Promise<string> }> =>
     Promise.resolve({ status: 200, text: () => Promise.resolve(text) });
