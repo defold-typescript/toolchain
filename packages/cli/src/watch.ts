@@ -258,6 +258,10 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   // Attach is a transition, not a per-rebuild fact: the editor may start, stop
   // or restart at any point during a watch, and only the change is worth a line.
   let attachedBaseUrl: string | null = null;
+  // Kept apart from `attachedBaseUrl` on purpose: a refusal has to clear the
+  // announced URL so a later recovery re-announces, so "is this endpoint's
+  // reload landing" needs a key of its own.
+  let refusedBaseUrl: string | null = null;
   let detachNoticed = false;
   let consoleRunning = false;
   // A parked async iterator cannot be closed from the consumer side, so
@@ -267,6 +271,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   let consoleReader: AsyncIterator<string> | null = null;
 
   function noteAttached(baseUrl: string): void {
+    refusedBaseUrl = null;
     if (attachedBaseUrl === baseUrl) return;
     attachedBaseUrl = baseUrl;
     detachNoticed = false;
@@ -276,6 +281,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
 
   function noteDetached(): void {
     attachedBaseUrl = null;
+    refusedBaseUrl = null;
     if (detachNoticed) return;
     detachNoticed = true;
     if (!opts.json) stderr.write("defold-typescript watch: no Defold editor detected\n");
@@ -288,6 +294,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
    */
   function noteReloadFailed(baseUrl: string): void {
     attachedBaseUrl = null;
+    refusedBaseUrl = baseUrl;
     if (detachNoticed) return;
     detachNoticed = true;
     if (!opts.json)
@@ -327,6 +334,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       if (consoleReader === reader) consoleReader = null;
       consoleRunning = false;
       attachedBaseUrl = null;
+      refusedBaseUrl = null;
     }
   }
 
@@ -351,7 +359,9 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       noteDetached();
       return null;
     }
-    if (announce) noteAttached(endpoint.baseUrl);
+    // Guarded here rather than inside `noteAttached`: `pushReload`'s success
+    // path calls it directly and is exactly the recovery that must announce.
+    if (announce && endpoint.baseUrl !== refusedBaseUrl) noteAttached(endpoint.baseUrl);
     if (client.openConsole !== undefined && !consoleRunning) {
       consoleRunning = true;
       const lines = await client.openConsole(endpoint, editorAbort.signal);
