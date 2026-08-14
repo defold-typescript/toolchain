@@ -94,8 +94,10 @@ export interface ModuleManifestEntry {
   readonly namespace: string;
   readonly doc: unknown;
   readonly outFile: string;
-  // Each item drops one member: an exact stripped local (`get`), or — when it
-  // ends in `.` — a segment prefix dropping everything beneath it (`ui.`).
+  // Each item drops one member of any element kind — a FUNCTION or a VARIABLE —
+  // by an exact stripped local (`get`), or — when it ends in `.` — a segment
+  // prefix dropping everything beneath it (`ui.`). The field keeps its historic
+  // name; its reach is not limited to functions.
   readonly skipFunctions?: readonly string[];
   readonly importsFrom?: string;
   readonly moduleId?: string;
@@ -183,6 +185,10 @@ const EDITOR_TYPE_MAP: Readonly<Record<string, string>> = {
   // the hand-authored overload file, which returns the same `Opaque<"command">`.
   // The entry stays so a future `command`-returning function maps identically.
   command: 'Opaque<"command">',
+  // The handle every `editor.ui.*` builder returns and `editor.ui.show_dialog`
+  // consumes. Branding it keeps the whole component chain one nominal type
+  // rather than letting each end fall to the default `unknown` mapping.
+  component: 'Opaque<"component">',
   transaction_step: 'Opaque<"transaction_step">',
   "transaction_step[": 'Opaque<"transaction_step">[]',
   // The handle every `localization` function returns: a userdata whose only
@@ -203,16 +209,13 @@ function mapEditorType(token: string): string {
 // namespaces. They are emitted from their own per-namespace fixtures through
 // EDITOR_VM_MODULE_MANIFEST, and skipped here so this entry cannot misname them
 // as `editor.*` — `pprint`, a flat identifier, would otherwise land as
-// `editor.pprint`. `editor.ui.*` and `editor.prefs.*` have no second home yet
-// and are simply dropped.
-const EDITOR_SKIP_FUNCTIONS: readonly string[] = [
+// `editor.pprint`.
+export const EDITOR_SKIP_FUNCTIONS: readonly string[] = [
   // Unlike every other entry here, this is not a dropped namespace prefix: the
   // hand-authored `src/editor-overloads.d.ts` supplies `editor.command` with a
   // generic signature that couples a command's opts bag to its own query, which
   // the emitter cannot express.
   "command",
-  "ui.",
-  "prefs.",
   "http.",
   "json.",
   "localization.",
@@ -254,19 +257,28 @@ const EDITOR_VM_NAMESPACES: readonly string[] = [
   "tilemap.tiles",
 ];
 
-// The functions whose vendored signature the emitter cannot render soundly, so
-// they are withheld here and hand-authored in `src/editor-vm-globals.d.ts`
-// instead. Two causes, both of them the fixture's positional model being a lossy
+// The members withheld here and hand-authored in `src/editor-vm-globals.d.ts`
+// instead. Rules are local names — the `<namespace>.` prefix is stripped before
+// matching — and they withhold VARIABLEs as well as FUNCTIONs.
+//
+// The functions are ones whose vendored signature the emitter cannot render
+// soundly, both causes being the fixture's positional model being a lossy
 // description of the Lua function its own `examples` block calls: an optional
 // parameter sitting *before* a required one (TypeScript cannot mark a middle
 // parameter `?`, so the emit renders it `T | undefined` and rejects every
 // documented short form), and an empty `returnvalues` on a function upstream's
-// own prose says returns a value. Rules are local names — the `<namespace>.`
-// prefix is stripped before matching.
+// own prose says returns a value.
+//
+// The constant tables are expressible now that the nested pass reaches
+// variables, but a VARIABLE carries no `types`, so the emit would be `unknown` —
+// and `ZipPackOptions.method?: string` rejects that. Their brief is the literal
+// value, which looks like a string-literal type until you notice upstream's own
+// `zip.ON_CONFLICT.OVERWRITE` reads `"skip"`, so no type is derived from it.
+// The hand-authored declarations stay authoritative and these stay withheld.
 const EDITOR_VM_SKIP_FUNCTIONS: Readonly<Record<string, readonly string[]>> = {
-  http: ["server.route"],
+  http: ["server.local_url", "server.port", "server.route", "server.url"],
   json: ["decode", "encode"],
-  zip: ["pack", "unpack"],
+  zip: ["METHOD.", "ON_CONFLICT.", "pack", "unpack"],
 };
 
 const editorVmSlug = (namespace: string): string => namespace.replace(/\./g, "_");
@@ -376,14 +388,14 @@ function prepareGeneratedModule(
   const rules = entry.skipFunctions ?? [];
   const exact = new Set(rules.filter((rule) => !rule.endsWith(".")));
   const segments = rules.filter((rule) => rule.endsWith("."));
-  module.functions = module.functions.filter((fn) => {
-    const local = fn.name.startsWith(prefix) ? fn.name.slice(prefix.length) : fn.name;
-    if (exact.has(local) || segments.some((segment) => local.startsWith(segment))) {
-      dropped.push(fn.name);
-      return false;
-    }
+  const withheld = (name: string): boolean => {
+    const local = name.startsWith(prefix) ? name.slice(prefix.length) : name;
+    if (!exact.has(local) && !segments.some((segment) => local.startsWith(segment))) return false;
+    dropped.push(name);
     return true;
-  });
+  };
+  module.functions = module.functions.filter((fn) => !withheld(fn.name));
+  module.variables = module.variables.filter((v) => !withheld(v.name));
   const knownConstantFqns = options?.knownConstantFqns ?? collectConstantFqns();
   const translations = options?.translations ?? loadTranslations();
   const urlParameters = options?.urlParameters ?? committedUrlParameters();

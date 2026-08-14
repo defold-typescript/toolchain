@@ -3,6 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   EDITOR_MODULE_MANIFEST,
+  EDITOR_SKIP_FUNCTIONS,
   EDITOR_VM_MODULE_MANIFEST,
   generateBuiltinMessagesDeclaration,
   generateKindIndex,
@@ -127,6 +128,48 @@ describe("reserved-name member recovery", () => {
   });
 });
 
+describe("manifest member skips", () => {
+  // A skip rule withholds a member whatever its element type: a constant table
+  // the hand-authored lane owns is a VARIABLE, and leaving the filter on
+  // functions alone would emit an `unknown`-typed duplicate beside it.
+  const element = (type: string, name: string) => ({
+    type,
+    name,
+    brief: "",
+    description: "",
+    parameters: [],
+    returnvalues: [],
+    types: ["string"],
+  });
+  const entry = {
+    namespace: "demo",
+    outFile: "demo.d.ts",
+    doc: {
+      info: { namespace: "demo", brief: "d", description: "d" },
+      elements: [
+        element("FUNCTION", "demo.kept"),
+        element("FUNCTION", "demo.gone"),
+        element("VARIABLE", "demo.KEPT"),
+        element("VARIABLE", "demo.GONE"),
+        element("VARIABLE", "demo.TABLE.MEMBER"),
+        element("VARIABLE", "demo.OTHER.MEMBER"),
+      ],
+    },
+    skipFunctions: ["gone", "GONE", "TABLE."],
+  };
+
+  test("an exact or segment-prefix rule withholds a VARIABLE and reports it through dropped", () => {
+    const { contents, dropped } = generateModuleDeclaration(entry);
+    expect(dropped.sort()).toEqual(["demo.GONE", "demo.TABLE.MEMBER", "demo.gone"]);
+    expect(contents).toContain("function kept(");
+    expect(contents).toContain("const KEPT:");
+    expect(contents).toContain("namespace OTHER {");
+    expect(contents).not.toContain("function gone(");
+    expect(contents).not.toContain("const GONE:");
+    expect(contents).not.toContain("namespace TABLE {");
+  });
+});
+
 describe("editor namespace emit", () => {
   const editorEntry = () => {
     const entry = EDITOR_MODULE_MANIFEST.find((e) => e.namespace === "editor");
@@ -153,12 +196,58 @@ describe("editor namespace emit", () => {
     expect(overloads).toMatch(/function command<const Q extends EditorCommandQuery/);
   });
 
-  test("emits no ui/prefs surface and reports the skipped members through dropped", () => {
+  test("emits the ui toolkit and the prefs surface, schema group included", () => {
     const { contents, dropped } = generateModuleDeclaration(editorEntry());
-    expect(contents).not.toContain("namespace ui");
-    expect(contents).not.toContain("namespace prefs");
-    expect(dropped).toContain("editor.ui.label");
-    expect(dropped).toContain("editor.prefs.get");
+    expect(contents).toContain("  namespace ui {");
+    expect(contents).toContain("  namespace prefs {");
+    expect(contents).toContain("    namespace schema {");
+    expect(contents).toContain("    namespace COLOR {");
+    expect(contents).toContain("    namespace SCOPE {");
+    expect(dropped).not.toContain("editor.ui.label");
+    expect(dropped).not.toContain("editor.prefs.get");
+  });
+
+  test("brands the component handle so a builder and show_dialog share one type", () => {
+    const { contents } = generateModuleDeclaration(editorEntry());
+    expect(contents).toContain(
+      'function button(props: Record<string | number, unknown>): Opaque<"component">;',
+    );
+    expect(contents).toContain('function show_dialog(dialog: Opaque<"component">)');
+  });
+
+  test("recovers the reserved-name prefs.schema.enum through an export alias", () => {
+    const { contents } = generateModuleDeclaration(editorEntry());
+    expect(contents).toContain("      function _enum(");
+    expect(contents).toContain("      export { _enum as enum };");
+  });
+
+  // The expectation is production's own skip list, not a second copy of the
+  // fixture: every element the emit leaves behind must be one a rule withholds.
+  // Dropping a prefix from the list while the emitter still cannot express its
+  // members would leave them silently missing, and reds here.
+  test("every fixture element reaches the emit except the ones a skip rule withholds", () => {
+    const entry = editorEntry();
+    const { contents } = generateModuleDeclaration(entry);
+    const withheld = (name: string): boolean => {
+      const local = name.startsWith("editor.") ? name.slice("editor.".length) : name;
+      return EDITOR_SKIP_FUNCTIONS.some((rule) =>
+        rule.endsWith(".") ? local.startsWith(rule) : local === rule,
+      );
+    };
+    const unexpressed = unexpressedFixtureNames(entry.doc, contents);
+    expect(unexpressed.filter((name) => !withheld(name))).toEqual([]);
+    expect(unexpressed.length).toBeGreaterThan(0);
+    for (const reached of [
+      "editor.ui.button",
+      "editor.ui.show_dialog",
+      "editor.ui.COLOR.TEXT",
+      "editor.prefs.get",
+      "editor.prefs.SCOPE.PROJECT",
+      "editor.prefs.schema.integer",
+      "editor.prefs.schema.enum",
+    ]) {
+      expect(unexpressed).not.toContain(reached);
+    }
   });
 
   test("leaves the editor-VM libraries that share the fixture to their own manifest", () => {
@@ -337,14 +426,33 @@ describe("per-kind factory re-export", () => {
 });
 
 describe("editor VM module emit", () => {
-  // The upstream elements the emitter cannot express, per module. Every entry is
-  // a two-segment VARIABLE: the nested pass groups functions only, so a constant
-  // table under a namespace has nowhere to land. Shrinking a list means the
-  // nested pass learned a shape and `src/editor-vm-globals.d.ts` should give it
-  // up; growing one means a new upstream shape started falling out unnoticed.
+  // The upstream elements no lane can express, per module. Every list is empty
+  // today: the nested pass reaches variables and two-level segments, so nothing
+  // falls out of the emit for want of a shape. Growing one means a new upstream
+  // shape started falling out unnoticed — that, not a shrink, is the signal now.
   const EMITTER_GAP: Readonly<Record<string, readonly string[]>> = {
-    http: ["http.server.local_url", "http.server.port", "http.server.url"],
+    http: [],
     json: [],
+    localization: [],
+    zip: [],
+    zlib: [],
+    "tilemap.tiles": [],
+  };
+
+  // The members withheld from the emit on purpose. Two causes. The functions are
+  // ones the fixture's positional parameter model describes in a way TypeScript
+  // cannot render soundly: optionals sitting before a required argument, and
+  // returns upstream records as empty while its own prose names a value. The
+  // constant tables are ones whose emitted form would be `unknown` — a VARIABLE
+  // carries no `types`, and its brief is an unreliable literal (upstream's
+  // `zip.ON_CONFLICT.OVERWRITE` reads `"skip"`) — so the hand-authored form in
+  // `src/editor-vm-globals.d.ts`, which `ZipPackOptions` actually types against,
+  // stays authoritative. Kept apart from EMITTER_GAP so the two causes stay
+  // distinguishable: a deliberate skip going missing is a different defect from
+  // a new upstream shape falling out.
+  const DELIBERATE_SKIP: Readonly<Record<string, readonly string[]>> = {
+    http: ["http.server.local_url", "http.server.port", "http.server.route", "http.server.url"],
+    json: ["json.decode", "json.encode"],
     localization: [],
     zip: [
       "zip.METHOD.DEFLATED",
@@ -352,23 +460,9 @@ describe("editor VM module emit", () => {
       "zip.ON_CONFLICT.ERROR",
       "zip.ON_CONFLICT.OVERWRITE",
       "zip.ON_CONFLICT.SKIP",
+      "zip.pack",
+      "zip.unpack",
     ],
-    zlib: [],
-    "tilemap.tiles": [],
-  };
-
-  // The functions withheld from the emit on purpose, because the fixture's
-  // positional parameter model describes them in a way TypeScript cannot render
-  // soundly: optionals sitting before a required argument, and returns upstream
-  // records as empty while its own prose names a value. They are hand-authored
-  // in `src/editor-vm-globals.d.ts` instead. Kept apart from EMITTER_GAP so the
-  // two causes stay distinguishable — a deliberate skip going missing is a
-  // different defect from a new upstream shape falling out.
-  const DELIBERATE_SKIP: Readonly<Record<string, readonly string[]>> = {
-    http: ["http.server.route"],
-    json: ["json.decode", "json.encode"],
-    localization: [],
-    zip: ["zip.pack", "zip.unpack"],
     zlib: [],
     "tilemap.tiles": [],
   };

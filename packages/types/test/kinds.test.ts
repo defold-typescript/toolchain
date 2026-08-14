@@ -53,7 +53,7 @@ describe("per-kind ambient API wall — consumer tsconfig proof", () => {
     const { exitCode, output } = typecheck("tsconfig.editor-script.json");
     if (exitCode !== 0) {
       throw new Error(
-        `editor-script surface proof failed — either go/vmath/msg/editor.ui leaked in ` +
+        `editor-script surface proof failed — either go/vmath/msg leaked in ` +
           `(unused @ts-expect-error) or an editor.* call did not resolve:\n${output}`,
       );
     }

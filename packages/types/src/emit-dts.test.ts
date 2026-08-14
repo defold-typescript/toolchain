@@ -3092,7 +3092,7 @@ describe("slot-level array-of-object recovery", () => {
     expect(out).not.toContain("function dns.toip");
   });
 
-  test("a function with two dots or a non-identifier segment after stripping is still dropped", () => {
+  test("a nested VARIABLE and a two-level member emit under their own namespaces", () => {
     const module: ApiModule = {
       namespace: "sock",
       brief: "",
@@ -3100,6 +3100,88 @@ describe("slot-level array-of-object recovery", () => {
       functions: [
         {
           name: "sock.a.b.c",
+          brief: "",
+          description: "",
+          parameters: [{ name: "opts", doc: "", types: ["table"], isOptional: false }],
+          returnValues: [{ name: "", doc: "", types: ["string"], isOptional: false }],
+        },
+      ],
+      variables: [
+        { name: "sock.GROUP.MEMBER", brief: "", description: "", types: ["string"] },
+        { name: "sock.OUTER.INNER.LEAF", brief: "", description: "", types: ["number"] },
+      ],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    };
+    const out = emitDeclarations(module);
+    expect(out).toContain("  namespace GROUP {\n    const MEMBER: string;\n  }");
+    expect(out).toContain(
+      "  namespace OUTER {\n    namespace INNER {\n      const LEAF: number;\n    }\n  }",
+    );
+    expect(out).toContain(
+      "  namespace a {\n    namespace b {\n" +
+        "      function c(opts: Record<string | number, unknown>): string;\n    }\n  }",
+    );
+  });
+
+  test("a nested VARIABLE with no documented type emits unknown and keeps its brief as JSDoc", () => {
+    const module: ApiModule = {
+      namespace: "sock",
+      brief: "",
+      description: "",
+      functions: [],
+      variables: [
+        {
+          name: "sock.GROUP.MEMBER",
+          brief: "<code>&quot;m&quot;</code>",
+          description: "",
+          types: [],
+        },
+      ],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    };
+    const out = emitDeclarations(module);
+    expect(out).toContain(
+      '  namespace GROUP {\n    /**\n     * `"m"`\n     */\n    const MEMBER: unknown;\n  }',
+    );
+  });
+
+  test("a nested member named `enum` is recovered through the alias escape", () => {
+    const module: ApiModule = {
+      namespace: "sock",
+      brief: "",
+      description: "",
+      functions: [
+        {
+          name: "sock.schema.enum",
+          brief: "",
+          description: "",
+          parameters: [],
+          returnValues: [{ name: "", doc: "", types: ["string"], isOptional: false }],
+        },
+      ],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    };
+    const out = emitDeclarations(module);
+    expect(out).toContain("    function _enum(): string;");
+    expect(out).toContain("    export { _enum as enum };");
+    expect(out).not.toContain("function enum(");
+  });
+
+  test("a member three levels deep or under a non-identifier segment is still dropped", () => {
+    const module: ApiModule = {
+      namespace: "sock",
+      brief: "",
+      description: "",
+      functions: [
+        {
+          name: "sock.a.b.c.d",
           brief: "",
           description: "",
           parameters: [],
@@ -3113,16 +3195,22 @@ describe("slot-level array-of-object recovery", () => {
           returnValues: [],
         },
       ],
-      variables: [],
+      variables: [
+        { name: "sock.P.Q.R.S", brief: "", description: "", types: ["string"] },
+        { name: "sock.9bad.V", brief: "", description: "", types: ["string"] },
+      ],
       constants: [],
       properties: [],
       typedefs: [],
     };
     const out = emitDeclarations(module);
     expect(out).not.toContain("namespace a ");
+    expect(out).not.toContain("namespace P ");
     expect(out).not.toContain("namespace 9bad");
-    expect(out).not.toContain("function c(");
+    expect(out).not.toContain("function d(");
     expect(out).not.toContain("function x(");
+    expect(out).not.toContain("const S:");
+    expect(out).not.toContain("const V:");
   });
 
   test("socket.dns.toip emits under a nested namespace with its FQN-resolved multi-return", () => {

@@ -7,17 +7,20 @@ import type {
   ZipUnpackOptions,
 } from "./editor-vm-types";
 
-// The editor VM surfaces the emitter cannot express, hand-authored and pinned to
+// The editor VM surfaces the emit leaves behind, hand-authored and pinned to
 // their vendored fixtures by `test/editor-vm-globals-parity.test.ts`. Three
 // shapes land here: `pprint` is a bare global function with no namespace to hang
-// off; the two-segment VARIABLEs (`zip.METHOD.*`, `http.server.*`) fall outside
-// the emitter's nested pass, which groups functions only; and the functions
+// off; the two-segment VARIABLEs (`zip.METHOD.*`, `http.server.*`) are reachable
+// by the emitter's nested pass but deliberately withheld, because a VARIABLE
+// carries no type and would emit as `unknown` — useless to `ZipPackOptions`,
+// which types `method` as a string — while its brief is an unreliable literal
+// (upstream's own `zip.ON_CONFLICT.OVERWRITE` reads `"skip"`); and the functions
 // whose *vendored signature* cannot be rendered soundly — an optional parameter
 // sitting before a required one, or an empty `returnvalues` on a function
-// upstream's own prose says returns a value — are withheld from the emit by
-// `EDITOR_VM_SKIP_FUNCTIONS` and written out here as overload sets. The contract
-// is unchanged and still derived: this file declares exactly what the emit
-// leaves behind. The namespaces below merge with the emitted
+// upstream's own prose says returns a value — are written out here as overload
+// sets. All three are withheld from the emit by `EDITOR_VM_SKIP_FUNCTIONS`. The
+// contract is unchanged and still derived: this file declares exactly what the
+// emit leaves behind. The namespaces below merge with the emitted
 // `generated/editor-vm/` bodies rather than replacing them. Upstream records no
 // type for a VARIABLE, so those annotations are read from each member's prose.
 
