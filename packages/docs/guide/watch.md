@@ -62,7 +62,7 @@ pressing **Build** after every edit:
 bunx @defold-typescript/cli watch --hot-reload
 ```
 
-Three things are worth knowing about how it behaves:
+Four things are worth knowing about how it behaves:
 
 - **A failed build reloads nothing.** A compile error leaves the running game on
   the last code that actually built, rather than pushing the previous emit's Lua
@@ -74,6 +74,10 @@ Three things are worth knowing about how it behaves:
 - **Editor scripts reload separately.** An emit that touched a
   `.ts.editor_script` reloads the editor's extensions instead; an emit touching
   both kinds does both.
+- **A refused reload says so.** If the editor is found but the reload does not
+  land, the terminal names that editor's address once and stops reporting it as
+  attached, rather than leaving you watching a loop that believes it is
+  connected. The attach line returns when a reload succeeds again.
 
 Hot reload runs the **new code against the old state** and does not re-run
 `init`. See [Script lifecycle](./script-lifecycle.md#hot-reload-and-on_reload)

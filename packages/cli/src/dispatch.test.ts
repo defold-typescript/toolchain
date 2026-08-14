@@ -15,7 +15,13 @@ import {
 } from "./ref-doc-test-fixture";
 import { runResolve } from "./resolve";
 import { defaultUpgradeIo } from "./upgrade";
-import type { RunWatchHandle, Watcher, WatcherFactory } from "./watch";
+import type {
+  EditorReloadCommand,
+  RunWatchHandle,
+  WatchEditorClient,
+  Watcher,
+  WatcherFactory,
+} from "./watch";
 
 function captureStreams(): {
   io: { stdout: NodeJS.WritableStream; stderr: NodeJS.WritableStream };
@@ -59,6 +65,34 @@ function failureOutput(stderrText: string): string {
 // `onWatchStart` callback fires on a later microtask than the synchronous
 // dispatch() return. This bridges that gap: pass `onWatchStart` into dispatch,
 // then `await ready` to get the handle before driving the watcher.
+interface FakeEditorClient {
+  readonly client: WatchEditorClient;
+  readonly posts: EditorReloadCommand[];
+  resolveCount(): number;
+}
+
+function makeEditorClient(baseUrl = "http://localhost:4242"): FakeEditorClient {
+  const posts: EditorReloadCommand[] = [];
+  let resolves = 0;
+  return {
+    client: {
+      resolve() {
+        resolves += 1;
+        return Promise.resolve({ baseUrl });
+      },
+      postCommand(_cwd, name) {
+        posts.push(name);
+        return Promise.resolve("accepted");
+      },
+      openConsole() {
+        return Promise.resolve(null);
+      },
+    },
+    posts,
+    resolveCount: () => resolves,
+  };
+}
+
 function watchHandle(): {
   onWatchStart: (h: RunWatchHandle) => void;
   ready: Promise<RunWatchHandle>;
@@ -1708,6 +1742,88 @@ describe("dispatch", () => {
     expect(build.command).toBe("watch");
     expect(build.event).toBe("build");
     expect(build.ok).toBe(true);
+  });
+
+  test("watch --hot-reload posts one reload through the injected editor client", async () => {
+    const tsconfig = JSON.stringify(
+      { compilerOptions: { strict: true }, include: ["src/**/*.ts"] },
+      null,
+      2,
+    );
+    writeFileSync(path.join(cwd, "tsconfig.json"), tsconfig);
+    const srcDir = path.join(cwd, "src");
+    mkdirSync(srcDir, { recursive: true });
+    writeFileSync(path.join(srcDir, "main.ts"), "export const a = 1;\n");
+
+    const { io } = captureStreams();
+    let triggerMain: ((kind: "change" | "rename", rel: string) => void) | undefined;
+    const factory: WatcherFactory = (_dir, onEvent): Watcher => {
+      triggerMain = (kind, rel) => onEvent({ kind, path: rel });
+      return { close() {} };
+    };
+    const editor = makeEditorClient();
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd, "--hot-reload"], io, {
+      debounceMs: 5,
+      watcherFactory: factory,
+      editorClient: editor.client,
+      onWatchStart,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+    const afterStartup = editor.posts.length;
+
+    writeFileSync(path.join(srcDir, "main.ts"), "export const a = 2;\n");
+    triggerMain?.("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    expect(editor.posts.slice(afterStartup)).toEqual(["hot-reload"]);
+
+    handle.stop();
+    await result;
+  });
+
+  test("watch without --hot-reload reads the editor but posts nothing to it", async () => {
+    const tsconfig = JSON.stringify(
+      { compilerOptions: { strict: true }, include: ["src/**/*.ts"] },
+      null,
+      2,
+    );
+    writeFileSync(path.join(cwd, "tsconfig.json"), tsconfig);
+    const srcDir = path.join(cwd, "src");
+    mkdirSync(srcDir, { recursive: true });
+    writeFileSync(path.join(srcDir, "main.ts"), "export const a = 1;\n");
+
+    const { io } = captureStreams();
+    let triggerMain: ((kind: "change" | "rename", rel: string) => void) | undefined;
+    const factory: WatcherFactory = (_dir, onEvent): Watcher => {
+      triggerMain = (kind, rel) => onEvent({ kind, path: rel });
+      return { close() {} };
+    };
+    const editor = makeEditorClient();
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd], io, {
+      debounceMs: 5,
+      watcherFactory: factory,
+      editorClient: editor.client,
+      onWatchStart,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+
+    writeFileSync(path.join(srcDir, "main.ts"), "export const a = 2;\n");
+    triggerMain?.("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    expect(editor.posts).toEqual([]);
+    expect(editor.resolveCount()).toBeGreaterThan(0);
+
+    handle.stop();
+    await result;
   });
 
   test("watch keeps the full materialized surface at startup for a single-.script project", async () => {
