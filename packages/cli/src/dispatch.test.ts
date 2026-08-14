@@ -3944,6 +3944,59 @@ describe("dispatch init --template", () => {
     expect(parsed.exitCode).toBe(0);
   });
 
+  for (const engineArgs of [["--wait", "100"], ["--extensions"]]) {
+    test(`run hands the engine post-\`--\` ${engineArgs[0]} instead of parsing it as a CLI flag`, async () => {
+      const projectc = path.join(cwd, "build/default/game.projectc");
+      const engine = path.join(cwd, "build/x86_64-linux/dmengine");
+      const spawned: string[][] = [];
+      const { io } = captureStreams();
+
+      const code = await dispatch(["run", cwd, "--", ...engineArgs], io, {
+        detectEditorVersion: () => null,
+        runInternals: {
+          platform: "linux",
+          arch: "x64",
+          probe: (p) => p === projectc || p === engine,
+          spawn: (argv) => {
+            spawned.push(argv);
+            return { kill: () => {}, exited: Promise.resolve(0) };
+          },
+          copyAside: (p) => p,
+          chmod: () => {},
+        },
+      });
+
+      expect(code).toBe(0);
+      expect(spawned[0]).toEqual([engine, projectc, ...engineArgs]);
+    });
+  }
+
+  test("run forwards a post-`--` --json to the engine without switching the CLI to JSON", async () => {
+    const projectc = path.join(cwd, "build/default/game.projectc");
+    const engine = path.join(cwd, "build/x86_64-linux/dmengine");
+    const spawned: string[][] = [];
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["run", cwd, "--", "--json"], io, {
+      detectEditorVersion: () => null,
+      runInternals: {
+        platform: "linux",
+        arch: "x64",
+        probe: (p) => p === projectc || p === engine,
+        spawn: (argv) => {
+          spawned.push(argv);
+          return { kill: () => {}, exited: Promise.resolve(0) };
+        },
+        copyAside: (p) => p,
+        chmod: () => {},
+      },
+    });
+
+    expect(code).toBe(0);
+    expect(spawned[0]).toEqual([engine, projectc, "--json"]);
+    expect(out()).not.toContain('"command"');
+  });
+
   test("run warns on stderr when the installed editor drifts from a version pin, exit code intact", async () => {
     writeFileSync(
       path.join(cwd, "package.json"),
@@ -4871,9 +4924,32 @@ describe("dispatch reload", () => {
     expect(zero).toBe(0);
     expect(opened).toBe(0);
 
+    // A window that was asked for and could not be opened is a failure, not a
+    // quiet console: the flag still reaches `runReload`, and the exit says so.
     const waited = await dispatch(["reload", cwd, "--wait", "10"], io, { editorClient: client });
-    expect(waited).toBe(0);
+    expect(waited).toBe(1);
     expect(opened).toBe(1);
+  });
+
+  test("reload still parses its own flags when no delimiter is present", async () => {
+    const { io } = captureStreams();
+    const editor = makeEditorClient();
+    let opened = 0;
+    const client: WatchEditorClient = {
+      ...editor.client,
+      openConsole: () => {
+        opened += 1;
+        return Promise.resolve(null);
+      },
+    };
+
+    const code = await dispatch(["reload", cwd, "--wait", "0", "--extensions"], io, {
+      editorClient: client,
+    });
+
+    expect(code).toBe(0);
+    expect(editor.posts).toEqual(["reload-extensions"]);
+    expect(opened).toBe(0);
   });
 
   test("reload --extensions forwards the flag instead of dropping it", async () => {

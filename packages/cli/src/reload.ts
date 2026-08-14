@@ -15,15 +15,69 @@ export interface RunReloadOptions {
   readonly extensions?: boolean;
   readonly waitMs?: number;
   readonly json?: boolean;
+  readonly attachTimeoutMs?: number;
 }
 
 export const DEFAULT_RELOAD_WAIT_MS = 2000;
+
+/**
+ * Bounds editor discovery and console attachment, matching `build`'s
+ * `EDITOR_PROBE_TIMEOUT_MS`. `--wait` governs a later, different interval: how
+ * long an *open* console is read. Neither transport times out on its own, so a
+ * stale `.internal/editor.port` naming a process that listens but never answers
+ * would otherwise park a one-shot command forever.
+ */
+export const ATTACH_TIMEOUT_MS = 2000;
 
 const CONSOLE_PREFIX = "defold-typescript reload: editor: ";
 
 const UNAVAILABLE = "no running Defold editor accepted the reload";
 const REFUSED = "the Defold editor refused the reload: no game running, or nothing to reload";
 const REPORTED_ERROR = "the reloaded code reported an error";
+const UNOBSERVABLE =
+  "the editor console could not be opened, so nothing was observed for this reload";
+
+/**
+ * Whether the window the caller asked for was actually read. `skipped` is the
+ * deliberate `--wait 0` opt-out and stays a success; `failed` is a window that
+ * was requested and could not be had, which is not the same fact as a window
+ * that was read and stayed quiet.
+ */
+type ConsoleState = "observed" | "skipped" | "failed";
+
+/**
+ * Races one attach call against a deadline that aborts the shared controller. A
+ * rejection lands in the same place as a refusal, because to this command they
+ * are the same outcome: no usable answer. `onLate` releases a value that arrives
+ * after the deadline -- an unreleased stream keeps the process alive.
+ */
+async function bounded<T extends object>(
+  start: () => Promise<T | null>,
+  abort: AbortController,
+  timeoutMs: number,
+  onLate: (value: T) => void,
+): Promise<T | null> {
+  const settled = Promise.resolve()
+    .then(start)
+    .catch(() => null);
+  let timer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+    timer = null;
+    abort.abort();
+  }, timeoutMs);
+  const result = await Promise.race([
+    settled,
+    new Promise<null>((resolve) => {
+      abort.signal.addEventListener("abort", () => resolve(null));
+    }),
+  ]);
+  if (timer !== null) clearTimeout(timer);
+  if (result === null) {
+    void settled.then((late) => {
+      if (late !== null) onLate(late);
+    });
+  }
+  return result;
+}
 
 /**
  * Reads whole console lines until the window closes, keeping only error headers
@@ -86,14 +140,21 @@ export async function runReload(opts: RunReloadOptions): Promise<number> {
   const command: EditorReloadCommand =
     opts.extensions === true ? "reload-extensions" : "hot-reload";
   const abort = new AbortController();
+  const attachTimeoutMs = opts.attachTimeoutMs ?? ATTACH_TIMEOUT_MS;
 
-  const report = (outcome: ReloadOutcome, errors: readonly string[], error?: string): number => {
+  const report = (
+    outcome: ReloadOutcome,
+    errors: readonly string[],
+    consoleObserved: boolean,
+    error?: string,
+  ): number => {
     if (opts.json === true) {
       stdout.write(
         renderResult({
           command: "reload",
           outcome,
           consoleErrors: errors,
+          consoleObserved,
           ...(error === undefined ? {} : { error }),
         }),
       );
@@ -104,26 +165,46 @@ export async function runReload(opts: RunReloadOptions): Promise<number> {
     return error === undefined ? 0 : 1;
   };
 
-  const endpoint: EditorEndpoint | null = await client.resolve(cwd, abort.signal);
+  const endpoint: EditorEndpoint | null = await bounded<EditorEndpoint>(
+    () => client.resolve(cwd, abort.signal),
+    abort,
+    attachTimeoutMs,
+    () => {},
+  );
   if (endpoint === null) {
     abort.abort();
-    return report("unavailable", [], UNAVAILABLE);
+    return report("unavailable", [], false, UNAVAILABLE);
   }
 
   // Opened before the post, never after: `openConsole` reads the watermark it
   // skips history with, so a stream opened afterwards would count the reload's
   // own error as history and drop it.
+  const openConsole = client.openConsole;
+  const wantsConsole = waitMs > 0;
   const lines =
-    waitMs > 0 && client.openConsole !== undefined
-      ? await client.openConsole(endpoint, abort.signal)
+    wantsConsole && openConsole !== undefined
+      ? await bounded<AsyncIterable<string>>(
+          () => openConsole.call(client, endpoint, abort.signal),
+          abort,
+          attachTimeoutMs,
+          (late) => {
+            void late[Symbol.asyncIterator]().return?.(undefined);
+          },
+        )
       : null;
   const reader = lines === null ? null : lines[Symbol.asyncIterator]();
+  const consoleState: ConsoleState = !wantsConsole
+    ? "skipped"
+    : reader === null
+      ? "failed"
+      : "observed";
+  const observed = consoleState === "observed";
 
   const outcome = await client.postCommand(cwd, command);
   if (outcome !== "accepted") {
     abort.abort();
     void reader?.return?.(undefined);
-    return report(outcome, [], outcome === "skipped" ? REFUSED : UNAVAILABLE);
+    return report(outcome, [], observed, outcome === "skipped" ? REFUSED : UNAVAILABLE);
   }
 
   if (!opts.json) {
@@ -132,17 +213,24 @@ export async function runReload(opts: RunReloadOptions): Promise<number> {
     );
   }
 
+  // The post is the command's primary job and it landed, so the editor's answer
+  // is preserved; the exit status is what carries the inability to observe.
+  if (consoleState === "failed") {
+    abort.abort();
+    return report("accepted", [], false, UNOBSERVABLE);
+  }
+
   const captured = reader === null ? [] : await drainWindow(reader, waitMs, abort);
   abort.abort();
 
-  if (captured.length > 0) return report("accepted", captured, REPORTED_ERROR);
+  if (captured.length > 0) return report("accepted", captured, observed, REPORTED_ERROR);
 
   if (!opts.json) {
     stdout.write(
-      waitMs > 0
+      observed
         ? `defold-typescript reload: no error observed within ${waitMs}ms (later errors are not covered)\n`
         : "defold-typescript reload: no error observed; the console was not read\n",
     );
   }
-  return report("accepted", []);
+  return report("accepted", [], observed);
 }
