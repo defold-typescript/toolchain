@@ -1001,6 +1001,13 @@ interface FakeConsole {
   settled(): Promise<void>;
   /** Resolves once the consumer's loop has actually left the iterator. */
   closed(): Promise<void>;
+  /**
+   * Resolves once a consumer calls `return()` on an iterator taken from `items`.
+   * `closed()` cannot stand in: production discards a stream it never began
+   * draining, and a never-started generator's `finally` -- so `markFinished` --
+   * never runs.
+   */
+  released(): Promise<void>;
   /** Whether the signal production handed this stream has been aborted. */
   isAborted(): boolean;
 }
@@ -1014,6 +1021,10 @@ function makeConsole(seed: readonly string[] = [], signal?: AbortSignal): FakeCo
   let markFinished!: () => void;
   const finished = new Promise<void>((resolve) => {
     markFinished = resolve;
+  });
+  let markReleased!: () => void;
+  const released = new Promise<void>((resolve) => {
+    markReleased = resolve;
   });
 
   async function* iterate(): AsyncGenerator<string> {
@@ -1051,8 +1062,22 @@ function makeConsole(seed: readonly string[] = [], signal?: AbortSignal): FakeCo
     resume();
   });
 
+  // The iterator is wrapped rather than handed over bare so a `return()` is
+  // observable even on a generator that was never started.
+  function open(): AsyncIterator<string> {
+    const inner = iterate();
+    return {
+      next: () => inner.next(),
+      return(value) {
+        markReleased();
+        return inner.return(value as never);
+      },
+      throw: (reason) => inner.throw(reason),
+    };
+  }
+
   return {
-    items: { [Symbol.asyncIterator]: iterate },
+    items: { [Symbol.asyncIterator]: open },
     push(...items) {
       queue.push(...items);
       resume();
@@ -1069,6 +1094,7 @@ function makeConsole(seed: readonly string[] = [], signal?: AbortSignal): FakeCo
       });
     },
     closed: () => finished,
+    released: () => released,
     isAborted: () => signal?.aborted === true,
   };
 }
@@ -1084,6 +1110,13 @@ interface FakeEditor {
   hold(): () => void;
   /** Suspend every resolve started from now until the returned release is called. */
   holdResolve(): () => void;
+  /**
+   * While false, `openConsole` resolves `null` and records no stream -- the
+   * production state that leaves the next attach with no running console.
+   */
+  setConsoleOpen(open: boolean): void;
+  /** Suspend every openConsole started from now until the returned release is called. */
+  holdConsole(): () => void;
   /** The signal production passed to the most recent resolve, if any. */
   lastResolveSignal(): AbortSignal | undefined;
 }
@@ -1096,9 +1129,11 @@ function makeEditor(baseUrl: string | null = "http://localhost:4242"): FakeEdito
     url: baseUrl,
     outcome: "accepted" as ReloadOutcome,
     resolveSignal: undefined as AbortSignal | undefined,
+    consoleOpen: true,
   };
   let gate: Promise<void> | null = null;
   let resolveGate: Promise<void> | null = null;
+  let consoleGate: Promise<void> | null = null;
   const client: WatchEditorClient = {
     async resolve(_cwd, signal) {
       state.resolves += 1;
@@ -1113,10 +1148,14 @@ function makeEditor(baseUrl: string | null = "http://localhost:4242"): FakeEdito
       if (open) await open;
       return state.outcome;
     },
-    openConsole(_endpoint, signal) {
+    async openConsole(_endpoint, signal) {
+      if (!state.consoleOpen) return null;
       const stream = makeConsole([], signal);
+      // Recorded before parking so a held open is observable from the test.
       consoles.push(stream);
-      return Promise.resolve(stream.items);
+      const open = consoleGate;
+      if (open) await open;
+      return stream.items;
     },
   };
   return {
@@ -1147,6 +1186,19 @@ function makeEditor(baseUrl: string | null = "http://localhost:4242"): FakeEdito
       });
       return () => {
         resolveGate = null;
+        release();
+      };
+    },
+    setConsoleOpen(open) {
+      state.consoleOpen = open;
+    },
+    holdConsole() {
+      let release!: () => void;
+      consoleGate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      return () => {
+        consoleGate = null;
         release();
       };
     },
@@ -2212,6 +2264,135 @@ describe("runWatch stop lifecycle", () => {
       .map((line) => JSON.parse(line) as { event?: string })
       .filter((event) => event.event === "stop");
     expect(stops.length).toBe(1);
+  });
+
+  test("a watch stopped while a reload's console open is in flight posts nothing afterwards", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+    // Startup leaves no console running, so the reload's own attach is the one
+    // that opens a stream -- and the one the stop has to cancel.
+    editor.setConsoleOpen(false);
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    editor.posts.length = 0;
+    editor.setConsoleOpen(true);
+    const releaseConsole = editor.holdConsole();
+
+    writeProjectFile("src/main.ts", scriptSource(2));
+    factory.trigger("change", "src/main.ts");
+    await until(() => editor.consoles.length === 1);
+
+    const beforeStop = err().length;
+    handle.stop();
+    expect(await handle.done).toBe(0);
+
+    releaseConsole();
+    const stream = editor.consoles[0] as FakeConsole;
+    await stream.released();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    expect(editor.posts.length).toBe(0);
+    const afterStop = err().slice(beforeStop);
+    expect(afterStop).not.toContain("attached to Defold editor");
+    expect(afterStop).not.toContain("did not accept the reload");
+  });
+
+  test("json mode reports no reload after the stop event when the stop cancels a reload", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, out } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+    editor.setConsoleOpen(false);
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      json: true,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    editor.setConsoleOpen(true);
+    const releaseConsole = editor.holdConsole();
+
+    writeProjectFile("src/main.ts", scriptSource(2));
+    factory.trigger("change", "src/main.ts");
+    await until(() => editor.consoles.length === 1);
+
+    handle.stop();
+    expect(await handle.done).toBe(0);
+
+    releaseConsole();
+    await (editor.consoles[0] as FakeConsole).released();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    const events = out()
+      .trimEnd()
+      .split("\n")
+      .map((line) => JSON.parse(line) as { event?: string; error?: string });
+    const stopAt = events.findIndex((event) => event.event === "stop");
+    expect(stopAt).toBeGreaterThanOrEqual(0);
+    expect(events.slice(stopAt + 1)).toEqual([]);
+    // A cancelled reload is not a refused one, so neither arm reports.
+    expect(events.filter((event) => event.event === "reload")).toEqual([]);
+  });
+
+  test("a stop landing between a mixed emit's two commands posts only the first", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    writeProjectFile("src/tools.ts", EDITOR_SCRIPT_SOURCE);
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    editor.posts.length = 0;
+    // The refusal wording is the discriminating one here: `noteAttached` is
+    // latched from startup, so only a failing outcome makes a post-stop note
+    // visible on stderr.
+    editor.setOutcome("unavailable");
+    const releasePost = editor.hold();
+
+    writeProjectFile("src/main.ts", scriptSource(2));
+    writeProjectFile("src/tools.ts", EDITOR_SCRIPT_SOURCE.replace("Say Hi", "Say Hello"));
+    factory.trigger("change", "src/main.ts");
+    factory.trigger("change", "src/tools.ts");
+    await until(() => editor.posts.length === 1);
+
+    const beforeStop = err().length;
+    handle.stop();
+    expect(await handle.done).toBe(0);
+
+    releasePost();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    expect(editor.posts.length).toBe(1);
+    expect(err().slice(beforeStop)).not.toContain("did not accept the reload");
   });
 });
 
