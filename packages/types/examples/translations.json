@@ -185,6 +185,18 @@
       "ts": "// Make a directory with spaces in it:\neditor.execute(\"mkdir\", \"new dir\");\n\n// Read the git status:\nconst status = editor.execute(\"git\", \"status\", \"--porcelain\", {\n  reload_resources: false,\n  out: \"capture\",\n});"
     }
   ],
+  "editor.ui.use_memo": [
+    {
+      "sourceHash": "dac97ede337c4f69",
+      "ts": "function increment(n: unknown): number {\n  return (n as number) + 1;\n}\n\nfunction makeListener(setCount: unknown) {\n  return () => {\n    (setCount as (update: unknown) => unknown)(increment);\n  };\n}\n\nconst counterButton = editor.ui.component((props) => {\n  const [count, setCount] = editor.ui.use_state((props as { count: unknown }).count);\n  const onPressed = editor.ui.use_memo(makeListener, setCount);\n  return editor.ui.button({\n    text: tostring(count),\n    on_pressed: onPressed,\n  });\n});"
+    }
+  ],
+  "editor.ui.use_state": [
+    {
+      "sourceHash": "3065b49232e1a2de",
+      "ts": "function increment(n: unknown): number {\n  return (n as number) + 1;\n}\n\nconst counterButton = editor.ui.component((props) => {\n  const [count, setCount] = editor.ui.use_state((props as { count: unknown }).count);\n  return editor.ui.button({\n    text: tostring(count),\n    on_pressed: () => {\n      setCount(increment);\n    },\n  });\n});"
+    }
+  ],
   "factory.create": [
     {
       "sourceHash": "d2cd2037a9127ec6",

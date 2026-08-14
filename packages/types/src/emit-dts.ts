@@ -88,6 +88,7 @@ export const TS_RESERVED_NAMES = new Set([
   "with",
   "debugger",
   "extends",
+  "enum",
 ]);
 
 // A parameter name that clears `TS_IDENTIFIER` but is a TS reserved word (e.g.
@@ -1465,32 +1466,14 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
         : a.name.localeCompare(b.name),
     );
 
-  // One-level nested functions (`socket.dns.toip`) fail the flat-identifier test
-  // in `prepareFunction` above (the stripped `dns.toip` has a dot), so they are
-  // absent from `functions`. Re-collect them grouped by their single leading
-  // segment, re-stripping against `<namespace>.<segment>.` so the emitted
-  // identifier is the final segment. Only exactly-one-dot, both-sides-identifier
-  // locals qualify; deeper nesting and non-identifier segments stay dropped.
-  const nestedFunctionLocal = /^[A-Za-z_$][\w$]*\.[A-Za-z_$][\w$]*$/;
-  const nestedGroups = new Map<string, PreparedFunction[]>();
-  for (const fn of module.functions) {
-    const local = stripPrefix(fn.name, prefix);
-    if (!nestedFunctionLocal.test(local)) continue;
-    const segment = local.slice(0, local.indexOf("."));
-    const prepared = prepareFunction(fn, `${module.namespace}.${segment}.`);
-    if (prepared === null) continue;
-    const group = nestedGroups.get(segment) ?? [];
-    group.push(prepared);
-    nestedGroups.set(segment, group);
-  }
-  for (const group of nestedGroups.values()) {
-    group.sort((a, b) =>
-      a.name === b.name
-        ? a.original.parameters.length - b.original.parameters.length
-        : a.name.localeCompare(b.name),
-    );
-  }
-  const nestedSegments = [...nestedGroups.keys()].sort((a, b) => a.localeCompare(b));
+  // Nested members (`socket.dns.toip`, `editor.ui.COLOR.TEXT`) fail the
+  // flat-identifier test in `prepareVariable`/`prepareFunction` above (the
+  // stripped local has a dot), so they are absent from `variables`/`functions`.
+  // Re-collect them into a tree keyed by their full leading path, re-stripping
+  // against `<namespace>.<path>.` so the emitted identifier is the final
+  // segment. One or two leading identifier segments qualify; anything deeper,
+  // and any non-identifier segment, stays dropped.
+  const nestedRoot = collectNestedGroups(module, prefix);
 
   // Colon methods (`client:send`) are FUNCTION elements named `<receiver>:<method>`
   // and are NOT namespace-prefixed, so they fail the flat-identifier test in
@@ -1576,31 +1559,57 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
     lines.push(`${INDENT}export { ${alias.internal} as ${alias.public} };`);
   }
 
-  const nestedIndent = `${INDENT}${INDENT}`;
-  for (const segment of nestedSegments) {
-    const group = nestedGroups.get(segment) ?? [];
-    // A reserved-name function inside a nested namespace gets the same recovery as
-    // a top-level one: emitted un-exported as `_<name>` and re-exported under the
-    // reserved name. The alias switches this namespace out of implicit-export mode,
-    // so its siblings then need an explicit `export` to stay reachable.
-    const segmentAliases: { internal: string; public: string }[] = [];
-    const segmentDecl = group.some((fn) => TS_RESERVED_NAMES.has(fn.name)) ? "export " : "";
-    lines.push(`${INDENT}${decl}namespace ${segment} {`);
-    for (const fn of group) {
-      const reserved = TS_RESERVED_NAMES.has(fn.name);
-      const emitName = aliasName(fn.name, segmentAliases);
-      for (const docLine of functionDocLines(fn.original, translations, nestedIndent)) {
-        lines.push(docLine);
+  const emitNestedLevel = (
+    level: ReadonlyMap<string, NestedGroup>,
+    indent: string,
+    outerDecl: string,
+  ): void => {
+    for (const segment of [...level.keys()].sort((a, b) => a.localeCompare(b))) {
+      const group = level.get(segment) as NestedGroup;
+      const bodyIndent = `${indent}${INDENT}`;
+      // A reserved-name member inside a nested namespace gets the same recovery as
+      // a top-level one: emitted un-exported as `_<name>` and re-exported under the
+      // reserved name. The alias switches this namespace out of implicit-export mode,
+      // so its siblings then need an explicit `export` to stay reachable.
+      const segmentAliases: { internal: string; public: string }[] = [];
+      const segmentDecl =
+        group.variables.some((v) => TS_RESERVED_NAMES.has(v.name)) ||
+        group.functions.some((fn) => TS_RESERVED_NAMES.has(fn.name))
+          ? "export "
+          : "";
+      lines.push(`${indent}${outerDecl}namespace ${segment} {`);
+      for (const v of group.variables) {
+        const reserved = TS_RESERVED_NAMES.has(v.name);
+        const emitName = aliasName(v.name, segmentAliases);
+        for (const docLine of summaryDocLines(
+          v.original.brief,
+          v.original.description,
+          bodyIndent,
+        )) {
+          lines.push(docLine);
+        }
+        lines.push(
+          `${bodyIndent}${reserved ? "" : segmentDecl}${emitVariable(v, emitName, mapType)}`,
+        );
       }
-      lines.push(
-        `${nestedIndent}${reserved ? "" : segmentDecl}${emitFunction(fn, emitName, mapType, resolver, urlParameters)}`,
-      );
+      for (const fn of group.functions) {
+        const reserved = TS_RESERVED_NAMES.has(fn.name);
+        const emitName = aliasName(fn.name, segmentAliases);
+        for (const docLine of functionDocLines(fn.original, translations, bodyIndent)) {
+          lines.push(docLine);
+        }
+        lines.push(
+          `${bodyIndent}${reserved ? "" : segmentDecl}${emitFunction(fn, emitName, mapType, resolver, urlParameters)}`,
+        );
+      }
+      for (const alias of [...segmentAliases].sort((a, b) => a.public.localeCompare(b.public))) {
+        lines.push(`${bodyIndent}export { ${alias.internal} as ${alias.public} };`);
+      }
+      emitNestedLevel(group.children, bodyIndent, segmentDecl);
+      lines.push(`${indent}}`);
     }
-    for (const alias of [...segmentAliases].sort((a, b) => a.public.localeCompare(b.public))) {
-      lines.push(`${nestedIndent}export { ${alias.internal} as ${alias.public} };`);
-    }
-    lines.push(`${INDENT}}`);
-  }
+  };
+  emitNestedLevel(nestedRoot, INDENT, decl);
 
   if (module.properties.length > 0) {
     const members = [...module.properties].sort((a, b) => a.name.localeCompare(b.name));
@@ -1747,6 +1756,70 @@ interface PreparedFunction {
 interface PreparedVariable {
   name: string;
   original: ApiVariable;
+}
+
+// One level of the nested-member tree: the members declared directly under a
+// segment, plus the segments declared beneath it.
+interface NestedGroup {
+  variables: PreparedVariable[];
+  functions: PreparedFunction[];
+  children: Map<string, NestedGroup>;
+}
+
+// A stripped local carrying one or two leading identifier segments before the
+// member name (`dns.toip`, `COLOR.TEXT`, `schema.integer`). Three levels deep is
+// beyond anything the vendored documents describe, so it stays dropped rather
+// than half-emitted.
+const NESTED_MEMBER_LOCAL = /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*){1,2}$/;
+
+function collectNestedGroups(module: ApiModule, prefix: string): Map<string, NestedGroup> {
+  const root = new Map<string, NestedGroup>();
+  const groupAt = (segments: readonly string[]): NestedGroup => {
+    let level = root;
+    let group: NestedGroup | undefined;
+    for (const segment of segments) {
+      let next = level.get(segment);
+      if (next === undefined) {
+        next = { variables: [], functions: [], children: new Map() };
+        level.set(segment, next);
+      }
+      group = next;
+      level = next.children;
+    }
+    return group as NestedGroup;
+  };
+  const pathOf = (local: string): string[] => local.split(".").slice(0, -1);
+
+  for (const v of module.variables) {
+    const local = stripPrefix(v.name, prefix);
+    if (!NESTED_MEMBER_LOCAL.test(local)) continue;
+    const segments = pathOf(local);
+    const prepared = prepareVariable(v, `${module.namespace}.${segments.join(".")}.`);
+    if (prepared === null) continue;
+    groupAt(segments).variables.push(prepared);
+  }
+  for (const fn of module.functions) {
+    const local = stripPrefix(fn.name, prefix);
+    if (!NESTED_MEMBER_LOCAL.test(local)) continue;
+    const segments = pathOf(local);
+    const prepared = prepareFunction(fn, `${module.namespace}.${segments.join(".")}.`);
+    if (prepared === null) continue;
+    groupAt(segments).functions.push(prepared);
+  }
+
+  const sortLevel = (level: Map<string, NestedGroup>): void => {
+    for (const group of level.values()) {
+      group.variables.sort((a, b) => a.name.localeCompare(b.name));
+      group.functions.sort((a, b) =>
+        a.name === b.name
+          ? a.original.parameters.length - b.original.parameters.length
+          : a.name.localeCompare(b.name),
+      );
+      sortLevel(group.children);
+    }
+  };
+  sortLevel(root);
+  return root;
 }
 
 function prepareFunction(fn: ApiFunction, prefix: string): PreparedFunction | null {
