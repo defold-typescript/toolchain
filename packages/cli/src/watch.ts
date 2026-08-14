@@ -368,6 +368,9 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       if (lines === null || stopped) {
         consoleRunning = false;
         if (lines !== null) void lines[Symbol.asyncIterator]().return?.(undefined);
+        // A client whose console never opened is still attached, just silent; a
+        // stopped watch is not, and callers read this value as permission to post.
+        if (stopped) return null;
       } else {
         const reader = lines[Symbol.asyncIterator]();
         consoleReader = reader;
@@ -392,11 +395,14 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     // it up front would claim an attachment a refused reload cannot back.
     const endpoint = await ensureAttached(false);
     if (endpoint === null) {
-      emitReloadEvent("unavailable");
+      // Guarded here rather than inside `emitReloadEvent`, which the post
+      // outcomes also reach: a cancelled reload is not a refused one.
+      if (!stopped) emitReloadEvent("unavailable");
       return;
     }
     for (const name of commands) {
       const outcome = await client.postCommand(cwd, name);
+      if (stopped) return;
       if (outcome === "unavailable") {
         noteReloadFailed(endpoint.baseUrl);
       } else {
