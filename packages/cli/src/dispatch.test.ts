@@ -4839,3 +4839,81 @@ describe("dispatch set-target", () => {
     expect(pinOf()).toBe("1.12.4");
   });
 });
+
+describe("dispatch reload", () => {
+  test("reload posts one hot-reload through the injected editor client and exits 0", async () => {
+    const { io, out } = captureStreams();
+    const editor = makeEditorClient();
+
+    const code = await dispatch(["reload", cwd, "--wait", "0"], io, {
+      editorClient: editor.client,
+    });
+
+    expect(code).toBe(0);
+    expect(editor.posts).toEqual(["hot-reload"]);
+    expect(out()).toContain("no error observed");
+    expect(out()).not.toContain('"command"');
+  });
+
+  test("reload --wait 0 reaches runReload as a zero window, opening no console", async () => {
+    const { io } = captureStreams();
+    const editor = makeEditorClient();
+    let opened = 0;
+    const client: WatchEditorClient = {
+      ...editor.client,
+      openConsole: () => {
+        opened += 1;
+        return Promise.resolve(null);
+      },
+    };
+
+    const zero = await dispatch(["reload", cwd, "--wait", "0"], io, { editorClient: client });
+    expect(zero).toBe(0);
+    expect(opened).toBe(0);
+
+    const waited = await dispatch(["reload", cwd, "--wait", "10"], io, { editorClient: client });
+    expect(waited).toBe(0);
+    expect(opened).toBe(1);
+  });
+
+  test("reload --extensions forwards the flag instead of dropping it", async () => {
+    const { io } = captureStreams();
+    const editor = makeEditorClient();
+
+    const code = await dispatch(["reload", cwd, "--extensions", "--wait", "0"], io, {
+      editorClient: editor.client,
+    });
+
+    expect(code).toBe(0);
+    expect(editor.posts).toEqual(["reload-extensions"]);
+  });
+
+  test("reload --json writes one result line carrying command and outcome", async () => {
+    const { io, out, err } = captureStreams();
+    const editor = makeEditorClient();
+
+    const code = await dispatch(["reload", cwd, "--wait", "0", "--json"], io, {
+      editorClient: editor.client,
+    });
+
+    expect(code).toBe(0);
+    expect(err()).toBe("");
+    const lines = out().trimEnd().split("\n");
+    expect(lines.length).toBe(1);
+    const payload = JSON.parse(lines[0] as string) as Record<string, unknown>;
+    expect(payload.command).toBe("reload");
+    expect(payload.outcome).toBe("accepted");
+    expect(payload.ok).toBe(true);
+  });
+
+  test("reload propagates a non-zero exit when no editor is running", async () => {
+    const { io, err } = captureStreams();
+    const editor = makeEditorClient();
+    const client: WatchEditorClient = { ...editor.client, resolve: () => Promise.resolve(null) };
+
+    const code = await dispatch(["reload", cwd, "--wait", "0"], io, { editorClient: client });
+
+    expect(code).toBe(1);
+    expect(err()).toContain("no running Defold editor");
+  });
+});

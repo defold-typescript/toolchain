@@ -83,6 +83,11 @@ Hot reload runs the **new code against the old state** and does not re-run
 `init`. See [Script lifecycle](./script-lifecycle.md#hot-reload-and-on_reload)
 for what belongs in `on_reload`.
 
+If you want one reload rather than a loop — a script or an agent that builds,
+reloads, and then decides what to do next — use [`reload`](./reload.md), which
+posts a single reload, reads the console for a bounded window, and exits with a
+status you can branch on.
+
 ## Flags
 
 - `--hot-reload` — push a reload to the running game after every successful

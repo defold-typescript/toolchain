@@ -765,6 +765,60 @@ then recover in order: fix the import as in
 re-run `bunx @defold-typescript/cli build --json`, and clear the Defold project's
 `build/` output if stale compiled resources keep failing.
 
+## Hot reload the running game
+
+**Goal:** get an edit into the *already running* game and find out whether the
+reloaded code ran, without opening the editor and without holding a foreground
+watcher. This is the fast inner loop for an agent: change a `.ts`, rebuild,
+reload, read the result, decide.
+
+**Commands (run from the project root):**
+
+```sh
+bunx @defold-typescript/cli build --json
+bunx @defold-typescript/cli reload --json
+```
+
+Chain them with `&&`: `build` exits non-zero on a compile error, so a failed
+build never reloads and the game stays on the last code that actually built.
+
+[`reload`](./reload.md) posts one reload and then reads the editor console for a
+bounded window (`--wait <ms>`, default `2000`), because the editor answers the
+post with HTTP 202 — *queued* — and a Lua error in the reloaded chunk reaches the
+console, never that response. Its single JSON line is:
+
+```json
+{"command":"reload","ok":false,"written":[],"error":"the reloaded code reported an error","outcome":"accepted","consoleErrors":["ERROR:SCRIPT: /main/main.script:12: attempt to index a nil value"]}
+```
+
+Branch on `outcome` first, then `ok`:
+
+- `outcome: "unavailable"` — no editor is running. Nothing was posted; start the
+  editor and the game before retrying.
+- `outcome: "skipped"` — the editor is running but declined: usually no game is
+  running, or nothing was dirty. Press **Build** in the editor once to get a game
+  under it.
+- `outcome: "accepted"` with `ok: true` — the reload landed and nothing appeared
+  on the console during the window.
+- `outcome: "accepted"` with `ok: false` — the reload landed and the new code
+  threw. `consoleErrors` carries the header and its traceback frames in order;
+  that is your stack trace.
+
+**`ok: true` is not proof the reload succeeded.** The window is a heuristic: an
+error thrown after it closes, or on a frame the game has not reached, is missed.
+Widen `--wait` for a reload that does real work before it can fail. Two failure
+classes never reach the console at all — Defold's own build errors (a bad
+component reference, a missing atlas, a Lua syntax error) go to the editor's
+Build Errors tab.
+
+When the reload lands but the game behaves as before, check `on_reload` rather
+than the reload: hot reload runs the **new code against the old state** and does
+not re-run `init`, so state seeded in `init` keeps its old values. See
+[Script lifecycle](./script-lifecycle.md#hot-reload-and-on_reload).
+
+For a person editing files rather than an agent driving one change at a time,
+[`watch --hot-reload`](./watch.md#hot-reload) does this continuously instead.
+
 ## Drive the engine build
 
 **Goal:** once the TypeScript surface transpiles clean, run the actual Defold
