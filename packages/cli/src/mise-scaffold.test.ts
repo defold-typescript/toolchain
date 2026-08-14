@@ -2,13 +2,18 @@ import { describe, expect, test } from "bun:test";
 import { MISE_TASKS_TOML, mergeMiseToml } from "./mise-scaffold";
 
 describe("MISE_TASKS_TOML", () => {
-  test("declares the six quoted namespaced task headers", () => {
+  test("declares the seven quoted namespaced task headers", () => {
     expect(MISE_TASKS_TOML).toContain('[tasks."defold-typescript:build"]');
     expect(MISE_TASKS_TOML).toContain('[tasks."defold-typescript:watch"]');
+    expect(MISE_TASKS_TOML).toContain('[tasks."defold-typescript:watch-hr"]');
     expect(MISE_TASKS_TOML).toContain('[tasks."defold-typescript:resolve"]');
     expect(MISE_TASKS_TOML).toContain('[tasks."defold-typescript:upgrade"]');
     expect(MISE_TASKS_TOML).toContain('[tasks."defold-typescript:setup-debug"]');
     expect(MISE_TASKS_TOML).toContain('[tasks."defold-typescript:init-agents"]');
+  });
+
+  test("watch-hr runs the watch verb with the hot-reload flag", () => {
+    expect(MISE_TASKS_TOML).toContain('run = "bunx @defold-typescript/cli watch --hot-reload"');
   });
 
   test("setup-debug runs the CLI via bunx @defold-typescript/cli", () => {
@@ -122,6 +127,26 @@ describe("mergeMiseToml", () => {
     const markers = merged.match(/# managed by @defold-typescript/g) ?? [];
     const expected = MISE_TASKS_TOML.match(/# managed by @defold-typescript/g) ?? [];
     expect(markers.length).toBe(expected.length);
+  });
+
+  test("an upgraded project gains watch-hr with its user content byte-identical", () => {
+    // The prior generation is the managed block minus the new task, which is what
+    // a project scaffolded before this feature actually carries on disk.
+    const userContent = '[tools]\nbun = "1.3"\n\n[tasks.foo]\nrun = "echo hi"';
+    const priorManaged = MISE_TASKS_TOML.split("# managed by @defold-typescript\n")
+      .filter((block) => !block.includes('[tasks."defold-typescript:watch-hr"]'))
+      .filter((block) => block !== "")
+      .map((block) => `# managed by @defold-typescript\n${block}`)
+      .join("");
+    expect(priorManaged).not.toContain('[tasks."defold-typescript:watch-hr"]');
+
+    const merged = mergeMiseToml(`${userContent}\n\n${priorManaged}`);
+
+    expect(merged).toContain('[tasks."defold-typescript:watch-hr"]');
+    expect(merged).toContain(userContent);
+    for (const header of merged.match(/\[tasks\."defold-typescript:[^"]+"\]/g) ?? []) {
+      expect(merged.split(header).length - 1).toBe(1);
+    }
   });
 
   test("strips a stale managed block before re-appending the fresh one", () => {

@@ -157,6 +157,24 @@ export default defineScript({
 
 `on_message(self, message_id, message, sender)` runs when another script or the engine posts to this component. Defold pre-hashes the id, so `message_id` arrives as a `Hash` and `message` as an untyped record. `on_message`'s payload narrowing — the `isMessage` guard and the `onMessage` dispatcher that turn that untyped record back into its `BuiltinMessages` shape — is covered in [Typed messages](./messages.md), the same way [Where script state lives](./script-state.md) is the canonical home for `self` typing.
 
+## Hot reload and `on_reload`
+
+`on_reload(self)` runs when a component's code is reloaded into a running game — what [`watch --hot-reload`](./watch.md#hot-reload) pushes on every successful rebuild, and what the editor's own **Reload** does.
+
+A reload swaps the **code**; the state stays. Defold keeps the live `self` the old code left behind and does **not** call `init` again, so anything `init` established is simply not re-established:
+
+```ts
+export default defineScript({
+  init: () => ({ speed: 120, target: vmath.vector3(0, 0, 0) }),
+  on_reload(self) {
+    // Reached the running instance with the *old* self; re-apply what init set.
+    self.speed = 120;
+  },
+});
+```
+
+This bites harder in TypeScript than in Lua, because `init`'s **return value is** the state object: the field set you wrote once in `init` is exactly what a reload leaves untouched. Add a field to `init`'s return and reload, and the running instance still holds the old shape — the new field is `undefined` until the game restarts, even though the type says otherwise. `on_reload` is where you close that gap for the fields worth tweaking live; for the rest, restart the game.
+
 ## API availability by script kind
 
 Defold scopes two namespaces to a script kind: `gui.*` resolves only inside a `.gui_script`, and `render.*` only inside a `.render_script`. Every other namespace (`go`, `msg`, `vmath`, `sys`, `physics`, …) is available in every kind.
