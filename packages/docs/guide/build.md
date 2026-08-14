@@ -23,6 +23,13 @@ becomes a Lua `require` that resolves against that emitted module, so a shared
 module must be built before the script importing it will run. Open the project in
 the [Defold editor](./defold-editor.md) (or run it headlessly, below) to play it.
 
+If a Defold editor is open on this project, `build` names it on stderr
+(`attached to Defold editor at http://localhost:<port>`) and moves on. It is a
+one-shot command, so nothing is streamed and nothing is posted to the editor; for
+the loop that surfaces the running game's runtime errors as they happen, see
+[`watch`](./watch.md#runtime-errors-in-the-terminal). With no editor open — the
+ordinary case in CI — `build` prints nothing extra and behaves exactly as before.
+
 When a source uses a runtime helper TypeScript-to-Lua provides (`Object.keys`,
 object spread, and similar), the build also writes a `lualib_bundle.lua` at the
 output root automatically; the generated Lua's `require("lualib_bundle")` resolves

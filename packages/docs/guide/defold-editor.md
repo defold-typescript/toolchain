@@ -67,3 +67,9 @@ It attaches to whichever editor is open on this project — start the editor bef
 Hot reload replaces code, not state: the reloaded script keeps the state the old code left behind and `init` is **not** run again. What `init` set up must be re-applied in `on_reload` — see [Script lifecycle](./script-lifecycle.md#hot-reload-and-on_reload).
 
 Without hot reload the manual path still stands: rebuild with `bunx @defold-typescript/cli build` (or keep plain `watch` running) and press **Build** in the editor to run the new code.
+
+### Runtime errors in your terminal
+
+While the editor is open, `watch` also reads its console and prints runtime errors — the ones a script throws while the game runs — into your terminal, with their stack tracebacks. This happens with or without `--hot-reload`, and `build` prints a line naming the editor it found.
+
+An attached editor means the CLI can read the editor, not that the editor is checking your project in the background. Defold's own build errors — a missing atlas, a bad component reference — are produced by pressing **Build** and appear in the editor's Build Errors tab, never in the console. See [`watch`](./watch.md#runtime-errors-in-the-terminal).

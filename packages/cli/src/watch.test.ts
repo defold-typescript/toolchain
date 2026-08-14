@@ -4,8 +4,14 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { Writable } from "node:stream";
 import { GENERATED_BANNER } from "./build-output";
-import type { ReloadOutcome } from "./editor-attach";
 import {
+  EDITOR_API_TITLE,
+  EDITOR_PORT_FILE,
+  type EditorTransport,
+  type ReloadOutcome,
+} from "./editor-attach";
+import {
+  createWatchEditorClient,
   type EditorReloadCommand,
   runWatch,
   type WatchEditorClient,
@@ -105,6 +111,18 @@ function countMatches(haystack: string, needle: RegExp): number {
   return haystack.match(needle)?.length ?? 0;
 }
 
+// Editor attach/detach is a status channel that now reports on every watch,
+// including one with no editor. Strip it so an assertion aimed at build failures
+// still fails on any real failure line.
+const EDITOR_STATUS = /^defold-typescript watch: (attached to Defold editor|no Defold editor)/;
+
+function failureOutput(stderrText: string): string {
+  return stderrText
+    .split("\n")
+    .filter((line) => line !== "" && !EDITOR_STATUS.test(line))
+    .join("\n");
+}
+
 function scriptSource(value: number): string {
   return `import { defineScript } from "@defold-typescript/types";\nexport default defineScript({ init() { vmath.vector3(${value}, 0, 0); } });\n`;
 }
@@ -165,7 +183,7 @@ describe("runWatch", () => {
     await handle.waitForIdle();
 
     expect(countMatches(out(), /wrote 1 files/g)).toBe(1);
-    expect(err()).toBe("");
+    expect(failureOutput(err())).toBe("");
     expect(err()).not.toContain("unsupported extension");
 
     handle.stop();
@@ -966,9 +984,80 @@ function moduleSource(value: number): string {
   return `export const answer = ${value};\n`;
 }
 
+/**
+ * A hand-driven console stream. `settled()` resolves once every pushed item has
+ * been pulled *and* the consumer has parked again, which is what makes an
+ * assertion on surfaced output deterministic without a sleep.
+ */
+interface FakeConsole {
+  readonly items: AsyncIterable<string>;
+  push(...items: string[]): void;
+  end(): void;
+  settled(): Promise<void>;
+}
+
+function makeConsole(seed: readonly string[] = []): FakeConsole {
+  const queue: string[] = [...seed];
+  let wake: (() => void) | null = null;
+  let onPark: (() => void) | null = null;
+  let ended = false;
+  let parked = false;
+  let markFinished!: () => void;
+  const finished = new Promise<void>((resolve) => {
+    markFinished = resolve;
+  });
+
+  async function* iterate(): AsyncGenerator<string> {
+    try {
+      for (;;) {
+        while (queue.length > 0) yield queue.shift() as string;
+        if (ended) return;
+        parked = true;
+        const announce = onPark;
+        onPark = null;
+        announce?.();
+        await new Promise<void>((resolve) => {
+          wake = resolve;
+        });
+      }
+    } finally {
+      markFinished();
+    }
+  }
+
+  // Clearing `parked` here rather than after the await keeps `settled()` from
+  // observing a stale park from before the push it is meant to wait on.
+  const resume = (): void => {
+    parked = false;
+    const pending = wake;
+    wake = null;
+    pending?.();
+  };
+
+  return {
+    items: { [Symbol.asyncIterator]: iterate },
+    push(...items) {
+      queue.push(...items);
+      resume();
+    },
+    end() {
+      ended = true;
+      resume();
+    },
+    settled() {
+      if (ended) return finished;
+      if (parked) return Promise.resolve();
+      return new Promise<void>((resolve) => {
+        onPark = resolve;
+      });
+    },
+  };
+}
+
 interface FakeEditor {
   readonly client: WatchEditorClient;
   readonly posts: EditorReloadCommand[];
+  readonly consoles: FakeConsole[];
   resolveCount(): number;
   setBaseUrl(url: string | null): void;
   setOutcome(outcome: ReloadOutcome): void;
@@ -978,6 +1067,7 @@ interface FakeEditor {
 
 function makeEditor(baseUrl: string | null = "http://localhost:4242"): FakeEditor {
   const posts: EditorReloadCommand[] = [];
+  const consoles: FakeConsole[] = [];
   const state = { resolves: 0, url: baseUrl, outcome: "accepted" as ReloadOutcome };
   let gate: Promise<void> | null = null;
   const client: WatchEditorClient = {
@@ -991,10 +1081,16 @@ function makeEditor(baseUrl: string | null = "http://localhost:4242"): FakeEdito
       if (open) await open;
       return state.outcome;
     },
+    openConsole() {
+      const stream = makeConsole();
+      consoles.push(stream);
+      return Promise.resolve(stream.items);
+    },
   };
   return {
     client,
     posts,
+    consoles,
     resolveCount: () => state.resolves,
     setBaseUrl(url) {
       state.url = url;
@@ -1096,14 +1192,14 @@ describe("runWatch hot reload", () => {
     factory.trigger("rename", "src/helper.ts");
     await handle.waitForIdle();
 
-    expect(err()).toBe("");
+    expect(failureOutput(err())).toBe("");
     expect(editor.posts.length).toBe(afterStartup);
 
     handle.stop();
     await handle.done;
   });
 
-  test("without hotReload the editor client is never touched, not even for discovery", async () => {
+  test("without hotReload the editor is still read, but nothing is ever posted to it", async () => {
     writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeProjectFile("src/main.ts", scriptSource(1));
     const { stdout, stderr } = captureStreams();
@@ -1124,7 +1220,7 @@ describe("runWatch hot reload", () => {
     await handle.waitForIdle();
 
     expect(editor.posts.length).toBe(0);
-    expect(editor.resolveCount()).toBe(0);
+    expect(editor.resolveCount()).toBeGreaterThan(0);
 
     handle.stop();
     await handle.done;
@@ -1401,6 +1497,202 @@ describe("runWatch hot reload coalescing and diagnostics", () => {
     expect(typeof unavailable.error).toBe("string");
 
     expect(err()).toBe("");
+
+    handle.stop();
+    await handle.done;
+  });
+});
+
+function makeEditorTransport(historyLines: number, stream: FakeConsole): EditorTransport {
+  const ok = (text: string): Promise<{ status: number; text(): Promise<string> }> =>
+    Promise.resolve({ status: 200, text: () => Promise.resolve(text) });
+  return (url) => {
+    if (url.endsWith("/openapi.json"))
+      return ok(JSON.stringify({ info: { title: EDITOR_API_TITLE } }));
+    if (url.endsWith("/console/stream")) {
+      return Promise.resolve({
+        status: 200,
+        text: () => Promise.resolve(""),
+        body: stream.items,
+      });
+    }
+    if (url.endsWith("/console")) {
+      return ok(JSON.stringify({ lines: Array.from({ length: historyLines }, (_, i) => `${i}`) }));
+    }
+    return Promise.resolve({ status: 404, text: () => Promise.resolve("") });
+  };
+}
+
+describe("runWatch console surfacing", () => {
+  test("ERROR-class console lines reach the terminal and ordinary frame logging does not", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    const stream = editor.consoles[0] as FakeConsole;
+    stream.push(
+      "INFO:ENGINE: Defold Engine 1.9.8",
+      "DEBUG:SCRIPT: player position updated",
+      "ERROR:SCRIPT: main/main.script:5: attempt to index a nil value",
+      "INFO:RESOURCE: main/main.luac successfully reloaded",
+    );
+    await stream.settled();
+
+    expect(err()).toContain(
+      "defold-typescript watch: editor: ERROR:SCRIPT: main/main.script:5: attempt to index a nil value",
+    );
+    expect(err()).not.toContain("Defold Engine 1.9.8");
+    expect(err()).not.toContain("player position updated");
+    expect(err()).not.toContain("successfully reloaded");
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("a traceback following an error header is surfaced with it", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    const stream = editor.consoles[0] as FakeConsole;
+    stream.push(
+      "ERROR:SCRIPT: main/main.script:5: attempt to call a nil value",
+      "stack traceback:",
+      "\tmain/main.script:5: in function <main/main.script:4>",
+      "INFO:ENGINE: the next frame is not part of the error",
+    );
+    await stream.settled();
+
+    expect(err()).toContain("stack traceback:");
+    expect(err()).toContain("in function <main/main.script:4>");
+    expect(err()).not.toContain("the next frame is not part of the error");
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("attaching to an editor whose console already holds errors replays none of them", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    writeProjectFile(EDITOR_PORT_FILE, "4242\n");
+    const history = [
+      "ERROR:SCRIPT: main/old.script:1: an error from before this watch started",
+      "INFO:ENGINE: an old info line",
+    ];
+    const stream = makeConsole(history.map((line) => `${line}\n`));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      editorClient: createWatchEditorClient(makeEditorTransport(history.length, stream)),
+    });
+    await handle.waitForIdle();
+    await stream.settled();
+
+    expect(err()).not.toContain("an error from before this watch started");
+
+    stream.push("ERROR:SCRIPT: main/main.script:9: a live error arrived after attach\n");
+    await stream.settled();
+
+    expect(err()).toContain("a live error arrived after attach");
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("the editor quitting mid-watch ends surfacing without failing the watch, and a later editor re-attaches", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    const first = editor.consoles[0] as FakeConsole;
+    first.end();
+    await first.settled();
+
+    writeProjectFile("src/main.ts", scriptSource(2));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    expect(editor.consoles.length).toBe(2);
+    const second = editor.consoles[1] as FakeConsole;
+    second.push("ERROR:SCRIPT: main/main.script:2: surfaced after re-attach");
+    await second.settled();
+
+    expect(err()).toContain("surfaced after re-attach");
+
+    handle.stop();
+    expect(await handle.done).toBe(0);
+  });
+
+  test("json mode keeps surfaced editor errors out of the event stream", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, out, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      json: true,
+      watcherFactory: factory.factory,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    const stream = editor.consoles[0] as FakeConsole;
+    stream.push("ERROR:SCRIPT: main/main.script:5: runtime boom");
+    await stream.settled();
+
+    writeProjectFile("src/main.ts", scriptSource(2));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+    stream.push("ERROR:SCRIPT: main/main.script:6: runtime boom again");
+    await stream.settled();
+
+    for (const line of out().trimEnd().split("\n")) {
+      expect(() => JSON.parse(line) as unknown).not.toThrow();
+    }
+    expect(out()).not.toContain("runtime boom");
+    expect(err()).toContain("runtime boom");
 
     handle.stop();
     await handle.done;

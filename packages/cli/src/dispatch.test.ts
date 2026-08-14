@@ -43,6 +43,18 @@ function captureStreams(): {
   };
 }
 
+// Editor attach/detach is a status channel every watch reports on, including one
+// running with no editor. Strip it so an assertion aimed at command failures
+// still fails on any real failure line.
+const EDITOR_STATUS = /^defold-typescript watch: (attached to Defold editor|no Defold editor)/;
+
+function failureOutput(stderrText: string): string {
+  return stderrText
+    .split("\n")
+    .filter((line) => line !== "" && !EDITOR_STATUS.test(line))
+    .join("\n");
+}
+
 // The watch branch lazy-imports its transpiler-bearing modules, so its
 // `onWatchStart` callback fires on a later microtask than the synchronous
 // dispatch() return. This bridges that gap: pass `onWatchStart` into dispatch,
@@ -1616,7 +1628,7 @@ describe("dispatch", () => {
 
     const code = await result;
     expect(code).toBe(0);
-    expect(err()).toBe("");
+    expect(failureOutput(err())).toBe("");
 
     const dir = path.join(cwd, ".defold-types", "defold-1.9.8");
     expect(existsSync(path.join(dir, "sprite.d.ts"))).toBe(true);
@@ -1656,7 +1668,7 @@ describe("dispatch", () => {
     const code = await result;
 
     expect(code).toBe(0);
-    expect(err()).toBe("");
+    expect(failureOutput(err())).toBe("");
     expect(out()).toMatch(/wrote 1 files/);
   });
 
@@ -1745,7 +1757,7 @@ describe("dispatch", () => {
     handle?.stop();
     const code = await result;
     expect(code).toBe(0);
-    expect(err()).toBe("");
+    expect(failureOutput(err())).toBe("");
 
     rmSync(sourceGeneratedDir, { recursive: true, force: true });
   });
@@ -1943,7 +1955,7 @@ describe("dispatch", () => {
     const contents = readFileSync(extPath, "utf8");
     expect(contents).toContain("do_alpha");
 
-    expect(err()).toBe("");
+    expect(failureOutput(err())).toBe("");
 
     handle?.stop();
     const code = await result;
@@ -2003,7 +2015,7 @@ describe("dispatch", () => {
 
     const extDir = path.join(cwd, ".defold-types", "extensions");
     expect(existsSync(extDir)).toBe(false);
-    expect(err()).toBe("");
+    expect(failureOutput(err())).toBe("");
 
     handle?.stop();
     const code = await result;
