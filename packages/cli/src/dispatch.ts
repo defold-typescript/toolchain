@@ -43,7 +43,7 @@ import { runSetTarget } from "./set-target";
 import { runSetupDebug } from "./setup-debug";
 import { runUpgrade, type UpgradeIo } from "./upgrade";
 import type { CheckboxPrompt } from "./wall-interactive";
-import type { RunWatchHandle, RunWatchOptions, WatcherFactory } from "./watch";
+import type { RunWatchHandle, RunWatchOptions, WatchEditorClient, WatcherFactory } from "./watch";
 
 export interface DispatchIo {
   readonly stdout: NodeJS.WritableStream;
@@ -52,6 +52,7 @@ export interface DispatchIo {
 
 export interface DispatchInternals {
   readonly watcherFactory?: WatcherFactory;
+  readonly editorClient?: WatchEditorClient;
   readonly componentWatcherFactory?: WatcherFactory;
   readonly debounceMs?: number;
   readonly onWatchStart?: (handle: RunWatchHandle) => void;
@@ -199,6 +200,7 @@ function dispatchCommand(
   const wallList = argv.includes("--list");
   const frozen = argv.includes("--frozen");
   const failOnDrift = argv.includes("--fail-on-drift");
+  const hotReload = argv.includes("--hot-reload");
   const { value: defoldTargetFlag, rest: afterTargetArgs } = parseValueFlag(argv, "defold-target");
   const { script: scriptFlag, rest: afterScriptArgs } = parseScriptFlag(afterTargetArgs);
   const { value: javaFlag, rest: afterJavaArgs } = parseValueFlag(afterScriptArgs, "java");
@@ -219,6 +221,7 @@ function dispatchCommand(
       a !== "--list" &&
       a !== "--frozen" &&
       a !== "--fail-on-drift" &&
+      a !== "--hot-reload" &&
       a !== "--detected" &&
       a !== "--detect",
   );
@@ -758,6 +761,8 @@ function dispatchCommand(
           ...(json ? { json: true } : {}),
           ...(pinDiagnostics.length > 0 ? { pinDiagnostics } : {}),
           ...(pinMismatch ? { pinMismatch } : {}),
+          ...(hotReload ? { hotReload: true } : {}),
+          ...(internals?.editorClient ? { editorClient: internals.editorClient } : {}),
         };
         const handle = runWatch(watchOpts);
         if (internals) {

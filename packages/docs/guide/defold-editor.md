@@ -50,4 +50,20 @@ Driving this without the editor — editing `.go` / `.collection` text directly 
 
 ## Run the game
 
-With the project open in Defold, press **Build** or **Project > Build** to run the game. If you change TypeScript code, rebuild with `bunx @defold-typescript/cli build` before running again, or keep `watch` running in a terminal.
+With the project open in Defold, press **Build** or **Project > Build** to run the game.
+
+### Hot reload while it runs
+
+Once the game is running, you do not have to stop it and press **Build** again for every code change. Run the watch loop with hot reload and each successful rebuild is pushed straight into the running game:
+
+```sh
+bunx @defold-typescript/cli watch --hot-reload
+# or, in a scaffolded project:
+mise run defold-typescript:watch-hr
+```
+
+It attaches to whichever editor is open on this project — start the editor before or after the watch loop, either order works — and reloads nothing when a build fails, so a compile error never pushes stale Lua into the running game. A change to an editor script reloads the editor's extensions instead. See [`watch`](./watch.md#hot-reload) for the flag and its output.
+
+Hot reload replaces code, not state: the reloaded script keeps the state the old code left behind and `init` is **not** run again. What `init` set up must be re-applied in `on_reload` — see [Script lifecycle](./script-lifecycle.md#hot-reload-and-on_reload).
+
+Without hot reload the manual path still stands: rebuild with `bunx @defold-typescript/cli build` (or keep plain `watch` running) and press **Build** in the editor to run the new code.

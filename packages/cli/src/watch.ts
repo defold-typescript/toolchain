@@ -1,5 +1,6 @@
 import { existsSync, watch as fsWatch } from "node:fs";
 import * as path from "node:path";
+import { SCRIPT_SUFFIX_BY_KIND } from "@defold-typescript/transpiler";
 import {
   BuildFailureError,
   isFileIncluded,
@@ -8,6 +9,12 @@ import {
   toPosix,
 } from "./build-output";
 import { type BuildSession, createBuildSession } from "./build-session";
+import {
+  type EditorEndpoint,
+  postCommand,
+  type ReloadOutcome,
+  resolveEditor,
+} from "./editor-attach";
 import { renderWatchEvent } from "./json-output";
 import { isComponentPath, isSkipped } from "./script-kind";
 
@@ -22,6 +29,34 @@ export interface Watcher {
 
 export type WatcherFactory = (root: string, onEvent: (e: WatchEvent) => void) => Watcher;
 
+/**
+ * `hot-reload` swaps the running game's Lua; `reload-extensions` reloads the
+ * editor's own extension scripts. They are disjoint targets, so an emit that
+ * touched both kinds posts both.
+ */
+export type EditorReloadCommand = "hot-reload" | "reload-extensions";
+
+export interface WatchEditorClient {
+  resolve(cwd: string): Promise<EditorEndpoint | null>;
+  postCommand(cwd: string, name: EditorReloadCommand): Promise<ReloadOutcome>;
+}
+
+export const defaultEditorClient: WatchEditorClient = {
+  resolve: (cwd) => resolveEditor(cwd),
+  postCommand: (cwd, name) => postCommand(cwd, name),
+};
+
+const EDITOR_SCRIPT_SUFFIX = SCRIPT_SUFFIX_BY_KIND["editor-script"];
+
+const RELOAD_UNAVAILABLE = "no running Defold editor accepted the reload";
+
+function reloadCommandsFor(written: readonly string[]): EditorReloadCommand[] {
+  const commands: EditorReloadCommand[] = [];
+  if (written.some((rel) => !rel.endsWith(EDITOR_SCRIPT_SUFFIX))) commands.push("hot-reload");
+  if (written.some((rel) => rel.endsWith(EDITOR_SCRIPT_SUFFIX))) commands.push("reload-extensions");
+  return commands;
+}
+
 export interface RunWatchOptions {
   readonly cwd: string;
   readonly stdout: NodeJS.WritableStream;
@@ -34,6 +69,8 @@ export interface RunWatchOptions {
   readonly json?: boolean;
   readonly pinDiagnostics?: readonly string[];
   readonly pinMismatch?: { readonly installed: string; readonly pinned: string };
+  readonly hotReload?: boolean;
+  readonly editorClient?: WatchEditorClient;
 }
 
 export interface RunWatchHandle {
@@ -166,15 +203,84 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   let rebuildBusy = false;
   let syncBusy = false;
   let resolveBusy = false;
+  let reloadBusy = false;
   let stopped = false;
   let idleResolvers: Array<() => void> = [];
   const pending = new Set<string>();
 
   function notifyIdle(): void {
-    if (rebuildBusy || syncBusy || resolveBusy) return;
+    if (rebuildBusy || syncBusy || resolveBusy || reloadBusy) return;
     const resolvers = idleResolvers;
     idleResolvers = [];
     for (const resolve of resolvers) resolve();
+  }
+
+  const pendingReload = new Set<EditorReloadCommand>();
+  // Attach is a transition, not a per-rebuild fact: the editor may start, stop
+  // or restart at any point during a watch, and only the change is worth a line.
+  let attachedBaseUrl: string | null = null;
+  let detachNoticed = false;
+
+  function noteAttached(baseUrl: string): void {
+    if (attachedBaseUrl === baseUrl) return;
+    attachedBaseUrl = baseUrl;
+    detachNoticed = false;
+    if (!opts.json) stderr.write(`defold-typescript watch: hot reload attached to ${baseUrl}\n`);
+  }
+
+  function noteDetached(): void {
+    attachedBaseUrl = null;
+    if (detachNoticed) return;
+    detachNoticed = true;
+    if (!opts.json) {
+      stderr.write("defold-typescript watch: no Defold editor detected; hot reload is idle\n");
+    }
+  }
+
+  function emitReloadEvent(outcome: ReloadOutcome): void {
+    if (!opts.json || outcome === "skipped") return;
+    stdout.write(
+      outcome === "accepted"
+        ? renderWatchEvent({ event: "reload" })
+        : renderWatchEvent({ event: "reload", error: RELOAD_UNAVAILABLE }),
+    );
+  }
+
+  async function pushReload(commands: readonly EditorReloadCommand[]): Promise<void> {
+    const client = opts.editorClient ?? defaultEditorClient;
+    const endpoint = await client.resolve(cwd);
+    if (endpoint === null) {
+      noteDetached();
+      emitReloadEvent("unavailable");
+      return;
+    }
+    noteAttached(endpoint.baseUrl);
+    for (const name of commands) {
+      emitReloadEvent(await client.postCommand(cwd, name));
+    }
+  }
+
+  // A latch, not a timer: a burst landing while a reload is in flight collapses
+  // into exactly one trailing reload, and a lone save pays no added latency.
+  async function drainReloads(): Promise<void> {
+    try {
+      while (pendingReload.size > 0) {
+        const commands = [...pendingReload];
+        pendingReload.clear();
+        await pushReload(commands);
+      }
+    } finally {
+      reloadBusy = false;
+      notifyIdle();
+    }
+  }
+
+  function scheduleReload(written: readonly string[]): void {
+    if (!opts.hotReload || written.length === 0) return;
+    for (const command of reloadCommandsFor(written)) pendingReload.add(command);
+    if (reloadBusy) return;
+    reloadBusy = true;
+    void drainReloads();
   }
 
   function rebuild(): void {
@@ -198,6 +304,9 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
           ? renderWatchEvent({ event: "rebuild", written, changed, removed })
           : formatBuildLine(written),
       );
+      // Inside the success branch on purpose: reloading after a failed build
+      // would push the previous emit's Lua into the running game.
+      scheduleReload(written);
     } catch (err) {
       reportFailure(err, "rebuild");
     }
@@ -292,12 +401,13 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     rebuildBusy = false;
     syncBusy = false;
     resolveBusy = false;
+    reloadBusy = false;
     notifyIdle();
     resolveDone(0);
   }
 
   function waitForIdle(): Promise<void> {
-    if (!rebuildBusy && !syncBusy && !resolveBusy) return Promise.resolve();
+    if (!rebuildBusy && !syncBusy && !resolveBusy && !reloadBusy) return Promise.resolve();
     return new Promise<void>((resolve) => {
       idleResolvers.push(resolve);
     });
