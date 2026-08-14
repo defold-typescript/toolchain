@@ -69,7 +69,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 
 - [init](./init.md) — scaffold a new Defold project with a TypeScript surface, or add TypeScript to an existing project; the two modes, the `--template` / `--force` flags, and the starter templates.
 - [upgrade](./upgrade.md) — move the project to the latest toolchain with one verb (`bunx @defold-typescript/cli@latest upgrade`, or its `update` synonym): what it re-scaffolds, why it never clobbers your own scripts, what it does to an existing `defold-target` pin, and the `--json` envelope to read.
-- [watch](./watch.md) — the incremental rebuild loop: recompile Lua on every save beside the Defold editor, and re-resolve the extension surface on `game.project` changes.
+- [watch](./watch.md) — the incremental rebuild loop: recompile Lua on every save beside the Defold editor, push each successful rebuild into the running game with `--hot-reload`, and re-resolve the extension surface on `game.project` changes.
 - [build](./build.md) — one-shot transpile of every `src/` TypeScript file to Lua, plus the headless `defold` subcommand that drives `bob` to build and bundle the project.
 - [run](./run.md) — launch the compiled project from `build/default` (or a native-extension `dmengine`) with no transpile and no Bob, forwarding engine args after `--` and propagating the engine exit code.
 - [bob](./bob.md) — drive Defold's headless `bob.jar` build tool: the `resolve`/`build`/`bundle`/`status`/`run` subcommands, the sha-keyed jar cache, Java resolution, and target selection.
@@ -410,7 +410,23 @@ Driving this without the editor — editing `.go` / `.collection` text directly 
 
 #### Run the game
 
-With the project open in Defold, press **Build** or **Project > Build** to run the game. If you change TypeScript code, rebuild with `bunx @defold-typescript/cli build` before running again, or keep `watch` running in a terminal.
+With the project open in Defold, press **Build** or **Project > Build** to run the game.
+
+##### Hot reload while it runs
+
+Once the game is running, you do not have to stop it and press **Build** again for every code change. Run the watch loop with hot reload and each successful rebuild is pushed straight into the running game:
+
+```sh
+bunx @defold-typescript/cli watch --hot-reload
+# or, in a scaffolded project:
+mise run defold-typescript:watch-hr
+```
+
+It attaches to whichever editor is open on this project — start the editor before or after the watch loop, either order works — and reloads nothing when a build fails, so a compile error never pushes stale Lua into the running game. A change to an editor script reloads the editor's extensions instead. See [`watch`](./watch.md#hot-reload) for the flag and its output.
+
+Hot reload replaces code, not state: the reloaded script keeps the state the old code left behind and `init` is **not** run again. What `init` set up must be re-applied in `on_reload` — see [Script lifecycle](./script-lifecycle.md#hot-reload-and-on_reload).
+
+Without hot reload the manual path still stands: rebuild with `bunx @defold-typescript/cli build` (or keep plain `watch` running) and press **Build** in the editor to run the new code.
 
 ### TypeScript vs Lua
 
@@ -1363,6 +1379,24 @@ export default defineScript({
 
 `on_message(self, message_id, message, sender)` runs when another script or the engine posts to this component. Defold pre-hashes the id, so `message_id` arrives as a `Hash` and `message` as an untyped record. `on_message`'s payload narrowing — the `isMessage` guard and the `onMessage` dispatcher that turn that untyped record back into its `BuiltinMessages` shape — is covered in [Typed messages](./messages.md), the same way [Where script state lives](./script-state.md) is the canonical home for `self` typing.
 
+#### Hot reload and `on_reload`
+
+`on_reload(self)` runs when a component's code is reloaded into a running game — what [`watch --hot-reload`](./watch.md#hot-reload) pushes on every successful rebuild, and what the editor's own **Reload** does.
+
+A reload swaps the **code**; the state stays. Defold keeps the live `self` the old code left behind and does **not** call `init` again, so anything `init` established is simply not re-established:
+
+```ts
+export default defineScript({
+  init: () => ({ speed: 120, target: vmath.vector3(0, 0, 0) }),
+  on_reload(self) {
+    // Reached the running instance with the *old* self; re-apply what init set.
+    self.speed = 120;
+  },
+});
+```
+
+This bites harder in TypeScript than in Lua, because `init`'s **return value is** the state object: the field set you wrote once in `init` is exactly what a reload leaves untouched. Add a field to `init`'s return and reload, and the running instance still holds the old shape — the new field is `undefined` until the game restarts, even though the type says otherwise. `on_reload` is where you close that gap for the fields worth tweaking live; for the rest, restart the game.
+
 #### API availability by script kind
 
 Defold scopes two namespaces to a script kind: `gui.*` resolves only inside a `.gui_script`, and `render.*` only inside a `.render_script`. Every other namespace (`go`, `msg`, `vmath`, `sys`, `physics`, …) is available in every kind.
@@ -2052,11 +2086,41 @@ It does **not** bootstrap that surface: run `resolve` once before `watch` so the
 initial extension types exist; `watch` only reconciles later `[dependencies]`
 edits.
 
+#### Hot reload
+
+`--hot-reload` pushes each successful rebuild into the game running under the
+[Defold editor](./defold-editor.md#hot-reload-while-it-runs), so you stop
+pressing **Build** after every edit:
+
+```sh
+bunx @defold-typescript/cli watch --hot-reload
+```
+
+Three things are worth knowing about how it behaves:
+
+- **A failed build reloads nothing.** A compile error leaves the running game on
+  the last code that actually built, rather than pushing the previous emit's Lua
+  and making the change look like it did nothing.
+- **The editor may come and go.** The port is re-read on every reload, so an
+  editor started after the loop attaches on the next rebuild, and one that quits
+  simply leaves the loop rebuilding until it returns. Nothing is reported while
+  the game is not running — that is the ordinary case, not an error.
+- **Editor scripts reload separately.** An emit that touched a
+  `.ts.editor_script` reloads the editor's extensions instead; an emit touching
+  both kinds does both.
+
+Hot reload runs the **new code against the old state** and does not re-run
+`init`. See [Script lifecycle](./script-lifecycle.md#hot-reload-and-on_reload)
+for what belongs in `on_reload`.
+
 #### Flags
 
+- `--hot-reload` — push a reload to the running game after every successful
+  rebuild (see [Hot reload](#hot-reload)).
 - `--json` — stream the build lifecycle as newline-delimited JSON for agents and
   scripts. See [Agent runbooks](./agent-runbooks.md#machine-readable-output)
-  for the event stream.
+  for the event stream. Each reload adds a `reload` event; a reload the editor
+  declined because no game is running is silent.
 
 #### As a mise task
 
@@ -2064,6 +2128,8 @@ edits.
 mise run # and pick defold-typescript:watch
 # or
 mise run defold-typescript:watch
+# with hot reload:
+mise run defold-typescript:watch-hr
 ```
 
 If you use [mise](https://mise.jdx.dev), the scaffolded `mise.toml` exposes the
