@@ -14,6 +14,8 @@ import {
   consoleWatermark,
   type EditorEndpoint,
   type EditorTransport,
+  isConsoleContinuation,
+  isConsoleErrorHeader,
   openConsoleStream,
   postCommand,
   type ReloadOutcome,
@@ -136,18 +138,6 @@ function formatFailureLine(entry: {
 }
 
 const CONSOLE_PREFIX = "defold-typescript watch: editor: ";
-
-// The engine tags every console line with its level, so the level is the filter:
-// a watch that echoed the whole stream would drown in per-frame INFO lines.
-function isConsoleErrorHeader(line: string): boolean {
-  return /^(?:ERROR|WARNING):/.test(line);
-}
-
-// A traceback frame is indented and carries no level of its own, so it is only
-// meaningful as a continuation of the header above it.
-function isConsoleContinuation(line: string): boolean {
-  return /^\s/.test(line) || /^stack traceback/i.test(line);
-}
 
 function rewrapInitError(err: unknown): Error {
   const message = err instanceof Error ? err.message : String(err);
