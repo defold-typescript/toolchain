@@ -9,6 +9,7 @@ export type CliCommand =
   | "wall"
   | "resolve"
   | "run"
+  | "reload"
   | "upgrade"
   | "set-target";
 
@@ -72,6 +73,8 @@ export interface RenderResultInput {
   readonly from?: string;
   readonly to?: string;
   readonly handedOff?: boolean;
+  readonly outcome?: string;
+  readonly consoleErrors?: readonly string[];
 }
 
 export function renderResult(input: RenderResultInput): string {
@@ -138,7 +141,11 @@ export function renderResult(input: RenderResultInput): string {
   const withLaunch = "launch" in input ? { ...withBuild, launch: input.launch } : withBuild;
   const withFrom = "from" in input ? { ...withLaunch, from: input.from } : withLaunch;
   const withTo = "to" in input ? { ...withFrom, to: input.to } : withFrom;
-  const payload = "handedOff" in input ? { ...withTo, handedOff: input.handedOff } : withTo;
+  const withHandedOff = "handedOff" in input ? { ...withTo, handedOff: input.handedOff } : withTo;
+  const withOutcome =
+    "outcome" in input ? { ...withHandedOff, outcome: input.outcome } : withHandedOff;
+  const payload =
+    "consoleErrors" in input ? { ...withOutcome, consoleErrors: input.consoleErrors } : withOutcome;
   return `${JSON.stringify(payload)}\n`;
 }
 

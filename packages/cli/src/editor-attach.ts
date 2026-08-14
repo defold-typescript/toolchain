@@ -149,6 +149,18 @@ export async function openConsoleStream(
  * An editor quitting mid-watch ends the reader normally rather than throwing --
  * that is an ordinary transition, not a failure of the watch.
  */
+// The engine tags every console line with its level, so the level is the filter:
+// a watch that echoed the whole stream would drown in per-frame INFO lines.
+export function isConsoleErrorHeader(line: string): boolean {
+  return /^(?:ERROR|WARNING):/.test(line);
+}
+
+// A traceback frame is indented and carries no level of its own, so it is only
+// meaningful as a continuation of the header above it.
+export function isConsoleContinuation(line: string): boolean {
+  return /^\s/.test(line) || /^stack traceback/i.test(line);
+}
+
 export async function* consoleLines(
   chunks: AsyncIterable<Uint8Array | string>,
   skip: number,

@@ -93,6 +93,21 @@ const COMMANDS: readonly HelpCommand[] = [
     ],
   },
   {
+    name: "reload",
+    summary: "Push one reload to the running game and read the console for errors.",
+    usage: "bunx @defold-typescript/cli reload [path]",
+    flags: [
+      {
+        flag: "--extensions",
+        desc: "reload the editor's extension scripts instead of the running game",
+      },
+      {
+        flag: "--wait <ms>",
+        desc: "how long to read the editor console for errors (default 2000; 0 skips the read)",
+      },
+    ],
+  },
+  {
     name: "wall",
     summary: "Manage generated-file walls in target directories.",
     usage: "bunx @defold-typescript/cli wall [dir...]",

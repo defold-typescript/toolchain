@@ -392,6 +392,7 @@ describe("buildNav", () => {
       "/init",
       "/upgrade",
       "/watch",
+      "/reload",
       "/build",
       "/run",
       "/bob",
