@@ -79,6 +79,10 @@ const COMMANDS: readonly HelpCommand[] = [
     usage: "bunx @defold-typescript/cli watch [path]",
     flags: [
       {
+        flag: "--hot-reload",
+        desc: "push a reload to the running game after every successful rebuild",
+      },
+      {
         flag: "--defold-target <version|stable|beta|alpha>",
         desc: "override the resolved Defold target",
       },

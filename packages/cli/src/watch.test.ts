@@ -4,7 +4,15 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { Writable } from "node:stream";
 import { GENERATED_BANNER } from "./build-output";
-import { runWatch, type WatchEvent, type Watcher, type WatcherFactory } from "./watch";
+import type { ReloadOutcome } from "./editor-attach";
+import {
+  type EditorReloadCommand,
+  runWatch,
+  type WatchEditorClient,
+  type WatchEvent,
+  type Watcher,
+  type WatcherFactory,
+} from "./watch";
 
 function captureStreams() {
   const outChunks: Buffer[] = [];
@@ -940,6 +948,459 @@ describe("runWatch resolve surface", () => {
     release?.();
     await idleProbe;
     expect(settled).toBe(true);
+
+    handle.stop();
+    await handle.done;
+  });
+});
+
+const EDITOR_SCRIPT_SOURCE = [
+  'import { defineEditorScript } from "@defold-typescript/types";',
+  "export default defineEditorScript({",
+  '  get_commands: () => [{ label: "Say Hi", locations: ["Edit"], run: () => print("hi") }],',
+  "});",
+  "",
+].join("\n");
+
+function moduleSource(value: number): string {
+  return `export const answer = ${value};\n`;
+}
+
+interface FakeEditor {
+  readonly client: WatchEditorClient;
+  readonly posts: EditorReloadCommand[];
+  resolveCount(): number;
+  setBaseUrl(url: string | null): void;
+  setOutcome(outcome: ReloadOutcome): void;
+  /** Suspend every post opened from now until the returned release is called. */
+  hold(): () => void;
+}
+
+function makeEditor(baseUrl: string | null = "http://localhost:4242"): FakeEditor {
+  const posts: EditorReloadCommand[] = [];
+  const state = { resolves: 0, url: baseUrl, outcome: "accepted" as ReloadOutcome };
+  let gate: Promise<void> | null = null;
+  const client: WatchEditorClient = {
+    resolve() {
+      state.resolves += 1;
+      return Promise.resolve(state.url === null ? null : { baseUrl: state.url });
+    },
+    async postCommand(_cwd, name) {
+      posts.push(name);
+      const open = gate;
+      if (open) await open;
+      return state.outcome;
+    },
+  };
+  return {
+    client,
+    posts,
+    resolveCount: () => state.resolves,
+    setBaseUrl(url) {
+      state.url = url;
+    },
+    setOutcome(outcome) {
+      state.outcome = outcome;
+    },
+    hold() {
+      let release!: () => void;
+      gate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      return () => {
+        gate = null;
+        release();
+      };
+    },
+  };
+}
+
+describe("runWatch hot reload", () => {
+  test("a rebuild that emits files posts exactly one hot reload", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+    const afterStartup = editor.posts.length;
+
+    writeProjectFile("src/main.ts", scriptSource(2));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    expect(editor.posts.length - afterStartup).toBe(1);
+    expect(editor.posts[editor.posts.length - 1]).toBe("hot-reload");
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("a rebuild whose build fails posts no reload", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+    const afterStartup = editor.posts.length;
+
+    writeProjectFile("src/main.ts", 'const x: number = "oops";\n');
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    expect(editor.posts.length).toBe(afterStartup);
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("a rebuild that succeeds but writes no files posts no reload", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    writeProjectFile("src/helper.ts", moduleSource(1));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+    const afterStartup = editor.posts.length;
+
+    rmSync(path.join(cwd, "src/helper.ts"));
+    factory.trigger("rename", "src/helper.ts");
+    await handle.waitForIdle();
+
+    expect(err()).toBe("");
+    expect(editor.posts.length).toBe(afterStartup);
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("without hotReload the editor client is never touched, not even for discovery", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    writeProjectFile("src/main.ts", scriptSource(2));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    expect(editor.posts.length).toBe(0);
+    expect(editor.resolveCount()).toBe(0);
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("an editor-script-only emit posts reload-extensions, a runtime emit posts hot-reload, a mixed emit posts both", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    writeProjectFile("src/tools.ts", EDITOR_SCRIPT_SOURCE);
+    const { stdout, stderr } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    editor.posts.length = 0;
+    writeProjectFile("src/tools.ts", EDITOR_SCRIPT_SOURCE.replace("Say Hi", "Say Hello"));
+    factory.trigger("change", "src/tools.ts");
+    await handle.waitForIdle();
+    expect([...editor.posts]).toEqual(["reload-extensions"]);
+
+    editor.posts.length = 0;
+    writeProjectFile("src/main.ts", scriptSource(3));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+    expect([...editor.posts]).toEqual(["hot-reload"]);
+
+    editor.posts.length = 0;
+    writeProjectFile("src/main.ts", scriptSource(4));
+    writeProjectFile("src/tools.ts", EDITOR_SCRIPT_SOURCE.replace("Say Hi", "Say Howdy"));
+    factory.trigger("change", "src/main.ts");
+    factory.trigger("change", "src/tools.ts");
+    await handle.waitForIdle();
+    expect([...editor.posts].sort()).toEqual(["hot-reload", "reload-extensions"]);
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("a skipped reload outcome writes nothing to stdout or stderr", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, out, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+    editor.setOutcome("skipped");
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    const beforeReload = out();
+    writeProjectFile("src/main.ts", scriptSource(2));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    expect(editor.posts.length).toBeGreaterThan(0);
+    expect(out().slice(beforeReload.length)).not.toMatch(/skipped|reload/i);
+    // The attach transition is reported once; the 403 itself stays silent.
+    expect(err()).not.toMatch(/skip|error|fail/i);
+
+    handle.stop();
+    await handle.done;
+  });
+});
+
+async function until(predicate: () => boolean, timeoutMs = 2000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (!predicate()) {
+    if (Date.now() > deadline) throw new Error("condition not reached in time");
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
+}
+
+describe("runWatch hot reload coalescing and diagnostics", () => {
+  test("rebuilds landing during an in-flight reload collapse into exactly one trailing reload", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, out } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    const release = editor.hold();
+
+    writeProjectFile("src/main.ts", scriptSource(2));
+    factory.trigger("change", "src/main.ts");
+    await until(() => editor.posts.length === 1);
+
+    writeProjectFile("src/main.ts", scriptSource(3));
+    factory.trigger("change", "src/main.ts");
+    await until(() => countMatches(out(), /wrote 1 files/g) === 3);
+
+    writeProjectFile("src/main.ts", scriptSource(4));
+    factory.trigger("change", "src/main.ts");
+    await until(() => countMatches(out(), /wrote 1 files/g) === 4);
+
+    expect(editor.posts.length).toBe(1);
+
+    release();
+    await handle.waitForIdle();
+
+    expect(editor.posts.length).toBe(2);
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("the attached-editor diagnostic naming the port is printed once, not once per rebuild", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor("http://localhost:4242");
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    for (const value of [2, 3, 4]) {
+      writeProjectFile("src/main.ts", scriptSource(value));
+      factory.trigger("change", "src/main.ts");
+      await handle.waitForIdle();
+    }
+
+    expect(err()).toContain("http://localhost:4242");
+    expect(countMatches(err(), /http:\/\/localhost:4242/g)).toBe(1);
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("the no-editor notice is printed at most once across many rebuilds", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor(null);
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    for (const value of [2, 3, 4]) {
+      writeProjectFile("src/main.ts", scriptSource(value));
+      factory.trigger("change", "src/main.ts");
+      await handle.waitForIdle();
+    }
+
+    expect(countMatches(err(), /no Defold editor/g)).toBe(1);
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("an editor that appears after the watch started attaches on the next rebuild", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor(null);
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    writeProjectFile("src/main.ts", scriptSource(2));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+    expect(editor.posts.length).toBe(0);
+    expect(err()).not.toContain("http://localhost:7777");
+
+    editor.setBaseUrl("http://localhost:7777");
+    writeProjectFile("src/main.ts", scriptSource(3));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    expect(editor.posts).toEqual(["hot-reload"]);
+    expect(err()).toContain("http://localhost:7777");
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("json mode emits a reload event per outcome and keeps the attach diagnostics out of the stream", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, out, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      json: true,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    const readReloadEvents = (): Array<Record<string, unknown>> =>
+      out()
+        .trimEnd()
+        .split("\n")
+        .map((line) => JSON.parse(line) as Record<string, unknown>)
+        .filter((event) => event.event === "reload");
+
+    writeProjectFile("src/main.ts", scriptSource(2));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    expect(readReloadEvents()).toEqual([
+      { command: "watch", event: "reload", ok: true, written: [] },
+    ]);
+
+    editor.setOutcome("skipped");
+    writeProjectFile("src/main.ts", scriptSource(3));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+    expect(readReloadEvents().length).toBe(1);
+
+    editor.setBaseUrl(null);
+    writeProjectFile("src/main.ts", scriptSource(4));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    const events = readReloadEvents();
+    expect(events.length).toBe(2);
+    const unavailable = events[1] as Record<string, unknown>;
+    expect(unavailable.ok).toBe(false);
+    expect(typeof unavailable.error).toBe("string");
+
+    expect(err()).toBe("");
 
     handle.stop();
     await handle.done;
