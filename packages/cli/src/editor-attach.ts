@@ -10,7 +10,7 @@ export interface EditorResponse {
 
 export type EditorTransport = (
   url: string,
-  init?: { readonly method?: string },
+  init?: { readonly method?: string; readonly signal?: AbortSignal | undefined },
 ) => Promise<EditorResponse>;
 
 export interface EditorEndpoint {
@@ -29,7 +29,11 @@ export const EDITOR_PORT_FILE = path.join(".internal", "editor.port");
 
 export const EDITOR_API_TITLE = "Defold Editor HTTP API";
 
-const defaultTransport: EditorTransport = (url, init) => fetch(url, init);
+const defaultTransport: EditorTransport = (url, init) =>
+  fetch(url, {
+    ...(init?.method === undefined ? {} : { method: init.method }),
+    signal: init?.signal ?? null,
+  });
 
 /**
  * The port a running editor published, or `null` when no editor is open. Both
@@ -58,12 +62,13 @@ export function readEditorPort(cwd: string): number | null {
 export async function resolveEditor(
   cwd: string,
   transport: EditorTransport = defaultTransport,
+  signal?: AbortSignal,
 ): Promise<EditorEndpoint | null> {
   const port = readEditorPort(cwd);
   if (port === null) return null;
   const baseUrl = `http://localhost:${port}`;
   try {
-    const res = await transport(`${baseUrl}/openapi.json`, { method: "GET" });
+    const res = await transport(`${baseUrl}/openapi.json`, { method: "GET", signal });
     if (res.status !== 200) return null;
     const doc = JSON.parse(await res.text()) as { info?: { title?: unknown } };
     return doc.info?.title === EDITOR_API_TITLE ? { baseUrl } : null;
@@ -113,9 +118,10 @@ export function hotReload(
 export async function consoleWatermark(
   endpoint: EditorEndpoint,
   transport: EditorTransport = defaultTransport,
+  signal?: AbortSignal,
 ): Promise<number> {
   try {
-    const res = await transport(`${endpoint.baseUrl}/console`, { method: "GET" });
+    const res = await transport(`${endpoint.baseUrl}/console`, { method: "GET", signal });
     if (res.status !== 200) return 0;
     const doc = JSON.parse(await res.text()) as { lines?: unknown };
     return Array.isArray(doc.lines) ? doc.lines.length : 0;
@@ -127,9 +133,10 @@ export async function consoleWatermark(
 export async function openConsoleStream(
   endpoint: EditorEndpoint,
   transport: EditorTransport = defaultTransport,
+  signal?: AbortSignal,
 ): Promise<AsyncIterable<Uint8Array | string> | null> {
   try {
-    const res = await transport(`${endpoint.baseUrl}/console/stream`, { method: "GET" });
+    const res = await transport(`${endpoint.baseUrl}/console/stream`, { method: "GET", signal });
     if (res.status !== 200) return null;
     return res.body ?? null;
   } catch {

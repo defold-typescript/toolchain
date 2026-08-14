@@ -10,6 +10,11 @@ import {
   type EditorTransport,
   type ReloadOutcome,
 } from "./editor-attach";
+import type {
+  EditorReloadCommand as PublicEditorReloadCommand,
+  RunWatchOptions as PublicRunWatchOptions,
+  WatchEditorClient as PublicWatchEditorClient,
+} from "./index";
 import {
   createWatchEditorClient,
   type EditorReloadCommand,
@@ -994,9 +999,13 @@ interface FakeConsole {
   push(...items: string[]): void;
   end(): void;
   settled(): Promise<void>;
+  /** Resolves once the consumer's loop has actually left the iterator. */
+  closed(): Promise<void>;
+  /** Whether the signal production handed this stream has been aborted. */
+  isAborted(): boolean;
 }
 
-function makeConsole(seed: readonly string[] = []): FakeConsole {
+function makeConsole(seed: readonly string[] = [], signal?: AbortSignal): FakeConsole {
   const queue: string[] = [...seed];
   let wake: (() => void) | null = null;
   let onPark: (() => void) | null = null;
@@ -1034,6 +1043,14 @@ function makeConsole(seed: readonly string[] = []): FakeConsole {
     pending?.();
   };
 
+  // A real `/console/stream` ends only when its request is cancelled, so the
+  // fake unparks on the signal alone: dropping the abort wiring leaves this
+  // stream parked forever, exactly as it would in production.
+  signal?.addEventListener("abort", () => {
+    ended = true;
+    resume();
+  });
+
   return {
     items: { [Symbol.asyncIterator]: iterate },
     push(...items) {
@@ -1051,6 +1068,8 @@ function makeConsole(seed: readonly string[] = []): FakeConsole {
         onPark = resolve;
       });
     },
+    closed: () => finished,
+    isAborted: () => signal?.aborted === true,
   };
 }
 
@@ -1063,17 +1082,30 @@ interface FakeEditor {
   setOutcome(outcome: ReloadOutcome): void;
   /** Suspend every post opened from now until the returned release is called. */
   hold(): () => void;
+  /** Suspend every resolve started from now until the returned release is called. */
+  holdResolve(): () => void;
+  /** The signal production passed to the most recent resolve, if any. */
+  lastResolveSignal(): AbortSignal | undefined;
 }
 
 function makeEditor(baseUrl: string | null = "http://localhost:4242"): FakeEditor {
   const posts: EditorReloadCommand[] = [];
   const consoles: FakeConsole[] = [];
-  const state = { resolves: 0, url: baseUrl, outcome: "accepted" as ReloadOutcome };
+  const state = {
+    resolves: 0,
+    url: baseUrl,
+    outcome: "accepted" as ReloadOutcome,
+    resolveSignal: undefined as AbortSignal | undefined,
+  };
   let gate: Promise<void> | null = null;
+  let resolveGate: Promise<void> | null = null;
   const client: WatchEditorClient = {
-    resolve() {
+    async resolve(_cwd, signal) {
       state.resolves += 1;
-      return Promise.resolve(state.url === null ? null : { baseUrl: state.url });
+      state.resolveSignal = signal;
+      const open = resolveGate;
+      if (open) await open;
+      return state.url === null ? null : { baseUrl: state.url };
     },
     async postCommand(_cwd, name) {
       posts.push(name);
@@ -1081,8 +1113,8 @@ function makeEditor(baseUrl: string | null = "http://localhost:4242"): FakeEdito
       if (open) await open;
       return state.outcome;
     },
-    openConsole() {
-      const stream = makeConsole();
+    openConsole(_endpoint, signal) {
+      const stream = makeConsole([], signal);
       consoles.push(stream);
       return Promise.resolve(stream.items);
     },
@@ -1108,6 +1140,17 @@ function makeEditor(baseUrl: string | null = "http://localhost:4242"): FakeEdito
         release();
       };
     },
+    holdResolve() {
+      let release!: () => void;
+      resolveGate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      return () => {
+        resolveGate = null;
+        release();
+      };
+    },
+    lastResolveSignal: () => state.resolveSignal,
   };
 }
 
@@ -1692,7 +1735,7 @@ function makeEditorTransport(historyLines: number, stream: FakeConsole): EditorT
 }
 
 describe("runWatch console surfacing", () => {
-  test("ERROR-class console lines reach the terminal and ordinary frame logging does not", async () => {
+  test("ERROR and WARNING console lines reach the terminal and ordinary frame logging does not", async () => {
     writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeProjectFile("src/main.ts", scriptSource(1));
     const { stdout, stderr, err } = captureStreams();
@@ -1713,12 +1756,16 @@ describe("runWatch console surfacing", () => {
       "INFO:ENGINE: Defold Engine 1.9.8",
       "DEBUG:SCRIPT: player position updated",
       "ERROR:SCRIPT: main/main.script:5: attempt to index a nil value",
+      "WARNING:SCRIPT: main/main.script:7: a deprecated call",
       "INFO:RESOURCE: main/main.luac successfully reloaded",
     );
     await stream.settled();
 
     expect(err()).toContain(
       "defold-typescript watch: editor: ERROR:SCRIPT: main/main.script:5: attempt to index a nil value",
+    );
+    expect(err()).toContain(
+      "defold-typescript watch: editor: WARNING:SCRIPT: main/main.script:7: a deprecated call",
     );
     expect(err()).not.toContain("Defold Engine 1.9.8");
     expect(err()).not.toContain("player position updated");
@@ -1864,5 +1911,161 @@ describe("runWatch console surfacing", () => {
 
     handle.stop();
     await handle.done;
+  });
+});
+
+describe("runWatch stop lifecycle", () => {
+  test("stopping a watch releases an idle console stream instead of parking on it", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    const stream = editor.consoles[0] as FakeConsole;
+    await stream.settled();
+
+    handle.stop();
+    expect(await handle.done).toBe(0);
+
+    await stream.closed();
+    expect(stream.isAborted()).toBe(true);
+  });
+
+  test("stopping while discovery is in flight announces no attachment and opens no stream", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+    const release = editor.holdResolve();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      editorClient: editor.client,
+    });
+
+    handle.stop();
+    release();
+    expect(await handle.done).toBe(0);
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    expect(editor.resolveCount()).toBe(1);
+    expect(err()).not.toContain("attached to Defold editor");
+    expect(editor.consoles.length).toBe(0);
+  });
+
+  test("a console line already queued when the stop lands is never written", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    const stream = editor.consoles[0] as FakeConsole;
+    await stream.settled();
+
+    // Queued and then stopped in the same synchronous turn: the drain wakes with
+    // a real line to write and `stopped` already true, which is the race the
+    // post-stop guard exists for.
+    stream.push("ERROR:SCRIPT: main/main.script:1: raced the stop");
+    handle.stop();
+    expect(await handle.done).toBe(0);
+    await stream.closed();
+
+    expect(err()).not.toContain("raced the stop");
+  });
+
+  test("stopping twice resolves once and emits a single stop event", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, out } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      json: true,
+      watcherFactory: factory.factory,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    handle.stop();
+    expect(await handle.done).toBe(0);
+    handle.stop();
+    expect(await handle.done).toBe(0);
+
+    const stops = out()
+      .trimEnd()
+      .split("\n")
+      .map((line) => JSON.parse(line) as { event?: string })
+      .filter((event) => event.event === "stop");
+    expect(stops.length).toBe(1);
+  });
+});
+
+describe("runWatch console support is optional", () => {
+  test("a client declaring only resolve and postCommand drives a hot-reloading watch", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    const posts: PublicEditorReloadCommand[] = [];
+
+    // Declared against the exported type rather than inferred structurally, so
+    // re-tightening `openConsole` back to required reds the type-check.
+    const client: PublicWatchEditorClient = {
+      resolve: () => Promise.resolve({ baseUrl: "http://localhost:4242" }),
+      postCommand: (_cwd, name) => {
+        posts.push(name);
+        return Promise.resolve("accepted" as const);
+      },
+    };
+    const opts: PublicRunWatchOptions = {
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: client,
+    };
+
+    const handle = runWatch(opts);
+    await handle.waitForIdle();
+
+    writeProjectFile("src/main.ts", scriptSource(2));
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    expect(posts).toEqual(["hot-reload"]);
+    expect(err()).toContain("attached to Defold editor at http://localhost:4242");
+    expect(err()).not.toContain("defold-typescript watch: editor: ");
+
+    handle.stop();
+    expect(await handle.done).toBe(0);
   });
 });

@@ -22,8 +22,10 @@ export {
   runInitAgents,
 } from "./init-agents";
 export type {
+  EditorReloadCommand,
   RunWatchHandle,
   RunWatchOptions,
+  WatchEditorClient,
   WatchEvent,
   WatcherFactory,
 } from "./watch";
