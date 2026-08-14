@@ -180,9 +180,18 @@ function dispatchCommand(
   internals: DispatchInternals | undefined,
   drift: { escalate: boolean },
 ): number | Promise<number> {
-  const json = argv.includes("--json");
+  // end-of-options-delimiter: `--` closes the CLI's own flag preamble, so every
+  // scan below reads `head` alone. Scanning the whole argv let a post-delimiter
+  // token that happened to share a CLI flag's name be consumed before `run`
+  // computed `extraArgs`, and let `run . -- --json` switch this dispatcher into
+  // JSON mode -- both contradict the documented engine passthrough.
+  const dashIndex = argv.indexOf("--");
+  const head = dashIndex === -1 ? argv : argv.slice(0, dashIndex);
+  const tail = dashIndex === -1 ? [] : argv.slice(dashIndex + 1);
 
-  if (argv.includes("--version") || argv.includes("-v")) {
+  const json = head.includes("--json");
+
+  if (head.includes("--version") || head.includes("-v")) {
     const version = internals?.cliVersion ?? readCliVersion();
     io.stdout.write(
       json
@@ -192,21 +201,30 @@ function dispatchCommand(
     return 0;
   }
 
-  if (argv.includes("--help") || argv.includes("-h")) {
-    const subject = argv.find((a) => COMMAND_NAMES.has(a)) ?? null;
+  if (head.includes("--help") || head.includes("-h")) {
+    const subject = head.find((a) => COMMAND_NAMES.has(a)) ?? null;
     io.stdout.write(json ? renderHelpJson(subject) : renderHelp(subject));
     return 0;
   }
 
-  const force = argv.includes("--force");
-  const suppressInstallReminder = argv.includes("--suppress-install-reminder");
-  const wallRemove = argv.includes("--remove");
-  const wallList = argv.includes("--list");
-  const frozen = argv.includes("--frozen");
-  const failOnDrift = argv.includes("--fail-on-drift");
-  const hotReload = argv.includes("--hot-reload");
-  const reloadExtensions = argv.includes("--extensions");
-  const { value: waitFlag, rest: afterWaitArgs } = parseValueFlag(argv, "wait");
+  // `--wait` and `--extensions` belong to `reload` alone, so the command token is
+  // resolved before they are parsed: every other command must see them as the
+  // ordinary positionals they are. `update` dispatches as an alias of `upgrade`
+  // and has no help entry, so it is not in `COMMAND_NAMES`.
+  const commandToken = head.find((a) => COMMAND_NAMES.has(a) || a === "update");
+  const isReload = commandToken === "reload";
+
+  const force = head.includes("--force");
+  const suppressInstallReminder = head.includes("--suppress-install-reminder");
+  const wallRemove = head.includes("--remove");
+  const wallList = head.includes("--list");
+  const frozen = head.includes("--frozen");
+  const failOnDrift = head.includes("--fail-on-drift");
+  const hotReload = head.includes("--hot-reload");
+  const reloadExtensions = isReload && head.includes("--extensions");
+  const { value: waitFlag, rest: afterWaitArgs } = isReload
+    ? parseValueFlag(head, "wait")
+    : { value: undefined, rest: head };
   const { value: defoldTargetFlag, rest: afterTargetArgs } = parseValueFlag(
     afterWaitArgs,
     "defold-target",
@@ -231,11 +249,14 @@ function dispatchCommand(
       a !== "--frozen" &&
       a !== "--fail-on-drift" &&
       a !== "--hot-reload" &&
-      a !== "--extensions" &&
+      !(isReload && a === "--extensions") &&
       a !== "--detected" &&
       a !== "--detect",
   );
-  const [command, ...rest] = positional;
+  const [command, ...headRest] = positional;
+  // The tail is re-appended verbatim so `runDashIndex`/`extraArgs` below keep the
+  // exact math they had when the delimiter was still an ordinary positional.
+  const rest = dashIndex === -1 ? headRest : [...headRest, "--", ...tail];
   // bob-cwd-is-second-positional: bob's leading positional is its subcommand, so
   // the project dir it reads pins and diagnostics from is `rest[1]`; `run` takes
   // its project dir from the first positional *before* `--` (engine args follow
@@ -250,7 +271,9 @@ function dispatchCommand(
 
   // Hard cutover: the two-flag surface collapsed into `--defold-target`. Reject
   // the removed flags before any resolution so the pointer is unambiguous.
-  const removedTargetFlag = argv.find(
+  // On `head` too: a removed flag written after `--` is an engine argument, not
+  // this CLI's to reject.
+  const removedTargetFlag = head.find(
     (a) =>
       a === "--defold-version" ||
       a === "--channel" ||
@@ -272,7 +295,7 @@ function dispatchCommand(
     // Pin writer, not a target resolver: it never runs the resolution machinery
     // below. With `--detected` the sole positional is the path; otherwise the
     // token leads and the path trails.
-    const detectedMode = argv.includes("--detected") || argv.includes("--detect");
+    const detectedMode = head.includes("--detected") || head.includes("--detect");
     const usageError = (): number => {
       const message =
         "defold-typescript set-target: pass a version|stable|beta|alpha token, or --detected, and an optional path.";
