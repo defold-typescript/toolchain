@@ -3997,6 +3997,44 @@ describe("dispatch init --template", () => {
     expect(out()).not.toContain('"command"');
   });
 
+  // The scans these cover read `head` *before* the flag preamble, so widening one
+  // back to `argv` returns without ever spawning -- a failure shape the three
+  // preamble cases above cannot see.
+  const POST_DELIMITER_EARLY_EXIT_ARGS = [
+    ["--help"],
+    ["--version"],
+    ["--channel", "beta"],
+    ["--defold-version=1.9.0"],
+  ];
+
+  for (const engineArgs of POST_DELIMITER_EARLY_EXIT_ARGS) {
+    test(`run hands the engine post-\`--\` ${engineArgs[0]} instead of exiting early`, async () => {
+      const projectc = path.join(cwd, "build/default/game.projectc");
+      const engine = path.join(cwd, "build/x86_64-linux/dmengine");
+      const spawned: string[][] = [];
+      const { io, out } = captureStreams();
+
+      const code = await dispatch(["run", cwd, "--", ...engineArgs], io, {
+        detectEditorVersion: () => null,
+        runInternals: {
+          platform: "linux",
+          arch: "x64",
+          probe: (p) => p === projectc || p === engine,
+          spawn: (argv) => {
+            spawned.push(argv);
+            return { kill: () => {}, exited: Promise.resolve(0) };
+          },
+          copyAside: (p) => p,
+          chmod: () => {},
+        },
+      });
+
+      expect(code).toBe(0);
+      expect(spawned[0]).toEqual([engine, projectc, ...engineArgs]);
+      expect(out()).toBe("");
+    });
+  }
+
   test("run warns on stderr when the installed editor drifts from a version pin, exit code intact", async () => {
     writeFileSync(
       path.join(cwd, "package.json"),
