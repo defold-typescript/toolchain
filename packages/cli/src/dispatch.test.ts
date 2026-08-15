@@ -3999,10 +3999,16 @@ describe("dispatch init --template", () => {
 
   // The scans these cover read `head` *before* the flag preamble, so widening one
   // back to `argv` returns without ever spawning -- a failure shape the three
-  // preamble cases above cannot see.
+  // preamble cases above cannot see. The short aliases carry their own rows
+  // because each short alias is scanned separately from its long form -- the
+  // early exits are two `head.includes` calls joined by `||`, so one operand can
+  // be widened back to `argv` while the other stays correct and keeps the
+  // long-form row green.
   const POST_DELIMITER_EARLY_EXIT_ARGS = [
     ["--help"],
+    ["-h"],
     ["--version"],
+    ["-v"],
     ["--channel", "beta"],
     ["--defold-version=1.9.0"],
   ];
