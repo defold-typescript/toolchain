@@ -62,7 +62,11 @@ managed blocks without disturbing your own entries. For `tsconfig.json` that mea
 an existing `compilerOptions.typeRoots`, `types`, and `include` survive — including
 the `.defold-types` root and pinned engine surface that
 [`resolve`](./resolve.md) writes — while the `@defold-typescript/tstl-plugin`
-language-service plugin is unioned in exactly once.
+language-service plugin is unioned in exactly once. For `mise.toml` it means the
+refresh rewrites only `description` and `run` inside each managed
+`defold-typescript:*` task, so keys you add to one — an `alias`, a `depends`, an
+`env`, a comment of your own — are carried across every re-run. A managed task
+the scaffold stops shipping is removed with whatever you added to it.
 
 ## Flags
 

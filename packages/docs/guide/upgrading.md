@@ -48,7 +48,10 @@ It **never** clobbers files you authored. An entry script you have written —
 `src/main.ts` — is left exactly as it is; the scaffold reports it as `skipped`
 rather than overwriting it. Notes you keep outside the `AGENTS.md` markers, your
 own `[tools]` and `[tasks.*]` entries in `mise.toml`, and your other
-`tsconfig.json` settings all survive the upgrade untouched.
+`tsconfig.json` settings all survive the upgrade untouched. Inside a managed
+`mise.toml` task the refresh rewrites only the two keys the scaffold authors —
+`description` and `run` — so a key you added there, such as an `alias` or a
+`depends`, survives too.
 
 ## What it does to your `defold-target` pin
 

@@ -149,6 +149,14 @@ describe("mergeMiseToml", () => {
     }
   });
 
+  test("a file of nothing but managed blocks re-emits them byte-identically", () => {
+    // Also the parity lock on the block renderer: with nothing carried it must
+    // reproduce the literal, so every assertion above still describes the file
+    // a merge actually writes.
+    expect(mergeMiseToml("")).toBe(MISE_TASKS_TOML);
+    expect(mergeMiseToml(MISE_TASKS_TOML)).toBe(MISE_TASKS_TOML);
+  });
+
   test("strips a stale managed block before re-appending the fresh one", () => {
     const stale = `[tasks.foo]\nrun = "echo hi"\n\n# managed by @defold-typescript\n[tasks."defold-typescript:build"]\nrun = "old"\n`;
     const merged = mergeMiseToml(stale);
@@ -156,5 +164,131 @@ describe("mergeMiseToml", () => {
     expect(merged).toContain('run = "bunx @defold-typescript/cli build"');
     expect(merged).not.toContain('run = "old"');
     expect(merged).toContain('[tasks.foo]\nrun = "echo hi"');
+  });
+});
+
+describe("mergeMiseToml (keys added inside a managed block)", () => {
+  // Blocks are blank-line separated, so the one holding a header is its slice.
+  const blockFor = (text: string, header: string) =>
+    text.split("\n\n").find((block) => block.includes(header)) ?? "";
+
+  const BUILD = '[tasks."defold-typescript:build"]';
+  const RESOLVE = '[tasks."defold-typescript:resolve"]';
+
+  const onDisk = (header: string, ...added: string[]) =>
+    [
+      "# managed by @defold-typescript",
+      header,
+      'description = "stale"',
+      'run = "old"',
+      ...added,
+      "",
+    ].join("\n");
+
+  test("carries an added key across a refresh while the managed keys still overwrite", () => {
+    const merged = mergeMiseToml(onDisk(BUILD, 'alias = "b"', 'depends = ["setup"]'));
+    const block = blockFor(merged, BUILD);
+
+    expect(block).toContain('run = "bunx @defold-typescript/cli build"');
+    expect(block).toContain(
+      'description = "Build the TypeScript sources with the defold-typescript CLI"',
+    );
+    expect(merged).not.toContain('run = "old"');
+    expect(merged).not.toContain('description = "stale"');
+    expect(block).toContain('alias = "b"');
+    expect(block).toContain('depends = ["setup"]');
+  });
+
+  test("is idempotent with carried keys: a second merge changes nothing", () => {
+    const once = mergeMiseToml(onDisk(BUILD, 'alias = "b"'));
+    expect(mergeMiseToml(once)).toBe(once);
+  });
+
+  test("carries keys even when the file holds no user content at all", () => {
+    // The old merge short-circuited on empty user content and returned the
+    // canonical block, dropping additions a managed-blocks-only file carried.
+    expect(mergeMiseToml(onDisk(BUILD, 'alias = "b"'))).toContain('alias = "b"');
+  });
+
+  test("carries a comment of your own without duplicating one the scaffold emits", () => {
+    const scaffoldComment =
+      "# watch runs this automatically on every game.project change; run it manually for a one-off resolve";
+    const merged = mergeMiseToml(
+      onDisk(RESOLVE, scaffoldComment, "# ours: run before every playtest", 'alias = "r"'),
+    );
+    const block = blockFor(merged, RESOLVE);
+
+    expect(block).toContain("# ours: run before every playtest");
+    expect(block.split(scaffoldComment).length - 1).toBe(1);
+    expect(block).toContain('alias = "r"');
+  });
+
+  test("follows a hand-edited multi-line run to its close instead of stranding its tail", () => {
+    const merged = mergeMiseToml(
+      [
+        "# managed by @defold-typescript",
+        BUILD,
+        "run = [",
+        '  "echo before # not a comment",',
+        '  "bunx @defold-typescript/cli build",',
+        "]",
+        'alias = "b"',
+        "",
+      ].join("\n"),
+    );
+    const block = blockFor(merged, BUILD);
+
+    expect(block).toContain('run = "bunx @defold-typescript/cli build"');
+    expect(block).not.toContain("echo before");
+    expect(block).not.toContain("run = [");
+    expect(block.split("\n")).not.toContain("]");
+    expect(block).toContain('alias = "b"');
+  });
+
+  test("follows a triple-quoted run to its close", () => {
+    const merged = mergeMiseToml(
+      [
+        "# managed by @defold-typescript",
+        BUILD,
+        'run = """',
+        "#!/usr/bin/env bash",
+        "echo building",
+        '"""',
+        'alias = "b"',
+        "",
+      ].join("\n"),
+    );
+    const block = blockFor(merged, BUILD);
+
+    expect(block).toContain('run = "bunx @defold-typescript/cli build"');
+    expect(block).not.toContain("echo building");
+    expect(block).not.toContain("#!/usr/bin/env bash");
+    expect(block).toContain('alias = "b"');
+  });
+
+  test("a block for a task the scaffold no longer emits retires with its additions", () => {
+    const merged = mergeMiseToml(
+      [
+        "# managed by @defold-typescript",
+        '[tasks."defold-typescript:retired"]',
+        'run = "gone"',
+        'alias = "x"',
+        "",
+        '[tasks.foo]\nrun = "echo hi"',
+      ].join("\n"),
+    );
+
+    expect(merged).not.toContain("defold-typescript:retired");
+    expect(merged).not.toContain('alias = "x"');
+    expect(merged).toContain('[tasks.foo]\nrun = "echo hi"');
+  });
+
+  test("carries additions while user content outside the blocks stays byte-identical", () => {
+    const userContent = '[tools]\nbun = "1.3"\n\n[tasks.foo]\nrun = "echo hi"';
+    const merged = mergeMiseToml(`${userContent}\n\n${onDisk(BUILD, 'alias = "b"')}`);
+
+    expect(merged).toContain(userContent);
+    expect(blockFor(merged, BUILD)).toContain('alias = "b"');
+    expect(merged.match(/\[tasks\."defold-typescript:build"\]/g)?.length).toBe(1);
   });
 });
