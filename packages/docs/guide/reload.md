@@ -32,15 +32,18 @@ session's.
 
 ## What the exit code means
 
-- **0** — the editor accepted the reload and no error appeared during the window.
+- **0** — the editor accepted the reload, and either no error appeared during the
+  window or `--wait 0` opened no window at all.
 - **1** — no editor was running, the editor refused the reload, an error appeared
   during the window, or a console window was requested and could not be opened.
 
-Exit 0 is **not** proof that the reload succeeded. The window is a heuristic: an
-error thrown after it closes, or on a frame the game has not reached yet, is
-missed. The command says only *no error was observed within N milliseconds*, and
-that is the strongest claim it can honestly make. Widen `--wait` when a reload
-does real work before it can fail.
+Exit 0 is **not** proof that the reload succeeded. With a window, it is a
+heuristic: an error thrown after the window closes, or on a frame the game has
+not reached yet, is missed, so the command says only *no error was observed
+within N milliseconds* — widen `--wait` when a reload does real work before it
+can fail. Under `--wait 0` there is no window and nothing was read, so exit 0
+says only *the editor accepted the post*. Either way, that is the strongest
+claim it can honestly make.
 
 Two failure classes stay invisible here, as they do under `watch`: Defold's own
 build errors (a bad component reference, a missing atlas, a Lua syntax error) go
@@ -85,7 +88,8 @@ bunx @defold-typescript/cli build && bunx @defold-typescript/cli reload
 
 `build` fails on a compile error and `reload` never runs, so the game stays on the
 last code that actually built. When `reload` exits 0, the editor accepted the
-post and nothing complained on the console during the window. See
+post — and nothing complained on the console during the window, unless `--wait 0`
+skipped reading it. See
 [Agent runbooks](./agent-runbooks.md#hot-reload-the-running-game) for the full
 procedure, including what to check when `reload` reports no error but nothing
 changes.

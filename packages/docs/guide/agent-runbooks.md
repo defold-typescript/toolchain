@@ -802,8 +802,10 @@ Branch on `outcome` first, then `consoleObserved`, then `ok`:
 - `outcome: "accepted"` with `consoleObserved: false` and `ok: false` — the post
   was accepted but the console never opened, so nothing was watched. Retry, or
   pass `--wait 0` to accept that trade deliberately.
-- `outcome: "accepted"` with `ok: true` — the post was accepted and nothing
-  appeared on the console during the window.
+- `outcome: "accepted"` with `consoleObserved: false` and `ok: true` — `--wait 0`:
+  no console was read at all, so the post being accepted is the whole claim.
+- `outcome: "accepted"` with `consoleObserved: true` and `ok: true` — the post
+  was accepted, a console window was read, and nothing appeared on it.
 - `outcome: "accepted"` with `ok: false` and `consoleObserved: true` — the post
   was accepted and the new code threw. `consoleErrors` carries the header and its
   traceback frames in order; that is your stack trace.
