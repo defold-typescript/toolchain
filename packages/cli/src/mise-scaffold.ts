@@ -47,38 +47,167 @@ description = "Upgrade the defold-typescript CLI to its latest release and re-pi
 run = "bunx @defold-typescript/cli@latest upgrade"
 `;
 
-// Drop every managed block (marker line through the next blank line or EOF),
-// leaving all other lines byte-identical, so a refresh strips the stale block
-// before the fresh one is re-appended.
-function stripManagedBlocks(text: string): string {
+// The only keys the scaffold authors, so the only ones a refresh may overwrite.
+// Everything else a managed block holds — `alias`, `depends`, `env`, `dir`, a
+// comment of your own, even a table you wedged in with no blank line above it —
+// is yours and is carried across the refresh untouched.
+const MANAGED_KEYS = new Set(["description", "run"]);
+
+interface ManagedBlock {
+  // The `[tasks."…"]` line, trimmed: what pairs a block on disk with its
+  // canonical counterpart across a refresh.
+  readonly header: string;
+  // Every line after the marker, header included.
+  readonly body: readonly string[];
+}
+
+// Split a file into the lines outside managed blocks and the blocks themselves.
+// A block runs from its marker to the next blank line or EOF; the blank line is
+// consumed with it, so the surviving user lines stay byte-identical.
+function scanManagedBlocks(text: string): {
+  userLines: string[];
+  blocks: ManagedBlock[];
+} {
   const lines = text.split("\n");
-  const out: string[] = [];
+  const userLines: string[] = [];
+  const blocks: ManagedBlock[] = [];
   let i = 0;
   while (i < lines.length) {
     const line = lines[i] ?? "";
-    if (line.trim() === MANAGED_MARKER) {
+    if (line.trim() !== MANAGED_MARKER) {
+      userLines.push(line);
       i += 1;
-      while (i < lines.length && (lines[i] ?? "").trim() !== "") {
+      continue;
+    }
+    i += 1;
+    const body: string[] = [];
+    while (i < lines.length && (lines[i] ?? "").trim() !== "") {
+      body.push(lines[i] ?? "");
+      i += 1;
+    }
+    if (i < lines.length) {
+      i += 1;
+    }
+    const header = body.find((l) => l.trimStart().startsWith("[tasks."))?.trim();
+    if (header !== undefined) {
+      blocks.push({ header, body });
+    }
+  }
+  return { userLines, blocks };
+}
+
+// Net `[` minus `]` outside strings and comments, so a `run` spanning lines as
+// an array is followed to its close instead of leaving its tail behind as user
+// content — which would re-emit a dangling `]` after the refreshed value.
+function bracketDelta(line: string): number {
+  let depth = 0;
+  let quote: '"' | "'" | undefined;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (quote !== undefined) {
+      if (char === "\\" && quote === '"') {
         i += 1;
-      }
-      if (i < lines.length) {
-        i += 1;
+      } else if (char === quote) {
+        quote = undefined;
       }
       continue;
     }
-    out.push(line);
-    i += 1;
+    if (char === '"' || char === "'") {
+      quote = char;
+    } else if (char === "#") {
+      break;
+    } else if (char === "[") {
+      depth += 1;
+    } else if (char === "]") {
+      depth -= 1;
+    }
   }
-  return out.join("\n");
+  return depth;
+}
+
+function tripleQuoteParity(line: string): number {
+  return ((line.match(/"""/g)?.length ?? 0) + (line.match(/'''/g)?.length ?? 0)) % 2;
+}
+
+// Index of the last line of the value opening at `start` — the same line unless
+// it opens a multi-line array or a `"""` block, mise's idiom for a multi-command
+// task.
+function endOfValue(body: readonly string[], start: number): number {
+  if (tripleQuoteParity(body[start] ?? "") === 1) {
+    for (let i = start + 1; i < body.length; i++) {
+      if (tripleQuoteParity(body[i] ?? "") === 1) {
+        return i;
+      }
+    }
+    return body.length - 1;
+  }
+  let depth = bracketDelta(body[start] ?? "");
+  let i = start;
+  while (depth > 0 && i + 1 < body.length) {
+    i += 1;
+    depth += bracketDelta(body[i] ?? "");
+  }
+  return i;
+}
+
+// What survives a refresh of one block: every line that is neither the table
+// header, nor a key the scaffold authors, nor a comment the scaffold emits
+// itself (carrying that one would duplicate it on every re-merge).
+function carriedLines(block: ManagedBlock, canonical: ManagedBlock): string[] {
+  const emitted = new Set(canonical.body.map((l) => l.trim()));
+  const carried: string[] = [];
+  for (let i = 0; i < block.body.length; i++) {
+    const line = block.body[i] ?? "";
+    if (line.trim() === block.header) {
+      continue;
+    }
+    const key = /^\s*([A-Za-z0-9_-]+)\s*=/.exec(line)?.[1];
+    if (key !== undefined && MANAGED_KEYS.has(key)) {
+      i = endOfValue(block.body, i);
+      continue;
+    }
+    if (line.trim().startsWith("#") && emitted.has(line.trim())) {
+      continue;
+    }
+    carried.push(line);
+  }
+  return carried;
+}
+
+const CANONICAL_BLOCKS = scanManagedBlocks(MISE_TASKS_TOML).blocks;
+
+// Re-emit every managed block, each followed by whatever the file on disk had
+// added to it. With nothing carried this reproduces `MISE_TASKS_TOML` byte for
+// byte.
+function renderManaged(carried: ReadonlyMap<string, readonly string[]>): string {
+  const blocks = CANONICAL_BLOCKS.map((block) =>
+    [MANAGED_MARKER, ...block.body, ...(carried.get(block.header) ?? [])].join("\n"),
+  );
+  return `${blocks.join("\n\n")}\n`;
 }
 
 export function mergeMiseToml(existing?: string): string {
   if (existing === undefined) {
     return MISE_TASKS_TOML;
   }
-  const userContent = stripManagedBlocks(existing).replace(/\s*$/, "");
-  if (userContent === "") {
-    return MISE_TASKS_TOML;
+  const { userLines, blocks } = scanManagedBlocks(existing);
+  const carried = new Map<string, string[]>();
+  for (const block of blocks) {
+    const canonical = CANONICAL_BLOCKS.find((b) => b.header === block.header);
+    // A block whose task the scaffold no longer emits retires with it: there is
+    // no header left to carry its additions under.
+    if (canonical === undefined) {
+      continue;
+    }
+    const lines = carriedLines(block, canonical);
+    if (lines.length > 0) {
+      carried.set(block.header, [...(carried.get(block.header) ?? []), ...lines]);
+    }
   }
-  return `${userContent}\n\n${MISE_TASKS_TOML}`;
+  const userContent = userLines.join("\n").replace(/\s*$/, "");
+  const managed = renderManaged(carried);
+  if (userContent === "") {
+    return managed;
+  }
+  return `${userContent}\n\n${managed}`;
 }

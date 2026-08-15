@@ -39,6 +39,7 @@ changes are called out first because the toolchain is pre-1.0.
 ### Fixed
 
 - [`run`](./run.md) hands the engine every argument after `--`, including ones sharing a name with a CLI flag. `run . -- --json` now launches the engine with `--json` instead of consuming it and switching the CLI's own output into JSON mode.
+- Keys you add to a managed `mise.toml` task now survive [`init`](./init.md) and [`upgrade`](./upgrade.md). A refresh used to replace each `defold-typescript:*` block wholesale, silently dropping an `alias`, a `depends` or a comment you had put there; it now rewrites only the `description` and `run` it authors.
 - **Reference-site corrections**, each on what a page displayed rather than on what it documents:
   - **[Libraries](/libraries) index** — no longer credits the `ts-defold/library` project for its type definitions. Every library has been maintained in this repo since v0.24.0, generated from upstream sources that ship machine-readable types or hand-forked where upstream ships none.
   - **[persist](/api/persist) and [rendy](/api/rendy)** — credited to their author's current GitHub account, so the attribution links no longer depend on a rename redirect.
