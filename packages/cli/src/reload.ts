@@ -1,3 +1,4 @@
+import { consoleLineLocations, mapConsoleLine } from "./console-source-map";
 import {
   type EditorEndpoint,
   isConsoleContinuation,
@@ -148,19 +149,23 @@ export async function runReload(opts: RunReloadOptions): Promise<number> {
     consoleObserved: boolean,
     error?: string,
   ): number => {
+    // The raw lines are what `captured` holds, so the JSON's `consoleErrors`
+    // and the human's mapped stderr are two renderings of one list rather than
+    // two independently captured ones.
     if (opts.json === true) {
       stdout.write(
         renderResult({
           command: "reload",
           outcome,
           consoleErrors: errors,
+          consoleErrorLocations: errors.flatMap((line) => consoleLineLocations(cwd, line)),
           consoleObserved,
           ...(error === undefined ? {} : { error }),
         }),
       );
       return error === undefined ? 0 : 1;
     }
-    for (const line of errors) stderr.write(`${CONSOLE_PREFIX}${line}\n`);
+    for (const line of errors) stderr.write(`${CONSOLE_PREFIX}${mapConsoleLine(cwd, line)}\n`);
     if (error !== undefined) stderr.write(`defold-typescript reload: ${error}\n`);
     return error === undefined ? 0 : 1;
   };

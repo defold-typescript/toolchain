@@ -30,6 +30,15 @@ filtering out ordinary `INFO:`/`DEBUG:` frame logging. Console history recorded
 before the post is skipped, so you see this reload's output rather than the
 session's.
 
+The console names the generated chunk the engine is running
+(`/src/main.ts.script:4`), not the file you edited. Where the build's source map
+can answer, `reload` prints the authored location in front of it —
+`src/main.ts:5:11 (/src/main.ts.script:4)`. The mapping is best-effort: a chunk
+with no map beside it, a generated line the map does not cover, or a map that
+does not parse leaves the line exactly as the console sent it, because a wrong
+`.ts` line would be worse than an honest generated one. The raw location is
+always kept.
+
 ## What the exit code means
 
 - **0** — the editor accepted the reload, and either no error appeared during the
@@ -66,13 +75,17 @@ to the editor's Build Errors tab, never to the console.
 `--json` writes exactly one JSON object to stdout:
 
 ```json
-{"command":"reload","ok":false,"written":[],"error":"the reloaded code reported an error","outcome":"accepted","consoleErrors":["ERROR:SCRIPT: /main/main.script:12: attempt to index a nil value"],"consoleObserved":true}
+{"command":"reload","ok":false,"error":"the reloaded code reported an error","outcome":"accepted","consoleErrors":["ERROR:SCRIPT: /src/main.ts.script:4: attempt to index a nil value"],"consoleErrorLocations":[{"chunk":"/src/main.ts.script","chunkLine":4,"file":"src/main.ts","line":5,"column":11}],"consoleObserved":true}
 ```
 
 `outcome` is the editor's answer to the post — `accepted`, `skipped` (the editor
 declined: no game running, or nothing to reload), or `unavailable` (no editor
-found). `consoleErrors` carries the captured lines in the order they arrived.
-`consoleObserved` says whether the console was actually read: `false` under
+found). `consoleErrors` carries the captured lines in the order they arrived,
+exactly as the console sent them — the mapping never rewrites this field.
+`consoleErrorLocations` carries one entry per chunk reference the source map
+resolved, so it is `[]` when nothing could be mapped and can hold more than one
+entry for a single traceback line. `consoleObserved` says whether the console
+was actually read: `false` under
 `--wait 0`, and `false` with an error when a requested window could not be
 opened, so an empty `consoleErrors` is only meaningful when it is `true`. Note
 that `ok` is `false` while `outcome` is `accepted` when the post landed and the

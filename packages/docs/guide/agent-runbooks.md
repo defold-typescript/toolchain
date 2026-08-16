@@ -788,8 +788,15 @@ post with HTTP 202 — *queued* — and a Lua error in the reloaded chunk reache
 console, never that response. Its single JSON line is:
 
 ```json
-{"command":"reload","ok":false,"written":[],"error":"the reloaded code reported an error","outcome":"accepted","consoleErrors":["ERROR:SCRIPT: /main/main.script:12: attempt to index a nil value"],"consoleObserved":true}
+{"command":"reload","ok":false,"error":"the reloaded code reported an error","outcome":"accepted","consoleErrors":["ERROR:SCRIPT: /src/main.ts.script:4: attempt to index a nil value"],"consoleErrorLocations":[{"chunk":"/src/main.ts.script","chunkLine":4,"file":"src/main.ts","line":5,"column":11}],"consoleObserved":true}
 ```
+
+`consoleErrors` is always the console's own text, naming the generated chunk.
+`consoleErrorLocations` is the best-effort translation back to the authored
+TypeScript, one entry per reference the build's source map resolved — read it
+when present, and fall back to `consoleErrors` when it is `[]`, which is what a
+chunk with no map, an uncovered generated line, or an unparseable map produces.
+Never assume it is populated.
 
 Branch on `outcome` first, then `consoleObserved`, then `ok`:
 

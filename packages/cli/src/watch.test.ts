@@ -2047,6 +2047,43 @@ describe("runWatch console surfacing", () => {
     await handle.done;
   });
 
+  test("a drained error line names the authored TypeScript beside the generated chunk", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    const lua = readFileSync(path.join(cwd, "src/main.ts.script"), "utf8").split("\n");
+    const chunkLine = lua.findIndex((text) => text.includes("vmath.vector3")) + 1;
+    expect(chunkLine).toBeGreaterThan(0);
+
+    const stream = editor.consoles[0] as FakeConsole;
+    stream.push(
+      `ERROR:SCRIPT: /src/main.ts.script:${chunkLine}: attempt to index a nil value`,
+      "ERROR:SCRIPT: /main/main.script:12: an unmappable chunk",
+    );
+    await stream.settled();
+
+    expect(err()).toContain(`(/src/main.ts.script:${chunkLine})`);
+    expect(err()).toMatch(/src\/main\.ts:\d+:\d+/);
+    expect(err()).toContain(
+      "defold-typescript watch: editor: ERROR:SCRIPT: /main/main.script:12: an unmappable chunk\n",
+    );
+
+    handle.stop();
+    await handle.done;
+  });
+
   test("attaching to an editor whose console already holds errors replays none of them", async () => {
     writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeProjectFile("src/main.ts", scriptSource(1));
