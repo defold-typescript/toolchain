@@ -71,6 +71,41 @@ export function enumerateDeclaredSymbols(
 }
 
 /**
+ * The parameter names the lifecycle hook `hookName` declares, unioned across
+ * every interface that declares a method of that name. Unlike
+ * {@link enumerateDeclaredParameters} this reaches method signatures rather than
+ * `declare function`s, because the script hooks are members of an interface
+ * rather than free functions.
+ */
+export function scriptHookParameters(
+  source: string,
+  hookName: string,
+  fileName = "lifecycle.ts",
+): string[] {
+  const names: string[] = [];
+  const sourceFile = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true);
+
+  const visit = (node: ts.Node): void => {
+    if (
+      (ts.isMethodSignature(node) || ts.isMethodDeclaration(node)) &&
+      ts.isIdentifier(node.name) &&
+      node.name.text === hookName
+    ) {
+      for (const parameter of node.parameters) {
+        if (ts.isIdentifier(parameter.name) && !names.includes(parameter.name.text)) {
+          names.push(parameter.name.text);
+        }
+      }
+      return;
+    }
+    ts.forEachChild(node, visit);
+  };
+
+  visit(sourceFile);
+  return names;
+}
+
+/**
  * The parameter names each declared function accepts, keyed by full dotted
  * namespace path. Same namespace-frame walk as {@link enumerateDeclaredSymbols},
  * but overloads **merge** rather than first-wins: a slot declared on only one

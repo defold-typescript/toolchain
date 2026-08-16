@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import {
   buildConfigKeyIndex,
   buildGuiNodeIndex,
+  buildInputActionIndex,
   buildSceneComponentIndex,
   buildSceneObjectPathIndex,
   buildSpriteAnimationIndex,
@@ -40,6 +41,11 @@ const ANIMATION_ASSET_EXTENSIONS = [".atlas", ".tilesource", ".sprite"];
 // cannot resolve.
 const PROJECT_EXTENSIONS = [".project"];
 const GAME_PROJECT_DOCUMENT = "game.project";
+
+// A fifth set, and the one whose universe is every file of its kind at once:
+// which binding is live is a `game.project` `[input] game_binding` setting, and
+// offering only that one would hide the actions a project switches between.
+const INPUT_BINDING_EXTENSIONS = [".input_binding"];
 
 const requireFromHere = createRequire(import.meta.url);
 
@@ -201,6 +207,21 @@ function configKeyEntries(
   return buildWholeLiteralCompletionEntries({ slot, ids, baseEntries });
 }
 
+// The kind with no scene, no owner and no sibling to resolve through: the slot
+// resolver has already settled that this `hash("…")` is compared against an
+// `on_input` action id, so every action the project declares is a candidate.
+// Same whole-literal span as a config key.
+function actionIdEntries(
+  slot: ClassifiedSlot,
+  cache: SceneIndexCache,
+  baseEntries: readonly ts.CompletionEntry[],
+): ts.CompletionEntry[] {
+  const ids = cache.derived("input-actions", () =>
+    buildInputActionIndex(cache.documents(INPUT_BINDING_EXTENSIONS).documents),
+  );
+  return buildWholeLiteralCompletionEntries({ slot, ids, baseEntries });
+}
+
 // A TS language-service plugin is loaded by package name and its main is called
 // as this `init` factory; the editor passes its own `typescript` instance so the
 // plugin shares the editor's `ts` (notably `DiagnosticCategory`).
@@ -294,7 +315,9 @@ export default function init(modules: { typescript: typeof import("typescript") 
               ? resourceEntries(slot, cache, baseEntries)
               : slot.class === "config-key"
                 ? configKeyEntries(slot, cache, baseEntries)
-                : [];
+                : slot.class === "action-id"
+                  ? actionIdEntries(slot, cache, baseEntries)
+                  : [];
       if (entries.length === 0) {
         return prior;
       }
