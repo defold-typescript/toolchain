@@ -39,6 +39,16 @@ const skippedFqns = new Set(
   ),
 );
 
+// A config reader is named by its shape, not by a list kept here: the class
+// covers a family upstream can extend, so the expected membership is read off
+// the same ref-doc source the emitter consumes rather than restated. A fifth
+// reader joins this set the moment it appears in the source.
+const CONFIG_READER_FQN = /^sys\.get_config_[a-z0-9_]+$/;
+const configReaderSlots = [...slots.values()]
+  .filter((slot) => CONFIG_READER_FQN.test(slot.fqn) && slot.parameter === "key")
+  .map((slot) => `${slot.fqn}#${slot.parameter}`)
+  .sort();
+
 const generated = table.filter((entry) => entry.source === "generated");
 const authored = table.filter((entry) => entry.source !== "generated");
 
@@ -118,17 +128,16 @@ describe("url-parameters.json generated entries", () => {
     ]);
   });
 
-  test("the config-key class is recorded against exactly the four config readers", () => {
+  test("the config-key class covers every config reader the ref-doc declares", () => {
+    // Guard against a namespace change that stops the shape matching and turns
+    // this into a comparison of two empty sets.
+    expect(configReaderSlots.length).toBeGreaterThan(0);
     const configKeys = table
       .filter((entry) => entry.class === "config-key")
-      .map((entry) => `${entry.fqn}#${entry.parameter}`);
-    expect(configKeys).toEqual([
-      "sys.get_config_boolean#key",
-      "sys.get_config_int#key",
-      "sys.get_config_number#key",
-      "sys.get_config_string#key",
-    ]);
-    for (const key of configKeys) {
+      .map((entry) => `${entry.fqn}#${entry.parameter}`)
+      .sort();
+    expect(configKeys).toEqual(configReaderSlots);
+    for (const key of configReaderSlots) {
       expect(slots.get(key)?.types).toEqual(["string"]);
     }
   });
