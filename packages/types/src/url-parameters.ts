@@ -12,7 +12,11 @@ import type { ApiModule } from "./api-doc";
 // extensions its entry declares rather than by anything in the scene graph;
 // `config-key` names a `<section>.<key>` entry in the project's own
 // `game.project`, so its universe is one file the project declares rather than
-// anything in the scene graph or on disk beside it.
+// anything in the scene graph or on disk beside it; `action-id` names an action
+// the project's `.input_binding` files declare, and is the one class whose slot
+// is a parameter of a prefixless global rather than of a Defold module function
+// — `hash("jump")` — so it is scoped by the comparison the call sits in rather
+// than by a sibling argument.
 export type UrlParameterClass =
   | "none"
   | "game-object"
@@ -21,7 +25,8 @@ export type UrlParameterClass =
   | "gui-node"
   | "animation"
   | "resource-path"
-  | "config-key";
+  | "config-key"
+  | "action-id";
 
 export interface UrlParameterEntry {
   fqn: string;
@@ -39,6 +44,13 @@ export interface UrlParameterEntry {
   // entry rather than per class because the six constructors sharing the class
   // each accept a different one.
   resourceExtensions?: readonly string[];
+  // The parameter this slot's *call* must be compared against for the class to
+  // apply — `action_id` for `hash("…")`, whose bare global would otherwise match
+  // every hashed name a project writes. Required for `action-id` and absent
+  // otherwise, enforced by the drift guard for the same reason `addressParameter`
+  // is. Unlike `addressParameter` this names a parameter of the surrounding
+  // *hook*, not of the classified function.
+  comparedParameter?: string;
   // `"generated"` for a slot the emitter derives from the ref-doc, otherwise a
   // package-relative path to the hand-authored `.d.ts` that declares it,
   // resolved against the `packages/types` package root. Not repo-relative: the
@@ -85,6 +97,7 @@ export const REQUIRED_TYPES: Record<Exclude<UrlParameterClass, "none">, readonly
   animation: ["string", "hash"],
   "resource-path": ["string"],
   "config-key": ["string"],
+  "action-id": ["string"],
 };
 
 function bareName(fqn: string): string {

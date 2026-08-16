@@ -145,6 +145,31 @@ describe("checkUrlFragmentReachability", () => {
     ]);
   });
 
+  test("an action-id slot is never an address, so it is never reported", () => {
+    // The class is suggestion-only: an action id is not a component, and no
+    // `.go`/`.collection` could declare one. `checkUrlFragmentReachability` is
+    // the only reporting consumer of `addressClassOfArgument`, so adding
+    // `action-id` to the address set would surface here as a finding on a
+    // hashed name that is not an address at all.
+    const source =
+      "export function on_input(_self: unknown, action_id: Hash | undefined) {\n" +
+      '  if (action_id === hash("no#pe")) {}\n' +
+      "}\n" +
+      'msg.post("#missing", "hello");\n';
+    expect(findingsOf(source, universe("sprite")).map((f) => f.start)).toEqual([
+      source.indexOf('"#missing"'),
+    ]);
+  });
+
+  test("an action id built at runtime is examined no more than a written one", () => {
+    const source =
+      "export function on_input(_self: unknown, action_id: Hash | undefined) {\n" +
+      "  const n = 1;\n" +
+      `  if (action_id === hash(\`item_\${n}\`)) {}\n` +
+      "}\n";
+    expect(check(source, universe("sprite"))).toEqual({ kind: "checked", findings: [] });
+  });
+
   test("withholds every finding while the universe has gaps", () => {
     const reasons = ["main.collection: could not be parsed (line 3)"];
     const report = check('msg.post("#unknown", "hello");\n', {
