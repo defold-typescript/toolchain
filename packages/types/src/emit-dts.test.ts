@@ -3326,6 +3326,28 @@ describe("url-parameter address retyping", () => {
     expect(out).not.toContain("SceneGameObjectAddress");
   });
 
+  test("a classified action-id slot is inert — a sixth class widens nothing", () => {
+    // The committed table records `action-id` only on the hand-authored `hash`
+    // global, which no ref-doc module emits — so the class can only be held to
+    // the emitter through a table that puts it on a generated slot. The slot
+    // chosen carries the address triple, so an alias would be plainly visible.
+    const module = parseDefoldApiDoc(goDoc);
+    const table: UrlParameterTable = [
+      {
+        fqn: "go.get_position",
+        parameter: "id",
+        class: "action-id",
+        comparedParameter: "action_id",
+        source: "generated",
+      },
+    ];
+    const out = emitDeclarations(module, { urlParameters: table });
+    expect(signatureLine(out, "function get_position(")).toBe(
+      "export function get_position(id?: string | Hash | Url): Vector3;",
+    );
+    expect(out).not.toContain("SceneGameObjectAddress");
+  });
+
   test("emitSymbolSignatures retypes the same slots as the declaration", () => {
     const module = parseDefoldApiDoc(goDoc);
     const signatures = emitSymbolSignatures(module, { urlParameters: committed });

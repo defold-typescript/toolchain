@@ -228,6 +228,25 @@ const CONFIG_DOCUMENTS: Record<string, string> = {
   "vendor/other.project": "[display]\nheight = 640\n",
 };
 
+// An action-id slot, whose candidates come from a project-wide union of the
+// `.input_binding` files. The slot is the one that is not a parameter of a
+// Defold API function at all: it is scoped by the comparison against the hook's
+// own `action_id`.
+const ACTION_SOURCE =
+  "export function on_input(_self: unknown, action_id: Hash | undefined) {\n" +
+  '  if (action_id === hash("")) {}\n' +
+  "}\n";
+const ACTION_POSITION = ACTION_SOURCE.indexOf('""') + 1;
+
+// Two bindings, so a union is visible — which one is live is a `game.project`
+// setting the universe deliberately ignores.
+const ACTION_DOCUMENTS: Record<string, string> = {
+  "input/game.input_binding":
+    'key_trigger {\n  input: KEY_SPACE\n  action: "jump"\n}\n' +
+    'mouse_trigger {\n  input: MOUSE_BUTTON_1\n  action: "touch"\n}\n',
+  "input/menu.input_binding": 'key_trigger {\n  input: KEY_ENTER\n  action: "confirm"\n}\n',
+};
+
 // One level of the escaping a `.collection` uses to carry a whole `.go`, and a
 // `.go` to carry a whole component — applied twice for an embedded sprite.
 function escapePayload(payload: string): string {
@@ -773,6 +792,93 @@ describe("tstl-plugin", () => {
     expect(host.openWatchers).toBe(0);
   });
 
+  test("appends the project's action ids after the base entries, sorted", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const service = completionProxy({
+      source: ACTION_SOURCE,
+      base,
+      documents: ACTION_DOCUMENTS,
+    });
+    const result = service.getCompletionsAtPosition("main.ts", ACTION_POSITION, undefined);
+    expect(result?.entries[0]).toBe(base.entries[0] as ts.CompletionEntry);
+    expect(result?.entries.map((e) => e.name)).toEqual(["zzz", "confirm", "jump", "touch"]);
+    for (const built of result?.entries.slice(1) ?? []) {
+      expect(built.replacementSpan).toEqual({ start: ACTION_POSITION, length: 0 });
+      expect(built.sortText > LOCATION_PRIORITY).toBe(true);
+    }
+  });
+
+  test("an action caret with no base result still offers the project's actions", () => {
+    const service = completionProxy({
+      source: ACTION_SOURCE,
+      base: undefined,
+      documents: ACTION_DOCUMENTS,
+    });
+    const result = service.getCompletionsAtPosition("main.ts", ACTION_POSITION, undefined);
+    expect(result?.entries.map((e) => e.name)).toEqual(["confirm", "jump", "touch"]);
+  });
+
+  test("a project with no `.input_binding` returns the base result untouched", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const service = completionProxy({
+      source: ACTION_SOURCE,
+      base,
+      documents: { "main/board.go": 'components {\n  id: "board"\n}\n' },
+    });
+    expect(service.getCompletionsAtPosition("main.ts", ACTION_POSITION, undefined)).toBe(base);
+  });
+
+  test("an action the base service already offers is not repeated", () => {
+    const base = completionInfo([completionEntry("jump", DEPRECATED_IDENTIFIER)]);
+    const service = completionProxy({
+      source: ACTION_SOURCE,
+      base,
+      documents: ACTION_DOCUMENTS,
+    });
+    const result = service.getCompletionsAtPosition("main.ts", ACTION_POSITION, undefined);
+    expect(result?.entries.map((e) => e.name)).toEqual(["jump", "confirm", "touch"]);
+  });
+
+  test("an action caret degrades to the base result on a host that cannot enumerate", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const service = completionProxy({
+      source: ACTION_SOURCE,
+      base,
+      documents: ACTION_DOCUMENTS,
+      serverHost: false,
+    });
+    expect(service.getCompletionsAtPosition("main.ts", ACTION_POSITION, undefined)).toBe(base);
+  });
+
+  test("an action added to a binding is offered once the host reports the change", () => {
+    const { service, host } = completionSetup({
+      source: ACTION_SOURCE,
+      base: undefined,
+      documents: ACTION_DOCUMENTS,
+    });
+    const before = service.getCompletionsAtPosition("main.ts", ACTION_POSITION, undefined);
+    expect(before?.entries.map((e) => e.name)).toEqual(["confirm", "jump", "touch"]);
+
+    host.documents["input/menu.input_binding"] =
+      'key_trigger {\n  input: KEY_ESCAPE\n  action: "back"\n}\n';
+    host.fireDirectory("/project/input/menu.input_binding");
+
+    const after = service.getCompletionsAtPosition("main.ts", ACTION_POSITION, undefined);
+    expect(after?.entries.map((e) => e.name)).toEqual(["back", "jump", "touch"]);
+  });
+
+  test("an action caret on a host without watch facilities still completes", () => {
+    const { service, host } = completionSetup({
+      source: ACTION_SOURCE,
+      base: undefined,
+      documents: ACTION_DOCUMENTS,
+      watch: false,
+    });
+    const result = service.getCompletionsAtPosition("main.ts", ACTION_POSITION, undefined);
+    expect(result?.entries.map((e) => e.name)).toEqual(["confirm", "jump", "touch"]);
+    expect(host.openWatchers).toBe(0);
+  });
+
   test("a second completion in the same slot walks nothing — every kind shares one index", () => {
     const cases: { source: string; position: number; documents: Record<string, string> }[] = [
       { source: ADDRESS_SOURCE, position: FRAGMENT_POSITION, documents: SCENE_DOCUMENTS },
@@ -781,6 +887,7 @@ describe("tstl-plugin", () => {
       { source: ANIMATION_SOURCE, position: ANIMATION_POSITION, documents: ANIMATION_DOCUMENTS },
       { source: ATLAS_SOURCE, position: ATLAS_POSITION, documents: RESOURCE_DOCUMENTS },
       { source: CONFIG_SOURCE, position: CONFIG_POSITION, documents: CONFIG_DOCUMENTS },
+      { source: ACTION_SOURCE, position: ACTION_POSITION, documents: ACTION_DOCUMENTS },
     ];
     for (const { source, position, documents } of cases) {
       const { service, host } = completionSetup({ source, base: undefined, documents });

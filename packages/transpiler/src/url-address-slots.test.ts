@@ -43,6 +43,17 @@ function insideOf(source: string, literal: string): number {
   return start + 1;
 }
 
+// The plain-function form of the hook, whose `action_id` is the parameter an
+// action-id slot must be compared against.
+function ON_INPUT(body: string): string {
+  return [
+    "export function on_input(_self: unknown, action_id: Hash | undefined) {",
+    `  ${body}`,
+    "}",
+    "",
+  ].join("\n");
+}
+
 describe("resolveClassifiedSlotAtPosition", () => {
   test("resolves an address slot, reporting the span strictly inside the quotes", () => {
     const source = 'msg.post("#sprite", "hello");\n';
@@ -218,6 +229,84 @@ describe("resolveClassifiedSlotAtPosition", () => {
     // resolves nothing rather than offering keys.
     expect(slotAt(stringSource, insideOf(stringSource, '"fallback"'))).toBeUndefined();
   });
+
+  test("an action-id slot resolves whole-literal inside a compared `hash`", () => {
+    const source = ON_INPUT('if (action_id === hash("")) {}');
+    const slot = slotAt(source, insideOf(source, '""'));
+    expect(slot?.class).toBe("action-id");
+    expect(slot?.text).toBe("");
+    expect(slot?.fragmentStart).toBe(-1);
+    expect(slot?.addressText).toBeUndefined();
+    expect(slot?.resourceExtensions).toBeUndefined();
+    // biome-ignore lint/style/noNonNullAssertion: the assertions above already failed if it did not resolve
+    expect(isAddressClass(slot!.class)).toBe(false);
+  });
+
+  test("either operand order and either equality operator scopes the slot", () => {
+    for (const comparison of [
+      'action_id === hash("")',
+      'hash("") === action_id',
+      'action_id !== hash("")',
+      'hash("") != action_id',
+      'action_id == hash("")',
+    ]) {
+      const source = ON_INPUT(`if (${comparison}) {}`);
+      expect(slotAt(source, insideOf(source, '""'))?.class).toBe("action-id");
+    }
+  });
+
+  test("the `defineScript` method form scopes the slot too", () => {
+    // The hook is written as an object method there, whose `action_id` is a
+    // `ParameterDeclaration` exactly as a plain function's is.
+    const source = [
+      'import { defineScript } from "@defold-typescript/types";',
+      "export default defineScript({",
+      "  on_input(_self, action_id) {",
+      '    if (action_id === hash("")) {}',
+      "    return false;",
+      "  },",
+      "});",
+      "",
+    ].join("\n");
+    expect(slotAt(source, insideOf(source, '""'))?.class).toBe("action-id");
+  });
+
+  test("a `hash` carrying no comparison against an action id resolves nothing", () => {
+    // The hoisted-constant form is the common one, and it has nothing to scope
+    // by: offering every action there would suggest ids in component, message
+    // and property names alike.
+    const hoisted = 'const JUMP = hash("");\n';
+    expect(slotAt(hoisted, insideOf(hoisted, '""'))).toBeUndefined();
+
+    const argument = 'sprite.play_flipbook(hash(""), "");\n';
+    expect(slotAt(argument, insideOf(argument, '""'))).toBeUndefined();
+
+    for (const comparison of ['action_id > hash("")', 'action_id ? hash("") : action_id']) {
+      const source = ON_INPUT(`if (${comparison}) {}`);
+      expect(slotAt(source, insideOf(source, '""'))).toBeUndefined();
+    }
+  });
+
+  test("the compared operand must resolve to a parameter of that name, not merely read as one", () => {
+    // A local of the same name is the case identifier text alone cannot tell
+    // apart, and it is not an action id — nothing in it came from `on_input`.
+    const local = [
+      "export function handle() {",
+      '  const action_id = hash("other");',
+      '  if (action_id === hash("")) {}',
+      "}",
+      "",
+    ].join("\n");
+    expect(slotAt(local, insideOf(local, '""'))).toBeUndefined();
+
+    const renamed = [
+      "export function on_input(_self: unknown, message_id: Hash | undefined) {",
+      '  if (message_id === hash("")) {}',
+      "}",
+      "",
+    ].join("\n");
+    expect(slotAt(renamed, insideOf(renamed, '""'))).toBeUndefined();
+  });
 });
 
 describe("isAddressClass", () => {
@@ -229,6 +318,7 @@ describe("isAddressClass", () => {
     expect(isAddressClass("animation")).toBe(false);
     expect(isAddressClass("resource-path")).toBe(false);
     expect(isAddressClass("config-key")).toBe(false);
+    expect(isAddressClass("action-id")).toBe(false);
     expect(isAddressClass("none")).toBe(false);
   });
 });

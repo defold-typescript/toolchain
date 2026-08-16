@@ -1,6 +1,7 @@
 export { buildConfigKeyIndex } from "./config-key-index";
 export type { GuiNodeIndex } from "./gui-node-index";
 export { buildGuiNodeIndex } from "./gui-node-index";
+export { buildInputActionIndex } from "./input-action-index";
 export { findMainEntryFactoryImports } from "./main-entry-factory-imports";
 export type { BuildConfig, ScriptKind, SourceOutputKind } from "./output-paths";
 export {

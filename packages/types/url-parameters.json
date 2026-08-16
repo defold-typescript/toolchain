@@ -274,5 +274,12 @@
     "class": "config-key",
     "source": "generated",
     "evidence": "The syntax is SECTION.KEY"
+  },
+  {
+    "fqn": "hash",
+    "parameter": "s",
+    "class": "action-id",
+    "comparedParameter": "action_id",
+    "source": "src/engine-globals.d.ts"
   }
 ]
