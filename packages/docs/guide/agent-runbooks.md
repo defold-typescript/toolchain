@@ -796,9 +796,9 @@ console, never that response. Its single JSON line is:
 TypeScript, one entry per reference the build's source map resolved — read it
 when present, and fall back to `consoleErrors` when it is `[]`, which is what a
 chunk with no map, an uncovered generated line, an unparseable map, or a map
-resolving to a file that is not in the project produces. Never assume it is
-populated. Every `file` it does carry is a project-relative path that exists on
-disk, under any `outDir`.
+resolving to something that is not a file in the project produces. Never assume
+it is populated. Every `file` it does carry is a project-relative path naming a
+file in the project, under any `outDir`.
 
 Branch on `outcome` first, then `consoleObserved`, then `ok`:
 
