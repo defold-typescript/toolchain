@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { runBuild } from "./build";
@@ -89,7 +89,7 @@ describe("mapConsoleLine", () => {
     expect(text.slice((location?.column as number) - 1)).toStartWith(MARKER);
   });
 
-  test("resolves the map's basename source against the map's own directory, not cwd", () => {
+  test("reports the authored source under an outDir layout, not a path in the output tree", () => {
     writeProjectFile(
       "tsconfig.json",
       JSON.stringify(
@@ -108,7 +108,11 @@ describe("mapConsoleLine", () => {
       `ERROR:SCRIPT: /build/lua/game/hero.ts.script:${chunkLine}: boom`,
     );
 
-    expect(location?.file).toBe("build/lua/game/hero.ts");
+    expect(location?.file).toBe("src/game/hero.ts");
+    expect(existsSync(path.join(cwd, location?.file as string))).toBe(true);
+    const text = authoredLine("src/game/hero.ts", location?.line as number);
+    expect(text).toContain(MARKER);
+    expect(text.slice((location?.column as number) - 1)).toStartWith(MARKER);
   });
 
   test("rewrites every reference on a traceback frame carrying two of them", () => {
@@ -179,6 +183,41 @@ describe("mapConsoleLine misses", () => {
 
     expect(mapConsoleLine(cwd, raw)).toBe(raw);
     expect(consoleLineLocations(cwd, raw)).toEqual([]);
+  });
+
+  test("returns the line unchanged when the mapped source is no longer on disk", () => {
+    writeProjectFile("tsconfig.json", TSCONFIG);
+    writeProjectFile("src/main.ts", markerSource(0));
+    runBuild({ cwd });
+    const chunkLine = markerChunkLine("src/main.ts.script");
+    rmSync(path.join(cwd, "src/main.ts"));
+    const raw = `ERROR:SCRIPT: /src/main.ts.script:${chunkLine}: attempt to index a nil value`;
+
+    expect(mapConsoleLine(cwd, raw)).toBe(raw);
+    expect(consoleLineLocations(cwd, raw)).toEqual([]);
+  });
+
+  test("returns the line unchanged when the source root escapes the project root", () => {
+    // The escaping target is a real file, so only the outside-the-project
+    // rejection can refuse it — an existence check alone would let it through.
+    const outside = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-console-map-outside-"));
+    try {
+      writeProjectFile("tsconfig.json", TSCONFIG);
+      writeProjectFile("src/main.ts", markerSource(0));
+      runBuild({ cwd });
+      const chunkLine = markerChunkLine("src/main.ts.script");
+      writeFileSync(path.join(outside, "main.ts"), markerSource(0));
+      const mapPath = path.join(cwd, "src/main.ts.script.map");
+      const map = JSON.parse(readFileSync(mapPath, "utf8")) as Record<string, unknown>;
+      map.sourceRoot = `../../${path.basename(outside)}`;
+      writeFileSync(mapPath, JSON.stringify(map));
+      const raw = `ERROR:SCRIPT: /src/main.ts.script:${chunkLine}: attempt to index a nil value`;
+
+      expect(mapConsoleLine(cwd, raw)).toBe(raw);
+      expect(consoleLineLocations(cwd, raw)).toEqual([]);
+    } finally {
+      rmSync(outside, { recursive: true, force: true });
+    }
   });
 
   test("returns the line unchanged when the map is not valid JSON", () => {
