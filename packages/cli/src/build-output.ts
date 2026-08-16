@@ -254,6 +254,39 @@ export function throwIfFailures(failures: ReadonlyMap<string, FailureEntry[]>): 
   );
 }
 
+/**
+ * Rewrites a map's `sourceRoot` to reach the authored source from the output
+ * file, which is the one relation only the build knows. `sources` is left as the
+ * bare basename the Local Lua Debugger's `scriptRoots` resolution expects.
+ *
+ * The map comes back untouched — byte for byte, so an alongside build's output
+ * never moves — whenever the correction is empty or cannot be trusted: a map
+ * that does not parse, and a map naming more than one source, which no single
+ * `sourceRoot` can relocate.
+ */
+export function retargetSourceRoot(
+  map: string | undefined,
+  scriptRel: string,
+  sourceRel: string,
+): string | undefined {
+  if (map === undefined) return undefined;
+  const sourceRoot = path.posix.relative(
+    path.posix.dirname(toPosix(scriptRel)),
+    path.posix.dirname(toPosix(sourceRel)),
+  );
+  if (sourceRoot === "") return map;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(map);
+  } catch {
+    return map;
+  }
+  if (typeof parsed !== "object" || parsed === null) return map;
+  const { sources } = parsed as Record<string, unknown>;
+  if (!Array.isArray(sources) || sources.length !== 1) return map;
+  return JSON.stringify({ ...(parsed as Record<string, unknown>), sourceRoot });
+}
+
 export function writeScriptFile(
   cwd: string,
   scriptRel: string,

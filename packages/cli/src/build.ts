@@ -8,6 +8,7 @@ import {
   lualibBundleRel,
   pruneAlternativeOutputs,
   readBuildConfig,
+  retargetSourceRoot,
   throwIfFailures,
   timersModuleRel,
   toPosix,
@@ -80,7 +81,12 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
     }
     const outputRel = computeOutputRel(rel, config, detectSourceOutputKind(files[rel] ?? ""));
     pruneAlternativeOutputs(cwd, rel, config, outputRel);
-    writeScriptFile(cwd, outputRel, lua, result.sourceMaps[rel]);
+    writeScriptFile(
+      cwd,
+      outputRel,
+      lua,
+      retargetSourceRoot(result.sourceMaps[rel], outputRel, rel),
+    );
     written.push(outputRel);
   }
 

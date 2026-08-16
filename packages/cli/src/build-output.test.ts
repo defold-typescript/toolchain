@@ -15,6 +15,7 @@ import {
   isTranspilerSource,
   outputRelsForSource,
   pruneAlternativeOutputs,
+  retargetSourceRoot,
   throwIfFailures,
   timersModuleRel,
   toPosix,
@@ -271,6 +272,54 @@ describe("outputRelsForSource editor-script coverage", () => {
     const rels = outputRelsForSource("src/tools.ts", { outDir: undefined, include });
     expect(rels).toContain("src/tools.ts.editor_script");
     expect(rels).toContain("src/tools.ts.editor_script.map");
+  });
+});
+
+describe("retargetSourceRoot", () => {
+  // Formatted, so an implementation that re-stringifies unconditionally cannot
+  // return a byte-identical string by accident.
+  function mapWithSources(sources: string[]): string {
+    return JSON.stringify(
+      { version: 3, sources, names: [], mappings: ";;AAGE", file: "hero.lua", sourceRoot: "" },
+      null,
+      2,
+    );
+  }
+
+  test("points the source root at the authored directory for an outDir layout", () => {
+    const retargeted = retargetSourceRoot(
+      mapWithSources(["hero.ts"]),
+      "build/lua/game/hero.ts.script",
+      "src/game/hero.ts",
+    );
+
+    const parsed = JSON.parse(retargeted as string) as Record<string, unknown>;
+    expect(parsed.sourceRoot).toBe("../../../src/game");
+    expect(parsed.sources).toEqual(["hero.ts"]);
+  });
+
+  test("returns the map unchanged when the output sits beside its source", () => {
+    const map = mapWithSources(["main.ts"]);
+
+    expect(retargetSourceRoot(map, "src/main.ts.script", "src/main.ts")).toBe(map);
+  });
+
+  test("returns the map unchanged when it is not valid JSON", () => {
+    const map = "{ not json";
+
+    expect(retargetSourceRoot(map, "build/lua/game/hero.ts.script", "src/game/hero.ts")).toBe(map);
+  });
+
+  test("returns the map unchanged when it carries more than one source", () => {
+    const map = mapWithSources(["hero.ts", "sidekick.ts"]);
+
+    expect(retargetSourceRoot(map, "build/lua/game/hero.ts.script", "src/game/hero.ts")).toBe(map);
+  });
+
+  test("returns undefined when there is no map to retarget", () => {
+    expect(
+      retargetSourceRoot(undefined, "build/lua/game/hero.ts.script", "src/game/hero.ts"),
+    ).toBeUndefined();
   });
 });
 
