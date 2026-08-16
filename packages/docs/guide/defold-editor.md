@@ -70,6 +70,6 @@ Without hot reload the manual path still stands: rebuild with `bunx @defold-type
 
 ### Runtime errors in your terminal
 
-While the editor is open, `watch` also reads its console and prints runtime errors — the ones a script throws while the game runs — into your terminal, with their stack tracebacks. This happens with or without `--hot-reload`, and `build` prints a line naming the editor it found.
+While the editor is open, `watch` also reads its console and prints runtime errors — the ones a script throws while the game runs — into your terminal, with their stack tracebacks. Where the build's source map can answer, each location names the authored `.ts` line in front of the generated chunk one. This happens with or without `--hot-reload`, and `build` prints a line naming the editor it found.
 
 An attached editor means the CLI can read the editor, not that the editor is checking your project in the background. Defold's own build errors — a missing atlas, a bad component reference — are produced by pressing **Build** and appear in the editor's Build Errors tab, never in the console. See [`watch`](./watch.md#runtime-errors-in-the-terminal).
