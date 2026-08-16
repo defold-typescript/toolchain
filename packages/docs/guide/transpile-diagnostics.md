@@ -64,7 +64,9 @@ Put the caret inside a `hash("…")` that is compared against your handler's `ac
 
 This is the only completion kind whose slot is not an argument of a Defold API function: `hash` is a prefixless global you call for component ids, message ids and property names alike, so the comparison is what says this particular one names an action. Both operand orders work, as do `===`, `!==`, `==` and `!=`, and so does the object-method form `defineScript({ on_input(self, action_id, action) { … } })`. The compared operand must resolve to a *parameter* named `action_id` — a local variable of the same name is not your handler's action and offers nothing.
 
-A `hash("…")` carrying no such comparison offers nothing, and that includes the hoisted `const JUMP = hash("jump")` form: there is nothing at that call to scope by. Compare against the constant instead — `action_id === JUMP` — and complete the id where you declare it if you want the suggestions.
+A `hash("…")` carrying no such comparison offers nothing, and that includes the hoisted `const JUMP = hash("jump")` form: there is nothing at that call to scope by. To get the suggestions, type the id in the inline compared form — `action_id === hash("")` — and hoist it afterwards if you prefer; `action_id === JUMP` stays the recommended runtime shape either way.
+
+The slot is Defold's own ambient `hash`. A `hash` your project declares or imports itself is never offered action ids, the same way a local variable named `action_id` is not your handler's action.
 
 Candidates are the union of **every** `.input_binding` in the project, whatever trigger kind declares them (`key_trigger`, `mouse_trigger`, `gamepad_trigger`, `text_trigger`). Which binding is live is a `game.project` `[input] game_binding` setting the union deliberately ignores, so a project that switches bindings still sees all its actions. The `input:` half of a binding (`KEY_SPACE`) is an engine constant and is never offered, and a trigger bound to an empty `action` contributes nothing.
 

@@ -50,10 +50,11 @@ export function isAddressClass(parameterClass: UrlParameterClass): boolean {
   return ADDRESS_CLASSES[parameterClass];
 }
 
-// `getFullyQualifiedName` reports an ambient namespace member as
-// `global.msg.post`, while the table is keyed on the Lua-side `msg.post`. A bare
-// identifier is the prefixless-global shape (`hash`), and the same strip reduces
-// it to the same Lua-side name.
+// `getFullyQualifiedName` reports a symbol declared in an ambient `declare
+// global` block as `global.msg.post` / `global.hash`, while the table is keyed
+// on the Lua-side `msg.post` / `hash`. The prefix is therefore the evidence that
+// the callee *is* the Defold global the entry describes: a project's own `hash`,
+// or a local object named `gui`, resolves prefixless and must not be keyed.
 function tableKey(
   checker: ts.TypeChecker,
   callee: ts.PropertyAccessExpression | ts.Identifier,
@@ -61,7 +62,7 @@ function tableKey(
   const symbol = checker.getSymbolAtLocation(ts.isIdentifier(callee) ? callee : callee.name);
   if (!symbol) return undefined;
   const fqn = checker.getFullyQualifiedName(symbol);
-  return fqn.startsWith("global.") ? fqn.slice("global.".length) : fqn;
+  return fqn.startsWith("global.") ? fqn.slice("global.".length) : undefined;
 }
 
 // The parameter this literal occupies, or `undefined` when the call does not
