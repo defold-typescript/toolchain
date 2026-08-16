@@ -428,3 +428,140 @@ describe("mergeMiseToml (blank lines inside a managed block)", () => {
     expect(parse(merged).alias).toBeUndefined();
   });
 });
+
+describe("mergeMiseToml (TOML key syntax)", () => {
+  const MARKER = "# managed by @defold-typescript";
+  const BUILD = '[tasks."defold-typescript:build"]';
+  const BUILD_TASK = "defold-typescript:build";
+  const CANONICAL_BUILD_RUN = "bunx @defold-typescript/cli build";
+
+  const parse = (text: string) => Bun.TOML.parse(text) as Record<string, unknown>;
+  const taskTable = (text: string, name: string) => {
+    const tasks = parse(text).tasks as Record<string, Record<string, unknown>>;
+    return tasks[name] ?? {};
+  };
+  const envOf = (text: string, name: string) =>
+    (taskTable(text, name).env ?? {}) as Record<string, string>;
+
+  test("a dotted key written with spaces keeps its multi-line value on the task", () => {
+    const merged = mergeMiseToml(
+      [
+        MARKER,
+        BUILD,
+        'description = "stale"',
+        'run = "old"',
+        'env . CONFIG = """',
+        "echo start",
+        "[stage] building",
+        '"""',
+        'alias = "b"',
+        "",
+      ].join("\n"),
+    );
+
+    expect(envOf(merged, BUILD_TASK).CONFIG).toContain("[stage] building");
+    expect(parse(merged).env).toBeUndefined();
+    expect(parse(merged).alias).toBeUndefined();
+    expect(taskTable(merged, BUILD_TASK).run).toBe(CANONICAL_BUILD_RUN);
+    expect(taskTable(merged, BUILD_TASK).alias).toBe("b");
+    expect(mergeMiseToml(merged)).toBe(merged);
+  });
+
+  test("a quoted key segment holding a space keeps its multi-line value on the task", () => {
+    const merged = mergeMiseToml(
+      [
+        MARKER,
+        BUILD,
+        'description = "stale"',
+        'run = "old"',
+        'env."MY VAR" = """',
+        "echo start",
+        "[stage] building",
+        '"""',
+        'alias = "b"',
+        "",
+      ].join("\n"),
+    );
+
+    expect(envOf(merged, BUILD_TASK)["MY VAR"]).toContain("[stage] building");
+    expect(parse(merged).env).toBeUndefined();
+    expect(taskTable(merged, BUILD_TASK).run).toBe(CANONICAL_BUILD_RUN);
+    expect(taskTable(merged, BUILD_TASK).alias).toBe("b");
+  });
+
+  test("a managed key spelled inside a carried value stays part of that value", () => {
+    const merged = mergeMiseToml(
+      [
+        MARKER,
+        BUILD,
+        'description = "stale"',
+        'run = "old"',
+        'env . CONFIG = """',
+        'run = "not the task run"',
+        '"""',
+        "",
+      ].join("\n"),
+    );
+
+    expect(envOf(merged, BUILD_TASK).CONFIG).toContain('run = "not the task run"');
+    expect(taskTable(merged, BUILD_TASK).run).toBe(CANONICAL_BUILD_RUN);
+  });
+
+  test("a quoted spelling of a managed key refreshes instead of duplicating", () => {
+    const merged = mergeMiseToml(
+      [MARKER, BUILD, 'description = "stale"', '"run" = "mine"', ""].join("\n"),
+    );
+
+    expect(taskTable(merged, BUILD_TASK).run).toBe(CANONICAL_BUILD_RUN);
+    expect(merged).not.toContain("mine");
+  });
+
+  test("a managed marker inside a user task's value does not split the file", () => {
+    const merged = mergeMiseToml(
+      [
+        "[tasks.foo]",
+        'run = """',
+        "echo one",
+        MARKER,
+        "echo two",
+        '"""',
+        "",
+        "[tasks.bar]",
+        'run = "echo bar"',
+        "",
+        MARKER,
+        BUILD,
+        'description = "stale"',
+        'run = "old"',
+        "",
+      ].join("\n"),
+    );
+
+    const tasks = parse(merged).tasks as Record<string, Record<string, unknown>>;
+    expect(tasks.foo?.run).toContain(MARKER);
+    expect(tasks.bar?.run).toBe("echo bar");
+    expect(taskTable(merged, BUILD_TASK).run).toBe(CANONICAL_BUILD_RUN);
+    expect(merged.match(/\[tasks\."defold-typescript:build"\]/g)?.length).toBe(1);
+    expect(merged.match(/# managed by @defold-typescript/g)?.length).toBe(
+      (MISE_TASKS_TOML.match(/# managed by @defold-typescript/g)?.length ?? 0) + 1,
+    );
+  });
+
+  test("a comment is carried rather than read as an assignment", () => {
+    const merged = mergeMiseToml(
+      [
+        MARKER,
+        BUILD,
+        'description = "stale"',
+        'run = "old"',
+        '# note: """ below',
+        'alias = "b"',
+        "",
+      ].join("\n"),
+    );
+
+    expect(taskTable(merged, BUILD_TASK).alias).toBe("b");
+    expect(taskTable(merged, BUILD_TASK).run).toBe(CANONICAL_BUILD_RUN);
+    expect(merged).toContain('# note: """ below');
+  });
+});
