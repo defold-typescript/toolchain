@@ -41,6 +41,7 @@ const ADDRESS_CLASSES = {
   "gui-node": false,
   animation: false,
   "resource-path": false,
+  "config-key": false,
   none: false,
 } satisfies Record<UrlParameterClass, boolean>;
 

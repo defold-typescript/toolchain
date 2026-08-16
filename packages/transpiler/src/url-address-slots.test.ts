@@ -198,6 +198,26 @@ describe("resolveClassifiedSlotAtPosition", () => {
     expect(slot?.text).toBe("#sprite");
     expect(slot?.addressText).toBe("walk");
   });
+
+  test("a config-key slot resolves whole-literal, and the default value does not", () => {
+    const source = 'const width = sys.get_config_int("", 960);\n';
+    const slot = slotAt(source, insideOf(source, '""'));
+    expect(slot?.class).toBe("config-key");
+    expect(slot?.text).toBe("");
+    expect(slot?.fragmentStart).toBe(-1);
+    expect(slot?.resourceExtensions).toBeUndefined();
+    expect(slot?.addressText).toBeUndefined();
+    // biome-ignore lint/style/noNonNullAssertion: the assertions above already failed if it did not resolve
+    expect(isAddressClass(slot!.class)).toBe(false);
+
+    const stringSource = 'const title = sys.get_config_string("project.title", "fallback");\n';
+    expect(slotAt(stringSource, insideOf(stringSource, '"project.title"'))?.class).toBe(
+      "config-key",
+    );
+    // The `default_value` argument is an unclassified `string`, so a caret there
+    // resolves nothing rather than offering keys.
+    expect(slotAt(stringSource, insideOf(stringSource, '"fallback"'))).toBeUndefined();
+  });
 });
 
 describe("isAddressClass", () => {
@@ -208,6 +228,7 @@ describe("isAddressClass", () => {
     expect(isAddressClass("gui-node")).toBe(false);
     expect(isAddressClass("animation")).toBe(false);
     expect(isAddressClass("resource-path")).toBe(false);
+    expect(isAddressClass("config-key")).toBe(false);
     expect(isAddressClass("none")).toBe(false);
   });
 });

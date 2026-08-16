@@ -1,3 +1,4 @@
+export { buildConfigKeyIndex } from "./config-key-index";
 export type { GuiNodeIndex } from "./gui-node-index";
 export { buildGuiNodeIndex } from "./gui-node-index";
 export { findMainEntryFactoryImports } from "./main-entry-factory-imports";
