@@ -3,7 +3,9 @@ import type ts from "typescript";
 
 // The editor's own `ts` is not in scope here and is not needed: this is a
 // string-enum member whose value is its name, and the plugin builds plain data.
-const STRING_KIND = "string" as ts.ScriptElementKind;
+// Exported because the details panel restates the kind of the entry it answers
+// for, and a second literal there could drift from what was offered.
+export const CONTRIBUTED_ENTRY_KIND = "string" as ts.ScriptElementKind;
 
 // `sortText` is compared as a string, and TypeScript's own priorities are
 // "10"–"18" with `"z"`-prefixed deprecated variants, so "z18" is the greatest
@@ -22,6 +24,12 @@ function keyAboveAll(baseEntries: readonly ts.CompletionEntry[]): string {
   )}0`;
 }
 
+// The one `ts.CompletionEntry` field the host round-trips verbatim as the
+// details request's `source` argument, which is what lets a later request
+// recognize an entry as ours rather than guess from its name. Namespaced rather
+// than a bare word because a host is free to surface it beside the label.
+export const DEFOLD_COMPLETION_SOURCE = "defold-typescript/scene";
+
 function entriesFor(
   ids: ReadonlySet<string>,
   offeredName: (id: string) => string,
@@ -38,10 +46,11 @@ function entriesFor(
     .filter((id) => !offered.has(offeredName(id)))
     .map((id) => ({
       name: id,
-      kind: STRING_KIND,
+      kind: CONTRIBUTED_ENTRY_KIND,
       kindModifiers: "",
       sortText,
       replacementSpan,
+      source: DEFOLD_COMPLETION_SOURCE,
     }));
 }
 

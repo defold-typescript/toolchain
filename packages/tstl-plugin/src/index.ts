@@ -21,31 +21,27 @@ import {
   buildAddressPathCompletionEntries,
   buildSceneCompletionEntries,
   buildWholeLiteralCompletionEntries,
+  CONTRIBUTED_ENTRY_KIND,
+  DEFOLD_COMPLETION_SOURCE,
 } from "./scene-completions";
-import { displayPathOf } from "./scene-documents";
+import {
+  displayPathOf,
+  GAME_PROJECT_DOCUMENT,
+  GUI_EXTENSIONS,
+  INPUT_BINDING_EXTENSIONS,
+  PROJECT_EXTENSIONS,
+} from "./scene-documents";
 import {
   createSceneIndexCache,
   type SceneIndexCache,
   type SceneWatchHost,
 } from "./scene-index-cache";
+import { resolveEntryProvenance } from "./scene-provenance";
 
-const GUI_EXTENSIONS = [".gui"];
-
-// A third extension set, disjoint from the other two: an atlas declares
-// animation names, not component ids or node ids.
+// The one extension set no second reader shares: an atlas declares animation
+// names, not component ids or node ids, and animation provenance is out of the
+// covered set.
 const ANIMATION_ASSET_EXTENSIONS = [".atlas", ".tilesource", ".sprite"];
-
-// A fourth set, whose whole universe is one file: `game.project` at the project
-// root. The walk returns every `.project` the project holds, so the lookup is by
-// display path — a vendored `*.project` declares keys this project's readers
-// cannot resolve.
-const PROJECT_EXTENSIONS = [".project"];
-const GAME_PROJECT_DOCUMENT = "game.project";
-
-// A fifth set, and the one whose universe is every file of its kind at once:
-// which binding is live is a `game.project` `[input] game_binding` setting, and
-// offering only that one would hide the actions a project switches between.
-const INPUT_BINDING_EXTENSIONS = [".input_binding"];
 
 const requireFromHere = createRequire(import.meta.url);
 
@@ -222,6 +218,28 @@ function actionIdEntries(
   return buildWholeLiteralCompletionEntries({ slot, ids, baseEntries });
 }
 
+// The panel a claimed request is answered with. `documentation` rather than
+// `displayParts` carries the paths because a host renders the former as the
+// body of the panel, which is where a list of files reads as one.
+function provenancePanel(
+  entryName: string,
+  declaredIn: readonly string[],
+): ts.CompletionEntryDetails {
+  return {
+    name: entryName,
+    kind: CONTRIBUTED_ENTRY_KIND,
+    kindModifiers: "",
+    displayParts: [{ kind: "stringLiteral", text: JSON.stringify(entryName) }],
+    documentation: [
+      {
+        kind: "text",
+        text: `Declared in ${declaredIn.join(", ")}`,
+      },
+    ],
+    source: [{ kind: "text", text: DEFOLD_COMPLETION_SOURCE }],
+  };
+}
+
 // A TS language-service plugin is loaded by package name and its main is called
 // as this `init` factory; the editor passes its own `typescript` instance so the
 // plugin shares the editor's `ts` (notably `DiagnosticCategory`).
@@ -257,6 +275,46 @@ export default function init(modules: { typescript: typeof import("typescript") 
       cache?.dispose();
       const disposeBase = (base as Partial<ts.LanguageService>).dispose;
       disposeBase?.call(base);
+    };
+
+    // Set after the member-copy loop for the same reason as `dispose`. Claimed
+    // only when the host round-tripped our own discriminator, the slot still
+    // resolves, and the entry's universe really names a declaring file — every
+    // other request is handed to the base member exactly as received, because a
+    // fabricated panel is worse than the editor's own.
+    proxy.getCompletionEntryDetails = (
+      fileName: string,
+      position: number,
+      entryName: string,
+      formatOptions: ts.FormatCodeOptions | ts.FormatCodeSettings | undefined,
+      source: string | undefined,
+      preferences: ts.UserPreferences | undefined,
+      data: ts.CompletionEntryData | undefined,
+    ): ts.CompletionEntryDetails | undefined => {
+      const forward = () =>
+        base.getCompletionEntryDetails?.(
+          fileName,
+          position,
+          entryName,
+          formatOptions,
+          source,
+          preferences,
+          data,
+        );
+      if (source !== DEFOLD_COMPLETION_SOURCE || !cache) {
+        return forward();
+      }
+      const program = base.getProgram();
+      const table = loadUrlParameterTable();
+      if (!program || !table) {
+        return forward();
+      }
+      const slot = resolveClassifiedSlotAtPosition({ program, table, fileName, position });
+      if (!slot) {
+        return forward();
+      }
+      const declaredIn = resolveEntryProvenance({ slot, cache, fileName, entryName });
+      return declaredIn.length === 0 ? forward() : provenancePanel(entryName, declaredIn);
     };
 
     proxy.getSemanticDiagnostics = (fileName: string): ts.Diagnostic[] => {

@@ -70,6 +70,12 @@ The slot is Defold's own ambient `hash`. A `hash` your project declares or impor
 
 Candidates are the union of **every** `.input_binding` in the project, whatever trigger kind declares them (`key_trigger`, `mouse_trigger`, `gamepad_trigger`, `text_trigger`). Which binding is live is a `game.project` `[input] game_binding` setting the union deliberately ignores, so a project that switches bindings still sees all its actions. The `input:` half of a binding (`KEY_SPACE`) is an engine constant and is never offered, and a trigger bound to an empty `action` contributes nothing.
 
+## Where a suggestion came from
+
+Highlight one of the plugin's own suggestions in the completion list and the detail panel names the project files that declare it — `main/board.go` for a component id, the owning `.gui` for a node id, `game.project` for a config key, and every `.input_binding` that declares an action when more than one does. Seven kinds of id now come from five different universes, so the panel answers the question the list alone cannot: which file would you open to change this.
+
+The panel is shown only for suggestions the plugin contributed and only when the declaring file can be named exactly. Everything else falls through to whatever your editor would have shown: the editor's own entries, another extension's, and the two kinds whose declaring file is not recoverable — game-object paths, which are composed across several scenes rather than declared in one, and animation ids, whose atlas is reached through the addressed sprite. Those still complete as before; they just get the editor's default panel rather than a guessed one.
+
 ## It is advisory, not blocking
 
 Every diagnostic the plugin appends carries the `Suggestion` category, never `Error`. It adds editor signal; it never turns valid code red. In particular it **never blocks `tsc --noEmit`** — a project that type-checks clean stays clean in CI even with the plugin active. The plugin is an editor convenience layer; the build path remains the source of truth for what compiles.
