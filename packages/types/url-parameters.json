@@ -246,5 +246,33 @@
     "resourceExtensions": [".tilesource"],
     "source": "generated",
     "evidence": "optional resource path string to the resource"
+  },
+  {
+    "fqn": "sys.get_config_boolean",
+    "parameter": "key",
+    "class": "config-key",
+    "source": "generated",
+    "evidence": "The syntax is SECTION.KEY"
+  },
+  {
+    "fqn": "sys.get_config_int",
+    "parameter": "key",
+    "class": "config-key",
+    "source": "generated",
+    "evidence": "The syntax is SECTION.KEY"
+  },
+  {
+    "fqn": "sys.get_config_number",
+    "parameter": "key",
+    "class": "config-key",
+    "source": "generated",
+    "evidence": "The syntax is SECTION.KEY"
+  },
+  {
+    "fqn": "sys.get_config_string",
+    "parameter": "key",
+    "class": "config-key",
+    "source": "generated",
+    "evidence": "The syntax is SECTION.KEY"
   }
 ]

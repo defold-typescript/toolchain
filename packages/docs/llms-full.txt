@@ -2949,6 +2949,12 @@ Paths are offered in the `/`-prefixed project-relative form Defold resolves, the
 
 Not offered: the built-path slots ([`collectionfactory.set_prototype`](/api/collectionfactory) and [`collectionproxy.set_collection`](/api/collectionproxy)), whose literals name `c`-suffixed build outputs rather than source files, and the extension-less loaders ([`resource.load`](/api/resource), [`sys.load_resource`](/api/sys)), which accept any resource and so have no kind to filter by.
 
+#### Config key completions inside the `sys.get_config_*` readers
+
+Put the caret inside the `key` argument of [`sys.get_config_string`](/api/sys), `sys.get_config_int`, `sys.get_config_number` or `sys.get_config_boolean` and the plugin offers the `SECTION.KEY` ids your project's own `game.project` declares — `display.width`, `project.title`, and every other key the file writes. The whole quoted text is replaced at once, and a key carrying a `#` (`project.dependencies#0`) is offered verbatim rather than treated as an address fragment.
+
+The candidate list is exactly what `game.project` declares and nothing more. Keys the engine defaults but your file never writes are not offered: the file is the whole universe a reader can resolve, and a key it omits answers the reader's `default_value` (or `nil`) at runtime. Only the project root's `game.project` is read — a vendored `*.project` elsewhere in the tree declares keys your readers cannot resolve. A project with no `game.project` offers nothing rather than an empty list.
+
 #### It is advisory, not blocking
 
 Every diagnostic the plugin appends carries the `Suggestion` category, never `Error`. It adds editor signal; it never turns valid code red. In particular it **never blocks `tsc --noEmit`** — a project that type-checks clean stays clean in CI even with the plugin active. The plugin is an editor convenience layer; the build path remains the source of truth for what compiles.

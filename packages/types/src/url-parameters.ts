@@ -9,7 +9,10 @@ import type { ApiModule } from "./api-doc";
 // `animation` names a block inside the atlas of a component a *sibling*
 // argument addresses, which is why it is the one class needing a companion;
 // `resource-path` names a project file outright, so it is scoped by the
-// extensions its entry declares rather than by anything in the scene graph.
+// extensions its entry declares rather than by anything in the scene graph;
+// `config-key` names a `<section>.<key>` entry in the project's own
+// `game.project`, so its universe is one file the project declares rather than
+// anything in the scene graph or on disk beside it.
 export type UrlParameterClass =
   | "none"
   | "game-object"
@@ -17,7 +20,8 @@ export type UrlParameterClass =
   | "either"
   | "gui-node"
   | "animation"
-  | "resource-path";
+  | "resource-path"
+  | "config-key";
 
 export interface UrlParameterEntry {
   fqn: string;
@@ -80,6 +84,7 @@ export const REQUIRED_TYPES: Record<Exclude<UrlParameterClass, "none">, readonly
   "gui-node": ["string", "hash"],
   animation: ["string", "hash"],
   "resource-path": ["string"],
+  "config-key": ["string"],
 };
 
 function bareName(fqn: string): string {
