@@ -40,7 +40,10 @@ prints the `ERROR:` and `WARNING:` lines — with their stack tracebacks — int
 same terminal you are already watching. That covers the failures the transpiler
 cannot see: code that compiles clean and then throws in the running game. It
 needs no flag, because `--hot-reload` governs whether a reload is *posted*, not
-whether the editor is read.
+whether the editor is read. Where the build's source map can answer, each
+reported location names the authored `.ts` line in front of the generated chunk
+one; see [`reload`](./reload.md#why-it-reads-the-console) for when that mapping
+is available.
 
 Ordinary `INFO:`/`DEBUG:` frame logging is filtered out, and console history
 recorded before `watch` attached is skipped — attaching mid-session prints the

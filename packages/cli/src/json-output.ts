@@ -75,6 +75,13 @@ export interface RenderResultInput {
   readonly handedOff?: boolean;
   readonly outcome?: string;
   readonly consoleErrors?: readonly string[];
+  readonly consoleErrorLocations?: readonly {
+    readonly chunk: string;
+    readonly chunkLine: number;
+    readonly file: string;
+    readonly line: number;
+    readonly column: number;
+  }[];
   readonly consoleObserved?: boolean;
 }
 
@@ -147,10 +154,14 @@ export function renderResult(input: RenderResultInput): string {
     "outcome" in input ? { ...withHandedOff, outcome: input.outcome } : withHandedOff;
   const withConsoleErrors =
     "consoleErrors" in input ? { ...withOutcome, consoleErrors: input.consoleErrors } : withOutcome;
+  const withConsoleLocations =
+    "consoleErrorLocations" in input
+      ? { ...withConsoleErrors, consoleErrorLocations: input.consoleErrorLocations }
+      : withConsoleErrors;
   const payload =
     "consoleObserved" in input
-      ? { ...withConsoleErrors, consoleObserved: input.consoleObserved }
-      : withConsoleErrors;
+      ? { ...withConsoleLocations, consoleObserved: input.consoleObserved }
+      : withConsoleLocations;
   return `${JSON.stringify(payload)}\n`;
 }
 

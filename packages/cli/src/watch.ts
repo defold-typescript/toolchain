@@ -9,6 +9,7 @@ import {
   toPosix,
 } from "./build-output";
 import { type BuildSession, createBuildSession } from "./build-session";
+import { mapConsoleLine } from "./console-source-map";
 import {
   consoleLines,
   consoleWatermark,
@@ -313,7 +314,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
           inError = false;
           continue;
         }
-        stderr.write(`${CONSOLE_PREFIX}${line}\n`);
+        stderr.write(`${CONSOLE_PREFIX}${mapConsoleLine(cwd, line)}\n`);
       }
     } catch {
       // An aborted stream rejects rather than ending; that is the ordinary stop
