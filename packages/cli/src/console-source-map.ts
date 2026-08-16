@@ -1,4 +1,4 @@
-import { readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import * as path from "node:path";
 
 /** `[generatedColumn, sourceIndex, sourceLine, sourceColumn]`, all zero-based. */
@@ -71,8 +71,8 @@ export function decodeMappings(mappings: string): MappingSegment[][] {
 }
 
 interface ParsedMap {
-  readonly sources: readonly string[];
-  readonly sourceRoot: string;
+  /** Per `sources` entry, the `cwd`-relative file it names, or `null` when none. */
+  readonly files: readonly (string | null)[];
   readonly lines: readonly MappingSegment[][];
 }
 
@@ -89,7 +89,35 @@ interface CacheEntry {
 // not re-read the file for every line.
 const parsedMaps = new Map<string, CacheEntry>();
 
-function loadMap(mapPath: string): ParsedMap | null {
+/**
+ * The `cwd`-relative file a `sources` entry names, or `null` when it names none
+ * that may be reported: `sources` holds a bare basename, so it resolves against
+ * the map's own directory plus the `sourceRoot` the build wrote there. A result
+ * that leaves the project is not a project-relative authored path, and one that
+ * is not on disk was not found — a location is only ever reported for a file
+ * that is really there.
+ */
+function resolveSource(
+  cwd: string,
+  rel: string,
+  sourceRoot: string,
+  source: string,
+): string | null {
+  const segments = [path.posix.dirname(rel), ...(sourceRoot === "" ? [] : [sourceRoot])];
+  const resolved = path.posix.join(...segments, source);
+  if (path.posix.isAbsolute(resolved) || resolved === ".." || resolved.startsWith("../")) {
+    return null;
+  }
+  return existsSync(path.join(cwd, resolved)) ? resolved : null;
+}
+
+/**
+ * Parses the map beside `rel` and resolves its sources once, so the existence
+ * result is cached with the map and refreshes exactly when a rebuild rewrites
+ * it — which is the only way a source deleted under a live `watch` comes back.
+ */
+function loadMap(cwd: string, rel: string): ParsedMap | null {
+  const mapPath = path.join(cwd, `${rel}.map`);
   let mtimeMs: number;
   let size: number;
   try {
@@ -110,9 +138,11 @@ function loadMap(mapPath: string): ParsedMap | null {
       sources.every((entry) => typeof entry === "string") &&
       typeof mappings === "string"
     ) {
+      const root = typeof sourceRoot === "string" ? sourceRoot : "";
       parsed = {
-        sources: sources as readonly string[],
-        sourceRoot: typeof sourceRoot === "string" ? sourceRoot : "",
+        files: (sources as readonly string[]).map((source) =>
+          resolveSource(cwd, rel, root, source),
+        ),
         lines: decodeMappings(mappings),
       };
     }
@@ -137,21 +167,13 @@ export function lookupChunkLocation(
   // Defold reports a resource path (`/main/main.script`); the build wrote that
   // chunk at the same path relative to the project root.
   const rel = chunkPath.startsWith("/") ? chunkPath.slice(1) : chunkPath;
-  const map = loadMap(path.join(cwd, `${rel}.map`));
+  const map = loadMap(cwd, rel);
   if (map === null) return null;
   const first = map.lines[line - 1]?.[0];
   if (first === undefined) return null;
-  const source = map.sources[first[1]];
-  if (source === undefined) return null;
-  // `sources` holds a bare basename, so it resolves against the map's own
-  // directory. Joining it to `cwd` instead would name a file in the project
-  // root that never existed.
-  const segments = [path.posix.dirname(rel), ...(map.sourceRoot === "" ? [] : [map.sourceRoot])];
-  return {
-    file: path.posix.join(...segments, source),
-    line: first[2] + 1,
-    column: first[3] + 1,
-  };
+  const file = map.files[first[1]];
+  if (file === undefined || file === null) return null;
+  return { file, line: first[2] + 1, column: first[3] + 1 };
 }
 
 const CHUNK_REFERENCE =
