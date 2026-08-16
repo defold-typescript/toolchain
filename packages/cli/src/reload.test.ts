@@ -1,4 +1,8 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
+import { runBuild } from "./build";
 import type { EditorEndpoint, ReloadOutcome } from "./editor-attach";
 import { runReload } from "./reload";
 import type { EditorReloadCommand, WatchEditorClient } from "./watch";
@@ -506,5 +510,173 @@ describe("runReload", () => {
     expect(io.err()).toContain(UNOBSERVABLE);
 
     await editor.settleConsole().released();
+  });
+});
+
+describe("runReload console source mapping", () => {
+  const MARKER = "defold_typescript_marker";
+  const CONSOLE_PREFIX = "defold-typescript reload: editor: ";
+  const UNMAPPABLE = "ERROR:SCRIPT: /main/main.script:12: attempt to index a nil value";
+
+  let project: string;
+
+  beforeEach(() => {
+    project = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-reload-map-"));
+    const write = (rel: string, contents: string): void => {
+      const abs = path.join(project, rel);
+      mkdirSync(path.dirname(abs), { recursive: true });
+      writeFileSync(abs, contents);
+    };
+    write(
+      "tsconfig.json",
+      JSON.stringify(
+        {
+          compilerOptions: { target: "ES2022", module: "ESNext", strict: true },
+          include: ["src/**/*.ts"],
+        },
+        null,
+        2,
+      ),
+    );
+    write(
+      "src/main.ts",
+      `import { defineScript } from "@defold-typescript/types";
+
+export default defineScript({
+  init() {
+    const ${MARKER} = vmath.vector3(1, 2, 3);
+    print(${MARKER});
+  },
+});
+`,
+    );
+    runBuild({ cwd: project });
+  });
+
+  afterEach(() => {
+    rmSync(project, { recursive: true, force: true });
+  });
+
+  /** The 1-based line of the built chunk carrying the marker statement. */
+  function markerChunkLine(): number {
+    const lua = readFileSync(path.join(project, "src/main.ts.script"), "utf8").split("\n");
+    const index = lua.findIndex((text) => text.includes(MARKER));
+    expect(index).toBeGreaterThan(-1);
+    return index + 1;
+  }
+
+  test("stderr carries the authored location beside the raw chunk one", async () => {
+    const chunkLine = markerChunkLine();
+    const raw = `ERROR:SCRIPT: /src/main.ts.script:${chunkLine}: attempt to index a nil value`;
+    const editor = makeEditor({
+      onConsole: (stream) => {
+        stream.push(raw);
+        stream.end();
+      },
+    });
+    const io = captureStreams();
+
+    const code = await runReload({
+      cwd: project,
+      stdout: io.stdout,
+      stderr: io.stderr,
+      editorClient: editor.client,
+      waitMs: NEVER_ELAPSES_MS,
+    });
+
+    expect(code).toBe(1);
+    expect(io.err()).toContain(`(/src/main.ts.script:${chunkLine})`);
+    expect(io.err()).toMatch(/src\/main\.ts:\d+:\d+/);
+    expect(io.err()).toContain("attempt to index a nil value");
+    expect(io.err()).toContain("the reloaded code reported an error");
+  });
+
+  test("--json keeps consoleErrors raw and reports the mapping in its own field", async () => {
+    const chunkLine = markerChunkLine();
+    const raw = `ERROR:SCRIPT: /src/main.ts.script:${chunkLine}: attempt to index a nil value`;
+    const editor = makeEditor({
+      onConsole: (stream) => {
+        stream.push(raw);
+        stream.end();
+      },
+    });
+    const io = captureStreams();
+
+    const code = await runReload({
+      cwd: project,
+      stdout: io.stdout,
+      stderr: io.stderr,
+      editorClient: editor.client,
+      json: true,
+      waitMs: NEVER_ELAPSES_MS,
+    });
+
+    expect(code).toBe(1);
+    const payload = JSON.parse(io.out().trim()) as {
+      consoleErrors: string[];
+      consoleErrorLocations: {
+        chunk: string;
+        chunkLine: number;
+        file: string;
+        line: number;
+        column: number;
+      }[];
+    };
+    expect(payload.consoleErrors).toEqual([raw]);
+    expect(payload.consoleErrorLocations.length).toBe(1);
+    const [location] = payload.consoleErrorLocations;
+    expect(location?.chunk).toBe("/src/main.ts.script");
+    expect(location?.chunkLine).toBe(chunkLine);
+    expect(location?.file).toBe("src/main.ts");
+    const authored = readFileSync(path.join(project, "src/main.ts"), "utf8").split("\n");
+    expect(authored[(location?.line as number) - 1]).toContain(MARKER);
+  });
+
+  test("an unmappable chunk leaves both surfaces exactly as they are today", async () => {
+    const editor = makeEditor({
+      onConsole: (stream) => {
+        stream.push(UNMAPPABLE);
+        stream.end();
+      },
+    });
+    const io = captureStreams();
+
+    const code = await runReload({
+      cwd: project,
+      stdout: io.stdout,
+      stderr: io.stderr,
+      editorClient: editor.client,
+      waitMs: NEVER_ELAPSES_MS,
+    });
+
+    expect(code).toBe(1);
+    expect(io.err()).toContain(`${CONSOLE_PREFIX}${UNMAPPABLE}\n`);
+  });
+
+  test("--json reports no locations for an unmappable chunk", async () => {
+    const editor = makeEditor({
+      onConsole: (stream) => {
+        stream.push(UNMAPPABLE);
+        stream.end();
+      },
+    });
+    const io = captureStreams();
+
+    const code = await runReload({
+      cwd: project,
+      stdout: io.stdout,
+      stderr: io.stderr,
+      editorClient: editor.client,
+      json: true,
+      waitMs: NEVER_ELAPSES_MS,
+    });
+
+    expect(code).toBe(1);
+    const payload = JSON.parse(io.out().trim()) as {
+      consoleErrors: string[];
+      consoleErrorLocations: unknown[];
+    };
+    expect(payload.consoleErrors).toEqual([UNMAPPABLE]);
+    expect(payload.consoleErrorLocations).toEqual([]);
   });
 });
