@@ -292,3 +292,139 @@ describe("mergeMiseToml (keys added inside a managed block)", () => {
     expect(merged.match(/\[tasks\."defold-typescript:build"\]/g)?.length).toBe(1);
   });
 });
+
+describe("mergeMiseToml (blank lines inside a managed block)", () => {
+  const BUILD = '[tasks."defold-typescript:build"]';
+  const BUILD_TASK = "defold-typescript:build";
+  const UPGRADE_TASK = "defold-typescript:upgrade";
+  const CANONICAL_BUILD_RUN = "bunx @defold-typescript/cli build";
+
+  // A key hoisted out of its task is still valid TOML, so only the parsed table
+  // tree distinguishes fixed from broken — substrings cannot.
+  const parse = (text: string) => Bun.TOML.parse(text) as Record<string, unknown>;
+  const taskTable = (text: string, name: string) => {
+    const tasks = parse(text).tasks as Record<string, Record<string, unknown>>;
+    return tasks[name] ?? {};
+  };
+
+  test("a key after a blank line stays in its task instead of reaching the root", () => {
+    const merged = mergeMiseToml(
+      [
+        "# managed by @defold-typescript",
+        BUILD,
+        'description = "stale"',
+        'run = "old"',
+        "",
+        'alias = "b"',
+        "",
+      ].join("\n"),
+    );
+
+    expect(taskTable(merged, BUILD_TASK).alias).toBe("b");
+    expect(parse(merged).alias).toBeUndefined();
+    expect(taskTable(merged, BUILD_TASK).run).toBe(CANONICAL_BUILD_RUN);
+    expect(mergeMiseToml(merged)).toBe(merged);
+  });
+
+  test("a multi-line run array survives an interior blank line", () => {
+    const merged = mergeMiseToml(
+      [
+        "# managed by @defold-typescript",
+        BUILD,
+        "run = [",
+        '  "echo one",',
+        "",
+        '  "echo two",',
+        "]",
+        'alias = "b"',
+        "",
+      ].join("\n"),
+    );
+
+    expect(taskTable(merged, BUILD_TASK).run).toBe(CANONICAL_BUILD_RUN);
+    expect(taskTable(merged, BUILD_TASK).alias).toBe("b");
+    expect(merged).not.toContain("echo one");
+    expect(merged).not.toContain("echo two");
+    expect(merged.split("\n")).not.toContain("]");
+  });
+
+  test("a triple-quoted run survives an interior blank line", () => {
+    const merged = mergeMiseToml(
+      [
+        "# managed by @defold-typescript",
+        BUILD,
+        'run = """',
+        "echo one",
+        "",
+        "echo two",
+        '"""',
+        'alias = "b"',
+        "",
+      ].join("\n"),
+    );
+
+    expect(taskTable(merged, BUILD_TASK).run).toBe(CANONICAL_BUILD_RUN);
+    expect(taskTable(merged, BUILD_TASK).alias).toBe("b");
+    expect(merged).not.toContain("echo one");
+    expect(merged).not.toContain("echo two");
+    expect(merged).not.toContain('"""');
+  });
+
+  test("a bracketed line inside a multi-line value is value text, not a table header", () => {
+    const merged = mergeMiseToml(
+      [
+        "# managed by @defold-typescript",
+        BUILD,
+        'run = """',
+        "echo start",
+        "[stage] building",
+        "echo done",
+        '"""',
+        'alias = "b"',
+        "",
+      ].join("\n"),
+    );
+
+    expect(taskTable(merged, BUILD_TASK).run).toBe(CANONICAL_BUILD_RUN);
+    expect(taskTable(merged, BUILD_TASK).alias).toBe("b");
+    expect(merged).not.toContain("[stage]");
+    expect(merged).not.toContain("echo done");
+  });
+
+  test("a user table after a managed block ends the block instead of joining it", () => {
+    const authored = '[tasks.foo]\nrun = "echo hi"';
+    const merged = mergeMiseToml(
+      [
+        "# managed by @defold-typescript",
+        BUILD,
+        'description = "stale"',
+        'run = "old"',
+        authored,
+        "",
+      ].join("\n"),
+    );
+
+    const tasks = parse(merged).tasks as Record<string, Record<string, unknown>>;
+    expect(tasks.foo?.run).toBe("echo hi");
+    expect(taskTable(merged, BUILD_TASK).foo).toBeUndefined();
+    expect(taskTable(merged, BUILD_TASK).run).toBe(CANONICAL_BUILD_RUN);
+    expect(merged).toContain(authored);
+  });
+
+  test("a blank-separated key in the last block lands on that task, not the root", () => {
+    const merged = mergeMiseToml(
+      [
+        "# managed by @defold-typescript",
+        `[tasks."${UPGRADE_TASK}"]`,
+        'description = "stale"',
+        'run = "old"',
+        "",
+        'alias = "u"',
+        "",
+      ].join("\n"),
+    );
+
+    expect(taskTable(merged, UPGRADE_TASK).alias).toBe("u");
+    expect(parse(merged).alias).toBeUndefined();
+  });
+});

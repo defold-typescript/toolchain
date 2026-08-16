@@ -49,8 +49,9 @@ run = "bunx @defold-typescript/cli@latest upgrade"
 
 // The only keys the scaffold authors, so the only ones a refresh may overwrite.
 // Everything else a managed block holds — `alias`, `depends`, `env`, `dir`, a
-// comment of your own, even a table you wedged in with no blank line above it —
-// is yours and is carried across the refresh untouched.
+// comment of your own, a blank line you left for readability — is yours and is
+// carried across the refresh untouched. A table header ends the block, so a
+// table of your own below one stays user content rather than joining the task.
 const MANAGED_KEYS = new Set(["description", "run"]);
 
 interface ManagedBlock {
@@ -61,9 +62,18 @@ interface ManagedBlock {
   readonly body: readonly string[];
 }
 
+// Matches a key assignment, so the scanner hands the line to the shared value
+// scanner rather than treating its continuation lines as structure. Quoted and
+// dotted keys are assignments too; a comment never is, since `#` is excluded.
+const KEY_ASSIGNMENT = /^\s*[A-Za-z0-9_"'.-]+\s*=/;
+
 // Split a file into the lines outside managed blocks and the blocks themselves.
-// A block runs from its marker to the next blank line or EOF; the blank line is
-// consumed with it, so the surviving user lines stay byte-identical.
+// A block runs from its marker to the next marker, the next table header, or
+// EOF — a blank line does not end a TOML table, so ending a block at one strands
+// whatever follows it in the root table and `mise` then refuses to parse the
+// file at all. Both boundary rules are recognized only outside a multi-line
+// value, which is why the header test and `carriedLines` share `endOfValue`:
+// two rules that must agree about where a value ends would otherwise drift.
 function scanManagedBlocks(text: string): {
   userLines: string[];
   blocks: ManagedBlock[];
@@ -81,17 +91,50 @@ function scanManagedBlocks(text: string): {
     }
     i += 1;
     const body: string[] = [];
-    while (i < lines.length && (lines[i] ?? "").trim() !== "") {
-      body.push(lines[i] ?? "");
+    let ownHeader: string | undefined;
+    while (i < lines.length) {
+      const current = lines[i] ?? "";
+      const trimmed = current.trim();
+      // A sibling marker opens the next block; managed blocks are separated by a
+      // blank line and the next thing is a marker, not a header, so a
+      // header-only rule would merge every managed task into one block.
+      if (trimmed === MANAGED_MARKER) {
+        break;
+      }
+      if (trimmed.startsWith("[")) {
+        if (ownHeader !== undefined) {
+          break;
+        }
+        ownHeader = trimmed;
+        body.push(current);
+        i += 1;
+        continue;
+      }
+      if (KEY_ASSIGNMENT.test(current)) {
+        const end = endOfValue(lines, i);
+        for (let j = i; j <= end; j++) {
+          body.push(lines[j] ?? "");
+        }
+        i = end + 1;
+        continue;
+      }
+      body.push(current);
       i += 1;
     }
-    if (i < lines.length) {
-      i += 1;
+    // Trailing blanks belong to the separator between blocks, not to the block.
+    // Carried, they would double the renderer's `\n\n` join — breaking byte
+    // parity — and accumulate one more line on every merge.
+    while (body.length > 0 && (body.at(-1) ?? "").trim() === "") {
+      body.pop();
     }
     const header = body.find((l) => l.trimStart().startsWith("[tasks."))?.trim();
-    if (header !== undefined) {
-      blocks.push({ header, body });
+    if (header === undefined) {
+      // Not a managed task at all — a stray marker in hand-written content.
+      // Give the lines back rather than swallowing them to the next header.
+      userLines.push(line, ...body);
+      continue;
     }
+    blocks.push({ header, body });
   }
   return { userLines, blocks };
 }
@@ -131,21 +174,22 @@ function tripleQuoteParity(line: string): number {
 
 // Index of the last line of the value opening at `start` — the same line unless
 // it opens a multi-line array or a `"""` block, mise's idiom for a multi-command
-// task.
-function endOfValue(body: readonly string[], start: number): number {
-  if (tripleQuoteParity(body[start] ?? "") === 1) {
-    for (let i = start + 1; i < body.length; i++) {
-      if (tripleQuoteParity(body[i] ?? "") === 1) {
+// task. The one definition of where a value ends, shared by the block boundary
+// in `scanManagedBlocks` and the carry in `carriedLines`.
+function endOfValue(lines: readonly string[], start: number): number {
+  if (tripleQuoteParity(lines[start] ?? "") === 1) {
+    for (let i = start + 1; i < lines.length; i++) {
+      if (tripleQuoteParity(lines[i] ?? "") === 1) {
         return i;
       }
     }
-    return body.length - 1;
+    return lines.length - 1;
   }
-  let depth = bracketDelta(body[start] ?? "");
+  let depth = bracketDelta(lines[start] ?? "");
   let i = start;
-  while (depth > 0 && i + 1 < body.length) {
+  while (depth > 0 && i + 1 < lines.length) {
     i += 1;
-    depth += bracketDelta(body[i] ?? "");
+    depth += bracketDelta(lines[i] ?? "");
   }
   return i;
 }
