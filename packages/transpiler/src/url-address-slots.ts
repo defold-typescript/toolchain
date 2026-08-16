@@ -42,6 +42,7 @@ const ADDRESS_CLASSES = {
   animation: false,
   "resource-path": false,
   "config-key": false,
+  "action-id": false,
   none: false,
 } satisfies Record<UrlParameterClass, boolean>;
 
@@ -50,12 +51,14 @@ export function isAddressClass(parameterClass: UrlParameterClass): boolean {
 }
 
 // `getFullyQualifiedName` reports an ambient namespace member as
-// `global.msg.post`, while the table is keyed on the Lua-side `msg.post`.
+// `global.msg.post`, while the table is keyed on the Lua-side `msg.post`. A bare
+// identifier is the prefixless-global shape (`hash`), and the same strip reduces
+// it to the same Lua-side name.
 function tableKey(
   checker: ts.TypeChecker,
-  callee: ts.PropertyAccessExpression,
+  callee: ts.PropertyAccessExpression | ts.Identifier,
 ): string | undefined {
-  const symbol = checker.getSymbolAtLocation(callee.name);
+  const symbol = checker.getSymbolAtLocation(ts.isIdentifier(callee) ? callee : callee.name);
   if (!symbol) return undefined;
   const fqn = checker.getFullyQualifiedName(symbol);
   return fqn.startsWith("global.") ? fqn.slice("global.".length) : fqn;
@@ -77,6 +80,44 @@ function parameterName(
   return parameter.name.text;
 }
 
+const EQUALITY_OPERATORS = new Set<ts.SyntaxKind>([
+  ts.SyntaxKind.EqualsEqualsEqualsToken,
+  ts.SyntaxKind.ExclamationEqualsEqualsToken,
+  ts.SyntaxKind.EqualsEqualsToken,
+  ts.SyntaxKind.ExclamationEqualsToken,
+]);
+
+// Whether `call` sits in a comparison against the parameter the entry names. An
+// entry declaring no `comparedParameter` is unscoped and always satisfied; for
+// one that does, the class applies only where its universe can appear —
+// `hash("…")` is a prefixless global a project writes for component ids, message
+// ids and property names alike, and only the comparison against `on_input`'s
+// action id says this one names an action.
+//
+// The other operand must *resolve* to a parameter declaration of that name.
+// Matching the identifier's text instead would accept a local that merely reads
+// like the hook's, whose value came from somewhere else entirely.
+function comparisonSatisfied(
+  checker: ts.TypeChecker,
+  entry: UrlParameterEntry,
+  call: ts.CallExpression,
+): boolean {
+  if (entry.comparedParameter === undefined) return true;
+  let node: ts.Node = call;
+  while (ts.isParenthesizedExpression(node.parent)) node = node.parent;
+  const comparison = node.parent;
+  if (!ts.isBinaryExpression(comparison)) return false;
+  if (!EQUALITY_OPERATORS.has(comparison.operatorToken.kind)) return false;
+  const other = comparison.left === node ? comparison.right : comparison.left;
+  const symbol = checker.getSymbolAtLocation(other);
+  return (symbol?.declarations ?? []).some(
+    (declaration) =>
+      ts.isParameter(declaration) &&
+      ts.isIdentifier(declaration.name) &&
+      declaration.name.text === entry.comparedParameter,
+  );
+}
+
 // The table entry governing the argument slot this literal occupies, together
 // with the call it sits in — `undefined` when the call, the parameter, or the
 // lookup does not resolve. The judgment is the table's alone: the parameter's
@@ -90,13 +131,19 @@ function classifiedEntryOfArgument(
   const call = literal.parent;
   if (!ts.isCallExpression(call)) return undefined;
   const argumentIndex = call.arguments.indexOf(literal);
-  if (argumentIndex === -1 || !ts.isPropertyAccessExpression(call.expression)) return undefined;
-  const fqn = tableKey(checker, call.expression);
+  if (argumentIndex === -1) return undefined;
+  const callee = call.expression;
+  if (!ts.isPropertyAccessExpression(callee) && !ts.isIdentifier(callee)) return undefined;
+  const fqn = tableKey(checker, callee);
   if (fqn === undefined) return undefined;
   const parameter = parameterName(checker, call, argumentIndex);
   if (parameter === undefined) return undefined;
   for (const entry of table) {
-    if (entry.fqn === fqn && entry.parameter === parameter) return { entry, call };
+    if (entry.fqn !== fqn || entry.parameter !== parameter) continue;
+    // Inside the lookup, so `addressClassOfArgument` and
+    // `resolveClassifiedSlotAtPosition` can never disagree about whether a
+    // scoped entry applies.
+    return comparisonSatisfied(checker, entry, call) ? { entry, call } : undefined;
   }
   return undefined;
 }

@@ -10,7 +10,7 @@ import {
   type UrlParameterSource,
   type UrlParameterTable,
 } from "../src/url-parameters";
-import { enumerateDeclaredParameters } from "./fixture-surface-enumerate";
+import { enumerateDeclaredParameters, scriptHookParameters } from "./fixture-surface-enumerate";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 
@@ -180,6 +180,57 @@ describe("url-parameters.json generated entries", () => {
         )
         .map((entry) => `${entry.fqn}#${entry.parameter}`),
     ).toEqual([]);
+  });
+
+  test("the action-id class is recorded against the one slot that carries it", () => {
+    const actionIds = table
+      .filter((entry) => entry.class === "action-id")
+      .map((entry) => `${entry.fqn}#${entry.parameter}`);
+    expect(actionIds).toEqual(["hash#s"]);
+    // Hand-authored, not generated: `hash` is a prefixless global the ref-doc
+    // ships no entry for, so the authored-entry rule above is what proves the
+    // slot exists at all.
+    const entry = table.find((candidate) => candidate.class === "action-id");
+    expect(entry?.source).toBe("src/engine-globals.d.ts");
+    expect(entry?.evidence).toBeUndefined();
+  });
+
+  test("every action-id entry names the parameter its call must be compared against", () => {
+    // Without the scope the class would offer action ids inside every
+    // `hash("…")` a project writes, so a missing name is a silent widening
+    // rather than a failure.
+    expect(
+      table
+        .filter((entry) => entry.class === "action-id" && entry.comparedParameter === undefined)
+        .map((entry) => `${entry.fqn}#${entry.parameter}`),
+    ).toEqual([]);
+  });
+
+  test("only an action-id entry carries a compared parameter", () => {
+    expect(
+      table
+        .filter((entry) => entry.class !== "action-id" && entry.comparedParameter !== undefined)
+        .map((entry) => `${entry.fqn}#${entry.parameter}`),
+    ).toEqual([]);
+  });
+
+  test("every compared parameter still names a parameter of the shipped on_input hook", () => {
+    // The name is what scopes the class, and it is the name the shipped hook
+    // signature — and the `@example` under it — teaches users to write. A
+    // lifecycle rename leaves the two disagreeing with nothing else to catch it.
+    const hookParameters = scriptHookParameters(
+      readFileSync(resolve(PACKAGE_ROOT, "src/lifecycle.ts"), "utf8"),
+      "on_input",
+    );
+    expect(hookParameters.length).toBeGreaterThan(0);
+    const unresolved = table
+      .filter(
+        (entry) =>
+          entry.comparedParameter !== undefined &&
+          !hookParameters.includes(entry.comparedParameter),
+      )
+      .map((entry) => `${entry.fqn}#${entry.parameter}: ${entry.comparedParameter}`);
+    expect(unresolved).toEqual([]);
   });
 
   test("only an animation entry carries an address companion", () => {

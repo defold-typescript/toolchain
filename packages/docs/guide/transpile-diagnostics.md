@@ -58,6 +58,16 @@ Put the caret inside the `key` argument of [`sys.get_config_string`](/api/sys), 
 
 The candidate list is exactly what `game.project` declares and nothing more. Keys the engine defaults but your file never writes are not offered: the file is the whole universe a reader can resolve, and a key it omits answers the reader's `default_value` (or `nil`) at runtime. Only the project root's `game.project` is read — a vendored `*.project` elsewhere in the tree declares keys your readers cannot resolve. A project with no `game.project` offers nothing rather than an empty list.
 
+## Action id completions inside a compared `hash("…")`
+
+Put the caret inside a `hash("…")` that is compared against your handler's `action_id` — `if (action_id === hash(""))` — and the plugin offers the action names your project's `.input_binding` files declare. The whole quoted text is replaced at once.
+
+This is the only completion kind whose slot is not an argument of a Defold API function: `hash` is a prefixless global you call for component ids, message ids and property names alike, so the comparison is what says this particular one names an action. Both operand orders work, as do `===`, `!==`, `==` and `!=`, and so does the object-method form `defineScript({ on_input(self, action_id, action) { … } })`. The compared operand must resolve to a *parameter* named `action_id` — a local variable of the same name is not your handler's action and offers nothing.
+
+A `hash("…")` carrying no such comparison offers nothing, and that includes the hoisted `const JUMP = hash("jump")` form: there is nothing at that call to scope by. Compare against the constant instead — `action_id === JUMP` — and complete the id where you declare it if you want the suggestions.
+
+Candidates are the union of **every** `.input_binding` in the project, whatever trigger kind declares them (`key_trigger`, `mouse_trigger`, `gamepad_trigger`, `text_trigger`). Which binding is live is a `game.project` `[input] game_binding` setting the union deliberately ignores, so a project that switches bindings still sees all its actions. The `input:` half of a binding (`KEY_SPACE`) is an engine constant and is never offered, and a trigger bound to an empty `action` contributes nothing.
+
 ## It is advisory, not blocking
 
 Every diagnostic the plugin appends carries the `Suggestion` category, never `Error`. It adds editor signal; it never turns valid code red. In particular it **never blocks `tsc --noEmit`** — a project that type-checks clean stays clean in CI even with the plugin active. The plugin is an editor convenience layer; the build path remains the source of truth for what compiles.

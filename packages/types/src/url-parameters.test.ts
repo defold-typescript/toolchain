@@ -168,6 +168,15 @@ describe("parameterTypesSatisfyClass", () => {
     expect(parameterTypesSatisfyClass(["number"], "config-key")).toBe(false);
   });
 
+  test("an action-id class needs only a string", () => {
+    // The slot is hashed at the call — `hash(s)` takes a plain string — so the
+    // literal that names the action is never a `Hash` itself.
+    expect(parameterTypesSatisfyClass(["string"], "action-id")).toBe(true);
+    expect(parameterTypesSatisfyClass(["string", "hash"], "action-id")).toBe(true);
+    expect(parameterTypesSatisfyClass(["hash"], "action-id")).toBe(false);
+    expect(parameterTypesSatisfyClass(["number"], "action-id")).toBe(false);
+  });
+
   test("an address class needs the whole triple", () => {
     for (const addressClass of ["game-object", "component", "either"] as const) {
       expect(parameterTypesSatisfyClass(["string", "hash", "url"], addressClass)).toBe(true);
