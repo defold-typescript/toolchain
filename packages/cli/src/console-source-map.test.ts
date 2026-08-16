@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import * as os from "node:os";
 import * as path from "node:path";
 import { runBuild } from "./build";
+import { createBuildSession } from "./build-session";
 import { consoleLineLocations, mapConsoleLine } from "./console-source-map";
 
 const MARKER = "defold_typescript_marker";
@@ -12,6 +13,12 @@ const TSCONFIG = JSON.stringify(
     compilerOptions: { target: "ES2022", module: "ESNext", strict: true },
     include: ["src/**/*.ts"],
   },
+  null,
+  2,
+);
+
+const OUTDIR_TSCONFIG = JSON.stringify(
+  { compilerOptions: { outDir: "build/lua", strict: true }, include: ["src/**/*.ts"] },
   null,
   2,
 );
@@ -147,6 +154,45 @@ describe("mapConsoleLine", () => {
     expect(after?.line).toBe((before?.line as number) + 2);
     expect(authoredLine("src/main.ts", after?.line as number)).toContain(MARKER);
   });
+
+  test("a session's startup build reports the authored source under an outDir layout", () => {
+    writeProjectFile("tsconfig.json", OUTDIR_TSCONFIG);
+    writeProjectFile("src/game/hero.ts", markerSource(0));
+    const built = createBuildSession({ cwd }).buildAll();
+    expect(built.written).toContain("build/lua/game/hero.ts.script");
+    const chunkLine = markerChunkLine("build/lua/game/hero.ts.script");
+
+    const [location] = consoleLineLocations(
+      cwd,
+      `ERROR:SCRIPT: /build/lua/game/hero.ts.script:${chunkLine}: boom`,
+    );
+
+    expect(location?.file).toBe("src/game/hero.ts");
+    expect(existsSync(path.join(cwd, location?.file as string))).toBe(true);
+    const text = authoredLine("src/game/hero.ts", location?.line as number);
+    expect(text).toContain(MARKER);
+    expect(text.slice((location?.column as number) - 1)).toStartWith(MARKER);
+  });
+
+  test("a session's incremental rebuild keeps the authored source, at the moved line", () => {
+    writeProjectFile("tsconfig.json", OUTDIR_TSCONFIG);
+    writeProjectFile("src/game/hero.ts", markerSource(0));
+    const session = createBuildSession({ cwd });
+    session.buildAll();
+    const chunkLine = markerChunkLine("build/lua/game/hero.ts.script");
+    const raw = `ERROR:SCRIPT: /build/lua/game/hero.ts.script:${chunkLine}: boom`;
+    const before = consoleLineLocations(cwd, raw)[0];
+
+    writeProjectFile("src/game/hero.ts", markerSource(2));
+    session.applyEvents(["src/game/hero.ts"], []);
+    expect(markerChunkLine("build/lua/game/hero.ts.script")).toBe(chunkLine);
+    const after = consoleLineLocations(cwd, raw)[0];
+
+    expect(before?.line).toBeDefined();
+    expect(after?.file).toBe("src/game/hero.ts");
+    expect(after?.line).toBe((before?.line as number) + 2);
+    expect(authoredLine("src/game/hero.ts", after?.line as number)).toContain(MARKER);
+  });
 });
 
 describe("mapConsoleLine misses", () => {
@@ -191,6 +237,22 @@ describe("mapConsoleLine misses", () => {
     runBuild({ cwd });
     const chunkLine = markerChunkLine("src/main.ts.script");
     rmSync(path.join(cwd, "src/main.ts"));
+    const raw = `ERROR:SCRIPT: /src/main.ts.script:${chunkLine}: attempt to index a nil value`;
+
+    expect(mapConsoleLine(cwd, raw)).toBe(raw);
+    expect(consoleLineLocations(cwd, raw)).toEqual([]);
+  });
+
+  test("returns the line unchanged when the mapped source is a directory", () => {
+    writeProjectFile("tsconfig.json", TSCONFIG);
+    writeProjectFile("src/main.ts", markerSource(0));
+    runBuild({ cwd });
+    const chunkLine = markerChunkLine("src/main.ts.script");
+    mkdirSync(path.join(cwd, "src/game"), { recursive: true });
+    const mapPath = path.join(cwd, "src/main.ts.script.map");
+    const map = JSON.parse(readFileSync(mapPath, "utf8")) as Record<string, unknown>;
+    map.sources = ["game"];
+    writeFileSync(mapPath, JSON.stringify(map));
     const raw = `ERROR:SCRIPT: /src/main.ts.script:${chunkLine}: attempt to index a nil value`;
 
     expect(mapConsoleLine(cwd, raw)).toBe(raw);

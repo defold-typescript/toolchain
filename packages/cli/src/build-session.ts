@@ -14,6 +14,7 @@ import {
   lualibBundleRel,
   pruneAlternativeOutputs,
   readBuildConfig,
+  retargetSourceRoot,
   throwIfFailures,
   timersModuleRel,
   toPosix,
@@ -66,7 +67,12 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
       if (pruneAlternatives) {
         pruneOutputs(rel, outputRel);
       }
-      writeScriptFile(cwd, outputRel, lua, result.sourceMaps[rel]);
+      writeScriptFile(
+        cwd,
+        outputRel,
+        lua,
+        retargetSourceRoot(result.sourceMaps[rel], outputRel, rel),
+      );
       written.push(outputRel);
     }
     if (result.lualib !== undefined) {
