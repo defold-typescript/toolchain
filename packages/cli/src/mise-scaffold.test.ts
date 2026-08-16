@@ -564,4 +564,41 @@ describe("mergeMiseToml (TOML key syntax)", () => {
     expect(taskTable(merged, BUILD_TASK).run).toBe(CANONICAL_BUILD_RUN);
     expect(merged).toContain('# note: """ below');
   });
+
+  test("an escaped spelling of a managed key refreshes instead of duplicating", () => {
+    const merged = mergeMiseToml(
+      [
+        MARKER,
+        BUILD,
+        'description = "stale"',
+        'run = "old"',
+        '"r\\u0075n" = "mine"',
+        '"d\\U00000065scription" = "theirs"',
+        "",
+      ].join("\n"),
+    );
+
+    expect(taskTable(merged, BUILD_TASK).run).toBe(CANONICAL_BUILD_RUN);
+    expect(taskTable(merged, BUILD_TASK).description).toBe(
+      "Build the TypeScript sources with the defold-typescript CLI",
+    );
+    // `Bun.TOML` does not decode the 8-digit form, so only the emitted text can
+    // prove the `\U` key was recognized rather than carried beside the canonical
+    // one.
+    expect(merged).not.toContain("mine");
+    expect(merged).not.toContain("theirs");
+    expect(mergeMiseToml(merged)).toBe(merged);
+  });
+
+  test("a control escape is not a managed key", () => {
+    const CR_KEY = "\r" + "un";
+    const merged = mergeMiseToml(
+      [MARKER, BUILD, 'description = "stale"', 'run = "old"', '"\\run" = "mine"', ""].join("\n"),
+    );
+
+    expect(taskTable(merged, BUILD_TASK).run).toBe(CANONICAL_BUILD_RUN);
+    expect(taskTable(merged, BUILD_TASK)[CR_KEY]).toBe("mine");
+    expect(merged).toContain('"\\run" = "mine"');
+    expect(mergeMiseToml(merged)).toBe(merged);
+  });
 });
