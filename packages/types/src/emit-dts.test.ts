@@ -3314,6 +3314,18 @@ describe("url-parameter address retyping", () => {
     expect(out).not.toContain("SceneGameObjectAddress");
   });
 
+  test("a classified config-key slot is inert — a fifth class widens nothing", () => {
+    const module = parseDefoldApiDoc(sysDoc);
+    const out = emitDeclarations(module, { urlParameters: committed });
+    // `sys.get_config_string#key` is classified `config-key` in the committed
+    // table. The alias map is a partial record, so the key keeps the plain
+    // `string` the ref-doc declares.
+    expect(signatureLine(out, "function get_config_string(")).toBe(
+      "function get_config_string(key: string, default_value?: string): string;",
+    );
+    expect(out).not.toContain("SceneGameObjectAddress");
+  });
+
   test("emitSymbolSignatures retypes the same slots as the declaration", () => {
     const module = parseDefoldApiDoc(goDoc);
     const signatures = emitSymbolSignatures(module, { urlParameters: committed });

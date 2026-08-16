@@ -216,6 +216,18 @@ const RESOURCE_DOCUMENTS: Record<string, string> = {
   "ui/icons.font": "",
 };
 
+// A config-key slot, whose candidates come from the one project file rather
+// than from a walk of many — the caret again sits in an empty literal.
+const CONFIG_SOURCE = 'const title = sys.get_config_string("");\n';
+const CONFIG_POSITION = CONFIG_SOURCE.indexOf('""') + 1;
+
+// The project's own `game.project`, plus a nested `.project` the same walk
+// returns: only the root file declares the keys a reader can resolve.
+const CONFIG_DOCUMENTS: Record<string, string> = {
+  "game.project": "[display]\nwidth = 960\n\n[project]\ntitle = Game\n",
+  "vendor/other.project": "[display]\nheight = 640\n",
+};
+
 // One level of the escaping a `.collection` uses to carry a whole `.go`, and a
 // `.go` to carry a whole component — applied twice for an embedded sprite.
 function escapePayload(payload: string): string {
@@ -673,6 +685,94 @@ describe("tstl-plugin", () => {
     expect(service.getCompletionsAtPosition("main.ts", ATLAS_POSITION, undefined)).toBe(base);
   });
 
+  test("appends the keys `game.project` declares after the base entries", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const service = completionProxy({
+      source: CONFIG_SOURCE,
+      base,
+      documents: CONFIG_DOCUMENTS,
+    });
+    const result = service.getCompletionsAtPosition("main.ts", CONFIG_POSITION, undefined);
+    expect(result?.entries[0]).toBe(base.entries[0] as ts.CompletionEntry);
+    // `vendor/other.project` is a `.project` the same walk returns, and its
+    // `display.height` must not stand in for the project's own file.
+    expect(result?.entries.map((e) => e.name)).toEqual(["zzz", "display.width", "project.title"]);
+    for (const built of result?.entries.slice(1) ?? []) {
+      expect(built.replacementSpan).toEqual({ start: CONFIG_POSITION, length: 0 });
+      expect(built.sortText > LOCATION_PRIORITY).toBe(true);
+    }
+  });
+
+  test("a config caret with no base result still offers the project's keys", () => {
+    const service = completionProxy({
+      source: CONFIG_SOURCE,
+      base: undefined,
+      documents: CONFIG_DOCUMENTS,
+    });
+    const result = service.getCompletionsAtPosition("main.ts", CONFIG_POSITION, undefined);
+    expect(result?.entries.map((e) => e.name)).toEqual(["display.width", "project.title"]);
+  });
+
+  test("a project with no `game.project` returns the base result untouched", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const service = completionProxy({
+      source: CONFIG_SOURCE,
+      base,
+      documents: { "vendor/other.project": "[display]\nheight = 640\n" },
+    });
+    expect(service.getCompletionsAtPosition("main.ts", CONFIG_POSITION, undefined)).toBe(base);
+  });
+
+  test("a key the base service already offers is not repeated", () => {
+    const base = completionInfo([completionEntry("display.width", DEPRECATED_IDENTIFIER)]);
+    const service = completionProxy({
+      source: CONFIG_SOURCE,
+      base,
+      documents: CONFIG_DOCUMENTS,
+    });
+    const result = service.getCompletionsAtPosition("main.ts", CONFIG_POSITION, undefined);
+    expect(result?.entries.map((e) => e.name)).toEqual(["display.width", "project.title"]);
+  });
+
+  test("a config caret degrades to the base result on a host that cannot enumerate", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const service = completionProxy({
+      source: CONFIG_SOURCE,
+      base,
+      documents: CONFIG_DOCUMENTS,
+      serverHost: false,
+    });
+    expect(service.getCompletionsAtPosition("main.ts", CONFIG_POSITION, undefined)).toBe(base);
+  });
+
+  test("a config key added to `game.project` is offered once the host reports the change", () => {
+    const { service, host } = completionSetup({
+      source: CONFIG_SOURCE,
+      base: undefined,
+      documents: CONFIG_DOCUMENTS,
+    });
+    const before = service.getCompletionsAtPosition("main.ts", CONFIG_POSITION, undefined);
+    expect(before?.entries.map((e) => e.name)).toEqual(["display.width", "project.title"]);
+
+    host.documents["game.project"] = "[display]\nwidth = 960\nvsync = 1\n";
+    host.fireDirectory("/project/game.project");
+
+    const after = service.getCompletionsAtPosition("main.ts", CONFIG_POSITION, undefined);
+    expect(after?.entries.map((e) => e.name)).toEqual(["display.vsync", "display.width"]);
+  });
+
+  test("a config caret on a host without watch facilities still completes", () => {
+    const { service, host } = completionSetup({
+      source: CONFIG_SOURCE,
+      base: undefined,
+      documents: CONFIG_DOCUMENTS,
+      watch: false,
+    });
+    const result = service.getCompletionsAtPosition("main.ts", CONFIG_POSITION, undefined);
+    expect(result?.entries.map((e) => e.name)).toEqual(["display.width", "project.title"]);
+    expect(host.openWatchers).toBe(0);
+  });
+
   test("a second completion in the same slot walks nothing — every kind shares one index", () => {
     const cases: { source: string; position: number; documents: Record<string, string> }[] = [
       { source: ADDRESS_SOURCE, position: FRAGMENT_POSITION, documents: SCENE_DOCUMENTS },
@@ -680,6 +780,7 @@ describe("tstl-plugin", () => {
       { source: NODE_SOURCE, position: NODE_POSITION, documents: SCENE_DOCUMENTS },
       { source: ANIMATION_SOURCE, position: ANIMATION_POSITION, documents: ANIMATION_DOCUMENTS },
       { source: ATLAS_SOURCE, position: ATLAS_POSITION, documents: RESOURCE_DOCUMENTS },
+      { source: CONFIG_SOURCE, position: CONFIG_POSITION, documents: CONFIG_DOCUMENTS },
     ];
     for (const { source, position, documents } of cases) {
       const { service, host } = completionSetup({ source, base: undefined, documents });

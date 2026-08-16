@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import {
+  buildConfigKeyIndex,
   buildGuiNodeIndex,
   buildSceneComponentIndex,
   buildSceneObjectPathIndex,
@@ -32,6 +33,13 @@ const GUI_EXTENSIONS = [".gui"];
 // A third extension set, disjoint from the other two: an atlas declares
 // animation names, not component ids or node ids.
 const ANIMATION_ASSET_EXTENSIONS = [".atlas", ".tilesource", ".sprite"];
+
+// A fourth set, whose whole universe is one file: `game.project` at the project
+// root. The walk returns every `.project` the project holds, so the lookup is by
+// display path — a vendored `*.project` declares keys this project's readers
+// cannot resolve.
+const PROJECT_EXTENSIONS = [".project"];
+const GAME_PROJECT_DOCUMENT = "game.project";
 
 const requireFromHere = createRequire(import.meta.url);
 
@@ -175,6 +183,24 @@ function resourceEntries(
   return buildWholeLiteralCompletionEntries({ slot, ids, baseEntries });
 }
 
+// The kind whose candidates come from a single project file rather than a walk
+// of many: `game.project` is the whole universe, since a key it never writes
+// answers the reader's default at runtime. Same whole-literal span as a resource
+// path — a config key is the entire text between the quotes, including any `#`
+// a `dependencies#0`-shaped key carries.
+function configKeyEntries(
+  slot: ClassifiedSlot,
+  cache: SceneIndexCache,
+  baseEntries: readonly ts.CompletionEntry[],
+): ts.CompletionEntry[] {
+  const text = cache.documents(PROJECT_EXTENSIONS).documents.get(GAME_PROJECT_DOCUMENT);
+  if (text === undefined) {
+    return [];
+  }
+  const ids = cache.derived("config-keys", () => buildConfigKeyIndex(text));
+  return buildWholeLiteralCompletionEntries({ slot, ids, baseEntries });
+}
+
 // A TS language-service plugin is loaded by package name and its main is called
 // as this `init` factory; the editor passes its own `typescript` instance so the
 // plugin shares the editor's `ts` (notably `DiagnosticCategory`).
@@ -266,7 +292,9 @@ export default function init(modules: { typescript: typeof import("typescript") 
             ? animationEntries(slot, cache, fileName, baseEntries)
             : slot.class === "resource-path"
               ? resourceEntries(slot, cache, baseEntries)
-              : [];
+              : slot.class === "config-key"
+                ? configKeyEntries(slot, cache, baseEntries)
+                : [];
       if (entries.length === 0) {
         return prior;
       }
