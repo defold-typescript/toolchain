@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import type { UrlParameterTable } from "@defold-typescript/types";
+import type { UrlParameterClass, UrlParameterTable } from "@defold-typescript/types";
 import type * as ts from "typescript";
 import { createTranspileSession } from "./session";
 import { isAddressClass, resolveClassifiedSlotAtPosition } from "./url-address-slots";
@@ -53,6 +53,28 @@ function ON_INPUT(body: string): string {
     "",
   ].join("\n");
 }
+
+// One real call per class, resolved through the production session and the
+// committed table. The expected side is the table's own class column, so a
+// class it carries with no positive here reds instead of passing quietly —
+// which is what let `game-object`, 21 of its 40 entries, go unexercised.
+const CLASS_POSITIVES: ReadonlyArray<{
+  source: string;
+  literal: string;
+  class: UrlParameterClass;
+}> = [
+  { source: 'go.get_position("/player");\n', literal: '"/player"', class: "game-object" },
+  { source: 'msg.post("#sprite", "hello");\n', literal: '"#sprite"', class: "either" },
+  { source: 'gui.get_node("score");\n', literal: '"score"', class: "gui-node" },
+  { source: 'sprite.play_flipbook("#sprite", "wa");\n', literal: '"wa"', class: "animation" },
+  {
+    source: 'go.property("my_atlas", resource.atlas(""));\n',
+    literal: '""',
+    class: "resource-path",
+  },
+  { source: 'const width = sys.get_config_int("", 960);\n', literal: '""', class: "config-key" },
+  { source: ON_INPUT('if (action_id === hash("")) {}'), literal: '""', class: "action-id" },
+];
 
 describe("resolveClassifiedSlotAtPosition", () => {
   test("resolves an address slot, reporting the span strictly inside the quotes", () => {
@@ -116,6 +138,17 @@ describe("resolveClassifiedSlotAtPosition", () => {
   test("an unresolvable call is not a slot", () => {
     const source = '(undefined as any)("#x");\n';
     expect(slotAt(source, insideOf(source, '"#x"'))).toBeUndefined();
+  });
+
+  test("a game-object slot resolves as its own class, and its class is an address", () => {
+    const source = 'go.get_position("/player");\n';
+    const slot = slotAt(source, insideOf(source, '"/player"'));
+    expect(slot?.class).toBe("game-object");
+    expect(slot?.text).toBe("/player");
+    expect(slot?.textStart).toBe(source.indexOf("/player"));
+    expect(slot?.fragmentStart).toBe(-1);
+    // biome-ignore lint/style/noNonNullAssertion: the assertions above already failed if it did not resolve
+    expect(isAddressClass(slot!.class)).toBe(true);
   });
 
   test("a node-id slot resolves as its own class, not as an address", () => {
@@ -356,6 +389,17 @@ describe("resolveClassifiedSlotAtPosition", () => {
       "",
     ].join("\n");
     expect(slotAt(msg, insideOf(msg, '"#sprite"'))).toBeUndefined();
+  });
+
+  test("every class the committed table carries has a call here that resolves it", () => {
+    const covered = new Set<UrlParameterClass>();
+    for (const positive of CLASS_POSITIVES) {
+      expect(slotAt(positive.source, insideOf(positive.source, positive.literal))?.class).toBe(
+        positive.class,
+      );
+      covered.add(positive.class);
+    }
+    expect([...covered].sort()).toEqual([...new Set(TABLE.map((entry) => entry.class))].sort());
   });
 });
 
