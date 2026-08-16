@@ -64,6 +64,55 @@ interface ManagedBlock {
 
 const BARE_KEY_CHAR = /[A-Za-z0-9_-]/;
 
+const HEX_DIGITS = /^[0-9A-Fa-f]+$/;
+
+const SIMPLE_ESCAPES: Record<string, string> = {
+  b: "\b",
+  t: "\t",
+  n: "\n",
+  f: "\f",
+  r: "\r",
+  '"': '"',
+  "\\": "\\",
+};
+
+// What a basic string's escape sequence denotes, and how many characters it
+// spans. `MANAGED_KEYS` holds semantic names, so a key has to be compared by
+// what it means rather than by how TOML spelled it. A sequence TOML does not
+// define — truncated at end of line, non-hex digits, a code point out of range
+// — keeps the backslash and the next character verbatim: the span never drops
+// below 2, so `\"` still cannot close the string, and a malformed sequence can
+// never spell `run` or `description`.
+function decodeBasicStringEscape(
+  line: string,
+  backslash: number,
+): { text: string; length: number } {
+  const verbatim = { text: line.slice(backslash, backslash + 2), length: 2 };
+  const marker = line[backslash + 1];
+  if (marker === undefined) {
+    return verbatim;
+  }
+  const simple = SIMPLE_ESCAPES[marker];
+  if (simple !== undefined) {
+    return { text: simple, length: 2 };
+  }
+  // The 16-bit form for `\u` means a surrogate pair written as two escapes
+  // concatenates into the right character with no pair handling of our own.
+  const digits = marker === "u" ? 4 : marker === "U" ? 8 : 0;
+  if (digits === 0) {
+    return verbatim;
+  }
+  const hex = line.slice(backslash + 2, backslash + 2 + digits);
+  if (hex.length < digits || !HEX_DIGITS.test(hex)) {
+    return verbatim;
+  }
+  const code = Number.parseInt(hex, 16);
+  if (digits === 4) {
+    return { text: String.fromCharCode(code), length: 6 };
+  }
+  return code > 0x10ffff ? verbatim : { text: String.fromCodePoint(code), length: 10 };
+}
+
 // The one place that decides what a key assignment is and what it is named, so
 // every scan shares TOML's grammar rather than a character class approximating
 // it: `simple-key (ws '.' ws simple-key)*` then `ws '='`, where a simple key is
@@ -71,9 +120,10 @@ const BARE_KEY_CHAR = /[A-Za-z0-9_-]/;
 // direction — a real assignment that goes unrecognized never reaches
 // `endOfValue`, so its multi-line value's lines are read as structure and a `[`
 // or a marker inside them ends the block and hoists the tail into the root
-// table. Returns the dotted key's segments with their delimiters stripped, or
-// `undefined` when the line opens no assignment — which is what makes a comment
-// and a bare `"""` non-assignments without a special case for either.
+// table. Returns the dotted key's segments as the names they denote — quoting
+// stripped and a basic string's escapes decoded — or `undefined` when the line
+// opens no assignment, which is what makes a comment and a bare `"""`
+// non-assignments without a special case for either.
 function assignmentKey(line: string): string[] | undefined {
   const segments: string[] = [];
   let i = 0;
@@ -94,8 +144,9 @@ function assignmentKey(line: string): string[] | undefined {
         // A basic string escapes its delimiter; a literal string cannot, so
         // consuming the escape is what keeps `"a\"b"` from terminating early.
         if (opener === '"' && char === "\\") {
-          value += line[i + 1] ?? "";
-          i += 2;
+          const decoded = decodeBasicStringEscape(line, i);
+          value += decoded.text;
+          i += decoded.length;
           continue;
         }
         if (char === opener) {
