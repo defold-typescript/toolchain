@@ -307,6 +307,56 @@ describe("resolveClassifiedSlotAtPosition", () => {
     ].join("\n");
     expect(slotAt(renamed, insideOf(renamed, '""'))).toBeUndefined();
   });
+
+  test("a `hash` the project declares itself shadows the global and offers nothing", () => {
+    // The entry describes Defold's ambient `hash`. A project's own function of
+    // that name takes an `s` too, so the table would match it on name alone.
+    const declared = [
+      "function hash(s: string) {",
+      "  return s;",
+      "}",
+      "export function on_input(_self: unknown, action_id: Hash | undefined) {",
+      '  if (action_id === hash("")) {}',
+      "}",
+      "",
+    ].join("\n");
+    expect(slotAt(declared, insideOf(declared, '""'))).toBeUndefined();
+
+    const local = [
+      "export function on_input(_self: unknown, action_id: Hash | undefined) {",
+      "  const hash = (s: string) => s;",
+      '  if (action_id === hash("")) {}',
+      "}",
+      "",
+    ].join("\n");
+    expect(slotAt(local, insideOf(local, '""'))).toBeUndefined();
+  });
+
+  test("a shadowed property-access callee is not a slot either", () => {
+    // The same fallback that keyed a bare shadow keys `gui.get_node` on a local
+    // object of that name, so the predicate has to close both shapes at once.
+    const gui = [
+      "const gui = {",
+      "  get_node(id: string) {",
+      "    return id;",
+      "  },",
+      "};",
+      'gui.get_node("score");',
+      "",
+    ].join("\n");
+    expect(slotAt(gui, insideOf(gui, '"score"'))).toBeUndefined();
+
+    const msg = [
+      "const msg = {",
+      "  post(receiver: string, message_id: string) {",
+      "    return receiver + message_id;",
+      "  },",
+      "};",
+      'msg.post("#sprite", "hello");',
+      "",
+    ].join("\n");
+    expect(slotAt(msg, insideOf(msg, '"#sprite"'))).toBeUndefined();
+  });
 });
 
 describe("isAddressClass", () => {
