@@ -6,7 +6,8 @@
 // The typed `editor.*` global (`get`/`transact`/`command`) and the walled
 // `@defold-typescript/types/editor-script` entrypoint ship alongside this file,
 // as do the editor VM's own `http`/`json`/`zip`/`zlib`/`tilemap.tiles`
-// libraries. Still a later slice: `editor.ui.*` and `editor.prefs.*`.
+// libraries and the `editor.ui.*`, `editor.prefs.*`, and `localization.*`
+// surfaces.
 
 import type { Opaque } from "./core-types";
 
