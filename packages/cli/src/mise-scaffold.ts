@@ -62,10 +62,73 @@ interface ManagedBlock {
   readonly body: readonly string[];
 }
 
-// Matches a key assignment, so the scanner hands the line to the shared value
-// scanner rather than treating its continuation lines as structure. Quoted and
-// dotted keys are assignments too; a comment never is, since `#` is excluded.
-const KEY_ASSIGNMENT = /^\s*[A-Za-z0-9_"'.-]+\s*=/;
+const BARE_KEY_CHAR = /[A-Za-z0-9_-]/;
+
+// The one place that decides what a key assignment is and what it is named, so
+// every scan shares TOML's grammar rather than a character class approximating
+// it: `simple-key (ws '.' ws simple-key)*` then `ws '='`, where a simple key is
+// bare, a basic string or a literal string. A *false negative* is the damaging
+// direction — a real assignment that goes unrecognized never reaches
+// `endOfValue`, so its multi-line value's lines are read as structure and a `[`
+// or a marker inside them ends the block and hoists the tail into the root
+// table. Returns the dotted key's segments with their delimiters stripped, or
+// `undefined` when the line opens no assignment — which is what makes a comment
+// and a bare `"""` non-assignments without a special case for either.
+function assignmentKey(line: string): string[] | undefined {
+  const segments: string[] = [];
+  let i = 0;
+  const skipWhitespace = () => {
+    while (line[i] === " " || line[i] === "\t") {
+      i += 1;
+    }
+  };
+  for (;;) {
+    skipWhitespace();
+    const opener = line[i];
+    if (opener === '"' || opener === "'") {
+      i += 1;
+      let value = "";
+      let closed = false;
+      while (i < line.length) {
+        const char = line[i];
+        // A basic string escapes its delimiter; a literal string cannot, so
+        // consuming the escape is what keeps `"a\"b"` from terminating early.
+        if (opener === '"' && char === "\\") {
+          value += line[i + 1] ?? "";
+          i += 2;
+          continue;
+        }
+        if (char === opener) {
+          i += 1;
+          closed = true;
+          break;
+        }
+        value += char;
+        i += 1;
+      }
+      if (!closed) {
+        return undefined;
+      }
+      segments.push(value);
+    } else {
+      let value = "";
+      while (i < line.length && BARE_KEY_CHAR.test(line[i] ?? "")) {
+        value += line[i];
+        i += 1;
+      }
+      if (value === "") {
+        return undefined;
+      }
+      segments.push(value);
+    }
+    skipWhitespace();
+    if (line[i] === ".") {
+      i += 1;
+      continue;
+    }
+    return line[i] === "=" ? segments : undefined;
+  }
+}
 
 // Split a file into the lines outside managed blocks and the blocks themselves.
 // A block runs from its marker to the next marker, the next table header, or
@@ -85,6 +148,18 @@ function scanManagedBlocks(text: string): {
   while (i < lines.length) {
     const line = lines[i] ?? "";
     if (line.trim() !== MANAGED_MARKER) {
+      // User content is value-aware too: a marker or a table header written
+      // inside a user task's multi-line value is that value's text, and reading
+      // it as structure opens a phantom managed block that swallows — and on a
+      // header match silently drops — everything down to the next marker.
+      if (assignmentKey(line) !== undefined) {
+        const end = endOfValue(lines, i);
+        for (let j = i; j <= end; j++) {
+          userLines.push(lines[j] ?? "");
+        }
+        i = end + 1;
+        continue;
+      }
       userLines.push(line);
       i += 1;
       continue;
@@ -110,7 +185,7 @@ function scanManagedBlocks(text: string): {
         i += 1;
         continue;
       }
-      if (KEY_ASSIGNMENT.test(current)) {
+      if (assignmentKey(current) !== undefined) {
         const end = endOfValue(lines, i);
         for (let j = i; j <= end; j++) {
           body.push(lines[j] ?? "");
@@ -205,9 +280,18 @@ function carriedLines(block: ManagedBlock, canonical: ManagedBlock): string[] {
     if (line.trim() === block.header) {
       continue;
     }
-    const key = /^\s*([A-Za-z0-9_-]+)\s*=/.exec(line)?.[1];
-    if (key !== undefined && MANAGED_KEYS.has(key)) {
-      i = endOfValue(block.body, i);
+    const key = assignmentKey(line);
+    if (key !== undefined) {
+      const end = endOfValue(block.body, i);
+      // Carry an unmanaged key as one unit so the filters below never see a
+      // value's interior — a body line spelling `run = …` is that string's
+      // text, not a key of the task.
+      if (!(key.length === 1 && MANAGED_KEYS.has(key[0] ?? ""))) {
+        for (let j = i; j <= end; j++) {
+          carried.push(block.body[j] ?? "");
+        }
+      }
+      i = end;
       continue;
     }
     if (line.trim().startsWith("#") && emitted.has(line.trim())) {
