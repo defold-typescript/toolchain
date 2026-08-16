@@ -12,6 +12,7 @@ import {
   buildAddressPathCompletionEntries,
   buildSceneCompletionEntries,
   buildWholeLiteralCompletionEntries,
+  DEFOLD_COMPLETION_SOURCE,
 } from "./scene-completions";
 
 const TABLE: UrlParameterTable = JSON.parse(
@@ -343,5 +344,101 @@ describe("buildWholeLiteralCompletionEntries", () => {
       expect(entries[0]?.sortText ?? "").toBeTruthy();
       expect((entries[0]?.sortText ?? "") > priority).toBe(true);
     }
+  });
+});
+
+// One call per exported builder, each in the slot class that builder serves.
+// Every case below runs all three, so a discriminator stamped in one place only
+// is a failure rather than a coincidence.
+function everyBuilder(): { name: string; entries: ts.CompletionEntry[] }[] {
+  const fragmentSlot = slotIn('msg.post("#bo", "hello");\n', '"#bo"');
+  const addressSlot = slotIn('msg.post("/enemy#sprite", "hello");\n', '"/enemy#sprite"');
+  const literalSlot = slotIn('gui.get_node("sco");\n', '"sco"');
+  return [
+    {
+      name: "buildSceneCompletionEntries",
+      entries: buildSceneCompletionEntries({
+        slot: fragmentSlot,
+        ids: new Set(["hud", "board"]),
+        baseEntries: [],
+      }),
+    },
+    {
+      name: "buildAddressPathCompletionEntries",
+      entries: buildAddressPathCompletionEntries({
+        slot: addressSlot,
+        paths: new Set(["/hero", "/hud"]),
+        baseEntries: [],
+      }),
+    },
+    {
+      name: "buildWholeLiteralCompletionEntries",
+      entries: buildWholeLiteralCompletionEntries({
+        slot: literalSlot,
+        ids: new Set(["score", "level"]),
+        baseEntries: [],
+      }),
+    },
+  ];
+}
+
+describe("contributed entries carry a discriminator", () => {
+  test("every entry from every builder names this plugin as its source", () => {
+    for (const { name, entries } of everyBuilder()) {
+      expect(entries.length).toBeGreaterThan(0);
+      for (const built of entries) {
+        expect({ builder: name, source: built.source }).toEqual({
+          builder: name,
+          source: DEFOLD_COMPLETION_SOURCE,
+        });
+      }
+    }
+  });
+
+  test("the source is namespaced to this tool rather than a bare word", () => {
+    expect(DEFOLD_COMPLETION_SOURCE).toContain("defold-typescript");
+  });
+
+  test("adding the field leaves every other field of every entry as it was", () => {
+    const fragmentSlot = slotIn('msg.post("#bo", "hello");\n', '"#bo"');
+    const addressSlot = slotIn('msg.post("/enemy#sprite", "hello");\n', '"/enemy#sprite"');
+    const literalSlot = slotIn('gui.get_node("sco");\n', '"sco"');
+    const [fragment, address, literal] = everyBuilder().map(({ entries }) => entries);
+
+    expect(fragment?.map((e) => e.name)).toEqual(["board", "hud"]);
+    for (const built of fragment ?? []) {
+      expect(built.kind).toBe("string" as ts.ScriptElementKind);
+      expect(built.kindModifiers).toBe("");
+      expect(built.replacementSpan).toEqual({ start: fragmentSlot.fragmentStart, length: 2 });
+      expect(built.sortText > DEPRECATED_IDENTIFIER).toBe(true);
+    }
+
+    expect(address?.map((e) => e.name)).toEqual(["/hero", "/hud"]);
+    for (const built of address ?? []) {
+      expect(built.replacementSpan).toEqual({
+        start: addressSlot.textStart,
+        length: "/enemy".length,
+      });
+    }
+
+    expect(literal?.map((e) => e.name)).toEqual(["level", "score"]);
+    for (const built of literal ?? []) {
+      expect(built.replacementSpan).toEqual({
+        start: literalSlot.textStart,
+        length: "sco".length,
+      });
+    }
+  });
+
+  test("a base entry is deduped against but never stamped — the plugin marks only what it builds", () => {
+    const slot = slotIn('gui.get_node("sco");\n', '"sco"');
+    const baseEntries = [entry("score", LOCATION_PRIORITY)];
+    const entries = buildWholeLiteralCompletionEntries({
+      slot,
+      ids: new Set(["score", "level"]),
+      baseEntries,
+    });
+    expect(entries.map((e) => e.name)).toEqual(["level"]);
+    expect(baseEntries.map((e) => e.source)).toEqual([undefined]);
   });
 });

@@ -11,6 +11,19 @@ export interface SceneReadHost {
 
 export const SCENE_EXTENSIONS = [".go", ".collection"];
 
+// The extension sets more than one reader asks the host for. They live here
+// rather than beside either caller because the index cache serves exactly the
+// sets it is handed: a second definition that drifted would walk — and watch —
+// a universe the other reader never invalidates.
+export const GUI_EXTENSIONS = [".gui"];
+export const INPUT_BINDING_EXTENSIONS = [".input_binding"];
+
+// The walk returns every `.project` the project holds, so the lookup is by
+// display path — a vendored `*.project` declares keys this project's readers
+// cannot resolve.
+export const PROJECT_EXTENSIONS = [".project"];
+export const GAME_PROJECT_DOCUMENT = "game.project";
+
 // The project-relative name a file is keyed by — the same name the editor
 // reports for a program file, so a scene's claim on a script can be looked up
 // against the file being edited.

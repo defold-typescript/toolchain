@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { createTranspileSession } from "@defold-typescript/transpiler";
 import ts from "typescript";
 import init from "./index";
+import { DEFOLD_COMPLETION_SOURCE } from "./scene-completions";
 
 // Valid TypeScript, unsupported by TSTL's Lua 5.1 target — the editor-only
 // signal the plugin appends on top of the base service's diagnostics.
@@ -73,6 +74,7 @@ interface CompletionSetup {
   service: ts.LanguageService;
   host: ProxyHost;
   baseDisposeCalls(): number;
+  detailsCalls(): unknown[][];
 }
 
 function completionSetup(options: {
@@ -82,6 +84,7 @@ function completionSetup(options: {
   serverHost?: boolean;
   watch?: boolean;
   baseDispose?: boolean;
+  baseDetails?: ts.CompletionEntryDetails;
   fileName?: string;
 }): CompletionSetup {
   const fileName = options.fileName ?? "main.ts";
@@ -92,10 +95,15 @@ function completionSetup(options: {
     throw new Error("session produced no program");
   }
   let baseDisposeCalls = 0;
+  const detailsCalls: unknown[][] = [];
   const languageService = {
     getProgram: () => program,
     getSemanticDiagnostics: () => [],
     getCompletionsAtPosition: () => options.base,
+    getCompletionEntryDetails: (...args: unknown[]) => {
+      detailsCalls.push(args);
+      return options.baseDetails;
+    },
     ...(options.baseDispose
       ? {
           dispose: () => {
@@ -152,6 +160,7 @@ function completionSetup(options: {
     service: init({ typescript: ts }).create(info),
     host,
     baseDisposeCalls: () => baseDisposeCalls,
+    detailsCalls: () => detailsCalls,
   };
 }
 
@@ -953,5 +962,226 @@ describe("tstl-plugin", () => {
     const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
     const { service } = completionSetup({ source: ADDRESS_SOURCE, base, documents: {} });
     expect(service.getCompletionsAtPosition("main.ts", FRAGMENT_POSITION, undefined)).toBe(base);
+  });
+});
+
+// The entry the details request is really issued for: taken from what the
+// completion path returned, so a discriminator the proxy cannot recognize is a
+// failure here rather than an assumption baked into a hand-built entry.
+function contributedEntry(
+  setup: CompletionSetup,
+  position: number,
+  name: string,
+): ts.CompletionEntry {
+  const result = setup.service.getCompletionsAtPosition("main.ts", position, undefined);
+  const entry = result?.entries.find((candidate) => candidate.name === name);
+  if (!entry) {
+    throw new Error(`${name} was not offered at ${position}`);
+  }
+  return entry;
+}
+
+function documentationOf(details: ts.CompletionEntryDetails | undefined): string {
+  return (details?.documentation ?? []).map((part) => part.text).join("");
+}
+
+const BASE_DETAILS: ts.CompletionEntryDetails = {
+  name: "from-the-base",
+  kind: "text" as ts.ScriptElementKind,
+  kindModifiers: "",
+  displayParts: [{ kind: "text", text: "the base service's own panel" }],
+};
+
+describe("tstl-plugin completion entry details", () => {
+  test("a contributed id is answered with the file that declares it, without calling the base", () => {
+    const setup = completionSetup({ source: ADDRESS_SOURCE, base: undefined });
+    const entry = contributedEntry(setup, FRAGMENT_POSITION, "board");
+    const details = setup.service.getCompletionEntryDetails(
+      "main.ts",
+      FRAGMENT_POSITION,
+      entry.name,
+      undefined,
+      entry.source,
+      undefined,
+      undefined,
+    );
+    expect(details?.name).toBe("board");
+    expect(documentationOf(details)).toContain("main/board.go");
+    expect(documentationOf(details)).not.toContain("main/hud.go");
+    expect(setup.detailsCalls()).toHaveLength(0);
+  });
+
+  test("a node id is answered with the `.gui` that owns this file", () => {
+    const setup = completionSetup({ source: NODE_SOURCE, base: undefined });
+    const entry = contributedEntry(setup, NODE_POSITION, "score");
+    const details = setup.service.getCompletionEntryDetails(
+      "main.ts",
+      NODE_POSITION,
+      entry.name,
+      undefined,
+      entry.source,
+      undefined,
+      undefined,
+    );
+    expect(documentationOf(details)).toContain("main/hud.gui");
+    expect(setup.detailsCalls()).toHaveLength(0);
+  });
+
+  test("a request carrying no source forwards and returns the base result verbatim", () => {
+    const setup = completionSetup({
+      source: ADDRESS_SOURCE,
+      base: undefined,
+      baseDetails: BASE_DETAILS,
+    });
+    const details = setup.service.getCompletionEntryDetails(
+      "main.ts",
+      FRAGMENT_POSITION,
+      "board",
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    );
+    expect(details).toBe(BASE_DETAILS);
+    expect(setup.detailsCalls()).toHaveLength(1);
+  });
+
+  test("a foreign source forwards rather than claiming another contributor's entry", () => {
+    const setup = completionSetup({
+      source: ADDRESS_SOURCE,
+      base: undefined,
+      baseDetails: BASE_DETAILS,
+    });
+    const details = setup.service.getCompletionEntryDetails(
+      "main.ts",
+      FRAGMENT_POSITION,
+      "board",
+      undefined,
+      "some-other-plugin",
+      undefined,
+      undefined,
+    );
+    expect(details).toBe(BASE_DETAILS);
+    expect(setup.detailsCalls()).toHaveLength(1);
+  });
+
+  test("a base `undefined` is forwarded as `undefined`, never converted into a panel", () => {
+    const setup = completionSetup({ source: ADDRESS_SOURCE, base: undefined });
+    expect(
+      setup.service.getCompletionEntryDetails(
+        "main.ts",
+        FRAGMENT_POSITION,
+        "board",
+        undefined,
+        "some-other-plugin",
+        undefined,
+        undefined,
+      ),
+    ).toBeUndefined();
+    expect(setup.detailsCalls()).toHaveLength(1);
+  });
+
+  test("a name the plugin never contributed forwards even under our own source", () => {
+    const setup = completionSetup({
+      source: ADDRESS_SOURCE,
+      base: undefined,
+      baseDetails: BASE_DETAILS,
+    });
+    const entry = contributedEntry(setup, FRAGMENT_POSITION, "board");
+    const details = setup.service.getCompletionEntryDetails(
+      "main.ts",
+      FRAGMENT_POSITION,
+      "no-scene-declares-this",
+      undefined,
+      entry.source,
+      undefined,
+      undefined,
+    );
+    expect(details).toBe(BASE_DETAILS);
+    expect(setup.detailsCalls()).toHaveLength(1);
+  });
+
+  test("forwarding hands the base every argument it was given, unchanged", () => {
+    const setup = completionSetup({
+      source: ADDRESS_SOURCE,
+      base: undefined,
+      baseDetails: BASE_DETAILS,
+    });
+    const formatOptions = { indentSize: 2 } as ts.FormatCodeSettings;
+    const preferences = { includeCompletionsForModuleExports: true } as ts.UserPreferences;
+    const data = { exportName: "x" } as ts.CompletionEntryData;
+    setup.service.getCompletionEntryDetails(
+      "main.ts",
+      FRAGMENT_POSITION,
+      "board",
+      formatOptions,
+      undefined,
+      preferences,
+      data,
+    );
+    expect(setup.detailsCalls()).toEqual([
+      ["main.ts", FRAGMENT_POSITION, "board", formatOptions, undefined, preferences, data],
+    ]);
+  });
+
+  test("an uncovered kind forwards rather than answering an empty panel", () => {
+    const setup = completionSetup({
+      source: ANIMATION_SOURCE,
+      base: undefined,
+      documents: ANIMATION_DOCUMENTS,
+      baseDetails: BASE_DETAILS,
+    });
+    const entry = contributedEntry(setup, ANIMATION_POSITION, "walk");
+    expect(entry.source).toBeDefined();
+    const details = setup.service.getCompletionEntryDetails(
+      "main.ts",
+      ANIMATION_POSITION,
+      entry.name,
+      undefined,
+      entry.source,
+      undefined,
+      undefined,
+    );
+    expect(details).toBe(BASE_DETAILS);
+    expect(setup.detailsCalls()).toHaveLength(1);
+  });
+
+  test("a host the plugin cannot enumerate forwards the way the completion path already does", () => {
+    const setup = completionSetup({
+      source: ADDRESS_SOURCE,
+      base: undefined,
+      serverHost: false,
+      baseDetails: BASE_DETAILS,
+    });
+    const details = setup.service.getCompletionEntryDetails(
+      "main.ts",
+      FRAGMENT_POSITION,
+      "board",
+      undefined,
+      DEFOLD_COMPLETION_SOURCE,
+      undefined,
+      undefined,
+    );
+    expect(details).toBe(BASE_DETAILS);
+    expect(setup.detailsCalls()).toHaveLength(1);
+  });
+
+  test("a position that is no slot at all forwards", () => {
+    const setup = completionSetup({
+      source: ADDRESS_SOURCE,
+      base: undefined,
+      baseDetails: BASE_DETAILS,
+    });
+    const details = setup.service.getCompletionEntryDetails(
+      "main.ts",
+      NON_ADDRESS_POSITION,
+      "board",
+      undefined,
+      DEFOLD_COMPLETION_SOURCE,
+      undefined,
+      undefined,
+    );
+    expect(details).toBe(BASE_DETAILS);
+    expect(setup.detailsCalls()).toHaveLength(1);
   });
 });
