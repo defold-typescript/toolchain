@@ -118,6 +118,21 @@ describe("url-parameters.json generated entries", () => {
     ]);
   });
 
+  test("the config-key class is recorded against exactly the four config readers", () => {
+    const configKeys = table
+      .filter((entry) => entry.class === "config-key")
+      .map((entry) => `${entry.fqn}#${entry.parameter}`);
+    expect(configKeys).toEqual([
+      "sys.get_config_boolean#key",
+      "sys.get_config_int#key",
+      "sys.get_config_number#key",
+      "sys.get_config_string#key",
+    ]);
+    for (const key of configKeys) {
+      expect(slots.get(key)?.types).toEqual(["string"]);
+    }
+  });
+
   test("every resource-path extension reads in its own function's ref-doc example", () => {
     // The parameter doc says *resource path* without saying which kind, so the
     // only refutable evidence for the extension is the example the ref-doc
