@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { readFileSync, statSync } from "node:fs";
 import * as path from "node:path";
 
 /** `[generatedColumn, sourceIndex, sourceLine, sourceColumn]`, all zero-based. */
@@ -94,8 +94,9 @@ const parsedMaps = new Map<string, CacheEntry>();
  * that may be reported: `sources` holds a bare basename, so it resolves against
  * the map's own directory plus the `sourceRoot` the build wrote there. A result
  * that leaves the project is not a project-relative authored path, and one that
- * is not on disk was not found — a location is only ever reported for a file
- * that is really there.
+ * is not a file on disk was not found — a location is only ever reported for a
+ * file that is really there, never for a directory that happens to share its
+ * name.
  */
 function resolveSource(
   cwd: string,
@@ -108,7 +109,11 @@ function resolveSource(
   if (path.posix.isAbsolute(resolved) || resolved === ".." || resolved.startsWith("../")) {
     return null;
   }
-  return existsSync(path.join(cwd, resolved)) ? resolved : null;
+  try {
+    return statSync(path.join(cwd, resolved)).isFile() ? resolved : null;
+  } catch {
+    return null;
+  }
 }
 
 /**
