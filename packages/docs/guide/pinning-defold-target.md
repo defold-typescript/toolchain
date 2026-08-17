@@ -244,13 +244,18 @@ narrow it by script kind. Narrowing a directory to one kind is opt-in via the
 surface for every kind that surface wrote, and falls back to the installed
 `@defold-typescript/types` subpath for any kind it did not.
 
-Which kinds a surface writes follows the target it was built from. Every target
-carries the runtime trio (`script`, `gui-script`, `render-script`); a target
-carries `editor-script` only when it ships an editor-scripting document of its
-own, which today only the current default target does. A project pinned to a
-target without one keeps the installed package's
-[editor-script surface](editor-scripts.md) — nothing silently substitutes the
-default target's editor API for the pinned release's.
+### Which kinds a surface writes
+
+Which kinds a surface writes follows both the target it was built from and how
+that surface was produced. A surface **generated on the fly** from reference docs
+carries the runtime trio (`script`, `gui-script`, `render-script`); a surface
+**copied from a committed snapshot** — the current default and 1.12.4 — carries no
+runtime kind at all, so its runtime walls always keep the installed subpath.
+Either surface carries `editor-script` only when the target it was built from
+ships an editor-scripting document of its own, which today only the current
+default target does. A project pinned to a target without one keeps the installed
+package's [editor-script surface](editor-scripts.md) — nothing silently
+substitutes the default target's editor API for the pinned release's.
 
 If a pinned target cannot be generated — an unknown version, or no network on
 first use — the build does **not** fail. It reports `materializedSurface: null`,

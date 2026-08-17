@@ -1,18 +1,24 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import {
+  materializedSurfaceKinds,
   planSourceDirectoryWalls,
   resolveActivePinnedSurface,
   wireWallReferences,
   writeDirectoryWallTsconfigs,
 } from "./directory-walls";
-import { ensureMaterializedReference, materializeRefDocSurface } from "./materialize";
+import {
+  ensureMaterializedReference,
+  materializeApiSurface,
+  materializeRefDocSurface,
+} from "./materialize";
 import { multiKindRefDocResolveOpts, multiKindRefDocTarget } from "./ref-doc-test-fixture";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
 const BIN_DIR = path.join(REPO_ROOT, "node_modules", ".bin");
+const TYPES_PKG = path.join(REPO_ROOT, "packages", "types");
 
 let cwd: string;
 
@@ -159,5 +165,122 @@ describe("composite directory walls under a pinned ref-doc surface", () => {
     const { code, output } = typecheckBuild(cwd);
     expect(code).not.toBe(0);
     expect(output).toContain("render");
+  });
+});
+
+// A committed target goes through `materializeApiSurface`, and only its editor
+// kind is ever carried: `regen` emits only `only`-kinds per versioned target, so
+// a runtime sibling wall must keep the installed entrypoint.
+describe("composite directory walls under a pinned committed surface", () => {
+  const COMMITTED = "defold-1.13.0";
+
+  function linkTypesPackage(): void {
+    const scope = path.join(cwd, "node_modules", "@defold-typescript");
+    mkdirSync(scope, { recursive: true });
+    symlinkSync(TYPES_PKG, path.join(scope, "types"), "dir");
+  }
+
+  function materializeCommitted(): void {
+    const { materializedDir } = materializeApiSurface({
+      cwd,
+      surface: { surfaceId: COMMITTED, available: true },
+      sourceGeneratedDir: path.join(TYPES_PKG, "generated"),
+    });
+    expect(materializedDir).toBe(`.defold-types/${COMMITTED}`);
+    ensureMaterializedReference(cwd, materializedDir);
+  }
+
+  function scaffoldEditorAndRuntime(): void {
+    touch("src/game/logic.script");
+    touch(
+      "src/game/logic.ts",
+      [
+        'import { defineScript } from "@defold-typescript/types/script";',
+        "defineScript({",
+        "  init() {",
+        '    msg.post("#", "hello");',
+        "  },",
+        "});",
+      ].join("\n"),
+    );
+    // The factory comes from the plain `editor` subpath, not the installed
+    // `editor-script` kind index: importing that index would inject the
+    // *installed* default target's ambient editor surface into this program and
+    // the wall's pinned surface would no longer be the only thing declaring
+    // `editor` and `localization`.
+    touch(
+      "src/tooling/bundle.ts",
+      [
+        'import { defineEditorScript } from "@defold-typescript/types/editor";',
+        "export default defineEditorScript({",
+        "  get_commands: () => {",
+        "    void editor.platform;",
+        '    void localization.message("bundle.done", { count: 1 });',
+        "    return [];",
+        "  },",
+        "});",
+      ].join("\n"),
+    );
+  }
+
+  function wallUnderPin(): {
+    pinned: string | null;
+    walls: ReturnType<typeof planSourceDirectoryWalls>;
+  } {
+    const pinned = resolveActivePinnedSurface(cwd);
+    const walls = planSourceDirectoryWalls(cwd);
+    writeDirectoryWallTsconfigs(cwd, walls, pinned);
+    wireWallReferences(cwd, walls);
+    return { pinned, walls };
+  }
+
+  function readWallTypes(dir: string): { typeRoots: unknown; types: unknown } {
+    const parsed = JSON.parse(readFileSync(path.join(cwd, dir, "tsconfig.json"), "utf8")) as {
+      compilerOptions: { typeRoots: unknown; types: unknown };
+    };
+    return {
+      typeRoots: parsed.compilerOptions.typeRoots,
+      types: parsed.compilerOptions.types,
+    };
+  }
+
+  test("only the editor wall narrows to the pinned surface; a runtime sibling does not", () => {
+    writeRootTsconfig();
+    materializeCommitted();
+    linkTypesPackage();
+    scaffoldEditorAndRuntime();
+
+    const { pinned, walls } = wallUnderPin();
+    expect(pinned).toBe(COMMITTED);
+    expect(materializedSurfaceKinds(cwd, pinned)).toEqual(["editor-script"]);
+    expect(walls.map((wall) => `${wall.dir}:${wall.kind}`)).toEqual([
+      "src/game:script",
+      "src/tooling:editor-script",
+    ]);
+
+    expect(readWallTypes("src/tooling")).toEqual({
+      typeRoots: ["../../.defold-types"],
+      types: [`${COMMITTED}/editor-script`],
+    });
+    expect(readWallTypes("src/game")).toEqual({
+      typeRoots: null,
+      types: ["@defold-typescript/types/script"],
+    });
+  });
+
+  test("tsc -b accepts an editor wall reading the carried editor VM declarations", () => {
+    writeRootTsconfig();
+    materializeCommitted();
+    linkTypesPackage();
+    scaffoldEditorAndRuntime();
+    wallUnderPin();
+
+    const { code, output } = typecheckBuild(cwd);
+    if (code !== 0) {
+      throw new Error(
+        `expected clean type-check under a pinned committed surface, got:\n${output}`,
+      );
+    }
+    expect(code).toBe(0);
   });
 });
