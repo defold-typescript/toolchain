@@ -231,7 +231,23 @@ function nestedExcludes(wallDir: string, nestedWallDirs: readonly string[]): str
 
 export interface RootPathAliases {
   readonly baseUrl?: string;
+  // The directory the root config resolves its relative values against. Carried
+  // beside `baseUrl` because `baseUrl` alone cannot place an absolute base
+  // relative to the surface — there is nothing to measure the distance from.
+  readonly baseDir?: string;
   readonly paths?: Record<string, string[]>;
+}
+
+// Drive-rooted (`X:\`, `X:/`) and UNC (`\\server\share`) roots, neither of which
+// `path.posix.isAbsolute` recognizes.
+const WINDOWS_ABSOLUTE = /^(?:[A-Za-z]:[\\/]|\\\\)/;
+
+function isAbsolutePath(value: string): boolean {
+  return value.startsWith("/") || WINDOWS_ABSOLUTE.test(value);
+}
+
+function toPosixSeparators(value: string): string {
+  return value.replaceAll("\\", "/");
 }
 
 // The root config's own `paths` and `baseUrl`, read one level only — the file a
@@ -251,6 +267,7 @@ export function readRootPathAliases(cwd: string): RootPathAliases {
   const baseUrl = parsed.compilerOptions?.baseUrl;
   const paths = parsed.compilerOptions?.paths;
   return {
+    baseDir: cwd,
     ...(typeof baseUrl === "string" ? { baseUrl } : {}),
     ...(paths !== null && typeof paths === "object"
       ? { paths: paths as Record<string, string[]> }
@@ -263,11 +280,28 @@ export function readRootPathAliases(cwd: string): RootPathAliases {
 // the root declares `baseUrl`, the wall inherits it — a relative `baseUrl` in an
 // extended config resolves against the config that declared it — and every
 // substitution then resolves against that directory instead.
-function wallPathsBase(depth: number, baseUrl: string | undefined): string {
+function wallPathsBase(
+  depth: number,
+  baseUrl: string | undefined,
+  baseDir: string | undefined,
+): string {
   if (baseUrl === undefined) {
     return `${"../".repeat(depth)}${MATERIALIZED_ROOT}`;
   }
-  return path.posix.relative(path.posix.normalize(baseUrl), MATERIALIZED_ROOT);
+  if (isAbsolutePath(baseUrl)) {
+    // Without a base directory there is nothing to measure against, and
+    // `path.posix.relative` would silently measure against the *process* cwd. A
+    // redirect that resolves beats one anchored to whatever directory the CLI
+    // happened to run in; only a hand-constructed `rootAliases` reaches this.
+    if (baseDir === undefined) {
+      return `${"../".repeat(depth)}${MATERIALIZED_ROOT}`;
+    }
+    // The flavor comes from `baseUrl`; a cross-flavor pairing is not modeled,
+    // because a Windows project has a Windows `cwd`.
+    const flavor = WINDOWS_ABSOLUTE.test(baseUrl) ? path.win32 : path.posix;
+    return toPosixSeparators(flavor.relative(baseUrl, flavor.join(baseDir, MATERIALIZED_ROOT)));
+  }
+  return path.posix.relative(path.posix.normalize(toPosixSeparators(baseUrl)), MATERIALIZED_ROOT);
 }
 
 // The wall's own redirect for the documented `@defold-typescript/types/<kind>`
@@ -280,11 +314,14 @@ function pinnedKindIndexPaths(
   depth: number,
   pinnedSurface: string,
   kind: string,
-  baseUrl: string | undefined,
+  rootAliases: RootPathAliases,
 ): Record<string, string[]> {
+  // `join`, not interpolation: a `baseUrl` naming the materialized root itself
+  // leaves an empty base, which interpolation would turn into a rooted `/…`.
+  const base = wallPathsBase(depth, rootAliases.baseUrl, rootAliases.baseDir);
   return {
     [`@defold-typescript/types/${kind}`]: [
-      `${wallPathsBase(depth, baseUrl)}/${pinnedSurface}/${kind}/index.d.ts`,
+      path.posix.join(base, pinnedSurface, kind, "index.d.ts"),
     ],
   };
 }
@@ -292,12 +329,14 @@ function pinnedKindIndexPaths(
 // The value the wall would write when mirroring root alias target `target`.
 // Re-based to the wall directory when the root declares no `baseUrl`, verbatim
 // when it does — the wall resolves against the same base the root does in that
-// case. An absolute target already names its file outright.
+// case. An absolute target of any flavor already names its file outright, and
+// stays byte-identical: it is the user's string, and normalizing a
+// backslash-spelled one would break the value equality the un-pin depends on.
 function mirroredTarget(target: string, baseUrl: string | undefined, depth: number): string {
-  if (baseUrl !== undefined || path.posix.isAbsolute(target)) {
+  if (baseUrl !== undefined || isAbsolutePath(target)) {
     return target;
   }
-  return path.posix.join("../".repeat(depth), target);
+  return path.posix.join("../".repeat(depth), toPosixSeparators(target));
 }
 
 export interface MergeWallPathsInput {
@@ -386,7 +425,7 @@ export function directoryWallTsconfig(
       composite: true,
       typeRoots: [`${"../".repeat(depth)}${MATERIALIZED_ROOT}`],
       types: [`${pinnedSurface}/${wall.kind}`],
-      paths: pinnedKindIndexPaths(depth, pinnedSurface, wall.kind, rootAliases.baseUrl),
+      paths: pinnedKindIndexPaths(depth, pinnedSurface, wall.kind, rootAliases),
     },
     include: ["**/*.ts"],
     exclude,
