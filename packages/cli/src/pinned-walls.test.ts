@@ -284,3 +284,105 @@ describe("composite directory walls under a pinned committed surface", () => {
     expect(code).toBe(0);
   });
 });
+
+// The documented consumer form: the factory comes from the `<kind>` index, whose
+// bare specifier resolves through `node_modules` to the *installed* package. Each
+// test therefore needs the real package installed and a pinned surface that
+// **differs** from it — a byte-identical copy satisfies any assertion, and the
+// `linkMaterializedSurface` arrangement above hides the second channel entirely.
+describe("a pinned wall's documented kind-index import resolves into the pinned surface", () => {
+  function linkInstalledTypesPackage(): void {
+    const scope = path.join(cwd, "node_modules", "@defold-typescript");
+    mkdirSync(scope, { recursive: true });
+    symlinkSync(TYPES_PKG, path.join(scope, "types"), "dir");
+  }
+
+  // Rename a member out of the materialized surface so it survives only in the
+  // installed package. Throws rather than silently proving nothing when the
+  // upstream member is gone.
+  function renameInSurface(rel: string, member: string, renamed: string): void {
+    const full = path.join(cwd, rel);
+    const before = readFileSync(full, "utf8");
+    const after = before.split(member).join(renamed);
+    if (after === before) {
+      throw new Error(`fixture drift: ${member} no longer appears in ${rel}`);
+    }
+    writeFileSync(full, after);
+  }
+
+  function wallUnderPin(): string | null {
+    const pinned = resolveActivePinnedSurface(cwd);
+    const walls = planSourceDirectoryWalls(cwd);
+    writeDirectoryWallTsconfigs(cwd, walls, pinned);
+    wireWallReferences(cwd, walls);
+    return pinned;
+  }
+
+  // One program reading both members settles both halves at once: the pinned-only
+  // member drawing no diagnostic proves the redirect resolves into the surface,
+  // and the installed-only member drawing TS2339 proves nothing else is loaded.
+  // TS reports the missing property as TS2339, or TS2551 when it can suggest a
+  // near-miss from the pinned surface; both are the same rejection.
+  function expectOnlyPinnedSurface(pinnedOnly: string, installedOnly: string): void {
+    const { code, output } = typecheckBuild(cwd);
+    expect(code).not.toBe(0);
+    expect(output).toMatch(
+      new RegExp(`error TS2(339|551): Property '${installedOnly}' does not exist`),
+    );
+    expect(output).not.toContain(pinnedOnly);
+  }
+
+  test("an editor wall over a committed surface rejects a member only the installed release declares", () => {
+    const COMMITTED = "defold-1.13.0";
+    writeRootTsconfig();
+    const { materializedDir } = materializeApiSurface({
+      cwd,
+      surface: { surfaceId: COMMITTED, available: true },
+      sourceGeneratedDir: path.join(TYPES_PKG, "generated"),
+    });
+    ensureMaterializedReference(cwd, materializedDir);
+    linkInstalledTypesPackage();
+    renameInSurface(`.defold-types/${COMMITTED}/editor.d.ts`, "engine_sha1", "only_in_pinned");
+
+    touch(
+      "src/tooling/bundle.ts",
+      [
+        'import { defineEditorScript } from "@defold-typescript/types/editor-script";',
+        "export default defineEditorScript({",
+        "  get_commands: () => {",
+        "    void editor.only_in_pinned;",
+        "    void editor.engine_sha1;",
+        "    return [];",
+        "  },",
+        "});",
+      ].join("\n"),
+    );
+
+    expect(wallUnderPin()).toBe(COMMITTED);
+    expectOnlyPinnedSurface("only_in_pinned", "engine_sha1");
+  });
+
+  test("a gui wall over a ref-doc surface rejects a member only the installed release declares", async () => {
+    writeRootTsconfig();
+    await materializPinnedMultiKind();
+    linkInstalledTypesPackage();
+    renameInSurface(".defold-types/defold-1.9.8/gui.d.ts", "get_node", "only_in_pinned");
+
+    touch("src/ui/hud.gui_script");
+    touch(
+      "src/ui/hud.ts",
+      [
+        'import { defineGuiScript } from "@defold-typescript/types/gui-script";',
+        "defineGuiScript({",
+        "  init() {",
+        "    void gui.only_in_pinned;",
+        "    void gui.get_node;",
+        "  },",
+        "});",
+      ].join("\n"),
+    );
+
+    expect(wallUnderPin()).toBe("defold-1.9.8");
+    expectOnlyPinnedSurface("only_in_pinned", "get_node");
+  });
+});

@@ -213,6 +213,7 @@ interface WallTsconfig {
     readonly composite: true;
     readonly typeRoots: null | string[];
     readonly types: string[];
+    readonly paths?: Record<string, string[]>;
   };
   readonly include: readonly ["**/*.ts"];
   readonly exclude: readonly string[];
@@ -226,6 +227,26 @@ function nestedExcludes(wallDir: string, nestedWallDirs: readonly string[]): str
   return nestedWallDirs
     .map((dir) => `${dir.slice(wallDir.length + 1)}/**`)
     .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+}
+
+// The wall's own redirect for the documented `@defold-typescript/types/<kind>`
+// factory import, which otherwise resolves through `node_modules` to the
+// *installed* package's kind index and loads a second ambient surface beside the
+// pinned one. It must name `<surface>/<kind>/index.d.ts` — the same file `types`
+// resolves — and not the identical-content `<surface>/kinds/<kind>.d.ts` sibling,
+// which would re-create the double load. `paths` in a config with no `baseUrl`
+// resolves against the config's own directory, so the prefix is the one
+// `typeRoots` uses.
+function pinnedKindIndexPaths(
+  depth: number,
+  pinnedSurface: string,
+  kind: string,
+): Record<string, string[]> {
+  return {
+    [`@defold-typescript/types/${kind}`]: [
+      `${"../".repeat(depth)}${MATERIALIZED_ROOT}/${pinnedSurface}/${kind}/index.d.ts`,
+    ],
+  };
 }
 
 // `surfaceKinds` is what the pinned surface actually wrote (see
@@ -255,6 +276,7 @@ export function directoryWallTsconfig(
       composite: true,
       typeRoots: [`${"../".repeat(depth)}${MATERIALIZED_ROOT}`],
       types: [`${pinnedSurface}/${wall.kind}`],
+      paths: pinnedKindIndexPaths(depth, pinnedSurface, wall.kind),
     },
     include: ["**/*.ts"],
     exclude,
@@ -407,23 +429,36 @@ export function writeDirectoryWallTsconfigs(
       const options = current.compilerOptions ?? {};
       // Skip the write when already narrowed so a consumer's formatting is not
       // churned to JSON.stringify's layout on every build.
+      // An unpinned wall carries no `paths` key while an un-pinned one reads
+      // `paths: null`; both mean "no redirect", so normalize before comparing or
+      // every build rewrites a wall that was pinned once.
       const alreadyNarrowed =
         current.extends === desired.extends &&
         options.composite === desired.compilerOptions.composite &&
         JSON.stringify(options.typeRoots) === JSON.stringify(desired.compilerOptions.typeRoots) &&
         JSON.stringify(options.types) === JSON.stringify(desired.compilerOptions.types) &&
+        JSON.stringify(options.paths ?? null) ===
+          JSON.stringify(desired.compilerOptions.paths ?? null) &&
         JSON.stringify(current.include) === JSON.stringify(desired.include) &&
         JSON.stringify(current.exclude) === JSON.stringify(desired.exclude);
       if (!alreadyNarrowed) {
+        const nextOptions: Record<string, unknown> = {
+          ...options,
+          composite: desired.compilerOptions.composite,
+          typeRoots: desired.compilerOptions.typeRoots,
+          types: desired.compilerOptions.types,
+        };
+        // A wall that never had a redirect keeps a `paths`-free tsconfig; only a
+        // stale key from an earlier pin is nulled out, the way `typeRoots` is.
+        if (desired.compilerOptions.paths !== undefined) {
+          nextOptions.paths = desired.compilerOptions.paths;
+        } else if (options.paths !== undefined) {
+          nextOptions.paths = null;
+        }
         writeJson(target, {
           ...current,
           extends: desired.extends,
-          compilerOptions: {
-            ...options,
-            composite: desired.compilerOptions.composite,
-            typeRoots: desired.compilerOptions.typeRoots,
-            types: desired.compilerOptions.types,
-          },
+          compilerOptions: nextOptions,
           include: desired.include,
           exclude: desired.exclude,
         });
