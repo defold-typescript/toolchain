@@ -168,10 +168,13 @@ function classifiedEntryOfArgument(
 // hashed name addresses whatever the enclosing call's slot addresses, so
 // `msg.post(hash("#sprite"), …)` reads as the bare literal does. Handing the
 // `hash(…)` call itself to the lookup above is what keeps the parameter search,
-// the comparison scoping and the companion argument in one place — and it is
-// also why this is one level and not a walk: the inner `hash` of a doubly
-// wrapped literal is an argument of a `hash` call, whose entry is scoped to an
-// action-id comparison it cannot satisfy there.
+// the comparison scoping and the companion argument in one place.
+//
+// One level, and the stop is enforced rather than argued: a resolved entry that
+// is itself the `hash` entry means the literal was doubly wrapped, and the
+// compared outer `hash` of `action_id === hash(hash(""))` is exactly the shape
+// that satisfies that entry — so prose about a scope it "cannot satisfy" was
+// never enough to keep action ids off the inner literal.
 //
 // Only the ambient `hash` ascends. A project's own is prefixless, so `tableKey`
 // declines it exactly as it declines it for an action id.
@@ -185,7 +188,8 @@ function slotThroughHashedCall(
   const callee = call.expression;
   if (!ts.isPropertyAccessExpression(callee) && !ts.isIdentifier(callee)) return undefined;
   if (tableKey(checker, callee) !== "hash") return undefined;
-  return classifiedEntryOfArgument(checker, table, call);
+  const ascended = classifiedEntryOfArgument(checker, table, call);
+  return ascended?.entry.fqn === "hash" ? undefined : ascended;
 }
 
 // How the committed table classifies the argument slot this expression occupies
