@@ -164,6 +164,30 @@ function classifiedEntryOfArgument(
   return undefined;
 }
 
+// The entry governing the slot a literal *wrapped in* `hash(…)` occupies: the
+// hashed name addresses whatever the enclosing call's slot addresses, so
+// `msg.post(hash("#sprite"), …)` reads as the bare literal does. Handing the
+// `hash(…)` call itself to the lookup above is what keeps the parameter search,
+// the comparison scoping and the companion argument in one place — and it is
+// also why this is one level and not a walk: the inner `hash` of a doubly
+// wrapped literal is an argument of a `hash` call, whose entry is scoped to an
+// action-id comparison it cannot satisfy there.
+//
+// Only the ambient `hash` ascends. A project's own is prefixless, so `tableKey`
+// declines it exactly as it declines it for an action id.
+function slotThroughHashedCall(
+  checker: ts.TypeChecker,
+  table: UrlParameterTable,
+  literal: ts.StringLiteralLike,
+): { entry: UrlParameterEntry; call: ts.CallExpression } | undefined {
+  const call = literal.parent;
+  if (!ts.isCallExpression(call)) return undefined;
+  const callee = call.expression;
+  if (!ts.isPropertyAccessExpression(callee) && !ts.isIdentifier(callee)) return undefined;
+  if (tableKey(checker, callee) !== "hash") return undefined;
+  return classifiedEntryOfArgument(checker, table, call);
+}
+
 // How the committed table classifies the argument slot this expression occupies
 // — `"none"` when nothing resolves, which is also the answer for any node that
 // is not a call argument at all.
@@ -239,7 +263,12 @@ export function resolveClassifiedSlotAtPosition(input: {
   if (position < textStart || position > textStart + literal.text.length) return undefined;
 
   const checker = program.getTypeChecker();
-  const classified = classifiedEntryOfArgument(checker, table, literal);
+  // fallback-only ascent: a literal whose own slot classifies — the action-id
+  // caret inside a compared `hash` — never reaches it, so no shipped kind can
+  // change meaning here.
+  const own = classifiedEntryOfArgument(checker, table, literal);
+  const classified =
+    own && own.entry.class !== "none" ? own : slotThroughHashedCall(checker, table, literal);
   if (!classified || classified.entry.class === "none") return undefined;
 
   const hash = literal.text.lastIndexOf("#");
