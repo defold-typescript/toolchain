@@ -2675,6 +2675,15 @@ Either surface carries `editor-script` only when the Defold target it was built
 from ships an editor-scripting document of its own, which today only the current
 default target does.
 
+Narrowing covers the import as well as the ambient namespaces. A wall that
+narrows to a pinned kind also redirects the `@defold-typescript/types/<kind>`
+factory import into the same pinned file, so the factory and the namespaces come
+from one surface rather than from the pinned one *and* the installed release. That
+is why a member the pinned release does not declare is now a compile error inside
+a walled directory, even though the installed package still declares it. Walls
+that are not pinned, and pinned walls for a kind the surface did not write, keep
+the installed entrypoint and are unaffected.
+
 The root `tsconfig.json` references each walled directory and excludes it from the
 root program, so `tsc -b --noEmit` builds every walled directory against only its
 narrowed surface — a `render.*` use inside a gui-walled directory becomes a compile
@@ -4691,7 +4700,10 @@ Either surface carries `editor-script` only when the target it was built from
 ships an editor-scripting document of its own, which today only the current
 default target does. A project pinned to a target without one keeps the installed
 package's [editor-script surface](editor-scripts.md) — nothing silently
-substitutes the default target's editor API for the pinned release's.
+substitutes the default target's editor API for the pinned release's. Where a
+wall does narrow, the narrowing covers the `@defold-typescript/types/<kind>`
+factory import as well as the ambient surface, so both come from the pinned
+release; see [walling a directory](./wall.md).
 
 If a pinned target cannot be generated — an unknown version, or no network on
 first use — the build does **not** fail. It reports `materializedSurface: null`,
