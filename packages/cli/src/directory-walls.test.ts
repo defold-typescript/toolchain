@@ -405,6 +405,11 @@ describe("directoryWallTsconfig", () => {
         composite: true,
         typeRoots: [`../../${MATERIALIZED_ROOT}`],
         types: ["1.9.8/gui-script"],
+        paths: {
+          "@defold-typescript/types/gui-script": [
+            `../../${MATERIALIZED_ROOT}/1.9.8/gui-script/index.d.ts`,
+          ],
+        },
       },
       include: ["**/*.ts"],
       exclude: [],
@@ -425,6 +430,11 @@ describe("directoryWallTsconfig", () => {
         composite: true,
         typeRoots: [`../${MATERIALIZED_ROOT}`],
         types: ["1.9.8/render-script"],
+        paths: {
+          "@defold-typescript/types/render-script": [
+            `../${MATERIALIZED_ROOT}/1.9.8/render-script/index.d.ts`,
+          ],
+        },
       },
       include: ["**/*.ts"],
       exclude: [],
@@ -488,6 +498,11 @@ describe("directoryWallTsconfig", () => {
         composite: true,
         typeRoots: [`../../${MATERIALIZED_ROOT}`],
         types: ["1.9.8/editor-script"],
+        paths: {
+          "@defold-typescript/types/editor-script": [
+            `../../${MATERIALIZED_ROOT}/1.9.8/editor-script/index.d.ts`,
+          ],
+        },
       },
       include: ["**/*.ts"],
       exclude: [],
@@ -525,6 +540,31 @@ describe("directoryWallTsconfig", () => {
       include: ["**/*.ts"],
       exclude: [],
     });
+  });
+
+  test("the redirect names the per-kind index the ambient channel resolves, not its kinds/ sibling", () => {
+    const { paths } = directoryWallTsconfig(
+      wall("src/ui", "gui-script", "@defold-typescript/types/gui-script"),
+      "1.9.8",
+      [],
+      RUNTIME_KINDS,
+    ).compilerOptions;
+    const target = paths?.["@defold-typescript/types/gui-script"]?.[0];
+    expect(target).toEndWith("/gui-script/index.d.ts");
+    expect(target).not.toContain("/kinds/");
+  });
+
+  test("an unpinned wall and a pinned wall for an unwritten kind carry no paths key at all", () => {
+    const guiWall = wall("src/ui", "gui-script", "@defold-typescript/types/gui-script");
+    expect(Object.hasOwn(directoryWallTsconfig(guiWall, null).compilerOptions, "paths")).toBe(
+      false,
+    );
+    expect(
+      Object.hasOwn(
+        directoryWallTsconfig(guiWall, "1.9.8", [], ["script", "editor-script"]).compilerOptions,
+        "paths",
+      ),
+    ).toBe(false);
   });
 });
 
@@ -686,6 +726,54 @@ describe("writeDirectoryWallTsconfigs", () => {
     seedSurface("1.9.8", [...RUNTIME_KINDS, "editor-script"]);
     expect(writeDirectoryWallTsconfigs(cwd, walls, "1.9.8")).toEqual(["src/editor/tsconfig.json"]);
     expect(types()).toEqual(["1.9.8/editor-script"]);
+  });
+
+  test("a redirect pointing at the kinds/ sibling is rewritten even though every other key matches", () => {
+    seedSurface("1.9.8", RUNTIME_KINDS);
+    const walls = [wall("src/ui", "gui-script", "@defold-typescript/types/gui-script")];
+    const desired = directoryWallTsconfig(walls[0] as DirectoryWall, "1.9.8", [], RUNTIME_KINDS);
+    touch(
+      "src/ui/tsconfig.json",
+      JSON.stringify({
+        ...desired,
+        compilerOptions: {
+          ...desired.compilerOptions,
+          paths: {
+            "@defold-typescript/types/gui-script": [
+              `../../${MATERIALIZED_ROOT}/1.9.8/kinds/gui-script.d.ts`,
+            ],
+          },
+        },
+      }),
+    );
+
+    expect(writeDirectoryWallTsconfigs(cwd, walls, "1.9.8")).toEqual(["src/ui/tsconfig.json"]);
+    expect(JSON.parse(readFileSync(path.join(cwd, "src/ui/tsconfig.json"), "utf8"))).toEqual(
+      desired,
+    );
+  });
+
+  test("a wall that stops being pinned has its redirect nulled out and then settles", () => {
+    seedSurface("1.9.8", RUNTIME_KINDS);
+    const walls = [wall("src/ui", "gui-script", "@defold-typescript/types/gui-script")];
+    const target = path.join(cwd, "src/ui/tsconfig.json");
+    const paths = (): unknown =>
+      (JSON.parse(readFileSync(target, "utf8")) as { compilerOptions: { paths?: unknown } })
+        .compilerOptions.paths;
+
+    writeDirectoryWallTsconfigs(cwd, walls, "1.9.8");
+    expect(paths()).toEqual({
+      "@defold-typescript/types/gui-script": [
+        `../../${MATERIALIZED_ROOT}/1.9.8/gui-script/index.d.ts`,
+      ],
+    });
+
+    expect(writeDirectoryWallTsconfigs(cwd, walls, null)).toEqual(["src/ui/tsconfig.json"]);
+    expect(paths()).toBe(null);
+
+    const before = statSync(target).mtimeMs;
+    expect(writeDirectoryWallTsconfigs(cwd, walls, null)).toEqual([]);
+    expect(statSync(target).mtimeMs).toBe(before);
   });
 });
 
