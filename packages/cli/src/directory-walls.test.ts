@@ -8,6 +8,7 @@ import {
   groupSourceScriptKindsByDirectory,
   groupSourceScriptKindsBySubtree,
   materializedSurfaceKinds,
+  mergeWallPaths,
   nearestWall,
   planSourceDirectoryWalls,
   type ResolvedDirectoryWall,
@@ -41,6 +42,23 @@ function touch(rel: string, contents = ""): void {
 
 function writeTsconfig(include: string[]): void {
   touch("tsconfig.json", JSON.stringify({ include }));
+}
+
+function writeRootAliases(paths: Record<string, string[]>, baseUrl?: string): void {
+  touch(
+    "tsconfig.json",
+    JSON.stringify({
+      compilerOptions: baseUrl === undefined ? { paths } : { baseUrl, paths },
+      include: ["src/**/*.ts"],
+    }),
+  );
+}
+
+function readWallPaths(rel: string): unknown {
+  const parsed = JSON.parse(readFileSync(path.join(cwd, rel), "utf8")) as {
+    compilerOptions: { paths?: unknown };
+  };
+  return parsed.compilerOptions.paths;
 }
 
 function seedSurface(surface: string, kinds: readonly string[]): void {
@@ -753,27 +771,212 @@ describe("writeDirectoryWallTsconfigs", () => {
     );
   });
 
-  test("a wall that stops being pinned has its redirect nulled out and then settles", () => {
+  test("a pinned write adds the redirect beside a key the wall already declared", () => {
     seedSurface("1.9.8", RUNTIME_KINDS);
-    const walls = [wall("src/ui", "gui-script", "@defold-typescript/types/gui-script")];
-    const target = path.join(cwd, "src/ui/tsconfig.json");
-    const paths = (): unknown =>
-      (JSON.parse(readFileSync(target, "utf8")) as { compilerOptions: { paths?: unknown } })
-        .compilerOptions.paths;
+    touch(
+      "src/ui/tsconfig.json",
+      JSON.stringify({ compilerOptions: { paths: { "@app/*": ["./local/*"] } } }),
+    );
 
-    writeDirectoryWallTsconfigs(cwd, walls, "1.9.8");
-    expect(paths()).toEqual({
+    writeDirectoryWallTsconfigs(
+      cwd,
+      [wall("src/ui", "gui-script", "@defold-typescript/types/gui-script")],
+      "1.9.8",
+    );
+
+    expect(readWallPaths("src/ui/tsconfig.json")).toEqual({
+      "@app/*": ["./local/*"],
       "@defold-typescript/types/gui-script": [
         `../../${MATERIALIZED_ROOT}/1.9.8/gui-script/index.d.ts`,
       ],
     });
+  });
 
+  test("a pinned write mirrors the root's aliases re-based to the wall directory", () => {
+    seedSurface("1.9.8", RUNTIME_KINDS);
+    writeRootAliases({ "@app/*": ["./src/shared/*"], "@abs": ["/opt/types/abs.d.ts"] });
+
+    writeDirectoryWallTsconfigs(
+      cwd,
+      [wall("src/ui", "gui-script", "@defold-typescript/types/gui-script")],
+      "1.9.8",
+    );
+
+    expect(readWallPaths("src/ui/tsconfig.json")).toEqual({
+      "@app/*": ["../../src/shared/*"],
+      "@abs": ["/opt/types/abs.d.ts"],
+      "@defold-typescript/types/gui-script": [
+        `../../${MATERIALIZED_ROOT}/1.9.8/gui-script/index.d.ts`,
+      ],
+    });
+  });
+
+  test("a root baseUrl copies mirrors verbatim and bases the redirect on it, not on the wall dir", () => {
+    seedSurface("1.9.8", RUNTIME_KINDS);
+    writeRootAliases({ "@app/*": ["./src/shared/*"] }, ".");
+
+    writeDirectoryWallTsconfigs(
+      cwd,
+      [wall("src/ui", "gui-script", "@defold-typescript/types/gui-script")],
+      "1.9.8",
+    );
+
+    expect(readWallPaths("src/ui/tsconfig.json")).toEqual({
+      "@app/*": ["./src/shared/*"],
+      "@defold-typescript/types/gui-script": [`${MATERIALIZED_ROOT}/1.9.8/gui-script/index.d.ts`],
+    });
+  });
+
+  test("a nested baseUrl bases the redirect on that directory", () => {
+    seedSurface("1.9.8", RUNTIME_KINDS);
+    writeRootAliases({}, "./src");
+
+    writeDirectoryWallTsconfigs(
+      cwd,
+      [wall("src/ui", "gui-script", "@defold-typescript/types/gui-script")],
+      "1.9.8",
+    );
+
+    expect(readWallPaths("src/ui/tsconfig.json")).toEqual({
+      "@defold-typescript/types/gui-script": [
+        `../${MATERIALIZED_ROOT}/1.9.8/gui-script/index.d.ts`,
+      ],
+    });
+  });
+
+  test("a root declaring no paths leaves the pinned wall carrying the redirect alone", () => {
+    seedSurface("1.9.8", RUNTIME_KINDS);
+    writeTsconfig(["src/**/*.ts"]);
+
+    writeDirectoryWallTsconfigs(
+      cwd,
+      [wall("src/ui", "gui-script", "@defold-typescript/types/gui-script")],
+      "1.9.8",
+    );
+
+    expect(readWallPaths("src/ui/tsconfig.json")).toEqual({
+      "@defold-typescript/types/gui-script": [
+        `../../${MATERIALIZED_ROOT}/1.9.8/gui-script/index.d.ts`,
+      ],
+    });
+  });
+
+  test("a second pinned write over mirrored root aliases and a user key changes nothing", () => {
+    seedSurface("1.9.8", RUNTIME_KINDS);
+    writeRootAliases({ "@app/*": ["./src/shared/*"] });
+    touch(
+      "src/ui/tsconfig.json",
+      JSON.stringify({ compilerOptions: { paths: { "@local/*": ["./local/*"] } } }),
+    );
+    const walls = [wall("src/ui", "gui-script", "@defold-typescript/types/gui-script")];
+    const target = path.join(cwd, "src/ui/tsconfig.json");
+
+    writeDirectoryWallTsconfigs(cwd, walls, "1.9.8");
+    const before = statSync(target).mtimeMs;
+    expect(writeDirectoryWallTsconfigs(cwd, walls, "1.9.8")).toEqual([]);
+    expect(statSync(target).mtimeMs).toBe(before);
+    expect(readWallPaths("src/ui/tsconfig.json")).toEqual({
+      "@local/*": ["./local/*"],
+      "@app/*": ["../../src/shared/*"],
+      "@defold-typescript/types/gui-script": [
+        `../../${MATERIALIZED_ROOT}/1.9.8/gui-script/index.d.ts`,
+      ],
+    });
+  });
+
+  test("un-pinning drops the redirect and the mirrors, keeps a user key, and settles", () => {
+    seedSurface("1.9.8", RUNTIME_KINDS);
+    writeRootAliases({ "@app/*": ["./src/shared/*"] });
+    touch(
+      "src/ui/tsconfig.json",
+      JSON.stringify({ compilerOptions: { paths: { "@local/*": ["./local/*"] } } }),
+    );
+    const walls = [wall("src/ui", "gui-script", "@defold-typescript/types/gui-script")];
+    const target = path.join(cwd, "src/ui/tsconfig.json");
+
+    writeDirectoryWallTsconfigs(cwd, walls, "1.9.8");
     expect(writeDirectoryWallTsconfigs(cwd, walls, null)).toEqual(["src/ui/tsconfig.json"]);
-    expect(paths()).toBe(null);
+    expect(readWallPaths("src/ui/tsconfig.json")).toEqual({ "@local/*": ["./local/*"] });
 
     const before = statSync(target).mtimeMs;
     expect(writeDirectoryWallTsconfigs(cwd, walls, null)).toEqual([]);
     expect(statSync(target).mtimeMs).toBe(before);
+  });
+
+  test("un-pinning a wall holding only managed entries deletes the paths key rather than nulling it", () => {
+    seedSurface("1.9.8", RUNTIME_KINDS);
+    writeRootAliases({ "@app/*": ["./src/shared/*"] });
+    const walls = [wall("src/ui", "gui-script", "@defold-typescript/types/gui-script")];
+    const target = path.join(cwd, "src/ui/tsconfig.json");
+
+    writeDirectoryWallTsconfigs(cwd, walls, "1.9.8");
+    expect(writeDirectoryWallTsconfigs(cwd, walls, null)).toEqual(["src/ui/tsconfig.json"]);
+
+    const options = (
+      JSON.parse(readFileSync(target, "utf8")) as { compilerOptions: Record<string, unknown> }
+    ).compilerOptions;
+    expect(Object.hasOwn(options, "paths")).toBe(false);
+
+    const before = statSync(target).mtimeMs;
+    expect(writeDirectoryWallTsconfigs(cwd, walls, null)).toEqual([]);
+    expect(statSync(target).mtimeMs).toBe(before);
+  });
+
+  test("an unpinned wall that was never pinned keeps its own paths and gains no mirror", () => {
+    writeRootAliases({ "@app/*": ["./src/shared/*"] });
+    touch(
+      "src/ui/tsconfig.json",
+      JSON.stringify({ compilerOptions: { paths: { "@local/*": ["./local/*"] } } }),
+    );
+    const walls = [wall("src/ui", "gui-script", "@defold-typescript/types/gui-script")];
+
+    writeDirectoryWallTsconfigs(cwd, walls, null);
+    expect(readWallPaths("src/ui/tsconfig.json")).toEqual({ "@local/*": ["./local/*"] });
+  });
+});
+
+describe("mergeWallPaths", () => {
+  const managed = {
+    "@defold-typescript/types/gui-script": [
+      `../../${MATERIALIZED_ROOT}/1.9.8/gui-script/index.d.ts`,
+    ],
+  };
+  const managedKey = "@defold-typescript/types/gui-script";
+
+  test("an empty result is undefined, the signal to delete the key", () => {
+    expect(
+      mergeWallPaths({
+        existing: { [managedKey]: ["stale"] },
+        managed: undefined,
+        managedKey,
+        rootAliases: {},
+        depth: 2,
+      }),
+    ).toBe(undefined);
+  });
+
+  test("a wall-local entry wins over a root alias of the same specifier", () => {
+    expect(
+      mergeWallPaths({
+        existing: { "@app/*": ["./mine/*"] },
+        managed,
+        managedKey,
+        rootAliases: { paths: { "@app/*": ["./src/shared/*"] } },
+        depth: 2,
+      }),
+    ).toEqual({ "@app/*": ["./mine/*"], ...managed });
+  });
+
+  test("un-pinning keeps a root alias the user has since diverged from", () => {
+    expect(
+      mergeWallPaths({
+        existing: { "@app/*": ["./edited/*"], [managedKey]: managed[managedKey] },
+        managed: undefined,
+        managedKey,
+        rootAliases: { paths: { "@app/*": ["./src/shared/*"] } },
+        depth: 2,
+      }),
+    ).toEqual({ "@app/*": ["./edited/*"] });
   });
 });
 
