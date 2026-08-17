@@ -129,19 +129,24 @@ function comparisonSatisfied(
   );
 }
 
-// The table entry governing the argument slot this literal occupies, together
+// The table entry governing the argument slot this expression occupies, together
 // with the call it sits in — `undefined` when the call, the parameter, or the
 // lookup does not resolve. The judgment is the table's alone: the parameter's
 // declared type never participates, because an address slot and a `mesh_id`
 // carry the same triple.
+//
+// Any argument expression, not only a string literal: a hoisted `const SPRITE =
+// hash("#sprite")` occupies the slot exactly as the written literal does, and
+// driving both off this one lookup is what stops the two from ever disagreeing
+// about whether a slot addresses.
 function classifiedEntryOfArgument(
   checker: ts.TypeChecker,
   table: UrlParameterTable,
-  literal: ts.StringLiteralLike,
+  argument: ts.Expression,
 ): { entry: UrlParameterEntry; call: ts.CallExpression } | undefined {
-  const call = literal.parent;
+  const call = argument.parent;
   if (!ts.isCallExpression(call)) return undefined;
-  const argumentIndex = call.arguments.indexOf(literal);
+  const argumentIndex = call.arguments.indexOf(argument);
   if (argumentIndex === -1) return undefined;
   const callee = call.expression;
   if (!ts.isPropertyAccessExpression(callee) && !ts.isIdentifier(callee)) return undefined;
@@ -159,14 +164,15 @@ function classifiedEntryOfArgument(
   return undefined;
 }
 
-// How the committed table classifies the argument slot this literal occupies —
-// `"none"` when nothing resolves.
+// How the committed table classifies the argument slot this expression occupies
+// — `"none"` when nothing resolves, which is also the answer for any node that
+// is not a call argument at all.
 export function addressClassOfArgument(
   checker: ts.TypeChecker,
   table: UrlParameterTable,
-  literal: ts.StringLiteralLike,
+  argument: ts.Expression,
 ): UrlParameterClass {
-  return classifiedEntryOfArgument(checker, table, literal)?.entry.class ?? "none";
+  return classifiedEntryOfArgument(checker, table, argument)?.entry.class ?? "none";
 }
 
 // The text of the sibling argument the entry names as its address companion.
