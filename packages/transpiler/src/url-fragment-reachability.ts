@@ -32,20 +32,41 @@ function referenceTargetSymbol(type: ts.Type): ts.Symbol | undefined {
   return (type as ts.TypeReference).target.symbol;
 }
 
-// The declarations *the* `Hash` can come from, resolved from what the ambient
-// `hash` global returns rather than from the file `Hash` happens to be declared
-// in. A path test answers differently for an installed
-// `node_modules/@defold-typescript/types/…` and a workspace-resolved
+// What the global `Hash` *type* name means in scope at the anchor, as symbols.
+// The shipped `type Hash<S extends string = string> = Core.Hash<S>` yields the
+// `Core.Hash` symbol; a project's `Project.Hash` is not in global scope under
+// the bare name and never appears, and a project cannot add a second global
+// `Hash` type without a duplicate-identifier error — so unlike the *name*, this
+// anchor cannot be shadowed.
+function ambientHashAliasTargets(checker: ts.TypeChecker, anchor: ts.Node): ReadonlySet<ts.Symbol> {
+  const targets = new Set<ts.Symbol>();
+  for (const symbol of checker.getSymbolsInScope(anchor, ts.SymbolFlags.Type)) {
+    if (symbol.name !== "Hash") continue;
+    const target = referenceTargetSymbol(checker.getDeclaredTypeOfSymbol(symbol));
+    if (target) targets.add(target);
+  }
+  return targets;
+}
+
+// The declarations *the* `Hash` can come from, resolved from the two anchors the
+// shipped ambient declarations carry one line apart rather than from the file
+// `Hash` happens to be declared in. A path test answers differently for an
+// installed `node_modules/@defold-typescript/types/…` and a workspace-resolved
 // `packages/types/…` copy of the very same declarations, which silently emptied
 // this report for anyone consuming the package through a `paths` mapping or a
 // symlink (bug-121); a symbol identity holds under both.
 //
-// The scope anchor is an ambient file so that no user module's own `hash`
-// participates, and every call signature is walked because a project's
-// global-script `function hash(s: string): string` *merges* into this symbol
-// rather than replacing it — the declarations then span both files and a
-// fully-qualified-name test would reject the real one. Asking the checker
-// instead of the filesystem is the same discipline as `tableKey` in
+// The answer is the *intersection* of the two anchors. The `hash` function is
+// the scope-and-fail-closed anchor: its scope anchor is an ambient file so that
+// no user module's own `hash` participates, and every call signature is walked
+// because a project's global-script `function hash(s: string): string` *merges*
+// into this symbol rather than replacing it — the declarations then span both
+// files and a fully-qualified-name test would reject the real one. The global
+// `Hash` alias is the identity anchor: the function alone is not enough, because
+// a merged project overload contributes its own signatures, and testing what
+// they return by *name* admits any project type called `Hash` and then reports a
+// type argument that was never an address (bug-122). Asking the checker instead
+// of the filesystem is the same discipline as `tableKey` in
 // `url-address-slots.ts`.
 function canonicalHashSymbols(
   checker: ts.TypeChecker,
@@ -56,6 +77,8 @@ function canonicalHashSymbols(
   const canonical = new Set<ts.Symbol>();
   if (!anchor) return canonical;
 
+  const aliased = ambientHashAliasTargets(checker, anchor);
+
   for (const symbol of checker.getSymbolsInScope(anchor, ts.SymbolFlags.Function)) {
     if (symbol.name !== "hash") continue;
     const declaration = symbol.declarations?.[0];
@@ -64,7 +87,7 @@ function canonicalHashSymbols(
       .getTypeOfSymbolAtLocation(symbol, declaration)
       .getCallSignatures()) {
       const target = referenceTargetSymbol(signature.getReturnType());
-      if (target?.name === "Hash") canonical.add(target);
+      if (target && aliased.has(target)) canonical.add(target);
     }
   }
   return canonical;
