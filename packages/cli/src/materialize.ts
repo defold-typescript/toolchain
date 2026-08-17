@@ -50,6 +50,166 @@ function listDts(dir: string): string[] {
     .sort();
 }
 
+// The subpaths the installed types package publishes, so a carried declaration
+// that reaches a `src/` sibling can name the published module instead of a
+// surface file that either does not exist or — as with `editor` — exists as a
+// different module (the generated `editor` namespace, not `src/editor.ts`).
+function publishedSubpaths(typesRoot: string | null): ReadonlySet<string> {
+  if (typesRoot === null) {
+    return new Set();
+  }
+  try {
+    const pkg = JSON.parse(readFileSync(path.join(typesRoot, "package.json"), "utf8")) as {
+      exports?: Record<string, unknown>;
+    };
+    return new Set(
+      Object.keys(pkg.exports ?? {})
+        .filter((key) => key.startsWith("./"))
+        .map((key) => key.slice(2)),
+    );
+  } catch {
+    return new Set();
+  }
+}
+
+// A carried module resolves the surface's `core-types` re-export from wherever it
+// landed: `./core-types` at the root, `../core-types` one level down. Without
+// that re-export in the surface at all, the published subpath is the only target
+// that resolves.
+function retargetCoreTypes(contents: string, depth: number, surfaceHasCoreTypes: boolean): string {
+  const target = surfaceHasCoreTypes
+    ? `${depth === 0 ? "./" : "../".repeat(depth)}core-types`
+    : "@defold-typescript/types/core-types";
+  return contents.replace(/from "[^"]*\/src\/core-types"/g, `from "${target}"`);
+}
+
+function findSrcDeclaration(srcDir: string, name: string): string | null {
+  for (const candidate of [`${name}.d.ts`, `${name}.ts`]) {
+    const full = path.join(srcDir, candidate);
+    if (existsSync(full)) {
+      return full;
+    }
+  }
+  return null;
+}
+
+interface EditorCarryPlan {
+  // Surface-relative destination -> contents to write.
+  readonly files: ReadonlyMap<string, string>;
+  readonly kindIndex: string;
+  // Surface-root basenames the plan writes, so the stale-module prune keeps them.
+  readonly rootNames: readonly string[];
+}
+
+interface EditorCarryOptions {
+  readonly sourceGeneratedDir: string;
+  readonly srcDir: string;
+  readonly typesRoot: string | null;
+  // Surface-root module basenames already derived from `src/` (the overload set,
+  // the `core-types` re-export, `engine-globals`). A carried declaration reaching
+  // one of these keeps its relative specifier.
+  readonly srcDerived: ReadonlySet<string>;
+  readonly surfaceHasCoreTypes: boolean;
+  // Surface-relative paths the runtime copy already wrote.
+  readonly alreadyWritten: ReadonlySet<string>;
+}
+
+// Everything a target's own `kinds/editor-script.d.ts` names, retargeted for the
+// materialized layout. Returns `null` when the target declares no editor
+// document, and also when any file the index names is missing — an index with a
+// dangling import is worse than no editor kind at all, because
+// `resolveActivePinnedSurface` would then recognise the surface as pinned.
+function planEditorCarry(opts: EditorCarryOptions): EditorCarryPlan | null {
+  const indexPath = path.join(opts.sourceGeneratedDir, "kinds", "editor-script.d.ts");
+  if (!existsSync(indexPath)) {
+    return null;
+  }
+  const indexContents = readFileSync(indexPath, "utf8");
+  const kindsDir = path.dirname(indexPath);
+
+  const files = new Map<string, string>();
+  const rootNames: string[] = [];
+  const handAuthored: string[] = [];
+
+  for (const match of indexContents.matchAll(/import "([^"]+)";/g)) {
+    const spec = match[1] ?? "";
+    if (!spec.startsWith(".")) {
+      continue;
+    }
+    const fromSrc = /(?:^|\/)src\/(.+)$/.exec(spec);
+    if (fromSrc?.[1] !== undefined) {
+      handAuthored.push(fromSrc[1]);
+      continue;
+    }
+    const abs = `${path.resolve(kindsDir, spec)}.d.ts`;
+    const rel = path.relative(opts.sourceGeneratedDir, abs);
+    if (rel.startsWith("..") || path.isAbsolute(rel)) {
+      return null;
+    }
+    if (!existsSync(abs)) {
+      return null;
+    }
+    const relPosix = rel.split(path.sep).join("/");
+    if (opts.alreadyWritten.has(relPosix)) {
+      continue;
+    }
+    files.set(
+      relPosix,
+      retargetCoreTypes(
+        readFileSync(abs, "utf8"),
+        relPosix.split("/").length - 1,
+        opts.surfaceHasCoreTypes,
+      ),
+    );
+  }
+
+  // The hand-authored ambients sit at the surface root, so their own relative
+  // specifiers are resolved against the same root: a name the surface already
+  // derives from `src/` stays relative, a published subpath is named outright,
+  // and anything else is pulled in as another root file. Iterative because a
+  // pulled-in file may name further siblings.
+  const published = publishedSubpaths(opts.typesRoot);
+  const pending = [...handAuthored];
+  const carried = new Map<string, string>();
+  while (pending.length > 0) {
+    const name = pending.shift() as string;
+    if (carried.has(name)) {
+      continue;
+    }
+    const source = findSrcDeclaration(opts.srcDir, name);
+    if (source === null) {
+      return null;
+    }
+    const contents = readFileSync(source, "utf8");
+    carried.set(name, contents);
+    for (const match of contents.matchAll(/from "(\.[^"]*)"/g)) {
+      const dep = path.basename(match[1] ?? "");
+      if (dep === "" || opts.srcDerived.has(dep) || published.has(dep)) {
+        continue;
+      }
+      pending.push(dep);
+    }
+  }
+
+  for (const [name, contents] of carried) {
+    const rewritten = contents.replace(/from "(\.[^"]*)"/g, (whole, spec: string) => {
+      const dep = path.basename(spec);
+      if (opts.srcDerived.has(dep) || carried.has(dep)) {
+        return `from "./${dep}"`;
+      }
+      return published.has(dep) ? `from "@defold-typescript/types/${dep}"` : whole;
+    });
+    files.set(`${name}.d.ts`, rewritten);
+    rootNames.push(`${name}.d.ts`);
+  }
+
+  const kindIndex = indexContents
+    .replace(/import "(?:\.\.\/)+src\/([^"]+)";/g, 'import "../$1";')
+    .replace(/from "(?:\.\.\/)+src\/([^"]+)"/g, 'from "@defold-typescript/types/$1"');
+
+  return { files, kindIndex, rootNames };
+}
+
 export function materializeApiSurface(
   opts: MaterializeApiSurfaceOptions,
 ): MaterializeApiSurfaceResult {
@@ -98,6 +258,23 @@ export function materializeApiSurface(
   const engineGlobalsSrc = path.join(srcDir, "engine-globals.d.ts");
   const includeEngineGlobals = includeCoreTypes && existsSync(engineGlobalsSrc);
 
+  const srcDerived = new Set(overloads.map((file) => file.replace(/\.d\.ts$/, "")));
+  if (includeCoreTypes) {
+    srcDerived.add("core-types");
+  }
+  if (includeEngineGlobals) {
+    srcDerived.add("engine-globals");
+  }
+
+  const editorPlan = planEditorCarry({
+    sourceGeneratedDir,
+    srcDir,
+    typesRoot,
+    srcDerived,
+    surfaceHasCoreTypes: includeCoreTypes,
+    alreadyWritten: new Set(sources),
+  });
+
   const wanted = new Set(sources);
   for (const file of overloads) {
     wanted.add(file);
@@ -107,6 +284,9 @@ export function materializeApiSurface(
   }
   if (includeEngineGlobals) {
     wanted.add("engine-globals.d.ts");
+  }
+  for (const file of editorPlan?.rootNames ?? []) {
+    wanted.add(file);
   }
 
   for (const existing of readdirSync(absDir)) {
@@ -143,6 +323,23 @@ export function materializeApiSurface(
     name: `@defold-typescript/materialized-${surfaceId}`,
     types: "index.d.ts",
   });
+
+  // The surface directory is reused across builds, so the editor carry-over is
+  // rewritten from scratch every run: a target that stopped declaring an editor
+  // document must lose its `kinds/` too, or `resolveActivePinnedSurface` keeps
+  // recognising the surface as pinned against a stale mirror.
+  rmSync(path.join(absDir, "kinds"), { recursive: true, force: true });
+  rmSync(path.join(absDir, "editor-vm"), { recursive: true, force: true });
+  if (editorPlan !== null) {
+    for (const [rel, contents] of editorPlan.files) {
+      const target = path.join(absDir, ...rel.split("/"));
+      mkdirSync(path.dirname(target), { recursive: true });
+      writeFileSync(target, contents);
+    }
+    const kindsDir = path.join(absDir, "kinds");
+    mkdirSync(kindsDir, { recursive: true });
+    writeFileSync(path.join(kindsDir, "editor-script.d.ts"), editorPlan.kindIndex);
+  }
 
   return { materializedDir: relDir, active: surfaceId };
 }
