@@ -48,6 +48,16 @@ const rejectingTransport: EditorTransport = async () => {
   throw new Error("connect ECONNREFUSED 127.0.0.1:58433");
 };
 
+// Settles only on abort, so it can only complete if the signal actually reached
+// the transport init -- a wiring assertion would pass on a forwarded-but-unused
+// signal, this cannot.
+const abortOnlyTransport: EditorTransport = (_url, init) =>
+  new Promise((_resolve, reject) => {
+    init?.signal?.addEventListener("abort", () => {
+      reject(new DOMException("This operation was aborted", "AbortError"));
+    });
+  });
+
 const DEFOLD_OPENAPI = JSON.stringify({ info: { title: "Defold Editor HTTP API" } });
 
 async function* chunkStream(chunks: readonly string[]): AsyncIterable<string> {
@@ -188,6 +198,27 @@ describe("postCommand", () => {
     expect(calls).toEqual([
       { url: "http://localhost:58433/command/reload-extensions", method: "POST" },
     ]);
+  });
+
+  test("a caller that aborts abandons a post the editor never answers", async () => {
+    const cwd = tempProject();
+    writePortFile(cwd, "58433");
+    const controller = new AbortController();
+
+    const outcome = postCommand(cwd, "hot-reload", abortOnlyTransport, controller.signal);
+    controller.abort();
+
+    expect(await outcome).toBe("unavailable");
+  });
+
+  test("a signal that never aborts leaves the ordinary outcome alone", async () => {
+    const cwd = tempProject();
+    writePortFile(cwd, "58433");
+    const { transport } = recordingTransport(() => response(202));
+
+    const outcome = await postCommand(cwd, "hot-reload", transport, new AbortController().signal);
+
+    expect(outcome).toBe("accepted");
   });
 });
 
