@@ -86,11 +86,15 @@ export async function postCommand(
   cwd: string,
   name: string,
   transport: EditorTransport = defaultTransport,
+  signal?: AbortSignal,
 ): Promise<ReloadOutcome> {
   const port = readEditorPort(cwd);
   if (port === null) return "unavailable";
   try {
-    const res = await transport(`http://localhost:${port}/command/${name}`, { method: "POST" });
+    const res = await transport(`http://localhost:${port}/command/${name}`, {
+      method: "POST",
+      signal,
+    });
     if (res.status === 202) return "accepted";
     if (res.status === 403) return "skipped";
     return "unavailable";
@@ -102,8 +106,9 @@ export async function postCommand(
 export function hotReload(
   cwd: string,
   transport: EditorTransport = defaultTransport,
+  signal?: AbortSignal,
 ): Promise<ReloadOutcome> {
-  return postCommand(cwd, "hot-reload", transport);
+  return postCommand(cwd, "hot-reload", transport, signal);
 }
 
 /**

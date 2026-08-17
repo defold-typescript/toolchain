@@ -1119,6 +1119,8 @@ interface FakeEditor {
   holdConsole(): () => void;
   /** The signal production passed to the most recent resolve, if any. */
   lastResolveSignal(): AbortSignal | undefined;
+  /** The signal production passed to the most recent post, if any. */
+  lastPostSignal(): AbortSignal | undefined;
 }
 
 function makeEditor(baseUrl: string | null = "http://localhost:4242"): FakeEditor {
@@ -1129,6 +1131,7 @@ function makeEditor(baseUrl: string | null = "http://localhost:4242"): FakeEdito
     url: baseUrl,
     outcome: "accepted" as ReloadOutcome,
     resolveSignal: undefined as AbortSignal | undefined,
+    postSignal: undefined as AbortSignal | undefined,
     consoleOpen: true,
   };
   let gate: Promise<void> | null = null;
@@ -1142,8 +1145,10 @@ function makeEditor(baseUrl: string | null = "http://localhost:4242"): FakeEdito
       if (open) await open;
       return state.url === null ? null : { baseUrl: state.url };
     },
-    async postCommand(_cwd, name) {
+    async postCommand(_cwd, name, signal) {
       posts.push(name);
+      // Recorded before parking so a held post is observable from the test.
+      state.postSignal = signal;
       const open = gate;
       if (open) await open;
       return state.outcome;
@@ -1203,6 +1208,7 @@ function makeEditor(baseUrl: string | null = "http://localhost:4242"): FakeEdito
       };
     },
     lastResolveSignal: () => state.resolveSignal,
+    lastPostSignal: () => state.postSignal,
   };
 }
 
@@ -2430,6 +2436,208 @@ describe("runWatch stop lifecycle", () => {
 
     expect(editor.posts.length).toBe(1);
     expect(err().slice(beforeStop)).not.toContain("did not accept the reload");
+  });
+
+  test("stopping a watch aborts the reload post it left in flight", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    editor.posts.length = 0;
+    const releasePost = editor.hold();
+
+    writeProjectFile("src/main.ts", scriptSource(2));
+    factory.trigger("change", "src/main.ts");
+    await until(() => editor.posts.length === 1);
+
+    expect(editor.lastPostSignal()?.aborted).toBe(false);
+
+    handle.stop();
+    expect(await handle.done).toBe(0);
+
+    // The fake resolves its gate on release either way, so only the recorded
+    // signal proves the watch's own controller reached the call.
+    expect(editor.lastPostSignal()?.aborted).toBe(true);
+    releasePost();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  });
+
+  test("json mode reports no reload when the stop cancels a post already in flight", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, out } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      json: true,
+      watcherFactory: factory.factory,
+      hotReload: true,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    editor.posts.length = 0;
+    // An aborted post maps to `unavailable`, so the refusal arm is the one that
+    // would report if the post-stop guard let it through.
+    editor.setOutcome("unavailable");
+    const releasePost = editor.hold();
+
+    writeProjectFile("src/main.ts", scriptSource(2));
+    factory.trigger("change", "src/main.ts");
+    await until(() => editor.posts.length === 1);
+
+    handle.stop();
+    expect(await handle.done).toBe(0);
+
+    releasePost();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    const events = out()
+      .trimEnd()
+      .split("\n")
+      .map((line) => JSON.parse(line) as { event?: string });
+    const stopAt = events.findIndex((event) => event.event === "stop");
+    expect(stopAt).toBeGreaterThanOrEqual(0);
+    expect(events.slice(stopAt + 1)).toEqual([]);
+  });
+
+  test("a resolve that settles after the stop writes no resolve event", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, out } = captureStreams();
+    const factory = makeFactory();
+    let started = false;
+    let release!: () => void;
+    const settled = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      json: true,
+      watcherFactory: factory.factory,
+      debounceMs: 5,
+      resolveSurface: async () => {
+        started = true;
+        await settled;
+      },
+    });
+    await handle.waitForIdle();
+
+    factory.trigger("change", "game.project");
+    await until(() => started);
+
+    handle.stop();
+    expect(await handle.done).toBe(0);
+
+    release();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    const events = out()
+      .trimEnd()
+      .split("\n")
+      .map((line) => JSON.parse(line) as { event?: string });
+    const stopAt = events.findIndex((event) => event.event === "stop");
+    expect(stopAt).toBeGreaterThanOrEqual(0);
+    expect(events.slice(stopAt + 1)).toEqual([]);
+  });
+
+  test("a resolve that rejects after the stop writes no error event", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, out } = captureStreams();
+    const factory = makeFactory();
+    let started = false;
+    let fail!: (err: Error) => void;
+    const settled = new Promise<void>((_resolve, reject) => {
+      fail = reject;
+    });
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      json: true,
+      watcherFactory: factory.factory,
+      debounceMs: 5,
+      resolveSurface: async () => {
+        started = true;
+        await settled;
+      },
+    });
+    await handle.waitForIdle();
+
+    factory.trigger("change", "game.project");
+    await until(() => started);
+
+    handle.stop();
+    expect(await handle.done).toBe(0);
+
+    fail(new Error("surface resolution collapsed after the stop"));
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    const events = out()
+      .trimEnd()
+      .split("\n")
+      .map((line) => JSON.parse(line) as { event?: string });
+    const stopAt = events.findIndex((event) => event.event === "stop");
+    expect(stopAt).toBeGreaterThanOrEqual(0);
+    expect(events.slice(stopAt + 1)).toEqual([]);
+  });
+
+  test("a resolve that rejects after the stop writes nothing to stderr", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    let started = false;
+    let fail!: (err: Error) => void;
+    const settled = new Promise<void>((_resolve, reject) => {
+      fail = reject;
+    });
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      debounceMs: 5,
+      resolveSurface: async () => {
+        started = true;
+        await settled;
+      },
+    });
+    await handle.waitForIdle();
+
+    factory.trigger("change", "game.project");
+    await until(() => started);
+
+    const beforeStop = err().length;
+    handle.stop();
+    expect(await handle.done).toBe(0);
+
+    fail(new Error("surface resolution collapsed after the stop"));
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    expect(err().slice(beforeStop)).not.toContain("surface resolution collapsed");
   });
 });
 
