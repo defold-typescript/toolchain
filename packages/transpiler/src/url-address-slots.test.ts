@@ -441,10 +441,23 @@ describe("resolveClassifiedSlotAtPosition", () => {
     ].join("\n");
     expect(slotAt(declared, insideOf(declared, '"#sprite"'))).toBeUndefined();
 
-    // One level only: a recursing ascent would walk past the inner `hash` to
-    // `msg.post` and report `either` here.
+    // The ascent does not recurse: it would have to walk past the inner `hash`
+    // to `msg.post` to report `either` here. This says nothing about landing on
+    // the `hash` entry itself, because the outer `hash` sits in no comparison.
     const nested = 'msg.post(hash(hash("#sprite")), "hello");\n';
     expect(slotAt(nested, insideOf(nested, '"#sprite"'))).toBeUndefined();
+
+    // The stop itself: the compared outer `hash` *is* an operand of the
+    // action-id comparison, so one ascent from the inner literal lands on the
+    // `hash` entry and satisfies it. Nothing is being named here — the doubled
+    // wrapper hashes a hash — so the ascent has to reject that entry.
+    const doubled = ON_INPUT('if (action_id === hash(hash(""))) {}');
+    expect(slotAt(doubled, insideOf(doubled, '""'))).toBeUndefined();
+
+    // The paired positive, so a guard broad enough to reject the single wrapper
+    // reds here rather than only in a distant test.
+    const compared = ON_INPUT('if (action_id === hash("")) {}');
+    expect(slotAt(compared, insideOf(compared, '""'))?.class).toBe("action-id");
   });
 
   test("every class the committed table carries has a call here that resolves it", () => {
