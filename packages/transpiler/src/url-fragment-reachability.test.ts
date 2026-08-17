@@ -1,10 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { createRequire } from "node:module";
+import { dirname, join, resolve } from "node:path";
 import type { UrlParameterTable } from "@defold-typescript/types";
-import type * as ts from "typescript";
+import * as ts from "typescript";
 import type { SceneComponentIndex } from "./scene-component-index";
 import { createTranspileSession } from "./session";
+import { AMBIENT_FILES } from "./transpile";
 import { checkUrlFragmentReachability } from "./url-fragment-reachability";
 
 // The committed classification table, exactly as `@defold-typescript/types`
@@ -24,6 +26,72 @@ function programFor(source: string): ts.Program {
   return program;
 }
 
+const INSTALLED_PREFIX = "node_modules/@defold-typescript/types/";
+const WORKSPACE_PREFIX = "packages/types/";
+
+const requireFromHere = createRequire(import.meta.url);
+
+// The same ambient declarations the session seeds, keyed at the path a
+// workspace program resolves them at: a `paths` mapping or a symlinked
+// workspace package puts `Hash` in `packages/types/src/core-types.ts`, with no
+// package segment in the name (bug-121). Only the keys move — the contents are
+// the production export, so the file name is the single changing input.
+function workspaceProgramFor(source: string): ts.Program {
+  const files: Record<string, string> = { "main.ts": source };
+  for (const [name, content] of Object.entries(AMBIENT_FILES)) {
+    files[
+      name.startsWith(INSTALLED_PREFIX)
+        ? WORKSPACE_PREFIX + name.slice(INSTALLED_PREFIX.length)
+        : name
+    ] = content;
+  }
+
+  // Host wiring mirrored from `createTranspileSession`: the virtual map first,
+  // then `lib.*` beside the resolved `typescript` module and the tstl language
+  // extensions from disk.
+  const getSourceFile: ts.CompilerHost["getSourceFile"] = (fileName) => {
+    const content = files[fileName.replace(/\\/g, "/")];
+    if (content !== undefined) {
+      return ts.createSourceFile(fileName, content, ts.ScriptTarget.Latest, false);
+    }
+    let filePath: string | undefined;
+    if (fileName.startsWith("lib.")) {
+      filePath = join(dirname(requireFromHere.resolve("typescript")), fileName);
+    }
+    if (fileName.includes("language-extensions")) {
+      filePath = resolve(fileName.replace(/(\.d)?(\.ts)$/, ".d.ts"));
+    }
+    if (filePath === undefined) {
+      return undefined;
+    }
+    return ts.createSourceFile(
+      filePath,
+      readFileSync(filePath, "utf8"),
+      ts.ScriptTarget.Latest,
+      false,
+    );
+  };
+
+  const host: ts.CompilerHost = {
+    fileExists: (fileName) =>
+      files[fileName.replace(/\\/g, "/")] !== undefined || ts.sys.fileExists(fileName),
+    getCanonicalFileName: (fileName) => fileName,
+    getCurrentDirectory: () => "",
+    getDefaultLibFileName: ts.getDefaultLibFileName,
+    readFile: () => "",
+    getNewLine: () => "\n",
+    useCaseSensitiveFileNames: () => false,
+    writeFile() {},
+    getSourceFile,
+  };
+
+  return ts.createProgram(
+    Object.keys(files),
+    { lib: ["lib.es2022.d.ts"], skipLibCheck: true },
+    host,
+  );
+}
+
 function universe(...ids: string[]): SceneComponentIndex {
   return { ids: new Set(ids), incomplete: [] };
 }
@@ -34,6 +102,27 @@ function check(source: string, index: SceneComponentIndex) {
 
 function findingsOf(source: string, index: SceneComponentIndex) {
   const report = check(source, index);
+  if (report.kind !== "checked") {
+    throw new Error(`expected a checked report, got ${report.kind}`);
+  }
+  return report.findings;
+}
+
+// Scoped to the project's own file the way a real consumer scopes a run: under
+// the workspace keying the ambient declarations no longer sit under
+// `node_modules`, so `isAmbient` would otherwise walk them.
+function workspaceFindingsOf(source: string, index: SceneComponentIndex) {
+  const program = workspaceProgramFor(source);
+  const main = program.getSourceFile("main.ts");
+  if (!main) {
+    throw new Error("workspace program produced no main.ts");
+  }
+  const report = checkUrlFragmentReachability({
+    program,
+    table: TABLE,
+    index,
+    sourceFiles: [main],
+  });
   if (report.kind !== "checked") {
     throw new Error(`expected a checked report, got ${report.kind}`);
   }
@@ -217,6 +306,41 @@ describe("checkUrlFragmentReachability", () => {
     // non-address slot into a finding.
     const source = 'const ANIM = hash("no#pe");\nsprite.play_flipbook("#sprite", ANIM);\n';
     expect(findingsOf(source, universe("sprite"))).toEqual([]);
+  });
+
+  test("reads a hoisted hash under a workspace keying exactly as under an installed one", () => {
+    const source = 'const SPRITE = hash("#sprit");\nmsg.post(SPRITE, "hello");\n';
+    const workspace = workspaceFindingsOf(source, universe("sprite"));
+    expect(workspace).toEqual(findingsOf(source, universe("sprite")));
+    expect(workspace).toHaveLength(1);
+    const [finding] = workspace;
+    expect(finding?.fragment).toBe("sprit");
+    expect(finding?.start).toBe(source.indexOf("SPRITE", source.indexOf("msg.post")));
+    expect(finding?.length).toBe("SPRITE".length);
+  });
+
+  test("a project's own generic named `Hash` is never read as an address", () => {
+    // The local `Hash` is not assignable to the receiver, so the fixture carries
+    // an expected overload diagnostic; the report neither reads diagnostics nor
+    // is affected by them, and the argument's own type is the thing under test.
+    // The sibling literal anchors the case: it proves the visitor reached the
+    // slot, so a passing run cannot be one where nothing was examined.
+    const source =
+      "export const marker = 1;\n" +
+      "interface Hash<S extends string = string> {\n" +
+      "  readonly local: S;\n" +
+      "}\n" +
+      'declare const FAKE: Hash<"#nope">;\n' +
+      'msg.post(FAKE, "hello");\n' +
+      'msg.post("#missing", "hello");\n';
+    for (const findings of [
+      findingsOf(source, universe("sprite")),
+      workspaceFindingsOf(source, universe("sprite")),
+    ]) {
+      expect(findings.map((f) => f.fragment)).toEqual(["missing"]);
+      expect(findings[0]?.start).toBe(source.indexOf('"#missing"'));
+      expect(findings[0]?.length).toBe('"#missing"'.length);
+    }
   });
 
   test("withholds every finding while the universe has gaps", () => {
