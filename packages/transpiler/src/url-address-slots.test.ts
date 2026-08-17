@@ -4,7 +4,11 @@ import { join } from "node:path";
 import type { UrlParameterClass, UrlParameterTable } from "@defold-typescript/types";
 import type * as ts from "typescript";
 import { createTranspileSession } from "./session";
-import { isAddressClass, resolveClassifiedSlotAtPosition } from "./url-address-slots";
+import {
+  isAddressClass,
+  isFragmentCaret,
+  resolveClassifiedSlotAtPosition,
+} from "./url-address-slots";
 
 // The committed classification table, exactly as `@defold-typescript/types`
 // ships it — a table written into the test would prove nothing about the slots
@@ -400,6 +404,35 @@ describe("resolveClassifiedSlotAtPosition", () => {
       covered.add(positive.class);
     }
     expect([...covered].sort()).toEqual([...new Set(TABLE.map((entry) => entry.class))].sort());
+  });
+});
+
+// The slot geometry the predicate reads comes from the production resolver over
+// the committed table, so an offset written here is the offset an editor would
+// really report.
+function addressSlotAt(source: string, literal: string) {
+  const slot = slotAt(source, insideOf(source, literal));
+  if (!slot) {
+    throw new Error(`${literal} did not resolve to a classified slot`);
+  }
+  return slot;
+}
+
+describe("isFragmentCaret", () => {
+  test("the half flips at `fragmentStart` itself, where an empty fragment is typed", () => {
+    const slot = addressSlotAt('msg.post("/enemy#sprite", "hello");\n', '"/enemy#sprite"');
+    expect(isFragmentCaret(slot, slot.textStart)).toBe(false);
+    expect(isFragmentCaret(slot, slot.fragmentStart - 1)).toBe(false);
+    expect(isFragmentCaret(slot, slot.fragmentStart)).toBe(true);
+    expect(isFragmentCaret(slot, slot.textStart + slot.text.length)).toBe(true);
+  });
+
+  test("a literal carrying no `#` is path for every caret inside it", () => {
+    const slot = addressSlotAt('go.get_position("/player");\n', '"/player"');
+    expect(slot.fragmentStart).toBe(-1);
+    for (let position = slot.textStart; position <= slot.textStart + slot.text.length; position++) {
+      expect(isFragmentCaret(slot, position)).toBe(false);
+    }
   });
 });
 
