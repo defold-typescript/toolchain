@@ -12,6 +12,7 @@ import {
   nearestWall,
   planSourceDirectoryWalls,
   type ResolvedDirectoryWall,
+  type RootPathAliases,
   resolveActivePinnedSurface,
   resolveSourceWalls,
   wireWallReferences,
@@ -586,6 +587,53 @@ describe("directoryWallTsconfig", () => {
   });
 });
 
+describe("the pinned redirect's base", () => {
+  function redirect(rootAliases: RootPathAliases): string {
+    const { paths } = directoryWallTsconfig(
+      wall("src/ui", "gui-script", "@defold-typescript/types/gui-script"),
+      "1.9.8",
+      [],
+      RUNTIME_KINDS,
+      rootAliases,
+    ).compilerOptions;
+    const target = paths?.["@defold-typescript/types/gui-script"]?.[0];
+    if (target === undefined) {
+      throw new Error("the pinned wall wrote no redirect");
+    }
+    return target;
+  }
+
+  test("no baseUrl keeps the wall-relative prefix", () => {
+    expect(redirect({})).toBe(`../../${MATERIALIZED_ROOT}/1.9.8/gui-script/index.d.ts`);
+  });
+
+  test("a baseUrl naming the materialized root yields a bare, unrooted redirect", () => {
+    expect(redirect({ baseUrl: MATERIALIZED_ROOT })).toBe("1.9.8/gui-script/index.d.ts");
+    expect(redirect({ baseUrl: `./${MATERIALIZED_ROOT}` })).toBe("1.9.8/gui-script/index.d.ts");
+  });
+
+  test("a Windows absolute baseUrl resolves against the project directory in its own flavor", () => {
+    expect(redirect({ baseUrl: "C:\\proj", baseDir: "C:\\proj" })).toBe(
+      `${MATERIALIZED_ROOT}/1.9.8/gui-script/index.d.ts`,
+    );
+    const sibling = redirect({ baseUrl: "C:\\types", baseDir: "C:\\proj" });
+    expect(sibling).toBe(`../proj/${MATERIALIZED_ROOT}/1.9.8/gui-script/index.d.ts`);
+    expect(sibling).not.toContain("\\");
+  });
+
+  test("a POSIX absolute baseUrl resolves against the project directory, not the process cwd", () => {
+    const target = redirect({ baseUrl: "/opt/types", baseDir: "/home/me/proj" });
+    expect(target).toBe(`../../home/me/proj/${MATERIALIZED_ROOT}/1.9.8/gui-script/index.d.ts`);
+    expect(target).not.toContain(process.cwd());
+  });
+
+  test("an absolute baseUrl with no project directory falls back to the wall-relative prefix", () => {
+    expect(redirect({ baseUrl: "/opt/types" })).toBe(
+      `../../${MATERIALIZED_ROOT}/1.9.8/gui-script/index.d.ts`,
+    );
+  });
+});
+
 describe("writeDirectoryWallTsconfigs", () => {
   test("writes a tsconfig per wall and returns the rel paths sorted", () => {
     const walls = [
@@ -811,6 +859,52 @@ describe("writeDirectoryWallTsconfigs", () => {
     });
   });
 
+  test("a pinned write mirrors absolute alias targets of every flavor verbatim", () => {
+    seedSurface("1.9.8", RUNTIME_KINDS);
+    writeRootAliases({
+      "@app/*": ["./src/shared/*"],
+      "@abs": ["/opt/types/abs.d.ts"],
+      "@win/*": ["C:/types/*"],
+      "@unc": ["\\\\server\\share\\types.d.ts"],
+    });
+
+    writeDirectoryWallTsconfigs(
+      cwd,
+      [wall("src/ui", "gui-script", "@defold-typescript/types/gui-script")],
+      "1.9.8",
+    );
+
+    expect(readWallPaths("src/ui/tsconfig.json")).toEqual({
+      "@app/*": ["../../src/shared/*"],
+      "@abs": ["/opt/types/abs.d.ts"],
+      "@win/*": ["C:/types/*"],
+      "@unc": ["\\\\server\\share\\types.d.ts"],
+      "@defold-typescript/types/gui-script": [
+        `../../${MATERIALIZED_ROOT}/1.9.8/gui-script/index.d.ts`,
+      ],
+    });
+  });
+
+  test("un-pinning removes the absolute mirrors it wrote and keeps a wall-local key", () => {
+    seedSurface("1.9.8", RUNTIME_KINDS);
+    writeRootAliases({
+      "@app/*": ["./src/shared/*"],
+      "@abs": ["/opt/types/abs.d.ts"],
+      "@win/*": ["C:/types/*"],
+      "@unc": ["\\\\server\\share\\types.d.ts"],
+    });
+    touch(
+      "src/ui/tsconfig.json",
+      JSON.stringify({ compilerOptions: { paths: { "@local/*": ["./local/*"] } } }),
+    );
+    const walls = [wall("src/ui", "gui-script", "@defold-typescript/types/gui-script")];
+
+    writeDirectoryWallTsconfigs(cwd, walls, "1.9.8");
+    writeDirectoryWallTsconfigs(cwd, walls, null);
+
+    expect(readWallPaths("src/ui/tsconfig.json")).toEqual({ "@local/*": ["./local/*"] });
+  });
+
   test("a root baseUrl copies mirrors verbatim and bases the redirect on it, not on the wall dir", () => {
     seedSurface("1.9.8", RUNTIME_KINDS);
     writeRootAliases({ "@app/*": ["./src/shared/*"] }, ".");
@@ -825,6 +919,19 @@ describe("writeDirectoryWallTsconfigs", () => {
       "@app/*": ["./src/shared/*"],
       "@defold-typescript/types/gui-script": [`${MATERIALIZED_ROOT}/1.9.8/gui-script/index.d.ts`],
     });
+  });
+
+  test("a root baseUrl equal to the materialized root writes an unrooted redirect and settles", () => {
+    seedSurface("1.9.8", RUNTIME_KINDS);
+    writeRootAliases({}, MATERIALIZED_ROOT);
+    const walls = [wall("src/ui", "gui-script", "@defold-typescript/types/gui-script")];
+
+    writeDirectoryWallTsconfigs(cwd, walls, "1.9.8");
+
+    expect(readWallPaths("src/ui/tsconfig.json")).toEqual({
+      "@defold-typescript/types/gui-script": ["1.9.8/gui-script/index.d.ts"],
+    });
+    expect(writeDirectoryWallTsconfigs(cwd, walls, "1.9.8")).toEqual([]);
   });
 
   test("a nested baseUrl bases the redirect on that directory", () => {
