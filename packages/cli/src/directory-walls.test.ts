@@ -951,6 +951,28 @@ describe("writeDirectoryWallTsconfigs", () => {
     });
   });
 
+  test("an absolute root baseUrl bases the redirect on the project directory the writer read", () => {
+    seedSurface("1.9.8", RUNTIME_KINDS);
+    // A sibling of the temp project directory, built in the host's own path
+    // flavor: `wallPathsBase` picks its flavor from the `baseUrl` string, so
+    // deriving both sides from `cwd` keeps one literal expectation valid on a
+    // Windows runner too.
+    const base = path.join(path.dirname(cwd), `${path.basename(cwd)}-types`);
+    writeRootAliases({}, base);
+    const walls = [wall("src/ui", "gui-script", "@defold-typescript/types/gui-script")];
+
+    writeDirectoryWallTsconfigs(cwd, walls, "1.9.8");
+
+    const target = `../${path.basename(cwd)}/${MATERIALIZED_ROOT}/1.9.8/gui-script/index.d.ts`;
+    expect(readWallPaths("src/ui/tsconfig.json")).toEqual({
+      "@defold-typescript/types/gui-script": [target],
+    });
+    expect(path.resolve(base, target)).toBe(
+      path.join(cwd, MATERIALIZED_ROOT, "1.9.8", "gui-script", "index.d.ts"),
+    );
+    expect(writeDirectoryWallTsconfigs(cwd, walls, "1.9.8")).toEqual([]);
+  });
+
   test("a root declaring no paths leaves the pinned wall carrying the redirect alone", () => {
     seedSurface("1.9.8", RUNTIME_KINDS);
     writeTsconfig(["src/**/*.ts"]);
