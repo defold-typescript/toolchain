@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { readdirSync, readFileSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import {
   EDITOR_MODULE_MANIFEST,
@@ -11,9 +12,13 @@ import {
   generateVersionIndex,
   KIND_MODULE_MANIFEST,
   type KindManifestEntry,
+  loadApiTargets,
   MESSAGES_MANIFEST,
   MODULE_MANIFEST,
+  RUNTIME_KIND_MANIFEST,
+  targetKindManifest,
   VERSIONED_MODULE_MANIFEST,
+  versionedModuleManifest,
 } from "../scripts/regen";
 import { parseDefoldApiDoc } from "../src/api-doc";
 import { unexpressedFixtureNames } from "./declared-fqns";
@@ -322,6 +327,209 @@ describe("editor namespace emit", () => {
     KIND_MODULE_MANIFEST.filter((e) => e.kind !== "editor-script").map((e) => [e.kind]),
   )("%s: the runtime kind index never imports the editor namespace", (kind) => {
     expect(generateKindIndex(kind)).not.toContain('import "../editor";');
+  });
+});
+
+describe("editor manifests derived from the declaring target", () => {
+  const defaultTarget = () => {
+    const target = loadApiTargets().find((t) => t.default === true);
+    if (!target) throw new Error("no default target");
+    return target;
+  };
+  const declared = (predicate: (outFile: string) => boolean) =>
+    (defaultTarget().editorModules ?? []).filter((m) => predicate(m.outFile));
+
+  test("the editor entry reproduces the declaring target's own declaration", () => {
+    const registry = declared((outFile) => !outFile.startsWith("editor-vm/"));
+    expect(
+      EDITOR_MODULE_MANIFEST.map((entry) => ({
+        namespace: entry.namespace,
+        outFile: entry.outFile,
+        skipFunctions: entry.skipFunctions,
+      })),
+    ).toEqual(
+      registry.map((module) => ({
+        namespace: module.namespace,
+        outFile: module.outFile,
+        skipFunctions: module.skipFunctions,
+      })),
+    );
+    expect(EDITOR_MODULE_MANIFEST.map((entry) => entry.namespace)).toEqual(["editor"]);
+    // The named `mapType` selector survives the derivation: without it every
+    // editor handle token falls back to `unknown` and the branded chain breaks.
+    for (const entry of EDITOR_MODULE_MANIFEST) {
+      expect(entry.mapType?.("command")).toBe('Opaque<"command">');
+      expect(entry.mapType?.("transaction_step[")).toBe('Opaque<"transaction_step">[]');
+    }
+  });
+
+  test("each editor VM entry keeps its own imports-from and skip rules", () => {
+    const registry = declared((outFile) => outFile.startsWith("editor-vm/"));
+    expect(
+      EDITOR_VM_MODULE_MANIFEST.map((entry) => ({
+        namespace: entry.namespace,
+        outFile: entry.outFile,
+        importsFrom: entry.importsFrom,
+        skipFunctions: entry.skipFunctions,
+      })),
+    ).toEqual(
+      registry.map((module) => ({
+        namespace: module.namespace,
+        outFile: module.outFile,
+        // A VM module sits one directory deeper than the runtime surface, so it
+        // cannot ride the target's own `coreTypesImport`.
+        importsFrom: "../../src/core-types",
+        skipFunctions: module.skipFunctions,
+      })),
+    );
+    for (const entry of EDITOR_VM_MODULE_MANIFEST) {
+      expect(entry.mapType?.("any[")).toBe("unknown[]");
+    }
+  });
+
+  test("EDITOR_SKIP_FUNCTIONS is the declaring target's own editor skip list", () => {
+    const [module] = declared((outFile) => !outFile.startsWith("editor-vm/"));
+    expect([...EDITOR_SKIP_FUNCTIONS]).toEqual([...(module?.skipFunctions ?? [])]);
+    expect(EDITOR_SKIP_FUNCTIONS).toContain("command");
+  });
+});
+
+describe("per-target editor surface", () => {
+  const element = (name: string) => ({
+    type: "FUNCTION",
+    name,
+    brief: "",
+    description: "",
+    parameters: [],
+    returnvalues: [],
+  });
+
+  // Two non-default targets that differ only in whether they declare an editor
+  // document, so every assertion below turns on the declaration alone.
+  const syntheticRegistry = (): { registryPath: string; root: string } => {
+    const root = mkdtempSync(resolve(tmpdir(), "editor-targets-"));
+    const doc = (namespace: string) =>
+      JSON.stringify({
+        info: { namespace, brief: "b", description: "d" },
+        elements: [element(`${namespace}.ping`)],
+      });
+    writeFileSync(resolve(root, "label_doc.json"), doc("label"));
+    writeFileSync(resolve(root, "editor_doc.json"), doc("editor"));
+    writeFileSync(resolve(root, "editor_zip_doc.json"), doc("zip"));
+    const base = (id: string) => ({
+      id,
+      default: false,
+      fixturesDir: ".",
+      generatedDir: `generated/versions/${id}`,
+      coreTypesImport: "../../../src/core-types",
+      source: null,
+      modules: [{ namespace: "label", fixture: "label_doc.json", outFile: "label.d.ts" }],
+    });
+    const registryPath = resolve(root, "api-targets.json");
+    writeFileSync(
+      registryPath,
+      JSON.stringify({
+        targets: [
+          {
+            ...base("current"),
+            default: true,
+            generatedDir: "generated",
+            coreTypesImport: "../src/core-types",
+          },
+          {
+            ...base("declaring"),
+            editorModules: [
+              {
+                namespace: "editor",
+                fixture: "editor_doc.json",
+                outFile: "editor.d.ts",
+                mapType: "editor",
+              },
+              {
+                namespace: "zip",
+                fixture: "editor_zip_doc.json",
+                outFile: "editor-vm/zip.d.ts",
+                mapType: "editor",
+              },
+            ],
+          },
+          base("silent"),
+        ],
+      }),
+    );
+    return { registryPath, root };
+  };
+
+  const targetsOf = () => {
+    const { registryPath, root } = syntheticRegistry();
+    const targets = loadApiTargets(registryPath, root);
+    const byId = (id: string) => {
+      const target = targets.find((t) => t.id === id);
+      if (!target) throw new Error(`no ${id} target`);
+      return target;
+    };
+    return { targets, root, byId };
+  };
+
+  test("a declaring target contributes its editor entries to the versioned manifest", () => {
+    const { targets, root } = targetsOf();
+    const versioned = versionedModuleManifest(targets, root);
+    expect(
+      versioned
+        .filter((entry) => entry.versionId === "declaring")
+        .map((entry) => [entry.outFile, entry.editor === true] as const),
+    ).toEqual([
+      ["label.d.ts", false],
+      ["editor.d.ts", true],
+      ["editor-vm/zip.d.ts", true],
+    ]);
+  });
+
+  test("a target declaring no editor document contributes no editor entry", () => {
+    const { targets, root } = targetsOf();
+    const versioned = versionedModuleManifest(targets, root);
+    expect(versioned.filter((entry) => entry.versionId === "silent").map((e) => e.outFile)).toEqual(
+      ["label.d.ts"],
+    );
+    expect(versioned.some((entry) => entry.versionId === "current")).toBe(false);
+  });
+
+  test("the editor surface stays out of a version's runtime aggregate index", () => {
+    const { targets, root } = targetsOf();
+    const versioned = versionedModuleManifest(targets, root);
+    expect(generateVersionIndex("declaring", versioned)).toBe('import "./label";\n\nexport {};\n');
+  });
+
+  test("the editor-script kind index names the declaring target's own editor modules", () => {
+    const { byId } = targetsOf();
+    const index = generateKindIndex("editor-script", byId("declaring"));
+    expect([...index.matchAll(/^import "([^"]+)";$/gm)].map((m) => m[1])).toEqual([
+      "../editor",
+      "../editor-vm/zip",
+      // Four levels out of `generated/versions/<id>/kinds/`, where the default
+      // target's own index needs two — the pin is a real retarget, not a copy.
+      "../../../../src/editor-overloads",
+      "../../../../src/editor-vm-globals",
+    ]);
+    expect(index).not.toContain("../editor-vm/http");
+  });
+
+  test("a target declaring no editor document cannot produce an editor-script index", () => {
+    const { byId } = targetsOf();
+    expect(() => generateKindIndex("editor-script", byId("silent"))).toThrow(
+      /silent.*no editor document/,
+    );
+  });
+
+  test("only a declaring target's kind manifest carries the editor kind", () => {
+    const { byId } = targetsOf();
+    expect(targetKindManifest(byId("declaring")).map((entry) => entry.kind)).toEqual([
+      ...RUNTIME_KIND_MANIFEST.map((entry) => entry.kind),
+      "editor-script",
+    ]);
+    expect(targetKindManifest(byId("silent")).map((entry) => entry.kind)).toEqual(
+      RUNTIME_KIND_MANIFEST.map((entry) => entry.kind),
+    );
   });
 });
 

@@ -231,6 +231,7 @@ interface KindManifestEntry {
   readonly kind: string;
   readonly restricted?: string;
   readonly factory: string;
+  readonly only?: readonly string[];
 }
 
 interface MaterializeVersionedSurfaceModule {
@@ -246,13 +247,21 @@ interface MaterializeVersionedSurfaceModule {
     kind: string;
     universalModules: readonly string[];
     restrictedModule: string | null;
+    editorModules?: readonly string[];
   }) => string;
   readonly RUNTIME_KIND_MANIFEST: readonly KindManifestEntry[];
+  readonly targetKindManifest: (target: unknown) => readonly KindManifestEntry[];
 }
 
 // gui/render are the only kind-restricted namespaces; every other module is
 // universal and rides all three kind subpaths.
 const RESTRICTED_NAMESPACES = new Set(["gui", "render"]);
+
+// The hand-authored declarations an editor kind index needs on top of the
+// emitted namespaces: they are what make `editor.command`, `pprint` and the
+// `zip` constant tables resolve at all. Copied into the surface for the same
+// reason `engine-globals` is — the surface has no relative `src/` to reach.
+const EDITOR_HAND_AUTHORED: readonly string[] = ["editor-overloads", "editor-vm-globals"];
 
 export interface MaterializeRefDocSurfaceOptions {
   readonly cwd: string;
@@ -304,18 +313,46 @@ export async function materializeRefDocSurface(
     const indexPath = path.join(absDir, "index.d.ts");
     writeFileSync(indexPath, `import "./engine-globals";\n${readFileSync(indexPath, "utf8")}`);
 
+    // The editor documents the target declared, plain namespace first so the
+    // kind index reads the way the committed one does. They sit beside the
+    // runtime modules on disk but belong to the editor kind alone, so they are
+    // held out of the universal set the runtime kinds import.
+    const declaredEditor = target.editorModules ?? [];
+    const editorModules = [
+      ...declaredEditor.filter((m) => !m.outFile.includes("/")),
+      ...declaredEditor.filter((m) => m.outFile.includes("/")),
+    ].map((m) => m.outFile.replace(/\.d\.ts$/, ""));
+    if (editorModules.length > 0) {
+      for (const base of EDITOR_HAND_AUTHORED) {
+        copyFileSync(path.join(root, "src", `${base}.d.ts`), path.join(absDir, `${base}.d.ts`));
+      }
+    }
+    const editorOwned = new Set([...editorModules, ...EDITOR_HAND_AUTHORED]);
+
     const surfaceModules = listDts(absDir)
       .map((file) => file.replace(/\.d\.ts$/, ""))
-      .filter((base) => base !== "index" && base !== "core-types" && base !== "engine-globals");
+      .filter(
+        (base) =>
+          base !== "index" &&
+          base !== "core-types" &&
+          base !== "engine-globals" &&
+          !editorOwned.has(base),
+      );
     const universalModules = surfaceModules.filter((base) => !RESTRICTED_NAMESPACES.has(base));
+    const kinds = mod.targetKindManifest(target);
     const kindsDir = path.join(absDir, "kinds");
     mkdirSync(kindsDir, { recursive: true });
-    for (const entry of mod.RUNTIME_KIND_MANIFEST) {
+    for (const entry of kinds) {
       const restrictedModule =
         entry.restricted && surfaceModules.includes(entry.restricted) ? entry.restricted : null;
       writeFileSync(
         path.join(kindsDir, `${entry.kind}.d.ts`),
-        mod.renderMaterializedKindIndex({ kind: entry.kind, universalModules, restrictedModule }),
+        mod.renderMaterializedKindIndex({
+          kind: entry.kind,
+          universalModules,
+          restrictedModule,
+          editorModules: [...editorModules, ...EDITOR_HAND_AUTHORED],
+        }),
       );
     }
 
@@ -324,10 +361,7 @@ export async function materializeRefDocSurface(
     pkg.exports = {
       ".": { types: "./index.d.ts" },
       ...Object.fromEntries(
-        mod.RUNTIME_KIND_MANIFEST.map((entry) => [
-          `./${entry.kind}`,
-          { types: `./kinds/${entry.kind}.d.ts` },
-        ]),
+        kinds.map((entry) => [`./${entry.kind}`, { types: `./kinds/${entry.kind}.d.ts` }]),
       ),
       "./core-types": { types: "./core-types.d.ts" },
     };

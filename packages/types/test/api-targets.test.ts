@@ -313,3 +313,72 @@ describe("api-targets registry", () => {
     }
   });
 });
+
+describe("registry-declared editor modules", () => {
+  // A target's editor document is declared, never inferred from a fixture that
+  // happens to be on disk: absence is a registry statement, so a fixture deleted
+  // by accident fails loudly instead of degrading to the default surface.
+  const syntheticRegistry = (declaredFixture: string | null): string => {
+    const tmp = mkdtempSync(resolve(tmpdir(), "editor-targets-"));
+    const doc = JSON.stringify({ info: { namespace: "editor" }, elements: [] });
+    writeFileSync(resolve(tmp, "label_doc.json"), JSON.stringify({ info: {}, elements: [] }));
+    writeFileSync(resolve(tmp, "editor_doc.json"), doc);
+    const declaring = {
+      id: "declaring",
+      default: true,
+      fixturesDir: ".",
+      generatedDir: "generated",
+      coreTypesImport: "../src/core-types",
+      source: null,
+      modules: [{ namespace: "label", fixture: "label_doc.json", outFile: "label.d.ts" }],
+      ...(declaredFixture === null
+        ? {}
+        : {
+            editorModules: [
+              { namespace: "editor", fixture: declaredFixture, outFile: "editor.d.ts" },
+            ],
+          }),
+    };
+    const silent = {
+      id: "silent",
+      default: false,
+      fixturesDir: ".",
+      generatedDir: "generated/versions/silent",
+      coreTypesImport: "../../../src/core-types",
+      source: null,
+      modules: [{ namespace: "label", fixture: "label_doc.json", outFile: "label.d.ts" }],
+    };
+    const registryPath = resolve(tmp, "api-targets.json");
+    writeFileSync(registryPath, JSON.stringify({ targets: [declaring, silent] }));
+    return registryPath;
+  };
+
+  test("loadApiTargets accepts a declaring target beside one that declares no editor document", () => {
+    const targets = loadApiTargets(syntheticRegistry("editor_doc.json"));
+    expect(
+      targets.find((t) => t.id === "declaring")?.editorModules?.map((m) => m.namespace),
+    ).toEqual(["editor"]);
+    expect(targets.find((t) => t.id === "silent")?.editorModules).toBeUndefined();
+  });
+
+  test("loadApiTargets rejects a declared editor fixture the target's fixturesDir does not hold", () => {
+    expect(() => loadApiTargets(syntheticRegistry("editor_gone_doc.json"))).toThrow(
+      /declaring.*editor.*editor_gone_doc\.json/,
+    );
+  });
+
+  test("the default target declares the editor document and no other committed target does", () => {
+    const targets = loadApiTargets();
+    for (const target of targets) {
+      const declared = target.editorModules ?? [];
+      if (target.default === true) {
+        expect(declared.length).toBeGreaterThan(0);
+        for (const module of declared) {
+          expect(existsSync(resolve(PACKAGE_ROOT, target.fixturesDir, module.fixture))).toBe(true);
+        }
+        continue;
+      }
+      expect(declared).toEqual([]);
+    }
+  });
+});

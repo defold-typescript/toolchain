@@ -7,6 +7,7 @@ import {
   directoryWallTsconfig,
   groupSourceScriptKindsByDirectory,
   groupSourceScriptKindsBySubtree,
+  materializedSurfaceKinds,
   nearestWall,
   planSourceDirectoryWalls,
   type ResolvedDirectoryWall,
@@ -17,6 +18,10 @@ import {
 } from "./directory-walls";
 import { MATERIALIZED_ROOT } from "./materialize";
 import type { ScriptKind } from "./script-kind";
+
+// The kinds every materialized surface writes today. Named here so a test that
+// means "the surface holds the runtime trio" reads as that, not as a list.
+const RUNTIME_KINDS: readonly string[] = ["script", "gui-script", "render-script"];
 
 let cwd: string;
 
@@ -36,6 +41,14 @@ function touch(rel: string, contents = ""): void {
 
 function writeTsconfig(include: string[]): void {
   touch("tsconfig.json", JSON.stringify({ include }));
+}
+
+function seedSurface(surface: string, kinds: readonly string[]): void {
+  const kindsDir = path.join(cwd, MATERIALIZED_ROOT, surface, "kinds");
+  mkdirSync(kindsDir, { recursive: true });
+  for (const kind of kinds) {
+    writeFileSync(path.join(kindsDir, `${kind}.d.ts`), "export {};\n");
+  }
 }
 
 describe("groupSourceScriptKindsByDirectory", () => {
@@ -383,6 +396,8 @@ describe("directoryWallTsconfig", () => {
       directoryWallTsconfig(
         wall("src/ui", "gui-script", "@defold-typescript/types/gui-script"),
         "1.9.8",
+        [],
+        RUNTIME_KINDS,
       ),
     ).toEqual({
       extends: "../../tsconfig.json",
@@ -401,6 +416,8 @@ describe("directoryWallTsconfig", () => {
       directoryWallTsconfig(
         wall("render", "render-script", "@defold-typescript/types/render-script"),
         "1.9.8",
+        [],
+        RUNTIME_KINDS,
       ),
     ).toEqual({
       extends: "../tsconfig.json",
@@ -437,11 +454,13 @@ describe("directoryWallTsconfig", () => {
     ).toEqual([]);
   });
 
-  test("an editor-script wall keeps the installed entrypoint even under a pinned surface", () => {
+  test("an editor-script wall keeps the installed entrypoint when the surface wrote no such kind", () => {
     expect(
       directoryWallTsconfig(
         wall("src/editor", "editor-script", "@defold-typescript/types/editor-script"),
         "1.9.8",
+        [],
+        RUNTIME_KINDS,
       ),
     ).toEqual({
       extends: "../../tsconfig.json",
@@ -452,6 +471,41 @@ describe("directoryWallTsconfig", () => {
       },
       include: ["**/*.ts"],
       exclude: [],
+    });
+  });
+
+  test("an editor-script wall points at the pinned surface once that surface wrote the kind", () => {
+    expect(
+      directoryWallTsconfig(
+        wall("src/editor", "editor-script", "@defold-typescript/types/editor-script"),
+        "1.9.8",
+        [],
+        [...RUNTIME_KINDS, "editor-script"],
+      ),
+    ).toEqual({
+      extends: "../../tsconfig.json",
+      compilerOptions: {
+        composite: true,
+        typeRoots: [`../../${MATERIALIZED_ROOT}`],
+        types: ["1.9.8/editor-script"],
+      },
+      include: ["**/*.ts"],
+      exclude: [],
+    });
+  });
+
+  test("a wall keeps the installed entrypoint for a kind the surface omitted", () => {
+    expect(
+      directoryWallTsconfig(
+        wall("src/ui", "gui-script", "@defold-typescript/types/gui-script"),
+        "1.9.8",
+        [],
+        ["script", "editor-script"],
+      ).compilerOptions,
+    ).toEqual({
+      composite: true,
+      typeRoots: null,
+      types: ["@defold-typescript/types/gui-script"],
     });
   });
 
@@ -595,11 +649,12 @@ describe("writeDirectoryWallTsconfigs", () => {
   });
 
   test("a pinned-surface wall writes the per-kind typeRoots/types and skips when unchanged", () => {
+    seedSurface("1.9.8", RUNTIME_KINDS);
     const walls = [wall("src/ui", "gui-script", "@defold-typescript/types/gui-script")];
     expect(writeDirectoryWallTsconfigs(cwd, walls, "1.9.8")).toEqual(["src/ui/tsconfig.json"]);
     const target = path.join(cwd, "src/ui/tsconfig.json");
     expect(JSON.parse(readFileSync(target, "utf8"))).toEqual(
-      directoryWallTsconfig(walls[0] as DirectoryWall, "1.9.8"),
+      directoryWallTsconfig(walls[0] as DirectoryWall, "1.9.8", [], RUNTIME_KINDS),
     );
 
     const before = statSync(target).mtimeMs;
@@ -608,12 +663,50 @@ describe("writeDirectoryWallTsconfigs", () => {
   });
 
   test("switching a wall from installed to pinned form rewrites it", () => {
+    seedSurface("1.9.8", RUNTIME_KINDS);
     const walls = [wall("src/ui", "gui-script", "@defold-typescript/types/gui-script")];
     writeDirectoryWallTsconfigs(cwd, walls);
     expect(writeDirectoryWallTsconfigs(cwd, walls, "1.9.8")).toEqual(["src/ui/tsconfig.json"]);
     expect(JSON.parse(readFileSync(path.join(cwd, "src/ui/tsconfig.json"), "utf8"))).toEqual(
-      directoryWallTsconfig(walls[0] as DirectoryWall, "1.9.8"),
+      directoryWallTsconfig(walls[0] as DirectoryWall, "1.9.8", [], RUNTIME_KINDS),
     );
+  });
+
+  test("an editor-script wall goes pinned only once the surface has written that kind", () => {
+    const walls = [wall("src/editor", "editor-script", "@defold-typescript/types/editor-script")];
+    const target = path.join(cwd, "src/editor/tsconfig.json");
+    const types = (): string[] =>
+      (JSON.parse(readFileSync(target, "utf8")) as { compilerOptions: { types: string[] } })
+        .compilerOptions.types;
+
+    seedSurface("1.9.8", RUNTIME_KINDS);
+    writeDirectoryWallTsconfigs(cwd, walls, "1.9.8");
+    expect(types()).toEqual(["@defold-typescript/types/editor-script"]);
+
+    seedSurface("1.9.8", [...RUNTIME_KINDS, "editor-script"]);
+    expect(writeDirectoryWallTsconfigs(cwd, walls, "1.9.8")).toEqual(["src/editor/tsconfig.json"]);
+    expect(types()).toEqual(["1.9.8/editor-script"]);
+  });
+});
+
+describe("materializedSurfaceKinds", () => {
+  test("reports the kinds the surface itself wrote", () => {
+    seedSurface("1.9.8", [...RUNTIME_KINDS, "editor-script"]);
+    expect(materializedSurfaceKinds(cwd, "1.9.8").sort()).toEqual(
+      [...RUNTIME_KINDS, "editor-script"].sort(),
+    );
+  });
+
+  test("a surface with no kinds directory, or none pinned at all, reports nothing", () => {
+    mkdirSync(path.join(cwd, MATERIALIZED_ROOT, "1.9.8"), { recursive: true });
+    expect(materializedSurfaceKinds(cwd, "1.9.8")).toEqual([]);
+    expect(materializedSurfaceKinds(cwd, null)).toEqual([]);
+  });
+
+  test("a file that is not a wallable kind is not reported as one", () => {
+    seedSurface("1.9.8", ["script"]);
+    writeFileSync(path.join(cwd, MATERIALIZED_ROOT, "1.9.8", "kinds", "index.d.ts"), "");
+    expect(materializedSurfaceKinds(cwd, "1.9.8")).toEqual(["script"]);
   });
 });
 

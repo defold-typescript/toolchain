@@ -1,5 +1,5 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import messagesDoc from "../fixtures/messages_doc.json" with { type: "json" };
 import { type ApiModule, parseDefoldApiDoc } from "../src/api-doc";
 import {
@@ -34,6 +34,16 @@ export interface ApiTargetModule {
   readonly skipFunctions?: readonly string[];
 }
 
+// An editor-VM document declared by a target. It carries two things a runtime
+// module never needs: its own `importsFrom` (the `editor-vm/` subdirectory sits
+// a level below the runtime surface, so the target's `coreTypesImport` does not
+// reach) and a named `mapType` selector, since the editor VM is the only surface
+// with handle tokens no runtime namespace uses.
+export interface ApiTargetEditorModule extends ApiTargetModule {
+  readonly importsFrom?: string;
+  readonly mapType?: string;
+}
+
 // A target sourced from a resolved ref-doc zip (resolved on demand, never
 // pre-baked) versus the committed-fixture default (`null`).
 export type ApiTargetSource = { readonly kind: "ref-doc"; readonly version: string } | null;
@@ -46,6 +56,11 @@ export interface ApiTarget {
   readonly coreTypesImport: string;
   readonly source?: ApiTargetSource;
   readonly modules: readonly ApiTargetModule[];
+  // The editor-scripting documents this target ships, or absent when it ships
+  // none. Absence is declared, never inferred from a missing file, so a fixture
+  // deleted by accident fails loudly instead of silently degrading a pinned
+  // project to the default target's editor surface.
+  readonly editorModules?: readonly ApiTargetEditorModule[];
   // Docs-only Lua stdlib pages (no generated `.d.ts`): vendored fixtures the
   // docs-site pages under the "Lua standard library" category. Never read by
   // regen/MODULE_MANIFEST; surfaced here so the registry stays type-honest.
@@ -55,13 +70,26 @@ export interface ApiTarget {
 const REGISTRY_PATH = resolve(import.meta.dir, "..", "api-targets.json");
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 
-export function loadApiTargets(registryPath: string = REGISTRY_PATH): ApiTarget[] {
+export function loadApiTargets(
+  registryPath: string = REGISTRY_PATH,
+  packageRoot: string = resolve(registryPath, ".."),
+): ApiTarget[] {
   const { targets } = JSON.parse(readFileSync(registryPath, "utf8")) as { targets: ApiTarget[] };
   const defaults = targets.filter((t) => t.default === true);
   if (defaults.length !== 1) {
     throw new Error(
       `api-targets.json: expected exactly one default target, found ${defaults.length}`,
     );
+  }
+  for (const target of targets) {
+    for (const module of target.editorModules ?? []) {
+      const path = resolve(packageRoot, target.fixturesDir, module.fixture);
+      if (!existsSync(path)) {
+        throw new Error(
+          `api-targets.json: target "${target.id}" editor module "${module.namespace}" fixture not found: ${path}`,
+        );
+      }
+    }
   }
   return targets;
 }
@@ -204,70 +232,61 @@ function mapEditorType(token: string): string {
   return EDITOR_TYPE_MAP[token] ?? defaultMapType(token);
 }
 
-// The editor VM's own `http`/`json`/`zip`/`zlib`/`pprint`/`localization`/
-// `tilemap.tiles` sit in this same upstream document under their own top-level
-// namespaces. They are emitted from their own per-namespace fixtures through
-// EDITOR_VM_MODULE_MANIFEST, and skipped here so this entry cannot misname them
-// as `editor.*` — `pprint`, a flat identifier, would otherwise land as
-// `editor.pprint`.
-export const EDITOR_SKIP_FUNCTIONS: readonly string[] = [
-  // Unlike every other entry here, this is not a dropped namespace prefix: the
-  // hand-authored `src/editor-overloads.d.ts` supplies `editor.command` with a
-  // generic signature that couples a command's opts bag to its own query, which
-  // the emitter cannot express.
-  "command",
-  "http.",
-  "json.",
-  "localization.",
-  "pprint",
-  "tilemap.",
-  "zip.",
-  "zlib.",
-];
+// The named type maps an `editorModules` entry may select. A closed set, so an
+// unknown selector fails loudly instead of silently falling back to the runtime
+// token mapping and emitting `unknown` for every editor handle.
+const NAMED_TYPE_MAPS: Readonly<Record<string, (token: string) => string>> = {
+  editor: mapEditorType,
+};
 
-// The editor-scripting surface. Vendored and emitted through the same pipeline
-// as MODULE_MANIFEST but deliberately separate from it: MODULE_MANIFEST drives
-// every runtime kind's universal imports, the per-version targets and the
-// published API artifacts, none of which describe the editor VM. Reached only
-// through the `editor-script` kind index.
-export const EDITOR_MODULE_MANIFEST: readonly ModuleManifestEntry[] = [
-  {
-    namespace: "editor",
-    doc: JSON.parse(
-      readFileSync(resolve(PACKAGE_ROOT, "fixtures", "defold-1.13.0", "editor_doc.json"), "utf8"),
-    ),
-    outFile: "editor.d.ts",
-    skipFunctions: EDITOR_SKIP_FUNCTIONS,
-    mapType: mapEditorType,
-  },
-];
-
-// The namespace-shaped libraries the editor VM exposes alongside `editor`. They
-// emit into `generated/editor-vm/` rather than beside the runtime modules for a
+// The subdirectory the namespace-shaped libraries the editor VM exposes
+// alongside `editor` emit into, rather than beside the runtime modules, for a
 // hard reason: `tsconfig.json` includes the flat glob `generated/*.d.ts`, so an
 // editor `http.d.ts` there would share a program with the runtime one and
 // declare `namespace http` twice. A subdirectory keeps them out of that glob,
 // the same escape `generated/versions/` and `generated/kinds/` already use.
-const EDITOR_VM_NAMESPACES: readonly string[] = [
-  "http",
-  "json",
-  "localization",
-  "zip",
-  "zlib",
-  "tilemap.tiles",
-];
+// Because that boundary is forced, it also discriminates the two halves of a
+// target's declaration: the `editor` namespace a kind index names directly, and
+// the VM libraries it must import by explicit path.
+export const EDITOR_VM_SUBDIR = "editor-vm/";
 
-// The members withheld here and hand-authored in `src/editor-vm-globals.d.ts`
-// instead. Rules are local names — the `<namespace>.` prefix is stripped before
-// matching — and they withhold VARIABLEs as well as FUNCTIONs.
+export function isEditorVmModule(module: { readonly outFile: string }): boolean {
+  return module.outFile.startsWith(EDITOR_VM_SUBDIR);
+}
+
+function oneLevelDeeper(importPath: string): string {
+  return importPath.startsWith("./") ? `../${importPath.slice(2)}` : `../${importPath}`;
+}
+
+// The editor-scripting surface a target declares. Vendored and emitted through
+// the same pipeline as MODULE_MANIFEST but deliberately separate from it:
+// MODULE_MANIFEST drives every runtime kind's universal imports, the per-version
+// targets and the published API artifacts, none of which describe the editor VM.
+// Reached only through the `editor-script` kind index.
 //
-// The functions are ones whose vendored signature the emitter cannot render
-// soundly, both causes being the fixture's positional model being a lossy
-// description of the Lua function its own `examples` block calls: an optional
-// parameter sitting *before* a required one (TypeScript cannot mark a middle
-// parameter `?`, so the emit renders it `T | undefined` and rejects every
-// documented short form), and an empty `returnvalues` on a function upstream's
-// own prose says returns a value.
+// The `skipFunctions` rules a target declares in `api-targets.json` withhold
+// members for reasons the registry data alone cannot state. Rules are local
+// names — the `<namespace>.` prefix is stripped before matching — and they
+// withhold VARIABLEs as well as FUNCTIONs.
+//
+// On the `editor` entry, the editor VM's own `http`/`json`/`zip`/`zlib`/
+// `pprint`/`localization`/`tilemap.tiles` sit in that same upstream document
+// under their own top-level namespaces. They are emitted from their own
+// per-namespace fixtures instead, and skipped on `editor` so that entry cannot
+// misname them as `editor.*` — `pprint`, a flat identifier, would otherwise land
+// as `editor.pprint`. `command` is the one rule there that is not a dropped
+// namespace prefix: the hand-authored `src/editor-overloads.d.ts` supplies
+// `editor.command` with a generic signature that couples a command's opts bag to
+// its own query, which the emitter cannot express.
+//
+// On a VM entry, the withheld members are hand-authored in
+// `src/editor-vm-globals.d.ts` instead. The functions are ones whose vendored
+// signature the emitter cannot render soundly, both causes being the fixture's
+// positional model being a lossy description of the Lua function its own
+// `examples` block calls: an optional parameter sitting *before* a required one
+// (TypeScript cannot mark a middle parameter `?`, so the emit renders it
+// `T | undefined` and rejects every documented short form), and an empty
+// `returnvalues` on a function upstream's own prose says returns a value.
 //
 // The constant tables are expressible now that the nested pass reaches
 // variables, but a VARIABLE carries no `types`, so the emit would be `unknown` —
@@ -275,36 +294,56 @@ const EDITOR_VM_NAMESPACES: readonly string[] = [
 // value, which looks like a string-literal type until you notice upstream's own
 // `zip.ON_CONFLICT.OVERWRITE` reads `"skip"`, so no type is derived from it.
 // The hand-authored declarations stay authoritative and these stay withheld.
-const EDITOR_VM_SKIP_FUNCTIONS: Readonly<Record<string, readonly string[]>> = {
-  http: ["server.local_url", "server.port", "server.route", "server.url"],
-  json: ["decode", "encode"],
-  zip: ["METHOD.", "ON_CONFLICT.", "pack", "unpack"],
-};
+export function loadTargetEditorModules(
+  target: ApiTarget,
+  packageRoot: string = PACKAGE_ROOT,
+): ModuleManifestEntry[] {
+  return (target.editorModules ?? []).map((module) => {
+    const path = resolve(packageRoot, target.fixturesDir, module.fixture);
+    let raw: string;
+    try {
+      raw = readFileSync(path, "utf8");
+    } catch {
+      throw new Error(
+        `api-targets.json: target "${target.id}" editor module "${module.namespace}" fixture not found: ${path}`,
+      );
+    }
+    if (module.mapType !== undefined && NAMED_TYPE_MAPS[module.mapType] === undefined) {
+      throw new Error(
+        `api-targets.json: target "${target.id}" editor module "${module.namespace}": unknown mapType "${module.mapType}"`,
+      );
+    }
+    const entry: ModuleManifestEntry = {
+      namespace: module.namespace,
+      doc: JSON.parse(raw),
+      outFile: module.outFile,
+      // A VM module sits one directory below the rest of the surface, so it
+      // cannot ride the target's own `coreTypesImport` unchanged. Deriving the
+      // deeper form keeps a relocated surface (a materialized `.defold-types/`
+      // copy rewrites `coreTypesImport` to `./core-types`) resolving too.
+      importsFrom:
+        module.importsFrom ??
+        (isEditorVmModule(module)
+          ? oneLevelDeeper(target.coreTypesImport)
+          : target.coreTypesImport),
+      ...(module.skipFunctions ? { skipFunctions: module.skipFunctions } : {}),
+      ...(module.mapType ? { mapType: NAMED_TYPE_MAPS[module.mapType] } : {}),
+    };
+    return entry;
+  });
+}
 
-const editorVmSlug = (namespace: string): string => namespace.replace(/\./g, "_");
+const DEFAULT_EDITOR_MODULES = loadTargetEditorModules(DEFAULT_TARGET);
 
-export const EDITOR_VM_MODULE_MANIFEST: readonly ModuleManifestEntry[] = EDITOR_VM_NAMESPACES.map(
-  (namespace) => ({
-    namespace,
-    doc: JSON.parse(
-      readFileSync(
-        resolve(
-          PACKAGE_ROOT,
-          "fixtures",
-          "defold-1.13.0",
-          `editor_${editorVmSlug(namespace)}_doc.json`,
-        ),
-        "utf8",
-      ),
-    ),
-    outFile: `editor-vm/${editorVmSlug(namespace)}.d.ts`,
-    importsFrom: "../../src/core-types",
-    mapType: mapEditorType,
-    ...(EDITOR_VM_SKIP_FUNCTIONS[namespace]
-      ? { skipFunctions: EDITOR_VM_SKIP_FUNCTIONS[namespace] }
-      : {}),
-  }),
+export const EDITOR_MODULE_MANIFEST: readonly ModuleManifestEntry[] = DEFAULT_EDITOR_MODULES.filter(
+  (entry) => !isEditorVmModule(entry),
 );
+
+export const EDITOR_VM_MODULE_MANIFEST: readonly ModuleManifestEntry[] =
+  DEFAULT_EDITOR_MODULES.filter(isEditorVmModule);
+
+export const EDITOR_SKIP_FUNCTIONS: readonly string[] =
+  EDITOR_MODULE_MANIFEST.find((entry) => entry.namespace === "editor")?.skipFunctions ?? [];
 
 export interface MessagesManifestEntry {
   readonly doc: unknown;
@@ -449,17 +488,37 @@ export function generateModuleSignatures(
 
 export interface VersionedModuleManifestEntry extends ModuleManifestEntry {
   readonly versionId: string;
+  // Set on an entry derived from the target's `editorModules`. The editor
+  // surface rides the same per-version emit as the runtime modules but never the
+  // version's aggregate index — importing it there would drag the editor VM into
+  // every runtime program pinned to that version.
+  readonly editor?: boolean;
 }
 
 // Committed generation covers only filesystem-fixture targets (source == null).
 // ref-doc targets are resolved on the fly and never pre-baked, so they are
 // excluded from the committed regen loop and the byte-drift guards.
+export function versionedModuleManifest(
+  targets: readonly ApiTarget[],
+  packageRoot: string = PACKAGE_ROOT,
+): VersionedModuleManifestEntry[] {
+  return targets
+    .filter((target) => target.default !== true && (target.source ?? null) == null)
+    .flatMap((target) => [
+      ...loadTargetModules(target, packageRoot).map((entry) => ({
+        ...entry,
+        versionId: target.id,
+      })),
+      ...loadTargetEditorModules(target, packageRoot).map((entry) => ({
+        ...entry,
+        versionId: target.id,
+        editor: true,
+      })),
+    ]);
+}
+
 export const VERSIONED_MODULE_MANIFEST: readonly VersionedModuleManifestEntry[] =
-  API_TARGETS.filter(
-    (target) => target.default !== true && (target.source ?? null) == null,
-  ).flatMap((target) =>
-    loadTargetModules(target).map((entry) => ({ ...entry, versionId: target.id })),
-  );
+  versionedModuleManifest(API_TARGETS);
 
 export const RESTRICTED_NAMESPACES: Readonly<Record<string, string>> = {
   gui: "gui_script",
@@ -473,6 +532,13 @@ export const RESTRICTED_NAMESPACES: Readonly<Record<string, string>> = {
 const LUA_51_REFERENCE = '/// <reference types="lua-types/5.1" />\n';
 const LUA_JIT_ONLY_REFERENCE = '/// <reference types="lua-types/special/jit-only" />\n';
 export const LUA_STDLIB_REFERENCES = `${LUA_51_REFERENCE}${LUA_JIT_ONLY_REFERENCE}`;
+
+// The stdlib references a kind's own VM earns. Shared with the materialized
+// renderer so a surface generated on the fly makes the same LuaJIT call the
+// committed emit does.
+export function kindStdlibReferences(entry: KindManifestEntry): string {
+  return `${LUA_51_REFERENCE}${entry.jit === false ? "" : LUA_JIT_ONLY_REFERENCE}`;
+}
 
 const UNIVERSAL_EXTRA_IMPORTS: readonly string[] = [
   "../builtin-messages",
@@ -518,15 +584,12 @@ export const KIND_MODULE_MANIFEST: readonly KindManifestEntry[] = [
   { kind: "render-script", restricted: "render", factory: "defineRenderScript" },
   {
     kind: "editor-script",
-    only: ["editor"],
-    // `only` holds namespaces and builds `../${namespace}`, which would produce
-    // `../http` (the runtime module) and `../tilemap.tiles` (not a path). The
-    // editor VM modules come through as explicit relative paths instead.
-    extraModules: [
-      ...EDITOR_VM_MODULE_MANIFEST.map((entry) => `../${entry.outFile.replace(/\.d\.ts$/, "")}`),
-      "../../src/editor-overloads",
-      "../../src/editor-vm-globals",
-    ],
+    // Empty on purpose: the emitted namespaces come from the declaring target's
+    // `editorModules` (see `editorKindModules`), and the empty array is what
+    // marks the kind as disjoint from the runtime surface rather than a
+    // narrowing of it.
+    only: [],
+    extraModules: ["../../src/editor-overloads", "../../src/editor-vm-globals"],
     factory: "defineEditorScript",
     extraExports: ["defineEditorCommand"],
     extraTypeExports: ["EditorCommandQuery", "EditorNode"],
@@ -536,26 +599,47 @@ export const KIND_MODULE_MANIFEST: readonly KindManifestEntry[] = [
   },
 ];
 
-// The kinds a materialized *versioned* surface can carry. An `only` kind names
-// generated modules built from MODULE_MANIFEST targets, which never contain the
-// editor VM, so it has no versioned form.
+// The kinds every materialized *versioned* surface carries, whatever the target.
+// An `only` kind is built from the target's own `editorModules`, so it has a
+// versioned form only for a target that declares an editor document — see
+// `targetKindManifest`, which is what a per-target emit resolves through.
 export const RUNTIME_KIND_MANIFEST: readonly KindManifestEntry[] = KIND_MODULE_MANIFEST.filter(
   (entry) => entry.only === undefined,
 );
 
-export function generateKindIndex(kind: string): string {
+// The emitted modules an editor kind index imports, read from the declaring
+// target rather than from a list beside the kind entry, so a pinned surface
+// names its own editor document instead of the default target's. The plain
+// namespace leads and the VM libraries follow by explicit path — `only` holds
+// namespaces and would build `../http` (the runtime module) and
+// `../tilemap.tiles` (not a path) for those.
+function editorKindModules(target: ApiTarget): string[] {
+  const declared = target.editorModules ?? [];
+  if (declared.length === 0) {
+    throw new Error(`api-targets.json: target "${target.id}" declares no editor document`);
+  }
+  return [
+    ...declared.filter((m) => !isEditorVmModule(m)),
+    ...declared.filter(isEditorVmModule),
+  ].map((m) => `../${m.outFile.replace(/\.d\.ts$/, "")}`);
+}
+
+export function generateKindIndex(kind: string, target: ApiTarget = DEFAULT_TARGET): string {
   const entry = KIND_MODULE_MANIFEST.find((e) => e.kind === kind);
   if (!entry) throw new Error(`unknown script kind: ${kind}`);
+  const srcPrefix = targetSrcPrefix(target);
   const universalNamespaces = MODULE_MANIFEST.filter(
     (m) => !Object.hasOwn(RESTRICTED_NAMESPACES, m.namespace),
   ).map((m) => `../${m.outFile.replace(/\.d\.ts$/, "")}`);
-  const modules = entry.only
-    ? [...entry.only.map((namespace) => `../${namespace}`), ...(entry.extraModules ?? [])]
-    : [...new Set([...universalNamespaces.sort(), ...[...UNIVERSAL_EXTRA_IMPORTS].sort()])];
+  const modules = (
+    entry.only === undefined
+      ? [...new Set([...universalNamespaces.sort(), ...[...UNIVERSAL_EXTRA_IMPORTS].sort()])]
+      : [...editorKindModules(target), ...(entry.extraModules ?? [])]
+  ).map((path) => retargetSrcPath(path, srcPrefix));
   const lines = modules.map((path) => `import "${path}";`);
   if (entry.restricted) lines.push(`import "../${entry.restricted}";`);
-  const references = `${LUA_51_REFERENCE}${entry.jit === false ? "" : LUA_JIT_ONLY_REFERENCE}`;
-  const from = entry.factoryFrom ?? DEFAULT_FACTORY_MODULE;
+  const references = kindStdlibReferences(entry);
+  const from = retargetSrcPath(entry.factoryFrom ?? DEFAULT_FACTORY_MODULE, srcPrefix);
   const values = [entry.factory, ...(entry.extraExports ?? [])].join(", ");
   const typeExports = entry.extraTypeExports?.length
     ? `\nexport type { ${entry.extraTypeExports.join(", ")} } from "${from}";`
@@ -572,12 +656,38 @@ export function generateVersionIndex(
   manifest: readonly VersionedModuleManifestEntry[] = VERSIONED_MODULE_MANIFEST,
 ): string {
   const imports = manifest
-    .filter((entry) => entry.versionId === versionId)
+    .filter((entry) => entry.versionId === versionId && entry.editor !== true)
     .map((entry) => entry.outFile.replace(/\.d\.ts$/, ""))
     .sort()
     .map((module) => `import "./${module}";`)
     .join("\n");
   return `${imports}\n\nexport {};\n`;
+}
+
+// The `src/`-relative prefix a kind index living in `<generatedDir>/kinds/` needs
+// to reach the package's hand-authored modules. The target's own
+// `coreTypesImport` already measures its generated dir's depth; the kind index
+// sits one level below it.
+function targetSrcPrefix(target: ApiTarget): string {
+  return `../${target.coreTypesImport.slice(0, -"core-types".length)}`;
+}
+
+const DEFAULT_SRC_PREFIX = "../../src/";
+
+function retargetSrcPath(modulePath: string, srcPrefix: string): string {
+  return modulePath.startsWith(DEFAULT_SRC_PREFIX)
+    ? `${srcPrefix}${modulePath.slice(DEFAULT_SRC_PREFIX.length)}`
+    : modulePath;
+}
+
+// The kinds a materialized surface for `target` can carry: the runtime trio
+// always, plus the editor kind when — and only when — the target declares an
+// editor document of its own.
+export function targetKindManifest(target: ApiTarget): readonly KindManifestEntry[] {
+  if ((target.editorModules?.length ?? 0) === 0) {
+    return RUNTIME_KIND_MANIFEST;
+  }
+  return [...RUNTIME_KIND_MANIFEST, ...KIND_MODULE_MANIFEST.filter((e) => e.only !== undefined)];
 }
 
 if (import.meta.main) {
@@ -600,7 +710,17 @@ if (import.meta.main) {
   writeFileSync(messagesOut, generateBuiltinMessagesDeclaration(MESSAGES_MANIFEST));
   console.log(`wrote ${messagesOut}`);
 
-  const versionIds = new Set(VERSIONED_MODULE_MANIFEST.map((entry) => entry.versionId));
+  // The target's own `generatedDir` is where a version lands, so a declaring
+  // target's editor surface (and its `editor-vm/` subdirectory) rides the same
+  // destination rule as its runtime modules rather than a second convention.
+  const versionedTargets = API_TARGETS.filter(
+    (target) => target.default !== true && (target.source ?? null) == null,
+  );
+  const versionDirOf = (versionId: string): string => {
+    const target = versionedTargets.find((t) => t.id === versionId);
+    if (!target) throw new Error(`no committed target for version ${versionId}`);
+    return resolve(PACKAGE_ROOT, target.generatedDir);
+  };
   for (const entry of VERSIONED_MODULE_MANIFEST) {
     const { contents, dropped } = generateModuleDeclaration(entry);
     if (dropped.length > 0) {
@@ -608,16 +728,26 @@ if (import.meta.main) {
         `note: dropped skipped member(s) from ${entry.versionId}/${entry.namespace}: ${dropped.join(", ")}`,
       );
     }
-    const versionDir = resolve(generated, "versions", entry.versionId);
-    mkdirSync(versionDir, { recursive: true });
-    const out = resolve(versionDir, entry.outFile);
+    const out = resolve(versionDirOf(entry.versionId), entry.outFile);
+    mkdirSync(dirname(out), { recursive: true });
     writeFileSync(out, contents);
     console.log(`wrote ${out}`);
   }
-  for (const versionId of versionIds) {
-    const indexOut = resolve(generated, "versions", versionId, "index.d.ts");
-    writeFileSync(indexOut, generateVersionIndex(versionId));
+  for (const target of versionedTargets) {
+    const indexOut = resolve(versionDirOf(target.id), "index.d.ts");
+    mkdirSync(dirname(indexOut), { recursive: true });
+    writeFileSync(indexOut, generateVersionIndex(target.id));
     console.log(`wrote ${indexOut}`);
+
+    const editorKinds = targetKindManifest(target).filter((entry) => entry.only !== undefined);
+    if (editorKinds.length === 0) continue;
+    const versionKindsDir = resolve(versionDirOf(target.id), "kinds");
+    mkdirSync(versionKindsDir, { recursive: true });
+    for (const entry of editorKinds) {
+      const out = resolve(versionKindsDir, `${entry.kind}.d.ts`);
+      writeFileSync(out, generateKindIndex(entry.kind, target));
+      console.log(`wrote ${out}`);
+    }
   }
 
   const kindsDir = resolve(generated, "kinds");

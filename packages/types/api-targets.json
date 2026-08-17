@@ -242,6 +242,63 @@
           "outFile": "zlib.d.ts"
         }
       ],
+      "editorModules": [
+        {
+          "namespace": "editor",
+          "fixture": "editor_doc.json",
+          "outFile": "editor.d.ts",
+          "mapType": "editor",
+          "skipFunctions": [
+            "command",
+            "http.",
+            "json.",
+            "localization.",
+            "pprint",
+            "tilemap.",
+            "zip.",
+            "zlib."
+          ]
+        },
+        {
+          "namespace": "http",
+          "fixture": "editor_http_doc.json",
+          "outFile": "editor-vm/http.d.ts",
+          "mapType": "editor",
+          "skipFunctions": ["server.local_url", "server.port", "server.route", "server.url"]
+        },
+        {
+          "namespace": "json",
+          "fixture": "editor_json_doc.json",
+          "outFile": "editor-vm/json.d.ts",
+          "mapType": "editor",
+          "skipFunctions": ["decode", "encode"]
+        },
+        {
+          "namespace": "localization",
+          "fixture": "editor_localization_doc.json",
+          "outFile": "editor-vm/localization.d.ts",
+          "mapType": "editor"
+        },
+        {
+          "namespace": "zip",
+          "fixture": "editor_zip_doc.json",
+          "outFile": "editor-vm/zip.d.ts",
+          "mapType": "editor",
+          "skipFunctions": ["METHOD.", "ON_CONFLICT.", "pack", "unpack"]
+        },
+        {
+          "namespace": "zlib",
+          "fixture": "editor_zlib_doc.json",
+          "outFile": "editor-vm/zlib.d.ts",
+          "mapType": "editor"
+        },
+        {
+          "namespace": "tilemap.tiles",
+          "fixture": "editor_tilemap_tiles_doc.json",
+          "outFile": "editor-vm/tilemap_tiles.d.ts",
+          "mapType": "editor"
+        }
+      ],
       "luaStdlib": [
         {
           "namespace": "base",
