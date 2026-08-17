@@ -7,6 +7,10 @@ import { parseSceneTextFormat, type SceneMessage, SceneTextFormatError } from ".
 // empty set means the component resolved and declares no animation.
 export interface SpriteAnimationIndex {
   readonly byScriptResource: ReadonlyMap<string, ReadonlyMap<string, ReadonlySet<string>>>;
+  // The display path of the tile source each keyed component's ids were read
+  // from, under the same two keys. Present for exactly the components
+  // `byScriptResource` keys, so the two can never disagree about a resource.
+  readonly tileSetByScriptResource: ReadonlyMap<string, ReadonlyMap<string, string>>;
   readonly unresolved: readonly string[];
 }
 
@@ -138,6 +142,7 @@ export function buildSpriteAnimationIndex(input: {
   const unresolved: string[] = [];
   const assets = readAssets(input.assets, unresolved);
   const byScriptResource = new Map<string, ReadonlyMap<string, ReadonlySet<string>>>();
+  const tileSetByScriptResource = new Map<string, ReadonlyMap<string, string>>();
   const claimedBy = new Map<string, string>();
 
   // A `.go` document is a game object at its root; a `.collection` carries one
@@ -173,6 +178,7 @@ export function buildSpriteAnimationIndex(input: {
 
     const tileSets = spriteTileSets(object, displayPath, assets, unresolved);
     const animations = new Map<string, ReadonlySet<string>>();
+    const declaringTileSets = new Map<string, string>();
     for (const [id, tileSet] of tileSets) {
       const declared = assets.animationsByTileSet.get(tileSet);
       if (declared === undefined) {
@@ -182,12 +188,14 @@ export function buildSpriteAnimationIndex(input: {
         continue;
       }
       animations.set(id, declared);
+      declaringTileSets.set(id, tileSet);
     }
 
     for (const key of scripts) {
       const owner = claimedBy.get(key);
       if (owner !== undefined) {
         byScriptResource.delete(key);
+        tileSetByScriptResource.delete(key);
         unresolved.push(
           `${key}: claimed by both ${owner} and ${displayPath}, so its sprite animations are ambiguous`,
         );
@@ -195,6 +203,7 @@ export function buildSpriteAnimationIndex(input: {
       }
       claimedBy.set(key, displayPath);
       byScriptResource.set(key, animations);
+      tileSetByScriptResource.set(key, declaringTileSets);
     }
   }
 
@@ -207,7 +216,7 @@ export function buildSpriteAnimationIndex(input: {
     }
   }
 
-  return { byScriptResource, unresolved };
+  return { byScriptResource, tileSetByScriptResource, unresolved };
 }
 
 // The component id a same-object `"#id"` address names, or `undefined` for

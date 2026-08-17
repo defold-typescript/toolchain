@@ -26,6 +26,7 @@ import {
   DEFOLD_COMPLETION_SOURCE,
 } from "./scene-completions";
 import {
+  ANIMATION_ASSET_EXTENSIONS,
   displayPathOf,
   GAME_PROJECT_DOCUMENT,
   GUI_EXTENSIONS,
@@ -38,11 +39,6 @@ import {
   type SceneWatchHost,
 } from "./scene-index-cache";
 import { resolveEntryProvenance } from "./scene-provenance";
-
-// The one extension set no second reader shares: an atlas declares animation
-// names, not component ids or node ids, and animation provenance is out of the
-// covered set.
-const ANIMATION_ASSET_EXTENSIONS = [".atlas", ".tilesource", ".sprite"];
 
 const requireFromHere = createRequire(import.meta.url);
 

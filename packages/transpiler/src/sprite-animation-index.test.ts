@@ -37,6 +37,14 @@ function animationsFor(
   return found === undefined ? undefined : [...found].sort();
 }
 
+function tileSetFor(
+  index: ReturnType<typeof indexOf>,
+  resource: string,
+  component: string,
+): string | undefined {
+  return index.tileSetByScriptResource.get(resource)?.get(component);
+}
+
 // A `.go` document: its root message is the game object itself.
 function gameObject(script: string, ...components: string[]): string {
   return `components {\n  id: "self"\n  component: "${script}"\n}\n${components.join("")}`;
@@ -299,6 +307,82 @@ describe("buildSpriteAnimationIndex", () => {
       "swim",
       "walk",
     ]);
+  });
+
+  test("an animation names the tile source that declared it, not the object displaying it", () => {
+    const index = indexOf(
+      {
+        "game/player.collection": collection(
+          gameObject("/src/player.ts.script", embeddedSprite("sprite", "/assets/player.atlas")),
+        ),
+      },
+      { "assets/player.atlas": atlas("walk", "jump") },
+    );
+    expect(tileSetFor(index, "src/player.ts.script", "sprite")).toBe("assets/player.atlas");
+  });
+
+  test("the tile source is the one the `.sprite` hop lands on, not the `.sprite` itself", () => {
+    const index = indexOf(
+      {
+        "main/hero.go": gameObject(
+          "/src/hero.ts.script",
+          spriteComponent("body", "/assets/a.sprite"),
+        ),
+      },
+      {
+        "assets/a.sprite": 'tile_set: "/assets/level.tilesource"\n',
+        "assets/level.tilesource": 'image: "/assets/images/sheet.png"\n',
+      },
+    );
+    expect(tileSetFor(index, "src/hero.ts.script", "body")).toBe("assets/level.tilesource");
+  });
+
+  test("two sprite components on one object each report their own tile source", () => {
+    const index = indexOf(
+      {
+        "main/hero.go": gameObject(
+          "/src/hero.ts.script",
+          embeddedSprite("body", "/assets/body.atlas"),
+          spriteComponent("cape", "/assets/cape.sprite"),
+        ),
+      },
+      {
+        "assets/body.atlas": atlas("idle", "run"),
+        "assets/cape.sprite": 'tile_set: "/assets/cape.atlas"\n',
+        "assets/cape.atlas": atlas("flap", "furl"),
+      },
+    );
+    expect(tileSetFor(index, "src/hero.ts.script", "body")).toBe("assets/body.atlas");
+    expect(tileSetFor(index, "src/hero.ts.script", "cape")).toBe("assets/cape.atlas");
+  });
+
+  test("a sprite naming a tile source no asset document holds reports none", () => {
+    const index = indexOf(
+      {
+        "main/hero.go": gameObject(
+          "/src/hero.ts.script",
+          embeddedSprite("missing", "/assets/gone.atlas"),
+          embeddedSprite("body", "/assets/a.atlas"),
+        ),
+      },
+      { "assets/a.atlas": atlas("idle") },
+    );
+    expect(tileSetFor(index, "src/hero.ts.script", "missing")).toBeUndefined();
+    expect(tileSetFor(index, "src/hero.ts.script", "body")).toBe("assets/a.atlas");
+    expect(index.unresolved).toHaveLength(1);
+    expect(index.unresolved[0]).toContain("/assets/gone.atlas");
+  });
+
+  test("a script two objects claim reports no tile source, the way it reports no animation", () => {
+    const index = indexOf(
+      {
+        "main/a.go": gameObject("/src/hero.ts.script", embeddedSprite("body", "/assets/a.atlas")),
+        "main/b.go": gameObject("/src/hero.ts.script", embeddedSprite("body", "/assets/a.atlas")),
+      },
+      { "assets/a.atlas": atlas("idle") },
+    );
+    expect(index.byScriptResource.has("src/hero.ts.script")).toBe(false);
+    expect(index.tileSetByScriptResource.has("src/hero.ts.script")).toBe(false);
   });
 });
 
