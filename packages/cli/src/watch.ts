@@ -45,7 +45,7 @@ export type EditorReloadCommand = "hot-reload" | "reload-extensions";
 
 export interface WatchEditorClient {
   resolve(cwd: string, signal?: AbortSignal): Promise<EditorEndpoint | null>;
-  postCommand(cwd: string, name: EditorReloadCommand): Promise<ReloadOutcome>;
+  postCommand(cwd: string, name: EditorReloadCommand, signal?: AbortSignal): Promise<ReloadOutcome>;
   /**
    * Live console lines with the replayed history already dropped, or null when
    * the stream will not open. Optional: console streaming is additive, so a
@@ -60,7 +60,7 @@ export interface WatchEditorClient {
 export function createWatchEditorClient(transport?: EditorTransport): WatchEditorClient {
   return {
     resolve: (cwd, signal) => resolveEditor(cwd, transport, signal),
-    postCommand: (cwd, name) => postCommand(cwd, name, transport),
+    postCommand: (cwd, name, signal) => postCommand(cwd, name, transport, signal),
     async openConsole(endpoint, signal) {
       // The watermark is read before the stream opens: /console/stream replays
       // the whole session, so without it every attach reprints history as news.
@@ -392,7 +392,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       return;
     }
     for (const name of commands) {
-      const outcome = await client.postCommand(cwd, name);
+      const outcome = await client.postCommand(cwd, name, editorAbort.signal);
       if (stopped) return;
       if (outcome === "unavailable") {
         noteReloadFailed(endpoint.baseUrl);
@@ -509,17 +509,23 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     resolveScheduled = null;
     try {
       await opts.resolveSurface?.();
-      if (opts.json) {
+      if (!stopped && opts.json) {
         stdout.write(renderWatchEvent({ event: "resolve" }));
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      if (opts.json) {
-        stdout.write(renderWatchEvent({ event: "resolve", error: message }));
-      } else {
-        stderr.write(`${message}\n`);
+      // The rejecting path has two writers of its own, so the guard covers both:
+      // a stopped watch is silent whichever way a late resolve settles.
+      if (!stopped) {
+        if (opts.json) {
+          stdout.write(renderWatchEvent({ event: "resolve", error: message }));
+        } else {
+          stderr.write(`${message}\n`);
+        }
       }
     }
+    // Unconditional: the guard suppresses the reporting, never the bookkeeping,
+    // so a late settle cannot leave `waitForIdle` parked.
     resolveBusy = false;
     notifyIdle();
   }
