@@ -24,6 +24,52 @@ function isAmbient(fileName: string): boolean {
   return /[\\/]node_modules[\\/]/.test(fileName) || /(^|[\\/])lib\.[^\\/]*\.d\.ts$/.test(fileName);
 }
 
+// The symbol a generic type reference was instantiated from — `undefined` for
+// anything that is not one.
+function referenceTargetSymbol(type: ts.Type): ts.Symbol | undefined {
+  if ((type.flags & ts.TypeFlags.Object) === 0) return undefined;
+  if (((type as ts.ObjectType).objectFlags & ts.ObjectFlags.Reference) === 0) return undefined;
+  return (type as ts.TypeReference).target.symbol;
+}
+
+// The declarations *the* `Hash` can come from, resolved from what the ambient
+// `hash` global returns rather than from the file `Hash` happens to be declared
+// in. A path test answers differently for an installed
+// `node_modules/@defold-typescript/types/…` and a workspace-resolved
+// `packages/types/…` copy of the very same declarations, which silently emptied
+// this report for anyone consuming the package through a `paths` mapping or a
+// symlink (bug-121); a symbol identity holds under both.
+//
+// The scope anchor is an ambient file so that no user module's own `hash`
+// participates, and every call signature is walked because a project's
+// global-script `function hash(s: string): string` *merges* into this symbol
+// rather than replacing it — the declarations then span both files and a
+// fully-qualified-name test would reject the real one. Asking the checker
+// instead of the filesystem is the same discipline as `tableKey` in
+// `url-address-slots.ts`.
+function canonicalHashSymbols(
+  checker: ts.TypeChecker,
+  program: ts.Program,
+): ReadonlySet<ts.Symbol> {
+  const files = program.getSourceFiles();
+  const anchor = files.find((file) => isAmbient(file.fileName)) ?? files[0];
+  const canonical = new Set<ts.Symbol>();
+  if (!anchor) return canonical;
+
+  for (const symbol of checker.getSymbolsInScope(anchor, ts.SymbolFlags.Function)) {
+    if (symbol.name !== "hash") continue;
+    const declaration = symbol.declarations?.[0];
+    if (!declaration) continue;
+    for (const signature of checker
+      .getTypeOfSymbolAtLocation(symbol, declaration)
+      .getCallSignatures()) {
+      const target = referenceTargetSymbol(signature.getReturnType());
+      if (target?.name === "Hash") canonical.add(target);
+    }
+  }
+  return canonical;
+}
+
 // The string a `Hash` was hashed from, recovered from its type argument —
 // `undefined` for anything else, including a bare `Hash`, a `Url`, a `string`,
 // and a union. `hash` records the argument in `Hash<S>` (see the `Hash` JSDoc in
@@ -32,17 +78,15 @@ function isAmbient(fileName: string): boolean {
 //
 // The interface must be *the* `Hash`: a project's own generic type named `Hash`
 // resolves to its own declaration, and reading a type argument off it would
-// report a fragment that was never an address. Same discipline as
-// `tableKey`'s `global.` prefix in `url-address-slots.ts`.
-function hashedSourceOfType(checker: ts.TypeChecker, type: ts.Type): string | undefined {
-  if ((type.flags & ts.TypeFlags.Object) === 0) return undefined;
-  if (((type as ts.ObjectType).objectFlags & ts.ObjectFlags.Reference) === 0) return undefined;
-  const reference = type as ts.TypeReference;
-  const target = reference.target.symbol;
-  if (target?.name !== "Hash") return undefined;
-  const declaredIn = target.declarations?.[0]?.getSourceFile().fileName ?? "";
-  if (!/@defold-typescript[\\/]types[\\/].*core-types\.ts$/.test(declaredIn)) return undefined;
-  const [source] = checker.getTypeArguments(reference);
+// report a fragment that was never an address. `canonical` is what settles that.
+function hashedSourceOfType(
+  checker: ts.TypeChecker,
+  type: ts.Type,
+  canonical: ReadonlySet<ts.Symbol>,
+): string | undefined {
+  const target = referenceTargetSymbol(type);
+  if (!target || !canonical.has(target)) return undefined;
+  const [source] = checker.getTypeArguments(type as ts.TypeReference);
   return source?.isStringLiteral() ? source.value : undefined;
 }
 
@@ -67,6 +111,11 @@ export function checkUrlFragmentReachability(input: {
   }
 
   const checker = program.getTypeChecker();
+  // Resolved once per call — measured at ~0.1 ms, so no laziness is warranted.
+  // An empty set reports nothing from the type-directed branch and leaves inline
+  // literals untouched, which is the answer for a program carrying no ambient
+  // `hash` and the module's existing fail-closed posture.
+  const canonical = canonicalHashSymbols(checker, program);
   const findings: UrlFragmentFinding[] = [];
   const targets = sourceFiles ?? program.getSourceFiles();
 
@@ -77,7 +126,7 @@ export function checkUrlFragmentReachability(input: {
       if (ts.isExpression(node) && isAddressClass(addressClassOfArgument(checker, table, node))) {
         const text = ts.isStringLiteralLike(node)
           ? node.text
-          : hashedSourceOfType(checker, checker.getTypeAtLocation(node));
+          : hashedSourceOfType(checker, checker.getTypeAtLocation(node), canonical);
         if (text !== undefined) {
           const hash = text.indexOf("#");
           const fragment = hash === -1 ? "" : text.slice(hash + 1);
