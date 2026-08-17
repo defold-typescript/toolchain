@@ -147,6 +147,35 @@ const ATLAS_SOURCE = 'go.property("my_atlas", resource.atlas("/assets/hero.atlas
 
 const ANIMATION_SOURCE = 'sprite.play_flipbook("#sprite", "walk");\n';
 
+// One object naming the edited file's generated script and one sprite reached
+// through a `.sprite` hop, so the atlas a suggestion came from is two documents
+// away from the object that displays it.
+const ANIMATION_DOCUMENTS: Record<string, string> = {
+  "main/hero.go":
+    'components {\n  id: "self"\n  component: "/main.ts.script"\n}\n' +
+    'components {\n  id: "sprite"\n  component: "/assets/hero.sprite"\n}\n',
+  "assets/hero.sprite": 'tile_set: "/assets/hero.atlas"\n',
+  "assets/hero.atlas": 'animations {\n  id: "walk"\n}\nanimations {\n  id: "jump"\n}\n',
+};
+
+// The same shape with a second object claiming the same script, which is the
+// ambiguity `buildSpriteAnimationIndex` deletes rather than picks a winner for.
+const CONTESTED_ANIMATION_DOCUMENTS: Record<string, string> = {
+  ...ANIMATION_DOCUMENTS,
+  "main/twin.go":
+    'components {\n  id: "self"\n  component: "/main.ts.script"\n}\n' +
+    'components {\n  id: "sprite"\n  component: "/assets/hero.sprite"\n}\n',
+};
+
+// A collection composing `/hero` through an instanced collection, so the
+// declaring document is the one naming the leaf rather than the root that
+// prefixed it.
+const PATH_DOCUMENTS: Record<string, string> = {
+  "main/main.collection":
+    'collection_instances {\n  id: "world"\n  collection: "/main/world.collection"\n}\n',
+  "main/world.collection": 'instances {\n  id: "hero"\n  prototype: "/main/board.go"\n}\n',
+};
+
 describe("resolveEntryProvenance", () => {
   test("a component id names the object that declares it, and only that one", () => {
     const { cache } = cacheOver(COMPONENT_DOCUMENTS);
@@ -272,31 +301,88 @@ describe("resolveEntryProvenance", () => {
     ).toEqual([]);
   });
 
-  test("a game-object path names nothing rather than guessing at a composed universe", () => {
-    const { cache } = cacheOver({
-      ...COMPONENT_DOCUMENTS,
-      "main/main.collection": 'instances {\n  id: "hero"\n  prototype: "/main/board.go"\n}\n',
-    });
-    const { slot, position } = slotIn(PATH_SOURCE, PATH_LITERAL);
-    // The caret its entry is offered at is the path half; the fragment half is
-    // the shipped case, where the `/`-prefixed name simply misses.
+  test("a game-object path names the document declaring its leaf, and only at the path half", () => {
+    const { cache } = cacheOver({ ...COMPONENT_DOCUMENTS, ...PATH_DOCUMENTS });
+    const { slot } = slotIn(PATH_SOURCE, PATH_LITERAL);
+    const at = (position: number) =>
+      resolveEntryProvenance({
+        slot,
+        position,
+        cache,
+        fileName: "main.ts",
+        entryName: "/world/hero",
+      });
+    expect(at(PATH_HALF)).toEqual(["main/world.collection"]);
+    // The fragment half belongs to the component universe, which never carries a
+    // `/`-prefixed name — the caret rule is not widened by covering this kind.
+    expect(at(IN_FRAGMENT)).toEqual([]);
+  });
+
+  test("a path no document declares, and a project that failed to parse, name nothing", () => {
+    const { slot } = slotIn(PATH_SOURCE, PATH_LITERAL);
+    const declared = cacheOver({ ...COMPONENT_DOCUMENTS, ...PATH_DOCUMENTS });
     expect(
       resolveEntryProvenance({
         slot,
         position: PATH_HALF,
-        cache,
+        cache: declared.cache,
+        fileName: "main.ts",
+        entryName: "/world/ghost",
+      }),
+    ).toEqual([]);
+
+    const broken = cacheOver({ "main/main.collection": 'instances {\n  id: "hero"\n' });
+    expect(
+      resolveEntryProvenance({
+        slot,
+        position: PATH_HALF,
+        cache: broken.cache,
         fileName: "main.ts",
         entryName: "/hero",
       }),
     ).toEqual([]);
+  });
+
+  test("an animation id names the tile source the addressed sprite reads from", () => {
+    const { cache } = cacheOver(ANIMATION_DOCUMENTS);
+    const { slot, position } = slotIn(ANIMATION_SOURCE, '"walk"');
+    expect(slot.class).toBe("animation");
     expect(
-      resolveEntryProvenance({ slot, position, cache, fileName: "main.ts", entryName: "/hero" }),
+      resolveEntryProvenance({ slot, position, cache, fileName: "main.ts", entryName: "walk" }),
+    ).toEqual(["assets/hero.atlas"]);
+    expect(
+      resolveEntryProvenance({ slot, position, cache, fileName: "main.ts", entryName: "swim" }),
     ).toEqual([]);
   });
 
-  test("an animation id names nothing rather than the atlas a full re-walk would find", () => {
-    const { cache } = cacheOver(COMPONENT_DOCUMENTS);
+  test("an unclaimed file and a contested one both name nothing for an animation", () => {
     const { slot, position } = slotIn(ANIMATION_SOURCE, '"walk"');
+    const claimed = cacheOver(ANIMATION_DOCUMENTS);
+    expect(
+      resolveEntryProvenance({
+        slot,
+        position,
+        cache: claimed.cache,
+        fileName: "unclaimed.ts",
+        entryName: "walk",
+      }),
+    ).toEqual([]);
+
+    const contested = cacheOver(CONTESTED_ANIMATION_DOCUMENTS);
+    expect(
+      resolveEntryProvenance({
+        slot,
+        position,
+        cache: contested.cache,
+        fileName: "main.ts",
+        entryName: "walk",
+      }),
+    ).toEqual([]);
+  });
+
+  test("an animation slot whose sibling address is not a same-object form names nothing", () => {
+    const { cache } = cacheOver(ANIMATION_DOCUMENTS);
+    const { slot, position } = slotIn('sprite.play_flipbook("/other#sprite", "walk");\n', '"walk"');
     expect(slot.class).toBe("animation");
     expect(
       resolveEntryProvenance({ slot, position, cache, fileName: "main.ts", entryName: "walk" }),
