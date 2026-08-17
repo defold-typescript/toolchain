@@ -343,6 +343,51 @@ describe("checkUrlFragmentReachability", () => {
     }
   });
 
+  test("a project's own global `hash` overload never widens the canonical set", () => {
+    // No `import`/`export`, so the declarations are global and the project's
+    // `hash` *merges* into the ambient symbol instead of shadowing it. The
+    // returned `Project.Hash` is not assignable to the receiver, so the fixture
+    // carries an expected overload diagnostic; the report neither reads
+    // diagnostics nor is affected by them. The sibling literal anchors the case:
+    // it proves the visitor reached the slot, so `FAKE` is dropped on identity
+    // rather than by never being examined.
+    const source =
+      "declare namespace Project {\n" +
+      "  interface Hash<S extends string = string> {\n" +
+      "    readonly local: S;\n" +
+      "  }\n" +
+      "}\n" +
+      "declare function hash(s: string): Project.Hash<string>;\n" +
+      'declare const FAKE: Project.Hash<"#nope">;\n' +
+      'msg.post(FAKE, "hello");\n' +
+      'msg.post("#missing", "hello");\n';
+    for (const findings of [
+      findingsOf(source, universe("sprite")),
+      workspaceFindingsOf(source, universe("sprite")),
+    ]) {
+      expect(findings.map((f) => f.fragment)).toEqual(["missing"]);
+      expect(findings[0]?.start).toBe(source.indexOf('"#missing"'));
+      expect(findings[0]?.length).toBe('"#missing"'.length);
+    }
+  });
+
+  test("a project's own global `hash` overload does not hide the shipped signature", () => {
+    // The merged declarations put `main.ts` first, so reading one declaration or
+    // taking one signature would silently pick the project's `string` return and
+    // empty the canonical set. The address is typed through the shipped global
+    // `Hash` alias, which is what must still resolve.
+    const source =
+      "declare function hash(s: string): string;\n" +
+      'declare const SPRITE: Hash<"#sprit">;\n' +
+      'msg.post(SPRITE, "hello");\n';
+    const findings = findingsOf(source, universe("sprite"));
+    expect(findings).toHaveLength(1);
+    const [finding] = findings;
+    expect(finding?.fragment).toBe("sprit");
+    expect(finding?.start).toBe(source.indexOf("SPRITE", source.indexOf("msg.post")));
+    expect(finding?.length).toBe("SPRITE".length);
+  });
+
   test("withholds every finding while the universe has gaps", () => {
     const reasons = ["main.collection: could not be parsed (line 3)"];
     const report = check('msg.post("#unknown", "hello");\n', {
