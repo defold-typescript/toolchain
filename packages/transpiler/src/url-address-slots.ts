@@ -50,6 +50,16 @@ export function isAddressClass(parameterClass: UrlParameterClass): boolean {
   return ADDRESS_CLASSES[parameterClass];
 }
 
+// Which of an address literal's two universes a caret stands in: component ids
+// from `fragmentStart` on, game-object paths everywhere before it — including a
+// literal carrying no `#` at all, which is all path. `>=` not `>`: at
+// `fragmentStart` the fragment is merely empty, which is where it is most often
+// typed. Stated once here so the entry builders and the provenance resolver
+// cannot drift apart about where the boundary sits.
+export function isFragmentCaret(slot: ClassifiedSlot, position: number): boolean {
+  return slot.fragmentStart !== -1 && position >= slot.fragmentStart;
+}
+
 // `getFullyQualifiedName` reports a symbol declared in an ambient `declare
 // global` block as `global.msg.post` / `global.hash`, while the table is keyed
 // on the Lua-side `msg.post` / `hash`. The prefix is therefore the evidence that

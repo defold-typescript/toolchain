@@ -37,6 +37,7 @@ export type { ClassifiedSlot } from "./url-address-slots";
 export {
   addressClassOfArgument,
   isAddressClass,
+  isFragmentCaret,
   resolveClassifiedSlotAtPosition,
 } from "./url-address-slots";
 export type { UrlFragmentFinding, UrlFragmentReport } from "./url-fragment-reachability";
