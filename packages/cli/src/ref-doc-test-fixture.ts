@@ -91,3 +91,28 @@ export function multiKindRefDocTarget(): RegistryTarget {
     ],
   };
 }
+
+// The same multi-kind target, but declaring an editor document of its own — the
+// shape a retained target holds once a bump moves the default past the release
+// whose editor fixtures it already synced. `fixturesDir` points at the vendored
+// set that actually carries them; the runtime modules still come from the zip.
+export function editorRefDocTarget(): RegistryTarget {
+  return {
+    ...multiKindRefDocTarget(),
+    fixturesDir: "fixtures/defold-1.13.0",
+    editorModules: [
+      {
+        namespace: "editor",
+        fixture: "editor_doc.json",
+        outFile: "editor.d.ts",
+        mapType: "editor",
+      },
+      {
+        namespace: "zip",
+        fixture: "editor_zip_doc.json",
+        outFile: "editor-vm/zip.d.ts",
+        mapType: "editor",
+      },
+    ],
+  };
+}

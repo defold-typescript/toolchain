@@ -19,6 +19,7 @@ import {
   materializeRefDocSurface,
 } from "./materialize";
 import {
+  editorRefDocTarget,
   labelRefDocResolveOpts,
   multiKindRefDocResolveOpts,
   multiKindRefDocTarget,
@@ -554,16 +555,100 @@ describe("materializeRefDocSurface per-kind subpaths", () => {
     rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
   });
 
-  test("the wall's materialized-kind list is exactly the versioned manifest's wallable kinds", async () => {
-    const { RUNTIME_KIND_MANIFEST } = (await import(
+  test("every kind a surface can carry is one a wall may narrow against", async () => {
+    const { RUNTIME_KIND_MANIFEST, targetKindManifest } = (await import(
       path.resolve(import.meta.dir, "../../types/scripts/regen.ts")
-    )) as { RUNTIME_KIND_MANIFEST: ReadonlyArray<{ kind: string }> };
-    const { MATERIALIZED_KIND_SUBPATHS, PINNED_KIND_SUBPATHS } = await import("./directory-walls");
-    expect([...MATERIALIZED_KIND_SUBPATHS].sort()).toEqual(
-      RUNTIME_KIND_MANIFEST.map((entry) => entry.kind)
-        .filter((kind) => PINNED_KIND_SUBPATHS.includes(kind))
-        .sort(),
+    )) as {
+      RUNTIME_KIND_MANIFEST: ReadonlyArray<{ kind: string }>;
+      targetKindManifest: (target: unknown) => ReadonlyArray<{ kind: string }>;
+    };
+    const { PINNED_KIND_SUBPATHS } = await import("./directory-walls");
+    const declaring = targetKindManifest(editorRefDocTarget()).map((entry) => entry.kind);
+    // A wall that could never name a kind the surface writes would leave that
+    // kind unreachable through a pinned surface.
+    for (const kind of declaring) {
+      expect(PINNED_KIND_SUBPATHS).toContain(kind);
+    }
+    expect(declaring).toEqual([
+      ...RUNTIME_KIND_MANIFEST.map((entry) => entry.kind),
+      "editor-script",
+    ]);
+    expect(targetKindManifest(multiKindRefDocTarget()).map((entry) => entry.kind)).toEqual(
+      RUNTIME_KIND_MANIFEST.map((entry) => entry.kind),
     );
+  });
+
+  test("a declaring target's surface carries its editor modules, kind index and subpath export", async () => {
+    const resolveOpts = multiKindRefDocResolveOpts();
+
+    const { materializedDir } = await materializeRefDocSurface({
+      cwd,
+      surfaceId: "defold-1.9.8",
+      resolveOpts,
+      registry: [editorRefDocTarget()],
+    });
+    expect(materializedDir).toBe(".defold-types/defold-1.9.8");
+
+    const dir = path.join(cwd, ".defold-types", "defold-1.9.8");
+    for (const rel of [
+      "editor.d.ts",
+      path.join("editor-vm", "zip.d.ts"),
+      "editor-overloads.d.ts",
+      "editor-vm-globals.d.ts",
+      path.join("kinds", "editor-script.d.ts"),
+    ]) {
+      expect(existsSync(path.join(dir, rel))).toBe(true);
+    }
+
+    const index = readFileSync(path.join(dir, "kinds", "editor-script.d.ts"), "utf8");
+    expect([...index.matchAll(/^import "([^"]+)";$/gm)].map((match) => match[1])).toEqual([
+      "../editor",
+      "../editor-vm/zip",
+      "../editor-overloads",
+      "../editor-vm-globals",
+    ]);
+    expect(index).toContain(
+      'export { defineEditorScript, defineEditorCommand } from "@defold-typescript/types/editor";',
+    );
+    expect(index).toContain(
+      'export type { EditorCommandQuery, EditorNode } from "@defold-typescript/types/editor";',
+    );
+    // Editor scripts run plain Lua 5.1 and have no script properties.
+    expect(index).not.toContain("ScriptProperty");
+    expect(index).not.toContain("jit-only");
+
+    // The editor surface stays out of the runtime programs entirely.
+    const script = readFileSync(path.join(dir, "kinds", "script.d.ts"), "utf8");
+    for (const forbidden of ['import "../editor";', 'import "../editor-overloads";']) {
+      expect(script).not.toContain(forbidden);
+    }
+    expect(readFileSync(path.join(dir, "index.d.ts"), "utf8")).not.toContain('import "./editor";');
+
+    const pkg = JSON.parse(readFileSync(path.join(dir, "package.json"), "utf8")) as {
+      exports: Record<string, unknown>;
+    };
+    expect(pkg.exports["./editor-script"]).toEqual({ types: "./kinds/editor-script.d.ts" });
+
+    rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
+  });
+
+  test("a target declaring no editor document writes no editor file at all", async () => {
+    const resolveOpts = multiKindRefDocResolveOpts();
+
+    await materializeRefDocSurface({
+      cwd,
+      surfaceId: "defold-1.9.8",
+      resolveOpts,
+      registry: [multiKindRefDocTarget()],
+    });
+
+    const dir = path.join(cwd, ".defold-types", "defold-1.9.8");
+    for (const rel of ["editor.d.ts", "editor-overloads.d.ts", "editor-vm"]) {
+      expect(existsSync(path.join(dir, rel))).toBe(false);
+    }
+    expect(existsSync(path.join(dir, "kinds", "script.d.ts"))).toBe(true);
+
+    rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
   });
 });
 
