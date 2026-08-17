@@ -1,34 +1,61 @@
 import { mkdirSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import {
   type ApiTarget,
   generateModuleDeclaration,
   generateVersionIndex,
-  LUA_STDLIB_REFERENCES,
+  KIND_MODULE_MANIFEST,
+  type KindManifestEntry,
+  kindStdlibReferences,
+  loadTargetEditorModules,
   type ResolveTargetOptions,
-  RUNTIME_KIND_MANIFEST,
   resolveTargetModules,
 } from "./regen";
 
-export { RUNTIME_KIND_MANIFEST } from "./regen";
+export { RUNTIME_KIND_MANIFEST, targetKindManifest } from "./regen";
 
 export interface RenderMaterializedKindIndexOptions {
   readonly kind: string;
   readonly universalModules: readonly string[];
   readonly restrictedModule: string | null;
+  // Set for a kind built from the target's own editor documents. It replaces
+  // the universal set outright — an editor kind is disjoint from the runtime
+  // surface, not a narrowing of it.
+  readonly editorModules?: readonly string[];
+}
+
+// The installed subpath a materialized kind re-exports its factory from: the
+// surface has no relative `src/<module>` to reach, but the package publishes
+// each factory module under its own name.
+function installedFactoryModule(entry: KindManifestEntry): string {
+  const module = (entry.factoryFrom ?? "../../src/lifecycle").split("/").pop();
+  return `@defold-typescript/types/${module}`;
 }
 
 // Render one per-kind subpath for the materialized surface, mirroring
 // `generateKindIndex` but re-exporting the factory from the installed
-// `@defold-typescript/types/lifecycle` subpath (the materialized surface has no
-// relative `src/lifecycle` to reach). Pure: returns a string, no FS.
+// `@defold-typescript/types/<module>` subpath. Pure: returns a string, no FS.
 export function renderMaterializedKindIndex(opts: RenderMaterializedKindIndexOptions): string {
-  const entry = RUNTIME_KIND_MANIFEST.find((e) => e.kind === opts.kind);
+  const entry = KIND_MODULE_MANIFEST.find((e) => e.kind === opts.kind);
   if (!entry) throw new Error(`unknown script kind: ${opts.kind}`);
-  const universal = [...new Set(["engine-globals", ...opts.universalModules])].sort();
-  const lines = universal.map((mod) => `import "../${mod}";`);
-  if (opts.restrictedModule) lines.push(`import "../${opts.restrictedModule}";`);
-  return `${LUA_STDLIB_REFERENCES}${lines.join("\n")}\n\nexport { ${entry.factory} } from "@defold-typescript/types/lifecycle";\nexport type { ScriptProperties, ScriptProperty } from "@defold-typescript/types/lifecycle";\n`;
+  const modules =
+    entry.only === undefined
+      ? [...new Set(["engine-globals", ...opts.universalModules])].sort()
+      : [...(opts.editorModules ?? [])];
+  const lines = modules.map((mod) => `import "../${mod}";`);
+  if (entry.only === undefined && opts.restrictedModule) {
+    lines.push(`import "../${opts.restrictedModule}";`);
+  }
+  const from = installedFactoryModule(entry);
+  const values = [entry.factory, ...(entry.extraExports ?? [])].join(", ");
+  const typeExports = entry.extraTypeExports?.length
+    ? `\nexport type { ${entry.extraTypeExports.join(", ")} } from "${from}";`
+    : "";
+  const properties =
+    entry.propertyTypes === false
+      ? ""
+      : `\nexport type { ScriptProperties, ScriptProperty } from "${from}";`;
+  return `${kindStdlibReferences(entry)}${lines.join("\n")}\n\nexport { ${values} } from "${from}";${typeExports}${properties}\n`;
 }
 
 export interface BuildVersionedSurfaceOptions {
@@ -60,15 +87,25 @@ export async function buildVersionedSurfaceFiles(
   opts: BuildVersionedSurfaceOptions = {},
 ): Promise<VersionedSurfaceFile[]> {
   const exclude = new Set(opts.excludeModules ?? []);
-  const modules = (await resolveTargetModules(target, opts.resolveOpts ?? {})).filter(
-    (entry) => !exclude.has(entry.outFile.replace(/\.d\.ts$/, "")),
+  const kept = (outFile: string): boolean => !exclude.has(outFile.replace(/\.d\.ts$/, ""));
+  const modules = (await resolveTargetModules(target, opts.resolveOpts ?? {})).filter((entry) =>
+    kept(entry.outFile),
   );
+  // The editor documents a target declares are always committed fixtures — the
+  // ref-doc zip carries no editor surface — so they resolve from disk whatever
+  // the target's `source` says.
+  const editorModules = loadTargetEditorModules(
+    target,
+    opts.resolveOpts?.packageRoot ?? undefined,
+  ).filter((entry) => kept(entry.outFile));
 
-  const files: VersionedSurfaceFile[] = modules.map((entry) => ({
+  const files: VersionedSurfaceFile[] = [...modules, ...editorModules].map((entry) => ({
     path: entry.outFile,
     contents: generateModuleDeclaration(entry).contents,
   }));
 
+  // The aggregate entrypoint stays the runtime surface: importing the editor VM
+  // there would drag it into every program that pins this version.
   const versioned = modules.map((entry) => ({ ...entry, versionId: target.id }));
   files.push({ path: "index.d.ts", contents: generateVersionIndex(target.id, versioned) });
 
@@ -94,6 +131,10 @@ export async function materializeVersionedSurface(
   const files = await buildVersionedSurfaceFiles(target, opts);
   mkdirSync(opts.destDir, { recursive: true });
   for (const file of files) {
-    writeFileSync(resolve(opts.destDir, file.path), file.contents);
+    const out = resolve(opts.destDir, file.path);
+    // An editor VM module lands in its own subdirectory, so the sink cannot
+    // assume every file is a direct child of the surface root.
+    mkdirSync(dirname(out), { recursive: true });
+    writeFileSync(out, file.contents);
   }
 }

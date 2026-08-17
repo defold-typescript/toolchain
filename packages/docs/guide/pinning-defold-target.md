@@ -240,9 +240,17 @@ as `materializedSurface`. Re-running build is idempotent.
 The pinned versioned surface is materialized in full — `build` and `watch` never
 narrow it by script kind. Narrowing a directory to one kind is opt-in via the
 `wall` command; see [Wall](wall.md) and the per-kind API wall in
-[Script lifecycle](script-lifecycle.md). (Walls today narrow against the
-installed `@defold-typescript/types` subpaths, not the pinned
-`.defold-types/<version>/` surface.)
+[Script lifecycle](script-lifecycle.md). A wall narrows against the pinned
+surface for every kind that surface wrote, and falls back to the installed
+`@defold-typescript/types` subpath for any kind it did not.
+
+Which kinds a surface writes follows the target it was built from. Every target
+carries the runtime trio (`script`, `gui-script`, `render-script`); a target
+carries `editor-script` only when it ships an editor-scripting document of its
+own, which today only the current default target does. A project pinned to a
+target without one keeps the installed package's
+[editor-script surface](editor-scripts.md) — nothing silently substitutes the
+default target's editor API for the pinned release's.
 
 If a pinned target cannot be generated — an unknown version, or no network on
 first use — the build does **not** fail. It reports `materializedSurface: null`,
