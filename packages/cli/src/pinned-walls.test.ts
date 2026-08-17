@@ -96,13 +96,18 @@ function scaffoldSources(guiBody: string, renderBody: string): void {
   );
 }
 
-function typecheckBuild(cwd: string): { code: number; output: string } {
-  const proc = Bun.spawnSync([path.join(BIN_DIR, "tsc"), "-b", "--noEmit"], {
-    cwd,
-    stdout: "pipe",
-    stderr: "pipe",
-    timeout: 60_000,
-  });
+// `force` defeats the composite build's up-to-date cache, which otherwise
+// survives an edit to a wall's own `tsconfig.json` and replays the prior result.
+function typecheckBuild(cwd: string, force = false): { code: number; output: string } {
+  const proc = Bun.spawnSync(
+    [path.join(BIN_DIR, "tsc"), "-b", "--noEmit", ...(force ? ["--force"] : [])],
+    {
+      cwd,
+      stdout: "pipe",
+      stderr: "pipe",
+      timeout: 60_000,
+    },
+  );
   return { code: proc.exitCode, output: `${proc.stdout.toString()}${proc.stderr.toString()}` };
 }
 
@@ -380,10 +385,56 @@ describe("a pinned wall's documented kind-index import resolves into the pinned 
       new RegExp(`error TS2(339|551): Property '${installedOnly}' does not exist`),
     );
     expect(output).not.toContain(pinnedOnly);
+    // The rejection is evidence about the pinned surface's *contents* only when
+    // the program around it resolved. An unresolvable factory import (TS2307), a
+    // `types` entry naming a subpath the surface never wrote (TS2688), or a
+    // missing ambient namespace (TS2304) each exit nonzero carrying the property
+    // diagnostic too, and the assertions above would accept every one of them.
+    const unexpected = [...output.matchAll(/error TS(\d+)/g)]
+      .map((match) => match[1])
+      .filter((diagnostic) => diagnostic !== "2339" && diagnostic !== "2551");
+    expect(unexpected).toEqual([]);
   }
 
-  test("an editor wall over a committed surface rejects a member only the installed release declares", () => {
-    const COMMITTED = "defold-1.13.0";
+  // Strip the wall's managed redirect and rebuild. This is the pre-bug-125
+  // arrangement: the documented import falls back through `node_modules`, the
+  // installed ambient surface loads beside the pinned one, and the
+  // installed-only member resolves. Returned rather than asserted so the
+  // negative control below can arrange for it to fail.
+  function buildWithoutWallRedirect(wallDir: string): { code: number; output: string } {
+    const configPath = path.join(cwd, wallDir, "tsconfig.json");
+    const config = JSON.parse(readFileSync(configPath, "utf8"));
+    const paths: Record<string, string[]> = config.compilerOptions?.paths ?? {};
+    const managed = Object.keys(paths).filter((key) => key.startsWith("@defold-typescript/types/"));
+    const [managedKey] = managed;
+    if (managed.length !== 1 || managedKey === undefined) {
+      throw new Error(
+        `expected one managed redirect in ${wallDir}/tsconfig.json, got ${JSON.stringify(managed)}`,
+      );
+    }
+    delete paths[managedKey];
+    if (Object.keys(paths).length === 0) {
+      delete config.compilerOptions.paths;
+    }
+    writeFileSync(configPath, JSON.stringify(config, null, 2));
+    return typecheckBuild(cwd, true);
+  }
+
+  // Without this, `expectOnlyPinnedSurface` passes just as well when no second
+  // channel exists at all — it would then assert only that the pinned surface
+  // loaded, which is the whole vacuity being ruled out.
+  function expectInstalledMemberReachable(wallDir: string, member: string): void {
+    const { code, output } = buildWithoutWallRedirect(wallDir);
+    if (code !== 0) {
+      throw new Error(
+        `expected '${member}' to resolve through the installed package once the wall redirect is gone, got:\n${output}`,
+      );
+    }
+  }
+
+  const COMMITTED = "defold-1.13.0";
+
+  function arrangeCommittedEditorWall(installed: boolean): void {
     writeRootTsconfig();
     const { materializedDir } = materializeApiSurface({
       cwd,
@@ -391,7 +442,9 @@ describe("a pinned wall's documented kind-index import resolves into the pinned 
       sourceGeneratedDir: path.join(TYPES_PKG, "generated"),
     });
     ensureMaterializedReference(cwd, materializedDir);
-    linkInstalledTypesPackage();
+    if (installed) {
+      linkInstalledTypesPackage();
+    }
     renameInSurface(`.defold-types/${COMMITTED}/editor.d.ts`, "engine_sha1", "only_in_pinned");
 
     touch(
@@ -409,7 +462,21 @@ describe("a pinned wall's documented kind-index import resolves into the pinned 
     );
 
     expect(wallUnderPin()).toBe(COMMITTED);
+  }
+
+  test("an editor wall over a committed surface rejects a member only the installed release declares", () => {
+    arrangeCommittedEditorWall(true);
     expectOnlyPinnedSurface("only_in_pinned", "engine_sha1");
+    expectInstalledMemberReachable("src/tooling", "engine_sha1");
+  });
+
+  // The control's own negative control. Arrangement, not a production mutation:
+  // with no installed package the narrowing assertion still passes — and the
+  // control is what refuses to call that a single-surface proof.
+  test("the installed-channel control fails when nothing is installed to reach", () => {
+    arrangeCommittedEditorWall(false);
+    expectOnlyPinnedSurface("only_in_pinned", "engine_sha1");
+    expect(buildWithoutWallRedirect("src/tooling").code).not.toBe(0);
   });
 
   test("a gui wall over a ref-doc surface rejects a member only the installed release declares", async () => {
@@ -434,5 +501,6 @@ describe("a pinned wall's documented kind-index import resolves into the pinned 
 
     expect(wallUnderPin()).toBe("defold-1.9.8");
     expectOnlyPinnedSurface("only_in_pinned", "get_node");
+    expectInstalledMemberReachable("src/ui", "get_node");
   });
 });
