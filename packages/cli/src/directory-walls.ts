@@ -229,24 +229,133 @@ function nestedExcludes(wallDir: string, nestedWallDirs: readonly string[]): str
     .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 }
 
+export interface RootPathAliases {
+  readonly baseUrl?: string;
+  readonly paths?: Record<string, string[]>;
+}
+
+// The root config's own `paths` and `baseUrl`, read one level only — the file a
+// wall's `extends` names — matching `resolveActivePinnedSurface`, which reads the
+// same single file and likewise does not follow an `extends` chain above it.
+export function readRootPathAliases(cwd: string): RootPathAliases {
+  const rootPath = path.join(cwd, "tsconfig.json");
+  if (!existsSync(rootPath)) {
+    return {};
+  }
+  let parsed: { compilerOptions?: { baseUrl?: unknown; paths?: unknown } };
+  try {
+    parsed = JSON.parse(readFileSync(rootPath, "utf8"));
+  } catch {
+    return {};
+  }
+  const baseUrl = parsed.compilerOptions?.baseUrl;
+  const paths = parsed.compilerOptions?.paths;
+  return {
+    ...(typeof baseUrl === "string" ? { baseUrl } : {}),
+    ...(paths !== null && typeof paths === "object"
+      ? { paths: paths as Record<string, string[]> }
+      : {}),
+  };
+}
+
+// Where a wall's `paths` substitutions are resolved from. With no `baseUrl` that
+// is the wall's own directory, so the prefix is the one `typeRoots` uses; when
+// the root declares `baseUrl`, the wall inherits it — a relative `baseUrl` in an
+// extended config resolves against the config that declared it — and every
+// substitution then resolves against that directory instead.
+function wallPathsBase(depth: number, baseUrl: string | undefined): string {
+  if (baseUrl === undefined) {
+    return `${"../".repeat(depth)}${MATERIALIZED_ROOT}`;
+  }
+  return path.posix.relative(path.posix.normalize(baseUrl), MATERIALIZED_ROOT);
+}
+
 // The wall's own redirect for the documented `@defold-typescript/types/<kind>`
 // factory import, which otherwise resolves through `node_modules` to the
 // *installed* package's kind index and loads a second ambient surface beside the
 // pinned one. It must name `<surface>/<kind>/index.d.ts` — the same file `types`
 // resolves — and not the identical-content `<surface>/kinds/<kind>.d.ts` sibling,
-// which would re-create the double load. `paths` in a config with no `baseUrl`
-// resolves against the config's own directory, so the prefix is the one
-// `typeRoots` uses.
+// which would re-create the double load.
 function pinnedKindIndexPaths(
   depth: number,
   pinnedSurface: string,
   kind: string,
+  baseUrl: string | undefined,
 ): Record<string, string[]> {
   return {
     [`@defold-typescript/types/${kind}`]: [
-      `${"../".repeat(depth)}${MATERIALIZED_ROOT}/${pinnedSurface}/${kind}/index.d.ts`,
+      `${wallPathsBase(depth, baseUrl)}/${pinnedSurface}/${kind}/index.d.ts`,
     ],
   };
+}
+
+// The value the wall would write when mirroring root alias target `target`.
+// Re-based to the wall directory when the root declares no `baseUrl`, verbatim
+// when it does — the wall resolves against the same base the root does in that
+// case. An absolute target already names its file outright.
+function mirroredTarget(target: string, baseUrl: string | undefined, depth: number): string {
+  if (baseUrl !== undefined || path.posix.isAbsolute(target)) {
+    return target;
+  }
+  return path.posix.join("../".repeat(depth), target);
+}
+
+export interface MergeWallPathsInput {
+  readonly existing: Record<string, string[]> | undefined;
+  readonly managed: Record<string, string[]> | undefined;
+  readonly managedKey: string;
+  readonly rootAliases: RootPathAliases;
+  readonly depth: number;
+}
+
+// A wall owns exactly its `@defold-typescript/types/<kind>` redirect; every other
+// entry belongs to the user. Declaring any `paths` replaces — never merges — the
+// object inherited through `extends`, so a pinned write must also mirror the root
+// config's own aliases to compensate for the shadowing the redirect introduces.
+//
+// Value equality with the mirror this function would write is what identifies a
+// wall-authored entry, in both directions: a colliding entry that differs is the
+// user's and survives a pinned write, and only an entry still equal to its mirror
+// is removed on un-pin. A root alias the user later edits or deletes therefore
+// stays behind as an ordinary preserved entry; that is accepted rather than
+// tracked.
+//
+// Returns `undefined` when nothing is left, which is the signal to **delete** the
+// key: `paths: null` suppresses the inherited object exactly as a populated one
+// does, so it would leave the root aliases dead after the pin is gone.
+export function mergeWallPaths({
+  existing,
+  managed,
+  managedKey,
+  rootAliases,
+  depth,
+}: MergeWallPathsInput): Record<string, string[]> | undefined {
+  const mirrors = new Map<string, string[]>();
+  for (const [specifier, targets] of Object.entries(rootAliases.paths ?? {})) {
+    mirrors.set(
+      specifier,
+      targets.map((target) => mirroredTarget(target, rootAliases.baseUrl, depth)),
+    );
+  }
+
+  const merged: Record<string, string[]> = { ...existing };
+  if (managed === undefined) {
+    delete merged[managedKey];
+    for (const [specifier, mirror] of mirrors) {
+      if (JSON.stringify(merged[specifier]) === JSON.stringify(mirror)) {
+        delete merged[specifier];
+      }
+    }
+  } else {
+    for (const [specifier, mirror] of mirrors) {
+      if (merged[specifier] === undefined) {
+        merged[specifier] = mirror;
+      }
+    }
+    Object.assign(merged, managed);
+  }
+
+  return Object.keys(merged).length === 0 ? undefined : merged;
 }
 
 // `surfaceKinds` is what the pinned surface actually wrote (see
@@ -259,6 +368,7 @@ export function directoryWallTsconfig(
   pinnedSurface: string | null = null,
   nestedWallDirs: readonly string[] = [],
   surfaceKinds: readonly string[] = [],
+  rootAliases: RootPathAliases = {},
 ): WallTsconfig {
   const depth = wall.dir.split("/").length;
   const exclude = nestedExcludes(wall.dir, nestedWallDirs);
@@ -276,7 +386,7 @@ export function directoryWallTsconfig(
       composite: true,
       typeRoots: [`${"../".repeat(depth)}${MATERIALIZED_ROOT}`],
       types: [`${pinnedSurface}/${wall.kind}`],
-      paths: pinnedKindIndexPaths(depth, pinnedSurface, wall.kind),
+      paths: pinnedKindIndexPaths(depth, pinnedSurface, wall.kind, rootAliases.baseUrl),
     },
     include: ["**/*.ts"],
     exclude,
@@ -408,6 +518,7 @@ export function writeDirectoryWallTsconfigs(
 ): string[] {
   const written: string[] = [];
   const surfaceKinds = materializedSurfaceKinds(cwd, pinnedSurface);
+  const rootAliases = readRootPathAliases(cwd);
   for (const w of walls) {
     if (w.dir === ".") {
       continue;
@@ -419,7 +530,16 @@ export function writeDirectoryWallTsconfigs(
       pinnedSurface,
       nearestDescendantDirs(w, walls),
       surfaceKinds,
+      rootAliases,
     );
+    const mergePaths = (existing: Record<string, string[]> | undefined) =>
+      mergeWallPaths({
+        existing,
+        managed: desired.compilerOptions.paths,
+        managedKey: `@defold-typescript/types/${w.kind}`,
+        rootAliases,
+        depth: w.dir.split("/").length,
+      });
     if (existsSync(target)) {
       const current = JSON.parse(readFileSync(target, "utf8")) as {
         extends?: string;
@@ -427,18 +547,17 @@ export function writeDirectoryWallTsconfigs(
         [key: string]: unknown;
       };
       const options = current.compilerOptions ?? {};
+      const mergedPaths = mergePaths(options.paths as Record<string, string[]> | undefined);
       // Skip the write when already narrowed so a consumer's formatting is not
-      // churned to JSON.stringify's layout on every build.
-      // An unpinned wall carries no `paths` key while an un-pinned one reads
-      // `paths: null`; both mean "no redirect", so normalize before comparing or
-      // every build rewrites a wall that was pinned once.
+      // churned to JSON.stringify's layout on every build. The comparison is
+      // against the *merged* object, not the managed entry alone, or a wall
+      // whose mirrors are already in place is rewritten on every build.
       const alreadyNarrowed =
         current.extends === desired.extends &&
         options.composite === desired.compilerOptions.composite &&
         JSON.stringify(options.typeRoots) === JSON.stringify(desired.compilerOptions.typeRoots) &&
         JSON.stringify(options.types) === JSON.stringify(desired.compilerOptions.types) &&
-        JSON.stringify(options.paths ?? null) ===
-          JSON.stringify(desired.compilerOptions.paths ?? null) &&
+        JSON.stringify(options.paths ?? null) === JSON.stringify(mergedPaths ?? null) &&
         JSON.stringify(current.include) === JSON.stringify(desired.include) &&
         JSON.stringify(current.exclude) === JSON.stringify(desired.exclude);
       if (!alreadyNarrowed) {
@@ -448,12 +567,10 @@ export function writeDirectoryWallTsconfigs(
           typeRoots: desired.compilerOptions.typeRoots,
           types: desired.compilerOptions.types,
         };
-        // A wall that never had a redirect keeps a `paths`-free tsconfig; only a
-        // stale key from an earlier pin is nulled out, the way `typeRoots` is.
-        if (desired.compilerOptions.paths !== undefined) {
-          nextOptions.paths = desired.compilerOptions.paths;
-        } else if (options.paths !== undefined) {
-          nextOptions.paths = null;
+        if (mergedPaths === undefined) {
+          delete nextOptions.paths;
+        } else {
+          nextOptions.paths = mergedPaths;
         }
         writeJson(target, {
           ...current,
@@ -465,7 +582,12 @@ export function writeDirectoryWallTsconfigs(
         written.push(rel);
       }
     } else {
-      writeJson(target, desired);
+      const mergedPaths = mergePaths(undefined);
+      const { paths: _managed, ...options } = desired.compilerOptions;
+      writeJson(target, {
+        ...desired,
+        compilerOptions: mergedPaths === undefined ? options : { ...options, paths: mergedPaths },
+      });
       written.push(rel);
     }
   }
