@@ -448,6 +448,220 @@ describe("materializeApiSurface consumer proof — imported + ambient types unif
   });
 });
 
+const PINNED: SelectedApiSurface = { surfaceId: "defold-1.13.0", available: true };
+
+function walkDts(dir: string, prefix = ""): string[] {
+  const found: string[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const rel = prefix === "" ? entry.name : `${prefix}/${entry.name}`;
+    if (entry.isDirectory()) {
+      found.push(...walkDts(path.join(dir, entry.name), rel));
+    } else if (entry.name.endsWith(".d.ts")) {
+      found.push(rel);
+    }
+  }
+  return found;
+}
+
+// Every `.` specifier a materialized surface writes must land on a file the same
+// surface holds. A byte assertion says which specifier changed; this says the
+// whole rewritten graph closes, which is what `tsc` needs and what
+// `skipLibCheck` (on in every consumer scaffold) hides.
+function danglingSpecifiers(dir: string): string[] {
+  const dangling: string[] = [];
+  for (const rel of walkDts(dir)) {
+    const file = path.join(dir, ...rel.split("/"));
+    const contents = readFileSync(file, "utf8");
+    for (const match of contents.matchAll(/(?:import|from) "(\.[^"]*)"/g)) {
+      const target = path.resolve(path.dirname(file), match[1] ?? "");
+      if (!existsSync(`${target}.d.ts`) && !existsSync(path.join(target, "index.d.ts"))) {
+        dangling.push(`${rel} -> ${match[1]}`);
+      }
+    }
+  }
+  return dangling;
+}
+
+describe("materializeApiSurface editor surface", () => {
+  const TYPES_ROOT = path.resolve(import.meta.dir, "..", "..", "types");
+  const REAL_GENERATED = path.join(TYPES_ROOT, "generated");
+
+  function materializeReal(): string {
+    const { materializedDir } = materializeApiSurface({
+      cwd,
+      surface: PINNED,
+      sourceGeneratedDir: REAL_GENERATED,
+    });
+    expect(materializedDir).toBe(".defold-types/defold-1.13.0");
+    return path.join(cwd, ".defold-types", "defold-1.13.0");
+  }
+
+  test("carries the declaring target's editor modules, hand-authored deps and editor kind", () => {
+    const dir = materializeReal();
+
+    for (const rel of [
+      "editor.d.ts",
+      "editor-vm/http.d.ts",
+      "editor-vm/localization.d.ts",
+      "editor-overloads.d.ts",
+      "editor-vm-globals.d.ts",
+      "editor-vm-types.d.ts",
+      "kinds/editor-script.d.ts",
+    ]) {
+      expect(existsSync(path.join(dir, ...rel.split("/")))).toBe(true);
+    }
+
+    // The aggregate index stays the runtime surface: `editor.d.ts` is a
+    // top-level module and was always in it, but the editor VM and the
+    // hand-authored ambients belong to the editor kind alone.
+    const index = readFileSync(path.join(dir, "index.d.ts"), "utf8");
+    expect(index).toContain('import "./editor";');
+    expect(index).not.toContain("editor-vm");
+    expect(index).not.toContain("editor-overloads");
+
+    const pkg = JSON.parse(readFileSync(path.join(dir, "package.json"), "utf8")) as Record<
+      string,
+      unknown
+    >;
+    expect(Object.keys(pkg).sort()).toEqual(["name", "types"]);
+  });
+
+  test("the relocated kind index resolves from its new location", () => {
+    const dir = materializeReal();
+    const source = readFileSync(path.join(REAL_GENERATED, "kinds", "editor-script.d.ts"), "utf8");
+    const written = readFileSync(path.join(dir, "kinds", "editor-script.d.ts"), "utf8");
+
+    const sourceSpecs = [...source.matchAll(/^import "([^"]+)";$/gm)].map(
+      (match) => match[1] ?? "",
+    );
+    expect(sourceSpecs.some((spec) => spec.includes("/src/"))).toBe(true);
+    expect([...written.matchAll(/^import "([^"]+)";$/gm)].map((match) => match[1])).toEqual(
+      sourceSpecs.map((spec) => (spec.includes("/src/") ? `../${spec.split("/src/")[1]}` : spec)),
+    );
+
+    expect(written).toContain(
+      'export { defineEditorScript, defineEditorCommand } from "@defold-typescript/types/editor";',
+    );
+    expect(written).toContain(
+      'export type { EditorCommandQuery, EditorNode } from "@defold-typescript/types/editor";',
+    );
+    expect(written).not.toContain("/src/");
+  });
+
+  test("a copied editor-vm module's core-types import is depth-aware", () => {
+    const dir = materializeReal();
+
+    const localization = readFileSync(path.join(dir, "editor-vm", "localization.d.ts"), "utf8");
+    expect(localization).toContain('from "../core-types"');
+    expect(localization).not.toContain('from "./core-types"');
+    expect(localization).not.toContain("src/core-types");
+
+    // A surface-root module keeps today's flat rewrite.
+    expect(readFileSync(path.join(dir, "editor.d.ts"), "utf8")).toContain('from "./core-types"');
+  });
+
+  test("every relative specifier in the materialized surface resolves on disk", () => {
+    expect(danglingSpecifiers(materializeReal())).toEqual([]);
+  });
+
+  test("derives the editor surface from the pinned target's kind index, not the package's", () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-typesroot-"));
+    try {
+      const gen = path.join(root, "generated");
+      const kinds = path.join(gen, "kinds");
+      const src = path.join(root, "src");
+      mkdirSync(kinds, { recursive: true });
+      mkdirSync(path.join(gen, "editor-vm"), { recursive: true });
+      mkdirSync(src);
+
+      writeFileSync(path.join(gen, "editor.d.ts"), "declare const __editor: unknown;\n");
+      writeFileSync(
+        path.join(gen, "editor-vm", "pinned_only.d.ts"),
+        'import type { Opaque } from "../../src/core-types";\ndeclare const __pinned: Opaque<"pinned">;\n',
+      );
+      writeFileSync(
+        path.join(kinds, "editor-script.d.ts"),
+        [
+          'import "../editor";',
+          'import "../editor-vm/pinned_only";',
+          'import "../../src/pinned-overloads";',
+          "",
+          'export { defineEditorScript } from "../../src/editor";',
+          "",
+        ].join("\n"),
+      );
+      writeFileSync(
+        path.join(src, "core-types.ts"),
+        "export type Opaque<T extends string> = { readonly __brand: T };\n",
+      );
+      writeFileSync(
+        path.join(src, "pinned-overloads.d.ts"),
+        'import type { Opaque } from "./core-types";\ndeclare const __po: Opaque<"po">;\nexport {};\n',
+      );
+      for (const file of ["msg-overloads.d.ts", "message-guard.d.ts", "go-overloads.d.ts"]) {
+        writeFileSync(path.join(src, file), "export {};\n");
+      }
+
+      materializeApiSurface({ cwd, surface: PINNED, sourceGeneratedDir: gen });
+
+      const dir = path.join(cwd, ".defold-types", "defold-1.13.0");
+      expect(existsSync(path.join(dir, "editor-vm", "pinned_only.d.ts"))).toBe(true);
+      expect(existsSync(path.join(dir, "pinned-overloads.d.ts"))).toBe(true);
+      // The packaged default target's editor surface must never leak in.
+      expect(existsSync(path.join(dir, "editor-vm-globals.d.ts"))).toBe(false);
+      expect(existsSync(path.join(dir, "editor-vm", "localization.d.ts"))).toBe(false);
+
+      const written = readFileSync(path.join(dir, "kinds", "editor-script.d.ts"), "utf8");
+      expect(written).toContain('import "../pinned-overloads";');
+      expect(written).toContain(
+        'export { defineEditorScript } from "@defold-typescript/types/editor";',
+      );
+      expect(danglingSpecifiers(dir)).toEqual([]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("a target declaring no editor document writes no kinds/, and a stale one is pruned", () => {
+    const dir = materializeReal();
+    expect(existsSync(path.join(dir, "kinds"))).toBe(true);
+    expect(existsSync(path.join(dir, "editor-vm"))).toBe(true);
+
+    seedSource(["label"]);
+    materializeApiSurface({ cwd, surface: PINNED, sourceGeneratedDir: sourceDir });
+
+    expect(existsSync(path.join(dir, "kinds"))).toBe(false);
+    expect(existsSync(path.join(dir, "editor-vm"))).toBe(false);
+    expect(existsSync(path.join(dir, "editor-overloads.d.ts"))).toBe(false);
+    expect(existsSync(path.join(dir, "label.d.ts"))).toBe(true);
+  });
+
+  test("a kind index naming a file that does not exist writes no kinds/ at all", () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-typesroot-"));
+    try {
+      const gen = path.join(root, "generated");
+      const kinds = path.join(gen, "kinds");
+      mkdirSync(kinds, { recursive: true });
+      mkdirSync(path.join(root, "src"));
+      writeFileSync(path.join(gen, "editor.d.ts"), "declare const __editor: unknown;\n");
+      writeFileSync(
+        path.join(kinds, "editor-script.d.ts"),
+        ['import "../editor";', 'import "../editor-vm/absent";', ""].join("\n"),
+      );
+
+      materializeApiSurface({ cwd, surface: PINNED, sourceGeneratedDir: gen });
+
+      const dir = path.join(cwd, ".defold-types", "defold-1.13.0");
+      expect(existsSync(path.join(dir, "kinds"))).toBe(false);
+      expect(existsSync(path.join(dir, "editor-vm"))).toBe(false);
+      // Today's behavior for the rest of the surface is untouched.
+      expect(existsSync(path.join(dir, "editor.d.ts"))).toBe(true);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
 describe("materializeRefDocSurface full surface (no kind narrowing)", () => {
   test("keeps every module — gui and render are never dropped", async () => {
     const resolveOpts = multiKindRefDocResolveOpts();

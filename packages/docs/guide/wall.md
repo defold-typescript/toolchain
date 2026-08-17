@@ -39,12 +39,16 @@ only editor scripts is eligible and walls to that subpath; see
 [editor scripts](./editor-scripts.md).
 
 Under a pinned Defold surface a wall narrows to `<surface>/<kind>` only for the
-kinds that surface actually wrote. Every surface carries the runtime trio; a
-surface carries `editor-script` only when the Defold target it was built from
-ships an editor-scripting document of its own. Today only the current default
-target does, so an editor-script wall in a project pinned to an older target
-keeps naming the installed `@defold-typescript/types/editor-script` package
-entrypoint while its runtime siblings narrow to the pinned surface.
+kinds that surface actually wrote; for every other kind it keeps naming the
+installed `@defold-typescript/types/<kind>` entrypoint. Which kinds a surface
+writes depends on how it was produced — see
+[Pinning a Defold target](./pinning-defold-target.md#which-kinds-a-surface-writes).
+A surface generated on the fly from Defold's reference docs carries the runtime
+trio, so its runtime walls narrow; a surface copied from a committed snapshot
+carries only `editor-script`, so its runtime walls keep the installed subpath.
+Either surface carries `editor-script` only when the Defold target it was built
+from ships an editor-scripting document of its own, which today only the current
+default target does.
 
 The root `tsconfig.json` references each walled directory and excludes it from the
 root program, so `tsc -b --noEmit` builds every walled directory against only its
