@@ -44,8 +44,8 @@ tooling and configuration, not a rewrite.
 | — (no first-party editor-diagnostics package verified)                                                                  | `@defold-typescript/tstl-plugin` — live transpile diagnostics in the editor                                                         |
 
 The full `defold-typescript` command surface is
-`init | init-agents | build | watch | wall | setup-debug | resolve | bob`
-(and `bob <resolve|build|bundle>`).
+`init | init-agents | upgrade | set-target | build | watch | reload | wall | setup-debug | resolve | bob | run`
+(and `bob <resolve|build|bundle|status|run>`).
 
 ## In-place adoption is a migration strength
 

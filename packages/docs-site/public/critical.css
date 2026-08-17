@@ -266,6 +266,31 @@ header.topbar-critical .logo-mark {
   border-color: transparent;
   padding: 0;
 }
+/* A prose code span that is itself the link text (`[`resolve`](./resolve.md)`)
+   reads as inert chrome at a glance, because the pill looks the same whether or
+   not it navigates. Tint it with the accent so the affordance is legible without
+   hovering. Excludes `.api-signature` (the rule above deliberately strips its
+   chrome) and `a.heading-anchor`. The border goes transparent rather than
+   keeping `--color-border`: a tinted chip inside a neutral grey outline reads as
+   a mistake, and the accent text plus the link underline already carry the
+   affordance. Mirrors app/styles.css; unlayered here so it beats the unlayered
+   `.prose code` rule above by specificity. */
+.prose a:not(.heading-anchor) > code:not(.api-signature) {
+  background: var(--color-accent-soft);
+  border-color: transparent;
+  color: var(--color-accent);
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+/* The glow is the hover state, not the resting one: at rest the tint plus the
+   accent text is enough, and the ring arrives only once the pointer (or the
+   keyboard focus ring) is actually on the target. */
+.prose a:not(.heading-anchor):hover > code:not(.api-signature),
+.prose a:not(.heading-anchor):focus-visible > code:not(.api-signature) {
+  background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 22%, transparent);
+}
 .prose pre {
   font-family: var(--font-mono);
   font-size: var(--prose-pre-size);
