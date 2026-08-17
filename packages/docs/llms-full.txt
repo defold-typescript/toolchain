@@ -2955,13 +2955,19 @@ Put the caret inside the `key` argument of [`sys.get_config_string`](/api/sys), 
 
 The candidate list is exactly what `game.project` declares and nothing more. Keys the engine defaults but your file never writes are not offered: the file is the whole universe a reader can resolve, and a key it omits answers the reader's `default_value` (or `nil`) at runtime. Only the project root's `game.project` is read — a vendored `*.project` elsewhere in the tree declares keys your readers cannot resolve. A project with no `game.project` offers nothing rather than an empty list.
 
+#### A caret inside `hash("…")` completes the slot the call occupies
+
+A hashed name addresses whatever the argument around it addresses, so a caret inside `hash("…")` gets the suggestions the bare literal would: `msg.post(hash("#sprite"), "hello")` offers component ids, and `sprite.play_flipbook("#sprite", hash(""))` offers the addressed sprite's animations. Only Defold's own ambient `hash` reads this way, and only one level deep — a `hash` your project declares itself and a doubly wrapped `hash(hash("…"))` both offer nothing, as does a `hash(…)` sitting in no completed slot at all, the bare `const id = hash("#sprite")` included.
+
+The wrapper counts for the slot being completed, not for the *sibling* address that scopes it. `sprite.play_flipbook(hash("#sprite"), "")` still offers no animations, for the reason above: an address that is not a plain literal names a component this file cannot decide.
+
 #### Action id completions inside a compared `hash("…")`
 
 Put the caret inside a `hash("…")` that is compared against your handler's `action_id` — `if (action_id === hash(""))` — and the plugin offers the action names your project's `.input_binding` files declare. The whole quoted text is replaced at once.
 
 This is the only completion kind whose slot is not an argument of a Defold API function: `hash` is a prefixless global you call for component ids, message ids and property names alike, so the comparison is what says this particular one names an action. Both operand orders work, as do `===`, `!==`, `==` and `!=`, and so does the object-method form `defineScript({ on_input(self, action_id, action) { … } })`. The compared operand must resolve to a *parameter* named `action_id` — a local variable of the same name is not your handler's action and offers nothing.
 
-A `hash("…")` carrying no such comparison offers nothing, and that includes the hoisted `const JUMP = hash("jump")` form: there is nothing at that call to scope by. To get the suggestions, type the id in the inline compared form — `action_id === hash("")` — and hoist it afterwards if you prefer; `action_id === JUMP` stays the recommended runtime shape either way.
+A `hash("…")` carrying no such comparison offers no action ids, and that includes the hoisted `const JUMP = hash("jump")` form: there is nothing at that call to scope by. To get the suggestions, type the id in the inline compared form — `action_id === hash("")` — and hoist it afterwards if you prefer; `action_id === JUMP` stays the recommended runtime shape either way.
 
 The slot is Defold's own ambient `hash`. A `hash` your project declares or imports itself is never offered action ids, the same way a local variable named `action_id` is not your handler's action.
 

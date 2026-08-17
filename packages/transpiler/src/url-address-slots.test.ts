@@ -395,6 +395,58 @@ describe("resolveClassifiedSlotAtPosition", () => {
     expect(slotAt(msg, insideOf(msg, '"#sprite"'))).toBeUndefined();
   });
 
+  test("a caret inside `hash(…)` classifies as the slot the enclosing call occupies", () => {
+    // Two shapes that differ in how the entry is reached: `msg.post`'s receiver
+    // is classified on its own, while the animation slot has to find its
+    // companion on the outer call — so this is the case that proves the ascent
+    // handed the right call down and not merely the right entry.
+    const receiver = 'msg.post(hash("#sprite"), "hello");\n';
+    expect(slotAt(receiver, insideOf(receiver, '"#sprite"'))?.class).toBe("either");
+
+    const animation = 'sprite.play_flipbook("#sprite", hash("wa"));\n';
+    const slot = slotAt(animation, insideOf(animation, '"wa"'));
+    expect(slot?.class).toBe("animation");
+    expect(slot?.text).toBe("wa");
+    expect(slot?.addressText).toBe("#sprite");
+  });
+
+  test("a wrapped caret reports the inner literal's span, not the `hash` call's", () => {
+    const source = 'msg.post(hash("#sprite"), "hello");\n';
+    const slot = slotAt(source, insideOf(source, '"#sprite"'));
+    expect(slot?.textStart).toBe(source.indexOf("#sprite"));
+    // biome-ignore lint/style/noNonNullAssertion: the assertion above already failed if it did not resolve
+    expect(source.slice(slot!.textStart, slot!.textStart + slot!.text.length)).toBe("#sprite");
+    // biome-ignore lint/style/noNonNullAssertion: as above
+    expect(source.slice(slot!.fragmentStart, slot!.textStart + slot!.text.length)).toBe("sprite");
+  });
+
+  test("the ascent fires only through the ambient `hash`, one level, into a classified slot", () => {
+    // A `hash` in no call at all, and one whose enclosing call the table does
+    // not classify: neither has an outer slot to ascend to.
+    const bare = 'const id = hash("#sprite");\n';
+    expect(slotAt(bare, insideOf(bare, '"#sprite"'))).toBeUndefined();
+
+    const unclassified = 'print(hash("#sprite"));\n';
+    expect(slotAt(unclassified, insideOf(unclassified, '"#sprite"'))).toBeUndefined();
+
+    // The project's own `hash` is prefixless, so it is not the global the entry
+    // describes — the ascent has to apply the same canonicity test the
+    // action-id path does.
+    const declared = [
+      "function hash(s: string): Hash {",
+      "  return s as unknown as Hash;",
+      "}",
+      'msg.post(hash("#sprite"), "hello");',
+      "",
+    ].join("\n");
+    expect(slotAt(declared, insideOf(declared, '"#sprite"'))).toBeUndefined();
+
+    // One level only: a recursing ascent would walk past the inner `hash` to
+    // `msg.post` and report `either` here.
+    const nested = 'msg.post(hash(hash("#sprite")), "hello");\n';
+    expect(slotAt(nested, insideOf(nested, '"#sprite"'))).toBeUndefined();
+  });
+
   test("every class the committed table carries has a call here that resolves it", () => {
     const covered = new Set<UrlParameterClass>();
     for (const positive of CLASS_POSITIVES) {
