@@ -46,7 +46,7 @@ function linkMaterializedSurface(): void {
   symlinkSync(path.join(cwd, ".defold-types", "defold-1.9.8"), path.join(scope, "types"), "dir");
 }
 
-function writeRootTsconfig(): void {
+function writeRootTsconfig(extraCompilerOptions: Record<string, unknown> = {}): void {
   touch(
     "tsconfig.json",
     `${JSON.stringify(
@@ -59,6 +59,7 @@ function writeRootTsconfig(): void {
           strict: true,
           noEmit: true,
           types: ["@defold-typescript/types"],
+          ...extraCompilerOptions,
         },
         include: ["src/**/*.ts"],
       },
@@ -266,6 +267,55 @@ describe("composite directory walls under a pinned committed surface", () => {
       typeRoots: null,
       types: ["@defold-typescript/types/script"],
     });
+  });
+
+  // A `.d.ts` alias target is required: a `.ts` one outside the wall directory
+  // draws TS6307 from the composite program, an unrelated constraint.
+  test("a root import alias still resolves inside a walled directory, pinned and un-pinned", () => {
+    writeRootTsconfig({ paths: { "@shared/*": ["./shared/*"] } });
+    materializeCommitted();
+    linkTypesPackage();
+    touch("shared/labels.d.ts", "export declare const BUNDLE_LABEL: string;\n");
+    touch("src/game/logic.script");
+    touch(
+      "src/game/logic.ts",
+      [
+        'import { defineScript } from "@defold-typescript/types/script";',
+        "defineScript({",
+        "  init() {",
+        '    msg.post("#", "hello");',
+        "  },",
+        "});",
+      ].join("\n"),
+    );
+    touch(
+      "src/tooling/bundle.ts",
+      [
+        'import { defineEditorScript } from "@defold-typescript/types/editor-script";',
+        'import { BUNDLE_LABEL } from "@shared/labels";',
+        "export default defineEditorScript({",
+        "  get_commands: () => {",
+        "    void BUNDLE_LABEL;",
+        "    return [];",
+        "  },",
+        "});",
+      ].join("\n"),
+    );
+
+    const { pinned, walls } = wallUnderPin();
+    expect(pinned).toBe(COMMITTED);
+    const pinnedBuild = typecheckBuild(cwd);
+    if (pinnedBuild.code !== 0) {
+      throw new Error(`expected the root alias to resolve inside a pinned wall, got:
+${pinnedBuild.output}`);
+    }
+
+    writeDirectoryWallTsconfigs(cwd, walls, null);
+    const unpinnedBuild = typecheckBuild(cwd);
+    if (unpinnedBuild.code !== 0) {
+      throw new Error(`expected the root alias to keep resolving after un-pinning, got:
+${unpinnedBuild.output}`);
+    }
   });
 
   test("tsc -b accepts an editor wall reading the carried editor VM declarations", () => {

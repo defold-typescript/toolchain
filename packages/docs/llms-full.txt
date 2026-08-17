@@ -2682,7 +2682,10 @@ from one surface rather than from the pinned one *and* the installed release. Th
 is why a member the pinned release does not declare is now a compile error inside
 a walled directory, even though the installed package still declares it. Walls
 that are not pinned, and pinned walls for a kind the surface did not write, keep
-the installed entrypoint and are unaffected.
+the installed entrypoint and are unaffected. That redirect is the only module
+mapping a wall manages: mappings you declare in the wall's own `tsconfig.json`
+and in the root config keep resolving inside the walled directory, and dropping
+the pin removes only what walling added.
 
 The root `tsconfig.json` references each walled directory and excludes it from the
 root program, so `tsc -b --noEmit` builds every walled directory against only its
