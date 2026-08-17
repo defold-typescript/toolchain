@@ -88,6 +88,7 @@ export interface Matrix4 {
 }
 
 declare const HashBrand: unique symbol;
+declare const HashSource: unique symbol;
 /**
  * An opaque, branded handle to a *hashed name*: hold it and pass it back to the
  * engine API, but never inspect or construct it. Defold uses it in place of a
@@ -111,9 +112,22 @@ declare const HashBrand: unique symbol;
  * `hash_to_hex(h)` renders it as a hexadecimal string for logging, and `pprint`
  * shows it as `hash: [0x…]`. Two hashes are equal exactly when they name the
  * same thing, so a `Hash` is safe to compare, store, and use as a table key.
+ *
+ * The `S` parameter records the string `hash()` was called with, so a tool can
+ * *read* an address back out of `const SPRITE = hash("#sprite")`. It is not a
+ * checked constraint: it defaults to `string`, so every bare `Hash` keeps
+ * meaning what it always did, and its phantom member is optional, so `Hash` and
+ * `Hash<"#sprite">` stay assignable to each other in both directions. Nothing
+ * that compiles without it stops compiling with it.
  */
-export interface Hash {
+export interface Hash<S extends string = string> {
   readonly [HashBrand]: "Hash";
+  // Method syntax, and load-bearing: a method's parameters are compared
+  // bivariantly, which is what keeps `Hash` and `Hash<"#sprite">` assignable in
+  // *both* directions. Written as a plain optional property (`?: S`) the
+  // parameter would be covariant, and passing a bare `Hash` where a sourced one
+  // is expected would start failing — the one thing this type must never do.
+  [HashSource]?(source: S): void;
 }
 
 declare const OpaqueBrand: unique symbol;
