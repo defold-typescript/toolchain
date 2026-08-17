@@ -7,9 +7,9 @@ import type * as Core from "./core-types";
 // engine-globals test fails if the two fall out of sync.
 declare global {
   /** An opaque, branded handle to a hashed name; see {@link Core.Hash}. */
-  type Hash = Core.Hash;
+  type Hash<S extends string = string> = Core.Hash<S>;
   /** Hash a string into the engine's `Hash` handle. */
-  function hash(s: string): Core.Hash;
+  function hash<S extends string>(s: S): Core.Hash<S>;
   /** Render a `Hash` handle as its hexadecimal string. */
   function hash_to_hex(h: Core.Hash): string;
   /** Pretty-print any value to the console for debugging. */

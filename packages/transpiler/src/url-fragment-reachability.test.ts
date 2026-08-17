@@ -170,6 +170,55 @@ describe("checkUrlFragmentReachability", () => {
     expect(check(source, universe("sprite"))).toEqual({ kind: "checked", findings: [] });
   });
 
+  test("reads the hashed source out of a hoisted constant, at its use site", () => {
+    const source = 'const SPRITE = hash("#sprit");\nmsg.post(SPRITE, "hello");\n';
+    const findings = findingsOf(source, universe("sprite"));
+    expect(findings).toHaveLength(1);
+    const [finding] = findings;
+    expect(finding?.fragment).toBe("sprit");
+    expect(finding?.start).toBe(source.indexOf("SPRITE", source.indexOf("msg.post")));
+    expect(finding?.length).toBe("SPRITE".length);
+  });
+
+  test("reports a hoisted constant once per use site", () => {
+    const source =
+      'const SPRITE = hash("#sprit");\nmsg.post(SPRITE, "hello");\nmsg.post(SPRITE, "again");\n';
+    expect(findingsOf(source, universe("sprite")).map((f) => f.start)).toEqual([
+      source.indexOf("SPRITE", source.indexOf("msg.post")),
+      source.indexOf("SPRITE", source.lastIndexOf("msg.post")),
+    ]);
+  });
+
+  test("stays silent once the hoisted constant names a component the project declares", () => {
+    const source = 'const SPRITE = hash("#sprite");\nmsg.post(SPRITE, "hello");\n';
+    expect(findingsOf(source, universe("sprite"))).toEqual([]);
+  });
+
+  test("a hashed path carries no fragment, so it is no more decidable than a written one", () => {
+    const source = 'const ENEMY = hash("/enemy");\nmsg.post(ENEMY, "hello");\n';
+    expect(findingsOf(source, universe("sprite"))).toEqual([]);
+  });
+
+  test("never reports a value whose source string is not statically known", () => {
+    for (const [declaration, argument] of [
+      ['const raw: string = "#sprit";\nconst ID = hash(raw);', "ID"],
+      ['const raw: string = "#sprit";', "raw"],
+      ['const raw: string = "#sprit";\nconst URL = msg.url(raw);', "URL"],
+      ['const ID = factory.create("#sprite");', "ID"],
+    ] as const) {
+      const source = `${declaration}\nmsg.post(${argument}, "hello");\n`;
+      expect(findingsOf(source, universe("sprite"))).toEqual([]);
+    }
+  });
+
+  test("a hoisted hash in a slot the table does not classify as an address is not reported", () => {
+    // An animation id names a block inside an atlas; its `#` is part of that
+    // name, so the same hoisting that makes an address readable must not turn a
+    // non-address slot into a finding.
+    const source = 'const ANIM = hash("no#pe");\nsprite.play_flipbook("#sprite", ANIM);\n';
+    expect(findingsOf(source, universe("sprite"))).toEqual([]);
+  });
+
   test("withholds every finding while the universe has gaps", () => {
     const reasons = ["main.collection: could not be parsed (line 3)"];
     const report = check('msg.post("#unknown", "hello");\n', {

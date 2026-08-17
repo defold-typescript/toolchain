@@ -13,6 +13,14 @@ const ENGINE_TYPES = [
   "Vector4",
 ] as const;
 
+// The aliases that re-export a *generic* core type. `Hash`'s parameter records
+// the string it was hashed from and defaults to `string`, so the alias has to
+// forward it; the rest of the set is plain.
+const GENERIC_TYPE_DECLARATIONS: Partial<Record<(typeof ENGINE_TYPES)[number], string>> = {
+  Hash: "type Hash<S extends string = string> = Core.Hash<S>",
+  Opaque: "type Opaque<Name extends string> = Core.Opaque<Name>",
+};
+
 const source = readFileSync(path.join(import.meta.dir, "engine-globals.d.ts"), "utf8");
 const globalsDoc = JSON.parse(
   readFileSync(path.join(import.meta.dir, "../fixtures/globals_doc.json"), "utf8"),
@@ -33,19 +41,17 @@ describe("engine-globals.d.ts", () => {
     expect(source.indexOf("declare global", open + 1)).toBe(-1);
     const block = source.slice(open);
     for (const name of ENGINE_TYPES) {
-      const decl =
-        name === "Opaque"
-          ? "type Opaque<Name extends string> = Core.Opaque<Name>"
-          : `type ${name} =`;
-      expect(block).toContain(decl);
+      expect(block).toContain(GENERIC_TYPE_DECLARATIONS[name] ?? `type ${name} =`);
     }
-    expect(block).toContain("function hash(s: string): Core.Hash");
+    expect(block).toContain("function hash<S extends string>(s: S): Core.Hash<S>");
     expect(block).toContain("function hash_to_hex(");
     expect(block).toContain("function pprint(");
   });
 
   test("globals_doc.json and engine-globals.d.ts agree on the set of global functions", () => {
-    const declared = new Set([...source.matchAll(/function (\w+)\(/g)].map((m) => m[1] as string));
+    const declared = new Set(
+      [...source.matchAll(/function (\w+)[(<]/g)].map((m) => m[1] as string),
+    );
     const documented = new Set(
       globalsDoc.elements.filter((e) => e.type === "FUNCTION").map((e) => e.name),
     );
@@ -74,11 +80,9 @@ describe("engine-globals.d.ts", () => {
     ...ENGINE_TYPES.map((name) => ({
       label: name as string,
       match: (trimmed: string) =>
-        name === "Opaque"
-          ? trimmed.startsWith("type Opaque<")
-          : trimmed.startsWith(`type ${name} =`),
+        trimmed.startsWith(`type ${name}<`) || trimmed.startsWith(`type ${name} =`),
     })),
-    { label: "hash", match: (t: string) => t.startsWith("function hash(") },
+    { label: "hash", match: (t: string) => t.startsWith("function hash<") },
     { label: "hash_to_hex", match: (t: string) => t.startsWith("function hash_to_hex(") },
     { label: "pprint", match: (t: string) => t.startsWith("function pprint(") },
   ];
