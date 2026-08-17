@@ -1124,7 +1124,7 @@ describe("tstl-plugin completion entry details", () => {
     ]);
   });
 
-  test("an uncovered kind forwards rather than answering an empty panel", () => {
+  test("an animation id is answered with the tile source it was read from", () => {
     const setup = completionSetup({
       source: ANIMATION_SOURCE,
       base: undefined,
@@ -1142,8 +1142,9 @@ describe("tstl-plugin completion entry details", () => {
       undefined,
       undefined,
     );
-    expect(details).toBe(BASE_DETAILS);
-    expect(setup.detailsCalls()).toHaveLength(1);
+    expect(details?.name).toBe("walk");
+    expect(documentationOf(details)).toContain("assets/player.atlas");
+    expect(setup.detailsCalls()).toHaveLength(0);
   });
 
   test("a host the plugin cannot enumerate forwards the way the completion path already does", () => {
@@ -1196,7 +1197,7 @@ describe("tstl-plugin completion entry details", () => {
     expect(setup.detailsCalls()).toHaveLength(1);
   });
 
-  test("a contributed path entry forwards — its universe records no declaring file yet", () => {
+  test("a contributed path entry is answered with the collection that declares it", () => {
     const setup = completionSetup({
       source: PATH_FRAGMENT_SOURCE,
       base: undefined,
@@ -1210,6 +1211,27 @@ describe("tstl-plugin completion entry details", () => {
       entry.name,
       undefined,
       entry.source,
+      undefined,
+      undefined,
+    );
+    expect(details?.name).toBe("/hero");
+    expect(documentationOf(details)).toContain("main/main.collection");
+    expect(setup.detailsCalls()).toHaveLength(0);
+  });
+
+  test("a path name no collection declares still forwards", () => {
+    const setup = completionSetup({
+      source: PATH_FRAGMENT_SOURCE,
+      base: undefined,
+      documents: PATH_DOCUMENTS,
+      baseDetails: BASE_DETAILS,
+    });
+    const details = setup.service.getCompletionEntryDetails(
+      "main.ts",
+      PATH_POSITION,
+      "/no-collection-declares-this",
+      undefined,
+      DEFOLD_COMPLETION_SOURCE,
       undefined,
       undefined,
     );

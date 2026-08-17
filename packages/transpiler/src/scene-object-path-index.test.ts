@@ -19,6 +19,14 @@ function pathsOf(documents: Iterable<readonly [string, string]>): string[] {
   return [...index.paths].sort();
 }
 
+function declaredInOf(
+  documents: Iterable<readonly [string, string]>,
+): Record<string, readonly string[]> {
+  const index = buildSceneObjectPathIndex(new Map(documents));
+  expect(index.incomplete).toEqual([]);
+  return Object.fromEntries([...index.declaredIn].sort(([a], [b]) => a.localeCompare(b)));
+}
+
 describe("buildSceneObjectPathIndex", () => {
   test("an instance and an embedded instance are each one leaf segment", () => {
     expect(
@@ -139,5 +147,77 @@ describe("buildSceneObjectPathIndex", () => {
     const index = buildSceneObjectPathIndex(new Map());
     expect([...index.paths]).toEqual([]);
     expect(index.incomplete).toHaveLength(1);
+  });
+
+  test("a leaf id is attributed to the document carrying its block", () => {
+    expect(
+      declaredInOf([
+        [
+          "main.collection",
+          'instances {\n  id: "hero"\n  prototype: "/hero.go"\n}\n' +
+            'embedded_instances {\n  id: "level"\n  data: ""\n}\n',
+        ],
+        ["hero.go", 'components {\n  id: "script"\n  component: "/hero.script"\n}\n'],
+      ]),
+    ).toEqual({ "/hero": ["main.collection"], "/level": ["main.collection"] });
+  });
+
+  test("a composed path names the document declaring its leaf, not the one that prefixed it", () => {
+    expect(
+      declaredInOf([
+        [
+          "game/game.collection",
+          'collection_instances {\n  id: "player"\n  collection: "/game/player.collection"\n}\n',
+        ],
+        ["game/player.collection", 'embedded_instances {\n  id: "player"\n  data: ""\n}\n'],
+      ]),
+    ).toEqual({ "/player/player": ["game/player.collection"] });
+  });
+
+  test("attribution follows the leaf through every level of nesting", () => {
+    expect(
+      declaredInOf([
+        [
+          "world.collection",
+          'collection_instances {\n  id: "arena"\n  collection: "/game.collection"\n}\n',
+        ],
+        [
+          "game.collection",
+          'collection_instances {\n  id: "player"\n  collection: "/player.collection"\n}\n',
+        ],
+        ["player.collection", 'instances {\n  id: "body"\n  prototype: "/body.go"\n}\n'],
+      ]),
+    ).toEqual({ "/arena/player/body": ["player.collection"] });
+  });
+
+  test("a path two un-instanced documents both declare names both, sorted", () => {
+    expect(
+      declaredInOf([
+        ["second.collection", 'instances {\n  id: "hud"\n  prototype: "/hud.go"\n}\n'],
+        ["first.collection", 'instances {\n  id: "hud"\n  prototype: "/hud.go"\n}\n'],
+      ]),
+    ).toEqual({ "/hud": ["first.collection", "second.collection"] });
+  });
+
+  test("a document instanced under two roots is attributed once, not once per root", () => {
+    expect(
+      declaredInOf([
+        ["a.collection", 'collection_instances {\n  id: "p"\n  collection: "/p.collection"\n}\n'],
+        ["b.collection", 'collection_instances {\n  id: "p"\n  collection: "/p.collection"\n}\n'],
+        ["p.collection", 'instances {\n  id: "body"\n  prototype: "/body.go"\n}\n'],
+      ]),
+    ).toEqual({ "/p/body": ["p.collection"] });
+  });
+
+  test("attributes the committed platformer's own composed paths", () => {
+    expect(
+      declaredInOf([
+        committed("platformer", "game", "game.collection"),
+        committed("platformer", "game", "player.collection"),
+      ]),
+    ).toEqual({
+      "/level": ["game/game.collection"],
+      "/player/player": ["game/player.collection"],
+    });
   });
 });

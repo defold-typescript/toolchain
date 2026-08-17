@@ -6,6 +6,10 @@ import { parseSceneTextFormat, type SceneMessage, SceneTextFormatError } from ".
 // universe is not provably whole, so no consumer may conclude a path is absent.
 export interface SceneObjectPathIndex {
   readonly paths: ReadonlySet<string>;
+  // The documents declaring each path's *leaf* segment, sorted — the files an
+  // author would open to rename that object. A composed address is attributed to
+  // the collection that names the object, never to the ones that prefixed it.
+  readonly declaredIn: ReadonlyMap<string, readonly string[]>;
   readonly incomplete: readonly string[];
 }
 
@@ -43,7 +47,7 @@ export function buildSceneObjectPathIndex(
 
   if (documents.size === 0) {
     incomplete.push("no scene sources were read, so no game-object path can be proven absent");
-    return { paths: new Set(), incomplete };
+    return { paths: new Set(), declaredIn: new Map(), incomplete };
   }
 
   const parsed = new Map<string, SceneMessage>();
@@ -69,29 +73,31 @@ export function buildSceneObjectPathIndex(
 
   // Memo keyed by display path, so a collection instanced twice is read once;
   // `inProgress` is the cycle guard, without which two collections instancing
-  // each other would recur until the stack ran out.
-  const composed = new Map<string, ReadonlySet<string>>();
+  // each other would recur until the stack ran out. Each entry maps a composed
+  // path to the document that declared its leaf, so the attribution is carried
+  // by the same walk that builds the path rather than recovered afterwards.
+  const composed = new Map<string, ReadonlyMap<string, string>>();
   const inProgress = new Set<string>();
 
-  function pathsOf(displayPath: string): ReadonlySet<string> {
+  function pathsOf(displayPath: string): ReadonlyMap<string, string> {
     const done = composed.get(displayPath);
     if (done !== undefined) return done;
     if (inProgress.has(displayPath)) {
       incomplete.push(
         `${displayPath}: is instanced inside itself through a cycle of collection references, so its paths cannot be composed`,
       );
-      return new Set();
+      return new Map();
     }
     const document = parsed.get(displayPath);
-    if (document === undefined) return new Set();
+    if (document === undefined) return new Map();
 
     inProgress.add(displayPath);
-    const paths = new Set<string>();
+    const paths = new Map<string, string>();
 
     for (const blockName of LEAF_BLOCKS) {
       for (const block of childrenOf(document, blockName)) {
         const id = firstField(block, "id");
-        if (id !== undefined && id !== "") paths.add(`/${id}`);
+        if (id !== undefined && id !== "") paths.set(`/${id}`, displayPath);
       }
     }
 
@@ -106,8 +112,8 @@ export function buildSceneObjectPathIndex(
         );
         continue;
       }
-      for (const nested of pathsOf(key)) {
-        paths.add(`/${id}${nested}`);
+      for (const [nested, declarer] of pathsOf(key)) {
+        paths.set(`/${id}${nested}`, declarer);
       }
     }
 
@@ -120,11 +126,23 @@ export function buildSceneObjectPathIndex(
   // cycle or a dangling reference reached only from inside an instanced
   // collection is still a gap the caller has to hear about.
   const paths = new Set<string>();
+  const declaredIn = new Map<string, string[]>();
   for (const displayPath of parsed.keys()) {
     const own = pathsOf(displayPath);
     if (instanced.has(displayPath)) continue;
-    for (const path of own) paths.add(path);
+    for (const [path, declarer] of own) {
+      paths.add(path);
+      const declarers = declaredIn.get(path);
+      if (declarers === undefined) {
+        declaredIn.set(path, [declarer]);
+      } else if (!declarers.includes(declarer)) {
+        // Two roots instancing one collection under the same id compose the same
+        // address from the same leaf, which is one declaring file and not two.
+        declarers.push(declarer);
+      }
+    }
   }
+  for (const declarers of declaredIn.values()) declarers.sort();
 
-  return { paths, incomplete };
+  return { paths, declaredIn, incomplete };
 }

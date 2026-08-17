@@ -3,13 +3,17 @@ import {
   buildGuiNodeIndex,
   buildInputActionIndex,
   buildSceneComponentIndex,
+  buildSceneObjectPathIndex,
+  buildSpriteAnimationIndex,
   type ClassifiedSlot,
+  componentIdOfSameObjectAddress,
   computeOutputRel,
   isAddressClass,
   isFragmentCaret,
 } from "@defold-typescript/transpiler";
 import { readBuildConfigFromHost } from "./build-config";
 import {
+  ANIMATION_ASSET_EXTENSIONS,
   displayPathOf,
   GAME_PROJECT_DOCUMENT,
   GUI_EXTENSIONS,
@@ -24,6 +28,8 @@ import type { SceneIndexCache } from "./scene-index-cache";
 const COMPONENT_PROVENANCE = "provenance:component-ids";
 const ACTION_PROVENANCE = "provenance:input-actions";
 const GUI_PROVENANCE = "provenance:gui-nodes";
+const PATH_PROVENANCE = "provenance:object-paths";
+const ANIMATION_PROVENANCE = "provenance:sprite-animations";
 
 type Provenance = ReadonlyMap<string, readonly string[]>;
 
@@ -113,6 +119,44 @@ function nodeProvenance(cache: SceneIndexCache, fileName: string): Provenance {
   return byResource.get(resource) ?? new Map();
 }
 
+// A composed path is not a narrowing of anything: the builder records the
+// document declaring each leaf as it walks, so the map is read straight off the
+// index rather than recovered by re-running it per document.
+function pathProvenance(cache: SceneIndexCache): Provenance {
+  return cache.derived(
+    PATH_PROVENANCE,
+    () => buildSceneObjectPathIndex(cache.documents().documents).declaredIn,
+  );
+}
+
+// Scoped exactly the way the animation completion is: to the sprite component
+// the slot's sibling literal addresses on the one game object owning this
+// script, resolved through the same helper so the two cannot disagree about
+// which sprite is addressed. The tile set is reported only for an id it really
+// declares — a panel naming a file that does not carry the name is the
+// fabricated answer this surface exists to avoid.
+function animationProvenance(input: {
+  slot: ClassifiedSlot;
+  cache: SceneIndexCache;
+  fileName: string;
+  entryName: string;
+}): readonly string[] {
+  const { slot, cache, fileName, entryName } = input;
+  const component = componentIdOfSameObjectAddress(slot.addressText ?? "");
+  if (component === undefined) return [];
+  const index = cache.derived(ANIMATION_PROVENANCE, () =>
+    buildSpriteAnimationIndex({
+      scenes: cache.documents().documents,
+      assets: cache.documents(ANIMATION_ASSET_EXTENSIONS).documents,
+    }),
+  );
+  const config = readBuildConfigFromHost(cache.host, cache.projectRoot);
+  const resource = computeOutputRel(displayPathOf(cache.projectRoot, fileName), config, "script");
+  const tileSet = index.tileSetByScriptResource.get(resource)?.get(component);
+  if (tileSet === undefined) return [];
+  return index.byScriptResource.get(resource)?.get(component)?.has(entryName) ? [tileSet] : [];
+}
+
 // A config key is declared by the one file that answers a reader at runtime, and
 // a resource path is declared by the file it names. Both are still checked
 // against the project rather than asserted: a panel naming a document that does
@@ -134,15 +178,10 @@ function constantProvenance(
 }
 
 // The display paths of the project files that declare `entryName` in the
-// universe this slot draws from, sorted, empty when no covered narrowing
-// recovers it.
-//
-// Two kinds resolve to nothing by design rather than by omission: a game-object
-// path is composed across documents from the un-instanced roots alone, and an
-// animation id's declaring atlas is reachable only by re-running the whole scene
-// set per asset. Neither is a narrowing of a shipped builder, so both wait on a
-// production index that records its own source. Silence forwards the request,
-// which is what lets the covered set grow one kind at a time.
+// universe this slot draws from, sorted, empty when the project does not name
+// one exactly. Every kind the completion path offers is answered here; silence
+// means the file could not be named, not that the kind is uncovered, and it
+// forwards the request to the editor's own panel.
 export function resolveEntryProvenance(input: {
   slot: ClassifiedSlot;
   position: number;
@@ -153,10 +192,11 @@ export function resolveEntryProvenance(input: {
   const { slot, position, cache, fileName, entryName } = input;
   if (isAddressClass(slot.class)) {
     // The caret decides which universe owns the request, on the same predicate
-    // the completion path offers from. A path-half caret waits on a production
-    // index that records its own source, so it resolves to nothing here rather
-    // than to whatever the component map happens to carry under that name.
-    if (!isFragmentCaret(slot, position)) return [];
+    // the completion path offers from — so a name carried by both maps is still
+    // answered from the one the author is standing in.
+    if (!isFragmentCaret(slot, position)) {
+      return pathProvenance(cache).get(entryName) ?? [];
+    }
     return componentProvenance(cache).get(entryName) ?? [];
   }
   if (slot.class === "gui-node") {
@@ -164,6 +204,9 @@ export function resolveEntryProvenance(input: {
   }
   if (slot.class === "action-id") {
     return actionProvenance(cache).get(entryName) ?? [];
+  }
+  if (slot.class === "animation") {
+    return animationProvenance({ slot, cache, fileName, entryName });
   }
   if (slot.class === "config-key" || slot.class === "resource-path") {
     return constantProvenance(slot, cache, entryName);
