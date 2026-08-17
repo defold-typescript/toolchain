@@ -66,9 +66,10 @@ describe("guide references to the types package", () => {
   });
 
   test("a subpath the package neither publishes nor holds is rejected", () => {
-    // `editor` is the namespace behind the published `editor-script` subpath but
-    // is not itself an entrypoint — a near-miss the guard must still reject.
-    expect(resolvesUnderTypes("editor", exported)).toBe(false);
+    // `editor-vm` names the generated subdirectory the editor VM libraries emit
+    // into, but is neither published nor a path at the package root — a
+    // near-miss the guard must still reject.
+    expect(resolvesUnderTypes("editor-vm", exported)).toBe(false);
     expect(resolvesUnderTypes("not-a-real-entrypoint", exported)).toBe(false);
   });
 

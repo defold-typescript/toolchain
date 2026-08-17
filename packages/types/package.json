@@ -36,6 +36,9 @@
     "./lifecycle": {
       "types": "./src/lifecycle.ts"
     },
+    "./editor": {
+      "types": "./src/editor.ts"
+    },
     "./timers": {
       "types": "./src/timers.d.ts"
     },

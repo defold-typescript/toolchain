@@ -7,11 +7,22 @@ export interface RegistryTargetSource {
   readonly version: string;
 }
 
+export interface RegistryTargetModule {
+  readonly namespace: string;
+  readonly fixture: string;
+  readonly outFile: string;
+  readonly skipFunctions?: readonly string[];
+  readonly mapType?: string;
+}
+
 export interface RegistryTarget {
   readonly id: string;
   readonly default?: boolean;
   readonly coreTypesImport?: string;
   readonly source?: RegistryTargetSource | null;
+  // Present only on a target that ships an editor-scripting document; absence is
+  // the registry's own statement that it ships none.
+  readonly editorModules?: readonly RegistryTargetModule[];
   readonly [key: string]: unknown;
 }
 

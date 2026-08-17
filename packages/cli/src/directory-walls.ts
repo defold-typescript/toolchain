@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { detectSourceOutputKind, isTranspilerSource, readBuildConfig } from "./build-output";
 import { formatJsonLikeBiome } from "./format-json";
@@ -21,17 +21,27 @@ export const PINNED_KIND_SUBPATHS: readonly string[] = [
   "editor-script",
 ];
 
-// The subset a materialized surface can actually resolve. Mirrors
-// `RUNTIME_KIND_MANIFEST` (regen.ts), which drops any `only` kind because such a
-// kind names modules a versioned surface never builds. A wall on a kind outside
-// this set keeps the installed package entrypoint even under a pinned surface —
-// pointing it at `<surface>/<kind>` would name a subpath the surface never
-// wrote.
-export const MATERIALIZED_KIND_SUBPATHS: readonly string[] = [
-  "script",
-  "gui-script",
-  "render-script",
-];
+// The wallable kinds a materialized surface actually wrote, read from its own
+// `kinds/` directory rather than from a static list. Which kinds a surface
+// carries is now a property of the target it was built from — a target
+// declaring an editor document carries `editor-script`, one that does not never
+// will — so existence on disk is the only source that can answer for every
+// surface. One rule then decides both the per-kind mirror below and whether a
+// wall may name `<surface>/<kind>`: a wall never points at a subpath the
+// surface did not write.
+export function materializedSurfaceKinds(cwd: string, surface: string | null): string[] {
+  if (surface === null) {
+    return [];
+  }
+  const kindsDir = path.join(cwd, MATERIALIZED_ROOT, surface, "kinds");
+  if (!existsSync(kindsDir)) {
+    return [];
+  }
+  return readdirSync(kindsDir)
+    .filter((file) => file.endsWith(".d.ts"))
+    .map((file) => file.slice(0, -".d.ts".length))
+    .filter((kind) => PINNED_KIND_SUBPATHS.includes(kind));
+}
 
 // `materializeRefDocSurface` writes the per-kind modules at
 // `<surface>/kinds/<kind>.d.ts`. Under `typeRoots`/`types`, TypeScript resolves
@@ -45,7 +55,7 @@ export const MATERIALIZED_KIND_SUBPATHS: readonly string[] = [
 // No-op when the surface already exposes the per-kind layout.
 function ensurePinnedKindSubpaths(cwd: string, surface: string): void {
   const surfaceDir = path.join(cwd, MATERIALIZED_ROOT, surface);
-  for (const kind of MATERIALIZED_KIND_SUBPATHS) {
+  for (const kind of materializedSurfaceKinds(cwd, surface)) {
     const kindDir = path.join(surfaceDir, kind);
     const indexPath = path.join(kindDir, "index.d.ts");
     if (existsSync(indexPath)) {
@@ -218,14 +228,20 @@ function nestedExcludes(wallDir: string, nestedWallDirs: readonly string[]): str
     .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
 }
 
+// `surfaceKinds` is what the pinned surface actually wrote (see
+// `materializedSurfaceKinds`). It defaults to empty so a caller that cannot
+// prove what the surface holds keeps the installed package entrypoint — naming
+// a `<surface>/<kind>` subpath that was never written points the wall's tsconfig
+// at nothing.
 export function directoryWallTsconfig(
   wall: DirectoryWall,
   pinnedSurface: string | null = null,
   nestedWallDirs: readonly string[] = [],
+  surfaceKinds: readonly string[] = [],
 ): WallTsconfig {
   const depth = wall.dir.split("/").length;
   const exclude = nestedExcludes(wall.dir, nestedWallDirs);
-  if (pinnedSurface === null || !MATERIALIZED_KIND_SUBPATHS.includes(wall.kind)) {
+  if (pinnedSurface === null || !surfaceKinds.includes(wall.kind)) {
     return {
       extends: `${"../".repeat(depth)}tsconfig.json`,
       compilerOptions: { composite: true, typeRoots: null, types: [wall.typesEntrypoint] },
@@ -369,13 +385,19 @@ export function writeDirectoryWallTsconfigs(
   pinnedSurface: string | null = null,
 ): string[] {
   const written: string[] = [];
+  const surfaceKinds = materializedSurfaceKinds(cwd, pinnedSurface);
   for (const w of walls) {
     if (w.dir === ".") {
       continue;
     }
     const rel = `${w.dir}/tsconfig.json`;
     const target = path.join(cwd, w.dir, "tsconfig.json");
-    const desired = directoryWallTsconfig(w, pinnedSurface, nearestDescendantDirs(w, walls));
+    const desired = directoryWallTsconfig(
+      w,
+      pinnedSurface,
+      nearestDescendantDirs(w, walls),
+      surfaceKinds,
+    );
     if (existsSync(target)) {
       const current = JSON.parse(readFileSync(target, "utf8")) as {
         extends?: string;

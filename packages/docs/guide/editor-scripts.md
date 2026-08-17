@@ -87,6 +87,8 @@ Under that config `editor.get`, `editor.command`, `editor.transact`, the `editor
 
 You rarely need to write that `tsconfig` yourself: [`wall`](./wall.md) now offers an editor-script-only directory as a target like any other kind and writes the same config for you. Mixing an editor script and a runtime script in one directory still leaves it ineligible — no single narrowing covers both.
 
+The editor surface is declared per Defold target, so which release you build against decides which `editor.*` you get. Only the current default target ships an editor-scripting document today; a project [pinned](./pinning-defold-target.md) to a target that ships none keeps the installed package's editor surface — its runtime namespaces pin, its editor ones do not.
+
 ## The editor VM's own libraries
 
 The same entrypoint also carries the libraries the editor VM exposes as their own globals, beside `editor.*`:
