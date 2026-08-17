@@ -1166,6 +1166,57 @@ describe("tstl-plugin completion entry details", () => {
     expect(setup.detailsCalls()).toHaveLength(1);
   });
 
+  test("the panel follows the caret's half, not the entry's name", () => {
+    const setup = completionSetup({
+      source: PATH_FRAGMENT_SOURCE,
+      base: undefined,
+      documents: PATH_DOCUMENTS,
+      baseDetails: BASE_DETAILS,
+    });
+    const entry = contributedEntry(setup, SPRITE_POSITION, "board");
+    const detailsAt = (position: number) =>
+      setup.service.getCompletionEntryDetails(
+        "main.ts",
+        position,
+        entry.name,
+        undefined,
+        entry.source,
+        undefined,
+        undefined,
+      );
+
+    const inFragment = detailsAt(SPRITE_POSITION);
+    expect(inFragment?.name).toBe("board");
+    expect(documentationOf(inFragment)).toContain("main/board.go");
+    expect(setup.detailsCalls()).toHaveLength(0);
+
+    // `board` is a component id the path half never offers, so answering it
+    // there would draw a panel for a list the caret is not standing on.
+    expect(detailsAt(PATH_POSITION)).toBe(BASE_DETAILS);
+    expect(setup.detailsCalls()).toHaveLength(1);
+  });
+
+  test("a contributed path entry forwards — its universe records no declaring file yet", () => {
+    const setup = completionSetup({
+      source: PATH_FRAGMENT_SOURCE,
+      base: undefined,
+      documents: PATH_DOCUMENTS,
+      baseDetails: BASE_DETAILS,
+    });
+    const entry = contributedEntry(setup, PATH_POSITION, "/hero");
+    const details = setup.service.getCompletionEntryDetails(
+      "main.ts",
+      PATH_POSITION,
+      entry.name,
+      undefined,
+      entry.source,
+      undefined,
+      undefined,
+    );
+    expect(details).toBe(BASE_DETAILS);
+    expect(setup.detailsCalls()).toHaveLength(1);
+  });
+
   test("a position that is no slot at all forwards", () => {
     const setup = completionSetup({
       source: ADDRESS_SOURCE,

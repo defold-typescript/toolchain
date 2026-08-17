@@ -6,6 +6,7 @@ import {
   type ClassifiedSlot,
   computeOutputRel,
   isAddressClass,
+  isFragmentCaret,
 } from "@defold-typescript/transpiler";
 import { readBuildConfigFromHost } from "./build-config";
 import {
@@ -144,14 +145,18 @@ function constantProvenance(
 // which is what lets the covered set grow one kind at a time.
 export function resolveEntryProvenance(input: {
   slot: ClassifiedSlot;
+  position: number;
   cache: SceneIndexCache;
   fileName: string;
   entryName: string;
 }): readonly string[] {
-  const { slot, cache, fileName, entryName } = input;
+  const { slot, position, cache, fileName, entryName } = input;
   if (isAddressClass(slot.class)) {
-    // Only the fragment half: a path never keys the component universe, so an
-    // address-path entry falls out here rather than being guessed at.
+    // The caret decides which universe owns the request, on the same predicate
+    // the completion path offers from. A path-half caret waits on a production
+    // index that records its own source, so it resolves to nothing here rather
+    // than to whatever the component map happens to carry under that name.
+    if (!isFragmentCaret(slot, position)) return [];
     return componentProvenance(cache).get(entryName) ?? [];
   }
   if (slot.class === "gui-node") {

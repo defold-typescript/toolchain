@@ -12,6 +12,7 @@ import {
   computeOutputRel,
   getProgramDiagnostics,
   isAddressClass,
+  isFragmentCaret,
   resolveClassifiedSlotAtPosition,
 } from "@defold-typescript/transpiler";
 import type { UrlParameterTable } from "@defold-typescript/types";
@@ -66,17 +67,15 @@ function loadUrlParameterTable(): UrlParameterTable | undefined {
 
 // A slot resolves for a caret anywhere inside the quotes, but a component
 // entry's `replacementSpan` only ever covers the fragment — so offering one to
-// a caret in the path would edit text the author is not standing on. `<` not
-// `<=`: at `fragmentStart` the fragment is merely empty, which is where it is
-// most often typed. The guard is above the walk, so a caret in the path costs no
-// `.go`/`.collection` parse.
+// a caret in the path would edit text the author is not standing on. The guard
+// is above the walk, so a caret in the path costs no `.go`/`.collection` parse.
 function componentEntries(
   slot: ClassifiedSlot,
   position: number,
   cache: SceneIndexCache,
   baseEntries: readonly ts.CompletionEntry[],
 ): ts.CompletionEntry[] {
-  if (slot.fragmentStart === -1 || position < slot.fragmentStart) {
+  if (!isFragmentCaret(slot, position)) {
     return [];
   }
   // A partial universe still suggests — unlike the reachability report, a
@@ -92,18 +91,16 @@ function componentEntries(
 }
 
 // The exact complement of `componentEntries`' guard, so precisely one of the two
-// universes answers any caret in an address: component ids from `fragmentStart`
-// on, game-object paths everywhere before it — including a literal carrying no
-// `#` at all, which is all path. Project-wide like the component universe, and
-// for the same reason: what a path resolves to at runtime depends on the
-// collection that was loaded, which the file being edited does not say.
+// universes answers any caret in an address. Project-wide like the component
+// universe, and for the same reason: what a path resolves to at runtime depends
+// on the collection that was loaded, which the file being edited does not say.
 function objectPathEntries(
   slot: ClassifiedSlot,
   position: number,
   cache: SceneIndexCache,
   baseEntries: readonly ts.CompletionEntry[],
 ): ts.CompletionEntry[] {
-  if (slot.fragmentStart !== -1 && position >= slot.fragmentStart) {
+  if (isFragmentCaret(slot, position)) {
     return [];
   }
   return buildAddressPathCompletionEntries({
@@ -313,7 +310,7 @@ export default function init(modules: { typescript: typeof import("typescript") 
       if (!slot) {
         return forward();
       }
-      const declaredIn = resolveEntryProvenance({ slot, cache, fileName, entryName });
+      const declaredIn = resolveEntryProvenance({ slot, position, cache, fileName, entryName });
       return declaredIn.length === 0 ? forward() : provenancePanel(entryName, declaredIn);
     };
 
