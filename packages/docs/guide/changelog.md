@@ -52,6 +52,7 @@ changes are called out first because the toolchain is pre-1.0.
   - **[Libraries](/libraries) index** — no longer credits the `ts-defold/library` project for its type definitions. Every library has been maintained in this repo since v0.24.0, generated from upstream sources that ship machine-readable types or hand-forked where upstream ships none.
   - **[persist](/api/persist) and [rendy](/api/rendy)** — credited to their author's current GitHub account, so the attribution links no longer depend on a rename redirect.
   - **[boom](/api/boom) and [deftest](/api/deftest)** — the reference pages now show the type parameter their generic helpers take, instead of a signature naming a `T` it never declares.
+  - **[Migrating from `ts-defold`](./migrating-from-ts-defold.md)** — the command surface it lists names every verb again, including [`upgrade`](./upgrade.md), `set-target`, [`reload`](./reload.md) and [`run`](./run.md), along with `bob`'s full subcommand set.
 
 ## v0.24.0
 

@@ -6,18 +6,23 @@ toc-title: Overview
 ![defold-typescript logo](logo-ver-classic.png#max-width=200)
 
 [![npm](https://img.shields.io/npm/v/@defold-typescript/cli)](https://www.npmjs.com/package/@defold-typescript/cli)
+[![Changelog](https://img.shields.io/badge/changelog-latest-1f6feb)](./changelog.md)
 [![GitHub repo](https://img.shields.io/badge/github-repo-181717?logo=github&logoColor=white)](https://github.com/defold-typescript/toolchain)
 [![CI](https://img.shields.io/github/actions/workflow/status/defold-typescript/toolchain/ci.yml?branch=main)](https://github.com/defold-typescript/toolchain/actions/workflows/ci.yml)
 [![Docs](https://img.shields.io/badge/docs-defold--typescript.github.io-1f6feb)](https://defold-typescript.github.io/toolchain/)
 
 Build your [Defold](https://defold.com/) game in [TypeScript](https://www.typescriptlang.org/) and get VSCode's full editor experience — autocomplete, inline type errors, and safe refactors — across the whole Defold API, while still shipping the plain [Lua](https://www.lua.org/) the engine runs.
 
-- **The full Defold API, typed** — every module and namespace is typed from the official reference, so `go`, `gui`, `vmath`, `msg`, and the rest autocomplete and type-check as you write.
+- **The full Defold API, typed** — every module and namespace is typed from the official reference, so `go`, `gui`, `vmath`, `msg`, and the rest autocomplete and type-check as you write, with the reference documentation rendered into the hover text.
 - **Compiles to plain Lua** — your TypeScript runs through the battle-tested [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) compiler down to the Lua Defold already runs: no engine fork, no proprietary runtime, no lock-in.
 - **Typed scripts end to end** — `self`, `on_message`, and `on_input` payloads are typed through `defineScript`, `defineGuiScript`, and `defineRenderScript`.
+- **The editor completes what your project declares** — game-object paths, component ids, node ids, animation ids, resource paths, `game.project` config keys, and input action ids are read from your own project files and offered inside the string that needs them.
+- **Pin the API to the engine you ship** — lock a project to a [Defold release](./pinning-defold-target.md) so the types match the runtime you build against, and [wall](./wall.md) a directory to one script kind so its files see only the surface that kind really has.
+- **Community libraries, typed on demand** — declare a supported library as a dependency and [`resolve`](./resolve.md) materializes its types; each one is maintained here against a pinned upstream rather than scraped at install time.
 - **Fits new and existing projects** — scaffold from scratch, or add the TypeScript surface to a project that already has `game.project` and adopt type safety gradually, one script at a time alongside your existing Lua.
   - **Preserves your project layout** — TypeScript blends into the existing project structure without creating a wrapper folder.
-- **Built for the real loop** — `watch` recompiles beside the Defold editor, live transpile diagnostics surface errors inline, and source maps let you set breakpoints in your `.ts`.
+- **Built for the real loop** — `watch` recompiles beside the Defold editor, live transpile diagnostics surface errors inline, and source maps let you set breakpoints in your `.ts`; [`--hot-reload`](./watch.md#hot-reload) pushes each successful build into the running game, whose runtime errors arrive in your terminal naming the `.ts` line that threw.
+- **Moving fast, pre-1.0** — the toolchain ships often, and the [changelog](./changelog.md) calls out breaking changes first so an upgrade is never a surprise.
 
 This guide shows how to scaffold a project, write TypeScript that the toolchain compiles to Lua, and look up the language-and-toolchain quirks you will hit along the way.
 
@@ -93,3 +98,4 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - **For AI agents** — machine-readable docs per [llmstxt.org](https://llmstxt.org/):
     * [`llms.txt`](https://defold-typescript.github.io/toolchain/llms.txt) is the map (start here)
     * [`llms-full.txt`](https://defold-typescript.github.io/toolchain/llms-full.txt) is the full corpus (grep it, never read it whole). The same pair ships into a consumer's `node_modules/@defold-typescript/docs/` on install.
+    * [`init-agents`](./agent-runbooks.md#install-the-agent-contract) wires them up — it writes the managed `AGENTS.md` / `CLAUDE.md` block that points your agent at both files and at the runbooks, so a fresh session orients from the project's own documentation instead of from training-data recall.
