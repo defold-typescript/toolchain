@@ -75,6 +75,30 @@ function collection(...objects: string[]): string {
     .join("");
 }
 
+// The example project's documents keyed the way the host names them: `join`
+// yields `\` on Windows and `/` elsewhere, which is exactly the caller shape
+// the index's key contract has to absorb.
+function exampleProjectDocuments(): { scenes: Map<string, string>; assets: Map<string, string> } {
+  const root = join(import.meta.dir, "../../../docs/examples/platformer");
+  const walk = (directory: string): string[] =>
+    readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+      const path = join(directory, entry.name);
+      if (entry.isDirectory()) return entry.name === "build" ? [] : walk(path);
+      return path;
+    });
+  const read = (match: RegExp): Map<string, string> =>
+    new Map(
+      walk(root)
+        .filter((path) => match.test(path))
+        .map((path) => [path.slice(root.length + 1), readFileSync(path, "utf8")]),
+    );
+  return { scenes: read(/\.(go|collection)$/), assets: read(/\.(atlas|tilesource|sprite)$/) };
+}
+
+function rekey(documents: ReadonlyMap<string, string>, separator: string): Map<string, string> {
+  return new Map([...documents].map(([path, text]) => [path.split(/[/\\]/).join(separator), text]));
+}
+
 describe("buildSpriteAnimationIndex", () => {
   test("scopes a script's animations to the sprite components of the object that owns it", () => {
     const index = indexOf(
@@ -274,23 +298,7 @@ describe("buildSpriteAnimationIndex", () => {
   });
 
   test("indexes the committed example project's own scenes and atlases", () => {
-    const root = join(import.meta.dir, "../../../docs/examples/platformer");
-    const walk = (directory: string): string[] =>
-      readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
-        const path = join(directory, entry.name);
-        if (entry.isDirectory()) return entry.name === "build" ? [] : walk(path);
-        return path;
-      });
-    const read = (match: RegExp): Map<string, string> =>
-      new Map(
-        walk(root)
-          .filter((path) => match.test(path))
-          .map((path) => [path.slice(root.length + 1), readFileSync(path, "utf8")]),
-      );
-    const index = buildSpriteAnimationIndex({
-      scenes: read(/\.(go|collection)$/),
-      assets: read(/\.(atlas|tilesource|sprite)$/),
-    });
+    const index = buildSpriteAnimationIndex(exampleProjectDocuments());
     expect(index.unresolved).toEqual([]);
     expect([...index.byScriptResource.keys()]).toEqual(["src/player.ts.script"]);
     // The object's `collisionobject` and `camera` components are not sprites,
@@ -306,6 +314,46 @@ describe("buildSpriteAnimationIndex", () => {
       "jump",
       "swim",
       "walk",
+    ]);
+  });
+
+  test("keys separated the Windows way index identically to POSIX ones", () => {
+    const documents = exampleProjectDocuments();
+    const posix = buildSpriteAnimationIndex({
+      scenes: rekey(documents.scenes, "/"),
+      assets: rekey(documents.assets, "/"),
+    });
+    const windows = buildSpriteAnimationIndex({
+      scenes: rekey(documents.scenes, "\\"),
+      assets: rekey(documents.assets, "\\"),
+    });
+    expect(windows.unresolved).toEqual([]);
+    expect(windows.byScriptResource).toEqual(posix.byScriptResource);
+    expect(windows.tileSetByScriptResource).toEqual(posix.tileSetByScriptResource);
+  });
+
+  test("a key mixing separators normalizes per segment, not by whole-string match", () => {
+    const index = indexOf(
+      {
+        "game\\sub/player.collection": collection(
+          gameObject("/src/player.ts.script", embeddedSprite("sprite", "/assets/sub/player.atlas")),
+        ),
+      },
+      { "assets\\sub/player.atlas": atlas("walk") },
+    );
+    expect(index.unresolved).toEqual([]);
+    expect(tileSetFor(index, "src/player.ts.script", "sprite")).toBe("assets/sub/player.atlas");
+  });
+
+  test("an unresolved reason names the scene by its POSIX display path", () => {
+    const index = indexOf({
+      "game\\sub\\hero.go": gameObject(
+        "/src/hero.ts.script",
+        embeddedSprite("body", "/assets/missing.atlas"),
+      ),
+    });
+    expect(index.unresolved).toEqual([
+      'game/sub/hero.go: the sprite component "body" names the tile source /assets/missing.atlas, which is not among the project\'s asset documents',
     ]);
   });
 
