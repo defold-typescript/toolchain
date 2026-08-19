@@ -22,6 +22,15 @@ function resourceKey(resource: string): string {
   return resource.startsWith("/") ? resource.slice(1) : resource;
 }
 
+// The keys a caller supplies name files on the host, so they may arrive with
+// native separators; the resource paths they are matched against come out of
+// scene content and are always `/`-separated. Normalizing here enforces that
+// contract at the boundary instead of leaving it to whichever caller happens
+// to build the maps.
+function normalizeDocumentKey(path: string): string {
+  return path.replaceAll("\\", "/");
+}
+
 const SCRIPT_SUFFIX = ".script";
 const SPRITE_SUFFIX = ".sprite";
 
@@ -56,7 +65,8 @@ function readAssets(assets: ReadonlyMap<string, string>, unresolved: string[]): 
   const animationsByTileSet = new Map<string, Set<string>>();
   const tileSetBySprite = new Map<string, string>();
 
-  for (const [displayPath, text] of assets) {
+  for (const [path, text] of assets) {
+    const displayPath = normalizeDocumentKey(path);
     let document: SceneMessage;
     try {
       document = parseSceneTextFormat(text);
@@ -207,7 +217,8 @@ export function buildSpriteAnimationIndex(input: {
     }
   }
 
-  for (const [displayPath, text] of input.scenes) {
+  for (const [path, text] of input.scenes) {
+    const displayPath = normalizeDocumentKey(path);
     try {
       walk(parseSceneTextFormat(text), "", displayPath);
     } catch (error) {
