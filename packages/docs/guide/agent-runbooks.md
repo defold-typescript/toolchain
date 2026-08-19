@@ -1219,8 +1219,10 @@ you do not select it.
   `EXTENSION_MANIFEST` tags (iac/iap/push/webview) still match the intended
   `<to>` build; a new Defold release may bundle newer extension versions. These
   pin independently of `import-manifest.json`.
-- **Author the upgrade guide** — a new `upgrading-to-defold-<new>.md` under
-  `packages/docs/guide/` (dashes, not dots) plus its gate.
+- **Author the upgrade guide** — add a `<!-- release: <new> -->` section to
+  `packages/docs/guide/upgrading-defold-versions.md`. The readiness gate follows
+  the marker, so no new page and no new gate is owed per bump; every heading must
+  stay unique page-wide so the lifecycle badges keep resolving.
 - **Minor bumps only** — review the demoted `defold-<prev>` surface under
   `generated/versions/`.
 

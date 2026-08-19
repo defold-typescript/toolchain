@@ -16,6 +16,7 @@ import {
   type ReleaseRouteManifest,
   validateReleaseRouteManifest,
 } from "../packages/docs-site/app/lib/release-manifest.ts";
+import { releaseSection } from "../packages/docs-site/app/lib/upgrade-guide.ts";
 import { searchIndexOutputs } from "../packages/docs-site/scripts/build-search-index.ts";
 import { symbolIndexOutputs } from "../packages/docs-site/scripts/build-symbol-index.ts";
 import {
@@ -441,11 +442,19 @@ function readText(abs: string): string | null {
   }
 }
 
-function guidePath(root: string, release: string): string {
-  return path.join(
-    root,
-    `packages/docs/guide/upgrading-to-defold-${release.replace(/\./g, "-")}.md`,
-  );
+// One evergreen page for every release, not a file per version: the release
+// being shipped is selected by its `<!-- release: -->` marker, so no filename is
+// derived from the pin.
+function guidePath(root: string): string {
+  return path.join(root, "packages/docs/guide/upgrading-defold-versions.md");
+}
+
+// The guide text scoped to one release. A page that carries no marker for the
+// release under test yields `null`, which both collectors turn into the existing
+// `evidence absent` blockers rather than a silent pass.
+function guideReleaseText(root: string, release: string): string | null {
+  const text = readText(guidePath(root));
+  return text === null ? null : releaseSection(text, release);
 }
 
 function collectImportManifest(root: string, release: string): ImportManifestEvidence | null {
@@ -588,8 +597,11 @@ function regenerateTargetDeclarations(
   }
 }
 
-function collectMigrationGuide(root: string, release: string): MigrationGuideEvidence | null {
-  const text = readText(guidePath(root, release));
+export function collectMigrationGuide(
+  root: string,
+  release: string,
+): MigrationGuideEvidence | null {
+  const text = guideReleaseText(root, release);
   if (text === null) {
     return null;
   }
@@ -597,8 +609,8 @@ function collectMigrationGuide(root: string, release: string): MigrationGuideEvi
   return { headings };
 }
 
-function collectDocs(root: string, release: string, baseline: string): DocsEvidence | null {
-  const text = readText(guidePath(root, release));
+export function collectDocs(root: string, release: string, baseline: string): DocsEvidence | null {
+  const text = guideReleaseText(root, release);
   if (text === null) {
     return null;
   }

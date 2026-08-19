@@ -1,25 +1,79 @@
 ---
-toc-title: Upgrading to Defold 1.13.0
+toc-title: Upgrading Defold versions
 ---
-# Upgrading to Defold 1.13.0
+# Upgrading Defold versions
 
-Defold 1.13.0 is the current stable release and the toolchain's default API
-target. Moving a project from 1.12.4 removes a handful of Lua APIs, re-signatures
-a few others, changes some source/asset expectations, and shifts a few rendering
-and platform defaults. This page lists each change with actionable migration
-guidance and a way to verify it.
+This is the standing runbook for moving a project from one pinned Defold API
+surface to another, followed by one section per release recording exactly what
+changed in it. The runbook is version-agnostic — read `<old>` as the version you
+ship today and `<new>` as the one you are moving to — so it stays true for every
+upgrade; the per-release sections below carry the concrete facts.
 
-Pair this with [Pinning the Defold target](./pinning-defold-target.md): pin the
-old surface first to reproduce today's build, then flip the pin to `1.13.0` and
-let the compiler point at everything that moved. The curated availability facts
-behind the lifecycle sections below live in
-`packages/types/api-availability.json`; each symbol keeps a stable heading here
-so the API lifecycle badges can link a reader straight to it.
+Pair it with [Pinning the Defold target](./pinning-defold-target.md): pin the old
+surface first to reproduce today's build, then flip the pin to `<new>` and let
+the compiler point at everything that moved. The curated availability facts
+behind the lifecycle notes live in `packages/types/api-availability.json`; each
+symbol keeps a stable heading on this page so the API lifecycle badges can link a
+reader straight to it.
 
 ## Reproduce, then flip the target
 
 Reproduce the current build against the exact old surface, then re-run the same
-command against 1.13.0 to surface every removed call as a compile error:
+command against the new one to surface every removed call as a compile error:
+
+```sh
+# what you ship today
+bunx @defold-typescript/cli build --defold-target <old>
+
+# the same project against the new surface
+bunx @defold-typescript/cli build --defold-target <new>
+```
+
+Once the project compiles clean, record the target in `package.json` so every
+later `build`, `watch`, and `resolve` agrees:
+
+```jsonc
+// package.json
+{
+  "defold-typescript": { "defold-target": "<new>" }
+}
+```
+
+## Verification
+
+After flipping the pin, prove the upgrade end to end:
+
+1. Type-check against `<new>` — every removed call in that release's section is
+   now a compile error, so a clean type-check means no removed API survives in
+   your source:
+
+   ```sh
+   bunx @defold-typescript/cli build --defold-target <new>
+   ```
+
+2. Confirm the resolved target and surface in the `--json` envelope report
+   `<new>`, as described in [Pinning the Defold
+   target](./pinning-defold-target.md#what---json-reports).
+3. Build and run the game in the matching Defold editor and walk the
+   rendering/platform changes listed for that release by hand, since those
+   cannot be caught by the compiler.
+
+## Release notes
+
+Each release below opens with a `<!-- release: <version> -->` marker. The
+release-readiness gate reads only the marked section for the release being
+shipped, so a note filed under an older release never counts as migration
+coverage for a newer one. Add a section per release rather than a new page.
+
+<!-- release: 1.13.0 -->
+
+Defold 1.13.0 is the current stable release and the toolchain's default API
+target. Moving a project from 1.12.4 removes a handful of Lua APIs, re-signatures
+a few others, changes some source/asset expectations, and shifts a few rendering
+and platform defaults. Each change below carries actionable migration guidance
+and a way to verify it.
+
+The runbook above, with this release's concrete targets:
 
 ```sh
 # what you ship today
@@ -29,17 +83,7 @@ bunx @defold-typescript/cli build --defold-target 1.12.4
 bunx @defold-typescript/cli build --defold-target 1.13.0
 ```
 
-Once the project compiles clean, record the target in `package.json` so every
-later `build`, `watch`, and `resolve` agrees:
-
-```jsonc
-// package.json
-{
-  "defold-typescript": { "defold-target": "1.13.0" }
-}
-```
-
-## Changed Lua API signatures
+## Defold 1.13.0: changed Lua API signatures
 
 These Lua APIs still exist on the 1.13.0 surface — one or more parameter types
 changed rather than the symbol being removed, so a call written against 1.12.4
@@ -65,7 +109,7 @@ page](/api/defold-1.12.4/liveupdate).
 down. The [1.12.4 `liveupdate` page](/api/defold-1.12.4/liveupdate) keeps the old
 single-string signature for comparison.
 
-## Removed Lua APIs and constants
+## Defold 1.13.0: removed Lua APIs and constants
 
 Each removed symbol is a compile error against the 1.13.0 surface. Its frozen
 signature stays discoverable on the historical [1.12.4 API
@@ -80,7 +124,7 @@ current [`model`](/api/defold-1.13.0/model) surface instead of the one blanket p
 removed property's frozen shape stays on the [1.12.4 `model`
 page](/api/defold-1.12.4/model).
 
-## Deprecated Lua APIs
+## Defold 1.13.0: deprecated Lua APIs
 
 These APIs still compile and run against the 1.13.0 surface but are marked
 **deprecated** in the engine reference. No replacement is announced upstream, so
@@ -103,7 +147,7 @@ release and avoid them in new code.
 <!-- no-action: acquire_camera_focus -->
 <!-- no-action: release_camera_focus -->
 
-## Source and project migrations
+## Defold 1.13.0: source and project migrations
 
 These changes touch assets and project configuration rather than the typed Lua
 surface, so the compiler cannot flag them — audit them by hand.
@@ -123,7 +167,7 @@ surface, so the compiler cannot flag them — audit them by hand.
   the Spine dependency in `game.project` to at least `4.6.0`; older extension
   versions will not build.
 
-## Rendering and platform behavior
+## Defold 1.13.0: rendering and platform behavior
 
 Defaults changed here. Nothing is a Lua API removal, but the rendered result or
 the target platform behaves differently.
@@ -146,22 +190,3 @@ the target platform behaves differently.
 - **asm.js removal.** The HTML5 build no longer emits an asm.js fallback; builds
   are WebAssembly-only. Drop any asm.js-specific loader branches from a custom
   HTML5 shell, since only the WebAssembly artifact is produced.
-
-## Verification
-
-After flipping the pin, prove the upgrade end to end:
-
-1. Type-check against 1.13.0 — every removed call above is now a compile error,
-   so a clean type-check means no removed API survives in your source:
-
-   ```sh
-   bunx @defold-typescript/cli build --defold-target 1.13.0
-   ```
-
-2. Confirm the resolved target and surface in the `--json` envelope report
-   `1.13.0`, as described in [Pinning the Defold
-   target](./pinning-defold-target.md#what---json-reports).
-3. Build and run the game in the Defold 1.13.0 editor and walk the
-   rendering/platform changes above (winding, culling, splash, and — on Android
-   or HTML5 — the platform defaults), since those cannot be caught by the
-   compiler.

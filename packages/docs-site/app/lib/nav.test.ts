@@ -408,7 +408,7 @@ describe("buildNav", () => {
     expect(byLabel("Project configuration")?.children?.map((c) => c.route)).toEqual([
       "/pinning-defold-target",
       "/upgrading",
-      "/upgrading-to-defold-1-13-0",
+      "/upgrading-defold-versions",
       "/extensions",
       "/authoring-luals-library-types",
       "/authoring-forked-library-types",
@@ -418,6 +418,20 @@ describe("buildNav", () => {
       "/migrating-from-ts-defold",
     ]);
     expect(byLabel("Releases")?.children?.map((c) => c.route)).toEqual(["/changelog"]);
+  });
+
+  test("the retired per-version upgrade slug survives nowhere in the tree", () => {
+    const routes: string[] = [];
+    for (const category of fullNav()) {
+      for (const link of category.links) {
+        if (link.route !== undefined) routes.push(link.route);
+        for (const child of link.children ?? []) {
+          if (child.route !== undefined) routes.push(child.route);
+        }
+      }
+    }
+    expect(routes).toContain("/upgrading-defold-versions");
+    expect(routes).not.toContain("/upgrading-to-defold-1-13-0");
   });
 
   test("maps the index page to / under Get started, labeled Overview", () => {
