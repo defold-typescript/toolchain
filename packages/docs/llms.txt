@@ -44,7 +44,7 @@ Only guide pages are inlined into `llms-full.txt`; pages marked `llms-full: fals
 - [Helper scripts](guide/helper-scripts.md)
 - [Pinning the Defold target](guide/pinning-defold-target.md)
 - [Upgrading the toolchain](guide/upgrading.md)
-- [Upgrading to Defold 1.13.0](guide/upgrading-to-defold-1-13-0.md)
+- [Upgrading Defold versions](guide/upgrading-defold-versions.md)
 - [Native extensions](guide/extensions.md)
 - [Authoring LuaLS library types](guide/authoring-luals-library-types.md)
 - [Authoring forked library types](guide/authoring-forked-library-types.md)

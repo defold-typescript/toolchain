@@ -14,6 +14,12 @@ Entries are curated by hand from the git history; the most recent releases are
 listed per-patch, older releases are rolled up per minor version. Breaking
 changes are called out first because the toolchain is pre-1.0.
 
+## v0.26.0
+
+### Breaking
+
+- **The per-version upgrade page is now one evergreen guide.** [Upgrading Defold versions](./upgrading-defold-versions.md) replaces `upgrading-to-defold-1-13-0.md` with a version-agnostic runbook plus one section per release, so the old page's URL no longer resolves. The 1.13.0 migration notes are unchanged, just moved into that release's section.
+
 ## v0.25.0
 
 ### Breaking

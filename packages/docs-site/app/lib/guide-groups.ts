@@ -48,7 +48,7 @@ export const GUIDE_GROUPS: GuideGroup[] = [
     slugs: [
       "pinning-defold-target",
       "upgrading",
-      "upgrading-to-defold-1-13-0",
+      "upgrading-defold-versions",
       "extensions",
       "authoring-luals-library-types",
       "authoring-forked-library-types",
