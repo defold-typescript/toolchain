@@ -12,8 +12,8 @@ in the Defold version you target, instead of letting them through to fail at
 runtime.
 
 Moving a project from 1.12.4 to the current 1.13.0 surface removes some Lua APIs
-and changes a few asset and platform defaults — see [Upgrading to Defold
-1.13.0](./upgrading-to-defold-1-13-0.md) for the per-change migration steps.
+and changes a few asset and platform defaults — see [Upgrading Defold
+versions](./upgrading-defold-versions.md) for the per-change migration steps.
 
 A **target** is a single selector — `--defold-target <version|stable|beta|alpha>`
 — that replaces the older two-flag selector (a fixed version plus a separate
@@ -368,7 +368,7 @@ bun scripts/defold-release-readiness.ts --check --json
 
 The `--check --json` form is offline and deterministic — it reads only committed
 artifacts (the import manifest, `api-availability.json`, `api-targets.json`, the
-`upgrading-to-defold-<version>.md` migration guide, and the docs search
+`upgrading-defold-versions.md` migration guide, and the docs search
 machinery) plus the static `RELEASE_TARGET_MATRIX`, and prints
 `{"ok":…,"problems":[…]}`. Each blocker is tagged by category: `import`,
 `unknown-type`, `declaration`, `docs-route`, `search`, `migration-guide`,

@@ -12,7 +12,9 @@ import {
 } from "../packages/types/scripts/regen.ts";
 import type { ApiModule } from "../packages/types/src/api-doc.ts";
 import {
+  collectDocs,
   collectEvidence,
+  collectMigrationGuide,
   collectTargets,
   type DocsEvidence,
   docsRouteEvidence,
@@ -729,5 +731,110 @@ describe("releaseIndexProblems — the generated index set must cover every mani
       symbolFiles: fullSymbol.filter((f) => f !== "symbol-index-defold-1.13.0.json"),
     });
     expect(problems.some((p) => p.includes("symbol-index-defold-1.13.0.json"))).toBe(true);
+  });
+});
+
+describe("the migration guide is read one release section at a time", () => {
+  // A section documenting an older release must never satisfy the release being
+  // shipped: one shared evergreen page is only safe if coverage is proven inside
+  // the current release's own `<!-- release: -->` section.
+  function withGuide(body: string, run: (root: string) => void): void {
+    const root = mkdtempSync(join(tmpdir(), "readiness-guide-"));
+    try {
+      const guideDir = join(root, "packages", "docs", "guide");
+      mkdirSync(guideDir, { recursive: true });
+      writeFileSync(join(guideDir, "upgrading-defold-versions.md"), body);
+      run(root);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }
+
+  function guideWith(sections: { version: string; body: string }[]): string {
+    return [
+      "# Upgrading Defold versions",
+      "",
+      "## Reproduce, then flip the target",
+      "",
+      ...sections.flatMap((s) => [`<!-- release: ${s.version} -->`, "", s.body, ""]),
+    ].join("\n");
+  }
+
+  function problemsWith(root: string): string[] {
+    const evidence: ReadinessEvidence = {
+      ...passingEvidence(),
+      migrationGuide: collectMigrationGuide(root, "1.13.0"),
+    };
+    return evaluateReleaseReadiness(evidence)
+      .problems.filter((p) => p.category === "migration-guide")
+      .map((p) => p.message);
+  }
+
+  test("a removed symbol covered only by an older release's section is not coverage", () => {
+    withGuide(
+      guideWith([
+        { version: "1.12.4", body: "### model.material\n\nRetired here." },
+        { version: "1.13.0", body: "### liveupdate.add_mount\n\nRe-signatured." },
+      ]),
+      (root) => {
+        expect(problemsWith(root)).toEqual([
+          "removed symbol model.material has no migration-guide heading",
+        ]);
+      },
+    );
+  });
+
+  test("the same heading inside the current release's section is coverage", () => {
+    withGuide(
+      guideWith([
+        { version: "1.12.4", body: "### something.else\n\nOlder note." },
+        {
+          version: "1.13.0",
+          body: "### liveupdate.add_mount\n\nRe-signatured.\n\n### model.material\n\nRemoved.",
+        },
+      ]),
+      (root) => {
+        expect(problemsWith(root)).toEqual([]);
+      },
+    );
+  });
+
+  test("a page carrying no section for the current release is evidence absent", () => {
+    withGuide(
+      guideWith([
+        {
+          version: "1.12.4",
+          body: "### liveupdate.add_mount\n\nOlder.\n\n### model.material\n\nOlder.",
+        },
+      ]),
+      (root) => {
+        expect(collectMigrationGuide(root, "1.13.0")).toBeNull();
+        expect(problemsWith(root)).toEqual(["migration-guide evidence absent: no migration guide"]);
+      },
+    );
+  });
+
+  test("historical API routes are read from the current release's section only", () => {
+    withGuide(
+      guideWith([
+        { version: "1.12.4", body: "See [model](/api/defold-1.12.4/model)." },
+        { version: "1.13.0", body: "See [liveupdate](/api/defold-1.12.4/liveupdate)." },
+      ]),
+      (root) => {
+        expect(collectDocs(root, "1.13.0", "1.12.4")?.historicalRoutes).toEqual([
+          "/api/defold-1.12.4/liveupdate",
+        ]);
+      },
+    );
+  });
+
+  test("a missing guide file is evidence absent for both collectors", () => {
+    const root = mkdtempSync(join(tmpdir(), "readiness-guide-none-"));
+    try {
+      expect(collectMigrationGuide(root, "1.13.0")).toBeNull();
+      expect(collectDocs(root, "1.13.0", "1.12.4")).toBeNull();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });
