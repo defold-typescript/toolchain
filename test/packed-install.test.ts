@@ -1,21 +1,22 @@
 import { afterAll, describe, expect, test } from "bun:test";
 import {
-  existsSync,
   lstatSync,
   mkdirSync,
   mkdtempSync,
-  readdirSync,
   readFileSync,
   realpathSync,
   rmSync,
-  symlinkSync,
   writeFileSync,
 } from "node:fs";
-import { createRequire } from "node:module";
 import * as path from "node:path";
 import { iterateTarEntries } from "../scripts/release-pack-proof";
-
-const REPO_ROOT = path.resolve(import.meta.dir, "..");
+import {
+  installLinkPreflight,
+  type LinkedDependencyRoot,
+  linkThirdPartyDeps,
+  packageDir,
+  REPO_ROOT,
+} from "./packed-install-links";
 
 // Building and packing three workspaces, then cold-spawning `node`, costs far
 // more than the sibling `release-bin-smoke` spawns that already needed 30s of
@@ -29,10 +30,6 @@ const BUILT_ENTRIES = ["bin.js", "index.js"] as const;
 function run(cmd: string[], cwd: string): { code: number; output: string } {
   const proc = Bun.spawnSync(cmd, { cwd, stdout: "pipe", stderr: "pipe" });
   return { code: proc.exitCode, output: `${proc.stdout.toString()}${proc.stderr.toString()}` };
-}
-
-function packageDir(pkg: string): string {
-  return path.join(REPO_ROOT, "packages", pkg);
 }
 
 function build(pkg: string): void {
@@ -63,47 +60,6 @@ function extractTarball(tarball: string, into: string): void {
     mkdirSync(path.dirname(target), { recursive: true });
     writeFileSync(target, entry.data);
   }
-}
-
-type LinkedDependencyRoot = {
-  specifier: string;
-  link: string;
-  target: string;
-  installed: string;
-};
-
-// A real `npm install` places each package's own third-party deps beside it, so
-// mirror the workspace's nested ones into the extracted tree. `@defold-typescript`
-// is deliberately excluded: those must stay real extracted directories, because
-// it is the workspace symlink — whose realpath escapes `node_modules` — that
-// hides this defect from the in-repo suite.
-//
-// Every link points at a realpath: a scope directory is not a package, and its
-// children are relative symlinks into `node_modules/.bun/` that re-interpret
-// from wherever the link is traversed. Linking the leaf's realpath keeps the
-// packed tree self-contained on a host that traverses links in place.
-function linkThirdPartyDeps(pkg: string, into: string): LinkedDependencyRoot[] {
-  const source = path.join(packageDir(pkg), "node_modules");
-  if (!existsSync(source)) return [];
-  const target = path.join(into, "node_modules");
-  mkdirSync(target, { recursive: true });
-  const linked: LinkedDependencyRoot[] = [];
-  for (const entry of readdirSync(source)) {
-    if (entry === "@defold-typescript" || entry === ".bin") continue;
-    const specifiers = entry.startsWith("@")
-      ? readdirSync(path.join(source, entry)).map((leaf) => `${entry}/${leaf}`)
-      : [entry];
-    for (const specifier of specifiers) {
-      const resolved = realpathSync(path.join(source, specifier));
-      const link = path.join(target, specifier);
-      mkdirSync(path.dirname(link), { recursive: true });
-      // "junction" is correct on Windows for a real directory target and inert
-      // on POSIX; the defect this guards was the target, not the link type.
-      symlinkSync(resolved, link, "junction");
-      linked.push({ specifier, link, target: resolved, installed: into });
-    }
-  }
-  return linked;
 }
 
 function staticDefoldSpecifiers(file: string): string[] {
@@ -141,6 +97,8 @@ describe("a packed install runs under plain node", () => {
     rmSync(consumer, { recursive: true, force: true });
     rmSync(tarballs, { recursive: true, force: true });
   });
+
+  installLinkPreflight(linkedDependencyRoots);
 
   test(
     "the published bin loads and prints its usage banner",
@@ -188,37 +146,6 @@ describe("a packed install runs under plain node", () => {
     },
     PACKED_INSTALL_TIMEOUT_MS,
   );
-  test("every linked dependency resolves from inside the packed tree", () => {
-    // A scan that recorded nothing would green every assertion below.
-    expect(linkedDependencyRoots.length).toBeGreaterThan(0);
-
-    for (const root of linkedDependencyRoots) {
-      const describeLink = `${root.specifier}: ${root.link} -> ${root.target}`;
-
-      let traversed: string;
-      try {
-        traversed = realpathSync(path.join(root.link, "package.json"));
-      } catch (cause) {
-        throw new Error(`the packed link does not traverse — ${describeLink}`, { cause });
-      }
-
-      const from = createRequire(path.join(root.installed, "package.json"));
-      let resolved: string;
-      try {
-        resolved = from.resolve(`${root.specifier}/package.json`);
-      } catch (cause) {
-        throw new Error(
-          `${root.specifier} does not resolve from ${root.installed} — ${describeLink}`,
-          { cause },
-        );
-      }
-
-      expect(`${describeLink} resolved to ${realpathSync(resolved)}`).toBe(
-        `${describeLink} resolved to ${traversed}`,
-      );
-    }
-  });
-
   test("every linked dependency root reaches a real directory in one hop", () => {
     for (const root of linkedDependencyRoots) {
       expect(`${root.specifier} link exists`).toBe(
