@@ -5,12 +5,20 @@ import { searchIndexOutputs } from "../../scripts/build-search-index";
 import { groupGuidePages } from "./guide-groups";
 import { listGuidePages } from "./guide-loader";
 import { slugify } from "./headings";
+import { releaseSection, releaseSections } from "./upgrade-guide";
 
-const SLUG = "upgrading-to-defold-1-13-0";
+const SLUG = "upgrading-defold-versions";
+const RELEASE = "1.13.0";
 const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");
 const TYPES_DIR = join(import.meta.dir, "../../../../packages/types");
 
 const guideBody = readFileSync(join(GUIDE_DIR, `${SLUG}.md`), "utf8");
+
+// The page holds one marked section per release. Every claim about a specific
+// release is asserted against that release's own section, mirroring how the
+// readiness gate scopes its evidence — a heading parked in an older section
+// must not satisfy the current release.
+const releaseBody = releaseSection(guideBody, RELEASE) ?? "";
 
 interface AvailabilityRecord {
   identity: { namespace: string; kind: string; name: string; signature: string };
@@ -42,6 +50,22 @@ function absentFromNewest(doc: AvailabilityDoc): (r: AvailabilityRecord) => bool
 function qualifiedName(record: AvailabilityRecord): string {
   const { namespace, name } = record.identity;
   return name.includes(".") ? name : `${namespace}.${name}`;
+}
+
+// Every h2/h3 heading's raw text, in document order, skipping fenced code.
+function headingTexts(markdown: string): string[] {
+  const out: string[] = [];
+  let inFence = false;
+  for (const line of markdown.split("\n")) {
+    if (/^\s*(```|~~~)/.test(line)) {
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence) continue;
+    const match = /^\s*(#{2,3})\s+(.+?)\s*$/.exec(line);
+    if (match) out.push(match[2] ?? "");
+  }
+  return out;
 }
 
 // Mirror the reference-audit / renderer heading-id rule: h2/h3 headings gain a
@@ -87,7 +111,39 @@ function apiLinkTargets(markdown: string): string[] {
     .filter((href) => href.startsWith("/api/") || href === "/api");
 }
 
-describe("upgrading-to-defold-1-13-0 guide", () => {
+describe("upgrading-defold-versions guide", () => {
+  test("exposes the current release as a marked section", () => {
+    expect(releaseBody).not.toEqual("");
+    expect(releaseSections(guideBody).map((s) => s.version)).toContain(RELEASE);
+  });
+
+  // Page-wide, not per-section: the API lifecycle badges link to
+  // `slugify(<qualified symbol>)` on this one page, so a heading repeated in a
+  // second release section would mint `<slug>-2` and leave the badge pointing at
+  // the earlier release's note.
+  test("every h2/h3 heading slug on the page is unique", () => {
+    const seen = new Map<string, number>();
+    for (const heading of headingTexts(guideBody)) {
+      const slug = slugify(heading);
+      seen.set(slug, (seen.get(slug) ?? 0) + 1);
+    }
+    const duplicated = [...seen].filter(([, n]) => n > 1).map(([slug]) => slug);
+    expect(duplicated).toEqual([]);
+    expect(seen.size).toBeGreaterThan(0);
+  });
+
+  test("a heading repeated across two release sections is reported as a duplicate slug", () => {
+    const body = [
+      "<!-- release: 1.13.0 -->",
+      "### liveupdate.add_mount",
+      "<!-- release: 1.13.1 -->",
+      "### liveupdate.add_mount",
+    ].join("\n");
+    const slugs = headingTexts(body).map(slugify);
+    expect(slugs).toEqual(["liveupdateadd_mount", "liveupdateadd_mount"]);
+    expect(headingAnchors(body).has("liveupdateadd_mount-1")).toBe(true);
+  });
+
   test("is registered in the Guides navigation under Project configuration", () => {
     const groups = groupGuidePages(listGuidePages(GUIDE_DIR));
     const projectConfig = groups.find((g) => g.id === "project-configuration");
@@ -95,7 +151,7 @@ describe("upgrading-to-defold-1-13-0 guide", () => {
   });
 
   test("covers every PRD-listed engine breaking change", () => {
-    const body = guideBody.toLowerCase();
+    const body = releaseBody.toLowerCase();
     // Stable content tokens, not prose bytes: additive editorial edits keep them.
     const changes: { name: string; tokens: string[] }[] = [
       { name: "asm.js removal", tokens: ["asm.js"] },
@@ -114,11 +170,11 @@ describe("upgrading-to-defold-1-13-0 guide", () => {
   });
 
   test("every removed/deprecated catalog symbol has a stable guide anchor or a no-action entry", () => {
-    const anchors = headingAnchors(guideBody);
+    const anchors = headingAnchors(releaseBody);
     // An explicit no-action list: `<!-- no-action: <qualified> -->` classifies a
     // removed/deprecated symbol that needs no migration, without minting a heading.
     const noAction = new Set(
-      [...guideBody.matchAll(/<!--\s*no-action:\s*([^\s]+)\s*-->/g)].map((m) => m[1] ?? ""),
+      [...releaseBody.matchAll(/<!--\s*no-action:\s*([^\s]+)\s*-->/g)].map((m) => m[1] ?? ""),
     );
     const doc = availabilityDoc();
     const removed = absentFromNewest(doc);
@@ -132,8 +188,8 @@ describe("upgrading-to-defold-1-13-0 guide", () => {
   });
 
   test("uses exact 1.12.4 and 1.13.0 target commands", () => {
-    expect(guideBody).toContain("--defold-target 1.12.4");
-    expect(guideBody).toContain("--defold-target 1.13.0");
+    expect(releaseBody).toContain("--defold-target 1.12.4");
+    expect(releaseBody).toContain("--defold-target 1.13.0");
   });
 
   test("links every removed symbol to its historical 1.12.4 API page", () => {
@@ -143,15 +199,15 @@ describe("upgrading-to-defold-1-13-0 guide", () => {
     );
     expect(namespaces.size).toBeGreaterThan(0);
     for (const namespace of namespaces) {
-      expect(guideBody).toContain(`/api/defold-1.12.4/${namespace}`);
+      expect(releaseBody).toContain(`/api/defold-1.12.4/${namespace}`);
     }
   });
 
   test("points 1.13.0-specific claims at the exact-version pages", () => {
     // The upgrade guide's current-surface claims are version-specific to 1.13.0,
     // so they resolve to the exact-version pages, not the unprefixed Combined page.
-    expect(guideBody).toContain("/api/defold-1.13.0/liveupdate");
-    expect(guideBody).toContain("/api/defold-1.13.0/model");
+    expect(releaseBody).toContain("/api/defold-1.13.0/liveupdate");
+    expect(releaseBody).toContain("/api/defold-1.13.0/model");
     expect(guideBody).not.toContain("](/api/liveupdate)");
     expect(guideBody).not.toContain("](/api/model)");
   });
@@ -168,8 +224,8 @@ describe("upgrading-to-defold-1-13-0 guide", () => {
   // transition — the `name` parameter widened to accept a hash — not as removed
   // symbols, so the guide must describe a parameter-type change.
   test("describes the Live Update mounts as a parameter-type change, not a removal", () => {
-    const collapsed = guideBody.replace(/\s+/g, " ");
-    expect(collapsed).toContain("## Changed Lua API signatures");
+    const collapsed = releaseBody.replace(/\s+/g, " ");
+    expect(collapsed).toContain("## Defold 1.13.0: changed Lua API signatures");
     expect(collapsed).toContain("`liveupdate.add_mount` was **not** removed");
     expect(collapsed).toContain("widened from `string` to `string | Hash`");
     expect(collapsed).not.toContain("auto-mount API is gone");
@@ -178,7 +234,7 @@ describe("upgrading-to-defold-1-13-0 guide", () => {
   });
 
   test("still describes model.material as removed", () => {
-    expect(guideBody.replace(/\s+/g, " ")).toContain(
+    expect(releaseBody.replace(/\s+/g, " ")).toContain(
       "The single-slot `model.material` property is removed",
     );
   });
@@ -188,8 +244,67 @@ describe("upgrading-to-defold-1-13-0 guide", () => {
   // their user-facing surface, mirroring the reset_constant no-action entries.
   test("documents the deprecated 1.13.0 camera-focus messages with no-action markers", () => {
     for (const name of ["acquire_camera_focus", "release_camera_focus"]) {
-      expect(guideBody).toContain(name);
-      expect(guideBody).toContain(`<!-- no-action: ${name} -->`);
+      expect(releaseBody).toContain(name);
+      expect(releaseBody).toContain(`<!-- no-action: ${name} -->`);
     }
+  });
+});
+
+describe("releaseSections", () => {
+  const twoReleases = [
+    "---",
+    "toc-title: Upgrading Defold versions",
+    "---",
+    "# Upgrading Defold versions",
+    "",
+    "## Reproduce, then flip the target",
+    "",
+    "Preamble that belongs to no release.",
+    "",
+    "<!-- release: 1.13.0 -->",
+    "",
+    "### model.material",
+    "",
+    "Removed in 1.13.0.",
+    "",
+    "<!-- release: 1.13.1 -->",
+    "",
+    "### sprite.play_flipbook",
+    "",
+    "Removed in 1.13.1.",
+    "",
+  ].join("\n");
+
+  test("returns one entry per marker, in document order", () => {
+    expect(releaseSections(twoReleases).map((s) => s.version)).toEqual(["1.13.0", "1.13.1"]);
+  });
+
+  test("section boundaries do not bleed into the neighbouring release", () => {
+    const [first, second] = releaseSections(twoReleases);
+    expect(first?.body).toContain("model.material");
+    expect(first?.body).not.toContain("sprite.play_flipbook");
+    expect(second?.body).toContain("sprite.play_flipbook");
+    expect(second?.body).not.toContain("model.material");
+  });
+
+  test("the preamble before the first marker belongs to no release", () => {
+    for (const { body } of releaseSections(twoReleases)) {
+      expect(body).not.toContain("Preamble that belongs to no release.");
+      expect(body).not.toContain("## Reproduce, then flip the target");
+    }
+  });
+
+  test("the final section runs to end of file", () => {
+    const last = releaseSections(twoReleases).at(-1);
+    expect(last?.body.trimEnd().endsWith("Removed in 1.13.1.")).toBe(true);
+  });
+
+  test("a body with no marker yields no sections", () => {
+    expect(releaseSections("# Title\n\n## Heading\n")).toEqual([]);
+  });
+
+  test("releaseSection selects one version and is null for an absent one", () => {
+    expect(releaseSection(twoReleases, "1.13.0")).toContain("model.material");
+    expect(releaseSection(twoReleases, "1.13.2")).toBeNull();
   });
 });
