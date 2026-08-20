@@ -1221,8 +1221,12 @@ you do not select it.
   pin independently of `import-manifest.json`.
 - **Author the upgrade guide** — add a `<!-- release: <new> -->` section to
   `packages/docs/guide/upgrading-defold-versions.md`. The readiness gate follows
-  the marker, so no new page and no new gate is owed per bump; every heading must
-  stay unique page-wide so the lifecycle badges keep resolving.
+  the marker, so no new page and no new gate is owed per bump. Shape the section
+  as the marker, then one `## Defold <new>` owning the release, topic headings at
+  h3 beneath it, and one h4 per documented symbol. Topic headings repeat freely
+  across releases, but every `## Defold <version>` and every per-symbol h4 must
+  slug uniquely page-wide — a symbol documented in a second release needs a
+  distinguishing suffix, or its anchor silently moves to the older note.
 - **Minor bumps only** — review the demoted `defold-<prev>` surface under
   `generated/versions/`.
 

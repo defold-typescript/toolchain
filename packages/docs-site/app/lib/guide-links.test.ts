@@ -21,7 +21,7 @@ const REAL_ROUTES_DIR = join(import.meta.dir, "../routes");
 
 // Heading ids are read back out of the rendered page rather than recomputed
 // here: `markdown.ts`'s `slugify-headings` ruler is the only thing that decides
-// what a guide anchor resolves to (it slugifies, limits ids to h1-h3, and
+// what a guide anchor resolves to (it slugifies, limits ids to h1-h4, and
 // suffixes duplicates). Re-deriving that mapping in the test would put a second
 // model of production between an authored `#anchor` and the id it must match.
 const HEADING_ID_RE = /<h[1-6][^>]*\sid="([^"]+)"/g;
