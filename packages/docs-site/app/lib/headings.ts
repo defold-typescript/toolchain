@@ -1,22 +1,32 @@
 /**
- * Extract the H2 / H3 / H4 headings from a rendered HTML body for the right-side
- * table of contents. The depth stops at H4 — deeper nesting reads badly on small
- * screens, and no page authors it. The fourth tier exists because the upgrade
+ * Read the headings out of a rendered HTML body. `allPageHeadings` is full-depth,
+ * H1 through H6, so a caller judging a heading against the role it plays sees one
+ * authored at any level instead of silently missing it. `pageHeadings` filters
+ * that down to the H2 / H3 / H4 the right-side table of contents shows: the depth
+ * stops at H4 — deeper nesting reads badly on small screens — and starts at H2
+ * because the H1 is the page title. The fourth tier exists because the upgrade
  * guide nests each release's per-symbol notes beneath one `## Defold <version>`
  * heading, which pushes the symbols a reader actually searches for to H4; a TOC
  * cut at H3 would list every release and topic but no symbol. Headings inside
  * `<pre>` blocks are ignored (they come from code).
  */
-export interface Heading {
+export type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
+
+export interface AnyHeading {
   /** Heading text, trimmed. */
   text: string;
   /** Slug used as the `id` attribute on the rendered heading. */
   id: string;
-  /** Heading level (2, 3 or 4). */
+  /** Heading level (1 through 6). */
+  level: HeadingLevel;
+}
+
+/** A heading inside the table of contents' depth window. */
+export interface Heading extends AnyHeading {
   level: 2 | 3 | 4;
 }
 
-const HEADING_RE = /<h([234])(\s+[^>]*)?>([\s\S]*?)<\/h\1>/gi;
+const HEADING_RE = /<h([1-6])(\s+[^>]*)?>([\s\S]*?)<\/h\1>/gi;
 const TAG_RE = /<[^>]+>/g;
 const ID_RE = /\sid="([^"]+)"/i;
 const NAMED_ENTITY: Record<string, string> = {
@@ -50,10 +60,10 @@ function decodeEntities(s: string): string {
   return out;
 }
 
-export function pageHeadings(html: string): Heading[] {
-  const out: Heading[] = [];
+export function allPageHeadings(html: string): AnyHeading[] {
+  const out: AnyHeading[] = [];
   for (const match of html.matchAll(HEADING_RE)) {
-    const level = Number(match[1]) as 2 | 3 | 4;
+    const level = Number(match[1]) as HeadingLevel;
     const rawAttrs = match[2] ?? "";
     const inner = match[3] ?? "";
     const idMatch = rawAttrs.match(ID_RE);
@@ -66,6 +76,10 @@ export function pageHeadings(html: string): Heading[] {
     });
   }
   return out;
+}
+
+export function pageHeadings(html: string): Heading[] {
+  return allPageHeadings(html).filter((h): h is Heading => h.level >= 2 && h.level <= 4);
 }
 
 // GitHub parity: keep word characters (including `_`), strip the rest, and emit

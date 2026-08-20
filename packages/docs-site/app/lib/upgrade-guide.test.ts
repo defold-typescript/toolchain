@@ -5,7 +5,7 @@ import { searchIndexOutputs } from "../../scripts/build-search-index";
 import { renderGuidePage } from "./content";
 import { groupGuidePages } from "./guide-groups";
 import { listGuidePages } from "./guide-loader";
-import { type Heading, pageHeadings, slugify } from "./headings";
+import { allPageHeadings, type Heading, pageHeadings, slugify } from "./headings";
 import { renderMarkdown } from "./markdown";
 import { releaseSection, releaseSections } from "./upgrade-guide";
 
@@ -121,11 +121,13 @@ function symbolSlugs(): Set<string> {
 // symbol, h3 for every other heading — the topics, defined as the complement so
 // no restated title list sits between the page and its gate. Returns one message
 // per defect naming the version, the heading and both levels, so a red says what
-// to move where; empty when the section nests correctly.
+// to move where; empty when the section nests correctly. Read full-depth: a
+// heading outside the table of contents' h2..h4 window is at the wrong level, not
+// absent, and the narrow reader would drop it instead of rejecting it.
 function headingHierarchyDefects(html: string, symbols: Set<string>): string[] {
   const defects: string[] = [];
   for (const { version, body } of releaseSections(html)) {
-    const [wrapper, ...rest] = pageHeadings(body);
+    const [wrapper, ...rest] = allPageHeadings(body);
     if (wrapper?.level !== 2 || wrapper.text !== `Defold ${version}`) {
       defects.push(
         wrapper
@@ -319,6 +321,78 @@ describe("upgrading-defold-versions guide", () => {
     expect(headingHierarchyDefects(html, symbolSlugs())).toEqual([
       '1.13.0: "Defold 1.13.0" is h3, expected the section to open with an h2 wrapper',
     ]);
+  });
+
+  // The gate reads the page full-depth, so a heading authored outside the table
+  // of contents' h2..h4 window is judged against its role rather than dropped.
+  test("a topic heading authored outside h2..h4 is rejected", async () => {
+    for (const [hashes, level] of [
+      ["#", 1],
+      ["#####", 5],
+    ] as const) {
+      const html = await renderMarkdown(
+        twoReleaseFixture(
+          `${hashes} Added Lua APIs\n\n#### collectionproxy.load`,
+          "### Changed Lua API signatures\n\n#### gui.set",
+        ),
+      );
+      expect(headingHierarchyDefects(html, symbolSlugs())).toEqual([
+        `1.13.0: "Added Lua APIs" is h${level}, expected h3`,
+      ]);
+    }
+  });
+
+  test("a symbol note authored outside h2..h4 is rejected", async () => {
+    for (const [hashes, level] of [
+      ["#####", 5],
+      ["######", 6],
+    ] as const) {
+      const html = await renderMarkdown(
+        twoReleaseFixture(
+          `### Added Lua APIs\n\n${hashes} collectionproxy.load`,
+          "### Changed Lua API signatures\n\n#### gui.set",
+        ),
+      );
+      expect(headingHierarchyDefects(html, symbolSlugs())).toEqual([
+        `1.13.0: "collectionproxy.load" is h${level}, expected h4`,
+      ]);
+    }
+  });
+
+  // A wrapper outside the window used to vanish from the reader, letting the next
+  // heading slide into the wrapper slot and take the blame. The defect must name
+  // the wrapper that is actually at the wrong level.
+  test("a release wrapper authored outside h2..h4 is rejected, naming that wrapper", async () => {
+    for (const [hashes, level] of [
+      ["#", 1],
+      ["######", 6],
+    ] as const) {
+      const html = await renderMarkdown(
+        [
+          "<!-- release: 1.13.0 -->",
+          "",
+          `${hashes} Defold 1.13.0`,
+          "",
+          "### Added Lua APIs",
+          "",
+          "#### collectionproxy.load",
+          "",
+        ].join("\n"),
+      );
+      expect(headingHierarchyDefects(html, symbolSlugs())).toEqual([
+        `1.13.0: "Defold 1.13.0" is h${level}, expected the section to open with an h2 wrapper`,
+      ]);
+    }
+  });
+
+  // Widening the reader must not resurrect heading-like text from inside `<pre>`.
+  test("a heading-like line inside a fence is not a heading at an out-of-range level", async () => {
+    const fenced = ["```md", "###### liveupdate.add_mount", "```"].join("\n");
+    const html = await renderMarkdown(
+      twoReleaseFixture("### Changed Lua API signatures\n\n#### liveupdate.add_mount", fenced),
+    );
+    expect(allPageHeadings(html).some((h) => h.level === 6)).toBe(false);
+    expect(headingHierarchyDefects(html, symbolSlugs())).toEqual([]);
   });
 
   // The latitude the gate must keep: topics are structure, so the same topic
