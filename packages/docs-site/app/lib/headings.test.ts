@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { pageHeadings, slugify } from "./headings";
+import { allPageHeadings, pageHeadings, slugify } from "./headings";
 
 describe("slugify", () => {
   test("keeps underscores so on_message-style ids match GitHub", () => {
@@ -64,6 +64,35 @@ describe("pageHeadings", () => {
       '<h3 id="added-lua-apis">Added Lua APIs</h3>' +
       '<h4 id="collectionproxyload">collectionproxy.load</h4>';
     expect(pageHeadings(html)).toEqual([
+      { text: "Defold 1.13.1", id: "defold-1131", level: 2 },
+      { text: "Added Lua APIs", id: "added-lua-apis", level: 3 },
+      { text: "collectionproxy.load", id: "collectionproxyload", level: 4 },
+    ]);
+  });
+});
+
+describe("allPageHeadings", () => {
+  const fullDepthHtml =
+    '<h1 id="upgrading-defold-versions">Upgrading Defold versions</h1>' +
+    '<h2 id="defold-1131">Defold 1.13.1</h2>' +
+    '<h3 id="added-lua-apis">Added Lua APIs</h3>' +
+    '<h4 id="collectionproxyload">collectionproxy.load</h4>' +
+    '<h5><a href="#x"><span>Opaque&#x3C;"node"&#x3E;</span></a></h5>' +
+    '<h6 id="minted-deep">Deep note</h6>';
+
+  test("returns h1 through h6 in document order, with tags stripped, entities decoded, and an explicit id preferred over the slug fallback outside h2..h4", () => {
+    expect(allPageHeadings(fullDepthHtml)).toEqual([
+      { text: "Upgrading Defold versions", id: "upgrading-defold-versions", level: 1 },
+      { text: "Defold 1.13.1", id: "defold-1131", level: 2 },
+      { text: "Added Lua APIs", id: "added-lua-apis", level: 3 },
+      { text: "collectionproxy.load", id: "collectionproxyload", level: 4 },
+      { text: 'Opaque<"node">', id: "opaquenode", level: 5 },
+      { text: "Deep note", id: "minted-deep", level: 6 },
+    ]);
+  });
+
+  test("pageHeadings over the same html keeps the h2..h4 table-of-contents bound", () => {
+    expect(pageHeadings(fullDepthHtml)).toEqual([
       { text: "Defold 1.13.1", id: "defold-1131", level: 2 },
       { text: "Added Lua APIs", id: "added-lua-apis", level: 3 },
       { text: "collectionproxy.load", id: "collectionproxyload", level: 4 },
