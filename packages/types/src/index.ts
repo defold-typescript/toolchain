@@ -5,6 +5,7 @@ export {
   type ApiSymbolIdentity,
   type AvailabilityLabel,
   type AvailabilityLabelKind,
+  type AvailabilityLabelOptions,
   applyMigrationOverlay,
   availabilityLabel,
   type Box2dBackend,
@@ -14,7 +15,9 @@ export {
   isSignatureTransition,
   type LogicalNameGroup,
   normalizedFunctionSignature,
+  signatureTransitionNames,
   symbolIdentityKey,
+  symbolNameKey,
   type VersionSurface,
   validateAvailability,
 } from "./api-availability";

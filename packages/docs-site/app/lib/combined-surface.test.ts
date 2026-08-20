@@ -101,6 +101,7 @@ const signatures: SignaturesArtifact = {
 
 const overlay: AvailabilityLookup = {
   versions: ["1.13.0", "1.12.4"],
+  transitions: new Set(),
   records: new Map([
     [
       symbolIdentityKey(funcId("model", material)),
@@ -134,7 +135,7 @@ describe("buildCombinedSurface", () => {
     const model = nsOf("model");
     const entry = model.entries.find((e) => e.identity.name === "model.material");
     expect(entry?.availableIn).toEqual(["1.12.4"]);
-    expect(entry?.label.label).toBe("Available through Defold 1.12.4");
+    expect(entry?.label.label).toBe("Removed in Defold 1.13.0");
     expect(entry?.deprecatedSince).toBe("1.12.0");
     expect(entry?.replacement?.name).toBe("go.get_position");
   });
@@ -161,7 +162,7 @@ describe("buildCombinedSurface", () => {
     );
     expect(oldEntry?.transition).toBe(true);
     expect(newEntry?.transition).toBe(true);
-    expect(oldEntry?.label.label).toBe("Available through Defold 1.12.4");
+    expect(oldEntry?.label.label).toBe("Signature changed in Defold 1.13.0");
     expect(newEntry?.label.label).toBe("Since Defold 1.13.0");
   });
 
@@ -250,8 +251,11 @@ describe("loadCombinedSurface (committed artifacts)", () => {
     expect((indices[1] as number) - (indices[0] as number)).toBe(1);
     const entries = live?.entries.filter((e) => e.identity.name === "liveupdate.add_mount") ?? [];
     expect(entries.every((e) => e.transition)).toBe(true);
+    // The leading arm is the one that stops at the oldest version, and it is the
+    // one that reads as a signature change rather than a removal.
+    expect(entries[0]?.availableIn).toEqual([OLDEST]);
     expect(entries.map((e) => e.label.label)).toEqual([
-      `Available through Defold ${OLDEST}`,
+      `Signature changed in Defold ${NEWEST}`,
       `Since Defold ${NEWEST}`,
     ]);
   });
@@ -326,6 +330,7 @@ describe("compactAvailability", () => {
       },
       overlay: {
         versions: ["1.13.0", "1.12.4"],
+        transitions: new Set(),
         records: new Map([
           [
             symbolIdentityKey(funcId("b2d", b2)),
@@ -591,6 +596,7 @@ describe("curated deprecation widens availableIn", () => {
       signatures: sigs,
       overlay: {
         versions: axis,
+        transitions: new Set(),
         records: new Map(
           deprecatedSince
             ? [
