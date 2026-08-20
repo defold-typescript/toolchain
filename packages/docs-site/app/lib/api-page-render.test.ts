@@ -808,6 +808,7 @@ describe("availability badges", () => {
     fn: ApiFunction,
     record: Omit<ApiAvailability, "identity">,
     route = "/api/model",
+    siblings: ApiAvailability[] = [],
   ): ApiPage {
     const identity = {
       namespace: "model",
@@ -832,7 +833,7 @@ describe("availability badges", () => {
       translations: {},
       signatures: {},
       category: "engine",
-      availability: lookup([{ identity, ...record }]),
+      availability: lookup([{ identity, ...record }, ...siblings]),
     };
   }
 
@@ -887,6 +888,41 @@ describe("availability badges", () => {
     const bodyOpen = block.indexOf('<div class="api-symbol-body">');
     const description = block.indexOf("Old material accessor.");
     expect(block.slice(bodyOpen, description).trim()).toBe('<div class="api-symbol-body">');
+  });
+
+  // The newer arm of the same logical name, differing only by an added optional
+  // parameter, so `signatureTransitionNames` groups the two overloads and the
+  // old arm's note must say the signature changed, not that the name is gone.
+  const materialWithOptions: ApiFunction = {
+    ...material,
+    parameters: [
+      ...material.parameters,
+      { name: "options", doc: "", types: ["table"], isOptional: true },
+    ],
+  };
+  const newMaterialArm: ApiAvailability = {
+    identity: {
+      namespace: "model",
+      kind: "FUNCTION",
+      name: "model.material",
+      signature: normalizedFunctionSignature(materialWithOptions),
+    },
+    availableIn: ["1.13.0"],
+  };
+
+  test("renders the old arm of a signature transition as changed, not removed", () => {
+    const md = apiPageMarkdown(
+      modelPage(material, { availableIn: ["1.12.4"] }, "/api/model", [newMaterialArm]),
+      noLink,
+    );
+    expect(md).toContain("Signature changed in Defold 1.13.0");
+    expect(md).not.toContain("Removed in Defold");
+    const block = blockOf(md, "### `model.material");
+    const note = block.indexOf('<div class="api-availability"');
+    const description = block.indexOf("Old material accessor.");
+    expect(note).toBeGreaterThan(-1);
+    expect(description).toBeGreaterThan(-1);
+    expect(note).toBeLessThan(description);
   });
 
   test("renders deprecated-since and removed-in span badges", () => {
