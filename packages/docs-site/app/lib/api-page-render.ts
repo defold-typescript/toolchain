@@ -7,6 +7,7 @@ import {
   type ApiPage,
   type ApiSymbol,
   type ApiSymbolParam,
+  type AvailabilityLookup,
   apiModuleSymbols,
   availabilityLabels,
   type BadgeCategory,
@@ -97,7 +98,7 @@ export type ReplacementResolver = (id: ApiSymbolIdentity) => string | undefined;
 // a tag.
 function availabilityBadges(
   av: ApiAvailability | undefined,
-  versions: readonly string[],
+  availability: AvailabilityLookup | undefined,
   resolveReplacement: ReplacementResolver,
   indexRoute: string,
   deprecated?: string,
@@ -115,7 +116,7 @@ function availabilityBadges(
         : `Deprecated — ${tagText}`
       : undefined;
   if (!av) return tagLine === undefined ? "" : availabilityList([tagLine]);
-  const items = availabilityLabels(av, versions);
+  const items = availabilityLabels(av, availability);
   if (tagLine !== undefined) items.unshift(tagLine);
   if (av.replacement) {
     const route = resolveReplacement(av.replacement) ?? indexRoute;
@@ -232,14 +233,15 @@ export function navNamespaceBadges(counts: NamespaceBadgeCounts): string {
 // description + example are wrapped in an indented `.api-symbol-body` so the body
 // reads as subordinate to the title. The signature is not repeated as a code
 // block — the heading already shows it. The blank lines around the inner markdown
-// let markdown-it parse it inside the raw HTML wrapper. `badges` (the availability
-// block) sits right after the description so lifecycle facts read before the
-// example and parameter tables.
+// let markdown-it parse it inside the raw HTML wrapper. Body order is `badges`
+// (the availability block), description, example, Parameters, Returns: a symbol
+// that was removed or re-signatured says so before the prose describing it, so a
+// reader never acts on a description that no longer holds for their version.
 function symbolBlock(symbol: ApiSymbol, badges = "", dots = ""): string {
   const heading = dots ? `### \`${symbol.signature}\` ${dots}` : `### \`${symbol.signature}\``;
   const body: string[] = [];
-  if (symbol.docMarkdown) body.push(symbol.docMarkdown);
   if (badges) body.push(badges);
+  if (symbol.docMarkdown) body.push(symbol.docMarkdown);
   if (symbol.exampleMarkdown) body.push(symbol.exampleMarkdown);
   if (symbol.parameters.length > 0) body.push(paramSection("Parameters", symbol.parameters));
   if (symbol.returnValues.length > 0) body.push(paramSection("Returns", symbol.returnValues));
@@ -396,7 +398,7 @@ export function apiPageMarkdown(
     };
     const badges = availabilityBadges(
       symbol.availability,
-      page.availability?.versions ?? [],
+      page.availability,
       resolveReplacement,
       indexRoute,
       symbol.deprecated,

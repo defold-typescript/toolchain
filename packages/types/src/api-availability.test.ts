@@ -11,7 +11,9 @@ import {
   deriveAvailabilityMatrix,
   groupByLogicalName,
   isSignatureTransition,
+  signatureTransitionNames,
   symbolIdentityKey,
+  symbolNameKey,
   type VersionSurface,
   validateAvailability,
 } from "./api-availability";
@@ -164,15 +166,48 @@ describe("availabilityLabel", () => {
     });
   });
 
-  test("classifies a through-oldest block", () => {
+  test("classifies a through-oldest block, naming the version it ended at", () => {
     expect(availabilityLabel(["1.10.0"], versions)).toMatchObject({
       kind: "through",
-      label: "Available through Defold 1.10.0",
+      to: "1.10.0",
+      boundary: "1.11.0",
+      label: "Removed in Defold 1.11.0",
     });
     expect(availabilityLabel(["1.11.0", "1.10.0"], versions)).toMatchObject({
       kind: "through",
-      label: "Available through Defold 1.11.0",
+      to: "1.11.0",
+      boundary: "1.12.4",
+      label: "Removed in Defold 1.12.4",
     });
+  });
+
+  test("reads a through-oldest block as a signature change when the name survived", () => {
+    expect(availabilityLabel(["1.10.0"], versions, { transition: true })).toMatchObject({
+      kind: "through",
+      to: "1.10.0",
+      boundary: "1.11.0",
+      label: "Signature changed in Defold 1.11.0",
+    });
+    expect(availabilityLabel(["1.11.0", "1.10.0"], versions, { transition: true })).toMatchObject({
+      kind: "through",
+      boundary: "1.12.4",
+      label: "Signature changed in Defold 1.12.4",
+    });
+  });
+
+  test("leaves every kind but through untouched by the transition flag", () => {
+    const spans = [
+      versions,
+      ["1.13.0"],
+      ["1.13.0", "1.12.4"],
+      ["1.12.4", "1.11.0"],
+      ["1.13.0", "1.11.0"],
+    ];
+    for (const span of spans) {
+      const plain = availabilityLabel(span, versions);
+      expect(plain.kind).not.toBe("through");
+      expect(availabilityLabel(span, versions, { transition: true })).toEqual(plain);
+    }
   });
 
   test("classifies an interior contiguous block as a range", () => {
@@ -222,6 +257,27 @@ describe("groupByLogicalName / isSignatureTransition", () => {
       typeof groupByLogicalName
     >[number];
     expect(isSignatureTransition(group, versions)).toBe(false);
+  });
+
+  test("signatureTransitionNames names the re-signatured logical name and not the removed one", () => {
+    const oldSig = fn("m.f", [param("name", ["string"])]);
+    const newSig = fn("m.f", [param("name", ["string", "hash"])]);
+    const [oldId] = collectSymbolIdentities([moduleOf("m", { functions: [oldSig] })]);
+    const [newId] = collectSymbolIdentities([moduleOf("m", { functions: [newSig] })]);
+    const [materialId] = collectSymbolIdentities([
+      moduleOf("model", {
+        properties: [{ name: "model.material", types: ["hash"], brief: "", description: "" }],
+      }),
+    ]);
+    const records: ApiAvailability[] = [
+      { identity: newId as ApiSymbolIdentity, availableIn: ["1.13.0"] },
+      { identity: oldId as ApiSymbolIdentity, availableIn: ["1.12.4"] },
+      { identity: materialId as ApiSymbolIdentity, availableIn: ["1.12.4"] },
+    ];
+    const names = signatureTransitionNames(records, versions);
+    expect(names.has(symbolNameKey(oldId as ApiSymbolIdentity))).toBe(true);
+    expect(names.has(symbolNameKey(newId as ApiSymbolIdentity))).toBe(true);
+    expect(names.has(symbolNameKey(materialId as ApiSymbolIdentity))).toBe(false);
   });
 });
 

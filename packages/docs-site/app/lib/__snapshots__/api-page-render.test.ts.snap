@@ -2317,13 +2317,13 @@ Get chars count by width
 
 <div class="api-symbol-body">
 
-Set text to text field
-
 <div class="api-availability" aria-label="Availability">
 
 - Deprecated
 
 </div>
+
+Set text to text field
 
 **Parameters**
 

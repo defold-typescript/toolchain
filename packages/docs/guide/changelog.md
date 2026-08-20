@@ -26,6 +26,7 @@ changes are called out first because the toolchain is pre-1.0.
 - **Defold 1.13.1 brings two Lua API changes**, both additive — nothing was removed or deprecated:
   - **[`collectionproxy.load`](/api/collectionproxy)** — loads and initializes a proxied collection, with the callback receiving `proxy_loading`, `proxy_ready` and `proxy_error`.
   - **[`gui.set`](/api/gui)** — its `value` parameter now accepts `nil`, so a property can be cleared rather than only reassigned; existing calls are unaffected.
+- **A version note on an [API reference](/api) page now names the version that changed the symbol, and reads before the description instead of after it.** A symbol absent from the newest surface says `Removed in Defold 1.13.1` rather than `Available through Defold 1.12.4`, and one whose name survives under a new signature — [`gui.set`](/api/gui), whose `value` now accepts `nil` — says `Signature changed in Defold 1.13.1` instead of claiming it is gone.
 - **[Editor scripts](./editor-scripts.md) gain the editor VM's `image` library** — `image.load_file`, then `image.size`, `image.pixel` and the `image.pixels` iterator over the loaded image.
 
 ## v0.25.0
