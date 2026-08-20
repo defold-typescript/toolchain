@@ -99,7 +99,7 @@ export function multiKindRefDocTarget(): RegistryTarget {
 export function editorRefDocTarget(): RegistryTarget {
   return {
     ...multiKindRefDocTarget(),
-    fixturesDir: "fixtures/defold-1.13.0",
+    fixturesDir: "fixtures/defold-1.13.1",
     editorModules: [
       {
         namespace: "editor",

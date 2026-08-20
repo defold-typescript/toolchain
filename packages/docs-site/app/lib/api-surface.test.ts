@@ -2938,14 +2938,15 @@ describe("availability join", () => {
     expect(md).toContain("Available through Defold 1.12.4");
   });
 
-  test("the real default surface joins a since-1.13.0 symbol onto its b2d.body page", () => {
+  test("the real default surface joins a newest-version-only symbol onto its b2d.body page", () => {
+    const newest = (versionsWithDiskFixtures(REAL_TYPES_DIR)[0]?.id ?? "").replace(/^defold-/, "");
     const pages = loadApiSurface(REAL_TYPES_DIR);
     const body = pages.find((p) => p.namespace === "b2d.body");
     expect(body).toBeDefined();
     if (!body) return;
     expect(body.availability?.records.size ?? 0).toBeGreaterThan(0);
     const labelled = apiModuleSymbols(body, body.translations, body.signatures).filter(
-      (s) => s.availability?.availableIn.length === 1 && s.availability.availableIn[0] === "1.13.0",
+      (s) => s.availability?.availableIn.length === 1 && s.availability.availableIn[0] === newest,
     );
     expect(labelled.length).toBeGreaterThan(0);
   });
@@ -3040,7 +3041,8 @@ describe("complete release snapshots", () => {
     return targets;
   }
 
-  // The materialized registry targets — canonical 1.13.0 and historical 1.12.4.
+  // The materialized registry targets — the canonical default and the historical
+  // previous release.
   // A ref-doc-sourced target with no committed fixtures is not a release
   // snapshot and is excluded by `versionsWithDiskFixtures`.
   const completeTargets = versionsWithDiskFixtures(REAL_TYPES_DIR);
@@ -3054,7 +3056,7 @@ describe("complete release snapshots", () => {
   }
 
   test("both complete targets are present: canonical default plus historical 1.12.4", () => {
-    expect(completeTargets.some((v) => v.id === "defold-1.13.0" && v.isDefault)).toBe(true);
+    expect(completeTargets.filter((v) => v.isDefault)).toHaveLength(1);
     expect(completeTargets.some((v) => v.id === "defold-1.12.4" && !v.isDefault)).toBe(true);
   });
 
@@ -3079,9 +3081,10 @@ describe("complete release snapshots", () => {
   });
 
   test("every version — the default included — serves its engine family under its own id prefix", () => {
-    const canonicalVersion = loadApiSurfaceForVersion(REAL_TYPES_DIR, "defold-1.13.0");
+    const defaultId = completeTargets.find((v) => v.isDefault)?.id as string;
+    const canonicalVersion = loadApiSurfaceForVersion(REAL_TYPES_DIR, defaultId);
     const historical = loadApiSurfaceForVersion(REAL_TYPES_DIR, "defold-1.12.4");
-    expect(canonicalVersion.find((p) => p.namespace === "go")?.route).toBe("/api/defold-1.13.0/go");
+    expect(canonicalVersion.find((p) => p.namespace === "go")?.route).toBe(`/api/${defaultId}/go`);
     expect(historical.find((p) => p.namespace === "go")?.route).toBe("/api/defold-1.12.4/go");
   });
 

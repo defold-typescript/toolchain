@@ -15,6 +15,7 @@ import {
   runBump,
   runBumpCli,
   spawn,
+  stageCommand,
 } from "./bump-defold.ts";
 import { EXTENSION_PINS, fixtureDir, RELEASE_MODEL, targetMetaFor } from "./release-model.ts";
 
@@ -45,9 +46,25 @@ function occurrences(haystack: string, needle: string): number {
   return haystack.split(needle).length - 1;
 }
 
+// The rotation tests copy the *real* version files, so their target has to sit
+// ahead of whatever is pinned today — a literal goes stale (and silently turns
+// into a no-op bump) the moment the pin reaches it.
+const [MAJOR, MINOR, PATCH] = RELEASE_MODEL.current.split(".").map(Number) as [
+  number,
+  number,
+  number,
+];
+const NEXT_PATCH = `${MAJOR}.${MINOR}.${PATCH + 1}`;
+const NEXT_MINOR = `${MAJOR}.${MINOR + 1}.0`;
+
+// A frozen model for the tests that drive a synthetic registry: the registry
+// contents and the plan must describe the same world, and pinning both makes the
+// assertions readable and independent of the live pin.
+const FIXED_MODEL = { current: "1.13.0", previous: "1.12.4", all: ["1.13.0", "1.12.4"] } as const;
+
 describe("planBump", () => {
   test("a same-minor target plans an in-place patch with no demotion", () => {
-    const plan = planBump("1.13.1");
+    const plan = planBump(NEXT_PATCH);
     expect(plan.transition).toBe("patch");
     const kinds = plan.targetOps.map((op) => op.kind);
     expect(kinds).toContain("in-place");
@@ -170,7 +187,7 @@ describe("remainingHumanDecisions", () => {
   });
 
   test("a patch bump carries the same extension-tag entry — it is unconditional", () => {
-    const decisions = remainingHumanDecisions(planBump("1.13.1"));
+    const decisions = remainingHumanDecisions(planBump(NEXT_PATCH));
     const entry = decisions.find((d) => /extension release tag/i.test(d));
     expect(entry).toBeDefined();
     expect(entry).toContain(`${pin.namespace}@${pin.tag}`);
@@ -186,29 +203,29 @@ describe("remainingHumanDecisions", () => {
 describe("applyVersionRotation", () => {
   test("a patch rotates the current in place and leaves no old fixture token", () => {
     const { versionFile, syncFile } = tmpCopies();
-    applyVersionRotation(planBump("1.13.1"), { versionFile, syncFile });
+    applyVersionRotation(planBump(NEXT_PATCH), { versionFile, syncFile });
     const version = readFileSync(versionFile, "utf8");
-    expect(version).toContain('DEFOLD_VERSIONS = ["1.13.1", "1.12.4"]');
+    expect(version).toContain(`DEFOLD_VERSIONS = ["${NEXT_PATCH}", "${RELEASE_MODEL.previous}"]`);
     const sync = readFileSync(syncFile, "utf8");
-    expect(sync).toContain('DEFOLD_VERSION = "1.13.1"');
-    expect(sync).not.toContain("defold-1.13.0");
+    expect(sync).toContain(`DEFOLD_VERSION = "${NEXT_PATCH}"`);
+    expect(sync).not.toContain(`defold-${RELEASE_MODEL.current}`);
   });
 
   test("a minor prepends the new version and demotes the prior current", () => {
     const { versionFile, syncFile } = tmpCopies();
-    applyVersionRotation(planBump("1.14.0"), { versionFile, syncFile });
+    applyVersionRotation(planBump(NEXT_MINOR), { versionFile, syncFile });
     const version = readFileSync(versionFile, "utf8");
-    expect(version).toContain('DEFOLD_VERSIONS = ["1.14.0", "1.13.0"]');
+    expect(version).toContain(`DEFOLD_VERSIONS = ["${NEXT_MINOR}", "${RELEASE_MODEL.current}"]`);
     const sync = readFileSync(syncFile, "utf8");
-    expect(sync).toContain('DEFOLD_VERSION = "1.14.0"');
+    expect(sync).toContain(`DEFOLD_VERSION = "${NEXT_MINOR}"`);
   });
 
   test("both core and extension fixture templates retarget the new dir", () => {
     const { versionFile, syncFile } = tmpCopies();
-    applyVersionRotation(planBump("1.14.0"), { versionFile, syncFile });
+    applyVersionRotation(planBump(NEXT_MINOR), { versionFile, syncFile });
     const sync = readFileSync(syncFile, "utf8");
-    expect(occurrences(sync, "fixtures/defold-1.14.0/")).toBe(2);
-    expect(occurrences(sync, "fixtures/defold-1.13.0/")).toBe(0);
+    expect(occurrences(sync, `fixtures/defold-${NEXT_MINOR}/`)).toBe(2);
+    expect(occurrences(sync, `fixtures/defold-${RELEASE_MODEL.current}/`)).toBe(0);
   });
 });
 
@@ -244,7 +261,7 @@ describe("applyTargetOps against a temporary registry", () => {
 
   test("a patch swaps the default in place and adds no target", () => {
     const targetsPath = tmpTargets();
-    applyTargetOps(planBump("1.13.1"), targetsPath);
+    applyTargetOps(planBump("1.13.1", FIXED_MODEL), targetsPath);
     const registry = JSON.parse(readFileSync(targetsPath, "utf8")) as {
       targets: Array<{
         id: string;
@@ -264,7 +281,7 @@ describe("applyTargetOps against a temporary registry", () => {
 
   test("a minor inserts the new default at index 0 and demotes the prior default", () => {
     const targetsPath = tmpTargets();
-    applyTargetOps(planBump("1.14.0"), targetsPath);
+    applyTargetOps(planBump("1.14.0", FIXED_MODEL), targetsPath);
     const registry = JSON.parse(readFileSync(targetsPath, "utf8")) as {
       targets: Array<{
         id: string;
@@ -378,6 +395,40 @@ describe("runBump thrown-stage structuring", () => {
     expect(summary.error).toContain("boom");
     expect(summary.ran).not.toContain("target-metadata");
     expect(summary.ran).not.toContain("regen");
+  });
+});
+
+describe("stage commands", () => {
+  // A stage that spawns a command bun cannot resolve does not fail loudly: bun
+  // prints its usage banner and exits 0, so the orchestrator records the stage as
+  // successful while nothing ran. Resolving every argv against the things this
+  // repo can actually execute is what turns that silent no-op into a red test.
+  test("every spawning stage names a runnable script", async () => {
+    const pkg = (await Bun.file("package.json").json()) as { scripts?: Record<string, string> };
+    const scripts = pkg.scripts ?? {};
+    const spawning = BUMP_STAGES.filter((stage) => stageCommand(stage, "1.0.0") !== undefined);
+    expect(spawning.length).toBeGreaterThan(0);
+
+    for (const stage of spawning) {
+      const command = stageCommand(stage, "1.0.0") as readonly string[];
+      const [runner, first, second] = command;
+      if (runner === "bunx") continue;
+      expect(runner).toBe("bun");
+      if (first === "run") {
+        expect(second).toBeDefined();
+        expect(Object.keys(scripts)).toContain(second as string);
+      } else {
+        expect(first).toBeDefined();
+        expect(await Bun.file(first as string).exists()).toBe(true);
+      }
+    }
+  });
+
+  test("the sync stage runs the types-package sync script", () => {
+    expect(stageCommand("sync", "1.0.0")).toEqual([
+      "bun",
+      "packages/types/scripts/sync-api-docs.ts",
+    ]);
   });
 });
 

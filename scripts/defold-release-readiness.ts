@@ -25,6 +25,7 @@ import {
   loadApiTargets,
   loadTargetModules,
 } from "../packages/types/scripts/regen.ts";
+import { classifyTransition } from "./release-model.ts";
 
 // Aggregates the committed, offline evidence a Defold release promotion is gated
 // on and fails closed when any dimension is absent or stale. Each blocker is
@@ -147,7 +148,18 @@ export function evaluateReleaseReadiness(evidence: ReadinessEvidence): Readiness
         `import evidence stale: manifest version ${im.version ?? "(none)"} != release ${expected.release}`,
       );
     }
-    if (stripSurfacePrefix(im.baseline) !== expected.baseline) {
+    // Two baselines are legitimate. A minor keeps its predecessor as a historical
+    // surface, so the import diffed against exactly `expected.baseline`. A patch
+    // replaces its predecessor in place — the import diffed against a version that
+    // no longer exists, and the surviving previous stable is one release older.
+    // Accepting the replaced version costs no staleness protection: a manifest
+    // left over from that earlier import fails the `version` check above.
+    const manifestBaseline = stripSurfacePrefix(im.baseline);
+    const replacedInPlace =
+      manifestBaseline !== "" &&
+      manifestBaseline !== expected.release &&
+      classifyTransition(manifestBaseline, expected.release) === "patch";
+    if (manifestBaseline !== expected.baseline && !replacedInPlace) {
       add(
         "import",
         `import evidence stale: manifest baseline ${im.baseline ?? "(none)"} != ${expected.baseline}`,

@@ -2,18 +2,25 @@ import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import committed from "../api-signatures.json" with { type: "json" };
+import { selectCompleteVersionSurfaces } from "./generate-api-availability";
 import {
   buildSignaturesArtifact,
   type SignaturesArtifact,
   serializeSignaturesArtifact,
 } from "./generate-api-signatures";
+import { loadApiTargets } from "./regen";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const SIGNATURES_PATH = resolve(PACKAGE_ROOT, "api-signatures.json");
 
+// The committed version axis, read from the same production selector the
+// artifact builder uses, so a version rotation needs no edit here.
+const COMPLETE_TARGETS = selectCompleteVersionSurfaces(loadApiTargets());
+const CURRENT_VERSION = (COMPLETE_TARGETS.find((t) => t.default)?.id ?? "").replace(/^defold-/, "");
+
 function committedDtsBlob(version: string): string {
   const dir =
-    version === "1.13.0"
+    version === CURRENT_VERSION
       ? resolve(PACKAGE_ROOT, "generated")
       : resolve(PACKAGE_ROOT, "generated", "versions", `defold-${version}`);
   return readdirSync(dir)
@@ -26,7 +33,9 @@ describe("authoritative signature artifact", () => {
   const artifact = buildSignaturesArtifact();
 
   test("emits one signature string per emitted symbol per committed version", () => {
-    expect(Object.keys(artifact.versions).sort()).toEqual(["1.12.4", "1.13.0"]);
+    expect(Object.keys(artifact.versions).sort()).toEqual(
+      COMPLETE_TARGETS.map((t) => t.id.replace(/^defold-/, "")).sort(),
+    );
     for (const perSymbol of Object.values(artifact.versions)) {
       expect(Object.keys(perSymbol).length).toBeGreaterThan(500);
       expect(Object.values(perSymbol).every((s) => typeof s === "string" && s.length > 0)).toBe(
@@ -46,7 +55,7 @@ describe("authoritative signature artifact", () => {
   });
 
   test("the audited drift cases resolve to their curated declaration-backed shapes", () => {
-    const v13 = artifact.versions["1.13.0"] as Record<string, string>;
+    const v13 = artifact.versions[CURRENT_VERSION] as Record<string, string>;
     const find = (namespace: string, name: string): string => {
       const hit = Object.entries(v13).find(([key]) => {
         const [ns, kind, symbolName] = key.split("\0");

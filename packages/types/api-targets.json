@@ -1,9 +1,9 @@
 {
   "targets": [
     {
-      "id": "defold-1.13.0",
+      "id": "defold-1.13.1",
       "default": true,
-      "fixturesDir": "fixtures/defold-1.13.0",
+      "fixturesDir": "fixtures/defold-1.13.1",
       "generatedDir": "generated",
       "coreTypesImport": "../src/core-types",
       "source": null,
@@ -251,6 +251,7 @@
           "skipFunctions": [
             "command",
             "http.",
+            "image.",
             "json.",
             "localization.",
             "pprint",
@@ -265,6 +266,12 @@
           "outFile": "editor-vm/http.d.ts",
           "mapType": "editor",
           "skipFunctions": ["server.local_url", "server.port", "server.route", "server.url"]
+        },
+        {
+          "namespace": "image",
+          "fixture": "editor_image_doc.json",
+          "outFile": "editor-vm/image.d.ts",
+          "mapType": "editor"
         },
         {
           "namespace": "json",

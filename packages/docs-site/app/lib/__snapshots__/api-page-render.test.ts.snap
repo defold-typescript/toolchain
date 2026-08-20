@@ -175,8 +175,8 @@ Create a widget from the bound Druid GUI instance.
 The widget will be created and all widget functions can be called from Game Object contexts.
 This allows using only \`druid_widget.gui_script\` for GUI files and call this widget functions from Game Object script file.
 Widget class here is your lua file for the GUI scene (widgets in Druid)
-<a href="/api/defold-1.13.0/msg#msgurlsocket-string--hash-path-string--hash-fragment-string--hash-url" class="symbol-xref">msg.url</a>(nil, nil, "gui_widget") -- current game object
-<a href="/api/defold-1.13.0/msg#msgurlsocket-string--hash-path-string--hash-fragment-string--hash-url" class="symbol-xref">msg.url</a>(nil, object_url, "gui_widget") -- other game object
+<a href="/api/defold-1.13.1/msg#msgurlsocket-string--hash-path-string--hash-fragment-string--hash-url" class="symbol-xref">msg.url</a>(nil, nil, "gui_widget") -- current game object
+<a href="/api/defold-1.13.1/msg#msgurlsocket-string--hash-path-string--hash-fragment-string--hash-url" class="symbol-xref">msg.url</a>(nil, object_url, "gui_widget") -- other game object
 
 **Parameters**
 
@@ -2624,7 +2624,7 @@ Set current component nodes, returned from \`gui.clone_tree\` function.
 
 **Parameters**
 
-- \`nodes\`?: \`LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined\` — The nodes table from <a href="/api/defold-1.13.0/gui#guiclone_treenode-opaquenode-recordstring--number-unknown" class="symbol-xref">gui.clone_tree</a> or prefab node to use for clone or node id to clone
+- \`nodes\`?: \`LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined\` — The nodes table from <a href="/api/defold-1.13.1/gui#guiclone_treenode-opaquenode-recordstring--number-unknown" class="symbol-xref">gui.clone_tree</a> or prefab node to use for clone or node id to clone
 
 **Returns**
 
@@ -2750,7 +2750,7 @@ Get parent component
 **Parameters**
 
 - \`template\`: \`string\` — The template string name
-- \`nodes\`: \`LuaTable\` — Nodes table from <a href="/api/defold-1.13.0/gui#guiclone_treenode-opaquenode-recordstring--number-unknown" class="symbol-xref">gui.clone_tree</a>
+- \`nodes\`: \`LuaTable\` — Nodes table from <a href="/api/defold-1.13.1/gui#guiclone_treenode-opaquenode-recordstring--number-unknown" class="symbol-xref">gui.clone_tree</a>
 
 </div>
 
@@ -2991,7 +2991,7 @@ The position of the cursor
 **Parameters**
 
 - \`text_node\`: \`Opaque<"node"> | string\` — The text node to make Rich Text
-- \`value\`?: \`string | undefined\` — The initial text value. Default will be <a href="/api/defold-1.13.0/gui#guiget_textnode-opaquenode-string" class="symbol-xref">gui.get_text</a>(text_node)
+- \`value\`?: \`string | undefined\` — The initial text value. Default will be <a href="/api/defold-1.13.1/gui#guiget_textnode-opaquenode-string" class="symbol-xref">gui.get_text</a>(text_node)
 
 </div>
 
@@ -3396,7 +3396,7 @@ Set node for layout node to fit inside it. Pass nil to reset
 
 **Parameters**
 
-- \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
+- \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.1/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
 
 **Returns**
 
@@ -4210,7 +4210,7 @@ The style of the input component
 
 **Parameters**
 
-- \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
+- \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.1/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
 - \`locale_id\`?: \`string | undefined\` — Default locale id or text from node as default. If not provided, will use text from the node
 - \`adjust_type\`?: \`string | undefined\` — Adjust type for text. By default is DOWNSCALE. Look const.TEXT_ADJUST for reference
 
@@ -4570,7 +4570,7 @@ Remove node from layout
 
 <div class="api-symbol-body">
 
-Set custom position function for layout nodes. It will call on update poses on layout elements. Default: <a href="/api/defold-1.13.0/gui#guiset_positionnode-opaquenode-position-vector3--vector4" class="symbol-xref">gui.set_position</a>
+Set custom position function for layout nodes. It will call on update poses on layout elements. Default: <a href="/api/defold-1.13.1/gui#guiset_positionnode-opaquenode-position-vector3--vector4" class="symbol-xref">gui.set_position</a>
 
 **Parameters**
 
@@ -5701,7 +5701,7 @@ Create new Druid widget instance
 
 - \`widget\`: \`T\` — The widget class to create
 - \`template\`?: \`string | undefined\` — The template name used by widget
-- \`nodes\`?: \`LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined\` — The nodes table from <a href="/api/defold-1.13.0/gui#guiclone_treenode-opaquenode-recordstring--number-unknown" class="symbol-xref">gui.clone_tree</a> or prefab node to use for clone or node id to clone
+- \`nodes\`?: \`LuaTable<Hash, Opaque<"node">> | Opaque<"node"> | string | undefined\` — The nodes table from <a href="/api/defold-1.13.1/gui#guiclone_treenode-opaquenode-recordstring--number-unknown" class="symbol-xref">gui.clone_tree</a> or prefab node to use for clone or node id to clone
 - \`...args\`: \`unknown\` — Additional arguments to pass to the widget's init function
 
 **Returns**
@@ -5718,7 +5718,7 @@ Create Button component
 
 **Parameters**
 
-- \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
+- \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.1/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
 - \`callback\`?: \`((...args: any[]) => unknown) | event | undefined\` — Button callback
 - \`params\`?: \`unknown | undefined\` — Button callback params
 - \`anim_node\`?: \`Opaque<"node"> | string | undefined\` — Button anim node (node, if not provided)
@@ -5737,7 +5737,7 @@ Create Blocker component
 
 **Parameters**
 
-- \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
+- \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.1/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
 
 **Returns**
 
@@ -5770,7 +5770,7 @@ Create Hover component
 
 **Parameters**
 
-- \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
+- \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.1/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
 - \`on_hover_callback\`?: \`((...args: any[]) => unknown) | undefined\` — Hover callback
 - \`on_mouse_hover_callback\`?: \`((...args: any[]) => unknown) | undefined\` — Mouse hover callback
 
@@ -5788,7 +5788,7 @@ Create Text component
 
 **Parameters**
 
-- \`node\`: \`string | Opaque<"node"> | druid_text\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
+- \`node\`: \`string | Opaque<"node"> | druid_text\` — The node_id or <a href="/api/defold-1.13.1/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
 - \`value\`?: \`string | undefined\` — Initial text. Default value is node text from GUI scene.
 - \`adjust_type\`?: \`string | undefined\` — Adjust type for text. By default is DOWNSCALE. Look const.TEXT_ADJUST for reference
 
@@ -5806,7 +5806,7 @@ Create Grid component
 
 **Parameters**
 
-- \`parent_node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Parent of all Grid items.
+- \`parent_node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.1/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Parent of all Grid items.
 - \`item\`: \`string | Opaque<"node">\` — Item prefab. Required to get grid's item size. Can be adjusted separately.
 - \`in_row\`?: \`number | undefined\` — How many nodes can be placed in a row
 
@@ -5824,8 +5824,8 @@ Create Scroll component
 
 **Parameters**
 
-- \`view_node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Will be used as user input node.
-- \`content_node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Will be used as scrollable node inside view_node.
+- \`view_node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.1/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Will be used as user input node.
+- \`content_node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.1/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Will be used as scrollable node inside view_node.
 
 **Returns**
 
@@ -5841,7 +5841,7 @@ Create Drag component
 
 **Parameters**
 
-- \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Will be used as user input node.
+- \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.1/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Will be used as user input node.
 - \`on_drag_callback\`?: \`((...args: any[]) => unknown) | undefined\` — Callback for on_drag_event(self, dx, dy)
 
 **Returns**
@@ -5858,7 +5858,7 @@ Create Swipe component
 
 **Parameters**
 
-- \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Will be used as user input node.
+- \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.1/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id). Will be used as user input node.
 - \`on_swipe_callback\`?: \`((...args: any[]) => unknown) | undefined\` — Swipe callback for on_swipe_end event
 
 **Returns**
@@ -5875,7 +5875,7 @@ Create LangText component
 
 **Parameters**
 
-- \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
+- \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.1/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id)
 - \`locale_id\`?: \`string | undefined\` — Default locale id or text from node as default
 - \`adjust_type\`?: \`string | undefined\` — Adjust type for text node. Default: "downscale"
 
@@ -5893,7 +5893,7 @@ Create Slider component
 
 **Parameters**
 
-- \`pin_node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id).
+- \`pin_node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.1/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id).
 - \`end_pos\`: \`Vector3\` — The end position of slider
 - \`callback\`?: \`((...args: any[]) => unknown) | undefined\` — On slider change callback
 
@@ -5984,7 +5984,7 @@ Create Layout component
 
 **Parameters**
 
-- \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id).
+- \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.1/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id).
 - \`mode\`?: \`string | undefined\` — vertical|horizontal|horizontal_wrap. Default: horizontal
 
 **Returns**
@@ -6001,7 +6001,7 @@ Create Container component
 
 **Parameters**
 
-- \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.0/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id).
+- \`node\`: \`string | Opaque<"node">\` — The node_id or <a href="/api/defold-1.13.1/gui#guiget_nodeid-string--hash-opaquenode" class="symbol-xref">gui.get_node</a>(node_id).
 - \`mode\`?: \`druid_container_mode | undefined\` — Layout mode. Default Fit or Stretch depends from node adjust mode from GUI scene
 - \`callback\`?: \`((self: druid_container, size: Vector3) => void) | undefined\` — Callback on size changed
 
@@ -6038,7 +6038,7 @@ Create RichText component.
 **Parameters**
 
 - \`text_node\`: \`string | Opaque<"node">\` — The text node to make Rich Text
-- \`value\`?: \`string | undefined\` — The initial text value. Default will be <a href="/api/defold-1.13.0/gui#guiget_textnode-opaquenode-string" class="symbol-xref">gui.get_text</a>(text_node)
+- \`value\`?: \`string | undefined\` — The initial text value. Default will be <a href="/api/defold-1.13.1/gui#guiget_textnode-opaquenode-string" class="symbol-xref">gui.get_text</a>(text_node)
 
 **Returns**
 
@@ -6056,7 +6056,7 @@ As a template please check rich_input.gui layout.
 **Parameters**
 
 - \`template\`: \`string\` — The template string name
-- \`nodes\`?: \`LuaTable | undefined\` — Nodes table from <a href="/api/defold-1.13.0/gui#guiclone_treenode-opaquenode-recordstring--number-unknown" class="symbol-xref">gui.clone_tree</a>
+- \`nodes\`?: \`LuaTable | undefined\` — Nodes table from <a href="/api/defold-1.13.1/gui#guiclone_treenode-opaquenode-recordstring--number-unknown" class="symbol-xref">gui.clone_tree</a>
 
 **Returns**
 

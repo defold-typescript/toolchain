@@ -1667,11 +1667,31 @@ declare global {
      */
     function reset_nodes(): void;
     /**
-     * Convert the screen position to the local position of supplied node
+     * Converts a screen-space position to the local position value for the supplied node.
+     * The conversion takes the parent transform, anchors, adjust mode, and adjust reference into account.
      *
-     * @param node - node used for getting local transformation matrix
-     * @param screen_position - screen position
-     * @returns local position
+     * @param node - node whose local position space should be used
+     * @param screen_position - screen-space position
+     * @returns local position value for the node
+     * @example
+     * ```ts
+     * // Animate a node to the pressed pointer position:
+     * export default defineScript({
+     *   init() {
+     *     msg.post(".", "acquire_input_focus");
+     *     return { marker: gui.get_node("marker") };
+     *   },
+     *
+     *   on_input(self, action_id, action) {
+     *     if (action_id === hash("touch") && action.pressed) {
+     *       const screen_position = vmath.vector3(action.screen_x, action.screen_y, 0);
+     *       const target_position = gui.screen_to_local(self.marker, screen_position);
+     *       gui.animate(self.marker, gui.PROP_POSITION, target_position, gui.EASING_OUTQUAD, 0.2);
+     *       return true;
+     *     }
+     *   },
+     * });
+     * ```
      */
     function screen_to_local(node: Opaque<"node">, screen_position: Vector3): Vector3;
     /**
@@ -1719,7 +1739,7 @@ declare global {
      *
      * @param node - node to set the property for, or msg.url() to the gui itself
      * @param property - the property to set
-     * @param value - the property to set
+     * @param value - the property to set. `nil` is only supported for removing runtime texture mappings with `gui.set(msg.url(), "textures", nil, {key = ...})`.
      * @param options - optional options table (only applicable for material constants)
      * - `index` number index into array property (1 based)
      * - `key` hash name of internal property
@@ -1767,9 +1787,18 @@ declare global {
      *     }
      *   },
      * });
+     *
+     * // Remove a named runtime texture resource mapping:
+     * const atlas_id = resource.create_atlas("/runtime.texturesetc", atlas_params);
+     * gui.set(msg.url(), "textures", atlas_id, { key: "runtime_texture" });
+     * gui.set_texture(gui.get_node("box"), "runtime_texture");
+     *
+     * // Later, remove the GUI mapping before releasing the atlas resource.
+     * gui.set(msg.url(), "textures", undefined, { key: "runtime_texture" });
+     * resource.release(atlas_id);
      * ```
      */
-    function set(node: Opaque<"node"> | Url, property: string | Hash | Opaque<"constant">, value: number | Vector4 | Vector3 | Quaternion, options?: { index?: number; key?: Hash }): void;
+    function set(node: Opaque<"node"> | Url, property: string | Hash | Opaque<"constant">, value?: number | Vector4 | Vector3 | Quaternion, options?: { index?: number; key?: Hash }): void;
     /**
      * Sets the adjust mode on a node.
      * The adjust mode defines how the node will adjust itself to screen

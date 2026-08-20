@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { join } from "node:path";
 import { canonicalApiPages } from "./api-content";
 import { apiSignatureSymbolLinks } from "./api-page-render";
-import { loadApiSurfaceForVersion } from "./api-surface-loader";
+import { loadApiSurfaceForVersion, versionsWithDiskFixtures } from "./api-surface-loader";
 import { buildSymbolIndex } from "./symbol-index";
 
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
@@ -21,6 +21,8 @@ test("a versioned surface carries no Opaque page, so its route resolves against 
   // resolving against a versioned surface yields nothing. This is why the
   // `/api/<version>/<namespace>` route builds its signature links from the
   // canonical surface (which links every version's `Opaque` to `/api/Opaque`).
-  const versioned = loadApiSurfaceForVersion(REAL_TYPES_DIR, "defold-1.13.0");
+  const defaultId = versionsWithDiskFixtures(REAL_TYPES_DIR).find((v) => v.isDefault)?.id;
+  expect(defaultId).toBeDefined();
+  const versioned = loadApiSurfaceForVersion(REAL_TYPES_DIR, defaultId as string);
   expect(apiSignatureSymbolLinks(versioned).size).toBe(0);
 });
