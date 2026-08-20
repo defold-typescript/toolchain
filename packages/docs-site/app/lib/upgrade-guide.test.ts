@@ -8,7 +8,13 @@ import { slugify } from "./headings";
 import { releaseSection, releaseSections } from "./upgrade-guide";
 
 const SLUG = "upgrading-defold-versions";
-const RELEASE = "1.13.0";
+// The currently-pinned release, and the only marked section: a patch replaces its
+// predecessor in place, so the current section carries the whole 1.12.4 -> current
+// migration rather than one section per replaced patch.
+const RELEASE = "1.13.1";
+// The version 1.13.1 replaced. Its `/api/defold-1.13.0/…` family no longer exists,
+// so nothing on the page may link into it.
+const REPLACED = "1.13.0";
 const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");
 const TYPES_DIR = join(import.meta.dir, "../../../../packages/types");
 
@@ -187,9 +193,9 @@ describe("upgrading-defold-versions guide", () => {
     expect(uncovered.map(qualifiedName)).toEqual([]);
   });
 
-  test("uses exact 1.12.4 and 1.13.0 target commands", () => {
+  test("uses exact baseline and current target commands", () => {
     expect(releaseBody).toContain("--defold-target 1.12.4");
-    expect(releaseBody).toContain("--defold-target 1.13.0");
+    expect(releaseBody).toContain(`--defold-target ${RELEASE}`);
   });
 
   test("links every removed symbol to its historical 1.12.4 API page", () => {
@@ -203,13 +209,25 @@ describe("upgrading-defold-versions guide", () => {
     }
   });
 
-  test("points 1.13.0-specific claims at the exact-version pages", () => {
-    // The upgrade guide's current-surface claims are version-specific to 1.13.0,
-    // so they resolve to the exact-version pages, not the unprefixed Combined page.
-    expect(releaseBody).toContain("/api/defold-1.13.0/liveupdate");
-    expect(releaseBody).toContain("/api/defold-1.13.0/model");
+  test("points current-surface claims at the exact-version pages", () => {
+    // The upgrade guide's current-surface claims are version-specific, so they
+    // resolve to the exact-version pages, not the unprefixed Combined page.
+    expect(releaseBody).toContain(`/api/defold-${RELEASE}/liveupdate`);
+    expect(releaseBody).toContain(`/api/defold-${RELEASE}/model`);
     expect(guideBody).not.toContain("](/api/liveupdate)");
     expect(guideBody).not.toContain("](/api/model)");
+  });
+
+  // A patch replaces its predecessor in place, taking that version's whole
+  // `/api/defold-<replaced>/…` route family with it. Any surviving *link* is
+  // broken by construction — and reds here on the guide body alone, without
+  // waiting for a docs rebuild to repopulate the route set. Prose may still name
+  // the family to explain that it is gone; only navigation into it is the defect.
+  test("links nothing into the replaced version's API family", () => {
+    const dead = apiLinkTargets(guideBody).filter((href) =>
+      href.startsWith(`/api/defold-${REPLACED}/`),
+    );
+    expect(dead).toEqual([]);
   });
 
   test("carries no broken API links", () => {
@@ -225,11 +243,11 @@ describe("upgrading-defold-versions guide", () => {
   // symbols, so the guide must describe a parameter-type change.
   test("describes the Live Update mounts as a parameter-type change, not a removal", () => {
     const collapsed = releaseBody.replace(/\s+/g, " ");
-    expect(collapsed).toContain("## Defold 1.13.0: changed Lua API signatures");
+    expect(collapsed).toContain("## Defold 1.13.1: changed Lua API signatures");
     expect(collapsed).toContain("`liveupdate.add_mount` was **not** removed");
     expect(collapsed).toContain("widened from `string` to `string | Hash`");
     expect(collapsed).not.toContain("auto-mount API is gone");
-    expect(collapsed).not.toContain("no longer exists on the 1.13.0");
+    expect(collapsed).not.toContain("no longer exists on the 1.13.1");
     expect(collapsed).not.toContain("is removed alongside `add_mount`");
   });
 

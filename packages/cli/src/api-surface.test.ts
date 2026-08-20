@@ -10,7 +10,10 @@ import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 
 describe("selectApiSurface", () => {
   test("CURRENT_STABLE_SURFACE_ID is the absolute-versioned default id", () => {
-    expect(CURRENT_STABLE_SURFACE_ID).toBe("defold-1.13.0");
+    // The contract is the *shape*: an exact `defold-<major.minor.patch>` id built
+    // from the pinned version, never a channel alias like `defold-stable`.
+    expect(CURRENT_STABLE_SURFACE_ID).toMatch(/^defold-\d+\.\d+\.\d+$/);
+    expect(CURRENT_STABLE_SURFACE_ID).toBe(`defold-${CURRENT_STABLE_DEFOLD_VERSION}`);
   });
 
   test("current-stable version maps to the default surface", () => {

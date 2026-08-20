@@ -9,7 +9,11 @@ import {
   symbolIdentityKey,
 } from "@defold-typescript/types";
 import { type AvailabilityLookup, badgeCategoryFromLabel } from "./api-surface";
-import { loadCombinedSurface, loadSignaturesArtifact } from "./api-surface-loader";
+import {
+  loadCombinedSurface,
+  loadSignaturesArtifact,
+  versionsWithDiskFixtures,
+} from "./api-surface-loader";
 import {
   buildCombinedSurface,
   type CombinedVersionSurface,
@@ -218,16 +222,22 @@ describe("buildCombinedSurface", () => {
 
 describe("loadCombinedSurface (committed artifacts)", () => {
   const surface = loadCombinedSurface(REAL_TYPES_DIR);
+  // The tracked versions come from the target registry the loader itself reads,
+  // so these assertions follow a version rotation instead of naming the pin.
+  const trackedVersions = versionsWithDiskFixtures(REAL_TYPES_DIR).map((v) =>
+    v.id.replace(/^defold-/, ""),
+  );
+  const [NEWEST, OLDEST] = trackedVersions as [string, string];
 
   test("its axis is the tracked versions, newest-first", () => {
-    expect(surface.versions).toEqual(["1.13.0", "1.12.4"]);
+    expect(surface.versions).toEqual(trackedVersions);
   });
 
-  test("keeps a namespace new in the newest version (compute), marked Since Defold 1.13.0", () => {
+  test("keeps a namespace new in the newest version (compute) marked since that version", () => {
     const compute = surface.namespaces.find((n) => n.namespace === "compute");
     expect(compute).toBeDefined();
-    expect(compute?.entries.every((e) => e.availableIn.includes("1.13.0"))).toBe(true);
-    expect(compute?.entries.some((e) => e.label.label === "Since Defold 1.13.0")).toBe(true);
+    expect(compute?.entries.every((e) => e.availableIn.includes(NEWEST))).toBe(true);
+    expect(compute?.entries.some((e) => e.label.label === `Since Defold ${NEWEST}`)).toBe(true);
   });
 
   test("renders liveupdate.add_mount as an adjacent, oldest-first signature transition", () => {
@@ -241,8 +251,8 @@ describe("loadCombinedSurface (committed artifacts)", () => {
     const entries = live?.entries.filter((e) => e.identity.name === "liveupdate.add_mount") ?? [];
     expect(entries.every((e) => e.transition)).toBe(true);
     expect(entries.map((e) => e.label.label)).toEqual([
-      "Available through Defold 1.12.4",
-      "Since Defold 1.13.0",
+      `Available through Defold ${OLDEST}`,
+      `Since Defold ${NEWEST}`,
     ]);
   });
 

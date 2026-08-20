@@ -69,7 +69,15 @@ function compareVersions(a: string, b: string): number {
   return 0;
 }
 
-export function planBump(to: string, model = RELEASE_MODEL): BumpPlan {
+// Structural, not `typeof RELEASE_MODEL`: pinning the parameter to the live
+// model's literal type makes the seam untestable, since no injected model can
+// ever match the pinned `current`.
+export interface BumpReleaseModel {
+  readonly current: string;
+  readonly previous: string;
+}
+
+export function planBump(to: string, model: BumpReleaseModel = RELEASE_MODEL): BumpPlan {
   if (!/^\d+\.\d+\.\d+$/.test(to)) {
     throw new BumpValidationError(`invalid target version '${to}' — expected major.minor.patch`);
   }
@@ -349,31 +357,48 @@ export function importResult(child: SpawnResult): ImportOutcome {
   return { ok: child.exitCode === 0 && manifest.ready, ready: manifest.ready, blockers };
 }
 
+// The argv every spawning stage runs, as data rather than inline literals, so
+// `bump-defold.test.ts` can prove each one names something this repo can
+// actually run. That check is not cosmetic: `bun --cwd <dir> run <script>` is
+// not a supported invocation — bun prints its usage banner and **exits 0**, so a
+// stage spawned that way silently does nothing while reporting success.
+// Repo-root-relative script paths are cwd-independent (each script resolves its
+// own package root from `import.meta.dir`), so they need no `cwd` at all.
+export function stageCommand(stage: BumpStageId, to: string): readonly string[] | undefined {
+  switch (stage) {
+    case "import":
+      return ["bun", "run", "import-defold-release", to, "--json"];
+    case "sync":
+      return ["bun", "packages/types/scripts/sync-api-docs.ts"];
+    case "target-metadata":
+      return ["bunx", "biome", "format", "--write", TARGETS_PATH];
+    case "regen":
+      return ["bun", "scripts/regen-all.ts"];
+    default:
+      return undefined;
+  }
+}
+
 // The real stage seam: each stage is an actual child invocation (or a
 // programmatic file edit) wired to `io`. Tests inject a mock in its place, so
 // this factory's body is exercised only by a live bump.
 export function makeDefaultRunStage(io: BumpIO): RunStage {
   return (stage, ctx) => {
+    const command = stageCommand(stage, ctx.to);
     switch (stage) {
       case "import":
-        return importResult(
-          spawn(["bun", "run", "import-defold-release", ctx.to, "--json"], io, { capture: true }),
-        );
+        return importResult(spawn(command as string[], io, { capture: true }));
       case "rotate":
         applyVersionRotation(ctx.plan);
         return { ok: true };
       case "sync":
-        return {
-          ok: spawn(["bun", "--cwd", "packages/types", "run", "sync-api-docs"], io).exitCode === 0,
-        };
+        return { ok: spawn(command as string[], io).exitCode === 0 };
       case "target-metadata": {
         applyTargetOps(ctx.plan);
-        return {
-          ok: spawn(["bunx", "biome", "format", "--write", TARGETS_PATH], io).exitCode === 0,
-        };
+        return { ok: spawn(command as string[], io).exitCode === 0 };
       }
       case "regen":
-        return { ok: spawn(["bun", "scripts/regen-all.ts"], io).exitCode === 0 };
+        return { ok: spawn(command as string[], io).exitCode === 0 };
       default:
         return { ok: false };
     }

@@ -60,35 +60,35 @@ declare global {
      */
     function browse(url: string): void;
     /**
-     * Check if `editor.tx.add()` (as well as `editor.tx.clear()` and `editor.tx.remove()`) transaction with this property won't throw an error
+     * Check whether this list property supports add, clear, and remove operations on the supplied node.
      *
      * @param node - Either resource path (e.g. `"/main/game.script"`), or internal node id passed to the script by the editor
      * @param property - Either `"path"`, `"text"`, or a property from the Outline view (hover the label to see its editor script name)
      */
     function can_add(node: string | Opaque<"userdata">, property: string): boolean;
     /**
-     * Check if you can get this property so `editor.get()` won't throw an error
+     * Check whether this property is exposed for reading on the supplied node or resource.
      *
      * @param node - Either resource path (e.g. `"/main/game.script"`), or internal node id passed to the script by the editor
      * @param property - Either `"path"`, `"text"`, or a property from the Outline view (hover the label to see its editor script name)
      */
     function can_get(node: string | Opaque<"userdata">, property: string): boolean;
     /**
-     * Check if `editor.tx.reorder()` transaction with this property won't throw an error
+     * Check whether this list property supports reordering on the supplied node.
      *
      * @param node - Either resource path (e.g. `"/main/game.script"`), or internal node id passed to the script by the editor
      * @param property - Either `"path"`, `"text"`, or a property from the Outline view (hover the label to see its editor script name)
      */
     function can_reorder(node: string | Opaque<"userdata">, property: string): boolean;
     /**
-     * Check if `editor.tx.reset()` transaction with this property won't throw an error
+     * Check whether this property supports reset on the supplied node.
      *
      * @param node - Either resource path (e.g. `"/main/game.script"`), or internal node id passed to the script by the editor
      * @param property - Either `"path"`, `"text"`, or a property from the Outline view (hover the label to see its editor script name)
      */
     function can_reset(node: string | Opaque<"userdata">, property: string): boolean;
     /**
-     * Check if `editor.tx.set()` transaction with this property won't throw an error
+     * Check whether this property is exposed for setting on the supplied node.
      *
      * @param node - Either resource path (e.g. `"/main/game.script"`), or internal node id passed to the script by the editor
      * @param property - Either `"path"`, `"text"`, or a property from the Outline view (hover the label to see its editor script name)
@@ -172,6 +172,11 @@ declare global {
      * @returns A table with the following keys: `path string` resolved file path `exists boolean` whether there is a file system entry at the path `is_file boolean` whether the path corresponds to a file `is_directory boolean` whether the path corresponds to a directory
      */
     function external_file_attributes(path: string): Record<string | number, unknown>;
+    /**
+     * Download the latest version of the project library dependencies and reload library-provided editor scripts.
+     * This function may replace library-provided editor commands, hooks, routes, and UI contributed by editor scripts, so it should typically be the last operation performed by a command.
+     */
+    function fetch_libraries(): void;
     /**
      * Get a value of a node property inside the editor.
      * Some properties might be read-only, and some might be unavailable in different contexts, so you should use `editor.can_get()` before reading them and `editor.can_set()` before making the editor set them.
@@ -453,7 +458,7 @@ declare global {
       /**
        * Check box with a label
        *
-       * @param props - Optional props: `value boolean`determines if the checkbox should appear checked`on_value_changed function`change callback, will receive the new value`text string, message`the text, either a string or a localization message`text_alignment string`text alignment within paragraph bounds; either:
+       * @param props - Optional props: `value boolean`determines if the checkbox should appear checked`on_value_changed function`change callback, will receive the new value`indeterminate boolean`determines if the checkbox should appear in the mixed state`text string, message`the text, either a string or a localization message`text_alignment string`text alignment within paragraph bounds; either:
        * - `editor.ui.TEXT_ALIGNMENT.LEFT`
        * - `editor.ui.TEXT_ALIGNMENT.CENTER`
        * - `editor.ui.TEXT_ALIGNMENT.RIGHT`
@@ -482,7 +487,7 @@ declare global {
       /**
        * Dialog component, a top-level window component that can't be used as a child of other components
        *
-       * @param props - Required props: `title string, message`OS dialog window title, either a string or a localization message Optional props: `header component`top part of the dialog, defaults to `editor.ui.heading({text = props.title})``content component`content of the dialog`buttons component[]`array of `editor.ui.dialog_button(...)` components, footer of the dialog. Defaults to a single Close button
+       * @param props - Required props: `title string, message`OS dialog window title, either a string or a localization message Optional props: `header component`top part of the dialog, defaults to `editor.ui.heading({text = props.title})``content component`content of the dialog`width number`initial width of the dialog window in pixels`height number`initial height of the dialog window in pixels`resizable boolean`determines if the dialog window can be resized by the user`buttons component[]`array of `editor.ui.dialog_button(...)` components, footer of the dialog. Defaults to a single Close button`modal boolean`if set to `false`, the dialog window stays on top but does not block interaction with the editor
        * @returns UI component
        */
       function dialog(props: Record<string | number, unknown>): Opaque<"component">;
@@ -776,7 +781,7 @@ declare global {
        */
       function separator(props: Record<string | number, unknown>): Opaque<"component">;
       /**
-       * Show a modal dialog and await a result
+       * Show a dialog and await a result
        *
        * @param dialog - a component that resolves to `editor.ui.dialog(...)`
        * @returns dialog result, the value used as a `result` prop in a `editor.ui.dialog_button({...})` selected by the user, or `nil` if the dialog was closed and there was no `cancel = true` dialog button with `result` prop set
@@ -819,6 +824,20 @@ declare global {
        * @returns UI component
        */
       function string_field(props: Record<string | number, unknown>): Opaque<"component">;
+      /**
+       * Tab used in the `tabs` prop of `editor.ui.tabs(...)`
+       *
+       * @param props - Required props: `text string, message`tab header text, either a string or a localization message Optional props: `content component`tab content component`icon component`tab header icon component`enabled boolean`determines if the tab can be selected
+       * @returns UI component
+       */
+      function tab(props: Record<string | number, unknown>): Opaque<"component">;
+      /**
+       * Layout container that shows one selected tab content at a time
+       *
+       * @param props - Optional props: `tabs component[]`array of `editor.ui.tab(...)` components`grow boolean`determines if the component should grow to fill available space in a `horizontal` or `vertical` layout container`row_span integer`how many rows the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.`column_span integer`how many columns the component spans inside a grid container, must be positive. This prop is only useful for components inside a `grid` container.
+       * @returns UI component
+       */
+      function tabs(props: Record<string | number, unknown>): Opaque<"component">;
       /**
        * A hook that caches the result of a computation between re-renders.
        * See `editor.ui.component` for hooks caveats and rules. If any of the arguments to `use_memo` change during a component refresh (checked with `==`), the value will be recomputed.

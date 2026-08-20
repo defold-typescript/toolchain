@@ -117,7 +117,7 @@ preserves every other key, and reports the transition. Setting the value already
 pinned writes nothing. It does not materialize a surface or repoint
 `tsconfig.json` — the next `build`/`watch` does that. Its flags:
 
-- `bunx @defold-typescript/cli@latest set-target 1.13.0` pins that version;
+- `bunx @defold-typescript/cli@latest set-target 1.13.1` pins that version;
   `set-target stable` (or `beta`/`alpha`) pins the channel — the token is written
   verbatim, as you expressed it;
 - `set-target --detected` (alias `--detect`) pins the installed editor's version,
@@ -179,7 +179,7 @@ The resolved target is reported in `--json` output:
   for a fixed-version target.
 - `apiSurface` — the surface the resolved head version maps to. The
   current-stable version maps to the default surface
-  (`apiSurface: "defold-1.13.0"`); a version with a registered reference-doc
+  (`apiSurface: "defold-1.13.1"`); a version with a registered reference-doc
   target maps to `apiSurface: "defold-<version>"` (for example `defold-1.9.8`);
   a version with no matching target reports `apiSurface: null`. The surface id
   always derives from the resolved head version, never from the pin token.
@@ -218,7 +218,7 @@ it. The build writes a project-local `.defold-types/<surface>/` directory (a fau
 How the surface is produced depends on the resolved version:
 
 - **Current-stable** copies the pre-baked surface that ships in
-  `@defold-typescript/types` into `.defold-types/defold-1.13.0/`. No network access.
+  `@defold-typescript/types` into `.defold-types/defold-1.13.1/`. No network access.
 - **The previous 1.12.4 version** copies its complete committed declaration
   snapshot and requires no network access.
 - **Another pinned non-current version** is generated **on the fly** from that

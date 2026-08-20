@@ -562,9 +562,10 @@ describe("extractFixtures split", () => {
 });
 
 describe("EDITOR_VM_MANIFEST", () => {
-  test("covers the seven editor-VM namespaces, each split off the editor apidoc", () => {
+  test("covers the eight editor-VM namespaces, each split off the editor apidoc", () => {
     expect(EDITOR_VM_MANIFEST.map((e) => e.namespace)).toEqual([
       "http",
+      "image",
       "json",
       "localization",
       "zip",

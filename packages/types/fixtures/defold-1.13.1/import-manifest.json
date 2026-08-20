@@ -1,6 +1,6 @@
 {
-  "version": "1.13.0",
-  "baseline": "defold-1.12.4",
+  "version": "1.13.1",
+  "baseline": "defold-1.13.0",
   "ready": true,
   "sources": [
     {
@@ -86,7 +86,7 @@
     {
       "namespace": "collectionproxy",
       "entries": ["doc/scripts-script_collectionproxy.cpp_doc.json"],
-      "functionCount": 2
+      "functionCount": 3
     },
     {
       "namespace": "compute",
@@ -111,7 +111,7 @@
     {
       "namespace": "editor",
       "entries": ["doc/editor.apidoc_doc.json"],
-      "functionCount": 93
+      "functionCount": 100
     },
     {
       "namespace": "engine",
@@ -314,48 +314,6 @@
   },
   "moved": [
     {
-      "namespace": "b2d.body",
-      "from": ["doc/scripts-box2d-script_box2d_body.cpp_doc.json"],
-      "to": [
-        "doc/scripts-box2d-v2-script_box2d_body_v2.cpp_doc.json",
-        "doc/scripts-box2d-v3-script_box2d_body_v3.cpp_doc.json"
-      ]
-    },
-    {
-      "namespace": "b2d.chain",
-      "from": ["doc/b2d_chain.json"],
-      "to": ["doc/scripts-box2d-v3-script_box2d_chain_v3.cpp_doc.json"]
-    },
-    {
-      "namespace": "b2d.fixture",
-      "from": ["doc/b2d_fixture.json"],
-      "to": ["doc/scripts-box2d-v2-script_box2d_fixture_v2.cpp_doc.json"]
-    },
-    {
-      "namespace": "b2d.joint",
-      "from": ["doc/b2d_joint.json"],
-      "to": [
-        "doc/scripts-box2d-v2-script_box2d_joint_v2.cpp_doc.json",
-        "doc/scripts-box2d-v3-script_box2d_joint_v3.cpp_doc.json"
-      ]
-    },
-    {
-      "namespace": "b2d.shape",
-      "from": ["doc/b2d_shape.json"],
-      "to": [
-        "doc/scripts-box2d-v2-script_box2d_shape_v2.cpp_doc.json",
-        "doc/scripts-box2d-v3-script_box2d_shape_v3.cpp_doc.json"
-      ]
-    },
-    {
-      "namespace": "b2d.world",
-      "from": ["doc/b2d_world.json"],
-      "to": [
-        "doc/scripts-box2d-v2-script_box2d_world_v2.cpp_doc.json",
-        "doc/scripts-box2d-v3-script_box2d_world_v3.cpp_doc.json"
-      ]
-    },
-    {
       "namespace": "base",
       "from": ["doc/base.json"],
       "to": ["doc/lua_base.doc_h_doc.json"]
@@ -364,11 +322,6 @@
       "namespace": "bit",
       "from": ["doc/bit.json"],
       "to": ["doc/src-script_bitop.cpp_doc.json"]
-    },
-    {
-      "namespace": "compute",
-      "from": ["doc/compute.json"],
-      "to": ["doc/scripts-script_compute.cpp_doc.json"]
     },
     {
       "namespace": "coroutine",
@@ -384,11 +337,6 @@
       "namespace": "io",
       "from": ["doc/io.json"],
       "to": ["doc/lua_io.doc_h_doc.json"]
-    },
-    {
-      "namespace": "material",
-      "from": ["doc/material.json"],
-      "to": ["doc/scripts-script_material.cpp_doc.json"]
     },
     {
       "namespace": "math",
@@ -418,429 +366,8 @@
   ],
   "symbols": [
     {
-      "namespace": "b2d",
-      "added": ["b2d.get_version"],
-      "removed": []
-    },
-    {
-      "namespace": "b2d.body",
-      "added": [
-        "b2d.body.apply_linear_impulse_to_center",
-        "b2d.body.compute_aabb",
-        "b2d.body.create_chain",
-        "b2d.body.create_fixture",
-        "b2d.body.create_shape",
-        "b2d.body.destroy_fixture",
-        "b2d.body.destroy_shape",
-        "b2d.body.dump",
-        "b2d.body.enable_contact_events",
-        "b2d.body.enable_hit_events",
-        "b2d.body.get_contact_data",
-        "b2d.body.get_contact_list",
-        "b2d.body.get_fixtures",
-        "b2d.body.get_force",
-        "b2d.body.get_inertia",
-        "b2d.body.get_joints",
-        "b2d.body.get_local_center",
-        "b2d.body.get_mass_data",
-        "b2d.body.get_name",
-        "b2d.body.get_next",
-        "b2d.body.get_shapes",
-        "b2d.body.get_sleep_threshold",
-        "b2d.body.get_transform",
-        "b2d.body.get_user_data",
-        "b2d.body.get_world_center",
-        "b2d.body.is_sleeping_allowed",
-        "b2d.body.is_valid",
-        "b2d.body.set_mass_data",
-        "b2d.body.set_name",
-        "b2d.body.set_sleep_threshold",
-        "b2d.body.set_sleeping_allowed",
-        "b2d.body.set_target_transform",
-        "b2d.body.set_user_data"
-      ],
-      "removed": []
-    },
-    {
-      "namespace": "b2d.chain",
-      "added": [
-        "b2Chain",
-        "b2d.chain.destroy",
-        "b2d.chain.from_shape",
-        "b2d.chain.get_friction",
-        "b2d.chain.get_geometry",
-        "b2d.chain.get_material",
-        "b2d.chain.get_restitution",
-        "b2d.chain.get_segment_count",
-        "b2d.chain.get_segments",
-        "b2d.chain.get_world",
-        "b2d.chain.is_valid",
-        "b2d.chain.set_friction",
-        "b2d.chain.set_material",
-        "b2d.chain.set_restitution"
-      ],
-      "removed": []
-    },
-    {
-      "namespace": "b2d.fixture",
-      "added": [
-        "b2d.fixture.get_aabb",
-        "b2d.fixture.get_density",
-        "b2d.fixture.get_filter_data",
-        "b2d.fixture.get_friction",
-        "b2d.fixture.get_restitution",
-        "b2d.fixture.get_shape",
-        "b2d.fixture.get_type",
-        "b2d.fixture.is_sensor",
-        "b2d.fixture.refilter",
-        "b2d.fixture.set_density",
-        "b2d.fixture.set_filter_data",
-        "b2d.fixture.set_friction",
-        "b2d.fixture.set_restitution",
-        "b2d.fixture.set_sensor",
-        "b2d.fixture.set_shape",
-        "b2d.fixture.test_point"
-      ],
-      "removed": []
-    },
-    {
-      "namespace": "b2d.joint",
-      "added": [
-        "b2Joint",
-        "b2d.joint.JOINT_TYPE_DISTANCE",
-        "b2d.joint.JOINT_TYPE_FILTER",
-        "b2d.joint.JOINT_TYPE_FRICTION",
-        "b2d.joint.JOINT_TYPE_GEAR",
-        "b2d.joint.JOINT_TYPE_MOTOR",
-        "b2d.joint.JOINT_TYPE_MOUSE",
-        "b2d.joint.JOINT_TYPE_PRISMATIC",
-        "b2d.joint.JOINT_TYPE_PULLEY",
-        "b2d.joint.JOINT_TYPE_REVOLUTE",
-        "b2d.joint.JOINT_TYPE_ROPE",
-        "b2d.joint.JOINT_TYPE_UNKNOWN",
-        "b2d.joint.JOINT_TYPE_WELD",
-        "b2d.joint.JOINT_TYPE_WHEEL",
-        "b2d.joint.LIMIT_STATE_AT_LOWER",
-        "b2d.joint.LIMIT_STATE_AT_UPPER",
-        "b2d.joint.LIMIT_STATE_EQUAL",
-        "b2d.joint.LIMIT_STATE_INACTIVE",
-        "b2d.joint.create_distance",
-        "b2d.joint.create_filter",
-        "b2d.joint.create_friction",
-        "b2d.joint.create_gear",
-        "b2d.joint.create_motor",
-        "b2d.joint.create_mouse",
-        "b2d.joint.create_prismatic",
-        "b2d.joint.create_pulley",
-        "b2d.joint.create_revolute",
-        "b2d.joint.create_rope",
-        "b2d.joint.create_weld",
-        "b2d.joint.create_wheel",
-        "b2d.joint.destroy",
-        "b2d.joint.enable_limit",
-        "b2d.joint.enable_motor",
-        "b2d.joint.enable_spring",
-        "b2d.joint.get_anchor_a",
-        "b2d.joint.get_anchor_b",
-        "b2d.joint.get_angular_damping_ratio",
-        "b2d.joint.get_angular_hertz",
-        "b2d.joint.get_angular_offset",
-        "b2d.joint.get_body_a",
-        "b2d.joint.get_body_b",
-        "b2d.joint.get_collide_connected",
-        "b2d.joint.get_correction_factor",
-        "b2d.joint.get_current_length",
-        "b2d.joint.get_damping_ratio",
-        "b2d.joint.get_frequency",
-        "b2d.joint.get_ground_anchor_a",
-        "b2d.joint.get_ground_anchor_b",
-        "b2d.joint.get_hertz",
-        "b2d.joint.get_joint1",
-        "b2d.joint.get_joint2",
-        "b2d.joint.get_joint_angle",
-        "b2d.joint.get_joint_speed",
-        "b2d.joint.get_joint_translation",
-        "b2d.joint.get_length",
-        "b2d.joint.get_length_a",
-        "b2d.joint.get_length_b",
-        "b2d.joint.get_limit_state",
-        "b2d.joint.get_linear_damping_ratio",
-        "b2d.joint.get_linear_hertz",
-        "b2d.joint.get_linear_offset",
-        "b2d.joint.get_local_anchor_a",
-        "b2d.joint.get_local_anchor_b",
-        "b2d.joint.get_local_axis_a",
-        "b2d.joint.get_lower_limit",
-        "b2d.joint.get_max_force",
-        "b2d.joint.get_max_length",
-        "b2d.joint.get_max_motor_force",
-        "b2d.joint.get_max_motor_torque",
-        "b2d.joint.get_max_torque",
-        "b2d.joint.get_min_length",
-        "b2d.joint.get_motor_force",
-        "b2d.joint.get_motor_speed",
-        "b2d.joint.get_motor_torque",
-        "b2d.joint.get_mouse_target",
-        "b2d.joint.get_ratio",
-        "b2d.joint.get_reaction_force",
-        "b2d.joint.get_reaction_torque",
-        "b2d.joint.get_reference_angle",
-        "b2d.joint.get_spring_damping_ratio",
-        "b2d.joint.get_spring_hertz",
-        "b2d.joint.get_type",
-        "b2d.joint.get_upper_limit",
-        "b2d.joint.get_world",
-        "b2d.joint.is_active",
-        "b2d.joint.is_limit_enabled",
-        "b2d.joint.is_motor_enabled",
-        "b2d.joint.is_spring_enabled",
-        "b2d.joint.is_valid",
-        "b2d.joint.set_angular_damping_ratio",
-        "b2d.joint.set_angular_hertz",
-        "b2d.joint.set_angular_offset",
-        "b2d.joint.set_collide_connected",
-        "b2d.joint.set_correction_factor",
-        "b2d.joint.set_damping_ratio",
-        "b2d.joint.set_frequency",
-        "b2d.joint.set_hertz",
-        "b2d.joint.set_length",
-        "b2d.joint.set_length_range",
-        "b2d.joint.set_limits",
-        "b2d.joint.set_linear_damping_ratio",
-        "b2d.joint.set_linear_hertz",
-        "b2d.joint.set_linear_offset",
-        "b2d.joint.set_max_force",
-        "b2d.joint.set_max_length",
-        "b2d.joint.set_max_motor_force",
-        "b2d.joint.set_max_motor_torque",
-        "b2d.joint.set_max_torque",
-        "b2d.joint.set_min_length",
-        "b2d.joint.set_motor_speed",
-        "b2d.joint.set_mouse_target",
-        "b2d.joint.set_ratio",
-        "b2d.joint.set_reference_angle",
-        "b2d.joint.set_spring_damping_ratio",
-        "b2d.joint.set_spring_hertz",
-        "b2d.joint.wake_bodies"
-      ],
-      "removed": []
-    },
-    {
-      "namespace": "b2d.shape",
-      "added": [
-        "b2Shape",
-        "b2d.shape.SHAPE_TYPE_BOX",
-        "b2d.shape.SHAPE_TYPE_CAPSULE",
-        "b2d.shape.SHAPE_TYPE_CHAIN",
-        "b2d.shape.SHAPE_TYPE_CIRCLE",
-        "b2d.shape.SHAPE_TYPE_EDGE",
-        "b2d.shape.SHAPE_TYPE_GRID",
-        "b2d.shape.SHAPE_TYPE_POLYGON",
-        "b2d.shape.SHAPE_TYPE_SEGMENT",
-        "b2d.shape.are_contact_events_enabled",
-        "b2d.shape.are_hit_events_enabled",
-        "b2d.shape.are_pre_solve_events_enabled",
-        "b2d.shape.are_sensor_events_enabled",
-        "b2d.shape.enable_contact_events",
-        "b2d.shape.enable_hit_events",
-        "b2d.shape.enable_pre_solve_events",
-        "b2d.shape.enable_sensor_events",
-        "b2d.shape.get_body",
-        "b2d.shape.get_closest_point",
-        "b2d.shape.get_contact_capacity",
-        "b2d.shape.get_contact_data",
-        "b2d.shape.get_mass_data",
-        "b2d.shape.get_material",
-        "b2d.shape.get_sensor_capacity",
-        "b2d.shape.get_sensor_overlaps",
-        "b2d.shape.get_shape",
-        "b2d.shape.get_world",
-        "b2d.shape.is_valid",
-        "b2d.shape.ray_cast",
-        "b2d.shape.set_material",
-        "b2d.shape.set_shape"
-      ],
-      "removed": []
-    },
-    {
-      "namespace": "b2d.world",
-      "added": [
-        "b2d.world.cast_mover",
-        "b2d.world.cast_ray",
-        "b2d.world.cast_ray_closest",
-        "b2d.world.cast_shape",
-        "b2d.world.collide_mover",
-        "b2d.world.enable_continuous",
-        "b2d.world.enable_sleeping",
-        "b2d.world.enable_speculative",
-        "b2d.world.enable_warm_starting",
-        "b2d.world.explode",
-        "b2d.world.get_awake_body_count",
-        "b2d.world.get_counters",
-        "b2d.world.get_gravity",
-        "b2d.world.get_hit_event_threshold",
-        "b2d.world.get_maximum_linear_speed",
-        "b2d.world.get_profile",
-        "b2d.world.get_restitution_threshold",
-        "b2d.world.is_continuous_enabled",
-        "b2d.world.is_locked",
-        "b2d.world.is_sleeping_enabled",
-        "b2d.world.is_valid",
-        "b2d.world.is_warm_starting_enabled",
-        "b2d.world.overlap_aabb",
-        "b2d.world.overlap_shape",
-        "b2d.world.rebuild_static_tree",
-        "b2d.world.set_contact_tuning",
-        "b2d.world.set_gravity",
-        "b2d.world.set_hit_event_threshold",
-        "b2d.world.set_joint_tuning",
-        "b2d.world.set_maximum_linear_speed",
-        "b2d.world.set_restitution_threshold"
-      ],
-      "removed": []
-    },
-    {
-      "namespace": "camera",
-      "added": [
-        "acquire_camera_focus",
-        "aspect_ratio",
-        "camera.get_orthographic_auto_zoom",
-        "far_z",
-        "fov",
-        "near_z",
-        "orthographic_auto_zoom",
-        "orthographic_zoom",
-        "projection",
-        "release_camera_focus",
-        "set_camera",
-        "view"
-      ],
-      "removed": []
-    },
-    {
-      "namespace": "compute",
-      "added": [
-        "compute.get_constants",
-        "compute.get_samplers",
-        "compute.get_textures",
-        "compute.set_constants",
-        "compute.set_samplers",
-        "compute.set_textures"
-      ],
-      "removed": []
-    },
-    {
-      "namespace": "go",
-      "added": ["acquire_input_focus", "disable", "enable", "release_input_focus", "set_parent"],
-      "removed": []
-    },
-    {
-      "namespace": "graphics",
-      "added": [
-        "graphics.BLEND_EQUATION_ADD",
-        "graphics.BLEND_EQUATION_MAX",
-        "graphics.BLEND_EQUATION_MIN",
-        "graphics.BLEND_EQUATION_REVERSE_SUBTRACT",
-        "graphics.BLEND_EQUATION_SUBTRACT",
-        "graphics.CONTEXT_FEATURE_3D_TEXTURES",
-        "graphics.CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES",
-        "graphics.CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX",
-        "graphics.CONTEXT_FEATURE_COMPUTE_SHADER",
-        "graphics.CONTEXT_FEATURE_INSTANCING",
-        "graphics.CONTEXT_FEATURE_MULTI_TARGET_RENDERING",
-        "graphics.CONTEXT_FEATURE_STORAGE_BUFFER",
-        "graphics.CONTEXT_FEATURE_TEXTURE_ARRAY",
-        "graphics.CONTEXT_FEATURE_VSYNC",
-        "graphics.get_adapter_info",
-        "graphics.get_engine_adapters"
-      ],
-      "removed": []
-    },
-    {
-      "namespace": "gui",
-      "added": ["layout_changed"],
-      "removed": []
-    },
-    {
-      "namespace": "liveupdate",
-      "added": ["liveupdate.is_built_with_excluded_files"],
-      "removed": []
-    },
-    {
-      "namespace": "material",
-      "added": [
-        "material.get_constants",
-        "material.get_samplers",
-        "material.get_textures",
-        "material.get_vertex_attributes",
-        "material.set_constants",
-        "material.set_samplers",
-        "material.set_textures",
-        "material.set_vertex_attributes"
-      ],
-      "removed": []
-    },
-    {
-      "namespace": "model",
-      "added": [
-        "model.get_blend_weights",
-        "model.reset_constant",
-        "model.set_blend_weights",
-        "model_animation_done"
-      ],
-      "removed": ["material"]
-    },
-    {
-      "namespace": "physics",
-      "added": [
-        "apply_force",
-        "collision_event",
-        "collision_response",
-        "contact_point_event",
-        "contact_point_response",
-        "ray_cast_missed",
-        "ray_cast_response",
-        "trigger_event",
-        "trigger_response"
-      ],
-      "removed": []
-    },
-    {
-      "namespace": "render",
-      "added": [
-        "clear_color",
-        "draw_debug_text",
-        "draw_line",
-        "render.set_blend_equation_separate",
-        "render.set_blend_func_separate",
-        "resize",
-        "window_resized"
-      ],
-      "removed": []
-    },
-    {
-      "namespace": "sprite",
-      "added": ["animation_done", "play_animation", "sprite.reset_constant"],
-      "removed": []
-    },
-    {
-      "namespace": "sys",
-      "added": [
-        "exit",
-        "reboot",
-        "resume_rendering",
-        "set_update_frequency",
-        "set_vsync",
-        "start_record",
-        "stop_record",
-        "toggle_physics_debug",
-        "toggle_profile"
-      ],
-      "removed": []
-    },
-    {
-      "namespace": "tilemap",
-      "added": ["tilemap.reset_constant"],
+      "namespace": "collectionproxy",
+      "added": ["collectionproxy.load"],
       "removed": []
     }
   ],
@@ -3731,6 +3258,12 @@
         {
           "identity": "collectionproxy\u0000FUNCTION\u0000collectionproxy.get_resources\u0000[{\"types\":[\"url\"],\"is_optional\":\"False\"}]\u0000[{\"types\":[\"table\"]}]",
           "name": "collectionproxy.get_resources",
+          "kind": "FUNCTION",
+          "sourceEntries": ["doc/scripts-script_collectionproxy.cpp_doc.json"]
+        },
+        {
+          "identity": "collectionproxy\u0000FUNCTION\u0000collectionproxy.load\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"is_optional\":\"False\"},{\"types\":[\"nil\",\"table\"],\"is_optional\":\"False\"},{\"types\":[\"function(self, message_id, message, sender)\"],\"is_optional\":\"False\"}]\u0000[]",
+          "name": "collectionproxy.load",
           "kind": "FUNCTION",
           "sourceEntries": ["doc/scripts-script_collectionproxy.cpp_doc.json"]
         },
@@ -6861,7 +6394,7 @@
           "sourceEntries": ["doc/gui_script.cpp_doc.json"]
         },
         {
-          "identity": "gui\u0000FUNCTION\u0000gui.set\u0000[{\"types\":[\"node\",\"url\"],\"is_optional\":\"False\"},{\"types\":[\"constant\",\"hash\",\"string\"],\"is_optional\":\"False\"},{\"types\":[\"number\",\"quaternion\",\"vector3\",\"vector4\"],\"is_optional\":\"False\"},{\"types\":[\"table\"],\"is_optional\":\"True\"}]\u0000[]",
+          "identity": "gui\u0000FUNCTION\u0000gui.set\u0000[{\"types\":[\"node\",\"url\"],\"is_optional\":\"False\"},{\"types\":[\"constant\",\"hash\",\"string\"],\"is_optional\":\"False\"},{\"types\":[\"nil\",\"number\",\"quaternion\",\"vector3\",\"vector4\"],\"is_optional\":\"False\"},{\"types\":[\"table\"],\"is_optional\":\"True\"}]\u0000[]",
           "name": "gui.set",
           "kind": "FUNCTION",
           "sourceEntries": ["doc/gui_script.cpp_doc.json"]

@@ -14,11 +14,16 @@ import { loadApiTargets } from "./regen";
 
 const AVAILABILITY_PATH = resolve(import.meta.dir, "..", "api-availability.json");
 
+// The committed version axis, newest-first, from the same production selector the
+// artifact builder uses — so a version rotation needs no edit here.
+const COMPLETE_VERSIONS = selectCompleteVersionSurfaces(loadApiTargets()).map(versionOf);
+const [NEWEST_VERSION] = COMPLETE_VERSIONS as [string];
+
 describe("availability derivation over the committed target snapshots", () => {
   const artifact = buildAvailabilityArtifact();
 
   test("emits an N-version matrix keyed by the ordered committed version axis, no pairwise keys", () => {
-    expect(artifact.versions).toEqual(["1.13.0", "1.12.4"]);
+    expect(artifact.versions).toEqual(COMPLETE_VERSIONS);
     expect((artifact as unknown as { current?: string }).current).toBeUndefined();
     expect((artifact as unknown as { baseline?: string }).baseline).toBeUndefined();
     expect(
@@ -36,12 +41,12 @@ describe("availability derivation over the committed target snapshots", () => {
     expect(artifact.versions).toEqual(committedVersions);
   });
 
-  test("a promoted 1.13.0-only symbol becomes availableIn:[1.13.0] (since:X migration)", () => {
+  test("a newest-only promoted symbol becomes availableIn:[newest] (since:X migration)", () => {
     const promoted = artifact.records.filter((r) => r.identity.namespace === "b2d.world");
     expect(promoted.length).toBeGreaterThan(0);
-    expect(promoted.every((r) => r.availableIn.length === 1 && r.availableIn[0] === "1.13.0")).toBe(
-      true,
-    );
+    expect(
+      promoted.every((r) => r.availableIn.length === 1 && r.availableIn[0] === NEWEST_VERSION),
+    ).toBe(true);
   });
 
   test("a genuinely removed symbol becomes availableIn:[1.12.4] (removedIn:X migration)", () => {
@@ -64,9 +69,9 @@ describe("availability derivation over the committed target snapshots", () => {
     expect(mount.some((r) => r.availableIn.length === 1 && r.availableIn[0] === "1.12.4")).toBe(
       true,
     );
-    expect(mount.some((r) => r.availableIn.length === 1 && r.availableIn[0] === "1.13.0")).toBe(
-      true,
-    );
+    expect(
+      mount.some((r) => r.availableIn.length === 1 && r.availableIn[0] === NEWEST_VERSION),
+    ).toBe(true);
     const group = groupByLogicalName(mount, artifact.versions);
     expect(group).toHaveLength(1);
     expect(isSignatureTransition(group[0] as (typeof group)[number], artifact.versions)).toBe(true);

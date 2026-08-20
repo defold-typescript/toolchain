@@ -130,13 +130,16 @@ describe("testsModelCorrespondenceProblems", () => {
   });
 
   test("a file hardcoding the current version literal is an integration blocker", () => {
+    // Built from the live model: the scan flags *the current* version, so a baked
+    // literal stops exercising the blocker the moment the pin moves past it.
+    const current = RELEASE_MODEL.current;
     withFile(
       "bad.test.ts",
-      'import { DEFOLD_VERSION } from "x";\nexpect(id).toBe("defold-1.13.0");\n',
+      `import { DEFOLD_VERSION } from "x";\nexpect(id).toBe("defold-${current}");\n`,
       (root) => {
         const problems = testsModelCorrespondenceProblems(root, RELEASE_MODEL, ["bad.test.ts"]);
         expect(problems.map((p) => p.category)).toContain("integration");
-        expect(problems.some((p) => /1\.13\.0/.test(p.message))).toBe(true);
+        expect(problems.some((p) => p.message.includes(current))).toBe(true);
       },
     );
   });

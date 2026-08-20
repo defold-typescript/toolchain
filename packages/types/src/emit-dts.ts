@@ -157,6 +157,12 @@ export const ARBITRARY_TABLE_SLOTS = new Set([
   // is opaque to the field-list parser and the whole-slot `Record` is faithful.
   "render.render_target",
   "render.set_render_target",
+  // reserved-but-undocumented options bag: `collectionproxy.load`'s `options`
+  // slot is documented verbatim as "options table, currently unused" and accepts
+  // `nil`, so upstream defines no field list to emit. The whole-slot `Record` is
+  // faithful to what is documented today. If a later release fills the bag in,
+  // drop this entry so the missing fields resurface under `recordTables`.
+  "collectionproxy.load",
 ]);
 
 // Per-slot companion to ARBITRARY_TABLE_SLOTS (`element:kind:name`), for a

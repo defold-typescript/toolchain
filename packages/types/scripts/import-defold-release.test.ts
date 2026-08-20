@@ -9,7 +9,7 @@ import {
   parseReleaseImportArgs,
   releaseImportReportJson,
 } from "./import-defold-release";
-import type { ZipAccessor } from "./sync-api-docs";
+import { EDITOR_MANIFEST, EDITOR_VM_MANIFEST, type ZipAccessor } from "./sync-api-docs";
 
 function fakeZip(entries: Record<string, unknown>): ZipAccessor {
   const encoded = Object.fromEntries(
@@ -156,6 +156,37 @@ describe("buildReleaseImportPlan", () => {
       { namespace: "orphan", entries: ["doc/orphan.json"], symbols: ["orphan.run"] },
     ]);
     expect(plan.ready).toBe(false);
+  });
+
+  // The editor-scripting namespace is mapped by `EDITOR_MANIFEST`, never by
+  // `api-targets.json` — it emits through `EDITOR_MODULE_MANIFEST`, not the
+  // runtime module set the baseline is built from. Reading mapped-ness off the
+  // baseline alone therefore reports a deliberately-typed namespace as an
+  // unresolved human decision and fails the import closed.
+  //
+  // `EDITOR_VM_MANIFEST` is deliberately NOT excused: its entries are split out
+  // of the editor document and never appear as an upstream `info.namespace`, so
+  // excusing their bare names (`pprint`, `zip`, `localization`, …) would only
+  // suppress a genuine future runtime namespace that happened to share one.
+  test("excuses editor-manifest namespaces but still blockers on editor-VM names", () => {
+    const editorNamespaces = EDITOR_MANIFEST.map((source) => source.namespace);
+    expect(editorNamespaces.length).toBeGreaterThan(0);
+    const vmOnly = EDITOR_VM_MANIFEST.map((source) => source.namespace).filter(
+      (namespace) => !editorNamespaces.includes(namespace),
+    );
+    expect(vmOnly.length).toBeGreaterThan(0);
+    const docs = Object.fromEntries(
+      [...editorNamespaces, ...vmOnly].map((namespace) => [
+        `doc/${namespace.replace(/\./g, "_")}.json`,
+        apiDoc(namespace, [fn(`${namespace}.run`)]),
+      ]),
+    );
+
+    const plan = buildReleaseImportPlan({ version: "1.13.1", zip: fakeZip(docs), baseline });
+    const blocked = plan.blockers.unmappedFunctionNamespaces.map((entry) => entry.namespace);
+
+    for (const namespace of editorNamespaces) expect(blocked).not.toContain(namespace);
+    for (const namespace of vmOnly) expect(blocked).toContain(namespace);
   });
 
   test("dry-run JSON is stable and apply writes only the named snapshot and manifest", () => {

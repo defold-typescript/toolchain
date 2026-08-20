@@ -65,13 +65,18 @@ release-readiness gate reads only the marked section for the release being
 shipped, so a note filed under an older release never counts as migration
 coverage for a newer one. Add a section per release rather than a new page.
 
-<!-- release: 1.13.0 -->
+<!-- release: 1.13.1 -->
 
-Defold 1.13.0 is the current stable release and the toolchain's default API
+Defold 1.13.1 is the current stable release and the toolchain's default API
 target. Moving a project from 1.12.4 removes a handful of Lua APIs, re-signatures
-a few others, changes some source/asset expectations, and shifts a few rendering
-and platform defaults. Each change below carries actionable migration guidance
-and a way to verify it.
+a few others, adds one, changes some source/asset expectations, and shifts a few
+rendering and platform defaults. Each change below carries actionable migration
+guidance and a way to verify it.
+
+1.13.1 is a patch over 1.13.0, which it **replaced in place** — 1.13.0 is no
+longer a shipped API surface, and its `/api/defold-1.13.0/…` pages are gone. A
+project already on 1.13.0 needs no source migration beyond the two 1.13.1-only
+entries called out below; everything else here is the 1.12.4 upgrade.
 
 The runbook above, with this release's concrete targets:
 
@@ -80,23 +85,23 @@ The runbook above, with this release's concrete targets:
 bunx @defold-typescript/cli build --defold-target 1.12.4
 
 # the same project against the new surface
-bunx @defold-typescript/cli build --defold-target 1.13.0
+bunx @defold-typescript/cli build --defold-target 1.13.1
 ```
 
-## Defold 1.13.0: changed Lua API signatures
+## Defold 1.13.1: changed Lua API signatures
 
-These Lua APIs still exist on the 1.13.0 surface — one or more parameter types
+These Lua APIs still exist on the 1.13.1 surface — one or more parameter types
 changed rather than the symbol being removed, so a call written against 1.12.4
 keeps compiling. The Combined API surface — now canonical at the unprefixed `/api`
 (the old `/api/combined` links redirect there) — renders both signatures
-adjacently; the exact-version pages (`/api/defold-1.13.0/…`, `/api/defold-1.12.4/…`)
+adjacently; the exact-version pages (`/api/defold-1.13.1/…`, `/api/defold-1.12.4/…`)
 show each in isolation.
 
 ### liveupdate.add_mount
 
 Despite the old Live Update **auto-mount** framing, `liveupdate.add_mount` was
-**not** removed — it remains an imperative runtime API on the 1.13.0
-[`liveupdate`](/api/defold-1.13.0/liveupdate) surface. Its `name` parameter widened from
+**not** removed — it remains an imperative runtime API on the 1.13.1
+[`liveupdate`](/api/defold-1.13.1/liveupdate) surface. Its `name` parameter widened from
 `string` to `string | Hash`, so a hashed mount name is now accepted alongside a
 plain string, and the mount callback is typed more precisely. Compare the current
 signature with the historical one on the [1.12.4 `liveupdate`
@@ -109,9 +114,27 @@ page](/api/defold-1.12.4/liveupdate).
 down. The [1.12.4 `liveupdate` page](/api/defold-1.12.4/liveupdate) keeps the old
 single-string signature for comparison.
 
-## Defold 1.13.0: removed Lua APIs and constants
+### gui.set
 
-Each removed symbol is a compile error against the 1.13.0 surface. Its frozen
+**New in 1.13.1.** `gui.set`'s `value` parameter accepts `nil` alongside the
+number and vector types it already took, so a property can be cleared rather than
+only reassigned. Existing calls are unaffected — the change is a widening. The
+[1.12.4 `gui` page](/api/defold-1.12.4/gui) shows the narrower signature for
+comparison; the current one is on the 1.13.1
+[`gui`](/api/defold-1.13.1/gui) surface.
+
+## Defold 1.13.1: added Lua APIs
+
+### collectionproxy.load
+
+**New in 1.13.1.** `collectionproxy.load` is new on the 1.13.1
+[`collectionproxy`](/api/defold-1.13.1/collectionproxy) surface. It is purely
+additive, so no existing call needs changing; a project that wants it must pin
+`--defold-target 1.13.1` or newer.
+
+## Defold 1.13.1: removed Lua APIs and constants
+
+Each removed symbol is a compile error against the 1.13.1 surface. Its frozen
 signature stays discoverable on the historical [1.12.4 API
 pages](/api/defold-1.12.4/model); the current-surface namespace pages linked
 below show what replaced it.
@@ -120,13 +143,13 @@ below show what replaced it.
 
 The single-slot `model.material` property is removed. A model can carry several
 material slots, so address a slot by name with the component material APIs on the
-current [`model`](/api/defold-1.13.0/model) surface instead of the one blanket property; the
+current [`model`](/api/defold-1.13.1/model) surface instead of the one blanket property; the
 removed property's frozen shape stays on the [1.12.4 `model`
 page](/api/defold-1.12.4/model).
 
-## Defold 1.13.0: deprecated Lua APIs
+## Defold 1.13.1: deprecated Lua APIs
 
-These APIs still compile and run against the 1.13.0 surface but are marked
+These APIs still compile and run against the 1.13.1 surface but are marked
 **deprecated** in the engine reference. No replacement is announced upstream, so
 nothing is forced right now — treat them as candidates for removal in a future
 release and avoid them in new code.
@@ -147,7 +170,7 @@ release and avoid them in new code.
 <!-- no-action: acquire_camera_focus -->
 <!-- no-action: release_camera_focus -->
 
-## Defold 1.13.0: source and project migrations
+## Defold 1.13.1: source and project migrations
 
 These changes touch assets and project configuration rather than the typed Lua
 surface, so the compiler cannot flag them — audit them by hand.
@@ -167,7 +190,7 @@ surface, so the compiler cannot flag them — audit them by hand.
   the Spine dependency in `game.project` to at least `4.6.0`; older extension
   versions will not build.
 
-## Defold 1.13.0: rendering and platform behavior
+## Defold 1.13.1: rendering and platform behavior
 
 Defaults changed here. Nothing is a Lua API removal, but the rendered result or
 the target platform behaves differently.

@@ -4,6 +4,7 @@ import { isKnownDefoldTypeToken } from "../src/emit-dts";
 import { refDocCacheDir, resolveRefDoc } from "./doc-source";
 import {
   apiElementIdentity,
+  EDITOR_MANIFEST,
   IGNORED_UPSTREAM,
   mergeApiDocs,
   readZip,
@@ -14,6 +15,14 @@ import {
 const EXACT_VERSION = /^\d+\.\d+\.\d+$/;
 const LUA_NAMESPACE = /^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)*$/;
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
+
+// Editor-scripting namespaces are mapped, but not by `api-targets.json`: they
+// emit through `EDITOR_MODULE_MANIFEST` rather than the runtime module set the
+// baseline is built from, so the baseline can never vouch for them. Only
+// `EDITOR_MANIFEST` is consulted — `EDITOR_VM_MANIFEST` entries are split out of
+// the editor document and never surface as an upstream `info.namespace`, so
+// excusing their bare names would suppress a real runtime namespace instead.
+const EDITOR_MAPPED_NAMESPACES = new Set(EDITOR_MANIFEST.map((source) => source.namespace));
 
 // The set of namespaces promoted into the generated surface at Defold 1.13.0.
 // Held here rather than derived from the root release model because the
@@ -325,6 +334,7 @@ export function buildReleaseImportPlan(input: {
       (source) =>
         source.functionCount > 0 &&
         !baselineByNamespace.has(source.namespace) &&
+        !EDITOR_MAPPED_NAMESPACES.has(source.namespace) &&
         !IGNORED_UPSTREAM.has(source.namespace),
     )
     .map((source) => ({
