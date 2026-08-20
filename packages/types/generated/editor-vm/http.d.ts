@@ -8,8 +8,8 @@ declare global {
      * Perform an HTTP request
      *
      * @param url - request URL
-     * @param opts - Additional request options, a table with the following keys:`method string`request method, defaults to `"GET"``headers table`request headers, a table with string keys and values`body string`request body`as string`response body converter, either `"string"` or `"json"`
-     * @returns HTTP response, a table with the following keys:`status integer`response code`headers table`response headers, a table where each key is a lower-cased string, and each value is either a string or an array of strings if the header was repeated`body string, any, nil`response body, present only when `as` option was provided, either a string or a parsed json value
+     * @param opts - Additional request options, a table with the following keys:`method string`request method, defaults to `"GET"``headers table`request headers, a table with string keys and values`body string`request body`as string`response body converter, either `"string"` or `"json"`; mutually exclusive with `path``path string`destination file path, resolved against project root if relative; mutually exclusive with `as`
+     * @returns HTTP response, a table with the following keys:`status integer`response code`headers table`response headers, a table where each key is a lower-cased string, and each value is either a string or an array of strings if the header was repeated`body string, any, nil`response body, present only when `as` option was provided, either a string or a parsed json value`path string, nil`resolved absolute destination path, present only after a successful response was written when the `path` option was provided
      */
     function request(url: string, opts?: Record<string | number, unknown>): Record<string | number, unknown>;
     namespace server {

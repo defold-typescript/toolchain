@@ -28,7 +28,7 @@
     "name": "Editor",
     "brief": "Editor scripting documentation",
     "description": "Editor scripting documentation",
-    "path": "engine/docs/editor.apidoc",
+    "path": "",
     "file": "",
     "notes": [],
     "language": "Lua"

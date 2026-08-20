@@ -239,6 +239,8 @@ declare global {
      * - `graphics.SEMANTIC_TYPE_BONE_INDICES`
      *
      * - `graphics.SEMANTIC_TYPE_TEXTURE_TRANSFORM_2D`
+     *
+     * - `graphics.SEMANTIC_TYPE_MORPH_TARGET_WEIGHTS`
      * @example
      * ```ts
      * const vertex_attributes = material.get_vertex_attributes(resource.material("/my_material.materialc"));
@@ -432,6 +434,8 @@ declare global {
      * - `graphics.SEMANTIC_TYPE_BONE_INDICES`
      *
      * - `graphics.SEMANTIC_TYPE_TEXTURE_TRANSFORM_2D`
+     *
+     * - `graphics.SEMANTIC_TYPE_MORPH_TARGET_WEIGHTS`
      * @example
      * ```ts
      * material.set_vertex_attributes(resource.material("/my_material.materialc"), { tint_attribute: { value: vmath.vector4(1, 0, 0, 1), semantic_type: graphics.SEMANTIC_TYPE_COLOR } });

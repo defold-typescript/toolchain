@@ -2,11 +2,11 @@ import { describe, expect, test } from "bun:test";
 import bufferDoc from "../fixtures/buffer_doc.json" with { type: "json" };
 import collectionfactoryDoc from "../fixtures/collectionfactory_doc.json" with { type: "json" };
 import collectionproxyDoc from "../fixtures/collectionproxy_doc.json" with { type: "json" };
-import b2dWorldDoc from "../fixtures/defold-1.13.0/b2d_world_doc.json" with { type: "json" };
-import computeDoc from "../fixtures/defold-1.13.0/compute_doc.json" with { type: "json" };
-import graphicsDoc from "../fixtures/defold-1.13.0/graphics_doc.json" with { type: "json" };
-import materialDoc from "../fixtures/defold-1.13.0/material_doc.json" with { type: "json" };
-import model113Doc from "../fixtures/defold-1.13.0/model_doc.json" with { type: "json" };
+import b2dWorldDoc from "../fixtures/defold-1.13.1/b2d_world_doc.json" with { type: "json" };
+import computeDoc from "../fixtures/defold-1.13.1/compute_doc.json" with { type: "json" };
+import graphicsDoc from "../fixtures/defold-1.13.1/graphics_doc.json" with { type: "json" };
+import materialDoc from "../fixtures/defold-1.13.1/material_doc.json" with { type: "json" };
+import model113Doc from "../fixtures/defold-1.13.1/model_doc.json" with { type: "json" };
 import goDoc from "../fixtures/go_doc.json" with { type: "json" };
 import guiDoc from "../fixtures/gui_doc.json" with { type: "json" };
 import httpDoc from "../fixtures/http_doc.json" with { type: "json" };
@@ -1823,6 +1823,7 @@ describe("ARBITRARY_TABLE_SLOTS", () => {
   test("holds the serialization/JSON passthrough, platform-opaque, runtime-owned passthrough, engine-formatted blob, dead cross-ref, OS-resolver, and engine-built render-target element names", () => {
     expect([...ARBITRARY_TABLE_SLOTS].sort()).toEqual([
       "collectionfactory.create",
+      "collectionproxy.load",
       "crash.get_backtrace",
       "crash.get_modules",
       "factory.create",

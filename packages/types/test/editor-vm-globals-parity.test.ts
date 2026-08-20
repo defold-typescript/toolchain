@@ -7,12 +7,12 @@ import { htmlToDocText } from "../src/doc-comment";
 import { collectDeclaredFqns, type FixtureDoc, unexpressedFixtureNames } from "./declared-fqns";
 
 const GLOBALS_PATH = resolve(import.meta.dir, "..", "src", "editor-vm-globals.d.ts");
+// Read off the sync manifest rather than named: the fixture path carries the
+// pinned version, which a bump rotates.
 const PPRINT_FIXTURE = resolve(
   import.meta.dir,
   "..",
-  "fixtures",
-  "defold-1.13.0",
-  "editor_pprint_doc.json",
+  EDITOR_VM_MANIFEST.find((entry) => entry.namespace === "pprint")?.fixture as string,
 );
 
 // The hand-authored file exists to carry exactly what the emitter cannot

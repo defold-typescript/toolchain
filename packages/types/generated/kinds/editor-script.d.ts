@@ -1,6 +1,7 @@
 /// <reference types="lua-types/5.1" />
 import "../editor";
 import "../editor-vm/http";
+import "../editor-vm/image";
 import "../editor-vm/json";
 import "../editor-vm/localization";
 import "../editor-vm/zip";

@@ -18,7 +18,15 @@ changes are called out first because the toolchain is pre-1.0.
 
 ### Breaking
 
-- **The per-version upgrade page is now one evergreen guide.** [Upgrading Defold versions](./upgrading-defold-versions.md) replaces `upgrading-to-defold-1-13-0.md` with a version-agnostic runbook plus one section per release, so the old page's URL no longer resolves. The 1.13.0 migration notes are unchanged, just moved into that release's section.
+- **The pinned Defold target is now 1.13.1, and 1.13.0 is gone.** A patch release *replaces* its predecessor rather than sitting beside it, so `defold-1.13.0` is no longer a shipped API surface: `--defold-target 1.13.0` stops resolving and the `/api/defold-1.13.0/…` reference pages are retired. Move the pin to `1.13.1` — a project already on 1.13.0 needs no source migration. See [Pinning the Defold target](./pinning-defold-target.md).
+- **The per-version upgrade page is now one evergreen guide.** [Upgrading Defold versions](./upgrading-defold-versions.md) replaces `upgrading-to-defold-1-13-0.md` with a version-agnostic runbook plus one section per release, so the old page's URL no longer resolves. The 1.12.4 migration notes it carried are unchanged, now filed under the current release's section.
+
+### Improved
+
+- **Defold 1.13.1 brings two Lua API changes**, both additive — nothing was removed or deprecated:
+  - **[`collectionproxy.load`](/api/collectionproxy)** — loads and initializes a proxied collection, with the callback receiving `proxy_loading`, `proxy_ready` and `proxy_error`.
+  - **[`gui.set`](/api/gui)** — its `value` parameter now accepts `nil`, so a property can be cleared rather than only reassigned; existing calls are unaffected.
+- **[Editor scripts](./editor-scripts.md) gain the editor VM's `image` library** — `image.load_file`, then `image.size`, `image.pixel` and the `image.pixels` iterator over the loaded image.
 
 ## v0.25.0
 

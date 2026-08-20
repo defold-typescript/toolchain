@@ -1726,49 +1726,49 @@ declare global {
      * - `index` number index into array property (1 based)
      * - `key` hash name of internal property
      * @example
-     * ```ts
-     * // Updates the position property on an existing node:
-     * const node = gui.get_node("my_box_node");
-     * const node_position = gui.get(node, "position");
-     * gui.set(node, "position.x", node_position.x + 128);
+     * ```lua
+     * Updates the position property on an existing node:
+     * local node = gui.get_node("my_box_node")
+     * local node_position = gui.get(node, "position")
+     * gui.set(node, "position.x", node_position.x + 128)
      *
-     * // Updates the rotation property on an existing node:
-     * gui.set(node, "rotation", vmath.quat_rotation_z(math.rad(45)));
-     * // this is equivalent to:
-     * gui.set(node, "euler.z", 45);
-     * // or using the entire vector:
-     * gui.set(node, "euler", vmath.vector3(0, 0, 45));
-     * // or using the set_rotation
-     * gui.set_rotation(node, vmath.vector3(0, 0, 45));
+     * Updates the rotation property on an existing node:
+     * local node = gui.get_node("my_box_node")
+     * gui.set(node, "rotation", vmath.quat_rotation_z(math.rad(45)))
+     * -- this is equivalent to:
+     * gui.set(node, "euler.z", 45)
+     * -- or using the entire vector:
+     * gui.set(node, "euler", vmath.vector3(0,0,45))
+     * -- or using the set_rotation
+     * gui.set_rotation(node, vmath.vector3(0,0,45))
      *
-     * // Sets various material constants for a node:
-     * gui.set(node, "tint", vmath.vector4(1, 0, 0, 1));
-     * // matrix4 is also supported
-     * gui.set(node, "light_matrix", vmath.matrix4());
-     * // update a constant in an array at position 4. the array is specified in the shader as:
-     * // uniform vec4 tint_array[4]; // lua is 1 based, shader is 0 based
-     * gui.set(node, "tint_array", vmath.vector4(1, 0, 0, 1), { index: 4 });
-     * // update a matrix constant in an array at position 4. the array is specified in the shader as:
-     * // uniform mat4 light_matrix_array[4];
-     * gui.set(node, "light_matrix_array", vmath.matrix4(), { index: 4 });
-     * // update a sub-element in a constant
-     * gui.set(node, "tint.x", 1);
-     * // update a sub-element in an array constant at position 4
-     * gui.set(node, "tint_array.x", 1, { index: 4 });
+     * Sets various material constants for a node:
+     * local node = gui.get_node("my_box_node")
+     * gui.set(node, "tint", vmath.vector4(1,0,0,1))
+     * -- matrix4 is also supported
+     * gui.set(node, "light_matrix", vmath.matrix4())
+     * -- update a constant in an array at position 4. the array is specified in the shader as:
+     * -- uniform vec4 tint_array[4]; // lua is 1 based, shader is 0 based
+     * gui.set(node, "tint_array", vmath.vector4(1,0,0,1), { index = 4 })
+     * -- update a matrix constant in an array at position 4. the array is specified in the shader as:
+     * -- uniform mat4 light_matrix_array[4];
+     * gui.set(node, "light_matrix_array", vmath.matrix4(), { index = 4 })
+     * -- update a sub-element in a constant
+     * gui.set(node, "tint.x", 1)
+     * -- update a sub-element in an array constant at position 4
+     * gui.set(node, "tint_array.x", 1, {index = 4})
      *
-     * // Set a named property
-     * export default defineScript({
-     *   on_message(self, message_id, message) {
-     *     if (message_id === hash("set_font")) {
-     *       gui.set(msg.url(), "fonts", message.font, { key: "my_font_name" });
-     *       gui.set_font(gui.get_node("text"), "my_font_name");
-     *     } else if (message_id === hash("set_texture")) {
-     *       gui.set(msg.url(), "textures", message.texture, { key: "my_texture" });
-     *       gui.set_texture(gui.get_node("box"), "my_texture");
-     *       gui.play_flipbook(gui.get_node("box"), "logo_256");
-     *     }
-     *   },
-     * });
+     * Set a named property
+     * function on_message(self, message_id, message, sender)
+     *    if message_id == hash("set_font") then
+     *        gui.set(msg.url(), "fonts", message.font, {key = "my_font_name"})
+     *        gui.set_font(gui.get_node("text"), "my_font_name")
+     *    elseif message_id == hash("set_texture") then
+     *        gui.set(msg.url(), "textures", message.texture, {key = "my_texture"})
+     *        gui.set_texture(gui.get_node("box"), "my_texture")
+     *        gui.play_flipbook(gui.get_node("box"), "logo_256")
+     *    end
+     * end
      * ```
      */
     function set(node: Opaque<"node"> | Url, property: string | Hash | Opaque<"constant">, value: number | Vector4 | Vector3 | Quaternion, options?: { index?: number; key?: Hash }): void;

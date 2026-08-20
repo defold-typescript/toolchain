@@ -640,6 +640,7 @@ describe("editor VM module emit", () => {
   // shape started falling out unnoticed — that, not a shrink, is the signal now.
   const EMITTER_GAP: Readonly<Record<string, readonly string[]>> = {
     http: [],
+    image: [],
     json: [],
     localization: [],
     zip: [],
@@ -660,6 +661,7 @@ describe("editor VM module emit", () => {
   // a new upstream shape falling out.
   const DELIBERATE_SKIP: Readonly<Record<string, readonly string[]>> = {
     http: ["http.server.local_url", "http.server.port", "http.server.route", "http.server.url"],
+    image: [],
     json: ["json.decode", "json.encode"],
     localization: [],
     zip: [

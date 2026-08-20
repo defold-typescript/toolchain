@@ -2,6 +2,10 @@ import { describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import {
+  CURRENT_STABLE_DEFOLD_VERSION,
+  PREVIOUS_STABLE_DEFOLD_VERSION,
+} from "../packages/cli/src/defold-version.ts";
 import type { ApiPage } from "../packages/docs-site/app/lib/api-surface.ts";
 import type { ApiVersion } from "../packages/docs-site/app/lib/api-surface-loader.ts";
 import { buildReleaseRouteManifest } from "../packages/docs-site/app/lib/release-manifest.ts";
@@ -354,6 +358,36 @@ describe("evaluateReleaseReadiness", () => {
     }
   });
 
+  // A patch replaces its predecessor in place, so the version the import diffed
+  // against stops existing the moment the rotation lands. Requiring the manifest
+  // baseline to equal the *surviving* previous stable therefore reds forever on
+  // every patch bump, with nothing a maintainer can do to satisfy it. Staleness
+  // is still caught: a manifest left over from the previous import fails the
+  // `version` check above.
+  test("accepts an import baseline the current release replaced in place", () => {
+    const evidence = passingEvidence();
+    const result = evaluateReleaseReadiness({
+      ...evidence,
+      expected: { release: "1.13.1", baseline: "1.12.4" },
+      importManifest: { ...baseImportManifest(), version: "1.13.1", baseline: "defold-1.13.0" },
+    });
+
+    expect(result.problems.filter((p) => p.category === "import")).toEqual([]);
+  });
+
+  test("still rejects an import baseline from an unrelated release line", () => {
+    const evidence = passingEvidence();
+    const result = evaluateReleaseReadiness({
+      ...evidence,
+      expected: { release: "1.13.1", baseline: "1.12.4" },
+      importManifest: { ...baseImportManifest(), version: "1.13.1", baseline: "defold-1.11.0" },
+    });
+
+    expect(result.problems.map((p) => p.message)).toContain(
+      "import evidence stale: manifest baseline defold-1.11.0 != 1.12.4",
+    );
+  });
+
   test("rejects when the baseline id is absent from the required complete versions", () => {
     // The baseline disk fixture is missing, so it never enters the independently
     // derived required set — symmetric to the current-version check.
@@ -657,7 +691,10 @@ describe("collectTargets — physical committed-surface verification", () => {
   });
 
   test("regression lock: the real repo tree at HEAD reports ready", () => {
-    const evidence = collectEvidence(REPO_ROOT, { release: "1.13.0", baseline: "1.12.4" });
+    const evidence = collectEvidence(REPO_ROOT, {
+      release: CURRENT_STABLE_DEFOLD_VERSION,
+      baseline: PREVIOUS_STABLE_DEFOLD_VERSION,
+    });
     const result = evaluateReleaseReadiness(evidence);
     if (!result.ok) {
       throw new Error(`expected ready, got blockers:\n${JSON.stringify(result.problems, null, 2)}`);

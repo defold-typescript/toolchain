@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { loadCombinedSurface } from "../app/lib/api-surface-loader";
+import { loadCombinedSurface, versionsWithDiskFixtures } from "../app/lib/api-surface-loader";
 import { withBase } from "../app/lib/base";
 import { listGuidePages } from "../app/lib/guide-loader";
 import {
@@ -15,6 +15,11 @@ import {
 } from "./build-llms";
 
 const TYPES_DIR = join(import.meta.dir, "..", "..", "types");
+// Newest-first tracked versions, from the registry the builder itself reads.
+const TRACKED_VERSIONS = versionsWithDiskFixtures(TYPES_DIR).map((v) =>
+  v.id.replace(/^defold-/, ""),
+);
+const [NEWEST_VERSION, OLDEST_VERSION] = TRACKED_VERSIONS as [string, string];
 
 // The concatenated guide bodies in llms-full: from `## Guide` to `## API`.
 // The per-section `section()` helper stops at the next `## `, which now lands
@@ -292,8 +297,8 @@ describe("llms-full ## API serializes the Combined projection", () => {
   });
 
   test("tags each entry with compact machine-readable availability, only when not all-tracked", () => {
-    expect(api).toContain("[since 1.13.0]");
-    expect(api).toContain("[through 1.12.4]");
+    expect(api).toContain(`[since ${NEWEST_VERSION}]`);
+    expect(api).toContain(`[through ${OLDEST_VERSION}]`);
     // a universally-present symbol carries a bare signature with no availability tag
     expect(api).toMatch(/^- [^\n[]*;$/m);
   });
@@ -376,8 +381,7 @@ describe("llms-full header carries the Combined-surface agent contract", () => {
   const header = full.slice(0, full.indexOf("## Guide"));
 
   test("enumerates the tracked versions", () => {
-    expect(header).toContain("1.13.0");
-    expect(header).toContain("1.12.4");
+    for (const version of TRACKED_VERSIONS) expect(header).toContain(version);
   });
 
   test("instructs agents to resolve the target, filter by availability, and trust .defold-types", () => {

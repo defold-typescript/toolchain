@@ -32,12 +32,18 @@ describe("release model", () => {
     expect(classifyTransition("1.12.4", "1.13.0")).toBe("minor");
   });
 
+  // A fixed sample version, not `RELEASE_MODEL.current`: the path *shape* is the
+  // contract, and pinning it to the moving current version either needs an edit
+  // every bump or degrades into restating the template it is meant to check.
   test("fixtureDir yields the release-scoped fixtures path", () => {
-    expect(fixtureDir(RELEASE_MODEL.current)).toBe("fixtures/defold-1.13.0");
+    expect(fixtureDir("1.13.0")).toBe("fixtures/defold-1.13.0");
   });
 
-  test("promotedNamespacesFor(current) matches the former 1.13 constant", () => {
-    expect(promotedNamespacesFor(RELEASE_MODEL.current)).toEqual([
+  // Promotion is a property of the release that introduced a namespace, not of
+  // whichever release is current — 1.13.1 promoted nothing, and keying this on
+  // `current` would silently empty the expectation on the next patch.
+  test("promotedNamespacesFor(1.13.0) matches the former 1.13 constant", () => {
+    expect(promotedNamespacesFor("1.13.0")).toEqual([
       "b2d.chain",
       "b2d.fixture",
       "b2d.joint",
@@ -49,7 +55,7 @@ describe("release model", () => {
   });
 
   test("targetMetaFor returns the default surface shape for the current release", () => {
-    expect(targetMetaFor(RELEASE_MODEL.current, { isDefault: true })).toEqual({
+    expect(targetMetaFor("1.13.0", { isDefault: true })).toEqual({
       fixturesDir: "fixtures/defold-1.13.0",
       generatedDir: "generated",
       coreTypesImport: "../src/core-types",
@@ -79,9 +85,7 @@ describe("release model", () => {
     });
 
     test("promoted namespaces read by import-defold-release match the model", () => {
-      expect(promotedNamespacesFor(RELEASE_MODEL.current)).toEqual([
-        ...DEFOLD_1_13_PROMOTED_NAMESPACES,
-      ]);
+      expect(promotedNamespacesFor("1.13.0")).toEqual([...DEFOLD_1_13_PROMOTED_NAMESPACES]);
     });
 
     test("extension pins read by sync-api-docs match the model", () => {

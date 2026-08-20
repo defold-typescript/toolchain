@@ -53,7 +53,7 @@
       "returnvalues": [
         {
           "name": "response",
-          "doc": "HTTP response, a table with the following keys:<dl><dt><code>status <small>integer</small></code></dt><dd>response code</dd><dt><code>headers <small>table</small></code></dt><dd>response headers, a table where each key is a lower-cased string, and each value is either a string or an array of strings if the header was repeated</dd><dt><code>body <small>string, any, nil</small></code></dt><dd>response body, present only when <code>as</code> option was provided, either a string or a parsed json value</dd></dl>",
+          "doc": "HTTP response, a table with the following keys:<dl><dt><code>status <small>integer</small></code></dt><dd>response code</dd><dt><code>headers <small>table</small></code></dt><dd>response headers, a table where each key is a lower-cased string, and each value is either a string or an array of strings if the header was repeated</dd><dt><code>body <small>string, any, nil</small></code></dt><dd>response body, present only when <code>as</code> option was provided, either a string or a parsed json value</dd><dt><code>path <small>string, nil</small></code></dt><dd>resolved absolute destination path, present only after a successful response was written when the <code>path</code> option was provided</dd></dl>",
           "types": ["table"]
         }
       ],
@@ -61,7 +61,7 @@
         { "name": "url", "doc": "request URL", "types": ["string"], "is_optional": "False" },
         {
           "name": "opts",
-          "doc": "Additional request options, a table with the following keys:<dl><dt><code>method <small>string</small></code></dt><dd>request method, defaults to <code>\"GET\"</code></dd><dt><code>headers <small>table</small></code></dt><dd>request headers, a table with string keys and values</dd><dt><code>body <small>string</small></code></dt><dd>request body</dd><dt><code>as <small>string</small></code></dt><dd>response body converter, either <code>\"string\"</code> or <code>\"json\"</code></dd></dl>",
+          "doc": "Additional request options, a table with the following keys:<dl><dt><code>method <small>string</small></code></dt><dd>request method, defaults to <code>\"GET\"</code></dd><dt><code>headers <small>table</small></code></dt><dd>request headers, a table with string keys and values</dd><dt><code>body <small>string</small></code></dt><dd>request body</dd><dt><code>as <small>string</small></code></dt><dd>response body converter, either <code>\"string\"</code> or <code>\"json\"</code>; mutually exclusive with <code>path</code></dd><dt><code>path <small>string</small></code></dt><dd>destination file path, resolved against project root if relative; mutually exclusive with <code>as</code></dd></dl>",
           "types": ["table"],
           "is_optional": "True"
         }
@@ -265,7 +265,7 @@
     "name": "Editor",
     "brief": "Editor scripting documentation",
     "description": "Editor scripting documentation",
-    "path": "engine/docs/editor.apidoc",
+    "path": "",
     "file": "",
     "notes": [],
     "language": "Lua"

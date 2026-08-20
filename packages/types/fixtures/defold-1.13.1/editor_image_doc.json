@@ -1,0 +1,128 @@
+{
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "image.load_file",
+      "brief": "load an image file for reading",
+      "description": "Load an image file for reading",
+      "returnvalues": [{ "name": "image", "doc": "image userdata", "types": ["image"] }],
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "External file path, resolved against project root if relative",
+          "types": ["string"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "image.size",
+      "brief": "return the width and height of a loaded image.",
+      "description": "Return the width and height of a loaded image.",
+      "returnvalues": [
+        { "name": "width", "doc": "image width in pixels", "types": ["integer"] },
+        { "name": "height", "doc": "image height in pixels", "types": ["integer"] }
+      ],
+      "parameters": [
+        {
+          "name": "image",
+          "doc": "image userdata returned by <code>image.load_file()</code>",
+          "types": ["image"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "image.pixel",
+      "brief": "return the color of a pixel from a loaded image.",
+      "description": "Return the color of a pixel from a loaded image.\nCoordinates are 1-based, with <code>1, 1</code> at the top-left corner.",
+      "returnvalues": [
+        { "name": "r", "doc": "red channel, 0-255", "types": ["integer"] },
+        { "name": "g", "doc": "green channel, 0-255", "types": ["integer"] },
+        { "name": "b", "doc": "blue channel, 0-255", "types": ["integer"] },
+        { "name": "a", "doc": "alpha channel, 0-255", "types": ["integer"] }
+      ],
+      "parameters": [
+        {
+          "name": "image",
+          "doc": "image userdata returned by <code>image.load_file()</code>",
+          "types": ["image"],
+          "is_optional": "False"
+        },
+        {
+          "name": "x",
+          "doc": "1-based horizontal pixel coordinate",
+          "types": ["integer"],
+          "is_optional": "False"
+        },
+        {
+          "name": "y",
+          "doc": "1-based vertical pixel coordinate",
+          "types": ["integer"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "image.pixels",
+      "brief": "iterate over pixels in a loaded image.",
+      "description": "Iterate over pixels in a loaded image.\nThe iterator returns pixels row by row from top-left to bottom-right. Coordinates are 1-based.",
+      "returnvalues": [
+        {
+          "name": "iterator",
+          "doc": "iterator function returning <code>x, y, r, g, b, a</code> for each pixel",
+          "types": ["function"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "image",
+          "doc": "image userdata returned by <code>image.load_file()</code>",
+          "types": ["image"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">local</span><span class=\"w\"> </span><span class=\"n\">img</span><span class=\"w\"> </span><span class=\"o\">=</span><span class=\"w\"> </span><span class=\"n\">image</span><span class=\"o\">.</span><span class=\"n\">load_file</span><span class=\"p\">(</span><span class=\"s2\">&quot;assets/source.png&quot;</span><span class=\"p\">)</span><span class=\"w\"></span>\n<span class=\"n\">local</span><span class=\"w\"> </span><span class=\"n\">width</span><span class=\"p\">,</span><span class=\"w\"> </span><span class=\"n\">height</span><span class=\"w\"> </span><span class=\"o\">=</span><span class=\"w\"> </span><span class=\"n\">image</span><span class=\"o\">.</span><span class=\"n\">size</span><span class=\"p\">(</span><span class=\"n\">img</span><span class=\"p\">)</span><span class=\"w\"></span>\n<span class=\"k\">for</span><span class=\"w\"> </span><span class=\"n\">x</span><span class=\"p\">,</span><span class=\"w\"> </span><span class=\"n\">y</span><span class=\"p\">,</span><span class=\"w\"> </span><span class=\"n\">r</span><span class=\"p\">,</span><span class=\"w\"> </span><span class=\"n\">g</span><span class=\"p\">,</span><span class=\"w\"> </span><span class=\"n\">b</span><span class=\"p\">,</span><span class=\"w\"> </span><span class=\"n\">a</span><span class=\"w\"> </span><span class=\"ow\">in</span><span class=\"w\"> </span><span class=\"n\">image</span><span class=\"o\">.</span><span class=\"n\">pixels</span><span class=\"p\">(</span><span class=\"n\">img</span><span class=\"p\">)</span><span class=\"w\"> </span><span class=\"n\">do</span><span class=\"w\"></span>\n<span class=\"w\">  </span><span class=\"nb\">print</span><span class=\"p\">(</span><span class=\"n\">x</span><span class=\"p\">,</span><span class=\"w\"> </span><span class=\"n\">y</span><span class=\"p\">,</span><span class=\"w\"> </span><span class=\"n\">r</span><span class=\"p\">,</span><span class=\"w\"> </span><span class=\"n\">g</span><span class=\"p\">,</span><span class=\"w\"> </span><span class=\"n\">b</span><span class=\"p\">,</span><span class=\"w\"> </span><span class=\"n\">a</span><span class=\"p\">)</span><span class=\"w\"></span>\n<span class=\"n\">end</span><span class=\"w\"></span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "image",
+    "name": "Editor",
+    "brief": "Editor scripting documentation",
+    "description": "Editor scripting documentation",
+    "path": "",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  }
+}
