@@ -122,6 +122,27 @@ describe("renderMarkdown", () => {
     expect(html).toMatch(/<a class="heading-anchor"[^>]*href="#sub-one"/);
   });
 
+  // The upgrade guide nests each release's per-symbol notes at h4 beneath one
+  // `## Defold <version>` heading. Without an id at that depth the symbol notes
+  // render unaddressable: no permalink, no TOC target, and nothing for a
+  // cross-reference to point at.
+  test("mints an id and a permalink for h4 headings", async () => {
+    const html = await renderMarkdown("#### liveupdate.add_mount\n");
+    expect(html).toMatch(/<h4[^>]*id="liveupdateadd_mount"/);
+    expect(html).toMatch(/<a class="heading-anchor"[^>]*href="#liveupdateadd_mount"/);
+  });
+
+  test("disambiguates duplicate h4 ids the same way as h2", async () => {
+    const html = await renderMarkdown("#### Same\n\n#### Same\n");
+    expect(html).toMatch(/<h4[^>]*id="same"/);
+    expect(html).toMatch(/<h4[^>]*id="same-1"/);
+  });
+
+  test("h5 stays unminted, so the depth cut is deliberate rather than unbounded", async () => {
+    const html = await renderMarkdown("##### Deep\n");
+    expect(html).not.toMatch(/<h5[^>]*id=/);
+  });
+
   test("rewrites a relative .md cross-link to its site route", async () => {
     const html = await renderMarkdown("[gs](getting-started.md)\n");
     expect(html).toMatch(/href="\/getting-started"/);

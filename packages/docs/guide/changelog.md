@@ -18,8 +18,8 @@ changes are called out first because the toolchain is pre-1.0.
 
 ### Breaking
 
-- **The pinned Defold target is now 1.13.1, and 1.13.0 is gone.** A patch release *replaces* its predecessor rather than sitting beside it, so `defold-1.13.0` is no longer a shipped API surface: `--defold-target 1.13.0` stops resolving and the `/api/defold-1.13.0/…` reference pages are retired. Move the pin to `1.13.1` — a project already on 1.13.0 needs no source migration. See [Pinning the Defold target](./pinning-defold-target.md).
-- **The per-version upgrade page is now one evergreen guide.** [Upgrading Defold versions](./upgrading-defold-versions.md) replaces `upgrading-to-defold-1-13-0.md` with a version-agnostic runbook plus one section per release, so the old page's URL no longer resolves. The 1.12.4 migration notes it carried are unchanged, now filed under the current release's section.
+- **The pinned Defold target is now 1.13.1, and 1.13.0 is gone.** A patch release *replaces* its predecessor rather than sitting beside it, so `defold-1.13.0` is no longer a shipped API surface: `--defold-target 1.13.0` stops resolving and the `/api/defold-1.13.0/…` reference pages are retired. Move the pin to `1.13.1` — a project already on 1.13.0 needs no source migration, and a project on 1.12.4 still migrates through the 1.13.0 notes, which stay under their own heading. See [Pinning the Defold target](./pinning-defold-target.md).
+- **The per-version upgrade page is now one evergreen guide.** [Upgrading Defold versions](./upgrading-defold-versions.md) replaces `upgrading-to-defold-1-13-0.md` with a version-agnostic runbook plus one `## Defold <version>` section per release, each keeping that release's own "what changed" notes, so the old page's URL no longer resolves.
 
 ### Improved
 

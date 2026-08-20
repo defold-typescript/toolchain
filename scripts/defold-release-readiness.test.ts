@@ -800,7 +800,7 @@ describe("the migration guide is read one release section at a time", () => {
   function problemsWith(root: string): string[] {
     const evidence: ReadinessEvidence = {
       ...passingEvidence(),
-      migrationGuide: collectMigrationGuide(root, "1.13.0"),
+      migrationGuide: collectMigrationGuide(root, "1.13.0", "1.12.4"),
     };
     return evaluateReleaseReadiness(evidence)
       .problems.filter((p) => p.category === "migration-guide")
@@ -836,6 +836,53 @@ describe("the migration guide is read one release section at a time", () => {
     );
   });
 
+  // A patch replaces its predecessor as a *surface*, but that predecessor is still
+  // a real release a baseline project migrates through. With baseline 1.12.4 and
+  // current 1.13.1, the hop spans both 1.13.0 and 1.13.1, so each release keeps
+  // its own notes and the gate reads their union — rather than forcing every
+  // older release's changes to be relabelled under the current version.
+  function problemsSpanning(root: string, baseline: string, release: string): string[] {
+    const evidence: ReadinessEvidence = {
+      ...passingEvidence(),
+      expected: { release, baseline },
+      availability: { ...passingEvidence().availability, current: release, baseline } as never,
+      migrationGuide: collectMigrationGuide(root, release, baseline),
+    };
+    return evaluateReleaseReadiness(evidence)
+      .problems.filter((p) => p.category === "migration-guide")
+      .map((p) => p.message);
+  }
+
+  test("a release between the baseline and the current one is coverage", () => {
+    withGuide(
+      guideWith([
+        { version: "1.12.4", body: "### something.else\n\nOlder note." },
+        {
+          version: "1.13.0",
+          body: "### liveupdate.add_mount\n\nRe-signatured.\n\n### model.material\n\nRemoved.",
+        },
+        { version: "1.13.1", body: "### gui.set\n\nWidened." },
+      ]),
+      (root) => {
+        expect(problemsSpanning(root, "1.12.4", "1.13.1")).toEqual([]);
+      },
+    );
+  });
+
+  test("the baseline's own section is still not coverage for the hop away from it", () => {
+    withGuide(
+      guideWith([
+        { version: "1.12.4", body: "### model.material\n\nRetired here." },
+        { version: "1.13.1", body: "### liveupdate.add_mount\n\nRe-signatured." },
+      ]),
+      (root) => {
+        expect(problemsSpanning(root, "1.12.4", "1.13.1")).toEqual([
+          "removed symbol model.material has no migration-guide heading",
+        ]);
+      },
+    );
+  });
+
   test("a page carrying no section for the current release is evidence absent", () => {
     withGuide(
       guideWith([
@@ -845,7 +892,7 @@ describe("the migration guide is read one release section at a time", () => {
         },
       ]),
       (root) => {
-        expect(collectMigrationGuide(root, "1.13.0")).toBeNull();
+        expect(collectMigrationGuide(root, "1.13.0", "1.12.4")).toBeNull();
         expect(problemsWith(root)).toEqual(["migration-guide evidence absent: no migration guide"]);
       },
     );
@@ -868,7 +915,7 @@ describe("the migration guide is read one release section at a time", () => {
   test("a missing guide file is evidence absent for both collectors", () => {
     const root = mkdtempSync(join(tmpdir(), "readiness-guide-none-"));
     try {
-      expect(collectMigrationGuide(root, "1.13.0")).toBeNull();
+      expect(collectMigrationGuide(root, "1.13.0", "1.12.4")).toBeNull();
       expect(collectDocs(root, "1.13.0", "1.12.4")).toBeNull();
     } finally {
       rmSync(root, { recursive: true, force: true });
