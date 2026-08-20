@@ -104,6 +104,45 @@ function disambiguatedAnchors(html: string): Heading[] {
   return pageHeadings(html).filter((h) => h.level !== 3 && h.id !== slugify(h.text));
 }
 
+// Every slug that names a symbol this guide documents, page-wide: the typed
+// identity catalog the suite already reads, unioned with the `no-action` markers
+// that classify the identities outside it. A symbol is a symbol wherever it is
+// documented, so the union is not scoped per release.
+function symbolSlugs(): Set<string> {
+  const slugs = new Set(availabilityDoc().records.map((r) => slugify(qualifiedName(r))));
+  for (const match of guideBody.matchAll(/<!--\s*no-action:\s*([^\s]+)\s*-->/g)) {
+    slugs.add(slugify(match[1] ?? ""));
+  }
+  return slugs;
+}
+
+// Each release section's heading levels checked against the role every heading
+// plays: one h2 wrapper opening the section, h4 for a note naming a documented
+// symbol, h3 for every other heading — the topics, defined as the complement so
+// no restated title list sits between the page and its gate. Returns one message
+// per defect naming the version, the heading and both levels, so a red says what
+// to move where; empty when the section nests correctly.
+function headingHierarchyDefects(html: string, symbols: Set<string>): string[] {
+  const defects: string[] = [];
+  for (const { version, body } of releaseSections(html)) {
+    const [wrapper, ...rest] = pageHeadings(body);
+    if (wrapper?.level !== 2 || wrapper.text !== `Defold ${version}`) {
+      defects.push(
+        wrapper
+          ? `${version}: "${wrapper.text}" is h${wrapper.level}, expected the section to open with an h2 wrapper`
+          : `${version}: the section has no headings, expected an h2 \`Defold ${version}\` wrapper`,
+      );
+    }
+    for (const heading of rest) {
+      const want = symbols.has(slugify(heading.text)) ? 4 : 3;
+      if (heading.level !== want) {
+        defects.push(`${version}: "${heading.text}" is h${heading.level}, expected h${want}`);
+      }
+    }
+  }
+  return defects;
+}
+
 // Two release sections shaped exactly as the page shapes them, so a fixture
 // exercises the same renderer path as the real guide. Blank lines around each
 // marker keep it its own html_block, which is what `releaseSections` looks for.
@@ -226,6 +265,74 @@ describe("upgrading-defold-versions guide", () => {
     expect(ids).toContain("modelmaterial");
   });
 
+  // Heading depth is the page's structure contract, not decoration: the h2 wrapper
+  // owns a release, an h3 groups a topic inside it, and an h4 is the stable
+  // per-symbol anchor a permalink and the TOC's deepest tier point at. A note
+  // authored one tier off still renders, still slugs, and still passes every
+  // uniqueness check above — while landing in the wrong place in the reader's
+  // navigation. These read the role from production data, so the check holds for
+  // headings nobody has written yet.
+  test("every release section on the rendered page nests wrapper, topic and symbol", () => {
+    const symbols = symbolSlugs();
+    expect(symbols.size).toBeGreaterThan(0);
+    expect(releaseSections(guideHtml).length).toBeGreaterThan(0);
+    expect(headingHierarchyDefects(guideHtml, symbols)).toEqual([]);
+  });
+
+  test("a topic heading demoted to h4 is rejected", async () => {
+    const html = await renderMarkdown(
+      twoReleaseFixture(
+        "#### Added Lua APIs\n\n#### collectionproxy.load",
+        "### Changed Lua API signatures\n\n#### gui.set",
+      ),
+    );
+    expect(headingHierarchyDefects(html, symbolSlugs())).toEqual([
+      '1.13.0: "Added Lua APIs" is h4, expected h3',
+    ]);
+  });
+
+  test("a symbol note promoted to h3 is rejected", async () => {
+    const html = await renderMarkdown(
+      twoReleaseFixture(
+        "### Added Lua APIs\n\n### collectionproxy.load",
+        "### Changed Lua API signatures\n\n#### gui.set",
+      ),
+    );
+    expect(headingHierarchyDefects(html, symbolSlugs())).toEqual([
+      '1.13.0: "collectionproxy.load" is h3, expected h4',
+    ]);
+  });
+
+  test("a release wrapper demoted to h3 is rejected", async () => {
+    const html = await renderMarkdown(
+      [
+        "<!-- release: 1.13.0 -->",
+        "",
+        "### Defold 1.13.0",
+        "",
+        "### Added Lua APIs",
+        "",
+        "#### collectionproxy.load",
+        "",
+      ].join("\n"),
+    );
+    expect(headingHierarchyDefects(html, symbolSlugs())).toEqual([
+      '1.13.0: "Defold 1.13.0" is h3, expected the section to open with an h2 wrapper',
+    ]);
+  });
+
+  // The latitude the gate must keep: topics are structure, so the same topic
+  // heading legitimately opens a group under every release that needs it. A check
+  // reaching for page-wide topic uniqueness would red the real page.
+  test("one topic heading repeating across releases over distinct symbols is accepted", async () => {
+    const html = await renderMarkdown(
+      twoReleaseFixture(
+        "### Changed Lua API signatures\n\n#### liveupdate.add_mount",
+        "### Changed Lua API signatures\n\n#### gui.set",
+      ),
+    );
+    expect(headingHierarchyDefects(html, symbolSlugs())).toEqual([]);
+  });
   test("is registered in the Guides navigation under Project configuration", () => {
     const groups = groupGuidePages(listGuidePages(GUIDE_DIR));
     const projectConfig = groups.find((g) => g.id === "project-configuration");
