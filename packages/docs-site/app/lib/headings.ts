@@ -1,19 +1,22 @@
 /**
- * Extract the H2 / H3 headings from a rendered HTML body for the right-side
- * table of contents. We deliberately limit the depth to H2/H3 — a docs site
- * rarely needs deeper nesting, and a flatter TOC reads better on small
- * screens. Headings inside `<pre>` blocks are ignored (they come from code).
+ * Extract the H2 / H3 / H4 headings from a rendered HTML body for the right-side
+ * table of contents. The depth stops at H4 — deeper nesting reads badly on small
+ * screens, and no page authors it. The fourth tier exists because the upgrade
+ * guide nests each release's per-symbol notes beneath one `## Defold <version>`
+ * heading, which pushes the symbols a reader actually searches for to H4; a TOC
+ * cut at H3 would list every release and topic but no symbol. Headings inside
+ * `<pre>` blocks are ignored (they come from code).
  */
 export interface Heading {
   /** Heading text, trimmed. */
   text: string;
   /** Slug used as the `id` attribute on the rendered heading. */
   id: string;
-  /** Heading level (2 or 3). */
-  level: 2 | 3;
+  /** Heading level (2, 3 or 4). */
+  level: 2 | 3 | 4;
 }
 
-const HEADING_RE = /<h([23])(\s+[^>]*)?>([\s\S]*?)<\/h\1>/gi;
+const HEADING_RE = /<h([234])(\s+[^>]*)?>([\s\S]*?)<\/h\1>/gi;
 const TAG_RE = /<[^>]+>/g;
 const ID_RE = /\sid="([^"]+)"/i;
 const NAMED_ENTITY: Record<string, string> = {

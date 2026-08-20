@@ -16,7 +16,7 @@ import {
   type ReleaseRouteManifest,
   validateReleaseRouteManifest,
 } from "../packages/docs-site/app/lib/release-manifest.ts";
-import { releaseSection } from "../packages/docs-site/app/lib/upgrade-guide.ts";
+import { releaseSection, releaseSections } from "../packages/docs-site/app/lib/upgrade-guide.ts";
 import { searchIndexOutputs } from "../packages/docs-site/scripts/build-search-index.ts";
 import { symbolIndexOutputs } from "../packages/docs-site/scripts/build-symbol-index.ts";
 import {
@@ -130,6 +130,18 @@ export interface ReadinessEvidence {
 }
 
 const stripSurfacePrefix = (value?: string): string => (value ?? "").replace(/^defold-/, "");
+
+// Numeric major.minor.patch ordering; a malformed part sorts as 0 rather than
+// throwing, so a stray marker cannot take the whole gate down.
+function compareVersions(a: string, b: string): number {
+  const parts = (v: string) => v.split(".").map((n) => Number.parseInt(n, 10) || 0);
+  const [x, y] = [parts(a), parts(b)];
+  for (let i = 0; i < 3; i++) {
+    const d = (x[i] ?? 0) - (y[i] ?? 0);
+    if (d !== 0) return d;
+  }
+  return 0;
+}
 
 export function evaluateReleaseReadiness(evidence: ReadinessEvidence): ReadinessResult {
   const problems: ReadinessProblem[] = [];
@@ -609,15 +621,39 @@ function regenerateTargetDeclarations(
   }
 }
 
+// Every release section covering the hop a baseline project actually makes:
+// `baseline < version <= release`. A patch replaces its predecessor as a
+// *surface*, but that predecessor is still a real release whose changes a
+// baseline project migrates through, so its notes stay filed under its own
+// version and count as evidence here. Scoping to the current release alone would
+// force every older release's changes to be relabelled under the current
+// version, destroying the per-version history this page exists to keep. The
+// baseline's own section is excluded: it documents arriving at the baseline, not
+// leaving it.
+function guideSpanText(root: string, release: string, baseline: string): string[] {
+  const text = readText(guidePath(root));
+  if (text === null) return [];
+  return releaseSections(text)
+    .filter(
+      (section) =>
+        compareVersions(section.version, baseline) > 0 &&
+        compareVersions(section.version, release) <= 0,
+    )
+    .map((section) => section.body);
+}
+
 export function collectMigrationGuide(
   root: string,
   release: string,
+  baseline: string,
 ): MigrationGuideEvidence | null {
-  const text = guideReleaseText(root, release);
-  if (text === null) {
+  const bodies = guideSpanText(root, release, baseline);
+  if (bodies.length === 0) {
     return null;
   }
-  const headings = [...text.matchAll(/^#{2,4}\s+(.+?)\s*$/gm)].map((m) => m[1] ?? "");
+  const headings = bodies.flatMap((body) =>
+    [...body.matchAll(/^#{2,5}\s+(.+?)\s*$/gm)].map((m) => m[1] ?? ""),
+  );
   return { headings };
 }
 
@@ -714,7 +750,7 @@ export function collectEvidence(
     importManifest: collectImportManifest(root, expected.release),
     availability: collectAvailability(root),
     targets: collectTargets(root),
-    migrationGuide: collectMigrationGuide(root, expected.release),
+    migrationGuide: collectMigrationGuide(root, expected.release, expected.baseline),
     docs: collectDocs(root, expected.release, expected.baseline),
     matrix: collectMatrix(),
   };
