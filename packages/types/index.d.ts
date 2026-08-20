@@ -61,13 +61,16 @@ export {
   type ApiSymbolIdentity,
   type AvailabilityLabel,
   type AvailabilityLabelKind,
+  type AvailabilityLabelOptions,
   availabilityLabel,
   deriveAvailabilityMatrix,
   groupByLogicalName,
   isSignatureTransition,
   type LogicalNameGroup,
   normalizedFunctionSignature,
+  signatureTransitionNames,
   symbolIdentityKey,
+  symbolNameKey,
   type VersionSurface,
 } from "./src/api-availability";
 export type { ApiFunction, ApiModule, ApiParameter, ApiVariable } from "./src/api-doc";

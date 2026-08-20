@@ -9,6 +9,7 @@ import {
   normalizedFunctionSignature,
   parseDefoldApiDoc,
   type SignatureStore,
+  signatureTransitionNames,
   symbolIdentityKey,
 } from "@defold-typescript/types";
 import { canonicalApiPages } from "./api-content";
@@ -2870,6 +2871,7 @@ describe("availability join", () => {
     return {
       versions: AV_VERSIONS,
       records: new Map(records.map((r) => [symbolIdentityKey(r.identity), r])),
+      transitions: signatureTransitionNames(records, AV_VERSIONS),
     };
   }
 
@@ -2917,7 +2919,10 @@ describe("availability join", () => {
 
   test("no availability lookup leaves every symbol unlabelled", () => {
     const symbols = apiModuleSymbols(
-      pageWith({ functions: [fooOverloadA] }, { versions: [], records: new Map() }),
+      pageWith(
+        { functions: [fooOverloadA] },
+        { versions: [], records: new Map(), transitions: new Set() },
+      ),
     );
     expect(symbols[0]?.availability).toBeUndefined();
   });
@@ -2935,7 +2940,7 @@ describe("availability join", () => {
       },
     ]);
     const md = apiModuleMarkdown(pageWith({ functions: [fooOverloadA] }, availability));
-    expect(md).toContain("Available through Defold 1.12.4");
+    expect(md).toContain("Removed in Defold 1.13.0");
   });
 
   test("the real default surface joins a newest-version-only symbol onto its b2d.body page", () => {
