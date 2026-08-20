@@ -6,10 +6,10 @@ import {
   type ApiVariable,
   type AvailabilityLabel,
   availabilityLabel,
-  groupByLogicalName,
-  isSignatureTransition,
   normalizedFunctionSignature,
+  signatureTransitionNames,
   symbolIdentityKey,
+  symbolNameKey,
 } from "@defold-typescript/types";
 import { type ApiPage, type AvailabilityLookup, badgeCategoryFromLabel } from "./api-surface";
 
@@ -300,10 +300,6 @@ function availableWithDeprecation(
   return versions.filter((version) => covered.has(version));
 }
 
-function nameKey(id: Pick<ApiSymbolIdentity, "namespace" | "kind" | "name">): string {
-  return `${id.namespace} ${id.kind} ${id.name}`;
-}
-
 function memberIdentity(namespace: string, kind: string, name: string): ApiSymbolIdentity {
   return { namespace, kind, name, signature: "" };
 }
@@ -427,10 +423,7 @@ export function buildCombinedSurface(input: BuildCombinedSurfaceInput): Combined
       nonUniversal.push({ identity: record.identity, availableIn: record.availableIn });
     }
   }
-  const transitionNames = new Set<string>();
-  for (const group of groupByLogicalName(nonUniversal, versions)) {
-    if (isSignatureTransition(group, versions)) transitionNames.add(nameKey(group));
-  }
+  const transitionNames = signatureTransitionNames(nonUniversal, versions);
 
   const oldestIndex = (key: string): number =>
     (presence.get(key)?.availableIn ?? []).reduce(
@@ -458,12 +451,13 @@ export function buildCombinedSurface(input: BuildCombinedSurfaceInput): Combined
     const newest = versions.find((version) => presenceIn.includes(version)) ?? versions[0] ?? "";
     const facts = curatedFacts(overlayRecords?.get(key));
     const availableIn = availableWithDeprecation(presenceIn, facts.deprecatedSince, versions);
+    const transition = transitionNames.has(symbolNameKey(identity));
     return {
       identity,
       authoritativeSignature: input.signatures.versions[newest]?.[key] ?? "",
       availableIn,
-      label: availabilityLabel(availableIn, versions),
-      transition: transitionNames.has(nameKey(identity)),
+      label: availabilityLabel(availableIn, versions, { transition }),
+      transition,
       ...facts,
     };
   };
@@ -512,7 +506,7 @@ export function buildCombinedSurface(input: BuildCombinedSurfaceInput): Combined
         properties,
         typedefs,
       },
-      availability: { versions, records },
+      availability: { versions, records, transitions: transitionNames },
       entries: identities.map(entryFor),
     });
   }

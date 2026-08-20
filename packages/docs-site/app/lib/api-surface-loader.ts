@@ -4,6 +4,7 @@ import {
   type ApiAvailability,
   parseDefoldApiDoc,
   type SignatureStore,
+  signatureTransitionNames,
   symbolIdentityKey,
   type TranslationStore,
 } from "@defold-typescript/types";
@@ -70,6 +71,7 @@ function loadAvailability(typesDir: string): AvailabilityLookup | undefined {
   return {
     versions,
     records: new Map(records.map((record) => [symbolIdentityKey(record.identity), record])),
+    transitions: signatureTransitionNames(records, versions),
   };
 }
 

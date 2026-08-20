@@ -4,6 +4,7 @@ import {
   type ApiAvailability,
   type ApiFunction,
   normalizedFunctionSignature,
+  signatureTransitionNames,
   symbolIdentityKey,
 } from "@defold-typescript/types";
 import { LibraryHeading } from "../routes/api/[namespace]";
@@ -799,6 +800,7 @@ describe("availability badges", () => {
     return {
       versions: VERSIONS,
       records: new Map(records.map((r) => [symbolIdentityKey(r.identity), r])),
+      transitions: signatureTransitionNames(records, VERSIONS),
     };
   }
 
@@ -856,13 +858,44 @@ describe("availability badges", () => {
     expect(md).toContain('aria-label="Availability"');
   });
 
-  test("renders deprecated-since and through-oldest span badges", () => {
+  // Slice one symbol's rendered block out of the page so a position comparison
+  // cannot be satisfied by another symbol's markup.
+  const blockOf = (md: string, headingPrefix: string): string => {
+    const start = md.indexOf(headingPrefix);
+    if (start < 0) throw new Error(`no symbol block for ${headingPrefix}`);
+    const next = md.indexOf("\n### ", start + headingPrefix.length);
+    return next < 0 ? md.slice(start) : md.slice(start, next);
+  };
+
+  test("opens a symbol body with the availability note, ahead of its description", () => {
+    const md = apiPageMarkdown(
+      modelPage(material, { availableIn: ["1.12.4"], deprecatedSince: "1.12.0" }),
+      noLink,
+    );
+    const block = blockOf(md, "### `model.material");
+    const note = block.indexOf('<div class="api-availability"');
+    const description = block.indexOf("Old material accessor.");
+    expect(note).toBeGreaterThan(-1);
+    expect(description).toBeGreaterThan(-1);
+    expect(note).toBeLessThan(description);
+  });
+
+  test("a symbol carrying no note still opens its body with the description", () => {
+    const md = apiPageMarkdown(modelPage(material, { availableIn: VERSIONS }), noLink);
+    const block = blockOf(md, "### `model.material");
+    expect(block).not.toContain('<div class="api-availability"');
+    const bodyOpen = block.indexOf('<div class="api-symbol-body">');
+    const description = block.indexOf("Old material accessor.");
+    expect(block.slice(bodyOpen, description).trim()).toBe('<div class="api-symbol-body">');
+  });
+
+  test("renders deprecated-since and removed-in span badges", () => {
     const md = apiPageMarkdown(
       modelPage(material, { availableIn: ["1.12.4"], deprecatedSince: "1.12.0" }),
       noLink,
     );
     expect(md).toContain("Deprecated since 1.12.0");
-    expect(md).toContain("Available through Defold 1.12.4");
+    expect(md).toContain("Removed in Defold 1.13.0");
   });
 
   // The version-keyed engine wording stays authoritative: a symbol carrying both
@@ -926,7 +959,7 @@ describe("availability badges", () => {
 
   test("a symbol with no availability record renders no badge block", () => {
     const page = modelPage(material, { availableIn: VERSIONS });
-    page.availability = { versions: VERSIONS, records: new Map() };
+    page.availability = { versions: VERSIONS, records: new Map(), transitions: new Set() };
     const md = apiPageMarkdown(page, noLink);
     expect(md).not.toContain('aria-label="Availability"');
   });
@@ -1032,6 +1065,7 @@ describe("availability badges", () => {
             { identity, availableIn: ["1.13.0"], deprecatedSince: "1.13.0" },
           ],
         ]),
+        transitions: new Set(),
       },
     });
     const ns = combined.namespaces.find((n) => n.namespace === "model");
@@ -1602,6 +1636,22 @@ describe("apiPageMarkdown deprecation from the api-doc tag", () => {
     );
   });
 
+  test("opens the symbol body with a source-tag-only note, ahead of the description", () => {
+    const md = apiPageMarkdown(
+      libraryPage({
+        name: "player_get_id",
+        description: "Library function.",
+        deprecated: "Use `player_get_unique_id` instead.",
+      }),
+      noLink,
+    );
+    const note = md.indexOf('<div class="api-availability"');
+    const description = md.indexOf("Library function.");
+    expect(note).toBeGreaterThan(-1);
+    expect(description).toBeGreaterThan(-1);
+    expect(note).toBeLessThan(description);
+  });
+
   test("renders no availability block when the symbol carries neither fact", () => {
     const md = apiPageMarkdown(libraryPage({ name: "current_thing" }), noLink);
     expect(md).not.toContain('aria-label="Availability"');
@@ -1625,6 +1675,7 @@ describe("apiPageMarkdown deprecation from the api-doc tag", () => {
     const availability: AvailabilityLookup = {
       versions: ["1.13.0", "1.12.4"],
       records: new Map([[symbolIdentityKey(identity), { identity, ...record }]]),
+      transitions: new Set(),
     };
     return { ...page, availability };
   }

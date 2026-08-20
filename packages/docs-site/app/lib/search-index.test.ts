@@ -308,18 +308,18 @@ describe("apiSearchRecords", () => {
     expect(body).toBeDefined();
     expect(body?.text).toContain(`Since Defold ${NEWEST_VERSION}`);
 
-    // `model.material` is available through 1.12.4 only, so the canonical surface
-    // neither renders it nor carries its through-oldest badge.
+    // `model.material` is present through 1.12.4 only, so the canonical surface
+    // neither renders it nor carries its removed-in badge.
     const defaultModel = defaultRecords.find((r) => r.title === "model API");
     expect(defaultModel).toBeDefined();
-    expect(defaultModel?.text).not.toContain("Available through Defold 1.12.4");
+    expect(defaultModel?.text).not.toContain("Removed in Defold");
 
     const historicalRecords = apiSearchRecords(
       loadApiSurfaceForVersion(REAL_TYPES_DIR, "defold-1.12.4"),
     );
     const historicalModel = historicalRecords.find((r) => r.title === "model API");
     expect(historicalModel).toBeDefined();
-    expect(historicalModel?.text).toContain("Available through Defold 1.12.4");
+    expect(historicalModel?.text).toContain("Removed in Defold 1.13.1");
   });
 });
 
@@ -352,7 +352,7 @@ describe("combinedSearchRecords", () => {
     const compute = records.find((r) => r.route === "/api/compute");
     expect(compute?.text).toContain(`Since Defold ${NEWEST_VERSION}`);
     const live = records.find((r) => r.route === "/api/liveupdate");
-    expect(live?.text).toContain("Available through Defold 1.12.4");
+    expect(live?.text).toContain(`Signature changed in Defold ${NEWEST_VERSION}`);
   });
 
   test("threads a verified upstream deprecation into the Combined search text", () => {
