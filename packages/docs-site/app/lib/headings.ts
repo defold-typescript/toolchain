@@ -53,7 +53,7 @@ function decodeEntities(s: string): string {
 export function pageHeadings(html: string): Heading[] {
   const out: Heading[] = [];
   for (const match of html.matchAll(HEADING_RE)) {
-    const level = Number(match[1]) as 2 | 3;
+    const level = Number(match[1]) as 2 | 3 | 4;
     const rawAttrs = match[2] ?? "";
     const inner = match[3] ?? "";
     const idMatch = rawAttrs.match(ID_RE);
