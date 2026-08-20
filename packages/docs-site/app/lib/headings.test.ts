@@ -54,4 +54,19 @@ describe("pageHeadings", () => {
     expect(headings).toHaveLength(1);
     expect(headings[0]?.text).toBe("Record<string, any> & Foo");
   });
+
+  // The upgrade guide nests each release's per-symbol notes at h4 beneath one
+  // `## Defold <version>` heading. A TOC that stops at h3 lists the release and
+  // its topics but none of the symbols a reader is actually looking for.
+  test("extracts an h4 heading as a third tier, in document order", () => {
+    const html =
+      '<h2 id="defold-1131">Defold 1.13.1</h2>' +
+      '<h3 id="added-lua-apis">Added Lua APIs</h3>' +
+      '<h4 id="collectionproxyload">collectionproxy.load</h4>';
+    expect(pageHeadings(html)).toEqual([
+      { text: "Defold 1.13.1", id: "defold-1131", level: 2 },
+      { text: "Added Lua APIs", id: "added-lua-apis", level: 3 },
+      { text: "collectionproxy.load", id: "collectionproxyload", level: 4 },
+    ]);
+  });
 });

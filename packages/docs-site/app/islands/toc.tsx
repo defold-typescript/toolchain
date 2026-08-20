@@ -106,7 +106,7 @@ export default function Toc({
         {headings.map((h) => {
           const linkClass =
             "-ml-px block truncate border-l py-1 text-text-muted transition hover:text-text " +
-            (h.level === 3 ? "pl-7 " : "pl-4 ") +
+            (h.level === 4 ? "pl-10 " : h.level === 3 ? "pl-7 " : "pl-4 ") +
             (h.id === clickedId
               ? "border-accent-strong font-medium text-accent-strong"
               : visibleIds.includes(h.id)
