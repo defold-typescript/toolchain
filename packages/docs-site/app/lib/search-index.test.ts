@@ -7,6 +7,7 @@ import {
   loadApiSurfaceForVersion,
   loadCombinedSurface,
   loadVersionIndependentPages,
+  versionsWithDiskFixtures,
 } from "./api-surface-loader";
 import type { GuidePage } from "./guide";
 import {
@@ -19,6 +20,12 @@ import {
 
 const API_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
+// Derived from the target registry, so a version rotation does not need an edit
+// here: "newest tracked" is what the lifecycle prose is keyed on.
+const NEWEST_VERSION = (versionsWithDiskFixtures(REAL_TYPES_DIR)[0]?.id ?? "").replace(
+  /^defold-/,
+  "",
+);
 const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
 
 const page = (file: string, isIndex = false): GuidePage => {
@@ -299,7 +306,7 @@ describe("apiSearchRecords", () => {
     const defaultRecords = apiSearchRecords(loadApiSurface(REAL_TYPES_DIR));
     const body = defaultRecords.find((r) => r.title === "b2d.body API");
     expect(body).toBeDefined();
-    expect(body?.text).toContain("Since Defold 1.13.0");
+    expect(body?.text).toContain(`Since Defold ${NEWEST_VERSION}`);
 
     // `model.material` is available through 1.12.4 only, so the canonical surface
     // neither renders it nor carries its through-oldest badge.
@@ -343,7 +350,7 @@ describe("combinedSearchRecords", () => {
   test("threads availability prose for symbols that are not present in every version", () => {
     const records = combinedSearchRecords(combined);
     const compute = records.find((r) => r.route === "/api/compute");
-    expect(compute?.text).toContain("Since Defold 1.13.0");
+    expect(compute?.text).toContain(`Since Defold ${NEWEST_VERSION}`);
     const live = records.find((r) => r.route === "/api/liveupdate");
     expect(live?.text).toContain("Available through Defold 1.12.4");
   });

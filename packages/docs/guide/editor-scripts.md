@@ -96,6 +96,7 @@ The same entrypoint also carries the libraries the editor VM exposes as their ow
 | Global | What it covers |
 | --- | --- |
 | `http` | `http.request`, and the `http.server.route`/`response` builders plus the server's `url`, `local_url` and `port` |
+| `image` | `image.load_file(path)`, then `image.size`, `image.pixel` and the `image.pixels` iterator over the loaded image |
 | `json` | `json.decode`, returning the decoded value to narrow at the point of use, and `json.encode`, returning the document string |
 | `localization` | `localization.message(key, vars)` and the `and_list` / `or_list` / `concat` pattern builders, each returning a handle that localizes when stringified |
 | `zip` | `zip.pack(archive, ["build"])` / `zip.unpack(archive)`, with the `zip.METHOD.*` and `zip.ON_CONFLICT.*` option constants |

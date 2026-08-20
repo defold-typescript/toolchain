@@ -42,6 +42,28 @@ declare global {
      */
     function get_resources(collectionproxy: Url): Hash[];
     /**
+     * Loads the collection referenced by a collection proxy. The proxy is also
+     * initialized and the callback receives `proxy_loading`, `proxy_ready`, or
+     * `proxy_error` messages.
+     *
+     * @param url - the collection proxy component
+     * @param options - options table, currently unused
+     * @param callback - callback
+     * @example
+     * ```ts
+     * collectionproxy.load("#proxy", undefined, (self, message_id, message, sender) => {
+     *   if (message_id === hash("proxy_ready")) {
+     *     print("proxy is ready");
+     *   } else if (message_id === hash("proxy_loading")) {
+     *     print("progress", message.progress);
+     *   } else if (message_id === hash("proxy_error")) {
+     *     print("error", message.code);
+     *   }
+     * });
+     * ```
+     */
+    function load(url: string | Hash | Url, options: Record<string | number, unknown> | undefined, callback: (self: unknown, message_id: unknown, message: unknown, sender: unknown) => void): void;
+    /**
      * The collection should be loaded by the collection proxy.
      * Setting the collection to "nil" will revert it back to the original collection.
      * The collection proxy shouldn't be loaded and should have the 'Exclude' checkbox checked.

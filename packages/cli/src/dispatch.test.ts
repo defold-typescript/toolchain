@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import * as os from "node:os";
 import * as path from "node:path";
 import { Writable } from "node:stream";
+import { CURRENT_STABLE_SURFACE_ID } from "./api-surface";
 import type { DefoldIo } from "./bob-command";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import { dispatch } from "./dispatch";
@@ -1262,7 +1263,7 @@ describe("dispatch", () => {
     expect(parsed.defoldVersionSource).toBe("default");
   });
 
-  test("build --json with no pin reports apiSurface defold-1.13.0", async () => {
+  test("build --json with no pin reports the current-stable apiSurface", async () => {
     scaffoldBuildProject();
     const { io, out } = captureStreams();
 
@@ -1273,7 +1274,7 @@ describe("dispatch", () => {
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { defoldVersion: string; apiSurface: string | null };
     expect(parsed.defoldVersion).toBe(CURRENT_STABLE_DEFOLD_VERSION);
-    expect(parsed.apiSurface).toBe("defold-1.13.0");
+    expect(parsed.apiSurface).toBe(CURRENT_STABLE_SURFACE_ID);
   });
 
   test("build --defold-target with no pre-baked surface reports apiSurface null", async () => {
@@ -1287,7 +1288,7 @@ describe("dispatch", () => {
     expect(parsed.apiSurface).toBeNull();
   });
 
-  test("init --json reports apiSurface defold-1.13.0", () => {
+  test("init --json reports the current-stable apiSurface", () => {
     writeFileSync(path.join(cwd, "game.project"), "[project]\n");
     const { io, out } = captureStreams();
 
@@ -1297,7 +1298,7 @@ describe("dispatch", () => {
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { apiSurface: string | null };
-    expect(parsed.apiSurface).toBe("defold-1.13.0");
+    expect(parsed.apiSurface).toBe(CURRENT_STABLE_SURFACE_ID);
   });
 
   test("init --json carries no scriptKind field even for a single-gui_script project", () => {
@@ -1336,8 +1337,8 @@ describe("dispatch", () => {
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { materializedSurface: string | null };
-    expect(parsed.materializedSurface).toBe(".defold-types/defold-1.13.0");
-    const surfaceDir = path.join(cwd, ".defold-types", "defold-1.13.0");
+    expect(parsed.materializedSurface).toBe(`.defold-types/${CURRENT_STABLE_SURFACE_ID}`);
+    const surfaceDir = path.join(cwd, ".defold-types", CURRENT_STABLE_SURFACE_ID);
     expect(existsSync(path.join(surfaceDir, "label.d.ts"))).toBe(true);
     expect(existsSync(path.join(surfaceDir, "engine-globals.d.ts"))).toBe(true);
     expect(readFileSync(path.join(surfaceDir, "index.d.ts"), "utf8")).toContain(
@@ -1369,7 +1370,7 @@ describe("dispatch", () => {
     expect("scriptKind" in parsed).toBe(false);
 
     const index = readFileSync(
-      path.join(cwd, ".defold-types", "defold-1.13.0", "index.d.ts"),
+      path.join(cwd, ".defold-types", CURRENT_STABLE_SURFACE_ID, "index.d.ts"),
       "utf8",
     );
     expect(index).toContain('"./gui"');
@@ -1402,7 +1403,7 @@ describe("dispatch", () => {
     expect("scriptKind" in parsed).toBe(false);
 
     const index = readFileSync(
-      path.join(cwd, ".defold-types", "defold-1.13.0", "index.d.ts"),
+      path.join(cwd, ".defold-types", CURRENT_STABLE_SURFACE_ID, "index.d.ts"),
       "utf8",
     );
     expect(index).toContain('"./gui"');
@@ -1600,7 +1601,7 @@ describe("dispatch", () => {
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { materializedSurface: string | null };
-    expect(parsed.materializedSurface).toBe(".defold-types/defold-1.13.0");
+    expect(parsed.materializedSurface).toBe(`.defold-types/${CURRENT_STABLE_SURFACE_ID}`);
     expect(downloadCalled).toBe(false);
 
     rmSync(sourceGeneratedDir, { recursive: true, force: true });
@@ -1863,7 +1864,7 @@ describe("dispatch", () => {
     await handle.waitForIdle();
 
     const index = readFileSync(
-      path.join(cwd, ".defold-types", "defold-1.13.0", "index.d.ts"),
+      path.join(cwd, ".defold-types", CURRENT_STABLE_SURFACE_ID, "index.d.ts"),
       "utf8",
     );
     expect(index).toContain('"./gui"');
@@ -1918,7 +1919,7 @@ describe("dispatch", () => {
     const handle = await ready;
     await handle.waitForIdle();
 
-    const indexPath = path.join(cwd, ".defold-types", "defold-1.13.0", "index.d.ts");
+    const indexPath = path.join(cwd, ".defold-types", CURRENT_STABLE_SURFACE_ID, "index.d.ts");
     expect(readFileSync(indexPath, "utf8")).toContain('"./render"');
 
     writeFileSync(path.join(cwd, "hud.gui_script"), "");
@@ -2323,6 +2324,10 @@ describe("dispatch", () => {
     const result = dispatch(["watch", cwd, "--json"], io, {
       watcherFactory: factory,
       onWatchStart,
+      // Stubbed, not left to the host: an unstubbed probe reads whatever editor
+      // this machine has installed, so "a valid pin" would emit a pin-mismatch
+      // warning on any machine whose editor is not the pinned version.
+      detectEditorVersion: () => CURRENT_STABLE_DEFOLD_VERSION,
     });
 
     const handle = await ready;
@@ -3389,7 +3394,9 @@ describe("dispatch resolve", () => {
 
     const code = await dispatch(["resolve", cwd, "--defold-target", "beta", "--json"], io, {
       ...resolveInternals(url),
-      fetchChannelInfo: async () => ({ version: "1.13.0", sha1: "abc123" }),
+      // A head that resolves to a *registered* surface, so the assertion below
+      // distinguishes "derived from the head" from "fell back to null".
+      fetchChannelInfo: async () => ({ version: CURRENT_STABLE_DEFOLD_VERSION, sha1: "abc123" }),
     });
 
     expect(code).toBe(0);
@@ -3399,12 +3406,12 @@ describe("dispatch resolve", () => {
       defoldSha: string | null;
       apiSurface: string | null;
     };
-    expect(parsed.defoldVersion).toBe("1.13.0");
+    expect(parsed.defoldVersion).toBe(CURRENT_STABLE_DEFOLD_VERSION);
     expect(parsed.defoldChannel).toBe("beta");
     expect(parsed.defoldSha).toBe("abc123");
-    // The registered 1.13.0 surface derives from the resolved head version,
-    // never from the channel pin token.
-    expect(parsed.apiSurface).toBe("defold-1.13.0");
+    // The surface derives from the resolved head version, never from the channel
+    // pin token — `beta` would otherwise leak through as the surface id.
+    expect(parsed.apiSurface).toBe(CURRENT_STABLE_SURFACE_ID);
   });
 
   test("--json includes pinnedVersion when the project pins the url", async () => {

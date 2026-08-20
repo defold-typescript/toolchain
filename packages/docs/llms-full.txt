@@ -14,7 +14,7 @@ Only guide pages are inlined into `llms-full.txt`; pages marked `llms-full: fals
 - [Messages](guide/messages.md)
 - [Vector math](guide/vector-math.md)
 
-> Tracked Defold versions: 1.13.0, 1.12.4 (newest first).
+> Tracked Defold versions: 1.13.1, 1.12.4 (newest first).
 
 The `## API` section below is the **Combined** surface: the union of every tracked version's engine API. Each entry is its authoritative TypeScript signature, optionally followed by one or more compact **Availability** tags in this order: a version span — `[since X]`, `[through X]`, the closed range `[X–Y]`, or the discrete list `[versions: …]` — then any curated lifecycle facts: `[signature transition]` (one arm of a same-name overload change), `[deprecated since X]`, `[replaced by namespace.symbol]`, and `[Box2D: …]` (the backend a symbol applies to). No tag means the symbol exists in every tracked version with no curated lifecycle caveat. Multiple tags may coexist on one line, and each tag applies to the exact signature it follows, not to the symbol name in general.
 
@@ -92,7 +92,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 
 - [Pinning the Defold target](./pinning-defold-target.md) — keep the default latest surface, or pin a fixed version or release channel (`stable`/`beta`/`alpha`) whose API surface is generated on the fly and materialized into a project-local `.defold-types/<version>/`.
 - [Upgrading the toolchain](./upgrading.md) — move the project to the latest toolchain with one verb (`bunx @defold-typescript/cli@latest upgrade`, or its `update` synonym): what it re-scaffolds, why it never clobbers your own scripts, what it does to an existing `defold-target` pin.
-- [Upgrading Defold versions](./upgrading-defold-versions.md) — move a project between pinned surfaces, with a section per release. For 1.13.0, from 1.12.4: the removed and re-signatured Lua APIs (`model.material` removed, `liveupdate.add_mount` re-signatured, …), the source/asset migrations (Collada removal, glTF re-centering, Spine 4.6.0), and the rendering/platform default changes, each with a way to verify.
+- [Upgrading Defold versions](./upgrading-defold-versions.md) — move a project between pinned surfaces, with a section per release. For 1.13.1, from 1.12.4: the removed and re-signatured Lua APIs (`model.material` removed, `liveupdate.add_mount` re-signatured, …), the source/asset migrations (Collada removal, glTF re-centering, Spine 4.6.0), and the rendering/platform default changes, each with a way to verify.
 - [Native extensions](./extensions.md) — declare an extension in `game.project` `[dependencies]`, then run [`resolve`](./resolve.md) to generate an ambient namespace per `.script_api` into a gitignored `.defold-types/extensions/` surface, and consume it with no import.
 - [Authoring LuaLS library types](./authoring-luals-library-types.md) — add a pure-Lua library whose types are generated from its inline LuaLS (`---@`) annotations: the `luals-targets.json` entry, the fetch/fidelity/emit/api-doc commands, and how the committed `.d.ts` reaches a consumer via [`resolve`](./resolve.md).
 - [Authoring forked library types](./authoring-forked-library-types.md) — add a library with no structured upstream source by vendoring a forked or hand-authored `.d.ts`: the fork/hand-author/keep cost model, the `authored-targets.json` entry, the emit/api-doc commands, and why a fork's emission fidelity is by construction while its accuracy against upstream is not.
@@ -1809,6 +1809,7 @@ The same entrypoint also carries the libraries the editor VM exposes as their ow
 | Global | What it covers |
 | --- | --- |
 | `http` | `http.request`, and the `http.server.route`/`response` builders plus the server's `url`, `local_url` and `port` |
+| `image` | `image.load_file(path)`, then `image.size`, `image.pixel` and the `image.pixels` iterator over the loaded image |
 | `json` | `json.decode`, returning the decoded value to narrow at the point of use, and `json.encode`, returning the document string |
 | `localization` | `localization.message(key, vars)` and the `and_list` / `or_list` / `concat` pattern builders, each returning a handle that localizes when stringified |
 | `zip` | `zip.pack(archive, ["build"])` / `zip.unpack(archive)`, with the `zip.METHOD.*` and `zip.ON_CONFLICT.*` option constants |
@@ -4572,7 +4573,7 @@ preserves every other key, and reports the transition. Setting the value already
 pinned writes nothing. It does not materialize a surface or repoint
 `tsconfig.json` — the next `build`/`watch` does that. Its flags:
 
-- `bunx @defold-typescript/cli@latest set-target 1.13.0` pins that version;
+- `bunx @defold-typescript/cli@latest set-target 1.13.1` pins that version;
   `set-target stable` (or `beta`/`alpha`) pins the channel — the token is written
   verbatim, as you expressed it;
 - `set-target --detected` (alias `--detect`) pins the installed editor's version,
@@ -4634,7 +4635,7 @@ The resolved target is reported in `--json` output:
   for a fixed-version target.
 - `apiSurface` — the surface the resolved head version maps to. The
   current-stable version maps to the default surface
-  (`apiSurface: "defold-1.13.0"`); a version with a registered reference-doc
+  (`apiSurface: "defold-1.13.1"`); a version with a registered reference-doc
   target maps to `apiSurface: "defold-<version>"` (for example `defold-1.9.8`);
   a version with no matching target reports `apiSurface: null`. The surface id
   always derives from the resolved head version, never from the pin token.
@@ -4673,7 +4674,7 @@ it. The build writes a project-local `.defold-types/<surface>/` directory (a fau
 How the surface is produced depends on the resolved version:
 
 - **Current-stable** copies the pre-baked surface that ships in
-  `@defold-typescript/types` into `.defold-types/defold-1.13.0/`. No network access.
+  `@defold-typescript/types` into `.defold-types/defold-1.13.1/`. No network access.
 - **The previous 1.12.4 version** copies its complete committed declaration
   snapshot and requires no network access.
 - **Another pinned non-current version** is generated **on the fly** from that
@@ -4983,13 +4984,18 @@ release-readiness gate reads only the marked section for the release being
 shipped, so a note filed under an older release never counts as migration
 coverage for a newer one. Add a section per release rather than a new page.
 
-<!-- release: 1.13.0 -->
+<!-- release: 1.13.1 -->
 
-Defold 1.13.0 is the current stable release and the toolchain's default API
+Defold 1.13.1 is the current stable release and the toolchain's default API
 target. Moving a project from 1.12.4 removes a handful of Lua APIs, re-signatures
-a few others, changes some source/asset expectations, and shifts a few rendering
-and platform defaults. Each change below carries actionable migration guidance
-and a way to verify it.
+a few others, adds one, changes some source/asset expectations, and shifts a few
+rendering and platform defaults. Each change below carries actionable migration
+guidance and a way to verify it.
+
+1.13.1 is a patch over 1.13.0, which it **replaced in place** — 1.13.0 is no
+longer a shipped API surface, and its `/api/defold-1.13.0/…` pages are gone. A
+project already on 1.13.0 needs no source migration beyond the two 1.13.1-only
+entries called out below; everything else here is the 1.12.4 upgrade.
 
 The runbook above, with this release's concrete targets:
 
@@ -4998,23 +5004,23 @@ The runbook above, with this release's concrete targets:
 bunx @defold-typescript/cli build --defold-target 1.12.4
 
 # the same project against the new surface
-bunx @defold-typescript/cli build --defold-target 1.13.0
+bunx @defold-typescript/cli build --defold-target 1.13.1
 ```
 
-#### Defold 1.13.0: changed Lua API signatures
+#### Defold 1.13.1: changed Lua API signatures
 
-These Lua APIs still exist on the 1.13.0 surface — one or more parameter types
+These Lua APIs still exist on the 1.13.1 surface — one or more parameter types
 changed rather than the symbol being removed, so a call written against 1.12.4
 keeps compiling. The Combined API surface — now canonical at the unprefixed `/api`
 (the old `/api/combined` links redirect there) — renders both signatures
-adjacently; the exact-version pages (`/api/defold-1.13.0/…`, `/api/defold-1.12.4/…`)
+adjacently; the exact-version pages (`/api/defold-1.13.1/…`, `/api/defold-1.12.4/…`)
 show each in isolation.
 
 ##### liveupdate.add_mount
 
 Despite the old Live Update **auto-mount** framing, `liveupdate.add_mount` was
-**not** removed — it remains an imperative runtime API on the 1.13.0
-[`liveupdate`](/api/defold-1.13.0/liveupdate) surface. Its `name` parameter widened from
+**not** removed — it remains an imperative runtime API on the 1.13.1
+[`liveupdate`](/api/defold-1.13.1/liveupdate) surface. Its `name` parameter widened from
 `string` to `string | Hash`, so a hashed mount name is now accepted alongside a
 plain string, and the mount callback is typed more precisely. Compare the current
 signature with the historical one on the [1.12.4 `liveupdate`
@@ -5027,9 +5033,27 @@ page](/api/defold-1.12.4/liveupdate).
 down. The [1.12.4 `liveupdate` page](/api/defold-1.12.4/liveupdate) keeps the old
 single-string signature for comparison.
 
-#### Defold 1.13.0: removed Lua APIs and constants
+##### gui.set
 
-Each removed symbol is a compile error against the 1.13.0 surface. Its frozen
+**New in 1.13.1.** `gui.set`'s `value` parameter accepts `nil` alongside the
+number and vector types it already took, so a property can be cleared rather than
+only reassigned. Existing calls are unaffected — the change is a widening. The
+[1.12.4 `gui` page](/api/defold-1.12.4/gui) shows the narrower signature for
+comparison; the current one is on the 1.13.1
+[`gui`](/api/defold-1.13.1/gui) surface.
+
+#### Defold 1.13.1: added Lua APIs
+
+##### collectionproxy.load
+
+**New in 1.13.1.** `collectionproxy.load` is new on the 1.13.1
+[`collectionproxy`](/api/defold-1.13.1/collectionproxy) surface. It is purely
+additive, so no existing call needs changing; a project that wants it must pin
+`--defold-target 1.13.1` or newer.
+
+#### Defold 1.13.1: removed Lua APIs and constants
+
+Each removed symbol is a compile error against the 1.13.1 surface. Its frozen
 signature stays discoverable on the historical [1.12.4 API
 pages](/api/defold-1.12.4/model); the current-surface namespace pages linked
 below show what replaced it.
@@ -5038,13 +5062,13 @@ below show what replaced it.
 
 The single-slot `model.material` property is removed. A model can carry several
 material slots, so address a slot by name with the component material APIs on the
-current [`model`](/api/defold-1.13.0/model) surface instead of the one blanket property; the
+current [`model`](/api/defold-1.13.1/model) surface instead of the one blanket property; the
 removed property's frozen shape stays on the [1.12.4 `model`
 page](/api/defold-1.12.4/model).
 
-#### Defold 1.13.0: deprecated Lua APIs
+#### Defold 1.13.1: deprecated Lua APIs
 
-These APIs still compile and run against the 1.13.0 surface but are marked
+These APIs still compile and run against the 1.13.1 surface but are marked
 **deprecated** in the engine reference. No replacement is announced upstream, so
 nothing is forced right now — treat them as candidates for removal in a future
 release and avoid them in new code.
@@ -5065,7 +5089,7 @@ release and avoid them in new code.
 <!-- no-action: acquire_camera_focus -->
 <!-- no-action: release_camera_focus -->
 
-#### Defold 1.13.0: source and project migrations
+#### Defold 1.13.1: source and project migrations
 
 These changes touch assets and project configuration rather than the typed Lua
 surface, so the compiler cannot flag them — audit them by hand.
@@ -5085,7 +5109,7 @@ surface, so the compiler cannot flag them — audit them by hand.
   the Spine dependency in `game.project` to at least `4.6.0`; older extension
   versions will not build.
 
-#### Defold 1.13.0: rendering and platform behavior
+#### Defold 1.13.1: rendering and platform behavior
 
 Defaults changed here. Nothing is a Lua API removal, but the rendered result or
 the target platform behaves differently.
@@ -6420,7 +6444,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### b2d
 
 - function get_body(url: string | Hash | Url): Opaque<"b2Body">;
-- function get_version(): { version: number; major: number; middle: number; minor: number }; [since 1.13.0]
+- function get_version(): { version: number; major: number; middle: number; minor: number }; [since 1.13.1]
 - function get_world(): Opaque<"b2World">;
 - type b2Body = Opaque<"b2Body">
 - type b2World = Opaque<"b2World">
@@ -6431,53 +6455,53 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function apply_force(body: Opaque<"b2Body">, force: Vector3, point: Vector3): void;
 - function apply_force_to_center(body: Opaque<"b2Body">, force: Vector3): void;
 - function apply_linear_impulse(body: Opaque<"b2Body">, impulse: Vector3, point: Vector3): void;
-- function apply_linear_impulse_to_center(body: Opaque<"b2Body">, impulse: Vector3): void; [since 1.13.0]
+- function apply_linear_impulse_to_center(body: Opaque<"b2Body">, impulse: Vector3): void; [since 1.13.1]
 - function apply_torque(body: Opaque<"b2Body">, torque: number): void;
-- function compute_aabb(body: Opaque<"b2Body">): { lower: Vector3; upper: Vector3 }; [since 1.13.0]
-- function create_chain(body: Opaque<"b2Body">, definition: Record<string | number, unknown>): LuaMultiReturn<[Opaque<"b2Chain">, { shape_id: number }[]]>; [since 1.13.0]
-- function create_fixture(body: Opaque<"b2Body">, shape: Opaque<"b2Shape">, density: number): void; [since 1.13.0]
-- function create_fixture(body: Opaque<"b2Body">, definition: { shape?: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; friction?: number; restitution?: number; density?: number; sensor?: boolean; filter?: { category_bits?: number; mask_bits?: number; group_index?: number } }): { index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }; [since 1.13.0]
-- function create_shape(body: Opaque<"b2Body">, definition: Record<string | number, unknown>): void; [since 1.13.0]
-- function destroy_fixture(body: Opaque<"b2Body">, fixture_index: number): void; [since 1.13.0]
-- function destroy_shape(body: Opaque<"b2Body">, shape_index: number): void; [since 1.13.0]
-- function dump(body: Opaque<"b2Body">): void; [since 1.13.0]
-- function enable_contact_events(body: Opaque<"b2Body">, enable: boolean): void; [since 1.13.0]
-- function enable_hit_events(body: Opaque<"b2Body">, enable: boolean): void; [since 1.13.0]
+- function compute_aabb(body: Opaque<"b2Body">): { lower: Vector3; upper: Vector3 }; [since 1.13.1]
+- function create_chain(body: Opaque<"b2Body">, definition: Record<string | number, unknown>): LuaMultiReturn<[Opaque<"b2Chain">, { shape_id: number }[]]>; [since 1.13.1]
+- function create_fixture(body: Opaque<"b2Body">, shape: Opaque<"b2Shape">, density: number): void; [since 1.13.1]
+- function create_fixture(body: Opaque<"b2Body">, definition: { shape?: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; friction?: number; restitution?: number; density?: number; sensor?: boolean; filter?: { category_bits?: number; mask_bits?: number; group_index?: number } }): { index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }; [since 1.13.1]
+- function create_shape(body: Opaque<"b2Body">, definition: Record<string | number, unknown>): void; [since 1.13.1]
+- function destroy_fixture(body: Opaque<"b2Body">, fixture_index: number): void; [since 1.13.1]
+- function destroy_shape(body: Opaque<"b2Body">, shape_index: number): void; [since 1.13.1]
+- function dump(body: Opaque<"b2Body">): void; [since 1.13.1]
+- function enable_contact_events(body: Opaque<"b2Body">, enable: boolean): void; [since 1.13.1]
+- function enable_hit_events(body: Opaque<"b2Body">, enable: boolean): void; [since 1.13.1]
 - function enable_sleep(body: Opaque<"b2Body">, enable: boolean): void;
 - function get_angle(body: Opaque<"b2Body">): number;
 - function get_angular_damping(body: Opaque<"b2Body">): number;
 - function get_angular_velocity(body: Opaque<"b2Body">): number;
-- function get_contact_data(body: Opaque<"b2Body">): Record<string | number, unknown>; [since 1.13.0]
-- function get_contact_list(body: Opaque<"b2Body">): Opaque<"b2ContactEdge">; [since 1.13.0]
-- function get_fixtures(body: Opaque<"b2Body">): { index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }[]; [since 1.13.0]
-- function get_force(body: Opaque<"b2Body">): Vector3; [since 1.13.0]
+- function get_contact_data(body: Opaque<"b2Body">): Record<string | number, unknown>; [since 1.13.1]
+- function get_contact_list(body: Opaque<"b2Body">): Opaque<"b2ContactEdge">; [since 1.13.1]
+- function get_fixtures(body: Opaque<"b2Body">): { index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }[]; [since 1.13.1]
+- function get_force(body: Opaque<"b2Body">): Vector3; [since 1.13.1]
 - function get_gravity_scale(body: Opaque<"b2Body">): number;
-- function get_inertia(body: Opaque<"b2Body">): number; [since 1.13.0]
-- function get_joints(body: Opaque<"b2Body">): number[]; [since 1.13.0]
+- function get_inertia(body: Opaque<"b2Body">): number; [since 1.13.1]
+- function get_joints(body: Opaque<"b2Body">): number[]; [since 1.13.1]
 - function get_linear_damping(body: Opaque<"b2Body">): number;
 - function get_linear_velocity(body: Opaque<"b2Body">): Vector3;
 - function get_linear_velocity_from_local_point(body: Opaque<"b2Body">, local_point: Vector3): Vector3;
 - function get_linear_velocity_from_world_point(body: Opaque<"b2Body">, world_point: Vector3): Vector3;
-- function get_local_center(body: Opaque<"b2Body">): Vector3; [since 1.13.0]
+- function get_local_center(body: Opaque<"b2Body">): Vector3; [since 1.13.1]
 - function get_local_center_of_mass(body: Opaque<"b2Body">): Vector3;
 - function get_local_point(body: Opaque<"b2Body">, world_point: Vector3): Vector3;
 - function get_local_vector(body: Opaque<"b2Body">, world_vector: Vector3): Vector3;
 - function get_mass(body: Opaque<"b2Body">): number;
-- function get_mass_data(body: Opaque<"b2Body">): Opaque<"b2MassData">; [since 1.13.0]
-- function get_mass_data(body: Opaque<"b2Body">): { mass: number; center: Vector3; inertia: number }; [since 1.13.0]
-- function get_name(body: Opaque<"b2Body">): string; [since 1.13.0]
-- function get_next(body: Opaque<"b2Body">): Opaque<"b2Body">; [since 1.13.0]
+- function get_mass_data(body: Opaque<"b2Body">): Opaque<"b2MassData">; [since 1.13.1]
+- function get_mass_data(body: Opaque<"b2Body">): { mass: number; center: Vector3; inertia: number }; [since 1.13.1]
+- function get_name(body: Opaque<"b2Body">): string; [since 1.13.1]
+- function get_next(body: Opaque<"b2Body">): Opaque<"b2Body">; [since 1.13.1]
 - function get_position(body: Opaque<"b2Body">): Vector3;
 - function get_rotational_inertia(body: Opaque<"b2Body">): number;
-- function get_shapes(body: Opaque<"b2Body">): { shape_id: number }[]; [since 1.13.0]
-- function get_sleep_threshold(body: Opaque<"b2Body">): number; [since 1.13.0]
-- function get_transform(body: Opaque<"b2Body">): Opaque<"b2Transform">; [since 1.13.0]
-- function get_transform(body: Opaque<"b2Body">): { position: Vector3; angle: number }; [since 1.13.0]
+- function get_shapes(body: Opaque<"b2Body">): { shape_id: number }[]; [since 1.13.1]
+- function get_sleep_threshold(body: Opaque<"b2Body">): number; [since 1.13.1]
+- function get_transform(body: Opaque<"b2Body">): Opaque<"b2Transform">; [since 1.13.1]
+- function get_transform(body: Opaque<"b2Body">): { position: Vector3; angle: number }; [since 1.13.1]
 - function get_type(body: Opaque<"b2Body">): (number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_KINEMATIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_STATIC_BODY" });
-- function get_user_data(body: Opaque<"b2Body">): Hash; [since 1.13.0]
+- function get_user_data(body: Opaque<"b2Body">): Hash; [since 1.13.1]
 - function get_world(body: Opaque<"b2Body">): Opaque<"b2World">;
-- function get_world_center(body: Opaque<"b2Body">): number; [since 1.13.0]
-- function get_world_center(body: Opaque<"b2Body">): Vector3; [since 1.13.0]
+- function get_world_center(body: Opaque<"b2Body">): number; [since 1.13.1]
+- function get_world_center(body: Opaque<"b2Body">): Vector3; [since 1.13.1]
 - function get_world_center_of_mass(body: Opaque<"b2Body">): Vector3;
 - function get_world_point(body: Opaque<"b2Body">, local_vector: Vector3): Vector3;
 - function get_world_vector(body: Opaque<"b2Body">, local_vector: Vector3): Vector3;
@@ -6485,9 +6509,9 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function is_awake(body: Opaque<"b2Body">): boolean;
 - function is_bullet(body: Opaque<"b2Body">): boolean;
 - function is_fixed_rotation(body: Opaque<"b2Body">): boolean;
-- function is_sleeping_allowed(body: Opaque<"b2Body">): boolean; [since 1.13.0]
+- function is_sleeping_allowed(body: Opaque<"b2Body">): boolean; [since 1.13.1]
 - function is_sleeping_enabled(body: Opaque<"b2Body">): boolean;
-- function is_valid(body: Opaque<"b2Body">): boolean; [since 1.13.0]
+- function is_valid(body: Opaque<"b2Body">): boolean; [since 1.13.1]
 - function reset_mass_data(body: Opaque<"b2Body">): void;
 - function set_active(body: Opaque<"b2Body">, enable: boolean): void;
 - function set_angular_damping(body: Opaque<"b2Body">, damping: number): void;
@@ -6498,15 +6522,15 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_gravity_scale(body: Opaque<"b2Body">, scale: number): void;
 - function set_linear_damping(body: Opaque<"b2Body">, damping: number): void;
 - function set_linear_velocity(body: Opaque<"b2Body">, velocity: Vector3): void;
-- function set_mass_data(body: Opaque<"b2Body">, data: Opaque<"b2MassData">): void; [since 1.13.0]
-- function set_mass_data(body: Opaque<"b2Body">, data: { mass?: number; center?: Vector3; inertia?: number }): void; [since 1.13.0]
-- function set_name(body: Opaque<"b2Body">, name: string): void; [since 1.13.0]
-- function set_sleep_threshold(body: Opaque<"b2Body">, threshold: number): void; [since 1.13.0]
-- function set_sleeping_allowed(body: Opaque<"b2Body">, enable: boolean): void; [since 1.13.0]
-- function set_target_transform(body: Opaque<"b2Body">, position: Vector3, angle: number, time_step: number): void; [since 1.13.0]
+- function set_mass_data(body: Opaque<"b2Body">, data: Opaque<"b2MassData">): void; [since 1.13.1]
+- function set_mass_data(body: Opaque<"b2Body">, data: { mass?: number; center?: Vector3; inertia?: number }): void; [since 1.13.1]
+- function set_name(body: Opaque<"b2Body">, name: string): void; [since 1.13.1]
+- function set_sleep_threshold(body: Opaque<"b2Body">, threshold: number): void; [since 1.13.1]
+- function set_sleeping_allowed(body: Opaque<"b2Body">, enable: boolean): void; [since 1.13.1]
+- function set_target_transform(body: Opaque<"b2Body">, position: Vector3, angle: number, time_step: number): void; [since 1.13.1]
 - function set_transform(body: Opaque<"b2Body">, position: Vector3, angle: number): void;
 - function set_type(body: Opaque<"b2Body">, type: (number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_KINEMATIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_STATIC_BODY" })): void;
-- function set_user_data(body: Opaque<"b2Body">, id: Hash): void; [since 1.13.0]
+- function set_user_data(body: Opaque<"b2Body">, id: Hash): void; [since 1.13.1]
 - b2d.body.B2_DYNAMIC_BODY: number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }
 - b2d.body.B2_KINEMATIC_BODY: number & { readonly __brand: "b2d.body.B2_KINEMATIC_BODY" }
 - b2d.body.B2_STATIC_BODY: number & { readonly __brand: "b2d.body.B2_STATIC_BODY" }
@@ -6515,235 +6539,235 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### b2d.chain
 
-- function destroy(chain: Opaque<"b2Chain">): void; [since 1.13.0]
-- function from_shape(shape_id: Opaque<"b2Shape">): Opaque<"b2Chain"> | undefined; [since 1.13.0]
-- function get_friction(chain: Opaque<"b2Chain">): number; [since 1.13.0]
-- function get_geometry(chain: Opaque<"b2Chain">): Record<string | number, unknown>; [since 1.13.0]
-- function get_material(chain: Opaque<"b2Chain">): number; [since 1.13.0]
-- function get_restitution(chain: Opaque<"b2Chain">): number; [since 1.13.0]
-- function get_segment_count(chain: Opaque<"b2Chain">): number; [since 1.13.0]
-- function get_segments(chain: Opaque<"b2Chain">): { shape_id: number }[]; [since 1.13.0]
-- function get_world(chain: Opaque<"b2Chain">): Opaque<"b2World">; [since 1.13.0]
-- function is_valid(chain: Opaque<"b2Chain">): boolean; [since 1.13.0]
-- function set_friction(chain: Opaque<"b2Chain">, friction: number): void; [since 1.13.0]
-- function set_material(chain: Opaque<"b2Chain">, material: number): void; [since 1.13.0]
-- function set_restitution(chain: Opaque<"b2Chain">, restitution: number): void; [since 1.13.0]
-- type b2Chain = Opaque<"b2Chain"> [since 1.13.0]
+- function destroy(chain: Opaque<"b2Chain">): void; [since 1.13.1]
+- function from_shape(shape_id: Opaque<"b2Shape">): Opaque<"b2Chain"> | undefined; [since 1.13.1]
+- function get_friction(chain: Opaque<"b2Chain">): number; [since 1.13.1]
+- function get_geometry(chain: Opaque<"b2Chain">): Record<string | number, unknown>; [since 1.13.1]
+- function get_material(chain: Opaque<"b2Chain">): number; [since 1.13.1]
+- function get_restitution(chain: Opaque<"b2Chain">): number; [since 1.13.1]
+- function get_segment_count(chain: Opaque<"b2Chain">): number; [since 1.13.1]
+- function get_segments(chain: Opaque<"b2Chain">): { shape_id: number }[]; [since 1.13.1]
+- function get_world(chain: Opaque<"b2Chain">): Opaque<"b2World">; [since 1.13.1]
+- function is_valid(chain: Opaque<"b2Chain">): boolean; [since 1.13.1]
+- function set_friction(chain: Opaque<"b2Chain">, friction: number): void; [since 1.13.1]
+- function set_material(chain: Opaque<"b2Chain">, material: number): void; [since 1.13.1]
+- function set_restitution(chain: Opaque<"b2Chain">, restitution: number): void; [since 1.13.1]
+- type b2Chain = Opaque<"b2Chain"> [since 1.13.1]
 
 ### b2d.fixture
 
-- function get_aabb(body: Opaque<"b2Body">, fixture_index: number, child_index: number): { lower: Vector3; upper: Vector3 }; [since 1.13.0]
-- function get_density(body: Opaque<"b2Body">, fixture_index: number): number; [since 1.13.0]
-- function get_filter_data(body: Opaque<"b2Body">, fixture_index: number, child_index: number): { category_bits: number; mask_bits: number; group_index: number }; [since 1.13.0]
-- function get_friction(body: Opaque<"b2Body">, fixture_index: number): number; [since 1.13.0]
-- function get_restitution(body: Opaque<"b2Body">, fixture_index: number): number; [since 1.13.0]
-- function get_shape(body: Opaque<"b2Body">, fixture_index: number): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; [since 1.13.0]
-- function get_type(body: Opaque<"b2Body">, fixture_index: number): number; [since 1.13.0]
-- function is_sensor(body: Opaque<"b2Body">, fixture_index: number): boolean; [since 1.13.0]
-- function refilter(body: Opaque<"b2Body">, fixture_index: number, touch_proxies: boolean): void; [since 1.13.0]
-- function set_density(body: Opaque<"b2Body">, fixture_index: number, density: number, update_mass: boolean): void; [since 1.13.0]
-- function set_filter_data(body: Opaque<"b2Body">, fixture_index: number, child_index: number, filter: { category_bits?: number; mask_bits?: number; group_index?: number }): void; [since 1.13.0]
-- function set_friction(body: Opaque<"b2Body">, fixture_index: number, friction: number): void; [since 1.13.0]
-- function set_restitution(body: Opaque<"b2Body">, fixture_index: number, restitution: number): void; [since 1.13.0]
-- function set_sensor(body: Opaque<"b2Body">, fixture_index: number, enabled: boolean): void; [since 1.13.0]
-- function set_shape(body: Opaque<"b2Body">, fixture_index: number, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, update_mass: boolean): void; [since 1.13.0]
-- function test_point(body: Opaque<"b2Body">, fixture_index: number, point: Vector3): boolean; [since 1.13.0]
+- function get_aabb(body: Opaque<"b2Body">, fixture_index: number, child_index: number): { lower: Vector3; upper: Vector3 }; [since 1.13.1]
+- function get_density(body: Opaque<"b2Body">, fixture_index: number): number; [since 1.13.1]
+- function get_filter_data(body: Opaque<"b2Body">, fixture_index: number, child_index: number): { category_bits: number; mask_bits: number; group_index: number }; [since 1.13.1]
+- function get_friction(body: Opaque<"b2Body">, fixture_index: number): number; [since 1.13.1]
+- function get_restitution(body: Opaque<"b2Body">, fixture_index: number): number; [since 1.13.1]
+- function get_shape(body: Opaque<"b2Body">, fixture_index: number): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; [since 1.13.1]
+- function get_type(body: Opaque<"b2Body">, fixture_index: number): number; [since 1.13.1]
+- function is_sensor(body: Opaque<"b2Body">, fixture_index: number): boolean; [since 1.13.1]
+- function refilter(body: Opaque<"b2Body">, fixture_index: number, touch_proxies: boolean): void; [since 1.13.1]
+- function set_density(body: Opaque<"b2Body">, fixture_index: number, density: number, update_mass: boolean): void; [since 1.13.1]
+- function set_filter_data(body: Opaque<"b2Body">, fixture_index: number, child_index: number, filter: { category_bits?: number; mask_bits?: number; group_index?: number }): void; [since 1.13.1]
+- function set_friction(body: Opaque<"b2Body">, fixture_index: number, friction: number): void; [since 1.13.1]
+- function set_restitution(body: Opaque<"b2Body">, fixture_index: number, restitution: number): void; [since 1.13.1]
+- function set_sensor(body: Opaque<"b2Body">, fixture_index: number, enabled: boolean): void; [since 1.13.1]
+- function set_shape(body: Opaque<"b2Body">, fixture_index: number, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, update_mass: boolean): void; [since 1.13.1]
+- function test_point(body: Opaque<"b2Body">, fixture_index: number, point: Vector3): boolean; [since 1.13.1]
 
 ### b2d.joint
 
-- function create_distance(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; length?: number; frequency?: number; damping_ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
-- function create_filter(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: Record<string | number, unknown>): Opaque<"b2Joint">; [since 1.13.0]
-- function create_friction(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; max_force?: number; max_torque?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
-- function create_gear(joint1: Opaque<"b2Joint">, joint2: Opaque<"b2Joint">, definition: { ratio?: number }): Opaque<"b2Joint">; [since 1.13.0]
-- function create_motor(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { linear_offset?: Vector3; angular_offset?: number; max_force?: number; max_torque?: number; correction_factor?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
-- function create_mouse(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { target?: Vector3; max_force?: number; frequency?: number; damping_ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
-- function create_prismatic(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; local_axis_a?: Vector3; reference_angle?: number; enable_limit?: boolean; lower_translation?: number; upper_translation?: number; enable_motor?: boolean; max_motor_force?: number; motor_speed?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
-- function create_pulley(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { ground_anchor_a?: Vector3; ground_anchor_b?: Vector3; local_anchor_a?: Vector3; local_anchor_b?: Vector3; length_a?: number; length_b?: number; ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
-- function create_revolute(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; reference_angle?: number; enable_limit?: boolean; lower_angle?: number; upper_angle?: number; enable_motor?: boolean; max_motor_torque?: number; motor_speed?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
-- function create_rope(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; max_length?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
-- function create_weld(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; reference_angle?: number; frequency?: number; damping_ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
-- function create_wheel(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; local_axis_a?: Vector3; enable_motor?: boolean; max_motor_torque?: number; motor_speed?: number; frequency?: number; damping_ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
-- function destroy(joint: Opaque<"b2Joint">): void; [since 1.13.0]
-- function enable_limit(joint: Opaque<"b2Joint">, enable: boolean): void; [since 1.13.0]
-- function enable_motor(joint: Opaque<"b2Joint">, enable: boolean): void; [since 1.13.0]
-- function enable_spring(joint: Opaque<"b2Joint">, enable: boolean): void; [since 1.13.0]
-- function get_anchor_a(joint: Opaque<"b2Joint">): Vector3; [since 1.13.0]
-- function get_anchor_b(joint: Opaque<"b2Joint">): Vector3; [since 1.13.0]
-- function get_angular_damping_ratio(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_angular_hertz(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_angular_offset(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_body_a(joint: Opaque<"b2Joint">): Opaque<"b2Body">; [since 1.13.0]
-- function get_body_b(joint: Opaque<"b2Joint">): Opaque<"b2Body">; [since 1.13.0]
-- function get_collide_connected(joint: Opaque<"b2Joint">): boolean; [since 1.13.0]
-- function get_correction_factor(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_current_length(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_damping_ratio(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_frequency(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_ground_anchor_a(joint: Opaque<"b2Joint">): Vector3; [since 1.13.0]
-- function get_ground_anchor_b(joint: Opaque<"b2Joint">): Vector3; [since 1.13.0]
-- function get_hertz(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_joint_angle(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_joint_speed(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_joint_translation(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_joint1(joint: Opaque<"b2Joint">): Opaque<"b2Joint">; [since 1.13.0]
-- function get_joint2(joint: Opaque<"b2Joint">): Opaque<"b2Joint">; [since 1.13.0]
-- function get_length(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_length_a(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_length_b(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_limit_state(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_linear_damping_ratio(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_linear_hertz(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_linear_offset(joint: Opaque<"b2Joint">): Vector3; [since 1.13.0]
-- function get_local_anchor_a(joint: Opaque<"b2Joint">): Vector3; [since 1.13.0]
-- function get_local_anchor_b(joint: Opaque<"b2Joint">): Vector3; [since 1.13.0]
-- function get_local_axis_a(joint: Opaque<"b2Joint">): Vector3; [since 1.13.0]
-- function get_lower_limit(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_max_force(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_max_length(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_max_motor_force(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_max_motor_torque(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_max_torque(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_min_length(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_motor_force(joint: Opaque<"b2Joint">, inv_dt: number): number; [since 1.13.0]
-- function get_motor_force(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_motor_speed(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_motor_torque(joint: Opaque<"b2Joint">, inv_dt: number): number; [since 1.13.0]
-- function get_motor_torque(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_mouse_target(joint: Opaque<"b2Joint">): Vector3; [since 1.13.0]
-- function get_ratio(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_reaction_force(joint: Opaque<"b2Joint">, inv_dt: number): Vector3; [since 1.13.0]
-- function get_reaction_force(joint: Opaque<"b2Joint">): Vector3; [since 1.13.0]
-- function get_reaction_torque(joint: Opaque<"b2Joint">, inv_dt: number): number; [since 1.13.0]
-- function get_reaction_torque(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_reference_angle(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_spring_damping_ratio(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_spring_hertz(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_type(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_upper_limit(joint: Opaque<"b2Joint">): number; [since 1.13.0]
-- function get_world(joint: Opaque<"b2Joint">): Opaque<"b2World">; [since 1.13.0]
-- function is_active(joint: Opaque<"b2Joint">): boolean; [since 1.13.0]
-- function is_limit_enabled(joint: Opaque<"b2Joint">): boolean; [since 1.13.0]
-- function is_motor_enabled(joint: Opaque<"b2Joint">): boolean; [since 1.13.0]
-- function is_spring_enabled(joint: Opaque<"b2Joint">): boolean; [since 1.13.0]
-- function is_valid(joint: Opaque<"b2Joint">): boolean; [since 1.13.0]
-- function set_angular_damping_ratio(joint: Opaque<"b2Joint">, ratio: number): void; [since 1.13.0]
-- function set_angular_hertz(joint: Opaque<"b2Joint">, hertz: number): void; [since 1.13.0]
-- function set_angular_offset(joint: Opaque<"b2Joint">, offset: number): void; [since 1.13.0]
-- function set_collide_connected(joint: Opaque<"b2Joint">, collide: boolean): void; [since 1.13.0]
-- function set_correction_factor(joint: Opaque<"b2Joint">, factor: number): void; [since 1.13.0]
-- function set_damping_ratio(joint: Opaque<"b2Joint">, ratio: number): void; [since 1.13.0]
-- function set_frequency(joint: Opaque<"b2Joint">, frequency: number): void; [since 1.13.0]
-- function set_hertz(joint: Opaque<"b2Joint">, hertz: number): void; [since 1.13.0]
-- function set_length(joint: Opaque<"b2Joint">, length: number): void; [since 1.13.0]
-- function set_length_range(joint: Opaque<"b2Joint">, min_length: number, max_length: number): void; [since 1.13.0]
-- function set_limits(joint: Opaque<"b2Joint">, lower: number, upper: number): void; [since 1.13.0]
-- function set_linear_damping_ratio(joint: Opaque<"b2Joint">, ratio: number): void; [since 1.13.0]
-- function set_linear_hertz(joint: Opaque<"b2Joint">, hertz: number): void; [since 1.13.0]
-- function set_linear_offset(joint: Opaque<"b2Joint">, offset: Vector3): void; [since 1.13.0]
-- function set_max_force(joint: Opaque<"b2Joint">, force: number): void; [since 1.13.0]
-- function set_max_length(joint: Opaque<"b2Joint">, length: number): void; [since 1.13.0]
-- function set_max_motor_force(joint: Opaque<"b2Joint">, force: number): void; [since 1.13.0]
-- function set_max_motor_torque(joint: Opaque<"b2Joint">, torque: number): void; [since 1.13.0]
-- function set_max_torque(joint: Opaque<"b2Joint">, torque: number): void; [since 1.13.0]
-- function set_min_length(joint: Opaque<"b2Joint">, length: number): void; [since 1.13.0]
-- function set_motor_speed(joint: Opaque<"b2Joint">, speed: number): void; [since 1.13.0]
-- function set_mouse_target(joint: Opaque<"b2Joint">, target: Vector3): void; [since 1.13.0]
-- function set_ratio(joint: Opaque<"b2Joint">, ratio: number): void; [since 1.13.0]
-- function set_reference_angle(joint: Opaque<"b2Joint">, angle: number): void; [since 1.13.0]
-- function set_spring_damping_ratio(joint: Opaque<"b2Joint">, ratio: number): void; [since 1.13.0]
-- function set_spring_hertz(joint: Opaque<"b2Joint">, hertz: number): void; [since 1.13.0]
-- function wake_bodies(joint: Opaque<"b2Joint">): void; [since 1.13.0]
-- b2d.joint.JOINT_TYPE_DISTANCE: number & { readonly __brand: "b2d.joint.JOINT_TYPE_DISTANCE" } [since 1.13.0]
-- b2d.joint.JOINT_TYPE_FILTER: number & { readonly __brand: "b2d.joint.JOINT_TYPE_FILTER" } [since 1.13.0]
-- b2d.joint.JOINT_TYPE_FRICTION: number & { readonly __brand: "b2d.joint.JOINT_TYPE_FRICTION" } [since 1.13.0]
-- b2d.joint.JOINT_TYPE_GEAR: number & { readonly __brand: "b2d.joint.JOINT_TYPE_GEAR" } [since 1.13.0]
-- b2d.joint.JOINT_TYPE_MOTOR: number & { readonly __brand: "b2d.joint.JOINT_TYPE_MOTOR" } [since 1.13.0]
-- b2d.joint.JOINT_TYPE_MOUSE: number & { readonly __brand: "b2d.joint.JOINT_TYPE_MOUSE" } [since 1.13.0]
-- b2d.joint.JOINT_TYPE_PRISMATIC: number & { readonly __brand: "b2d.joint.JOINT_TYPE_PRISMATIC" } [since 1.13.0]
-- b2d.joint.JOINT_TYPE_PULLEY: number & { readonly __brand: "b2d.joint.JOINT_TYPE_PULLEY" } [since 1.13.0]
-- b2d.joint.JOINT_TYPE_REVOLUTE: number & { readonly __brand: "b2d.joint.JOINT_TYPE_REVOLUTE" } [since 1.13.0]
-- b2d.joint.JOINT_TYPE_ROPE: number & { readonly __brand: "b2d.joint.JOINT_TYPE_ROPE" } [since 1.13.0]
-- b2d.joint.JOINT_TYPE_UNKNOWN: number & { readonly __brand: "b2d.joint.JOINT_TYPE_UNKNOWN" } [since 1.13.0]
-- b2d.joint.JOINT_TYPE_WELD: number & { readonly __brand: "b2d.joint.JOINT_TYPE_WELD" } [since 1.13.0]
-- b2d.joint.JOINT_TYPE_WHEEL: number & { readonly __brand: "b2d.joint.JOINT_TYPE_WHEEL" } [since 1.13.0]
-- b2d.joint.LIMIT_STATE_AT_LOWER: number & { readonly __brand: "b2d.joint.LIMIT_STATE_AT_LOWER" } [since 1.13.0]
-- b2d.joint.LIMIT_STATE_AT_UPPER: number & { readonly __brand: "b2d.joint.LIMIT_STATE_AT_UPPER" } [since 1.13.0]
-- b2d.joint.LIMIT_STATE_EQUAL: number & { readonly __brand: "b2d.joint.LIMIT_STATE_EQUAL" } [since 1.13.0]
-- b2d.joint.LIMIT_STATE_INACTIVE: number & { readonly __brand: "b2d.joint.LIMIT_STATE_INACTIVE" } [since 1.13.0]
-- type b2Joint = Opaque<"b2Joint"> [since 1.13.0]
+- function create_distance(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; length?: number; frequency?: number; damping_ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.1]
+- function create_filter(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: Record<string | number, unknown>): Opaque<"b2Joint">; [since 1.13.1]
+- function create_friction(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; max_force?: number; max_torque?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.1]
+- function create_gear(joint1: Opaque<"b2Joint">, joint2: Opaque<"b2Joint">, definition: { ratio?: number }): Opaque<"b2Joint">; [since 1.13.1]
+- function create_motor(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { linear_offset?: Vector3; angular_offset?: number; max_force?: number; max_torque?: number; correction_factor?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.1]
+- function create_mouse(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { target?: Vector3; max_force?: number; frequency?: number; damping_ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.1]
+- function create_prismatic(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; local_axis_a?: Vector3; reference_angle?: number; enable_limit?: boolean; lower_translation?: number; upper_translation?: number; enable_motor?: boolean; max_motor_force?: number; motor_speed?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.1]
+- function create_pulley(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { ground_anchor_a?: Vector3; ground_anchor_b?: Vector3; local_anchor_a?: Vector3; local_anchor_b?: Vector3; length_a?: number; length_b?: number; ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.1]
+- function create_revolute(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; reference_angle?: number; enable_limit?: boolean; lower_angle?: number; upper_angle?: number; enable_motor?: boolean; max_motor_torque?: number; motor_speed?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.1]
+- function create_rope(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; max_length?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.1]
+- function create_weld(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; reference_angle?: number; frequency?: number; damping_ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.1]
+- function create_wheel(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; local_axis_a?: Vector3; enable_motor?: boolean; max_motor_torque?: number; motor_speed?: number; frequency?: number; damping_ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.1]
+- function destroy(joint: Opaque<"b2Joint">): void; [since 1.13.1]
+- function enable_limit(joint: Opaque<"b2Joint">, enable: boolean): void; [since 1.13.1]
+- function enable_motor(joint: Opaque<"b2Joint">, enable: boolean): void; [since 1.13.1]
+- function enable_spring(joint: Opaque<"b2Joint">, enable: boolean): void; [since 1.13.1]
+- function get_anchor_a(joint: Opaque<"b2Joint">): Vector3; [since 1.13.1]
+- function get_anchor_b(joint: Opaque<"b2Joint">): Vector3; [since 1.13.1]
+- function get_angular_damping_ratio(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_angular_hertz(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_angular_offset(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_body_a(joint: Opaque<"b2Joint">): Opaque<"b2Body">; [since 1.13.1]
+- function get_body_b(joint: Opaque<"b2Joint">): Opaque<"b2Body">; [since 1.13.1]
+- function get_collide_connected(joint: Opaque<"b2Joint">): boolean; [since 1.13.1]
+- function get_correction_factor(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_current_length(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_damping_ratio(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_frequency(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_ground_anchor_a(joint: Opaque<"b2Joint">): Vector3; [since 1.13.1]
+- function get_ground_anchor_b(joint: Opaque<"b2Joint">): Vector3; [since 1.13.1]
+- function get_hertz(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_joint_angle(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_joint_speed(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_joint_translation(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_joint1(joint: Opaque<"b2Joint">): Opaque<"b2Joint">; [since 1.13.1]
+- function get_joint2(joint: Opaque<"b2Joint">): Opaque<"b2Joint">; [since 1.13.1]
+- function get_length(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_length_a(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_length_b(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_limit_state(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_linear_damping_ratio(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_linear_hertz(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_linear_offset(joint: Opaque<"b2Joint">): Vector3; [since 1.13.1]
+- function get_local_anchor_a(joint: Opaque<"b2Joint">): Vector3; [since 1.13.1]
+- function get_local_anchor_b(joint: Opaque<"b2Joint">): Vector3; [since 1.13.1]
+- function get_local_axis_a(joint: Opaque<"b2Joint">): Vector3; [since 1.13.1]
+- function get_lower_limit(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_max_force(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_max_length(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_max_motor_force(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_max_motor_torque(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_max_torque(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_min_length(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_motor_force(joint: Opaque<"b2Joint">, inv_dt: number): number; [since 1.13.1]
+- function get_motor_force(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_motor_speed(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_motor_torque(joint: Opaque<"b2Joint">, inv_dt: number): number; [since 1.13.1]
+- function get_motor_torque(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_mouse_target(joint: Opaque<"b2Joint">): Vector3; [since 1.13.1]
+- function get_ratio(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_reaction_force(joint: Opaque<"b2Joint">, inv_dt: number): Vector3; [since 1.13.1]
+- function get_reaction_force(joint: Opaque<"b2Joint">): Vector3; [since 1.13.1]
+- function get_reaction_torque(joint: Opaque<"b2Joint">, inv_dt: number): number; [since 1.13.1]
+- function get_reaction_torque(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_reference_angle(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_spring_damping_ratio(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_spring_hertz(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_type(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_upper_limit(joint: Opaque<"b2Joint">): number; [since 1.13.1]
+- function get_world(joint: Opaque<"b2Joint">): Opaque<"b2World">; [since 1.13.1]
+- function is_active(joint: Opaque<"b2Joint">): boolean; [since 1.13.1]
+- function is_limit_enabled(joint: Opaque<"b2Joint">): boolean; [since 1.13.1]
+- function is_motor_enabled(joint: Opaque<"b2Joint">): boolean; [since 1.13.1]
+- function is_spring_enabled(joint: Opaque<"b2Joint">): boolean; [since 1.13.1]
+- function is_valid(joint: Opaque<"b2Joint">): boolean; [since 1.13.1]
+- function set_angular_damping_ratio(joint: Opaque<"b2Joint">, ratio: number): void; [since 1.13.1]
+- function set_angular_hertz(joint: Opaque<"b2Joint">, hertz: number): void; [since 1.13.1]
+- function set_angular_offset(joint: Opaque<"b2Joint">, offset: number): void; [since 1.13.1]
+- function set_collide_connected(joint: Opaque<"b2Joint">, collide: boolean): void; [since 1.13.1]
+- function set_correction_factor(joint: Opaque<"b2Joint">, factor: number): void; [since 1.13.1]
+- function set_damping_ratio(joint: Opaque<"b2Joint">, ratio: number): void; [since 1.13.1]
+- function set_frequency(joint: Opaque<"b2Joint">, frequency: number): void; [since 1.13.1]
+- function set_hertz(joint: Opaque<"b2Joint">, hertz: number): void; [since 1.13.1]
+- function set_length(joint: Opaque<"b2Joint">, length: number): void; [since 1.13.1]
+- function set_length_range(joint: Opaque<"b2Joint">, min_length: number, max_length: number): void; [since 1.13.1]
+- function set_limits(joint: Opaque<"b2Joint">, lower: number, upper: number): void; [since 1.13.1]
+- function set_linear_damping_ratio(joint: Opaque<"b2Joint">, ratio: number): void; [since 1.13.1]
+- function set_linear_hertz(joint: Opaque<"b2Joint">, hertz: number): void; [since 1.13.1]
+- function set_linear_offset(joint: Opaque<"b2Joint">, offset: Vector3): void; [since 1.13.1]
+- function set_max_force(joint: Opaque<"b2Joint">, force: number): void; [since 1.13.1]
+- function set_max_length(joint: Opaque<"b2Joint">, length: number): void; [since 1.13.1]
+- function set_max_motor_force(joint: Opaque<"b2Joint">, force: number): void; [since 1.13.1]
+- function set_max_motor_torque(joint: Opaque<"b2Joint">, torque: number): void; [since 1.13.1]
+- function set_max_torque(joint: Opaque<"b2Joint">, torque: number): void; [since 1.13.1]
+- function set_min_length(joint: Opaque<"b2Joint">, length: number): void; [since 1.13.1]
+- function set_motor_speed(joint: Opaque<"b2Joint">, speed: number): void; [since 1.13.1]
+- function set_mouse_target(joint: Opaque<"b2Joint">, target: Vector3): void; [since 1.13.1]
+- function set_ratio(joint: Opaque<"b2Joint">, ratio: number): void; [since 1.13.1]
+- function set_reference_angle(joint: Opaque<"b2Joint">, angle: number): void; [since 1.13.1]
+- function set_spring_damping_ratio(joint: Opaque<"b2Joint">, ratio: number): void; [since 1.13.1]
+- function set_spring_hertz(joint: Opaque<"b2Joint">, hertz: number): void; [since 1.13.1]
+- function wake_bodies(joint: Opaque<"b2Joint">): void; [since 1.13.1]
+- b2d.joint.JOINT_TYPE_DISTANCE: number & { readonly __brand: "b2d.joint.JOINT_TYPE_DISTANCE" } [since 1.13.1]
+- b2d.joint.JOINT_TYPE_FILTER: number & { readonly __brand: "b2d.joint.JOINT_TYPE_FILTER" } [since 1.13.1]
+- b2d.joint.JOINT_TYPE_FRICTION: number & { readonly __brand: "b2d.joint.JOINT_TYPE_FRICTION" } [since 1.13.1]
+- b2d.joint.JOINT_TYPE_GEAR: number & { readonly __brand: "b2d.joint.JOINT_TYPE_GEAR" } [since 1.13.1]
+- b2d.joint.JOINT_TYPE_MOTOR: number & { readonly __brand: "b2d.joint.JOINT_TYPE_MOTOR" } [since 1.13.1]
+- b2d.joint.JOINT_TYPE_MOUSE: number & { readonly __brand: "b2d.joint.JOINT_TYPE_MOUSE" } [since 1.13.1]
+- b2d.joint.JOINT_TYPE_PRISMATIC: number & { readonly __brand: "b2d.joint.JOINT_TYPE_PRISMATIC" } [since 1.13.1]
+- b2d.joint.JOINT_TYPE_PULLEY: number & { readonly __brand: "b2d.joint.JOINT_TYPE_PULLEY" } [since 1.13.1]
+- b2d.joint.JOINT_TYPE_REVOLUTE: number & { readonly __brand: "b2d.joint.JOINT_TYPE_REVOLUTE" } [since 1.13.1]
+- b2d.joint.JOINT_TYPE_ROPE: number & { readonly __brand: "b2d.joint.JOINT_TYPE_ROPE" } [since 1.13.1]
+- b2d.joint.JOINT_TYPE_UNKNOWN: number & { readonly __brand: "b2d.joint.JOINT_TYPE_UNKNOWN" } [since 1.13.1]
+- b2d.joint.JOINT_TYPE_WELD: number & { readonly __brand: "b2d.joint.JOINT_TYPE_WELD" } [since 1.13.1]
+- b2d.joint.JOINT_TYPE_WHEEL: number & { readonly __brand: "b2d.joint.JOINT_TYPE_WHEEL" } [since 1.13.1]
+- b2d.joint.LIMIT_STATE_AT_LOWER: number & { readonly __brand: "b2d.joint.LIMIT_STATE_AT_LOWER" } [since 1.13.1]
+- b2d.joint.LIMIT_STATE_AT_UPPER: number & { readonly __brand: "b2d.joint.LIMIT_STATE_AT_UPPER" } [since 1.13.1]
+- b2d.joint.LIMIT_STATE_EQUAL: number & { readonly __brand: "b2d.joint.LIMIT_STATE_EQUAL" } [since 1.13.1]
+- b2d.joint.LIMIT_STATE_INACTIVE: number & { readonly __brand: "b2d.joint.LIMIT_STATE_INACTIVE" } [since 1.13.1]
+- type b2Joint = Opaque<"b2Joint"> [since 1.13.1]
 
 ### b2d.shape
 
-- function are_contact_events_enabled(shape_id: Opaque<"b2Shape">): boolean; [since 1.13.0]
-- function are_hit_events_enabled(shape_id: Opaque<"b2Shape">): boolean; [since 1.13.0]
-- function are_pre_solve_events_enabled(shape_id: Opaque<"b2Shape">): boolean; [since 1.13.0]
-- function are_sensor_events_enabled(shape_id: Opaque<"b2Shape">): boolean; [since 1.13.0]
-- function enable_contact_events(shape_id: Opaque<"b2Shape">, enable: boolean): void; [since 1.13.0]
-- function enable_hit_events(shape_id: Opaque<"b2Shape">, enable: boolean): void; [since 1.13.0]
-- function enable_pre_solve_events(shape_id: Opaque<"b2Shape">, enable: boolean): void; [since 1.13.0]
-- function enable_sensor_events(shape_id: Opaque<"b2Shape">, enable: boolean): void; [since 1.13.0]
-- function get_body(shape_id: Opaque<"b2Shape">): Opaque<"b2Body">; [since 1.13.0]
-- function get_closest_point(shape_id: Opaque<"b2Shape">, target: Vector3): Vector3; [since 1.13.0]
-- function get_contact_capacity(shape_id: Opaque<"b2Shape">): number; [since 1.13.0]
-- function get_contact_data(shape_id: Opaque<"b2Shape">): Record<string | number, unknown>; [since 1.13.0]
-- function get_mass_data(shape_id: Opaque<"b2Shape">): { mass: number; center: Vector3; inertia: number }; [since 1.13.0]
-- function get_material(shape_id: Opaque<"b2Shape">): number; [since 1.13.0]
-- function get_sensor_capacity(shape_id: Opaque<"b2Shape">): number; [since 1.13.0]
-- function get_sensor_overlaps(shape_id: Opaque<"b2Shape">): { shape_id: number }[]; [since 1.13.0]
-- function get_shape(shape_id: Opaque<"b2Shape">): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; [since 1.13.0]
-- function get_world(shape_id: Opaque<"b2Shape">): Opaque<"b2World">; [since 1.13.0]
-- function is_valid(shape_id: Opaque<"b2Shape">): boolean; [since 1.13.0]
-- function ray_cast(shape_id: Opaque<"b2Shape">, origin: Vector3, translation: Vector3, max_fraction: number): { point: Vector3; normal: Vector3; fraction: number; iterations: number }; [since 1.13.0]
-- function set_material(shape_id: Opaque<"b2Shape">, material: number): void; [since 1.13.0]
-- function set_shape(shape_id: Opaque<"b2Shape">, definition: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, update_mass: boolean): void; [since 1.13.0]
-- b2d.shape.SHAPE_TYPE_BOX: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_BOX" } [since 1.13.0]
-- b2d.shape.SHAPE_TYPE_CAPSULE: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_CAPSULE" } [since 1.13.0]
-- b2d.shape.SHAPE_TYPE_CHAIN: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_CHAIN" } [since 1.13.0]
-- b2d.shape.SHAPE_TYPE_CIRCLE: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_CIRCLE" } [since 1.13.0]
-- b2d.shape.SHAPE_TYPE_EDGE: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_EDGE" } [since 1.13.0]
-- b2d.shape.SHAPE_TYPE_GRID: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_GRID" } [since 1.13.0]
-- b2d.shape.SHAPE_TYPE_POLYGON: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_POLYGON" } [since 1.13.0]
-- b2d.shape.SHAPE_TYPE_SEGMENT: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_SEGMENT" } [since 1.13.0]
-- type b2Shape = Opaque<"b2Shape"> [since 1.13.0]
+- function are_contact_events_enabled(shape_id: Opaque<"b2Shape">): boolean; [since 1.13.1]
+- function are_hit_events_enabled(shape_id: Opaque<"b2Shape">): boolean; [since 1.13.1]
+- function are_pre_solve_events_enabled(shape_id: Opaque<"b2Shape">): boolean; [since 1.13.1]
+- function are_sensor_events_enabled(shape_id: Opaque<"b2Shape">): boolean; [since 1.13.1]
+- function enable_contact_events(shape_id: Opaque<"b2Shape">, enable: boolean): void; [since 1.13.1]
+- function enable_hit_events(shape_id: Opaque<"b2Shape">, enable: boolean): void; [since 1.13.1]
+- function enable_pre_solve_events(shape_id: Opaque<"b2Shape">, enable: boolean): void; [since 1.13.1]
+- function enable_sensor_events(shape_id: Opaque<"b2Shape">, enable: boolean): void; [since 1.13.1]
+- function get_body(shape_id: Opaque<"b2Shape">): Opaque<"b2Body">; [since 1.13.1]
+- function get_closest_point(shape_id: Opaque<"b2Shape">, target: Vector3): Vector3; [since 1.13.1]
+- function get_contact_capacity(shape_id: Opaque<"b2Shape">): number; [since 1.13.1]
+- function get_contact_data(shape_id: Opaque<"b2Shape">): Record<string | number, unknown>; [since 1.13.1]
+- function get_mass_data(shape_id: Opaque<"b2Shape">): { mass: number; center: Vector3; inertia: number }; [since 1.13.1]
+- function get_material(shape_id: Opaque<"b2Shape">): number; [since 1.13.1]
+- function get_sensor_capacity(shape_id: Opaque<"b2Shape">): number; [since 1.13.1]
+- function get_sensor_overlaps(shape_id: Opaque<"b2Shape">): { shape_id: number }[]; [since 1.13.1]
+- function get_shape(shape_id: Opaque<"b2Shape">): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; [since 1.13.1]
+- function get_world(shape_id: Opaque<"b2Shape">): Opaque<"b2World">; [since 1.13.1]
+- function is_valid(shape_id: Opaque<"b2Shape">): boolean; [since 1.13.1]
+- function ray_cast(shape_id: Opaque<"b2Shape">, origin: Vector3, translation: Vector3, max_fraction: number): { point: Vector3; normal: Vector3; fraction: number; iterations: number }; [since 1.13.1]
+- function set_material(shape_id: Opaque<"b2Shape">, material: number): void; [since 1.13.1]
+- function set_shape(shape_id: Opaque<"b2Shape">, definition: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, update_mass: boolean): void; [since 1.13.1]
+- b2d.shape.SHAPE_TYPE_BOX: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_BOX" } [since 1.13.1]
+- b2d.shape.SHAPE_TYPE_CAPSULE: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_CAPSULE" } [since 1.13.1]
+- b2d.shape.SHAPE_TYPE_CHAIN: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_CHAIN" } [since 1.13.1]
+- b2d.shape.SHAPE_TYPE_CIRCLE: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_CIRCLE" } [since 1.13.1]
+- b2d.shape.SHAPE_TYPE_EDGE: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_EDGE" } [since 1.13.1]
+- b2d.shape.SHAPE_TYPE_GRID: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_GRID" } [since 1.13.1]
+- b2d.shape.SHAPE_TYPE_POLYGON: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_POLYGON" } [since 1.13.1]
+- b2d.shape.SHAPE_TYPE_SEGMENT: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_SEGMENT" } [since 1.13.1]
+- type b2Shape = Opaque<"b2Shape"> [since 1.13.1]
 
 ### b2d.world
 
-- function cast_mover(world: Opaque<"b2World">, capsule: { center1?: Vector3; center2?: Vector3; radius?: number }, translation: Vector3, filter?: { category_bits?: number; mask_bits?: number }): number; [since 1.13.0]
-- function cast_ray(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
-- function cast_ray(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
-- function cast_ray_closest(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter: { category_bits?: number; mask_bits?: number; group_index?: number }): { fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number; node_visits: number; leaf_visits: number }; [since 1.13.0]
-- function cast_ray_closest(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }): { fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number; node_visits: number; leaf_visits: number } | undefined; [since 1.13.0]
-- function cast_shape(world: Opaque<"b2World">, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, translation: Vector3, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
-- function cast_shape(world: Opaque<"b2World">, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, translation: Vector3, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
-- function collide_mover(world: Opaque<"b2World">, capsule: { center1?: Vector3; center2?: Vector3; radius?: number }, filter?: { category_bits?: number; mask_bits?: number }, max_results?: number): Record<string | number, unknown>; [since 1.13.0]
-- function enable_continuous(world: Opaque<"b2World">, enable: boolean): void; [since 1.13.0]
-- function enable_sleeping(world: Opaque<"b2World">, enable: boolean): void; [since 1.13.0]
-- function enable_speculative(world: Opaque<"b2World">, enable: boolean): void; [since 1.13.0]
-- function enable_warm_starting(world: Opaque<"b2World">, enable: boolean): void; [since 1.13.0]
-- function explode(world: Opaque<"b2World">, definition: Record<string | number, unknown>): void; [since 1.13.0]
-- function get_awake_body_count(world: Opaque<"b2World">): number; [since 1.13.0]
-- function get_counters(world: Opaque<"b2World">): Record<string | number, unknown>; [since 1.13.0]
-- function get_gravity(world: Opaque<"b2World">): Vector3; [since 1.13.0]
-- function get_hit_event_threshold(world: Opaque<"b2World">): number; [since 1.13.0]
-- function get_maximum_linear_speed(world: Opaque<"b2World">): number; [since 1.13.0]
-- function get_profile(world: Opaque<"b2World">): Record<string | number, unknown>; [since 1.13.0]
-- function get_restitution_threshold(world: Opaque<"b2World">): number; [since 1.13.0]
-- function is_continuous_enabled(world: Opaque<"b2World">): boolean; [since 1.13.0]
-- function is_locked(world: Opaque<"b2World">): boolean; [since 1.13.0]
-- function is_sleeping_enabled(world: Opaque<"b2World">): boolean; [since 1.13.0]
-- function is_valid(world: Opaque<"b2World">): boolean; [since 1.13.0]
-- function is_warm_starting_enabled(world: Opaque<"b2World">): boolean; [since 1.13.0]
-- function overlap_aabb(world: Opaque<"b2World">, aabb: { lower?: Vector3; upper?: Vector3 }, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
-- function overlap_aabb(world: Opaque<"b2World">, aabb: { lower?: Vector3; upper?: Vector3 }, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ shape_id: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
-- function overlap_shape(world: Opaque<"b2World">, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
-- function overlap_shape(world: Opaque<"b2World">, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ shape_id: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
-- function rebuild_static_tree(world: Opaque<"b2World">): void; [since 1.13.0]
-- function set_contact_tuning(world: Opaque<"b2World">, hertz: number, damping_ratio: number, pushout: number): void; [since 1.13.0]
-- function set_gravity(world: Opaque<"b2World">, gravity: Vector3): void; [since 1.13.0]
-- function set_hit_event_threshold(world: Opaque<"b2World">, threshold: number): void; [since 1.13.0]
-- function set_joint_tuning(world: Opaque<"b2World">, hertz: number, damping_ratio: number): void; [since 1.13.0]
-- function set_maximum_linear_speed(world: Opaque<"b2World">, speed: number): void; [since 1.13.0]
-- function set_restitution_threshold(world: Opaque<"b2World">, threshold: number): void; [since 1.13.0]
+- function cast_mover(world: Opaque<"b2World">, capsule: { center1?: Vector3; center2?: Vector3; radius?: number }, translation: Vector3, filter?: { category_bits?: number; mask_bits?: number }): number; [since 1.13.1]
+- function cast_ray(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.1]
+- function cast_ray(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.1]
+- function cast_ray_closest(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter: { category_bits?: number; mask_bits?: number; group_index?: number }): { fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number; node_visits: number; leaf_visits: number }; [since 1.13.1]
+- function cast_ray_closest(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }): { fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number; node_visits: number; leaf_visits: number } | undefined; [since 1.13.1]
+- function cast_shape(world: Opaque<"b2World">, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, translation: Vector3, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.1]
+- function cast_shape(world: Opaque<"b2World">, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, translation: Vector3, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.1]
+- function collide_mover(world: Opaque<"b2World">, capsule: { center1?: Vector3; center2?: Vector3; radius?: number }, filter?: { category_bits?: number; mask_bits?: number }, max_results?: number): Record<string | number, unknown>; [since 1.13.1]
+- function enable_continuous(world: Opaque<"b2World">, enable: boolean): void; [since 1.13.1]
+- function enable_sleeping(world: Opaque<"b2World">, enable: boolean): void; [since 1.13.1]
+- function enable_speculative(world: Opaque<"b2World">, enable: boolean): void; [since 1.13.1]
+- function enable_warm_starting(world: Opaque<"b2World">, enable: boolean): void; [since 1.13.1]
+- function explode(world: Opaque<"b2World">, definition: Record<string | number, unknown>): void; [since 1.13.1]
+- function get_awake_body_count(world: Opaque<"b2World">): number; [since 1.13.1]
+- function get_counters(world: Opaque<"b2World">): Record<string | number, unknown>; [since 1.13.1]
+- function get_gravity(world: Opaque<"b2World">): Vector3; [since 1.13.1]
+- function get_hit_event_threshold(world: Opaque<"b2World">): number; [since 1.13.1]
+- function get_maximum_linear_speed(world: Opaque<"b2World">): number; [since 1.13.1]
+- function get_profile(world: Opaque<"b2World">): Record<string | number, unknown>; [since 1.13.1]
+- function get_restitution_threshold(world: Opaque<"b2World">): number; [since 1.13.1]
+- function is_continuous_enabled(world: Opaque<"b2World">): boolean; [since 1.13.1]
+- function is_locked(world: Opaque<"b2World">): boolean; [since 1.13.1]
+- function is_sleeping_enabled(world: Opaque<"b2World">): boolean; [since 1.13.1]
+- function is_valid(world: Opaque<"b2World">): boolean; [since 1.13.1]
+- function is_warm_starting_enabled(world: Opaque<"b2World">): boolean; [since 1.13.1]
+- function overlap_aabb(world: Opaque<"b2World">, aabb: { lower?: Vector3; upper?: Vector3 }, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.1]
+- function overlap_aabb(world: Opaque<"b2World">, aabb: { lower?: Vector3; upper?: Vector3 }, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ shape_id: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.1]
+- function overlap_shape(world: Opaque<"b2World">, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.1]
+- function overlap_shape(world: Opaque<"b2World">, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ shape_id: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.1]
+- function rebuild_static_tree(world: Opaque<"b2World">): void; [since 1.13.1]
+- function set_contact_tuning(world: Opaque<"b2World">, hertz: number, damping_ratio: number, pushout: number): void; [since 1.13.1]
+- function set_gravity(world: Opaque<"b2World">, gravity: Vector3): void; [since 1.13.1]
+- function set_hit_event_threshold(world: Opaque<"b2World">, threshold: number): void; [since 1.13.1]
+- function set_joint_tuning(world: Opaque<"b2World">, hertz: number, damping_ratio: number): void; [since 1.13.1]
+- function set_maximum_linear_speed(world: Opaque<"b2World">, speed: number): void; [since 1.13.1]
+- function set_restitution_threshold(world: Opaque<"b2World">, threshold: number): void; [since 1.13.1]
 
 ### buffer
 
@@ -6773,7 +6797,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_far_z(camera?: Url | number): number;
 - function get_fov(camera?: Url | number): number;
 - function get_near_z(camera?: Url | number): number;
-- function get_orthographic_auto_zoom(camera?: Url | number): number; [since 1.13.0]
+- function get_orthographic_auto_zoom(camera?: Url | number): number; [since 1.13.1]
 - function get_orthographic_mode(camera?: Url | number): number;
 - function get_orthographic_zoom(camera?: Url | number): number;
 - function get_projection(camera?: Url | number): Matrix4;
@@ -6791,14 +6815,14 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - camera.ORTHO_MODE_AUTO_COVER: number & { readonly __brand: "camera.ORTHO_MODE_AUTO_COVER" }
 - camera.ORTHO_MODE_AUTO_FIT: number & { readonly __brand: "camera.ORTHO_MODE_AUTO_FIT" }
 - camera.ORTHO_MODE_FIXED: number & { readonly __brand: "camera.ORTHO_MODE_FIXED" }
-- aspect_ratio: unknown [since 1.13.0]
-- far_z: unknown [since 1.13.0]
-- fov: unknown [since 1.13.0]
-- near_z: unknown [since 1.13.0]
-- orthographic_auto_zoom: unknown [since 1.13.0]
-- orthographic_zoom: unknown [since 1.13.0]
-- projection: unknown [since 1.13.0]
-- view: unknown [since 1.13.0]
+- aspect_ratio: unknown [since 1.13.1]
+- far_z: unknown [since 1.13.1]
+- fov: unknown [since 1.13.1]
+- near_z: unknown [since 1.13.1]
+- orthographic_auto_zoom: unknown [since 1.13.1]
+- orthographic_zoom: unknown [since 1.13.1]
+- projection: unknown [since 1.13.1]
+- view: unknown [since 1.13.1]
 
 ### collectionfactory
 
@@ -6814,6 +6838,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### collectionproxy
 
 - function get_resources(collectionproxy: Url): Hash[];
+- function load(url: string | Hash | Url, options: Record<string | number, unknown> | undefined, callback: (self: unknown, message_id: unknown, message: unknown, sender: unknown) => void): void; [since 1.13.1]
 - function set_collection(url?: string | Hash | Url, prototype?: string): LuaMultiReturn<[boolean, number]>;
 - collectionproxy.RESULT_ALREADY_LOADED: number & { readonly __brand: "collectionproxy.RESULT_ALREADY_LOADED" }
 - collectionproxy.RESULT_LOADING: number & { readonly __brand: "collectionproxy.RESULT_LOADING" }
@@ -6821,12 +6846,12 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### compute
 
-- function get_constants(path: Hash | string): { name: Hash; type: number; value: Vector4 | Matrix4 }[]; [since 1.13.0]
-- function get_samplers(path: Hash | string): { name: Hash; u_wrap: number; v_wrap: number; min_filter: number; mag_filter: number; max_anisotropy: number }[]; [since 1.13.0]
-- function get_textures(path: Hash | string): { path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number }[]; [since 1.13.0]
-- function set_constants(path: Hash | string, constants: Record<string, { type?: number; value?: Vector4 | Vector3 | Matrix4 | number | (Vector4 | Matrix4)[] }>): void; [since 1.13.0]
-- function set_samplers(path: Hash | string, samplers: Record<string, { u_wrap?: number; v_wrap?: number; min_filter?: number; mag_filter?: number; max_anisotropy?: number }>): void; [since 1.13.0]
-- function set_textures(path: Hash | string, textures: LuaMap<string, Hash>): void; [since 1.13.0]
+- function get_constants(path: Hash | string): { name: Hash; type: number; value: Vector4 | Matrix4 }[]; [since 1.13.1]
+- function get_samplers(path: Hash | string): { name: Hash; u_wrap: number; v_wrap: number; min_filter: number; mag_filter: number; max_anisotropy: number }[]; [since 1.13.1]
+- function get_textures(path: Hash | string): { path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number }[]; [since 1.13.1]
+- function set_constants(path: Hash | string, constants: Record<string, { type?: number; value?: Vector4 | Vector3 | Matrix4 | number | (Vector4 | Matrix4)[] }>): void; [since 1.13.1]
+- function set_samplers(path: Hash | string, samplers: Record<string, { u_wrap?: number; v_wrap?: number; min_filter?: number; mag_filter?: number; max_anisotropy?: number }>): void; [since 1.13.1]
+- function set_textures(path: Hash | string, textures: LuaMap<string, Hash>): void; [since 1.13.1]
 
 ### crash
 
@@ -6875,9 +6900,6 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### globals
 
-- hash(s: string): Hash
-- hash_to_hex(h: Hash): string
-- pprint(v: unknown)
 
 ### go
 
@@ -6981,13 +7003,13 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### graphics
 
-- function get_adapter_info(): { family: string; version_major: number; version_minor: number; limits: { max_texture_size_2d: number; max_texture_size_3d: number; max_texture_size_cube: number; max_texture_array_layers: number; max_framebuffer_width: number; max_framebuffer_height: number; max_color_attachments: number; max_samplers_per_stage: number; max_textures_per_stage: number; max_vertex_attributes: number; max_vertex_buffers: number; max_compute_workgroup_size_x: number; max_compute_workgroup_size_y: number; max_compute_workgroup_size_z: number; max_compute_workgroup_invocations: number; max_compute_shared_memory_size: number; max_uniform_buffer_range: number; max_storage_buffer_range: number }; extensions: string[]; features: number[] }; [since 1.13.0]
-- function get_engine_adapters(): string[]; [since 1.13.0]
-- graphics.BLEND_EQUATION_ADD: number & { readonly __brand: "graphics.BLEND_EQUATION_ADD" } [since 1.13.0]
-- graphics.BLEND_EQUATION_MAX: number & { readonly __brand: "graphics.BLEND_EQUATION_MAX" } [since 1.13.0]
-- graphics.BLEND_EQUATION_MIN: number & { readonly __brand: "graphics.BLEND_EQUATION_MIN" } [since 1.13.0]
-- graphics.BLEND_EQUATION_REVERSE_SUBTRACT: number & { readonly __brand: "graphics.BLEND_EQUATION_REVERSE_SUBTRACT" } [since 1.13.0]
-- graphics.BLEND_EQUATION_SUBTRACT: number & { readonly __brand: "graphics.BLEND_EQUATION_SUBTRACT" } [since 1.13.0]
+- function get_adapter_info(): { family: string; version_major: number; version_minor: number; limits: { max_texture_size_2d: number; max_texture_size_3d: number; max_texture_size_cube: number; max_texture_array_layers: number; max_framebuffer_width: number; max_framebuffer_height: number; max_color_attachments: number; max_samplers_per_stage: number; max_textures_per_stage: number; max_vertex_attributes: number; max_vertex_buffers: number; max_compute_workgroup_size_x: number; max_compute_workgroup_size_y: number; max_compute_workgroup_size_z: number; max_compute_workgroup_invocations: number; max_compute_shared_memory_size: number; max_uniform_buffer_range: number; max_storage_buffer_range: number }; extensions: string[]; features: number[] }; [since 1.13.1]
+- function get_engine_adapters(): string[]; [since 1.13.1]
+- graphics.BLEND_EQUATION_ADD: number & { readonly __brand: "graphics.BLEND_EQUATION_ADD" } [since 1.13.1]
+- graphics.BLEND_EQUATION_MAX: number & { readonly __brand: "graphics.BLEND_EQUATION_MAX" } [since 1.13.1]
+- graphics.BLEND_EQUATION_MIN: number & { readonly __brand: "graphics.BLEND_EQUATION_MIN" } [since 1.13.1]
+- graphics.BLEND_EQUATION_REVERSE_SUBTRACT: number & { readonly __brand: "graphics.BLEND_EQUATION_REVERSE_SUBTRACT" } [since 1.13.1]
+- graphics.BLEND_EQUATION_SUBTRACT: number & { readonly __brand: "graphics.BLEND_EQUATION_SUBTRACT" } [since 1.13.1]
 - graphics.BLEND_FACTOR_CONSTANT_ALPHA: number & { readonly __brand: "graphics.BLEND_FACTOR_CONSTANT_ALPHA" }
 - graphics.BLEND_FACTOR_CONSTANT_COLOR: number & { readonly __brand: "graphics.BLEND_FACTOR_CONSTANT_COLOR" }
 - graphics.BLEND_FACTOR_DST_ALPHA: number & { readonly __brand: "graphics.BLEND_FACTOR_DST_ALPHA" }
@@ -7022,15 +7044,15 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - graphics.COMPRESSION_TYPE_DEFAULT: number & { readonly __brand: "graphics.COMPRESSION_TYPE_DEFAULT" }
 - graphics.COMPRESSION_TYPE_WEBP: number & { readonly __brand: "graphics.COMPRESSION_TYPE_WEBP" }
 - graphics.COMPRESSION_TYPE_WEBP_LOSSY: number & { readonly __brand: "graphics.COMPRESSION_TYPE_WEBP_LOSSY" }
-- graphics.CONTEXT_FEATURE_3D_TEXTURES: number & { readonly __brand: "graphics.CONTEXT_FEATURE_3D_TEXTURES" } [since 1.13.0]
-- graphics.CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES: number & { readonly __brand: "graphics.CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES" } [since 1.13.0]
-- graphics.CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX: number & { readonly __brand: "graphics.CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX" } [since 1.13.0]
-- graphics.CONTEXT_FEATURE_COMPUTE_SHADER: number & { readonly __brand: "graphics.CONTEXT_FEATURE_COMPUTE_SHADER" } [since 1.13.0]
-- graphics.CONTEXT_FEATURE_INSTANCING: number & { readonly __brand: "graphics.CONTEXT_FEATURE_INSTANCING" } [since 1.13.0]
-- graphics.CONTEXT_FEATURE_MULTI_TARGET_RENDERING: number & { readonly __brand: "graphics.CONTEXT_FEATURE_MULTI_TARGET_RENDERING" } [since 1.13.0]
-- graphics.CONTEXT_FEATURE_STORAGE_BUFFER: number & { readonly __brand: "graphics.CONTEXT_FEATURE_STORAGE_BUFFER" } [since 1.13.0]
-- graphics.CONTEXT_FEATURE_TEXTURE_ARRAY: number & { readonly __brand: "graphics.CONTEXT_FEATURE_TEXTURE_ARRAY" } [since 1.13.0]
-- graphics.CONTEXT_FEATURE_VSYNC: number & { readonly __brand: "graphics.CONTEXT_FEATURE_VSYNC" } [since 1.13.0]
+- graphics.CONTEXT_FEATURE_3D_TEXTURES: number & { readonly __brand: "graphics.CONTEXT_FEATURE_3D_TEXTURES" } [since 1.13.1]
+- graphics.CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES: number & { readonly __brand: "graphics.CONTEXT_FEATURE_ASTC_ARRAY_TEXTURES" } [since 1.13.1]
+- graphics.CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX: number & { readonly __brand: "graphics.CONTEXT_FEATURE_BLEND_EQUATION_MIN_MAX" } [since 1.13.1]
+- graphics.CONTEXT_FEATURE_COMPUTE_SHADER: number & { readonly __brand: "graphics.CONTEXT_FEATURE_COMPUTE_SHADER" } [since 1.13.1]
+- graphics.CONTEXT_FEATURE_INSTANCING: number & { readonly __brand: "graphics.CONTEXT_FEATURE_INSTANCING" } [since 1.13.1]
+- graphics.CONTEXT_FEATURE_MULTI_TARGET_RENDERING: number & { readonly __brand: "graphics.CONTEXT_FEATURE_MULTI_TARGET_RENDERING" } [since 1.13.1]
+- graphics.CONTEXT_FEATURE_STORAGE_BUFFER: number & { readonly __brand: "graphics.CONTEXT_FEATURE_STORAGE_BUFFER" } [since 1.13.1]
+- graphics.CONTEXT_FEATURE_TEXTURE_ARRAY: number & { readonly __brand: "graphics.CONTEXT_FEATURE_TEXTURE_ARRAY" } [since 1.13.1]
+- graphics.CONTEXT_FEATURE_VSYNC: number & { readonly __brand: "graphics.CONTEXT_FEATURE_VSYNC" } [since 1.13.1]
 - graphics.FACE_TYPE_BACK: number & { readonly __brand: "graphics.FACE_TYPE_BACK" }
 - graphics.FACE_TYPE_FRONT: number & { readonly __brand: "graphics.FACE_TYPE_FRONT" }
 - graphics.FACE_TYPE_FRONT_AND_BACK: number & { readonly __brand: "graphics.FACE_TYPE_FRONT_AND_BACK" }
@@ -7182,7 +7204,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function reset_material(node: Opaque<"node">): void;
 - function reset_nodes(): void;
 - function screen_to_local(node: Opaque<"node">, screen_position: Vector3): Vector3;
-- function set(node: Opaque<"node"> | Url, property: string | Hash | Opaque<"constant">, value: number | Vector4 | Vector3 | Quaternion, options?: { index?: number; key?: Hash }): void;
+- function set(node: Opaque<"node"> | Url, property: string | Hash | Opaque<"constant">, value: number | Vector4 | Vector3 | Quaternion, options?: { index?: number; key?: Hash }): void; [through 1.12.4] [signature transition]
+- function set(node: Opaque<"node"> | Url, property: string | Hash | Opaque<"constant">, value?: number | Vector4 | Vector3 | Quaternion, options?: { index?: number; key?: Hash }): void; [since 1.13.1] [signature transition]
 - function set_adjust_mode(node: Opaque<"node">, adjust_mode: Opaque<"constant">): void;
 - function set_alpha(node: Opaque<"node">, alpha: number): void;
 - function set_blend_mode(node: Opaque<"node">, blend_mode: Opaque<"constant">): void;
@@ -7400,11 +7423,11 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### liveupdate
 
 - function add_mount(name: string, uri: string, priority: number, callback: (...args: unknown[]) => unknown): number; [through 1.12.4] [signature transition]
-- function add_mount(name: string | Hash, uri: string, priority: number, callback: (self: unknown, name: unknown, uri: unknown, result: unknown) => void): number; [since 1.13.0] [signature transition]
+- function add_mount(name: string | Hash, uri: string, priority: number, callback: (self: unknown, name: unknown, uri: unknown, result: unknown) => void): number; [since 1.13.1] [signature transition]
 - function get_mounts(): { name: string; uri: string; priority: number }[];
-- function is_built_with_excluded_files(): boolean; [since 1.13.0]
+- function is_built_with_excluded_files(): boolean; [since 1.13.1]
 - function remove_mount(name: string): number; [through 1.12.4] [signature transition]
-- function remove_mount(name: string | Hash): number; [since 1.13.0] [signature transition]
+- function remove_mount(name: string | Hash): number; [since 1.13.1] [signature transition]
 - liveupdate.LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH: number & { readonly __brand: "liveupdate.LIVEUPDATE_BUNDLED_RESOURCE_MISMATCH" }
 - liveupdate.LIVEUPDATE_ENGINE_VERSION_MISMATCH: number & { readonly __brand: "liveupdate.LIVEUPDATE_ENGINE_VERSION_MISMATCH" }
 - liveupdate.LIVEUPDATE_FORMAT_ERROR: number & { readonly __brand: "liveupdate.LIVEUPDATE_FORMAT_ERROR" }
@@ -7421,26 +7444,26 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### material
 
-- function get_constants(path: Hash | string): { name: Hash; type: number; value: Vector4 | Matrix4 }[]; [since 1.13.0]
-- function get_samplers(path: Hash | string): { name: Hash; u_wrap: number; v_wrap: number; min_filter: number; mag_filter: number; max_anisotropy: number }[]; [since 1.13.0]
-- function get_textures(path: Hash | string): { path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number }[]; [since 1.13.0]
-- function get_vertex_attributes(path: Hash | string): { name: Hash; value: Vector4 | Vector3 | Matrix4 | number | number[]; normalize: boolean; data_type: number; coordinate_space: number; semantic_type: number }[]; [since 1.13.0]
-- function set_constants(path: Hash | string, constants: Record<string, { type?: number; value?: Vector4 | Vector3 | Matrix4 | number | (Vector4 | Matrix4)[] }>): void; [since 1.13.0]
-- function set_samplers(path: Hash | string, samplers: Record<string, { u_wrap?: number; v_wrap?: number; min_filter?: number; mag_filter?: number; max_anisotropy?: number }>): void; [since 1.13.0]
-- function set_textures(path: Hash | string, textures: LuaMap<string, Hash>): void; [since 1.13.0]
-- function set_vertex_attributes(path: Hash | string, attributes: Record<string, { value?: Vector4 | Vector3 | Matrix4 | number | number[]; normalize?: boolean; data_type?: number; coordinate_space?: number; semantic_type?: number }>): void; [since 1.13.0]
+- function get_constants(path: Hash | string): { name: Hash; type: number; value: Vector4 | Matrix4 }[]; [since 1.13.1]
+- function get_samplers(path: Hash | string): { name: Hash; u_wrap: number; v_wrap: number; min_filter: number; mag_filter: number; max_anisotropy: number }[]; [since 1.13.1]
+- function get_textures(path: Hash | string): { path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number }[]; [since 1.13.1]
+- function get_vertex_attributes(path: Hash | string): { name: Hash; value: Vector4 | Vector3 | Matrix4 | number | number[]; normalize: boolean; data_type: number; coordinate_space: number; semantic_type: number }[]; [since 1.13.1]
+- function set_constants(path: Hash | string, constants: Record<string, { type?: number; value?: Vector4 | Vector3 | Matrix4 | number | (Vector4 | Matrix4)[] }>): void; [since 1.13.1]
+- function set_samplers(path: Hash | string, samplers: Record<string, { u_wrap?: number; v_wrap?: number; min_filter?: number; mag_filter?: number; max_anisotropy?: number }>): void; [since 1.13.1]
+- function set_textures(path: Hash | string, textures: LuaMap<string, Hash>): void; [since 1.13.1]
+- function set_vertex_attributes(path: Hash | string, attributes: Record<string, { value?: Vector4 | Vector3 | Matrix4 | number | number[]; normalize?: boolean; data_type?: number; coordinate_space?: number; semantic_type?: number }>): void; [since 1.13.1]
 
 ### model
 
 - function cancel(url: string | Hash | Url): void;
 - function get_aabb(url: string | Hash | Url): { min: Vector3; max: Vector3 };
-- function get_blend_weights(url: string | Hash | Url): number[]; [since 1.13.0]
+- function get_blend_weights(url: string | Hash | Url): number[]; [since 1.13.1]
 - function get_go(url: string | Hash | Url, bone_id: string | Hash): Hash;
 - function get_mesh_aabb(url: string | Hash | Url): LuaMap<Hash, { min: Vector3; max: Vector3 }>;
 - function get_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash | Url): boolean;
 - function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: Opaque<"constant">, play_properties?: { blend_duration?: number; offset?: number; playback_rate?: number }, complete_function?: (self: unknown, message_id: unknown, message: unknown, sender: unknown) => void): void;
 - function reset_constant(url: string | Hash | Url, constant: string | Hash): void; [deprecated since 1.13.0]
-- function set_blend_weights(url: string | Hash | Url, weights?: number[]): void; [since 1.13.0]
+- function set_blend_weights(url: string | Hash | Url, weights?: number[]): void; [since 1.13.1]
 - function set_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash | Url, enabled: boolean): void;
 - animation: Hash
 - cursor: number
@@ -7564,9 +7587,9 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_window_width(): number;
 - function predicate(tags: (string | Hash)[]): number;
 - function render_target(name: string, parameters: Record<string | number, unknown>): Opaque<"render_target">;
-- function set_blend_equation_separate(equation_color: number, equation_alpha: number): void; [since 1.13.0]
+- function set_blend_equation_separate(equation_color: number, equation_alpha: number): void; [since 1.13.1]
 - function set_blend_func(source_factor: number, destination_factor: number): void;
-- function set_blend_func_separate(source_factor_color: number, destination_factor_color: number, source_factor_alpha: number, destination_factor_alpha: number): void; [since 1.13.0]
+- function set_blend_func_separate(source_factor_color: number, destination_factor_color: number, source_factor_alpha: number, destination_factor_alpha: number): void; [since 1.13.1]
 - function set_camera(camera?: Url | number, options?: { use_frustum?: boolean }): void;
 - function set_color_mask(red: boolean, green: boolean, blue: boolean, alpha: boolean): void;
 - function set_compute(compute?: string | Hash): void;

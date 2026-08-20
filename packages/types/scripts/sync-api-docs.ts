@@ -11,7 +11,7 @@ import { MODULE_MANIFEST } from "./regen";
 // model because the per-package `rootDir` boundary forbids a types-package
 // module importing outside its own tree; `scripts/release-model.test.ts`
 // correspondence-guards these against the model so drift fails CI.
-export const DEFOLD_VERSION = "1.13.0";
+export const DEFOLD_VERSION = "1.13.1";
 export const refDocUrl = (version = DEFOLD_VERSION): string =>
   `https://github.com/defold/defold/releases/download/${version}/ref-doc.zip`;
 
@@ -184,6 +184,7 @@ export const EDITOR_MANIFEST: readonly SyncManifestEntry[] = [
 // `http_doc.json` / `json_doc.json` / `zlib_doc.json`.
 export const EDITOR_VM_MANIFEST: readonly SyncManifestEntry[] = [
   editorVm("http"),
+  editorVm("image"),
   editorVm("json"),
   editorVm("localization"),
   editorVm("zip"),
@@ -204,7 +205,7 @@ function editorVm(namespace: string): SyncManifestEntry {
 function entry(
   namespace: string,
   zipEntry: string,
-  fixture: string = `fixtures/defold-1.13.0/${namespace.replace(/\./g, "_")}_doc.json`,
+  fixture: string = `fixtures/defold-1.13.1/${namespace.replace(/\./g, "_")}_doc.json`,
   mergeEntries?: readonly string[],
 ): SyncManifestEntry {
   return { namespace, zipEntry, fixture, ...(mergeEntries ? { mergeEntries } : {}) };
@@ -235,7 +236,7 @@ function ext(namespace: string, repo: string, tag: string, path: string): Extens
     repo,
     tag,
     path,
-    fixture: `fixtures/defold-1.13.0/${namespace}_doc.json`,
+    fixture: `fixtures/defold-1.13.1/${namespace}_doc.json`,
   };
 }
 
