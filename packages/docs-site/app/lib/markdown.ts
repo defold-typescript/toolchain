@@ -210,7 +210,11 @@ export async function renderMarkdown(
       const token = state.tokens[i];
       if (token?.type !== "heading_open") continue;
       const level = Number(token.tag.slice(1));
-      if (level < 1 || level > 3) continue;
+      // h4 is minted too: the upgrade guide nests each release's per-symbol notes
+      // at that depth beneath one `## Defold <version>` heading, and an unminted
+      // heading has no permalink, no TOC target and nothing to link at. h5 and
+      // deeper stay unminted — no page addresses them.
+      if (level < 1 || level > 4) continue;
       const inline = state.tokens[i + 1];
       if (inline?.type !== "inline" || !inline.children) continue;
       // Availability badge markers (see api-page-render) are decorative `<span>`s

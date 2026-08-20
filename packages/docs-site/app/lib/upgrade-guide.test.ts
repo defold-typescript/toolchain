@@ -25,6 +25,16 @@ const guideBody = readFileSync(join(GUIDE_DIR, `${SLUG}.md`), "utf8");
 // readiness gate scopes its evidence — a heading parked in an older section
 // must not satisfy the current release.
 const releaseBody = releaseSection(guideBody, RELEASE) ?? "";
+// The hop a baseline project actually makes spans every release after the
+// baseline up to the current one — 1.13.0 and 1.13.1 both — so migration coverage
+// is asserted over their union, mirroring `collectMigrationGuide`. Each release
+// keeps its own notes under its own marker rather than being relabelled forward.
+const BASELINE = "1.12.4";
+const spanBody = releaseSections(guideBody)
+  .filter((s) => s.version !== BASELINE)
+  .map((s) => s.body)
+  .join("\n");
+const replacedBody = releaseSection(guideBody, REPLACED) ?? "";
 
 interface AvailabilityRecord {
   identity: { namespace: string; kind: string; name: string; signature: string };
@@ -58,7 +68,9 @@ function qualifiedName(record: AvailabilityRecord): string {
   return name.includes(".") ? name : `${namespace}.${name}`;
 }
 
-// Every h2/h3 heading's raw text, in document order, skipping fenced code.
+// Every h2-h4 heading's raw text, in document order, skipping fenced code. Each
+// release nests under one `## Defold <version>`, so topics sit at h3 and the
+// per-symbol notes the lifecycle badges target sit at h4.
 function headingTexts(markdown: string): string[] {
   const out: string[] = [];
   let inFence = false;
@@ -68,13 +80,13 @@ function headingTexts(markdown: string): string[] {
       continue;
     }
     if (inFence) continue;
-    const match = /^\s*(#{2,3})\s+(.+?)\s*$/.exec(line);
+    const match = /^\s*(#{2,4})\s+(.+?)\s*$/.exec(line);
     if (match) out.push(match[2] ?? "");
   }
   return out;
 }
 
-// Mirror the reference-audit / renderer heading-id rule: h2/h3 headings gain a
+// Mirror the reference-audit / renderer heading-id rule: h2-h4 headings gain a
 // slugified id; `-2`/`-3` disambiguate duplicates; fenced code is skipped.
 function headingAnchors(markdown: string): Set<string> {
   const out = new Set<string>();
@@ -86,7 +98,7 @@ function headingAnchors(markdown: string): Set<string> {
       continue;
     }
     if (inFence) continue;
-    const match = /^\s*(#{2,3})\s+(.+?)\s*$/.exec(line);
+    const match = /^\s*(#{2,4})\s+(.+?)\s*$/.exec(line);
     if (!match) continue;
     const base = slugify(match[2] ?? "");
     if (!base) continue;
@@ -124,13 +136,18 @@ describe("upgrading-defold-versions guide", () => {
   });
 
   // Page-wide, not per-section: the API lifecycle badges link to
-  // `slugify(<qualified symbol>)` on this one page, so a heading repeated in a
-  // second release section would mint `<slug>-2` and leave the badge pointing at
-  // the earlier release's note.
-  test("every h2/h3 heading slug on the page is unique", () => {
+  // `slugify(<qualified symbol>)` on this one page, so a *symbol* heading repeated
+  // in a second release section would mint `<slug>-2` and leave the badge pointing
+  // at the earlier release's note. Topic headings ("Changed Lua API signatures")
+  // deliberately repeat under each release's `## Defold <version>` parent — they
+  // are structure, not badge targets — so uniqueness is asserted over exactly the
+  // headings a badge can resolve to.
+  test("every symbol heading slug on the page is unique", () => {
+    const catalog = new Set(availabilityDoc().records.map((r) => slugify(qualifiedName(r))));
     const seen = new Map<string, number>();
     for (const heading of headingTexts(guideBody)) {
       const slug = slugify(heading);
+      if (!catalog.has(slug)) continue;
       seen.set(slug, (seen.get(slug) ?? 0) + 1);
     }
     const duplicated = [...seen].filter(([, n]) => n > 1).map(([slug]) => slug);
@@ -157,7 +174,7 @@ describe("upgrading-defold-versions guide", () => {
   });
 
   test("covers every PRD-listed engine breaking change", () => {
-    const body = releaseBody.toLowerCase();
+    const body = spanBody.toLowerCase();
     // Stable content tokens, not prose bytes: additive editorial edits keep them.
     const changes: { name: string; tokens: string[] }[] = [
       { name: "asm.js removal", tokens: ["asm.js"] },
@@ -176,11 +193,11 @@ describe("upgrading-defold-versions guide", () => {
   });
 
   test("every removed/deprecated catalog symbol has a stable guide anchor or a no-action entry", () => {
-    const anchors = headingAnchors(releaseBody);
+    const anchors = headingAnchors(spanBody);
     // An explicit no-action list: `<!-- no-action: <qualified> -->` classifies a
     // removed/deprecated symbol that needs no migration, without minting a heading.
     const noAction = new Set(
-      [...releaseBody.matchAll(/<!--\s*no-action:\s*([^\s]+)\s*-->/g)].map((m) => m[1] ?? ""),
+      [...spanBody.matchAll(/<!--\s*no-action:\s*([^\s]+)\s*-->/g)].map((m) => m[1] ?? ""),
     );
     const doc = availabilityDoc();
     const removed = absentFromNewest(doc);
@@ -205,15 +222,15 @@ describe("upgrading-defold-versions guide", () => {
     );
     expect(namespaces.size).toBeGreaterThan(0);
     for (const namespace of namespaces) {
-      expect(releaseBody).toContain(`/api/defold-1.12.4/${namespace}`);
+      expect(spanBody).toContain(`/api/defold-1.12.4/${namespace}`);
     }
   });
 
   test("points current-surface claims at the exact-version pages", () => {
     // The upgrade guide's current-surface claims are version-specific, so they
     // resolve to the exact-version pages, not the unprefixed Combined page.
-    expect(releaseBody).toContain(`/api/defold-${RELEASE}/liveupdate`);
-    expect(releaseBody).toContain(`/api/defold-${RELEASE}/model`);
+    expect(spanBody).toContain(`/api/defold-${RELEASE}/liveupdate`);
+    expect(spanBody).toContain(`/api/defold-${RELEASE}/model`);
     expect(guideBody).not.toContain("](/api/liveupdate)");
     expect(guideBody).not.toContain("](/api/model)");
   });
@@ -242,8 +259,8 @@ describe("upgrading-defold-versions guide", () => {
   // transition — the `name` parameter widened to accept a hash — not as removed
   // symbols, so the guide must describe a parameter-type change.
   test("describes the Live Update mounts as a parameter-type change, not a removal", () => {
-    const collapsed = releaseBody.replace(/\s+/g, " ");
-    expect(collapsed).toContain("## Defold 1.13.1: changed Lua API signatures");
+    const collapsed = replacedBody.replace(/\s+/g, " ");
+    expect(collapsed).toContain("### Changed Lua API signatures");
     expect(collapsed).toContain("`liveupdate.add_mount` was **not** removed");
     expect(collapsed).toContain("widened from `string` to `string | Hash`");
     expect(collapsed).not.toContain("auto-mount API is gone");
@@ -252,7 +269,7 @@ describe("upgrading-defold-versions guide", () => {
   });
 
   test("still describes model.material as removed", () => {
-    expect(releaseBody.replace(/\s+/g, " ")).toContain(
+    expect(spanBody.replace(/\s+/g, " ")).toContain(
       "The single-slot `model.material` property is removed",
     );
   });
@@ -262,8 +279,8 @@ describe("upgrading-defold-versions guide", () => {
   // their user-facing surface, mirroring the reset_constant no-action entries.
   test("documents the deprecated 1.13.0 camera-focus messages with no-action markers", () => {
     for (const name of ["acquire_camera_focus", "release_camera_focus"]) {
-      expect(releaseBody).toContain(name);
-      expect(releaseBody).toContain(`<!-- no-action: ${name} -->`);
+      expect(spanBody).toContain(name);
+      expect(spanBody).toContain(`<!-- no-action: ${name} -->`);
     }
   });
 });
