@@ -4670,10 +4670,28 @@ it. The build writes a project-local `.defold-types/<surface>/` directory (a fau
 {
   "compilerOptions": {
     "typeRoots": [".defold-types"],
-    "types": ["defold-1.9.8"]
+    "types": ["defold-1.9.8"],
+    "paths": {
+      "@defold-typescript/types": ["./.defold-types/defold-1.9.8/root/index.d.ts"]
+    }
   }
 }
 ```
+
+The `paths` entry is what makes the pin hold for code that *imports* the
+package. Without it, `import { defineScript } from "@defold-typescript/types"`
+resolves through `node_modules` to the installed package, whose entrypoint
+declares the same ambient namespaces the pinned surface declares — TypeScript
+merges the two and the newer one wins for **every** file in the program, not
+only the importing one. The redirect points at a `root/index.d.ts` inside the
+materialized surface that loads the pinned namespaces and re-exports the
+package's own API (`defineScript`, `Hash`, `Url`, …), so the import keeps
+working while the surface stays narrowed.
+
+Your own `paths` aliases are preserved: build merges its entry beside them, and
+removes only what it wrote when there is no surface to point at. An alias you
+declare for `@defold-typescript/types` yourself is left alone — and then owns
+resolution, so the pin no longer binds that specifier.
 
 How the surface is produced depends on the resolved version:
 
@@ -4701,8 +4719,11 @@ The pinned versioned surface is materialized in full — `build` and `watch` nev
 narrow it by script kind. Narrowing a directory to one kind is opt-in via the
 `wall` command; see [Wall](wall.md) and the per-kind API wall in
 [Script lifecycle](script-lifecycle.md). A wall narrows against the pinned
-surface for every kind that surface wrote, and falls back to the installed
-`@defold-typescript/types` subpath for any kind it did not.
+surface for every kind that surface wrote. For a kind the surface did not write
+it falls back to the installed `@defold-typescript/types` subpath — and that
+fallback loads the current ambient surface, so the pin does not narrow code
+inside such a wall. Surfaces generated from reference docs write all three
+runtime kinds; the committed snapshots do not.
 
 ##### Which kinds a surface writes
 

@@ -915,3 +915,200 @@ describe("materializeRefDocSurface consumer proof", () => {
     rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
   });
 });
+
+describe("pinned root paths", () => {
+  const PKG_ROOT = path.resolve(import.meta.dir, "..", "..", "types");
+  const MANAGED = "@defold-typescript/types";
+
+  function writeTsconfig(compilerOptions: Record<string, unknown>): void {
+    writeFileSync(
+      path.join(cwd, "tsconfig.json"),
+      `${JSON.stringify({ compilerOptions, include: ["src/**/*.ts"] }, null, 2)}\n`,
+    );
+  }
+
+  function readPaths(): Record<string, string[]> | undefined {
+    const tsconfig = JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")) as {
+      compilerOptions: { paths?: Record<string, string[]> };
+    };
+    return tsconfig.compilerOptions.paths;
+  }
+
+  function pin(): void {
+    seedSource(["label"]);
+    materializeApiSurface({ cwd, surface: CURRENT, sourceGeneratedDir: sourceDir });
+    ensureMaterializedReference(cwd, ".defold-types/defold-1.12.4");
+  }
+
+  test("binds the package specifier to the materialized surface alongside types/typeRoots", () => {
+    writeTsconfig({ strict: true, types: ["@defold-typescript/types"] });
+
+    pin();
+
+    const tsconfig = JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")) as {
+      compilerOptions: { types: string[]; typeRoots: string[]; paths: Record<string, string[]> };
+    };
+    expect(tsconfig.compilerOptions.types).toEqual(["defold-1.12.4"]);
+    expect(tsconfig.compilerOptions.typeRoots).toEqual([".defold-types"]);
+    expect(tsconfig.compilerOptions.paths[MANAGED]).toEqual([
+      "./.defold-types/defold-1.12.4/root/index.d.ts",
+    ]);
+  });
+
+  test("the substitution target is a relative specifier tsc accepts without baseUrl", () => {
+    // TS5090 rejects a `paths` target that is neither `./`-prefixed nor
+    // absolute when `baseUrl` is unset — `.defold-types/...` is not enough.
+    writeTsconfig({ strict: true });
+
+    pin();
+
+    for (const targets of Object.values(readPaths() ?? {})) {
+      for (const target of targets) {
+        expect(target.startsWith("./") || target.startsWith("../")).toBe(true);
+      }
+    }
+  });
+
+  test("resolves the substitution against the root config's baseUrl", () => {
+    writeTsconfig({ strict: true, baseUrl: "src" });
+
+    pin();
+
+    expect(readPaths()?.[MANAGED]).toEqual(["../.defold-types/defold-1.12.4/root/index.d.ts"]);
+  });
+
+  test("keeps the project's own aliases and merges the managed entry beside them", () => {
+    writeTsconfig({ strict: true, paths: { "@game/*": ["src/*"] } });
+
+    pin();
+
+    expect(readPaths()).toEqual({
+      "@game/*": ["src/*"],
+      [MANAGED]: ["./.defold-types/defold-1.12.4/root/index.d.ts"],
+    });
+  });
+
+  test("a project alias for the package specifier itself is not clobbered", () => {
+    writeTsconfig({ strict: true, paths: { [MANAGED]: ["./vendor/types/index.d.ts"] } });
+
+    pin();
+
+    expect(readPaths()?.[MANAGED]).toEqual(["./vendor/types/index.d.ts"]);
+  });
+
+  test("dropping the pin removes the managed entries and leaves the aliases untouched", () => {
+    writeTsconfig({ strict: true, paths: { "@game/*": ["src/*"] } });
+    pin();
+
+    ensureMaterializedReference(cwd, null);
+
+    expect(readPaths()).toEqual({ "@game/*": ["src/*"] });
+  });
+
+  test("dropping the pin deletes the paths key when only managed entries remained", () => {
+    writeTsconfig({ strict: true });
+    pin();
+    expect(readPaths()).toBeDefined();
+
+    ensureMaterializedReference(cwd, null);
+
+    expect(readPaths()).toBeUndefined();
+  });
+
+  test("re-pinning to another surface repoints rather than accumulating entries", () => {
+    writeTsconfig({ strict: true });
+    pin();
+
+    materializeApiSurface({ cwd, surface: PINNED, sourceGeneratedDir: sourceDir });
+    ensureMaterializedReference(cwd, ".defold-types/defold-1.13.0");
+
+    expect(readPaths()?.[MANAGED]).toEqual(["./.defold-types/defold-1.13.0/root/index.d.ts"]);
+  });
+
+  test("is idempotent — a second pin leaves the file byte-identical", () => {
+    writeTsconfig({ strict: true, paths: { "@game/*": ["src/*"] } });
+    pin();
+    const first = readFileSync(path.join(cwd, "tsconfig.json"), "utf8");
+
+    ensureMaterializedReference(cwd, ".defold-types/defold-1.12.4");
+
+    expect(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")).toBe(first);
+  });
+
+  test("an unpinned project with no managed entries is left byte-identical", () => {
+    writeTsconfig({ strict: true, paths: { "@game/*": ["src/*"] } });
+    const before = readFileSync(path.join(cwd, "tsconfig.json"), "utf8");
+
+    ensureMaterializedReference(cwd, null);
+
+    expect(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")).toBe(before);
+  });
+
+  test("maps each published subpath the surface actually serves", async () => {
+    const resolveOpts = multiKindRefDocResolveOpts();
+    const { materializedDir } = await materializeRefDocSurface({
+      cwd,
+      surfaceId: "defold-1.9.8",
+      resolveOpts,
+      registry: [multiKindRefDocTarget()],
+    });
+    writeTsconfig({ strict: true });
+
+    ensureMaterializedReference(cwd, materializedDir);
+
+    const paths = readPaths() ?? {};
+    for (const kind of ["script", "gui-script", "render-script"]) {
+      expect(paths[`${MANAGED}/${kind}`]).toEqual([
+        `./.defold-types/defold-1.9.8/kinds/${kind}.d.ts`,
+      ]);
+    }
+    rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
+  });
+
+  test("never maps a subpath the surface does not hold", () => {
+    writeTsconfig({ strict: true });
+
+    pin();
+
+    // The engine surface writes no runtime kind indexes, so a `script` redirect
+    // would dangle — and a dangling `paths` target silently disables the pin
+    // for that specifier instead of narrowing it.
+    expect(readPaths()?.[`${MANAGED}/script`]).toBeUndefined();
+    for (const targets of Object.values(readPaths() ?? {})) {
+      for (const target of targets) {
+        const abs = path.resolve(cwd, target);
+        expect(existsSync(abs) || existsSync(path.join(abs, "index.d.ts"))).toBe(true);
+      }
+    }
+  });
+
+  test("never remaps the shared core-types brand or a JSON data subpath", () => {
+    writeTsconfig({ strict: true });
+
+    pin();
+
+    const paths = readPaths() ?? {};
+    expect(paths[`${MANAGED}/core-types`]).toBeUndefined();
+    expect(paths[`${MANAGED}/api-availability.json`]).toBeUndefined();
+    expect(paths[`${MANAGED}/package.json`]).toBeUndefined();
+  });
+
+  test("the surface root entrypoint imports the pinned ambient index and re-exports the package API", () => {
+    seedSource(["label"]);
+
+    materializeApiSurface({ cwd, surface: CURRENT, sourceGeneratedDir: sourceDir });
+
+    const root = readFileSync(
+      path.join(cwd, ".defold-types", "defold-1.12.4", "root", "index.d.ts"),
+      "utf8",
+    );
+    expect(root).toContain('import "../index";');
+    expect(root).toContain(`export * from "${MANAGED}/lifecycle";`);
+    expect(root).toContain(`export * from "${MANAGED}/core-types";`);
+    // Kind indexes carry the ambient generated namespaces the pin narrows; a
+    // re-export of one would load the installed surface right back in.
+    expect(root).not.toContain(`export * from "${MANAGED}/script";`);
+    expect(root).not.toContain(`export * from "${MANAGED}/api-availability.json";`);
+    expect(PKG_ROOT.length).toBeGreaterThan(0);
+  });
+});
