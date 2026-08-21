@@ -19,6 +19,71 @@ import { formatJsonLikeBiome } from "./format-json";
 
 export const MATERIALIZED_ROOT = ".defold-types";
 
+// The package specifier every documented example imports. A materialized pin
+// must bind this, not only the type roots: the installed package's entrypoints
+// side-effect-import the *current* generated modules, which declare the same
+// ambient namespaces the pinned surface declares, and TypeScript merges them
+// program-wide — so one idiomatic import anywhere defeats the pin everywhere.
+export const TYPES_PACKAGE = "@defold-typescript/types";
+
+// The subdirectory holding the module entrypoint a pinned `paths` remap binds.
+// Kept apart from the surface's `index.d.ts`, which is the ambient entrypoint
+// `types`/`typeRoots` loads: one file answers "which namespaces exist", the
+// other "what does importing the package give you".
+const PINNED_ROOT_DIR = "root";
+
+// Drive-rooted (`X:\`, `X:/`) and UNC (`\\server\share`) roots, neither of which
+// `path.posix.isAbsolute` recognizes.
+const WINDOWS_ABSOLUTE = /^(?:[A-Za-z]:[\\/]|\\\\)/;
+
+export function isAbsolutePath(value: string): boolean {
+  return value.startsWith("/") || WINDOWS_ABSOLUTE.test(value);
+}
+
+export function toPosixSeparators(value: string): string {
+  return value.replaceAll("\\", "/");
+}
+
+// Where a config's `paths` substitutions into the materialized root resolve
+// from. With no `baseUrl` that is the config's own directory, so the prefix is
+// the one `typeRoots` uses; when the config declares `baseUrl`, substitutions
+// resolve against that directory instead — a relative `baseUrl` in an extended
+// config resolves against the config that declared it. `depth` is how far the
+// config sits below the project root: 0 for the root config, one per directory
+// for a wall.
+export function materializedPathsBase(
+  depth: number,
+  baseUrl: string | undefined,
+  baseDir: string | undefined,
+): string {
+  if (baseUrl === undefined) {
+    return `${"../".repeat(depth)}${MATERIALIZED_ROOT}`;
+  }
+  if (isAbsolutePath(baseUrl)) {
+    // Without a base directory there is nothing to measure against, and
+    // `path.posix.relative` would silently measure against the *process* cwd. A
+    // redirect that resolves beats one anchored to whatever directory the CLI
+    // happened to run in; only a hand-constructed `rootAliases` reaches this.
+    if (baseDir === undefined) {
+      return `${"../".repeat(depth)}${MATERIALIZED_ROOT}`;
+    }
+    // The flavor comes from `baseUrl`; a cross-flavor pairing is not modeled,
+    // because a Windows project has a Windows `cwd`.
+    const flavor = WINDOWS_ABSOLUTE.test(baseUrl) ? path.win32 : path.posix;
+    return toPosixSeparators(flavor.relative(baseUrl, flavor.join(baseDir, MATERIALIZED_ROOT)));
+  }
+  return path.posix.relative(path.posix.normalize(toPosixSeparators(baseUrl)), MATERIALIZED_ROOT);
+}
+
+// `paths` targets are module specifiers, and TS5090 rejects one that is neither
+// `./`-prefixed nor absolute while `baseUrl` is unset. A bare `.defold-types`
+// starts with a dot but is still non-relative to the compiler.
+function relativeSpecifier(value: string): string {
+  return value.startsWith("./") || value.startsWith("../") || isAbsolutePath(value)
+    ? value
+    : `./${value}`;
+}
+
 // The materialized surface must not mint its own copy of the branded engine
 // primitives: `Hash` & co. are `unique symbol`-branded per declaration, so a
 // copied `core-types.d.ts` is nominally distinct from the installed
@@ -54,22 +119,136 @@ function listDts(dir: string): string[] {
 // that reaches a `src/` sibling can name the published module instead of a
 // surface file that either does not exist or — as with `editor` — exists as a
 // different module (the generated `editor` namespace, not `src/editor.ts`).
-function publishedSubpaths(typesRoot: string | null): ReadonlySet<string> {
+function publishedSubpathTargets(typesRoot: string | null): ReadonlyMap<string, string | null> {
+  const targets = new Map<string, string | null>();
   if (typesRoot === null) {
-    return new Set();
+    return targets;
   }
   try {
     const pkg = JSON.parse(readFileSync(path.join(typesRoot, "package.json"), "utf8")) as {
       exports?: Record<string, unknown>;
     };
-    return new Set(
-      Object.keys(pkg.exports ?? {})
-        .filter((key) => key.startsWith("./"))
-        .map((key) => key.slice(2)),
-    );
+    for (const [key, entry] of Object.entries(pkg.exports ?? {})) {
+      if (!key.startsWith("./")) {
+        continue;
+      }
+      const types = (entry as { types?: unknown } | null)?.types;
+      targets.set(key.slice(2), typeof types === "string" ? types : null);
+    }
   } catch {
-    return new Set();
+    return new Map();
   }
+  return targets;
+}
+
+function publishedSubpaths(typesRoot: string | null): ReadonlySet<string> {
+  return new Set(publishedSubpathTargets(typesRoot).keys());
+}
+
+// The subpaths a pinned root entrypoint may re-export: the version-independent
+// `src/` modules (`lifecycle`, `core-types`, `editor`, `timers`) that carry the
+// package's exported API without declaring anything ambient. A `generated/`
+// target is a kind index whose ambient namespaces are exactly what the pin
+// narrows, and a JSON data file is not a module at all — re-exporting either
+// would load the installed surface straight back over the pinned one.
+function reexportableSubpaths(typesRoot: string | null): string[] {
+  return [...publishedSubpathTargets(typesRoot)]
+    .filter(([, target]) => target?.startsWith("./src/"))
+    .map(([subpath]) => subpath)
+    .sort();
+}
+
+// The pinned module entrypoint. It loads the pinned ambient surface and then
+// re-exports the package's own API, so remapping the bare specifier narrows the
+// namespaces without also taking `defineScript` & co. away from every consumer
+// that imports them. Rewritten from scratch each run; removed outright when the
+// package publishes nothing re-exportable, so the remap has no dangling target.
+function writePinnedRootEntrypoint(absDir: string, typesRoot: string | null): void {
+  const rootDir = path.join(absDir, PINNED_ROOT_DIR);
+  const subpaths = reexportableSubpaths(typesRoot);
+  if (subpaths.length === 0) {
+    rmSync(rootDir, { recursive: true, force: true });
+    return;
+  }
+  mkdirSync(rootDir, { recursive: true });
+  const body = [
+    `import "../index";`,
+    "",
+    ...subpaths.map((subpath) => `export * from "${TYPES_PACKAGE}/${subpath}";`),
+    "",
+  ].join("\n");
+  writeFileSync(path.join(rootDir, "index.d.ts"), body);
+}
+
+// The `paths` substitutions that bind the package specifier — and every subpath
+// the surface can actually serve — to the materialized surface. A subpath the
+// surface did not write is left resolving to the installed package: a dangling
+// target does not narrow the specifier, it disables checking for it.
+export function pinnedRootPaths(
+  base: string,
+  surfaceId: string,
+  surfaceDir: string,
+  subpaths: ReadonlySet<string>,
+): Record<string, string[]> {
+  const paths: Record<string, string[]> = {};
+  const target = (...segments: string[]): string[] => [
+    relativeSpecifier(path.posix.join(base, surfaceId, ...segments)),
+  ];
+
+  if (existsSync(path.join(surfaceDir, PINNED_ROOT_DIR, "index.d.ts"))) {
+    paths[TYPES_PACKAGE] = target(PINNED_ROOT_DIR, "index.d.ts");
+  }
+  for (const subpath of [...subpaths].sort()) {
+    if (existsSync(path.join(surfaceDir, subpath, "index.d.ts"))) {
+      paths[`${TYPES_PACKAGE}/${subpath}`] = target(subpath, "index.d.ts");
+    } else if (existsSync(path.join(surfaceDir, "kinds", `${subpath}.d.ts`))) {
+      paths[`${TYPES_PACKAGE}/${subpath}`] = target("kinds", `${subpath}.d.ts`);
+    }
+  }
+  return paths;
+}
+
+function isManagedPathsKey(key: string): boolean {
+  return key === TYPES_PACKAGE || key.startsWith(`${TYPES_PACKAGE}/`);
+}
+
+// A redirect into the CLI-owned `.defold-types` tree is one the CLI wrote. An
+// entry on the same key pointing anywhere else is the project's own alias and
+// survives both the pinned write and the un-pin — the same replace-vs-preserve
+// rule the directory walls use, minus their `extends`-shadowing mirror, which
+// degenerates at the root config (nothing above it to inherit from, so every
+// alias would look like a mirror and be deleted on un-pin).
+export function isManagedPathsTarget(targets: unknown): boolean {
+  return (
+    Array.isArray(targets) &&
+    targets.length > 0 &&
+    targets.every(
+      (entry) =>
+        typeof entry === "string" &&
+        toPosixSeparators(entry).split("/").includes(MATERIALIZED_ROOT),
+    )
+  );
+}
+
+// Returns `undefined` when nothing is left, which is the signal to delete the
+// key: `paths: {}` is not the same as no `paths` for a config that inherits.
+function mergePinnedRootPaths(
+  existing: Record<string, string[]> | undefined,
+  managed: Record<string, string[]>,
+): Record<string, string[]> | undefined {
+  const merged: Record<string, string[]> = { ...existing };
+  for (const [key, targets] of Object.entries(merged)) {
+    if (managed[key] === undefined && isManagedPathsKey(key) && isManagedPathsTarget(targets)) {
+      delete merged[key];
+    }
+  }
+  for (const [key, targets] of Object.entries(managed)) {
+    const prior = merged[key];
+    if (prior === undefined || isManagedPathsTarget(prior)) {
+      merged[key] = targets;
+    }
+  }
+  return Object.keys(merged).length === 0 ? undefined : merged;
 }
 
 // A carried module resolves the surface's `core-types` re-export from wherever it
@@ -324,6 +503,8 @@ export function materializeApiSurface(
     types: "index.d.ts",
   });
 
+  writePinnedRootEntrypoint(absDir, typesRoot);
+
   // The surface directory is reused across builds, so the editor carry-over is
   // rewritten from scratch every run: a target that stopped declaring an editor
   // document must lose its `kinds/` too, or `resolveActivePinnedSurface` keeps
@@ -360,10 +541,7 @@ export function ensureGitignoreLine(cwd: string, line: string): void {
 }
 
 export function ensureMaterializedReference(cwd: string, materializedDir: string | null): void {
-  if (materializedDir === null) {
-    return;
-  }
-  const surfaceId = path.posix.basename(materializedDir);
+  const surfaceId = materializedDir === null ? null : path.posix.basename(materializedDir);
 
   const tsconfigPath = path.join(cwd, "tsconfig.json");
   if (existsSync(tsconfigPath)) {
@@ -372,6 +550,41 @@ export function ensureMaterializedReference(cwd: string, materializedDir: string
       [key: string]: unknown;
     };
     const current = tsconfig.compilerOptions ?? {};
+    const currentPaths =
+      current.paths !== null && typeof current.paths === "object"
+        ? (current.paths as Record<string, string[]>)
+        : undefined;
+    const baseUrl = typeof current.baseUrl === "string" ? current.baseUrl : undefined;
+    // The root config sits at the project root, so its substitutions resolve
+    // from depth 0 — modulo a `baseUrl`, which moves the base out from under it
+    // exactly as it does for a wall.
+    const managedPaths =
+      surfaceId === null
+        ? {}
+        : pinnedRootPaths(
+            materializedPathsBase(0, baseUrl, cwd),
+            surfaceId,
+            path.join(cwd, MATERIALIZED_ROOT, surfaceId),
+            publishedSubpaths(resolveTypesPackageRoot()),
+          );
+    const desiredPaths = mergePinnedRootPaths(currentPaths, managedPaths);
+
+    if (surfaceId === null) {
+      // No surface to point at: withdraw what the CLI wrote and touch nothing
+      // else — not `types`, not `typeRoots`, not the project's own aliases.
+      if (JSON.stringify(desiredPaths) !== JSON.stringify(currentPaths)) {
+        const options = { ...current };
+        if (desiredPaths === undefined) {
+          delete options.paths;
+        } else {
+          options.paths = desiredPaths;
+        }
+        tsconfig.compilerOptions = options;
+        writeJson(tsconfigPath, tsconfig);
+      }
+      return;
+    }
+
     // The sibling `extensions` and `libraries` surfaces
     // (ensureExtensionTypesReference / ensureLibraryTypesReference) coexist with
     // the engine surface under one typeRoots; repointing the engine entry must
@@ -386,17 +599,27 @@ export function ensureMaterializedReference(cwd: string, materializedDir: string
     // JSON.stringify's layout on every build.
     const alreadyRepointed =
       JSON.stringify(current.typeRoots) === JSON.stringify([MATERIALIZED_ROOT]) &&
-      JSON.stringify(current.types) === JSON.stringify(desiredTypes);
+      JSON.stringify(current.types) === JSON.stringify(desiredTypes) &&
+      JSON.stringify(current.paths) === JSON.stringify(desiredPaths);
     if (!alreadyRepointed) {
-      tsconfig.compilerOptions = {
+      const options: Record<string, unknown> = {
         ...current,
         typeRoots: [MATERIALIZED_ROOT],
         types: desiredTypes,
       };
+      if (desiredPaths === undefined) {
+        delete options.paths;
+      } else {
+        options.paths = desiredPaths;
+      }
+      tsconfig.compilerOptions = options;
       writeJson(tsconfigPath, tsconfig);
     }
   }
 
+  if (surfaceId === null) {
+    return;
+  }
   ensureGitignoreLine(cwd, `${MATERIALIZED_ROOT}/`);
 }
 
@@ -563,6 +786,8 @@ export async function materializeRefDocSurface(
       "./core-types": { types: "./core-types.d.ts" },
     };
     writeJson(pkgPath, pkg);
+
+    writePinnedRootEntrypoint(absDir, root);
   } catch {
     rmSync(absDir, { recursive: true, force: true });
     return { materializedDir: null, active: null };

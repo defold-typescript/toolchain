@@ -2,7 +2,14 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import * as path from "node:path";
 import { detectSourceOutputKind, isTranspilerSource, readBuildConfig } from "./build-output";
 import { formatJsonLikeBiome } from "./format-json";
-import { MATERIALIZED_ROOT } from "./materialize";
+import {
+  isAbsolutePath,
+  isManagedPathsTarget,
+  MATERIALIZED_ROOT,
+  materializedPathsBase,
+  TYPES_PACKAGE,
+  toPosixSeparators,
+} from "./materialize";
 import { scanFilesSync } from "./scan";
 import {
   isSkipped,
@@ -238,18 +245,6 @@ export interface RootPathAliases {
   readonly paths?: Record<string, string[]>;
 }
 
-// Drive-rooted (`X:\`, `X:/`) and UNC (`\\server\share`) roots, neither of which
-// `path.posix.isAbsolute` recognizes.
-const WINDOWS_ABSOLUTE = /^(?:[A-Za-z]:[\\/]|\\\\)/;
-
-function isAbsolutePath(value: string): boolean {
-  return value.startsWith("/") || WINDOWS_ABSOLUTE.test(value);
-}
-
-function toPosixSeparators(value: string): string {
-  return value.replaceAll("\\", "/");
-}
-
 // The root config's own `paths` and `baseUrl`, read one level only — the file a
 // wall's `extends` names — matching `resolveActivePinnedSurface`, which reads the
 // same single file and likewise does not follow an `extends` chain above it.
@@ -275,35 +270,6 @@ export function readRootPathAliases(cwd: string): RootPathAliases {
   };
 }
 
-// Where a wall's `paths` substitutions are resolved from. With no `baseUrl` that
-// is the wall's own directory, so the prefix is the one `typeRoots` uses; when
-// the root declares `baseUrl`, the wall inherits it — a relative `baseUrl` in an
-// extended config resolves against the config that declared it — and every
-// substitution then resolves against that directory instead.
-function wallPathsBase(
-  depth: number,
-  baseUrl: string | undefined,
-  baseDir: string | undefined,
-): string {
-  if (baseUrl === undefined) {
-    return `${"../".repeat(depth)}${MATERIALIZED_ROOT}`;
-  }
-  if (isAbsolutePath(baseUrl)) {
-    // Without a base directory there is nothing to measure against, and
-    // `path.posix.relative` would silently measure against the *process* cwd. A
-    // redirect that resolves beats one anchored to whatever directory the CLI
-    // happened to run in; only a hand-constructed `rootAliases` reaches this.
-    if (baseDir === undefined) {
-      return `${"../".repeat(depth)}${MATERIALIZED_ROOT}`;
-    }
-    // The flavor comes from `baseUrl`; a cross-flavor pairing is not modeled,
-    // because a Windows project has a Windows `cwd`.
-    const flavor = WINDOWS_ABSOLUTE.test(baseUrl) ? path.win32 : path.posix;
-    return toPosixSeparators(flavor.relative(baseUrl, flavor.join(baseDir, MATERIALIZED_ROOT)));
-  }
-  return path.posix.relative(path.posix.normalize(toPosixSeparators(baseUrl)), MATERIALIZED_ROOT);
-}
-
 // The wall's own redirect for the documented `@defold-typescript/types/<kind>`
 // factory import, which otherwise resolves through `node_modules` to the
 // *installed* package's kind index and loads a second ambient surface beside the
@@ -318,7 +284,7 @@ function pinnedKindIndexPaths(
 ): Record<string, string[]> {
   // `join`, not interpolation: a `baseUrl` naming the materialized root itself
   // leaves an empty base, which interpolation would turn into a rooted `/…`.
-  const base = wallPathsBase(depth, rootAliases.baseUrl, rootAliases.baseDir);
+  const base = materializedPathsBase(depth, rootAliases.baseUrl, rootAliases.baseDir);
   return {
     [`@defold-typescript/types/${kind}`]: [
       path.posix.join(base, pinnedSurface, kind, "index.d.ts"),
@@ -371,6 +337,14 @@ export function mergeWallPaths({
 }: MergeWallPathsInput): Record<string, string[]> | undefined {
   const mirrors = new Map<string, string[]>();
   for (const [specifier, targets] of Object.entries(rootAliases.paths ?? {})) {
+    // The root config carries the CLI's own pinned redirects. Mirroring the bare
+    // package one is required — the wall's `paths` replaces the inherited object,
+    // so the root pin would otherwise die at the wall boundary. Mirroring the
+    // *per-kind* ones is not: a gui wall would inherit the script redirect and
+    // regain the surface the wall exists to withhold. The wall writes its own.
+    if (specifier.startsWith(`${TYPES_PACKAGE}/`) && isManagedPathsTarget(targets)) {
+      continue;
+    }
     mirrors.set(
       specifier,
       targets.map((target) => mirroredTarget(target, rootAliases.baseUrl, depth)),
