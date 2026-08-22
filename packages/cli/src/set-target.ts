@@ -7,6 +7,7 @@
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { resolvableTargetVersions } from "./api-registry";
 import { classifyDefoldTarget, readDefoldTargetPin, setDefoldTargetPin } from "./defold-target";
 import { formatJsonLikeBiome } from "./format-json";
 import { detectInstalledEditorVersion } from "./installed-editor-version";
@@ -24,16 +25,37 @@ export interface RunSetTargetOptions {
   readonly token?: string;
   readonly detected?: boolean;
   readonly detect?: () => string | null;
+  readonly resolvableTargets?: readonly string[];
 }
 
 function fail(error: string): RunSetTargetResult {
   return { ok: false, written: [], error };
 }
 
+// Shape validation alone accepts a version that never existed, and the pin it
+// writes only surfaces much later as a silently-wrong surface at build time. A
+// concrete version must therefore be a registry member here, where the typo was
+// made. An empty list means the registry could not be read at all — rejecting
+// every version on that basis would brick the pin writer, so membership is
+// enforced only when the registry actually answered.
+function membershipError(
+  version: string,
+  origin: string,
+  resolvableTargets: readonly string[],
+): string | null {
+  if (resolvableTargets.length === 0 || resolvableTargets.includes(version)) {
+    return null;
+  }
+  return `defold-typescript set-target: ${origin} names a version the API registry cannot provide; nothing was written. Resolvable targets: ${resolvableTargets.join(", ")}. Pin one of them, or a channel (stable|beta|alpha).`;
+}
+
 // Resolve the value to write: `--detected` reads the installed editor (never
 // falling back to current-stable), otherwise the positional token is validated
-// verbatim — channels and versions are kept as the user expressed them.
+// verbatim — channels and versions are kept as the user expressed them. Channels
+// resolve their head at build time and are not registry members, so only a
+// concrete version reaches the membership check.
 function resolveValue(opts: RunSetTargetOptions): { value: string } | { error: string } {
+  const resolvableTargets = opts.resolvableTargets ?? resolvableTargetVersions();
   if (opts.detected) {
     const version = (opts.detect ?? detectInstalledEditorVersion)();
     if (version === null) {
@@ -42,7 +64,12 @@ function resolveValue(opts: RunSetTargetOptions): { value: string } | { error: s
           "defold-typescript set-target: no installed Defold editor was detected; install Defold or pass a version|stable|beta|alpha token.",
       };
     }
-    return { value: version };
+    const error = membershipError(
+      version,
+      `the installed Defold editor (${version})`,
+      resolvableTargets,
+    );
+    return error === null ? { value: version } : { error };
   }
   if (opts.token === undefined) {
     return {
@@ -50,12 +77,19 @@ function resolveValue(opts: RunSetTargetOptions): { value: string } | { error: s
         "defold-typescript set-target: a version|stable|beta|alpha token or --detected is required.",
     };
   }
+  let classified: ReturnType<typeof classifyDefoldTarget>;
   try {
-    classifyDefoldTarget(opts.token);
+    classified = classifyDefoldTarget(opts.token);
   } catch {
     return {
       error: `defold-typescript set-target: unknown target '${opts.token}' (expected a version like 1.12.4, or stable|beta|alpha).`,
     };
+  }
+  if (classified.kind === "version") {
+    const error = membershipError(classified.version, `'${classified.version}'`, resolvableTargets);
+    if (error !== null) {
+      return { error };
+    }
   }
   return { value: opts.token };
 }
