@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { readCliVersion } from "./cli-version";
 import {
   materializedSurfaceKinds,
   planSourceDirectoryWalls,
@@ -13,8 +14,16 @@ import {
   ensureMaterializedReference,
   materializeApiSurface,
   materializeRefDocSurface,
+  surfaceDirName,
 } from "./materialize";
 import { multiKindRefDocResolveOpts, multiKindRefDocTarget } from "./ref-doc-test-fixture";
+
+// The materialized surface directory carries the generating toolchain version;
+// these tests defend other behavior, so they derive the name from production
+// rather than restating it.
+function surfaceDir(surfaceId: string): string {
+  return surfaceDirName(surfaceId, readCliVersion());
+}
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
 const BIN_DIR = path.join(REPO_ROOT, "node_modules", ".bin");
@@ -43,7 +52,11 @@ function touch(rel: string, contents = ""): void {
 function linkMaterializedSurface(): void {
   const scope = path.join(cwd, "node_modules", "@defold-typescript");
   mkdirSync(scope, { recursive: true });
-  symlinkSync(path.join(cwd, ".defold-types", "defold-1.9.8"), path.join(scope, "types"), "dir");
+  symlinkSync(
+    path.join(cwd, ".defold-types", surfaceDir("defold-1.9.8")),
+    path.join(scope, "types"),
+    "dir",
+  );
 }
 
 function writeRootTsconfig(extraCompilerOptions: Record<string, unknown> = {}): void {
@@ -140,7 +153,7 @@ describe("composite directory walls under a pinned ref-doc surface", () => {
     // consumer-side per-kind subdirs are mirrored into the materialized
     // surface before the wall tsconfigs are written.
     const pinned = resolveActivePinnedSurface(cwd);
-    expect(pinned).toBe("defold-1.9.8");
+    expect(pinned).toBe(surfaceDir("defold-1.9.8"));
 
     const walls = planSourceDirectoryWalls(cwd);
     writeDirectoryWallTsconfigs(cwd, walls, pinned);
@@ -162,7 +175,7 @@ describe("composite directory walls under a pinned ref-doc surface", () => {
     scaffoldSources("    render.set_depth_mask(true);", "    render.set_depth_mask(true);");
 
     const pinned = resolveActivePinnedSurface(cwd);
-    expect(pinned).toBe("defold-1.9.8");
+    expect(pinned).toBe(surfaceDir("defold-1.9.8"));
 
     const walls = planSourceDirectoryWalls(cwd);
     writeDirectoryWallTsconfigs(cwd, walls, pinned);
@@ -192,7 +205,7 @@ describe("composite directory walls under a pinned committed surface", () => {
       surface: { surfaceId: COMMITTED, available: true },
       sourceGeneratedDir: path.join(TYPES_PKG, "generated"),
     });
-    expect(materializedDir).toBe(`.defold-types/${COMMITTED}`);
+    expect(materializedDir).toBe(`.defold-types/${surfaceDir(COMMITTED)}`);
     ensureMaterializedReference(cwd, materializedDir);
   }
 
@@ -257,7 +270,7 @@ describe("composite directory walls under a pinned committed surface", () => {
     scaffoldEditorAndRuntime();
 
     const { pinned, walls } = wallUnderPin();
-    expect(pinned).toBe(COMMITTED);
+    expect(pinned).toBe(surfaceDir(COMMITTED));
     expect(materializedSurfaceKinds(cwd, pinned)).toEqual(["editor-script"]);
     expect(walls.map((wall) => `${wall.dir}:${wall.kind}`)).toEqual([
       "src/game:script",
@@ -266,7 +279,7 @@ describe("composite directory walls under a pinned committed surface", () => {
 
     expect(readWallTypes("src/tooling")).toEqual({
       typeRoots: ["../../.defold-types"],
-      types: [`${COMMITTED}/editor-script`],
+      types: [`${surfaceDir(COMMITTED)}/editor-script`],
     });
     expect(readWallTypes("src/game")).toEqual({
       typeRoots: null,
@@ -308,7 +321,7 @@ describe("composite directory walls under a pinned committed surface", () => {
     );
 
     const { pinned, walls } = wallUnderPin();
-    expect(pinned).toBe(COMMITTED);
+    expect(pinned).toBe(surfaceDir(COMMITTED));
     const pinnedBuild = typecheckBuild(cwd);
     if (pinnedBuild.code !== 0) {
       throw new Error(`expected the root alias to resolve inside a pinned wall, got:
@@ -445,7 +458,11 @@ describe("a pinned wall's documented kind-index import resolves into the pinned 
     if (installed) {
       linkInstalledTypesPackage();
     }
-    renameInSurface(`.defold-types/${COMMITTED}/editor.d.ts`, "engine_sha1", "only_in_pinned");
+    renameInSurface(
+      `.defold-types/${surfaceDir(COMMITTED)}/editor.d.ts`,
+      "engine_sha1",
+      "only_in_pinned",
+    );
 
     touch(
       "src/tooling/bundle.ts",
@@ -461,7 +478,7 @@ describe("a pinned wall's documented kind-index import resolves into the pinned 
       ].join("\n"),
     );
 
-    expect(wallUnderPin()).toBe(COMMITTED);
+    expect(wallUnderPin()).toBe(surfaceDir(COMMITTED));
   }
 
   test("an editor wall over a committed surface rejects a member only the installed release declares", () => {
@@ -483,7 +500,11 @@ describe("a pinned wall's documented kind-index import resolves into the pinned 
     writeRootTsconfig();
     await materializPinnedMultiKind();
     linkInstalledTypesPackage();
-    renameInSurface(".defold-types/defold-1.9.8/gui.d.ts", "get_node", "only_in_pinned");
+    renameInSurface(
+      `.defold-types/${surfaceDir("defold-1.9.8")}/gui.d.ts`,
+      "get_node",
+      "only_in_pinned",
+    );
 
     touch("src/ui/hud.gui_script");
     touch(
@@ -499,7 +520,7 @@ describe("a pinned wall's documented kind-index import resolves into the pinned 
       ].join("\n"),
     );
 
-    expect(wallUnderPin()).toBe("defold-1.9.8");
+    expect(wallUnderPin()).toBe(surfaceDir("defold-1.9.8"));
     expectOnlyPinnedSurface("only_in_pinned", "get_node");
     expectInstalledMemberReachable("src/ui", "get_node");
   });
