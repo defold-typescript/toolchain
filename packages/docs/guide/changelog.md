@@ -7,8 +7,8 @@ llms-full: false
 What changed in each published `defold-typescript` toolchain release. Sections
 are headed by the **toolchain** version (the `vX.Y.Z` git tag) — a different axis
 from the **Defold** engine version the API reference's version switcher selects
-(`1.12.4`, `1.13.0`, …). Upgrading the toolchain and upgrading your pinned Defold
-target are independent moves.
+(`1.13.1`, `1.13.0`, `1.12.4`). Upgrading the toolchain and upgrading your pinned
+Defold target are independent moves.
 
 Entries are curated by hand from the git history; the most recent releases are
 listed per-patch, older releases are rolled up per minor version. Breaking
@@ -18,13 +18,14 @@ changes are called out first because the toolchain is pre-1.0.
 
 ### Improved
 
+- **A patch Defold release no longer retires its predecessor.** The target a patch replaces is now demoted to a committed historical surface beside the new default instead of being overwritten, so it keeps resolving through [`set-target`](./pinning-defold-target.md); the toolchain ships the current release plus the previous minor pre-baked, and a bump reports every version that leaves that set.
 - **Defold 1.13.0 is a shipped [API target](./pinning-defold-target.md) again.** `set-target 1.13.0` resolves, `build` materializes its complete pre-baked surface, and the `/api/defold-1.13.0/…` reference pages are back, so a toolchain upgrade no longer strands a project that needs to roll the engine back. Version notes across the [API reference](/api) and search now name the release that actually introduced or changed a symbol — [`compute`](/api/compute) reads `Since Defold 1.13.0` rather than `Since Defold 1.13.1`.
 
 ### Fixed
 
 - **A [Defold pin](./pinning-defold-target.md) now holds, and says so when it cannot.** Three ways it used to fail quietly:
   - **`set-target`** — a concrete version was checked for shape only, so `set-target 1.42.99` printed a confident transition line and exited 0. It is now written only when the API registry can provide it, and rejected otherwise — with the resolvable targets listed, or with a reinstall notice when the registry is missing, unreadable, or malformed — writing nothing either way; `--detected` is checked identically, and channels still pass through so they keep working when the registry does not.
-  - **`build`, `run`, `watch`, `upgrade` and `bob build`/`bundle`/`run`** — a pin with no shipped API surface, one retired by a patch rotation say, materialized nothing and exited 0 while your code kept compiling against the newer default surface. They now name the pin and the resolvable targets on stderr and in the `--json` `warnings`, `--fail-on-drift` turns it into a non-zero exit, and a `bob` run that dies before Bob starts — an unregistered pin has no Defold release tag to look up — still reports the pin rather than the lookup error alone.
+  - **`build`, `run`, `watch`, `upgrade` and `bob build`/`bundle`/`run`** — a pin with no shipped API surface materialized nothing and exited 0 while your code kept compiling against the newer default surface. They now name the pin and the resolvable targets on stderr and in the `--json` `warnings`, `--fail-on-drift` turns it into a non-zero exit, and a `bob` run that dies before Bob starts — an unregistered pin has no Defold release tag to look up — still reports the pin rather than the lookup error alone.
   - **Package imports** — the pin repointed only the ambient type roots, so a single idiomatic `import { defineScript } from "@defold-typescript/types"` anywhere in the project merged the *current* API surface back over the pinned one for every file, and a project pinned to 1.12.4 still compiled [`collectionproxy.load`](/api/collectionproxy). A pin now binds the package specifier itself, so an API the pinned surface lacks is a compile error.
 - **On-demand generation of an older [Defold surface](./pinning-defold-target.md) now works in an installed toolchain.** The generator's own inputs — its API documents, its example store and a runtime dependency — were left out of the published package, so every target that is generated rather than pre-baked died before it started and [`build --defold-target <version>`](./build.md) reported `could not materialize` and quietly kept the default surface; a checkout never saw it, because the inputs were sitting on disk there.
 

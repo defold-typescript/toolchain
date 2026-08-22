@@ -1199,12 +1199,19 @@ is complete.
 
 ### Patch vs minor
 
-The one semantic a maintainer must hold: a **minor** bump (e.g. `1.13.x` to
-`1.14.0`) adds the new version as the default target and demotes the prior default
-into a committed historical surface under `generated/versions/`; a **patch** bump
-(`1.13.0` to `1.13.1`) replaces the current version in place, with no demotion.
-`bump:defold` classifies which one applies from the `--to` version automatically —
-you do not select it.
+Both classes demote: the new version becomes the default target and the prior
+default moves into a committed historical surface under `generated/versions/`,
+keeping its own `fixturesDir`. A **patch** bump (`1.13.0` to `1.13.1`) does this
+just as a **minor** one (`1.13.x` to `1.14.0`) does, so a patch never takes its
+predecessor's surface with it. `bump:defold` classifies which one applies from the
+`--to` version automatically — you do not select it.
+
+What the classes differ on is *retention*: `SURFACE_RETENTION` in
+`scripts/release-model.ts` keeps the current release plus the newest release of
+the preceding minor line in `DEFOLD_VERSIONS`, so a patch drops its predecessor
+from that pre-baked pair while a minor keeps it. A dropped version stays
+resolvable through its `api-targets.json` entry and its committed surface; the
+bump reports each one as a manual review point rather than deciding silently.
 
 ### Manual review points
 
