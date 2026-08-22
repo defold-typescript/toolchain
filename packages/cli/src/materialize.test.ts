@@ -11,6 +11,7 @@ import {
 } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { loadApiTargetsRegistry } from "./api-registry";
 import type { SelectedApiSurface } from "./api-surface";
 import { readCliVersion } from "./cli-version";
 import { ensureExtensionTypesReference } from "./extension-materialize";
@@ -498,20 +499,38 @@ function danglingSpecifiers(dir: string): string[] {
 
 describe("materializeApiSurface editor surface", () => {
   const TYPES_ROOT = path.resolve(import.meta.dir, "..", "..", "types");
-  const REAL_GENERATED = path.join(TYPES_ROOT, "generated");
 
-  function materializeReal(): string {
+  // Every committed target that declares an editor document, each materialized
+  // from its own generated tree under its own id — so the carry is proven
+  // against a versioned source dir and not only the default one.
+  const DECLARING_TARGETS = loadApiTargetsRegistry()
+    .filter((target) => (target.source ?? null) === null)
+    .filter((target) => (target.editorModules?.length ?? 0) > 0)
+    .map((target) => ({
+      id: target.id,
+      generated: path.join(TYPES_ROOT, String(target.generatedDir)),
+    }));
+
+  function materializeTarget(target: { id: string; generated: string }): string {
     const { materializedDir } = materializeApiSurface({
       cwd,
-      surface: PINNED,
-      sourceGeneratedDir: REAL_GENERATED,
+      surface: { surfaceId: target.id, available: true },
+      sourceGeneratedDir: target.generated,
     });
-    expect(materializedDir).toBe(`.defold-types/${surfaceDir("defold-1.13.0")}`);
-    return path.join(cwd, ".defold-types", surfaceDir("defold-1.13.0"));
+    expect(materializedDir).toBe(`.defold-types/${surfaceDir(target.id)}`);
+    return path.join(cwd, ".defold-types", surfaceDir(target.id));
   }
 
-  test("carries the declaring target's editor modules, hand-authored deps and editor kind", () => {
-    const dir = materializeReal();
+  const cases = DECLARING_TARGETS.map((target) => [target.id, target] as const);
+
+  test("the registry declares at least one committed editor-bearing target to materialize", () => {
+    expect(DECLARING_TARGETS.map((target) => target.id)).toContain("defold-1.13.0");
+  });
+
+  test.each(
+    cases,
+  )("%s: carries its editor modules, hand-authored deps and editor kind", (_id, target) => {
+    const dir = materializeTarget(target);
 
     for (const rel of [
       "editor.d.ts",
@@ -540,9 +559,9 @@ describe("materializeApiSurface editor surface", () => {
     expect(Object.keys(pkg).sort()).toEqual(["name", "types", "version"]);
   });
 
-  test("the relocated kind index resolves from its new location", () => {
-    const dir = materializeReal();
-    const source = readFileSync(path.join(REAL_GENERATED, "kinds", "editor-script.d.ts"), "utf8");
+  test.each(cases)("%s: the relocated kind index resolves from its new location", (_id, target) => {
+    const dir = materializeTarget(target);
+    const source = readFileSync(path.join(target.generated, "kinds", "editor-script.d.ts"), "utf8");
     const written = readFileSync(path.join(dir, "kinds", "editor-script.d.ts"), "utf8");
 
     const sourceSpecs = [...source.matchAll(/^import "([^"]+)";$/gm)].map(
@@ -562,8 +581,10 @@ describe("materializeApiSurface editor surface", () => {
     expect(written).not.toContain("/src/");
   });
 
-  test("a copied editor-vm module's core-types import is depth-aware", () => {
-    const dir = materializeReal();
+  test.each(
+    cases,
+  )("%s: a copied editor-vm module's core-types import is depth-aware", (_id, target) => {
+    const dir = materializeTarget(target);
 
     const localization = readFileSync(path.join(dir, "editor-vm", "localization.d.ts"), "utf8");
     expect(localization).toContain('from "../core-types"');
@@ -574,8 +595,10 @@ describe("materializeApiSurface editor surface", () => {
     expect(readFileSync(path.join(dir, "editor.d.ts"), "utf8")).toContain('from "./core-types"');
   });
 
-  test("every relative specifier in the materialized surface resolves on disk", () => {
-    expect(danglingSpecifiers(materializeReal())).toEqual([]);
+  test.each(
+    cases,
+  )("%s: every relative specifier in the materialized surface resolves on disk", (_id, target) => {
+    expect(danglingSpecifiers(materializeTarget(target))).toEqual([]);
   });
 
   test("derives the editor surface from the pinned target's kind index, not the package's", () => {
@@ -637,7 +660,9 @@ describe("materializeApiSurface editor surface", () => {
   });
 
   test("a target declaring no editor document writes no kinds/, and a stale one is pruned", () => {
-    const dir = materializeReal();
+    const pinned = DECLARING_TARGETS.find((target) => target.id === PINNED.surfaceId);
+    if (!pinned) throw new Error(`${PINNED.surfaceId} declares no editor modules in the registry`);
+    const dir = materializeTarget(pinned);
     expect(existsSync(path.join(dir, "kinds"))).toBe(true);
     expect(existsSync(path.join(dir, "editor-vm"))).toBe(true);
 
