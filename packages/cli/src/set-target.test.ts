@@ -207,13 +207,45 @@ describe("runSetTarget registry membership", () => {
     expect(readPkgFile()).toBe(before);
   });
 
-  test("an unreadable registry fails open rather than rejecting every version", () => {
+  test("an unavailable registry rejects a concrete version; file untouched", () => {
     writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const before = readPkgFile();
 
     const result = runSetTarget({ cwd, token: "1.42.99", resolvableTargets: [] });
 
-    expect(result.ok).toBe(true);
-    expect(pinOf()).toBe("1.42.99");
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain("API registry is unavailable");
+    expect(result.written).toEqual([]);
+    expect(readPkgFile()).toBe(before);
+  });
+
+  test("an unavailable registry rejects --detected too; file untouched", () => {
+    writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const before = readPkgFile();
+
+    const result = runSetTarget({
+      cwd,
+      detected: true,
+      detect: () => "1.42.99",
+      resolvableTargets: [],
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain("API registry is unavailable");
+    expect(result.written).toEqual([]);
+    expect(readPkgFile()).toBe(before);
+  });
+
+  test("channel tokens stay writable when the registry is unavailable", () => {
+    for (const channel of ["stable", "beta", "alpha"]) {
+      writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
+
+      const result = runSetTarget({ cwd, token: channel, resolvableTargets: [] });
+
+      expect(result.ok).toBe(true);
+      expect(result.written).toEqual(["package.json"]);
+      expect(pinOf()).toBe(channel);
+    }
   });
 
   test("a token already equal to an unprovidable pin is still rejected", () => {
