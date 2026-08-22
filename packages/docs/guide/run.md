@@ -61,9 +61,10 @@ Before launching, `run` writes any advisories to `stderr`:
   example a stale or mismatched build artifact).
 - **installed-editor pin-drift notice** — when the Defold editor installed on
   this machine differs from the version your project pins, `run` prints a
-  one-line heads-up (the same notice the everyday commands share). It is
-  advisory by default and never changes the exit code; pass `--fail-on-drift`
-  to make that same drift exit non-zero instead. The notice text is identical
+  one-line heads-up (the same notice the everyday commands share). A pin naming
+  a version the toolchain cannot provide is reported the same way. Both are
+  advisory by default and never change the exit code; pass `--fail-on-drift`
+  to make either exit non-zero instead. The notice text is identical
   either way, and the engine's own exit code always wins — escalation turns a
   clean run into a failure, never a failing run into a different failure.
 

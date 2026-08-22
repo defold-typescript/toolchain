@@ -97,9 +97,20 @@ warns, naming both the installed version and the pin, and pointing back at
 under `--json`. `bob status`/`bob resolve` inspect rather than build and stay
 quiet. A channel pin tracks its head and never triggers this.
 
-That drift notice is advisory by default: it never changes the exit code. Pass
-`--fail-on-drift` to any of those commands and the *same* drift exits non-zero
-instead — same notice text, same `--json` payload, and the pin is still never
+A pin the toolchain cannot *provide* is reported by that same loop. A concrete
+version with no shipped API surface — one retired by a patch rotation, or never
+registered at all — used to materialize nothing and exit 0, leaving the project
+compiling against the *newer* default surface and silently accepting APIs the
+pinned engine lacks. Those commands now name the pin, state that no surface was
+materialized, and list the resolvable targets, on stderr for a normal run and in
+the `warnings` array under `--json`. An unprovidable `--defold-target` override
+reports the same way and still never writes the pin. A channel target tracks a
+moving head, and the installed-editor fallback is not a target you declared, so
+neither triggers this.
+
+Those notices are advisory by default: they never change the exit code. Pass
+`--fail-on-drift` to any of those commands and the *same* condition — editor
+drift, or a target the toolchain cannot provide — exits non-zero instead — same notice text, same `--json` payload, and the pin is still never
 rewritten. It is the flag for CI, where a warning nobody reads is no signal at
 all. Escalation only ever turns a success into a failure: when the command
 itself already failed, you get its own exit code, not the drift code. On a
@@ -192,6 +203,12 @@ build`/`bundle`/`run` — adds a `pinMismatch: { installed, pinned }` object
 (alongside the notice in the `warnings` array) naming the installed editor version
 and the pinned version. It is absent when the two match, when no editor is
 detected, and for a channel pin.
+
+A target the toolchain cannot provide adds an `unresolvableTarget: { target,
+available }` object naming the pin (or the `--defold-target` value) and the
+versions that do resolve, so the no-surface outcome is a field you can read
+rather than a `materializedSurface: null` you have to infer. It is absent
+whenever the target resolves.
 
 Adding `--fail-on-drift` does not change that payload at all — same `warnings`,
 same `pinMismatch`, no extra field. Only the process exit code differs, so a CI
