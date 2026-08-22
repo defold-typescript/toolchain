@@ -50,6 +50,27 @@ describe("lookupTranslation", () => {
   });
 });
 
+describe("translations.json multi-hash entries", () => {
+  // `gui.set` carries one body on the default target and a different one on the
+  // demoted targets, so both source hashes have to resolve to their own
+  // translation. A re-pin that replaces rather than appends drops one of them
+  // and the older surface silently falls back to raw Lua.
+  test("gui.set resolves a translation for both the default and the demoted source body", () => {
+    const store = loadTranslations();
+    const hashes = (store["gui.set"] ?? []).map((entry) => entry.sourceHash);
+    expect(hashes).toContain("a609fdbcee772fac");
+    expect(hashes).toContain("d195edde0a9fd170");
+    for (const hash of hashes) {
+      const ts = lookupTranslation(store, "gui.set", hash);
+      expect(ts).not.toBeNull();
+      expect(ts).not.toContain("local ");
+    }
+    expect(lookupTranslation(store, "gui.set", "a609fdbcee772fac")).not.toBe(
+      lookupTranslation(store, "gui.set", "d195edde0a9fd170"),
+    );
+  });
+});
+
 describe("translations.json array migration", () => {
   test("every stored array element resolves back to its own ts via lookupTranslation", () => {
     const store = loadTranslations();

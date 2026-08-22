@@ -10,6 +10,11 @@ export interface Translation {
 // An FQN maps to one translation per distinct example body it carries: an
 // overloaded element (same name, differing `@example` source) contributes one
 // array entry per body, each pinned by its own `sourceHash`.
+//
+// add-don't-swap: a ref-doc re-pin that rewrites an element's example must
+// *append* the translation for the new source hash, never overwrite the entry
+// for the old one. Older API targets keep shipping the previous body, so
+// replacing the entry silently regresses every demoted surface to raw Lua.
 export type TranslationStore = Record<string, Translation[]>;
 
 const FNV_OFFSET_BASIS = 0xcbf29ce484222325n;
