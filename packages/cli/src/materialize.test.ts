@@ -1287,4 +1287,64 @@ describe("materialized surface identity", () => {
     }
     expect(exitCode).toBe(0);
   });
+
+  test("a materialization that fails after the declarations are written leaves no stamp", () => {
+    seedSource(["label"]);
+    const dir = path.join(cwd, ".defold-types", surfaceDir("defold-1.12.4"));
+    mkdirSync(dir, { recursive: true });
+    // `writePinnedRootEntrypoint` has to create `root/` as a directory, so a
+    // plain file there fails the real write at the point a late failure would.
+    // The name carries no `.d.ts`, so the stale-declaration sweep leaves it.
+    writeFileSync(path.join(dir, "root"), "");
+
+    expect(() =>
+      materializeApiSurface({ cwd, surface: CURRENT, sourceGeneratedDir: sourceDir }),
+    ).toThrow();
+
+    expect(existsSync(path.join(dir, "label.d.ts"))).toBe(true);
+    expect(surfaceStampStatus(dir)).toBe("missing");
+  });
+
+  test("a failed rewrite of a complete surface does not leave the previous stamp vouching for it", () => {
+    seedSource(["label"]);
+    const first = materializeApiSurface({ cwd, surface: CURRENT, sourceGeneratedDir: sourceDir });
+    const dir = path.join(cwd, first.materializedDir as string);
+    expect(surfaceStampStatus(dir)).toBe("match");
+
+    rmSync(path.join(dir, "root"), { recursive: true, force: true });
+    writeFileSync(path.join(dir, "root"), "");
+
+    expect(() =>
+      materializeApiSurface({ cwd, surface: CURRENT, sourceGeneratedDir: sourceDir }),
+    ).toThrow();
+
+    expect(surfaceStampStatus(dir)).toBe("missing");
+  });
+
+  test("a failure in the editor carry-over leaves no stamp, though the root entrypoint already landed", () => {
+    const generated = path.join(PKG_ROOT, "generated");
+    const first = materializeApiSurface({
+      cwd,
+      surface: PINNED,
+      sourceGeneratedDir: generated,
+    });
+    const dir = path.join(cwd, first.materializedDir as string);
+    expect(surfaceStampStatus(dir)).toBe("match");
+
+    // A directory where a carried editor declaration must be written. The
+    // surface wants that name, so the stale sweep leaves it and the carry-over
+    // `writeFileSync` fails on it — strictly after the root entrypoint, which
+    // is removed here so its reappearance proves the run got that far.
+    const carried = path.join(dir, "editor-overloads.d.ts");
+    rmSync(carried, { force: true });
+    mkdirSync(carried);
+    rmSync(path.join(dir, "root"), { recursive: true, force: true });
+
+    expect(() =>
+      materializeApiSurface({ cwd, surface: PINNED, sourceGeneratedDir: generated }),
+    ).toThrow();
+
+    expect(existsSync(path.join(dir, "root", "index.d.ts"))).toBe(true);
+    expect(surfaceStampStatus(dir)).toBe("missing");
+  });
 });
