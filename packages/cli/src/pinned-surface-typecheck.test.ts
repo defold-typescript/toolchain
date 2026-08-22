@@ -201,6 +201,54 @@ describe("a materialized pin binds the package specifier", () => {
     }
   });
 
+  test("the whole package export set reaches a pinned consumer, not just the lifecycle helpers", () => {
+    // The entrypoint used to re-export only the `./src/`-backed subpaths that
+    // happened to be published, which is a strict subset of the root export
+    // set — every other export vanished with TS2305 the moment a pin landed.
+    const fixture = scaffold({
+      "proof.ts": [
+        'import { parseDefoldApiDoc, availabilityLabel, emitDeclarations, htmlToDocText } from "@defold-typescript/types";',
+        'import type { ApiModule } from "@defold-typescript/types";',
+        "void parseDefoldApiDoc;",
+        "void availabilityLabel;",
+        "void emitDeclarations;",
+        "void htmlToDocText;",
+        "type Probe = ApiModule;",
+        "declare const probe: Probe;",
+        "void probe;",
+        "",
+      ].join("\n"),
+    });
+    try {
+      const { exitCode, output } = typecheck(fixture);
+      if (exitCode !== 0) {
+        throw new Error(`a pin must narrow engine namespaces, not package exports:\n${output}`);
+      }
+      expect(exitCode).toBe(0);
+    } finally {
+      rmSync(fixture.cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("a name the package does not export is still rejected through the pinned entrypoint", () => {
+    // The negative control for the test above: a facade widened to `any` — or a
+    // `declare module` shim — would buy that exit 0 by disabling checking.
+    const fixture = scaffold({
+      "proof.ts": [
+        'import { notAPackageExport } from "@defold-typescript/types";',
+        "void notAPackageExport;",
+        "",
+      ].join("\n"),
+    });
+    try {
+      const { exitCode, output } = typecheck(fixture);
+      expect(exitCode).not.toBe(0);
+      expect(output).toContain("has no exported member 'notAPackageExport'");
+    } finally {
+      rmSync(fixture.cwd, { recursive: true, force: true });
+    }
+  });
+
   test("the written tsconfig is what enforces the pin, not the fixture", () => {
     const fixture = scaffold({ "proof.ts": ["export {};", ""].join("\n") });
     try {

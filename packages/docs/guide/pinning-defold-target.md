@@ -263,8 +263,11 @@ declares the same ambient namespaces the pinned surface declares — TypeScript
 merges the two and the newer one wins for **every** file in the program, not
 only the importing one. The redirect points at a `root/index.d.ts` inside the
 materialized surface that loads the pinned namespaces and re-exports the
-package's own API (`defineScript`, `Hash`, `Url`, …), so the import keeps
-working while the surface stays narrowed.
+package's complete root export set through the
+`@defold-typescript/types/api` subpath — every symbol the bare specifier
+normally serves (`defineScript`, `Hash`, `Url`, `parseDefoldApiDoc`, …), in one
+module that declares nothing ambient. So a pin narrows the engine namespaces
+without taking package exports away from the code that imports them.
 
 Your own `paths` aliases are preserved: build merges its entry beside them, and
 removes only what it wrote when there is no surface to point at. An alias you
