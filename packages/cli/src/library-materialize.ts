@@ -1,6 +1,6 @@
 // Materialization slice of `library-type-resolution`: copy the matched vendored
 // libraries' committed `generated/<module>.d.ts` files verbatim into the
-// gitignored sibling surface `.defold-types/libraries/`, then point tsconfig at
+// gitignored sibling surface `.defold-types/libraries@<cliVersion>/`, then point tsconfig at
 // it. Mirrors `extension-materialize.ts`; the two surfaces coexist under one
 // `typeRoots: [".defold-types"]` alongside the engine `<surfaceId>/` surface.
 // Unlike extension namespaces, the generated library files are self-contained
@@ -9,16 +9,62 @@
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
+import { readCliVersion } from "./cli-version";
 import { formatJsonLikeBiome } from "./format-json";
 import type { VendoredLibrary } from "./library-match";
-import { ensureGitignoreLine, MATERIALIZED_ROOT } from "./materialize";
+import {
+  ensureGitignoreLine,
+  MATERIALIZED_ROOT,
+  surfaceDirName,
+  surfaceStampStatus,
+} from "./materialize";
 
-const LIBRARIES_DIR = "libraries";
+const LIBRARIES_BASE = "libraries";
+
+// The surface contents are a function of *(dependency set x toolchain version)*.
+// Only the toolchain axis can ride the directory name — the dependency set is a
+// set, and it changes for reasons unrelated to the toolchain — so the name
+// carries the version and the stamp carries the modules.
+export function librariesDirName(cliVersion: string): string {
+  return surfaceDirName(LIBRARIES_BASE, cliVersion);
+}
+
+// A legacy flat `libraries` entry, or any older `libraries@<version>` one.
+function isLibrariesEntry(entry: unknown): boolean {
+  return (
+    typeof entry === "string" &&
+    (entry === LIBRARIES_BASE || entry.startsWith(`${LIBRARIES_BASE}@`))
+  );
+}
+
+// Reuse only a surface whose stamp vouches for it *and* whose recorded module
+// set is the one being asked for: a matching stamp alone proves the toolchain
+// axis, never the dependency axis.
+function isReusableLibrarySurface(absDir: string, present: readonly string[]): boolean {
+  if (surfaceStampStatus(absDir) !== "match") {
+    return false;
+  }
+  try {
+    const stamp = JSON.parse(readFileSync(path.join(absDir, "package.json"), "utf8")) as {
+      modules?: unknown;
+    };
+    return (
+      Array.isArray(stamp.modules) &&
+      stamp.modules.length === present.length &&
+      stamp.modules.every((module, index) => module === present[index])
+    );
+  } catch {
+    return false;
+  }
+}
 
 export interface MaterializeVendoredLibrariesOptions {
   readonly cwd: string;
   readonly matched: readonly VendoredLibrary[];
   readonly generatedDir: string | null;
+  // Defaults to the running package's version, so a consumer's directory always
+  // names the toolchain that actually wrote it. Injected by tests.
+  readonly cliVersion?: string;
 }
 
 export interface MaterializeVendoredLibrariesResult {
@@ -32,8 +78,10 @@ export function materializeVendoredLibraries(
 ): MaterializeVendoredLibrariesResult {
   const { cwd, matched, generatedDir } = opts;
 
-  const relDir = path.posix.join(MATERIALIZED_ROOT, LIBRARIES_DIR);
-  const absDir = path.join(cwd, MATERIALIZED_ROOT, LIBRARIES_DIR);
+  const cliVersion = opts.cliVersion ?? readCliVersion();
+  const dirName = librariesDirName(cliVersion);
+  const relDir = path.posix.join(MATERIALIZED_ROOT, dirName);
+  const absDir = path.join(cwd, MATERIALIZED_ROOT, dirName);
 
   const modules = [...new Set(matched.flatMap((library) => library.modules))].sort();
 
@@ -68,7 +116,15 @@ export function materializeVendoredLibraries(
     return { materializedDir: null, modules: [], skipped };
   }
 
+  if (isReusableLibrarySurface(absDir, present)) {
+    return { materializedDir: relDir, modules: present, skipped };
+  }
+
   mkdirSync(absDir, { recursive: true });
+  // Retract the stamp for the duration of the rewrite: re-materializing the same
+  // `(module set, cliVersion)` lands in a directory whose existing stamp already
+  // matches, so writing it last is not enough on its own.
+  rmSync(path.join(absDir, "package.json"), { force: true });
 
   const wanted = new Set(present.map((module) => `${module}.d.ts`));
   for (const existing of readdirSync(absDir)) {
@@ -85,11 +141,16 @@ export function materializeVendoredLibraries(
   const imports = present.map((module) => `import "./${module}";`).join("\n");
   writeFileSync(path.join(absDir, "index.d.ts"), `${imports}\n\nexport {};\n`);
 
+  // Last write of the function: the stamp only ever vouches for a surface whose
+  // every other file has already landed. `modules` records the dependency axis
+  // the directory name cannot carry.
   writeFileSync(
     path.join(absDir, "package.json"),
     `${formatJsonLikeBiome({
       name: "@defold-typescript/materialized-libraries",
+      version: cliVersion,
       types: "index.d.ts",
+      modules: present,
     })}\n`,
   );
 
@@ -108,10 +169,9 @@ export function ensureLibraryTypesReference(cwd: string, materializedDir: string
     };
     const current = tsconfig.compilerOptions ?? {};
     const types = Array.isArray(current.types) ? (current.types as unknown[]).slice() : [];
-    const idx = types.indexOf(LIBRARIES_DIR);
-    if (idx !== -1) {
-      types.splice(idx, 1);
-      tsconfig.compilerOptions = { ...current, types };
+    const kept = types.filter((entry) => !isLibrariesEntry(entry));
+    if (kept.length !== types.length) {
+      tsconfig.compilerOptions = { ...current, types: kept };
       writeFileSync(tsconfigPath, `${formatJsonLikeBiome(tsconfig)}\n`);
     }
     return;
@@ -129,19 +189,23 @@ export function ensureLibraryTypesReference(cwd: string, materializedDir: string
       ? (current.typeRoots as unknown[]).slice()
       : [];
 
-    // Purely additive: keep an existing engine `surfaceId` and `"extensions"`
-    // entry and only append `"libraries"` when absent, so this composes with
-    // `ensureMaterializedReference` and `ensureExtensionTypesReference`.
-    const needsEntry = !types.includes(entry);
+    // Additive towards siblings — an engine `surfaceId` and `"extensions"` entry
+    // are preserved, so this composes with `ensureMaterializedReference` and
+    // `ensureExtensionTypesReference` — but exclusive within its own axis: a
+    // legacy flat `"libraries"` or an older `libraries@<version>` entry is
+    // dropped, or an upgrade would load the retained previous surface alongside
+    // the new one and every module would be declared twice.
+    const kept = types.filter((value) => value === entry || !isLibrariesEntry(value));
+    const needsEntry = !kept.includes(entry);
     const needsRoot = !typeRoots.includes(MATERIALIZED_ROOT);
-    if (needsEntry || needsRoot) {
+    if (needsEntry || needsRoot || kept.length !== types.length) {
       if (needsEntry) {
-        types.push(entry);
+        kept.push(entry);
       }
       if (needsRoot) {
         typeRoots.push(MATERIALIZED_ROOT);
       }
-      tsconfig.compilerOptions = { ...current, typeRoots, types };
+      tsconfig.compilerOptions = { ...current, typeRoots, types: kept };
       writeFileSync(tsconfigPath, `${formatJsonLikeBiome(tsconfig)}\n`);
     }
   }

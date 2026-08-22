@@ -785,6 +785,40 @@ describe("dispatch", () => {
     expect(notice).toBeDefined();
   });
 
+  test("--defold-target materializes beside the pinned surface and leaves it intact", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const sourceGeneratedDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-src-"));
+    writeFileSync(path.join(sourceGeneratedDir, "label.d.ts"), "declare const __label: unknown;\n");
+
+    const pinned = captureStreams();
+    expect(
+      await dispatch(["build", cwd, "--json"], pinned.io, {
+        sourceGeneratedDir,
+        detectEditorVersion: () => null,
+      }),
+    ).toBe(0);
+    const pinnedDir = path.join(cwd, ".defold-types", surfaceDir("defold-1.12.4"));
+    writeFileSync(path.join(pinnedDir, "sentinel.txt"), "pinned\n");
+
+    const overridden = captureStreams();
+    const code = await dispatch(
+      ["build", cwd, "--defold-target", "1.13.0", "--json"],
+      overridden.io,
+      {
+        sourceGeneratedDir,
+        detectEditorVersion: () => null,
+      },
+    );
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(overridden.out()) as { materializedSurface: string | null };
+    expect(parsed.materializedSurface).toBe(`.defold-types/${surfaceDir("defold-1.13.0")}`);
+    expect(readFileSync(path.join(pinnedDir, "sentinel.txt"), "utf8")).toBe("pinned\n");
+    expect(existsSync(path.join(pinnedDir, "label.d.ts"))).toBe(true);
+
+    rmSync(sourceGeneratedDir, { recursive: true, force: true });
+  });
+
   test("build --defold-target equal to the pin produces no override notice", async () => {
     scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
     const { io, out } = captureStreams();

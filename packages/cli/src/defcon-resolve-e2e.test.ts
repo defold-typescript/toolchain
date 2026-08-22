@@ -3,8 +3,14 @@ import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { transpileProject } from "@defold-typescript/transpiler";
+import { readCliVersion } from "./cli-version";
 import { type ExtensionZip, extensionArchiveKey } from "./extension-archive";
+import { librariesDirName } from "./library-materialize";
 import { runResolve } from "./resolve";
+
+// The materialized library surface carries the generating toolchain version;
+// these tests defend other behavior, so they derive the name from production.
+const LIBRARIES_DIR = librariesDirName(readCliVersion());
 
 const libraryTypesRoot = join(import.meta.dir, "..", "..", "library-types");
 const committedDefcon = join(libraryTypesRoot, "generated", "defcon.d.ts");
@@ -73,7 +79,7 @@ describe("defcon resolves and its materialized types are usable end to end", () 
     const cwd = tmp();
     await resolveDefcon(cwd);
 
-    const materialized = join(cwd, ".defold-types", "libraries", "defcon.console.d.ts");
+    const materialized = join(cwd, ".defold-types", LIBRARIES_DIR, "defcon.console.d.ts");
     expect(readFileSync(materialized, "utf8")).toBe(readFileSync(committedDefcon, "utf8"));
   });
 
@@ -81,7 +87,7 @@ describe("defcon resolves and its materialized types are usable end to end", () 
     const cwd = tmp();
     await resolveDefcon(cwd);
     const defconTypes = readFileSync(
-      join(cwd, ".defold-types", "libraries", "defcon.console.d.ts"),
+      join(cwd, ".defold-types", LIBRARIES_DIR, "defcon.console.d.ts"),
       "utf8",
     );
 
@@ -101,7 +107,7 @@ describe("defcon resolves and its materialized types are usable end to end", () 
     const cwd = tmp();
     await resolveDefcon(cwd);
     const defconTypes = readFileSync(
-      join(cwd, ".defold-types", "libraries", "defcon.console.d.ts"),
+      join(cwd, ".defold-types", LIBRARIES_DIR, "defcon.console.d.ts"),
       "utf8",
     );
 
