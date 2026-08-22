@@ -139,6 +139,15 @@ const ALPHA = `
         desc: the script self
 `;
 
+// A version the registry has never carried, so the surface lookup misses no
+// matter which targets ship. The precondition assertion below keeps it honest
+// if the registry ever grows toward it.
+const UNREGISTERED_TARGET = "1.0.0";
+
+function registeredTargetVersions(): string[] {
+  return loadApiTargetsRegistry().map((target) => target.id.replace(/^defold-/, ""));
+}
+
 describe("dispatch", () => {
   test("init <path> runs runInit and returns 0 on success", () => {
     writeFileSync(path.join(cwd, "game.project"), "[project]\n");
@@ -987,15 +996,6 @@ describe("dispatch", () => {
     expect(parsed.warnings.some((w) => w.includes("set-target --detected"))).toBe(true);
   });
 
-  // A version the registry has never carried, so the surface lookup misses no
-  // matter which targets ship. The precondition assertion below keeps it honest
-  // if the registry ever grows toward it.
-  const UNREGISTERED_TARGET = "1.0.0";
-
-  function registeredTargetVersions(): string[] {
-    return loadApiTargetsRegistry().map((target) => target.id.replace(/^defold-/, ""));
-  }
-
   test("build reports a pin the API registry cannot provide, naming the resolvable targets", async () => {
     expect(registeredTargetVersions()).not.toContain(UNREGISTERED_TARGET);
     scaffoldBuildProject({ "defold-typescript": { "defold-target": UNREGISTERED_TARGET } });
@@ -1161,6 +1161,41 @@ describe("dispatch", () => {
     expect(start.pinMismatch).toEqual({ installed: "1.13.0", pinned: "1.12.4" });
     // The notice rides `start` alone — exactly once across the whole stream.
     expect(out().split("set-target --detected").length - 1).toBe(1);
+  });
+
+  test("watch carries the unresolvable-target notice on stderr and its --json start event", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": UNREGISTERED_TARGET } });
+    const plain = captureStreams();
+    const plainFactory: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+
+    const plainCode = await dispatch(["watch", cwd], plain.io, {
+      watcherFactory: plainFactory,
+      onWatchStart: (h) => h.stop(),
+      detectEditorVersion: () => null,
+    });
+
+    expect(plainCode).toBe(0);
+    expect(plain.err()).toContain("the API registry cannot provide");
+
+    const jsonRun = captureStreams();
+    const jsonFactory: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd, "--json"], jsonRun.io, {
+      watcherFactory: jsonFactory,
+      onWatchStart,
+      detectEditorVersion: () => null,
+    });
+    const handle = await ready;
+    await handle.waitForIdle();
+    handle.stop();
+
+    expect(await result).toBe(0);
+    const start = JSON.parse(jsonRun.out().trimEnd().split("\n")[0] as string) as {
+      event: string;
+      warnings?: string[];
+    };
+    expect(start.event).toBe("start");
+    expect(start.warnings?.some((w) => w.includes("the API registry cannot provide"))).toBe(true);
   });
 
   test("watch stays silent when the editor matches the pin or the pin is a channel", async () => {
@@ -3399,6 +3434,177 @@ describe("dispatch bob", () => {
     expect(code).toBe(0);
   });
 
+  // The pin verdict is knowable before any network call, so a run that dies in
+  // `resolveHead()` must still report it. `fetchVersionInfo` rejecting is the
+  // real shape of that failure: an unregistered pin has no `refs/tags/<version>`
+  // to dereference, so the tag lookup is exactly what fails first.
+  const TAG_LOOKUP_ERROR =
+    "defold-typescript: could not resolve the Defold version tag (https://api.github.com/repos/defold/defold/git/refs/tags/1.0.0 -> 404 Not Found).";
+
+  function rejectingVersionFetch(): { fetchVersionInfo: () => Promise<{ sha1: string }> } {
+    return {
+      fetchVersionInfo: async () => {
+        throw new Error(TAG_LOOKUP_ERROR);
+      },
+    };
+  }
+
+  test("bob build retains the unresolvable-target diagnostic when the tag lookup fails", async () => {
+    expect(registeredTargetVersions()).not.toContain(UNREGISTERED_TARGET);
+    pinProject(UNREGISTERED_TARGET);
+    const { io, err } = captureStreams();
+    const { internals } = defoldInternals();
+
+    const code = await dispatch(["bob", "build", cwd], io, {
+      ...internals,
+      ...rejectingVersionFetch(),
+      detectEditorVersion: () => null,
+    });
+
+    expect(code).toBe(1);
+    const stderr = err();
+    // `1.0.0` alone also appears inside the tag-lookup URL, so the notice is
+    // identified by its own wording and the resolvable set it lists.
+    expect(stderr).toContain("the API registry cannot provide");
+    for (const version of registeredTargetVersions()) {
+      expect(stderr).toContain(version);
+    }
+    expect(stderr).toContain(TAG_LOOKUP_ERROR);
+  });
+
+  test("bob build --json folds the notice and unresolvableTarget into the failing payload", async () => {
+    pinProject(UNREGISTERED_TARGET);
+    const { io, out } = captureStreams();
+    const { internals } = defoldInternals();
+
+    const code = await dispatch(["bob", "build", cwd, "--json"], io, {
+      ...internals,
+      ...rejectingVersionFetch(),
+      detectEditorVersion: () => null,
+    });
+
+    expect(code).toBe(1);
+    const parsed = JSON.parse(out().trim()) as {
+      command: string;
+      subcommand: string;
+      error: string;
+      warnings?: string[];
+      unresolvableTarget?: { target: string; available: string[] };
+    };
+    expect(parsed.command).toBe("bob");
+    expect(parsed.subcommand).toBe("build");
+    expect(parsed.error).toBe(TAG_LOOKUP_ERROR);
+    expect(parsed.warnings?.some((w) => w.includes(UNREGISTERED_TARGET))).toBe(true);
+    expect(parsed.unresolvableTarget).toEqual({
+      target: UNREGISTERED_TARGET,
+      available: registeredTargetVersions(),
+    });
+  });
+
+  test("bob run reports the same diagnostic on stderr and under --json when the tag lookup fails", async () => {
+    pinProject(UNREGISTERED_TARGET);
+    const runInternals = {
+      platform: "darwin" as const,
+      arch: "arm64" as const,
+      probe: () => true,
+      spawn: () => ({ kill: () => {}, exited: Promise.resolve(0) }),
+      copyAside: (p: string) => p,
+      chmod: () => {},
+    };
+
+    const plain = captureStreams();
+    const { internals } = defoldInternals();
+    const plainCode = await dispatch(["bob", "run", cwd], plain.io, {
+      ...internals,
+      ...rejectingVersionFetch(),
+      detectEditorVersion: () => null,
+      runInternals,
+    });
+
+    expect(plainCode).toBe(1);
+    expect(plain.err()).toContain("the API registry cannot provide");
+    for (const version of registeredTargetVersions()) {
+      expect(plain.err()).toContain(version);
+    }
+    expect(plain.err()).toContain(TAG_LOOKUP_ERROR);
+
+    const jsonRun = captureStreams();
+    const { internals: internals2 } = defoldInternals();
+    const jsonCode = await dispatch(["bob", "run", cwd, "--json"], jsonRun.io, {
+      ...internals2,
+      ...rejectingVersionFetch(),
+      detectEditorVersion: () => null,
+      runInternals,
+    });
+
+    expect(jsonCode).toBe(1);
+    const parsed = JSON.parse(jsonRun.out().trim()) as {
+      subcommand: string;
+      error: string;
+      warnings?: string[];
+      unresolvableTarget?: { target: string; available: string[] };
+    };
+    expect(parsed.subcommand).toBe("run");
+    expect(parsed.error).toBe(TAG_LOOKUP_ERROR);
+    expect(parsed.warnings?.some((w) => w.includes(UNREGISTERED_TARGET))).toBe(true);
+    expect(parsed.unresolvableTarget).toEqual({
+      target: UNREGISTERED_TARGET,
+      available: registeredTargetVersions(),
+    });
+  });
+
+  // The pin is unresolvable, so `--fail-on-drift` really does arm the
+  // escalation; Bob then exits 5 on its own. A resolvable pin would leave the
+  // escalation disarmed and prove nothing about masking.
+  test("bob build --fail-on-drift returns Bob's own failure code, never masking it", async () => {
+    pinProject(UNREGISTERED_TARGET);
+    const { io } = captureStreams();
+    const { internals } = defoldInternals({
+      spawn: async () => ({ exitCode: 5 }),
+    });
+
+    const code = await dispatch(["bob", "build", cwd, "--fail-on-drift"], io, {
+      ...internals,
+      detectEditorVersion: () => null,
+    });
+
+    expect(code).toBe(5);
+  });
+
+  test("bob build carries the unresolvable-target notice on a successful Bob run", async () => {
+    pinProject(UNREGISTERED_TARGET);
+
+    const plain = captureStreams();
+    const { internals } = defoldInternals();
+    const plainCode = await dispatch(["bob", "build", cwd], plain.io, {
+      ...internals,
+      detectEditorVersion: () => null,
+    });
+
+    expect(plainCode).toBe(0);
+    expect(plain.err()).toContain("the API registry cannot provide");
+
+    const jsonRun = captureStreams();
+    const { internals: internals2 } = defoldInternals();
+    const jsonCode = await dispatch(["bob", "build", cwd, "--json"], jsonRun.io, {
+      ...internals2,
+      detectEditorVersion: () => null,
+    });
+
+    expect(jsonCode).toBe(0);
+    const parsed = JSON.parse(jsonRun.out().trim()) as {
+      exitCode: number;
+      warnings?: string[];
+      unresolvableTarget?: { target: string; available: string[] };
+    };
+    expect(parsed.exitCode).toBe(0);
+    expect(parsed.warnings?.some((w) => w.includes("the API registry cannot provide"))).toBe(true);
+    expect(parsed.unresolvableTarget).toEqual({
+      target: UNREGISTERED_TARGET,
+      available: registeredTargetVersions(),
+    });
+  });
+
   test("the removed defold command is unknown and falls through to top-level usage", async () => {
     const { io, err } = captureStreams();
 
@@ -4296,6 +4502,49 @@ describe("dispatch init --template", () => {
     expect(spawnedArgs.flat()).not.toContain("--fail-on-drift");
   });
 
+  test("run carries the unresolvable-target notice on stderr and in its --json envelope", async () => {
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      `${JSON.stringify({ "defold-typescript": { "defold-target": UNREGISTERED_TARGET } }, null, 2)}\n`,
+    );
+    const projectc = path.join(cwd, "build/default/game.projectc");
+    const engine = path.join(cwd, "build/arm64-macos/dmengine");
+    const runInternals = {
+      platform: "darwin" as const,
+      arch: "arm64" as const,
+      probe: (candidate: string) => candidate === projectc || candidate === engine,
+      spawn: () => ({ kill: () => {}, exited: Promise.resolve(0) }),
+      copyAside: (candidate: string) => candidate,
+      chmod: () => {},
+    };
+
+    const plain = captureStreams();
+    const plainCode = await dispatch(["run", cwd], plain.io, {
+      detectEditorVersion: () => null,
+      runInternals,
+    });
+
+    expect(plainCode).toBe(0);
+    expect(plain.err()).toContain("the API registry cannot provide");
+
+    const jsonRun = captureStreams();
+    const jsonCode = await dispatch(["run", cwd, "--json"], jsonRun.io, {
+      detectEditorVersion: () => null,
+      runInternals,
+    });
+
+    expect(jsonCode).toBe(0);
+    const parsed = JSON.parse(jsonRun.out()) as {
+      warnings?: string[];
+      unresolvableTarget?: { target: string; available: string[] };
+    };
+    expect(parsed.warnings?.some((w) => w.includes("the API registry cannot provide"))).toBe(true);
+    expect(parsed.unresolvableTarget).toEqual({
+      target: UNREGISTERED_TARGET,
+      available: registeredTargetVersions(),
+    });
+  });
+
   test("run stays silent when the editor matches the pin or the pin is a channel", async () => {
     const projectc = path.join(cwd, "build/default/game.projectc");
     const engine = path.join(cwd, "build/arm64-macos/dmengine");
@@ -4699,6 +4948,38 @@ describe("dispatch upgrade", () => {
     expect(parsed.ok).toBe(true);
     expect(parsed.warnings?.some((w) => w.includes("set-target --detected"))).toBe(true);
     expect(parsed.pinMismatch).toEqual({ installed: "1.13.0", pinned: "1.12.4" });
+  });
+
+  test("upgrade carries the unresolvable-target notice on stderr and in --json warnings", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      `${JSON.stringify({ "defold-typescript": { "defold-target": UNREGISTERED_TARGET } }, null, 2)}\n`,
+    );
+
+    const plain = captureStreams();
+    const { internals } = upgradeHarness({ running: "1.2.0", latest: "1.3.0" });
+    const plainCode = await dispatch(["upgrade", cwd], plain.io, internals);
+
+    expect(plainCode).toBe(0);
+    expect(plain.err()).toContain("the API registry cannot provide");
+
+    const jsonRun = captureStreams();
+    const { internals: internals2 } = upgradeHarness({ running: "1.2.0", latest: "1.3.0" });
+    const jsonCode = await dispatch(["upgrade", cwd, "--json"], jsonRun.io, internals2);
+
+    expect(jsonCode).toBe(0);
+    const parsed = JSON.parse(jsonRun.out().trim()) as {
+      ok: boolean;
+      warnings?: string[];
+      unresolvableTarget?: { target: string; available: string[] };
+    };
+    expect(parsed.ok).toBe(true);
+    expect(parsed.warnings?.some((w) => w.includes("the API registry cannot provide"))).toBe(true);
+    expect(parsed.unresolvableTarget).toEqual({
+      target: UNREGISTERED_TARGET,
+      available: registeredTargetVersions(),
+    });
   });
 
   test("update warns on stderr when the installed editor drifts from a version pin", async () => {
