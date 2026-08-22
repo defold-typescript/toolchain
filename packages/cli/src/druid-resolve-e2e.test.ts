@@ -3,8 +3,14 @@ import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { transpileProject } from "@defold-typescript/transpiler";
+import { readCliVersion } from "./cli-version";
 import { type ExtensionZip, extensionArchiveKey } from "./extension-archive";
+import { librariesDirName } from "./library-materialize";
 import { runResolve } from "./resolve";
+
+// The materialized library surface carries the generating toolchain version;
+// these tests defend other behavior, so they derive the name from production.
+const LIBRARIES_DIR = librariesDirName(readCliVersion());
 
 const libraryTypesRoot = join(import.meta.dir, "..", "..", "library-types");
 const committedDruid = join(libraryTypesRoot, "generated", "druid.d.ts");
@@ -69,7 +75,7 @@ describe("druid resolves and its materialized types are usable end to end", () =
     const cwd = tmp();
     await resolveDruid(cwd);
 
-    const materialized = join(cwd, ".defold-types", "libraries", "druid.druid.d.ts");
+    const materialized = join(cwd, ".defold-types", LIBRARIES_DIR, "druid.druid.d.ts");
     expect(readFileSync(materialized, "utf8")).toBe(readFileSync(committedDruid, "utf8"));
   });
 
@@ -77,7 +83,7 @@ describe("druid resolves and its materialized types are usable end to end", () =
     const cwd = tmp();
     await resolveDruid(cwd);
     const druidTypes = readFileSync(
-      join(cwd, ".defold-types", "libraries", "druid.druid.d.ts"),
+      join(cwd, ".defold-types", LIBRARIES_DIR, "druid.druid.d.ts"),
       "utf8",
     );
 
@@ -100,7 +106,7 @@ describe("druid resolves and its materialized types are usable end to end", () =
     const cwd = tmp();
     await resolveDruid(cwd);
     const druidTypes = readFileSync(
-      join(cwd, ".defold-types", "libraries", "druid.druid.d.ts"),
+      join(cwd, ".defold-types", LIBRARIES_DIR, "druid.druid.d.ts"),
       "utf8",
     );
 

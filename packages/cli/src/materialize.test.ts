@@ -1217,6 +1217,59 @@ describe("materialized surface identity", () => {
     ]);
   });
 
+  test("a surface missing its stamp is never served as-is; the re-run rewrites it", () => {
+    seedSource(["label"]);
+
+    const first = materializeApiSurface({
+      cwd,
+      surface: CURRENT,
+      sourceGeneratedDir: sourceDir,
+      cliVersion: "0.26.0",
+    });
+    const dir = path.join(cwd, first.materializedDir as string);
+    rmSync(path.join(dir, "package.json"), { force: true });
+    expect(surfaceStampStatus(dir)).toBe("missing");
+    writeFileSync(path.join(dir, "index.d.ts"), "// stale\n");
+
+    const second = materializeApiSurface({
+      cwd,
+      surface: CURRENT,
+      sourceGeneratedDir: sourceDir,
+      cliVersion: "0.26.0",
+    });
+
+    expect(second.materializedDir).toBe(first.materializedDir);
+    expect(readFileSync(path.join(dir, "index.d.ts"), "utf8")).toContain('import "./label";');
+    expect(surfaceStampStatus(dir)).toBe("match");
+  });
+
+  test("a surface whose stamp disagrees with its name is never served as-is", () => {
+    seedSource(["label"]);
+
+    const first = materializeApiSurface({
+      cwd,
+      surface: CURRENT,
+      sourceGeneratedDir: sourceDir,
+      cliVersion: "0.26.0",
+    });
+    const dir = path.join(cwd, first.materializedDir as string);
+    const pkgPath = path.join(dir, "package.json");
+    const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as Record<string, unknown>;
+    writeFileSync(pkgPath, JSON.stringify({ ...pkg, version: "0.1.0" }));
+    expect(surfaceStampStatus(dir)).toBe("mismatch");
+    writeFileSync(path.join(dir, "index.d.ts"), "// stale\n");
+
+    materializeApiSurface({
+      cwd,
+      surface: CURRENT,
+      sourceGeneratedDir: sourceDir,
+      cliVersion: "0.26.0",
+    });
+
+    expect(readFileSync(path.join(dir, "index.d.ts"), "utf8")).toContain('import "./label";');
+    expect(surfaceStampStatus(dir)).toBe("match");
+  });
+
   test("the surface stamps its generating toolchain and a disagreeing stamp is detected", () => {
     seedSource(["label"]);
 
