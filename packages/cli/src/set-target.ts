@@ -32,18 +32,26 @@ function fail(error: string): RunSetTargetResult {
   return { ok: false, written: [], error };
 }
 
+function registryUnavailableError(origin: string): string {
+  return `defold-typescript set-target: the API registry is unavailable, so ${origin} cannot be checked against the targets this toolchain can provide; nothing was written. Reinstall @defold-typescript/types (its api-targets.json is missing or unreadable), or pin a channel (stable|beta|alpha).`;
+}
+
 // Shape validation alone accepts a version that never existed, and the pin it
 // writes only surfaces much later as a silently-wrong surface at build time. A
 // concrete version must therefore be a registry member here, where the typo was
-// made. An empty list means the registry could not be read at all — rejecting
-// every version on that basis would brick the pin writer, so membership is
-// enforced only when the registry actually answered.
+// made. An empty list means membership cannot be established at all, and an
+// unknown pin is refused rather than written — matching `selectApiSurface`'s
+// build-time behavior, so a broken install cannot re-open the silent-bad-pin
+// hole through the writer.
 function membershipError(
   version: string,
   origin: string,
   resolvableTargets: readonly string[],
 ): string | null {
-  if (resolvableTargets.length === 0 || resolvableTargets.includes(version)) {
+  if (resolvableTargets.length === 0) {
+    return registryUnavailableError(origin);
+  }
+  if (resolvableTargets.includes(version)) {
     return null;
   }
   return `defold-typescript set-target: ${origin} names a version the API registry cannot provide; nothing was written. Resolvable targets: ${resolvableTargets.join(", ")}. Pin one of them, or a channel (stable|beta|alpha).`;
