@@ -2,7 +2,15 @@ import { describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { ensureMaterializedReference, materializeApiSurface } from "./materialize";
+import { readCliVersion } from "./cli-version";
+import { ensureMaterializedReference, materializeApiSurface, surfaceDirName } from "./materialize";
+
+// The materialized surface directory carries the generating toolchain version;
+// these tests defend other behavior, so they derive the name from production
+// rather than restating it.
+function surfaceDir(surfaceId: string): string {
+  return surfaceDirName(surfaceId, readCliVersion());
+}
 
 // A pin is only enforced if the *compiler* rejects a newer API. Every
 // config-shape assertion passed while `@defold-typescript/types` still resolved
@@ -30,7 +38,7 @@ function scaffold(sources: Record<string, string>): Fixture {
     surface: { surfaceId: "defold-1.12.4", available: true },
     sourceGeneratedDir: PINNED_SOURCE,
   });
-  expect(materializedDir).toBe(".defold-types/defold-1.12.4");
+  expect(materializedDir).toBe(`.defold-types/${surfaceDir("defold-1.12.4")}`);
 
   // Resolve the package the way an install does, so the remap has something to
   // out-rank: without this the bare specifier simply fails to resolve and the

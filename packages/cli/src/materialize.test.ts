@@ -12,11 +12,14 @@ import {
 import * as os from "node:os";
 import * as path from "node:path";
 import type { SelectedApiSurface } from "./api-surface";
+import { readCliVersion } from "./cli-version";
 import { ensureExtensionTypesReference } from "./extension-materialize";
 import {
   ensureMaterializedReference,
   materializeApiSurface,
   materializeRefDocSurface,
+  surfaceDirName,
+  surfaceStampStatus,
 } from "./materialize";
 import {
   editorRefDocTarget,
@@ -24,6 +27,13 @@ import {
   multiKindRefDocResolveOpts,
   multiKindRefDocTarget,
 } from "./ref-doc-test-fixture";
+
+// The materialized surface directory carries the generating toolchain version;
+// these tests defend other behavior, so they derive the name from production
+// rather than restating it.
+function surfaceDir(surfaceId: string): string {
+  return surfaceDirName(surfaceId, readCliVersion());
+}
 
 function typecheck(tsconfigPath: string): { exitCode: number; output: string } {
   const proc = Bun.spawnSync(["bunx", "tsc", "-p", tsconfigPath, "--noEmit"], {
@@ -66,11 +76,11 @@ describe("materializeApiSurface", () => {
     const result = materializeApiSurface({ cwd, surface: CURRENT, sourceGeneratedDir: sourceDir });
 
     expect(result).toEqual({
-      materializedDir: ".defold-types/defold-1.12.4",
+      materializedDir: `.defold-types/${surfaceDir("defold-1.12.4")}`,
       active: "defold-1.12.4",
     });
 
-    const dir = path.join(cwd, ".defold-types", "defold-1.12.4");
+    const dir = path.join(cwd, ".defold-types", surfaceDir("defold-1.12.4"));
     expect(readFileSync(path.join(dir, "label.d.ts"), "utf8")).toContain("__label");
     expect(readFileSync(path.join(dir, "sprite.d.ts"), "utf8")).toContain("__sprite");
 
@@ -136,7 +146,7 @@ describe("materializeApiSurface", () => {
 
       materializeApiSurface({ cwd, surface: CURRENT, sourceGeneratedDir: gen });
 
-      const dir = path.join(cwd, ".defold-types", "defold-1.12.4");
+      const dir = path.join(cwd, ".defold-types", surfaceDir("defold-1.12.4"));
       expect(existsSync(path.join(dir, "msg-overloads.d.ts"))).toBe(true);
       expect(existsSync(path.join(dir, "message-guard.d.ts"))).toBe(true);
       expect(existsSync(path.join(dir, "go-overloads.d.ts"))).toBe(true);
@@ -174,9 +184,9 @@ describe("materializeApiSurface", () => {
       surface: CURRENT,
       sourceGeneratedDir: gen,
     });
-    expect(materializedDir).toBe(".defold-types/defold-1.12.4");
+    expect(materializedDir).toBe(`.defold-types/${surfaceDir("defold-1.12.4")}`);
 
-    const dir = path.join(cwd, ".defold-types", "defold-1.12.4");
+    const dir = path.join(cwd, ".defold-types", surfaceDir("defold-1.12.4"));
     const index = readFileSync(path.join(dir, "index.d.ts"), "utf8");
     for (const name of wanted) {
       expect(existsSync(path.join(dir, `${name}.d.ts`))).toBe(true);
@@ -208,7 +218,7 @@ describe("materializeApiSurface", () => {
 
       materializeApiSurface({ cwd, surface: CURRENT, sourceGeneratedDir: gen });
 
-      const dir = path.join(cwd, ".defold-types", "defold-1.12.4");
+      const dir = path.join(cwd, ".defold-types", surfaceDir("defold-1.12.4"));
       expect(existsSync(path.join(dir, "msg-overloads.d.ts"))).toBe(true);
       expect(existsSync(path.join(dir, "message-guard.d.ts"))).toBe(true);
       expect(existsSync(path.join(dir, "go-overloads.d.ts"))).toBe(true);
@@ -241,9 +251,9 @@ describe("materializeApiSurface", () => {
     rmSync(path.join(sourceDir, "sprite.d.ts"));
     const result = materializeApiSurface({ cwd, surface: CURRENT, sourceGeneratedDir: sourceDir });
 
-    const dir = path.join(cwd, ".defold-types", "defold-1.12.4");
+    const dir = path.join(cwd, ".defold-types", surfaceDir("defold-1.12.4"));
     expect(result).toEqual({
-      materializedDir: ".defold-types/defold-1.12.4",
+      materializedDir: `.defold-types/${surfaceDir("defold-1.12.4")}`,
       active: "defold-1.12.4",
     });
     expect(existsSync(path.join(dir, "sprite.d.ts"))).toBe(false);
@@ -256,12 +266,15 @@ describe("materializeApiSurface", () => {
 
 describe("materializeApiSurface full surface (no kind narrowing)", () => {
   function materializedNames(): string[] {
-    const dir = path.join(cwd, ".defold-types", "defold-1.12.4");
+    const dir = path.join(cwd, ".defold-types", surfaceDir("defold-1.12.4"));
     return readdirSync(dir).filter((file) => file.endsWith(".d.ts") && file !== "index.d.ts");
   }
 
   function indexContents(): string {
-    return readFileSync(path.join(cwd, ".defold-types", "defold-1.12.4", "index.d.ts"), "utf8");
+    return readFileSync(
+      path.join(cwd, ".defold-types", surfaceDir("defold-1.12.4"), "index.d.ts"),
+      "utf8",
+    );
   }
 
   test("copies every module — gui and render are never dropped", () => {
@@ -298,12 +311,12 @@ describe("ensureMaterializedReference", () => {
       include: ["src/**/*.ts"],
     });
 
-    ensureMaterializedReference(cwd, ".defold-types/defold-1.12.4");
+    ensureMaterializedReference(cwd, `.defold-types/${surfaceDir("defold-1.12.4")}`);
 
     const tsconfig = JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")) as {
       compilerOptions: { types: string[]; typeRoots: string[] };
     };
-    expect(tsconfig.compilerOptions.types).toEqual(["defold-1.12.4"]);
+    expect(tsconfig.compilerOptions.types).toEqual([surfaceDir("defold-1.12.4")]);
     expect(tsconfig.compilerOptions.types).not.toContain("@defold-typescript/types");
     expect(tsconfig.compilerOptions.typeRoots).toEqual([".defold-types"]);
   });
@@ -312,7 +325,7 @@ describe("ensureMaterializedReference", () => {
     writeTsconfig({ compilerOptions: {} });
     writeFileSync(path.join(cwd, ".gitignore"), "src/**/*.lua\n");
 
-    ensureMaterializedReference(cwd, ".defold-types/defold-1.12.4");
+    ensureMaterializedReference(cwd, `.defold-types/${surfaceDir("defold-1.12.4")}`);
 
     const gitignore = readFileSync(path.join(cwd, ".gitignore"), "utf8");
     expect(gitignore).toContain(".defold-types/");
@@ -322,9 +335,9 @@ describe("ensureMaterializedReference", () => {
   test("is idempotent on re-run", () => {
     writeTsconfig({ compilerOptions: { types: ["@defold-typescript/types"] } });
 
-    ensureMaterializedReference(cwd, ".defold-types/defold-1.12.4");
+    ensureMaterializedReference(cwd, `.defold-types/${surfaceDir("defold-1.12.4")}`);
     const first = readFileSync(path.join(cwd, "tsconfig.json"), "utf8");
-    ensureMaterializedReference(cwd, ".defold-types/defold-1.12.4");
+    ensureMaterializedReference(cwd, `.defold-types/${surfaceDir("defold-1.12.4")}`);
     const second = readFileSync(path.join(cwd, "tsconfig.json"), "utf8");
 
     expect(second).toBe(first);
@@ -338,7 +351,7 @@ describe("ensureMaterializedReference", () => {
       '  "compilerOptions": {',
       '    "strict": true,',
       '    "typeRoots": [".defold-types"],',
-      '    "types": ["defold-1.12.4"]',
+      `    "types": ["${surfaceDir("defold-1.12.4")}"]`,
       "  },",
       '  "include": ["src/**/*.ts"]',
       "}",
@@ -346,7 +359,7 @@ describe("ensureMaterializedReference", () => {
     ].join("\n");
     writeFileSync(path.join(cwd, "tsconfig.json"), inline);
 
-    ensureMaterializedReference(cwd, ".defold-types/defold-1.12.4");
+    ensureMaterializedReference(cwd, `.defold-types/${surfaceDir("defold-1.12.4")}`);
 
     expect(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")).toBe(inline);
   });
@@ -365,12 +378,12 @@ describe("ensureMaterializedReference", () => {
     writeTsconfig({ compilerOptions: { types: ["@defold-typescript/types"] } });
 
     ensureExtensionTypesReference(cwd, ".defold-types/extensions");
-    ensureMaterializedReference(cwd, ".defold-types/defold-1.12.4");
+    ensureMaterializedReference(cwd, `.defold-types/${surfaceDir("defold-1.12.4")}`);
 
     const tsconfig = JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")) as {
       compilerOptions: { types: string[]; typeRoots: string[] };
     };
-    expect(tsconfig.compilerOptions.types).toEqual(["defold-1.12.4", "extensions"]);
+    expect(tsconfig.compilerOptions.types).toEqual([surfaceDir("defold-1.12.4"), "extensions"]);
     expect(tsconfig.compilerOptions.typeRoots).toEqual([".defold-types"]);
   });
 
@@ -378,9 +391,9 @@ describe("ensureMaterializedReference", () => {
     writeTsconfig({ compilerOptions: { types: ["@defold-typescript/types"] } });
 
     ensureExtensionTypesReference(cwd, ".defold-types/extensions");
-    ensureMaterializedReference(cwd, ".defold-types/defold-1.12.4");
+    ensureMaterializedReference(cwd, `.defold-types/${surfaceDir("defold-1.12.4")}`);
     const first = readFileSync(path.join(cwd, "tsconfig.json"), "utf8");
-    ensureMaterializedReference(cwd, ".defold-types/defold-1.12.4");
+    ensureMaterializedReference(cwd, `.defold-types/${surfaceDir("defold-1.12.4")}`);
     const second = readFileSync(path.join(cwd, "tsconfig.json"), "utf8");
 
     expect(second).toBe(first);
@@ -397,7 +410,7 @@ describe("materializeApiSurface consumer proof — imported + ambient types unif
       surface: CURRENT,
       sourceGeneratedDir: gen,
     });
-    expect(materializedDir).toBe(".defold-types/defold-1.12.4");
+    expect(materializedDir).toBe(`.defold-types/${surfaceDir("defold-1.12.4")}`);
 
     // Resolve `@defold-typescript/types` like an install: the import then hits
     // the package copy while ambient globals come from the materialized surface
@@ -417,7 +430,7 @@ describe("materializeApiSurface consumer proof — imported + ambient types unif
             skipLibCheck: true,
             noEmit: true,
             typeRoots: [".defold-types"],
-            types: ["defold-1.12.4"],
+            types: [surfaceDir("defold-1.12.4")],
           },
           include: ["proof.ts"],
         },
@@ -492,8 +505,8 @@ describe("materializeApiSurface editor surface", () => {
       surface: PINNED,
       sourceGeneratedDir: REAL_GENERATED,
     });
-    expect(materializedDir).toBe(".defold-types/defold-1.13.0");
-    return path.join(cwd, ".defold-types", "defold-1.13.0");
+    expect(materializedDir).toBe(`.defold-types/${surfaceDir("defold-1.13.0")}`);
+    return path.join(cwd, ".defold-types", surfaceDir("defold-1.13.0"));
   }
 
   test("carries the declaring target's editor modules, hand-authored deps and editor kind", () => {
@@ -523,7 +536,7 @@ describe("materializeApiSurface editor surface", () => {
       string,
       unknown
     >;
-    expect(Object.keys(pkg).sort()).toEqual(["name", "types"]);
+    expect(Object.keys(pkg).sort()).toEqual(["name", "types", "version"]);
   });
 
   test("the relocated kind index resolves from its new location", () => {
@@ -604,7 +617,7 @@ describe("materializeApiSurface editor surface", () => {
 
       materializeApiSurface({ cwd, surface: PINNED, sourceGeneratedDir: gen });
 
-      const dir = path.join(cwd, ".defold-types", "defold-1.13.0");
+      const dir = path.join(cwd, ".defold-types", surfaceDir("defold-1.13.0"));
       expect(existsSync(path.join(dir, "editor-vm", "pinned_only.d.ts"))).toBe(true);
       expect(existsSync(path.join(dir, "pinned-overloads.d.ts"))).toBe(true);
       // The packaged default target's editor surface must never leak in.
@@ -651,7 +664,7 @@ describe("materializeApiSurface editor surface", () => {
 
       materializeApiSurface({ cwd, surface: PINNED, sourceGeneratedDir: gen });
 
-      const dir = path.join(cwd, ".defold-types", "defold-1.13.0");
+      const dir = path.join(cwd, ".defold-types", surfaceDir("defold-1.13.0"));
       expect(existsSync(path.join(dir, "kinds"))).toBe(false);
       expect(existsSync(path.join(dir, "editor-vm"))).toBe(false);
       // Today's behavior for the rest of the surface is untouched.
@@ -672,9 +685,9 @@ describe("materializeRefDocSurface full surface (no kind narrowing)", () => {
       resolveOpts,
       registry: [multiKindRefDocTarget()],
     });
-    expect(materializedDir).toBe(".defold-types/defold-1.9.8");
+    expect(materializedDir).toBe(`.defold-types/${surfaceDir("defold-1.9.8")}`);
 
-    const dir = path.join(cwd, ".defold-types", "defold-1.9.8");
+    const dir = path.join(cwd, ".defold-types", surfaceDir("defold-1.9.8"));
     expect(existsSync(path.join(dir, "gui.d.ts"))).toBe(true);
     expect(existsSync(path.join(dir, "render.d.ts"))).toBe(true);
     expect(existsSync(path.join(dir, "sprite.d.ts"))).toBe(true);
@@ -693,9 +706,9 @@ describe("materializeRefDocSurface per-kind subpaths", () => {
       resolveOpts,
       registry: [multiKindRefDocTarget()],
     });
-    expect(materializedDir).toBe(".defold-types/defold-1.9.8");
+    expect(materializedDir).toBe(`.defold-types/${surfaceDir("defold-1.9.8")}`);
 
-    const dir = path.join(cwd, ".defold-types", "defold-1.9.8");
+    const dir = path.join(cwd, ".defold-types", surfaceDir("defold-1.9.8"));
     const kinds = path.join(dir, "kinds");
     expect(existsSync(path.join(kinds, "script.d.ts"))).toBe(true);
     expect(existsSync(path.join(kinds, "gui-script.d.ts"))).toBe(true);
@@ -736,9 +749,9 @@ describe("materializeRefDocSurface per-kind subpaths", () => {
       surfaceId: "defold-1.9.8",
       resolveOpts,
     });
-    expect(materializedDir).toBe(".defold-types/defold-1.9.8");
+    expect(materializedDir).toBe(`.defold-types/${surfaceDir("defold-1.9.8")}`);
 
-    const kinds = path.join(cwd, ".defold-types", "defold-1.9.8", "kinds");
+    const kinds = path.join(cwd, ".defold-types", surfaceDir("defold-1.9.8"), "kinds");
     for (const kind of ["script", "gui-script", "render-script"]) {
       expect(existsSync(path.join(kinds, `${kind}.d.ts`))).toBe(true);
     }
@@ -759,7 +772,7 @@ describe("materializeRefDocSurface per-kind subpaths", () => {
     const resolveOpts = labelRefDocResolveOpts();
     await materializeRefDocSurface({ cwd, surfaceId: "defold-1.9.8", resolveOpts });
 
-    const dir = path.join(cwd, ".defold-types", "defold-1.9.8");
+    const dir = path.join(cwd, ".defold-types", surfaceDir("defold-1.9.8"));
     expect(existsSync(path.join(dir, "kinds", "editor-script.d.ts"))).toBe(false);
     const pkg = JSON.parse(readFileSync(path.join(dir, "package.json"), "utf8")) as {
       exports: Record<string, unknown>;
@@ -801,9 +814,9 @@ describe("materializeRefDocSurface per-kind subpaths", () => {
       resolveOpts,
       registry: [editorRefDocTarget()],
     });
-    expect(materializedDir).toBe(".defold-types/defold-1.9.8");
+    expect(materializedDir).toBe(`.defold-types/${surfaceDir("defold-1.9.8")}`);
 
-    const dir = path.join(cwd, ".defold-types", "defold-1.9.8");
+    const dir = path.join(cwd, ".defold-types", surfaceDir("defold-1.9.8"));
     for (const rel of [
       "editor.d.ts",
       path.join("editor-vm", "zip.d.ts"),
@@ -856,7 +869,7 @@ describe("materializeRefDocSurface per-kind subpaths", () => {
       registry: [multiKindRefDocTarget()],
     });
 
-    const dir = path.join(cwd, ".defold-types", "defold-1.9.8");
+    const dir = path.join(cwd, ".defold-types", surfaceDir("defold-1.9.8"));
     for (const rel of ["editor.d.ts", "editor-overloads.d.ts", "editor-vm"]) {
       expect(existsSync(path.join(dir, rel))).toBe(false);
     }
@@ -893,11 +906,11 @@ describe("materializeRefDocSurface consumer proof", () => {
       surfaceId: "defold-1.9.8",
       resolveOpts,
     });
-    expect(materializedDir).toBe(".defold-types/defold-1.9.8");
+    expect(materializedDir).toBe(`.defold-types/${surfaceDir("defold-1.9.8")}`);
 
     ensureMaterializedReference(cwd, materializedDir);
 
-    const dir = path.join(cwd, ".defold-types", "defold-1.9.8");
+    const dir = path.join(cwd, ".defold-types", surfaceDir("defold-1.9.8"));
     expect(existsSync(path.join(dir, "label.d.ts"))).toBe(true);
     expect(existsSync(path.join(dir, "core-types.d.ts"))).toBe(true);
 
@@ -937,7 +950,7 @@ describe("pinned root paths", () => {
   function pin(): void {
     seedSource(["label"]);
     materializeApiSurface({ cwd, surface: CURRENT, sourceGeneratedDir: sourceDir });
-    ensureMaterializedReference(cwd, ".defold-types/defold-1.12.4");
+    ensureMaterializedReference(cwd, `.defold-types/${surfaceDir("defold-1.12.4")}`);
   }
 
   test("binds the package specifier to the materialized surface alongside types/typeRoots", () => {
@@ -948,10 +961,10 @@ describe("pinned root paths", () => {
     const tsconfig = JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")) as {
       compilerOptions: { types: string[]; typeRoots: string[]; paths: Record<string, string[]> };
     };
-    expect(tsconfig.compilerOptions.types).toEqual(["defold-1.12.4"]);
+    expect(tsconfig.compilerOptions.types).toEqual([surfaceDir("defold-1.12.4")]);
     expect(tsconfig.compilerOptions.typeRoots).toEqual([".defold-types"]);
     expect(tsconfig.compilerOptions.paths[MANAGED]).toEqual([
-      "./.defold-types/defold-1.12.4/root/index.d.ts",
+      `./.defold-types/${surfaceDir("defold-1.12.4")}/root/index.d.ts`,
     ]);
   });
 
@@ -974,7 +987,9 @@ describe("pinned root paths", () => {
 
     pin();
 
-    expect(readPaths()?.[MANAGED]).toEqual(["../.defold-types/defold-1.12.4/root/index.d.ts"]);
+    expect(readPaths()?.[MANAGED]).toEqual([
+      `../.defold-types/${surfaceDir("defold-1.12.4")}/root/index.d.ts`,
+    ]);
   });
 
   test("keeps the project's own aliases and merges the managed entry beside them", () => {
@@ -984,7 +999,7 @@ describe("pinned root paths", () => {
 
     expect(readPaths()).toEqual({
       "@game/*": ["src/*"],
-      [MANAGED]: ["./.defold-types/defold-1.12.4/root/index.d.ts"],
+      [MANAGED]: [`./.defold-types/${surfaceDir("defold-1.12.4")}/root/index.d.ts`],
     });
   });
 
@@ -1020,9 +1035,11 @@ describe("pinned root paths", () => {
     pin();
 
     materializeApiSurface({ cwd, surface: PINNED, sourceGeneratedDir: sourceDir });
-    ensureMaterializedReference(cwd, ".defold-types/defold-1.13.0");
+    ensureMaterializedReference(cwd, `.defold-types/${surfaceDir("defold-1.13.0")}`);
 
-    expect(readPaths()?.[MANAGED]).toEqual(["./.defold-types/defold-1.13.0/root/index.d.ts"]);
+    expect(readPaths()?.[MANAGED]).toEqual([
+      `./.defold-types/${surfaceDir("defold-1.13.0")}/root/index.d.ts`,
+    ]);
   });
 
   test("is idempotent — a second pin leaves the file byte-identical", () => {
@@ -1030,7 +1047,7 @@ describe("pinned root paths", () => {
     pin();
     const first = readFileSync(path.join(cwd, "tsconfig.json"), "utf8");
 
-    ensureMaterializedReference(cwd, ".defold-types/defold-1.12.4");
+    ensureMaterializedReference(cwd, `.defold-types/${surfaceDir("defold-1.12.4")}`);
 
     expect(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")).toBe(first);
   });
@@ -1059,7 +1076,7 @@ describe("pinned root paths", () => {
     const paths = readPaths() ?? {};
     for (const kind of ["script", "gui-script", "render-script"]) {
       expect(paths[`${MANAGED}/${kind}`]).toEqual([
-        `./.defold-types/defold-1.9.8/kinds/${kind}.d.ts`,
+        `./.defold-types/${surfaceDir("defold-1.9.8")}/kinds/${kind}.d.ts`,
       ]);
     }
     rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
@@ -1099,7 +1116,7 @@ describe("pinned root paths", () => {
     materializeApiSurface({ cwd, surface: CURRENT, sourceGeneratedDir: sourceDir });
 
     const root = readFileSync(
-      path.join(cwd, ".defold-types", "defold-1.12.4", "root", "index.d.ts"),
+      path.join(cwd, ".defold-types", surfaceDir("defold-1.12.4"), "root", "index.d.ts"),
       "utf8",
     );
     expect(root).toContain('import "../index";');
@@ -1110,5 +1127,164 @@ describe("pinned root paths", () => {
     expect(root).not.toContain(`export * from "${MANAGED}/script";`);
     expect(root).not.toContain(`export * from "${MANAGED}/api-availability.json";`);
     expect(PKG_ROOT.length).toBeGreaterThan(0);
+  });
+});
+
+describe("materialized surface identity", () => {
+  const PKG_ROOT = path.resolve(import.meta.dir, "..", "..", "types");
+
+  function readCompilerOptions(): {
+    types?: string[];
+    typeRoots?: string[];
+    paths?: Record<string, string[]>;
+  } {
+    const tsconfig = JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")) as {
+      compilerOptions: {
+        types?: string[];
+        typeRoots?: string[];
+        paths?: Record<string, string[]>;
+      };
+    };
+    return tsconfig.compilerOptions;
+  }
+
+  function writeBareTsconfig(): void {
+    writeFileSync(
+      path.join(cwd, "tsconfig.json"),
+      `${JSON.stringify({ compilerOptions: { strict: true }, include: ["src/**/*.ts"] }, null, 2)}\n`,
+    );
+  }
+
+  test("the surface directory names the Defold target and the generating toolchain", () => {
+    expect(surfaceDirName("defold-1.12.4", "0.26.0")).toBe("defold-1.12.4@0.26.0");
+  });
+
+  test("the directory, the tsconfig types entry and every paths target name one surface", () => {
+    seedSource(["label"]);
+    writeBareTsconfig();
+
+    const { materializedDir } = materializeApiSurface({
+      cwd,
+      surface: CURRENT,
+      sourceGeneratedDir: sourceDir,
+      cliVersion: "0.26.0",
+    });
+    ensureMaterializedReference(cwd, materializedDir);
+
+    expect(materializedDir).toBe(".defold-types/defold-1.12.4@0.26.0");
+    expect(existsSync(path.join(cwd, ".defold-types", "defold-1.12.4@0.26.0", "label.d.ts"))).toBe(
+      true,
+    );
+
+    const options = readCompilerOptions();
+    expect(options.types).toEqual(["defold-1.12.4@0.26.0"]);
+    const targets = Object.values(options.paths ?? {}).flat();
+    expect(targets.length).toBeGreaterThan(0);
+    for (const target of targets) {
+      expect(target).toContain("/defold-1.12.4@0.26.0/");
+    }
+  });
+
+  test("a toolchain upgrade leaves the earlier surface intact and repoints tsconfig", () => {
+    seedSource(["label"]);
+    writeBareTsconfig();
+
+    const first = materializeApiSurface({
+      cwd,
+      surface: CURRENT,
+      sourceGeneratedDir: sourceDir,
+      cliVersion: "0.26.0",
+    });
+    ensureMaterializedReference(cwd, first.materializedDir);
+    const firstDir = path.join(cwd, ".defold-types", "defold-1.12.4@0.26.0");
+    writeFileSync(path.join(firstDir, "sentinel.txt"), "written by 0.26.0\n");
+
+    const second = materializeApiSurface({
+      cwd,
+      surface: CURRENT,
+      sourceGeneratedDir: sourceDir,
+      cliVersion: "0.27.0",
+    });
+    ensureMaterializedReference(cwd, second.materializedDir);
+
+    expect(second.materializedDir).toBe(".defold-types/defold-1.12.4@0.27.0");
+    expect(readFileSync(path.join(firstDir, "sentinel.txt"), "utf8")).toBe("written by 0.26.0\n");
+    expect(existsSync(path.join(firstDir, "label.d.ts"))).toBe(true);
+    expect(readCompilerOptions().types).toEqual(["defold-1.12.4@0.27.0"]);
+    expect(readdirSync(path.join(cwd, ".defold-types")).sort()).toEqual([
+      "defold-1.12.4@0.26.0",
+      "defold-1.12.4@0.27.0",
+    ]);
+  });
+
+  test("the surface stamps its generating toolchain and a disagreeing stamp is detected", () => {
+    seedSource(["label"]);
+
+    const { materializedDir } = materializeApiSurface({
+      cwd,
+      surface: CURRENT,
+      sourceGeneratedDir: sourceDir,
+      cliVersion: "0.26.0",
+    });
+    const dir = path.join(cwd, materializedDir as string);
+    const pkgPath = path.join(dir, "package.json");
+    const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as Record<string, unknown>;
+
+    expect(pkg.version).toBe("0.26.0");
+    expect(surfaceStampStatus(dir)).toBe("match");
+
+    writeFileSync(pkgPath, JSON.stringify({ ...pkg, version: "0.1.0" }));
+    expect(surfaceStampStatus(dir)).toBe("mismatch");
+
+    const { version: _stamp, ...unstamped } = pkg;
+    writeFileSync(pkgPath, JSON.stringify(unstamped));
+    expect(surfaceStampStatus(dir)).toBe("missing");
+  });
+
+  test("an @-bearing surface directory resolves through tsc", () => {
+    const { materializedDir } = materializeApiSurface({
+      cwd,
+      surface: CURRENT,
+      sourceGeneratedDir: path.join(PKG_ROOT, "generated"),
+      cliVersion: "0.26.0",
+    });
+    expect(materializedDir).toBe(".defold-types/defold-1.12.4@0.26.0");
+
+    mkdirSync(path.join(cwd, "node_modules", "@defold-typescript"), { recursive: true });
+    symlinkSync(PKG_ROOT, path.join(cwd, "node_modules", "@defold-typescript", "types"));
+    writeFileSync(
+      path.join(cwd, "tsconfig.json"),
+      `${JSON.stringify(
+        {
+          compilerOptions: {
+            strict: true,
+            module: "ESNext",
+            moduleResolution: "bundler",
+            lib: ["ES2022"],
+            skipLibCheck: true,
+            noEmit: true,
+          },
+          include: ["proof.ts"],
+        },
+        null,
+        2,
+      )}\n`,
+    );
+    ensureMaterializedReference(cwd, materializedDir);
+    writeFileSync(
+      path.join(cwd, "proof.ts"),
+      [
+        'import type { Hash } from "@defold-typescript/types";',
+        'const obstacle: Hash = hash("obstacle");',
+        "void obstacle;",
+        "",
+      ].join("\n"),
+    );
+
+    const { exitCode, output } = typecheck(path.join(cwd, "tsconfig.json"));
+    if (exitCode !== 0) {
+      throw new Error(`the @-separated surface directory must resolve, but tsc failed:\n${output}`);
+    }
+    expect(exitCode).toBe(0);
   });
 });

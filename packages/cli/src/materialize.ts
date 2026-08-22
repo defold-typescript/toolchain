@@ -14,6 +14,7 @@ import {
   resolveTypesPackageRoot,
 } from "./api-registry";
 import type { SelectedApiSurface } from "./api-surface";
+import { readCliVersion } from "./cli-version";
 import type { DefoldChannel } from "./defold-target";
 import { formatJsonLikeBiome } from "./format-json";
 
@@ -31,6 +32,43 @@ export const TYPES_PACKAGE = "@defold-typescript/types";
 // `types`/`typeRoots` loads: one file answers "which namespaces exist", the
 // other "what does importing the package give you".
 const PINNED_ROOT_DIR = "root";
+
+// A materialized surface is a function of *(Defold target x toolchain version)*,
+// so both axes belong in its directory name — otherwise a toolchain upgrade
+// rewrites the previous surface in place and the change it made is unobservable.
+// `@` is the separator: absent from the NTFS reserved set, legal on POSIX,
+// already proven by npm scope directories, and needing no shell quoting.
+const SURFACE_STAMP_SEPARATOR = "@";
+
+export function surfaceDirName(surfaceId: string, cliVersion: string): string {
+  return `${surfaceId}${SURFACE_STAMP_SEPARATOR}${cliVersion}`;
+}
+
+export type SurfaceStampStatus = "match" | "mismatch" | "missing";
+
+// Whether a surface directory's `package.json` stamp agrees with the toolchain
+// version its own name claims. A disagreement means the directory was
+// hand-copied, renamed, or half-written, so its contents cannot be attributed to
+// the toolchain the name names.
+export function surfaceStampStatus(surfaceDir: string): SurfaceStampStatus {
+  const dirName = path.basename(surfaceDir);
+  const separator = dirName.lastIndexOf(SURFACE_STAMP_SEPARATOR);
+  const claimed = separator === -1 ? null : dirName.slice(separator + 1);
+  let stamp: unknown;
+  try {
+    stamp = (
+      JSON.parse(readFileSync(path.join(surfaceDir, "package.json"), "utf8")) as {
+        version?: unknown;
+      }
+    ).version;
+  } catch {
+    return "missing";
+  }
+  if (typeof stamp !== "string") {
+    return "missing";
+  }
+  return stamp === claimed ? "match" : "mismatch";
+}
 
 // Drive-rooted (`X:\`, `X:/`) and UNC (`\\server\share`) roots, neither of which
 // `path.posix.isAbsolute` recognizes.
@@ -98,6 +136,9 @@ export interface MaterializeApiSurfaceOptions {
   readonly cwd: string;
   readonly surface: SelectedApiSurface;
   readonly sourceGeneratedDir: string | null;
+  // Defaults to the running package's version, so a consumer's directory always
+  // names the toolchain that actually wrote it. Injected by tests.
+  readonly cliVersion?: string;
 }
 
 export interface MaterializeApiSurfaceResult {
@@ -186,13 +227,13 @@ function writePinnedRootEntrypoint(absDir: string, typesRoot: string | null): vo
 // target does not narrow the specifier, it disables checking for it.
 export function pinnedRootPaths(
   base: string,
-  surfaceId: string,
+  dirName: string,
   surfaceDir: string,
   subpaths: ReadonlySet<string>,
 ): Record<string, string[]> {
   const paths: Record<string, string[]> = {};
   const target = (...segments: string[]): string[] => [
-    relativeSpecifier(path.posix.join(base, surfaceId, ...segments)),
+    relativeSpecifier(path.posix.join(base, dirName, ...segments)),
   ];
 
   if (existsSync(path.join(surfaceDir, PINNED_ROOT_DIR, "index.d.ts"))) {
@@ -398,8 +439,10 @@ export function materializeApiSurface(
   }
 
   const { surfaceId } = surface;
-  const relDir = path.posix.join(MATERIALIZED_ROOT, surfaceId);
-  const absDir = path.join(cwd, MATERIALIZED_ROOT, surfaceId);
+  const cliVersion = opts.cliVersion ?? readCliVersion();
+  const dirName = surfaceDirName(surfaceId, cliVersion);
+  const relDir = path.posix.join(MATERIALIZED_ROOT, dirName);
+  const absDir = path.join(cwd, MATERIALIZED_ROOT, dirName);
   mkdirSync(absDir, { recursive: true });
 
   const sources = listDts(sourceGeneratedDir).filter((file) => file !== "index.d.ts");
@@ -498,8 +541,12 @@ export function materializeApiSurface(
   const imports = modules.map((mod) => `import "./${mod}";`).join("\n");
   writeFileSync(path.join(absDir, "index.d.ts"), `${imports}\n\nexport {};\n`);
 
+  // `name` keeps the bare surface id: a second `@` is not a legal npm name. The
+  // toolchain axis rides `version`, which is also what `surfaceStampStatus`
+  // reads back to tell a surface apart from a directory merely named like one.
   writeJson(path.join(absDir, "package.json"), {
     name: `@defold-typescript/materialized-${surfaceId}`,
+    version: cliVersion,
     types: "index.d.ts",
   });
 
@@ -541,7 +588,7 @@ export function ensureGitignoreLine(cwd: string, line: string): void {
 }
 
 export function ensureMaterializedReference(cwd: string, materializedDir: string | null): void {
-  const surfaceId = materializedDir === null ? null : path.posix.basename(materializedDir);
+  const dirName = materializedDir === null ? null : path.posix.basename(materializedDir);
 
   const tsconfigPath = path.join(cwd, "tsconfig.json");
   if (existsSync(tsconfigPath)) {
@@ -559,17 +606,17 @@ export function ensureMaterializedReference(cwd: string, materializedDir: string
     // from depth 0 — modulo a `baseUrl`, which moves the base out from under it
     // exactly as it does for a wall.
     const managedPaths =
-      surfaceId === null
+      dirName === null
         ? {}
         : pinnedRootPaths(
             materializedPathsBase(0, baseUrl, cwd),
-            surfaceId,
-            path.join(cwd, MATERIALIZED_ROOT, surfaceId),
+            dirName,
+            path.join(cwd, MATERIALIZED_ROOT, dirName),
             publishedSubpaths(resolveTypesPackageRoot()),
           );
     const desiredPaths = mergePinnedRootPaths(currentPaths, managedPaths);
 
-    if (surfaceId === null) {
+    if (dirName === null) {
       // No surface to point at: withdraw what the CLI wrote and touch nothing
       // else — not `types`, not `typeRoots`, not the project's own aliases.
       if (JSON.stringify(desiredPaths) !== JSON.stringify(currentPaths)) {
@@ -591,7 +638,7 @@ export function ensureMaterializedReference(cwd: string, materializedDir: string
     // carry any existing sibling types entry through, not clobber it.
     const currentTypes = Array.isArray(current.types) ? (current.types as unknown[]) : [];
     const desiredTypes = [
-      surfaceId,
+      dirName,
       ...["extensions", "libraries"].filter((entry) => currentTypes.includes(entry)),
     ];
     // Skip the write when already repointed so the file keeps its existing
@@ -617,7 +664,7 @@ export function ensureMaterializedReference(cwd: string, materializedDir: string
     }
   }
 
-  if (surfaceId === null) {
+  if (dirName === null) {
     return;
   }
   ensureGitignoreLine(cwd, `${MATERIALIZED_ROOT}/`);
@@ -687,6 +734,9 @@ export interface MaterializeRefDocSurfaceOptions {
   readonly cwd: string;
   readonly surfaceId: string;
   readonly resolveOpts?: RefDocResolveOptions;
+  // Defaults to the running package's version, exactly as for the packaged
+  // surface: both writers share one directory identity. Injected by tests.
+  readonly cliVersion?: string;
   // Registry override (defaults to the installed types package's
   // api-targets.json). Injected only by tests that need a multi-module ref-doc
   // target.
@@ -714,8 +764,10 @@ export async function materializeRefDocSurface(
     return { materializedDir: null, active: null };
   }
 
-  const relDir = path.posix.join(MATERIALIZED_ROOT, surfaceId);
-  const absDir = path.join(cwd, MATERIALIZED_ROOT, surfaceId);
+  const cliVersion = opts.cliVersion ?? readCliVersion();
+  const dirName = surfaceDirName(surfaceId, cliVersion);
+  const relDir = path.posix.join(MATERIALIZED_ROOT, dirName);
+  const absDir = path.join(cwd, MATERIALIZED_ROOT, dirName);
   try {
     const mod = (await import(
       path.join(root, "scripts", "materialize-version.ts")
@@ -778,6 +830,7 @@ export async function materializeRefDocSurface(
 
     const pkgPath = path.join(absDir, "package.json");
     const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as Record<string, unknown>;
+    pkg.version = cliVersion;
     pkg.exports = {
       ".": { types: "./index.d.ts" },
       ...Object.fromEntries(

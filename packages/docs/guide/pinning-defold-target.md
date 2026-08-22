@@ -48,8 +48,11 @@ You do not pin a surface through a package subpath export. The current 1.13.1
 surface and the historical 1.13.0 and 1.12.4 surfaces are shipped pre-baked in the
 npm package. Other registered non-current surfaces are generated on your
 machine from that version's Defold reference docs. Either form is
-**materialized** into a project-local `.defold-types/<version>/` faux `@types`
-package that your `tsconfig.json` references.
+**materialized** into a project-local `.defold-types/<version>@<toolchain>/`
+faux `@types` package that your `tsconfig.json` references. The directory names
+both axes that decide its contents — the Defold target and the toolchain release
+that generated it — so upgrading either one leaves the previous surface on disk
+instead of overwriting it.
 
 You select the target with the `package.json` pin described below; the
 toolchain resolves it, generates the matching surface, and repoints
@@ -235,8 +238,9 @@ result.
 ## Materializing the pinned surface
 
 `bunx @defold-typescript/cli build` does not only report the surface — it **materializes**
-it. The build writes a project-local `.defold-types/<surface>/` directory (a faux
-`@types` package with its own `index.d.ts` and `package.json`), then repoints
+it. The build writes a project-local `.defold-types/<surface>@<toolchain>/`
+directory (a faux `@types` package with its own `index.d.ts` and `package.json`,
+whose `version` records the toolchain that wrote it), then repoints
 `tsconfig.json` at it so exactly one surface is the active ambient type surface:
 
 ```jsonc
@@ -244,9 +248,9 @@ it. The build writes a project-local `.defold-types/<surface>/` directory (a fau
 {
   "compilerOptions": {
     "typeRoots": [".defold-types"],
-    "types": ["defold-1.9.8"],
+    "types": ["defold-1.9.8@0.27.0"],
     "paths": {
-      "@defold-typescript/types": ["./.defold-types/defold-1.9.8/root/index.d.ts"]
+      "@defold-typescript/types": ["./.defold-types/defold-1.9.8@0.27.0/root/index.d.ts"]
     }
   }
 }
@@ -270,12 +274,14 @@ resolution, so the pin no longer binds that specifier.
 How the surface is produced depends on the resolved version:
 
 - **Current-stable** copies the pre-baked surface that ships in
-  `@defold-typescript/types` into `.defold-types/defold-1.13.1/`. No network access.
+  `@defold-typescript/types` into `.defold-types/defold-1.13.1@<toolchain>/`. No
+  network access.
 - **The historical 1.13.0 and 1.12.4 versions** copy their complete committed
   declaration snapshots and require no network access.
 - **Another pinned non-current version** is generated **on the fly** from that
   version's Defold reference docs and written into
-  `.defold-types/<version>/` (for example `.defold-types/defold-1.9.8/`). The
+  `.defold-types/<version>@<toolchain>/` (for example
+  `.defold-types/defold-1.9.8@0.27.0/`). The
   reference docs are downloaded once on first use and cached, so later builds
   are offline. The generated faux package carries a `core-types.d.ts` that
   re-exports the installed `@defold-typescript/types/core-types`, so its branded
@@ -288,6 +294,13 @@ How the surface is produced depends on the resolved version:
 The `.defold-types/` directory is generated output, so build adds it to the
 project `.gitignore`. The materialized directory is reported in `--json` output
 as `materializedSurface`. Re-running build is idempotent.
+
+Because the toolchain version is part of the directory name, a toolchain upgrade
+materializes a *new* sibling and leaves the old one untouched — so you can diff
+the two to see exactly what the upgrade changed for a fixed Defold target.
+Nothing prunes them; they are gitignored, regenerable, and one directory per
+toolchain release you have built with. Delete `.defold-types/` whenever you want
+the space back.
 
 The pinned versioned surface is materialized in full — `build` and `watch` never
 narrow it by script kind. Narrowing a directory to one kind is opt-in via the
