@@ -2,9 +2,15 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
+import { readCliVersion } from "./cli-version";
 import { type ExtensionZip, extensionArchiveKey } from "./extension-archive";
 import { buildLualsRegistryEntries } from "./library-match";
+import { librariesDirName } from "./library-materialize";
 import { runResolve } from "./resolve";
+
+// The materialized library surface carries the generating toolchain version;
+// these tests defend other behavior, so they derive the name from production.
+const LIBRARIES_DIR = librariesDirName(readCliVersion());
 
 function tmp(): string {
   return mkdtempSync(join(tmpdir(), "resolve-"));
@@ -523,13 +529,13 @@ describe("runResolve library matching", () => {
     });
 
     expect(result.ok).toBe(true);
-    expect(readFileSync(join(cwd, ".defold-types", "libraries", "mylib.core.d.ts"), "utf8")).toBe(
+    expect(readFileSync(join(cwd, ".defold-types", LIBRARIES_DIR, "mylib.core.d.ts"), "utf8")).toBe(
       MYLIB,
     );
     const tsconfig = JSON.parse(readFileSync(join(cwd, "tsconfig.json"), "utf8")) as {
       compilerOptions: { types: string[] };
     };
-    expect(tsconfig.compilerOptions.types).toContain("libraries");
+    expect(tsconfig.compilerOptions.types).toContain(LIBRARIES_DIR);
     expect(result.libraries).toEqual([
       { url, source: "mylib", modules: ["mylib.core"], provenance: "vendored", verified: true },
     ]);
@@ -567,7 +573,7 @@ describe("runResolve library matching", () => {
     });
 
     expect(result.ok).toBe(true);
-    const librariesDir = join(cwd, ".defold-types", "libraries");
+    const librariesDir = join(cwd, ".defold-types", LIBRARIES_DIR);
     for (const file of [
       "nakama.engine.defold.d.ts",
       "nakama.nakama.d.ts",
@@ -611,7 +617,7 @@ describe("runResolve library matching", () => {
 
     expect(result.ok).toBe(true);
     // No library surface is written for an unverified match.
-    expect(existsSync(join(cwd, ".defold-types", "libraries"))).toBe(false);
+    expect(existsSync(join(cwd, ".defold-types", LIBRARIES_DIR))).toBe(false);
     expect(result.libraries).toEqual([
       { url, source: "mylib", modules: [], provenance: "vendored", verified: false },
     ]);
@@ -634,7 +640,7 @@ describe("runResolve library matching", () => {
 
     expect(result.ok).toBe(true);
     expect(result.libraries).toEqual([]);
-    expect(existsSync(join(cwd, ".defold-types", "libraries"))).toBe(false);
+    expect(existsSync(join(cwd, ".defold-types", LIBRARIES_DIR))).toBe(false);
     expect(result.extensions[0]?.assetOnly).toBe(true);
   });
 
@@ -663,7 +669,7 @@ describe("runResolve library matching", () => {
 
     expect(result.ok).toBe(true);
     expect(result.libraries).toEqual([]);
-    expect(existsSync(join(cwd, ".defold-types", "libraries"))).toBe(false);
+    expect(existsSync(join(cwd, ".defold-types", LIBRARIES_DIR))).toBe(false);
     expect(result.extensions[0]?.assetOnly).toBe(false);
   });
 
@@ -685,7 +691,7 @@ describe("runResolve library matching", () => {
 
     expect(result.ok).toBe(true);
     expect(result.libraries).toEqual([]);
-    expect(existsSync(join(cwd, ".defold-types", "libraries", "mylib.core.d.ts"))).toBe(false);
+    expect(existsSync(join(cwd, ".defold-types", LIBRARIES_DIR, "mylib.core.d.ts"))).toBe(false);
   });
 
   test("re-running after the matched dependency stops matching prunes the surface and derefs tsconfig", async () => {
@@ -703,7 +709,7 @@ describe("runResolve library matching", () => {
       libraryRegistry: registry,
       libraryGeneratedDir: generatedDir,
     });
-    expect(existsSync(join(cwd, ".defold-types", "libraries", "mylib.core.d.ts"))).toBe(true);
+    expect(existsSync(join(cwd, ".defold-types", LIBRARIES_DIR, "mylib.core.d.ts"))).toBe(true);
 
     const otherUrl = "https://example.com/other-asset.zip";
     writeFileSync(join(cwd, "game.project"), `[project]\ndependencies#0 = ${otherUrl}\n`);
@@ -718,11 +724,11 @@ describe("runResolve library matching", () => {
 
     expect(result.ok).toBe(true);
     expect(result.libraries).toEqual([]);
-    expect(existsSync(join(cwd, ".defold-types", "libraries"))).toBe(false);
+    expect(existsSync(join(cwd, ".defold-types", LIBRARIES_DIR))).toBe(false);
     const tsconfig = JSON.parse(readFileSync(join(cwd, "tsconfig.json"), "utf8")) as {
       compilerOptions: { types: string[] };
     };
-    expect(tsconfig.compilerOptions.types).not.toContain("libraries");
+    expect(tsconfig.compilerOptions.types).not.toContain(LIBRARIES_DIR);
   });
 
   test("removing every [dependencies] entry prunes a previously-materialized surface and derefs tsconfig", async () => {
@@ -740,7 +746,7 @@ describe("runResolve library matching", () => {
       libraryRegistry: registry,
       libraryGeneratedDir: generatedDir,
     });
-    expect(existsSync(join(cwd, ".defold-types", "libraries", "mylib.core.d.ts"))).toBe(true);
+    expect(existsSync(join(cwd, ".defold-types", LIBRARIES_DIR, "mylib.core.d.ts"))).toBe(true);
 
     writeFileSync(join(cwd, "game.project"), "[project]\ntitle = Test\n");
     const result = await runResolve({
@@ -755,11 +761,11 @@ describe("runResolve library matching", () => {
     });
 
     expect(result.ok).toBe(true);
-    expect(existsSync(join(cwd, ".defold-types", "libraries"))).toBe(false);
+    expect(existsSync(join(cwd, ".defold-types", LIBRARIES_DIR))).toBe(false);
     const tsconfig = JSON.parse(readFileSync(join(cwd, "tsconfig.json"), "utf8")) as {
       compilerOptions: { types: string[] };
     };
-    expect(tsconfig.compilerOptions.types).not.toContain("libraries");
+    expect(tsconfig.compilerOptions.types).not.toContain(LIBRARIES_DIR);
   });
 
   test("a matched library whose generated file is missing is reported on stderr, not thrown", async () => {
@@ -788,7 +794,7 @@ describe("runResolve library matching", () => {
     }
 
     expect(result.ok).toBe(true);
-    expect(existsSync(join(cwd, ".defold-types", "libraries"))).toBe(false);
+    expect(existsSync(join(cwd, ".defold-types", LIBRARIES_DIR))).toBe(false);
     expect(warnings.join("\n")).toContain("mylib.core");
   });
 });
@@ -834,16 +840,16 @@ describe("runResolve druid LuaLS library", () => {
     });
 
     expect(result.ok).toBe(true);
-    expect(readFileSync(join(cwd, ".defold-types", "libraries", "druid.druid.d.ts"), "utf8")).toBe(
-      DRUID,
-    );
+    expect(
+      readFileSync(join(cwd, ".defold-types", LIBRARIES_DIR, "druid.druid.d.ts"), "utf8"),
+    ).toBe(DRUID);
     expect(result.libraries).toEqual([
       { url, source: "druid", modules: ["druid.druid"], provenance: "vendored", verified: true },
     ]);
     const tsconfig = JSON.parse(readFileSync(join(cwd, "tsconfig.json"), "utf8")) as {
       compilerOptions: { types: string[] };
     };
-    expect(tsconfig.compilerOptions.types).toContain("libraries");
+    expect(tsconfig.compilerOptions.types).toContain(LIBRARIES_DIR);
   });
 
   test("a druid archive not shipping druid.druid stays unverified and writes no surface", async () => {
@@ -867,7 +873,7 @@ describe("runResolve druid LuaLS library", () => {
     });
 
     expect(result.ok).toBe(true);
-    expect(existsSync(join(cwd, ".defold-types", "libraries"))).toBe(false);
+    expect(existsSync(join(cwd, ".defold-types", LIBRARIES_DIR))).toBe(false);
     expect(result.libraries).toEqual([
       { url, source: "druid", modules: [], provenance: "vendored", verified: false },
     ]);
@@ -932,11 +938,11 @@ describe("runResolve a multi-module same-repo LuaLS library", () => {
     });
 
     expect(result.ok).toBe(true);
-    expect(readFileSync(join(cwd, ".defold-types", "libraries", "saver.saver.d.ts"), "utf8")).toBe(
-      SAVER,
-    );
     expect(
-      readFileSync(join(cwd, ".defold-types", "libraries", "saver.storage.d.ts"), "utf8"),
+      readFileSync(join(cwd, ".defold-types", LIBRARIES_DIR, "saver.saver.d.ts"), "utf8"),
+    ).toBe(SAVER);
+    expect(
+      readFileSync(join(cwd, ".defold-types", LIBRARIES_DIR, "saver.storage.d.ts"), "utf8"),
     ).toBe(STORAGE);
     expect(result.libraries).toEqual([
       {
@@ -950,6 +956,6 @@ describe("runResolve a multi-module same-repo LuaLS library", () => {
     const tsconfig = JSON.parse(readFileSync(join(cwd, "tsconfig.json"), "utf8")) as {
       compilerOptions: { types: string[] };
     };
-    expect(tsconfig.compilerOptions.types).toContain("libraries");
+    expect(tsconfig.compilerOptions.types).toContain(LIBRARIES_DIR);
   });
 });

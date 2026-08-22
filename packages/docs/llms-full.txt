@@ -2816,7 +2816,7 @@ It reads every `dependencies#N` URL under `[project]` in `game.project`. A
 | Kind | Detected by | What `resolve` produces |
 | ---- | ----------- | ----------------------- |
 | **Native extension** | the archive carries one or more `.script_api` docs | one ambient namespace per doc in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list |
-| **Vendored pure-Lua library** | the repo name matches the `@defold-typescript/library-types` corpus, confirmed against the archive | the committed `.d.ts` materialized into `.defold-types/libraries/`, plus `"libraries"` on the tsconfig `types` list |
+| **Vendored pure-Lua library** | the repo name matches the `@defold-typescript/library-types` corpus, confirmed against the archive | the committed `.d.ts` materialized into `.defold-types/libraries@<cliVersion>/`, plus that same name on the tsconfig `types` list |
 | **Asset-only / content** | no `.script_api` and no library match — fonts, asset packs, other content archives | nothing: reported and skipped |
 
 A skipped **asset-only** archive is never a failure — `resolve` still exits `0`
