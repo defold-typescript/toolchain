@@ -1,0 +1,106 @@
+{
+  "info": {
+    "namespace": "iap",
+    "brief": "Functions and constants for doing in-app purchases. Supported on iOS, Android (Google Play and Amazon) and Facebook Canvas platforms. [icon:ios] [icon:googleplay] [icon:amazon] [icon:facebook]",
+    "description": "Functions and constants for doing in-app purchases. Supported on iOS, Android (Google Play and Amazon) and Facebook Canvas platforms. [icon:ios] [icon:googleplay] [icon:amazon] [icon:facebook]"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "iap.buy",
+      "description": "Purchase a product.",
+      "parameters": [
+        { "name": "id", "doc": "product to buy", "types": ["string"] },
+        {
+          "name": "options",
+          "doc": "optional parameters as properties. The following parameters can be set",
+          "types": ["table"]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "iap.finish",
+      "description": "Explicitly finish a product transaction. [icon:attention] Calling iap.finish is required on a successful transaction if `auto_finish_transactions` is disabled in project settings. Calling this function with `auto_finish_transactions` set will be ignored and a warning is printed. The `transaction.state` field must equal `iap.TRANS_STATE_PURCHASED`.",
+      "parameters": [
+        {
+          "name": "transaction",
+          "doc": "transaction table parameter as supplied in listener callback",
+          "types": ["table"]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "iap.acknowledge",
+      "description": "Acknowledge a transaction. [icon:attention] Calling iap.acknowledge is required on a successful transaction on Google Play unless iap.finish is called. The transaction.state field must equal iap.TRANS_STATE_PURCHASED.",
+      "parameters": [
+        {
+          "name": "transaction",
+          "doc": "transaction table parameter as supplied in listener callback",
+          "types": ["table"]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "iap.get_provider_id",
+      "description": "Get current iap provider",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "provider_id",
+          "doc": "one of the following values\n- `iap.PROVIDER_ID_GOOGLE`\n- `iap.PROVIDER_ID_AMAZON`\n- `iap.PROVIDER_ID_APPLE`\n- `iap.PROVIDER_ID_FACEBOOK`",
+          "types": ["constant"]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "iap.list",
+      "description": "Get a list of all avaliable iap products.",
+      "parameters": [
+        {
+          "name": "ids",
+          "doc": "table (array) of identifiers to get products from",
+          "types": ["table"]
+        },
+        {
+          "name": "callback",
+          "doc": "result callback taking the following parameters",
+          "types": ["function"]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "iap.restore",
+      "description": "Restore previously purchased products.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "success",
+          "doc": "value is `true` if current store supports handling restored transactions, otherwise `false`.",
+          "types": ["boolean"]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "iap.set_listener",
+      "description": "Set the callback function to receive purchase transaction events.",
+      "parameters": [
+        {
+          "name": "listener",
+          "doc": "listener callback function. Pass an empty function if you no longer wish to receive callbacks.",
+          "types": ["function"]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

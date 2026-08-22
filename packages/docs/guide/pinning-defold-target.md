@@ -4,14 +4,14 @@ toc-title: Pinning the Defold target
 # Pinning the Defold API target
 
 `@defold-typescript/types` ships the **latest/current** Defold API surface and
-the complete previous 1.12.4 surface pre-baked; other older surfaces are
+the complete 1.13.0 and 1.12.4 surfaces pre-baked; other older surfaces are
 generated on demand. The default import is always current. Selecting another
 target materializes its version-owned surface locally. Pinning a surface
 makes the TypeScript compiler reject calls to engine functions that do not exist
 in the Defold version you target, instead of letting them through to fail at
 runtime.
 
-Moving a project from 1.12.4 to the current 1.13.0 surface removes some Lua APIs
+Moving a project from 1.12.4 to the current 1.13.1 surface removes some Lua APIs
 and changes a few asset and platform defaults — see [Upgrading Defold
 versions](./upgrading-defold-versions.md) for the per-change migration steps.
 
@@ -44,7 +44,8 @@ generated API.
 
 ## Opting into a pinned surface
 
-You do not pin a surface through a package subpath export. The current 1.13.0 and historical 1.12.4 surfaces are shipped pre-baked in the
+You do not pin a surface through a package subpath export. The current 1.13.1
+surface and the historical 1.13.0 and 1.12.4 surfaces are shipped pre-baked in the
 npm package. Other registered non-current surfaces are generated on your
 machine from that version's Defold reference docs. Either form is
 **materialized** into a project-local `.defold-types/<version>/` faux `@types`
@@ -269,8 +270,8 @@ How the surface is produced depends on the resolved version:
 
 - **Current-stable** copies the pre-baked surface that ships in
   `@defold-typescript/types` into `.defold-types/defold-1.13.1/`. No network access.
-- **The previous 1.12.4 version** copies its complete committed declaration
-  snapshot and requires no network access.
+- **The historical 1.13.0 and 1.12.4 versions** copy their complete committed
+  declaration snapshots and require no network access.
 - **Another pinned non-current version** is generated **on the fly** from that
   version's Defold reference docs and written into
   `.defold-types/<version>/` (for example `.defold-types/defold-1.9.8/`). The
@@ -302,8 +303,8 @@ runtime kinds; the committed snapshots do not.
 Which kinds a surface writes follows both the target it was built from and how
 that surface was produced. A surface **generated on the fly** from reference docs
 carries the runtime trio (`script`, `gui-script`, `render-script`); a surface
-**copied from a committed snapshot** — the current default and 1.12.4 — carries no
-runtime kind at all, so its runtime walls always keep the installed subpath.
+**copied from a committed snapshot** — the current default, 1.13.0 and 1.12.4 —
+carries no runtime kind at all, so its runtime walls always keep the installed subpath.
 Either surface carries `editor-script` only when the target it was built from
 ships an editor-scripting document of its own, which today only the current
 default target does. A project pinned to a target without one keeps the installed

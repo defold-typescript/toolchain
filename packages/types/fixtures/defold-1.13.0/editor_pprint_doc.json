@@ -1,0 +1,36 @@
+{
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "pprint",
+      "brief": "pretty-print a Lua value",
+      "description": "Pretty-print a Lua value",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "any Lua value to pretty-print",
+          "types": ["any"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "pprint",
+    "name": "Editor",
+    "brief": "Editor scripting documentation",
+    "description": "Editor scripting documentation",
+    "path": "engine/docs/editor.apidoc",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  }
+}

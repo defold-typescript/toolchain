@@ -1,0 +1,138 @@
+{
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "localization.message",
+      "brief": "create a message pattern for a localization key defined in an <code>.editor_localization</code> file; the actual localization happens when the returned value is stringified",
+      "description": "Create a message pattern for a localization key defined in an <code>.editor_localization</code> file; the actual localization happens when the returned value is stringified",
+      "returnvalues": [
+        {
+          "name": "message",
+          "doc": "a userdata value that, when stringified with <code>tostring()</code>, will produce a localized text according to the currently selected language in the editor",
+          "types": ["message"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "localization key defined in an <code>.editor_localization</code> file",
+          "types": ["string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "vars",
+          "doc": "optional table with variables to be substituted in the localized string that uses <a href=\"https://unicode-org.github.io/icu/userguide/format_parse/messages/\">ICU Message Format</a> syntax; keys must be strings; values must be either <code>nil</code>, <code>boolean</code>, <code>number</code>, <code>string</code>, or another <code>message</code> instance",
+          "types": ["table"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "localization.and_list",
+      "brief": "create a message pattern that renders a list with the \"and\" conjunction (for example: a, b, and c) once it is stringified",
+      "description": "Create a message pattern that renders a list with the \"and\" conjunction (for example: a, b, and c) once it is stringified",
+      "returnvalues": [
+        {
+          "name": "message",
+          "doc": "a userdata value that, when stringified with <code>tostring()</code>, will produce a localized text according to the currently selected language in the editor",
+          "types": ["message"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "doc": "] array of values; each value may be <code>nil</code>, <code>boolean</code>, <code>number</code>, <code>string</code>, or another <code>message</code> instance",
+          "types": ["any["],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "localization.or_list",
+      "brief": "create a message pattern that renders a list with the \"or\" conjunction (for example: a, b, or c) once it is stringified",
+      "description": "Create a message pattern that renders a list with the \"or\" conjunction (for example: a, b, or c) once it is stringified",
+      "returnvalues": [
+        {
+          "name": "message",
+          "doc": "a userdata value that, when stringified with <code>tostring()</code>, will produce a localized text according to the currently selected language in the editor",
+          "types": ["message"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "doc": "] array of values; each value may be <code>nil</code>, <code>boolean</code>, <code>number</code>, <code>string</code>, or another <code>message</code> instance",
+          "types": ["any["],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "localization.concat",
+      "brief": "create a message pattern that concatenates values (similar to <code>table.concat</code>) and performs the actual concatenation when stringified",
+      "description": "Create a message pattern that concatenates values (similar to <code>table.concat</code>) and performs the actual concatenation when stringified",
+      "returnvalues": [
+        {
+          "name": "message",
+          "doc": "a userdata value that, when stringified with <code>tostring()</code>, will produce a localized text according to the currently selected language in the editor",
+          "types": ["message"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "items",
+          "doc": "] array of values; each value may be <code>nil</code>, <code>boolean</code>, <code>number</code>, <code>string</code>, or another <code>message</code> instance",
+          "types": ["any["],
+          "is_optional": "False"
+        },
+        {
+          "name": "separator",
+          "doc": "optional separator inserted between values; defaults to an empty string",
+          "types": ["nil", "boolean", "number", "string", "message"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "localization",
+    "name": "Editor",
+    "brief": "Editor scripting documentation",
+    "description": "Editor scripting documentation",
+    "path": "engine/docs/editor.apidoc",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  }
+}

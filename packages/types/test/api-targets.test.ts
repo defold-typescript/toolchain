@@ -43,29 +43,40 @@ const noDownload = async (): Promise<Uint8Array> => {
 };
 
 describe("api-targets registry", () => {
-  test("the current version is the sole default and the previous committed target is a complete subset", () => {
+  test("the current version is the sole default and every demoted committed target is a complete subset", () => {
     const targets = loadApiTargets();
     const current = targets.find((target) => target.id === `defold-${DEFOLD_VERSION}`);
-    // The previous release is the one committed target that is not the default,
+    // Demoted releases are the committed targets that are not the default,
     // identified structurally so a version bump follows the registry (and the
     // `DEFOLD_VERSION` the registry's default id is cross-checked against here).
     const committedNonDefault = targets.filter(
       (target) => target.source == null && target.default !== true,
     );
-    expect(committedNonDefault).toHaveLength(1);
-    const previous = committedNonDefault[0];
+    expect(committedNonDefault.length).toBeGreaterThanOrEqual(1);
 
     expect(targets.filter((target) => target.default === true).map((target) => target.id)).toEqual([
       `defold-${DEFOLD_VERSION}`,
     ]);
     expect(current?.source).toBeNull();
-    expect(previous?.default).toBe(false);
-    expect(previous?.source).toBeNull();
     const currentNamespaces = new Set(current?.modules.map((module) => module.namespace));
-    for (const module of previous?.modules ?? []) {
-      expect(currentNamespaces.has(module.namespace)).toBe(true);
+    for (const demoted of committedNonDefault) {
+      expect(demoted.default).toBe(false);
+      expect(demoted.source).toBeNull();
+      for (const module of demoted.modules) {
+        expect(currentNamespaces.has(module.namespace)).toBe(true);
+      }
+      expect(demoted.modules.length).toBeGreaterThanOrEqual(39);
     }
-    expect(previous?.modules.length).toBeGreaterThanOrEqual(39);
+  });
+
+  // A toolchain upgrade must not strand a team on an engine it can no longer
+  // type-check: 1.13.0 was dropped by the 0.26.0 patch rotation and restored, and
+  // a silent second removal is the regression this names.
+  test("defold-1.13.0 stays a committed, demoted rollback target", () => {
+    const restored = loadApiTargets().find((target) => target.id === "defold-1.13.0");
+    expect(restored).toBeDefined();
+    expect(restored?.default).toBe(false);
+    expect(restored?.source).toBeNull();
   });
 
   test("registry parses and shape is valid", () => {
@@ -213,15 +224,17 @@ describe("api-targets registry", () => {
     expect(() => loadTargetModules(target, tmp)).toThrow(/broken.*nope.*does_not_exist\.json/);
   });
 
-  test("VERSIONED_MODULE_MANIFEST contains the complete committed previous surface only", () => {
-    const previous = loadApiTargets().find(
+  test("VERSIONED_MODULE_MANIFEST contains every complete committed demoted surface", () => {
+    const demoted = loadApiTargets().filter(
       (target) => target.source == null && target.default !== true,
     );
-    if (!previous) throw new Error("no committed previous target");
+    expect(demoted.length).toBeGreaterThan(0);
     expect(new Set(VERSIONED_MODULE_MANIFEST.map((entry) => entry.versionId))).toEqual(
-      new Set([previous.id]),
+      new Set(demoted.map((target) => target.id)),
     );
-    expect(VERSIONED_MODULE_MANIFEST).toHaveLength(previous.modules.length);
+    expect(VERSIONED_MODULE_MANIFEST).toHaveLength(
+      demoted.reduce((total, target) => total + target.modules.length, 0),
+    );
   });
 
   test("resolveTargetModules delegates to loadTargetModules for a null-source target", async () => {

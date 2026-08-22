@@ -16,6 +16,10 @@ changes are called out first because the toolchain is pre-1.0.
 
 ## v0.27.0
 
+### Improved
+
+- **Defold 1.13.0 is a shipped [API target](./pinning-defold-target.md) again.** `set-target 1.13.0` resolves, `build` materializes its complete pre-baked surface, and the `/api/defold-1.13.0/…` reference pages are back, so a toolchain upgrade no longer strands a project that needs to roll the engine back. Version notes across the [API reference](/api) and search now name the release that actually introduced or changed a symbol — [`compute`](/api/compute) reads `Since Defold 1.13.0` rather than `Since Defold 1.13.1`.
+
 ### Fixed
 
 - **A [Defold pin](./pinning-defold-target.md) now holds, and says so when it cannot.** Three ways it used to fail quietly:
