@@ -33,6 +33,12 @@ export const TYPES_PACKAGE = "@defold-typescript/types";
 // other "what does importing the package give you".
 const PINNED_ROOT_DIR = "root";
 
+// The entrypoint needs one ambient-free module carrying the *whole* root export
+// set. The accumulated `./src/` subpaths are only the modules that happened to
+// be published individually, which is a strict subset — re-exporting just those
+// makes a pin delete package exports instead of narrowing engine namespaces.
+const FACADE_SUBPATH = "api";
+
 // A materialized surface is a function of *(Defold target x toolchain version)*,
 // so both axes belong in its directory name — otherwise a toolchain upgrade
 // rewrites the previous surface in place and the change it made is unobservable.
@@ -211,19 +217,29 @@ function reexportableSubpaths(typesRoot: string | null): string[] {
 // re-exports the package's own API, so remapping the bare specifier narrows the
 // namespaces without also taking `defineScript` & co. away from every consumer
 // that imports them. Rewritten from scratch each run; removed outright when the
-// package publishes nothing re-exportable, so the remap has no dangling target.
-function writePinnedRootEntrypoint(absDir: string, typesRoot: string | null): void {
+// installed package does not publish the facade, so the remap has no dangling
+// target and never a partial entrypoint.
+export function writePinnedRootEntrypoint(absDir: string, typesRoot: string | null): void {
   const rootDir = path.join(absDir, PINNED_ROOT_DIR);
   const subpaths = reexportableSubpaths(typesRoot);
-  if (subpaths.length === 0) {
+  // Without the facade an older installed package would yield a partial
+  // entrypoint. Write nothing instead and let `pinnedRootPaths` omit the bare
+  // specifier: the pin degrades to unbound, which beats a subset.
+  if (!subpaths.includes(FACADE_SUBPATH)) {
     rmSync(rootDir, { recursive: true, force: true });
     return;
   }
   mkdirSync(rootDir, { recursive: true });
+  // The remaining subpaths are mostly redundant re-exports of the same
+  // declarations, but `timers` is not in the facade, and keeping the loop
+  // spares the emitter a hand-maintained exclusion list.
   const body = [
     `import "../index";`,
     "",
-    ...subpaths.map((subpath) => `export * from "${TYPES_PACKAGE}/${subpath}";`),
+    `export * from "${TYPES_PACKAGE}/${FACADE_SUBPATH}";`,
+    ...subpaths
+      .filter((subpath) => subpath !== FACADE_SUBPATH)
+      .map((subpath) => `export * from "${TYPES_PACKAGE}/${subpath}";`),
     "",
   ].join("\n");
   writeFileSync(path.join(rootDir, "index.d.ts"), body);

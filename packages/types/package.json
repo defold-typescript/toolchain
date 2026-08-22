@@ -30,6 +30,9 @@
     "./editor-script": {
       "types": "./generated/kinds/editor-script.d.ts"
     },
+    "./api": {
+      "types": "./src/index.ts"
+    },
     "./core-types": {
       "types": "./src/core-types.ts"
     },
