@@ -45,12 +45,24 @@ describe("@defold-typescript/types publish surface", () => {
     expect(paths).toContain("src/go-overloads.d.ts");
   });
 
-  test("excludes tests, snapshots, fixtures, and type-proofs", () => {
+  test("excludes tests, snapshots, and type-proofs", () => {
     for (const path of paths) {
       expect(path).not.toMatch(/\.test\.ts$/);
       expect(path).not.toMatch(/(^|\/)__snapshots__\//);
-      expect(path).not.toMatch(/^fixtures\//);
       expect(path).not.toMatch(/^test-d\//);
+    }
+  });
+
+  // The shipped generator reads a registered target's documents from the
+  // installed package, so those fixtures publish — `scripts/release-pack-proof.test.ts`
+  // proves the set is complete. The rest of `fixtures/` is docs-only or
+  // superseded input and stays repo-local, so the tarball does not carry it.
+  test("ships the registered targets' fixtures and nothing else under fixtures/", () => {
+    const shipped = paths.filter((path) => path.startsWith("fixtures/"));
+    expect(shipped).toContain("fixtures/messages_doc.json");
+    expect(shipped.some((path) => /^fixtures\/defold-[\d.]+\//.test(path))).toBe(true);
+    for (const path of shipped) {
+      expect(path).toMatch(/^fixtures\/(defold-[\d.]+\/.+|messages_doc\.json)$/);
     }
   });
 

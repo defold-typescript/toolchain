@@ -57,9 +57,13 @@
     "api-signatures.json",
     "url-parameters.json",
     "index.d.ts",
+    "fixtures/messages_doc.json",
+    "fixtures/defold-*",
+    "examples/translations.json",
     "!src/**/*.test.ts",
     "!scripts/**/*.test.ts",
-    "!src/**/__snapshots__"
+    "!src/**/__snapshots__",
+    "!scripts/lua-types-signature-index.ts"
   ],
   "publishConfig": {
     "access": "public"
@@ -75,7 +79,8 @@
     "ref-doc-delta": "bun scripts/ref-doc-delta.ts --target defold-1.9.8 --namespace label --present label.get_text --absent label.set_text"
   },
   "dependencies": {
-    "lua-types": "^2.13.1"
+    "lua-types": "^2.13.1",
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
     "@typescript-to-lua/language-extensions": "1.19.0",
