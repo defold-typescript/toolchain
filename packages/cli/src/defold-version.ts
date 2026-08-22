@@ -14,8 +14,10 @@ export const DEFOLD_VERSIONS = ["1.13.1", "1.13.0", "1.12.4"] as const;
 
 export const CURRENT_STABLE_DEFOLD_VERSION = DEFOLD_VERSIONS[0];
 
-// The immediately-preceding stable release, kept as a committed historical
-// surface (`api-targets.json` -> `defold-<this version>`) that the release matrix
-// and readiness gate promote the current release over. Every entry after it is a
+// The tuple's second slot: the retained release of the *preceding minor line*,
+// not whatever shipped immediately before — a bump drops intermediate patches
+// from the pre-baked set. It is kept as a committed historical surface
+// (`api-targets.json` -> `defold-<this version>`) that the release matrix and
+// readiness gate promote the current release over. Every entry after it is a
 // still-supported rollback target with its own committed surface.
 export const PREVIOUS_STABLE_DEFOLD_VERSION = DEFOLD_VERSIONS[1];

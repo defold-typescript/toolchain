@@ -7,8 +7,10 @@ import { type DispatchInternals, dispatch } from "./dispatch";
 import { resolveRegisteredSurfaceGeneratedDir } from "./materialize";
 import type { RunWatchHandle, Watcher, WatcherFactory } from "./watch";
 
-// The exact release targets a promotion is gated against: the current stable
-// release and the immediately-preceding one, each backed by a committed surface.
+// The exact release targets a promotion is gated against: one spec per pre-baked
+// `DEFOLD_VERSIONS` entry — the current release plus the retained previous-minor
+// release — each backed by a committed surface. Intermediate patches the
+// retention rule drops keep their surface but leave this matrix with the tuple.
 export interface ReleaseTargetSpec {
   readonly version: string;
   readonly surfaceId: string;
@@ -67,9 +69,10 @@ export interface SurfaceSelection {
   readonly generatedDir: string | null;
 }
 
-// Which committed generated `.d.ts` set backs a target. Current-stable and the
-// previous release both resolve to a committed directory; an unregistered
-// version resolves to nothing (a project pinned to it would not type-check).
+// Which committed generated `.d.ts` set backs a target. Every pre-baked target
+// resolves to a committed directory; an unregistered version resolves to nothing
+// (a project pinned to it would not type-check). Selection reads the registry,
+// not the tuple, so a demoted version still resolves.
 export function selectMatrixSurface(version: string): SurfaceSelection {
   const selected = selectApiSurface(version);
   return {
