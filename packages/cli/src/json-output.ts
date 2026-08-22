@@ -66,6 +66,12 @@ export interface RenderResultInput {
   readonly libraries?: readonly ResolvedLibraryReportJson[];
   readonly warnings?: readonly string[];
   readonly pinMismatch?: { readonly installed: string; readonly pinned: string };
+  // Stated outright so a consumer reads "no surface" from a present field
+  // rather than inferring it from an absent or null `materializedSurface`.
+  readonly unresolvableTarget?: {
+    readonly target: string;
+    readonly available: readonly string[];
+  };
   readonly enginePath?: string;
   readonly projectc?: string;
   readonly build?: { readonly exitCode: number };
@@ -141,8 +147,14 @@ export function renderResult(input: RenderResultInput): string {
     "warnings" in input ? { ...withLibraries, warnings: input.warnings } : withLibraries;
   const withPinMismatch =
     "pinMismatch" in input ? { ...withWarnings, pinMismatch: input.pinMismatch } : withWarnings;
+  const withUnresolvable =
+    "unresolvableTarget" in input
+      ? { ...withPinMismatch, unresolvableTarget: input.unresolvableTarget }
+      : withPinMismatch;
   const withEnginePath =
-    "enginePath" in input ? { ...withPinMismatch, enginePath: input.enginePath } : withPinMismatch;
+    "enginePath" in input
+      ? { ...withUnresolvable, enginePath: input.enginePath }
+      : withUnresolvable;
   const withProjectc =
     "projectc" in input ? { ...withEnginePath, projectc: input.projectc } : withEnginePath;
   const withBuild = "build" in input ? { ...withProjectc, build: input.build } : withProjectc;

@@ -18,6 +18,7 @@ changes are called out first because the toolchain is pre-1.0.
 
 ### Fixed
 
+- **A Defold pin the toolchain cannot provide is now reported instead of silently ignored.** Pinning a version with no shipped API surface — one retired by a patch rotation, say — used to materialize nothing and exit 0 while your code kept compiling against the newer default surface; `build`, `run`, `watch`, `upgrade` and `bob build`/`bundle`/`run` now name the pin and the resolvable targets on stderr and in the `--json` `warnings`, and `--fail-on-drift` turns it into a non-zero exit. See [Pinning the Defold target](./pinning-defold-target.md).
 - **Pinning a Defold target now actually holds when your code imports the package.** Previously the pin repointed only the ambient type roots, so a single idiomatic `import { defineScript } from "@defold-typescript/types"` anywhere in the project merged the *current* API surface back over the pinned one for every file — a project pinned to 1.12.4 still compiled [`collectionproxy.load`](/api/collectionproxy), which does not exist there. A pin now also binds the package specifier itself, so an API the pinned surface lacks is a compile error. See [Pinning the Defold target](./pinning-defold-target.md).
 
 ## v0.26.0
