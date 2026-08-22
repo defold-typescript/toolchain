@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import * as path from "node:path";
-import type { RegistryTarget } from "./api-registry";
+import { loadApiTargetsRegistry, type RegistryTarget } from "./api-registry";
 import { CURRENT_STABLE_SURFACE_ID, selectApiSurface } from "./api-surface";
 import {
   type DefoldIo,
@@ -13,6 +13,7 @@ import {
 import { readCliVersion } from "./cli-version";
 import {
   type DefoldChannel,
+  type DefoldTargetSource,
   describeInstalledPinMismatch,
   describeTargetOverride,
   diagnoseDefoldNamespace,
@@ -156,6 +157,27 @@ function readPackageJson(cwd: string): unknown {
   } catch {
     return undefined;
   }
+}
+
+// A pin or `--defold-target` naming a version the API registry does not carry
+// materializes no surface at all, so without a notice the project keeps
+// compiling against the *newer* default surface — accepting APIs the pinned
+// engine lacks — and still exits 0. `detected` and `default` sources stay out:
+// neither is a declared intent, and an installed editor ahead of the registry
+// would otherwise nag on every build.
+function unresolvableTargetNotice(
+  target: string | undefined,
+  source: DefoldTargetSource,
+  available: readonly string[],
+): readonly string[] {
+  if (target === undefined) {
+    return [];
+  }
+  const origin =
+    source === "flag" ? `--defold-target ${target}` : `the "defold-target" pin (${target})`;
+  return [
+    `${origin} names a version the API registry cannot provide; no API surface was materialized, so the default surface (${CURRENT_STABLE_SURFACE_ID}) stays active and accepts APIs that target may lack. Resolvable targets: ${available.join(", ")}. Pin one of them to build against a matching surface.`,
+  ];
 }
 
 // `--fail-on-drift` escalates once, here, rather than at each command's report
@@ -423,10 +445,39 @@ function dispatchCommand(
     installedForDrift !== undefined && pinnedVersion !== undefined && driftNotice.length > 0
       ? { installed: installedForDrift, pinned: pinnedVersion }
       : undefined;
+  // A channel target tracks a moving head, so "the registry does not carry it"
+  // is not a statement about anything the user declared; only a concrete version
+  // the user pinned or passed can be unprovidable.
+  const unresolvableTarget =
+    driftCheckedCommand &&
+    target.kind === "version" &&
+    (targetSource === "pin" || targetSource === "flag") &&
+    !selectApiSurface(target.version).available
+      ? target.version
+      : undefined;
+  const resolvableTargets =
+    unresolvableTarget === undefined
+      ? []
+      : loadApiTargetsRegistry().map((entry) => entry.id.replace(/^defold-/, ""));
+  const unresolvableNotice = unresolvableTargetNotice(
+    unresolvableTarget,
+    targetSource,
+    resolvableTargets,
+  );
+  // The no-surface outcome is stated outright rather than left to be inferred
+  // from a null `materializedSurface` the non-build commands never report.
+  const unresolvableTargetField =
+    unresolvableTarget === undefined
+      ? {}
+      : { unresolvableTarget: { target: unresolvableTarget, available: resolvableTargets } };
+  // One array for both pin verdicts: every stderr loop and `warnings` spread
+  // below carries them together, so neither can gain a channel the other lacks.
+  const pinNotices = [...driftNotice, ...unresolvableNotice];
   // `driftNotice` is already empty for undetected editors, matching versions,
   // channel pins, and every command outside `driftCheckedCommand`, so the
-  // escalation inherits that gate exactly rather than re-deriving it.
-  drift.escalate = failOnDrift && driftNotice.length > 0;
+  // escalation inherits that gate exactly rather than re-deriving it;
+  // `unresolvableNotice` carries the same command gate.
+  drift.escalate = failOnDrift && pinNotices.length > 0;
   const channelFetch =
     internals?.fetchChannelInfo ?? internals?.resolveOpts?.fetchChannelInfo ?? fetchChannelInfo;
   const versionFetch = internals?.fetchVersionInfo ?? fetchVersionInfo;
@@ -650,7 +701,7 @@ function dispatchCommand(
             renderResult({
               command: "build",
               written,
-              warnings: [...driftNotice, ...targetDiagnostics, ...warnings],
+              warnings: [...pinNotices, ...targetDiagnostics, ...warnings],
               defoldVersion: head.version,
               defoldVersionSource: targetSource,
               defoldChannel: head.channel,
@@ -658,13 +709,14 @@ function dispatchCommand(
               apiSurface,
               materializedSurface: materializedDir,
               ...(pinMismatch ? { pinMismatch } : {}),
+              ...unresolvableTargetField,
             }),
           );
         } else {
           io.stdout.write(
             `defold-typescript build: wrote ${written.length} files: ${written.join(", ")}\n`,
           );
-          for (const notice of driftNotice) {
+          for (const notice of pinNotices) {
             io.stderr.write(`defold-typescript build: ${notice}\n`);
           }
           for (const warning of warnings) {
@@ -810,9 +862,9 @@ function dispatchCommand(
         // so `--json` surfaces it there once. The non-JSON stderr line has no such
         // startup channel (watch.ts prints `pinDiagnostics` only in JSON mode), so
         // emit it here, once, before the watcher opens — never per rebuild.
-        const pinDiagnostics = [...driftNotice, ...targetDiagnostics];
+        const pinDiagnostics = [...pinNotices, ...targetDiagnostics];
         if (!json) {
-          for (const notice of driftNotice) {
+          for (const notice of pinNotices) {
             io.stderr.write(`defold-typescript watch: ${notice}\n`);
           }
         }
@@ -1191,7 +1243,7 @@ function dispatchCommand(
             io.stderr.write(`defold-typescript bob run: ${warning}\n`);
           }
           if (!json) {
-            for (const notice of driftNotice) {
+            for (const notice of pinNotices) {
               io.stderr.write(`defold-typescript bob run: ${notice}\n`);
             }
           }
@@ -1208,8 +1260,9 @@ function dispatchCommand(
                 subcommand: "run",
                 build: { exitCode: prepared.buildExitCode },
                 launch: { enginePath: runnable.enginePath, exitCode },
-                ...(driftNotice.length > 0 ? { warnings: driftNotice } : {}),
+                ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
                 ...(pinMismatch ? { pinMismatch } : {}),
+                ...unresolvableTargetField,
               }),
             );
           }
@@ -1240,7 +1293,7 @@ function dispatchCommand(
           );
         }
         if (!json) {
-          for (const notice of driftNotice) {
+          for (const notice of pinNotices) {
             io.stderr.write(`defold-typescript bob ${subcommand}: ${notice}\n`);
           }
         }
@@ -1256,8 +1309,9 @@ function dispatchCommand(
         if (json) {
           const withOutput = result.output !== undefined ? { output: result.output } : {};
           const driftFields = {
-            ...(driftNotice.length > 0 ? { warnings: driftNotice } : {}),
+            ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
             ...(pinMismatch ? { pinMismatch } : {}),
+            ...unresolvableTargetField,
           };
           const headFields = {
             defoldVersion: result.defoldVersion,
@@ -1334,7 +1388,7 @@ function dispatchCommand(
     // The drift notice is mutually exclusive with its JSON form: stderr here,
     // folded into `warnings`/`pinMismatch` below under `--json` (as `build` does).
     if (!json) {
-      for (const notice of driftNotice) {
+      for (const notice of pinNotices) {
         io.stderr.write(`defold-typescript run: ${notice}\n`);
       }
     }
@@ -1353,8 +1407,9 @@ function dispatchCommand(
             enginePath: runnable.enginePath,
             projectc: runnable.projectcPath,
             exitCode,
-            ...(driftNotice.length > 0 ? { warnings: driftNotice } : {}),
+            ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
             ...(pinMismatch ? { pinMismatch } : {}),
+            ...unresolvableTargetField,
           }),
         );
       }
@@ -1380,8 +1435,9 @@ function dispatchCommand(
               from: outcome.from,
               to: outcome.to,
               handedOff: outcome.handedOff,
-              ...(driftNotice.length > 0 ? { warnings: driftNotice } : {}),
+              ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
               ...(pinMismatch ? { pinMismatch } : {}),
+              ...unresolvableTargetField,
               ...(outcome.error !== undefined ? { error: outcome.error } : {}),
               ...(outcome.output !== undefined ? { output: outcome.output } : {}),
             }),
@@ -1389,7 +1445,7 @@ function dispatchCommand(
         } else if (outcome.error !== undefined) {
           io.stderr.write(`${outcome.error}\n`);
         } else {
-          for (const notice of driftNotice) {
+          for (const notice of pinNotices) {
             io.stderr.write(`defold-typescript upgrade: ${notice}\n`);
           }
           io.stdout.write(
