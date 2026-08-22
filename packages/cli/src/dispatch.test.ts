@@ -4979,18 +4979,18 @@ describe("dispatch set-target", () => {
     writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
     const { io, out } = captureStreams();
 
-    const code = await dispatch(["set-target", "1.13.0", cwd], io);
+    const code = await dispatch(["set-target", "1.13.1", cwd], io);
 
     expect(code).toBe(0);
-    expect(out()).toContain("1.12.4 -> 1.13.0");
-    expect(pinOf()).toBe("1.13.0");
+    expect(out()).toContain("1.12.4 -> 1.13.1");
+    expect(pinOf()).toBe("1.13.1");
   });
 
   test("set-target --json emits the command/ok/written/from/to payload", async () => {
     writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
     const { io, out } = captureStreams();
 
-    const code = await dispatch(["set-target", "1.13.0", cwd, "--json"], io);
+    const code = await dispatch(["set-target", "1.13.1", cwd, "--json"], io);
 
     expect(code).toBe(0);
     expect(JSON.parse(out())).toMatchObject({
@@ -4998,7 +4998,7 @@ describe("dispatch set-target", () => {
       ok: true,
       written: ["package.json"],
       from: "1.12.4",
-      to: "1.13.0",
+      to: "1.13.1",
     });
   });
 
@@ -5007,11 +5007,11 @@ describe("dispatch set-target", () => {
     const { io } = captureStreams();
 
     const code = await dispatch(["set-target", "--detected", cwd], io, {
-      detectEditorVersion: () => "1.13.0",
+      detectEditorVersion: () => "1.13.1",
     });
 
     expect(code).toBe(0);
-    expect(pinOf()).toBe("1.13.0");
+    expect(pinOf()).toBe("1.13.1");
   });
 
   test("--detect is a synonym of --detected", async () => {
@@ -5019,11 +5019,11 @@ describe("dispatch set-target", () => {
     const { io } = captureStreams();
 
     const code = await dispatch(["set-target", "--detect", cwd], io, {
-      detectEditorVersion: () => "1.13.0",
+      detectEditorVersion: () => "1.13.1",
     });
 
     expect(code).toBe(0);
-    expect(pinOf()).toBe("1.13.0");
+    expect(pinOf()).toBe("1.13.1");
   });
 
   test("neither a token nor --detected is a usage error", async () => {
@@ -5039,8 +5039,8 @@ describe("dispatch set-target", () => {
     writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
     const { io, err } = captureStreams();
 
-    const code = await dispatch(["set-target", "--detected", "1.13.0", cwd], io, {
-      detectEditorVersion: () => "1.13.0",
+    const code = await dispatch(["set-target", "--detected", "1.13.1", cwd], io, {
+      detectEditorVersion: () => "1.13.1",
     });
 
     expect(code).toBe(1);

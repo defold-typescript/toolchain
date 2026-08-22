@@ -4593,8 +4593,15 @@ pinned writes nothing. It does not materialize a surface or repoint
 - `bunx @defold-typescript/cli@latest set-target 1.13.1` pins that version;
   `set-target stable` (or `beta`/`alpha`) pins the channel — the token is written
   verbatim, as you expressed it;
+- a concrete version is checked against the API registry, not just its shape, so
+  `set-target 1.42.99` is rejected with the resolvable targets listed and nothing
+  written — the typo is caught where you made it rather than surfacing later as
+  the unprovidable-pin notice above. Channels bypass the check, because they
+  resolve their head at build time and are not registry members;
 - `set-target --detected` (alias `--detect`) pins the installed editor's version,
-  erroring when no Defold editor is detected rather than falling back;
+  erroring when no Defold editor is detected rather than falling back. An
+  installed editor the registry cannot provide is rejected the same way, rather
+  than syncing to a pin the toolchain cannot honor;
 - an optional trailing path targets a project other than the current folder.
 
 `init` also writes the pin:
