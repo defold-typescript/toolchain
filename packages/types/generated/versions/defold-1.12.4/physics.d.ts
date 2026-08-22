@@ -288,82 +288,85 @@ declare global {
      * `data`
      * table The callback value data is a table that contains event-related data. See the documentation for details on the messages.
      * @example
-     * ```lua
-     * local function physics_world_listener(self, events)
-     *   for _,event in ipairs(events):
-     *       local event_type = event['type']
-     *       if event_type == hash("contact_point_event") then
-     *           pprint(event)
-     *           -- {
-     *           --  distance = 2.1490633487701,
-     *           --  applied_impulse = 0
-     *           --  a = { --[[0x113f7c6c0]]
-     *           --    group = hash: [box],
-     *           --    id = hash: [/box]
-     *           --    mass = 0,
-     *           --    normal = vmath.vector3(0.379, 0.925, -0),
-     *           --    position = vmath.vector3(517.337, 235.068, 0),
-     *           --    instance_position = vmath.vector3(480, 144, 0),
-     *           --    relative_velocity = vmath.vector3(-0, -0, -0),
-     *           --  },
-     *           --  b = { --[[0x113f7c840]]
-     *           --    group = hash: [circle],
-     *           --    id = hash: [/circle]
-     *           --    mass = 0,
-     *           --    normal = vmath.vector3(-0.379, -0.925, 0),
-     *           --    position = vmath.vector3(517.337, 235.068, 0),
-     *           --    instance_position = vmath.vector3(-0.0021, 0, -0.0022),
-     *           --    relative_velocity = vmath.vector3(0, 0, 0),
-     *           --  },
-     *           -- }
-     *       elseif event == hash("collision_event") then
-     *           pprint(event)
-     *           -- {
-     *           --  a = {
-     *           --          group = hash: [default],
-     *           --          position = vmath.vector3(183, 666, 0),
-     *           --          id = hash: [/go1]
-     *           --      },
-     *           --  b = {
-     *           --          group = hash: [default],
-     *           --          position = vmath.vector3(185, 704.05865478516, 0),
-     *           --          id = hash: [/go2]
-     *           --      }
-     *           -- }
-     *       elseif event ==  hash("trigger_event") then
-     *           pprint(event)
-     *           -- {
-     *           --  enter = true,
-     *           --  b = {
-     *           --      group = hash: [default],
-     *           --      id = hash: [/go2]
-     *           --  },
-     *           --  a = {
-     *           --      group = hash: [default],
-     *           --      id = hash: [/go1]
-     *           --  }
-     *           -- },
-     *       elseif event ==  hash("ray_cast_response") then
-     *           pprint(event)
-     *           --{
-     *           --  group = hash: [default],
-     *           --  request_id = 0,
-     *           --  position = vmath.vector3(249.92222595215, 249.92222595215, 0),
-     *           --  fraction = 0.68759721517563,
-     *           --  normal = vmath.vector3(0, 1, 0),
-     *           --  id = hash: [/go]
-     *           -- }
-     *       elseif event ==  hash("ray_cast_missed") then
-     *           pprint(event)
-     *           -- {
-     *           --  request_id = 0
-     *           --},
-     *       end
-     * end
+     * ```ts
+     * function physics_world_listener(self, events) {
+     *   for (const event of events) {
+     *     const event_type = event["type"];
+     *     if (event_type === hash("contact_point_event")) {
+     *       pprint(event);
+     *       // {
+     *       //  distance = 2.1490633487701,
+     *       //  applied_impulse = 0
+     *       //  a = { --[[0x113f7c6c0]]
+     *       //    group = hash: [box],
+     *       //    id = hash: [/box]
+     *       //    mass = 0,
+     *       //    normal = vmath.vector3(0.379, 0.925, -0),
+     *       //    position = vmath.vector3(517.337, 235.068, 0),
+     *       //    instance_position = vmath.vector3(480, 144, 0),
+     *       //    relative_velocity = vmath.vector3(-0, -0, -0),
+     *       //  },
+     *       //  b = { --[[0x113f7c840]]
+     *       //    group = hash: [circle],
+     *       //    id = hash: [/circle]
+     *       //    mass = 0,
+     *       //    normal = vmath.vector3(-0.379, -0.925, 0),
+     *       //    position = vmath.vector3(517.337, 235.068, 0),
+     *       //    instance_position = vmath.vector3(-0.0021, 0, -0.0022),
+     *       //    relative_velocity = vmath.vector3(0, 0, 0),
+     *       //  },
+     *       // }
+     *     } else if (event === hash("collision_event")) {
+     *       pprint(event);
+     *       // {
+     *       //  a = {
+     *       //          group = hash: [default],
+     *       //          position = vmath.vector3(183, 666, 0),
+     *       //          id = hash: [/go1]
+     *       //      },
+     *       //  b = {
+     *       //          group = hash: [default],
+     *       //          position = vmath.vector3(185, 704.05865478516, 0),
+     *       //          id = hash: [/go2]
+     *       //      }
+     *       // }
+     *     } else if (event === hash("trigger_event")) {
+     *       pprint(event);
+     *       // {
+     *       //  enter = true,
+     *       //  b = {
+     *       //      group = hash: [default],
+     *       //      id = hash: [/go2]
+     *       //  },
+     *       //  a = {
+     *       //      group = hash: [default],
+     *       //      id = hash: [/go1]
+     *       //  }
+     *       // },
+     *     } else if (event === hash("ray_cast_response")) {
+     *       pprint(event);
+     *       // {
+     *       //  group = hash: [default],
+     *       //  request_id = 0,
+     *       //  position = vmath.vector3(249.92222595215, 249.92222595215, 0),
+     *       //  fraction = 0.68759721517563,
+     *       //  normal = vmath.vector3(0, 1, 0),
+     *       //  id = hash: [/go]
+     *       // }
+     *     } else if (event === hash("ray_cast_missed")) {
+     *       pprint(event);
+     *       // {
+     *       //  request_id = 0
+     *       // },
+     *     }
+     *   }
+     * }
      *
-     * function init(self)
-     *     physics.set_event_listener(physics_world_listener)
-     * end
+     * export default defineScript({
+     *   init(self) {
+     *     physics.set_event_listener(physics_world_listener);
+     *   },
+     * });
      * ```
      */
     function set_event_listener(callback?: (self: unknown, events: unknown) => void): void;

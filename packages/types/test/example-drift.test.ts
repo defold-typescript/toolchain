@@ -1,22 +1,47 @@
 import { describe, expect, test } from "bun:test";
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { loadTranslations } from "../scripts/example-store-io";
-import { EDITOR_MODULE_MANIFEST, MODULE_MANIFEST } from "../scripts/regen";
+import {
+  EDITOR_MODULE_MANIFEST,
+  loadApiTargets,
+  MODULE_MANIFEST,
+  VERSIONED_MODULE_MANIFEST,
+} from "../scripts/regen";
 import { parseDefoldApiDoc } from "../src/api-doc";
 import { htmlToCodeText } from "../src/doc-comment";
 import { hashExampleSource, lookupTranslation } from "../src/example-store";
 
-const EXAMPLES_DIR = resolve(import.meta.dir, "..", "examples");
-const GENERATED_DIR = resolve(import.meta.dir, "..", "generated");
+const PACKAGE_ROOT = resolve(import.meta.dir, "..");
+const EXAMPLES_DIR = resolve(PACKAGE_ROOT, "examples");
+
+// One committed API surface per entry: a target's `generatedDir` is the
+// directory that target emits its module declarations into, so the default
+// surface (`generated/`) and each demoted surface (`generated/versions/<id>/`)
+// are peers here. `ref-doc` targets are resolved on demand and never committed,
+// so they have nothing on disk to scan. `editor-vm/` and `kinds/` are separate
+// emit lanes nested inside the default surface, not surfaces of their own, and
+// are deliberately outside this walk.
+function allGeneratedSurfaces(): { id: string; dir: string }[] {
+  return loadApiTargets()
+    .filter((target) => (target.source ?? null) == null)
+    .map((target) => ({ id: target.id, dir: resolve(PACKAGE_ROOT, target.generatedDir) }))
+    .filter((surface) => existsSync(surface.dir));
+}
 
 // FQN -> every distinct post-htmlToCodeText example body carried by an element
 // with that name (overloads can carry differing bodies under one FQN). Spans the
 // editor manifest too: its emitted members carry translations, so their stored
 // source hashes need a fixture body to match against or they read as stale.
+// Spans the demoted surfaces for the same reason: a translation pinned to the
+// body an older target still ships is live for that target, not stale.
 function exampleSourcesByFqn(): Map<string, Set<string>> {
   const byFqn = new Map<string, Set<string>>();
-  for (const entry of [...MODULE_MANIFEST, ...EDITOR_MODULE_MANIFEST]) {
+  for (const entry of [
+    ...MODULE_MANIFEST,
+    ...EDITOR_MODULE_MANIFEST,
+    ...VERSIONED_MODULE_MANIFEST,
+  ]) {
     for (const fn of parseDefoldApiDoc(entry.doc).functions) {
       const lua = htmlToCodeText(fn.examples ?? "");
       if (lua === "") continue;
@@ -83,16 +108,28 @@ describe("generated declarations carry no Lua example fallback", () => {
   // fence ` * ```<lang>` (`doc-comment.ts` renderDocComment). Lua fences inside
   // namespace/param prose are upstream doc text, not translations — scope the
   // guard to the fence line that directly follows `@example`.
-  test("no @example block in generated/*.d.ts is fenced ```lua", () => {
+  test("no @example block in any committed surface is fenced ```lua", () => {
     const offenders: string[] = [];
-    for (const file of readdirSync(GENERATED_DIR)) {
-      if (!file.endsWith(".d.ts")) continue;
-      const lines = readFileSync(resolve(GENERATED_DIR, file), "utf8").split("\n");
-      for (let i = 0; i < lines.length - 1; i++) {
-        if (lines[i]?.trim() !== "* @example") continue;
-        if (lines[i + 1]?.trim() === "* ```lua") offenders.push(`${file}:${i + 2}`);
+    for (const surface of allGeneratedSurfaces()) {
+      for (const file of readdirSync(surface.dir)) {
+        if (!file.endsWith(".d.ts")) continue;
+        const lines = readFileSync(resolve(surface.dir, file), "utf8").split("\n");
+        for (let i = 0; i < lines.length - 1; i++) {
+          if (lines[i]?.trim() !== "* @example") continue;
+          if (lines[i + 1]?.trim() === "* ```lua") {
+            offenders.push(`${surface.id}/${file}:${i + 2}`);
+          }
+        }
       }
     }
     expect(offenders).toEqual([]);
+  });
+
+  // Without this the widened guard could pass by walking nothing at all.
+  test("the surface walk reaches the default surface and every committed demoted one", () => {
+    const ids = allGeneratedSurfaces().map((surface) => surface.id);
+    expect(ids).toContain("defold-1.13.1");
+    expect(ids).toContain("defold-1.12.4");
+    expect(ids).toContain("defold-1.13.0");
   });
 });

@@ -575,66 +575,86 @@ declare global {
      * @param parameters - table of buffer parameters, see the description for available keys and values
      * @returns new render target
      * @example
-     * ```lua
-     * How to create a new render target and draw to it:
-     * function init(self)
-     *     -- render target buffer parameters
-     *     local color_params = { format = graphics.TEXTURE_FORMAT_RGBA,
-     *                            width = render.get_window_width(),
-     *                            height = render.get_window_height(),
-     *                            min_filter = graphics.TEXTURE_FILTER_LINEAR,
-     *                            mag_filter = graphics.TEXTURE_FILTER_LINEAR,
-     *                            u_wrap = graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,
-     *                            v_wrap = graphics.TEXTURE_WRAP_CLAMP_TO_EDGE }
-     *     local depth_params = { format = graphics.TEXTURE_FORMAT_DEPTH,
-     *                            width = render.get_window_width(),
-     *                            height = render.get_window_height(),
-     *                            u_wrap = graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,
-     *                            v_wrap = graphics.TEXTURE_WRAP_CLAMP_TO_EDGE }
-     *     self.my_render_target = render.render_target({[graphics.BUFFER_TYPE_COLOR0_BIT] = color_params, [graphics.BUFFER_TYPE_DEPTH_BIT] = depth_params })
-     * end
+     * ```ts
+     * // How to create a new render target and draw to it:
+     * export default defineScript({
+     *   init() {
+     *     // render target buffer parameters
+     *     const color_params = {
+     *       format: graphics.TEXTURE_FORMAT_RGBA,
+     *       width: render.get_window_width(),
+     *       height: render.get_window_height(),
+     *       min_filter: graphics.TEXTURE_FILTER_LINEAR,
+     *       mag_filter: graphics.TEXTURE_FILTER_LINEAR,
+     *       u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,
+     *       v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,
+     *     };
+     *     const depth_params = {
+     *       format: graphics.TEXTURE_FORMAT_DEPTH,
+     *       width: render.get_window_width(),
+     *       height: render.get_window_height(),
+     *       u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,
+     *       v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,
+     *     };
+     *     return {
+     *       my_render_target: render.render_target({
+     *         [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params,
+     *         [graphics.BUFFER_TYPE_DEPTH_BIT]: depth_params,
+     *       }),
+     *     };
+     *   },
      *
-     * function update(self, dt)
-     *     -- enable target so all drawing is done to it
-     *     render.set_render_target(self.my_render_target)
+     *   update(self, dt) {
+     *     // enable target so all drawing is done to it
+     *     render.set_render_target(self.my_render_target);
      *
-     *     -- draw a predicate to the render target
-     *     render.draw(self.my_pred)
-     * end
+     *     // draw a predicate to the render target
+     *     render.draw(self.my_pred);
+     *   },
+     * });
      *
-     * How to create a render target with multiple outputs:
-     * function init(self)
-     *     -- render target buffer parameters
-     *     local color_params_rgba = { format = graphics.TEXTURE_FORMAT_RGBA,
-     *                                 width = render.get_window_width(),
-     *                                 height = render.get_window_height(),
-     *                                 min_filter = graphics.TEXTURE_FILTER_LINEAR,
-     *                                 mag_filter = graphics.TEXTURE_FILTER_LINEAR,
-     *                                 u_wrap = graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,
-     *                                 v_wrap = graphics.TEXTURE_WRAP_CLAMP_TO_EDGE }
-     *     local color_params_float = { format = graphics.TEXTURE_FORMAT_RG32F,
-     *                            width = render.get_window_width(),
-     *                            height = render.get_window_height(),
-     *                            min_filter = graphics.TEXTURE_FILTER_LINEAR,
-     *                            mag_filter = graphics.TEXTURE_FILTER_LINEAR,
-     *                            u_wrap = graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,
-     *                            v_wrap = graphics.TEXTURE_WRAP_CLAMP_TO_EDGE }
+     * // How to create a render target with multiple outputs:
+     * export default defineScript({
+     *   init() {
+     *     // render target buffer parameters
+     *     const color_params_rgba = {
+     *       format: graphics.TEXTURE_FORMAT_RGBA,
+     *       width: render.get_window_width(),
+     *       height: render.get_window_height(),
+     *       min_filter: graphics.TEXTURE_FILTER_LINEAR,
+     *       mag_filter: graphics.TEXTURE_FILTER_LINEAR,
+     *       u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,
+     *       v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,
+     *     };
+     *     const color_params_float = {
+     *       format: graphics.TEXTURE_FORMAT_RG32F,
+     *       width: render.get_window_width(),
+     *       height: render.get_window_height(),
+     *       min_filter: graphics.TEXTURE_FILTER_LINEAR,
+     *       mag_filter: graphics.TEXTURE_FILTER_LINEAR,
+     *       u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,
+     *       v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,
+     *     };
      *
-     *     -- Create a render target with three color attachments
-     *     -- Note: No depth buffer is attached here
-     *     self.my_render_target = render.render_target({
-     *            [graphics.BUFFER_TYPE_COLOR0_BIT] = color_params_rgba,
-     *            [graphics.BUFFER_TYPE_COLOR1_BIT] = color_params_rgba,
-     *            [graphics.BUFFER_TYPE_COLOR2_BIT] = color_params_float, })
-     * end
+     *     // Create a render target with three color attachments
+     *     // Note: No depth buffer is attached here
+     *     return {
+     *       my_render_target: render.render_target({
+     *         [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params_rgba,
+     *         [graphics.BUFFER_TYPE_COLOR1_BIT]: color_params_rgba,
+     *         [graphics.BUFFER_TYPE_COLOR2_BIT]: color_params_float,
+     *       }),
+     *     };
+     *   },
      *
-     * function update(self, dt)
-     *     -- enable target so all drawing is done to it
-     *     render.enable_render_target(self.my_render_target)
+     *   update(self, dt) {
+     *     // enable target so all drawing is done to it
+     *     render.enable_render_target(self.my_render_target);
      *
-     *     -- draw a predicate to the render target
-     *     render.draw(self.my_pred)
-     * end
+     *     // draw a predicate to the render target
+     *     render.draw(self.my_pred);
+     *   },
+     * });
      * ```
      */
     function render_target(name: string, parameters: Record<string | number, unknown>): Opaque<"render_target">;
