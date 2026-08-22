@@ -104,7 +104,11 @@ compiling against the *newer* default surface and silently accepting APIs the
 pinned engine lacks. Those commands now name the pin, state that no surface was
 materialized, and list the resolvable targets, on stderr for a normal run and in
 the `warnings` array under `--json`. An unprovidable `--defold-target` override
-reports the same way and still never writes the pin. A channel target tracks a
+reports the same way and still never writes the pin. The verdict is known before
+any network call, so a `bob build`/`bundle`/`run` that fails before Bob starts —
+an unregistered pin has no Defold release tag to dereference, so that lookup is
+what fails first — still carries the notice, on stderr and beside the `error` in
+its `--json` payload, instead of reporting the lookup failure alone. A channel target tracks a
 moving head, and the installed-editor fallback is not a target you declared, so
 neither triggers this.
 

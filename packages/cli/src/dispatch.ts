@@ -1199,6 +1199,15 @@ function dispatchCommand(
       const javaOverride = javaFlag ?? process.env.DEFOLD_JAVA;
       return (async (): Promise<number> => {
         try {
+          // Emitted before the first network call: the pin verdict is already
+          // known here, so a run that dies in `resolveHead()` still reports it.
+          // This puts the pin verdict ahead of `runnable.warnings` on stderr,
+          // which is the intended order — the verdict qualifies the run.
+          if (!json) {
+            for (const notice of pinNotices) {
+              io.stderr.write(`defold-typescript bob run: ${notice}\n`);
+            }
+          }
           const head = await resolveHead();
           if (head.sha === null) {
             throw new Error(
@@ -1223,6 +1232,9 @@ function dispatchCommand(
                   subcommand: "run",
                   build: { exitCode: prepared.buildExitCode },
                   error: prepared.error ?? `bob build exited with code ${prepared.buildExitCode}`,
+                  ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
+                  ...(pinMismatch ? { pinMismatch } : {}),
+                  ...unresolvableTargetField,
                 }),
               );
             } else {
@@ -1238,11 +1250,6 @@ function dispatchCommand(
           const { runnable } = prepared;
           for (const warning of runnable.warnings) {
             io.stderr.write(`defold-typescript bob run: ${warning}\n`);
-          }
-          if (!json) {
-            for (const notice of pinNotices) {
-              io.stderr.write(`defold-typescript bob run: ${notice}\n`);
-            }
           }
           const exitCode = await launchEngine(runnable, {
             platform: runEngine.platform,
@@ -1267,7 +1274,16 @@ function dispatchCommand(
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
           if (json) {
-            io.stdout.write(renderResult({ command: "bob", subcommand: "run", error: message }));
+            io.stdout.write(
+              renderResult({
+                command: "bob",
+                subcommand: "run",
+                error: message,
+                ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
+                ...(pinMismatch ? { pinMismatch } : {}),
+                ...unresolvableTargetField,
+              }),
+            );
           } else {
             io.stderr.write(`${message}\n`);
           }
@@ -1283,16 +1299,18 @@ function dispatchCommand(
     const javaOverride = javaFlag ?? process.env.DEFOLD_JAVA;
     return (async (): Promise<number> => {
       try {
+        // Emitted before the first network call, for the same reason as the
+        // `bob run` branch above: the verdict is knowable without it.
+        if (!json) {
+          for (const notice of pinNotices) {
+            io.stderr.write(`defold-typescript bob ${subcommand}: ${notice}\n`);
+          }
+        }
         const head = await resolveHead();
         if (head.sha === null) {
           throw new Error(
             `defold-typescript bob: could not resolve an artifact sha for Defold ${head.version}.`,
           );
-        }
-        if (!json) {
-          for (const notice of pinNotices) {
-            io.stderr.write(`defold-typescript bob ${subcommand}: ${notice}\n`);
-          }
         }
         const result = await runBobCommand({
           cwd: bobCwd,
@@ -1347,7 +1365,16 @@ function dispatchCommand(
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         if (json) {
-          io.stdout.write(renderResult({ command: "bob", subcommand, error: message }));
+          io.stdout.write(
+            renderResult({
+              command: "bob",
+              subcommand,
+              error: message,
+              ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
+              ...(pinMismatch ? { pinMismatch } : {}),
+              ...unresolvableTargetField,
+            }),
+          );
         } else {
           io.stderr.write(`${message}\n`);
         }
