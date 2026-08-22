@@ -310,10 +310,13 @@ describe("editor namespace emit", () => {
   // name, and no committed runtime doc declares one — so it provably cannot move
   // any runtime namespace's emitted surface. Read from the shipped manifests, so
   // a future runtime doc introducing a vararg reds this instead of silently
-  // reshaping a signature.
+  // reshaping a signature. Editor documents are out of scope on both axes: they
+  // do declare varargs, and `MODULE_MANIFEST` already excludes the default
+  // target's, so the versioned manifest's editor entries drop out here too.
   test("no committed runtime module doc declares a vararg parameter", () => {
     const offenders: string[] = [];
-    for (const entry of [...MODULE_MANIFEST, ...VERSIONED_MODULE_MANIFEST]) {
+    const versionedRuntime = VERSIONED_MODULE_MANIFEST.filter((entry) => entry.editor !== true);
+    for (const entry of [...MODULE_MANIFEST, ...versionedRuntime]) {
       for (const fn of parseDefoldApiDoc(entry.doc).functions) {
         for (const param of fn.parameters) {
           if (param.name.startsWith("...")) offenders.push(`${fn.name}(${param.name})`);
@@ -570,6 +573,30 @@ describe("versioned regen drift guard", () => {
     if (committed !== fresh) {
       throw new Error(
         `versions/${versionId}/index.d.ts is stale — run \`bun run regen\` in \`packages/types/\``,
+      );
+    }
+    expect(committed).toBe(fresh);
+  });
+});
+
+describe("versioned per-kind regen drift guard", () => {
+  const versionedKindCases = loadApiTargets()
+    .filter((target) => target.default !== true && (target.source ?? null) === null)
+    .flatMap((target) =>
+      targetKindManifest(target)
+        .filter((entry) => entry.only !== undefined)
+        .map((entry) => [`${target.id}/${entry.kind}`, target, entry.kind] as const),
+    );
+
+  test.each(
+    versionedKindCases,
+  )("%s: committed versioned kind index matches a fresh generateKindIndex", async (_label, target, kind) => {
+    const fresh = generateKindIndex(kind, target);
+    const path = resolve(GENERATED, "versions", target.id, "kinds", `${kind}.d.ts`);
+    const committed = await Bun.file(path).text();
+    if (committed !== fresh) {
+      throw new Error(
+        `versions/${target.id}/kinds/${kind}.d.ts is stale — run \`bun run regen\` in \`packages/types/\``,
       );
     }
     expect(committed).toBe(fresh);

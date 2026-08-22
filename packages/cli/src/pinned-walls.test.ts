@@ -203,7 +203,7 @@ describe("composite directory walls under a pinned committed surface", () => {
     const { materializedDir } = materializeApiSurface({
       cwd,
       surface: { surfaceId: COMMITTED, available: true },
-      sourceGeneratedDir: path.join(TYPES_PKG, "generated"),
+      sourceGeneratedDir: path.join(TYPES_PKG, "generated", "versions", COMMITTED),
     });
     expect(materializedDir).toBe(`.defold-types/${surfaceDir(COMMITTED)}`);
     ensureMaterializedReference(cwd, materializedDir);
@@ -386,18 +386,21 @@ describe("a pinned wall's documented kind-index import resolves into the pinned 
     return pinned;
   }
 
-  // One program reading both members settles both halves at once: the pinned-only
-  // member drawing no diagnostic proves the redirect resolves into the surface,
-  // and the installed-only member drawing TS2339 proves nothing else is loaded.
+  // One program reading both members settles both halves at once: the member the
+  // pinned surface declares drawing no diagnostic proves the redirect resolves
+  // into that surface, and the installed-only member drawing TS2339 proves
+  // nothing else is loaded. The first member need only be declared by the pin —
+  // where the pinned release is a strict subset of the installed one it is
+  // declared by both, and the second member carries the whole narrowing proof.
   // TS reports the missing property as TS2339, or TS2551 when it can suggest a
   // near-miss from the pinned surface; both are the same rejection.
-  function expectOnlyPinnedSurface(pinnedOnly: string, installedOnly: string): void {
+  function expectOnlyPinnedSurface(declaredByPin: string, installedOnly: string): void {
     const { code, output } = typecheckBuild(cwd);
     expect(code).not.toBe(0);
     expect(output).toMatch(
       new RegExp(`error TS2(339|551): Property '${installedOnly}' does not exist`),
     );
-    expect(output).not.toContain(pinnedOnly);
+    expect(output).not.toContain(declaredByPin);
     // The rejection is evidence about the pinned surface's *contents* only when
     // the program around it resolved. An unresolvable factory import (TS2307), a
     // `types` entry naming a subpath the surface never wrote (TS2688), or a
@@ -447,22 +450,26 @@ describe("a pinned wall's documented kind-index import resolves into the pinned 
 
   const COMMITTED = "defold-1.13.0";
 
+  // 1.13.0's editor document is a strict subset of the installed 1.13.1 one, so
+  // there is no member the pinned release declares alone. The narrowing proof is
+  // therefore one-directional and needs no renamed fixture: `platform` exists in
+  // both and only has to resolve, while `fetch_libraries` is 1.13.1-only on a
+  // namespace 1.13.0 does have, so it draws TS2339 unless the installed surface
+  // leaked in.
+  const RESOLVES_IN_BOTH = "platform";
+  const INSTALLED_ONLY_MEMBER = "fetch_libraries";
+
   function arrangeCommittedEditorWall(installed: boolean): void {
     writeRootTsconfig();
     const { materializedDir } = materializeApiSurface({
       cwd,
       surface: { surfaceId: COMMITTED, available: true },
-      sourceGeneratedDir: path.join(TYPES_PKG, "generated"),
+      sourceGeneratedDir: path.join(TYPES_PKG, "generated", "versions", COMMITTED),
     });
     ensureMaterializedReference(cwd, materializedDir);
     if (installed) {
       linkInstalledTypesPackage();
     }
-    renameInSurface(
-      `.defold-types/${surfaceDir(COMMITTED)}/editor.d.ts`,
-      "engine_sha1",
-      "only_in_pinned",
-    );
 
     touch(
       "src/tooling/bundle.ts",
@@ -470,8 +477,8 @@ describe("a pinned wall's documented kind-index import resolves into the pinned 
         'import { defineEditorScript } from "@defold-typescript/types/editor-script";',
         "export default defineEditorScript({",
         "  get_commands: () => {",
-        "    void editor.only_in_pinned;",
-        "    void editor.engine_sha1;",
+        `    void editor.${RESOLVES_IN_BOTH};`,
+        `    void editor.${INSTALLED_ONLY_MEMBER};`,
         "    return [];",
         "  },",
         "});",
@@ -483,8 +490,8 @@ describe("a pinned wall's documented kind-index import resolves into the pinned 
 
   test("an editor wall over a committed surface rejects a member only the installed release declares", () => {
     arrangeCommittedEditorWall(true);
-    expectOnlyPinnedSurface("only_in_pinned", "engine_sha1");
-    expectInstalledMemberReachable("src/tooling", "engine_sha1");
+    expectOnlyPinnedSurface(RESOLVES_IN_BOTH, INSTALLED_ONLY_MEMBER);
+    expectInstalledMemberReachable("src/tooling", INSTALLED_ONLY_MEMBER);
   });
 
   // The control's own negative control. Arrangement, not a production mutation:
@@ -492,8 +499,48 @@ describe("a pinned wall's documented kind-index import resolves into the pinned 
   // control is what refuses to call that a single-surface proof.
   test("the installed-channel control fails when nothing is installed to reach", () => {
     arrangeCommittedEditorWall(false);
-    expectOnlyPinnedSurface("only_in_pinned", "engine_sha1");
+    expectOnlyPinnedSurface(RESOLVES_IN_BOTH, INSTALLED_ONLY_MEMBER);
     expect(buildWithoutWallRedirect("src/tooling").code).not.toBe(0);
+  });
+
+  // A whole namespace, not a member: the editor-VM `image` library is
+  // 1.13.1-only, so under a 1.13.0 pin the name itself is undeclared (TS2304).
+  test("a pinned 1.13.0 editor wall rejects an editor-VM namespace only the installed release ships", () => {
+    writeRootTsconfig();
+    const { materializedDir } = materializeApiSurface({
+      cwd,
+      surface: { surfaceId: COMMITTED, available: true },
+      sourceGeneratedDir: path.join(TYPES_PKG, "generated", "versions", COMMITTED),
+    });
+    ensureMaterializedReference(cwd, materializedDir);
+    linkInstalledTypesPackage();
+
+    touch(
+      "src/tooling/bundle.ts",
+      [
+        'import { defineEditorScript } from "@defold-typescript/types/editor-script";',
+        "export default defineEditorScript({",
+        "  get_commands: () => {",
+        '    void image.load_file("logo.png");',
+        "    return [];",
+        "  },",
+        "});",
+      ].join("\n"),
+    );
+
+    expect(wallUnderPin()).toBe(surfaceDir(COMMITTED));
+    const { code, output } = typecheckBuild(cwd);
+    expect(code).not.toBe(0);
+    expect(output).toMatch(/error TS2304: Cannot find name 'image'/);
+
+    // Without this the rejection could just as well mean the installed package
+    // never declared `image` either, which would prove nothing about the pin.
+    const withoutWall = buildWithoutWallRedirect("src/tooling");
+    if (withoutWall.code !== 0) {
+      throw new Error(
+        `expected 'image' to resolve through the installed package once the wall redirect is gone, got:\n${withoutWall.output}`,
+      );
+    }
   });
 
   test("a gui wall over a ref-doc surface rejects a member only the installed release declares", async () => {

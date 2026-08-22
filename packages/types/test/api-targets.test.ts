@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { buildFidelityReport } from "../scripts/fidelity-audit";
 import {
+  type ApiTarget,
   generateModuleDeclaration,
   generateVersionIndex,
   loadApiTargets,
@@ -16,6 +17,31 @@ import { DEFOLD_VERSION, SYNC_MANIFEST, type ZipAccessor } from "../scripts/sync
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const GENERATED = resolve(PACKAGE_ROOT, "generated");
+const EDITOR_DOCUMENT_FIXTURE = "editor_doc.json";
+const EDITOR_NAMESPACE = "editor";
+
+// Committed targets are the ones whose fixtures live in the repo; a `source`
+// target is fetched, so its fixture tree is not a fact this suite can assert on.
+function committedTargets(): readonly ApiTarget[] {
+  return loadApiTargets().filter((target) => (target.source ?? null) === null);
+}
+
+function declaringTargets(): readonly ApiTarget[] {
+  return committedTargets().filter((target) => (target.editorModules?.length ?? 0) > 0);
+}
+
+function firstSegment(dotted: string): string {
+  return dotted.split(".")[0] ?? dotted;
+}
+
+// The top-level namespaces a target's editor document actually carries, read
+// from the fixture rather than restated, so the expectation moves with upstream.
+function editorDocumentSegments(target: ApiTarget): ReadonlySet<string> {
+  const doc = JSON.parse(
+    readFileSync(resolve(PACKAGE_ROOT, target.fixturesDir, EDITOR_DOCUMENT_FIXTURE), "utf8"),
+  ) as { elements: { name: string }[] };
+  return new Set(doc.elements.map((element) => firstSegment(element.name)));
+}
 
 function labelRefDocZip(): { fakeZip: ZipAccessor; cacheDir: string; version: string } {
   // Intentionally historical: 1.9.8 is a fixed ref-doc regression target, not the
@@ -232,8 +258,16 @@ describe("api-targets registry", () => {
     expect(new Set(VERSIONED_MODULE_MANIFEST.map((entry) => entry.versionId))).toEqual(
       new Set(demoted.map((target) => target.id)),
     );
+    // A declaring target contributes its editor modules to the same manifest,
+    // flagged `editor` so the aggregate version index can leave them out.
     expect(VERSIONED_MODULE_MANIFEST).toHaveLength(
-      demoted.reduce((total, target) => total + target.modules.length, 0),
+      demoted.reduce(
+        (total, target) => total + target.modules.length + (target.editorModules?.length ?? 0),
+        0,
+      ),
+    );
+    expect(VERSIONED_MODULE_MANIFEST.filter((entry) => entry.editor === true)).toHaveLength(
+      demoted.reduce((total, target) => total + (target.editorModules?.length ?? 0), 0),
     );
   });
 
@@ -380,18 +414,52 @@ describe("registry-declared editor modules", () => {
     );
   });
 
-  test("the default target declares the editor document and no other committed target does", () => {
-    const targets = loadApiTargets();
-    for (const target of targets) {
+  test("a committed target declares an editor surface exactly when it ships an editor document", () => {
+    for (const target of committedTargets()) {
       const declared = target.editorModules ?? [];
-      if (target.default === true) {
-        expect(declared.length).toBeGreaterThan(0);
-        for (const module of declared) {
-          expect(existsSync(resolve(PACKAGE_ROOT, target.fixturesDir, module.fixture))).toBe(true);
-        }
-        continue;
+      const hasDocument = existsSync(
+        resolve(PACKAGE_ROOT, target.fixturesDir, EDITOR_DOCUMENT_FIXTURE),
+      );
+      expect({ id: target.id, declares: declared.length > 0 }).toEqual({
+        id: target.id,
+        declares: hasDocument,
+      });
+      for (const module of declared) {
+        expect(existsSync(resolve(PACKAGE_ROOT, target.fixturesDir, module.fixture))).toBe(true);
       }
-      expect(declared).toEqual([]);
+    }
+  });
+
+  test("every editor VM module a target declares names a namespace its own editor document has", () => {
+    for (const target of declaringTargets()) {
+      const segments = editorDocumentSegments(target);
+      for (const module of target.editorModules ?? []) {
+        if (module.namespace === EDITOR_NAMESPACE) continue;
+        const segment = firstSegment(module.namespace);
+        expect({ id: target.id, segment, present: segments.has(segment) }).toEqual({
+          id: target.id,
+          segment,
+          present: true,
+        });
+      }
+    }
+  });
+
+  test("every namespace a target's editor document carries is declared or explicitly skipped", () => {
+    for (const target of declaringTargets()) {
+      const declared = target.editorModules ?? [];
+      const vmSegments = new Set(
+        declared
+          .filter((m) => m.namespace !== EDITOR_NAMESPACE)
+          .map((m) => firstSegment(m.namespace)),
+      );
+      const skipped = declared.find((m) => m.namespace === EDITOR_NAMESPACE)?.skipFunctions ?? [];
+      const undeclared = [...editorDocumentSegments(target)]
+        .filter((segment) => segment !== EDITOR_NAMESPACE)
+        .filter((segment) => !vmSegments.has(segment))
+        .filter((segment) => !skipped.some((rule) => rule === segment || rule === `${segment}.`))
+        .sort();
+      expect({ id: target.id, undeclared }).toEqual({ id: target.id, undeclared: [] });
     }
   });
 });
