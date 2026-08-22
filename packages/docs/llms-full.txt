@@ -4600,8 +4600,12 @@ pinned writes nothing. It does not materialize a surface or repoint
 - a concrete version is checked against the API registry, not just its shape, so
   `set-target 1.42.99` is rejected with the resolvable targets listed and nothing
   written — the typo is caught where you made it rather than surfacing later as
-  the unprovidable-pin notice above. Channels bypass the check, because they
-  resolve their head at build time and are not registry members;
+  the unprovidable-pin notice above. If the registry cannot be read at all — a
+  broken `@defold-typescript/types` install, a missing or unreadable
+  `api-targets.json` — the version is rejected too rather than written unchecked;
+  reinstall the types package, or pin a channel. Channels bypass the check
+  entirely, because they resolve their head at build time and are not registry
+  members, so they keep working precisely when the registry does not;
 - `set-target --detected` (alias `--detect`) pins the installed editor's version,
   erroring when no Defold editor is detected rather than falling back. An
   installed editor the registry cannot provide is rejected the same way, rather
