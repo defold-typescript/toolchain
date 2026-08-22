@@ -450,77 +450,80 @@ declare global {
      * -- Device and graphics adapter support 3D textures
      * end
      * @example
-     * ```lua
-     * How to create an 128x128 RGBA texture resource and assign it to a model
-     * function init(self)
-     *     local tparams = {
-     *        width          = 128,
-     *        height         = 128,
-     *        type           = graphics.TEXTURE_TYPE_2D,
-     *        format         = graphics.TEXTURE_FORMAT_RGBA,
-     *    }
-     *    local my_texture_id = resource.create_texture("/my_custom_texture.texturec", tparams)
-     *    go.set("#model", "texture0", my_texture_id)
-     * end
-     * ```How to create an 128x128 floating point texture (RGBA32F) resource from a buffer object
+     * ```ts
+     * // How to create an 128x128 RGBA texture resource and assign it to a model
+     * export default defineScript({
+     *   init() {
+     *     const tparams = {
+     *       width: 128,
+     *       height: 128,
+     *       type: graphics.TEXTURE_TYPE_2D,
+     *       format: graphics.TEXTURE_FORMAT_RGBA,
+     *     };
+     *     const my_texture_id = resource.create_texture("/my_custom_texture.texturec", tparams);
+     *     go.set("#model", "texture0", my_texture_id);
+     *   },
+     * });
      *
-     * ```lua
-     * function init(self)
-     *     -- Create a new buffer with 4 components and FLOAT32 type
-     *     local tbuffer = buffer.create(128 * 128, { {name=hash("rgba"), type=buffer.VALUE_TYPE_FLOAT32, count=4} } )
-     *     local tstream = buffer.get_stream(tbuffer, hash("rgba"))
+     * // How to create an 128x128 floating point texture (RGBA32F) resource from a buffer object
+     * export default defineScript({
+     *   init() {
+     *     // Create a new buffer with 4 components and FLOAT32 type
+     *     const tbuffer = buffer.create(128 * 128, [{ name: hash("rgba"), type: buffer.VALUE_TYPE_FLOAT32, count: 4 }]);
+     *     const tstream = buffer.get_stream(tbuffer, hash("rgba"));
      *
-     *     -- Fill the buffer stream with some float values
-     *     for y=1,128 do
-     *         for x=1,128 do
-     *             local index = (y-1) * 128 * 4 + (x-1) * 4 + 1
-     *             tstream[index + 0] = 999.0
-     *             tstream[index + 1] = -1.0
-     *             tstream[index + 2] = 0.5
-     *             tstream[index + 3] = 1.0
-     *         end
-     *     end
+     *     // Fill the buffer stream with some float values
+     *     for (let y = 0; y < 128; y++) {
+     *       for (let x = 0; x < 128; x++) {
+     *         const index = y * 128 * 4 + x * 4;
+     *         tstream[index + 0] = 999.0;
+     *         tstream[index + 1] = -1.0;
+     *         tstream[index + 2] = 0.5;
+     *         tstream[index + 3] = 1.0;
+     *       }
+     *     }
      *
-     *     -- Create a 2D Texture with a RGBA23F format
-     *     local tparams = {
-     *        width          = 128,
-     *        height         = 128,
-     *        type           = graphics.TEXTURE_TYPE_2D,
-     *        format         = graphics.TEXTURE_FORMAT_RGBA32F,
-     *    }
+     *     // Create a 2D Texture with a RGBA23F format
+     *     const tparams = {
+     *       width: 128,
+     *       height: 128,
+     *       type: graphics.TEXTURE_TYPE_2D,
+     *       format: graphics.TEXTURE_FORMAT_RGBA32F,
+     *     };
      *
-     *    -- Note that we pass the buffer as the last argument here!
-     *    local my_texture_id = resource.create_texture("/my_custom_texture.texturec", tparams, tbuffer)
+     *     // Note that we pass the buffer as the last argument here!
+     *     const my_texture_id = resource.create_texture("/my_custom_texture.texturec", tparams, tbuffer);
      *
-     *    -- assign the texture to a model
-     *    go.set("#model", "texture0", my_texture_id)
-     * end
-     * ```How to create a 32x32x32 floating point 3D texture that can be used to generate volumetric data in a compute shader
+     *     // assign the texture to a model
+     *     go.set("#model", "texture0", my_texture_id);
+     *   },
+     * });
      *
-     * ```lua
-     * function init(self)
-     *     local t_volume = resource.create_texture("/my_backing_texture.texturec", {
-     *         type   = graphics.TEXTURE_TYPE_IMAGE_3D,
-     *         width  = 32,
-     *         height = 32,
-     *         depth  = 32,
-     *         format = resource.TEXTURE_FORMAT_RGBA32F,
-     *         flags  = resource.TEXTURE_USAGE_FLAG_STORAGE + resource.TEXTURE_USAGE_FLAG_SAMPLE,
-     *     })
+     * // How to create a 32x32x32 floating point 3D texture that can be used to generate volumetric data in a compute shader
+     * export default defineScript({
+     *   init() {
+     *     const t_volume = resource.create_texture("/my_backing_texture.texturec", {
+     *       type: graphics.TEXTURE_TYPE_IMAGE_3D,
+     *       width: 32,
+     *       height: 32,
+     *       depth: 32,
+     *       format: resource.TEXTURE_FORMAT_RGBA32F,
+     *       flags: resource.TEXTURE_USAGE_FLAG_STORAGE + resource.TEXTURE_USAGE_FLAG_SAMPLE,
+     *     });
      *
-     *     -- pass the backing texture to the render script
-     *     msg.post("@render:", "add_textures", { t_volume })
-     * end
-     * ```How to create 512x512 texture array with 5 pages.
+     *     // pass the backing texture to the render script
+     *     msg.post("@render:", "add_textures", [t_volume]);
+     *   },
+     * });
      *
-     * ```lua
-     *         local new_tex = resource.create_texture("/runtime/example_array.texturec", {
-     *             type = graphics.TEXTURE_TYPE_2D_ARRAY,
-     *             width = 512,
-     *             height = 512,
-     *             page_count = 5,
-     *             format = graphics.TEXTURE_FORMAT_RGB,
-     *         })
+     * // How to create 512x512 texture array with 5 pages.
+     * const new_tex = resource.create_texture("/runtime/example_array.texturec", {
+     *   type: graphics.TEXTURE_TYPE_2D_ARRAY,
+     *   width: 512,
+     *   height: 512,
+     *   page_count: 5,
+     *   format: graphics.TEXTURE_FORMAT_RGB,
+     * });
      * ```
      */
     function create_texture(path: string, table: { type?: number; width?: number; height?: number; depth?: number; format?: number; flags?: number; max_mipmaps?: number; compression_type?: number }, buffer: Opaque<"buffer">): Hash;
@@ -1348,119 +1351,128 @@ declare global {
      * -- Device and graphics adapter support 3D textures
      * end
      * @example
-     * ```lua
-     * How to set all pixels of an atlas
-     * function init(self)
-     *   self.height = 128
-     *   self.width = 128
-     *   self.buffer = buffer.create(self.width * self.height, { {name=hash("rgb"), type=buffer.VALUE_TYPE_UINT8, count=3} } )
-     *   self.stream = buffer.get_stream(self.buffer, hash("rgb"))
+     * ```ts
+     * // How to set all pixels of an atlas
+     * export default defineScript({
+     *   init(self) {
+     *     self.height = 128;
+     *     self.width = 128;
+     *     self.buffer = buffer.create(self.width * self.height, [{ name: hash("rgb"), type: buffer.VALUE_TYPE_UINT8, count: 3 }]);
+     *     self.stream = buffer.get_stream(self.buffer, hash("rgb"));
      *
-     *   for y=1,self.height do
-     *       for x=1,self.width do
-     *           local index = (y-1) * self.width * 3 + (x-1) * 3 + 1
-     *           self.stream[index + 0] = 0xff
-     *           self.stream[index + 1] = 0x80
-     *           self.stream[index + 2] = 0x10
-     *       end
-     *   end
-     *
-     *   local resource_path = go.get("#model", "texture0")
-     *   local args = { width=self.width, height=self.height, type=graphics.TEXTURE_TYPE_2D, format=graphics.TEXTURE_FORMAT_RGB, num_mip_maps=1 }
-     *   resource.set_texture( resource_path, args, self.buffer )
-     * end
-     * ```How to update a specific region of an atlas by using the x,y values. Assumes the already set atlas is a 128x128 texture.
-     *
-     * ```lua
-     * function init(self)
-     *   self.x = 16
-     *   self.y = 16
-     *   self.height = 128 - self.x * 2
-     *   self.width = 128 - self.y * 2
-     *   self.buffer = buffer.create(self.width * self.height, { {name=hash("rgb"), type=buffer.VALUE_TYPE_UINT8, count=3} } )
-     *   self.stream = buffer.get_stream(self.buffer, hash("rgb"))
-     *
-     *   for y=1,self.height do
-     *       for x=1,self.width do
-     *           local index = (y-1) * self.width * 3 + (x-1) * 3 + 1
-     *           self.stream[index + 0] = 0xff
-     *           self.stream[index + 1] = 0x80
-     *           self.stream[index + 2] = 0x10
-     *       end
-     *   end
-     *
-     *   local resource_path = go.get("#model", "texture0")
-     *   local args = { width=self.width, height=self.height, x=self.x, y=self.y, type=graphics.TEXTURE_TYPE_2D, format=graphics.TEXTURE_FORMAT_RGB, num_mip_maps=1 }
-     *   resource.set_texture(resource_path, args, self.buffer )
-     * end
-     * ```Update a texture from a buffer resource
-     * ```lua
-     * go.property("my_buffer", resource.buffer("/my_default_buffer.buffer"))
-     *
-     * function init(self)
-     *     local resource_path = go.get("#model", "texture0")
-     *     -- the "my_buffer" resource is expected to hold 128 * 128 * 3 bytes!
-     *     local args = {
-     *          width  = 128,
-     *          height = 128,
-     *          type   = graphics.TEXTURE_TYPE_2D,
-     *          format = graphics.TEXTURE_FORMAT_RGB
-     *      }
-     *     -- Note that the extra resource.get_buffer call is a requirement here
-     *     -- since the "self.my_buffer" is just pointing to a buffer resource path
-     *     -- and not an actual buffer object or buffer resource.
-     *     resource.set_texture(resource_path, args, resource.get_buffer(self.my_buffer))
-     * end
-     * ```Update an existing 3D texture from a lua buffer
-     *
-     * ```lua
-     *
-     * function init(self)
-     *     -- create a buffer that can hold the data of a 8x8x8 texture
-     *     local tbuffer = buffer.create(8 * 8 * 8, { {name=hash("rgba"), type=buffer.VALUE_TYPE_FLOAT32, count=4} } )
-     *     local tstream = buffer.get_stream(tbuffer, hash("rgba"))
-     *
-     *     -- populate the buffer with some data
-     *     local index = 1
-     *     for z=1,8 do
-     *         for y=1,8 do
-     *             for x=1,8 do
-     *                 tstream[index + 0] = x
-     *                 tstream[index + 1] = y
-     *                 tstream[index + 2] = z
-     *                 tstream[index + 3] = 1.0
-     *                 index = index + 4
-     *             end
-     *         end
-     *     end
-     *
-     *     local t_args = {
-     *         type   = graphics.TEXTURE_TYPE_IMAGE_3D,
-     *         width  = 8,
-     *         height = 8,
-     *         depth  = 8,
-     *         format = resource.TEXTURE_FORMAT_RGBA32F
+     *     for (let y = 0; y < self.height; y++) {
+     *       for (let x = 0; x < self.width; x++) {
+     *         const index = y * self.width * 3 + x * 3;
+     *         self.stream[index + 0] = 0xff;
+     *         self.stream[index + 1] = 0x80;
+     *         self.stream[index + 2] = 0x10;
+     *       }
      *     }
      *
-     *     -- This expects that the texture resource "/my_3d_texture.texturec" already exists
-     *     -- and is a 3D texture resource. To create a dynamic 3D texture resource
-     *     -- use the "resource.create_texture" function.
-     *     resource.set_texture("/my_3d_texture.texturec", t_args, tbuffer)
-     * endUpdate texture 2nd array page with loaded texture from png
+     *     const resource_path = go.get("#model", "texture0");
+     *     const args = { width: self.width, height: self.height, type: graphics.TEXTURE_TYPE_2D, format: graphics.TEXTURE_FORMAT_RGB, num_mip_maps: 1 };
+     *     resource.set_texture(resource_path, args, self.buffer);
+     *   },
+     * });
      *
-     * ```lua
-     *     -- new_tex is resource handle of texture which was created via resource.create_resource
-     *     local tex_path = "/bundle_resources/page_02.png"
-     *     local data = sys.load_resource(tex_path)
-     *     local buf = image.load_buffer(data)
-     *     resource.set_texture(new_tex, {
-     *         type = graphics.TEXTURE_TYPE_2D_ARRAY,
-     *         width = buf.width,
-     *         height = buf.height,
-     *         page = 1,
-     *         format = graphics.TEXTURE_FORMAT_RGB
-     *     }, buf.buffer)
-     *     go.set("#mesh", "texture0", new_tex)
+     * // How to update a specific region of an atlas by using the x,y values. Assumes the already set atlas is a 128x128 texture.
+     * export default defineScript({
+     *   init(self) {
+     *     self.x = 16;
+     *     self.y = 16;
+     *     self.height = 128 - self.x * 2;
+     *     self.width = 128 - self.y * 2;
+     *     self.buffer = buffer.create(self.width * self.height, [{ name: hash("rgb"), type: buffer.VALUE_TYPE_UINT8, count: 3 }]);
+     *     self.stream = buffer.get_stream(self.buffer, hash("rgb"));
+     *
+     *     for (let y = 0; y < self.height; y++) {
+     *       for (let x = 0; x < self.width; x++) {
+     *         const index = y * self.width * 3 + x * 3;
+     *         self.stream[index + 0] = 0xff;
+     *         self.stream[index + 1] = 0x80;
+     *         self.stream[index + 2] = 0x10;
+     *       }
+     *     }
+     *
+     *     const resource_path = go.get("#model", "texture0");
+     *     const args = { width: self.width, height: self.height, x: self.x, y: self.y, type: graphics.TEXTURE_TYPE_2D, format: graphics.TEXTURE_FORMAT_RGB, num_mip_maps: 1 };
+     *     resource.set_texture(resource_path, args, self.buffer);
+     *   },
+     * });
+     *
+     * // Update a texture from a buffer resource
+     * go.property("my_buffer", resource.buffer("/my_default_buffer.buffer"));
+     *
+     * export default defineScript({
+     *   init(self) {
+     *     const resource_path = go.get("#model", "texture0");
+     *     // the "my_buffer" resource is expected to hold 128 * 128 * 3 bytes!
+     *     const args = {
+     *       width: 128,
+     *       height: 128,
+     *       type: graphics.TEXTURE_TYPE_2D,
+     *       format: graphics.TEXTURE_FORMAT_RGB,
+     *     };
+     *     // Note that the extra resource.get_buffer call is a requirement here
+     *     // since the "self.my_buffer" is just pointing to a buffer resource path
+     *     // and not an actual buffer object or buffer resource.
+     *     resource.set_texture(resource_path, args, resource.get_buffer(self.my_buffer));
+     *   },
+     * });
+     *
+     * // Update an existing 3D texture from a buffer
+     * export default defineScript({
+     *   init() {
+     *     // create a buffer that can hold the data of a 8x8x8 texture
+     *     const tbuffer = buffer.create(8 * 8 * 8, [{ name: hash("rgba"), type: buffer.VALUE_TYPE_FLOAT32, count: 4 }]);
+     *     const tstream = buffer.get_stream(tbuffer, hash("rgba"));
+     *
+     *     // populate the buffer with some data
+     *     let index = 0;
+     *     for (let z = 0; z < 8; z++) {
+     *       for (let y = 0; y < 8; y++) {
+     *         for (let x = 0; x < 8; x++) {
+     *           tstream[index + 0] = x;
+     *           tstream[index + 1] = y;
+     *           tstream[index + 2] = z;
+     *           tstream[index + 3] = 1.0;
+     *           index = index + 4;
+     *         }
+     *       }
+     *     }
+     *
+     *     const t_args = {
+     *       type: graphics.TEXTURE_TYPE_IMAGE_3D,
+     *       width: 8,
+     *       height: 8,
+     *       depth: 8,
+     *       format: resource.TEXTURE_FORMAT_RGBA32F,
+     *     };
+     *
+     *     // This expects that the texture resource "/my_3d_texture.texturec" already exists
+     *     // and is a 3D texture resource. To create a dynamic 3D texture resource
+     *     // use the "resource.create_texture" function.
+     *     resource.set_texture("/my_3d_texture.texturec", t_args, tbuffer);
+     *   },
+     * });
+     *
+     * // Update texture 2nd array page with loaded texture from png
+     * // new_tex is resource handle of texture which was created via resource.create_resource
+     * const tex_path = "/bundle_resources/page_02.png";
+     * const [data] = sys.load_resource(tex_path);
+     * const buf = image.load_buffer(data);
+     * resource.set_texture(
+     *   new_tex,
+     *   {
+     *     type: graphics.TEXTURE_TYPE_2D_ARRAY,
+     *     width: buf.width,
+     *     height: buf.height,
+     *     page: 1,
+     *     format: graphics.TEXTURE_FORMAT_RGB,
+     *   },
+     *   buf.buffer,
+     * );
+     * go.set("#mesh", "texture0", new_tex);
      * ```
      */
     function set_texture(path: Hash | string, table: { type?: number; width?: number; height?: number; format?: number; x?: number; y?: number; z?: number; page?: number; mipmap?: number; compression_type?: number }, buffer: Opaque<"buffer">): void;
