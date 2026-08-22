@@ -70,6 +70,14 @@ export function surfaceStampStatus(surfaceDir: string): SurfaceStampStatus {
   return stamp === claimed ? "match" : "mismatch";
 }
 
+// Retract the stamp for the duration of a materialization. Re-materializing the
+// same `(target, cliVersion)` lands in a directory whose existing stamp already
+// equals the new one, so moving the write to the end is not enough on its own:
+// the previous run's stamp would vouch for the whole rewrite.
+function clearSurfaceStamp(absDir: string): void {
+  rmSync(path.join(absDir, "package.json"), { force: true });
+}
+
 // Drive-rooted (`X:\`, `X:/`) and UNC (`\\server\share`) roots, neither of which
 // `path.posix.isAbsolute` recognizes.
 const WINDOWS_ABSOLUTE = /^(?:[A-Za-z]:[\\/]|\\\\)/;
@@ -444,6 +452,7 @@ export function materializeApiSurface(
   const relDir = path.posix.join(MATERIALIZED_ROOT, dirName);
   const absDir = path.join(cwd, MATERIALIZED_ROOT, dirName);
   mkdirSync(absDir, { recursive: true });
+  clearSurfaceStamp(absDir);
 
   const sources = listDts(sourceGeneratedDir).filter((file) => file !== "index.d.ts");
 
@@ -541,15 +550,6 @@ export function materializeApiSurface(
   const imports = modules.map((mod) => `import "./${mod}";`).join("\n");
   writeFileSync(path.join(absDir, "index.d.ts"), `${imports}\n\nexport {};\n`);
 
-  // `name` keeps the bare surface id: a second `@` is not a legal npm name. The
-  // toolchain axis rides `version`, which is also what `surfaceStampStatus`
-  // reads back to tell a surface apart from a directory merely named like one.
-  writeJson(path.join(absDir, "package.json"), {
-    name: `@defold-typescript/materialized-${surfaceId}`,
-    version: cliVersion,
-    types: "index.d.ts",
-  });
-
   writePinnedRootEntrypoint(absDir, typesRoot);
 
   // The surface directory is reused across builds, so the editor carry-over is
@@ -568,6 +568,17 @@ export function materializeApiSurface(
     mkdirSync(kindsDir, { recursive: true });
     writeFileSync(path.join(kindsDir, "editor-script.d.ts"), editorPlan.kindIndex);
   }
+
+  // `name` keeps the bare surface id: a second `@` is not a legal npm name. The
+  // toolchain axis rides `version`, which is also what `surfaceStampStatus`
+  // reads back to tell a surface apart from a directory merely named like one.
+  // Last write of the function: the stamp only ever vouches for a surface whose
+  // every other file has already landed.
+  writeJson(path.join(absDir, "package.json"), {
+    name: `@defold-typescript/materialized-${surfaceId}`,
+    version: cliVersion,
+    types: "index.d.ts",
+  });
 
   return { materializedDir: relDir, active: surfaceId };
 }
@@ -769,6 +780,7 @@ export async function materializeRefDocSurface(
   const relDir = path.posix.join(MATERIALIZED_ROOT, dirName);
   const absDir = path.join(cwd, MATERIALIZED_ROOT, dirName);
   try {
+    clearSurfaceStamp(absDir);
     const mod = (await import(
       path.join(root, "scripts", "materialize-version.ts")
     )) as MaterializeVersionedSurfaceModule;
@@ -838,9 +850,13 @@ export async function materializeRefDocSurface(
       ),
       "./core-types": { types: "./core-types.d.ts" },
     };
-    writeJson(pkgPath, pkg);
 
     writePinnedRootEntrypoint(absDir, root);
+
+    // Stamped last, as in `materializeApiSurface`. The `catch` below already
+    // removes the whole directory on an in-process throw, so the ordering here
+    // is what a SIGKILL between the two writes sees.
+    writeJson(pkgPath, pkg);
   } catch {
     rmSync(absDir, { recursive: true, force: true });
     return { materializedDir: null, active: null };
