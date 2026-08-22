@@ -4,18 +4,20 @@ import type { ReleaseImportManifest } from "../packages/types/scripts/import-def
 import { runBumpCheck } from "./bump-defold-check.ts";
 import {
   classifyTransition,
+  compareVersions,
   EXTENSION_PINS,
   fixtureDir,
   RELEASE_MODEL,
   type ReleaseTransition,
+  retainedVersions,
   type TargetMeta,
   targetMetaFor,
 } from "./release-model.ts";
 
 // One verb for the mechanical half of a Defold version bump: validate the
 // target, run the fail-closed release import, sync the ref-doc fixtures, rewrite
-// `api-targets.json` metadata (in place for a patch, add-default + demote-prior
-// for a minor), and regenerate every committed artifact — then report the
+// `api-targets.json` metadata (add-default + demote-prior for both transition
+// classes), and regenerate every committed artifact — then report the
 // review points a human still owns. Publication stays separate: this never
 // calls `scripts/release.ts`.
 
@@ -41,7 +43,10 @@ export const BUMP_STAGES: readonly BumpStageId[] = [
   "regen",
 ];
 
-export type TargetOpKind = "in-place" | "add-default" | "demote";
+// `in-place` is deliberately absent: a patch that rewrote the existing entry's
+// version took its predecessor's surface with it, which is exactly the retention
+// failure `SURFACE_RETENTION` now rules out.
+export type TargetOpKind = "add-default" | "demote";
 
 export interface TargetOp {
   readonly kind: TargetOpKind;
@@ -55,19 +60,14 @@ export interface BumpPlan {
   readonly transition: ReleaseTransition;
   readonly stages: readonly BumpStageId[];
   readonly targetOps: readonly TargetOp[];
+  // The rotated `DEFOLD_VERSIONS` tuple, and the versions the retention rule
+  // drops from it. A dropped version keeps its registry entry, its fixtures and
+  // its committed surface — it is no longer part of the pre-baked pair.
+  readonly prebaked: readonly string[];
+  readonly demotedFromPrebaked: readonly string[];
 }
 
 export class BumpValidationError extends Error {}
-
-function compareVersions(a: string, b: string): number {
-  const pa = a.split(".").map(Number);
-  const pb = b.split(".").map(Number);
-  for (let index = 0; index < Math.max(pa.length, pb.length); index += 1) {
-    const delta = (pa[index] ?? 0) - (pb[index] ?? 0);
-    if (delta !== 0) return delta < 0 ? -1 : 1;
-  }
-  return 0;
-}
 
 // Structural, not `typeof RELEASE_MODEL`: pinning the parameter to the live
 // model's literal type makes the seam untestable, since no injected model can
@@ -75,6 +75,7 @@ function compareVersions(a: string, b: string): number {
 export interface BumpReleaseModel {
   readonly current: string;
   readonly previous: string;
+  readonly all: readonly string[];
 }
 
 export function planBump(to: string, model: BumpReleaseModel = RELEASE_MODEL): BumpPlan {
@@ -90,14 +91,15 @@ export function planBump(to: string, model: BumpReleaseModel = RELEASE_MODEL): B
     throw new BumpValidationError(`'${to}' is a downgrade from '${from}' — refusing`);
   }
   const transition = classifyTransition(from, to);
-  const targetOps: TargetOp[] =
-    transition === "patch"
-      ? [{ kind: "in-place", version: to, meta: targetMetaFor(to, { isDefault: true }) }]
-      : [
-          { kind: "add-default", version: to, meta: targetMetaFor(to, { isDefault: true }) },
-          { kind: "demote", version: from, meta: targetMetaFor(from, { isDefault: false }) },
-        ];
-  return { to, from, transition, stages: BUMP_STAGES, targetOps };
+  // Both transition classes demote: nothing about a patch makes the predecessor
+  // unavailable, so it moves beside the new default instead of being overwritten.
+  const targetOps: TargetOp[] = [
+    { kind: "add-default", version: to, meta: targetMetaFor(to, { isDefault: true }) },
+    { kind: "demote", version: from, meta: targetMetaFor(from, { isDefault: false }) },
+  ];
+  const prebaked = retainedVersions(model.all, to);
+  const demotedFromPrebaked = model.all.filter((version) => !prebaked.includes(version));
+  return { to, from, transition, stages: BUMP_STAGES, targetOps, prebaked, demotedFromPrebaked };
 }
 
 export interface StageContext {
@@ -127,8 +129,11 @@ export function remainingHumanDecisions(plan: BumpPlan): string[] {
     `re-confirm the pinned extension release tags (${EXTENSION_PINS.map((p) => `${p.namespace}@${p.tag}`).join(", ")}) still match the intended ${plan.to} build`,
     `author the ${plan.to} upgrade guide`,
   ];
-  if (plan.transition === "minor") {
-    decisions.push(`review the demoted defold-${plan.from} surface under generated/versions/`);
+  decisions.push(`review the demoted defold-${plan.from} surface under generated/versions/`);
+  if (plan.demotedFromPrebaked.length > 0) {
+    decisions.push(
+      `confirm the retention rule's pre-baked drop: ${plan.demotedFromPrebaked.join(", ")} leave DEFOLD_VERSIONS (registry entries, fixtures and committed surfaces stay)`,
+    );
   }
   return decisions;
 }
@@ -221,22 +226,17 @@ interface TargetEntry {
 }
 
 // Programmatically apply a plan's target operations to `api-targets.json`, never
-// by hand. A patch swaps the current default's version in place; a minor inserts
-// the new version as default (inheriting the prior default's module surface as a
-// starting point a human then curates) and demotes the prior default into
-// `generated/versions/`.
+// by hand. Both transition classes insert the new version as default (inheriting
+// the prior default's module surface as a starting point a human then curates)
+// and demote the prior default into `generated/versions/`, keeping its own
+// `fixturesDir` so the demoted surface still has the documents it was built from.
 export function applyTargetOps(plan: BumpPlan, targetsPath = TARGETS_PATH): void {
   const registry = JSON.parse(readFileSync(targetsPath, "utf8")) as { targets: TargetEntry[] };
   const priorDefault = registry.targets.find((target) => target.default);
   if (!priorDefault) throw new Error("api-targets.json has no default target");
 
   for (const op of plan.targetOps) {
-    if (op.kind === "in-place") {
-      priorDefault.id = `defold-${op.version}`;
-      priorDefault.fixturesDir = op.meta.fixturesDir;
-      priorDefault.generatedDir = op.meta.generatedDir;
-      priorDefault.coreTypesImport = op.meta.coreTypesImport;
-    } else if (op.kind === "add-default") {
+    if (op.kind === "add-default") {
       const newDefault: TargetEntry = {
         id: `defold-${op.version}`,
         default: op.meta.default,
@@ -260,10 +260,12 @@ export function applyTargetOps(plan: BumpPlan, targetsPath = TARGETS_PATH): void
 
 // Rewrite the version literals a bump makes stale, programmatically (never by
 // hand) and mirroring `applyTargetOps`' path-injectable shape so tests operate
-// on temp copies. `DEFOLD_VERSIONS` seeds `RELEASE_MODEL`, so it must hold
-// exactly `[newCurrent, newPrevious]`; the sync file's `DEFOLD_VERSION` and both
-// `fixtures/defold-<from>/` templates must retarget the new dir so the next sync
-// writes core *and* extension fixtures into `fixtures/defold-<to>/`.
+// on temp copies. `DEFOLD_VERSIONS` seeds `RELEASE_MODEL`, so it holds exactly
+// the plan's pre-baked set — decided by `SURFACE_RETENTION` at plan time, never
+// re-derived from whatever the file happens to say; the sync file's
+// `DEFOLD_VERSION` and both `fixtures/defold-<from>/` templates must retarget the
+// new dir so the next sync writes core *and* extension fixtures into
+// `fixtures/defold-<to>/`.
 export function applyVersionRotation(
   plan: BumpPlan,
   paths: { versionFile?: string; syncFile?: string } = {},
@@ -274,10 +276,7 @@ export function applyVersionRotation(
   const versionSrc = readFileSync(versionFile, "utf8");
   const tuple = versionSrc.match(/DEFOLD_VERSIONS = \[[^\]]*\]/);
   if (!tuple) throw new Error(`could not find DEFOLD_VERSIONS tuple in ${versionFile}`);
-  const existing = [...tuple[0].matchAll(/"([^"]+)"/g)].map((entry) => entry[1]);
-  // patch keeps the existing previous ([1]); minor demotes the prior current ([0]).
-  const prevKept = plan.transition === "patch" ? existing[1] : existing[0];
-  const rotated = `DEFOLD_VERSIONS = ["${plan.to}", "${prevKept}"]`;
+  const rotated = `DEFOLD_VERSIONS = [${plan.prebaked.map((version) => `"${version}"`).join(", ")}]`;
   writeFileSync(versionFile, versionSrc.replace(tuple[0], rotated));
 
   const syncSrc = readFileSync(syncFile, "utf8")
