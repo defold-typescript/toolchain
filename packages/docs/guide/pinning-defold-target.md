@@ -323,13 +323,13 @@ carries the runtime trio (`script`, `gui-script`, `render-script`); a surface
 **copied from a committed snapshot** — the current default, 1.13.0 and 1.12.4 —
 carries no runtime kind at all, so its runtime walls always keep the installed subpath.
 Either surface carries `editor-script` only when the target it was built from
-ships an editor-scripting document of its own, which today only the current
-default target does. A project pinned to a target without one keeps the installed
-package's [editor-script surface](editor-scripts.md) — nothing silently
-substitutes the default target's editor API for the pinned release's. Where a
-wall does narrow, the narrowing covers the `@defold-typescript/types/<kind>`
-factory import as well as the ambient surface, so both come from the pinned
-release; see [walling a directory](./wall.md).
+ships an editor-scripting document of its own — today the current default target
+and 1.13.0, but not 1.12.4. A project pinned to a target without one falls back
+to the installed package's [editor-script surface](editor-scripts.md), which is
+the current default target's editor API: the pin does not narrow editor scripts
+there. Where a wall does narrow, the narrowing covers the
+`@defold-typescript/types/<kind>` factory import as well as the ambient surface,
+so both come from the pinned release; see [walling a directory](./wall.md).
 
 If a pinned target cannot be generated — an unknown version, or no network on
 first use — the build does **not** fail. It reports `materializedSurface: null`,
