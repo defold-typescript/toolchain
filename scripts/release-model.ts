@@ -30,6 +30,66 @@ export function fixtureDir(version: string): string {
   return `fixtures/defold-${version}`;
 }
 
+// Newest-first ordering over `major.minor.patch` strings, shared with the bump
+// orchestrator so the retention rule and the plan validator order versions the
+// same way.
+export function compareVersions(a: string, b: string): number {
+  const pa = a.split(".").map(Number);
+  const pb = b.split(".").map(Number);
+  for (let index = 0; index < Math.max(pa.length, pb.length); index += 1) {
+    const delta = (pa[index] ?? 0) - (pb[index] ?? 0);
+    if (delta !== 0) return delta < 0 ? -1 : 1;
+  }
+  return 0;
+}
+
+function minorLineOf(version: string): string {
+  return version.split(".").slice(0, 2).join(".");
+}
+
+export type RetentionSlot = "current" | "previous-minor";
+
+// Which Defold surfaces a bump leaves pre-baked, as data the planner executes
+// rather than prose it restates. The toolchain ships the incoming release plus
+// the newest release of the preceding minor line; an intermediate patch keeps
+// its `api-targets.json` entry, its fixtures and its committed
+// `generated/versions/` surface, and only leaves the `DEFOLD_VERSIONS` tuple —
+// which is what `bump-defold` reports as a remaining human decision.
+//
+// This is the bump's default, not a cap: a surface restored by hand (as 1.13.0
+// was) stays pre-baked until the next bump applies the rule again.
+export const SURFACE_RETENTION = {
+  keep: ["current", "previous-minor"] as readonly RetentionSlot[],
+} as const;
+
+// Apply `SURFACE_RETENTION` to a candidate version set, newest-first. The
+// previous-minor slot falls back to the newest remaining predecessor when every
+// known release shares the incoming release's minor line, because
+// `PREVIOUS_STABLE_DEFOLD_VERSION` reads the tuple's second entry.
+export function retainedVersions(all: readonly string[], to: string): string[] {
+  const ordered = [...new Set([to, ...all])].sort(compareVersions).reverse();
+  const retained: string[] = [];
+  for (const slot of SURFACE_RETENTION.keep) {
+    const pick =
+      slot === "current"
+        ? to
+        : (ordered.find((version) => version !== to && minorLineOf(version) !== minorLineOf(to)) ??
+          ordered.find((version) => version !== to));
+    if (pick !== undefined && !retained.includes(pick)) retained.push(pick);
+  }
+  return retained;
+}
+
+// The Defold versions the changelog's preamble presents as selectable. The
+// preamble is live page prose above the first `## vX.Y.Z` heading — unlike a
+// released section it is not frozen, so it has to keep tracking the target
+// registry, and `release-model.test.ts` guards it against `api-targets.json`.
+export function preambleSelectableVersions(changelog: string): string[] {
+  const firstRelease = changelog.search(/^## v\d/m);
+  const preamble = firstRelease === -1 ? changelog : changelog.slice(0, firstRelease);
+  return [...new Set([...preamble.matchAll(/`(\d+\.\d+\.\d+)`/g)].map((match) => match[1] ?? ""))];
+}
+
 // Namespaces promoted into the generated surface for the first time at a given
 // release. Seeded with the 1.13.0 set formerly held as
 // `DEFOLD_1_13_PROMOTED_NAMESPACES` in the release importer.
