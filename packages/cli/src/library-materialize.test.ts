@@ -2,9 +2,17 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { readCliVersion } from "./cli-version";
 import type { VendoredLibrary } from "./library-match";
 import { ensureLibraryTypesReference, materializeVendoredLibraries } from "./library-materialize";
-import { ensureMaterializedReference } from "./materialize";
+import { ensureMaterializedReference, surfaceDirName } from "./materialize";
+
+// The materialized surface directory carries the generating toolchain version;
+// these tests defend other behavior, so they derive the name from production
+// rather than restating it.
+function surfaceDir(surfaceId: string): string {
+  return surfaceDirName(surfaceId, readCliVersion());
+}
 
 let cwd: string;
 let generatedDir: string;
@@ -292,9 +300,9 @@ describe("ensureMaterializedReference carries sibling surfaces through the engin
       },
     });
 
-    ensureMaterializedReference(cwd, ".defold-types/defold-1.12.4");
+    ensureMaterializedReference(cwd, `.defold-types/${surfaceDir("defold-1.12.4")}`);
 
-    expect(readTypes()).toEqual(["defold-1.12.4", "extensions", "libraries"]);
+    expect(readTypes()).toEqual([surfaceDir("defold-1.12.4"), "extensions", "libraries"]);
   });
 
   test("carries a lone libraries entry through when extensions is absent", () => {
@@ -302,8 +310,8 @@ describe("ensureMaterializedReference carries sibling surfaces through the engin
       compilerOptions: { typeRoots: [".defold-types"], types: ["old-surface", "libraries"] },
     });
 
-    ensureMaterializedReference(cwd, ".defold-types/defold-1.12.4");
+    ensureMaterializedReference(cwd, `.defold-types/${surfaceDir("defold-1.12.4")}`);
 
-    expect(readTypes()).toEqual(["defold-1.12.4", "libraries"]);
+    expect(readTypes()).toEqual([surfaceDir("defold-1.12.4"), "libraries"]);
   });
 });
