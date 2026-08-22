@@ -1,0 +1,128 @@
+{
+  "elements": [
+    {
+      "type": "TYPEDEF",
+      "name": "b2World",
+      "brief": "Box2D world",
+      "description": "Box2D world",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": ["userdata"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "b2Body",
+      "brief": "Box2D body",
+      "description": "Box2D body",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": ["userdata"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.get_world",
+      "brief": "Get the Box2D world from the current collection",
+      "description": "Get the Box2D world from the current collection",
+      "returnvalues": [
+        {
+          "name": "world",
+          "doc": "the world if successful. Otherwise <code>nil</code>.",
+          "types": ["b2World"]
+        }
+      ],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.get_body",
+      "brief": "Get the Box2D body from a collision object",
+      "description": "Get the Box2D body from a collision object",
+      "returnvalues": [
+        {
+          "name": "body",
+          "doc": "the body if successful. Otherwise <code>nil</code>.",
+          "types": ["b2Body"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "the url to the game object collision component",
+          "types": ["string", "hash", "url"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.get_version",
+      "brief": "Get the Box2D version information for the active backend.",
+      "description": "Get the Box2D version information for the active backend.",
+      "returnvalues": [
+        {
+          "name": "info",
+          "doc": "version info with fields <code>version</code>, <code>major</code>, <code>middle</code>, and <code>minor</code>",
+          "types": ["table"]
+        }
+      ],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "b2d",
+    "name": "b2d",
+    "brief": "Box2D documentation",
+    "description": "Functions for interacting with Box2D.",
+    "path": "engine/gamesys/src/gamesys/scripts/box2d/script_box2d.cpp",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  }
+}
