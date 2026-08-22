@@ -160,18 +160,19 @@ export function evaluateReleaseReadiness(evidence: ReadinessEvidence): Readiness
         `import evidence stale: manifest version ${im.version ?? "(none)"} != release ${expected.release}`,
       );
     }
-    // Two baselines are legitimate. A minor keeps its predecessor as a historical
-    // surface, so the import diffed against exactly `expected.baseline`. A patch
-    // replaces its predecessor in place — the import diffed against a version that
-    // no longer exists, and the surviving previous stable is one release older.
-    // Accepting the replaced version costs no staleness protection: a manifest
-    // left over from that earlier import fails the `version` check above.
+    // Two baselines are legitimate. A minor keeps its predecessor as the previous
+    // stable, so the import diffed against exactly `expected.baseline`. A patch
+    // demotes its predecessor out of the pre-baked pair — the import diffed
+    // against a same-minor release the tuple no longer names, and the surviving
+    // previous stable is one minor line older. Accepting the demoted version
+    // costs no staleness protection: a manifest left over from that earlier
+    // import fails the `version` check above.
     const manifestBaseline = stripSurfacePrefix(im.baseline);
-    const replacedInPlace =
+    const demotedSameMinorBaseline =
       manifestBaseline !== "" &&
       manifestBaseline !== expected.release &&
       classifyTransition(manifestBaseline, expected.release) === "patch";
-    if (manifestBaseline !== expected.baseline && !replacedInPlace) {
+    if (manifestBaseline !== expected.baseline && !demotedSameMinorBaseline) {
       add(
         "import",
         `import evidence stale: manifest baseline ${im.baseline ?? "(none)"} != ${expected.baseline}`,

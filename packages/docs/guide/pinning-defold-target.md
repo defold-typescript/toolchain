@@ -99,8 +99,9 @@ under `--json`. `bob status`/`bob resolve` inspect rather than build and stay
 quiet. A channel pin tracks its head and never triggers this.
 
 A pin the toolchain cannot *provide* is reported by that same loop. A concrete
-version with no shipped API surface — one retired by a patch rotation, or never
-registered at all — used to materialize nothing and exit 0, leaving the project
+version with no shipped API surface — one never registered at all, or one a past
+patch rotation retired before bumps began demoting instead — used to materialize
+nothing and exit 0, leaving the project
 compiling against the *newer* default surface and silently accepting APIs the
 pinned engine lacks. Those commands now name the pin, state that no surface was
 materialized, and list the resolvable targets, on stderr for a normal run and in

@@ -39,8 +39,8 @@ describe("evaluateDrift", () => {
     expect(report.issueBody).toContain("generated/versions/");
   });
 
-  test("a patch body says the prior version keeps no historical surface", () => {
-    expect(evaluateDrift("1.13.0", "1.13.1").issueBody).toContain("replaced in place");
+  test("a patch body promises the same demotion a minor does", () => {
+    expect(evaluateDrift("1.13.0", "1.13.1").issueBody).toContain("generated/versions/");
   });
 
   test("an upstream head equal to the pin is not actionable", () => {

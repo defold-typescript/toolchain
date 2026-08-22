@@ -33,10 +33,9 @@ export function issueTitleFor(upstream: string): string {
 }
 
 function issueBodyFor(pinned: string, upstream: string, transition: ReleaseTransition): string {
-  const demotion =
-    transition === "minor"
-      ? `\`${pinned}\` is demoted to a committed historical surface under \`packages/types/generated/versions/\`.`
-      : `\`${pinned}\` is replaced in place — a patch keeps no historical surface for it.`;
+  // Both classes demote: a patch keeps its predecessor beside the new default
+  // rather than overwriting it, so the promise here does not fork on transition.
+  const demotion = `\`${pinned}\` is demoted to a committed historical surface under \`packages/types/generated/versions/\`.`;
   return [
     `The upstream stable channel now heads at **${upstream}**; the pinned target is **${pinned}**.`,
     "",

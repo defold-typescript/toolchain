@@ -57,19 +57,37 @@ const [MAJOR, MINOR, PATCH] = RELEASE_MODEL.current.split(".").map(Number) as [
 const NEXT_PATCH = `${MAJOR}.${MINOR}.${PATCH + 1}`;
 const NEXT_MINOR = `${MAJOR}.${MINOR + 1}.0`;
 
+// The newest pinned release outside the current minor line, computed here rather
+// than read back from `retainedVersions` so the retention assertions do not
+// restate the function they check.
+const PREVIOUS_MINOR_RELEASE = RELEASE_MODEL.all.find(
+  (version) => version.split(".").slice(0, 2).join(".") !== `${MAJOR}.${MINOR}`,
+) as string;
+
 // A frozen model for the tests that drive a synthetic registry: the registry
 // contents and the plan must describe the same world, and pinning both makes the
 // assertions readable and independent of the live pin.
 const FIXED_MODEL = { current: "1.13.0", previous: "1.12.4", all: ["1.13.0", "1.12.4"] } as const;
 
 describe("planBump", () => {
-  test("a same-minor target plans an in-place patch with no demotion", () => {
+  test("a same-minor target plans add-default plus demote, never a lone rewrite", () => {
     const plan = planBump(NEXT_PATCH);
     expect(plan.transition).toBe("patch");
-    const kinds = plan.targetOps.map((op) => op.kind);
-    expect(kinds).toContain("in-place");
-    expect(kinds).not.toContain("demote");
-    expect(kinds).not.toContain("add-default");
+    expect(plan.targetOps.map((op) => op.kind)).toEqual(["add-default", "demote"]);
+  });
+
+  test("the patch demote op matches targetMetaFor(predecessor, { isDefault: false })", () => {
+    const plan = planBump(NEXT_PATCH);
+    const demote = plan.targetOps.find((op) => op.kind === "demote");
+    expect(demote).toBeDefined();
+    expect(demote?.version).toBe(RELEASE_MODEL.current);
+    expect(demote?.meta).toEqual(targetMetaFor(RELEASE_MODEL.current, { isDefault: false }));
+  });
+
+  test("a patch retains the current release and the previous minor as the pre-baked pair", () => {
+    const plan = planBump(NEXT_PATCH);
+    expect(plan.prebaked).toEqual([NEXT_PATCH, PREVIOUS_MINOR_RELEASE]);
+    expect(plan.demotedFromPrebaked).toContain(RELEASE_MODEL.current);
   });
 
   test("a new-minor target plans add-default plus demote-prior", () => {
@@ -78,7 +96,12 @@ describe("planBump", () => {
     const kinds = plan.targetOps.map((op) => op.kind);
     expect(kinds).toContain("add-default");
     expect(kinds).toContain("demote");
-    expect(kinds).not.toContain("in-place");
+  });
+
+  test("a minor retains the outgoing current as the previous minor", () => {
+    const plan = planBump("1.14.0");
+    expect(plan.prebaked).toEqual(["1.14.0", RELEASE_MODEL.current]);
+    expect(plan.demotedFromPrebaked).not.toContain(RELEASE_MODEL.current);
   });
 
   test("the minor demote op matches targetMetaFor(prior-default, { isDefault: false })", () => {
@@ -193,6 +216,20 @@ describe("remainingHumanDecisions", () => {
     expect(entry).toContain(`${pin.namespace}@${pin.tag}`);
   });
 
+  test("a patch bump reports the demoted surface for review, just as a minor does", () => {
+    const joined = remainingHumanDecisions(planBump(NEXT_PATCH)).join("\n");
+    expect(joined).toContain(`demoted defold-${RELEASE_MODEL.current} surface`);
+  });
+
+  test("a bump names every version the retention rule drops from the pre-baked set", () => {
+    const plan = planBump(NEXT_PATCH);
+    const entry = remainingHumanDecisions(plan).find((d) => /pre-baked/i.test(d));
+    expect(entry).toBeDefined();
+    for (const version of plan.demotedFromPrebaked) {
+      expect(entry).toContain(version);
+    }
+  });
+
   test("the import-manifest reconfirmation survives alongside the new extension-tag line", () => {
     const joined = remainingHumanDecisions(planBump("1.14.0")).join("\n");
     expect(joined).toMatch(/manifest.*tag/i);
@@ -201,11 +238,11 @@ describe("remainingHumanDecisions", () => {
 });
 
 describe("applyVersionRotation", () => {
-  test("a patch rotates the current in place and leaves no old fixture token", () => {
+  test("a patch rotates to the retained pair and leaves no old fixture token", () => {
     const { versionFile, syncFile } = tmpCopies();
     applyVersionRotation(planBump(NEXT_PATCH), { versionFile, syncFile });
     const version = readFileSync(versionFile, "utf8");
-    expect(version).toContain(`DEFOLD_VERSIONS = ["${NEXT_PATCH}", "${RELEASE_MODEL.previous}"]`);
+    expect(version).toContain(`DEFOLD_VERSIONS = ["${NEXT_PATCH}", "${PREVIOUS_MINOR_RELEASE}"]`);
     const sync = readFileSync(syncFile, "utf8");
     expect(sync).toContain(`DEFOLD_VERSION = "${NEXT_PATCH}"`);
     expect(sync).not.toContain(`defold-${RELEASE_MODEL.current}`);
@@ -259,7 +296,7 @@ describe("applyTargetOps against a temporary registry", () => {
     return targetsPath;
   }
 
-  test("a patch swaps the default in place and adds no target", () => {
+  test("a patch adds the new default and keeps its predecessor as a demoted target", () => {
     const targetsPath = tmpTargets();
     applyTargetOps(planBump("1.13.1", FIXED_MODEL), targetsPath);
     const registry = JSON.parse(readFileSync(targetsPath, "utf8")) as {
@@ -271,12 +308,36 @@ describe("applyTargetOps against a temporary registry", () => {
         coreTypesImport: string;
       }>;
     };
-    expect(registry.targets.length).toBe(2);
+    expect(registry.targets.length).toBe(3);
     const def = registry.targets.find((target) => target.default);
     expect(def?.id).toBe("defold-1.13.1");
     expect(def?.fixturesDir).toBe(fixtureDir("1.13.1"));
     expect(def?.generatedDir).toBe("generated");
     expect(def?.coreTypesImport).toBe("../src/core-types");
+
+    const demoted = registry.targets.find((target) => target.id === "defold-1.13.0");
+    expect(demoted).toBeDefined();
+    expect(demoted?.default).toBe(false);
+    expect(demoted?.generatedDir).toBe("generated/versions/defold-1.13.0");
+    expect(demoted?.coreTypesImport).toBe("../../../src/core-types");
+  });
+
+  // The predecessor's inputs are what make its demoted surface regenerable; a
+  // bump that repointed `fixturesDir` at the incoming release would leave the
+  // demoted target reading the wrong release's documents.
+  test("a patch never repoints the predecessor's fixturesDir", () => {
+    const targetsPath = tmpTargets();
+    applyTargetOps(planBump("1.13.1", FIXED_MODEL), targetsPath);
+    const registry = JSON.parse(readFileSync(targetsPath, "utf8")) as {
+      targets: Array<{ id: string; fixturesDir: string }>;
+    };
+    const demoted = registry.targets.find((target) => target.id === "defold-1.13.0");
+    expect(demoted?.fixturesDir).toBe(fixtureDir("1.13.0"));
+    const def = registry.targets.find((target) => target.id === "defold-1.13.1");
+    expect(def?.fixturesDir).toBe(fixtureDir("1.13.1"));
+    expect(new Set(registry.targets.map((target) => target.fixturesDir)).size).toBe(
+      registry.targets.length,
+    );
   });
 
   test("a minor inserts the new default at index 0 and demotes the prior default", () => {
