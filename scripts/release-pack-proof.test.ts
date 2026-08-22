@@ -1,11 +1,21 @@
-import { describe, expect, test } from "bun:test";
-import { readdirSync, readFileSync } from "node:fs";
+import { afterAll, describe, expect, test } from "bun:test";
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import * as os from "node:os";
 import * as path from "node:path";
 import {
   checkCoordinatedDeps,
+  extractPackage,
+  linkDependencies,
+  loadTimeSpecifiers,
   PACKAGES,
+  packedTranslations,
+  packTypes,
   readTarEntry,
+  refDocMaterialize,
   stampVersion,
+  undeclaredPackedDependencies,
+  unpackagedCommittedFixtures,
+  unpackagedLoadTimeInputs,
 } from "./release-pack-proof.ts";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..");
@@ -209,5 +219,72 @@ describe("pack-proof covers the coordinated release set", () => {
       }
     }
     expect(offenders).toEqual([]);
+  });
+});
+
+// A published install has no repo tree behind it: `fixtures/` and `examples/`
+// only exist here, so every other generator test passes whether or not those
+// inputs ship. These drive a real `bun pm pack` of the types package and then
+// generate from the extracted tarball alone, which is the only place the
+// packaging gap is visible. Packing is ~40ms and nothing here touches the
+// network — the ref-doc zip is injected — so it stays a green-path gate.
+describe("packed types install", () => {
+  const dest = mkdtempSync(path.join(os.tmpdir(), "pack-proof-test-tgz-"));
+  const install = mkdtempSync(path.join(os.tmpdir(), "pack-proof-test-install-"));
+  const tar = packTypes(dest);
+  extractPackage(tar, install);
+  linkDependencies(install);
+
+  afterAll(() => {
+    rmSync(dest, { recursive: true, force: true });
+    rmSync(install, { recursive: true, force: true });
+  });
+
+  test("every load-time import in the packed graph resolves inside the tarball", () => {
+    expect(unpackagedLoadTimeInputs(tar)).toEqual([]);
+  });
+
+  test("every fixture the packed registry declares for a committed target is published", () => {
+    expect(unpackagedCommittedFixtures(tar)).toEqual([]);
+  });
+
+  test("every package the shipped graph loads is declared by the tarball", () => {
+    expect(undeclaredPackedDependencies(tar)).toEqual([]);
+  });
+
+  test("the example store is reachable from the install, not just the repo tree", async () => {
+    const verdict = await packedTranslations(install);
+    expect(verdict.detail).toContain("translated examples");
+    expect(verdict.ok).toBe(true);
+  });
+
+  test("a ref-doc target generates a surface from the packed install", async () => {
+    const verdict = await refDocMaterialize(install);
+    expect(verdict).toEqual({
+      ok: true,
+      detail: expect.stringContaining("ref-doc surface generated from the packed install"),
+    });
+  });
+});
+
+describe("loadTimeSpecifiers", () => {
+  test("keeps a relative value import and drops the type-only one it elides", () => {
+    const specs = loadTimeSpecifiers(
+      [
+        'import doc from "../fixtures/messages_doc.json" with { type: "json" };',
+        'import type { Store } from "../src/example-store";',
+        'export { readZip } from "./sync-api-docs";',
+      ].join("\n"),
+    );
+    expect(specs).toEqual(["../fixtures/messages_doc.json", "./sync-api-docs"]);
+  });
+
+  test("ignores bare specifiers and a deferred dynamic import", () => {
+    const specs = loadTimeSpecifiers(
+      ['import { resolve } from "node:path";', 'await import("./materialize-version.ts");'].join(
+        "\n",
+      ),
+    );
+    expect(specs).toEqual([]);
   });
 });
