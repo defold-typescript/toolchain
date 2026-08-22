@@ -50,6 +50,19 @@ export function resolveTypesPackageRoot(): string | null {
   }
 }
 
+// A syntactically valid document is not a usable registry: `{}` parses fine and
+// yields `undefined`, which every consumer then treats as an array. The array
+// check is what turns an unusable document into the empty-registry signal the
+// callers already act on.
+export function parseApiTargetsRegistry(text: string): RegistryTarget[] {
+  try {
+    const { targets } = JSON.parse(text) as { targets?: unknown };
+    return Array.isArray(targets) ? (targets as RegistryTarget[]) : [];
+  } catch {
+    return [];
+  }
+}
+
 export function loadApiTargetsRegistry(): RegistryTarget[] {
   const root = resolveTypesPackageRoot();
   if (root === null) {
@@ -60,10 +73,7 @@ export function loadApiTargetsRegistry(): RegistryTarget[] {
     return [];
   }
   try {
-    const { targets } = JSON.parse(readFileSync(registryPath, "utf8")) as {
-      targets: RegistryTarget[];
-    };
-    return targets;
+    return parseApiTargetsRegistry(readFileSync(registryPath, "utf8"));
   } catch {
     return [];
   }
