@@ -1,0 +1,2428 @@
+{
+  "elements": [
+    {
+      "type": "CONSTANT",
+      "name": "b2d.body.B2_STATIC_BODY",
+      "brief": "Static (immovable) body",
+      "description": "Static (immovable) body",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "b2d.body.B2_KINEMATIC_BODY",
+      "brief": "Kinematic body",
+      "description": "Kinematic body",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "b2d.body.B2_DYNAMIC_BODY",
+      "brief": "Dynamic body",
+      "description": "Dynamic body",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.create_fixture",
+      "brief": "Creates a fixture and attach it to this body. Use ...",
+      "description": "Creates a fixture and attach it to this body. Use this function if you need\nto set some fixture parameters, like friction. Otherwise you can create the\nfixture directly from a shape.\nIf the density is non-zero, this function automatically updates the mass of the body.\nContacts are not created until the next time step.",
+      "returnvalues": [
+        {
+          "name": "fixture",
+          "doc": "fixture info table with <code>index</code>, <code>type</code>, <code>sensor</code>, <code>density</code>, <code>friction</code>, <code>restitution</code>, and <code>child_count</code>",
+          "types": ["table"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "definition",
+          "doc": "fixture definition table with:\n<code>shape</code> = shape table, <code>friction</code> = number, <code>restitution</code> = number,\n<code>density</code> = number, <code>sensor</code> = boolean, and optional <code>filter</code> table.\nSupported shape tables are:\n<code>circle</code> = <code>{ type = b2d.shape.SHAPE_TYPE_CIRCLE, radius = number, center = vector3_or_nil }</code>\n<code>edge</code> = <code>{ type = b2d.shape.SHAPE_TYPE_EDGE, v1 = vector3, v2 = vector3, v0 = vector3_or_nil, v3 = vector3_or_nil }</code>\n<code>polygon</code> = <code>{ type = b2d.shape.SHAPE_TYPE_POLYGON, vertices = { vector3, ... } }</code>\n<code>box</code> = <code>{ type = b2d.shape.SHAPE_TYPE_BOX, hx = number, hy = number, center = vector3_or_nil, angle = radians_or_nil }</code>\n<code>chain</code> = <code>{ type = b2d.shape.SHAPE_TYPE_CHAIN, vertices = { vector3, ... }, loop = boolean_or_nil, prev_vertex = vector3_or_nil, next_vertex = vector3_or_nil }</code>",
+          "types": ["table"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">body</span> <span class=\"o\">=</span> <span class=\"n\">b2d</span><span class=\"p\">.</span><span class=\"n\">get_body</span><span class=\"p\">(</span><span class=\"s2\">&quot;#collisionobject&quot;</span><span class=\"p\">)</span>\n\n<span class=\"kd\">local</span> <span class=\"n\">triangle</span> <span class=\"o\">=</span> <span class=\"n\">b2d</span><span class=\"p\">.</span><span class=\"n\">body</span><span class=\"p\">.</span><span class=\"n\">create_fixture</span><span class=\"p\">(</span><span class=\"n\">body</span><span class=\"p\">,</span> <span class=\"p\">{</span>\n    <span class=\"n\">density</span> <span class=\"o\">=</span> <span class=\"mf\">1.0</span><span class=\"p\">,</span>\n    <span class=\"n\">friction</span> <span class=\"o\">=</span> <span class=\"mf\">0.3</span><span class=\"p\">,</span>\n    <span class=\"n\">shape</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n        <span class=\"nb\">type</span> <span class=\"o\">=</span> <span class=\"n\">b2d</span><span class=\"p\">.</span><span class=\"n\">shape</span><span class=\"p\">.</span><span class=\"n\">SHAPE_TYPE_POLYGON</span><span class=\"p\">,</span>\n        <span class=\"n\">vertices</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n            <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">(</span><span class=\"o\">-</span><span class=\"mi\">16</span><span class=\"p\">,</span> <span class=\"o\">-</span><span class=\"mi\">16</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">),</span>\n            <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">(</span> <span class=\"mi\">16</span><span class=\"p\">,</span> <span class=\"o\">-</span><span class=\"mi\">16</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">),</span>\n            <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">(</span>  <span class=\"mi\">0</span><span class=\"p\">,</span>  <span class=\"mi\">16</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">),</span>\n        <span class=\"p\">},</span>\n    <span class=\"p\">},</span>\n<span class=\"p\">})</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.create_fixture",
+      "brief": "Creates a fixture from a shape and attach it to th...",
+      "description": "Creates a fixture from a shape and attach it to this body.\nThis is a convenience function. Use b2FixtureDef if you need to set parameters\nlike friction, restitution, user data, or filtering.\nIf the density is non-zero, this function automatically updates the mass of the body.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "shape",
+          "doc": "the shape to be cloned.",
+          "types": ["b2Shape"],
+          "is_optional": "False"
+        },
+        {
+          "name": "density",
+          "doc": "the shape density (set to zero for static bodies).",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.set_transform",
+      "brief": "Set the position of the body's origin and rotation",
+      "description": "Set the position of the body's origin and rotation.\nThis breaks any contacts and wakes the other bodies.\nManipulating a body's transform may cause non-physical behavior.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "position",
+          "doc": "the world position of the body's local origin.",
+          "types": ["vector3"],
+          "is_optional": "False"
+        },
+        {
+          "name": "angle",
+          "doc": "the world position of the body's local origin.",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_transform",
+      "brief": "Get the body transform for the body's origin.",
+      "description": "Get the body transform for the body's origin.",
+      "returnvalues": [
+        {
+          "name": "transform",
+          "doc": "table with <code>position</code> and <code>angle</code> in radians.",
+          "types": ["table"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_position",
+      "brief": "Get the world body origin position.",
+      "description": "Get the world body origin position.",
+      "returnvalues": [
+        {
+          "name": "position",
+          "doc": "the world position of the body's origin.",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_world_center",
+      "brief": "Get the angle in radians.",
+      "description": "Get the angle in radians.",
+      "returnvalues": [
+        {
+          "name": "angle",
+          "doc": "the current world rotation angle in radians.",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_world_center",
+      "brief": "Get the world position of the center of mass.",
+      "description": "Get the world position of the center of mass.",
+      "returnvalues": [
+        {
+          "name": "center",
+          "doc": "Get the world position of the center of mass.",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_local_center",
+      "brief": "Get the local position of the center of mass.",
+      "description": "Get the local position of the center of mass.",
+      "returnvalues": [
+        {
+          "name": "center",
+          "doc": "Get the local position of the center of mass.",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.set_linear_velocity",
+      "brief": "Set the linear velocity of the center of mass.",
+      "description": "Set the linear velocity of the center of mass.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "velocity",
+          "doc": "the new linear velocity of the center of mass.",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_linear_velocity",
+      "brief": "Get the linear velocity of the center of mass.",
+      "description": "Get the linear velocity of the center of mass.",
+      "returnvalues": [
+        {
+          "name": "velocity",
+          "doc": "the linear velocity of the center of mass.",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.set_angular_velocity",
+      "brief": "Set the angular velocity.",
+      "description": "Set the angular velocity.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "omega",
+          "doc": "the new angular velocity in radians/second.",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_angular_velocity",
+      "brief": "Get the angular velocity.",
+      "description": "Get the angular velocity.",
+      "returnvalues": [
+        {
+          "name": "velocity",
+          "doc": "the angular velocity in radians/second.",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.apply_force",
+      "brief": "Apply a force at a world point. If the force is no...",
+      "description": "Apply a force at a world point. If the force is not\napplied at the center of mass, it will generate a torque and\naffect the angular velocity. This wakes up the body.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "force",
+          "doc": "the world force vector, usually in Newtons (N).",
+          "types": ["vector3"],
+          "is_optional": "False"
+        },
+        {
+          "name": "point",
+          "doc": "the world position of the point of application.",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.apply_force_to_center",
+      "brief": "Apply a force to the center of mass. This wakes up the body.",
+      "description": "Apply a force to the center of mass. This wakes up the body.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "force",
+          "doc": "the world force vector, usually in Newtons (N).",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.apply_torque",
+      "brief": "Apply a torque. This affects the angular velocity\n...",
+      "description": "Apply a torque. This affects the angular velocity\nwithout affecting the linear velocity of the center of mass.\nThis wakes up the body.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "torque",
+          "doc": "torque about the z-axis (out of the screen), usually in N-m.",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.apply_linear_impulse",
+      "brief": "Apply an impulse at a point. This immediately modi...",
+      "description": "Apply an impulse at a point. This immediately modifies the velocity.\nIt also modifies the angular velocity if the point of application\nis not at the center of mass. This wakes up the body.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "impulse",
+          "doc": "the world impulse vector, usually in N-seconds or kg-m/s.",
+          "types": ["vector3"],
+          "is_optional": "False"
+        },
+        {
+          "name": "point",
+          "doc": "the world position of the point of application.",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.apply_angular_impulse",
+      "brief": "Apply an angular impulse.",
+      "description": "Apply an angular impulse.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "impulse",
+          "doc": "impulse the angular impulse in units of kg<em>m</em>m/s",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_mass",
+      "brief": "Get the total mass of the body.",
+      "description": "Get the total mass of the body.",
+      "returnvalues": [
+        {
+          "name": "mass",
+          "doc": "the mass, usually in kilograms (kg).",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_inertia",
+      "brief": "Get the rotational inertia of the body about the local origin.",
+      "description": "Get the rotational inertia of the body about the local origin.",
+      "returnvalues": [
+        {
+          "name": "inertia",
+          "doc": "the rotational inertia, usually in kg-m^2.",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_mass_data",
+      "brief": "Get the mass data of the body.",
+      "description": "Get the mass data of the body.",
+      "returnvalues": [
+        {
+          "name": "data",
+          "doc": "table with <code>mass</code>, <code>center</code> in local coordinates, and <code>inertia</code>.",
+          "types": ["table"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.set_mass_data",
+      "brief": "Set the mass properties to override the mass prope...",
+      "description": "Set the mass properties to override the mass properties of the fixtures.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "data",
+          "doc": "table with <code>mass</code>, <code>center</code> in local coordinates, and <code>inertia</code>.",
+          "types": ["table"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [
+        "This function has no effect if the body isn't dynamic.",
+        "This changes the center of mass position.",
+        "Creating or destroying fixtures can also alter the mass."
+      ],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.reset_mass_data",
+      "brief": "This resets the mass properties to the sum of the ...",
+      "description": "This resets the mass properties to the sum of the mass properties of the fixtures.\nThis normally does not need to be called unless you called SetMassData to override",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_fixtures",
+      "brief": "Get the fixtures attached to this body.",
+      "description": "Get the fixtures attached to this body.",
+      "returnvalues": [
+        {
+          "name": "fixtures",
+          "doc": "array of fixture info tables with <code>index</code>, <code>type</code>, <code>sensor</code>, <code>density</code>, <code>friction</code>, <code>restitution</code>, and <code>child_count</code>",
+          "types": ["table"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.destroy_fixture",
+      "brief": "Destroy a fixture from a body.",
+      "description": "Destroy a fixture from a body.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "fixture_index",
+          "doc": "1-based fixture index from <code>b2d.body.get_fixtures</code>",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_world_point",
+      "brief": "Get the world coordinates of a point given the local coordinates.",
+      "description": "Get the world coordinates of a point given the local coordinates.",
+      "returnvalues": [
+        {
+          "name": "vector",
+          "doc": "the same point expressed in world coordinates.",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "local_vector",
+          "doc": "localPoint a point on the body measured relative the the body's origin.",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_world_vector",
+      "brief": "Get the world coordinates of a vector given the local coordinates.",
+      "description": "Get the world coordinates of a vector given the local coordinates.",
+      "returnvalues": [
+        {
+          "name": "vector",
+          "doc": "the same vector expressed in world coordinates.",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "local_vector",
+          "doc": "a vector fixed in the body.",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_local_point",
+      "brief": "Gets a local point relative to the body's origin given a world point.",
+      "description": "Gets a local point relative to the body's origin given a world point.",
+      "returnvalues": [
+        {
+          "name": "vector",
+          "doc": "the corresponding local point relative to the body's origin.",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "world_point",
+          "doc": "a point in world coordinates.",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_local_vector",
+      "brief": "Gets a local vector given a world vector.",
+      "description": "Gets a local vector given a world vector.",
+      "returnvalues": [
+        {
+          "name": "vector",
+          "doc": "the corresponding local vector.",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "world_vector",
+          "doc": "a vector in world coordinates.",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_linear_velocity_from_world_point",
+      "brief": "Get the world linear velocity of a world point attached to this body.",
+      "description": "Get the world linear velocity of a world point attached to this body.",
+      "returnvalues": [
+        {
+          "name": "velocity",
+          "doc": "the world velocity of a point.",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "world_point",
+          "doc": "a point in world coordinates.",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_linear_velocity_from_local_point",
+      "brief": "Get the world velocity of a local point.",
+      "description": "Get the world velocity of a local point.",
+      "returnvalues": [
+        {
+          "name": "velocity",
+          "doc": "the world velocity of a point.",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "local_point",
+          "doc": "a point in local coordinates.",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.set_linear_damping",
+      "brief": "Set the linear damping of the body.",
+      "description": "Set the linear damping of the body.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "damping",
+          "doc": "the damping",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_linear_damping",
+      "brief": "Get the linear damping of the body.",
+      "description": "Get the linear damping of the body.",
+      "returnvalues": [
+        {
+          "name": "damping",
+          "doc": "the damping",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.set_angular_damping",
+      "brief": "Set the angular damping of the body.",
+      "description": "Set the angular damping of the body.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "damping",
+          "doc": "the damping",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_angular_damping",
+      "brief": "Get the angular damping of the body.",
+      "description": "Get the angular damping of the body.",
+      "returnvalues": [
+        {
+          "name": "damping",
+          "doc": "the damping",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.set_gravity_scale",
+      "brief": "Set the gravity scale of the body.",
+      "description": "Set the gravity scale of the body.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "scale",
+          "doc": "the scale",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_gravity_scale",
+      "brief": "Get the gravity scale of the body.",
+      "description": "Get the gravity scale of the body.",
+      "returnvalues": [
+        {
+          "name": "scale",
+          "doc": "the scale",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.set_type",
+      "brief": "Set the type of this body. This may alter the mass and velocity.",
+      "description": "Set the type of this body. This may alter the mass and velocity.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "type",
+          "doc": "the body type",
+          "types": ["b2BodyType"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_type",
+      "brief": "Get the type of this body.",
+      "description": "Get the type of this body.",
+      "returnvalues": [
+        {
+          "name": "type",
+          "doc": "the body type",
+          "types": ["b2BodyType"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.set_bullet",
+      "brief": "Should this body be treated like a bullet for continuous collision detection?",
+      "description": "Should this body be treated like a bullet for continuous collision detection?",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "enable",
+          "doc": "if true, the body will be in bullet mode",
+          "types": ["boolean"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.is_bullet",
+      "brief": "Is this body in bullet mode",
+      "description": "Is this body in bullet mode",
+      "returnvalues": [
+        {
+          "name": "enabled",
+          "doc": "true if the body is in bullet mode",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.set_sleeping_allowed",
+      "brief": "You can disable sleeping on this body. If you disable sleeping, the body will be woken.",
+      "description": "You can disable sleeping on this body. If you disable sleeping, the body will be woken.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "enable",
+          "doc": "if false, the body will never sleep, and consume more CPU",
+          "types": ["boolean"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.is_sleeping_allowed",
+      "brief": "Is this body allowed to sleep",
+      "description": "Is this body allowed to sleep",
+      "returnvalues": [
+        {
+          "name": "enabled",
+          "doc": "true if the body is allowed to sleep",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.set_awake",
+      "brief": "Set the sleep state of the body. A sleeping body has very low CPU cost.",
+      "description": "Set the sleep state of the body. A sleeping body has very low CPU cost.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "enable",
+          "doc": "flag set to false to put body to sleep, true to wake it.",
+          "types": ["boolean"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.is_awake",
+      "brief": "Get the sleeping state of this body.",
+      "description": "Get the sleeping state of this body.",
+      "returnvalues": [
+        {
+          "name": "enabled",
+          "doc": "true if the body is awake, false if it's sleeping.",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.set_active",
+      "brief": "Set the active state of the body",
+      "description": "Set the active state of the body. An inactive body is not\nsimulated and cannot be collided with or woken up.\nIf you pass a flag of true, all fixtures will be added to the\nbroad-phase.\nIf you pass a flag of false, all fixtures will be removed from\nthe broad-phase and all contacts will be destroyed.\nFixtures and joints are otherwise unaffected. You may continue\nto create/destroy fixtures and joints on inactive bodies.\nFixtures on an inactive body are implicitly inactive and will\nnot participate in collisions, ray-casts, or queries.\nJoints connected to an inactive body are implicitly inactive.\nAn inactive body is still owned by a b2World object and remains\nin the body list.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "enable",
+          "doc": "true if the body should be active",
+          "types": ["boolean"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.is_active",
+      "brief": "Get the active state of the body.",
+      "description": "Get the active state of the body.",
+      "returnvalues": [
+        {
+          "name": "enabled",
+          "doc": "is the body active",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.set_fixed_rotation",
+      "brief": "Set this body to have fixed rotation. This causes the mass to be reset.",
+      "description": "Set this body to have fixed rotation. This causes the mass to be reset.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "enable",
+          "doc": "true if the rotation should be fixed",
+          "types": ["boolean"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.is_fixed_rotation",
+      "brief": "Does this body have fixed rotation?",
+      "description": "Does this body have fixed rotation?",
+      "returnvalues": [
+        {
+          "name": "enabled",
+          "doc": "is the rotation fixed",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_joints",
+      "brief": "Get the joints attached to this body.",
+      "description": "Get the joints attached to this body.",
+      "returnvalues": [
+        {
+          "name": "joints",
+          "doc": "array of <code>b2Joint</code> handles created by <code>b2d.joint</code>",
+          "types": ["table"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_contact_list",
+      "brief": "Get the list of all contacts attached to this body.",
+      "description": "Get the list of all contacts attached to this body.",
+      "returnvalues": [
+        {
+          "name": "edge",
+          "doc": "the first edge",
+          "types": ["b2ContactEdge"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_next",
+      "brief": "Get the next body in the world's body list.",
+      "description": "Get the next body in the world's body list.",
+      "returnvalues": [
+        {
+          "name": "body",
+          "doc": "the next body",
+          "types": ["b2Body"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_world",
+      "brief": "Get the parent world of this body.",
+      "description": "Get the parent world of this body.",
+      "returnvalues": [
+        {
+          "name": "world",
+          "doc": "",
+          "types": ["b2World"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.dump",
+      "brief": "Print the body representation to the log output",
+      "description": "Print the body representation to the log output",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_force",
+      "brief": "Get the total force currently applied on this object",
+      "description": "Get the total force currently applied on this object",
+      "returnvalues": [
+        {
+          "name": "force",
+          "doc": "",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": ["Defold Specific"],
+      "language": ""
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "b2World",
+      "brief": "Box2D world",
+      "description": "Box2D world",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": ["userdata"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "b2Body",
+      "brief": "Box2D body",
+      "description": "Box2D body",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": ["userdata"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.create_shape",
+      "brief": "Creates a shape and attaches it to this body",
+      "description": "Creates a shape and attaches it to this body.\nIf the density is non-zero, this function automatically updates the mass of the body.\nContacts are not created until the next time step.\nThe definition may include <code>density</code>, <code>friction</code>, <code>restitution</code>, <code>material</code>,\n<code>sensor</code> or <code>is_sensor</code>, <code>filter</code>, and the shape table itself. The shape table\ncan be in <code>definition.shape</code> or directly in <code>definition</code>.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "definition",
+          "doc": "the shape definition.",
+          "types": ["table"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.create_chain",
+      "brief": "Create a chain and attach its segment shapes to this body.",
+      "description": "Chains are one-sided connected segments with optional ghost vertices at\nthe ends of open chains. Ghost vertices are creation-time chain data only and\ncannot be added to arbitrary shapes, bodies, or joints after creation.\n<dl>\n<dt><code>definition.vertices</code></dt>\n<dd><span class=\"type\">table</span> array of local <code>vector3</code> vertices. Open chains require at least 2 vertices. Loop chains require at least 4 vertices.</dd>\n<dt><code>definition.loop</code></dt>\n<dd><span class=\"type\">boolean</span> true to create a closed loop chain.</dd>\n<dt><code>definition.prev_vertex</code></dt>\n<dd><span class=\"type\">vector3</span> optional ghost vertex before the first vertex for open chains.</dd>\n<dt><code>definition.next_vertex</code></dt>\n<dd><span class=\"type\">vector3</span> optional ghost vertex after the last vertex for open chains.</dd>\n<dt><code>definition.friction</code></dt>\n<dd><span class=\"type\">number</span> optional friction.</dd>\n<dt><code>definition.restitution</code></dt>\n<dd><span class=\"type\">number</span> optional restitution.</dd>\n<dt><code>definition.material</code></dt>\n<dd><span class=\"type\">number</span> optional material id.</dd>\n<dt><code>definition.filter</code></dt>\n<dd><span class=\"type\">table</span> optional filter with <code>category_bits</code>, <code>mask_bits</code>, and <code>group_index</code>.</dd>\n<dt><code>definition.enable_sensor_events</code></dt>\n<dd><span class=\"type\">boolean</span> true to enable sensor events for chain segments.</dd>\n</dl>",
+      "returnvalues": [
+        {
+          "name": "chain",
+          "doc": "created chain handle",
+          "types": ["b2Chain"]
+        },
+        {
+          "name": "segments",
+          "doc": "array of shape info tables for the chain segments",
+          "types": ["table"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "definition",
+          "doc": "the chain definition",
+          "types": ["table"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">chain</span><span class=\"p\">,</span> <span class=\"n\">segments</span> <span class=\"o\">=</span> <span class=\"n\">b2d</span><span class=\"p\">.</span><span class=\"n\">body</span><span class=\"p\">.</span><span class=\"n\">create_chain</span><span class=\"p\">(</span><span class=\"n\">body</span><span class=\"p\">,</span> <span class=\"p\">{</span>\n    <span class=\"n\">vertices</span> <span class=\"o\">=</span> <span class=\"p\">{</span>\n        <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">(</span><span class=\"o\">-</span><span class=\"mi\">64</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">),</span>\n        <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">(</span><span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">16</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">),</span>\n        <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">(</span><span class=\"mi\">64</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">),</span>\n    <span class=\"p\">},</span>\n    <span class=\"n\">prev_vertex</span> <span class=\"o\">=</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">(</span><span class=\"o\">-</span><span class=\"mi\">96</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">),</span>\n    <span class=\"n\">next_vertex</span> <span class=\"o\">=</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">(</span><span class=\"mi\">96</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">),</span>\n    <span class=\"n\">friction</span> <span class=\"o\">=</span> <span class=\"mf\">0.6</span><span class=\"p\">,</span>\n<span class=\"p\">})</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.destroy_shape",
+      "brief": "Destroy a shape. This removes the shape from the b...",
+      "description": "Destroy a shape. This removes the shape from the broad-phase and\ndestroys all contacts associated with this shape. This will\nautomatically adjust the mass of the body if the body is dynamic and the\nshape has positive density.\nAll shapes attached to a body are implicitly destroyed when the body is destroyed.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "shape_index",
+          "doc": "1-based shape index from <code>b2d.body.get_shapes</code>",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_transform",
+      "brief": "Get the body transform for the body's origin.",
+      "description": "Get the body transform for the body's origin.",
+      "returnvalues": [
+        {
+          "name": "transform",
+          "doc": "the world position of the body's origin.",
+          "types": ["b2Transform"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_angle",
+      "brief": "Get the angle in radians.",
+      "description": "Get the angle in radians.",
+      "returnvalues": [
+        {
+          "name": "angle",
+          "doc": "the current world rotation angle in radians.",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_world_center_of_mass",
+      "brief": "Get the world position of the center of mass.",
+      "description": "Get the world position of the center of mass.",
+      "returnvalues": [
+        {
+          "name": "center",
+          "doc": "Get the world position of the center of mass.",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_local_center_of_mass",
+      "brief": "Get the local position of the center of mass.",
+      "description": "Get the local position of the center of mass.",
+      "returnvalues": [
+        {
+          "name": "center",
+          "doc": "Get the local position of the center of mass.",
+          "types": ["vector3"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_rotational_inertia",
+      "brief": "Get the rotational inertia of the body about the local origin.",
+      "description": "Get the rotational inertia of the body about the local origin.",
+      "returnvalues": [
+        {
+          "name": "inertia",
+          "doc": "the rotational inertia, usually in kg-m^2.",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_mass_data",
+      "brief": "Get the mass data of the body.",
+      "description": "Get the mass data of the body.",
+      "returnvalues": [
+        {
+          "name": "data",
+          "doc": "a struct containing the mass, inertia and center of the body.",
+          "types": ["b2MassData"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.set_mass_data",
+      "brief": "Set the mass properties to override the mass prope...",
+      "description": "Set the mass properties to override the mass properties of the shapes.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "data",
+          "doc": "the mass properties.",
+          "types": ["b2MassData"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [
+        "This function has no effect if the body isn't dynamic.",
+        "This changes the center of mass position.",
+        "Creating or destroying shapes can also alter the mass."
+      ],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.enable_sleep",
+      "brief": "You can disable sleeping on this body. If you disable sleeping, the body will be woken.",
+      "description": "You can disable sleeping on this body. If you disable sleeping, the body will be woken.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "enable",
+          "doc": "if false, the body will never sleep, and consume more CPU",
+          "types": ["boolean"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.is_sleeping_enabled",
+      "brief": "Is this body allowed to sleep",
+      "description": "Is this body allowed to sleep",
+      "returnvalues": [
+        {
+          "name": "enabled",
+          "doc": "true if the body is allowed to sleep",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_shapes",
+      "brief": "Get the list of all shapes attached to this body.",
+      "description": "Get the list of all shapes attached to this body.",
+      "returnvalues": [
+        {
+          "name": "shapes",
+          "doc": "a table of shape info entries. Each entry includes <code>shape_id</code> for use with <code>b2d.shape</code> functions.",
+          "types": ["table"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_user_data",
+      "brief": "Get the user data pointer that was provided in the body definition.",
+      "description": "Get the user data pointer that was provided in the body definition.",
+      "returnvalues": [
+        {
+          "name": "id",
+          "doc": "the game object id this body is connected to",
+          "types": ["hash"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.set_user_data",
+      "brief": "Set the user data. Use this to store your application specific data.",
+      "description": "Set the user data. Use this to store your application specific data.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "id",
+          "doc": "the game object id",
+          "types": ["hash"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.is_valid",
+      "brief": "Validate a body handle.",
+      "description": "Validate a body handle.",
+      "returnvalues": [
+        {
+          "name": "valid",
+          "doc": "true if the body handle still refers to a live Box2D body",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.set_name",
+      "brief": "Set the body name.",
+      "description": "Set the body name.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "name",
+          "doc": "body name",
+          "types": ["string"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_name",
+      "brief": "Get the body name.",
+      "description": "Get the body name.",
+      "returnvalues": [
+        {
+          "name": "name",
+          "doc": "body name, or nil if no name is set",
+          "types": ["string"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.set_target_transform",
+      "brief": "Set velocity to reach a target transform.",
+      "description": "Set velocity to reach a target transform.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "position",
+          "doc": "target world position",
+          "types": ["vector3"],
+          "is_optional": "False"
+        },
+        {
+          "name": "angle",
+          "doc": "target world angle in radians",
+          "types": ["number"],
+          "is_optional": "False"
+        },
+        {
+          "name": "time_step",
+          "doc": "time step used to compute velocity",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.apply_linear_impulse_to_center",
+      "brief": "Apply a linear impulse to the center of mass.",
+      "description": "Apply a linear impulse to the center of mass.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "impulse",
+          "doc": "world impulse vector",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.set_sleep_threshold",
+      "brief": "Set the sleep velocity threshold.",
+      "description": "Set the sleep velocity threshold.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "threshold",
+          "doc": "velocity threshold in Defold units per second",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_sleep_threshold",
+      "brief": "Get the sleep velocity threshold.",
+      "description": "Get the sleep velocity threshold.",
+      "returnvalues": [
+        {
+          "name": "threshold",
+          "doc": "velocity threshold in Defold units per second",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.enable_contact_events",
+      "brief": "Enable or disable contact events on all body shapes.",
+      "description": "Enable or disable contact events on all body shapes.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "enable",
+          "doc": "true to enable contact events",
+          "types": ["boolean"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.enable_hit_events",
+      "brief": "Enable or disable hit events on all body shapes.",
+      "description": "Enable or disable hit events on all body shapes.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "enable",
+          "doc": "true to enable hit events",
+          "types": ["boolean"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.get_contact_data",
+      "brief": "Get touching contact data for a body.",
+      "description": "Get touching contact data for a body.",
+      "returnvalues": [
+        {
+          "name": "contacts",
+          "doc": "array of contact tables",
+          "types": ["table"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.body.compute_aabb",
+      "brief": "Compute the world AABB of all body shapes.",
+      "description": "Compute the world AABB of all body shapes.",
+      "returnvalues": [
+        {
+          "name": "aabb",
+          "doc": "table with <code>lower</code> and <code>upper</code> vector3 fields",
+          "types": ["table"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "b2d.body",
+    "name": "b2d.body",
+    "brief": "Box2D b2Body documentation",
+    "description": "Functions for interacting with Box2D bodies.",
+    "path": "engine/gamesys/src/gamesys/scripts/box2d/v2/script_box2d_body_v2.cpp",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  }
+}

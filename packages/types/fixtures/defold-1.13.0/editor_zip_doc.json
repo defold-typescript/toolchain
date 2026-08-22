@@ -1,0 +1,163 @@
+{
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "zip.METHOD.DEFLATED",
+      "brief": "<code>\"deflated\"</code> compression method",
+      "description": "<code>\"deflated\"</code> compression method",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "VARIABLE",
+      "name": "zip.METHOD.STORED",
+      "brief": "<code>\"stored\"</code> compression method, i.e. no compression",
+      "description": "<code>\"stored\"</code> compression method, i.e. no compression",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "VARIABLE",
+      "name": "zip.ON_CONFLICT.ERROR",
+      "brief": "<code>\"error\"</code>, any conflict aborts extraction",
+      "description": "<code>\"error\"</code>, any conflict aborts extraction",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "VARIABLE",
+      "name": "zip.ON_CONFLICT.SKIP",
+      "brief": "<code>\"skip\"</code>, existing file is preserved",
+      "description": "<code>\"skip\"</code>, existing file is preserved",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "VARIABLE",
+      "name": "zip.ON_CONFLICT.OVERWRITE",
+      "brief": "<code>\"skip\"</code>, existing file is overwritten",
+      "description": "<code>\"skip\"</code>, existing file is overwritten",
+      "returnvalues": [],
+      "parameters": [],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "zip.pack",
+      "brief": "create a ZIP archive",
+      "description": "Create a ZIP archive",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "output_path",
+          "doc": "output zip file path, resolved against project root if relative",
+          "types": ["string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "opts",
+          "doc": "compression options, a table with the following keys:<dl><dt><code>method <small>string</small></code></dt><dd>compression method, either <code>zip.METHOD.DEFLATED</code> (default) or <code>zip.METHOD.STORED</code></dd><dt><code>level <small>integer</small></code></dt><dd>compression level, an integer between 0 and 9, only useful when the compression method is <code>zip.METHOD.DEFLATED</code>; defaults to 6</dd></dl>",
+          "types": ["table"],
+          "is_optional": "True"
+        },
+        {
+          "name": "entries",
+          "doc": "entries to compress, either a string (relative path to file or folder to include) or a table with the following keys:<dl><dt><code>1 <small>string</small></code></dt><dd>required; source file or folder path to include, resolved against project root if relative</dd><dt><code>2 <small>string</small></code></dt><dd>optional; target file or folder path in the zip archive. May be omitted if source is a relative path that does not go above the project directory.</dd><dt><code>method <small>string</small></code></dt><dd>compression method, either <code>zip.METHOD.DEFLATED</code> (default) or <code>zip.METHOD.STORED</code></dd><dt><code>level <small>integer</small></code></dt><dd>compression level, an integer between 0 and 9, only useful when the compression method is <code>zip.METHOD.DEFLATED</code>; defaults to 6</dd></dl>",
+          "types": ["string", "table"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "Archive a file and a folder:\n<div class=\"codehilite\"><pre><span></span><code>zip.pack(&quot;build.zip&quot;, {&quot;build&quot;, &quot;game.project&quot;})\n</code></pre></div>\n\nChange the location of the files within the archive:\n<div class=\"codehilite\"><pre><span></span><code>zip.pack(&quot;build.zip&quot;, {\n  {&quot;build/wasm-web&quot;, &quot;.&quot;},\n  {&quot;configs/prod.json&quot;, &quot;config.json&quot;}\n})\n</code></pre></div>\n\nCreate archive without compression (much faster to create the archive, bigger archive file size, allows mmap access):\n<div class=\"codehilite\"><pre><span></span><code>zip.pack(&quot;build.zip&quot;, {method = zip.METHOD.STORED}, {\n  &quot;build&quot;,\n  &quot;resources&quot;\n})\n</code></pre></div>\n\nDon't compress one of the folders:\n<div class=\"codehilite\"><pre><span></span><code>zip.pack(&quot;build.zip&quot;, {\n  {&quot;assets&quot;, method = zip.METHOD.STORED},\n  &quot;build/wasm-web&quot;\n})\n</code></pre></div>\n\nInclude files from outside the project:\n<div class=\"codehilite\"><pre><span></span><code>zip.pack(&quot;build.zip&quot;, {\n  &quot;build&quot;,\n  {&quot;../secrets/auth-key.txt&quot;, &quot;auth-key.txt&quot;}\n})\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "zip.unpack",
+      "brief": "extract a ZIP archive",
+      "description": "Extract a ZIP archive",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "archive_path",
+          "doc": "zip file path, resolved against project root if relative",
+          "types": ["string"],
+          "is_optional": "False"
+        },
+        {
+          "name": "target_path",
+          "doc": "target path for extraction, defaults to parent of <code>archive_path</code> if omitted",
+          "types": ["string"],
+          "is_optional": "True"
+        },
+        {
+          "name": "opts",
+          "doc": "extraction options, a table with the following keys:<dl><dt><code>on_conflict <small>string</small></code></dt><dd>conflict resolution strategy, defaults to <code>zip.ON_CONFLICT.ERROR</code></dd></dl>",
+          "types": ["table"],
+          "is_optional": "True"
+        },
+        {
+          "name": "paths",
+          "doc": "entries to extract, relative string paths",
+          "types": ["table"],
+          "is_optional": "True"
+        }
+      ],
+      "examples": "Extract everything to a build dir:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">zip</span><span class=\"p\">.</span><span class=\"n\">unpack</span><span class=\"p\">(</span><span class=\"s2\">&quot;build/dev/resources.zip&quot;</span><span class=\"p\">)</span>\n</code></pre></div>\n\nExtract to a different directory:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">zip</span><span class=\"p\">.</span><span class=\"n\">unpack</span><span class=\"p\">(</span>\n  <span class=\"s2\">&quot;build/dev/resources.zip&quot;</span><span class=\"p\">,</span>\n  <span class=\"s2\">&quot;build/dev/tmp&quot;</span><span class=\"p\">,</span>\n<span class=\"p\">)</span>\n</code></pre></div>\n\nExtract while overwriting existing files on conflict:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">zip</span><span class=\"p\">.</span><span class=\"n\">unpack</span><span class=\"p\">(</span>\n  <span class=\"s2\">&quot;build/dev/resources.zip&quot;</span><span class=\"p\">,</span>\n  <span class=\"p\">{</span><span class=\"n\">on_conflict</span> <span class=\"o\">=</span> <span class=\"n\">zip</span><span class=\"p\">.</span><span class=\"n\">ON_CONFLICT</span><span class=\"p\">.</span><span class=\"n\">OVERWRITE</span><span class=\"p\">}</span>\n<span class=\"p\">)</span>\n</code></pre></div>\n\nExtract a single file:\n<div class=\"codehilite\"><pre><span></span><code><span class=\"n\">zip</span><span class=\"p\">.</span><span class=\"n\">unpack</span><span class=\"p\">(</span>\n  <span class=\"s2\">&quot;build/dev/resources.zip&quot;</span><span class=\"p\">,</span>\n  <span class=\"p\">{</span><span class=\"s2\">&quot;config.json&quot;</span><span class=\"p\">}</span>\n<span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "zip",
+    "name": "Editor",
+    "brief": "Editor scripting documentation",
+    "description": "Editor scripting documentation",
+    "path": "engine/docs/editor.apidoc",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  }
+}

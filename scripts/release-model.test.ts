@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import {
   CURRENT_STABLE_DEFOLD_VERSION,
   DEFOLD_VERSIONS,
@@ -18,6 +20,15 @@ import {
   RELEASE_MODEL,
   targetMetaFor,
 } from "./release-model.ts";
+
+interface RegistryTarget {
+  readonly id: string;
+  readonly default: boolean;
+  readonly fixturesDir: string;
+  readonly generatedDir: string;
+  readonly coreTypesImport: string;
+  readonly source?: unknown;
+}
 
 describe("release model", () => {
   test("current/previous are seeded from the CLI tuple, not a second literal", () => {
@@ -63,13 +74,37 @@ describe("release model", () => {
     });
   });
 
+  // A fixed sample version for the same reason the default-shape case above uses
+  // one: the demoted path *shape* is the contract, and keying it to whichever
+  // release is currently previous makes the expectation restate the template.
   test("targetMetaFor returns the demoted subpath shape for a previous release", () => {
-    expect(targetMetaFor(RELEASE_MODEL.previous, { isDefault: false })).toEqual({
+    expect(targetMetaFor("1.12.4", { isDefault: false })).toEqual({
       fixturesDir: "fixtures/defold-1.12.4",
       generatedDir: "generated/versions/defold-1.12.4",
       coreTypesImport: "../../../src/core-types",
       default: false,
     });
+  });
+
+  // The registry is written by `applyTargetOps` from `targetMetaFor`; a target
+  // restored or edited by hand can silently carry the default surface's flat
+  // `generated/` layout and a core-types import one level too shallow, which
+  // only shows up as a broken pinned surface.
+  test("every committed api-targets entry carries exactly the metadata targetMetaFor generates", () => {
+    const registry = JSON.parse(
+      readFileSync(resolve(import.meta.dir, "../packages/types/api-targets.json"), "utf8"),
+    ) as { targets: RegistryTarget[] };
+    const committed = registry.targets.filter((target) => (target.source ?? null) === null);
+    expect(committed.length).toBeGreaterThan(0);
+    for (const target of committed) {
+      const version = target.id.replace(/^defold-/, "");
+      expect({
+        fixturesDir: target.fixturesDir,
+        generatedDir: target.generatedDir,
+        coreTypesImport: target.coreTypesImport,
+        default: target.default,
+      }).toEqual(targetMetaFor(version, { isDefault: version === RELEASE_MODEL.current }));
+    }
   });
 
   describe("correspondence guard — actual runtime values, not regex-scraped source", () => {

@@ -1,0 +1,36 @@
+{
+  "info": {
+    "namespace": "globals",
+    "version": "1.12.4",
+    "brief": "Prefixless global symbols available to every Defold script.",
+    "description": "The functions Defold exposes to every script without a namespace prefix. The global *types* (`Hash`, `Vector3`, ...) have their own reference pages. The Lua base globals (`print`, `pcall`, `pairs`, `assert`, ...) come from the `lua-types` dependency and are documented on the [base reference page](/api/base), not duplicated here."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "hash",
+      "brief": "hash a string into a hash value",
+      "description": "Hashes a string into a hash value. The hash can be used to reference resources and identifiers in the Defold engine without carrying the original string around.",
+      "parameters": [{ "name": "s", "doc": "the string to hash", "types": ["string"] }],
+      "returnvalues": [{ "name": "hash", "doc": "the hash value", "types": ["hash"] }]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "hash_to_hex",
+      "brief": "get hex representation of a hash value as a string",
+      "description": "Returns a hexadecimal representation of a hash value. The returned string is always padded with leading zeros.",
+      "parameters": [{ "name": "h", "doc": "hash value to get hex string for", "types": ["hash"] }],
+      "returnvalues": [
+        { "name": "hex", "doc": "hex representation of the hash", "types": ["string"] }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pprint",
+      "brief": "pretty printing",
+      "description": "Pretty printing of Lua values. This function prints Lua values in a manner similar to +print()+, but will also recurse into tables and pretty print their contents.",
+      "parameters": [{ "name": "v", "doc": "value to print", "types": ["any"] }],
+      "returnvalues": []
+    }
+  ]
+}

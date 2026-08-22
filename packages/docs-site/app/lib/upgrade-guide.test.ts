@@ -14,9 +14,10 @@ const SLUG = "upgrading-defold-versions";
 // predecessor in place, so the current section carries the whole 1.12.4 -> current
 // migration rather than one section per replaced patch.
 const RELEASE = "1.13.1";
-// The version 1.13.1 replaced. Its `/api/defold-1.13.0/…` family no longer exists,
-// so nothing on the page may link into it.
-const REPLACED = "1.13.0";
+// The release immediately before the current one. It keeps its own marked section
+// and its own shipped `/api/defold-1.13.0/…` family, so the guide both documents
+// it and links into it.
+const PREDECESSOR = "1.13.0";
 const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");
 const TYPES_DIR = join(import.meta.dir, "../../../../packages/types");
 
@@ -52,7 +53,7 @@ function spanOf(source: string): string {
 }
 const spanBody = spanOf(guideBody);
 const spanHtml = spanOf(guideHtml);
-const replacedBody = releaseSection(guideBody, REPLACED) ?? "";
+const predecessorBody = releaseSection(guideBody, PREDECESSOR) ?? "";
 
 interface AvailabilityRecord {
   identity: { namespace: string; kind: string; name: string; signature: string };
@@ -258,8 +259,8 @@ describe("upgrading-defold-versions guide", () => {
     }
   });
 
-  test("the replaced release's per-symbol notes render at h4 with bare-symbol ids", () => {
-    const body = releaseSection(guideHtml, REPLACED) ?? "";
+  test("the predecessor release's per-symbol notes render at h4 with bare-symbol ids", () => {
+    const body = releaseSection(guideHtml, PREDECESSOR) ?? "";
     const ids = pageHeadings(body)
       .filter((h) => h.level === 4)
       .map((h) => h.id);
@@ -451,41 +452,50 @@ describe("upgrading-defold-versions guide", () => {
     expect(uncovered.map(qualifiedName)).toEqual([]);
   });
 
-  test("uses exact baseline and current target commands", () => {
-    expect(releaseBody).toContain("--defold-target 1.12.4");
+  // The "what you ship today" target is the release this one supersedes, read off
+  // the availability version axis rather than pinned: after a patch the reader is
+  // most likely on the immediately-preceding surface, not on the oldest one.
+  test("uses exact predecessor and current target commands", () => {
+    const previous = availabilityDoc().versions[1];
+    expect(previous).toBeDefined();
+    expect(releaseBody).toContain(`--defold-target ${previous}`);
     expect(releaseBody).toContain(`--defold-target ${RELEASE}`);
   });
 
-  test("links every removed symbol to its historical 1.12.4 API page", () => {
+  // Scoped to the hop this release makes, exactly as `collectAvailability` scopes
+  // the readiness gate's removed set: a symbol retired in an older release is
+  // documented under that release's own section against *its* predecessor, and
+  // demanding a link here would blame this release for a removal it did not make.
+  test("links every symbol this release retires to its predecessor's API page", () => {
     const doc = availabilityDoc();
+    const [newest, previous] = doc.versions;
+    expect(newest).toBeDefined();
+    expect(previous).toBeDefined();
     const namespaces = new Set(
-      doc.records.filter(absentFromNewest(doc)).map((r) => r.identity.namespace),
+      doc.records
+        .filter(
+          (r) =>
+            previous !== undefined &&
+            newest !== undefined &&
+            r.availableIn.includes(previous) &&
+            !r.availableIn.includes(newest),
+        )
+        .map((r) => r.identity.namespace),
     );
     expect(namespaces.size).toBeGreaterThan(0);
     for (const namespace of namespaces) {
-      expect(spanBody).toContain(`/api/defold-1.12.4/${namespace}`);
+      expect(releaseBody).toContain(`/api/defold-${previous}/${namespace}`);
     }
   });
 
-  test("points current-surface claims at the exact-version pages", () => {
-    // The upgrade guide's current-surface claims are version-specific, so they
-    // resolve to the exact-version pages, not the unprefixed Combined page.
-    expect(spanBody).toContain(`/api/defold-${RELEASE}/liveupdate`);
-    expect(spanBody).toContain(`/api/defold-${RELEASE}/model`);
-    expect(guideBody).not.toContain("](/api/liveupdate)");
-    expect(guideBody).not.toContain("](/api/model)");
-  });
-
-  // A patch replaces its predecessor in place, taking that version's whole
-  // `/api/defold-<replaced>/…` route family with it. Any surviving *link* is
-  // broken by construction — and reds here on the guide body alone, without
-  // waiting for a docs rebuild to repopulate the route set. Prose may still name
-  // the family to explain that it is gone; only navigation into it is the defect.
-  test("links nothing into the replaced version's API family", () => {
-    const dead = apiLinkTargets(guideBody).filter((href) =>
-      href.startsWith(`/api/defold-${REPLACED}/`),
-    );
-    expect(dead).toEqual([]);
+  // The guide's surface claims are version-specific, so every API link it makes
+  // resolves to an exact-version page rather than the unprefixed Combined page,
+  // which would silently re-point at whatever is current after the next bump.
+  test("points every surface claim at an exact-version page", () => {
+    const targets = apiLinkTargets(guideBody);
+    expect(targets.length).toBeGreaterThan(0);
+    const unversioned = targets.filter((href) => !href.startsWith("/api/defold-"));
+    expect(unversioned).toEqual([]);
   });
 
   test("carries no broken API links", () => {
@@ -500,12 +510,12 @@ describe("upgrading-defold-versions guide", () => {
   // transition — the `name` parameter widened to accept a hash — not as removed
   // symbols, so the guide must describe a parameter-type change.
   test("describes the Live Update mounts as a parameter-type change, not a removal", () => {
-    const replacedHtml = releaseSection(guideHtml, REPLACED) ?? "";
-    const groups = pageHeadings(replacedHtml)
+    const predecessorHtml = releaseSection(guideHtml, PREDECESSOR) ?? "";
+    const groups = pageHeadings(predecessorHtml)
       .filter((h) => h.level === 3)
       .map((h) => h.text);
     expect(groups).toContain("Changed Lua API signatures");
-    const collapsed = replacedBody.replace(/\s+/g, " ");
+    const collapsed = predecessorBody.replace(/\s+/g, " ");
     expect(collapsed).toContain("`liveupdate.add_mount` was **not** removed");
     expect(collapsed).toContain("widened from `string` to `string | Hash`");
     expect(collapsed).not.toContain("auto-mount API is gone");

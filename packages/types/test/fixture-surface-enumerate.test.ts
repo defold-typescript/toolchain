@@ -19,10 +19,11 @@ describe("committed release surfaces", () => {
       "material",
     ];
 
-    // The committed surfaces are the two null-source targets (current default +
-    // previous); the ref-doc regression target carries a non-null source.
+    // The committed surfaces are the null-source targets (the current default plus
+    // every demoted release kept beside it); a ref-doc regression target carries a
+    // non-null source and is resolved on demand rather than committed.
     const targets = loadApiTargets().filter((target) => target.source == null);
-    expect(targets).toHaveLength(2);
+    expect(targets.length).toBeGreaterThanOrEqual(2);
     const current = targets.find((target) => target.id === `defold-${DEFOLD_VERSION}`);
     if (!current) throw new Error(`missing defold-${DEFOLD_VERSION} target`);
     const currentNamespaces = new Set(current.modules.map((module) => module.namespace));
