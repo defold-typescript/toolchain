@@ -20,6 +20,7 @@ import {
   materializeRefDocSurface,
   surfaceDirName,
   surfaceStampStatus,
+  writePinnedRootEntrypoint,
 } from "./materialize";
 import {
   editorRefDocTarget,
@@ -1120,6 +1121,11 @@ describe("pinned root paths", () => {
       "utf8",
     );
     expect(root).toContain('import "../index";');
+    // The facade is the whole root export set in one ambient-free module; the
+    // per-module subpaths cover only part of it, and `timers` proves the
+    // legacy loop still runs for the one the facade does not re-export.
+    expect(root).toContain(`export * from "${MANAGED}/api";`);
+    expect(root).toContain(`export * from "${MANAGED}/timers";`);
     expect(root).toContain(`export * from "${MANAGED}/lifecycle";`);
     expect(root).toContain(`export * from "${MANAGED}/core-types";`);
     // Kind indexes carry the ambient generated namespaces the pin narrows; a
@@ -1127,6 +1133,34 @@ describe("pinned root paths", () => {
     expect(root).not.toContain(`export * from "${MANAGED}/script";`);
     expect(root).not.toContain(`export * from "${MANAGED}/api-availability.json";`);
     expect(PKG_ROOT.length).toBeGreaterThan(0);
+  });
+
+  test("an installed package without the facade subpath gets no root entrypoint at all", () => {
+    // A partial entrypoint is the defect being fixed, so an older installed
+    // package must fall back to the unbound pin rather than re-export a subset.
+    const typesRoot = path.join(cwd, "legacy-types");
+    mkdirSync(typesRoot, { recursive: true });
+    writeFileSync(
+      path.join(typesRoot, "package.json"),
+      `${JSON.stringify({
+        name: MANAGED,
+        exports: {
+          ".": { types: "./index.d.ts" },
+          "./core-types": { types: "./src/core-types.ts" },
+          "./lifecycle": { types: "./src/lifecycle.ts" },
+          "./timers": { types: "./src/timers.d.ts" },
+          "./script": { types: "./generated/kinds/script.d.ts" },
+        },
+      })}\n`,
+    );
+
+    const surfaceDirPath = path.join(cwd, "surface");
+    mkdirSync(path.join(surfaceDirPath, "root"), { recursive: true });
+    writeFileSync(path.join(surfaceDirPath, "root", "index.d.ts"), "export {};\n");
+
+    writePinnedRootEntrypoint(surfaceDirPath, typesRoot);
+
+    expect(existsSync(path.join(surfaceDirPath, "root"))).toBe(false);
   });
 });
 
