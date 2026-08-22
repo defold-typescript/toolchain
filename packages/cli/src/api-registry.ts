@@ -69,6 +69,15 @@ export function loadApiTargetsRegistry(): RegistryTarget[] {
   }
 }
 
+// The registry ids carry a `defold-` prefix the user never types. One derivation
+// for every surface that names the providable set, so the build-time notice and
+// the pin writer cannot list different targets.
+export function resolvableTargetVersions(
+  registry: readonly RegistryTarget[] = loadApiTargetsRegistry(),
+): string[] {
+  return registry.map((entry) => entry.id.replace(/^defold-/, ""));
+}
+
 export function findRefDocTarget(version: string): RegistryTarget | undefined {
   return loadApiTargetsRegistry().find(
     (target) => target.source?.kind === "ref-doc" && target.source.version === version,

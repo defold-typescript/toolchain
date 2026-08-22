@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import * as path from "node:path";
-import { loadApiTargetsRegistry, type RegistryTarget } from "./api-registry";
+import { type RegistryTarget, resolvableTargetVersions } from "./api-registry";
 import { CURRENT_STABLE_SURFACE_ID, selectApiSurface } from "./api-surface";
 import {
   type DefoldIo,
@@ -455,10 +455,7 @@ function dispatchCommand(
     !selectApiSurface(target.version).available
       ? target.version
       : undefined;
-  const resolvableTargets =
-    unresolvableTarget === undefined
-      ? []
-      : loadApiTargetsRegistry().map((entry) => entry.id.replace(/^defold-/, ""));
+  const resolvableTargets = unresolvableTarget === undefined ? [] : resolvableTargetVersions();
   const unresolvableNotice = unresolvableTargetNotice(
     unresolvableTarget,
     targetSource,
