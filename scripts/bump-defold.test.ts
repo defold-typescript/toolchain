@@ -3,6 +3,10 @@ import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
 import {
+  parseApiTargetsRegistry,
+  resolvableTargetVersions,
+} from "../packages/cli/src/api-registry.ts";
+import {
   applyTargetOps,
   applyVersionRotation,
   BUMP_STAGES,
@@ -17,7 +21,13 @@ import {
   spawn,
   stageCommand,
 } from "./bump-defold.ts";
-import { EXTENSION_PINS, fixtureDir, RELEASE_MODEL, targetMetaFor } from "./release-model.ts";
+import {
+  compareVersions,
+  EXTENSION_PINS,
+  fixtureDir,
+  RELEASE_MODEL,
+  targetMetaFor,
+} from "./release-model.ts";
 
 const REPO = path.resolve(import.meta.dir, "..");
 
@@ -358,6 +368,103 @@ describe("applyTargetOps against a temporary registry", () => {
     expect(demoted?.default).toBe(false);
     expect(demoted?.generatedDir).toBe("generated/versions/defold-1.13.0");
     expect(demoted?.coreTypesImport).toBe("../../../src/core-types");
+  });
+});
+
+// The op-shape tests above run against a synthetic two-target registry, which
+// cannot show the relationship this block is about: the real registry already
+// holds more surfaces than the pre-baked tuple does. Copying the shipped file is
+// what makes "strictly a superset" observable.
+function tmpRealTargets(): string {
+  const dir = mkdtempSync(path.join(tmpdir(), "bump-real-tgt-"));
+  const targetsPath = path.join(dir, "api-targets.json");
+  writeFileSync(
+    targetsPath,
+    readFileSync(path.join(REPO, "packages/types/api-targets.json"), "utf8"),
+  );
+  return targetsPath;
+}
+
+function readRegistry(targetsPath: string) {
+  return parseApiTargetsRegistry(readFileSync(targetsPath, "utf8"));
+}
+
+// The tuple as the rotation writer left it, read back out of its own output
+// rather than re-derived from the plan — otherwise the assertions would only
+// restate `retainedVersions`.
+function readRotatedTuple(versionFile: string): string[] {
+  const match = readFileSync(versionFile, "utf8").match(/DEFOLD_VERSIONS = \[([^\]]*)\]/);
+  if (!match?.[1]) throw new Error("no DEFOLD_VERSIONS tuple in the rotated file");
+  return [...match[1].matchAll(/"([^"]+)"/g)].map((entry) => entry[1] as string);
+}
+
+describe("post-rotation tuple/registry contract", () => {
+  function rotate() {
+    const { versionFile, syncFile } = tmpCopies();
+    const targetsPath = tmpRealTargets();
+    const before = readRegistry(targetsPath).map((target) => target.id);
+    const plan = planBump(NEXT_PATCH);
+    applyVersionRotation(plan, { versionFile, syncFile });
+    applyTargetOps(plan, targetsPath);
+    const registry = readRegistry(targetsPath);
+    return {
+      plan,
+      before,
+      targetsPath,
+      registry,
+      surfaces: registry.filter((target) => (target.source ?? null) === null),
+      tuple: readRotatedTuple(versionFile),
+    };
+  }
+
+  test("every rotated tuple entry keeps a committed surface", () => {
+    const { surfaces, tuple } = rotate();
+    const ids = new Set(surfaces.map((target) => target.id));
+    expect(tuple.filter((version) => !ids.has(`defold-${version}`))).toEqual([]);
+  });
+
+  test("the registry is a strict superset of the tuple, not its equal", () => {
+    const { surfaces, tuple } = rotate();
+    expect(surfaces.length).toBeGreaterThan(tuple.length);
+  });
+
+  test("every committed surface outside the tuple is a non-default demoted target", () => {
+    const { surfaces, tuple } = rotate();
+    const outside = surfaces.filter((target) => !tuple.includes(target.id.replace(/^defold-/, "")));
+    expect(outside.length).toBeGreaterThan(0);
+    for (const target of outside) {
+      expect(target.default === true).toBe(false);
+      expect(target.generatedDir).toBe(`generated/versions/${target.id}`);
+    }
+  });
+
+  test("exactly one default remains and it is the tuple head", () => {
+    const { registry, tuple } = rotate();
+    const defaults = registry.filter((target) => target.default === true).map((t) => t.id);
+    expect(defaults).toEqual([`defold-${tuple[0]}`]);
+  });
+
+  test("the rotation prepends the incoming release and removes nothing", () => {
+    const { registry, before, plan } = rotate();
+    expect(registry.map((target) => target.id)).toEqual([`defold-${plan.to}`, ...before]);
+  });
+
+  test("the rotated tuple stays strictly descending", () => {
+    const { tuple } = rotate();
+    for (let index = 1; index < tuple.length; index += 1) {
+      expect(compareVersions(tuple[index - 1] as string, tuple[index] as string)).toBeGreaterThan(
+        0,
+      );
+    }
+  });
+
+  // The predecessor leaves the pre-baked pair on a patch bump. What must survive
+  // is selectability, and `set-target` decides that from the registry — so the
+  // check runs through the same derivation rather than a local scan.
+  test("the predecessor dropped from the tuple is still a selectable target", () => {
+    const { registry, tuple } = rotate();
+    expect(tuple).not.toContain(RELEASE_MODEL.current);
+    expect(resolvableTargetVersions(registry)).toContain(RELEASE_MODEL.current);
   });
 });
 
