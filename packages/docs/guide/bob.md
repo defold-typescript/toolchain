@@ -104,5 +104,6 @@ before it ever launches.
 
 The one exception is `--fail-on-drift` on `bob build`/`bundle`/`run`, which
 fails an otherwise-successful command when the installed editor has drifted from
-the pin (see [Pinning the Defold target](./pinning-defold-target.md)). It only
+the pin, or the pin names a version the toolchain cannot provide (see
+[Pinning the Defold target](./pinning-defold-target.md)). It only
 ever replaces a success — a non-zero Bob or engine code is still reported as-is.

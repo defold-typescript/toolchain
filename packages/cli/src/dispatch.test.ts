@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import * as os from "node:os";
 import * as path from "node:path";
 import { Writable } from "node:stream";
+import { loadApiTargetsRegistry } from "./api-registry";
 import { CURRENT_STABLE_SURFACE_ID } from "./api-surface";
 import type { DefoldIo } from "./bob-command";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
@@ -984,6 +985,110 @@ describe("dispatch", () => {
     };
     expect(parsed.pinMismatch).toEqual({ installed: "1.13.0", pinned: "1.12.4" });
     expect(parsed.warnings.some((w) => w.includes("set-target --detected"))).toBe(true);
+  });
+
+  // A version the registry has never carried, so the surface lookup misses no
+  // matter which targets ship. The precondition assertion below keeps it honest
+  // if the registry ever grows toward it.
+  const UNREGISTERED_TARGET = "1.0.0";
+
+  function registeredTargetVersions(): string[] {
+    return loadApiTargetsRegistry().map((target) => target.id.replace(/^defold-/, ""));
+  }
+
+  test("build reports a pin the API registry cannot provide, naming the resolvable targets", async () => {
+    expect(registeredTargetVersions()).not.toContain(UNREGISTERED_TARGET);
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": UNREGISTERED_TARGET } });
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd], io, { detectEditorVersion: () => null });
+
+    expect(code).toBe(0);
+    expect(err()).toContain(UNREGISTERED_TARGET);
+    for (const version of registeredTargetVersions()) {
+      expect(err()).toContain(version);
+    }
+  });
+
+  test("build --json carries the unresolvable-target notice in warnings and states no surface was materialized", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": UNREGISTERED_TARGET } });
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--json"], io, { detectEditorVersion: () => null });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as {
+      warnings: string[];
+      materializedSurface: string | null;
+      unresolvableTarget?: { target: string; available: string[] };
+    };
+    expect(parsed.warnings.some((w) => w.includes(UNREGISTERED_TARGET))).toBe(true);
+    expect(parsed.materializedSurface).toBeNull();
+    expect(parsed.unresolvableTarget).toEqual({
+      target: UNREGISTERED_TARGET,
+      available: registeredTargetVersions(),
+    });
+    expect(existsSync(path.join(cwd, ".defold-types"))).toBe(false);
+  });
+
+  test("build --fail-on-drift escalates an unresolvable pin and leaves the notice unchanged", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": UNREGISTERED_TARGET } });
+
+    const advisory = captureStreams();
+    const advisoryCode = await dispatch(["build", cwd], advisory.io, {
+      detectEditorVersion: () => null,
+    });
+    const failing = captureStreams();
+    const failingCode = await dispatch(["build", cwd, "--fail-on-drift"], failing.io, {
+      detectEditorVersion: () => null,
+    });
+
+    expect(advisoryCode).toBe(0);
+    expect(failingCode).toBe(1);
+    expect(failing.err()).toBe(advisory.err());
+  });
+
+  test("an unresolvable --defold-target override reports the same way and still does not write the pin", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--defold-target", UNREGISTERED_TARGET], io, {
+      detectEditorVersion: () => null,
+    });
+
+    expect(code).toBe(0);
+    // The override notice already names the flag value, so the registry-miss
+    // notice is identified by the resolvable targets it lists instead.
+    expect(err()).toContain("API registry");
+    for (const version of registeredTargetVersions()) {
+      expect(err()).toContain(version);
+    }
+    const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8")) as {
+      "defold-typescript": { "defold-target": string };
+    };
+    expect(pkg["defold-typescript"]["defold-target"]).toBe("1.12.4");
+  });
+
+  test("a resolvable pin is unaffected: no notice, surface materialized, tsconfig repointed", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const { io, out, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--json"], io, { detectEditorVersion: () => null });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as {
+      warnings: string[];
+      materializedSurface: string | null;
+      unresolvableTarget?: unknown;
+    };
+    expect("unresolvableTarget" in parsed).toBe(false);
+    expect(parsed.warnings.some((w) => w.includes("API registry"))).toBe(false);
+    expect(parsed.materializedSurface).toBe(".defold-types/defold-1.12.4");
+    expect(err()).toBe("");
+    const tsconfig = JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")) as {
+      compilerOptions: { types?: string[] };
+    };
+    expect(tsconfig.compilerOptions.types).toContain("defold-1.12.4");
   });
 
   test("watch --fail-on-drift exits non-zero on the same drift the notice reports", async () => {
