@@ -6,9 +6,11 @@ import { Writable } from "node:stream";
 import { loadApiTargetsRegistry } from "./api-registry";
 import { CURRENT_STABLE_SURFACE_ID } from "./api-surface";
 import type { DefoldIo } from "./bob-command";
+import { readCliVersion } from "./cli-version";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import { dispatch } from "./dispatch";
 import { type ExtensionZip, extensionArchiveKey } from "./extension-archive";
+import { surfaceDirName } from "./materialize";
 import {
   labelRefDocResolveOpts,
   multiKindRefDocResolveOpts,
@@ -24,6 +26,13 @@ import type {
   Watcher,
   WatcherFactory,
 } from "./watch";
+
+// The materialized surface directory carries the generating toolchain version;
+// these tests defend other behavior, so they derive the name from production
+// rather than restating it.
+function surfaceDir(surfaceId: string): string {
+  return surfaceDirName(surfaceId, readCliVersion());
+}
 
 function captureStreams(): {
   io: { stdout: NodeJS.WritableStream; stderr: NodeJS.WritableStream };
@@ -1083,12 +1092,12 @@ describe("dispatch", () => {
     };
     expect("unresolvableTarget" in parsed).toBe(false);
     expect(parsed.warnings.some((w) => w.includes("API registry"))).toBe(false);
-    expect(parsed.materializedSurface).toBe(".defold-types/defold-1.12.4");
+    expect(parsed.materializedSurface).toBe(`.defold-types/${surfaceDir("defold-1.12.4")}`);
     expect(err()).toBe("");
     const tsconfig = JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")) as {
       compilerOptions: { types?: string[] };
     };
-    expect(tsconfig.compilerOptions.types).toContain("defold-1.12.4");
+    expect(tsconfig.compilerOptions.types).toContain(surfaceDir("defold-1.12.4"));
   });
 
   test("watch --fail-on-drift exits non-zero on the same drift the notice reports", async () => {
@@ -1321,9 +1330,9 @@ describe("dispatch", () => {
     expect(parsed.defoldVersion).toBe("1.12.4");
     expect(parsed.defoldChannel).toBeNull();
     expect(parsed.defoldSha).toBeNull();
-    expect(parsed.materializedSurface).toBe(".defold-types/defold-1.12.4");
+    expect(parsed.materializedSurface).toBe(`.defold-types/${surfaceDir("defold-1.12.4")}`);
     const camera = readFileSync(
-      path.join(cwd, ".defold-types", "defold-1.12.4", "camera.d.ts"),
+      path.join(cwd, ".defold-types", surfaceDir("defold-1.12.4"), "camera.d.ts"),
       "utf8",
     );
     expect(camera).toContain('from "./core-types"');
@@ -1477,11 +1486,13 @@ describe("dispatch", () => {
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { materializedSurface: string | null };
-    expect(parsed.materializedSurface).toBe(`.defold-types/${CURRENT_STABLE_SURFACE_ID}`);
-    const surfaceDir = path.join(cwd, ".defold-types", CURRENT_STABLE_SURFACE_ID);
-    expect(existsSync(path.join(surfaceDir, "label.d.ts"))).toBe(true);
-    expect(existsSync(path.join(surfaceDir, "engine-globals.d.ts"))).toBe(true);
-    expect(readFileSync(path.join(surfaceDir, "index.d.ts"), "utf8")).toContain(
+    expect(parsed.materializedSurface).toBe(
+      `.defold-types/${surfaceDir(CURRENT_STABLE_SURFACE_ID)}`,
+    );
+    const pinnedDir = path.join(cwd, ".defold-types", surfaceDir(CURRENT_STABLE_SURFACE_ID));
+    expect(existsSync(path.join(pinnedDir, "label.d.ts"))).toBe(true);
+    expect(existsSync(path.join(pinnedDir, "engine-globals.d.ts"))).toBe(true);
+    expect(readFileSync(path.join(pinnedDir, "index.d.ts"), "utf8")).toContain(
       'import "./engine-globals";',
     );
 
@@ -1510,7 +1521,7 @@ describe("dispatch", () => {
     expect("scriptKind" in parsed).toBe(false);
 
     const index = readFileSync(
-      path.join(cwd, ".defold-types", CURRENT_STABLE_SURFACE_ID, "index.d.ts"),
+      path.join(cwd, ".defold-types", surfaceDir(CURRENT_STABLE_SURFACE_ID), "index.d.ts"),
       "utf8",
     );
     expect(index).toContain('"./gui"');
@@ -1543,7 +1554,7 @@ describe("dispatch", () => {
     expect("scriptKind" in parsed).toBe(false);
 
     const index = readFileSync(
-      path.join(cwd, ".defold-types", CURRENT_STABLE_SURFACE_ID, "index.d.ts"),
+      path.join(cwd, ".defold-types", surfaceDir(CURRENT_STABLE_SURFACE_ID), "index.d.ts"),
       "utf8",
     );
     expect(index).toContain('"./gui"');
@@ -1659,9 +1670,9 @@ describe("dispatch", () => {
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { materializedSurface: string | null };
-    expect(parsed.materializedSurface).toBe(".defold-types/defold-1.9.8");
+    expect(parsed.materializedSurface).toBe(`.defold-types/${surfaceDir("defold-1.9.8")}`);
 
-    const dir = path.join(cwd, ".defold-types", "defold-1.9.8");
+    const dir = path.join(cwd, ".defold-types", surfaceDir("defold-1.9.8"));
     expect(existsSync(path.join(dir, "label.d.ts"))).toBe(true);
     expect(existsSync(path.join(dir, "index.d.ts"))).toBe(true);
     expect(existsSync(path.join(dir, "package.json"))).toBe(true);
@@ -1674,7 +1685,7 @@ describe("dispatch", () => {
       compilerOptions: { typeRoots: string[]; types: string[] };
     };
     expect(tsconfig.compilerOptions.typeRoots).toEqual([".defold-types"]);
-    expect(tsconfig.compilerOptions.types).toEqual(["defold-1.9.8"]);
+    expect(tsconfig.compilerOptions.types).toEqual([surfaceDir("defold-1.9.8")]);
 
     rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
   });
@@ -1711,7 +1722,7 @@ describe("dispatch", () => {
       defoldChannel: string | null;
       defoldSha: string | null;
     };
-    expect(parsed.materializedSurface).toBe(".defold-types/defold-1.9.8");
+    expect(parsed.materializedSurface).toBe(`.defold-types/${surfaceDir("defold-1.9.8")}`);
     expect(parsed.defoldVersion).toBe("1.9.8");
     expect(parsed.defoldChannel).toBe("beta");
     expect(parsed.defoldSha).toBe("deadbeef");
@@ -1741,7 +1752,9 @@ describe("dispatch", () => {
 
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { materializedSurface: string | null };
-    expect(parsed.materializedSurface).toBe(`.defold-types/${CURRENT_STABLE_SURFACE_ID}`);
+    expect(parsed.materializedSurface).toBe(
+      `.defold-types/${surfaceDir(CURRENT_STABLE_SURFACE_ID)}`,
+    );
     expect(downloadCalled).toBe(false);
 
     rmSync(sourceGeneratedDir, { recursive: true, force: true });
@@ -1777,7 +1790,7 @@ describe("dispatch", () => {
     });
 
     expect(code).toBe(0);
-    const dir = path.join(cwd, ".defold-types", "defold-1.9.8");
+    const dir = path.join(cwd, ".defold-types", surfaceDir("defold-1.9.8"));
     expect(existsSync(path.join(dir, "sprite.d.ts"))).toBe(true);
     expect(existsSync(path.join(dir, "gui.d.ts"))).toBe(true);
     expect(existsSync(path.join(dir, "render.d.ts"))).toBe(true);
@@ -1805,7 +1818,7 @@ describe("dispatch", () => {
     expect(code).toBe(0);
     expect(failureOutput(err())).toBe("");
 
-    const dir = path.join(cwd, ".defold-types", "defold-1.9.8");
+    const dir = path.join(cwd, ".defold-types", surfaceDir("defold-1.9.8"));
     expect(existsSync(path.join(dir, "sprite.d.ts"))).toBe(true);
     expect(existsSync(path.join(dir, "gui.d.ts"))).toBe(true);
     expect(existsSync(path.join(dir, "render.d.ts"))).toBe(true);
@@ -2004,7 +2017,7 @@ describe("dispatch", () => {
     await handle.waitForIdle();
 
     const index = readFileSync(
-      path.join(cwd, ".defold-types", CURRENT_STABLE_SURFACE_ID, "index.d.ts"),
+      path.join(cwd, ".defold-types", surfaceDir(CURRENT_STABLE_SURFACE_ID), "index.d.ts"),
       "utf8",
     );
     expect(index).toContain('"./gui"');
@@ -2059,7 +2072,12 @@ describe("dispatch", () => {
     const handle = await ready;
     await handle.waitForIdle();
 
-    const indexPath = path.join(cwd, ".defold-types", CURRENT_STABLE_SURFACE_ID, "index.d.ts");
+    const indexPath = path.join(
+      cwd,
+      ".defold-types",
+      surfaceDir(CURRENT_STABLE_SURFACE_ID),
+      "index.d.ts",
+    );
     expect(readFileSync(indexPath, "utf8")).toContain('"./render"');
 
     writeFileSync(path.join(cwd, "hud.gui_script"), "");

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { readCliVersion } from "./cli-version";
 import {
   type DirectoryWall,
   directoryWallTsconfig,
@@ -18,8 +19,15 @@ import {
   wireWallReferences,
   writeDirectoryWallTsconfigs,
 } from "./directory-walls";
-import { MATERIALIZED_ROOT } from "./materialize";
+import { MATERIALIZED_ROOT, surfaceDirName } from "./materialize";
 import type { ScriptKind } from "./script-kind";
+
+// The materialized surface directory carries the generating toolchain version;
+// these tests defend other behavior, so they derive the name from production
+// rather than restating it.
+function surfaceDir(surfaceId: string): string {
+  return surfaceDirName(surfaceId, readCliVersion());
+}
 
 // The kinds every materialized surface writes today. Named here so a test that
 // means "the surface holds the runtime trio" reads as that, not as a list.
@@ -118,7 +126,7 @@ describe("groupSourceScriptKindsByDirectory", () => {
     touch("src/keep.ts", "export default defineScript({});");
     touch("src/main.ts.script");
     touch("node_modules/dep/x.ts", "export default defineScript({});");
-    touch(".defold-types/defold-1.12.4/y.ts", "export default defineScript({});");
+    touch(`.defold-types/${surfaceDir("defold-1.12.4")}/y.ts`, "export default defineScript({});");
     touch("build/default/z.ts", "export default defineScript({});");
     expect(groupSourceScriptKindsByDirectory(cwd)).toEqual(new Map([["src", new Set(["script"])]]));
   });

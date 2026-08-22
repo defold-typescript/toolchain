@@ -4,6 +4,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { Writable } from "node:stream";
 import { GENERATED_BANNER } from "./build-output";
+import { readCliVersion } from "./cli-version";
 import {
   EDITOR_API_TITLE,
   EDITOR_PORT_FILE,
@@ -15,6 +16,7 @@ import type {
   RunWatchOptions as PublicRunWatchOptions,
   WatchEditorClient as PublicWatchEditorClient,
 } from "./index";
+import { surfaceDirName } from "./materialize";
 import {
   createWatchEditorClient,
   type EditorReloadCommand,
@@ -24,6 +26,13 @@ import {
   type Watcher,
   type WatcherFactory,
 } from "./watch";
+
+// The materialized surface directory carries the generating toolchain version;
+// these tests defend other behavior, so they derive the name from production
+// rather than restating it.
+function surfaceDir(surfaceId: string): string {
+  return surfaceDirName(surfaceId, readCliVersion());
+}
 
 function captureStreams() {
   const outChunks: Buffer[] = [];
@@ -525,7 +534,7 @@ describe("runWatch", () => {
     await handle.waitForIdle();
     expect(syncCount).toBe(1);
 
-    component.trigger("rename", ".defold-types/defold-1.12.4/index.d.ts");
+    component.trigger("rename", `.defold-types/${surfaceDir("defold-1.12.4")}/index.d.ts`);
     component.trigger("rename", "build/default/copy.script");
     component.trigger("rename", "node_modules/dep/example.script");
     await handle.waitForIdle();
