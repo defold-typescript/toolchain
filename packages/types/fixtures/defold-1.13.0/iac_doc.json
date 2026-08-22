@@ -1,0 +1,23 @@
+{
+  "info": {
+    "namespace": "iac",
+    "brief": "Functions and constants for doing inter-app communication. Supported on iOS and Android. [icon:ios] [icon:android]",
+    "description": "Functions and constants for doing inter-app communication. Supported on iOS and Android. [icon:ios] [icon:android]"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "iac.set_listener",
+      "description": "Sets the listener function for inter-app communication events.",
+      "parameters": [
+        { "name": "payload", "doc": "The iac payload.", "types": ["table"] },
+        {
+          "name": "type",
+          "doc": "The type of iac, an iac.TYPE_ enumeration. It can be one of the predefined constants below\n- `iac.TYPE_INVOCATION`",
+          "types": ["number"]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

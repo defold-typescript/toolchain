@@ -1,0 +1,594 @@
+{
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "b2d.fixture.get_type",
+      "brief": "Get the fixture type.",
+      "description": "Get the fixture type.",
+      "returnvalues": [
+        {
+          "name": "type",
+          "doc": "",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "fixture_index",
+          "doc": "1-based fixture index from <code>b2d.body.get_fixtures</code>",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.fixture.get_shape",
+      "brief": "Get the fixture shape as a functional shape table.",
+      "description": "Get the fixture shape as a functional shape table.",
+      "returnvalues": [
+        {
+          "name": "shape",
+          "doc": "shape table with numeric <code>type</code> from <code>b2d.shape.SHAPE_TYPE_*</code>,\nsuitable for reuse in <code>b2d.body.create_fixture</code>.\nCircle shapes use <code>radius</code> and <code>center</code>, edge shapes use <code>v1</code>, <code>v2</code>, optional <code>v0</code>, <code>v3</code>,\npolygon shapes use <code>vertices</code>, and chain shapes use <code>vertices</code>, <code>loop</code>, optional <code>prev_vertex</code>, and <code>next_vertex</code>.\nAny angle values are in radians.",
+          "types": ["table"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "fixture_index",
+          "doc": "1-based fixture index from <code>b2d.body.get_fixtures</code>",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.fixture.set_shape",
+      "brief": "Set the fixture shape geometry.",
+      "description": "This updates the existing Box2D v2 shape using the same table format as\n<code>b2d.body.create_fixture</code> and <code>b2d.fixture.get_shape</code>.\nThe shape type must match the current fixture shape type. Polygon updates must\nkeep the same vertex count. Chain shape geometry cannot be updated in-place.\nThe body mass is not updated unless <code>update_mass</code> is true.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "fixture_index",
+          "doc": "1-based fixture index from <code>b2d.body.get_fixtures</code>",
+          "types": ["number"],
+          "is_optional": "False"
+        },
+        {
+          "name": "shape",
+          "doc": "shape table with numeric <code>type</code> from <code>b2d.shape.SHAPE_TYPE_*</code>",
+          "types": ["table"],
+          "is_optional": "False"
+        },
+        {
+          "name": "update_mass",
+          "doc": "if true, reset body mass data after the change",
+          "types": ["boolean"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "<div class=\"codehilite\"><pre><span></span><code><span class=\"kd\">local</span> <span class=\"n\">body</span> <span class=\"o\">=</span> <span class=\"n\">b2d</span><span class=\"p\">.</span><span class=\"n\">get_body</span><span class=\"p\">(</span><span class=\"s2\">&quot;#collisionobject&quot;</span><span class=\"p\">)</span>\n\n<span class=\"c1\">-- Move a circle shape relative to the body origin.</span>\n<span class=\"kd\">local</span> <span class=\"n\">circle</span> <span class=\"o\">=</span> <span class=\"n\">b2d</span><span class=\"p\">.</span><span class=\"n\">fixture</span><span class=\"p\">.</span><span class=\"n\">get_shape</span><span class=\"p\">(</span><span class=\"n\">body</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">)</span>\n<span class=\"n\">circle</span><span class=\"p\">.</span><span class=\"n\">center</span> <span class=\"o\">=</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">(</span><span class=\"mi\">24</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">)</span>\n<span class=\"n\">b2d</span><span class=\"p\">.</span><span class=\"n\">fixture</span><span class=\"p\">.</span><span class=\"n\">set_shape</span><span class=\"p\">(</span><span class=\"n\">body</span><span class=\"p\">,</span> <span class=\"mi\">1</span><span class=\"p\">,</span> <span class=\"n\">circle</span><span class=\"p\">,</span> <span class=\"kc\">true</span><span class=\"p\">)</span>\n\n<span class=\"c1\">-- Replace an edge shape&#39;s local endpoints.</span>\n<span class=\"n\">b2d</span><span class=\"p\">.</span><span class=\"n\">fixture</span><span class=\"p\">.</span><span class=\"n\">set_shape</span><span class=\"p\">(</span><span class=\"n\">body</span><span class=\"p\">,</span> <span class=\"mi\">2</span><span class=\"p\">,</span> <span class=\"p\">{</span>\n    <span class=\"nb\">type</span> <span class=\"o\">=</span> <span class=\"n\">b2d</span><span class=\"p\">.</span><span class=\"n\">shape</span><span class=\"p\">.</span><span class=\"n\">SHAPE_TYPE_EDGE</span><span class=\"p\">,</span>\n    <span class=\"n\">v1</span> <span class=\"o\">=</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">(</span><span class=\"o\">-</span><span class=\"mi\">32</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">),</span>\n    <span class=\"n\">v2</span> <span class=\"o\">=</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">(</span> <span class=\"mi\">32</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">),</span>\n<span class=\"p\">})</span>\n\n<span class=\"c1\">-- Update a box shape using the polygon box convenience format.</span>\n<span class=\"c1\">-- The existing polygon must already have four vertices.</span>\n<span class=\"n\">b2d</span><span class=\"p\">.</span><span class=\"n\">fixture</span><span class=\"p\">.</span><span class=\"n\">set_shape</span><span class=\"p\">(</span><span class=\"n\">body</span><span class=\"p\">,</span> <span class=\"mi\">3</span><span class=\"p\">,</span> <span class=\"p\">{</span>\n    <span class=\"nb\">type</span> <span class=\"o\">=</span> <span class=\"n\">b2d</span><span class=\"p\">.</span><span class=\"n\">shape</span><span class=\"p\">.</span><span class=\"n\">SHAPE_TYPE_BOX</span><span class=\"p\">,</span>\n    <span class=\"n\">hx</span> <span class=\"o\">=</span> <span class=\"mi\">16</span><span class=\"p\">,</span>\n    <span class=\"n\">hy</span> <span class=\"o\">=</span> <span class=\"mi\">8</span><span class=\"p\">,</span>\n    <span class=\"n\">center</span> <span class=\"o\">=</span> <span class=\"n\">vmath</span><span class=\"p\">.</span><span class=\"n\">vector3</span><span class=\"p\">(</span><span class=\"mi\">0</span><span class=\"p\">,</span> <span class=\"mi\">20</span><span class=\"p\">,</span> <span class=\"mi\">0</span><span class=\"p\">),</span>\n    <span class=\"n\">angle</span> <span class=\"o\">=</span> <span class=\"nb\">math.rad</span><span class=\"p\">(</span><span class=\"mi\">30</span><span class=\"p\">),</span>\n<span class=\"p\">},</span> <span class=\"kc\">true</span><span class=\"p\">)</span>\n</code></pre></div>",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.fixture.is_sensor",
+      "brief": "Check if a fixture is a sensor.",
+      "description": "Check if a fixture is a sensor.",
+      "returnvalues": [
+        {
+          "name": "enabled",
+          "doc": "",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "fixture_index",
+          "doc": "1-based fixture index from <code>b2d.body.get_fixtures</code>",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.fixture.set_sensor",
+      "brief": "Set sensor mode for a fixture.",
+      "description": "Set sensor mode for a fixture.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "fixture_index",
+          "doc": "1-based fixture index from <code>b2d.body.get_fixtures</code>",
+          "types": ["number"],
+          "is_optional": "False"
+        },
+        {
+          "name": "enabled",
+          "doc": "",
+          "types": ["boolean"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.fixture.get_density",
+      "brief": "Get fixture density.",
+      "description": "Get fixture density.",
+      "returnvalues": [
+        {
+          "name": "density",
+          "doc": "density in kg/m^2",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "fixture_index",
+          "doc": "1-based fixture index from <code>b2d.body.get_fixtures</code>",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.fixture.set_density",
+      "brief": "Set fixture density.",
+      "description": "Set fixture density.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "fixture_index",
+          "doc": "1-based fixture index from <code>b2d.body.get_fixtures</code>",
+          "types": ["number"],
+          "is_optional": "False"
+        },
+        {
+          "name": "density",
+          "doc": "density in kg/m^2",
+          "types": ["number"],
+          "is_optional": "False"
+        },
+        {
+          "name": "update_mass",
+          "doc": "if true, reset body mass data after the change",
+          "types": ["boolean"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.fixture.get_friction",
+      "brief": "Get fixture friction.",
+      "description": "Get fixture friction.",
+      "returnvalues": [
+        {
+          "name": "friction",
+          "doc": "",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "fixture_index",
+          "doc": "1-based fixture index from <code>b2d.body.get_fixtures</code>",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.fixture.set_friction",
+      "brief": "Set fixture friction.",
+      "description": "Set fixture friction.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "fixture_index",
+          "doc": "1-based fixture index from <code>b2d.body.get_fixtures</code>",
+          "types": ["number"],
+          "is_optional": "False"
+        },
+        {
+          "name": "friction",
+          "doc": "",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.fixture.get_restitution",
+      "brief": "Get fixture restitution.",
+      "description": "Get fixture restitution.",
+      "returnvalues": [
+        {
+          "name": "restitution",
+          "doc": "",
+          "types": ["number"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "fixture_index",
+          "doc": "1-based fixture index from <code>b2d.body.get_fixtures</code>",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.fixture.set_restitution",
+      "brief": "Set fixture restitution.",
+      "description": "Set fixture restitution.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "fixture_index",
+          "doc": "1-based fixture index from <code>b2d.body.get_fixtures</code>",
+          "types": ["number"],
+          "is_optional": "False"
+        },
+        {
+          "name": "restitution",
+          "doc": "",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.fixture.get_filter_data",
+      "brief": "Get fixture filter data for a child shape.",
+      "description": "Get fixture filter data for a child shape.",
+      "returnvalues": [
+        {
+          "name": "filter",
+          "doc": "table with <code>category_bits</code>, <code>mask_bits</code>, and <code>group_index</code>",
+          "types": ["table"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "fixture_index",
+          "doc": "1-based fixture index from <code>b2d.body.get_fixtures</code>",
+          "types": ["number"],
+          "is_optional": "False"
+        },
+        {
+          "name": "child_index",
+          "doc": "1-based child shape index",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.fixture.set_filter_data",
+      "brief": "Set fixture filter data for a child shape.",
+      "description": "Set fixture filter data for a child shape.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "fixture_index",
+          "doc": "1-based fixture index from <code>b2d.body.get_fixtures</code>",
+          "types": ["number"],
+          "is_optional": "False"
+        },
+        {
+          "name": "child_index",
+          "doc": "1-based child shape index",
+          "types": ["number"],
+          "is_optional": "False"
+        },
+        {
+          "name": "filter",
+          "doc": "table with <code>category_bits</code>, <code>mask_bits</code>, and <code>group_index</code>",
+          "types": ["table"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.fixture.refilter",
+      "brief": "Refilter a fixture.",
+      "description": "Refilter a fixture.",
+      "returnvalues": [],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "fixture_index",
+          "doc": "1-based fixture index from <code>b2d.body.get_fixtures</code>",
+          "types": ["number"],
+          "is_optional": "False"
+        },
+        {
+          "name": "touch_proxies",
+          "doc": "if true, touch broad-phase proxies",
+          "types": ["boolean"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.fixture.test_point",
+      "brief": "Test a point against a fixture.",
+      "description": "Test a point against a fixture.",
+      "returnvalues": [
+        {
+          "name": "hit",
+          "doc": "",
+          "types": ["boolean"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "fixture_index",
+          "doc": "1-based fixture index from <code>b2d.body.get_fixtures</code>",
+          "types": ["number"],
+          "is_optional": "False"
+        },
+        {
+          "name": "point",
+          "doc": "point in world coordinates",
+          "types": ["vector3"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    },
+    {
+      "type": "FUNCTION",
+      "name": "b2d.fixture.get_aabb",
+      "brief": "Get fixture AABB for a child shape.",
+      "description": "Get fixture AABB for a child shape.",
+      "returnvalues": [
+        {
+          "name": "aabb",
+          "doc": "table with <code>lower</code> and <code>upper</code>",
+          "types": ["table"]
+        }
+      ],
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "body",
+          "types": ["b2Body"],
+          "is_optional": "False"
+        },
+        {
+          "name": "fixture_index",
+          "doc": "1-based fixture index from <code>b2d.body.get_fixtures</code>",
+          "types": ["number"],
+          "is_optional": "False"
+        },
+        {
+          "name": "child_index",
+          "doc": "1-based child shape index",
+          "types": ["number"],
+          "is_optional": "False"
+        }
+      ],
+      "examples": "",
+      "replaces": "",
+      "error": "",
+      "tparams": [],
+      "members": [],
+      "notes": [],
+      "language": ""
+    }
+  ],
+  "info": {
+    "namespace": "b2d.fixture",
+    "name": "b2d.fixture",
+    "brief": "Box2D b2Fixture documentation",
+    "description": "Functions for interacting with fixtures attached to Box2D bodies.\nFixtures are addressed functionally by `(body, fixture_index)` rather than persistent Lua handles.",
+    "path": "engine/gamesys/src/gamesys/scripts/box2d/v2/script_box2d_fixture_v2.cpp",
+    "file": "",
+    "notes": [],
+    "language": "Lua"
+  }
+}

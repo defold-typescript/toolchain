@@ -26,7 +26,43 @@ const NEWEST_VERSION = (versionsWithDiskFixtures(REAL_TYPES_DIR)[0]?.id ?? "").r
   /^defold-/,
   "",
 );
+const TRACKED_VERSIONS = versionsWithDiskFixtures(REAL_TYPES_DIR).map((v) =>
+  v.id.replace(/^defold-/, ""),
+);
+const OLDEST_VERSION = TRACKED_VERSIONS[TRACKED_VERSIONS.length - 1] as string;
 const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
+
+// The release a namespace's surviving-but-not-universal symbols were introduced
+// in, read off the Combined projection production renders from. The lifecycle
+// prose is keyed on *that* release, not on whichever one is newest: a symbol
+// promoted two releases ago keeps naming its own release forever, and asserting
+// the newest version only held while it happened to be the promoting one.
+function introducedVersionFor(namespace: string): string {
+  const ns = loadCombinedSurface(REAL_TYPES_DIR).namespaces.find((n) => n.namespace === namespace);
+  const introduced = new Set(
+    (ns?.entries ?? [])
+      .filter(
+        (e) => e.availableIn.includes(NEWEST_VERSION) && !e.availableIn.includes(OLDEST_VERSION),
+      )
+      .map((e) => e.availableIn[e.availableIn.length - 1] as string),
+  );
+  if (introduced.size !== 1) {
+    throw new Error(`${namespace}: expected one introducing release, got [${[...introduced]}]`);
+  }
+  return [...introduced][0] as string;
+}
+
+// The release that dropped a symbol: the one immediately newer than the last
+// release still carrying it. Derived for the same reason as `introducedVersionFor`
+// — a removal two releases back keeps naming the release that made it.
+function removedVersionFor(namespace: string, name: string): string {
+  const ns = loadCombinedSurface(REAL_TYPES_DIR).namespaces.find((n) => n.namespace === namespace);
+  const entry = (ns?.entries ?? []).find((e) => e.identity.name === name);
+  const lastHeld = entry?.availableIn[entry.availableIn.length - 1];
+  const index = TRACKED_VERSIONS.indexOf(lastHeld ?? "");
+  if (index < 1) throw new Error(`${namespace}.${name}: no release after ${lastHeld}`);
+  return TRACKED_VERSIONS[index - 1] as string;
+}
 
 const page = (file: string, isIndex = false): GuidePage => {
   const slug = isIndex ? "" : file.replace(/\.md$/, "");
@@ -306,7 +342,7 @@ describe("apiSearchRecords", () => {
     const defaultRecords = apiSearchRecords(loadApiSurface(REAL_TYPES_DIR));
     const body = defaultRecords.find((r) => r.title === "b2d.body API");
     expect(body).toBeDefined();
-    expect(body?.text).toContain(`Since Defold ${NEWEST_VERSION}`);
+    expect(body?.text).toContain(`Since Defold ${introducedVersionFor("b2d.body")}`);
 
     // `model.material` is present through 1.12.4 only, so the canonical surface
     // neither renders it nor carries its removed-in badge.
@@ -319,7 +355,9 @@ describe("apiSearchRecords", () => {
     );
     const historicalModel = historicalRecords.find((r) => r.title === "model API");
     expect(historicalModel).toBeDefined();
-    expect(historicalModel?.text).toContain("Removed in Defold 1.13.1");
+    expect(historicalModel?.text).toContain(
+      `Removed in Defold ${removedVersionFor("model", "material")}`,
+    );
   });
 });
 
@@ -350,9 +388,11 @@ describe("combinedSearchRecords", () => {
   test("threads availability prose for symbols that are not present in every version", () => {
     const records = combinedSearchRecords(combined);
     const compute = records.find((r) => r.route === "/api/compute");
-    expect(compute?.text).toContain(`Since Defold ${NEWEST_VERSION}`);
+    expect(compute?.text).toContain(`Since Defold ${introducedVersionFor("compute")}`);
     const live = records.find((r) => r.route === "/api/liveupdate");
-    expect(live?.text).toContain(`Signature changed in Defold ${NEWEST_VERSION}`);
+    expect(live?.text).toContain(
+      `Signature changed in Defold ${introducedVersionFor("liveupdate")}`,
+    );
   });
 
   test("threads a verified upstream deprecation into the Combined search text", () => {

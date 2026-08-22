@@ -228,17 +228,29 @@ describe("loadCombinedSurface (committed artifacts)", () => {
   const trackedVersions = versionsWithDiskFixtures(REAL_TYPES_DIR).map((v) =>
     v.id.replace(/^defold-/, ""),
   );
-  const [NEWEST, OLDEST] = trackedVersions as [string, string];
+  const NEWEST = trackedVersions[0] as string;
+  const OLDEST = trackedVersions[trackedVersions.length - 1] as string;
+  // The release a symbol first appeared in is the tail of its newest-anchored
+  // `availableIn` run — the version the "Since Defold …" label must name.
+  const introducedIn = (availableIn: readonly string[]): string =>
+    availableIn[availableIn.length - 1] as string;
 
   test("its axis is the tracked versions, newest-first", () => {
     expect(surface.versions).toEqual(trackedVersions);
   });
 
-  test("keeps a namespace new in the newest version (compute) marked since that version", () => {
+  // `compute` arrived mid-history and has survived since, so every entry runs to
+  // the newest version and its label must name the release it actually appeared
+  // in — not whichever release happens to be current.
+  test("marks a namespace introduced mid-history since the version that introduced it", () => {
     const compute = surface.namespaces.find((n) => n.namespace === "compute");
     expect(compute).toBeDefined();
+    expect(compute?.entries.length ?? 0).toBeGreaterThan(0);
     expect(compute?.entries.every((e) => e.availableIn.includes(NEWEST))).toBe(true);
-    expect(compute?.entries.some((e) => e.label.label === `Since Defold ${NEWEST}`)).toBe(true);
+    expect(compute?.entries.every((e) => !e.availableIn.includes(OLDEST))).toBe(true);
+    for (const entry of compute?.entries ?? []) {
+      expect(entry.label.label).toBe(`Since Defold ${introducedIn(entry.availableIn)}`);
+    }
   });
 
   test("renders liveupdate.add_mount as an adjacent, oldest-first signature transition", () => {
@@ -254,9 +266,12 @@ describe("loadCombinedSurface (committed artifacts)", () => {
     // The leading arm is the one that stops at the oldest version, and it is the
     // one that reads as a signature change rather than a removal.
     expect(entries[0]?.availableIn).toEqual([OLDEST]);
+    // Both arms are labelled by the release that made the change — the tail of the
+    // surviving arm's run — rather than by whichever release is newest.
+    const changedIn = introducedIn(entries[1]?.availableIn ?? []);
     expect(entries.map((e) => e.label.label)).toEqual([
-      `Signature changed in Defold ${NEWEST}`,
-      `Since Defold ${NEWEST}`,
+      `Signature changed in Defold ${changedIn}`,
+      `Since Defold ${changedIn}`,
     ]);
   });
 

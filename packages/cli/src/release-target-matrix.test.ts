@@ -1,5 +1,13 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { selectApiSurface } from "./api-surface";
@@ -112,11 +120,8 @@ function fakeContext(cwd: string, sha: string): MatrixCommandContext {
 }
 
 describe("RELEASE_TARGET_MATRIX", () => {
-  test("covers exactly the current-stable and previous-stable releases", () => {
-    expect(RELEASE_TARGET_MATRIX.map((s) => s.version)).toEqual([
-      CURRENT_STABLE_DEFOLD_VERSION,
-      PREVIOUS_STABLE_DEFOLD_VERSION,
-    ]);
+  test("covers every supported release, current-stable first and previous-stable next", () => {
+    expect(RELEASE_TARGET_MATRIX.map((s) => s.version)).toEqual([...DEFOLD_VERSIONS]);
     const current = RELEASE_TARGET_MATRIX.find((s) => s.isCurrentStable);
     expect(current?.version).toBe(CURRENT_STABLE_DEFOLD_VERSION);
     expect(current?.surfaceId).toBe(`defold-${CURRENT_STABLE_DEFOLD_VERSION}`);
@@ -133,6 +138,35 @@ describe("RELEASE_TARGET_MATRIX", () => {
       expect(spec?.surfaceId).toBe(`defold-${version}`);
       expect(spec?.isCurrentStable).toBe(i === 0);
     });
+  });
+});
+
+// The restored 1.13.0 surface is only worth having if it is genuinely 1.13.0.
+// Regenerating it from either neighbour's fixtures produces a complete, green
+// surface, so the guard has to pin it from both sides: it must lack a symbol
+// 1.13.1 added, and carry a namespace 1.12.4 predates.
+describe("the demoted 1.13.0 surface sits strictly between its neighbours", () => {
+  const RESTORED = "1.13.0";
+  const surfaceFile = (version: string, file: string): string => {
+    const dir = selectMatrixSurface(version).generatedDir;
+    if (dir === null) throw new Error(`no committed surface for ${version}`);
+    return readFileSync(path.join(dir, file), "utf8");
+  };
+
+  test("lacks collectionproxy.load, which 1.13.1 introduced", () => {
+    expect(surfaceFile(CURRENT_STABLE_DEFOLD_VERSION, "collectionproxy.d.ts")).toContain(
+      "function load(",
+    );
+    expect(surfaceFile(RESTORED, "collectionproxy.d.ts")).not.toContain("function load(");
+  });
+
+  test("carries the material namespace, which 1.13.0 promoted", () => {
+    const oldest = DEFOLD_VERSIONS[DEFOLD_VERSIONS.length - 1];
+    if (oldest === undefined) throw new Error("DEFOLD_VERSIONS is empty");
+    expect(surfaceFile(RESTORED, "material.d.ts")).toContain("namespace material");
+    const oldestDir = selectMatrixSurface(oldest).generatedDir;
+    expect(oldestDir).not.toBeNull();
+    expect(existsSync(path.join(oldestDir ?? "", "material.d.ts"))).toBe(false);
   });
 });
 
@@ -209,17 +243,22 @@ describe("runMatrixCommand drives the CLI seams offline", () => {
     }
   });
 
-  test("cross-version compile proof: shared code compiles on both; 1.13-only code compiles on 1.13.0 and fails on 1.12.4", () => {
+  test("cross-version compile proof: shared code compiles on every supported release; 1.13-only code fails on the oldest", () => {
     // Deterministic, fully offline cross-version proof. Each surface is reached
     // through the production materialization/selection seam (selectApiSurface +
     // resolveRegisteredSurfaceGeneratedDir + materializeApiSurface +
     // ensureMaterializedReference), then a real `tsc --noEmit` runs against the
     // materialized ambient surface. Real Bob/engine cross-compilation remains the
     // advisory live matrix's job; this proves the committed type surfaces.
+    // The oldest supported release, not `PREVIOUS_STABLE`: the snippet below is
+    // "absent before 1.13", and once a second 1.13 patch is supported the
+    // previous-stable slot is itself a 1.13 surface that must compile it.
+    const oldestVersion = DEFOLD_VERSIONS[DEFOLD_VERSIONS.length - 1];
+    if (oldestVersion === undefined) throw new Error("DEFOLD_VERSIONS is empty");
     const currentSurface = selectMatrixSurface(CURRENT_STABLE_DEFOLD_VERSION);
-    const previousSurface = selectMatrixSurface(PREVIOUS_STABLE_DEFOLD_VERSION);
-    expect(currentSurface.available && previousSurface.available).toBe(true);
-    expect(currentSurface.generatedDir).not.toBe(previousSurface.generatedDir);
+    const oldestSurface = selectMatrixSurface(oldestVersion);
+    expect(currentSurface.available && oldestSurface.available).toBe(true);
+    expect(currentSurface.generatedDir).not.toBe(oldestSurface.generatedDir);
 
     // A shared snippet using APIs present in both releases.
     const sharedSource = [
@@ -228,7 +267,8 @@ describe("runMatrixCommand drives the CLI seams offline", () => {
     ].join("\n");
 
     // A 1.13-only snippet exercising the reverified areas; every symbol is absent
-    // from the 1.12.4 surface, so it must compile on 1.13.0 and fail on 1.12.4.
+    // from the pre-1.13 surface, so it must compile on current and fail on the
+    // oldest supported release.
     const only113Source = [
       "declare const world: Parameters<typeof b2d.world.cast_ray>[0];",
       'compute.set_constants("/c.computec", { tint: { value: vmath.vector4(1, 0, 0, 1) } });',
@@ -244,19 +284,19 @@ describe("runMatrixCommand drives the CLI seams offline", () => {
     ].join("\n");
 
     const sharedOnCurrent = compileAgainstSurface(CURRENT_STABLE_DEFOLD_VERSION, sharedSource);
-    const sharedOnPrevious = compileAgainstSurface(PREVIOUS_STABLE_DEFOLD_VERSION, sharedSource);
+    const sharedOnOldest = compileAgainstSurface(oldestVersion, sharedSource);
     if (sharedOnCurrent.code !== 0) {
       throw new Error(`shared snippet must compile on current:\n${sharedOnCurrent.output}`);
     }
-    if (sharedOnPrevious.code !== 0) {
-      throw new Error(`shared snippet must compile on previous:\n${sharedOnPrevious.output}`);
+    if (sharedOnOldest.code !== 0) {
+      throw new Error(`shared snippet must compile on ${oldestVersion}:\n${sharedOnOldest.output}`);
     }
 
     const onlyOnCurrent = compileAgainstSurface(CURRENT_STABLE_DEFOLD_VERSION, only113Source);
-    const onlyOnPrevious = compileAgainstSurface(PREVIOUS_STABLE_DEFOLD_VERSION, only113Source);
+    const onlyOnOldest = compileAgainstSurface(oldestVersion, only113Source);
     if (onlyOnCurrent.code !== 0) {
-      throw new Error(`1.13-only snippet must compile on 1.13.0:\n${onlyOnCurrent.output}`);
+      throw new Error(`1.13-only snippet must compile on current:\n${onlyOnCurrent.output}`);
     }
-    expect(onlyOnPrevious.code).not.toBe(0);
+    expect(onlyOnOldest.code).not.toBe(0);
   }, 180_000);
 });

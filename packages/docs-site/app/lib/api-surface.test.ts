@@ -2943,15 +2943,22 @@ describe("availability join", () => {
     expect(md).toContain("Removed in Defold 1.13.0");
   });
 
-  test("the real default surface joins a newest-version-only symbol onto its b2d.body page", () => {
-    const newest = (versionsWithDiskFixtures(REAL_TYPES_DIR)[0]?.id ?? "").replace(/^defold-/, "");
+  // The join is proven by a symbol that carries *some* proper subset of the tracked
+  // releases — one absent from at least one of them. Requiring exactly `[newest]`
+  // silently made the assertion depend on the current release having promoted
+  // something into this namespace, which a patch release need not do.
+  test("the real default surface joins a lifecycle-labelled symbol onto its b2d.body page", () => {
+    const tracked = versionsWithDiskFixtures(REAL_TYPES_DIR).length;
     const pages = loadApiSurface(REAL_TYPES_DIR);
     const body = pages.find((p) => p.namespace === "b2d.body");
     expect(body).toBeDefined();
     if (!body) return;
     expect(body.availability?.records.size ?? 0).toBeGreaterThan(0);
     const labelled = apiModuleSymbols(body, body.translations, body.signatures).filter(
-      (s) => s.availability?.availableIn.length === 1 && s.availability.availableIn[0] === newest,
+      (s) =>
+        s.availability !== undefined &&
+        s.availability.availableIn.length > 0 &&
+        s.availability.availableIn.length < tracked,
     );
     expect(labelled.length).toBeGreaterThan(0);
   });

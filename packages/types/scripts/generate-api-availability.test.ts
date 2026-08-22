@@ -18,6 +18,16 @@ const AVAILABILITY_PATH = resolve(import.meta.dir, "..", "api-availability.json"
 // artifact builder uses — so a version rotation needs no edit here.
 const COMPLETE_VERSIONS = selectCompleteVersionSurfaces(loadApiTargets()).map(versionOf);
 const [NEWEST_VERSION] = COMPLETE_VERSIONS as [string];
+const OLDEST_VERSION = COMPLETE_VERSIONS[COMPLETE_VERSIONS.length - 1] as string;
+
+// `availableIn` for a symbol introduced after the oldest tracked release is a
+// newest-anchored, contiguous prefix of the version axis: a symbol cannot be
+// present, absent, then present again across a linear release history.
+function isNewestAnchoredPrefix(availableIn: readonly string[]): boolean {
+  return (
+    availableIn.length > 0 && availableIn.every((version, i) => version === COMPLETE_VERSIONS[i])
+  );
+}
 
 describe("availability derivation over the committed target snapshots", () => {
   const artifact = buildAvailabilityArtifact();
@@ -41,12 +51,17 @@ describe("availability derivation over the committed target snapshots", () => {
     expect(artifact.versions).toEqual(committedVersions);
   });
 
-  test("a newest-only promoted symbol becomes availableIn:[newest] (since:X migration)", () => {
+  // `b2d.world` was promoted mid-history, so it must carry every release from its
+  // promotion forward and none before it — asserted as the prefix property rather
+  // than as a fixed version list, which only held while exactly two were tracked.
+  test("a promoted symbol carries a newest-anchored run that stops short of the oldest release", () => {
     const promoted = artifact.records.filter((r) => r.identity.namespace === "b2d.world");
     expect(promoted.length).toBeGreaterThan(0);
-    expect(
-      promoted.every((r) => r.availableIn.length === 1 && r.availableIn[0] === NEWEST_VERSION),
-    ).toBe(true);
+    for (const record of promoted) {
+      expect(isNewestAnchoredPrefix(record.availableIn)).toBe(true);
+      expect(record.availableIn).toContain(NEWEST_VERSION);
+      expect(record.availableIn).not.toContain(OLDEST_VERSION);
+    }
   });
 
   test("a genuinely removed symbol becomes availableIn:[1.12.4] (removedIn:X migration)", () => {
@@ -64,14 +79,17 @@ describe("availability derivation over the committed target snapshots", () => {
     );
   });
 
-  test("a changed-signature symbol keeps one overload per version and reads as a transition", () => {
+  // The two arms partition the version axis: every tracked release is served by
+  // exactly one signature, so no release is left without an overload and none
+  // claims both. Counting one release per arm only held while two were tracked.
+  test("a changed-signature symbol partitions the version axis and reads as a transition", () => {
     const mount = artifact.records.filter((r) => r.identity.name === "liveupdate.add_mount");
-    expect(mount.some((r) => r.availableIn.length === 1 && r.availableIn[0] === "1.12.4")).toBe(
-      true,
-    );
-    expect(
-      mount.some((r) => r.availableIn.length === 1 && r.availableIn[0] === NEWEST_VERSION),
-    ).toBe(true);
+    expect(mount).toHaveLength(2);
+    const covered = mount.flatMap((r) => r.availableIn);
+    expect(covered.length).toBe(new Set(covered).size);
+    expect([...covered].sort()).toEqual([...COMPLETE_VERSIONS].sort());
+    expect(mount.some((r) => r.availableIn.includes(OLDEST_VERSION))).toBe(true);
+    expect(mount.some((r) => r.availableIn.includes(NEWEST_VERSION))).toBe(true);
     const group = groupByLogicalName(mount, artifact.versions);
     expect(group).toHaveLength(1);
     expect(isSignatureTransition(group[0] as (typeof group)[number], artifact.versions)).toBe(true);
