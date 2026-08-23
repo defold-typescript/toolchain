@@ -514,14 +514,15 @@ function collectAvailability(root: string): AvailabilityEvidence | null {
   }
   const versions = raw.versions ?? [];
   const records = raw.records ?? [];
-  // `current` is the newest tracked version; `baseline` the immediately-preceding
-  // one (`PREVIOUS_STABLE`). A "removed" symbol is one the baseline had and the
-  // newest version lacks — this spans genuine removals and the retired side of a
-  // signature transition, exactly what the migration guide must cover. Both ends
-  // are scoped to the baseline, because that is the hop `guideSpanText` reads: a
-  // symbol retired in some *older* release is documented under that release's own
-  // section, outside this span, and demanding a heading for it here would blame
-  // the promotion for a removal it did not make.
+  // `current` is the newest tracked version; `baseline` is `PREVIOUS_STABLE`, the
+  // tuple's second slot — the rule's previous-minor release once the next bump
+  // reapplies retention, and today the restored 1.13.0. A "removed" symbol is one
+  // the baseline had and the newest version lacks — this spans genuine removals
+  // and the retired side of a signature transition, exactly what the migration
+  // guide must cover. Both ends are scoped to the baseline, because that is the
+  // hop `guideSpanText` reads: a symbol retired in some *older* release is
+  // documented under that release's own section, outside this span, and demanding
+  // a heading for it here would blame the promotion for a removal it did not make.
   const newest = versions[0];
   const baseline = versions[1];
   const has = (r: { availableIn?: string[] }, version: string | undefined): boolean =>

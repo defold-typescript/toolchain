@@ -20,6 +20,7 @@ import {
   promotedNamespacesFor,
   RELEASE_MODEL,
   retainedVersions,
+  SURFACE_RETENTION,
   targetMetaFor,
 } from "./release-model.ts";
 
@@ -166,6 +167,37 @@ describe("surface retention", () => {
     expect(retainedVersions(["1.13.2", "1.13.1", "1.12.4"], "1.13.2")).toEqual([
       "1.13.2",
       "1.12.4",
+    ]);
+  });
+
+  test("the live tuple carries the rule's keep set plus one deliberate restoration", () => {
+    const keep = retainedVersions([...DEFOLD_VERSIONS], CURRENT_STABLE_DEFOLD_VERSION);
+
+    // Both derived from the live pin rather than written as literals, so the
+    // assertions survive a bump instead of silently pinning a stale release.
+    const [major, minor, patch] = CURRENT_STABLE_DEFOLD_VERSION.split(".").map(Number) as [
+      number,
+      number,
+      number,
+    ];
+    const nextPatch = `${major}.${minor}.${patch + 1}`;
+    // Computed by string prefix rather than read back out of `retainedVersions`,
+    // so the rule assertions do not restate the function they check.
+    const previousMinorOfCurrent = DEFOLD_VERSIONS.find(
+      (version) => version.split(".").slice(0, 2).join(".") !== `${major}.${minor}`,
+    ) as string;
+
+    expect(keep.length).toBe(SURFACE_RETENTION.keep.length);
+    expect(keep[0]).toBe(CURRENT_STABLE_DEFOLD_VERSION);
+    expect(keep[1]).toBe(previousMinorOfCurrent);
+
+    expect(DEFOLD_VERSIONS.filter((version) => !keep.includes(version))).toEqual([
+      PREVIOUS_STABLE_DEFOLD_VERSION,
+    ]);
+
+    expect(retainedVersions([...DEFOLD_VERSIONS], nextPatch)).toEqual([
+      nextPatch,
+      previousMinorOfCurrent,
     ]);
   });
 });
