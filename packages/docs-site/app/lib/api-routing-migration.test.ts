@@ -8,8 +8,16 @@ import { searchIndexOutputs } from "../../scripts/build-search-index";
 import { symbolIndexOutputs } from "../../scripts/build-symbol-index";
 import apiNamespaceRoute from "../routes/api/[namespace]";
 import combinedNamespaceRoute from "../routes/api/combined/[namespace]";
-import { canonicalApiPages, combinedApiPages } from "./api-content";
-import { versionedApiParams } from "./api-page-render";
+import {
+  AXIS,
+  MIDDLE,
+  makeWindowedTypesDir,
+  NEWEST,
+  OLDEST,
+  versionId,
+} from "./__fixtures__/windowed-surface";
+import { canonicalApiPages, combinedApiPages, windowedApiPages } from "./api-content";
+import { apiLinkify, apiPageMarkdown, versionedApiParams } from "./api-page-render";
 import { combinedRedirect, redirectHtml } from "./api-redirect";
 import type { ApiPage } from "./api-surface";
 import { loadApiSurfaceForVersion, versionsWithDiskFixtures } from "./api-surface-loader";
@@ -68,8 +76,22 @@ describe("api routing migration — every complete version owns a family and an 
     const params = new Set(
       versionedApiParams(FIXTURE_DIR).map((p) => `${p.version}/${p.namespace}`),
     );
+    // A version's family is now the window ending at it, so it can carry *more*
+    // namespaces than the version's own surface. What it must never do is lose
+    // one: every namespace the version owns that carries at least one symbol
+    // still has a param. Window membership is by symbol, so a namespace with no
+    // symbols at all (`alpha`, `wmath` here) is routed under no version — it has
+    // no content to show — and is filtered out rather than asserted away.
+    const carriesSymbols = (page: ApiPage): boolean =>
+      page.module.functions.length +
+        page.module.variables.length +
+        page.module.constants.length +
+        page.module.properties.length +
+        page.module.typedefs.length >
+      0;
     for (const version of versions) {
       for (const page of loadApiSurfaceForVersion(FIXTURE_DIR, version.id)) {
+        if (!carriesSymbols(page)) continue;
         expect(params.has(`${version.id}/${page.namespace}`)).toBe(true);
       }
     }
@@ -327,7 +349,11 @@ describe("api routing migration — identity placement across four classes via r
     expect(curExact.has("/api/cur/camera")).toBe(true);
     expect(params.has("cur/camera")).toBe(true);
     expect(oldExact.has("/api/old/camera")).toBe(false);
-    expect(params.has("old/camera")).toBe(false);
+    // The identity claim is the line above: `camera` is not part of `old`'s own
+    // surface. Its *family* is a different question now — `old` sorts newest on
+    // this fixture's axis, so its window spans both versions and legitimately
+    // routes `camera`, which is exactly the widening this route model introduces.
+    expect(params.has("old/camera")).toBe(true);
     // the symbol lands on Combined and the current exact page; the historical
     // version owns no `camera` page at all (absence, not merely a missing route)
     expect(fnNames(combinedPages, "camera")).toContain("camera.get_projection");
@@ -365,5 +391,67 @@ describe("api routing migration — identity placement across four classes via r
     // Both arms land once on the Combined page; each exact page keeps only its own.
     expect(combinedArms).toHaveLength(2);
     expect(new Set(combinedArms)).toEqual(new Set([...curArms, ...oldArms]));
+  });
+});
+
+// The windowed exact-version family. `/api/<version>/<ns>` is the window
+// `{oldest, version}` rather than that version's own surface, so it gains the
+// namespaces earlier versions owned and loses the symbols added after it. The
+// real corpus has no removed namespace and no window-capped signature, so these
+// properties are proven on the synthetic three-version registry.
+describe("api routing migration — the exact-version family is the window ending at that version", () => {
+  let dir = "";
+  const fullWindow = (to: string) => ({ from: OLDEST, to });
+
+  beforeAll(() => {
+    dir = makeWindowedTypesDir();
+  });
+  afterAll(() => {
+    if (dir) rmSync(dir, { recursive: true, force: true });
+  });
+
+  test("the newest version's family carries a namespace its own surface never had", () => {
+    // `gone` exists only in 1.0.0, so the newest version's *own* surface omits it
+    // entirely — yet a reader targeting 3.0.0 is exactly who needs to see that it
+    // was removed.
+    const ownNamespaces = loadApiSurfaceForVersion(dir, versionId(NEWEST)).map((p) => p.namespace);
+    expect(ownNamespaces).not.toContain("gone");
+
+    const windowed = windowedApiPages(fullWindow(NEWEST), dir);
+    expect(windowed.map((p) => p.namespace)).toContain("gone");
+
+    const gone = windowed.find((p) => p.namespace === "gone");
+    const markdown = apiPageMarkdown(gone as ApiPage, apiLinkify(windowed));
+    expect(markdown).toContain(`Removed in Defold ${MIDDLE}`);
+  });
+
+  test("the windowed family routes under the version it ends at, not the canonical route", () => {
+    for (const page of windowedApiPages(fullWindow(MIDDLE), dir)) {
+      expect(page.route).toBe(`/api/${versionId(MIDDLE)}/${page.namespace}`);
+    }
+  });
+
+  test("a symbol added after the routed version is absent there and present on canonical", () => {
+    const names = (pages: ApiPage[]): string[] =>
+      (pages.find((p) => p.namespace === "demo")?.module.functions ?? []).map((f) => f.name);
+
+    expect(names(windowedApiPages(fullWindow(MIDDLE), dir))).not.toContain("demo.newest_only");
+    expect(names(windowedApiPages(fullWindow(NEWEST), dir))).toContain("demo.newest_only");
+    expect(names(combinedApiPages(dir))).toContain("demo.newest_only");
+  });
+
+  test("the static params enumerate the windowed family, so params and content agree", () => {
+    const params = new Set(versionedApiParams(dir).map((p) => `${p.version}/${p.namespace}`));
+    for (const bare of AXIS) {
+      for (const page of windowedApiPages(fullWindow(bare), dir)) {
+        expect(params.has(`${versionId(bare)}/${page.namespace}`)).toBe(true);
+      }
+    }
+    // The widened namespace is reachable under the newest version, which is the
+    // whole point of widening the family rather than only the page body.
+    expect(params.has(`${versionId(NEWEST)}/gone`)).toBe(true);
+    // …and a symbol-level cap does not invent a namespace-level one: `demo`
+    // survives every window, so every version keeps its `demo` param.
+    for (const bare of AXIS) expect(params.has(`${versionId(bare)}/demo`)).toBe(true);
   });
 });

@@ -1,7 +1,10 @@
-import { describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { rmSync } from "node:fs";
 import type { ApiModule } from "@defold-typescript/types";
+import { makeWindowedTypesDir } from "./__fixtures__/windowed-surface";
+import { apiVersionAxis, canonicalApiPages, windowedApiPages } from "./api-content";
 import type { ApiPage } from "./api-surface";
-import type { ApiVersion } from "./api-surface-loader";
+import { type ApiVersion, versionsWithDiskFixtures } from "./api-surface-loader";
 import {
   type BuildReleaseRouteManifestInput,
   buildReleaseRouteManifest,
@@ -256,5 +259,54 @@ describe("validateReleaseRouteManifest", () => {
       symbolRoutes: [...m.symbolRoutes, "symbol-index.json"],
     };
     expect(validateReleaseRouteManifest(corrupt).length).toBeGreaterThan(0);
+  });
+});
+
+// The release gate against the real widened families. `pagesByVersion` is fed by
+// the production windowed enumerator rather than a hand-built list, so a widening
+// that emits a route whose prefix disagrees with its version — or a version left
+// with no family at all — reds here instead of shipping.
+describe("validateReleaseRouteManifest — widened per-version families", () => {
+  let dir = "";
+  let widened: BuildReleaseRouteManifestInput;
+
+  beforeAll(() => {
+    dir = makeWindowedTypesDir();
+    const axis = apiVersionAxis(dir);
+    const oldest = axis[axis.length - 1] as string;
+    const trackedVersions = versionsWithDiskFixtures(dir);
+    widened = {
+      versions: trackedVersions,
+      canonicalPages: canonicalApiPages(dir, dir),
+      pagesByVersion: Object.fromEntries(
+        trackedVersions.map((v) => [
+          v.id,
+          windowedApiPages({ from: oldest, to: v.id.replace(/^defold-/, "") }, dir),
+        ]),
+      ),
+    };
+  });
+  afterAll(() => {
+    if (dir) rmSync(dir, { recursive: true, force: true });
+  });
+
+  test("the manifest built from the windowed families is accepted with no rule relaxed", () => {
+    expect(validateReleaseRouteManifest(buildReleaseRouteManifest(widened))).toEqual([]);
+  });
+
+  test("the newest version's family carries the widened namespace", () => {
+    const manifest = buildReleaseRouteManifest(widened);
+    const newest = manifest.versions.find((v) => v.isDefault);
+    expect(newest?.routes).toContain(`/api/${newest?.id}/gone`);
+  });
+
+  test("a version whose windowed family is empty is still rejected", () => {
+    const manifest = buildReleaseRouteManifest({
+      ...widened,
+      pagesByVersion: { ...widened.pagesByVersion, [widened.versions[1]?.id as string]: [] },
+    });
+    expect(validateReleaseRouteManifest(manifest)).toContain(
+      `version ${widened.versions[1]?.id} has no routes (missing exact family)`,
+    );
   });
 });

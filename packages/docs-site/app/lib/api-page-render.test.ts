@@ -1,4 +1,5 @@
-import { describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { rmSync } from "node:fs";
 import { join } from "node:path";
 import {
   type ApiAvailability,
@@ -8,7 +9,8 @@ import {
   symbolIdentityKey,
 } from "@defold-typescript/types";
 import { LibraryHeading } from "../routes/api/[namespace]";
-import { canonicalApiPages } from "./api-content";
+import { MIDDLE, makeWindowedTypesDir, NEWEST, OLDEST } from "./__fixtures__/windowed-surface";
+import { canonicalApiPages, windowedApiPages } from "./api-content";
 import {
   apiLinkify,
   apiPageMarkdown,
@@ -193,12 +195,16 @@ function libraryPageWithMeta(overrides: Partial<ApiPage> = {}): ApiPage {
 }
 
 describe("versionedApiParams", () => {
-  test("yields one {version, namespace} per on-disk engine page of every materialized version, default included", () => {
+  test("yields one {version, namespace} per page of every materialized version's window", () => {
+    // A version's family is the window ending at it, not its own surface, so
+    // `old` — which sorts newest on this fixture's axis — spans both versions.
+    // `alpha` and `wmath` carry no symbols at all, and window membership is by
+    // symbol, so neither is routed under any version.
     expect(versionedApiParams(FIXTURE_DIR)).toEqual([
-      { version: "cur", namespace: "globals" },
-      { version: "cur", namespace: "alpha" },
       { version: "cur", namespace: "camera" },
-      { version: "old", namespace: "wmath" },
+      { version: "cur", namespace: "globals" },
+      { version: "old", namespace: "camera" },
+      { version: "old", namespace: "globals" },
     ]);
   });
 
@@ -1746,5 +1752,57 @@ describe("apiPageMarkdown deprecation from the api-doc tag", () => {
     expect(md).toContain("Deprecated since 1.12.0");
     expect(md).not.toContain("Deprecated — Use `player_get_unique_id` instead.");
     expect(md.match(/- Deprecated/g)).toHaveLength(1);
+  });
+});
+
+// What a reader actually sees on `/api/<version>/<ns>` once it renders the window
+// ending at that version. The exact surface already carries the *curated*
+// availability overlay, so the property that distinguishes the windowed page is
+// the presence-derived provenance the Combined projection computes — a symbol
+// that first appeared at the routed version says so, and one present in every
+// tracked version stays unmarked.
+describe("apiPageMarkdown — provenance on a non-default version's windowed page", () => {
+  let dir = "";
+  let pages: ApiPage[];
+  let demo: string;
+
+  beforeAll(() => {
+    dir = makeWindowedTypesDir();
+    pages = windowedApiPages({ from: OLDEST, to: MIDDLE }, dir);
+    demo = apiPageMarkdown(pages.find((p) => p.namespace === "demo") as ApiPage, apiLinkify(pages));
+  });
+  afterAll(() => {
+    if (dir) rmSync(dir, { recursive: true, force: true });
+  });
+
+  test("a symbol introduced at the routed version renders its availability marker", () => {
+    expect(demo).toContain('<div class="api-availability"');
+    expect(demo).toContain(`Since Defold ${MIDDLE}`);
+  });
+
+  test("a symbol present in every tracked version renders no availability marker", () => {
+    // `demo.always` spans the whole axis, so its block would read "All tracked
+    // versions" — which `availabilityLabels` deliberately drops. Slice the
+    // rendered section for that symbol so a marker on a *neighbouring* symbol
+    // cannot mask a regression here.
+    const start = demo.indexOf("demo.always()");
+    expect(start).toBeGreaterThan(-1);
+    const nextHeading = demo.indexOf("\n### ", start);
+    const section = demo.slice(start, nextHeading === -1 ? undefined : nextHeading);
+    expect(section).not.toContain("api-availability");
+  });
+
+  test("the rendered signature is the routed version's declaration, not the newest", () => {
+    // `demo.evolving` gains an optional parameter at the newest version; a window
+    // capped at MIDDLE must render the declaration MIDDLE actually shipped.
+    expect(demo).toContain("demo.evolving(a: string): void");
+    expect(demo).not.toContain("b?: number");
+
+    const canonicalPages = windowedApiPages({ from: OLDEST, to: NEWEST }, dir);
+    const canonical = apiPageMarkdown(
+      canonicalPages.find((p) => p.namespace === "demo") as ApiPage,
+      apiLinkify(canonicalPages),
+    );
+    expect(canonical).toContain("demo.evolving(a: string, b?: number): void");
   });
 });

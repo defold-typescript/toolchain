@@ -3,15 +3,20 @@ import { join } from "node:path";
 import {
   apiNamespaceOwner,
   apiNamespaceOwners,
+  apiVersionAxis,
   canonicalApiPages,
   canonicalNamespaces,
   combinedApiPages,
   versionIndependentPages,
+  windowedApiPages,
 } from "./api-content";
+import { apiLinkify, apiPageMarkdown } from "./api-page-render";
 import type { ApiPage } from "./api-surface";
+import { compareSemverDesc } from "./combined-surface";
 
 const ENGINE_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
 const LIBRARY_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/library-display");
+const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
 
 // A minimal page carrying only the fields the namespace-ownership union reads.
 function page(namespace: string): ApiPage {
@@ -139,5 +144,51 @@ describe("apiNamespaceOwner", () => {
     expect(
       apiNamespaceOwner("nonexistent", ENGINE_FIXTURE_DIR, LIBRARY_FIXTURE_DIR),
     ).toBeUndefined();
+  });
+});
+
+// The no-regression lock on the canonical surface. `/api/<ns>` keeps rendering
+// `combinedApiPages()`, but the default version's page is now the window
+// `{oldest, default}` over the same projection — so the two must be the same
+// surface. Asserted against the real corpus, because that is the surface every
+// shipped link, index and LLM artifact was built from; the expectation is the
+// production projection's own output, never a transcribed fixture.
+describe("windowedApiPages — the full-range window is the canonical surface", () => {
+  const axis = apiVersionAxis(REAL_TYPES_DIR);
+  const fullWindow = { from: axis[axis.length - 1] as string, to: axis[0] as string };
+
+  test("the tracked axis is newest-first and non-empty", () => {
+    expect(axis.length).toBeGreaterThan(0);
+    expect([...axis].sort(compareSemverDesc)).toEqual([...axis]);
+  });
+
+  test("the full-range window yields the same namespaces as the canonical surface", () => {
+    const windowed = windowedApiPages(fullWindow, REAL_TYPES_DIR).map((p) => p.namespace);
+    expect(windowed).toEqual(combinedApiPages(REAL_TYPES_DIR).map((p) => p.namespace));
+  });
+
+  test("the full-range window preserves every module, signature and availability record", () => {
+    const windowed = windowedApiPages(fullWindow, REAL_TYPES_DIR);
+    const canonical = combinedApiPages(REAL_TYPES_DIR);
+    expect(windowed.length).toBe(canonical.length);
+    for (const [i, page] of windowed.entries()) {
+      const other = canonical[i] as ApiPage;
+      // The route is the one field that legitimately differs: the windowed page
+      // is addressed under its `to` bound, the canonical page unprefixed.
+      expect({ ...page, route: other.route }).toEqual(other);
+    }
+  });
+
+  test("a canonical namespace renders byte-identically through the window", () => {
+    const windowed = windowedApiPages(fullWindow, REAL_TYPES_DIR);
+    const canonical = combinedApiPages(REAL_TYPES_DIR);
+    // `go` is a large, representative engine namespace: many functions, curated
+    // availability records, and members of every kind.
+    const pick = (pages: ApiPage[]): ApiPage => pages.find((p) => p.namespace === "go") as ApiPage;
+    const windowedPage = pick(windowed);
+    expect(windowedPage).toBeDefined();
+    expect(apiPageMarkdown({ ...windowedPage, route: "/api/go" }, apiLinkify(canonical))).toBe(
+      apiPageMarkdown(pick(canonical), apiLinkify(canonical)),
+    );
   });
 });
