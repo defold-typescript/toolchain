@@ -53,13 +53,34 @@ function windowSlice(versions: readonly string[], window: VersionWindow): string
   return versions.slice(newestIndex, oldestIndex + 1);
 }
 
+// The newest declaration the window genuinely contains, or `undefined` when it
+// contains none. `availableIn` is a presence set widened by curation, so an
+// in-window version can be available while owning no typings at all; an empty
+// string is the miss `entryFor` writes, not a declaration, so it is skipped too.
+function declaredInWindow(
+  entry: CombinedEntry,
+  signatures: SignaturesArtifact,
+  inSlice: ReadonlySet<string>,
+): string | undefined {
+  const key = symbolIdentityKey(entry.identity);
+  for (const version of entry.availableIn) {
+    if (!inSlice.has(version)) continue;
+    const declaration = signatures.versions[version]?.[key];
+    if (declaration) return declaration;
+  }
+  return undefined;
+}
+
 /**
  * The declaration a windowed entry is authoritative for. When the window's `to`
  * does not cap the entry, the built value is returned verbatim: that preserves
  * the resolution {@link buildCombinedSurface} made from *real* presence, which a
  * deprecation-widened span would otherwise re-resolve to a version owning no
- * declaration at all. Otherwise the newest in-window version wins, and a version
- * carrying no declaration degrades to `""` exactly as the full projection does.
+ * declaration at all. A capped window resolves the newest in-window version that
+ * genuinely *declares* the identity, stepping over widened versions that declare
+ * nothing, and keeps the built value when the window declares it nowhere — a real
+ * declaration from outside the window beats no declaration at all, which is the
+ * same degradation the uncapped branch already chooses.
  */
 function windowedSignature(
   entry: CombinedEntry,
@@ -70,7 +91,7 @@ function windowedSignature(
   if (newestInWindow === undefined || newestInWindow === entry.availableIn[0]) {
     return entry.authoritativeSignature;
   }
-  return signatures.versions[newestInWindow]?.[symbolIdentityKey(entry.identity)] ?? "";
+  return declaredInWindow(entry, signatures, inSlice) ?? entry.authoritativeSignature;
 }
 
 function windowNamespace(
