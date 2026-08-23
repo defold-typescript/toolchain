@@ -8,9 +8,10 @@ import { resolveRegisteredSurfaceGeneratedDir } from "./materialize";
 import type { RunWatchHandle, Watcher, WatcherFactory } from "./watch";
 
 // The exact release targets a promotion is gated against: one spec per pre-baked
-// `DEFOLD_VERSIONS` entry — the current release plus the retained previous-minor
-// release — each backed by a committed surface. Intermediate patches the
-// retention rule drops keep their surface but leave this matrix with the tuple.
+// `DEFOLD_VERSIONS` entry — every entry, including any deliberate restoration,
+// not just the current/previous-minor pair the retention rule picks — each backed
+// by a committed surface. Intermediate patches the retention rule drops keep their
+// surface but leave this matrix with the tuple.
 export interface ReleaseTargetSpec {
   readonly version: string;
   readonly surfaceId: string;
