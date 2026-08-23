@@ -16,6 +16,7 @@ import {
 } from "../packages/types/scripts/regen.ts";
 import type { ApiModule } from "../packages/types/src/api-doc.ts";
 import {
+  collectAvailability,
   collectDocs,
   collectEvidence,
   collectMigrationGuide,
@@ -920,5 +921,105 @@ describe("the migration guide is read one release section at a time", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
+  });
+});
+
+describe("collectAvailability — baseline selection", () => {
+  interface Catalog {
+    versions: string[];
+    records: { identity: { name: string }; availableIn: string[] }[];
+  }
+
+  // The availability axis carries every committed surface, including a patch the
+  // retention rule demoted out of `DEFOLD_VERSIONS`; `1.13.1` is that demoted
+  // intermediate, and the records discriminate positional from identity
+  // selection — under baseline `1.13.1` both symbol spans come back empty.
+  function catalogWithDemotedIntermediate(prefix = ""): Catalog {
+    const v = (version: string) => `${prefix}${version}`;
+    return {
+      versions: [v("1.13.2"), v("1.13.1"), v("1.12.4")],
+      records: [
+        { identity: { name: "alpha" }, availableIn: [v("1.12.4")] },
+        { identity: { name: "beta" }, availableIn: [v("1.13.1"), v("1.13.2")] },
+        { identity: { name: "gamma" }, availableIn: [v("1.12.4"), v("1.13.1"), v("1.13.2")] },
+      ],
+    };
+  }
+
+  function withCatalog(catalog: Catalog, run: (root: string) => void): void {
+    const root = mkdtempSync(join(tmpdir(), "readiness-availability-"));
+    try {
+      const typesDir = join(root, "packages", "types");
+      mkdirSync(typesDir, { recursive: true });
+      writeFileSync(join(typesDir, "api-availability.json"), JSON.stringify(catalog));
+      run(root);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }
+
+  const expected = { release: "1.13.2", baseline: "1.12.4" };
+
+  function migrationGuideProblems(root: string, headings: string[]): string[] {
+    const evidence: ReadinessEvidence = {
+      ...passingEvidence(),
+      expected,
+      availability: collectAvailability(root, expected),
+      migrationGuide: { headings },
+    };
+    return evaluateReleaseReadiness(evidence)
+      .problems.filter((p) => p.category === "migration-guide")
+      .map((p) => p.message);
+  }
+
+  test("selects the retained previous-minor release, not index 1", () => {
+    withCatalog(catalogWithDemotedIntermediate(), (root) => {
+      const av = collectAvailability(root, expected);
+      expect(av?.current).toBe("1.13.2");
+      expect(av?.baseline).toBe("1.12.4");
+    });
+  });
+
+  test("symbol spans are computed against the selected baseline", () => {
+    withCatalog(catalogWithDemotedIntermediate(), (root) => {
+      const av = collectAvailability(root, expected);
+      expect(av?.removedSymbols).toEqual(["alpha"]);
+      expect(av?.sinceCurrentSymbols).toEqual(["beta"]);
+    });
+  });
+
+  test("the intermediate patch alone does not make the catalog stale", () => {
+    withCatalog(catalogWithDemotedIntermediate(), (root) => {
+      expect(migrationGuideProblems(root, ["alpha"])).toEqual([]);
+    });
+  });
+
+  test("a prefixed axis entry compares against the expected baseline stripped", () => {
+    withCatalog(catalogWithDemotedIntermediate("defold-"), (root) => {
+      const av = collectAvailability(root, expected);
+      expect(av?.removedSymbols).toEqual(["alpha"]);
+      expect(migrationGuideProblems(root, ["alpha"])).toEqual([]);
+    });
+  });
+
+  test("fails closed when the expected baseline is not on the axis", () => {
+    const catalog = catalogWithDemotedIntermediate();
+    withCatalog({ ...catalog, versions: ["1.13.2", "1.13.1"] }, (root) => {
+      const av = collectAvailability(root, expected);
+      expect(av?.baseline).toBeUndefined();
+      expect(av?.removedSymbols).toEqual([]);
+      expect(migrationGuideProblems(root, ["alpha"])).toEqual([
+        "availability catalog stale: current 1.13.2 baseline (none)",
+      ]);
+    });
+  });
+
+  test("fails closed when the expected release is not the newest tracked version", () => {
+    const catalog = catalogWithDemotedIntermediate();
+    withCatalog({ ...catalog, versions: ["1.13.1", "1.12.4"] }, (root) => {
+      expect(migrationGuideProblems(root, ["alpha"])).toEqual([
+        "availability catalog stale: current 1.13.1 baseline 1.12.4",
+      ]);
+    });
   });
 });
