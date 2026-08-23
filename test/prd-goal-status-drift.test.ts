@@ -1,42 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-
-const repoRoot = join(import.meta.dir, "..");
-// Built from segments so the committed file carries no literal planning-doc
-// path; the leak guard forbids those substrings in tracked source.
-const prdDir = join(repoRoot, "docs", "prd");
-const implDir = join(repoRoot, "docs", "impl");
+import { anchoredGoals, implDir, parseIndexStatus, prdDir } from "./planning-ledger";
 
 // A covering step is "terminal" when its Step Index Status cell is one of these.
 const TERMINAL = new Set(["shipped", "done", "complete", "Obsolete"]);
-
-// Step Index row -> { stepFile, status } where status is the last `|` cell. The
-// Goal column carries area-name drift and is deliberately ignored.
-function parseIndexStatus(md: string): Map<string, string> {
-  const out = new Map<string, string>();
-  for (const line of md.split("\n")) {
-    const m = line.match(/^\| \[[^\]]+\]\(([^)]+\.md)\).*\|([^|]*)\|\s*$/);
-    const file = m?.[1];
-    const cell = m?.[2];
-    if (file === undefined || cell === undefined) continue;
-    const status = cell.trim();
-    const prev = out.get(file);
-    if (prev === undefined || (prev === "" && status !== "")) out.set(file, status);
-  }
-  return out;
-}
-
-// Goal ids a step claims via its `PRD: <path>#<goal-id>` anchor line(s). Keys off
-// the anchor, never the step's `Goal:` line nor the index Goal column.
-function anchoredGoals(stepMd: string): string[] {
-  const goals: string[] = [];
-  for (const line of stepMd.split("\n")) {
-    const goal = line.match(/^PRD:\s*\S*#(\S+)\s*$/)?.[1];
-    if (goal !== undefined) goals.push(goal);
-  }
-  return goals;
-}
 
 type PrdGoal = { status: string; hasImpl: boolean; sourceFile: string; block: string };
 
