@@ -299,8 +299,11 @@ export function libraryOwnerGroups(
 
 export function activeCategoryId(route: string, nav: NavCategory[]): string | undefined {
   let best: { id: string; length: number } | undefined;
-  const consider = (id: string, candidate: string | undefined) => {
-    if (!candidate) return;
+  const consider = (id: string, rawCandidate: string | undefined) => {
+    if (!rawCandidate) return;
+    // A rewritten API route carries the active window's `?since=`; `route` is the
+    // bare pathname, so the query is dropped before matching.
+    const candidate = rawCandidate.split("?")[0] as string;
     const matches = route === candidate || (candidate !== "/" && route.startsWith(`${candidate}/`));
     if (matches && (!best || candidate.length > best.length)) {
       best = { id, length: candidate.length };

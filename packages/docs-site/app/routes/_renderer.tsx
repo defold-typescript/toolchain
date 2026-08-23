@@ -14,7 +14,6 @@ import {
   apiPagesForVersion,
   apiVersions,
   canonicalApiPages,
-  combinedNamespaces,
   combinedSurface,
   libraryOrigins,
 } from "../lib/api-content";
@@ -22,12 +21,12 @@ import { navNamespaceBadges } from "../lib/api-page-render";
 import {
   API_SURFACE_STORAGE_KEY,
   type ApiSurfaceConfig,
-  activeSurfaceForPath,
+  activeRangeForPath,
   canonicalLinkPath,
-  currentSurfaceForRoute,
-  reconcileSurfaceSelector,
+  readStoredRange,
+  reconcileRangeSelector,
   resolveApiSurfaceRedirect,
-  rewriteApiNavForSurface,
+  rewriteApiNavForRange,
   showApiSurfaceSelector,
 } from "../lib/api-surface-pref";
 import { withBase } from "../lib/base";
@@ -43,10 +42,11 @@ import {
   type NavLink,
 } from "../lib/nav";
 import { buildPager, type Pager as PagerData, type PagerLink } from "../lib/pager";
+import { applySinceFilter } from "../lib/since-filter";
 import {
-  buildVersionSwitcher,
-  COMBINED_VERSION_ID,
-  type VersionSwitcherEntry,
+  buildRangeSelector,
+  type RangeSelector,
+  type RangeSelectorOption,
 } from "../lib/version-switch";
 
 declare module "hono" {
@@ -239,9 +239,10 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
   // reached from the selector.
   const allApiPages = canonicalApiPages();
   const toNamespace = (p: (typeof allApiPages)[number]) => ({ label: p.namespace, route: p.route });
-  // Combined per-namespace availability tallies drive the sidebar count pills; the
-  // pills are Combined-only, so they attach to engine leaves here and are stripped
-  // when the nav is rewritten onto an exact-version surface.
+  // Combined per-namespace availability tallies drive the sidebar count pills.
+  // Every window renders the availability layer now, so the pills attach to engine
+  // leaves here and ride every range; the client filter recounts them in place
+  // when `from` narrows.
   const badgeCountsByNamespace = new Map(
     combinedSurface().namespaces.map((ns) => [ns.namespace, namespaceBadgeCounts(ns)]),
   );
@@ -278,15 +279,15 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
       apiPagesForVersion(version.id).map((page) => page.namespace),
     ]),
   );
-  const combinedNs = combinedNamespaces();
 
-  // One surface-preference config drives both the pre-paint redirect (new users
-  // default to Combined; returning users keep their last choice) and the
-  // version-aware sidebar rewrite below, so navigating between API links no longer
-  // drops the selected surface.
+  // One range-preference config drives the pre-paint redirect (new users default
+  // to the full range ending at the default version; returning users keep their
+  // last window) and the range-aware sidebar rewrite below, so navigating between
+  // API links no longer drops the selected window.
   const surfaceConfig: ApiSurfaceConfig = {
     base: withBase("/").replace(/\/$/, ""),
     versionIds,
+    defaultVersionId: versions.find((version) => version.isDefault)?.id ?? versionIds[0] ?? "",
     namespacesByVersion,
   };
   // The default version's family and the bare canonical route render the same
@@ -297,38 +298,32 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
     surfaceConfig,
     versions.find((version) => version.isDefault)?.id,
   );
-  const activeSurface = activeSurfaceForPath(path, surfaceConfig);
-  const surfaceNamespaces =
-    activeSurface === COMBINED_VERSION_ID ? combinedNs : (namespacesByVersion[activeSurface] ?? []);
-  const surfaceNav = rewriteApiNavForSurface(nav, activeSurface, surfaceNamespaces);
+  const search = new URL(c.req.url).search;
+  const activeRange = activeRangeForPath(path, search, surfaceConfig);
+  const surfaceNav = rewriteApiNavForRange(nav, activeRange, surfaceConfig);
 
   const activeId = activeCategoryId(path, surfaceNav) ?? surfaceNav[0]?.id;
   const activeCategory = surfaceNav.find((category) => category.id === activeId) ?? surfaceNav[0];
-  // Combined is an additional surface beyond the tracked engine versions, so the
-  // selector shows as soon as one engine version exists — a single-version registry
-  // still offers the Combined-vs-exact choice.
-  const versionSwitcher = showApiSurfaceSelector(versions.length)
-    ? buildVersionSwitcher({
-        versions,
-        namespacesByVersion,
-        route: path,
-        combinedNamespaces: combinedNs,
-      })
-    : [];
-  const currentVersion = versionSwitcher.find((entry) => entry.isCurrent) ?? versionSwitcher[0];
+  // Both columns list the same tracked axis, so a single-version registry still
+  // renders two one-option columns rather than half a control.
+  const rangeSelector = showApiSurfaceSelector(versions.length)
+    ? buildRangeSelector({ versions, namespacesByVersion, route: path, range: activeRange })
+    : null;
 
   // Serialize the tested redirect decision into a pre-paint script (the theme-init
-  // pattern) so a new user's un-prefixed API page swaps to Combined before first
-  // paint; a capture-phase listener records the surface a selector link chooses so
-  // the choice survives later navigation.
+  // pattern) so a returning reader's un-prefixed API page swaps to their window
+  // before first paint; a capture-phase listener records the range a selector link
+  // chooses so the choice survives later navigation.
   const surfaceKey = JSON.stringify(API_SURFACE_STORAGE_KEY);
   const surfaceConfigJson = JSON.stringify(surfaceConfig);
-  // Pre-paint: (1) redirect an un-prefixed API page to the persisted surface,
-  // (2) record surface-selector clicks, (3) expose the reconciled surface on the
-  // document element before CSS loads, then reconcile the selector highlight and
-  // summary once its DOM exists. A version-independent page therefore keeps the
-  // user's Combined/version choice without briefly showing Combined-only chrome.
-  const surfaceInit = `(function(){try{var f=${resolveApiSurfaceRedirect.toString()};var t=f(location.pathname,localStorage.getItem(${surfaceKey}),${surfaceConfigJson});if(t&&t!==location.pathname){location.replace(t);return;}}catch(e){}try{document.addEventListener('click',function(e){var el=e.target;while(el&&el.getAttribute){var v=el.getAttribute('data-api-surface');if(v!=null){try{localStorage.setItem(${surfaceKey},v);}catch(_){}break;}el=el.parentNode;}},true);}catch(e){}try{var g=${currentSurfaceForRoute.toString()};var r=${reconcileSurfaceSelector.toString()};var s;try{s=g(location.pathname,localStorage.getItem(${surfaceKey}),${surfaceConfigJson});}catch(_){return;}try{r(document,s);}catch(_){}var apply=function(){try{r(document,s);}catch(_){}};if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',apply);}else{apply();}}catch(e){}})();`;
+  // Pre-paint: (1) redirect an un-prefixed API page onto the persisted range,
+  // (2) record range-selector clicks as a `<from>|<to>` pair, (3) reconcile both
+  // selector columns and expose the range on the document element before CSS
+  // loads, then (4) hide the symbols the `from` bound excludes — once pre-paint
+  // for whatever DOM already exists and again on `DOMContentLoaded` for the body
+  // it could not see. A version-independent page therefore keeps the reader's
+  // window without briefly showing a wider one.
+  const surfaceInit = `(function(){var K=${surfaceKey},C=${surfaceConfigJson};var readRange=${readStoredRange.toString()};var stored=function(){try{return localStorage.getItem(K);}catch(_){return null;}};try{var f=${resolveApiSurfaceRedirect.toString()};var t=f(location.pathname,location.search,stored(),C,readRange);if(t&&t!==location.pathname+location.search){location.replace(t);return;}}catch(e){}try{document.addEventListener('click',function(e){var el=e.target;while(el&&el.getAttribute){var v=el.getAttribute('data-range-option'),b=el.getAttribute('data-range-bound');if(v!=null&&b!=null){try{var cur=readRange(location.pathname,location.search,stored(),C);var next=b==='from'?[v,cur.to]:[cur.from,v];var i=C.versionIds.indexOf(next[0]),j=C.versionIds.indexOf(next[1]);if(i<j)next=b==='from'?[v,v]:[v,v];localStorage.setItem(K,next[0]+'|'+next[1]);}catch(_){}break;}el=el.parentNode;}},true);}catch(e){}try{var r=${reconcileRangeSelector.toString()};var filter=${applySinceFilter.toString()};var range;try{range=readRange(location.pathname,location.search,stored(),C);}catch(_){return;}var apply=function(){try{r(document,range);}catch(_){}try{filter(document,range.from,C.versionIds);}catch(_){}};apply();if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',apply);}}catch(e){}})();`;
   const tocHeadings = headings ?? [];
   const showToc = tocHeadings.length > 0;
   const styles = clientStyles();
@@ -417,12 +412,8 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
               </nav>
             </div>
             <div class="contents lg:ml-0 lg:flex lg:items-center lg:gap-2">
-              {currentVersion ? (
-                <VersionSelector
-                  entries={versionSwitcher}
-                  currentId={currentVersion.id}
-                  class="ml-auto lg:ml-0"
-                />
+              {rangeSelector ? (
+                <RangeSelectorControls selector={rangeSelector} class="ml-auto lg:ml-0" />
               ) : null}
               <div
                 data-testid="search"
@@ -477,20 +468,24 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
 
 const REPO_URL = "https://github.com/defold-typescript/toolchain";
 
-function VersionSelector({
-  entries,
-  currentId,
-  class: className,
+// One bound's dropdown. The two are identical controls distinguished only by
+// `data-range-bound`, which is what lets the pre-paint reconciliation and the
+// click listener treat either column without knowing which is which.
+function RangeColumn({
+  bound,
+  label,
+  options,
 }: {
-  entries: readonly VersionSwitcherEntry[];
-  currentId: string;
-  class?: string;
+  bound: "from" | "to";
+  label: string;
+  options: readonly RangeSelectorOption[];
 }) {
-  const currentLabel = entries.find((entry) => entry.id === currentId)?.label ?? currentId;
+  const current = options.find((option) => option.isCurrent) ?? options[0];
   return (
-    <details class={`group relative${className ? ` ${className}` : ""}`}>
+    <details class="group relative" data-range-column={bound}>
       <summary class="inline-flex h-9 cursor-pointer list-none items-center gap-1.5 rounded-md border border-border bg-surface px-3 text-sm font-medium text-text-muted transition hover:border-border-strong hover:text-text [&::-webkit-details-marker]:hidden">
-        <span data-surface-summary="">{currentLabel}</span>
+        <span class="text-text-faint">{label}</span>
+        <span data-range-summary={bound}>{current?.label ?? ""}</span>
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -505,22 +500,23 @@ function VersionSelector({
         </svg>
       </summary>
       <div class="absolute right-0 z-40 mt-2 min-w-40 rounded-lg border border-border bg-bg p-1 text-sm shadow-lg">
-        {entries.map((entry) => (
+        {options.map((option) => (
           <a
-            key={entry.id}
-            href={withBase(entry.route)}
-            data-api-surface={entry.id}
-            aria-current={entry.isCurrent ? "page" : undefined}
+            key={option.id}
+            href={withBase(option.href)}
+            data-range-option={option.id}
+            data-range-bound={bound}
+            aria-current={option.isCurrent ? "page" : undefined}
             class={
               "flex items-center justify-between gap-3 rounded-md px-3 py-2 text-text-muted transition hover:bg-surface hover:text-text " +
-              (entry.isCurrent ? "bg-accent-soft text-accent" : "")
+              (option.isCurrent ? "bg-accent-soft text-accent" : "")
             }
           >
-            <span>{entry.label}</span>
-            {entry.isCurrent ? (
+            <span>{option.label}</span>
+            {option.isCurrent ? (
               <span
                 aria-hidden="true"
-                data-surface-dot=""
+                data-range-dot=""
                 class="h-1.5 w-1.5 shrink-0 rounded-full bg-current"
               />
             ) : null}
@@ -528,6 +524,26 @@ function VersionSelector({
         ))}
       </div>
     </details>
+  );
+}
+
+function RangeSelectorControls({
+  selector,
+  class: className,
+}: {
+  selector: RangeSelector;
+  class?: string;
+}) {
+  return (
+    // A `fieldset` (not a labelled `div`) so the two bounds are announced as one
+    // named group; `min-w-0` keeps the browser default from forcing a min width.
+    <fieldset
+      class={`flex min-w-0 items-center gap-1.5 border-0 p-0${className ? ` ${className}` : ""}`}
+    >
+      <legend class="sr-only">API version range</legend>
+      <RangeColumn bound="from" label="From" options={selector.from} />
+      <RangeColumn bound="to" label="To" options={selector.to} />
+    </fieldset>
   );
 }
 

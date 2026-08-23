@@ -1,11 +1,21 @@
 import type { ApiVersion } from "./api-surface-loader";
+import { windowOptionHrefs } from "./version-window";
 
-export interface VersionSwitcherEntry {
+/** One option in a rendered `From`/`To` column. */
+export interface RangeSelectorOption {
+  /** The route id (`defold-1.13.0`) — the storage and reconciliation vocabulary. */
   id: string;
   /** Human chrome label derived from the id via {@link versionLabel}. */
   label: string;
-  route: string;
+  /** The destination, with the clamp and the namespace fallback already applied. */
+  href: string;
   isCurrent: boolean;
+}
+
+/** Both columns of the version range selector, in tracked-axis order. */
+export interface RangeSelector {
+  from: RangeSelectorOption[];
+  to: RangeSelectorOption[];
 }
 
 /**
@@ -15,91 +25,72 @@ export interface VersionSwitcherEntry {
  * future non-Defold targets stay readable without a lookup table.
  */
 export function versionLabel(id: string): string {
-  if (id === COMBINED_VERSION_ID) return "Combined";
   const match = /^defold-(.+)$/.exec(id);
   return match ? `Defold ${match[1]}` : id;
 }
 
-/**
- * The virtual, documentation-only version id for the union surface. It exists
- * only in the docs-site selector and `/api/combined` routes — never in
- * `api-targets.json`, a package export, or a materialized `.defold-types` surface.
- */
-export const COMBINED_VERSION_ID = "combined";
-
-export interface BuildVersionSwitcherInput {
+export interface BuildRangeSelectorInput {
+  /** Every tracked version, newest first — the axis both columns list. */
   versions: readonly ApiVersion[];
+  /** The namespaces each version generates a page for, keyed by route id. */
   namespacesByVersion: Record<string, readonly string[]>;
+  /** The current pathname, read only for the namespace to preserve. */
   route: string;
-  /**
-   * The union namespaces of the Combined surface. When present a virtual
-   * `Combined` entry is appended after the concrete versions (it switches to
-   * `/api/combined/<namespace>` when the current namespace exists there, else the
-   * `/api/combined` index). Omitted (the default) keeps the switcher versions-only.
-   */
-  combinedNamespaces?: readonly string[];
+  /** The window the page is showing, in route-id vocabulary. */
+  range: { from: string; to: string };
 }
 
 export function isApiRoute(route: string): boolean {
   return route === "/api" || route.startsWith("/api/");
 }
 
-export function buildVersionSwitcher({
+/**
+ * The two clamped dropdown columns. Every option is a plain link whose href
+ * already satisfies `from <= to`, so the markup carries no logic and a
+ * JS-disabled reader can still move either bound; the clamp itself lives once, in
+ * {@link version-window!windowOptionHrefs}.
+ *
+ * The bare canonical `/api/<ns>` route and the prefixed `/api/<version>/<ns>`
+ * route both name their namespace, and it is preserved across an option only when
+ * the version that option's href ends at generates a page for it — otherwise the
+ * option drops to that version's index rather than linking at a 404.
+ */
+export function buildRangeSelector({
   versions,
   namespacesByVersion,
   route,
-  combinedNamespaces,
-}: BuildVersionSwitcherInput): VersionSwitcherEntry[] {
-  const defaultVersion = versions.find((version) => version.isDefault) ?? versions[0];
-  if (!defaultVersion) return [];
+  range,
+}: BuildRangeSelectorInput): RangeSelector {
+  const ids = versions.map((version) => version.id);
+  // The window axis is bare semver while routes and storage speak route ids, so
+  // the bare form is derived here and mapped straight back by `idFor`.
+  const bareOf = new Map(ids.map((id) => [bare(id), id]));
+  const axis = ids.map(bare);
+  const idFor = (bareVersion: string): string => bareOf.get(bareVersion) ?? bareVersion;
+  const ownedByBare: Record<string, readonly string[]> = {};
+  for (const id of ids) ownedByBare[bare(id)] = namespacesByVersion[id] ?? [];
 
-  const knownVersionIds = new Set(versions.map((version) => version.id));
   const segments = route.replace(/\/+$/, "").split("/").filter(Boolean);
-  const firstApiSegment = segments[1];
-  const onCombined = firstApiSegment === COMBINED_VERSION_ID;
-  const routeHasVersionPrefix =
-    firstApiSegment !== undefined && knownVersionIds.has(firstApiSegment);
-  // Combined owns the canonical un-prefixed surface, so an un-prefixed API route
-  // (a canonical namespace), the old `/api/combined/…` route, and any non-API
-  // route all resolve to the Combined pseudo-surface; only an explicit
-  // `/api/<version>/…` prefix selects a concrete version.
-  const currentVersionId = routeHasVersionPrefix ? firstApiSegment : COMBINED_VERSION_ID;
-  const currentNamespace = onCombined || routeHasVersionPrefix ? segments[2] : firstApiSegment;
+  const first = segments[0] === "api" ? (segments[1] ?? "") : "";
+  // `/api/<version>/<ns>` names the namespace third; the canonical `/api/<ns>`
+  // names it second. A version id in that slot is an index route, not a namespace.
+  const namespace = ids.includes(first) ? segments[2] : segments[0] === "api" ? first : undefined;
 
-  const entries: VersionSwitcherEntry[] = versions.map((version) => ({
-    id: version.id,
-    label: versionLabel(version.id),
-    route: routeForVersion(version, namespacesByVersion[version.id] ?? [], currentNamespace),
-    isCurrent: version.id === currentVersionId,
-  }));
-
-  if (combinedNamespaces) {
-    const namespace =
-      currentNamespace && combinedNamespaces.includes(currentNamespace)
-        ? currentNamespace
-        : undefined;
-    // The Combined entry routes to the canonical un-prefixed page (or the `/api`
-    // index) — never the old `/api/combined/…` route, which is now a redirect stub.
-    entries.push({
-      id: COMBINED_VERSION_ID,
-      label: "Combined",
-      route: namespace ? `/api/${namespace}` : "/api",
-      isCurrent: currentVersionId === COMBINED_VERSION_ID,
+  const hrefs = windowOptionHrefs(
+    namespace,
+    { from: bare(range.from), to: bare(range.to) },
+    axis,
+    ownedByBare,
+    idFor,
+  );
+  const column = (options: typeof hrefs.from): RangeSelectorOption[] =>
+    options.map((option) => {
+      const id = idFor(option.version);
+      return { id, label: versionLabel(id), href: option.href, isCurrent: option.isCurrent };
     });
-  }
-
-  return entries;
+  return { from: column(hrefs.from), to: column(hrefs.to) };
 }
 
-// Every version — the default included — owns an explicit `/api/<id>/…` family, so
-// the route always carries the version prefix; the namespace is preserved only
-// when that version actually has a page for it.
-function routeForVersion(
-  version: ApiVersion,
-  namespaces: readonly string[],
-  namespace: string | undefined,
-): string {
-  const prefix = `/api/${version.id}`;
-  if (namespace && namespaces.includes(namespace)) return `${prefix}/${namespace}`;
-  return prefix;
+function bare(id: string): string {
+  return id.replace(/^defold-/, "");
 }

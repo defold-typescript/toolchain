@@ -187,6 +187,21 @@ function upstreamDot(symbol: ApiSymbol): string {
   return '<span class="api-badge-dot api-badge-dot--upstream" aria-label="Documentation imported from upstream" title="Documentation imported from upstream">U</span>';
 }
 
+// The per-symbol presence span the client-side `?since=` filter reads, riding the
+// heading on the same terms as `api-badge-dot` (an empty decorative `<span>`, so
+// the heading slugger already drops it and the id keeps keying off the bare
+// signature). Every symbol on a page with a tracked axis carries one — including
+// the symbols with no availability record at all, which are present across the
+// whole axis — because a symbol the filter cannot read a span for is a symbol it
+// cannot hide.
+function symbolSpanMarker(av: ApiAvailability | undefined, versions: readonly string[]): string {
+  const present = av?.availableIn?.length ? av.availableIn : versions;
+  const newest = present[0];
+  const oldest = present[present.length - 1];
+  if (!newest || !oldest) return "";
+  return `<span class="api-symbol-span" data-span-oldest="${oldest}" data-span-newest="${newest}" aria-hidden="true"></span>`;
+}
+
 const COUNT_KINDS: {
   readonly flag: keyof NamespaceBadgeCounts;
   readonly kind: string;
@@ -401,12 +416,17 @@ export function apiPageMarkdown(
       indexRoute,
       symbol.deprecated,
     );
+    const axis = page.availability?.versions ?? [];
+    // Only the engine surface is version-tracked, so only it gets a presence
+    // span. A `library` symbol is pinned to an upstream commit and a
+    // `global-type` / `lua-stdlib` symbol to no version at all; stamping a Defold
+    // range on either would state a fact that does not hold for it.
+    const spanTracked = page.category === "engine" && axis.length > 0;
     const dots =
-      (combinedMarkers
-        ? badgeDots(badgeCategory(symbol.availability, page.availability?.versions ?? []))
-        : "") +
+      (combinedMarkers ? badgeDots(badgeCategory(symbol.availability, axis)) : "") +
       globalDot(symbol) +
-      upstreamDot(symbol);
+      upstreamDot(symbol) +
+      (spanTracked ? symbolSpanMarker(symbol.availability, axis) : "");
     lines.push(symbolBlock(linkified, badges, dots), "");
   };
   for (const { kind, label } of KIND_SECTIONS) {
