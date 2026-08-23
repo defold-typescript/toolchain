@@ -71,15 +71,19 @@ export function declaresGoal(body: string, id: string, isBugFile: boolean): bool
 }
 
 // One entry per ledger step whose goal cannot be reached by a valid anchor:
-// no anchor line, an anchor with no id fragment, a target file that is
-// missing, or a target that does not declare the id the anchor names.
+// a missing step file, no anchor line, an anchor with no id fragment, a target
+// file that is missing, or a target that does not declare the id the anchor
+// names.
 export function anchorOffenders(root: string = repoRoot): string[] {
   const impl = join(root, "docs", "impl");
   const index = parseIndexStatus(readFileSync(join(impl, "README.md"), "utf8"));
   const offenders: string[] = [];
   for (const file of index.keys()) {
     const stepPath = join(impl, file);
-    if (!existsSync(stepPath)) continue;
+    if (!existsSync(stepPath)) {
+      offenders.push(`${file}: (missing step file)`);
+      continue;
+    }
     const targets = anchorTargets(readFileSync(stepPath, "utf8"));
     if (targets.length === 0) {
       offenders.push(`${file}: (no anchor)`);
