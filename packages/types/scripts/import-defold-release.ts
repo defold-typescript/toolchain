@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { isKnownDefoldTypeToken } from "../src/emit-dts";
 import { refDocCacheDir, resolveRefDoc } from "./doc-source";
@@ -387,6 +387,23 @@ export function applyReleaseImport(plan: ReleaseImportPlan, packageRoot = PACKAG
     writeFileSync(path, `${JSON.stringify(snapshot.doc, null, 2)}\n`);
     written.push(relative);
   }
+  // The prefixless builtins (`hash`, `pprint`, ...) are hand-vendored rather than
+  // generated, so no upstream snapshot carries them. Seeding the canonical copy
+  // here is what keeps a newly imported target from being born without a globals
+  // document — which the availability projection would read as a removal. The
+  // source is always the real package's canonical file, never `packageRoot`,
+  // which for a writer test is an empty temp tree.
+  const canonicalGlobals = resolve(PACKAGE_ROOT, "fixtures/globals_doc.json");
+  if (!existsSync(canonicalGlobals))
+    throw new Error(`missing canonical globals document at ${canonicalGlobals}`);
+  const globals = JSON.parse(readFileSync(canonicalGlobals, "utf8")) as {
+    info: Record<string, unknown>;
+  };
+  globals.info = { ...globals.info, version: plan.version };
+  const globalsPath = `${relativeRoot}/globals_doc.json`;
+  writeFileSync(resolve(packageRoot, globalsPath), `${JSON.stringify(globals, null, 2)}\n`);
+  written.push(globalsPath);
+
   const manifestPath = `${relativeRoot}/import-manifest.json`;
   writeFileSync(resolve(packageRoot, manifestPath), releaseImportReportJson(plan));
   written.push(manifestPath);

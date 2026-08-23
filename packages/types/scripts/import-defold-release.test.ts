@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readdirSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import {
   applyReleaseImport,
   buildReleaseImportPlan,
@@ -10,6 +10,8 @@ import {
   releaseImportReportJson,
 } from "./import-defold-release";
 import { EDITOR_MANIFEST, EDITOR_VM_MANIFEST, type ZipAccessor } from "./sync-api-docs";
+
+const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 
 function fakeZip(entries: Record<string, unknown>): ZipAccessor {
   const encoded = Object.fromEntries(
@@ -205,12 +207,36 @@ describe("buildReleaseImportPlan", () => {
     const written = applyReleaseImport(plan, root);
     expect(written).toEqual([
       "fixtures/defold-1.13.0/alpha_doc.json",
+      "fixtures/defold-1.13.0/globals_doc.json",
       "fixtures/defold-1.13.0/import-manifest.json",
     ]);
     expect(readdirSync(join(root, "fixtures"))).toEqual(["defold-1.13.0"]);
-    expect(JSON.parse(readFileSync(join(root, written[1] as string), "utf8"))).toEqual(
+    expect(JSON.parse(readFileSync(join(root, written[2] as string), "utf8"))).toEqual(
       plan.manifest,
     );
+  });
+
+  // The prefixless builtins are hand-vendored, so no upstream snapshot carries
+  // them: without this seeding a newly imported target is born with no globals
+  // document and its symbols read as removed at the newest version.
+  test("apply seeds the target fixtures dir with the canonical globals document", () => {
+    const zip = fakeZip({ "doc/alpha.json": apiDoc("alpha", [fn("alpha.old")]) });
+    const plan = buildReleaseImportPlan({ version: "1.13.0", zip, baseline });
+    const root = mkdtempSync(join(tmpdir(), "release-import-globals-"));
+
+    const written = applyReleaseImport(plan, root);
+    const relative = "fixtures/defold-1.13.0/globals_doc.json";
+    expect(written).toContain(relative);
+
+    const seeded = JSON.parse(readFileSync(join(root, relative), "utf8")) as {
+      info: { namespace: string };
+      elements: unknown[];
+    };
+    const canonical = JSON.parse(
+      readFileSync(join(PACKAGE_ROOT, "fixtures/globals_doc.json"), "utf8"),
+    ) as { elements: unknown[] };
+    expect(seeded.info.namespace).toBe("globals");
+    expect(seeded.elements).toEqual(canonical.elements);
   });
 });
 

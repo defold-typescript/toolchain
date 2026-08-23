@@ -7007,6 +7007,9 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### globals
 
+- hash(s: string): Hash
+- hash_to_hex(h: Hash): string
+- pprint(v: unknown)
 
 ### go
 
