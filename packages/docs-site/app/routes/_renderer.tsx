@@ -23,6 +23,7 @@ import {
   API_SURFACE_STORAGE_KEY,
   type ApiSurfaceConfig,
   activeSurfaceForPath,
+  canonicalLinkPath,
   currentSurfaceForRoute,
   reconcileSurfaceSelector,
   resolveApiSurfaceRedirect,
@@ -288,6 +289,14 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
     versionIds,
     namespacesByVersion,
   };
+  // The default version's family and the bare canonical route render the same
+  // window, so those pages declare the bare route canonical and the duplicate
+  // never competes with it in search. Every other page is its own content.
+  const canonicalHref = canonicalLinkPath(
+    path,
+    surfaceConfig,
+    versions.find((version) => version.isDefault)?.id,
+  );
   const activeSurface = activeSurfaceForPath(path, surfaceConfig);
   const surfaceNamespaces =
     activeSurface === COMBINED_VERSION_ID ? combinedNs : (namespacesByVersion[activeSurface] ?? []);
@@ -330,6 +339,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
         <meta charSet="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{title ? `${title} — defold-typescript` : "defold-typescript docs"}</title>
+        {canonicalHref ? <link rel="canonical" href={canonicalHref} /> : null}
         {faviconLinks().map((l) => (
           <link
             key={l.rel + l.href}

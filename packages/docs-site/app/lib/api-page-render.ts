@@ -3,6 +3,7 @@ import {
   type ApiSymbolIdentity,
   htmlToDocText,
 } from "@defold-typescript/types";
+import { apiVersionAxis, windowedApiPages } from "./api-content";
 import {
   type ApiPage,
   type ApiSymbol,
@@ -16,14 +17,11 @@ import {
   groupFunctionSymbols,
   type LibraryMeta,
 } from "./api-surface";
-import {
-  type ApiVersion,
-  loadApiSurfaceForVersion,
-  versionsWithDiskFixtures,
-} from "./api-surface-loader";
+import { type ApiVersion, versionsWithDiskFixtures } from "./api-surface-loader";
 import type { NamespaceBadgeCounts } from "./combined-surface";
 import { buildSymbolIndex } from "./symbol-index";
 import { linkifySymbolMentions } from "./symbol-linkify";
+import { resolveVersionWindow } from "./version-window";
 
 const KIND_SECTIONS: { kind: ApiSymbol["kind"]; label: string }[] = [
   { kind: "function", label: "Functions" },
@@ -472,13 +470,24 @@ export function apiReplacementResolver(pages: ApiPage[]): ReplacementResolver {
 // explicit `/api/defold-<default>/…` family alongside the historical versions.
 // Filtered through `versionsWithDiskFixtures` so an unmaterialized ref-doc target
 // contributes nothing and the build stays clean until its fixtures land.
+//
+// Enumerated from the same windowed surface the route renders, not from the
+// version's own surface: a version's family is the window ending at it, so it
+// includes namespaces that existed earlier and were gone by then. Deriving params
+// and content from one source is what keeps a page's body and its route in
+// agreement. A tracked target carrying no engine namespace is off the window axis
+// and contributes nothing — the release manifest then rejects its empty family
+// rather than the build silently emitting an unreachable route.
 export function versionedApiParams(typesDir: string): { version: string; namespace: string }[] {
-  return versionsWithDiskFixtures(typesDir).flatMap((v) =>
-    loadApiSurfaceForVersion(typesDir, v.id).map((page) => ({
+  const axis = apiVersionAxis(typesDir);
+  return versionsWithDiskFixtures(typesDir).flatMap((v) => {
+    const window = resolveVersionWindow(axis, v.id, null);
+    if (!window) return [];
+    return windowedApiPages(window, typesDir).map((page) => ({
       version: v.id,
       namespace: page.namespace,
-    })),
-  );
+    }));
+  });
 }
 
 // The `/api/:param` route branches on this: a known version id (default included,
