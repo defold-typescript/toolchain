@@ -5095,10 +5095,11 @@ bunx @defold-typescript/cli build --defold-target 1.13.0
 
 These Lua APIs still exist on the 1.13.0 surface — one or more parameter types
 changed rather than the symbol being removed, so a call written against 1.12.4
-keeps compiling. The Combined API surface — now canonical at the unprefixed `/api`
-(the old `/api/combined` links redirect there) — renders both signatures
-adjacently; the exact-version pages (`/api/defold-1.13.0/…`, `/api/defold-1.12.4/…`)
-show each in isolation.
+keeps compiling. Every API page now covers a *range* of releases — the unprefixed
+`/api` is the full range (the old `/api/combined` links redirect there), and
+`/api/defold-1.13.0/…` is the range ending at that version — so both signatures
+render adjacently wherever the range spans the change. Narrow the `From` dropdown
+to 1.13.0 to see only what that release still carries.
 
 ###### liveupdate.add_mount
 

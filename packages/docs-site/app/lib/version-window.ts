@@ -196,11 +196,20 @@ export function windowHref(
   namespace: string | undefined,
   window: VersionWindow,
   versions: readonly string[],
+  versionId: (bare: string) => string = defoldVersionId,
 ): string {
-  const path = `/api/defold-${window.to}${namespace ? `/${namespace}` : ""}`;
+  const path = `/api/${versionId(window.to)}${namespace ? `/${namespace}` : ""}`;
   return window.from === versions[versions.length - 1]
     ? path
-    : `${path}?since=defold-${window.from}`;
+    : `${path}?since=${versionId(window.from)}`;
+}
+
+// The route segment a bare axis version is addressed by. Defaults to the
+// `defold-` release convention every tracked target follows today; a registry
+// whose ids are shaped otherwise passes its own mapper rather than having the
+// prefix baked into the URL.
+function defoldVersionId(bare: string): string {
+  return `defold-${bare}`;
 }
 
 /**
@@ -209,30 +218,47 @@ export function windowHref(
  * that bound exactly and moves the *other* one only when it would otherwise be
  * crossed. A JS-disabled reader following any of these hrefs lands on a valid
  * window.
+ *
+ * `namespacesByVersion` (bare-keyed, optional) makes the namespace conditional:
+ * an option keeps it only when the version its href *ends at* generates a page
+ * for it, and otherwise drops to that version's index. The check keys off the
+ * clamped `to`, not the option's own version, because the `from` column moves the
+ * path version whenever the chosen bound would cross it. Omitting the map keeps
+ * the namespace on every option, which is right for a surface that owns it
+ * everywhere.
  */
 export function windowOptionHrefs(
   namespace: string | undefined,
   window: VersionWindow,
   versions: readonly string[],
+  namespacesByVersion?: Record<string, readonly string[]>,
+  versionId?: (bare: string) => string,
 ): WindowOptionHrefs {
+  const optionFor = (bound: VersionWindow, marked: boolean, version: string): WindowOption => {
+    const owned =
+      !namespace ||
+      !namespacesByVersion ||
+      (namespacesByVersion[bound.to] ?? []).includes(namespace);
+    return {
+      version,
+      href: windowHref(owned ? namespace : undefined, bound, versions, versionId),
+      isCurrent: marked,
+    };
+  };
   return {
-    from: versions.map((version) => ({
-      version,
-      href: windowHref(
-        namespace,
+    from: versions.map((version) =>
+      optionFor(
         { from: version, to: isOlder(version, window.to) ? window.to : version },
-        versions,
+        version === window.from,
+        version,
       ),
-      isCurrent: version === window.from,
-    })),
-    to: versions.map((version) => ({
-      version,
-      href: windowHref(
-        namespace,
+    ),
+    to: versions.map((version) =>
+      optionFor(
         { from: isOlder(window.from, version) ? window.from : version, to: version },
-        versions,
+        version === window.to,
+        version,
       ),
-      isCurrent: version === window.to,
-    })),
+    ),
   };
 }

@@ -21,7 +21,11 @@ import { apiLinkify, apiPageMarkdown, versionedApiParams } from "./api-page-rend
 import { combinedRedirect, redirectHtml } from "./api-redirect";
 import type { ApiPage } from "./api-surface";
 import { loadApiSurfaceForVersion, versionsWithDiskFixtures } from "./api-surface-loader";
-import { type ApiSurfaceConfig, resolveApiSurfaceRedirect } from "./api-surface-pref";
+import {
+  type ApiSurfaceConfig,
+  readStoredRange,
+  resolveApiSurfaceRedirect,
+} from "./api-surface-pref";
 import { searchIndexFileForRoute } from "./search-index";
 import { symbolIndexFileForRoute } from "./symbol-index";
 
@@ -210,22 +214,29 @@ describe("api routing migration — version-independent pages never 404 under a 
   const config: ApiSurfaceConfig = {
     base: "",
     versionIds: ["cur", "old"],
+    defaultVersionId: "cur",
     // `base`/`Hash`/libraries are intentionally absent: the ownership guard then
     // leaves them canonical under any version preference.
     namespacesByVersion: { cur: ["alpha", "camera", "globals"], old: ["wmath"] },
   };
 
-  test("global types, Lua stdlib, and libraries stay canonical under every version pref", () => {
-    for (const pref of ["cur", "old", "combined", null]) {
-      expect(resolveApiSurfaceRedirect("/api/base", pref, config)).toBeNull();
-      expect(resolveApiSurfaceRedirect("/api/Hash", pref, config)).toBeNull();
-      expect(resolveApiSurfaceRedirect("/api/monarch.monarch", pref, config)).toBeNull();
+  const redirect = (path: string, stored: string | null) =>
+    resolveApiSurfaceRedirect(path, "", stored, config, readStoredRange);
+
+  test("global types, Lua stdlib, and libraries stay canonical under every stored range", () => {
+    for (const pref of ["cur", "old", "old|cur", "combined", null]) {
+      expect(redirect("/api/base", pref)).toBeNull();
+      expect(redirect("/api/Hash", pref)).toBeNull();
+      expect(redirect("/api/monarch.monarch", pref)).toBeNull();
     }
   });
 
-  test("an owned engine namespace is steered to the wanted exact version", () => {
-    expect(resolveApiSurfaceRedirect("/api/camera", "cur", config)).toBe("/api/cur/camera");
-    expect(resolveApiSurfaceRedirect("/api/camera", "combined", config)).toBeNull();
+  test("an owned engine namespace is steered to the wanted window", () => {
+    expect(redirect("/api/camera", "cur|cur")).toBe("/api/cur/camera?since=cur");
+    // The full default range is what the un-prefixed page already shows, as is
+    // the retired `combined` id that migrates onto it.
+    expect(redirect("/api/camera", "cur")).toBeNull();
+    expect(redirect("/api/camera", "combined")).toBeNull();
   });
 });
 
