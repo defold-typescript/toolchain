@@ -34,6 +34,7 @@ function seedTree(): string {
       "| [anchorless.md](anchorless.md) | real-goal | done |",
       "| [dangling.md](dangling.md) | real-goal | done |",
       "| [sound.md](sound.md) | real-goal | done |",
+      "| [absent.md](absent.md) | real-goal | done |",
       "",
     ].join("\n"),
   );
@@ -50,9 +51,18 @@ describe("goal anchor exactness", () => {
     expect(anchorOffenders().filter((o) => o.endsWith("(no anchor)"))).toEqual([]);
   });
 
+  test.skipIf(!present)("every ledger step row resolves to a file that exists", () => {
+    expect(indexRowCount()).toBeGreaterThan(0);
+    expect(anchorOffenders().filter((o) => o.endsWith("(missing step file)"))).toEqual([]);
+  });
+
   test.skipIf(!present)("every anchor resolves to a file that declares its id", () => {
     expect(indexRowCount()).toBeGreaterThan(0);
-    expect(anchorOffenders().filter((o) => !o.endsWith("(no anchor)"))).toEqual([]);
+    expect(
+      anchorOffenders().filter(
+        (o) => !o.endsWith("(no anchor)") && !o.endsWith("(missing step file)"),
+      ),
+    ).toEqual([]);
   });
 
   test("declaresGoal accepts an area heading and rejects a different id", () => {
@@ -84,6 +94,7 @@ describe("goal anchor exactness", () => {
       expect(anchorOffenders(root)).toEqual([
         "anchorless.md: (no anchor)",
         `dangling.md: ${goalPath}#absent-goal (missing id)`,
+        "absent.md: (missing step file)",
       ]);
     } finally {
       rmSync(root, { recursive: true, force: true });
