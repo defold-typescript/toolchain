@@ -21,6 +21,13 @@ export interface CombinedRedirect {
 // `/api/combined/<namespace>` maps to the unprefixed canonical `/api/<namespace>`.
 // Both the `/api/combined` and `/api/combined/<namespace>` route handlers consume
 // this, so a miswired target is a one-place fix (and the migration test pins it).
+/**
+ * The retired `/api/combined…` route segment. It is a *shipped URL* kept alive by
+ * the compatibility stubs above, not a surface: the Combined pseudo-version no
+ * longer exists as a selectable id, a stored preference, or a rendered page.
+ */
+export const COMBINED_ROUTE_SEGMENT = "combined";
+
 export function combinedRedirect(namespace?: string): CombinedRedirect {
   return namespace
     ? { from: `/api/combined/${namespace}`, to: `/api/${namespace}` }

@@ -1,133 +1,126 @@
 import { describe, expect, test } from "bun:test";
 import type { ApiVersion } from "./api-surface-loader";
-import { buildVersionSwitcher, isApiRoute, versionLabel } from "./version-switch";
+import { buildRangeSelector, isApiRoute, versionLabel } from "./version-switch";
+
+// Newest-first, in the route-id vocabulary every `/api/<id>/…` path and the
+// persisted range preference use.
+const NEWEST = "defold-1.13.0";
+const MIDDLE = "defold-1.12.4";
+const OLDEST = "defold-1.12.0";
 
 const versions: ApiVersion[] = [
-  { id: "cur", isDefault: true },
-  { id: "old", isDefault: false },
+  { id: NEWEST, isDefault: true },
+  { id: MIDDLE, isDefault: false },
+  { id: OLDEST, isDefault: false },
 ];
 
-const realVersions: ApiVersion[] = [
-  { id: "defold-1.13.0", isDefault: true },
-  { id: "defold-1.12.4", isDefault: false },
-];
-
+// `camera` is newest-only and `wmath` oldest-only, so each column has a version
+// that owns the current namespace and one that does not.
 const namespacesByVersion = {
-  cur: ["camera", "alpha", "base", "bit", "shared"],
-  old: ["wmath", "shared"],
+  [NEWEST]: ["camera", "go", "shared"],
+  [MIDDLE]: ["go", "shared"],
+  [OLDEST]: ["wmath", "shared"],
 };
 
-describe("buildVersionSwitcher", () => {
-  test("no concrete version is current on an unprefixed (Combined) page; every version route is prefixed", () => {
-    expect(buildVersionSwitcher({ versions, namespacesByVersion, route: "/api/camera" })).toEqual([
-      { id: "cur", label: "cur", route: "/api/cur/camera", isCurrent: false },
-      { id: "old", label: "old", route: "/api/old", isCurrent: false },
+const build = (range: { from: string; to: string }, route: string) =>
+  buildRangeSelector({ versions, namespacesByVersion, route, range });
+
+describe("buildRangeSelector", () => {
+  test("renders both columns over the full axis, labelled and marked at the active bounds", () => {
+    const selector = build({ from: MIDDLE, to: NEWEST }, "/api/defold-1.13.0/shared");
+    expect(selector.from.map((o) => o.id)).toEqual([NEWEST, MIDDLE, OLDEST]);
+    expect(selector.to.map((o) => o.id)).toEqual([NEWEST, MIDDLE, OLDEST]);
+    expect(selector.to.map((o) => o.label)).toEqual([
+      "Defold 1.13.0",
+      "Defold 1.12.4",
+      "Defold 1.12.0",
     ]);
+    expect(selector.from.filter((o) => o.isCurrent).map((o) => o.id)).toEqual([MIDDLE]);
+    expect(selector.to.filter((o) => o.isCurrent).map((o) => o.id)).toEqual([NEWEST]);
   });
 
-  test("uses a prefixed version route as current and falls back when switching to a missing namespace", () => {
-    expect(
-      buildVersionSwitcher({ versions, namespacesByVersion, route: "/api/old/wmath" }),
-    ).toEqual([
-      { id: "cur", label: "cur", route: "/api/cur", isCurrent: false },
-      { id: "old", label: "old", route: "/api/old/wmath", isCurrent: true },
-    ]);
+  test("every option is a plain pre-clamped link — the markup holds no logic", () => {
+    const selector = build({ from: MIDDLE, to: NEWEST }, "/api/defold-1.13.0/shared");
+    for (const option of [...selector.from, ...selector.to]) {
+      expect(option.href.startsWith("/api/")).toBe(true);
+    }
+    // A wider `to` keeps the reader's `from`; the full range drops `?since=`.
+    expect(selector.to.find((o) => o.id === NEWEST)?.href).toBe(
+      "/api/defold-1.13.0/shared?since=defold-1.12.4",
+    );
+    expect(selector.from.find((o) => o.id === OLDEST)?.href).toBe("/api/defold-1.13.0/shared");
   });
 
-  test("preserves a shared namespace when switching versions (both prefixed)", () => {
-    expect(buildVersionSwitcher({ versions, namespacesByVersion, route: "/api/shared" })).toEqual([
-      { id: "cur", label: "cur", route: "/api/cur/shared", isCurrent: false },
-      { id: "old", label: "old", route: "/api/old/shared", isCurrent: false },
-    ]);
+  test("choosing an older `to` pulls `from` down to it; the chosen bound never shifts", () => {
+    const selector = build({ from: NEWEST, to: NEWEST }, "/api/defold-1.13.0/shared");
+    expect(selector.to.find((o) => o.id === MIDDLE)?.href).toBe(
+      "/api/defold-1.12.4/shared?since=defold-1.12.4",
+    );
+    // Clamping to the oldest tracked version *is* the full range, so the
+    // now-redundant `?since=` is dropped rather than spelled out.
+    expect(selector.to.find((o) => o.id === OLDEST)?.href).toBe("/api/defold-1.12.0/shared");
   });
 
-  test("links each version's own prefixed index from the canonical index", () => {
-    expect(buildVersionSwitcher({ versions, namespacesByVersion, route: "/api" })).toEqual([
-      { id: "cur", label: "cur", route: "/api/cur", isCurrent: false },
-      { id: "old", label: "old", route: "/api/old", isCurrent: false },
-    ]);
+  test("choosing a newer `from` pushes `to` up to it; the chosen bound never shifts", () => {
+    const selector = build({ from: OLDEST, to: OLDEST }, "/api/defold-1.12.0/shared");
+    expect(selector.from.find((o) => o.id === NEWEST)?.href).toBe(
+      "/api/defold-1.13.0/shared?since=defold-1.13.0",
+    );
   });
 
-  test("links each version's prefixed index from a non-API route", () => {
-    expect(buildVersionSwitcher({ versions, namespacesByVersion, route: "/guide/x" })).toEqual([
-      { id: "cur", label: "cur", route: "/api/cur", isCurrent: false },
-      { id: "old", label: "old", route: "/api/old", isCurrent: false },
-    ]);
+  test("keeps the namespace on a version that owns a page for it and falls back to the index otherwise", () => {
+    const selector = build({ from: OLDEST, to: NEWEST }, "/api/defold-1.13.0/camera");
+    // `camera` exists only in the newest version.
+    expect(selector.to.find((o) => o.id === NEWEST)?.href).toBe("/api/defold-1.13.0/camera");
+    expect(selector.to.find((o) => o.id === MIDDLE)?.href).toBe("/api/defold-1.12.4");
+    expect(selector.to.find((o) => o.id === OLDEST)?.href).toBe("/api/defold-1.12.0");
   });
 
-  test("carries the human label for real defold-<semver> ids", () => {
-    const entries = buildVersionSwitcher({
-      versions: realVersions,
-      namespacesByVersion: { "defold-1.13.0": ["go"], "defold-1.12.4": ["go"] },
-      route: "/api/go",
+  test("resolves the namespace fallback against the version the href ends at, not the option's own", () => {
+    // In the `from` column the path version moves up whenever the chosen bound
+    // would cross `to`, so `wmath` (oldest-only) must be dropped there too.
+    const selector = build({ from: OLDEST, to: OLDEST }, "/api/defold-1.12.0/wmath");
+    expect(selector.from.find((o) => o.id === OLDEST)?.href).toBe("/api/defold-1.12.0/wmath");
+    expect(selector.from.find((o) => o.id === NEWEST)?.href).toBe(
+      "/api/defold-1.13.0?since=defold-1.13.0",
+    );
+  });
+
+  test("an index route and a non-API route carry no namespace at all", () => {
+    for (const route of ["/api", "/api/defold-1.13.0", "/guides/setup"]) {
+      const selector = build({ from: OLDEST, to: NEWEST }, route);
+      for (const option of [...selector.from, ...selector.to]) {
+        expect(/^\/api\/defold-[\d.]+(\?|$)/.test(option.href)).toBe(true);
+      }
+    }
+  });
+
+  test("a bare canonical route still reads its namespace", () => {
+    const selector = build({ from: OLDEST, to: NEWEST }, "/api/shared");
+    expect(selector.to.find((o) => o.id === MIDDLE)?.href).toBe("/api/defold-1.12.4/shared");
+  });
+
+  test("a single tracked version still renders both columns, each with exactly one option", () => {
+    const selector = buildRangeSelector({
+      versions: [{ id: NEWEST, isDefault: true }],
+      namespacesByVersion: { [NEWEST]: ["go"] },
+      route: "/api/defold-1.13.0/go",
+      range: { from: NEWEST, to: NEWEST },
     });
-    expect(entries.map((e) => e.label)).toEqual(["Defold 1.13.0", "Defold 1.12.4"]);
-    expect(entries.map((e) => e.route)).toEqual(["/api/defold-1.13.0/go", "/api/defold-1.12.4/go"]);
-  });
-});
-
-describe("buildVersionSwitcher combined option", () => {
-  const combinedNamespaces = ["camera", "shared", "wmath"];
-
-  test("appends a Combined entry, current on an unprefixed page, routed to the canonical /api/<ns>", () => {
-    expect(
-      buildVersionSwitcher({
-        versions,
-        namespacesByVersion,
-        combinedNamespaces,
-        route: "/api/camera",
-      }),
-    ).toEqual([
-      { id: "cur", label: "cur", route: "/api/cur/camera", isCurrent: false },
-      { id: "old", label: "old", route: "/api/old", isCurrent: false },
-      { id: "combined", label: "Combined", route: "/api/camera", isCurrent: true },
-    ]);
+    expect(selector.from).toHaveLength(1);
+    expect(selector.to).toHaveLength(1);
+    expect(selector.from[0]?.isCurrent).toBe(true);
+    expect(selector.to[0]?.href).toBe("/api/defold-1.13.0/go");
   });
 
-  test("preserves the namespace across versions while Combined stays canonical", () => {
-    expect(
-      buildVersionSwitcher({
-        versions,
-        namespacesByVersion,
-        combinedNamespaces,
-        route: "/api/shared",
-      }),
-    ).toEqual([
-      { id: "cur", label: "cur", route: "/api/cur/shared", isCurrent: false },
-      { id: "old", label: "old", route: "/api/old/shared", isCurrent: false },
-      { id: "combined", label: "Combined", route: "/api/shared", isCurrent: true },
-    ]);
-  });
-
-  test("drops to the /api index when the namespace is unknown to the combined surface", () => {
-    const entries = buildVersionSwitcher({
-      versions,
-      namespacesByVersion,
-      combinedNamespaces,
-      route: "/api",
+  test("an id outside the `defold-<semver>` convention keeps its own route segment", () => {
+    const selector = buildRangeSelector({
+      versions: [{ id: "nightly", isDefault: true }],
+      namespacesByVersion: { nightly: ["go"] },
+      route: "/api/nightly/go",
+      range: { from: "nightly", to: "nightly" },
     });
-    expect(entries.find((e) => e.id === "combined")).toEqual({
-      id: "combined",
-      label: "Combined",
-      route: "/api",
-      isCurrent: true,
-    });
-  });
-
-  test("marks the concrete version current on its prefixed route, not Combined", () => {
-    const entries = buildVersionSwitcher({
-      versions,
-      namespacesByVersion,
-      combinedNamespaces,
-      route: "/api/old/wmath",
-    });
-    expect(entries.find((e) => e.isCurrent)?.id).toBe("old");
-    expect(entries.find((e) => e.id === "combined")?.isCurrent).toBe(false);
-  });
-
-  test("omits the Combined entry when no combinedNamespaces are given", () => {
-    const entries = buildVersionSwitcher({ versions, namespacesByVersion, route: "/api/camera" });
-    expect(entries.some((e) => e.id === "combined")).toBe(false);
+    expect(selector.to[0]?.href).toBe("/api/nightly/go");
   });
 });
 
@@ -137,20 +130,15 @@ describe("versionLabel", () => {
     expect(versionLabel("defold-1.12.4")).toBe("Defold 1.12.4");
   });
 
-  test("labels the combined virtual id", () => {
-    expect(versionLabel("combined")).toBe("Combined");
-  });
-
   test("passes a non-defold id through unchanged", () => {
-    expect(versionLabel("cur")).toBe("cur");
-    expect(versionLabel("old")).toBe("old");
+    expect(versionLabel("nightly")).toBe("nightly");
   });
 });
 
 describe("isApiRoute", () => {
   test("matches API routes", () => {
     expect(isApiRoute("/api/go")).toBe(true);
-    expect(isApiRoute("/api/old/wmath")).toBe(true);
+    expect(isApiRoute("/api/defold-1.12.4/wmath")).toBe(true);
   });
 
   test("rejects non-API routes", () => {

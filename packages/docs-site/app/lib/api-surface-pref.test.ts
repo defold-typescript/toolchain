@@ -1,176 +1,215 @@
 import { describe, expect, test } from "bun:test";
 import {
   type ApiSurfaceConfig,
-  activeSurfaceForPath,
+  type ApiSurfaceRange,
+  activeRangeForPath,
   canonicalLinkPath,
-  currentSurfaceForRoute,
-  reconcileSurfaceSelector,
+  readStoredRange,
+  reconcileRangeSelector,
   resolveApiSurfaceRedirect,
-  rewriteApiNavForSurface,
+  rewriteApiNavForRange,
   showApiSurfaceSelector,
-  surfacePathForNamespace,
 } from "./api-surface-pref";
 import type { NavCategory } from "./nav";
-import { buildVersionSwitcher } from "./version-switch";
+import { windowHref } from "./version-window";
 
-// Combined is the canonical un-prefixed surface; `versionIds` now lists EVERY
-// tracked version — the default (1.13.0) included — each owning a prefixed family.
+// The tracked axis is newest-first and every version owns an `/api/<id>/…`
+// family. `defold-1.13.0` is the default (what the bare canonical route renders
+// as its `to`); `defold-1.12.0` is the oldest, so it is the `from` a full-range
+// URL leaves implicit.
 const CONFIG: ApiSurfaceConfig = {
   base: "",
-  versionIds: ["defold-1.13.0", "defold-1.12.4"],
-  // Each version's engine namespaces; version-independent namespaces (`Hash`,
-  // `base`) are intentionally absent, so a version preference never prefixes them.
+  versionIds: ["defold-1.13.0", "defold-1.12.4", "defold-1.12.0"],
+  defaultVersionId: "defold-1.13.0",
+  // Version-independent namespaces (`Hash`, `base`) are intentionally absent, so
+  // a range never steers them to a version-prefixed 404.
   namespacesByVersion: {
     "defold-1.13.0": ["camera", "go", "model"],
     "defold-1.12.4": ["go", "model"],
+    "defold-1.12.0": ["go"],
   },
 };
 
 const BASED: ApiSurfaceConfig = { ...CONFIG, base: "/toolchain" };
 
-describe("resolveApiSurfaceRedirect — Combined is the canonical un-prefixed surface", () => {
-  test("an un-prefixed page with no preference (or a combined preference) stays put", () => {
-    expect(resolveApiSurfaceRedirect("/api/camera", null, CONFIG)).toBeNull();
-    expect(resolveApiSurfaceRedirect("/api/camera", "", CONFIG)).toBeNull();
-    expect(resolveApiSurfaceRedirect("/api/camera", "combined", CONFIG)).toBeNull();
-    expect(resolveApiSurfaceRedirect("/api", null, CONFIG)).toBeNull();
+const OLDEST = "defold-1.12.0";
+const DEFAULT = "defold-1.13.0";
+const FULL: ApiSurfaceRange = { from: OLDEST, to: DEFAULT };
+
+describe("readStoredRange — legacy stored values migrate instead of resetting", () => {
+  test("the retired `combined` id resolves to the full default range", () => {
+    expect(readStoredRange("/api/camera", "", "combined", CONFIG)).toEqual(FULL);
   });
 
-  test("a version preference — even the current version — prefixes an owned engine page", () => {
-    expect(resolveApiSurfaceRedirect("/api/camera", "defold-1.13.0", CONFIG)).toBe(
-      "/api/defold-1.13.0/camera",
-    );
-    expect(resolveApiSurfaceRedirect("/api/go", "defold-1.12.4", CONFIG)).toBe(
-      "/api/defold-1.12.4/go",
-    );
+  test("a stored bare version id becomes a range ending at that version", () => {
+    expect(readStoredRange("/api/camera", "", "defold-1.12.4", CONFIG)).toEqual({
+      from: OLDEST,
+      to: "defold-1.12.4",
+    });
+  });
+
+  test("no stored value, an empty one, and an unparseable one all resolve to the full default range", () => {
+    expect(readStoredRange("/api/camera", "", null, CONFIG)).toEqual(FULL);
+    expect(readStoredRange("/api/camera", "", "", CONFIG)).toEqual(FULL);
+    expect(readStoredRange("/api/camera", "", "bogus", CONFIG)).toEqual(FULL);
+    expect(readStoredRange("/api/camera", "", "defold-9.9.9|defold-8.8.8", CONFIG)).toEqual(FULL);
+  });
+
+  test("a stored range round-trips both bounds", () => {
+    expect(readStoredRange("/api/camera", "", "defold-1.12.4|defold-1.13.0", CONFIG)).toEqual({
+      from: "defold-1.12.4",
+      to: DEFAULT,
+    });
+  });
+
+  test("a stored inverted range clamps `from` down to `to` rather than being discarded", () => {
+    expect(readStoredRange("/api/camera", "", "defold-1.13.0|defold-1.12.0", CONFIG)).toEqual({
+      from: OLDEST,
+      to: OLDEST,
+    });
   });
 });
 
-describe("resolveApiSurfaceRedirect — explicit surfaces are honored", () => {
-  test("an explicit Combined or versioned route is never redirected", () => {
-    expect(resolveApiSurfaceRedirect("/api/combined/camera", null, CONFIG)).toBeNull();
-    expect(resolveApiSurfaceRedirect("/api/defold-1.12.4/go", null, CONFIG)).toBeNull();
-    expect(resolveApiSurfaceRedirect("/api/defold-1.13.0/camera", "combined", CONFIG)).toBeNull();
+describe("readStoredRange — an explicit URL always wins over the stored range", () => {
+  test("a version-prefixed path yields that `to` whatever is stored", () => {
+    expect(
+      readStoredRange("/api/defold-1.12.4/go", "", "defold-1.13.0|defold-1.13.0", CONFIG),
+    ).toEqual({ from: OLDEST, to: "defold-1.12.4" });
+  });
+
+  test("`?since=` yields that `from` on a routed page", () => {
+    expect(readStoredRange("/api/defold-1.13.0/go", "?since=defold-1.12.4", null, CONFIG)).toEqual({
+      from: "defold-1.12.4",
+      to: DEFAULT,
+    });
+  });
+
+  test("`?since=` is honored on an un-prefixed page too, keeping the stored `to`", () => {
+    expect(readStoredRange("/api/go", "?since=defold-1.12.4", "defold-1.12.4", CONFIG)).toEqual({
+      from: "defold-1.12.4",
+      to: "defold-1.12.4",
+    });
+  });
+
+  test("a routed page with no `?since=` states the full range, ignoring a stored `from`", () => {
+    expect(
+      readStoredRange("/api/defold-1.13.0/go", "", "defold-1.12.4|defold-1.12.4", CONFIG),
+    ).toEqual(FULL);
+  });
+
+  test("an untracked `?since=` widens to the oldest version instead of dropping the page", () => {
+    expect(readStoredRange("/api/defold-1.13.0/go", "?since=defold-9.9.9", null, CONFIG)).toEqual(
+      FULL,
+    );
+  });
+
+  test("a `?since=` newer than the routed `to` clamps down to `to`", () => {
+    expect(readStoredRange("/api/defold-1.12.0/go", "?since=defold-1.13.0", null, CONFIG)).toEqual({
+      from: OLDEST,
+      to: OLDEST,
+    });
+  });
+
+  test("the deploy base is stripped before the path is read", () => {
+    expect(readStoredRange("/toolchain/api/defold-1.12.4/go", "", null, BASED)).toEqual({
+      from: OLDEST,
+      to: "defold-1.12.4",
+    });
+  });
+});
+
+describe("activeRangeForPath — the window the server renders", () => {
+  test("a version-prefixed route renders its own window", () => {
+    expect(activeRangeForPath("/api/defold-1.12.4/go", "?since=defold-1.12.4", CONFIG)).toEqual({
+      from: "defold-1.12.4",
+      to: "defold-1.12.4",
+    });
+  });
+
+  test("the bare canonical route renders the full default window", () => {
+    expect(activeRangeForPath("/api/camera", "", CONFIG)).toEqual(FULL);
+    expect(activeRangeForPath("/api", "", CONFIG)).toEqual(FULL);
+  });
+
+  test("a non-API route resolves to the full default window", () => {
+    expect(activeRangeForPath("/guides", "", CONFIG)).toEqual(FULL);
+  });
+
+  test("ignores the client-persisted preference the server cannot read", () => {
+    // Same inputs as `readStoredRange` with a narrower stored range: the server
+    // must render what the URL says, never what a browser remembered.
+    expect(activeRangeForPath("/api/camera", "", CONFIG)).toEqual(FULL);
+  });
+});
+
+describe("resolveApiSurfaceRedirect — un-prefixed entry points steer to the stored range", () => {
+  const redirect = (path: string, search: string, stored: string | null, cfg = CONFIG) =>
+    resolveApiSurfaceRedirect(path, search, stored, cfg, readStoredRange);
+
+  test("a full default range leaves the canonical page put", () => {
+    expect(redirect("/api/camera", "", null)).toBeNull();
+    expect(redirect("/api/camera", "", "combined")).toBeNull();
+    expect(redirect("/api", "", null)).toBeNull();
+  });
+
+  test("a narrower stored range moves the page onto its windowed route", () => {
+    expect(redirect("/api/go", "", "defold-1.12.4|defold-1.12.4")).toBe(
+      "/api/defold-1.12.4/go?since=defold-1.12.4",
+    );
+    expect(redirect("/api/go", "", "defold-1.12.4")).toBe("/api/defold-1.12.4/go");
+  });
+
+  test("an explicit versioned route is the reader's stated intent and is never overridden", () => {
+    expect(redirect("/api/defold-1.12.4/go", "", "defold-1.13.0|defold-1.13.0")).toBeNull();
+    expect(redirect("/api/combined/camera", "", null)).toBeNull();
   });
 
   test("a non-API path is ignored", () => {
-    expect(resolveApiSurfaceRedirect("/guides", "defold-1.12.4", CONFIG)).toBeNull();
-    expect(resolveApiSurfaceRedirect("/", "combined", CONFIG)).toBeNull();
+    expect(redirect("/guides", "", "defold-1.12.4")).toBeNull();
+    expect(redirect("/", "", "defold-1.12.4")).toBeNull();
   });
 
-  test("an unknown preference is ignored", () => {
-    expect(resolveApiSurfaceRedirect("/api/camera", "bogus-surface", CONFIG)).toBeNull();
-  });
-});
-
-describe("resolveApiSurfaceRedirect — version-ownership guard (current version included)", () => {
-  test("a version-independent page the version does not own stays put (no version-prefixed 404)", () => {
-    expect(resolveApiSurfaceRedirect("/api/base", "defold-1.12.4", CONFIG)).toBeNull();
-    expect(resolveApiSurfaceRedirect("/api/Hash", "defold-1.13.0", CONFIG)).toBeNull();
+  test("a namespace the `to` version does not own stays canonical rather than 404ing", () => {
+    // `base` and `Hash` are version-independent; `camera` exists only in 1.13.0.
+    expect(redirect("/api/base", "", "defold-1.12.4")).toBeNull();
+    expect(redirect("/api/camera", "", "defold-1.12.4")).toBeNull();
   });
 
-  test("an owned engine namespace still redirects to its version route", () => {
-    expect(resolveApiSurfaceRedirect("/api/model", "defold-1.12.4", CONFIG)).toBe(
-      "/api/defold-1.12.4/model",
-    );
-  });
-});
-
-describe("resolveApiSurfaceRedirect — base prefix", () => {
-  test("strips and re-applies the deploy base", () => {
-    expect(resolveApiSurfaceRedirect("/toolchain/api/camera", "defold-1.13.0", BASED)).toBe(
-      "/toolchain/api/defold-1.13.0/camera",
+  test("re-applies the deploy base to the target", () => {
+    expect(redirect("/toolchain/api/go", "", "defold-1.12.4", BASED)).toBe(
+      "/toolchain/api/defold-1.12.4/go",
     );
   });
 
-  test("no-op when the based target equals the current path", () => {
-    expect(
-      resolveApiSurfaceRedirect("/toolchain/api/defold-1.13.0/camera", "defold-1.13.0", BASED),
-    ).toBeNull();
+  test("emits exactly the href `windowHref` builds for the same window", () => {
+    // The redirect inlines its own path/query encoding to stay `.toString()`
+    // serializable, so this pins the duplicate against the one real builder.
+    const bare = (id: string) => id.replace(/^defold-/, "");
+    const axis = CONFIG.versionIds.map(bare);
+    for (const [from, to] of [
+      ["defold-1.12.4", "defold-1.12.4"],
+      ["defold-1.12.0", "defold-1.12.4"],
+      ["defold-1.12.4", "defold-1.13.0"],
+    ] as const) {
+      expect(redirect("/api/go", "", `${from}|${to}`)).toBe(
+        windowHref("go", { from: bare(from), to: bare(to) }, axis),
+      );
+    }
   });
 });
 
-describe("activeSurfaceForPath", () => {
-  test("un-prefixed engine and version-independent pages read as Combined", () => {
-    expect(activeSurfaceForPath("/api/camera", CONFIG)).toBe("combined");
-    expect(activeSurfaceForPath("/api/Hash", CONFIG)).toBe("combined");
-    expect(activeSurfaceForPath("/api", CONFIG)).toBe("combined");
-    expect(activeSurfaceForPath("/guides", CONFIG)).toBe("combined");
-  });
-
-  test("an explicit version prefix reads as that version", () => {
-    expect(activeSurfaceForPath("/api/defold-1.13.0/camera", CONFIG)).toBe("defold-1.13.0");
-    expect(activeSurfaceForPath("/api/defold-1.12.4/camera", CONFIG)).toBe("defold-1.12.4");
-  });
-
-  test("honors the deploy base", () => {
-    expect(activeSurfaceForPath("/toolchain/api/defold-1.12.4/go", BASED)).toBe("defold-1.12.4");
-  });
-});
-
-describe("currentSurfaceForRoute", () => {
-  test("an explicit prefix wins over the stored preference", () => {
-    expect(currentSurfaceForRoute("/api/combined/go", "defold-1.12.4", CONFIG)).toBe("combined");
-    expect(currentSurfaceForRoute("/api/defold-1.12.4/model", "combined", CONFIG)).toBe(
-      "defold-1.12.4",
-    );
-  });
-
-  test("an un-prefixed page keeps a validated stored surface (no flip to Combined)", () => {
-    expect(currentSurfaceForRoute("/api/Hash", "defold-1.12.4", CONFIG)).toBe("defold-1.12.4");
-  });
-
-  test("a new user, an unknown pref, and non-API routes resolve to Combined", () => {
-    expect(currentSurfaceForRoute("/api/Hash", null, CONFIG)).toBe("combined");
-    expect(currentSurfaceForRoute("/api/Hash", "bogus", CONFIG)).toBe("combined");
-    expect(currentSurfaceForRoute("/guides/intro", "defold-1.12.4", CONFIG)).toBe("combined");
-  });
-
-  test("honors the deploy base prefix", () => {
-    expect(currentSurfaceForRoute("/toolchain/api/Hash", "defold-1.12.4", BASED)).toBe(
-      "defold-1.12.4",
-    );
-  });
-
-  test("is serializable — references no module-scope identifiers", () => {
-    const source = currentSurfaceForRoute.toString();
-    expect(source).not.toContain("COMBINED_VERSION_ID");
-    expect(source).toContain('"combined"');
-  });
-});
-
-describe("showApiSurfaceSelector — Combined is an additional surface", () => {
-  test("shows the selector as soon as one tracked engine version exists", () => {
+describe("showApiSurfaceSelector", () => {
+  test("renders as soon as one version is tracked — both columns hold that version", () => {
     expect(showApiSurfaceSelector(1)).toBe(true);
-    expect(showApiSurfaceSelector(2)).toBe(true);
+    expect(showApiSurfaceSelector(3)).toBe(true);
   });
 
-  test("hides the selector only when there is no tracked engine version", () => {
+  test("hides only when no version is tracked at all", () => {
     expect(showApiSurfaceSelector(0)).toBe(false);
   });
-
-  test("with one tracked engine version, the selector model still has two choices: Combined and that exact version", () => {
-    const entries = buildVersionSwitcher({
-      versions: [{ id: "defold-1.13.0", isDefault: true }],
-      namespacesByVersion: { "defold-1.13.0": ["go"] },
-      combinedNamespaces: ["go"],
-      route: "/api/go",
-    });
-    expect(entries.map((e) => e.id)).toEqual(["defold-1.13.0", "combined"]);
-    expect(entries.find((e) => e.id === "combined")?.route).toBe("/api/go");
-  });
 });
 
-describe("surfacePathForNamespace", () => {
-  test("Combined is un-prefixed; every version — the default included — is prefixed", () => {
-    expect(surfacePathForNamespace("combined", "camera")).toBe("/api/camera");
-    expect(surfacePathForNamespace("combined", undefined)).toBe("/api");
-    expect(surfacePathForNamespace("defold-1.13.0", "camera")).toBe("/api/defold-1.13.0/camera");
-    expect(surfacePathForNamespace("defold-1.12.4", "go")).toBe("/api/defold-1.12.4/go");
-  });
-});
-
-describe("rewriteApiNavForSurface", () => {
+describe("rewriteApiNavForRange", () => {
   const nav = (): NavCategory[] => [
     { id: "guides", label: "Guides", route: "/guides", links: [] },
     {
@@ -182,7 +221,7 @@ describe("rewriteApiNavForSurface", () => {
           label: "Defold",
           labelHtml: "Defold",
           children: [
-            { label: "go", labelHtml: "go", route: "/api/go" },
+            { label: "go", labelHtml: "go", route: "/api/go", badgeHtml: "<span>PILL</span>" },
             { label: "base", labelHtml: "base", route: "/api/base" },
           ],
         },
@@ -190,68 +229,37 @@ describe("rewriteApiNavForSurface", () => {
     },
   ];
 
-  test("remaps only the surface's engine leaves and the api root onto a version", () => {
-    const out = rewriteApiNavForSurface(nav(), "defold-1.12.4", ["go", "model"]);
+  test("points engine leaves and the api root at the active window", () => {
+    const out = rewriteApiNavForRange(
+      nav(),
+      { from: "defold-1.12.4", to: "defold-1.12.4" },
+      CONFIG,
+    );
     const api = out.find((c) => c.id === "api");
-    expect(api?.route).toBe("/api/defold-1.12.4");
+    expect(api?.route).toBe("/api/defold-1.12.4?since=defold-1.12.4");
     const leaves = api?.links[0]?.children ?? [];
-    expect(leaves.find((l) => l.label === "go")?.route).toBe("/api/defold-1.12.4/go");
-    // `base` is not owned by the version, so its route is left canonical.
+    expect(leaves.find((l) => l.label === "go")?.route).toBe(
+      "/api/defold-1.12.4/go?since=defold-1.12.4",
+    );
+    // `base` is version-independent, so its canonical route is left alone.
     expect(leaves.find((l) => l.label === "base")?.route).toBe("/api/base");
   });
 
-  test("prefixes the current version's engine leaves too, leaving version-independent leaves canonical", () => {
-    const out = rewriteApiNavForSurface(nav(), "defold-1.13.0", ["go", "camera", "model"]);
+  test("omits `?since=` for a full range, so the default window keeps clean URLs", () => {
+    const out = rewriteApiNavForRange(nav(), FULL, CONFIG);
     const api = out.find((c) => c.id === "api");
     expect(api?.route).toBe("/api/defold-1.13.0");
-    const leaves = api?.links[0]?.children ?? [];
-    expect(leaves.find((l) => l.label === "go")?.route).toBe("/api/defold-1.13.0/go");
-    // The current version is no longer special: `base` is version-independent, so
-    // it stays canonical even under the current-version surface.
-    expect(leaves.find((l) => l.label === "base")?.route).toBe("/api/base");
+    expect(api?.links[0]?.children?.find((l) => l.label === "go")?.route).toBe(
+      "/api/defold-1.13.0/go",
+    );
   });
 
-  test("is a no-op on the canonical Combined surface", () => {
-    const input = nav();
-    expect(rewriteApiNavForSurface(input, "combined", ["go"])).toBe(input);
-  });
-
-  const badgedNav = (): NavCategory[] => [
-    {
-      id: "api",
-      label: "API",
-      route: "/api",
-      links: [
-        {
-          label: "Defold",
-          labelHtml: "Defold",
-          children: [
-            { label: "go", labelHtml: "go", route: "/api/go", badgeHtml: "<span>PILL</span>" },
-            {
-              label: "model",
-              labelHtml: "model",
-              route: "/api/model",
-              badgeHtml: "<span>M</span>",
-            },
-          ],
-        },
-      ],
-    },
-  ];
-
-  test("drops the Combined-only badgeHtml from engine leaves on an exact-version surface", () => {
-    const out = rewriteApiNavForSurface(badgedNav(), "defold-1.12.4", ["go", "model"]);
-    const leaves = out.find((c) => c.id === "api")?.links[0]?.children ?? [];
-    for (const leaf of leaves) {
-      expect(leaf.route?.startsWith("/api/defold-1.12.4/")).toBe(true);
-      expect(leaf.badgeHtml).toBeUndefined();
-    }
-  });
-
-  test("leaves the Combined surface's badgeHtml untouched", () => {
-    const input = badgedNav();
-    const out = rewriteApiNavForSurface(input, "combined", ["go", "model"]);
-    expect(out).toBe(input);
+  test("keeps the count pills on every window — no surface is badge-free any more", () => {
+    const out = rewriteApiNavForRange(
+      nav(),
+      { from: "defold-1.12.4", to: "defold-1.12.4" },
+      CONFIG,
+    );
     const leaves = out.find((c) => c.id === "api")?.links[0]?.children ?? [];
     expect(leaves.find((l) => l.label === "go")?.badgeHtml).toBe("<span>PILL</span>");
   });
@@ -336,67 +344,125 @@ class FakeDoc {
   }
 }
 
-describe("reconcileSurfaceSelector (DOM contract)", () => {
+describe("reconcileRangeSelector (DOM contract)", () => {
+  const LABELS: Record<string, string> = {
+    "defold-1.13.0": "Defold 1.13.0",
+    "defold-1.12.4": "Defold 1.12.4",
+    "defold-1.12.0": "Defold 1.12.0",
+  };
+
   function selectorDom() {
     const doc = new FakeDoc();
     const root = doc.createElement("div");
     root.documentElement = root;
-    const labels: Record<string, string> = {
-      combined: "Combined",
-      "defold-1.13.0": "Defold 1.13.0",
-      "defold-1.12.4": "Defold 1.12.4",
-    };
-    for (const id of ["combined", "defold-1.13.0", "defold-1.12.4"]) {
-      const option = doc.createElement("a");
-      option.setAttribute("data-api-surface", id);
-      const label = doc.createElement("span");
-      label.textContent = labels[id] as string;
-      option.appendChild(label);
-      root.appendChild(option);
+    for (const bound of ["from", "to"] as const) {
+      const summary = doc.createElement("span");
+      summary.setAttribute("data-range-summary", bound);
+      summary.textContent = "server-rendered";
+      root.appendChild(summary);
+      for (const id of CONFIG.versionIds) {
+        const option = doc.createElement("a");
+        option.setAttribute("data-range-option", id);
+        option.setAttribute("data-range-bound", bound);
+        const label = doc.createElement("span");
+        label.textContent = LABELS[id] as string;
+        option.appendChild(label);
+        root.appendChild(option);
+      }
     }
-    const summary = doc.createElement("span");
-    summary.setAttribute("data-surface-summary", "");
-    summary.textContent = "Defold 1.13.0";
-    root.appendChild(summary);
-    const optionFor = (id: string) =>
+    const optionFor = (bound: string, id: string) =>
       root
-        .querySelectorAll("[data-api-surface]")
-        .find((o) => o.getAttribute("data-api-surface") === id);
-    return { root, summary, optionFor };
+        .querySelectorAll("[data-range-option]")
+        .find(
+          (o) =>
+            o.getAttribute("data-range-bound") === bound &&
+            o.getAttribute("data-range-option") === id,
+        );
+    const summaryFor = (bound: string) =>
+      root
+        .querySelectorAll("[data-range-summary]")
+        .find((s) => s.getAttribute("data-range-summary") === bound);
+    return { root, optionFor, summaryFor };
   }
 
-  test("activates the Combined option and sets the summary to 'Combined'", () => {
-    const { root, summary, optionFor } = selectorDom();
-    reconcileSurfaceSelector(root, "combined");
-    const combined = optionFor("combined");
-    expect(combined?.getAttribute("aria-current")).toBe("page");
-    expect(combined?.className).toContain("text-accent");
-    expect(combined?.querySelector("[data-surface-dot]")).not.toBeNull();
-    expect(summary.textContent).toBe("Combined");
+  test("marks the active option in both columns and writes both summaries", () => {
+    const { root, optionFor, summaryFor } = selectorDom();
+    reconcileRangeSelector(root, { from: "defold-1.12.4", to: DEFAULT });
+    expect(optionFor("from", "defold-1.12.4")?.getAttribute("aria-current")).toBe("page");
+    expect(optionFor("from", "defold-1.12.4")?.className).toContain("text-accent");
+    expect(optionFor("to", DEFAULT)?.getAttribute("aria-current")).toBe("page");
+    expect(summaryFor("from")?.textContent).toBe("Defold 1.12.4");
+    expect(summaryFor("to")?.textContent).toBe("Defold 1.13.0");
   });
 
-  test("activates a version option and copies its label into the summary", () => {
-    const { root, summary, optionFor } = selectorDom();
-    reconcileSurfaceSelector(root, "defold-1.13.0");
-    expect(optionFor("defold-1.13.0")?.getAttribute("aria-current")).toBe("page");
-    expect(summary.textContent).toBe("Defold 1.13.0");
-    // The non-active options carry no marker and no dot.
-    const combined = optionFor("combined");
-    expect(combined?.getAttribute("aria-current")).toBeNull();
-    expect(combined?.querySelector("[data-surface-dot]")).toBeNull();
+  test("clears the previously-marked option in each column independently", () => {
+    const { root, optionFor } = selectorDom();
+    reconcileRangeSelector(root, { from: "defold-1.12.4", to: DEFAULT });
+    reconcileRangeSelector(root, { from: OLDEST, to: "defold-1.12.4" });
+    expect(optionFor("from", "defold-1.12.4")?.getAttribute("aria-current")).toBeNull();
+    expect(optionFor("from", "defold-1.12.4")?.querySelector("[data-range-dot]")).toBeNull();
+    expect(optionFor("to", DEFAULT)?.getAttribute("aria-current")).toBeNull();
+    expect(optionFor("from", OLDEST)?.getAttribute("aria-current")).toBe("page");
+    expect(optionFor("to", "defold-1.12.4")?.getAttribute("aria-current")).toBe("page");
   });
 
-  test("exposes the reconciled surface on the document element", () => {
+  test("marks the same version in both columns when the window is a single version", () => {
+    const { root, optionFor } = selectorDom();
+    reconcileRangeSelector(root, { from: "defold-1.12.4", to: "defold-1.12.4" });
+    expect(optionFor("from", "defold-1.12.4")?.getAttribute("aria-current")).toBe("page");
+    expect(optionFor("to", "defold-1.12.4")?.getAttribute("aria-current")).toBe("page");
+  });
+
+  test("exposes the reconciled range on the document element", () => {
     const { root } = selectorDom();
-    reconcileSurfaceSelector(root, "defold-1.12.4");
-    expect(root.getAttribute("data-api-surface-current")).toBe("defold-1.12.4");
-    reconcileSurfaceSelector(root, "combined");
-    expect(root.getAttribute("data-api-surface-current")).toBe("combined");
+    reconcileRangeSelector(root, { from: "defold-1.12.4", to: DEFAULT });
+    expect(root.getAttribute("data-api-range-current")).toBe("defold-1.12.4|defold-1.13.0");
+  });
+});
+
+// The pre-paint `<script>` embeds these functions with `.toString()`, so their
+// bodies run with no module scope at all. Re-evaluating each one through
+// `new Function` reproduces exactly that isolation: any module-scope reference —
+// an imported constant, a sibling helper, a hoisted regex — throws here while
+// type-checking and the normal in-module call both stay green.
+describe("pre-paint serialization contract", () => {
+  const isolate = <T>(fn: T): T =>
+    new Function(`"use strict";return (${String(fn)});`)() as unknown as T;
+
+  test("readStoredRange runs with no module scope", () => {
+    const isolated = isolate(readStoredRange);
+    expect(isolated("/api/camera", "", "combined", CONFIG)).toEqual(FULL);
+    expect(isolated("/api/defold-1.12.4/go", "?since=defold-1.12.0", null, CONFIG)).toEqual({
+      from: OLDEST,
+      to: "defold-1.12.4",
+    });
   });
 
-  test("is serializable — references no module-scope identifiers", () => {
-    const source = reconcileSurfaceSelector.toString();
-    expect(source).not.toContain("COMBINED_VERSION_ID");
+  test("resolveApiSurfaceRedirect runs with no module scope", () => {
+    const isolated = isolate(resolveApiSurfaceRedirect);
+    expect(isolated("/api/go", "", "defold-1.12.4", CONFIG, isolate(readStoredRange))).toBe(
+      "/api/defold-1.12.4/go",
+    );
+  });
+
+  test("reconcileRangeSelector runs with no module scope", () => {
+    const doc = new FakeDoc();
+    const root = doc.createElement("div");
+    root.documentElement = root;
+    const option = doc.createElement("a");
+    option.setAttribute("data-range-option", DEFAULT);
+    option.setAttribute("data-range-bound", "to");
+    const label = doc.createElement("span");
+    label.textContent = "Defold 1.13.0";
+    option.appendChild(label);
+    root.appendChild(option);
+    const summary = doc.createElement("span");
+    summary.setAttribute("data-range-summary", "to");
+    root.appendChild(summary);
+
+    isolate(reconcileRangeSelector)(root, { from: OLDEST, to: DEFAULT });
+    expect(option.getAttribute("aria-current")).toBe("page");
+    expect(summary.textContent).toBe("Defold 1.13.0");
   });
 });
 
@@ -408,6 +474,7 @@ describe("canonicalLinkPath", () => {
   const config: ApiSurfaceConfig = {
     base: "",
     versionIds: ["defold-3.0.0", "defold-2.0.0"],
+    defaultVersionId: "defold-3.0.0",
     namespacesByVersion: { "defold-3.0.0": ["demo"], "defold-2.0.0": ["demo"] },
   };
 
@@ -419,25 +486,23 @@ describe("canonicalLinkPath", () => {
     expect(canonicalLinkPath("/api/defold-3.0.0", config, "defold-3.0.0")).toBe("/api");
   });
 
-  test("a non-default version's page claims no canonical", () => {
+  test("a historical version's page is its own content and claims no canonical", () => {
     expect(canonicalLinkPath("/api/defold-2.0.0/demo", config, "defold-3.0.0")).toBeNull();
   });
 
-  test("an already-canonical page and a non-API page claim no canonical", () => {
+  test("an already-canonical page and a non-API route claim nothing", () => {
     expect(canonicalLinkPath("/api/demo", config, "defold-3.0.0")).toBeNull();
-    expect(canonicalLinkPath("/api/combined/demo", config, "defold-3.0.0")).toBeNull();
-    expect(canonicalLinkPath("/guide/get-started", config, "defold-3.0.0")).toBeNull();
+    expect(canonicalLinkPath("/guides", config, "defold-3.0.0")).toBeNull();
   });
 
-  test("the deploy base is carried through both the match and the target", () => {
+  test("re-applies the deploy base", () => {
     const based: ApiSurfaceConfig = { ...config, base: "/toolchain" };
     expect(canonicalLinkPath("/toolchain/api/defold-3.0.0/demo", based, "defold-3.0.0")).toBe(
       "/toolchain/api/demo",
     );
-    expect(canonicalLinkPath("/toolchain/api/defold-2.0.0/demo", based, "defold-3.0.0")).toBeNull();
   });
 
-  test("with no default version resolved, nothing claims a canonical", () => {
+  test("claims nothing when no default version is known", () => {
     expect(canonicalLinkPath("/api/defold-3.0.0/demo", config, undefined)).toBeNull();
   });
 });

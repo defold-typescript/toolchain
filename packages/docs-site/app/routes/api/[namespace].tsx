@@ -24,13 +24,12 @@ import {
   isKnownVersionId,
   namespaceCountBadges,
 } from "../../lib/api-page-render";
-import { combinedRedirect, redirectHtml } from "../../lib/api-redirect";
+import { COMBINED_ROUTE_SEGMENT, combinedRedirect, redirectHtml } from "../../lib/api-redirect";
 import { withBase } from "../../lib/base";
 import { namespaceBadgeCounts } from "../../lib/combined-surface";
 import { pageHeadings } from "../../lib/headings";
 import { renderMarkdown } from "../../lib/markdown";
 import { libraryLineage } from "../../lib/nav";
-import { COMBINED_VERSION_ID } from "../../lib/version-switch";
 
 // The library page heading: the styled `owner/repo/namespace` path. Exported so
 // the path wiring is unit-testable without the route's cwd-relative surface loaders.
@@ -63,7 +62,7 @@ export default createRoute(
     // honox collapses `api/combined/index.tsx` to `/api/combined`, which the
     // shallower `/api/:namespace` route shadows — so the Combined redirect param
     // is folded in here alongside the per-version index params.
-    { namespace: COMBINED_VERSION_ID },
+    { namespace: COMBINED_ROUTE_SEGMENT },
   ]),
   async (c) => {
     const param = c.req.param("namespace");
@@ -71,7 +70,7 @@ export default createRoute(
     const base = withBase("/").replace(/\/$/, "");
 
     // The old Combined index is now a permanent compat redirect to canonical /api.
-    if (param === COMBINED_VERSION_ID) {
+    if (param === COMBINED_ROUTE_SEGMENT) {
       const { from, to } = combinedRedirect();
       return c.html(redirectHtml(from, to, base));
     }
