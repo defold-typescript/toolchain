@@ -18,6 +18,7 @@ import { DEFOLD_VERSION, SYNC_MANIFEST, type ZipAccessor } from "../scripts/sync
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const GENERATED = resolve(PACKAGE_ROOT, "generated");
 const EDITOR_DOCUMENT_FIXTURE = "editor_doc.json";
+const GLOBALS_DOCUMENT_FIXTURE = "globals_doc.json";
 const EDITOR_NAMESPACE = "editor";
 
 // Committed targets are the ones whose fixtures live in the repo; a `source`
@@ -372,6 +373,23 @@ describe("api-targets registry", () => {
     if (!target) throw new Error("no default target");
     for (const mod of target.luaStdlib ?? []) {
       expect(existsSync(resolve(PACKAGE_ROOT, target.fixturesDir, mod.fixture))).toBe(true);
+    }
+  });
+
+  // The prefixless builtins are hand-vendored rather than generated, so no
+  // registry module points at them and `every registry module references an
+  // existing fixture file` cannot see them missing. A committed target born
+  // without this document reads as "this version has no globals", which the
+  // Combined projection escalates to a removal claim.
+  test("every committed target ships a non-empty globals document", () => {
+    const targets = committedTargets();
+    expect(targets.length).toBeGreaterThan(0);
+    for (const target of targets) {
+      const path = resolve(PACKAGE_ROOT, target.fixturesDir, GLOBALS_DOCUMENT_FIXTURE);
+      expect(existsSync(path)).toBe(true);
+      const doc = JSON.parse(readFileSync(path, "utf8")) as { elements?: unknown };
+      expect(Array.isArray(doc.elements)).toBe(true);
+      expect((doc.elements as unknown[]).length).toBeGreaterThan(0);
     }
   });
 });

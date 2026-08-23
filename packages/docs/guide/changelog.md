@@ -34,6 +34,7 @@ changes are called out first because the toolchain is pre-1.0.
   - **On-demand generation** — the generator's own inputs were left out of the published package, so every target that is generated rather than pre-baked made [`build --defold-target <version>`](./build.md) report `could not materialize` and quietly keep the default surface. A checkout never saw it.
   - **Code examples** — a project pinned to 1.13.0 or 1.12.4 saw raw Lua in the `@example` block of [`gui.set`](/api/gui) and six other calls. Every committed surface is now checked, so a Defold bump cannot silently regress one.
 - **A matched vendored library's types survive the next build.** Once the library surface started naming its toolchain version, the [`build`](./build.md) following a `resolve` dropped the `libraries@<version>` entry from your `tsconfig.json`, so every library symbol stopped resolving until you re-ran `resolve`.
+- **The prefixless globals are on the current Defold surface again.** [`hash`, `hash_to_hex` and `pprint`](/api/globals) read `Removed in Defold 1.13.1` across the [API reference](/api) and its search, and the [1.13.1 version index](/api/defold-1.13.1) rendered no Globals section.
 
 ## v0.26.0
 
