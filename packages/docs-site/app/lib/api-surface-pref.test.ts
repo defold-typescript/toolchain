@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   type ApiSurfaceConfig,
   activeSurfaceForPath,
+  canonicalLinkPath,
   currentSurfaceForRoute,
   reconcileSurfaceSelector,
   resolveApiSurfaceRedirect,
@@ -396,5 +397,47 @@ describe("reconcileSurfaceSelector (DOM contract)", () => {
   test("is serializable — references no module-scope identifiers", () => {
     const source = reconcileSurfaceSelector.toString();
     expect(source).not.toContain("COMBINED_VERSION_ID");
+  });
+});
+
+// The duplicate-content contract between the two routes that now render the same
+// surface: `/api/<default-version>/<ns>` is the window `{oldest, default}`, which
+// is exactly what canonical `/api/<ns>` renders. Only that pair is a duplicate —
+// a historical version's page is its own content and must claim no canonical.
+describe("canonicalLinkPath", () => {
+  const config: ApiSurfaceConfig = {
+    base: "",
+    versionIds: ["defold-3.0.0", "defold-2.0.0"],
+    namespacesByVersion: { "defold-3.0.0": ["demo"], "defold-2.0.0": ["demo"] },
+  };
+
+  test("the default version's namespace page points at the bare canonical route", () => {
+    expect(canonicalLinkPath("/api/defold-3.0.0/demo", config, "defold-3.0.0")).toBe("/api/demo");
+  });
+
+  test("the default version's index points at the bare API index", () => {
+    expect(canonicalLinkPath("/api/defold-3.0.0", config, "defold-3.0.0")).toBe("/api");
+  });
+
+  test("a non-default version's page claims no canonical", () => {
+    expect(canonicalLinkPath("/api/defold-2.0.0/demo", config, "defold-3.0.0")).toBeNull();
+  });
+
+  test("an already-canonical page and a non-API page claim no canonical", () => {
+    expect(canonicalLinkPath("/api/demo", config, "defold-3.0.0")).toBeNull();
+    expect(canonicalLinkPath("/api/combined/demo", config, "defold-3.0.0")).toBeNull();
+    expect(canonicalLinkPath("/guide/get-started", config, "defold-3.0.0")).toBeNull();
+  });
+
+  test("the deploy base is carried through both the match and the target", () => {
+    const based: ApiSurfaceConfig = { ...config, base: "/toolchain" };
+    expect(canonicalLinkPath("/toolchain/api/defold-3.0.0/demo", based, "defold-3.0.0")).toBe(
+      "/toolchain/api/demo",
+    );
+    expect(canonicalLinkPath("/toolchain/api/defold-2.0.0/demo", based, "defold-3.0.0")).toBeNull();
+  });
+
+  test("with no default version resolved, nothing claims a canonical", () => {
+    expect(canonicalLinkPath("/api/defold-3.0.0/demo", config, undefined)).toBeNull();
   });
 });

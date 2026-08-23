@@ -6,6 +6,7 @@ import {
   loadApiSurface,
   loadApiSurfaceForVersion,
   loadCombinedSurface,
+  loadSignaturesArtifact,
   loadVersionIndependentPages,
   versionsWithDiskFixtures,
 } from "./api-surface-loader";
@@ -13,8 +14,10 @@ import {
   type CombinedNamespace,
   type CombinedSurface,
   combinedNamespaceToApiPage,
+  type SignaturesArtifact,
 } from "./combined-surface";
 import type { LibraryOrigin } from "./nav";
+import { type VersionWindow, windowCombinedSurface } from "./version-window";
 
 export const TYPES_DIR = join(process.cwd(), "../types");
 export const LIBRARY_TYPES_DIR = join(process.cwd(), "../library-types");
@@ -67,6 +70,73 @@ export function toCombinedApiPage(ns: CombinedNamespace): ApiPage {
 export function combinedApiPages(typesDir?: string): ApiPage[] {
   const surface = typesDir ? loadCombinedSurface(typesDir) : combinedSurface();
   return surface.namespaces.map(toCombinedApiPage);
+}
+
+// The authoritative signatures artifact, memoized on the same terms as
+// `combinedSurface` — every windowed projection re-reads it, and the SSG build
+// windows once per tracked version.
+let signaturesCache: SignaturesArtifact | undefined;
+function signaturesArtifact(): SignaturesArtifact {
+  if (!signaturesCache) signaturesCache = loadSignaturesArtifact(TYPES_DIR);
+  return signaturesCache;
+}
+
+// The tracked version axis the windows are sliced on: bare semver, newest first,
+// exactly the axis `buildCombinedSurface` derived. The single source every window
+// bound is validated against, so a route, a selector and a param set can never
+// disagree about which versions exist.
+export function apiVersionAxis(typesDir?: string): readonly string[] {
+  return (typesDir ? loadCombinedSurface(typesDir) : combinedSurface()).versions;
+}
+
+// The route segment a bare axis version is addressed by (`1.13.1` ->
+// `defold-1.13.1`). Read back from the registry rather than re-prefixed, so a
+// target whose id is not `defold-`-shaped still routes at its own id.
+function versionIdForBare(bare: string, typesDir: string): string {
+  const match = versionsWithDiskFixtures(typesDir).find(
+    (version) => version.id.replace(/^defold-/, "") === bare,
+  );
+  return match?.id ?? bare;
+}
+
+function buildWindowedPages(
+  combined: CombinedSurface,
+  signatures: SignaturesArtifact,
+  window: VersionWindow,
+  typesDir: string,
+): ApiPage[] {
+  const id = versionIdForBare(window.to, typesDir);
+  return windowCombinedSurface(combined, signatures, window).namespaces.map((ns) => ({
+    ...toCombinedApiPage(ns),
+    // The Combined projection owns the canonical `/api/<ns>` route at its source;
+    // a windowed page is addressed under the version it ends at instead.
+    route: `/api/${id}/${ns.namespace}`,
+  }));
+}
+
+// The engine pages for a `[from, to]` window, routed under `to`. This is what
+// `/api/<version>/<ns>` renders: the exact per-version surface is no longer a
+// separate concept, it is this window with `from` at the oldest tracked version.
+// Memoized per window because the SSG build renders every namespace of every
+// version, and re-windowing per page would dominate it. An explicit `typesDir`
+// bypasses the module cache for deterministic tests, matching `combinedApiPages`.
+const windowedPagesCache = new Map<string, ApiPage[]>();
+export function windowedApiPages(window: VersionWindow, typesDir?: string): ApiPage[] {
+  if (typesDir) {
+    return buildWindowedPages(
+      loadCombinedSurface(typesDir),
+      loadSignaturesArtifact(typesDir),
+      window,
+      typesDir,
+    );
+  }
+  const key = `${window.from}..${window.to}`;
+  let pages = windowedPagesCache.get(key);
+  if (!pages) {
+    pages = buildWindowedPages(combinedSurface(), signaturesArtifact(), window, TYPES_DIR);
+    windowedPagesCache.set(key, pages);
+  }
+  return pages;
 }
 
 // The version-independent reference pages (core value types, Lua standard

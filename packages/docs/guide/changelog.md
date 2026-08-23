@@ -18,7 +18,7 @@ changes are called out first because the toolchain is pre-1.0.
 
 ### Improved
 
-- **The [API reference](/api) can be read over a range of Defold releases, not just one.** Pick a `From` and a `To` version and the page shows the symbols that existed anywhere in that window, each carrying the newest real TypeScript signature that window contains, while every availability note keeps naming the real release — a symbol added in 1.12.4 still reads `Since Defold 1.12.4` even when the window starts there.
+- **The [API reference](/api) can be read over a range of Defold releases, not just one.** A version's own page — [1.13.0](/api/defold-1.13.0), say — now covers every symbol that existed anywhere from the oldest tracked release up to that version, each carrying the newest real TypeScript signature that range contains and an availability note naming the real release, so a symbol added in 1.13.0 reads `Since Defold 1.13.0` there instead of going unmarked.
 
 ## v0.27.0
 

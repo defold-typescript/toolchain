@@ -6,11 +6,12 @@ import {
   PREVIOUS_STABLE_DEFOLD_VERSION,
 } from "../packages/cli/src/defold-version.ts";
 import { RELEASE_TARGET_MATRIX } from "../packages/cli/src/release-target-matrix.ts";
-import { canonicalApiPages } from "../packages/docs-site/app/lib/api-content.ts";
 import {
-  loadApiSurfaceForVersion,
-  versionsWithDiskFixtures,
-} from "../packages/docs-site/app/lib/api-surface-loader.ts";
+  apiVersionAxis,
+  canonicalApiPages,
+  windowedApiPages,
+} from "../packages/docs-site/app/lib/api-content.ts";
+import { versionsWithDiskFixtures } from "../packages/docs-site/app/lib/api-surface-loader.ts";
 import {
   buildReleaseRouteManifest,
   type ReleaseRouteManifest,
@@ -708,11 +709,21 @@ export function collectDocs(root: string, release: string, baseline: string): Do
     // manifest that omits a family diverges from this set rather than silently
     // shrinking the set the evaluator iterates.
     requiredVersionIds = versions.map((v) => v.id);
+    // A version's family is the window ending at it — the same enumeration the
+    // SSG params and the route body use — so the gate validates the routes the
+    // build actually emits rather than each version's own narrower surface.
+    const axis = apiVersionAxis(typesDir);
+    const oldest = axis[axis.length - 1];
     const manifest = buildReleaseRouteManifest({
       versions,
       canonicalPages: canonicalApiPages(typesDir, libraryTypesDir),
       pagesByVersion: Object.fromEntries(
-        versions.map((v) => [v.id, loadApiSurfaceForVersion(typesDir, v.id)]),
+        versions.map((v) => [
+          v.id,
+          oldest === undefined
+            ? []
+            : windowedApiPages({ from: oldest, to: v.id.replace(/^defold-/, "") }, typesDir),
+        ]),
       ),
     });
     const evidence = docsRouteEvidence({

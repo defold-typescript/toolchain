@@ -1,6 +1,11 @@
 import { ssgParams } from "hono/ssg";
 import { createRoute } from "honox/factory";
-import { apiPagesForVersion, canonicalApiPages, TYPES_DIR } from "../../../lib/api-content";
+import {
+  apiVersionAxis,
+  canonicalApiPages,
+  TYPES_DIR,
+  windowedApiPages,
+} from "../../../lib/api-content";
 import {
   apiLinkify,
   apiPageMarkdown,
@@ -10,19 +15,27 @@ import {
 } from "../../../lib/api-page-render";
 import { pageHeadings } from "../../../lib/headings";
 import { renderMarkdown } from "../../../lib/markdown";
+import { resolveVersionWindow } from "../../../lib/version-window";
 
-// The 3-segment `/api/:version/:namespace` route — one page per engine namespace
-// of every tracked version, the current (default) version included, since each
-// version now owns an explicit `/api/<id>/…` family. `versionedApiParams` is
-// filtered to versions whose fixtures are on disk, so an unmaterialized ref-doc
-// target contributes nothing and the build stays clean until its fixtures land.
+// The 3-segment `/api/:version/:namespace` route. The page is the version window
+// ending at `:version` rather than that version's own surface, so the reader who
+// picked a concrete version is no longer the one reader who cannot see when a
+// symbol appeared or went away. The badge-free exact surface is not a separate
+// concept any more: it is this window with `from` at the oldest tracked version.
+// `versionedApiParams` enumerates the same windowed families, so a page's body
+// and its route always agree.
 export default createRoute(
   ssgParams(() => versionedApiParams(TYPES_DIR)),
   async (c) => {
     const version = c.req.param("version");
     const namespace = c.req.param("namespace");
     if (!version || !namespace) return c.notFound();
-    const pages = apiPagesForVersion(version);
+    // `?since=` is parsed and clamped here but does not yet narrow the page; the
+    // `from` bound becomes reader-controlled with the dual selector. An untracked
+    // version is unresolvable and 404s rather than rendering an empty window.
+    const window = resolveVersionWindow(apiVersionAxis(), version, c.req.query("since") ?? null);
+    if (!window) return c.notFound();
+    const pages = windowedApiPages(window);
     const page = pages.find((entry) => entry.namespace === namespace);
     if (!page) return c.notFound();
 
