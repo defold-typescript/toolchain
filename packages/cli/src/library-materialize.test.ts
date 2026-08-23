@@ -301,7 +301,51 @@ describe("ensureMaterializedReference carries sibling surfaces through the engin
     ).compilerOptions.types;
   }
 
-  test("preserves both extensions and libraries when re-pointing the engine surface", () => {
+  test("a build after a resolve keeps the library entry the resolve just wrote", () => {
+    writeTsconfig({
+      compilerOptions: { typeRoots: [".defold-types"], types: ["extensions"] },
+    });
+
+    ensureLibraryTypesReference(cwd, `.defold-types/${librariesDirName(readCliVersion())}`);
+    const afterResolve = readTypes();
+    expect(afterResolve).toContain(librariesDirName(readCliVersion()));
+
+    ensureMaterializedReference(cwd, `.defold-types/${surfaceDir("defold-1.12.4")}`);
+
+    expect(readTypes()).toEqual([surfaceDir("defold-1.12.4"), ...afterResolve]);
+  });
+
+  test("preserves both extensions and the versioned libraries entry when re-pointing", () => {
+    writeTsconfig({
+      compilerOptions: {
+        typeRoots: [".defold-types"],
+        types: ["old-surface", "extensions", librariesDirName(readCliVersion())],
+      },
+    });
+
+    ensureMaterializedReference(cwd, `.defold-types/${surfaceDir("defold-1.12.4")}`);
+
+    expect(readTypes()).toEqual([
+      surfaceDir("defold-1.12.4"),
+      "extensions",
+      librariesDirName(readCliVersion()),
+    ]);
+  });
+
+  test("carries a lone versioned libraries entry through when extensions is absent", () => {
+    writeTsconfig({
+      compilerOptions: {
+        typeRoots: [".defold-types"],
+        types: ["old-surface", librariesDirName(readCliVersion())],
+      },
+    });
+
+    ensureMaterializedReference(cwd, `.defold-types/${surfaceDir("defold-1.12.4")}`);
+
+    expect(readTypes()).toEqual([surfaceDir("defold-1.12.4"), librariesDirName(readCliVersion())]);
+  });
+
+  test("carries a legacy flat libraries entry through unchanged", () => {
     writeTsconfig({
       compilerOptions: {
         typeRoots: [".defold-types"],
@@ -314,14 +358,21 @@ describe("ensureMaterializedReference carries sibling surfaces through the engin
     expect(readTypes()).toEqual([surfaceDir("defold-1.12.4"), "extensions", "libraries"]);
   });
 
-  test("carries a lone libraries entry through when extensions is absent", () => {
+  test("sibling entries keep the order the tsconfig already had", () => {
     writeTsconfig({
-      compilerOptions: { typeRoots: [".defold-types"], types: ["old-surface", "libraries"] },
+      compilerOptions: {
+        typeRoots: [".defold-types"],
+        types: ["old-surface", librariesDirName(readCliVersion()), "extensions"],
+      },
     });
 
     ensureMaterializedReference(cwd, `.defold-types/${surfaceDir("defold-1.12.4")}`);
 
-    expect(readTypes()).toEqual([surfaceDir("defold-1.12.4"), "libraries"]);
+    expect(readTypes()).toEqual([
+      surfaceDir("defold-1.12.4"),
+      librariesDirName(readCliVersion()),
+      "extensions",
+    ]);
   });
 });
 
