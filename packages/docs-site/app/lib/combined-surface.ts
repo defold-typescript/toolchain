@@ -12,6 +12,7 @@ import {
   symbolNameKey,
 } from "@defold-typescript/types";
 import { type ApiPage, type AvailabilityLookup, badgeCategoryFromLabel } from "./api-surface";
+import type { VersionWindow } from "./version-window";
 
 type ApiConstant = ApiModule["constants"][number];
 type ApiProperty = ApiModule["properties"][number];
@@ -81,6 +82,12 @@ export interface CombinedNamespace {
 export interface CombinedSurface {
   readonly versions: readonly string[];
   readonly namespaces: readonly CombinedNamespace[];
+  /**
+   * Set only on a {@link windowCombinedSurface} result: the `[from, to]` bounds
+   * the membership was narrowed to. `versions` stays the full tracked axis
+   * either way, so every label a consumer renders remains absolute.
+   */
+  readonly window?: VersionWindow;
 }
 
 /**
@@ -265,7 +272,12 @@ export function namespaceBadgeCounts(ns: CombinedNamespace): NamespaceBadgeCount
   return { new: isNew, changed, deprecated };
 }
 
-function compareSemverDesc(a: string, b: string): number {
+/**
+ * Descending-semver comparator over the bare version strings the projection is
+ * keyed by, so the axis reads newest-first. Exported as the single ordering the
+ * window projection reuses — a second comparator would be free to disagree.
+ */
+export function compareSemverDesc(a: string, b: string): number {
   const pa = a.split(".").map((part) => Number.parseInt(part, 10));
   const pb = b.split(".").map((part) => Number.parseInt(part, 10));
   const len = Math.max(pa.length, pb.length);
@@ -300,11 +312,17 @@ function availableWithDeprecation(
   return versions.filter((version) => covered.has(version));
 }
 
-function memberIdentity(namespace: string, kind: string, name: string): ApiSymbolIdentity {
+/**
+ * The canonical identity for a non-function module member. Exported alongside
+ * {@link funcIdentity} so a downstream projection keys members by the exact
+ * value {@link buildCombinedSurface} used, rather than re-deriving the encoding.
+ */
+export function memberIdentity(namespace: string, kind: string, name: string): ApiSymbolIdentity {
   return { namespace, kind, name, signature: "" };
 }
 
-function funcIdentity(namespace: string, fn: ApiFunction): ApiSymbolIdentity {
+/** The canonical identity for a function, overload signature included. */
+export function funcIdentity(namespace: string, fn: ApiFunction): ApiSymbolIdentity {
   return { namespace, kind: "FUNCTION", name: fn.name, signature: normalizedFunctionSignature(fn) };
 }
 
