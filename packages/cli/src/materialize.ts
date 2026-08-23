@@ -50,6 +50,17 @@ export function surfaceDirName(surfaceId: string, cliVersion: string): string {
   return `${surfaceId}${SURFACE_STAMP_SEPARATOR}${cliVersion}`;
 }
 
+// Whether a `types` entry names the given surface axis — the pre-versioning bare
+// name, or any `<base>@<version>` this file's own writer produces. Recognizing a
+// name has to live beside writing it: a second reader restating the separator is
+// how the versioned library entry got dropped on the engine re-point.
+export function namesSurfaceAxis(base: string, entry: unknown): boolean {
+  return (
+    typeof entry === "string" &&
+    (entry === base || entry.startsWith(`${base}${SURFACE_STAMP_SEPARATOR}`))
+  );
+}
+
 export type SurfaceStampStatus = "match" | "mismatch" | "missing";
 
 // Whether a surface directory's `package.json` stamp agrees with the toolchain
@@ -662,11 +673,17 @@ export function ensureMaterializedReference(cwd: string, materializedDir: string
     // The sibling `extensions` and `libraries` surfaces
     // (ensureExtensionTypesReference / ensureLibraryTypesReference) coexist with
     // the engine surface under one typeRoots; repointing the engine entry must
-    // carry any existing sibling types entry through, not clobber it.
+    // carry any existing sibling types entry through, not clobber it. Match on
+    // the surface axis rather than two literal names, so a sibling that carries
+    // a toolchain version in its entry survives, and keep the order the file
+    // already had rather than imposing one — carrying the input through
+    // unchanged is what leaves the next call with nothing to rewrite.
     const currentTypes = Array.isArray(current.types) ? (current.types as unknown[]) : [];
     const desiredTypes = [
       dirName,
-      ...["extensions", "libraries"].filter((entry) => currentTypes.includes(entry)),
+      ...currentTypes.filter(
+        (entry) => namesSurfaceAxis("extensions", entry) || namesSurfaceAxis("libraries", entry),
+      ),
     ];
     // Skip the write when already repointed so the file keeps its existing
     // formatting (a consumer's Biome/Prettier shape) instead of churning to

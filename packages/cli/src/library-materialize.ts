@@ -15,6 +15,7 @@ import type { VendoredLibrary } from "./library-match";
 import {
   ensureGitignoreLine,
   MATERIALIZED_ROOT,
+  namesSurfaceAxis,
   surfaceDirName,
   surfaceStampStatus,
 } from "./materialize";
@@ -31,10 +32,7 @@ export function librariesDirName(cliVersion: string): string {
 
 // A legacy flat `libraries` entry, or any older `libraries@<version>` one.
 function isLibrariesEntry(entry: unknown): boolean {
-  return (
-    typeof entry === "string" &&
-    (entry === LIBRARIES_BASE || entry.startsWith(`${LIBRARIES_BASE}@`))
-  );
+  return namesSurfaceAxis(LIBRARIES_BASE, entry);
 }
 
 // Reuse only a surface whose stamp vouches for it *and* whose recorded module
