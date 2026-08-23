@@ -954,17 +954,15 @@
     background: var(--color-badge-deprecated);
   }
 
-  /* Sidebar namespace count pills (Combined-only). Not `.prose`-scoped — the
-   * sidebar tree sits outside prose. Compact: only the tally shows, the category
-   * lives in the `aria-label`, so color stays additive rather than the sole cue. */
+  /* Sidebar namespace count pills. Not `.prose`-scoped — the sidebar tree sits
+   * outside prose. Compact: only the tally shows, the category lives in the
+   * `aria-label`, so color stays additive rather than the sole cue. Every version
+   * window renders the availability layer, so the pills ride every surface and
+   * the client `?since=` filter recounts them in place. */
   .nav-badge-counts {
     display: inline-flex;
     gap: 0.25rem;
     align-items: center;
-  }
-
-  html[data-api-surface-current]:not([data-api-surface-current="combined"]) .nav-badge-counts {
-    display: none;
   }
 
   .nav-badge-count {

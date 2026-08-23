@@ -2,6 +2,8 @@
 import { withBase } from "../lib/base";
 import type { NavLink } from "../lib/nav";
 
+const routePath = (route: string): string => route.split("?")[0] as string;
+
 export function SidebarItems({
   links,
   path,
@@ -24,7 +26,10 @@ export function SidebarItems({
       {links.map((link) => (
         <li key={link.route ?? link.label}>
           {link.route ? (
-            <SidebarLink link={link} active={path === link.route} />
+            // A nav route carries the active window's `?since=` while `path` is
+            // the bare pathname, so the query is dropped before comparing —
+            // otherwise narrowing the range unmarks every leaf in the tree.
+            <SidebarLink link={link} active={path === routePath(link.route)} />
           ) : (
             <p
               class={

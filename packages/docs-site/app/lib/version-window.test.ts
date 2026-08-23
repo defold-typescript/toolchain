@@ -412,4 +412,73 @@ describe("windowOptionHrefs", () => {
     ]);
     expect(options.to.filter((option) => option.isCurrent).map((o) => o.version)).toEqual([NEWEST]);
   });
+
+  // Read an emitted href back through the production resolver the route itself
+  // uses, so the clamp is checked against what the link actually *means* rather
+  // than against the builder that wrote it.
+  function windowOf(href: string) {
+    const [path, query] = href.split("?");
+    const to = (path as string).split("/")[2] as string;
+    const since = query ? (/(?:^|&)since=([^&]*)/.exec(query)?.[1] ?? null) : null;
+    return resolveVersionWindow(AXIS, to, since);
+  }
+
+  test("every option honors its own bound exactly and never expresses `from` newer than `to`", () => {
+    // The invariant holds from any starting window, not just a convenient one.
+    for (const start of [
+      { from: OLDEST, to: NEWEST },
+      { from: SECOND_NEWEST, to: NEWEST },
+      { from: SECOND_OLDEST, to: SECOND_OLDEST },
+      { from: NEWEST, to: NEWEST },
+    ]) {
+      const options = windowOptionHrefs("demo", start, AXIS);
+      for (const option of options.from) {
+        const resolved = windowOf(option.href);
+        expect(resolved).not.toBeNull();
+        expect(resolved?.from).toBe(option.version);
+        expect(AXIS.indexOf(resolved?.from as string)).toBeGreaterThanOrEqual(
+          AXIS.indexOf(resolved?.to as string),
+        );
+      }
+      for (const option of options.to) {
+        const resolved = windowOf(option.href);
+        expect(resolved).not.toBeNull();
+        expect(resolved?.to).toBe(option.version);
+        expect(AXIS.indexOf(resolved?.from as string)).toBeGreaterThanOrEqual(
+          AXIS.indexOf(resolved?.to as string),
+        );
+      }
+    }
+  });
+
+  test("keeps the namespace only on a `to` version that owns a page for it", () => {
+    // `demo` is dropped from the two oldest versions, so their options must fall
+    // back to that version's index instead of linking at a route that 404s.
+    const owned = {
+      [NEWEST]: ["demo"],
+      [SECOND_NEWEST]: ["demo"],
+      [SECOND_OLDEST]: [],
+      [OLDEST]: [],
+    };
+    const options = windowOptionHrefs("demo", { from: SECOND_NEWEST, to: NEWEST }, AXIS, owned);
+    expect(options.to.find((o) => o.version === NEWEST)?.href).toBe(
+      `/api/defold-${NEWEST}/demo?since=defold-${SECOND_NEWEST}`,
+    );
+    expect(options.to.find((o) => o.version === SECOND_OLDEST)?.href).toBe(
+      `/api/defold-${SECOND_OLDEST}?since=defold-${SECOND_OLDEST}`,
+    );
+    // The `from` column shifts the path version only when it would cross `to`,
+    // so its namespace fallback keys off that resulting version, not the option's.
+    expect(options.from.find((o) => o.version === OLDEST)?.href).toBe(`/api/defold-${NEWEST}/demo`);
+    expect(options.from.find((o) => o.version === SECOND_OLDEST)?.href).toBe(
+      `/api/defold-${NEWEST}/demo?since=defold-${SECOND_OLDEST}`,
+    );
+  });
+
+  test("without an ownership map every option keeps the namespace", () => {
+    const options = windowOptionHrefs("demo", { from: OLDEST, to: NEWEST }, AXIS);
+    for (const option of [...options.from, ...options.to]) {
+      expect(option.href).toContain("/demo");
+    }
+  });
 });

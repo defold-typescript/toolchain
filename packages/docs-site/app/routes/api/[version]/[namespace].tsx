@@ -30,9 +30,11 @@ export default createRoute(
     const version = c.req.param("version");
     const namespace = c.req.param("namespace");
     if (!version || !namespace) return c.notFound();
-    // `?since=` is parsed and clamped here but does not yet narrow the page; the
-    // `from` bound becomes reader-controlled with the dual selector. An untracked
-    // version is unresolvable and 404s rather than rendering an empty window.
+    // `?since=` is parsed and clamped here, but only a prerendered `from` bound
+    // reaches this handler: the SSG enumerates one page per `(version, namespace)`
+    // at the full range, and a reader's narrower `from` is applied client-side by
+    // `applySinceFilter` over that superset. An untracked version is unresolvable
+    // and 404s rather than rendering an empty window.
     const window = resolveVersionWindow(apiVersionAxis(), version, c.req.query("since") ?? null);
     if (!window) return c.notFound();
     const pages = windowedApiPages(window);
@@ -45,10 +47,16 @@ export default createRoute(
     // the canonical `/api/Opaque` page, not per version — so resolve the
     // signature deep-links against the canonical surface, not this version's.
     const signatureSymbolLinks = apiSignatureSymbolLinks(canonicalApiPages());
-    const html = await renderMarkdown(apiPageMarkdown(page, linkify, { resolveReplacement }), {
-      highlightSignatureHeadings: true,
-      signatureSymbolLinks,
-    });
+    // A windowed page *is* a union across versions, so the availability marker
+    // layer is meaningful here exactly as it is on the canonical route — and the
+    // client `?since=` filter reads the per-symbol span markers it emits.
+    const html = await renderMarkdown(
+      apiPageMarkdown(page, linkify, { resolveReplacement, combinedMarkers: true }),
+      {
+        highlightSignatureHeadings: true,
+        signatureSymbolLinks,
+      },
+    );
     return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
       title: `${namespace} API (${version})`,
       headings: pageHeadings(html),
