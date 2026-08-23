@@ -304,7 +304,10 @@ export function evaluateReleaseReadiness(evidence: ReadinessEvidence): Readiness
   } else if (guide === null) {
     add("migration-guide", "migration-guide evidence absent: no migration guide");
   } else {
-    if (stripSurfacePrefix(av.current) !== expected.release || av.baseline !== expected.baseline) {
+    if (
+      stripSurfacePrefix(av.current) !== expected.release ||
+      stripSurfacePrefix(av.baseline) !== expected.baseline
+    ) {
       add(
         "migration-guide",
         `availability catalog stale: current ${av.current ?? "(none)"} baseline ${av.baseline ?? "(none)"}`,
@@ -504,7 +507,10 @@ function collectImportManifest(root: string, release: string): ImportManifestEvi
   };
 }
 
-function collectAvailability(root: string): AvailabilityEvidence | null {
+export function collectAvailability(
+  root: string,
+  expected: { release: string; baseline: string },
+): AvailabilityEvidence | null {
   const raw = readJson<{
     versions?: string[];
     records?: { identity: { name: string }; availableIn?: string[] }[];
@@ -514,9 +520,11 @@ function collectAvailability(root: string): AvailabilityEvidence | null {
   }
   const versions = raw.versions ?? [];
   const records = raw.records ?? [];
-  // `current` is the newest tracked version; `baseline` is `PREVIOUS_STABLE`, the
-  // tuple's second slot — the rule's previous-minor release once the next bump
-  // reapplies retention, and today the restored 1.13.0. A "removed" symbol is one
+  // `current` is the newest tracked version; `baseline` is the axis entry named by
+  // `PREVIOUS_STABLE`, found by identity rather than by position: the axis carries
+  // every committed surface, including patches the retention rule demoted out of
+  // `DEFOLD_VERSIONS`, so a positional read would pick the outgoing patch instead
+  // of the release the rule retained. A "removed" symbol is one
   // the baseline had and the newest version lacks — this spans genuine removals
   // and the retired side of a signature transition, exactly what the migration
   // guide must cover. Both ends are scoped to the baseline, because that is the
@@ -524,7 +532,7 @@ function collectAvailability(root: string): AvailabilityEvidence | null {
   // documented under that release's own section, outside this span, and demanding
   // a heading for it here would blame the promotion for a removal it did not make.
   const newest = versions[0];
-  const baseline = versions[1];
+  const baseline = versions.find((v) => stripSurfacePrefix(v) === expected.baseline);
   const has = (r: { availableIn?: string[] }, version: string | undefined): boolean =>
     version !== undefined && (r.availableIn ?? []).includes(version);
   return {
@@ -756,7 +764,7 @@ export function collectEvidence(
   return {
     expected,
     importManifest: collectImportManifest(root, expected.release),
-    availability: collectAvailability(root),
+    availability: collectAvailability(root, expected),
     targets: collectTargets(root),
     migrationGuide: collectMigrationGuide(root, expected.release, expected.baseline),
     docs: collectDocs(root, expected.release, expected.baseline),
