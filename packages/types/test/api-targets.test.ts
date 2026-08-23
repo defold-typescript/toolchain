@@ -36,11 +36,26 @@ function firstSegment(dotted: string): string {
 
 // The top-level namespaces a target's editor document actually carries, read
 // from the fixture rather than restated, so the expectation moves with upstream.
-function editorDocumentSegments(target: ApiTarget): ReadonlySet<string> {
+// dotted: a segment that owns members (`json.decode`) and so needs its own VM
+// module; flat: a segment that is itself the element (`pprint`) and can only be
+// covered by an exact skip rule. `editor` is excluded — it is the entry the
+// rules live on, not a namespace split out of it.
+function editorDocumentNamespaces(target: ApiTarget): {
+  dotted: ReadonlySet<string>;
+  flat: ReadonlySet<string>;
+} {
   const doc = JSON.parse(
     readFileSync(resolve(PACKAGE_ROOT, target.fixturesDir, EDITOR_DOCUMENT_FIXTURE), "utf8"),
   ) as { elements: { name: string }[] };
-  return new Set(doc.elements.map((element) => firstSegment(element.name)));
+  const dotted = new Set<string>();
+  const flat = new Set<string>();
+  for (const element of doc.elements) {
+    const segment = firstSegment(element.name);
+    if (segment === EDITOR_NAMESPACE) continue;
+    if (element.name === segment) flat.add(segment);
+    else dotted.add(segment);
+  }
+  return { dotted, flat };
 }
 
 function labelRefDocZip(): { fakeZip: ZipAccessor; cacheDir: string; version: string } {
@@ -432,7 +447,8 @@ describe("registry-declared editor modules", () => {
 
   test("every editor VM module a target declares names a namespace its own editor document has", () => {
     for (const target of declaringTargets()) {
-      const segments = editorDocumentSegments(target);
+      const { dotted, flat } = editorDocumentNamespaces(target);
+      const segments = new Set([...dotted, ...flat]);
       for (const module of target.editorModules ?? []) {
         if (module.namespace === EDITOR_NAMESPACE) continue;
         const segment = firstSegment(module.namespace);
@@ -445,21 +461,34 @@ describe("registry-declared editor modules", () => {
     }
   });
 
-  test("every namespace a target's editor document carries is declared or explicitly skipped", () => {
+  test("a target declares a VM module for every dotted editor namespace and skips only the flat ones", () => {
     for (const target of declaringTargets()) {
       const declared = target.editorModules ?? [];
-      const vmSegments = new Set(
-        declared
-          .filter((m) => m.namespace !== EDITOR_NAMESPACE)
-          .map((m) => firstSegment(m.namespace)),
-      );
+      const { dotted, flat } = editorDocumentNamespaces(target);
+      const vmSegments = declared
+        .filter((m) => m.namespace !== EDITOR_NAMESPACE)
+        .map((m) => firstSegment(m.namespace));
       const skipped = declared.find((m) => m.namespace === EDITOR_NAMESPACE)?.skipFunctions ?? [];
-      const undeclared = [...editorDocumentSegments(target)]
-        .filter((segment) => segment !== EDITOR_NAMESPACE)
-        .filter((segment) => !vmSegments.has(segment))
-        .filter((segment) => !skipped.some((rule) => rule === segment || rule === `${segment}.`))
+
+      // Set equality, not containment: a dropped `json` entry cannot be propped
+      // up by its surviving `"json."` rule, and a namespace the release does not
+      // ship cannot be declared.
+      expect({ id: target.id, vm: [...new Set(vmSegments)].sort().join(" ") }).toEqual({
+        id: target.id,
+        vm: [...dotted].sort().join(" "),
+      });
+
+      // Each split-out namespace must also be withheld from the `editor` emit,
+      // or it re-emits as `editor.json.*` alongside its own module.
+      const unwithheld = [...dotted].filter((s) => !skipped.includes(`${s}.`)).sort();
+      expect({ id: target.id, unwithheld }).toEqual({ id: target.id, unwithheld: [] });
+
+      // A flat namespace is a bare global, hand-authored elsewhere: exact rule,
+      // no VM module.
+      const flatMishandled = [...flat]
+        .filter((s) => !skipped.includes(s) || vmSegments.includes(s))
         .sort();
-      expect({ id: target.id, undeclared }).toEqual({ id: target.id, undeclared: [] });
+      expect({ id: target.id, flatMishandled }).toEqual({ id: target.id, flatMishandled: [] });
     }
   });
 });
