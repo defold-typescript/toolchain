@@ -86,6 +86,34 @@ export function activeSurfaceForPath(pathname: string, config: ApiSurfaceConfig)
 }
 
 /**
+ * The canonical target a routed page should declare, or `null` when it is not a
+ * duplicate of anything.
+ *
+ * The default version's family renders the window `{oldest, default}`, which is
+ * the same surface canonical `/api/<ns>` renders — two URLs, one page — so those
+ * pages point their canonical at the bare route and let the unprefixed one carry
+ * the search weight. Every other page is its own content: a historical version's
+ * page shows a surface no other URL does, and an already-unprefixed page is
+ * itself canonical. Returns the full target path with `base` applied, matching
+ * {@link resolveApiSurfaceRedirect}.
+ */
+export function canonicalLinkPath(
+  pathname: string,
+  config: ApiSurfaceConfig,
+  defaultVersionId: string | undefined,
+): string | null {
+  if (!defaultVersionId) return null;
+  const { base } = config;
+  let path = pathname;
+  if (base && path.indexOf(base) === 0) path = path.slice(base.length);
+  if (path.charAt(0) !== "/") path = `/${path}`;
+  const seg = path.replace(/\/+$/, "").split("/").filter(Boolean);
+  if (seg[0] !== "api" || seg[1] !== defaultVersionId) return null;
+  const namespace = seg[2];
+  return `${base}/api${namespace ? `/${namespace}` : ""}`;
+}
+
+/**
  * The surface the version selector should mark current for a route, honoring the
  * client-persisted preference the server cannot read. An explicit `/api/combined/…`
  * or `/api/<version>/…` prefix wins outright; an un-prefixed API page keeps the
