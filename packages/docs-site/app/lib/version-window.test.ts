@@ -63,13 +63,14 @@ const newestOnly = func("demo.newest_only");
 const oldestOnly = func("demo.oldest_only");
 const sinceSecondOldest = func("demo.since_second_oldest");
 const widened = func("demo.widened");
+const widenedEvolving = func("demo.widened_evolving", [param("a", ["string"])]);
 const soloNewest = func("solo.newest");
 
 const presence: Record<string, ApiFunction[]> = {
   [NEWEST]: [always, evolving, newestOnly, sinceSecondOldest],
-  [SECOND_NEWEST]: [always, evolving, sinceSecondOldest],
+  [SECOND_NEWEST]: [always, evolving, sinceSecondOldest, widenedEvolving],
   [SECOND_OLDEST]: [always, endsAtSecondOldest, evolving, sinceSecondOldest, widened],
-  [OLDEST]: [always, endsAtSecondOldest, oldestOnly],
+  [OLDEST]: [always, endsAtSecondOldest, oldestOnly, widenedEvolving],
 };
 
 const surfaces: CombinedVersionSurface[] = AXIS.map((version) => ({
@@ -86,12 +87,21 @@ const surfaces: CombinedVersionSurface[] = AXIS.map((version) => ({
 const EVOLVING_NEW = "function evolving(a: string, b: number): void;";
 const EVOLVING_OLD = "function evolving(a: string): void;";
 
+// `demo.widened_evolving` declares two different parameter lists at the two
+// versions it is genuinely present in, and the curated widening below fills the
+// gap between and above them. Distinct strings are what let a window prove which
+// version its declaration was resolved from.
+const WIDENED_EVOLVING_NEW = "function widened_evolving(a: string, b: number): void;";
+const WIDENED_EVOLVING_OLD = "function widened_evolving(a: string): void;";
+
 function declarationsFor(version: string): Record<string, string> {
   const entries: Record<string, string> = {};
   for (const fn of presence[version] as ApiFunction[]) {
     const key = symbolIdentityKey(funcId("demo", fn));
     if (fn === evolving) {
       entries[key] = version === NEWEST || version === SECOND_NEWEST ? EVOLVING_NEW : EVOLVING_OLD;
+    } else if (fn === widenedEvolving) {
+      entries[key] = version === SECOND_NEWEST ? WIDENED_EVOLVING_NEW : WIDENED_EVOLVING_OLD;
     } else {
       entries[key] = `function ${fn.name.replace("demo.", "")}(): void;`;
     }
@@ -120,6 +130,14 @@ const overlay: AvailabilityLookup = {
       {
         identity: funcId("demo", widened),
         availableIn: [SECOND_OLDEST],
+        deprecatedSince: NEWEST,
+      },
+    ],
+    [
+      symbolIdentityKey(funcId("demo", widenedEvolving)),
+      {
+        identity: funcId("demo", widenedEvolving),
+        availableIn: [SECOND_NEWEST, OLDEST],
         deprecatedSince: NEWEST,
       },
     ],
@@ -210,6 +228,67 @@ describe("windowCombinedSurface", () => {
     const entry = demo.entries.find((candidate) => symbolIdentityKey(candidate.identity) === key);
     expect(entry?.authoritativeSignature).toBe(EVOLVING_OLD);
     expect(combinedAuthoritativeSignatures(demo).get(key)).toBe("demo.evolving(a: string): void");
+  });
+
+  test("a capped window steps over a declaration-free in-window version", () => {
+    const key = symbolIdentityKey(funcId("demo", widenedEvolving));
+    const built = nsOf(combined, "demo").entries.find(
+      (entry) => symbolIdentityKey(entry.identity) === key,
+    );
+    expect(built?.availableIn).toEqual(AXIS);
+    expect(built?.authoritativeSignature).toBe(WIDENED_EVOLVING_NEW);
+
+    // `SECOND_OLDEST` is the newest version this window makes available, and the
+    // widening is the only reason it is available there at all — it declares
+    // nothing, so the answer has to come from `OLDEST`.
+    const windowed = windowCombinedSurface(combined, signatures, {
+      from: OLDEST,
+      to: SECOND_OLDEST,
+    });
+    const entry = nsOf(windowed, "demo").entries.find(
+      (candidate) => symbolIdentityKey(candidate.identity) === key,
+    );
+    expect(signatures.versions[SECOND_OLDEST]?.[key]).toBeUndefined();
+    expect(entry?.authoritativeSignature).toBe(WIDENED_EVOLVING_OLD);
+  });
+
+  test("a window that declares the entry nowhere keeps the built signature", () => {
+    const key = symbolIdentityKey(funcId("demo", widenedEvolving));
+    const windowed = windowCombinedSurface(combined, signatures, {
+      from: SECOND_OLDEST,
+      to: SECOND_OLDEST,
+    });
+    const demo = nsOf(windowed, "demo");
+    const entry = demo.entries.find((candidate) => symbolIdentityKey(candidate.identity) === key);
+    expect(entry).toBeDefined();
+    expect(entry?.authoritativeSignature).toBe(WIDENED_EVOLVING_NEW);
+    // An empty declaration drops the key here, which is how the render layer
+    // silently downgrades the symbol to its token-derived signature.
+    expect(combinedAuthoritativeSignatures(demo).get(key)).toBe(
+      "demo.widened_evolving(a: string, b: number): void",
+    );
+  });
+
+  test("the newest in-window declaration wins over an older one", () => {
+    const key = symbolIdentityKey(funcId("demo", widenedEvolving));
+    const windowed = windowCombinedSurface(combined, signatures, {
+      from: OLDEST,
+      to: SECOND_NEWEST,
+    });
+    const entry = nsOf(windowed, "demo").entries.find(
+      (candidate) => symbolIdentityKey(candidate.identity) === key,
+    );
+    expect(entry?.authoritativeSignature).toBe(WIDENED_EVOLVING_NEW);
+  });
+
+  test("an uncapped window keeps the built signature though its newest version declares nothing", () => {
+    const key = symbolIdentityKey(funcId("demo", widenedEvolving));
+    const windowed = windowCombinedSurface(combined, signatures, { from: OLDEST, to: NEWEST });
+    const entry = nsOf(windowed, "demo").entries.find(
+      (candidate) => symbolIdentityKey(candidate.identity) === key,
+    );
+    expect(signatures.versions[NEWEST]?.[key]).toBeUndefined();
+    expect(entry?.authoritativeSignature).toBe(WIDENED_EVOLVING_NEW);
   });
 
   test("the full window is the identity", () => {
