@@ -22,11 +22,13 @@ const CONFIG: ApiSurfaceConfig = {
   versionIds: ["defold-1.13.0", "defold-1.12.4", "defold-1.12.0"],
   defaultVersionId: "defold-1.13.0",
   // Version-independent namespaces (`Hash`, `base`) are intentionally absent, so
-  // a range never steers them to a version-prefixed 404.
+  // a range never steers them to a version-prefixed 404. `legacy` is the mirror
+  // of `camera`: owned by the oldest version alone, so a window can reach it
+  // without its `to` bound owning it.
   namespacesByVersion: {
     "defold-1.13.0": ["camera", "go", "model"],
     "defold-1.12.4": ["go", "model"],
-    "defold-1.12.0": ["go"],
+    "defold-1.12.0": ["go", "legacy"],
   },
 };
 
@@ -175,6 +177,21 @@ describe("resolveApiSurfaceRedirect — un-prefixed entry points steer to the st
     expect(redirect("/api/camera", "", "defold-1.12.4")).toBeNull();
   });
 
+  test("carries a namespace an older version in the window owns onto the range", () => {
+    // `legacy` exists at 1.12.0 alone; a window reaching back to it renders a
+    // page for it, so the reader keeps their page instead of the bare route.
+    expect(redirect("/api/legacy", "", "defold-1.12.0|defold-1.12.4")).toBe(
+      "/api/defold-1.12.4/legacy",
+    );
+  });
+
+  test("leaves it put when no version in the window owns it", () => {
+    expect(redirect("/api/legacy", "", "defold-1.12.4|defold-1.12.4")).toBeNull();
+    // A version-independent page is owned nowhere, so the empty union must not
+    // be read as ownership.
+    expect(redirect("/api/base", "", "defold-1.12.0|defold-1.12.4")).toBeNull();
+  });
+
   test("re-applies the deploy base to the target", () => {
     expect(redirect("/toolchain/api/go", "", "defold-1.12.4", BASED)).toBe(
       "/toolchain/api/defold-1.12.4/go",
@@ -222,6 +239,7 @@ describe("rewriteApiNavForRange", () => {
           labelHtml: "Defold",
           children: [
             { label: "go", labelHtml: "go", route: "/api/go", badgeHtml: "<span>PILL</span>" },
+            { label: "legacy", labelHtml: "legacy", route: "/api/legacy" },
             { label: "base", labelHtml: "base", route: "/api/base" },
           ],
         },
@@ -252,6 +270,25 @@ describe("rewriteApiNavForRange", () => {
     expect(api?.links[0]?.children?.find((l) => l.label === "go")?.route).toBe(
       "/api/defold-1.13.0/go",
     );
+  });
+
+  test("follows the same window rule as the selector, leaf for leaf", () => {
+    const out = rewriteApiNavForRange(
+      nav(),
+      { from: "defold-1.12.0", to: "defold-1.12.4" },
+      CONFIG,
+    );
+    const leaves = out.find((c) => c.id === "api")?.links[0]?.children ?? [];
+    // `legacy` is owned by 1.12.0, which this window reaches.
+    expect(leaves.find((l) => l.label === "legacy")?.route).toBe("/api/defold-1.12.4/legacy");
+    // A window past every owning version leaves the canonical leaf alone.
+    const narrowed = rewriteApiNavForRange(
+      nav(),
+      { from: "defold-1.12.4", to: "defold-1.12.4" },
+      CONFIG,
+    );
+    const narrowedLeaves = narrowed.find((c) => c.id === "api")?.links[0]?.children ?? [];
+    expect(narrowedLeaves.find((l) => l.label === "legacy")?.route).toBe("/api/legacy");
   });
 
   test("keeps the count pills on every window — no surface is badge-free any more", () => {

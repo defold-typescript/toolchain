@@ -26,9 +26,11 @@ export interface ApiSurfaceRange {
 // version newest-first — the default included — each owning an `/api/<id>/…`
 // prefixed family; `defaultVersionId` is the `to` the bare canonical `/api/…`
 // route renders, and the last entry of `versionIds` is the oldest, the `from` a
-// full-range URL leaves implicit. `namespacesByVersion` lists the namespaces each
-// version actually generates a page for, so a range preference never steers a
-// version-independent page to a 404 `/api/<version>/<ns>` route.
+// full-range URL leaves implicit. `namespacesByVersion` lists what each version
+// *contributes* to a window — every reader unions it across its own `[from, to]`
+// rather than reading one bound — so a namespace that ended mid-range is kept
+// while a version-independent page, contributed by nobody, is still never
+// steered to a 404 `/api/<version>/<ns>` route.
 export interface ApiSurfaceConfig {
   readonly base: string;
   readonly versionIds: readonly string[];
@@ -123,8 +125,8 @@ export function activeRangeForPath(
  * explicit `/api/<version>/…` route (or the legacy `/api/combined/…` redirect
  * stub) is the reader's stated intent and is never overridden. The full default
  * range is what the un-prefixed page already shows, so it leaves the page put; a
- * narrower range moves to its windowed route and is dropped for a
- * version-independent namespace the `to` version does not own.
+ * narrower range moves to its windowed route and is dropped only for a namespace
+ * no version in that range contributes.
  *
  * SELF-CONTAINED ON PURPOSE, exactly as {@link readStoredRange} is — including
  * the path/query encoding, which is why `readRange` arrives as a *parameter*
@@ -157,9 +159,21 @@ export function resolveApiSurfaceRedirect(
   const ids = config.versionIds;
   const oldest = ids[ids.length - 1] || config.defaultVersionId;
   if (range.to === config.defaultVersionId && range.from === oldest) return null;
-  // A version-independent page (global type, Lua stdlib, library) has no
-  // `/api/<version>/<ns>` route, so prefixing it would 404; leave it put.
-  if (namespace && (config.namespacesByVersion[range.to] || []).indexOf(namespace) < 0) return null;
+  // A version-independent page (global type, Lua stdlib, library) is contributed
+  // by no version, so it has no `/api/<version>/<ns>` route and prefixing it
+  // would 404; leave it put. The slice loop is inlined rather than shared with
+  // `namespacesInRange` because this function is serialized with `.toString()`
+  // and may reference nothing outside itself.
+  if (namespace) {
+    let owned = false;
+    for (let i = ids.indexOf(range.to); i >= 0 && i <= ids.indexOf(range.from); i++) {
+      if ((config.namespacesByVersion[ids[i] as string] || []).indexOf(namespace) >= 0) {
+        owned = true;
+        break;
+      }
+    }
+    if (!owned) return null;
+  }
 
   let target = `/api/${range.to}${namespace ? `/${namespace}` : ""}`;
   if (range.from !== oldest) target += `?since=${range.from}`;
@@ -299,9 +313,9 @@ function rangeHref(namespace: string | undefined, range: ApiSurfaceRange, oldest
 }
 
 // Remap one nav link tree's `/api/<ns>` engine leaves onto the active range,
-// recursing into groups. Only namespaces the `to` version actually owns are
-// moved; every other route (guides, libraries, non-engine reference) is returned
-// as-is. The count pills ride along untouched — every window now renders the
+// recursing into groups. Only namespaces some version in the window contributes
+// are moved; every other route (guides, libraries, non-engine reference) is
+// returned as-is. The count pills ride along untouched — every window now renders the
 // availability layer, so no surface is badge-free.
 function rewriteLink(
   link: NavLink,
@@ -320,19 +334,33 @@ function rewriteLink(
   return remapped;
 }
 
+// Every namespace the inclusive `[from, to]` slice of the tracked axis
+// contributes. Server-side only, so unlike the redirect's copy this one is a
+// shared helper.
+function namespacesInRange(config: ApiSurfaceConfig, range: ApiSurfaceRange): Set<string> {
+  const ids = config.versionIds;
+  const namespaces = new Set<string>();
+  for (let i = ids.indexOf(range.to); i >= 0 && i <= ids.indexOf(range.from); i++) {
+    for (const namespace of config.namespacesByVersion[ids[i] as string] ?? []) {
+      namespaces.add(namespace);
+    }
+  }
+  return namespaces;
+}
+
 /**
  * Rewrite the `api` category's engine leaves (and its own root route) onto the
  * active range so sidebar navigation stays in that window without a client
- * redirect. The namespaces the range owns are the `to` version's, read from the
- * config rather than passed alongside, so the ownership guard and the href can
- * never disagree about which version they describe.
+ * redirect. The namespaces the range owns are every version in the window's,
+ * read from the config rather than passed alongside, so the ownership guard and
+ * the href can never disagree about which window they describe.
  */
 export function rewriteApiNavForRange(
   categories: NavCategory[],
   range: ApiSurfaceRange,
   config: ApiSurfaceConfig,
 ): NavCategory[] {
-  const namespaces = new Set(config.namespacesByVersion[range.to] ?? []);
+  const namespaces = namespacesInRange(config, range);
   const oldest = config.versionIds[config.versionIds.length - 1] ?? config.defaultVersionId;
   return categories.map((category) => {
     if (category.id !== "api") return category;
