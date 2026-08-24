@@ -7,10 +7,11 @@ import { Hono } from "hono";
 import { searchIndexOutputs } from "../../scripts/build-search-index";
 import { symbolIndexOutputs } from "../../scripts/build-symbol-index";
 import { groupApiIndexPages } from "../components/api-index-sections";
-import apiNamespaceRoute from "../routes/api/[namespace]";
+import apiNamespaceRoute, { createApiNamespaceRoute } from "../routes/api/[namespace]";
 import combinedNamespaceRoute from "../routes/api/combined/[namespace]";
 import {
   AXIS,
+  HISTORICAL_ONLY_NAMESPACE,
   MIDDLE,
   makeWindowedTypesDir,
   NEWEST,
@@ -699,5 +700,91 @@ describe("api routing migration — a historical index is genuinely different co
     // what makes the self-canonical historical page a genuine second document.
     expect(canonical.has("demo#demo.newest_only")).toBe(true);
     expect(historical.has("demo#demo.newest_only")).toBe(false);
+  });
+});
+
+// bug-140's fix bound the `/api/<version>` index to `versionIndexPages`, but the
+// route branch that binds it is one line no test executed: re-sourcing it from
+// the version's own surface left the whole suite green while the rendered index
+// lost every Lua-standard card and its historical-only family member. So these
+// mount the real handler on a bare Hono and assert the *rendered* index, with
+// both sides of every comparison read from production.
+describe("api routing migration — the rendered version index is the guarded surface", () => {
+  const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
+  const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
+
+  const indexHrefs = (html: string): Set<string> =>
+    new Set([...html.matchAll(/href="([^"]*)"/g)].map((match) => match[1] as string));
+
+  // The rendered `/api/<versionId>` index, driven through the real handler on a
+  // fresh app so the route's own wiring — not the projection it calls — is what
+  // answers. Returns the status alongside the hrefs so a 404 or an empty index
+  // cannot satisfy a membership assertion vacuously.
+  const renderVersionIndex = async (
+    dirs: { typesDir?: string; libraryTypesDir?: string },
+    versionIdParam: string,
+  ): Promise<{ status: number; hrefs: Set<string> }> => {
+    const app = new Hono();
+    app.get("/api/:namespace", ...createApiNamespaceRoute(dirs));
+    const res = await app.request(`/api/${versionIdParam}`);
+    return { status: res.status, hrefs: indexHrefs(await res.text()) };
+  };
+
+  describe("against the windowed fixture registry", () => {
+    let dir = "";
+    beforeAll(() => {
+      dir = makeWindowedTypesDir();
+    });
+    afterAll(() => {
+      if (dir) rmSync(dir, { recursive: true, force: true });
+    });
+
+    test("every namespace the default version routes is linked from its rendered index", async () => {
+      const defaultId = versionId(NEWEST);
+      const { status, hrefs } = await renderVersionIndex(
+        { typesDir: dir, libraryTypesDir: dir },
+        defaultId,
+      );
+      expect(status).toBe(200);
+      expect(hrefs.size).toBeGreaterThan(0);
+      const routed = versionedApiParams(dir).filter((param) => param.version === defaultId);
+      expect(routed.length).toBeGreaterThan(0);
+      for (const param of routed) {
+        expect(hrefs.has(`/api/${defaultId}/${param.namespace}`)).toBe(true);
+      }
+      // `gone` ships at 1.0.0 alone, so it is in the window the default version
+      // ends but not on its own surface — the member that separates the two.
+      expect(hrefs.has(`/api/${defaultId}/${HISTORICAL_ONLY_NAMESPACE}`)).toBe(true);
+    });
+  });
+
+  describe("against the committed corpus", () => {
+    const defaultVersion = versionsWithDiskFixtures(REAL_TYPES_DIR).find((v) => v.isDefault)
+      ?.id as string;
+    const corpusDirs = {
+      typesDir: REAL_TYPES_DIR,
+      libraryTypesDir: REAL_LIBRARY_TYPES_DIR,
+    };
+    const independent = () => versionIndependentPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+
+    test("the version-independent pages are linked at their canonical routes", async () => {
+      const { status, hrefs } = await renderVersionIndex(corpusDirs, defaultVersion);
+      expect(status).toBe(200);
+      expect(hrefs.size).toBeGreaterThan(0);
+      const luaStdlib = independent().filter((page) => page.category === "lua-stdlib");
+      expect(luaStdlib.length).toBeGreaterThan(0);
+      for (const page of luaStdlib) expect(hrefs.has(page.route)).toBe(true);
+      // bug-140's named instance, pinned so the derived assertion above cannot
+      // pass on an empty or narrowed lua-stdlib slice.
+      expect(hrefs.has("/api/base")).toBe(true);
+    });
+
+    test("library pages stay off the version index, reachable through /libraries", async () => {
+      const { status, hrefs } = await renderVersionIndex(corpusDirs, defaultVersion);
+      expect(status).toBe(200);
+      const libraries = independent().filter((page) => page.category === "library");
+      expect(libraries.length).toBeGreaterThan(0);
+      for (const page of libraries) expect(hrefs.has(page.route)).toBe(false);
+    });
   });
 });
