@@ -193,14 +193,28 @@ export function CombinedIndex({
   const apiPageCount =
     globalsPages.length + globalTypePages.length + luaStdlibPages.length + enginePages.length;
   const engineBadge = (page: ApiPage) => apiCardBadgeHtml(page, badgeCounts);
+  // Newest first, so the axis ends on the last entry. Absence carries meaning
+  // here — a symbol present in every tracked version renders no badge — and that
+  // is only readable once the page says which versions are tracked and how far
+  // back the record goes, so the legend is derived from the same list rather
+  // than restated as prose that rots at the next adoption.
+  const oldest = versions[versions.length - 1];
+  const unmarkedRule = oldest
+    ? `A symbol carrying no availability note exists in all of them, and may be older still — Defold ${oldest} is the oldest release this reference covers.`
+    : "No release is tracked yet.";
   return (
     <LandingPage
       title="Combined API reference"
       lead={
         <p>
-          Every namespace across the tracked Defold versions ({versions.join(", ")}), unified into
-          one surface. Each symbol is annotated with the versions it is available in; a symbol
-          present in every version carries no badge.
+          Every namespace across the tracked Defold versions, unified into one surface. Each symbol
+          is annotated with the versions it is available in.
+          <span
+            class="mt-1 block text-sm text-text-faint"
+            data-tracked-versions={versions.join(", ")}
+          >
+            Tracked releases: {versions.join(", ")}. {unmarkedRule}
+          </span>
           <span class="mt-1 block text-sm text-text-faint">
             {apiPageCount} namespace{apiPageCount === 1 ? "" : "s"} documented.
           </span>

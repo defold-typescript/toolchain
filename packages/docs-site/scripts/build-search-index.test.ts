@@ -79,3 +79,20 @@ describe("searchIndexOutputs", () => {
     }
   });
 });
+
+// The window (`?since=`) is a view over one surface, never a surface of its own,
+// so the artifact set stays linear in tracked versions. Threading the window into
+// the builder "for consistency" would multiply this set by the version count.
+describe("searchIndexOutputs — the window is not an artifact dimension", () => {
+  test("emits exactly one canonical index plus one per tracked version", () => {
+    const expected = [
+      "search-index.json",
+      ...versionsWithDiskFixtures(TYPES_DIR).map((version) => `search-index-${version.id}.json`),
+    ];
+    expect(
+      searchIndexOutputs()
+        .map((output) => output.file)
+        .sort(),
+    ).toEqual(expected.sort());
+  });
+});
