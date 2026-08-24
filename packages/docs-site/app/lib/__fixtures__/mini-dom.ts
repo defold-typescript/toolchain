@@ -83,6 +83,10 @@ export class MiniElement {
     return name in this.attrs ? (this.attrs[name] as string) : null;
   }
 
+  setAttribute(name: string, value: string): void {
+    this.attrs[name] = value;
+  }
+
   descendants(): MiniElement[] {
     const out: MiniElement[] = [];
     for (const child of this.children) {

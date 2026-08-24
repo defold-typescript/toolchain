@@ -22,7 +22,8 @@ import {
   windowedBadgeCategory,
 } from "./api-surface";
 import { type ApiVersion, versionsWithDiskFixtures } from "./api-surface-loader";
-import type { NamespaceBadgeCounts } from "./combined-surface";
+import type { BadgeCountTable } from "./api-surface-pref";
+import { type NamespaceBadgeCounts, reachableBadgeCounts } from "./combined-surface";
 import { buildSymbolIndex } from "./symbol-index";
 import { linkifySymbolMentions } from "./symbol-linkify";
 import { resolveVersionWindow } from "./version-window";
@@ -280,18 +281,46 @@ export function namespaceCountBadges(counts: NamespaceBadgeCounts): string {
   return `<span class="api-badge-counts" aria-label="Availability summary">${pills.join("")}</span>`;
 }
 
-// The compact count pills for a sidebar namespace leaf: one span per non-zero
-// category showing just the tally as visible text (space is tight in the tree),
-// with the category spelled out in the `aria-label` so color stays additive. The
-// spans are sidebar-scoped (`nav-badge-*`, outside `.prose`) rather than the H1
-// pills' `.prose .api-badge-*`. Returns `""` for a fully stable namespace.
-export function navNamespaceBadges(counts: NamespaceBadgeCounts): string {
-  const pills = COUNT_KINDS.filter((c) => counts[c.flag] > 0).map(
-    (c) =>
-      `<span class="nav-badge-count nav-badge-count--${c.kind}" aria-label="${counts[c.flag]} ${c.noun} symbols">${counts[c.flag]}</span>`,
-  );
+// The compact count pills for a sidebar namespace leaf: one span per category
+// showing just the tally as visible text (space is tight in the tree), with the
+// category spelled out in the `aria-label` so color stays additive. The spans
+// are sidebar-scoped (`nav-badge-*`, outside `.prose`) rather than the H1 pills'
+// `.prose .api-badge-*`.
+//
+// Shaped after `badgeDots`: `emitted` names every category the reader can reach
+// by narrowing and `counts` the tally the active window gives, so a pill the
+// reader can narrow into is already in the markup, hidden, for a client that
+// only ever toggles `style.display`. The empty guard keys off `emitted`, so a
+// namespace that reaches nothing anywhere still renders nothing.
+export function navNamespaceBadges(
+  counts: NamespaceBadgeCounts,
+  emitted: NamespaceBadgeCounts = counts,
+): string {
+  const pills = COUNT_KINDS.filter((c) => emitted[c.flag] > 0).map((c) => {
+    const hidden = counts[c.flag] > 0 ? "" : ' style="display:none"';
+    return `<span class="nav-badge-count nav-badge-count--${c.kind}" aria-label="${counts[c.flag]} ${c.noun} symbols"${hidden}>${counts[c.flag]}</span>`;
+  });
   if (pills.length === 0) return "";
   return `<span class="nav-badge-counts">${pills.join("")}</span>`;
+}
+
+// One sidebar leaf's pills, read out of the per-window table at the range this
+// render is for. The row is read once: the active window supplies the tallies
+// and the row as a whole supplies what is emitted, so server and browser share
+// one derivation and nothing about reachability crosses into the client. A
+// namespace the table omits reaches nothing and so renders nothing, which is the
+// same "no pills" its omission from the table already meant.
+export function navLeafBadgeHtml(
+  table: BadgeCountTable,
+  namespace: string,
+  activeKey: string,
+): string {
+  const row = table[namespace];
+  const triple = row?.[activeKey];
+  const counts: NamespaceBadgeCounts = triple
+    ? { new: triple[0], changed: triple[1], deprecated: triple[2] }
+    : { new: 0, changed: 0, deprecated: 0 };
+  return navNamespaceBadges(counts, reachableBadgeCounts(row));
 }
 
 // One symbol, single column: the `### signature` heading is the title, and the

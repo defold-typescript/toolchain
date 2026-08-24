@@ -338,6 +338,34 @@ export function buildBadgeCountTable(
 }
 
 /**
+ * The categories a namespace's sidebar leaf can reach from *any* window in its
+ * {@link BadgeCountTable} row, as the largest tally each one attains there.
+ *
+ * The pre-paint script only toggles `style.display`, so a category the reader
+ * can narrow into has to be in the markup before they narrow — a gapped span
+ * reads Changed at the full range and New one step in, and the browser is not
+ * allowed to derive that. The server therefore emits the union and hides what
+ * the active window scores zero.
+ *
+ * A magnitude rather than a 0/1 flag: callers only test `> 0`, and a flag
+ * wearing a count's type invites a caller to render it. An absent or empty row
+ * reaches nothing, which is the same "no pills" the table's omission rules mean.
+ */
+export function reachableBadgeCounts(
+  row: Record<string, readonly [number, number, number]> | undefined,
+): NamespaceBadgeCounts {
+  let isNew = 0;
+  let changed = 0;
+  let deprecated = 0;
+  for (const triple of Object.values(row ?? {})) {
+    if (triple[0] > isNew) isNew = triple[0];
+    if (triple[1] > changed) changed = triple[1];
+    if (triple[2] > deprecated) deprecated = triple[2];
+  }
+  return { new: isNew, changed, deprecated };
+}
+
+/**
  * Descending-semver comparator over the bare version strings the projection is
  * keyed by, so the axis reads newest-first. Exported as the single ordering the
  * window projection reuses — a second comparator would be free to disagree.

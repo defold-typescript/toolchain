@@ -5107,10 +5107,13 @@ questions:
   `To` release but not the `From` one, and `Changed` moved some other way in
   between. So an unmarked symbol did not move inside your range — it may still
   carry an absolute version note — and setting `From` and `To` to the same
-  release marks nothing, because a release has not moved relative to itself.
+  release marks nothing `New` or `Changed`, because a release has not moved
+  relative to itself.
 - **`Deprecated` is bounded by `To` alone.** A symbol shows it when the
   deprecation had already happened by the `To` release, whatever `From` is set to;
-  a deprecation landing after `To` does not mark a symbol before it happened.
+  a deprecation landing after `To` does not mark a symbol before it happened. That
+  bound is why a same-release range can still mark `Deprecated`: the symbol really
+  is deprecated in the release you are reading.
 
 #### Release notes
 
