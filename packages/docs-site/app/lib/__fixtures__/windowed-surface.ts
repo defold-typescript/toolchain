@@ -39,6 +39,12 @@ export const MIDDLE = "2.0.0";
 export const OLDEST = "1.0.0";
 export const AXIS = [NEWEST, MIDDLE, OLDEST];
 
+// `gone` ships at `OLDEST` alone, so the Combined union carries it while no single
+// later version's own surface does. Declared once here and read by the canonical
+// index guards, so neither transcribes an identity the fixture owns.
+export const HISTORICAL_ONLY_NAMESPACE = "gone";
+export const HISTORICAL_ONLY_SYMBOL = "gone.thing";
+
 export const versionId = (bare: string): string => `defold-${bare}`;
 
 const param = (name: string, types: string[]) => ({
@@ -126,10 +132,12 @@ export function makeWindowedTypesDir(options: WindowedTypesDirOptions = {}): str
       modules.push({ namespace: "held", fixture: "held_doc.json" });
     }
     if (bare === OLDEST) {
-      const goneRaw = doc("gone", [fn("gone.thing")]);
+      const goneRaw = doc(HISTORICAL_ONLY_NAMESPACE, [fn(HISTORICAL_ONLY_SYMBOL)]);
       writeFileSync(join(dir, fixturesDir, "gone_doc.json"), goneRaw);
-      entries.push(...signaturesFor("gone", parseDefoldApiDoc(JSON.parse(goneRaw)), bare));
-      modules.push({ namespace: "gone", fixture: "gone_doc.json" });
+      entries.push(
+        ...signaturesFor(HISTORICAL_ONLY_NAMESPACE, parseDefoldApiDoc(JSON.parse(goneRaw)), bare),
+      );
+      modules.push({ namespace: HISTORICAL_ONLY_NAMESPACE, fixture: "gone_doc.json" });
     }
 
     signatureVersions[bare] = Object.fromEntries(entries);
