@@ -140,10 +140,20 @@ export function createApiNamespaceRoute(dirs: ApiSurfaceDirs = {}) {
       const model = combinedMarkers
         ? combinedSurface().namespaces.find((n) => n.namespace === param)
         : undefined;
-      const titleBadges = model ? namespaceCountBadges(namespaceBadgeCounts(model)) : "";
+      // The canonical route is the full range by definition, so it states that
+      // window explicitly rather than leaning on the option's default: the counts
+      // and the dots then read from the same declared range.
+      const axis = combinedSurface().versions;
+      const window = { from: axis[axis.length - 1] ?? "", to: axis[0] ?? "" };
+      const titleBadges = model ? namespaceCountBadges(namespaceBadgeCounts(model, window)) : "";
 
       const html = await renderMarkdown(
-        apiPageMarkdown(page, linkify, { resolveReplacement, titleBadges, combinedMarkers }),
+        apiPageMarkdown(page, linkify, {
+          resolveReplacement,
+          titleBadges,
+          combinedMarkers,
+          window,
+        }),
         { highlightSignatureHeadings: true, signatureSymbolLinks },
       );
       return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {

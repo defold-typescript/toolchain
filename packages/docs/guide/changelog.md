@@ -22,6 +22,7 @@ changes are called out first because the toolchain is pre-1.0.
   - **Symbols** — a page covers every symbol that existed anywhere in the range, with an availability note naming the release that actually added or removed it.
   - **Signatures** — a symbol shows the newest declaration made inside the range, or the one it was built with when the range declares none, so a deprecated symbol keeps its full declaration rather than a weaker one.
   - **Indexes** — a version index now lists everything that version's pages cover, including namespaces removed in an earlier release and the Lua standard library, so it matches [`/api`](/api); both state which releases are tracked and that an unmarked symbol is older than all of them.
+  - **Badges** — the `New`/`Changed`/`Deprecated` markers and every count beside them, sidebar included, now describe movement inside the range you picked instead of across all tracked releases, so setting `From` and `To` to the same release marks nothing. Availability notes stay absolute, and `Deprecated` follows the `To` bound so it no longer appears for a deprecation that happens after it.
 
 ## v0.27.0
 

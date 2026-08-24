@@ -49,9 +49,11 @@ export default createRoute(
     const signatureSymbolLinks = apiSignatureSymbolLinks(canonicalApiPages());
     // A windowed page *is* a union across versions, so the availability marker
     // layer is meaningful here exactly as it is on the canonical route — and the
-    // client `?since=` filter reads the per-symbol span markers it emits.
+    // client `?since=` filter reads the per-symbol span markers it emits. The
+    // resolved window also scopes the category layer, so the dots answer for the
+    // range the route names rather than for the whole tracked axis.
     const html = await renderMarkdown(
-      apiPageMarkdown(page, linkify, { resolveReplacement, combinedMarkers: true }),
+      apiPageMarkdown(page, linkify, { resolveReplacement, combinedMarkers: true, window }),
       {
         highlightSignatureHeadings: true,
         signatureSymbolLinks,
