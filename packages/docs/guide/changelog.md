@@ -18,7 +18,7 @@ changes are called out first because the toolchain is pre-1.0.
 
 ### Improved
 
-- **The [API reference](/api) can be read over a range of Defold releases, not just one.** Paired `From`/`To` dropdowns pick the range and the page then covers every symbol that existed anywhere in it, each carrying the newest signature that range holds and an availability note naming the real release, while the index now states which releases are tracked and that an unmarked symbol is older than all of them. See [Reading the API reference over a range](./upgrading-defold-versions.md#reading-the-api-reference-over-a-range).
+- **The [API reference](/api) can be read over a range of Defold releases, not just one.** Paired `From`/`To` dropdowns pick the range and the page then covers every symbol that existed anywhere in it, each carrying the newest signature declared inside the range — or, where the range declares none, the signature the symbol was built with, so a deprecated symbol keeps its full declaration rather than a weaker one — plus an availability note naming the real release; the index now states which releases are tracked and that an unmarked symbol is older than all of them. See [Reading the API reference over a range](./upgrading-defold-versions.md#reading-the-api-reference-over-a-range).
 
 ## v0.27.0
 
