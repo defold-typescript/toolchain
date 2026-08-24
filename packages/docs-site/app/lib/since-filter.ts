@@ -5,6 +5,7 @@
 // function's `.toString()`, so the emitted pre-paint script carries none of them.
 interface SinceFilterElement {
   getAttribute(name: string): string | null;
+  setAttribute(name: string, value: string): void;
   readonly parentElement: SinceFilterElement | null;
   readonly nextElementSibling: SinceFilterElement | null;
   readonly className: string;
@@ -168,11 +169,20 @@ export function applySinceFilter(
       if (!pill) continue;
       const cls = pill.className;
       let n = 0;
+      let kind = "";
       for (let k = 0; k < KINDS.length; k += 1) {
         if (cls.indexOf(`nav-badge-count--${KINDS[k]}`) < 0) continue;
         n = triple ? (triple[k] as number) : 0;
+        kind = KINDS[k] as string;
       }
       pill.textContent = String(n);
+      // The pill's visible text is the bare tally, so the label is the only place
+      // its category is named — a stale one misreads the control outright. The
+      // server writes the same sentence out of `COUNT_KINDS`, whose `kind` and
+      // `noun` are the same word for all three categories; that coincidence is
+      // what lets the client reuse `KINDS` instead of carrying a second
+      // vocabulary, so the two formats cannot drift apart while it holds.
+      pill.setAttribute("aria-label", `${n} ${kind} symbols`);
       pill.style.display = n === 0 ? "none" : "";
     }
   }

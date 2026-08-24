@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { rmSync } from "node:fs";
+import { readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import {
   type ApiAvailability,
@@ -18,6 +18,7 @@ import {
   apiSignatureSymbolLinks,
   isKnownVersionId,
   namespaceCountBadges,
+  navLeafBadgeHtml,
   navNamespaceBadges,
   versionedApiParams,
 } from "./api-page-render";
@@ -27,6 +28,7 @@ import {
   loadApiSurfaceForVersion,
   loadCombinedSurface,
 } from "./api-surface-loader";
+import type { BadgeCountTable } from "./api-surface-pref";
 import {
   buildCombinedSurface,
   combinedNamespaceToApiPage,
@@ -1288,6 +1290,94 @@ describe("navNamespaceBadges (sidebar count pills)", () => {
     expect(html).toContain("nav-badge-count--new");
     expect(html).not.toContain("nav-badge-count--changed");
     expect(html).not.toContain("nav-badge-count--deprecated");
+  });
+
+  test("a category only `emitted` carries rides along hidden", () => {
+    const html = navNamespaceBadges(
+      { new: 2, changed: 0, deprecated: 0 },
+      {
+        new: 2,
+        changed: 5,
+        deprecated: 0,
+      },
+    );
+    expect(html).toContain(
+      '<span class="nav-badge-count nav-badge-count--new" aria-label="2 new symbols">2</span>',
+    );
+    // The placeholder shows the *current* tally, not the reachable one: it is the
+    // pill the reader would see if they narrowed, and until they do it reads 0.
+    expect(html).toContain(
+      '<span class="nav-badge-count nav-badge-count--changed" aria-label="0 changed symbols" style="display:none">0</span>',
+    );
+    expect(html).not.toContain("nav-badge-count--deprecated");
+  });
+
+  test("an emitted-nothing namespace still renders nothing, whatever the counts", () => {
+    expect(
+      navNamespaceBadges(
+        { new: 4, changed: 1, deprecated: 0 },
+        { new: 0, changed: 0, deprecated: 0 },
+      ),
+    ).toBe("");
+  });
+
+  test("a reachable category survives an all-zero active window", () => {
+    // The window the page was rendered at can be all-zero while a narrower one is
+    // not; collapsing that to `""` is what leaves the pill unreachable.
+    const html = navNamespaceBadges(
+      { new: 0, changed: 0, deprecated: 0 },
+      {
+        new: 3,
+        changed: 0,
+        deprecated: 0,
+      },
+    );
+    expect(html).toContain('nav-badge-count--new" aria-label="0 new symbols" style="display:none"');
+  });
+});
+
+describe("navLeafBadgeHtml (the sidebar leaf's pills, table -> markup)", () => {
+  const TABLE: BadgeCountTable = {
+    demo: { "c|a": [0, 1, 0], "b|a": [2, 0, 0] },
+  };
+
+  test("the active window sets the tallies, the whole row sets what is emitted", () => {
+    const html = navLeafBadgeHtml(TABLE, "demo", "c|a");
+    expect(html).toContain('nav-badge-count--changed" aria-label="1 changed symbols">1</span>');
+    // `New` is zero at `c|a` but reachable at `b|a`, so it must be in the markup.
+    expect(html).toContain('nav-badge-count--new" aria-label="0 new symbols" style="display:none"');
+  });
+
+  test("narrowing is a display change only — the same categories are emitted", () => {
+    const wide = navLeafBadgeHtml(TABLE, "demo", "c|a");
+    const narrow = navLeafBadgeHtml(TABLE, "demo", "b|a");
+    const kinds = (html: string) => (html.match(/nav-badge-count--(\w+)/g) ?? []).sort();
+    expect(kinds(narrow)).toEqual(kinds(wide));
+    expect(narrow).toContain('nav-badge-count--new" aria-label="2 new symbols">2</span>');
+    expect(narrow).toContain(
+      'nav-badge-count--changed" aria-label="0 changed symbols" style="display:none"',
+    );
+  });
+
+  test("a window the row omits still emits the reachable pills, all hidden", () => {
+    const html = navLeafBadgeHtml(TABLE, "demo", "a|a");
+    expect(html).toContain('nav-badge-count--new" aria-label="0 new symbols" style="display:none"');
+    expect(html).toContain(
+      'nav-badge-count--changed" aria-label="0 changed symbols" style="display:none"',
+    );
+  });
+
+  test("a namespace the table omits renders nothing", () => {
+    expect(navLeafBadgeHtml(TABLE, "absent", "c|a")).toBe("");
+  });
+
+  test("the renderer builds the leaf pills through it", () => {
+    // `_renderer.tsx` composes the sidebar inside the jsx renderer, which no unit
+    // test can invoke; reverting to the inline `triple ?` tally is a one-line edit
+    // there, so the call site itself is what this asserts.
+    const renderer = readFileSync(join(import.meta.dir, "../routes/_renderer.tsx"), "utf8");
+    expect(renderer).toContain("navLeafBadgeHtml(surfaceConfig.badgeCounts,");
+    expect(renderer).not.toContain("navNamespaceBadges({ new: triple[0]");
   });
 });
 

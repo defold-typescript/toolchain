@@ -17,7 +17,7 @@ import {
   libraryOrigins,
   versionNamespaceAtom,
 } from "../lib/api-content";
-import { navNamespaceBadges } from "../lib/api-page-render";
+import { navLeafBadgeHtml } from "../lib/api-page-render";
 import {
   API_SURFACE_STORAGE_KEY,
   type ApiSurfaceConfig,
@@ -277,10 +277,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
   // disagree with the markup it is rewriting.
   const activeKey = `${activeRange.from}|${activeRange.to}`;
   const toEngineNamespace = (p: (typeof allApiPages)[number]) => {
-    const triple = surfaceConfig.badgeCounts[p.namespace]?.[activeKey];
-    const badgeHtml = triple
-      ? navNamespaceBadges({ new: triple[0], changed: triple[1], deprecated: triple[2] })
-      : "";
+    const badgeHtml = navLeafBadgeHtml(surfaceConfig.badgeCounts, p.namespace, activeKey);
     return { label: p.namespace, route: p.route, ...(badgeHtml ? { badgeHtml } : {}) };
   };
 
