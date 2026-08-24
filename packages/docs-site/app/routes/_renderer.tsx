@@ -11,11 +11,11 @@ import SymbolTooltip from "../islands/symbol-tooltip";
 import ThemeToggle from "../islands/theme-toggle";
 import Toc from "../islands/toc";
 import {
-  apiPagesForVersion,
   apiVersions,
   canonicalApiPages,
   combinedSurface,
   libraryOrigins,
+  versionNamespaceAtom,
 } from "../lib/api-content";
 import { navNamespaceBadges } from "../lib/api-page-render";
 import {
@@ -274,10 +274,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
   // Every tracked version — the default included — now owns a prefixed family.
   const versionIds = versions.map((version) => version.id);
   const namespacesByVersion = Object.fromEntries(
-    versions.map((version) => [
-      version.id,
-      apiPagesForVersion(version.id).map((page) => page.namespace),
-    ]),
+    versions.map((version) => [version.id, versionNamespaceAtom(version.id)]),
   );
 
   // One range-preference config drives the pre-paint redirect (new users default

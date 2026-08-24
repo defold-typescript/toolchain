@@ -86,6 +86,25 @@ describe("buildRangeSelector", () => {
     );
   });
 
+  test("keeps a historical namespace on any option whose window still reaches it", () => {
+    // `wmath` is oldest-only, so no bound newer than OLDEST owns it — yet every
+    // window reaching back to OLDEST routes a page for it.
+    const selector = build({ from: OLDEST, to: NEWEST }, "/api/defold-1.13.0/wmath");
+    expect(selector.to.find((o) => o.id === NEWEST)?.href).toBe("/api/defold-1.13.0/wmath");
+    expect(selector.to.find((o) => o.id === MIDDLE)?.href).toBe("/api/defold-1.12.4/wmath");
+    expect(selector.from.find((o) => o.id === OLDEST)?.href).toBe("/api/defold-1.13.0/wmath");
+  });
+
+  test("drops it once the chosen bound pushes the window past it", () => {
+    const selector = build({ from: OLDEST, to: NEWEST }, "/api/defold-1.13.0/wmath");
+    expect(selector.from.find((o) => o.id === MIDDLE)?.href).toBe(
+      "/api/defold-1.13.0?since=defold-1.12.4",
+    );
+    expect(selector.from.find((o) => o.id === NEWEST)?.href).toBe(
+      "/api/defold-1.13.0?since=defold-1.13.0",
+    );
+  });
+
   test("an index route and a non-API route carry no namespace at all", () => {
     for (const route of ["/api", "/api/defold-1.13.0", "/guides/setup"]) {
       const selector = build({ from: OLDEST, to: NEWEST }, route);
