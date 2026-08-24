@@ -27,10 +27,15 @@ import {
   loadApiSurfaceForVersion,
   loadCombinedSurface,
 } from "./api-surface-loader";
-import { buildCombinedSurface, combinedNamespaceToApiPage } from "./combined-surface";
+import {
+  buildCombinedSurface,
+  combinedNamespaceToApiPage,
+  namespaceBadgeCounts,
+} from "./combined-surface";
 import { slugify } from "./headings";
 import { renderMarkdown } from "./markdown";
 import { buildSymbolIndex } from "./symbol-index";
+import type { VersionWindow } from "./version-window";
 
 const FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
 const MISSING_VERSION_FIXTURE_DIR = join(
@@ -1283,6 +1288,86 @@ describe("navNamespaceBadges (sidebar count pills)", () => {
     expect(html).toContain("nav-badge-count--new");
     expect(html).not.toContain("nav-badge-count--changed");
     expect(html).not.toContain("nav-badge-count--deprecated");
+  });
+});
+
+describe("windowed page dots follow the selected range", () => {
+  const surface = loadCombinedSurface(REAL_TYPES_DIR);
+  const axis = surface.versions;
+  const full: VersionWindow = {
+    from: axis[axis.length - 1] as string,
+    to: axis[0] as string,
+  };
+  const noLink = (t: string) => t;
+  const nsOf = (namespace: string) => {
+    const found = surface.namespaces.find((n) => n.namespace === namespace);
+    if (!found) throw new Error(`namespace ${namespace} missing from combined surface`);
+    return found;
+  };
+  // Only the symbol headings are tallied: the function-overview cards repeat the
+  // same markers, so counting the whole page would double every function. And
+  // only the *visible* dots count — the server emits every category any window
+  // reaches and hides the inactive ones, so a hidden span is markup the reader
+  // never sees.
+  const headingDots = (md: string, kind: string): number =>
+    md
+      .split("\n")
+      .filter((line) => line.startsWith("### `"))
+      .reduce(
+        (total, line) =>
+          total +
+          [
+            ...line.matchAll(new RegExp(`<span class="[^"]*api-badge-dot--${kind}"[^>]*>`, "g")),
+          ].filter((m) => !(m[0] as string).includes("display:none")).length,
+        0,
+      );
+  const render = (namespace: string, window: VersionWindow): string =>
+    apiPageMarkdown(combinedNamespaceToApiPage(nsOf(namespace)), noLink, {
+      combinedMarkers: true,
+      window,
+    });
+
+  const NAMESPACES = ["graphics", "compute", "liveupdate", "model", "vmath"];
+
+  test("the committed axis tracks more than one version", () => {
+    expect(axis.length).toBeGreaterThan(1);
+  });
+
+  for (const namespace of NAMESPACES) {
+    test(`${namespace}: the full-range page's dots equal its full-range counts`, () => {
+      const md = render(namespace, full);
+      const counts = namespaceBadgeCounts(nsOf(namespace), full);
+      expect({
+        new: headingDots(md, "new"),
+        changed: headingDots(md, "changed"),
+        deprecated: headingDots(md, "deprecated"),
+      }).toEqual(counts);
+    });
+
+    test(`${namespace}: a single-version window marks no symbol new or changed`, () => {
+      for (const version of axis) {
+        const md = render(namespace, { from: version, to: version });
+        expect({
+          version,
+          new: headingDots(md, "new"),
+          changed: headingDots(md, "changed"),
+        }).toEqual({ version, new: 0, changed: 0 });
+      }
+    });
+  }
+
+  test("the full-range graphics page does mark symbols new", () => {
+    expect(headingDots(render("graphics", full), "new")).toBeGreaterThan(0);
+  });
+
+  test("omitting the window renders the same dots as passing the full range", () => {
+    for (const namespace of NAMESPACES) {
+      const withWindow = render(namespace, full);
+      const without = apiPageMarkdown(combinedNamespaceToApiPage(nsOf(namespace)), noLink, {
+        combinedMarkers: true,
+      });
+      expect({ namespace, md: without }).toEqual({ namespace, md: withWindow });
+    }
   });
 });
 

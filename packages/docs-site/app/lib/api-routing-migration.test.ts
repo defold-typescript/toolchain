@@ -228,6 +228,7 @@ describe("api routing migration — version-independent pages never 404 under a 
     // `base`/`Hash`/libraries are intentionally absent: the ownership guard then
     // leaves them canonical under any version preference.
     namespacesByVersion: { cur: ["alpha", "camera", "globals"], old: ["wmath"] },
+    badgeCounts: {},
   };
 
   const redirect = (path: string, stored: string | null) =>
@@ -676,6 +677,7 @@ describe("api routing migration — a historical index is genuinely different co
         versionIndexPages(versionId(bare), typesDir, typesDir).map((p) => p.namespace),
       ]),
     ),
+    badgeCounts: {},
   });
 
   test("the default version claims /api, and carries the canonical symbol identities", () => {

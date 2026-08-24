@@ -30,6 +30,7 @@ const CONFIG: ApiSurfaceConfig = {
     "defold-1.12.4": ["go", "model"],
     "defold-1.12.0": ["go", "legacy"],
   },
+  badgeCounts: {},
 };
 
 const BASED: ApiSurfaceConfig = { ...CONFIG, base: "/toolchain" };
@@ -516,6 +517,7 @@ describe("canonicalLinkPath", () => {
     versionIds: ["defold-3.0.0", "defold-2.0.0"],
     defaultVersionId: "defold-3.0.0",
     namespacesByVersion: { "defold-3.0.0": ["demo"], "defold-2.0.0": ["demo"] },
+    badgeCounts: {},
   };
 
   test("the default version's namespace page points at the bare canonical route", () => {
