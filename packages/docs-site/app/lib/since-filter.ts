@@ -29,7 +29,10 @@ interface SinceFilterRoot {
  * superset is always present and narrowing is a display concern. A symbol is out
  * of window when the newest version it is present in — read from the heading's
  * `data-span-newest` marker — is older than `from` on the newest-first `versions`
- * axis.
+ * axis. The two arrive in different vocabularies: the renderer passes route ids
+ * (`defold-`-prefixed) for both `from` and `versions`, while the markers carry bare
+ * semver. Both axes are therefore normalized on entry, so either vocabulary is
+ * accepted on either side.
  *
  * Every run sets the visibility of *every* symbol rather than only hiding, so the
  * function is idempotent and reversible: re-running it with a wider `from`
@@ -52,9 +55,18 @@ export function applySinceFilter(
   from: string,
   versions: readonly string[],
 ): void {
+  // Mirrors `version-window.ts`'s `bareVersion`: strip a leading `defold-`, pass
+  // anything else through. Declared inside the function because the whole body is
+  // serialized with `.toString()` into the pre-paint script, where module scope
+  // does not exist.
+  function bare(id: string): string {
+    return id.replace(/^defold-/, "");
+  }
+  const axis = versions.map(bare);
+
   // The axis is newest-first, so a larger index is an older version. An unknown
   // `from` would index to -1 and hide everything; treat it as the full range.
-  const fromIndex = versions.indexOf(from);
+  const fromIndex = axis.indexOf(bare(from));
   if (fromIndex < 0) return;
 
   const markers = root.querySelectorAll("[data-span-newest]");
@@ -72,7 +84,7 @@ export function applySinceFilter(
     if (!heading) continue;
 
     const newest = marker.getAttribute("data-span-newest") || "";
-    const newestIndex = versions.indexOf(newest);
+    const newestIndex = axis.indexOf(bare(newest));
     const out = newestIndex < 0 ? false : newestIndex > fromIndex;
     heading.style.display = out ? "none" : "";
     const body = heading.nextElementSibling;
