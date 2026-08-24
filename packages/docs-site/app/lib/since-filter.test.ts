@@ -1,9 +1,22 @@
 import { describe, expect, test } from "bun:test";
-import { normalizedFunctionSignature, symbolIdentityKey } from "@defold-typescript/types";
+import {
+  type ApiFunction,
+  type ApiModule,
+  type ApiSymbolIdentity,
+  normalizedFunctionSignature,
+  symbolIdentityKey,
+} from "@defold-typescript/types";
 import { type MiniElement, parseHtml } from "./__fixtures__/mini-dom";
-import { apiPageMarkdown, navNamespaceBadges } from "./api-page-render";
+import { apiPageMarkdown, navLeafBadgeHtml, navNamespaceBadges } from "./api-page-render";
 import { type ApiPage, type AvailabilityLookup, windowedBadgeCategory } from "./api-surface";
 import { type ApiSurfaceConfig, type BadgeCountTable, readStoredRange } from "./api-surface-pref";
+import {
+  buildBadgeCountTable,
+  buildCombinedSurface,
+  type CombinedVersionSurface,
+  namespaceBadgeCounts,
+  type SignaturesArtifact,
+} from "./combined-surface";
 import { renderMarkdown } from "./markdown";
 import { applySinceFilter } from "./since-filter";
 
@@ -158,6 +171,44 @@ const pillsFor = (root: MiniElement, namespace: string) => {
   );
 };
 
+const leafFor = (root: MiniElement, namespace: string): MiniElement => {
+  const leaf = root
+    .querySelectorAll("a[href]")
+    .find(
+      (a) => ((a.getAttribute("href") ?? "").split("?")[0] ?? "").split("/").pop() === namespace,
+    );
+  if (!leaf) throw new Error(`no sidebar leaf for ${namespace}`);
+  return leaf;
+};
+
+// The `aria-label` each *visible* pill currently announces, keyed by category —
+// the only place a sidebar pill names its category, since the visible text is
+// the bare tally.
+const labelsFor = (root: MiniElement, namespace: string) =>
+  Object.fromEntries(
+    leafFor(root, namespace)
+      .querySelectorAll("[class*=nav-badge-count--]")
+      .filter((pill) => visible(pill))
+      .map((pill) => [
+        (/nav-badge-count--(\w+)/.exec(pill.className)?.[1] ?? "") as string,
+        pill.getAttribute("aria-label"),
+      ]),
+  );
+
+// The labels the *server* would render for the same tallies, read off
+// `navNamespaceBadges`' own output. Comparing the client's rewrite against this
+// proves the two vocabularies agree without either side restating a literal.
+const serverLabels = (counts: { new: number; changed: number; deprecated: number }) =>
+  Object.fromEntries(
+    parseHtml(navNamespaceBadges(counts))
+      .querySelectorAll("[class*=nav-badge-count--]")
+      .filter((pill) => Number(pill.textContent) > 0)
+      .map((pill) => [
+        (/nav-badge-count--(\w+)/.exec(pill.className)?.[1] ?? "") as string,
+        pill.getAttribute("aria-label"),
+      ]),
+  );
+
 // The dots a reader can actually see on the symbol headings still on the page.
 // Both halves come off the rendered DOM, so this compares two production
 // surfaces rather than either to a constant.
@@ -307,9 +358,17 @@ describe("applySinceFilter", () => {
 
     applySinceFilter(root, { from: OLDEST, to: PAGE_TO }, config);
     expect(pillsFor(root, "other")).toEqual({ new: 2, changed: 1 });
+    // A pill announces the tally it is showing: the label is the only place the
+    // category is named, so a stale one misreads the control outright.
+    expect(labelsFor(root, "other")).toEqual(serverLabels({ new: 2, changed: 1, deprecated: 0 }));
 
     applySinceFilter(root, { from: MIDDLE, to: PAGE_TO }, config);
     expect(pillsFor(root, "other")).toEqual({ new: 1, changed: 0 });
+    expect(labelsFor(root, "other")).toEqual(serverLabels({ new: 1, changed: 0, deprecated: 0 }));
+
+    applySinceFilter(root, { from: OLDEST, to: PAGE_TO }, config);
+    expect(pillsFor(root, "other")).toEqual({ new: 2, changed: 1 });
+    expect(labelsFor(root, "other")).toEqual(serverLabels({ new: 2, changed: 1, deprecated: 0 }));
   });
 
   test("a leaf the table has no triple for renders no pills", async () => {
@@ -586,5 +645,105 @@ describe("pre-paint serialization contract", () => {
     isolated(root, { from: MIDDLE, to: PAGE_TO }, AXIS_CONFIG);
     expect(visible(headingFor(root, "demo.retired"))).toBe(false);
     expect(visible(headingFor(root, "demo.always"))).toBe(true);
+  });
+});
+
+// A namespace-parameterized identity + module pair, so a second namespace can be
+// built from the same `fn` factory the demo page uses.
+const funcIdent = (namespace: string, f: ApiFunction): ApiSymbolIdentity => ({
+  namespace,
+  kind: "FUNCTION",
+  name: f.name,
+  signature: normalizedFunctionSignature(f),
+});
+
+const moduleOf = (namespace: string, functions: ApiFunction[]): ApiModule => ({
+  namespace,
+  brief: "",
+  description: "",
+  functions,
+  variables: [],
+  constants: [],
+  properties: [],
+  typedefs: [],
+});
+
+// The case the committed corpus does not contain: a namespace whose `New` tally
+// is zero at the window its page was rendered at and non-zero one step in. The
+// client only toggles `display`, so that pill has to be in the markup already —
+// every count and every window key below comes from the production builders, so
+// a wrong expectation cannot agree with itself.
+describe("a category reachable only by narrowing is already in the markup", () => {
+  const gapped = fn("gapped.comes_back");
+  const steady = fn("gapped.always_there");
+  const gappedId = funcIdent("gapped", gapped);
+  const steadyId = funcIdent("gapped", steady);
+
+  // Present in the newest and the oldest, absent from the middle: at the full
+  // range that reads Changed, and at `{MIDDLE, NEWEST}` it reads New.
+  const surfaces: CombinedVersionSurface[] = [
+    { version: NEWEST, modules: [moduleOf("gapped", [gapped, steady])] },
+    { version: MIDDLE, modules: [moduleOf("gapped", [steady])] },
+    { version: OLDEST, modules: [moduleOf("gapped", [gapped, steady])] },
+  ];
+  const signatures: SignaturesArtifact = {
+    versions: Object.fromEntries(
+      AXIS.map((version) => [
+        version,
+        version === MIDDLE
+          ? { [symbolIdentityKey(steadyId)]: "function always_there(): void;" }
+          : {
+              [symbolIdentityKey(gappedId)]: "function comes_back(): void;",
+              [symbolIdentityKey(steadyId)]: "function always_there(): void;",
+            },
+      ]),
+    ),
+  };
+  const combined = buildCombinedSurface({
+    surfaces,
+    signatures,
+    overlay: { versions: [...AXIS], transitions: new Set(), records: new Map() },
+  });
+  const ns = combined.namespaces.find((n) => n.namespace === "gapped");
+  if (!ns) throw new Error("gapped namespace missing from the combined surface");
+
+  const FULL = { from: OLDEST, to: NEWEST };
+  const NARROW = { from: MIDDLE, to: NEWEST };
+  const table = buildBadgeCountTable([ns], AXIS);
+  const config = configFor(AXIS, table);
+
+  test("the fixture really is gapped: New is zero at the full range and non-zero one step in", () => {
+    // The premise every assertion below rests on. Stated against the production
+    // tally so a fixture that stopped being gapped reds here, not silently.
+    expect(namespaceBadgeCounts(ns, FULL).new).toBe(0);
+    expect(namespaceBadgeCounts(ns, FULL).changed).toBe(1);
+    expect(namespaceBadgeCounts(ns, NARROW).new).toBe(1);
+    expect(namespaceBadgeCounts(ns, NARROW).changed).toBe(0);
+  });
+
+  // The sidebar leaf as `_renderer.tsx` builds it, at the window the page is
+  // rendered for.
+  const rootAtFullRange = () =>
+    parseHtml(
+      `<main></main><a href="/api/gapped">${navLeafBadgeHtml(table, "gapped", `${OLDEST}|${NEWEST}`)}</a>`,
+    );
+
+  test("the New pill ships hidden and narrowing reveals it", () => {
+    const root = rootAtFullRange();
+    // Present in the markup before any filtering — the browser cannot create it.
+    expect(leafFor(root, "gapped").querySelectorAll("[class*=nav-badge-count--new]")).toHaveLength(
+      1,
+    );
+
+    applySinceFilter(root, FULL, config);
+    expect(pillsFor(root, "gapped")).toEqual({ new: 0, changed: 1 });
+
+    applySinceFilter(root, NARROW, config);
+    expect(pillsFor(root, "gapped")).toEqual({ new: 1, changed: 0 });
+    expect(labelsFor(root, "gapped")).toEqual(serverLabels({ new: 1, changed: 0, deprecated: 0 }));
+
+    applySinceFilter(root, FULL, config);
+    expect(pillsFor(root, "gapped")).toEqual({ new: 0, changed: 1 });
+    expect(labelsFor(root, "gapped")).toEqual(serverLabels({ new: 0, changed: 1, deprecated: 0 }));
   });
 });

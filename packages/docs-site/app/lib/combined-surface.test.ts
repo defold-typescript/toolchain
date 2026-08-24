@@ -23,6 +23,7 @@ import {
   combinedNamespaceToApiPage,
   compactAvailability,
   namespaceBadgeCounts,
+  reachableBadgeCounts,
   type SignaturesArtifact,
 } from "./combined-surface";
 import { type VersionWindow, windowCombinedSurface } from "./version-window";
@@ -635,7 +636,7 @@ describe("namespaceBadgeCounts over a window", () => {
     });
   }
 
-  test("a single-version window marks nothing anywhere", () => {
+  test("a single-version window marks nothing `New` and nothing `Changed`", () => {
     for (const version of axis) {
       for (const ns of surface.namespaces) {
         expect({
@@ -798,5 +799,50 @@ describe("curated deprecation widens availableIn (committed model.reset_constant
     expect(entry).toBeDefined();
     expect(entry?.deprecatedSince).toBeDefined();
     expect(entry?.label.kind).not.toBe("since");
+  });
+});
+
+describe("reachableBadgeCounts", () => {
+  const surface = loadCombinedSurface(REAL_TYPES_DIR);
+  const ids = surface.versions.map((v) => `defold-${v}`);
+  const table = buildBadgeCountTable(surface.namespaces, ids);
+
+  test("a category is reported iff some window in the row is non-zero for it", () => {
+    for (const [namespace, windows] of Object.entries(table)) {
+      const triples = Object.values(windows);
+      expect({ namespace, reachable: reachableBadgeCounts(windows) }).toEqual({
+        namespace,
+        reachable: {
+          new: Math.max(...triples.map((t) => t[0])),
+          changed: Math.max(...triples.map((t) => t[1])),
+          deprecated: Math.max(...triples.map((t) => t[2])),
+        },
+      });
+    }
+  });
+
+  test("it reaches past any single window, and takes the largest tally", () => {
+    // The corpus is uniform enough that reading only the full-range key would
+    // agree with the row-wide maximum on every namespace it holds, so the
+    // derivation's actual rule is stated against a row instead: `New` is
+    // reachable only from the narrower window, and `Changed` only from the
+    // wider one.
+    expect(reachableBadgeCounts({ "c|a": [0, 1, 0], "b|a": [2, 0, 0], "a|a": [0, 0, 3] })).toEqual({
+      new: 2,
+      changed: 1,
+      deprecated: 3,
+    });
+  });
+
+  test("a namespace the table omits reaches nothing", () => {
+    expect(reachableBadgeCounts(table["no-such-namespace"])).toEqual({
+      new: 0,
+      changed: 0,
+      deprecated: 0,
+    });
+  });
+
+  test("an empty row reaches nothing", () => {
+    expect(reachableBadgeCounts({})).toEqual({ new: 0, changed: 0, deprecated: 0 });
   });
 });
