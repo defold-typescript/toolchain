@@ -53,86 +53,105 @@ export function LibraryHeading({
 // redirect, a known-version exact index (default included), and — otherwise — a
 // canonical namespace page (a Combined engine page, or a version-independent one).
 // The 3-segment `/api/:version/:namespace` route lives in its own file.
-export default createRoute(
-  ssgParams(() => [
-    ...canonicalNamespaces().map((namespace) => ({ namespace })),
-    ...apiVersions().map((v) => ({ namespace: v.id })),
-    // honox collapses `api/combined/index.tsx` to `/api/combined`, which the
-    // shallower `/api/:namespace` route shadows — so the Combined redirect param
-    // is folded in here alongside the per-version index params.
-    { namespace: COMBINED_ROUTE_SEGMENT },
-  ]),
-  async (c) => {
-    const param = c.req.param("namespace");
-    if (!param) return c.notFound();
-    const base = withBase("/").replace(/\/$/, "");
+// What the version-index branch needs to read a surface that is not the docs-site
+// cwd's: the two dirs its loaders take. Deliberately *not* a page-source callback
+// — injecting `pagesForVersion` would let a test supply `versionIndexPages` while
+// production supplied anything, which is this guard's own bug one layer down.
+export interface ApiSurfaceDirs {
+  typesDir?: string;
+  libraryTypesDir?: string;
+}
 
-    // The old Combined index is now a permanent compat redirect to canonical /api.
-    if (param === COMBINED_ROUTE_SEGMENT) {
-      const { from, to } = combinedRedirect();
-      return c.html(redirectHtml(from, to, base));
-    }
+export function createApiNamespaceRoute(dirs: ApiSurfaceDirs = {}) {
+  return createRoute(
+    ssgParams(() => [
+      ...canonicalNamespaces().map((namespace) => ({ namespace })),
+      ...apiVersions().map((v) => ({ namespace: v.id })),
+      // honox collapses `api/combined/index.tsx` to `/api/combined`, which the
+      // shallower `/api/:namespace` route shadows — so the Combined redirect param
+      // is folded in here alongside the per-version index params.
+      { namespace: COMBINED_ROUTE_SEGMENT },
+    ]),
+    async (c) => {
+      const param = c.req.param("namespace");
+      if (!param) return c.notFound();
+      const base = withBase("/").replace(/\/$/, "");
 
-    // A known version id (the default included now that it owns an explicit
-    // `/api/<default>` family) renders that version's index — the window ending
-    // at it, so the index lists everything its `/api/<version>/<ns>` family
-    // routes; its version-independent entries link back to their canonical routes.
-    if (isKnownVersionId(param, apiVersions())) {
-      return c.render(<ApiIndex pages={versionIndexPages(param)} version={param} />, {
-        title: `API reference (${param})`,
-      });
-    }
+      // The old Combined index is now a permanent compat redirect to canonical /api.
+      if (param === COMBINED_ROUTE_SEGMENT) {
+        const { from, to } = combinedRedirect();
+        return c.html(redirectHtml(from, to, base));
+      }
 
-    // Otherwise a canonical namespace: dispatch on its owning surface. An unknown
-    // namespace 404s.
-    const owner = apiNamespaceOwner(param);
-    if (!owner) return c.notFound();
+      // A known version id (the default included now that it owns an explicit
+      // `/api/<default>` family) renders that version's index — the window ending
+      // at it, so the index lists everything its `/api/<version>/<ns>` family
+      // routes; its version-independent entries link back to their canonical routes.
+      if (isKnownVersionId(param, apiVersions(dirs.typesDir))) {
+        return c.render(
+          <ApiIndex
+            pages={versionIndexPages(param, dirs.typesDir, dirs.libraryTypesDir)}
+            version={param}
+          />,
+          {
+            title: `API reference (${param})`,
+          },
+        );
+      }
 
-    const pages = canonicalApiPages();
-    const page = pages.find((entry) => entry.namespace === param);
-    if (!page) return c.notFound();
+      // Otherwise a canonical namespace: dispatch on its owning surface. An unknown
+      // namespace 404s.
+      const owner = apiNamespaceOwner(param);
+      if (!owner) return c.notFound();
 
-    // The linkify + replacement registry span the whole canonical surface, so a
-    // prose mention or a deprecation replacement resolves to its canonical route.
-    const linkify = apiLinkify(pages);
-    const resolveReplacement = apiReplacementResolver(pages);
-    // Deep-link `Opaque` brand tokens in rendered signatures to this surface's
-    // `/api/Opaque` Reference page.
-    const signatureSymbolLinks = apiSignatureSymbolLinks(pages);
+      const pages = canonicalApiPages();
+      const page = pages.find((entry) => entry.namespace === param);
+      if (!page) return c.notFound();
 
-    // Library pages render their heading as the styled `owner/repo/namespace`
-    // path (matching the /libraries index), so the markdown body omits its H1.
-    if (page.category === "library") {
-      const { owner: repoOwner, repo } = libraryLineage(page.namespace, libraryOrigins());
-      const body = await renderMarkdown(
-        apiPageMarkdown(page, linkify, { omitHeading: true, resolveReplacement }),
+      // The linkify + replacement registry span the whole canonical surface, so a
+      // prose mention or a deprecation replacement resolves to its canonical route.
+      const linkify = apiLinkify(pages);
+      const resolveReplacement = apiReplacementResolver(pages);
+      // Deep-link `Opaque` brand tokens in rendered signatures to this surface's
+      // `/api/Opaque` Reference page.
+      const signatureSymbolLinks = apiSignatureSymbolLinks(pages);
+
+      // Library pages render their heading as the styled `owner/repo/namespace`
+      // path (matching the /libraries index), so the markdown body omits its H1.
+      if (page.category === "library") {
+        const { owner: repoOwner, repo } = libraryLineage(page.namespace, libraryOrigins());
+        const body = await renderMarkdown(
+          apiPageMarkdown(page, linkify, { omitHeading: true, resolveReplacement }),
+          { highlightSignatureHeadings: true, signatureSymbolLinks },
+        );
+        return c.render(
+          <article class="prose">
+            <LibraryHeading owner={repoOwner} repo={repo} namespace={page.namespace} />
+            <div dangerouslySetInnerHTML={{ __html: body }} />
+          </article>,
+          { title: `${page.module.namespace} API`, headings: pageHeadings(body) },
+        );
+      }
+
+      // A Combined engine namespace renders with the availability markers and the
+      // namespace-title count pills; a version-independent namespace (global type,
+      // Lua stdlib) renders plainly.
+      const combinedMarkers = owner === "combined-engine";
+      const model = combinedMarkers
+        ? combinedSurface().namespaces.find((n) => n.namespace === param)
+        : undefined;
+      const titleBadges = model ? namespaceCountBadges(namespaceBadgeCounts(model)) : "";
+
+      const html = await renderMarkdown(
+        apiPageMarkdown(page, linkify, { resolveReplacement, titleBadges, combinedMarkers }),
         { highlightSignatureHeadings: true, signatureSymbolLinks },
       );
-      return c.render(
-        <article class="prose">
-          <LibraryHeading owner={repoOwner} repo={repo} namespace={page.namespace} />
-          <div dangerouslySetInnerHTML={{ __html: body }} />
-        </article>,
-        { title: `${page.module.namespace} API`, headings: pageHeadings(body) },
-      );
-    }
+      return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
+        title: `${page.module.namespace} API`,
+        headings: pageHeadings(html),
+      });
+    },
+  );
+}
 
-    // A Combined engine namespace renders with the availability markers and the
-    // namespace-title count pills; a version-independent namespace (global type,
-    // Lua stdlib) renders plainly.
-    const combinedMarkers = owner === "combined-engine";
-    const model = combinedMarkers
-      ? combinedSurface().namespaces.find((n) => n.namespace === param)
-      : undefined;
-    const titleBadges = model ? namespaceCountBadges(namespaceBadgeCounts(model)) : "";
-
-    const html = await renderMarkdown(
-      apiPageMarkdown(page, linkify, { resolveReplacement, titleBadges, combinedMarkers }),
-      { highlightSignatureHeadings: true, signatureSymbolLinks },
-    );
-    return c.render(<article class="prose" dangerouslySetInnerHTML={{ __html: html }} />, {
-      title: `${page.module.namespace} API`,
-      headings: pageHeadings(html),
-    });
-  },
-);
+export default createApiNamespaceRoute();
