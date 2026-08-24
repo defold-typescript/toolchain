@@ -107,6 +107,8 @@ export function staticRoutes(routesDir: string, guideDir: string): Set<string> {
 interface RouteSets {
   api: Set<string>;
   static: Set<string>;
+  /** The tracked version ids a `?since=` window bound may name. */
+  versions: Set<string>;
 }
 
 type Renderer = (dir: string, file: string) => Promise<string>;
@@ -136,7 +138,12 @@ async function pageAnchors(dir: string, file: string, render: Renderer): Promise
 interface Broken {
   page: string;
   target: string;
-  reason: "missing file" | "unknown anchor" | "unknown api route" | "unknown route";
+  reason:
+    | "missing file"
+    | "unknown anchor"
+    | "unknown api route"
+    | "unknown route"
+    | "unknown version bound";
 }
 
 interface CorpusReport {
@@ -164,9 +171,21 @@ async function checkCorpus(
       // resolvable here, and its `#fragment` is a heading the API or guide
       // renderer emits rather than one this walk can read off a guide page.
       if (routes !== undefined && target.startsWith("/")) {
-        const route = target.split("#")[0] ?? "";
+        // `/api/<version>/<ns>?since=<version>` is the explicit-window URL the
+        // range selector builds, so the query is split off the route before the
+        // lookup and its bound is resolved against the tracked axis — a window
+        // naming a version the site no longer ships is as dead as a dead route.
+        const pathAndQuery = target.split("#")[0] ?? "";
+        const queryAt = pathAndQuery.indexOf("?");
+        const route = queryAt === -1 ? pathAndQuery : pathAndQuery.slice(0, queryAt);
+        const since =
+          queryAt === -1 ? null : new URLSearchParams(pathAndQuery.slice(queryAt + 1)).get("since");
         if (isApiRoute(target)) {
-          if (!routes.api.has(route)) broken.push({ page, target, reason: "unknown api route" });
+          if (!routes.api.has(route)) {
+            broken.push({ page, target, reason: "unknown api route" });
+          } else if (since !== null && !routes.versions.has(since)) {
+            broken.push({ page, target, reason: "unknown version bound" });
+          }
         } else if (!routes.static.has(route)) {
           broken.push({ page, target, reason: "unknown route" });
         }
@@ -199,9 +218,11 @@ function format(broken: Broken[]): string {
 // read the same report, so it is rendered once.
 const API_ROUTES = emittedApiRoutes(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
 const STATIC_ROUTES = staticRoutes(REAL_ROUTES_DIR, GUIDE_DIR);
+const TRACKED_VERSION_IDS = new Set(versionsWithDiskFixtures(REAL_TYPES_DIR).map((v) => v.id));
 const siteReport = checkCorpus(GUIDE_DIR, siteRenderer(GUIDE_DIR), {
   api: API_ROUTES,
   static: STATIC_ROUTES,
+  versions: TRACKED_VERSION_IDS,
 });
 
 describe("docs/guide link and anchor resolution", () => {
@@ -237,6 +258,9 @@ describe("docs/guide link and anchor resolution", () => {
     expect(api.some((t) => /^\/api\/[a-z_]+$/.test(t))).toBe(true);
     expect(api.some((t) => /^\/api\/defold-\d+\.\d+\.\d+\//.test(t))).toBe(true);
     expect(api).toContain("/api/Vector3");
+    // The explicit-window form the runbook documents, so the `since`-bound half
+    // of the check above runs against the real corpus rather than over nothing.
+    expect(api.some((t) => t.includes("?since="))).toBe(true);
   });
 
   // The emitted set is what the routes hand `ssgParams`, so it has to carry every
@@ -360,6 +384,7 @@ describe("docs/guide link and anchor resolution", () => {
     const routes = {
       api: new Set(["/api", "/api/live_module"]),
       static: new Set(["/libraries"]),
+      versions: new Set<string>(),
     };
     const withRoutes = await checkCorpus(dir, bareRenderer, routes);
     expect(
@@ -385,5 +410,31 @@ describe("docs/guide link and anchor resolution", () => {
     const { broken, inspected } = await checkCorpus(join(FIXTURES, "guide-links-sound"));
     expect(broken).toEqual([]);
     expect(inspected.length).toBeGreaterThan(0);
+  });
+});
+
+// The window is a query, not a path segment, so a `?since=` link has to be split
+// before the route lookup and its bound checked against the tracked axis. Driven
+// by synthetic sets so the case holds whatever the real corpus contains.
+describe("explicit-window links", () => {
+  test("resolves the route and the `since` bound separately, reporting each failure on its own", async () => {
+    const { broken, inspected } = await checkCorpus(
+      join(FIXTURES, "guide-links-window"),
+      bareRenderer,
+      {
+        api: new Set(["/api/defold-1.12.4/go"]),
+        static: new Set<string>(),
+        versions: new Set(["defold-1.12.4", "defold-1.12.0"]),
+      },
+    );
+    expect(broken.map((b) => `${b.page} ${b.target} ${b.reason}`).sort()).toEqual([
+      "page.md /api/defold-1.12.4/go?since=defold-9.9.9 unknown version bound",
+      "page.md /api/defold-1.12.4/retired?since=defold-1.12.0 unknown api route",
+    ]);
+    // Both sound forms were walked, so the pass above is not a silent skip.
+    expect(inspected.map((i) => i.target)).toContain("/api/defold-1.12.4/go?since=defold-1.12.0");
+    expect(inspected.map((i) => i.target)).toContain(
+      "/api/defold-1.12.4/go?since=defold-1.12.0#create",
+    );
   });
 });

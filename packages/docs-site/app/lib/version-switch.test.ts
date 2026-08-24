@@ -146,3 +146,30 @@ describe("isApiRoute", () => {
     expect(isApiRoute("/")).toBe(false);
   });
 });
+
+describe("buildRangeSelector — the axis limit", () => {
+  test("names the oldest tracked version, so the `From` column can say where the axis ends", () => {
+    const selector = build({ from: MIDDLE, to: NEWEST }, "/api/defold-1.13.0/shared");
+    expect(selector.oldest).toEqual({ id: OLDEST, label: "Defold 1.12.0" });
+  });
+
+  test("a single tracked version is its own limit", () => {
+    const selector = buildRangeSelector({
+      versions: [{ id: NEWEST, isDefault: true }],
+      namespacesByVersion: { [NEWEST]: ["go"] },
+      route: "/api/defold-1.13.0/go",
+      range: { from: NEWEST, to: NEWEST },
+    });
+    expect(selector.oldest).toEqual({ id: NEWEST, label: "Defold 1.13.0" });
+  });
+
+  test("an empty axis has no limit to name", () => {
+    const selector = buildRangeSelector({
+      versions: [],
+      namespacesByVersion: {},
+      route: "/api",
+      range: { from: "", to: "" },
+    });
+    expect(selector.oldest).toBeUndefined();
+  });
+});

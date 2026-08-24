@@ -220,6 +220,18 @@ The pointers the `init-agents` managed block writes are the layered pack:
 individual `guide/<page>.md` pages and the typed API in
 `@defold-typescript/types/generated/*.d.ts` alongside them.
 
+The website's own routes carry a version *range*, not one surface: the unprefixed
+`/api/<namespace>` is the full range across every tracked release,
+`/api/<version>/<namespace>` is the range ending at that version, and
+`/api/<version>/<namespace>?since=<version>` states both bounds explicitly — for
+example [`go` from 1.12.4 through
+1.13.0](/api/defold-1.13.0/go?since=defold-1.12.4). That range is a reader's
+view, never an artifact dimension: `llms.txt`, `llms-full.txt` and the search and
+symbol indexes are always built full-range. So whatever a human has selected in
+the dropdowns, read a symbol's availability from the `Availability` tags in
+`llms-full.txt` or from `api-availability.json`, never from how narrow a page
+looked.
+
 ### Confirm a signature
 
 Read the signature from the namespace declaration instead of recalling it. Grep

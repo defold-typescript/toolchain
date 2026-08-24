@@ -475,10 +475,13 @@ function RangeColumn({
   bound,
   label,
   options,
+  limit,
 }: {
   bound: "from" | "to";
   label: string;
   options: readonly RangeSelectorOption[];
+  /** The oldest tracked release, named under the `From` column as the end of the axis. */
+  limit?: string | undefined;
 }) {
   const current = options.find((option) => option.isCurrent) ?? options[0];
   return (
@@ -522,6 +525,11 @@ function RangeColumn({
             ) : null}
           </a>
         ))}
+        {limit ? (
+          <p class="mt-1 border-t border-border px-3 pt-2 pb-1 text-xs text-text-faint">
+            Oldest tracked: {limit}. Anything older is outside this reference.
+          </p>
+        ) : null}
       </div>
     </details>
   );
@@ -541,7 +549,12 @@ function RangeSelectorControls({
       class={`flex min-w-0 items-center gap-1.5 border-0 p-0${className ? ` ${className}` : ""}`}
     >
       <legend class="sr-only">API version range</legend>
-      <RangeColumn bound="from" label="From" options={selector.from} />
+      <RangeColumn
+        bound="from"
+        label="From"
+        options={selector.from}
+        limit={selector.oldest?.label}
+      />
       <RangeColumn bound="to" label="To" options={selector.to} />
     </fieldset>
   );

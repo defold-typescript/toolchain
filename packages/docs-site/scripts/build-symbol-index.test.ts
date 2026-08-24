@@ -75,3 +75,19 @@ describe("symbolIndexOutputs", () => {
     }
   });
 });
+
+// The counterpart of the search-index guard: the `?since=` window is a view, so
+// the symbol-index artifact set stays one canonical file plus one per version.
+describe("symbolIndexOutputs — the window is not an artifact dimension", () => {
+  test("emits exactly one canonical index plus one per tracked version", () => {
+    const expected = [
+      "symbol-index.json",
+      ...versionsWithDiskFixtures(TYPES_DIR).map((version) => `symbol-index-${version.id}.json`),
+    ];
+    expect(
+      symbolIndexOutputs()
+        .map((output) => output.file)
+        .sort(),
+    ).toEqual(expected.sort());
+  });
+});

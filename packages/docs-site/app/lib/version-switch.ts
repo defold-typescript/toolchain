@@ -16,6 +16,14 @@ export interface RangeSelectorOption {
 export interface RangeSelector {
   from: RangeSelectorOption[];
   to: RangeSelectorOption[];
+  /**
+   * The oldest tracked version — the limit of what the reference knows, which the
+   * `From` column names so a reader picking a bound sees where the axis ends. Read
+   * off the axis here rather than in the markup, because "oldest" is the last
+   * entry of a newest-first list and inverting it is the easy mistake. Undefined
+   * only when no version is tracked at all.
+   */
+  oldest?: { id: string; label: string } | undefined;
 }
 
 /**
@@ -88,7 +96,12 @@ export function buildRangeSelector({
       const id = idFor(option.version);
       return { id, label: versionLabel(id), href: option.href, isCurrent: option.isCurrent };
     });
-  return { from: column(hrefs.from), to: column(hrefs.to) };
+  const oldestId = ids[ids.length - 1];
+  return {
+    from: column(hrefs.from),
+    to: column(hrefs.to),
+    oldest: oldestId === undefined ? undefined : { id: oldestId, label: versionLabel(oldestId) },
+  };
 }
 
 function bare(id: string): string {

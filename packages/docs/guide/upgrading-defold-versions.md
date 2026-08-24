@@ -58,6 +58,32 @@ After flipping the pin, prove the upgrade end to end:
    rendering/platform changes listed for that release by hand, since those
    cannot be caught by the compiler.
 
+## Reading the API reference over a range
+
+The API reference covers a *range* of Defold releases rather than one, so a single
+page can answer "what changed between the version I ship and the one I am moving
+to". Two dropdowns pick the range:
+
+- **From** is the oldest release in view. Narrowing it hides the symbols that had
+  already gone by then, sidebar counts included.
+- **To** is the newest release in view. It also decides which declaration a
+  symbol renders with: the newest real signature inside the range.
+
+Setting both to the same release is the exact-version view — everything that
+release carries, and nothing else, as on [the 1.13.0 `go`
+page](/api/defold-1.13.0/go). The unprefixed `/api/<namespace>` is the full range
+across every tracked release, `/api/<version>/<namespace>` is the range ending at
+that version, and appending `?since=<version>` states the lower bound explicitly.
+
+Two things read differently once a page spans releases:
+
+- **Version notes are absolute.** A badge names the release the symbol really
+  arrived in or left, which may sit outside the range you selected — `Since
+  Defold 1.13.0` means 1.13.0, whatever the `From` bound says.
+- **No badge means "in every tracked release".** Such a symbol may be far older
+  than the oldest release tracked here; the API index states which releases those
+  are, and the `From` dropdown names the oldest of them.
+
 ## Release notes
 
 Each release below opens with a `<!-- release: <version> -->` marker and one
@@ -92,11 +118,10 @@ bunx @defold-typescript/cli build --defold-target 1.13.0
 
 These Lua APIs still exist on the 1.13.0 surface — one or more parameter types
 changed rather than the symbol being removed, so a call written against 1.12.4
-keeps compiling. Every API page now covers a *range* of releases — the unprefixed
-`/api` is the full range (the old `/api/combined` links redirect there), and
-`/api/defold-1.13.0/…` is the range ending at that version — so both signatures
-render adjacently wherever the range spans the change. Narrow the `From` dropdown
-to 1.13.0 to see only what that release still carries.
+keeps compiling. Because [an API page covers a
+range](#reading-the-api-reference-over-a-range), both signatures render adjacently
+wherever the range spans the change; narrow the `From` dropdown to 1.13.0 to see
+only what that release still carries.
 
 #### liveupdate.add_mount
 
