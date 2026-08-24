@@ -67,7 +67,9 @@ to". Two dropdowns pick the range:
 - **From** is the oldest release in view. Narrowing it hides the symbols that had
   already gone by then, sidebar counts included.
 - **To** is the newest release in view. It also decides which declaration a
-  symbol renders with: the newest real signature inside the range.
+  symbol renders with: the newest declaration made inside the range, or
+  the signature the symbol was built with when the range declares none, so a
+  deprecated symbol keeps its full declaration rather than a weaker one.
 
 Setting both to the same release is the exact-version view — everything that
 release carries, and nothing else, as on [the 1.13.0 `go`
