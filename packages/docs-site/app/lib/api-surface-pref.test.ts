@@ -470,6 +470,9 @@ describe("pre-paint serialization contract", () => {
 // surface: `/api/<default-version>/<ns>` is the window `{oldest, default}`, which
 // is exactly what canonical `/api/<ns>` renders. Only that pair is a duplicate —
 // a historical version's page is its own content and must claim no canonical.
+// These cases decide the URL only. `canonicalLinkPath` is serialized into the
+// pre-paint script and cannot read a surface, so the inventories the verdict
+// rests on are proven in `api-routing-migration.test.ts` instead.
 describe("canonicalLinkPath", () => {
   const config: ApiSurfaceConfig = {
     base: "",

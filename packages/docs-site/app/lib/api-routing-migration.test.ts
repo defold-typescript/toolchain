@@ -6,6 +6,7 @@ import { normalizedFunctionSignature } from "@defold-typescript/types";
 import { Hono } from "hono";
 import { searchIndexOutputs } from "../../scripts/build-search-index";
 import { symbolIndexOutputs } from "../../scripts/build-symbol-index";
+import { groupApiIndexPages } from "../components/api-index-sections";
 import apiNamespaceRoute from "../routes/api/[namespace]";
 import combinedNamespaceRoute from "../routes/api/combined/[namespace]";
 import {
@@ -16,13 +17,20 @@ import {
   OLDEST,
   versionId,
 } from "./__fixtures__/windowed-surface";
-import { canonicalApiPages, combinedApiPages, windowedApiPages } from "./api-content";
+import {
+  canonicalApiPages,
+  combinedApiPages,
+  versionIndependentPages,
+  versionIndexPages,
+  windowedApiPages,
+} from "./api-content";
 import { apiLinkify, apiPageMarkdown, versionedApiParams } from "./api-page-render";
 import { combinedRedirect, redirectHtml } from "./api-redirect";
 import type { ApiPage } from "./api-surface";
 import { loadApiSurfaceForVersion, versionsWithDiskFixtures } from "./api-surface-loader";
 import {
   type ApiSurfaceConfig,
+  canonicalLinkPath,
   readStoredRange,
   resolveApiSurfaceRedirect,
 } from "./api-surface-pref";
@@ -464,5 +472,175 @@ describe("api routing migration — the exact-version family is the window endin
     // …and a symbol-level cap does not invent a namespace-level one: `demo`
     // survives every window, so every version keeps its `demo` param.
     for (const bare of AXIS) expect(params.has(`${versionId(bare)}/demo`)).toBe(true);
+  });
+});
+
+// Every symbol a surface documents, keyed by namespace and member name. Derived
+// from the production page's own module rather than a transcribed list, so the
+// comparison tracks whatever the projection actually emits.
+const symbolIdentities = (pages: ApiPage[]): Set<string> => {
+  const ids = new Set<string>();
+  for (const page of pages) {
+    const m = page.module;
+    for (const member of [
+      ...m.functions,
+      ...m.variables,
+      ...m.constants,
+      ...m.properties,
+      ...m.typedefs,
+    ]) {
+      ids.add(`${page.namespace}#${member.name}`);
+    }
+  }
+  return ids;
+};
+
+// The version index and the version's route family are one surface or they are
+// two, and only a corpus with a removed namespace can tell them apart. The real
+// tracked axis has none, so the routed-family half is proven on the synthetic
+// registry and the canonical-equivalence half on the real one.
+describe("api routing migration — the version index is the family it routes", () => {
+  let dir = "";
+  beforeAll(() => {
+    dir = makeWindowedTypesDir();
+  });
+  afterAll(() => {
+    if (dir) rmSync(dir, { recursive: true, force: true });
+  });
+
+  test("every namespace the version routes is reachable from that version's index", () => {
+    const params = versionedApiParams(dir);
+    for (const bare of AXIS) {
+      const id = versionId(bare);
+      const routed = new Set(params.filter((p) => p.version === id).map((p) => p.namespace));
+      const indexed = new Set(versionIndexPages(id, dir, dir).map((p) => p.namespace));
+      expect(routed.size).toBeGreaterThan(0);
+      for (const namespace of routed) expect(indexed.has(namespace)).toBe(true);
+    }
+  });
+
+  test("the index source is the window, not the version's own surface", () => {
+    // The mutation this pair exists for: `loadApiSurfaceForVersion` is what the
+    // index read before, and it is the one substitution the real corpus cannot
+    // distinguish. `gone` lives in 1.0.0 alone, so it separates them here.
+    const id = versionId(NEWEST);
+    expect(versionIndexPages(id, dir, dir).map((p) => p.namespace)).toContain("gone");
+    expect(loadApiSurfaceForVersion(dir, id).map((p) => p.namespace)).not.toContain("gone");
+    expect(versionedApiParams(dir)).toContainEqual({ version: id, namespace: "gone" });
+  });
+});
+
+// The `rel="canonical"` from `/api/<default>` to `/api` asserts the two render
+// the same page. `canonicalLinkPath` decides the URL and cannot read content, so
+// the premise behind it is held here instead: the inventories are equal by
+// construction, and a drift reds this rather than shipping a false canonical.
+// Asserted against the real corpus, named explicitly — `api-content`'s no-arg
+// entry points are `process.cwd()`-bound, so a root-level `bun test` passes the
+// dirs the way the sibling drift guards do.
+describe("api routing migration — the canonical claim rests on equal inventories", () => {
+  const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
+  const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
+  const defaultVersion = versionsWithDiskFixtures(REAL_TYPES_DIR).find((v) => v.isDefault)
+    ?.id as string;
+  const defaultIndex = () =>
+    versionIndexPages(defaultVersion, REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+  // `/api` renders the canonical surface minus libraries, which are reached
+  // through `/libraries`. The version index applies the identical filter.
+  const canonicalIndex = () =>
+    canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR).filter(
+      (p) => p.category !== "library",
+    );
+
+  test("the default version's index carries the same namespaces as /api", () => {
+    expect(defaultVersion).toBeDefined();
+    expect(
+      defaultIndex()
+        .map((p) => p.namespace)
+        .sort(),
+    ).toEqual(
+      canonicalIndex()
+        .map((p) => p.namespace)
+        .sort(),
+    );
+  });
+
+  test("the two indexes fill the same sections, so neither can hide a whole category", () => {
+    const sectionsOf = (pages: ApiPage[]): string[] =>
+      Object.entries(groupApiIndexPages(pages))
+        .filter(([, bucket]) => bucket.length > 0)
+        .map(([name]) => name)
+        .sort();
+    expect(sectionsOf(defaultIndex())).toEqual(sectionsOf(canonicalIndex()));
+  });
+
+  test("the Lua standard library is present on both, not on /api alone", () => {
+    const luaStdlib = versionIndependentPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR).filter(
+      (p) => p.category === "lua-stdlib",
+    );
+    expect(luaStdlib.length).toBeGreaterThan(0);
+    const indexed = new Set(defaultIndex().map((p) => p.namespace));
+    for (const page of luaStdlib) expect(indexed.has(page.namespace)).toBe(true);
+  });
+
+  test("a namespace both halves could claim is merged once, not rendered twice", () => {
+    // The widened engine half now spans every tracked version, so the dedupe the
+    // version index has always applied is asked a broader question than before.
+    const namespaces = defaultIndex().map((p) => p.namespace);
+    expect(namespaces.length).toBe(new Set(namespaces).size);
+  });
+
+  test("every namespace the default version routes is reachable from its index", () => {
+    const routed = versionedApiParams(REAL_TYPES_DIR)
+      .filter((p) => p.version === defaultVersion)
+      .map((p) => p.namespace);
+    expect(routed.length).toBeGreaterThan(0);
+    const indexed = new Set(defaultIndex().map((p) => p.namespace));
+    for (const namespace of routed) expect(indexed.has(namespace)).toBe(true);
+  });
+});
+
+describe("api routing migration — a historical index is genuinely different content", () => {
+  let dir = "";
+  beforeAll(() => {
+    dir = makeWindowedTypesDir();
+  });
+  afterAll(() => {
+    if (dir) rmSync(dir, { recursive: true, force: true });
+  });
+
+  const configFor = (typesDir: string): ApiSurfaceConfig => ({
+    base: "",
+    versionIds: AXIS.map(versionId),
+    defaultVersionId: versionId(NEWEST),
+    namespacesByVersion: Object.fromEntries(
+      AXIS.map((bare) => [
+        versionId(bare),
+        versionIndexPages(versionId(bare), typesDir, typesDir).map((p) => p.namespace),
+      ]),
+    ),
+  });
+
+  test("the default version claims /api, and carries the canonical symbol identities", () => {
+    const config = configFor(dir);
+    expect(canonicalLinkPath(`/api/${versionId(NEWEST)}`, config, config.defaultVersionId)).toBe(
+      "/api",
+    );
+    expect(symbolIdentities(versionIndexPages(versionId(NEWEST), dir, dir))).toEqual(
+      symbolIdentities(combinedApiPages(dir)),
+    );
+  });
+
+  test("a historical version claims nothing, and its index is a proper subset", () => {
+    const config = configFor(dir);
+    expect(canonicalLinkPath(`/api/${versionId(MIDDLE)}`, config, config.defaultVersionId)).toBe(
+      null,
+    );
+    const historical = symbolIdentities(versionIndexPages(versionId(MIDDLE), dir, dir));
+    const canonical = symbolIdentities(combinedApiPages(dir));
+    for (const id of historical) expect(canonical.has(id)).toBe(true);
+    // `demo.newest_only` is capped out of the window ending at 2.0.0, which is
+    // what makes the self-canonical historical page a genuine second document.
+    expect(canonical.has("demo#demo.newest_only")).toBe(true);
+    expect(historical.has("demo#demo.newest_only")).toBe(false);
   });
 });

@@ -107,7 +107,7 @@ export function ApiIndex({ pages, version }: { pages: ApiPage[]; version?: strin
       lead={
         <p>
           {version
-            ? `Generated from the Defold ${version} reference documentation.`
+            ? `Generated from the tracked Defold releases up to ${version}.`
             : "Generated from the default Defold version's reference documentation."}{" "}
           <span class="mt-1 block text-sm text-text-faint">
             {apiPageCount} namespace{apiPageCount === 1 ? "" : "s"} documented.
