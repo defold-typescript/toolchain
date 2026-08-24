@@ -767,18 +767,24 @@ describe("api routing migration — the rendered version index is the guarded su
     };
     const independent = () => versionIndependentPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
 
-    test("the version-independent pages are linked at their canonical routes", async () => {
+    test("the whole non-library version-independent set is linked at its canonical routes", async () => {
       const { status, hrefs } = await renderVersionIndex(corpusDirs, defaultVersion);
       expect(status).toBe(200);
       expect(hrefs.size).toBeGreaterThan(0);
-      const luaStdlib = independent().filter((page) => page.category === "lua-stdlib");
-      expect(luaStdlib.length).toBeGreaterThan(0);
-      for (const page of luaStdlib) expect(hrefs.has(page.route)).toBe(true);
-      // bug-140's named instance, pinned so the derived assertion above cannot
-      // pass on an empty or narrowed lua-stdlib slice.
+      const shared = independent().filter((page) => page.category !== "library");
+      expect(shared.length).toBeGreaterThan(0);
+      for (const page of shared) expect(hrefs.has(page.route)).toBe(true);
+      // One named instance per category the set spans, pinned so the derived
+      // assertion above cannot pass on a slice narrowed to either of them:
+      // bug-140's Lua-standard `base`, and bug-146's Global-types `Vector3`.
       expect(hrefs.has("/api/base")).toBe(true);
+      expect(hrefs.has("/api/Vector3")).toBe(true);
     });
 
+    // `ApiIndex` renders no library section at all, so this guards the rendered
+    // surface only. `versionIndexPages`' own library filter is guarded where it is
+    // observable, in `api-content.test.ts` ("its non-engine half is the
+    // version-independent set the canonical index carries").
     test("library pages stay off the version index, reachable through /libraries", async () => {
       const { status, hrefs } = await renderVersionIndex(corpusDirs, defaultVersion);
       expect(status).toBe(200);
