@@ -29,8 +29,8 @@ export function apiPages(): ApiPage[] {
 // Enumeration for routing and version chrome: a non-default target with no
 // on-disk fixtures is skipped (it would ENOENT at build time), so an
 // unmaterialized ref-doc version stays invisible until its fixtures are committed.
-export function apiVersions(): ApiVersion[] {
-  return versionsWithDiskFixtures(TYPES_DIR);
+export function apiVersions(typesDir?: string): ApiVersion[] {
+  return versionsWithDiskFixtures(typesDir ?? TYPES_DIR);
 }
 
 export function apiPagesForVersion(versionId: string): ApiPage[] {
