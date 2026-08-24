@@ -135,6 +135,20 @@ export function windowedApiPages(window: VersionWindow, typesDir?: string): ApiP
   return pages;
 }
 
+// What one version contributes to a window: the namespaces the single-version
+// window `{V, V}` selects. The selector, the surface-preference redirect and the
+// sidebar rewrite each hold a map of these and union it across their own
+// `[from, to]`, so the union over any window is exactly that window's namespace
+// set. Sourcing it from the version's on-disk surface instead would drop a
+// namespace whose only presence in the window is one a deprecation claim widened
+// in — real to the routes, invisible to the disk. An unresolvable version
+// contributes nothing; the `/api/:namespace` route already rejects unknown ids.
+export function versionNamespaceAtom(versionId: string, typesDir?: string): string[] {
+  const window = resolveVersionWindow(apiVersionAxis(typesDir), versionId, versionId);
+  if (!window) return [];
+  return windowedApiPages(window, typesDir).map((page) => page.namespace);
+}
+
 // The version-independent reference pages (core value types, Lua standard
 // library, vendored libraries), each canonical at `/api/<ns>` with no version
 // tie. Defaults to the real types/library dirs; an explicit dir pair drives
