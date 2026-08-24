@@ -12,6 +12,7 @@ import {
   apiNamespaceOwner,
   apiNamespaceOwners,
   apiVersionAxis,
+  apiVersions,
   canonicalApiPages,
   canonicalNamespaces,
   combinedApiPages,
@@ -24,6 +25,7 @@ import { apiLinkify, apiPageMarkdown } from "./api-page-render";
 import type { ApiPage } from "./api-surface";
 import { loadApiSurfaceForVersion } from "./api-surface-loader";
 import { compareSemverDesc } from "./combined-surface";
+import { resolveVersionWindow } from "./version-window";
 
 const ENGINE_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
 const LIBRARY_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/library-display");
@@ -188,6 +190,34 @@ describe("windowedApiPages — the full-range window is the canonical surface", 
       // is addressed under its `to` bound, the canonical page unprefixed.
       expect({ ...page, route: other.route }).toEqual(other);
     }
+  });
+
+  test("the default version's family renders the same window the canonical route does", () => {
+    // `canonicalLinkPath` declares `/api/<default>/<ns>` a duplicate of
+    // `/api/<ns>`; that only holds while the window the version route resolves is
+    // the window the canonical route passes. Asserted rather than assumed,
+    // because the category layer is now derived from it.
+    const versions = apiVersions(REAL_TYPES_DIR);
+    const defaultId = versions.find((version) => version.isDefault)?.id;
+    expect(defaultId).toBeDefined();
+    expect(resolveVersionWindow(axis, defaultId as string, null)).toEqual(fullWindow);
+  });
+
+  test("the marker layer is byte-identical between the canonical and windowed page", () => {
+    // Both routes render the availability markers, and both now emit the
+    // per-`from` category fields the client reads. Comparing the marked render
+    // is what keeps the declared canonical honest.
+    const windowed = windowedApiPages(fullWindow, REAL_TYPES_DIR);
+    const canonical = combinedApiPages(REAL_TYPES_DIR);
+    const pick = (pages: ApiPage[]): ApiPage => pages.find((p) => p.namespace === "go") as ApiPage;
+    const marked = (page: ApiPage) =>
+      apiPageMarkdown({ ...page, route: "/api/go" }, apiLinkify(canonical), {
+        combinedMarkers: true,
+        window: fullWindow,
+      });
+    const output = marked(pick(windowed));
+    expect(output).toContain("data-span-cats=");
+    expect(output).toBe(marked(pick(canonical)));
   });
 
   test("a canonical namespace renders byte-identically through the window", () => {

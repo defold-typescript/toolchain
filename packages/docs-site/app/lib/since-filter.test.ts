@@ -2,8 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { normalizedFunctionSignature, symbolIdentityKey } from "@defold-typescript/types";
 import { type MiniElement, parseHtml } from "./__fixtures__/mini-dom";
 import { apiPageMarkdown, navNamespaceBadges } from "./api-page-render";
-import type { ApiPage, AvailabilityLookup } from "./api-surface";
-import { type ApiSurfaceConfig, readStoredRange } from "./api-surface-pref";
+import { type ApiPage, type AvailabilityLookup, windowedBadgeCategory } from "./api-surface";
+import { type ApiSurfaceConfig, type BadgeCountTable, readStoredRange } from "./api-surface-pref";
 import { renderMarkdown } from "./markdown";
 import { applySinceFilter } from "./since-filter";
 
@@ -83,16 +83,48 @@ function demoPage(axis: readonly string[] = AXIS): ApiPage {
 // oldest-only (a bounded span, so Changed) — the server-rendered tally for the
 // full range.
 function sidebarHtml(): string {
-  return `<a href="/api/demo" aria-current="page">${navNamespaceBadges({
-    new: 1,
-    changed: 1,
-    deprecated: 0,
-  })}</a>`;
+  const leaf = (route: string, counts: { new: number; changed: number; deprecated: number }) =>
+    `<a href="${route}"${route === "/api/demo" ? ' aria-current="page"' : ""}>${navNamespaceBadges(counts)}</a>`;
+  return [
+    leaf("/api/demo", { new: 1, changed: 1, deprecated: 0 }),
+    // A second engine leaf the reader is *not* on: the reported defect is that
+    // this one keeps the full-range tally whatever range is selected.
+    leaf(`/api/defold-${MIDDLE}/other`, { new: 2, changed: 1, deprecated: 0 }),
+    // A leaf the table has no window for at all — it must end up with no pills.
+    leaf(`/api/defold-${MIDDLE}/absent?since=defold-${OLDEST}`, {
+      new: 3,
+      changed: 0,
+      deprecated: 0,
+    }),
+  ].join("");
 }
 
-async function renderPage(axis: readonly string[] = AXIS): Promise<MiniElement> {
+// The one range the demo page is rendered at; every filter call narrows `from`
+// underneath it, exactly as the routed page does.
+const PAGE_TO = NEWEST;
+
+const configFor = (
+  versionIds: readonly string[],
+  badgeCounts: BadgeCountTable = {},
+): ApiSurfaceConfig => ({
+  base: "",
+  versionIds,
+  defaultVersionId: versionIds[0] as string,
+  namespacesByVersion: Object.fromEntries(versionIds.map((id) => [id, ["demo"]])),
+  badgeCounts,
+});
+
+const AXIS_CONFIG = configFor(AXIS);
+
+async function renderPage(
+  axis: readonly string[] = AXIS,
+  window?: { from: string; to: string },
+): Promise<MiniElement> {
   const html = await renderMarkdown(
-    apiPageMarkdown(demoPage(axis), (t) => t, { combinedMarkers: true }),
+    apiPageMarkdown(demoPage(axis), (t) => t, {
+      combinedMarkers: true,
+      ...(window ? { window } : {}),
+    }),
     {
       highlightSignatureHeadings: true,
     },
@@ -107,15 +139,51 @@ const bodyAfter = (heading: MiniElement | undefined) => heading?.nextElementSibl
 
 const visible = (el: MiniElement | undefined | null): boolean => el?.style.display !== "none";
 
-const pills = (root: MiniElement) =>
-  Object.fromEntries(
-    root
+// The pills one sidebar leaf shows, keyed by category. A pill hidden by the
+// filter reads 0, which is what the reader sees.
+const pillsFor = (root: MiniElement, namespace: string) => {
+  const leaf = root
+    .querySelectorAll("a[href]")
+    .find(
+      (a) => ((a.getAttribute("href") ?? "").split("?")[0] ?? "").split("/").pop() === namespace,
+    );
+  if (!leaf) throw new Error(`no sidebar leaf for ${namespace}`);
+  return Object.fromEntries(
+    leaf
       .querySelectorAll("[class*=nav-badge-count--]")
       .map((pill) => [
         (/nav-badge-count--(\w+)/.exec(pill.className)?.[1] ?? "") as string,
         visible(pill) ? Number(pill.textContent) : 0,
       ]),
   );
+};
+
+// The dots a reader can actually see on the symbol headings still on the page.
+// Both halves come off the rendered DOM, so this compares two production
+// surfaces rather than either to a constant.
+const visibleTally = (root: MiniElement, kind: string) =>
+  root
+    .querySelectorAll("h3")
+    .filter((h) => visible(h))
+    .filter((h) =>
+      h.querySelectorAll(`[class*=api-badge-dot--${kind}]`).some((dot) => visible(dot)),
+    ).length;
+
+// The per-window triples the pre-paint script looks pills up in. Hand-written
+// here as *input*: the assertions below hold it against the dots the page
+// actually renders, so a wrong table reds rather than agreeing with itself.
+const tableFor = (ids: readonly string[]): BadgeCountTable => ({
+  demo: {
+    [`${ids[2]}|${ids[0]}`]: [1, 1, 0],
+    [`${ids[1]}|${ids[0]}`]: [1, 0, 0],
+  },
+  other: {
+    [`${ids[2]}|${ids[0]}`]: [2, 1, 0],
+    [`${ids[1]}|${ids[0]}`]: [1, 0, 0],
+  },
+});
+
+const TABLE = tableFor(AXIS);
 
 describe("api page symbol span markers", () => {
   test("every symbol heading carries a presence span, badge or no badge", async () => {
@@ -150,7 +218,7 @@ describe("api page symbol span markers", () => {
 describe("applySinceFilter", () => {
   test("hides an out-of-window symbol and the body that follows it", async () => {
     const root = await renderPage();
-    applySinceFilter(root, MIDDLE, AXIS);
+    applySinceFilter(root, { from: MIDDLE, to: PAGE_TO }, AXIS_CONFIG);
     const retired = headingFor(root, "demo.retired");
     expect(visible(retired)).toBe(false);
     // The body is a sibling, not a wrapper, so an orphaned body is the natural bug.
@@ -160,7 +228,7 @@ describe("applySinceFilter", () => {
 
   test("leaves every in-window symbol and its body visible", async () => {
     const root = await renderPage();
-    applySinceFilter(root, MIDDLE, AXIS);
+    applySinceFilter(root, { from: MIDDLE, to: PAGE_TO }, AXIS_CONFIG);
     for (const name of ["demo.always", "demo.plain", "demo.recent"]) {
       const heading = headingFor(root, name);
       expect(visible(heading)).toBe(true);
@@ -170,7 +238,7 @@ describe("applySinceFilter", () => {
 
   test("hides the overview card that deep-links at a hidden symbol", async () => {
     const root = await renderPage();
-    applySinceFilter(root, MIDDLE, AXIS);
+    applySinceFilter(root, { from: MIDDLE, to: PAGE_TO }, AXIS_CONFIG);
     const retiredId = headingFor(root, "demo.retired")?.getAttribute("id");
     const cards = root.querySelectorAll(".api-overview li");
     const retiredCard = cards.find(
@@ -182,12 +250,12 @@ describe("applySinceFilter", () => {
 
   test("is idempotent, and widening `from` again restores every symbol", async () => {
     const root = await renderPage();
-    applySinceFilter(root, MIDDLE, AXIS);
-    applySinceFilter(root, MIDDLE, AXIS);
+    applySinceFilter(root, { from: MIDDLE, to: PAGE_TO }, AXIS_CONFIG);
+    applySinceFilter(root, { from: MIDDLE, to: PAGE_TO }, AXIS_CONFIG);
     expect(visible(headingFor(root, "demo.retired"))).toBe(false);
     expect(visible(headingFor(root, "demo.always"))).toBe(true);
 
-    applySinceFilter(root, OLDEST, AXIS);
+    applySinceFilter(root, { from: OLDEST, to: PAGE_TO }, AXIS_CONFIG);
     for (const name of ["demo.always", "demo.plain", "demo.recent", "demo.retired"]) {
       const heading = headingFor(root, name);
       expect(visible(heading)).toBe(true);
@@ -198,7 +266,7 @@ describe("applySinceFilter", () => {
 
   test("narrows to a single version without hiding what that version still has", async () => {
     const root = await renderPage();
-    applySinceFilter(root, NEWEST, AXIS);
+    applySinceFilter(root, { from: NEWEST, to: PAGE_TO }, AXIS_CONFIG);
     expect(visible(headingFor(root, "demo.retired"))).toBe(false);
     expect(visible(headingFor(root, "demo.recent"))).toBe(true);
     expect(visible(headingFor(root, "demo.always"))).toBe(true);
@@ -206,30 +274,203 @@ describe("applySinceFilter", () => {
 
   test("an unknown `from` is treated as the full range rather than hiding the page", async () => {
     const root = await renderPage();
-    applySinceFilter(root, "9.9.9", AXIS);
+    applySinceFilter(root, { from: "9.9.9", to: PAGE_TO }, AXIS_CONFIG);
     expect(root.querySelectorAll("h3").every((h) => visible(h))).toBe(true);
   });
 
-  test("the sidebar count pills agree with the symbols still on the page", async () => {
+  test("the table's triple for the active window equals the dots the page shows", async () => {
     const root = await renderPage();
-    // Both sides are read off the same rendered DOM, so this compares two
-    // production surfaces to each other rather than either to a constant.
-    const visibleTally = (kind: string) =>
-      root
-        .querySelectorAll("h3")
-        .filter((h) => visible(h))
-        .filter((h) => h.querySelector(`[class*=api-badge-dot--${kind}]`) !== null).length;
+    const config = configFor(AXIS, TABLE);
+    const agree = () =>
+      expect(pillsFor(root, "demo")).toEqual({
+        new: visibleTally(root, "new"),
+        changed: visibleTally(root, "changed"),
+      });
 
-    expect(pills(root)).toEqual({ new: visibleTally("new"), changed: visibleTally("changed") });
+    applySinceFilter(root, { from: OLDEST, to: PAGE_TO }, config);
+    expect(visibleTally(root, "changed")).toBe(1);
+    agree();
 
-    applySinceFilter(root, MIDDLE, AXIS);
+    applySinceFilter(root, { from: MIDDLE, to: PAGE_TO }, config);
     // The one Changed symbol is the one the window drops, so the pill must fall.
-    expect(visibleTally("changed")).toBe(0);
-    expect(pills(root)).toEqual({ new: visibleTally("new"), changed: visibleTally("changed") });
+    expect(visibleTally(root, "changed")).toBe(0);
+    agree();
 
-    applySinceFilter(root, OLDEST, AXIS);
-    expect(visibleTally("changed")).toBe(1);
-    expect(pills(root)).toEqual({ new: visibleTally("new"), changed: visibleTally("changed") });
+    applySinceFilter(root, { from: OLDEST, to: PAGE_TO }, config);
+    expect(visibleTally(root, "changed")).toBe(1);
+    agree();
+  });
+
+  test("every leaf recounts, not only the one the reader is on", async () => {
+    const root = await renderPage();
+    const config = configFor(AXIS, TABLE);
+
+    applySinceFilter(root, { from: OLDEST, to: PAGE_TO }, config);
+    expect(pillsFor(root, "other")).toEqual({ new: 2, changed: 1 });
+
+    applySinceFilter(root, { from: MIDDLE, to: PAGE_TO }, config);
+    expect(pillsFor(root, "other")).toEqual({ new: 1, changed: 0 });
+  });
+
+  test("a leaf the table has no triple for renders no pills", async () => {
+    const root = await renderPage();
+    applySinceFilter(root, { from: OLDEST, to: PAGE_TO }, configFor(AXIS, TABLE));
+    expect(pillsFor(root, "absent")).toEqual({ new: 0 });
+  });
+
+  test("a window the table omits leaves every leaf pill-less", async () => {
+    const root = await renderPage();
+    // `{NEWEST, NEWEST}` marks nothing anywhere, so the builder omits it entirely.
+    applySinceFilter(root, { from: NEWEST, to: PAGE_TO }, configFor(AXIS, TABLE));
+    expect(pillsFor(root, "demo")).toEqual({ new: 0, changed: 0 });
+    expect(pillsFor(root, "other")).toEqual({ new: 0, changed: 0 });
+  });
+});
+
+describe("data-span-cats", () => {
+  const catsOf = (root: MiniElement, name: string) =>
+    headingFor(root, name)?.querySelector("[data-span-cats]")?.getAttribute("data-span-cats");
+
+  test("one field per axis index, naming the category that `from` would give", async () => {
+    const root = await renderPage();
+    // Field i answers "if the reader set `from` to AXIS[i], what would this
+    // symbol be?" — read against the page's own `to`, the newest here.
+    expect(catsOf(root, "demo.always")).toBe("-|-|-");
+    expect(catsOf(root, "demo.plain")).toBe("-|-|-");
+    expect(catsOf(root, "demo.recent")).toBe("-|N|N");
+    expect(catsOf(root, "demo.retired")).toBe("-|-|C");
+  });
+
+  test("fields newer than the page's `to` are inert", async () => {
+    const root = await renderPage(AXIS, { from: OLDEST, to: MIDDLE });
+    // `from` can never be newer than `to`, so field 0 is unreachable and says so
+    // rather than describing a window the reader cannot select.
+    expect(catsOf(root, "demo.recent")).toBe("-|-|-");
+    expect(catsOf(root, "demo.retired")).toBe("-|-|C");
+    expect(catsOf(root, "demo.always")).toBe("-|-|-");
+  });
+
+  test("the letters agree with the categories the same window renders", async () => {
+    // The oracle is `windowedBadgeCategory` itself, so the marker cannot drift
+    // from the derivation the server dots come from.
+    const root = await renderPage();
+    for (const [name, availableIn] of [
+      ["demo.always", AXIS],
+      ["demo.recent", [NEWEST]],
+      ["demo.retired", [OLDEST]],
+    ] as const) {
+      const expected = AXIS.map((from) => {
+        const c = windowedBadgeCategory(availableIn, undefined, AXIS, { from, to: NEWEST });
+        const letters = `${c.isNew ? "N" : ""}${c.isChanged ? "C" : ""}${c.isDeprecated ? "D" : ""}`;
+        return letters || "-";
+      }).join("|");
+      expect({ name, cats: catsOf(root, name) }).toEqual({ name, cats: expected });
+    }
+  });
+});
+
+describe("dots follow the active `from`", () => {
+  const dotVisible = (root: MiniElement, name: string, kind: string) =>
+    headingFor(root, name)
+      ?.querySelectorAll(`[class*=api-badge-dot--${kind}]`)
+      .some((dot) => visible(dot)) ?? false;
+
+  test("narrowing hides a dot the window no longer justifies, and widening restores it", async () => {
+    const root = await renderPage();
+    const config = configFor(AXIS, TABLE);
+
+    applySinceFilter(root, { from: OLDEST, to: PAGE_TO }, config);
+    expect(dotVisible(root, "demo.recent", "new")).toBe(true);
+
+    // `demo.recent` survives a `from` of NEWEST — it is present in that version —
+    // but inside `{NEWEST, NEWEST}` it did not move, so it must lose its dot
+    // while keeping its row. Hiding rows but leaving stale dots is today's bug.
+    applySinceFilter(root, { from: NEWEST, to: PAGE_TO }, config);
+    expect(visible(headingFor(root, "demo.recent"))).toBe(true);
+    expect(dotVisible(root, "demo.recent", "new")).toBe(false);
+
+    applySinceFilter(root, { from: OLDEST, to: PAGE_TO }, config);
+    expect(dotVisible(root, "demo.recent", "new")).toBe(true);
+  });
+
+  test("the overview card's marker follows its heading", async () => {
+    const root = await renderPage();
+    const config = configFor(AXIS, TABLE);
+    const cardFor = (name: string) => {
+      const id = headingFor(root, name)?.getAttribute("id");
+      return root
+        .querySelectorAll(".api-overview li")
+        .find((li) => li.querySelector("a")?.getAttribute("href") === `#${id}`);
+    };
+    const cardDot = (name: string, kind: string) =>
+      cardFor(name)
+        ?.querySelectorAll(`[class*=api-badge-dot--${kind}]`)
+        .some((dot) => visible(dot)) ?? false;
+
+    applySinceFilter(root, { from: OLDEST, to: PAGE_TO }, config);
+    expect(cardDot("demo.recent", "new")).toBe(true);
+
+    applySinceFilter(root, { from: NEWEST, to: PAGE_TO }, config);
+    expect(cardDot("demo.recent", "new")).toBe(false);
+  });
+});
+
+// A symbol present in the newest and oldest versions but not the middle one.
+// Its full-range span is gapped (Changed), yet inside `{MIDDLE, NEWEST}` it
+// reads as New — so a category the page does not show at its own window still
+// has to be reachable. This is the case that decides what the server must emit.
+describe("a gapped span gains a category the full range does not show", () => {
+  const gappedPage = (): ApiPage => {
+    const page = demoPage();
+    const key = symbolIdentityKey(identity("demo.gapped"));
+    const records = new Map(page.availability?.records ?? []);
+    records.set(key, { identity: identity("demo.gapped"), availableIn: [NEWEST, OLDEST] });
+    return {
+      ...page,
+      module: { ...page.module, functions: [...page.module.functions, fn("demo.gapped")] },
+      availability: {
+        versions: [...AXIS],
+        records,
+        transitions: new Set<string>(),
+      },
+    };
+  };
+
+  const renderGapped = async (): Promise<MiniElement> => {
+    const html = await renderMarkdown(
+      apiPageMarkdown(gappedPage(), (t) => t, {
+        combinedMarkers: true,
+        window: { from: OLDEST, to: NEWEST },
+      }),
+      { highlightSignatureHeadings: true },
+    );
+    return parseHtml(`<main>${html}</main>${sidebarHtml()}`);
+  };
+
+  test("its marker names Changed at the full range and New one step in", async () => {
+    const root = await renderGapped();
+    expect(
+      headingFor(root, "demo.gapped")
+        ?.querySelector("[data-span-cats]")
+        ?.getAttribute("data-span-cats"),
+    ).toBe("-|N|C");
+  });
+
+  test("the New dot is emitted though the page's own window shows Changed", async () => {
+    const root = await renderGapped();
+    const dot = (kind: string) =>
+      headingFor(root, "demo.gapped")
+        ?.querySelectorAll(`[class*=api-badge-dot--${kind}]`)
+        .some((d) => visible(d)) ?? false;
+    const config = configFor(AXIS, TABLE);
+
+    applySinceFilter(root, { from: OLDEST, to: NEWEST }, config);
+    expect({ new: dot("new"), changed: dot("changed") }).toEqual({ new: false, changed: true });
+
+    // The client only toggles display, so the New span must already be in the
+    // markup — a server that emitted only the active category cannot get here.
+    applySinceFilter(root, { from: MIDDLE, to: NEWEST }, config);
+    expect({ new: dot("new"), changed: dot("changed") }).toEqual({ new: true, changed: false });
   });
 });
 
@@ -239,17 +480,16 @@ describe("applySinceFilter", () => {
 // apart again without a red.
 const PREFIXED_AXIS = [NEWEST, MIDDLE, OLDEST].map((v) => `defold-${v}`);
 
-const prefixedConfig = (): ApiSurfaceConfig => ({
-  base: "",
-  versionIds: PREFIXED_AXIS,
-  defaultVersionId: PREFIXED_AXIS[0] as string,
-  namespacesByVersion: Object.fromEntries(PREFIXED_AXIS.map((id) => [id, ["demo"]])),
-});
+const prefixedConfig = (): ApiSurfaceConfig => configFor(PREFIXED_AXIS);
 
 describe("applySinceFilter under the route-id vocabulary", () => {
   test("a prefixed bound hides the out-of-window symbol, its body and its card", async () => {
     const root = await renderPage();
-    applySinceFilter(root, `defold-${MIDDLE}`, PREFIXED_AXIS);
+    applySinceFilter(
+      root,
+      { from: `defold-${MIDDLE}`, to: `defold-${NEWEST}` },
+      configFor(PREFIXED_AXIS),
+    );
 
     const retired = headingFor(root, "demo.retired");
     expect(visible(retired)).toBe(false);
@@ -269,18 +509,19 @@ describe("applySinceFilter under the route-id vocabulary", () => {
     }
   });
 
-  test("the sidebar pills are recounted from the symbols a prefixed bound leaves", async () => {
+  test("the sidebar pills are recounted from the table under a prefixed bound", async () => {
     const root = await renderPage();
-    const visibleTally = (kind: string) =>
-      root
-        .querySelectorAll("h3")
-        .filter((h) => visible(h))
-        .filter((h) => h.querySelector(`[class*=api-badge-dot--${kind}]`) !== null).length;
-
-    applySinceFilter(root, `defold-${MIDDLE}`, PREFIXED_AXIS);
+    applySinceFilter(
+      root,
+      { from: `defold-${MIDDLE}`, to: `defold-${NEWEST}` },
+      configFor(PREFIXED_AXIS, tableFor(PREFIXED_AXIS)),
+    );
     // The one Changed symbol is the one the window drops, so the pill must fall.
-    expect(visibleTally("changed")).toBe(0);
-    expect(pills(root)).toEqual({ new: visibleTally("new"), changed: visibleTally("changed") });
+    expect(visibleTally(root, "changed")).toBe(0);
+    expect(pillsFor(root, "demo")).toEqual({
+      new: visibleTally(root, "new"),
+      changed: visibleTally(root, "changed"),
+    });
   });
 
   test("the bound the production range reader supplies is the one that narrows", async () => {
@@ -297,7 +538,7 @@ describe("applySinceFilter under the route-id vocabulary", () => {
     );
     expect(range.from).toBe(`defold-${MIDDLE}`);
 
-    applySinceFilter(root, range.from, config.versionIds);
+    applySinceFilter(root, range, config);
     expect(visible(headingFor(root, "demo.retired"))).toBe(false);
     expect(visible(headingFor(root, "demo.always"))).toBe(true);
     expect(visible(headingFor(root, "demo.recent"))).toBe(true);
@@ -314,7 +555,7 @@ describe("applySinceFilter under the route-id vocabulary", () => {
         ?.getAttribute("data-span-newest"),
     ).toBe(`defold-${OLDEST}`);
 
-    applySinceFilter(root, MIDDLE, [NEWEST, MIDDLE, OLDEST]);
+    applySinceFilter(root, { from: MIDDLE, to: NEWEST }, configFor([NEWEST, MIDDLE, OLDEST]));
     expect(visible(headingFor(root, "demo.retired"))).toBe(false);
     expect(visible(headingFor(root, "demo.always"))).toBe(true);
     expect(visible(headingFor(root, "demo.recent"))).toBe(true);
@@ -322,7 +563,11 @@ describe("applySinceFilter under the route-id vocabulary", () => {
 
   test("an unknown prefixed `from` still widens to the full range", async () => {
     const root = await renderPage();
-    applySinceFilter(root, "defold-9.9.9", PREFIXED_AXIS);
+    applySinceFilter(
+      root,
+      { from: "defold-9.9.9", to: `defold-${NEWEST}` },
+      configFor(PREFIXED_AXIS),
+    );
     expect(root.querySelectorAll("h3").every((h) => visible(h))).toBe(true);
     expect(root.querySelectorAll(".api-overview li").every((li) => visible(li))).toBe(true);
   });
@@ -338,7 +583,7 @@ describe("pre-paint serialization contract", () => {
     const isolated = new Function(
       `"use strict";return (${String(applySinceFilter)});`,
     )() as typeof applySinceFilter;
-    isolated(root, MIDDLE, AXIS);
+    isolated(root, { from: MIDDLE, to: PAGE_TO }, AXIS_CONFIG);
     expect(visible(headingFor(root, "demo.retired"))).toBe(false);
     expect(visible(headingFor(root, "demo.always"))).toBe(true);
   });

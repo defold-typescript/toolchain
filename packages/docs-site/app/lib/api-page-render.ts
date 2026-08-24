@@ -13,9 +13,13 @@ import {
   availabilityLabels,
   type BadgeCategory,
   badgeCategory,
+  badgeCategoryFromLabel,
+  bareId,
+  type CategoryWindow,
   functionOverviewCards,
   groupFunctionSymbols,
   type LibraryMeta,
+  windowedBadgeCategory,
 } from "./api-surface";
 import { type ApiVersion, versionsWithDiskFixtures } from "./api-surface-loader";
 import type { NamespaceBadgeCounts } from "./combined-surface";
@@ -160,13 +164,56 @@ const BADGE_KINDS: {
 // and the heading slugger drops every `api-badge-dot` span (glyph and all — see
 // `markdown.ts`), so the id and the function-overview anchors keep keying off the
 // bare signature. Returns `""` for a symbol with no category.
-function badgeDots(category: BadgeCategory): string {
-  return BADGE_KINDS.filter((b) => category[b.flag])
-    .map(
-      (b) =>
-        `<span class="api-badge-dot api-badge-dot--${b.kind}" aria-label="${b.label}" title="${b.label}">${b.glyph}</span>`,
-    )
+function badgeDots(active: BadgeCategory, emitted: BadgeCategory = active): string {
+  return BADGE_KINDS.filter((b) => emitted[b.flag])
+    .map((b) => {
+      const hidden = active[b.flag] ? "" : ' style="display:none"';
+      return `<span class="api-badge-dot api-badge-dot--${b.kind}" aria-label="${b.label}" title="${b.label}"${hidden}>${b.glyph}</span>`;
+    })
     .join("");
+}
+
+// The category letters one window would give a symbol, or `-` for none. The
+// per-`from` fields of `data-span-cats` are written in this alphabet and the
+// pre-paint filter reads it back, so it is the client's whole view of the model.
+function categoryLetters(category: BadgeCategory): string {
+  const letters = BADGE_KINDS.filter((b) => category[b.flag])
+    .map((b) => b.glyph)
+    .join("");
+  return letters || "-";
+}
+
+// The category the symbol would carry at each candidate `from` on the axis,
+// index-aligned with `versions` and always read against the page's own `to`. A
+// field newer than `to` would name a window with `from` after `to`, which is not
+// selectable, so it is left inert rather than describing a range the reader
+// cannot reach.
+function spanCategories(
+  availableIn: readonly string[],
+  deprecatedSince: string | undefined,
+  versions: readonly string[],
+  window: CategoryWindow,
+): BadgeCategory[] {
+  const inert = badgeCategoryFromLabel("all", false);
+  const axis = versions.map(bareId);
+  const toIndex = axis.indexOf(bareId(window.to));
+  return versions.map((from, index) =>
+    toIndex >= 0 && index < toIndex
+      ? inert
+      : windowedBadgeCategory(availableIn, deprecatedSince, versions, { from, to: window.to }),
+  );
+}
+
+// Every category any selectable window gives this symbol. The client only ever
+// toggles `style.display`, so a category reachable from some `from` has to be in
+// the markup already — a gapped span reads Changed at the full range and New one
+// step in, and neither may be built in the browser.
+function unionCategory(categories: readonly BadgeCategory[]): BadgeCategory {
+  return {
+    isNew: categories.some((c) => c.isNew),
+    isChanged: categories.some((c) => c.isChanged),
+    isDeprecated: categories.some((c) => c.isDeprecated),
+  };
 }
 
 // The heading marker for an ambient global, reusing the `api-badge-dot` markup
@@ -194,12 +241,17 @@ function upstreamDot(symbol: ApiSymbol): string {
 // the symbols with no availability record at all, which are present across the
 // whole axis — because a symbol the filter cannot read a span for is a symbol it
 // cannot hide.
-function symbolSpanMarker(av: ApiAvailability | undefined, versions: readonly string[]): string {
+function symbolSpanMarker(
+  av: ApiAvailability | undefined,
+  versions: readonly string[],
+  categories: readonly BadgeCategory[],
+): string {
   const present = av?.availableIn?.length ? av.availableIn : versions;
   const newest = present[0];
   const oldest = present[present.length - 1];
   if (!newest || !oldest) return "";
-  return `<span class="api-symbol-span" data-span-oldest="${oldest}" data-span-newest="${newest}" aria-hidden="true"></span>`;
+  const cats = categories.map(categoryLetters).join("|");
+  return `<span class="api-symbol-span" data-span-oldest="${oldest}" data-span-newest="${newest}" data-span-cats="${cats}" aria-hidden="true"></span>`;
 }
 
 const COUNT_KINDS: {
@@ -354,6 +406,7 @@ export function apiPageMarkdown(
     resolveReplacement = () => undefined,
     titleBadges = "",
     combinedMarkers = false,
+    window,
   }: {
     omitHeading?: boolean;
     resolveReplacement?: ReplacementResolver;
@@ -367,8 +420,37 @@ export function apiPageMarkdown(
     // page (`/api/combined` is a redirect stub that renders nothing); exact-version
     // pages keep the textual availability prose with no dots.
     combinedMarkers?: boolean;
+    // The range the category layer answers for. The version route resolves one
+    // from its path and `?since=`; the canonical route passes the full range,
+    // which is the identity case. Omitted is the full range too, so a caller that
+    // does not care about windows renders exactly what it always did.
+    window?: CategoryWindow;
   } = {},
 ): string {
+  // The page's own axis and the range it renders. Omitting `window` is the full
+  // range, so a caller that does not care about windows gets exactly what it did
+  // before the category layer became window-relative.
+  const pageAxis = page.availability?.versions ?? [];
+  const activeWindow: CategoryWindow = window ?? {
+    from: pageAxis[pageAxis.length - 1] ?? "",
+    to: pageAxis[0] ?? "",
+  };
+  // One resolver for both marker sites (symbol heading and function-overview
+  // card) so they cannot answer for different ranges. `emitted` is every category
+  // any selectable `from` reaches; `active` is the one this render shows.
+  const symbolDots = (symbol: ApiSymbol): string => {
+    const availableIn = symbol.availability?.availableIn ?? [];
+    const deprecatedSince = symbol.availability?.deprecatedSince;
+    // `badgeCategory` stays the no-window entry point, so a caller that states no
+    // range keeps the exact answer it had before the layer became window-relative.
+    // `api-page-render.test.ts` holds the two paths to byte-identical output over
+    // the committed corpus.
+    const active = window
+      ? windowedBadgeCategory(availableIn, deprecatedSince, pageAxis, window)
+      : badgeCategory(symbol.availability, pageAxis);
+    const reachable = spanCategories(availableIn, deprecatedSince, pageAxis, activeWindow);
+    return badgeDots(active, unionCategory(reachable));
+  };
   const m = page.module;
   const indexRoute = apiIndexRoute(page.route);
   const symbols = apiModuleSymbols(page, page.translations, page.signatures);
@@ -416,17 +498,27 @@ export function apiPageMarkdown(
       indexRoute,
       symbol.deprecated,
     );
-    const axis = page.availability?.versions ?? [];
     // Only the engine surface is version-tracked, so only it gets a presence
     // span. A `library` symbol is pinned to an upstream commit and a
     // `global-type` / `lua-stdlib` symbol to no version at all; stamping a Defold
     // range on either would state a fact that does not hold for it.
-    const spanTracked = page.category === "engine" && axis.length > 0;
+    const spanTracked = page.category === "engine" && pageAxis.length > 0;
     const dots =
-      (combinedMarkers ? badgeDots(badgeCategory(symbol.availability, axis)) : "") +
+      (combinedMarkers ? symbolDots(symbol) : "") +
       globalDot(symbol) +
       upstreamDot(symbol) +
-      (spanTracked ? symbolSpanMarker(symbol.availability, axis) : "");
+      (spanTracked
+        ? symbolSpanMarker(
+            symbol.availability,
+            pageAxis,
+            spanCategories(
+              symbol.availability?.availableIn ?? [],
+              symbol.availability?.deprecatedSince,
+              pageAxis,
+              activeWindow,
+            ),
+          )
+        : "");
     lines.push(symbolBlock(linkified, badges, dots), "");
   };
   for (const { kind, label } of KIND_SECTIONS) {
@@ -435,10 +527,7 @@ export function apiPageMarkdown(
     // Colon-named handle methods (`file:read`, `client:send`) get their own
     // `<receiver> methods` heading so they read apart from the module table.
     if (kind === "function") {
-      const overviewMarker = combinedMarkers
-        ? (s: ApiSymbol) =>
-            badgeDots(badgeCategory(s.availability, page.availability?.versions ?? []))
-        : undefined;
+      const overviewMarker = combinedMarkers ? symbolDots : undefined;
       for (const fnGroup of groupFunctionSymbols(group)) {
         lines.push(`## ${fnGroup.label}`, "");
         lines.push(functionOverviewCards(fnGroup.symbols, overviewMarker), "");

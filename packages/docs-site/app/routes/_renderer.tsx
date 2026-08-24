@@ -30,7 +30,7 @@ import {
   showApiSurfaceSelector,
 } from "../lib/api-surface-pref";
 import { withBase } from "../lib/base";
-import { namespaceBadgeCounts } from "../lib/combined-surface";
+import { buildBadgeCountTable } from "../lib/combined-surface";
 import { guidePages } from "../lib/content";
 import { faviconLinks } from "../lib/favicon";
 import type { Heading } from "../lib/headings";
@@ -239,16 +239,48 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
   // reached from the selector.
   const allApiPages = canonicalApiPages();
   const toNamespace = (p: (typeof allApiPages)[number]) => ({ label: p.namespace, route: p.route });
-  // Combined per-namespace availability tallies drive the sidebar count pills.
-  // Every window renders the availability layer now, so the pills attach to engine
-  // leaves here and ride every range; the client filter recounts them in place
-  // when `from` narrows.
-  const badgeCountsByNamespace = new Map(
-    combinedSurface().namespaces.map((ns) => [ns.namespace, namespaceBadgeCounts(ns)]),
+  const versions = apiVersions();
+  // Every tracked version — the default included — now owns a prefixed family.
+  const versionIds = versions.map((version) => version.id);
+  const namespacesByVersion = Object.fromEntries(
+    versions.map((version) => [version.id, versionNamespaceAtom(version.id)]),
   );
+
+  // One range-preference config drives the pre-paint redirect (new users default
+  // to the full range ending at the default version; returning users keep their
+  // last window) and the range-aware sidebar rewrite below, so navigating between
+  // API links no longer drops the selected window.
+  const surfaceConfig: ApiSurfaceConfig = {
+    base: withBase("/").replace(/\/$/, ""),
+    versionIds,
+    defaultVersionId: versions.find((version) => version.isDefault)?.id ?? versionIds[0] ?? "",
+    namespacesByVersion,
+    // Every selectable window's tallies, computed once here. The categories are
+    // window-relative and `from` is client-side, so the pre-paint filter looks
+    // its pills up in this table rather than deriving a span in the browser.
+    badgeCounts: buildBadgeCountTable(combinedSurface().namespaces, versionIds),
+  };
+  // The default version's family and the bare canonical route render the same
+  // window, so those pages declare the bare route canonical and the duplicate
+  // never competes with it in search. Every other page is its own content.
+  const canonicalHref = canonicalLinkPath(
+    path,
+    surfaceConfig,
+    versions.find((version) => version.isDefault)?.id,
+  );
+  const search = new URL(c.req.url).search;
+  const activeRange = activeRangeForPath(path, search, surfaceConfig);
+
+  // The sidebar count pills come out of the same per-window table the client
+  // reads, at the range this render is for. Server and browser therefore share
+  // one derivation of the category model, so a pre-paint rewrite can never
+  // disagree with the markup it is rewriting.
+  const activeKey = `${activeRange.from}|${activeRange.to}`;
   const toEngineNamespace = (p: (typeof allApiPages)[number]) => {
-    const counts = badgeCountsByNamespace.get(p.namespace);
-    const badgeHtml = counts ? navNamespaceBadges(counts) : "";
+    const triple = surfaceConfig.badgeCounts[p.namespace]?.[activeKey];
+    const badgeHtml = triple
+      ? navNamespaceBadges({ new: triple[0], changed: triple[1], deprecated: triple[2] })
+      : "";
     return { label: p.namespace, route: p.route, ...(badgeHtml ? { badgeHtml } : {}) };
   };
 
@@ -270,33 +302,6 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
       .map(toEngineNamespace),
     libraries,
   });
-  const versions = apiVersions();
-  // Every tracked version — the default included — now owns a prefixed family.
-  const versionIds = versions.map((version) => version.id);
-  const namespacesByVersion = Object.fromEntries(
-    versions.map((version) => [version.id, versionNamespaceAtom(version.id)]),
-  );
-
-  // One range-preference config drives the pre-paint redirect (new users default
-  // to the full range ending at the default version; returning users keep their
-  // last window) and the range-aware sidebar rewrite below, so navigating between
-  // API links no longer drops the selected window.
-  const surfaceConfig: ApiSurfaceConfig = {
-    base: withBase("/").replace(/\/$/, ""),
-    versionIds,
-    defaultVersionId: versions.find((version) => version.isDefault)?.id ?? versionIds[0] ?? "",
-    namespacesByVersion,
-  };
-  // The default version's family and the bare canonical route render the same
-  // window, so those pages declare the bare route canonical and the duplicate
-  // never competes with it in search. Every other page is its own content.
-  const canonicalHref = canonicalLinkPath(
-    path,
-    surfaceConfig,
-    versions.find((version) => version.isDefault)?.id,
-  );
-  const search = new URL(c.req.url).search;
-  const activeRange = activeRangeForPath(path, search, surfaceConfig);
   const surfaceNav = rewriteApiNavForRange(nav, activeRange, surfaceConfig);
 
   const activeId = activeCategoryId(path, surfaceNav) ?? surfaceNav[0]?.id;
@@ -320,7 +325,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
   // for whatever DOM already exists and again on `DOMContentLoaded` for the body
   // it could not see. A version-independent page therefore keeps the reader's
   // window without briefly showing a wider one.
-  const surfaceInit = `(function(){var K=${surfaceKey},C=${surfaceConfigJson};var readRange=${readStoredRange.toString()};var stored=function(){try{return localStorage.getItem(K);}catch(_){return null;}};try{var f=${resolveApiSurfaceRedirect.toString()};var t=f(location.pathname,location.search,stored(),C,readRange);if(t&&t!==location.pathname+location.search){location.replace(t);return;}}catch(e){}try{document.addEventListener('click',function(e){var el=e.target;while(el&&el.getAttribute){var v=el.getAttribute('data-range-option'),b=el.getAttribute('data-range-bound');if(v!=null&&b!=null){try{var cur=readRange(location.pathname,location.search,stored(),C);var next=b==='from'?[v,cur.to]:[cur.from,v];var i=C.versionIds.indexOf(next[0]),j=C.versionIds.indexOf(next[1]);if(i<j)next=b==='from'?[v,v]:[v,v];localStorage.setItem(K,next[0]+'|'+next[1]);}catch(_){}break;}el=el.parentNode;}},true);}catch(e){}try{var r=${reconcileRangeSelector.toString()};var filter=${applySinceFilter.toString()};var range;try{range=readRange(location.pathname,location.search,stored(),C);}catch(_){return;}var apply=function(){try{r(document,range);}catch(_){}try{filter(document,range.from,C.versionIds);}catch(_){}};apply();if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',apply);}}catch(e){}})();`;
+  const surfaceInit = `(function(){var K=${surfaceKey},C=${surfaceConfigJson};var readRange=${readStoredRange.toString()};var stored=function(){try{return localStorage.getItem(K);}catch(_){return null;}};try{var f=${resolveApiSurfaceRedirect.toString()};var t=f(location.pathname,location.search,stored(),C,readRange);if(t&&t!==location.pathname+location.search){location.replace(t);return;}}catch(e){}try{document.addEventListener('click',function(e){var el=e.target;while(el&&el.getAttribute){var v=el.getAttribute('data-range-option'),b=el.getAttribute('data-range-bound');if(v!=null&&b!=null){try{var cur=readRange(location.pathname,location.search,stored(),C);var next=b==='from'?[v,cur.to]:[cur.from,v];var i=C.versionIds.indexOf(next[0]),j=C.versionIds.indexOf(next[1]);if(i<j)next=b==='from'?[v,v]:[v,v];localStorage.setItem(K,next[0]+'|'+next[1]);}catch(_){}break;}el=el.parentNode;}},true);}catch(e){}try{var r=${reconcileRangeSelector.toString()};var filter=${applySinceFilter.toString()};var range;try{range=readRange(location.pathname,location.search,stored(),C);}catch(_){return;}var apply=function(){try{r(document,range);}catch(_){}try{filter(document,range,C);}catch(_){}};apply();if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',apply);}}catch(e){}})();`;
   const tocHeadings = headings ?? [];
   const showToc = tocHeadings.length > 0;
   const styles = clientStyles();

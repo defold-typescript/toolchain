@@ -15,7 +15,9 @@ import {
   versionsWithDiskFixtures,
 } from "./api-surface-loader";
 import {
+  buildBadgeCountTable,
   buildCombinedSurface,
+  type CombinedNamespace,
   type CombinedVersionSurface,
   combinedAuthoritativeSignatures,
   combinedNamespaceToApiPage,
@@ -23,6 +25,7 @@ import {
   namespaceBadgeCounts,
   type SignaturesArtifact,
 } from "./combined-surface";
+import { type VersionWindow, windowCombinedSurface } from "./version-window";
 
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
 
@@ -590,6 +593,126 @@ describe("namespaceBadgeCounts (committed artifacts)", () => {
 
   test("a namespace with a transitioned symbol (liveupdate) has changed > 0", () => {
     expect(namespaceBadgeCounts(real("liveupdate")).changed).toBeGreaterThan(0);
+  });
+});
+
+describe("namespaceBadgeCounts over a window", () => {
+  const surface = loadCombinedSurface(REAL_TYPES_DIR);
+  const signatures = loadSignaturesArtifact(REAL_TYPES_DIR);
+  const axis = surface.versions;
+  const ZERO = { new: 0, changed: 0, deprecated: 0 };
+  const windows: VersionWindow[] = [];
+  for (let to = 0; to < axis.length; to += 1) {
+    for (let from = to; from < axis.length; from += 1) {
+      windows.push({ from: axis[from] as string, to: axis[to] as string });
+    }
+  }
+
+  test("the committed axis offers more than one window", () => {
+    expect(windows.length).toBeGreaterThan(1);
+  });
+
+  test("the no-window call equals the full-range window", () => {
+    const full = { from: axis[axis.length - 1] as string, to: axis[0] as string };
+    for (const ns of surface.namespaces) {
+      expect(namespaceBadgeCounts(ns, full)).toEqual(namespaceBadgeCounts(ns));
+    }
+  });
+
+  for (const window of windows) {
+    test(`counting the unwindowed surface at ${window.from}..${window.to} equals counting the windowed one`, () => {
+      const windowed = windowCombinedSurface(surface, signatures, window);
+      for (const ns of surface.namespaces) {
+        const projected = windowed.namespaces.find((n) => n.namespace === ns.namespace);
+        expect({
+          namespace: ns.namespace,
+          counts: namespaceBadgeCounts(ns, window),
+        }).toEqual({
+          namespace: ns.namespace,
+          counts: projected ? namespaceBadgeCounts(projected, window) : ZERO,
+        });
+      }
+    });
+  }
+
+  test("a single-version window marks nothing anywhere", () => {
+    for (const version of axis) {
+      for (const ns of surface.namespaces) {
+        expect({
+          namespace: ns.namespace,
+          version,
+          counts: {
+            new: namespaceBadgeCounts(ns, { from: version, to: version }).new,
+            changed: namespaceBadgeCounts(ns, { from: version, to: version }).changed,
+          },
+        }).toEqual({ namespace: ns.namespace, version, counts: { new: 0, changed: 0 } });
+      }
+    }
+  });
+});
+
+describe("buildBadgeCountTable", () => {
+  const surface = loadCombinedSurface(REAL_TYPES_DIR);
+  const ids = surface.versions.map((v) => `defold-${v}`);
+  const table = buildBadgeCountTable(surface.namespaces, ids);
+
+  test("every triple it holds is the tally that window really gives", () => {
+    for (const [namespace, windows] of Object.entries(table)) {
+      const ns = surface.namespaces.find((n) => n.namespace === namespace);
+      expect(ns).toBeDefined();
+      for (const [key, triple] of Object.entries(windows)) {
+        const [from, to] = key.split("|") as [string, string];
+        const counts = namespaceBadgeCounts(ns as CombinedNamespace, { from, to });
+        expect({ namespace, key, triple }).toEqual({
+          namespace,
+          key,
+          triple: [counts.new, counts.changed, counts.deprecated],
+        });
+      }
+    }
+  });
+
+  test("it omits all-zero triples and namespaces with no non-zero window", () => {
+    for (const [namespace, windows] of Object.entries(table)) {
+      expect({ namespace, windows: Object.keys(windows).length }).not.toEqual({
+        namespace,
+        windows: 0,
+      });
+      for (const [key, triple] of Object.entries(windows)) {
+        expect({ namespace, key, zero: triple.every((n) => n === 0) }).toEqual({
+          namespace,
+          key,
+          zero: false,
+        });
+      }
+    }
+  });
+
+  test("it omits nothing that would have shown a pill", () => {
+    // The mirror of the rule above: a silently dropped window is a namespace
+    // whose pills vanish for one range only, which is exactly the class of bug
+    // this table exists to remove.
+    for (const ns of surface.namespaces) {
+      for (let to = 0; to < ids.length; to += 1) {
+        for (let from = to; from < ids.length; from += 1) {
+          const counts = namespaceBadgeCounts(ns, {
+            from: ids[from] as string,
+            to: ids[to] as string,
+          });
+          if (counts.new === 0 && counts.changed === 0 && counts.deprecated === 0) continue;
+          const key = `${ids[from]}|${ids[to]}`;
+          expect({ namespace: ns.namespace, key, triple: table[ns.namespace]?.[key] }).toEqual({
+            namespace: ns.namespace,
+            key,
+            triple: [counts.new, counts.changed, counts.deprecated],
+          });
+        }
+      }
+    }
+  });
+
+  test("the committed corpus actually populates it", () => {
+    expect(Object.keys(table).length).toBeGreaterThan(0);
   });
 });
 
