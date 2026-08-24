@@ -1,9 +1,19 @@
 import { describe, expect, test } from "bun:test";
+import { rmSync } from "node:fs";
 import { join } from "node:path";
 import {
+  HISTORICAL_ONLY_NAMESPACE,
+  makeWindowedTypesDir,
+} from "../app/lib/__fixtures__/windowed-surface";
+import {
+  loadCombinedSurface,
+  loadSignaturesArtifact,
   loadVersionIndependentPages,
   versionsWithDiskFixtures,
 } from "../app/lib/api-surface-loader";
+import type { CombinedSurface } from "../app/lib/combined-surface";
+import { combinedSearchRecords, type SearchRecord } from "../app/lib/search-index";
+import { windowCombinedSurface } from "../app/lib/version-window";
 import { searchIndexOutputs } from "./build-search-index";
 
 const TYPES_DIR = join(import.meta.dir, "..", "..", "types");
@@ -94,5 +104,74 @@ describe("searchIndexOutputs — the window is not an artifact dimension", () =>
         .map((output) => output.file)
         .sort(),
     ).toEqual(expected.sort());
+  });
+});
+
+// The other half of that Non-Goal: a window must not narrow what the canonical
+// artifact *contains* either. The expectation is the production record builder's
+// own output over the full Combined projection — never a transcribed inventory —
+// so the guard tracks whatever the builder emits.
+const serializeRecord = (record: SearchRecord): string =>
+  JSON.stringify([record.route, record.title, record.text]);
+
+function missingCombinedRecords(
+  records: readonly SearchRecord[],
+  combined: CombinedSurface,
+): SearchRecord[] {
+  const present = new Set(records.map(serializeRecord));
+  return combinedSearchRecords(combined).filter((record) => !present.has(serializeRecord(record)));
+}
+
+describe("searchIndexOutputs — the canonical index carries the full-range Combined surface", () => {
+  const outputs = searchIndexOutputs();
+  const canonical = outputs.find((output) => output.file === "search-index.json");
+
+  test("every full-range Combined record appears verbatim in search-index.json", () => {
+    const combined = loadCombinedSurface(TYPES_DIR);
+    // Non-vacuity: the production builder really does produce engine records here.
+    expect(combinedSearchRecords(combined).length).toBeGreaterThan(0);
+    expect(missingCombinedRecords(canonical?.records ?? [], combined)).toEqual([]);
+  });
+
+  test("a canonical index narrowed to the newest version reds while its filenames stay identical", () => {
+    const combined = loadCombinedSurface(TYPES_DIR);
+    const newest = combined.versions[0] as string;
+    const narrowedEngine = combinedSearchRecords(
+      windowCombinedSurface(combined, loadSignaturesArtifact(TYPES_DIR), {
+        from: newest,
+        to: newest,
+      }),
+    );
+    const fullEngine = new Set(combinedSearchRecords(combined).map(serializeRecord));
+    const narrowedRecords = [
+      ...(canonical?.records ?? []).filter((record) => !fullEngine.has(serializeRecord(record))),
+      ...narrowedEngine,
+    ];
+    const mutated = outputs.map((output) =>
+      output.file === "search-index.json"
+        ? { file: output.file, records: narrowedRecords }
+        : output,
+    );
+
+    // The emitted filename list is identical — exactly what the shipped
+    // cardinality guard sees, and exactly why it stays green on this mutation.
+    expect(mutated.map((output) => output.file)).toEqual(outputs.map((output) => output.file));
+    expect(missingCombinedRecords(narrowedRecords, combined).length).toBeGreaterThan(0);
+  });
+
+  test("the canonical index keeps a namespace that exists at the oldest version alone", () => {
+    const dir = makeWindowedTypesDir();
+    try {
+      const fixtureCanonical = searchIndexOutputs({ typesDir: dir }).find(
+        (output) => output.file === "search-index.json",
+      );
+      const routes = new Set(fixtureCanonical?.records.map((record) => record.route));
+      expect(routes.has(`/api/${HISTORICAL_ONLY_NAMESPACE}`)).toBe(true);
+      expect(
+        missingCombinedRecords(fixtureCanonical?.records ?? [], loadCombinedSurface(dir)),
+      ).toEqual([]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
