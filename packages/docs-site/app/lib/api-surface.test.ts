@@ -25,6 +25,7 @@ import {
   groupFunctionSymbols,
   mapDocType,
   outerCallArity,
+  windowedBadgeCategory,
 } from "./api-surface";
 import {
   libraryModuleDirs,
@@ -3034,6 +3035,172 @@ describe("badgeCategory", () => {
       isNew: false,
       isChanged: false,
       isDeprecated: false,
+    });
+  });
+});
+
+describe("windowedBadgeCategory", () => {
+  const V3 = ["1.14.0", "1.13.0", "1.12.4"];
+  const cat = (isNew: boolean, isChanged: boolean, isDeprecated = false) => ({
+    isNew,
+    isChanged,
+    isDeprecated,
+  });
+
+  describe("span categories inside the window", () => {
+    const window = { from: "1.13.0", to: "1.14.0" };
+
+    test("a span covering the whole window carries no category", () => {
+      expect(windowedBadgeCategory(["1.14.0", "1.13.0"], undefined, V3, window)).toEqual(
+        cat(false, false),
+      );
+    });
+
+    test("a span reaching `to` but not `from` is New", () => {
+      expect(windowedBadgeCategory(["1.14.0"], undefined, V3, window)).toEqual(cat(true, false));
+    });
+
+    test("a span reaching `from` but not `to` is Changed", () => {
+      expect(windowedBadgeCategory(["1.13.0", "1.12.4"], undefined, V3, window)).toEqual(
+        cat(false, true),
+      );
+    });
+
+    test("a symbol absent from the window carries no category", () => {
+      expect(windowedBadgeCategory(["1.12.4"], undefined, V3, window)).toEqual(cat(false, false));
+    });
+
+    test("an absent symbol stays uncategorized even when deprecated", () => {
+      expect(windowedBadgeCategory(["1.12.4"], "1.12.4", V3, window)).toEqual(cat(false, false));
+    });
+  });
+
+  describe("interior and gapped spans inside a wider window", () => {
+    const V4 = ["1.15.0", "1.14.0", "1.13.0", "1.12.4"];
+    const window = { from: "1.13.0", to: "1.15.0" };
+
+    test("an interior span is Changed", () => {
+      expect(windowedBadgeCategory(["1.14.0"], undefined, V4, window)).toEqual(cat(false, true));
+    });
+
+    test("a gapped span is Changed", () => {
+      expect(windowedBadgeCategory(["1.15.0", "1.13.0"], undefined, V4, window)).toEqual(
+        cat(false, true),
+      );
+    });
+  });
+
+  describe("the full-range window reproduces badgeCategory", () => {
+    const full = { from: "1.12.4", to: "1.14.0" };
+    const identity = { namespace: "m", kind: "FUNCTION", name: "m.f", signature: "" };
+    const spans: { readonly availableIn: string[]; readonly deprecatedSince?: string }[] = [
+      { availableIn: V3 },
+      { availableIn: ["1.14.0"] },
+      { availableIn: ["1.14.0", "1.13.0"] },
+      { availableIn: ["1.13.0"] },
+      { availableIn: ["1.13.0", "1.12.4"] },
+      { availableIn: ["1.12.4"] },
+      { availableIn: ["1.14.0", "1.12.4"] },
+      { availableIn: V3, deprecatedSince: "1.12.4" },
+      { availableIn: ["1.13.0"], deprecatedSince: "1.13.0" },
+    ];
+
+    for (const span of spans) {
+      const name = `${span.availableIn.join("+")}${span.deprecatedSince ? ` dep@${span.deprecatedSince}` : ""}`;
+      test(`agrees for ${name}`, () => {
+        const av: ApiAvailability =
+          span.deprecatedSince === undefined
+            ? { identity, availableIn: span.availableIn }
+            : {
+                identity,
+                availableIn: span.availableIn,
+                deprecatedSince: span.deprecatedSince,
+              };
+        expect(windowedBadgeCategory(span.availableIn, span.deprecatedSince, V3, full)).toEqual(
+          badgeCategory(av, V3),
+        );
+      });
+    }
+  });
+
+  describe("deprecation is bounded by `to`", () => {
+    const window = { from: "1.12.4", to: "1.13.0" };
+
+    test("a deprecation newer than `to` does not mark the symbol", () => {
+      expect(windowedBadgeCategory(["1.13.0", "1.12.4"], "1.14.0", V3, window).isDeprecated).toBe(
+        false,
+      );
+    });
+
+    test("a deprecation at `to` marks the symbol", () => {
+      expect(windowedBadgeCategory(["1.13.0", "1.12.4"], "1.13.0", V3, window).isDeprecated).toBe(
+        true,
+      );
+    });
+
+    test("a deprecation older than `to` marks the symbol", () => {
+      expect(windowedBadgeCategory(["1.13.0", "1.12.4"], "1.12.4", V3, window).isDeprecated).toBe(
+        true,
+      );
+    });
+
+    test("a deprecation absent from the axis stays Deprecated", () => {
+      expect(windowedBadgeCategory(["1.13.0", "1.12.4"], "0.9.0", V3, window).isDeprecated).toBe(
+        true,
+      );
+    });
+  });
+
+  describe("unresolvable bounds widen to the full axis", () => {
+    const full = { from: "1.12.4", to: "1.14.0" };
+    const widened = windowedBadgeCategory(["1.14.0"], undefined, V3, full);
+
+    test("an untracked `from` widens rather than emptying the slice", () => {
+      expect(
+        windowedBadgeCategory(["1.14.0"], undefined, V3, { from: "9.9.9", to: "1.14.0" }),
+      ).toEqual(widened);
+    });
+
+    test("an untracked `to` widens rather than emptying the slice", () => {
+      expect(
+        windowedBadgeCategory(["1.14.0"], undefined, V3, { from: "1.13.0", to: "9.9.9" }),
+      ).toEqual(widened);
+    });
+
+    test("an inverted window widens rather than emptying the slice", () => {
+      expect(
+        windowedBadgeCategory(["1.14.0"], undefined, V3, { from: "1.14.0", to: "1.12.4" }),
+      ).toEqual(widened);
+    });
+  });
+
+  describe("either vocabulary is accepted on either side", () => {
+    test("route-id bounds match bare-semver bounds", () => {
+      const bare = windowedBadgeCategory(["1.14.0"], undefined, V3, {
+        from: "1.13.0",
+        to: "1.14.0",
+      });
+      expect(
+        windowedBadgeCategory(["1.14.0"], undefined, V3, {
+          from: "defold-1.13.0",
+          to: "defold-1.14.0",
+        }),
+      ).toEqual(bare);
+    });
+
+    test("a route-id axis matches a bare-semver axis", () => {
+      const bare = windowedBadgeCategory(["1.14.0"], undefined, V3, {
+        from: "1.13.0",
+        to: "1.14.0",
+      });
+      expect(
+        windowedBadgeCategory(
+          ["defold-1.14.0"],
+          undefined,
+          V3.map((v) => `defold-${v}`),
+          { from: "1.13.0", to: "1.14.0" },
+        ),
+      ).toEqual(bare);
     });
   });
 });

@@ -11,7 +11,13 @@ import {
   symbolIdentityKey,
   symbolNameKey,
 } from "@defold-typescript/types";
-import { type ApiPage, type AvailabilityLookup, badgeCategoryFromLabel } from "./api-surface";
+import {
+  type ApiPage,
+  type AvailabilityLookup,
+  type CategoryWindow,
+  windowedBadgeCategory,
+} from "./api-surface";
+import type { BadgeCountTable } from "./api-surface-pref";
 import type { VersionWindow } from "./version-window";
 
 type ApiConstant = ApiModule["constants"][number];
@@ -255,21 +261,80 @@ export interface NamespaceBadgeCounts {
 /**
  * Tally the color-badge categories over a Combined namespace's entries: each
  * entry adds to every category it carries (a changed-and-deprecated symbol bumps
- * both). Derives from the entry's already-computed `label.kind` + `deprecatedSince`
- * via the shared {@link badgeCategoryFromLabel}, so the title pills and the
- * per-symbol dots can never disagree.
+ * both). Derives from each entry's `availableIn` + `deprecatedSince` through the
+ * shared {@link windowedBadgeCategory}, so the title pills, the sidebar pills and
+ * the per-symbol dots can never disagree.
+ *
+ * `window` scopes the categories to a selected range; omitting it measures the
+ * full tracked axis, which is what the entry's precomputed absolute `label`
+ * describes. The entry's `label` is deliberately not consulted: it is the
+ * absolute prose the pages still render, and it cannot answer for a narrower
+ * range. Counting an **unwindowed** namespace at a window equals counting the
+ * windowed projection at the same window, because an entry the window excludes
+ * carries no category either way — which is what lets the renderer tally every
+ * range off one surface.
  */
-export function namespaceBadgeCounts(ns: CombinedNamespace): NamespaceBadgeCounts {
+export function namespaceBadgeCounts(
+  ns: CombinedNamespace,
+  window?: CategoryWindow,
+): NamespaceBadgeCounts {
+  const versions = ns.availability.versions;
+  const scope = window ?? {
+    from: versions[versions.length - 1] ?? "",
+    to: versions[0] ?? "",
+  };
   let isNew = 0;
   let changed = 0;
   let deprecated = 0;
   for (const entry of ns.entries) {
-    const category = badgeCategoryFromLabel(entry.label.kind, entry.deprecatedSince !== undefined);
+    const category = windowedBadgeCategory(
+      entry.availableIn,
+      entry.deprecatedSince,
+      versions,
+      scope,
+    );
     if (category.isNew) isNew += 1;
     if (category.isChanged) changed += 1;
     if (category.isDeprecated) deprecated += 1;
   }
   return { new: isNew, changed, deprecated };
+}
+
+/**
+ * Every namespace's badge tallies at every window a reader can select, in the
+ * order {@link BadgeCountTable} documents. `versionIds` is the tracked axis
+ * newest-first in whichever vocabulary the caller uses; the keys come back in
+ * that same vocabulary, so the pre-paint script can index it with the range it
+ * already holds.
+ *
+ * The tally is taken over the *unwindowed* namespaces: an entry the window
+ * excludes carries no category, so counting the full surface at a window equals
+ * counting that window's projection, and no second surface is projected here.
+ */
+export function buildBadgeCountTable(
+  namespaces: readonly CombinedNamespace[],
+  versionIds: readonly string[],
+): BadgeCountTable {
+  const table: Record<string, Record<string, readonly [number, number, number]>> = {};
+  for (const ns of namespaces) {
+    const windows: Record<string, readonly [number, number, number]> = {};
+    for (let to = 0; to < versionIds.length; to += 1) {
+      for (let from = to; from < versionIds.length; from += 1) {
+        const counts = namespaceBadgeCounts(ns, {
+          from: versionIds[from] as string,
+          to: versionIds[to] as string,
+        });
+        if (counts.new === 0 && counts.changed === 0 && counts.deprecated === 0) continue;
+        windows[`${versionIds[from]}|${versionIds[to]}`] = [
+          counts.new,
+          counts.changed,
+          counts.deprecated,
+        ];
+      }
+    }
+    if (Object.keys(windows).length > 0) table[ns.namespace] = windows;
+  }
+  return table;
 }
 
 /**

@@ -141,6 +141,70 @@ export function badgeCategory(
   );
 }
 
+/**
+ * The inclusive `[from, to]` range a category is measured against. Structurally
+ * identical to {@link version-window!VersionWindow}, restated here because
+ * `version-window` imports `combined-surface`, which imports this module — an
+ * import in the other direction would close that cycle.
+ */
+export interface CategoryWindow {
+  readonly from: string;
+  readonly to: string;
+}
+
+/**
+ * Strip a route id's `defold-` prefix, passing bare semver through. The route
+ * vocabulary is prefixed and the projection axis is not, so every string entering
+ * a windowed derivation is normalized through this and either form works on
+ * either side.
+ */
+export function bareId(id: string): string {
+  return id.replace(/^defold-/, "");
+}
+
+/**
+ * Categorize a symbol for the color-badge layer **relative to the selected
+ * window** rather than the whole tracked axis: the span is measured against the
+ * inclusive `[from, to]` slice, so covering the window is no category, reaching
+ * `to` but not `from` is New, and every other in-window shape is Changed. A
+ * window whose bounds are untracked or inverted is a hand-edited URL rather than
+ * a real narrowing, so it widens to the full axis — the identity case, which is
+ * why the canonical route's output cannot move.
+ *
+ * A symbol the window does not contain carries **no** category. Without that
+ * guard it would reach {@link availabilityLabel} with no in-slice presence and
+ * come back as the `(none)` `discrete` label, scoring Changed for a range it is
+ * absent from. At the full range this guard can only fire for an `availableIn`
+ * naming no tracked version at all, which the Combined projection never builds.
+ *
+ * Deprecation is bounded by `to` on the same terms: a deprecation that lands
+ * after the window's target has not happened yet from the reader's position. A
+ * `deprecatedSince` that names no tracked version is a curated fact about a
+ * release outside the axis, so it keeps marking the symbol.
+ */
+export function windowedBadgeCategory(
+  availableIn: readonly string[],
+  deprecatedSince: string | undefined,
+  versions: readonly string[],
+  window: CategoryWindow,
+): BadgeCategory {
+  const axis = versions.map(bareId);
+  const newestIndex = axis.indexOf(bareId(window.to));
+  const oldestIndex = axis.indexOf(bareId(window.from));
+  const unresolvable = newestIndex === -1 || oldestIndex === -1 || newestIndex > oldestIndex;
+  const slice = unresolvable ? axis : axis.slice(newestIndex, oldestIndex + 1);
+  const present = availableIn.map(bareId).filter((version) => slice.includes(version));
+  if (present.length === 0) return badgeCategoryFromLabel("all", false);
+
+  const deprecated = deprecatedSince === undefined ? false : bareId(deprecatedSince);
+  const deprecatedIndex = deprecated === false ? -1 : axis.indexOf(deprecated);
+  const toIndex = unresolvable ? 0 : newestIndex;
+  const isDeprecated =
+    deprecated !== false && (deprecatedIndex === -1 || deprecatedIndex >= toIndex);
+
+  return badgeCategoryFromLabel(availabilityLabel(present, slice).kind, isDeprecated);
+}
+
 // Flat prose form for the search index: the badge labels plus the replacement's
 // plain name, so a reader searching "available through" or a replacement symbol
 // finds the historical page. Empty when the record carries no renderable fact.

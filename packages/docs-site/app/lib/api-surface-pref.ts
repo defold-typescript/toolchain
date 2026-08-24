@@ -36,7 +36,23 @@ export interface ApiSurfaceConfig {
   readonly versionIds: readonly string[];
   readonly defaultVersionId: string;
   readonly namespacesByVersion: Record<string, readonly string[]>;
+  readonly badgeCounts: BadgeCountTable;
 }
+
+/**
+ * Per-namespace availability tallies for every selectable window, keyed
+ * `namespace -> "<fromId>|<toId>" -> [new, changed, deprecated]` in the *route*
+ * vocabulary. The categories are window-relative, so the sidebar pills cannot be
+ * derived from one server-side tally; and `from` is client-side, so they cannot
+ * be routed either. The server therefore computes every window once and the
+ * pre-paint script *looks the triple up* — the browser never re-derives a span,
+ * which is what keeps one implementation of the category model.
+ *
+ * An all-zero triple is omitted, and a namespace with no non-zero window is
+ * omitted entirely: a missing entry means "no pills", which is the same thing the
+ * server renders for it.
+ */
+export type BadgeCountTable = Record<string, Record<string, readonly [number, number, number]>>;
 
 /**
  * The version range a page should show: the URL when it states one, else the
