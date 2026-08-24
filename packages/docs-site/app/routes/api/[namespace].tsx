@@ -5,16 +5,14 @@
 import { ssgParams } from "hono/ssg";
 import { createRoute } from "honox/factory";
 import { ApiIndex, LibraryPath } from "../../components/api-index";
-import { withGlobalTypes } from "../../components/api-index-sections";
 import {
   apiNamespaceOwner,
-  apiPagesForVersion,
   apiVersions,
   canonicalApiPages,
   canonicalNamespaces,
   combinedSurface,
-  defaultGlobalTypePages,
   libraryOrigins,
+  versionIndexPages,
 } from "../../lib/api-content";
 import {
   apiLinkify,
@@ -76,18 +74,13 @@ export default createRoute(
     }
 
     // A known version id (the default included now that it owns an explicit
-    // `/api/<default>` family) renders that version's exact-version index; its
-    // version-independent entries link back to their canonical routes.
+    // `/api/<default>` family) renders that version's index — the window ending
+    // at it, so the index lists everything its `/api/<version>/<ns>` family
+    // routes; its version-independent entries link back to their canonical routes.
     if (isKnownVersionId(param, apiVersions())) {
-      return c.render(
-        <ApiIndex
-          pages={withGlobalTypes(apiPagesForVersion(param), defaultGlobalTypePages())}
-          version={param}
-        />,
-        {
-          title: `API reference (${param})`,
-        },
-      );
+      return c.render(<ApiIndex pages={versionIndexPages(param)} version={param} />, {
+        title: `API reference (${param})`,
+      });
     }
 
     // Otherwise a canonical namespace: dispatch on its owning surface. An unknown

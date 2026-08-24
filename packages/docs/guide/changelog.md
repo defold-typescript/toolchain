@@ -18,7 +18,10 @@ changes are called out first because the toolchain is pre-1.0.
 
 ### Improved
 
-- **The [API reference](/api) can be read over a range of Defold releases, not just one.** Paired `From`/`To` dropdowns pick the range and the page then covers every symbol that existed anywhere in it, each carrying the newest signature declared inside the range — or, where the range declares none, the signature the symbol was built with, so a deprecated symbol keeps its full declaration rather than a weaker one — plus an availability note naming the real release; the index now states which releases are tracked and that an unmarked symbol is older than all of them. See [Reading the API reference over a range](./upgrading-defold-versions.md#reading-the-api-reference-over-a-range).
+- **The [API reference](/api) can be read over a range of Defold releases, not just one.** Paired `From`/`To` dropdowns pick the range, and every page and index then covers it whole. See [Reading the API reference over a range](./upgrading-defold-versions.md#reading-the-api-reference-over-a-range).
+  - **Symbols** — a page covers every symbol that existed anywhere in the range, with an availability note naming the release that actually added or removed it.
+  - **Signatures** — a symbol shows the newest declaration made inside the range, or the one it was built with when the range declares none, so a deprecated symbol keeps its full declaration rather than a weaker one.
+  - **Indexes** — a version index now lists everything that version's pages cover, including namespaces removed in an earlier release and the Lua standard library, so it matches [`/api`](/api); both state which releases are tracked and that an unmarked symbol is older than all of them.
 
 ## v0.27.0
 

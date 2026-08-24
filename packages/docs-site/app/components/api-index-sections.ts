@@ -37,13 +37,6 @@ export function groupApiIndexPages(pages: ApiPage[]): ApiIndexSections {
   };
 }
 
-// Global types are version-independent and kept off `apiPagesForVersion` for
-// routing/search, so the version index re-adds them here for display only.
-export function withGlobalTypes(versionPages: ApiPage[], globalTypePages: ApiPage[]): ApiPage[] {
-  const present = new Set(versionPages.map((p) => p.namespace));
-  return [...versionPages, ...globalTypePages.filter((p) => !present.has(p.namespace))];
-}
-
 // The Combined `/api` index card badge for one page: the `namespaceCountBadges`
 // pill HTML when the page is an engine namespace with a non-zero availability
 // tally, else `""`. Badges are Combined-only and engine-only — version-independent
