@@ -3,6 +3,7 @@ import { normalizedFunctionSignature, symbolIdentityKey } from "@defold-typescri
 import { type MiniElement, parseHtml } from "./__fixtures__/mini-dom";
 import { apiPageMarkdown, navNamespaceBadges } from "./api-page-render";
 import type { ApiPage, AvailabilityLookup } from "./api-surface";
+import { type ApiSurfaceConfig, readStoredRange } from "./api-surface-pref";
 import { renderMarkdown } from "./markdown";
 import { applySinceFilter } from "./since-filter";
 
@@ -34,23 +35,27 @@ const identity = (name: string) => ({
 // excludes it while every other symbol survives. `demo.plain` carries no
 // availability record at all — the case a filter keyed off badges alone would
 // silently make unfilterable.
-function availability(): AvailabilityLookup {
+// The axis is a parameter because the vocabulary the spans are written in is the
+// thing under test: rendering the same page against the prefixed axis emits
+// prefixed `data-span-newest` markers, with the badge dots unchanged.
+function availability(axis: readonly string[] = AXIS): AvailabilityLookup {
+  const newest = axis[0] as string;
+  const oldest = axis[axis.length - 1] as string;
+  const spans: readonly (readonly [string, readonly string[]])[] = [
+    ["demo.always", axis],
+    ["demo.retired", [oldest]],
+    ["demo.recent", [newest]],
+  ];
   const records = new Map(
-    (
-      [
-        ["demo.always", AXIS],
-        ["demo.retired", [OLDEST]],
-        ["demo.recent", [NEWEST]],
-      ] as const
-    ).map(([name, availableIn]) => [
+    spans.map(([name, availableIn]) => [
       symbolIdentityKey(identity(name)),
       { identity: identity(name), availableIn: [...availableIn] },
     ]),
   );
-  return { versions: AXIS, records, transitions: new Set<string>() };
+  return { versions: [...axis], records, transitions: new Set<string>() };
 }
 
-function demoPage(): ApiPage {
+function demoPage(axis: readonly string[] = AXIS): ApiPage {
   return {
     namespace: "demo",
     route: "/api/defold-3.0.0/demo",
@@ -68,7 +73,7 @@ function demoPage(): ApiPage {
     translations: {},
     signatures: {},
     category: "engine",
-    availability: availability(),
+    availability: availability(axis),
   };
 }
 
@@ -85,9 +90,9 @@ function sidebarHtml(): string {
   })}</a>`;
 }
 
-async function renderPage(): Promise<MiniElement> {
+async function renderPage(axis: readonly string[] = AXIS): Promise<MiniElement> {
   const html = await renderMarkdown(
-    apiPageMarkdown(demoPage(), (t) => t, { combinedMarkers: true }),
+    apiPageMarkdown(demoPage(axis), (t) => t, { combinedMarkers: true }),
     {
       highlightSignatureHeadings: true,
     },
@@ -225,6 +230,101 @@ describe("applySinceFilter", () => {
     applySinceFilter(root, OLDEST, AXIS);
     expect(visibleTally("changed")).toBe(1);
     expect(pills(root)).toEqual({ new: visibleTally("new"), changed: visibleTally("changed") });
+  });
+});
+
+// The renderer hands the filter route ids on both arguments — `range.from` and
+// `C.versionIds` are `defold-`-prefixed — while the page's span markers carry bare
+// semver. These drive the filter in that vocabulary, so the pair can never drift
+// apart again without a red.
+const PREFIXED_AXIS = [NEWEST, MIDDLE, OLDEST].map((v) => `defold-${v}`);
+
+const prefixedConfig = (): ApiSurfaceConfig => ({
+  base: "",
+  versionIds: PREFIXED_AXIS,
+  defaultVersionId: PREFIXED_AXIS[0] as string,
+  namespacesByVersion: Object.fromEntries(PREFIXED_AXIS.map((id) => [id, ["demo"]])),
+});
+
+describe("applySinceFilter under the route-id vocabulary", () => {
+  test("a prefixed bound hides the out-of-window symbol, its body and its card", async () => {
+    const root = await renderPage();
+    applySinceFilter(root, `defold-${MIDDLE}`, PREFIXED_AXIS);
+
+    const retired = headingFor(root, "demo.retired");
+    expect(visible(retired)).toBe(false);
+    expect(bodyAfter(retired)?.className).toContain("api-symbol-body");
+    expect(visible(bodyAfter(retired))).toBe(false);
+
+    const cards = root.querySelectorAll(".api-overview li");
+    const retiredCard = cards.find(
+      (li) => li.querySelector("a")?.getAttribute("href") === `#${retired?.getAttribute("id")}`,
+    );
+    expect(visible(retiredCard)).toBe(false);
+
+    for (const name of ["demo.always", "demo.plain", "demo.recent"]) {
+      const heading = headingFor(root, name);
+      expect(visible(heading)).toBe(true);
+      expect(visible(bodyAfter(heading))).toBe(true);
+    }
+  });
+
+  test("the sidebar pills are recounted from the symbols a prefixed bound leaves", async () => {
+    const root = await renderPage();
+    const visibleTally = (kind: string) =>
+      root
+        .querySelectorAll("h3")
+        .filter((h) => visible(h))
+        .filter((h) => h.querySelector(`[class*=api-badge-dot--${kind}]`) !== null).length;
+
+    applySinceFilter(root, `defold-${MIDDLE}`, PREFIXED_AXIS);
+    // The one Changed symbol is the one the window drops, so the pill must fall.
+    expect(visibleTally("changed")).toBe(0);
+    expect(pills(root)).toEqual({ new: visibleTally("new"), changed: visibleTally("changed") });
+  });
+
+  test("the bound the production range reader supplies is the one that narrows", async () => {
+    const root = await renderPage();
+    const config = prefixedConfig();
+    // `_renderer.tsx` filters with `readStoredRange(...).from` and `C.versionIds`;
+    // joining the two production surfaces here is that call with the `.toString()`
+    // serialization removed, so neither side is a transcribed constant.
+    const range = readStoredRange(
+      `/api/defold-${MIDDLE}/demo`,
+      `?since=defold-${MIDDLE}`,
+      null,
+      config,
+    );
+    expect(range.from).toBe(`defold-${MIDDLE}`);
+
+    applySinceFilter(root, range.from, config.versionIds);
+    expect(visible(headingFor(root, "demo.retired"))).toBe(false);
+    expect(visible(headingFor(root, "demo.always"))).toBe(true);
+    expect(visible(headingFor(root, "demo.recent"))).toBe(true);
+  });
+
+  test("a bare bound filters a page whose spans were written in the prefixed vocabulary", async () => {
+    // The mirror of the case above: the markers carry route ids and the bound is
+    // bare, so the marker side of the normalization is the only thing that can
+    // resolve them. `apiPageMarkdown` writes the spans, so neither axis is transcribed.
+    const root = await renderPage(PREFIXED_AXIS);
+    expect(
+      headingFor(root, "demo.retired")
+        ?.querySelector("[data-span-newest]")
+        ?.getAttribute("data-span-newest"),
+    ).toBe(`defold-${OLDEST}`);
+
+    applySinceFilter(root, MIDDLE, [NEWEST, MIDDLE, OLDEST]);
+    expect(visible(headingFor(root, "demo.retired"))).toBe(false);
+    expect(visible(headingFor(root, "demo.always"))).toBe(true);
+    expect(visible(headingFor(root, "demo.recent"))).toBe(true);
+  });
+
+  test("an unknown prefixed `from` still widens to the full range", async () => {
+    const root = await renderPage();
+    applySinceFilter(root, "defold-9.9.9", PREFIXED_AXIS);
+    expect(root.querySelectorAll("h3").every((h) => visible(h))).toBe(true);
+    expect(root.querySelectorAll(".api-overview li").every((li) => visible(li))).toBe(true);
   });
 });
 
