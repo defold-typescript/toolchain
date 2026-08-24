@@ -17,7 +17,7 @@ import {
   type SignaturesArtifact,
 } from "./combined-surface";
 import type { LibraryOrigin } from "./nav";
-import { type VersionWindow, windowCombinedSurface } from "./version-window";
+import { resolveVersionWindow, type VersionWindow, windowCombinedSurface } from "./version-window";
 
 export const TYPES_DIR = join(process.cwd(), "../types");
 export const LIBRARY_TYPES_DIR = join(process.cwd(), "../library-types");
@@ -35,10 +35,6 @@ export function apiVersions(): ApiVersion[] {
 
 export function apiPagesForVersion(versionId: string): ApiPage[] {
   return loadApiSurfaceForVersion(TYPES_DIR, versionId);
-}
-
-export function defaultGlobalTypePages(): ApiPage[] {
-  return apiPages().filter((p) => p.category === "global-type");
 }
 
 // The union "Combined" projection across every materialized version's engine
@@ -148,6 +144,41 @@ export function versionIndependentPages(
   libraryTypesDir: string = LIBRARY_TYPES_DIR,
 ): ApiPage[] {
   return loadVersionIndependentPages(typesDir, libraryTypesDir);
+}
+
+// Merge the version-independent pages into a version's engine pages, keeping the
+// engine page when both claim a namespace so the index never renders a card
+// twice. Order is preserved: the version's own pages first, the shared ones after.
+export function withVersionIndependentPages(
+  versionPages: ApiPage[],
+  independentPages: ApiPage[],
+): ApiPage[] {
+  const present = new Set(versionPages.map((p) => p.namespace));
+  return [...versionPages, ...independentPages.filter((p) => !present.has(p.namespace))];
+}
+
+// The `/api/<version>` index surface: the engine namespaces of the window
+// `{oldest, to: version}` — exactly the family `/api/<version>/<ns>` routes —
+// unioned with the version-independent pages the canonical `/api` index carries,
+// under the identical library filter. Sourcing the index from the window rather
+// than from the version's own surface is what makes a namespace removed before
+// this version reachable from it; unioning the same set `/api` does is what makes
+// the default version's `rel="canonical"` to `/api` true by construction. An
+// unresolvable version yields no window and no pages — the route's
+// `isKnownVersionId` guard already rejects an unknown param.
+export function versionIndexPages(
+  versionId: string,
+  typesDir?: string,
+  libraryTypesDir: string = LIBRARY_TYPES_DIR,
+): ApiPage[] {
+  const window = resolveVersionWindow(apiVersionAxis(typesDir), versionId, null);
+  if (!window) return [];
+  return withVersionIndependentPages(
+    windowedApiPages(window, typesDir),
+    versionIndependentPages(typesDir ?? TYPES_DIR, libraryTypesDir).filter(
+      (page) => page.category !== "library",
+    ),
+  );
 }
 
 // Which surface owns a canonical namespace: a Combined engine namespace, or a
