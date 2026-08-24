@@ -1,7 +1,12 @@
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { type ApiModule, parseDefoldApiDoc, symbolIdentityKey } from "@defold-typescript/types";
+import {
+  type ApiFunction,
+  type ApiModule,
+  parseDefoldApiDoc,
+  symbolIdentityKey,
+} from "@defold-typescript/types";
 import { funcIdentity } from "../combined-surface";
 
 // A three-version synthetic types dir for the version-window route tests. The
@@ -21,6 +26,14 @@ import { funcIdentity } from "../combined-surface";
 //                         window must resolve the declaration at its own bound
 // - `gone.thing`        — 1.0.0 only, so the namespace `gone` exists in the full
 //                         window but in no single later version's own surface
+//
+// `deprecationWidened` adds one more namespace, off by default so every existing
+// caller sees an unchanged registry: `held.thing` ships typings at 3.0.0 alone
+// yet is curated `deprecated since 3.0.0`, which widens its availability back
+// across the whole axis. It is the only case here that separates a version's
+// curated availability from its on-disk surface — every other namespace is
+// present exactly where its typings are, so those two sources agree and a
+// substitution between them stays invisible.
 export const NEWEST = "3.0.0";
 export const MIDDLE = "2.0.0";
 export const OLDEST = "1.0.0";
@@ -84,9 +97,15 @@ function signaturesFor(namespace: string, module: ApiModule, version: string): [
  * Materialize the synthetic registry into a fresh temp dir and return its path.
  * The caller owns cleanup (`rmSync(dir, { recursive: true, force: true })`).
  */
-export function makeWindowedTypesDir(): string {
+export interface WindowedTypesDirOptions {
+  /** Include the curated-availability namespace described above. */
+  deprecationWidened?: boolean;
+}
+
+export function makeWindowedTypesDir(options: WindowedTypesDirOptions = {}): string {
   const dir = mkdtempSync(join(tmpdir(), "version-window-routes-"));
   const signatureVersions: Record<string, Record<string, string>> = {};
+  let heldIdentity: unknown;
 
   const targets = AXIS.map((bare) => {
     const fixturesDir = `fixtures/${versionId(bare)}`;
@@ -98,6 +117,14 @@ export function makeWindowedTypesDir(): string {
     entries.push(...signaturesFor("demo", parseDefoldApiDoc(JSON.parse(demoRaw)), bare));
 
     const modules = [{ namespace: "demo", fixture: "demo_doc.json" }];
+    if (options.deprecationWidened && bare === NEWEST) {
+      const heldRaw = doc("held", [fn("held.thing")]);
+      writeFileSync(join(dir, fixturesDir, "held_doc.json"), heldRaw);
+      const heldModule = parseDefoldApiDoc(JSON.parse(heldRaw));
+      entries.push(...signaturesFor("held", heldModule, bare));
+      heldIdentity = funcIdentity("held", heldModule.functions[0] as ApiFunction);
+      modules.push({ namespace: "held", fixture: "held_doc.json" });
+    }
     if (bare === OLDEST) {
       const goneRaw = doc("gone", [fn("gone.thing")]);
       writeFileSync(join(dir, fixturesDir, "gone_doc.json"), goneRaw);
@@ -111,5 +138,14 @@ export function makeWindowedTypesDir(): string {
 
   writeFileSync(join(dir, "api-targets.json"), JSON.stringify({ targets }));
   writeFileSync(join(dir, "api-signatures.json"), JSON.stringify({ versions: signatureVersions }));
+  if (heldIdentity) {
+    writeFileSync(
+      join(dir, "api-availability.json"),
+      JSON.stringify({
+        versions: AXIS,
+        records: [{ identity: heldIdentity, availableIn: AXIS, deprecatedSince: NEWEST }],
+      }),
+    );
+  }
   return dir;
 }

@@ -22,6 +22,7 @@ import {
   combinedApiPages,
   versionIndependentPages,
   versionIndexPages,
+  versionNamespaceAtom,
   windowedApiPages,
 } from "./api-content";
 import { apiLinkify, apiPageMarkdown, versionedApiParams } from "./api-page-render";
@@ -527,6 +528,62 @@ describe("api routing migration — the version index is the family it routes", 
     expect(versionIndexPages(id, dir, dir).map((p) => p.namespace)).toContain("gone");
     expect(loadApiSurfaceForVersion(dir, id).map((p) => p.namespace)).not.toContain("gone");
     expect(versionedApiParams(dir)).toContainEqual({ version: id, namespace: "gone" });
+  });
+});
+
+// The map the renderer hands the selector, the redirect and the sidebar is keyed
+// by one version, but every reader unions it across its own window. That makes
+// each value an *atom* — what a version contributes to a window — rather than an
+// answer, and the atom has to be the routed one or a namespace curation widened
+// into a version goes missing from chrome the routes still serve.
+describe("api routing migration — the per-version namespace atom is the routed atom", () => {
+  let dir = "";
+  beforeAll(() => {
+    dir = makeWindowedTypesDir({ deprecationWidened: true });
+  });
+  afterAll(() => {
+    if (dir) rmSync(dir, { recursive: true, force: true });
+  });
+
+  test("each atom is the namespaces that version's own single-version window selects", () => {
+    for (const bare of AXIS) {
+      expect(versionNamespaceAtom(versionId(bare), dir)).toEqual(
+        windowedApiPages({ from: bare, to: bare }, dir).map((page) => page.namespace),
+      );
+    }
+  });
+
+  test("the atom follows curated availability, not the version's on-disk surface", () => {
+    // The mutation this pair exists for: `loadApiSurfaceForVersion` is what the
+    // renderer read before, and `held` is the one namespace that separates them
+    // — its typings ship at 3.0.0 alone, but the deprecation claim proves it
+    // existed at 1.0.0 too, so 1.0.0's window renders a page the disk never had.
+    const id = versionId(OLDEST);
+    expect(versionNamespaceAtom(id, dir)).toContain("held");
+    expect(loadApiSurfaceForVersion(dir, id).map((page) => page.namespace)).not.toContain("held");
+  });
+
+  test("the atoms union to exactly the family the newest version routes", () => {
+    const union = new Set(AXIS.flatMap((bare) => versionNamespaceAtom(versionId(bare), dir)));
+    const routed = new Set(
+      versionedApiParams(dir)
+        .filter((param) => param.version === versionId(NEWEST))
+        .map((param) => param.namespace),
+    );
+    expect([...union].sort()).toEqual([...routed].sort());
+  });
+
+  test("an untracked version contributes nothing", () => {
+    expect(versionNamespaceAtom("defold-9.9.9", dir)).toEqual([]);
+  });
+
+  test("the renderer builds the selector map from the atom", () => {
+    // `_renderer.tsx` composes the map inside the jsx renderer, which no unit
+    // test can invoke; the substitution above is a one-line revert there, so the
+    // call site itself is what this asserts.
+    const renderer = readFileSync(join(import.meta.dir, "../routes/_renderer.tsx"), "utf8");
+    expect(renderer).toContain("versionNamespaceAtom(version.id)");
+    expect(renderer).not.toContain("apiPagesForVersion(version.id)");
   });
 });
 

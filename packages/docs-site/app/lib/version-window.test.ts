@@ -475,6 +475,52 @@ describe("windowOptionHrefs", () => {
     );
   });
 
+  // `demo` is owned by the two oldest versions alone, so no bound newer than
+  // `SECOND_OLDEST` owns it while every window reaching back to one of them does.
+  const historical = {
+    [NEWEST]: [],
+    [SECOND_NEWEST]: [],
+    [SECOND_OLDEST]: ["demo"],
+    [OLDEST]: ["demo"],
+  };
+
+  test("keeps the namespace when a version inside the window owns it", () => {
+    const options = windowOptionHrefs("demo", { from: OLDEST, to: NEWEST }, AXIS, historical);
+    expect(options.to.find((o) => o.version === NEWEST)?.href).toBe(`/api/defold-${NEWEST}/demo`);
+    expect(options.to.find((o) => o.version === SECOND_OLDEST)?.href).toBe(
+      `/api/defold-${SECOND_OLDEST}/demo`,
+    );
+  });
+
+  test("drops it to the index when the whole window sits past every owning version", () => {
+    const options = windowOptionHrefs(
+      "demo",
+      { from: SECOND_NEWEST, to: NEWEST },
+      AXIS,
+      historical,
+    );
+    expect(options.to.find((o) => o.version === NEWEST)?.href).toBe(
+      `/api/defold-${NEWEST}?since=defold-${SECOND_NEWEST}`,
+    );
+  });
+
+  test("the `from` column applies the same window rule under its own clamp", () => {
+    const options = windowOptionHrefs("demo", { from: OLDEST, to: NEWEST }, AXIS, historical);
+    expect(options.from.find((o) => o.version === SECOND_OLDEST)?.href).toBe(
+      `/api/defold-${NEWEST}/demo?since=defold-${SECOND_OLDEST}`,
+    );
+    expect(options.from.find((o) => o.version === SECOND_NEWEST)?.href).toBe(
+      `/api/defold-${NEWEST}?since=defold-${SECOND_NEWEST}`,
+    );
+  });
+
+  test("a namespace no version owns is dropped on every option", () => {
+    const options = windowOptionHrefs("shared", { from: OLDEST, to: NEWEST }, AXIS, historical);
+    for (const option of [...options.from, ...options.to]) {
+      expect(option.href).not.toContain("/shared");
+    }
+  });
+
   test("without an ownership map every option keeps the namespace", () => {
     const options = windowOptionHrefs("demo", { from: OLDEST, to: NEWEST }, AXIS);
     for (const option of [...options.from, ...options.to]) {

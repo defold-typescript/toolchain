@@ -212,6 +212,20 @@ function defoldVersionId(bare: string): string {
   return `defold-${bare}`;
 }
 
+// True when any version the window spans contributes a page for the namespace.
+// Each map value is that version's own contribution, so ownership over a range
+// is the union across the slice rather than a lookup at either bound.
+function ownsInWindow(
+  namespacesByVersion: Record<string, readonly string[]>,
+  namespace: string,
+  window: VersionWindow,
+  versions: readonly string[],
+): boolean {
+  return windowSlice(versions, window).some((version) =>
+    (namespacesByVersion[version] ?? []).includes(namespace),
+  );
+}
+
 /**
  * Both selector columns for a namespace, with the clamp already applied so the
  * markup renders plain links and holds no logic: choosing a bound always honors
@@ -220,12 +234,13 @@ function defoldVersionId(bare: string): string {
  * window.
  *
  * `namespacesByVersion` (bare-keyed, optional) makes the namespace conditional:
- * an option keeps it only when the version its href *ends at* generates a page
- * for it, and otherwise drops to that version's index. The check keys off the
- * clamped `to`, not the option's own version, because the `from` column moves the
- * path version whenever the chosen bound would cross it. Omitting the map keeps
- * the namespace on every option, which is right for a surface that owns it
- * everywhere.
+ * an option keeps it only when the window its href *addresses* contains a page
+ * for it, and otherwise drops to that window's index. The check is the whole
+ * window rather than its `to` bound because the destination is a range: a
+ * namespace that ended before `to` is still on the page the option opens, and
+ * that window is always inside the routed `{oldest, to}` family, so a preserved
+ * namespace can never link at a 404. Omitting the map keeps the namespace on
+ * every option, which is right for a surface that owns it everywhere.
  */
 export function windowOptionHrefs(
   namespace: string | undefined,
@@ -238,7 +253,7 @@ export function windowOptionHrefs(
     const owned =
       !namespace ||
       !namespacesByVersion ||
-      (namespacesByVersion[bound.to] ?? []).includes(namespace);
+      ownsInWindow(namespacesByVersion, namespace, bound, versions);
     return {
       version,
       href: windowHref(owned ? namespace : undefined, bound, versions, versionId),

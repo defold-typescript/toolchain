@@ -40,7 +40,7 @@ export function versionLabel(id: string): string {
 export interface BuildRangeSelectorInput {
   /** Every tracked version, newest first — the axis both columns list. */
   versions: readonly ApiVersion[];
-  /** The namespaces each version generates a page for, keyed by route id. */
+  /** The namespaces each version *contributes* to a window, keyed by route id. */
   namespacesByVersion: Record<string, readonly string[]>;
   /** The current pathname, read only for the namespace to preserve. */
   route: string;
@@ -60,8 +60,8 @@ export function isApiRoute(route: string): boolean {
  *
  * The bare canonical `/api/<ns>` route and the prefixed `/api/<version>/<ns>`
  * route both name their namespace, and it is preserved across an option only when
- * the version that option's href ends at generates a page for it — otherwise the
- * option drops to that version's index rather than linking at a 404.
+ * some version in the window that option addresses generates a page for it —
+ * otherwise the option drops to that window's index rather than linking at a 404.
  */
 export function buildRangeSelector({
   versions,
