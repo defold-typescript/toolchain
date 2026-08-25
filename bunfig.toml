@@ -1,0 +1,5 @@
+[test]
+# Raises the default per-test timeout; see the preloaded file for why.
+# `timeout` is not a bunfig key — setDefaultTimeout in a preload is the
+# supported way to set this for every `bun test` run, CI and local alike.
+preload = ["./scripts/test-setup.ts"]
