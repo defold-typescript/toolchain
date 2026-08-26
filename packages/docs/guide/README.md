@@ -58,6 +58,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 
 - [init](./init.md) — scaffold a new Defold project with a TypeScript surface, or add TypeScript to an existing project; the two modes, the `--template` / `--force` flags, and the starter templates.
 - [upgrade](./upgrade.md) — move the project to the latest toolchain with one verb (`bunx @defold-typescript/cli@latest upgrade`, or its `update` synonym): what it re-scaffolds, why it never clobbers your own scripts, what it does to an existing `defold-target` pin, and the `--json` envelope to read.
+- [set-target](./set-target.md) — write the `defold-target` pin: a fixed version, a release channel (`stable`/`beta`/`alpha`), or `--detected` to sync it to the installed Defold editor, with the typo caught at write time rather than at build time.
 - [watch](./watch.md) — the incremental rebuild loop: recompile Lua on every save beside the Defold editor, push each successful rebuild into the running game with `--hot-reload`, and re-resolve the extension surface on `game.project` changes.
 - [reload](./reload.md) — push one reload into the running game and read the editor console for a bounded window, so a script learns whether an error surfaced there instead of trusting the editor's "queued" response.
 - [build](./build.md) — one-shot transpile of every `src/` TypeScript file to Lua, plus the headless `defold` subcommand that drives `bob` to build and bundle the project.

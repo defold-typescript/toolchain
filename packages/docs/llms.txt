@@ -31,6 +31,7 @@ Only guide pages are inlined into `llms-full.txt`; pages marked `llms-full: fals
 - [Editor scripts](guide/editor-scripts.md)
 - [init](guide/init.md)
 - [upgrade](guide/upgrade.md)
+- [set-target](guide/set-target.md)
 - [watch](guide/watch.md)
 - [reload](guide/reload.md)
 - [build](guide/build.md)

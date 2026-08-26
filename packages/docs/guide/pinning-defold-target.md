@@ -15,15 +15,43 @@ Moving a project from 1.12.4 to the current 1.13.1 surface removes some Lua APIs
 and changes a few asset and platform defaults — see [Upgrading Defold
 versions](./upgrading-defold-versions.md) for the per-change migration steps.
 
-A **target** is a single selector — `--defold-target <version|stable|beta|alpha>`
-— that replaces the older two-flag selector (a fixed version plus a separate
-release channel). A target is one of two things:
+A **target** names which Defold release's API surface your TypeScript compiles
+against. You express it in one of two places, in the same
+`<version|stable|beta|alpha>` spelling:
+
+- the **`defold-target` pin** in `package.json` — the project's persistent
+  answer, written by [`set-target`](./set-target.md) and read by every command
+  that resolves a surface;
+- the **`--defold-target <version|stable|beta|alpha>` flag** on `build`,
+  `watch`, `resolve`, and `bob` — a per-run override that never writes the pin.
+
+Whichever you use, the value is one of two things:
 
 - a **fixed version** (a semver token such as `1.12.4`): the surface is that
   exact release; nothing is fetched from a channel;
 - a **release channel** (`stable`, `beta`, or `alpha`): the channel head is
   resolved to a concrete `{version, sha}` at build time, and the surface derives
   from that resolved head version.
+
+## The pin and the per-run flag
+
+They take the same token and they are not interchangeable. `set-target` changes
+what the project targets; `--defold-target` changes what one command run
+targets:
+
+|  | [`set-target <token>`](./set-target.md) | `--defold-target <token>` |
+| --- | --- | --- |
+| Writes `package.json` | yes — this is all it does | never, by design |
+| Lasts beyond the run | yes, until you change it again | no |
+| Materializes a surface | no — the next `build`/`watch` does | yes, for that run |
+| Available on | its own verb | `build`, `watch`, `resolve`, `bob` |
+
+So `set-target 1.12.4` declares the project targets 1.12.4 and changes nothing
+on disk beyond `package.json`; `build --defold-target 1.12.4` compiles this once
+against 1.12.4 and leaves the declared target alone. The flag exists so a
+throwaway build against an older surface cannot silently re-pin the project; it
+announces the shadowing when it overrides a live pin, as
+[The pin's lifecycle](#the-pins-lifecycle) describes.
 
 ## The default stays current
 

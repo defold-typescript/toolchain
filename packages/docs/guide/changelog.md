@@ -14,6 +14,12 @@ Entries are curated by hand from the git history; the most recent releases are
 listed per-patch, older releases are rolled up per minor version. Breaking
 changes are called out first because the toolchain is pre-1.0.
 
+## v0.28.1
+
+### Fixed
+
+- **[`set-target`](./set-target.md) has its own CLI page** — its version and channel tokens, `--detected`, the rejected-version error, and its `--json` envelope. The verb that changes the `defold-target` pin was documented only inside [Pinning the Defold target](./pinning-defold-target.md), which now opens by saying what a target selects and the two places you express it: that pin, and the per-run `--defold-target` flag.
+
 ## v0.28.0
 
 ### Improved
