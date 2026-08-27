@@ -48,7 +48,9 @@ test("every dts-check compile input carries no diagnostics under skipLibCheck: f
   const offenderRe = new RegExp(`(${alternation}).*error TS`);
   const offenders = output.split("\n").filter((line) => offenderRe.test(line));
   expect(offenders).toEqual([]);
-});
+  // A whole-project `tsc` run is ~1s unloaded but has no business being scored
+  // against the 5s default while 278 test files compete for the same runner.
+}, 30_000);
 
 // Guard the seam between `luals-targets.json` (the namespace source the offender
 // filter is built from) and `tsconfig.dts-check.json`'s `include` (what `tsc`
