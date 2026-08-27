@@ -370,10 +370,17 @@ function dispatchCommand(
           ? { transport: internals.editorTransport }
           : {}),
       };
+      const probeEditor =
+        internals?.probeEditor ??
+        ((signal?: AbortSignal) =>
+          probeInstalledEditor({
+            ...probeOpts,
+            ...(signal !== undefined ? { signal } : {}),
+          }));
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
       const probed = await Promise.race([
-        probeInstalledEditor({ ...probeOpts, signal: controller.signal }).catch(() => null),
+        probeEditor(controller.signal).catch(() => null),
         new Promise<null>((resolve) => {
           controller.signal.addEventListener("abort", () => resolve(null));
         }),
