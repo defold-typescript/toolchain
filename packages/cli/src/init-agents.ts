@@ -94,8 +94,13 @@ export function runInitAgents(opts: RunInitAgentsOptions): RunInitAgentsResult {
     written.push("AGENTS.md");
   } else if (force) {
     const agentsExisting = readFileSync(agentsPath, "utf8");
-    writeFileSync(agentsPath, patchManagedBlock(agentsExisting, renderAgentsBlock()));
-    written.push("AGENTS.md");
+    const patched = patchManagedBlock(agentsExisting, renderAgentsBlock());
+    // A refresh that would reproduce the file byte-for-byte is not a write: it
+    // would report a touched file to `--json` and churn the mtime for nothing.
+    if (patched !== agentsExisting) {
+      writeFileSync(agentsPath, patched);
+      written.push("AGENTS.md");
+    }
   }
 
   const claudePath = path.join(cwd, "CLAUDE.md");

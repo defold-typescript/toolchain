@@ -117,8 +117,11 @@ export interface DispatchInternals {
   readonly upgradeInternals?: Partial<UpgradeIo>;
 }
 
-const USAGE =
-  "Usage: defold-typescript <init|init-agents|build|watch|wall|setup-debug|resolve|bob|run> [path]\n";
+// Derived from the help registry so a verb can never ship with a usage line
+// that omits it; `update` is absent there on purpose, as an alias of `upgrade`.
+const USAGE = `Usage: defold-typescript <${[...COMMAND_NAMES].join("|")}> [path]
+Run \`defold-typescript --help\` for per-command usage and flags.
+`;
 const BOB_USAGE = "Usage: defold-typescript bob <resolve|build|bundle|status|run> [path]\n";
 
 /** How long `build` waits for an editor to identify itself before giving up on it. */

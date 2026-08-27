@@ -58,6 +58,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 ### CLI
 
 - [init](https://defold-typescript.github.io/toolchain/init) — scaffold a new Defold project with a TypeScript surface, or add TypeScript to an existing project; the two modes, the `--template` / `--force` flags, and the starter templates.
+- [init-agents](https://defold-typescript.github.io/toolchain/init-agents) — write the agent contract (`AGENTS.md` + `CLAUDE.md`) into a project that has none, or restore a managed block you edited away; what the block carries, why re-runs never clobber your own notes, and how it differs from the contract `init` and `upgrade` already keep current.
 - [upgrade](https://defold-typescript.github.io/toolchain/upgrade) — move the project to the latest toolchain with one verb (`bunx @defold-typescript/cli@latest upgrade`, or its `update` synonym): what it re-scaffolds, why it never clobbers your own scripts, what it does to an existing `defold-target` pin, and the `--json` envelope to read.
 - [set-target](https://defold-typescript.github.io/toolchain/set-target) — write the `defold-target` pin: a fixed version, a release channel (`stable`/`beta`/`alpha`), or `--detected` to sync it to the detected Defold editor, with the typo caught at write time rather than at build time.
 - [watch](https://defold-typescript.github.io/toolchain/watch) — the incremental rebuild loop: recompile Lua on every save beside the Defold editor, push each successful rebuild into the running game with `--hot-reload`, and re-resolve the extension surface on `game.project` changes.
@@ -100,4 +101,4 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - **For AI agents** — machine-readable docs per [llmstxt.org](https://llmstxt.org/):
     * [`llms.txt`](https://defold-typescript.github.io/toolchain/llms.txt) is the map (start here)
     * [`llms-full.txt`](https://defold-typescript.github.io/toolchain/llms-full.txt) is the full corpus (grep it, never read it whole). The same pair ships into a consumer's `node_modules/@defold-typescript/docs/` on install.
-    * [`init-agents`](https://defold-typescript.github.io/toolchain/agent-runbooks#install-the-agent-contract) wires them up — it writes the managed `AGENTS.md` / `CLAUDE.md` block that points your agent at both files and at the runbooks, so a fresh session orients from the project's own documentation instead of from training-data recall.
+    * [`init-agents`](https://defold-typescript.github.io/toolchain/init-agents) wires them up — it writes the managed `AGENTS.md` / `CLAUDE.md` block that points your agent at both files and at the runbooks, so a fresh session orients from the project's own documentation instead of from training-data recall.
