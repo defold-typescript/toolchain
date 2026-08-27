@@ -2,7 +2,14 @@ import { describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
-import { EDITOR_PORT_FILE } from "./editor-attach";
+import {
+  EVAL_AUTH_SCHEME,
+  EVAL_REQUEST_MEDIA_TYPE,
+  EVAL_ROUTE,
+  evalSuccessBody,
+  SPEC_BODY,
+} from "../test/fixtures/editor-openapi";
+import { EDITOR_PORT_FILE, EDITOR_TOKEN_FILE, type EditorTransport } from "./editor-attach";
 import {
   detectEditorBundledJava,
   detectInstalledEditorVersion,
@@ -11,6 +18,8 @@ import {
   probeInstalledEditor,
   runningEditorDeclines,
 } from "./installed-editor-version";
+
+const EDITOR_TOKEN = "6ee9f0b3-3f5e-4a1e-9a0f-2c7d4b8e1a55";
 
 // A project directory with no `.internal/editor.port`, i.e. no editor open on
 // it. Every filesystem-lane case takes one so the editor lane declines from a
@@ -534,5 +543,127 @@ describe("probeInstalledEditor editor lane", () => {
         (await probeInstalledEditor(opts)).version,
       );
     }
+  });
+});
+
+// A project an editor is fully attached to: both the port file and its sibling
+// token, which `evalEditor` reads separately. `projectWithEditorOpen` keeps the
+// port-only shape on purpose, so the portless and half-attached cases stay
+// distinguishable.
+function projectWithEditorReady(): string {
+  const cwd = projectWithEditorOpen();
+  writeFileSync(join(cwd, EDITOR_TOKEN_FILE), `${EDITOR_TOKEN}\n`);
+  return cwd;
+}
+
+interface RecordedCall {
+  readonly url: string;
+  readonly method: string;
+  readonly headers: Readonly<Record<string, string>> | undefined;
+  readonly body: string | undefined;
+}
+
+// Answers the handshake from the recorded spec and hands `/eval` to the case,
+// which decides from the posted body -- so what the probe asked for is what
+// determines what it gets back, exactly as a real editor behaves.
+function recordingTransport(evalBody: (posted: string) => string): {
+  readonly transport: EditorTransport;
+  readonly calls: RecordedCall[];
+} {
+  const calls: RecordedCall[] = [];
+  const transport: EditorTransport = async (url, init) => {
+    calls.push({ url, method: init?.method ?? "GET", headers: init?.headers, body: init?.body });
+    const body = url.endsWith("/openapi.json") ? SPEC_BODY : evalBody(init?.body ?? "");
+    return { status: 200, text: async () => body };
+  };
+  return { transport, calls };
+}
+
+describe("probeInstalledEditor default /eval adapter", () => {
+  const home = (): string => "/home/u";
+  const readConfig = (): string => "version = 1.12.4\n";
+
+  test("reads editor.version and reports what the running editor answered", async () => {
+    const cwd = projectWithEditorReady();
+    const readConfigCalls: string[] = [];
+    // Anything other than the version expression is answered `nil`, so a probe
+    // that asks a different question falls through to the config lane instead of
+    // being handed the right answer regardless.
+    const { transport, calls } = recordingTransport((posted) =>
+      posted === "return editor.version" ? evalSuccessBody("1.13.1") : evalSuccessBody("nil"),
+    );
+
+    const result = await probeInstalledEditor({
+      cwd,
+      platform: "darwin",
+      home,
+      transport,
+      readConfig: (p) => {
+        readConfigCalls.push(p);
+        return readConfig();
+      },
+    });
+
+    expect(result.version).toBe("1.13.1");
+    expect(result.probed).toEqual([{ path: join(cwd, EDITOR_PORT_FILE), reason: "found" }]);
+    expect(readConfigCalls).toEqual([]);
+    expect(calls[1]).toEqual({
+      url: `http://localhost:58433${EVAL_ROUTE}`,
+      method: "POST",
+      headers: {
+        Authorization: `${EVAL_AUTH_SCHEME.replace(/^./, (c) => c.toUpperCase())} ${EDITOR_TOKEN}`,
+        "Content-Type": EVAL_REQUEST_MEDIA_TYPE,
+      },
+      body: "return editor.version",
+    });
+  });
+
+  test("a nil answer is no answer", async () => {
+    const cwd = projectWithEditorReady();
+    const { transport } = recordingTransport(() => evalSuccessBody("nil"));
+
+    const result = await probeInstalledEditor({
+      cwd,
+      platform: "darwin",
+      home,
+      transport,
+      readConfig,
+    });
+
+    expect(result.probed[0]).toEqual({ path: join(cwd, EDITOR_PORT_FILE), reason: "no-answer" });
+    expect(result.version).toBe("1.12.4");
+  });
+
+  test("an empty returned value is no answer", async () => {
+    const cwd = projectWithEditorReady();
+    const { transport } = recordingTransport(() => evalSuccessBody(""));
+
+    const result = await probeInstalledEditor({
+      cwd,
+      platform: "darwin",
+      home,
+      transport,
+      readConfig,
+    });
+
+    expect(result.probed[0]).toEqual({ path: join(cwd, EDITOR_PORT_FILE), reason: "no-answer" });
+    expect(result.version).toBe("1.12.4");
+  });
+
+  test("no port file means the transport is never touched at all", async () => {
+    const cwd = portlessProject();
+    const { transport, calls } = recordingTransport(() => evalSuccessBody("1.13.1"));
+
+    const result = await probeInstalledEditor({
+      cwd,
+      platform: "darwin",
+      home,
+      transport,
+      readConfig,
+    });
+
+    expect(calls).toEqual([]);
+    expect(result.probed[0]).toEqual(noEditorEntry(cwd));
+    expect(result.version).toBe("1.12.4");
   });
 });
