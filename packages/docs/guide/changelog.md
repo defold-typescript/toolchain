@@ -14,7 +14,11 @@ Entries are curated by hand from the git history; the most recent releases are
 listed per-patch, older releases are rolled up per minor version. Breaking
 changes are called out first because the toolchain is pre-1.0.
 
-## v0.28.2
+## v0.29.0
+
+### Fixed
+
+- **[`set-target --detected`](./set-target.md) finds an editor the toolchain would not have guessed, and says where it looked when it still cannot.** Set `DEFOLD_TYPESCRIPT_EDITOR` to the folder holding the editor's `config` and it is read ahead of the conventional per-OS locations — the answer for a Windows install, which is a portable archive extracted wherever you like. A miss now lists every path it read and why, instead of telling you to install the Defold you already have.
 
 ## v0.28.1
 

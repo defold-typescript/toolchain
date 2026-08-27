@@ -3,7 +3,12 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { loadApiTargetsRegistry } from "./api-registry";
+import type { EditorProbe, ProbedPath } from "./installed-editor-version";
 import { runSetTarget } from "./set-target";
+
+function probeOf(version: string | null, probed: readonly ProbedPath[] = []): () => EditorProbe {
+  return () => ({ version, probed });
+}
 
 let cwd: string;
 
@@ -107,7 +112,7 @@ describe("runSetTarget", () => {
   test("--detected writes the detected editor version", () => {
     writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
 
-    const result = runSetTarget({ cwd, detected: true, detect: () => "1.13.1" });
+    const result = runSetTarget({ cwd, detected: true, probe: probeOf("1.13.1") });
 
     expect(result.ok).toBe(true);
     expect(result.to).toBe("1.13.1");
@@ -119,12 +124,75 @@ describe("runSetTarget", () => {
     writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
     const before = readPkgFile();
 
-    const result = runSetTarget({ cwd, detected: true, detect: () => null });
+    const result = runSetTarget({
+      cwd,
+      detected: true,
+      probe: probeOf(null, [
+        { path: "/Applications/Defold.app/Contents/Resources/config", reason: "missing" },
+      ]),
+    });
 
     expect(result.ok).toBe(false);
     expect(result.error).toContain("no installed Defold editor");
     expect(result.written).toEqual([]);
     expect(readPkgFile()).toBe(before);
+  });
+
+  test("a detected miss lists every path it read, with why, and names the override", () => {
+    writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const before = readPkgFile();
+    const probed: readonly ProbedPath[] = [
+      { path: "/opt/custom/Defold/config", reason: "missing" },
+      { path: "/opt/custom/Defold/Contents/Resources/config", reason: "missing" },
+      { path: "/home/u/Defold/config", reason: "no-version-key" },
+    ];
+
+    const result = runSetTarget({ cwd, detected: true, probe: probeOf(null, probed) });
+
+    expect(result.ok).toBe(false);
+    expect(result.written).toEqual([]);
+    expect(readPkgFile()).toBe(before);
+    const error = result.error ?? "";
+    // The asserted paths and reasons come from the probe's own report, so the
+    // message cannot pass by restating a path list production never produced.
+    for (const entry of probed) {
+      expect(error).toContain(entry.path);
+    }
+    expect(error).toContain("missing");
+    expect(error).toContain("no-version-key");
+    expect(error).toContain("DEFOLD_TYPESCRIPT_EDITOR");
+  });
+
+  test("the two probe reasons stay distinguishable in the message", () => {
+    writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
+
+    const missing = runSetTarget({
+      cwd,
+      detected: true,
+      probe: probeOf(null, [{ path: "/a/config", reason: "missing" }]),
+    });
+    const noKey = runSetTarget({
+      cwd,
+      detected: true,
+      probe: probeOf(null, [{ path: "/a/config", reason: "no-version-key" }]),
+    });
+
+    expect(missing.error).not.toBe(noKey.error);
+  });
+
+  test("a probe with no candidates at all says so instead of printing an empty list", () => {
+    writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const before = readPkgFile();
+
+    const result = runSetTarget({ cwd, detected: true, probe: probeOf(null, []) });
+
+    expect(result.ok).toBe(false);
+    expect(result.written).toEqual([]);
+    expect(readPkgFile()).toBe(before);
+    const error = result.error ?? "";
+    expect(error).toContain("no candidate location");
+    // No header stranded over an empty list: not one `<path> (<reason>)` entry.
+    expect(error).not.toMatch(/\((?:missing|no-version-key|found)\)/);
   });
 
   test("a missing package.json is a clean error, not a throw", () => {
@@ -196,7 +264,7 @@ describe("runSetTarget registry membership", () => {
     const result = runSetTarget({
       cwd,
       detected: true,
-      detect: () => "1.42.99",
+      probe: probeOf("1.42.99"),
       resolvableTargets: ["1.13.1", "1.12.4"],
     });
 
@@ -226,7 +294,7 @@ describe("runSetTarget registry membership", () => {
     const result = runSetTarget({
       cwd,
       detected: true,
-      detect: () => "1.42.99",
+      probe: probeOf("1.42.99"),
       resolvableTargets: [],
     });
 

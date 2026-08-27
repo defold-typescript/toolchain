@@ -10,7 +10,12 @@ import { join } from "node:path";
 import { resolvableTargetVersions } from "./api-registry";
 import { classifyDefoldTarget, readDefoldTargetPin, setDefoldTargetPin } from "./defold-target";
 import { formatJsonLikeBiome } from "./format-json";
-import { detectInstalledEditorVersion } from "./installed-editor-version";
+import {
+  EDITOR_ROOT_ENV,
+  type EditorProbe,
+  type ProbedPath,
+  probeInstalledEditor,
+} from "./installed-editor-version";
 
 export interface RunSetTargetResult {
   readonly ok: boolean;
@@ -24,7 +29,7 @@ export interface RunSetTargetOptions {
   readonly cwd: string;
   readonly token?: string;
   readonly detected?: boolean;
-  readonly detect?: () => string | null;
+  readonly probe?: () => EditorProbe;
   readonly resolvableTargets?: readonly string[];
 }
 
@@ -57,6 +62,21 @@ function membershipError(
   return `defold-typescript set-target: ${origin} names a version the API registry cannot provide; nothing was written. Resolvable targets: ${resolvableTargets.join(", ")}. Pin one of them, or a channel (stable|beta|alpha).`;
 }
 
+// A user with Defold installed being told to install Defold is the reported
+// defect: the fix is to say which paths were read and why each one failed, so a
+// miss is actionable rather than a flat denial. The report is folded into the
+// single `error` string — the `--json` envelope stays `{command, ok, error}`.
+const PROBE_ACTION = `Set ${EDITOR_ROOT_ENV} to the folder containing the editor's \`config\` file (the bundle root or its Contents/Resources interior both work), or pass a version|stable|beta|alpha token.`;
+
+function undetectedError(probed: readonly ProbedPath[]): string {
+  const opening = "defold-typescript set-target: no installed Defold editor was detected";
+  if (probed.length === 0) {
+    return `${opening}, and no candidate location is known for this platform; nothing was written. ${PROBE_ACTION}`;
+  }
+  const lines = probed.map((entry) => `  ${entry.path} (${entry.reason})`).join("\n");
+  return `${opening}; nothing was written. Paths read:\n${lines}\n${PROBE_ACTION}`;
+}
+
 // Resolve the value to write: `--detected` reads the installed editor (never
 // falling back to current-stable), otherwise the positional token is validated
 // verbatim — channels and versions are kept as the user expressed them. Channels
@@ -65,12 +85,9 @@ function membershipError(
 function resolveValue(opts: RunSetTargetOptions): { value: string } | { error: string } {
   const resolvableTargets = opts.resolvableTargets ?? resolvableTargetVersions();
   if (opts.detected) {
-    const version = (opts.detect ?? detectInstalledEditorVersion)();
+    const { version, probed } = (opts.probe ?? probeInstalledEditor)();
     if (version === null) {
-      return {
-        error:
-          "defold-typescript set-target: no installed Defold editor was detected; install Defold or pass a version|stable|beta|alpha token.",
-      };
+      return { error: undetectedError(probed) };
     }
     const error = membershipError(
       version,

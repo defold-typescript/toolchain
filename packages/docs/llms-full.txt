@@ -2169,16 +2169,53 @@ is the answer to the drift warning that [`build`](./build.md),
 [`upgrade`](./upgrade.md), [`watch`](./watch.md), [`run`](./run.md), and
 [`bob`](./bob.md) print when your installed editor differs from the pin.
 
-It never falls back. With no editor detected it errors rather than guessing:
+It never falls back. With no editor detected it errors rather than guessing —
+and it tells you which paths it read and why each one did not answer:
 
 ```
-defold-typescript set-target: no installed Defold editor was detected; install
-Defold or pass a version|stable|beta|alpha token.
+defold-typescript set-target: no installed Defold editor was detected; nothing
+was written. Paths read:
+  /home/u/Defold/config (missing)
+  /opt/Defold/config (no-version-key)
+Set DEFOLD_TYPESCRIPT_EDITOR to the folder containing the editor's `config`
+file (the bundle root or its Contents/Resources interior both work), or pass a
+version|stable|beta|alpha token.
 ```
+
+`missing` means nothing was there to read; `no-version-key` means a `config`
+was read but carried no `version` line.
 
 An installed editor whose version the registry cannot provide is rejected the
 same way a bad token is, rather than syncing the pin to a target the toolchain
 cannot honor.
+
+##### `DEFOLD_TYPESCRIPT_EDITOR`
+
+`DEFOLD_TYPESCRIPT_EDITOR` names the editor's resources root — the folder that
+contains `config`. Both spellings work: point it at the bundle root, or at its
+`Contents/Resources` interior. It is read **before** the conventional locations
+on every platform, so an explicitly named editor always wins over one the
+toolchain happened to guess, and it is the only source of candidates on a
+platform the toolchain has no conventions for.
+
+Windows is the case that needs it. The Windows editor is a portable archive you
+extract wherever you like, not an installer that writes to a fixed path, so no
+list of conventional locations can be complete:
+
+```powershell
+$env:DEFOLD_TYPESCRIPT_EDITOR = 'D:\tools\Defold'
+bunx @defold-typescript/cli set-target --detected
+```
+
+On macOS and Linux the same variable takes a POSIX path:
+
+```sh
+DEFOLD_TYPESCRIPT_EDITOR=/opt/defold bunx @defold-typescript/cli set-target --detected
+```
+
+The same root also tells [`bob`](./bob.md) where the editor's bundled JDK lives,
+and feeds the drift warning, so one variable covers every place the toolchain
+looks for your editor.
 
 #### `--json`
 

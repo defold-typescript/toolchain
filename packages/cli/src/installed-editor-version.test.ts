@@ -6,6 +6,7 @@ import {
   detectInstalledEditorVersion,
   EDITOR_VERSION_KEY,
   editorConfigCandidates,
+  probeInstalledEditor,
 } from "./installed-editor-version";
 
 describe("editorConfigCandidates", () => {
@@ -23,22 +24,155 @@ describe("editorConfigCandidates", () => {
     ]);
   });
 
-  test("win32 returns a Defold/config path under each set env root, skipping unset ones", () => {
+  test("win32 returns a Defold/config path under each set env root and under home()", () => {
     expect(
       editorConfigCandidates(
         "win32",
         { LOCALAPPDATA: "C:\\la", PROGRAMFILES: "C:\\pf" },
         () => "C:\\u",
       ),
-    ).toEqual([join("C:\\la", "Defold", "config"), join("C:\\pf", "Defold", "config")]);
+    ).toEqual([
+      join("C:\\la", "Defold", "config"),
+      join("C:\\pf", "Defold", "config"),
+      join("C:\\u", "Defold", "config"),
+    ]);
     expect(editorConfigCandidates("win32", { PROGRAMFILES: "C:\\pf" }, () => "C:\\u")).toEqual([
       join("C:\\pf", "Defold", "config"),
+      join("C:\\u", "Defold", "config"),
     ]);
-    expect(editorConfigCandidates("win32", {}, () => "C:\\u")).toEqual([]);
+    // The home root is derived from the injected `home()`, never `env.USERPROFILE`,
+    // so it survives an env with no roots set at all.
+    expect(editorConfigCandidates("win32", {}, () => "C:\\u")).toEqual([
+      join("C:\\u", "Defold", "config"),
+    ]);
+    expect(editorConfigCandidates("win32", { USERPROFILE: "C:\\other" }, () => "C:\\u")).toEqual([
+      join("C:\\u", "Defold", "config"),
+    ]);
   });
 
   test("freebsd (unknown platform) returns no candidates", () => {
     expect(editorConfigCandidates("freebsd", {}, () => "/home/u")).toEqual([]);
+  });
+});
+
+describe("editorConfigCandidates with DEFOLD_TYPESCRIPT_EDITOR", () => {
+  const ROOT = join("/somewhere", "else", "Defold");
+  const OVERRIDE = [join(ROOT, "config"), join(ROOT, "Contents", "Resources", "config")];
+  const home = (): string => "/home/u";
+  // The conventional tail is read back off production for the same inputs, so a
+  // change to the per-OS conventions cannot leave this test agreeing with itself.
+  const conventions = (platform: NodeJS.Platform, env: NodeJS.ProcessEnv): string[] =>
+    editorConfigCandidates(platform, env, home);
+
+  const platforms: ReadonlyArray<[NodeJS.Platform, NodeJS.ProcessEnv]> = [
+    ["darwin", {}],
+    ["linux", {}],
+    ["win32", { LOCALAPPDATA: "C:\\la", PROGRAMFILES: "C:\\pf" }],
+    ["freebsd", {}],
+  ];
+
+  for (const [platform, env] of platforms) {
+    test(`${platform} puts the override's two spellings ahead of every convention`, () => {
+      expect(
+        editorConfigCandidates(platform, { ...env, DEFOLD_TYPESCRIPT_EDITOR: ROOT }, home),
+      ).toEqual([...OVERRIDE, ...conventions(platform, env)]);
+    });
+  }
+
+  test("an unrecognised platform yields the override alone rather than nothing", () => {
+    expect(editorConfigCandidates("freebsd", { DEFOLD_TYPESCRIPT_EDITOR: ROOT }, home)).toEqual(
+      OVERRIDE,
+    );
+    expect(conventions("freebsd", {})).toEqual([]);
+  });
+
+  test("unset or empty leaves the conventions alone", () => {
+    for (const env of [{}, { DEFOLD_TYPESCRIPT_EDITOR: "" }]) {
+      expect(editorConfigCandidates("darwin", env, home)).toEqual(conventions("darwin", {}));
+      expect(editorConfigCandidates("linux", env, home)).toEqual(conventions("linux", {}));
+    }
+  });
+});
+
+describe("probeInstalledEditor", () => {
+  const home = (): string => "/home/u";
+
+  test("reports every path it read, in order, with why each yielded no version", () => {
+    const candidates = editorConfigCandidates("darwin", {}, home);
+    const bodies: Record<string, string | null> = {
+      // First candidate is unreadable, second reads but carries no version key.
+      [candidates[0] as string]: null,
+      [candidates[1] as string]: "display_name = Defold\ntimestamp = 0\n",
+    };
+    const result = probeInstalledEditor({
+      platform: "darwin",
+      home,
+      readConfig: (p) => bodies[p] ?? null,
+    });
+
+    expect(result.version).toBeNull();
+    expect(result.probed).toEqual([
+      { path: candidates[0] as string, reason: "missing" },
+      { path: candidates[1] as string, reason: "no-version-key" },
+    ]);
+  });
+
+  test("a hit short-circuits, so the report ends at the successful candidate", () => {
+    const candidates = editorConfigCandidates("darwin", {}, home);
+    const result = probeInstalledEditor({
+      platform: "darwin",
+      home,
+      readConfig: (p) => (p === candidates[0] ? "version = 1.12.4\n" : "version = 1.9.8\n"),
+    });
+
+    expect(result.version).toBe("1.12.4");
+    expect(result.probed).toEqual([{ path: candidates[0] as string, reason: "found" }]);
+  });
+
+  test("the report names the paths the reader was actually called with", () => {
+    const calls: string[] = [];
+    const result = probeInstalledEditor({
+      platform: "linux",
+      home,
+      readConfig: (p) => {
+        calls.push(p);
+        return null;
+      },
+    });
+
+    expect(result.probed.map((entry) => entry.path)).toEqual(calls);
+    expect(calls).toEqual(editorConfigCandidates("linux", {}, home));
+  });
+
+  test("an override root is the first thing reported", () => {
+    const root = "/opt/custom/Defold";
+    const result = probeInstalledEditor({
+      platform: "win32",
+      env: { DEFOLD_TYPESCRIPT_EDITOR: root, PROGRAMFILES: "C:\\pf" },
+      home: () => "C:\\u",
+      readConfig: () => null,
+    });
+
+    expect(result.version).toBeNull();
+    expect(result.probed[0]?.path).toBe(join(root, "config"));
+    expect(result.probed.map((entry) => entry.path)).toEqual(
+      editorConfigCandidates(
+        "win32",
+        { DEFOLD_TYPESCRIPT_EDITOR: root, PROGRAMFILES: "C:\\pf" },
+        () => "C:\\u",
+      ),
+    );
+  });
+
+  test("no candidates at all is an empty report, not a fabricated one", () => {
+    const result = probeInstalledEditor({
+      platform: "freebsd",
+      home,
+      readConfig: () => "version = 1.12.4",
+    });
+
+    expect(result.version).toBeNull();
+    expect(result.probed).toEqual([]);
   });
 });
 
@@ -119,6 +253,23 @@ describe("detectInstalledEditorVersion", () => {
     ).toBeNull();
   });
 
+  test("is the probe's version for the same inputs (hit, miss, and no-version-key)", () => {
+    const home = (): string => "/home/u";
+    const cases: ReadonlyArray<(p: string) => string | null> = [
+      // hit
+      (p) =>
+        p === "/Applications/Defold.app/Contents/Resources/config" ? "version = 1.12.4" : null,
+      // miss — nothing readable anywhere
+      () => null,
+      // readable, but no version key
+      () => "display_name = Defold\n",
+    ];
+    for (const readConfig of cases) {
+      const opts = { platform: "darwin" as NodeJS.Platform, home, readConfig };
+      expect(detectInstalledEditorVersion(opts)).toBe(probeInstalledEditor(opts).version);
+    }
+  });
+
   test("uses process.platform / process.env / homedir when no opts are passed", () => {
     // Default homedir() is real, but no candidate file exists in CI, so we
     // just verify the integration wires through without throwing.
@@ -189,6 +340,49 @@ describe("detectEditorBundledJava", () => {
         exists: () => false,
       }),
     ).toBeNull();
+  });
+
+  test("follows DEFOLD_TYPESCRIPT_EDITOR to <override>/packages/jdk-*/bin/java", () => {
+    const root = "/opt/custom/Defold";
+    const packages = join(root, "packages");
+    const java = join(packages, JDK, "bin", "java");
+    const result = detectEditorBundledJava({
+      platform: "linux",
+      env: { DEFOLD_TYPESCRIPT_EDITOR: root },
+      home: () => "/home/u",
+      listDir: (dir) => (dir === packages ? [JDK] : []),
+      exists: (p) => p === java,
+    });
+    expect(result).toBe(java);
+  });
+
+  test("follows the override's Contents/Resources bundle spelling too", () => {
+    const root = "/opt/custom/Defold.app";
+    const packages = join(root, "Contents", "Resources", "packages");
+    const java = join(packages, JDK, "bin", "java");
+    const result = detectEditorBundledJava({
+      platform: "darwin",
+      env: { DEFOLD_TYPESCRIPT_EDITOR: root },
+      home: () => "/home/u",
+      listDir: (dir) => (dir === packages ? [JDK] : []),
+      exists: (p) => p === java,
+    });
+    expect(result).toBe(java);
+  });
+
+  test("the override wins over a conventional install that also has a jdk", () => {
+    const root = "/opt/custom/Defold";
+    const overridePackages = join(root, "packages");
+    const overrideJava = join(overridePackages, JDK, "bin", "java");
+    const conventionalJava = join(PACKAGES, JDK, "bin", "java");
+    const result = detectEditorBundledJava({
+      platform: "darwin",
+      env: { DEFOLD_TYPESCRIPT_EDITOR: root },
+      home: () => "/home/u",
+      listDir: (dir) => (dir === overridePackages || dir === PACKAGES ? [JDK] : []),
+      exists: (p) => p === overrideJava || p === conventionalJava,
+    });
+    expect(result).toBe(overrideJava);
   });
 });
 
