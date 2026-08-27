@@ -4,30 +4,54 @@ import { dirname, join } from "node:path";
 
 export const EDITOR_VERSION_KEY = "version";
 
-// Pinned for live verification — these are the assumed Defold editor bundle
-// `config` paths per OS. Live verification against a real install is a
-// follow-up: tests prove the probe *mechanics* against synthetic fixtures
-// via the injected `readConfig` seam, never the correctness of the real
-// paths.
+export const EDITOR_ROOT_ENV = "DEFOLD_TYPESCRIPT_EDITOR";
+
+// `DEFOLD_TYPESCRIPT_EDITOR` names the editor's resources root and is consulted
+// before the per-OS paths below, mirroring how `DEFOLD_TYPESCRIPT_LOCAL_DISTRIBUTION`
+// fronts `defaultDistributionRoots` for the local ref-doc distribution. Both the
+// bundle root and its `Contents/Resources` interior are emitted unconditionally:
+// the enumerator returns candidates and the probe decides which exist, which is
+// what lets the probe report list both.
+function overrideCandidates(env: NodeJS.ProcessEnv): string[] {
+  const root = env[EDITOR_ROOT_ENV];
+  if (!root) {
+    return [];
+  }
+  return [join(root, "config"), join(root, "Contents", "Resources", "config")];
+}
+
+// The per-OS paths are the *fallback* — where an editor is found when the user
+// has not said. Live verification (bug-149) found them incomplete on Windows and
+// uncompletable in principle: the Windows editor is a portable archive extracted
+// wherever the user likes, so no list of conventions can cover it. That is what
+// `DEFOLD_TYPESCRIPT_EDITOR` answers. Tests still prove the probe *mechanics*
+// against synthetic fixtures via the injected `readConfig` seam, never the
+// correctness of the real paths.
 export function editorConfigCandidates(
   platform: NodeJS.Platform,
   env: NodeJS.ProcessEnv = process.env,
   home: () => string = homedir,
 ): string[] {
+  const override = overrideCandidates(env);
   switch (platform) {
     case "darwin":
       return [
+        ...override,
         "/Applications/Defold.app/Contents/Resources/config",
         join(home(), "Applications", "Defold.app", "Contents", "Resources", "config"),
       ];
     case "linux":
-      return [join(home(), "Defold", "config"), "/opt/Defold/config"];
+      return [...override, join(home(), "Defold", "config"), "/opt/Defold/config"];
     case "win32":
-      return [env.LOCALAPPDATA, env.PROGRAMFILES]
-        .filter((root): root is string => Boolean(root))
-        .map((root) => join(root, "Defold", "config"));
+      return [
+        ...override,
+        ...[env.LOCALAPPDATA, env.PROGRAMFILES]
+          .filter((root): root is string => Boolean(root))
+          .map((root) => join(root, "Defold", "config")),
+        join(home(), "Defold", "config"),
+      ];
     default:
-      return [];
+      return override;
   }
 }
 
@@ -45,26 +69,48 @@ export interface DetectInstalledEditorVersionOpts {
   readonly readConfig?: (path: string) => string | null;
 }
 
-export function detectInstalledEditorVersion(
-  opts: DetectInstalledEditorVersionOpts = {},
-): string | null {
+export interface ProbedPath {
+  readonly path: string;
+  readonly reason: "missing" | "no-version-key" | "found";
+}
+
+export interface EditorProbe {
+  readonly version: string | null;
+  readonly probed: readonly ProbedPath[];
+}
+
+// `probed` records what the loop actually read, in order, so a miss is
+// diagnosable instead of mute. A hit short-circuits, so the successful candidate
+// is the last entry and no later candidate appears — rebuilding the list from
+// `editorConfigCandidates` would wrongly claim paths that were never opened.
+export function probeInstalledEditor(opts: DetectInstalledEditorVersionOpts = {}): EditorProbe {
   const platform = opts.platform ?? process.platform;
   const env = opts.env ?? process.env;
   const home = opts.home ?? homedir;
   const readConfig = opts.readConfig ?? defaultReadConfig;
   const candidates = editorConfigCandidates(platform, env, home);
   const pattern = new RegExp(`^\\s*${EDITOR_VERSION_KEY}\\s*=\\s*(\\S+)`, "m");
+  const probed: ProbedPath[] = [];
   for (const candidate of candidates) {
     const body = readConfig(candidate);
     if (body === null) {
+      probed.push({ path: candidate, reason: "missing" });
       continue;
     }
     const match = body.match(pattern);
     if (match && match[1] !== undefined) {
-      return match[1];
+      probed.push({ path: candidate, reason: "found" });
+      return { version: match[1], probed };
     }
+    probed.push({ path: candidate, reason: "no-version-key" });
   }
-  return null;
+  return { version: null, probed };
+}
+
+export function detectInstalledEditorVersion(
+  opts: DetectInstalledEditorVersionOpts = {},
+): string | null {
+  return probeInstalledEditor(opts).version;
 }
 
 const defaultListDir = (dir: string): string[] => {
