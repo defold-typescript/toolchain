@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
+import { EDITOR_PORT_FILE, evalEditor, readEditorPort } from "./editor-attach";
 
 export const EDITOR_VERSION_KEY = "version";
 
@@ -62,16 +63,37 @@ const defaultReadConfig = (p: string): string | null => {
   return readFileSync(p, "utf8");
 };
 
+/**
+ * Whether the running-editor lane has nothing to say about this project, decided
+ * with one `stat` and no promise. Callers consult it to find out whether they
+ * must await `probeInstalledEditor` at all, which is what keeps the common
+ * no-editor case off the async path; it is deliberately a predicate and never a
+ * second copy of the lookup.
+ */
+export function runningEditorDeclines(cwd: string): boolean {
+  return readEditorPort(cwd) === null;
+}
+
+const defaultEvalVersion = async (cwd: string, signal?: AbortSignal): Promise<string | null> => {
+  const value = await evalEditor(cwd, "return editor.version", undefined, signal);
+  // `/eval` renders every value through `tostring`, so a Lua `nil` arrives as
+  // the text "nil" and is indistinguishable from that string. Treating it as no
+  // answer is right for a version question and wrong for nothing this asks.
+  return value === null || value === "" || value === "nil" ? null : value;
+};
+
 export interface DetectInstalledEditorVersionOpts {
+  readonly cwd?: string;
   readonly platform?: NodeJS.Platform;
   readonly env?: NodeJS.ProcessEnv;
   readonly home?: () => string;
   readonly readConfig?: (path: string) => string | null;
+  readonly evalVersion?: (cwd: string, signal?: AbortSignal) => Promise<string | null>;
 }
 
 export interface ProbedPath {
   readonly path: string;
-  readonly reason: "missing" | "no-version-key" | "found";
+  readonly reason: "missing" | "no-version-key" | "found" | "no-editor-open" | "no-answer";
 }
 
 export interface EditorProbe {
@@ -83,7 +105,13 @@ export interface EditorProbe {
 // diagnosable instead of mute. A hit short-circuits, so the successful candidate
 // is the last entry and no later candidate appears — rebuilding the list from
 // `editorConfigCandidates` would wrongly claim paths that were never opened.
-export function probeInstalledEditor(opts: DetectInstalledEditorVersionOpts = {}): EditorProbe {
+//
+// This is the filesystem lane on its own, and it is the *only* copy of that
+// loop: `probeInstalledEditor` runs the editor lane and then delegates here, so
+// the two cannot drift. It stays synchronous because reading `config` files
+// never needed a promise, which is what lets a caller that has not yet been
+// taught to await keep asking the filesystem question directly.
+export function probeEditorConfigFiles(opts: DetectInstalledEditorVersionOpts = {}): EditorProbe {
   const platform = opts.platform ?? process.platform;
   const env = opts.env ?? process.env;
   const home = opts.home ?? homedir;
@@ -107,10 +135,40 @@ export function probeInstalledEditor(opts: DetectInstalledEditorVersionOpts = {}
   return { version: null, probed };
 }
 
-export function detectInstalledEditorVersion(
+// The running editor is asked first: a published port file is evidence that
+// *this project* is open in *that* instance right now, where every config
+// candidate below is only a guess about the machine. No timeout is owned here —
+// the deadline rides in on the caller's signal.
+export async function probeInstalledEditor(
   opts: DetectInstalledEditorVersionOpts = {},
-): string | null {
-  return probeInstalledEditor(opts).version;
+): Promise<EditorProbe> {
+  const cwd = opts.cwd ?? process.cwd();
+  const evalVersion = opts.evalVersion ?? defaultEvalVersion;
+  // The entry names the port file so the report keeps its "here is what was
+  // read" meaning for a source that is not a config file.
+  const portPath = join(cwd, EDITOR_PORT_FILE);
+  if (!runningEditorDeclines(cwd)) {
+    const version = await evalVersion(cwd);
+    if (version !== null) {
+      return { version, probed: [{ path: portPath, reason: "found" }] };
+    }
+    const fallback = probeEditorConfigFiles(opts);
+    return {
+      version: fallback.version,
+      probed: [{ path: portPath, reason: "no-answer" }, ...fallback.probed],
+    };
+  }
+  const fallback = probeEditorConfigFiles(opts);
+  return {
+    version: fallback.version,
+    probed: [{ path: portPath, reason: "no-editor-open" }, ...fallback.probed],
+  };
+}
+
+export async function detectInstalledEditorVersion(
+  opts: DetectInstalledEditorVersionOpts = {},
+): Promise<string | null> {
+  return (await probeInstalledEditor(opts)).version;
 }
 
 const defaultListDir = (dir: string): string[] => {
