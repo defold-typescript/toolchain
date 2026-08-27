@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   classifyDefoldTarget,
-  describeInstalledPinMismatch,
+  describeDetectedPinMismatch,
   describeTargetOverride,
   describeUpstreamReleaseNotice,
   diagnoseDefoldNamespace,
@@ -177,9 +177,9 @@ describe("describeTargetOverride", () => {
   });
 });
 
-describe("describeInstalledPinMismatch", () => {
-  test("installed editor differing from the pin names both and points at set-target --detected", () => {
-    const notices = describeInstalledPinMismatch("1.13.0", "1.12.4");
+describe("describeDetectedPinMismatch", () => {
+  test("detected editor differing from the pin names both and points at set-target --detected", () => {
+    const notices = describeDetectedPinMismatch("1.13.0", "1.12.4");
     expect(notices).toHaveLength(1);
     expect(notices[0]).toContain("1.13.0");
     expect(notices[0]).toContain("1.12.4");
@@ -191,10 +191,10 @@ describe("describeInstalledPinMismatch", () => {
   });
 
   test("equal, whitespace-only difference, no editor, or no pin produce no notice", () => {
-    expect(describeInstalledPinMismatch("1.12.4", "1.12.4")).toEqual([]);
-    expect(describeInstalledPinMismatch(" 1.12.4 ", "1.12.4")).toEqual([]);
-    expect(describeInstalledPinMismatch(undefined, "1.12.4")).toEqual([]);
-    expect(describeInstalledPinMismatch("1.13.0", undefined)).toEqual([]);
+    expect(describeDetectedPinMismatch("1.12.4", "1.12.4")).toEqual([]);
+    expect(describeDetectedPinMismatch(" 1.12.4 ", "1.12.4")).toEqual([]);
+    expect(describeDetectedPinMismatch(undefined, "1.12.4")).toEqual([]);
+    expect(describeDetectedPinMismatch("1.13.0", undefined)).toEqual([]);
   });
 });
 

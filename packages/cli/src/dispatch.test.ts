@@ -3,13 +3,22 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import * as os from "node:os";
 import * as path from "node:path";
 import { Writable } from "node:stream";
+import {
+  EVAL_AUTH_SCHEME,
+  EVAL_REQUEST_MEDIA_TYPE,
+  EVAL_ROUTE,
+  evalSuccessBody,
+  SPEC_BODY,
+} from "../test/fixtures/editor-openapi";
 import { loadApiTargetsRegistry } from "./api-registry";
 import { CURRENT_STABLE_SURFACE_ID } from "./api-surface";
 import type { DefoldIo } from "./bob-command";
 import { readCliVersion } from "./cli-version";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import { dispatch } from "./dispatch";
+import { EDITOR_PORT_FILE, EDITOR_TOKEN_FILE, type EditorTransport } from "./editor-attach";
 import { type ExtensionZip, extensionArchiveKey } from "./extension-archive";
+import { EDITOR_ROOT_ENV } from "./installed-editor-version";
 import { surfaceDirName } from "./materialize";
 import {
   labelRefDocResolveOpts,
@@ -861,7 +870,7 @@ describe("dispatch", () => {
     expect(parsed.warnings.some((w) => w.includes("1.13.0") && w.includes("1.12.4"))).toBe(true);
   });
 
-  test("build warns on stderr when the installed editor drifts from a version pin", async () => {
+  test("build warns on stderr when the detected editor drifts from a version pin", async () => {
     scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
     const { io, err } = captureStreams();
 
@@ -954,7 +963,7 @@ describe("dispatch", () => {
     expect("pinMismatch" in parsed).toBe(false);
   });
 
-  test("build --fail-on-drift exits non-zero when the installed editor drifts from the pin", async () => {
+  test("build --fail-on-drift exits non-zero when the detected editor drifts from the pin", async () => {
     scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
     const { io } = captureStreams();
 
@@ -965,7 +974,7 @@ describe("dispatch", () => {
     expect(code).toBe(1);
   });
 
-  test("build --fail-on-drift exits 0 when the installed editor matches the pin", async () => {
+  test("build --fail-on-drift exits 0 when the detected editor matches the pin", async () => {
     scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
     const { io } = captureStreams();
 
@@ -1149,7 +1158,7 @@ describe("dispatch", () => {
     expect(err()).toContain("set-target --detected");
   });
 
-  test("watch warns on stderr once at startup when the installed editor drifts from a version pin", async () => {
+  test("watch warns on stderr once at startup when the detected editor drifts from a version pin", async () => {
     scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
     writeFileSync(path.join(cwd, "main.script"), "");
     const resolveOpts = multiKindRefDocResolveOpts();
@@ -3225,7 +3234,7 @@ describe("dispatch bob", () => {
     );
   }
 
-  test("bob build warns on stderr when the installed editor drifts from a version pin", async () => {
+  test("bob build warns on stderr when the detected editor drifts from a version pin", async () => {
     pinProject("1.12.4");
     const { io, err } = captureStreams();
     const { internals } = defoldInternals();
@@ -4411,7 +4420,7 @@ describe("dispatch init --template", () => {
     });
   }
 
-  test("run warns on stderr when the installed editor drifts from a version pin, exit code intact", async () => {
+  test("run warns on stderr when the detected editor drifts from a version pin, exit code intact", async () => {
     writeFileSync(
       path.join(cwd, "package.json"),
       `${JSON.stringify({ "defold-typescript": { "defold-target": "1.12.4" } }, null, 2)}\n`,
@@ -4961,7 +4970,7 @@ describe("dispatch upgrade", () => {
     expect(err()).toBe("");
   });
 
-  test("upgrade warns on stderr when the installed editor drifts from a version pin", async () => {
+  test("upgrade warns on stderr when the detected editor drifts from a version pin", async () => {
     writeFileSync(path.join(cwd, "game.project"), "[project]\n");
     writeFileSync(
       path.join(cwd, "package.json"),
@@ -5034,7 +5043,7 @@ describe("dispatch upgrade", () => {
     });
   });
 
-  test("update warns on stderr when the installed editor drifts from a version pin", async () => {
+  test("update warns on stderr when the detected editor drifts from a version pin", async () => {
     writeFileSync(path.join(cwd, "game.project"), "[project]\n");
     writeFileSync(
       path.join(cwd, "package.json"),
@@ -5075,7 +5084,7 @@ describe("dispatch upgrade", () => {
     expect(parsed.pinMismatch).toEqual({ installed: "1.13.0", pinned: "1.12.4" });
   });
 
-  test("update stays silent when the installed editor matches the version pin", async () => {
+  test("update stays silent when the detected editor matches the version pin", async () => {
     writeFileSync(path.join(cwd, "game.project"), "[project]\n");
     writeFileSync(
       path.join(cwd, "package.json"),
@@ -5378,6 +5387,142 @@ describe("dispatch set-target", () => {
 
     expect(code).toBe(1);
     expect(err()).toContain("set-target");
+    expect(pinOf()).toBe("1.12.4");
+  });
+});
+
+// The `--detected` cases above inject `probeEditor`, which replaces the probe
+// *including its choice of source*. These drive the default expression instead,
+// injecting only the socket beneath it, so what the command asks and where it
+// asks it are production's own.
+describe("dispatch set-target --detected through the default probe", () => {
+  const EDITOR_TOKEN = "6ee9f0b3-3f5e-4a1e-9a0f-2c7d4b8e1a55";
+
+  interface RecordedCall {
+    readonly url: string;
+    readonly method: string;
+    readonly headers: Readonly<Record<string, string>> | undefined;
+    readonly body: string | undefined;
+  }
+
+  // Answers the handshake from the recorded spec and hands `/eval` to the case,
+  // which decides from the posted body.
+  function recordingTransport(evalBody: (posted: string) => string): {
+    readonly transport: EditorTransport;
+    readonly calls: RecordedCall[];
+  } {
+    const calls: RecordedCall[] = [];
+    const transport: EditorTransport = async (url, init) => {
+      calls.push({ url, method: init?.method ?? "GET", headers: init?.headers, body: init?.body });
+      const body = url.endsWith("/openapi.json") ? SPEC_BODY : evalBody(init?.body ?? "");
+      return { status: 200, text: async () => body };
+    };
+    return { transport, calls };
+  }
+
+  function writePkg(value: unknown): void {
+    writeFileSync(path.join(cwd, "package.json"), `${JSON.stringify(value, null, 2)}\n`);
+  }
+
+  function pinOf(): string {
+    const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8")) as {
+      "defold-typescript": { "defold-target": string };
+    };
+    return pkg["defold-typescript"]["defold-target"];
+  }
+
+  function openEditorOn(dir: string): void {
+    mkdirSync(path.join(dir, ".internal"), { recursive: true });
+    writeFileSync(path.join(dir, EDITOR_PORT_FILE), "58433");
+    writeFileSync(path.join(dir, EDITOR_TOKEN_FILE), EDITOR_TOKEN);
+  }
+
+  // Dispatch hands the probe nothing but a cwd, so the config lane is steered
+  // the way a user steers it. The override is read ahead of every per-OS path,
+  // which is what keeps these deterministic on a machine that has Defold
+  // installed.
+  let editorRoots: string[] = [];
+  function configLaneAnswers(version: string): void {
+    const root = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-editor-root-"));
+    writeFileSync(path.join(root, "config"), `version = ${version}\n`);
+    editorRoots.push(root);
+    process.env[EDITOR_ROOT_ENV] = root;
+  }
+
+  const savedEditorRoot = process.env[EDITOR_ROOT_ENV];
+
+  afterEach(() => {
+    if (savedEditorRoot === undefined) {
+      delete process.env[EDITOR_ROOT_ENV];
+    } else {
+      process.env[EDITOR_ROOT_ENV] = savedEditorRoot;
+    }
+    for (const root of editorRoots) {
+      rmSync(root, { recursive: true, force: true });
+    }
+    editorRoots = [];
+  });
+
+  test("--detected takes the version the running editor answered", async () => {
+    writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
+    openEditorOn(cwd);
+    // The config lane answers a *different* version on purpose: a default
+    // narrowed to the filesystem then writes 1.12.4 and cannot pass by
+    // coincidence on a machine that has an editor installed.
+    configLaneAnswers("1.12.4");
+    const { transport, calls } = recordingTransport((posted) =>
+      posted === "return editor.version" ? evalSuccessBody("1.13.1") : evalSuccessBody("nil"),
+    );
+    const { io } = captureStreams();
+
+    const code = await dispatch(["set-target", "--detected", cwd], io, {
+      editorTransport: transport,
+    });
+
+    expect(code).toBe(0);
+    expect(pinOf()).toBe("1.13.1");
+    expect(calls[1]).toEqual({
+      url: `http://localhost:58433${EVAL_ROUTE}`,
+      method: "POST",
+      headers: {
+        Authorization: `${EVAL_AUTH_SCHEME.replace(/^./, (c) => c.toUpperCase())} ${EDITOR_TOKEN}`,
+        "Content-Type": EVAL_REQUEST_MEDIA_TYPE,
+      },
+      body: "return editor.version",
+    });
+  });
+
+  test("--detected with no editor open asks nothing and reads the config lane", async () => {
+    writePkg({ "defold-typescript": { "defold-target": "1.13.1" } });
+    configLaneAnswers("1.12.4");
+    const { transport, calls } = recordingTransport(() => evalSuccessBody("1.13.1"));
+    const { io } = captureStreams();
+
+    const code = await dispatch(["set-target", "--detected", cwd], io, {
+      editorTransport: transport,
+    });
+
+    expect(code).toBe(0);
+    expect(calls).toEqual([]);
+    expect(pinOf()).toBe("1.12.4");
+  });
+
+  test("an editor that never answers cannot hold --detected", async () => {
+    writePkg({ "defold-typescript": { "defold-target": "1.13.1" } });
+    openEditorOn(cwd);
+    configLaneAnswers("1.12.4");
+    // Ignores abort on purpose: a stale port file can name a process that
+    // accepts and then says nothing, so the deadline — not the signal — is what
+    // has to be able to end this wait.
+    const transport: EditorTransport = () => new Promise(() => {});
+    const { io } = captureStreams();
+
+    const code = await dispatch(["set-target", "--detected", cwd], io, {
+      editorTransport: transport,
+      editorProbeTimeoutMs: 20,
+    });
+
+    expect(code).toBe(0);
     expect(pinOf()).toBe("1.12.4");
   });
 });

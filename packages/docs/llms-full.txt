@@ -73,7 +73,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 
 - [init](./init.md) — scaffold a new Defold project with a TypeScript surface, or add TypeScript to an existing project; the two modes, the `--template` / `--force` flags, and the starter templates.
 - [upgrade](./upgrade.md) — move the project to the latest toolchain with one verb (`bunx @defold-typescript/cli@latest upgrade`, or its `update` synonym): what it re-scaffolds, why it never clobbers your own scripts, what it does to an existing `defold-target` pin, and the `--json` envelope to read.
-- [set-target](./set-target.md) — write the `defold-target` pin: a fixed version, a release channel (`stable`/`beta`/`alpha`), or `--detected` to sync it to the installed Defold editor, with the typo caught at write time rather than at build time.
+- [set-target](./set-target.md) — write the `defold-target` pin: a fixed version, a release channel (`stable`/`beta`/`alpha`), or `--detected` to sync it to the detected Defold editor, with the typo caught at write time rather than at build time.
 - [watch](./watch.md) — the incremental rebuild loop: recompile Lua on every save beside the Defold editor, push each successful rebuild into the running game with `--hot-reload`, and re-resolve the extension surface on `game.project` changes.
 - [reload](./reload.md) — push one reload into the running game and read the editor console for a bounded window, so a script learns whether an error surfaced there instead of trusting the editor's "queued" response.
 - [build](./build.md) — one-shot transpile of every `src/` TypeScript file to Lua, plus the headless `defold` subcommand that drives `bob` to build and bundle the project.
@@ -2090,7 +2090,7 @@ type-checking, see [Pinning the Defold target](./pinning-defold-target.md).
 ```sh
 bunx @defold-typescript/cli set-target 1.13.1        # pin a fixed version
 bunx @defold-typescript/cli set-target stable        # pin a release channel
-bunx @defold-typescript/cli set-target --detected    # sync to the installed editor
+bunx @defold-typescript/cli set-target --detected    # sync to the detected editor
 bunx @defold-typescript/cli set-target 1.13.1 path/to/project
 ```
 
@@ -2163,29 +2163,31 @@ working precisely when the registry does not.
 
 #### `--detected`
 
-`--detected` (alias `--detect`) pins the installed Defold editor's version, read
-from the editor bundle's `config` file at its conventional per-OS location. It
+`--detected` (alias `--detect`) pins the detected Defold editor's version, taken
+from this project's running editor when one is open, and otherwise from the
+editor bundle's `config` file at its conventional per-OS location. It
 is the answer to the drift warning that [`build`](./build.md),
 [`upgrade`](./upgrade.md), [`watch`](./watch.md), [`run`](./run.md), and
-[`bob`](./bob.md) print when your installed editor differs from the pin.
+[`bob`](./bob.md) print when your detected editor differs from the pin.
 
 It never falls back. With no editor detected it errors rather than guessing —
 and it tells you which paths it read and why each one did not answer:
 
 ```
-defold-typescript set-target: no installed Defold editor was detected; nothing
-was written. Paths read:
+defold-typescript set-target: no Defold editor was detected; nothing was
+written. Paths read:
   /home/u/Defold/config (missing)
   /opt/Defold/config (no-version-key)
-Set DEFOLD_TYPESCRIPT_EDITOR to the folder containing the editor's `config`
-file (the bundle root or its Contents/Resources interior both work), or pass a
-version|stable|beta|alpha token.
+Open this project in the Defold editor, or set DEFOLD_TYPESCRIPT_EDITOR to the
+folder containing the editor's `config` file (the bundle root or its
+Contents/Resources interior both work), or pass a version|stable|beta|alpha
+token.
 ```
 
 `missing` means nothing was there to read; `no-version-key` means a `config`
 was read but carried no `version` line.
 
-An installed editor whose version the registry cannot provide is rejected the
+A detected editor whose version the registry cannot provide is rejected the
 same way a bad token is, rather than syncing the pin to a target the toolchain
 cannot honor.
 
@@ -2793,7 +2795,7 @@ command, and `bob run` short-circuits on a failed build with that same code
 before it ever launches.
 
 The one exception is `--fail-on-drift` on `bob build`/`bundle`/`run`, which
-fails an otherwise-successful command when the installed editor has drifted from
+fails an otherwise-successful command when the detected editor has drifted from
 the pin, or the pin names a version the toolchain cannot provide (see
 [Pinning the Defold target](./pinning-defold-target.md)). It only
 ever replaces a success — a non-zero Bob or engine code is still reported as-is.
@@ -4760,13 +4762,13 @@ A channel is spelled the same way — swap the version for a channel name:
 
 The pin is written by `set-target` (or hand-edited). `set-target <token>` writes
 the `defold-target` pin to a version or channel; `set-target --detected` syncs it
-to the installed Defold editor's version. By contrast, `--defold-target` is a
+to the detected Defold editor's version. By contrast, `--defold-target` is a
 per-run override that never writes `package.json`, by design — a throwaway build
 against an older surface cannot silently re-pin the project. When the flag
 overrides a live pin, the CLI now says so — on stderr for a normal run and in the
 `warnings` array under `--json` — naming both the flag value and the pin it
 shadowed, and pointing at how to persist the target. The reverse drift is caught
-too: when the installed editor differs from a pinned version, the whole
+too: when the detected editor differs from a pinned version, the whole
 build-the-project loop — `build`, `upgrade` (and its `update` synonym), `watch`
 (once at startup, never per rebuild), `run`, and `bob build`/`bundle`/`run` —
 warns, naming both the installed version and the pin, and pointing back at
@@ -4801,7 +4803,7 @@ rather than an error, exactly as `--frozen` and `--force` are off their own
 commands. Do not confuse it with `resolve --frozen`, which is a different
 mechanism entirely: `--frozen` fails when a *native-extension* download would be
 needed because the cache missed, while `--fail-on-drift` fails when the
-*installed editor* has drifted from the version pin. Neither implies the other,
+*detected editor* has drifted from the version pin. Neither implies the other,
 and `--fail-on-drift` never appears on `resolve`.
 
 `set-target` is a **writer** scoped like `init`'s pin write: it reads
@@ -4822,9 +4824,9 @@ pinned writes nothing. It does not materialize a surface or repoint
   reinstall the types package, or pin a channel. Channels bypass the check
   entirely, because they resolve their head at build time and are not registry
   members, so they keep working precisely when the registry does not;
-- `set-target --detected` (alias `--detect`) pins the installed editor's version,
-  erroring when no Defold editor is detected rather than falling back. An
-  installed editor the registry cannot provide is rejected the same way, rather
+- `set-target --detected` (alias `--detect`) pins the detected editor's version,
+  erroring when no Defold editor is detected rather than falling back. A
+  detected editor the registry cannot provide is rejected the same way, rather
   than syncing to a pin the toolchain cannot honor;
 - an optional trailing path targets a project other than the current folder.
 
@@ -4913,9 +4915,9 @@ The resolved target is reported in `--json` output:
 On drift, every command in the build-the-project loop — `build`, `upgrade` (and
 its `update` synonym), `watch` (on its `start` event), `run`, and `bob
 build`/`bundle`/`run` — adds a `pinMismatch: { installed, pinned }` object
-(alongside the notice in the `warnings` array) naming the installed editor version
-and the pinned version. It is absent when the two match, when no editor is
-detected, and for a channel pin.
+(alongside the notice in the `warnings` array) naming the detected editor's
+version under `installed`, and the pinned version. It is absent when the two
+match, when no editor is detected, and for a channel pin.
 
 A target the toolchain cannot provide adds an `unresolvableTarget: { target,
 available }` object naming the pin (or the `--defold-target` value) and the

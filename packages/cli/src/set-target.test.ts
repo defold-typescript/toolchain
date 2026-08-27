@@ -3,7 +3,8 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { loadApiTargetsRegistry } from "./api-registry";
-import type { EditorProbe, ProbedPath } from "./installed-editor-version";
+import { EDITOR_PORT_FILE } from "./editor-attach";
+import { type EditorProbe, editorLaneFallback, type ProbedPath } from "./installed-editor-version";
 import { runSetTarget } from "./set-target";
 
 function probeOf(
@@ -123,7 +124,7 @@ describe("runSetTarget", () => {
     expect(pinOf()).toBe("1.13.1");
   });
 
-  test("--detected with no installed editor errors and never falls back to current-stable", async () => {
+  test("--detected with no editor detected errors and never falls back to current-stable", async () => {
     writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
     const before = readPkgFile();
 
@@ -136,7 +137,7 @@ describe("runSetTarget", () => {
     });
 
     expect(result.ok).toBe(false);
-    expect(result.error).toContain("no installed Defold editor");
+    expect(result.error).toContain("no Defold editor was detected");
     expect(result.written).toEqual([]);
     expect(readPkgFile()).toBe(before);
   });
@@ -201,6 +202,32 @@ describe("runSetTarget", () => {
     const error = result.error ?? "";
     expect(error).toContain("/proj/.internal/editor.port");
     expect(error).toContain("no-answer");
+  });
+
+  // The report the abandoned-editor path actually hands over is production's
+  // own, so this is the one case proving `undetectedError` can render it. The
+  // hand-built shapes above pin the wording; this pins that they still describe
+  // something the assembly emits.
+  test("the assembly the abandoned-editor path returns renders as a miss report", async () => {
+    writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const before = readPkgFile();
+    const report = editorLaneFallback("no-answer", {
+      cwd,
+      platform: "darwin",
+      home: () => "/home/u",
+      readConfig: () => null,
+    });
+
+    const result = await runSetTarget({ cwd, detected: true, probe: async () => report });
+
+    expect(result.ok).toBe(false);
+    expect(readPkgFile()).toBe(before);
+    const error = result.error ?? "";
+    for (const entry of report.probed) {
+      expect(error).toContain(entry.path);
+      expect(error).toContain(entry.reason);
+    }
+    expect(error).toContain(path.join(cwd, EDITOR_PORT_FILE));
   });
 
   test("the two probe reasons stay distinguishable in the message", async () => {
