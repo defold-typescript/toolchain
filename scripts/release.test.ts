@@ -1,11 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { parseTopChangelogVersion } from "./changelog-version.ts";
 import {
   compareVersions,
   latestReleaseTag,
   maxVersion,
   parseArgs,
+  releaseReadiness,
   releaseTagsAt,
   resolveReleaseTarget,
   sleepSync,
@@ -91,6 +93,77 @@ describe("resolveReleaseTarget", () => {
   });
 });
 
+describe("releaseReadiness", () => {
+  test("no release tag on HEAD projects the pending target over the latest tag", () => {
+    expect(releaseReadiness("## v0.20.5\n\n### Fixed\n", ["v0.20.4"], [])).toEqual({
+      kind: "pending",
+      version: "0.20.5",
+    });
+  });
+
+  test("no release tag on HEAD still throws for an already-tagged top heading", () => {
+    expect(() => releaseReadiness("## v0.20.5\n", ["v0.20.4", "v0.20.5"], [])).toThrow(
+      /strictly greater/,
+    );
+  });
+
+  test("no release tag on HEAD still throws for a top heading below the latest tag", () => {
+    expect(() => releaseReadiness("## v0.20.3\n", ["v0.20.4"], [])).toThrow(/strictly greater/);
+  });
+
+  test("a release tag on HEAD matching the top heading is the released state", () => {
+    expect(releaseReadiness("## v0.20.5\n", ["v0.20.4", "v0.20.5"], ["v0.20.5"])).toEqual({
+      kind: "released",
+      tag: "v0.20.5",
+    });
+  });
+
+  test("non-release tags on HEAD are filtered out, leaving the pending state", () => {
+    expect(releaseReadiness("## v0.20.5\n", ["v0.20.4"], ["nightly", "v1.2"])).toEqual({
+      kind: "pending",
+      version: "0.20.5",
+    });
+  });
+
+  test("a heading above the release tag on HEAD is pending, not a mismatch", () => {
+    expect(releaseReadiness("## v0.21.0\n", ["v0.20.5"], ["v0.20.5"])).toEqual({
+      kind: "pending",
+      version: "0.21.0",
+    });
+  });
+
+  test("a heading at or below the release tag on HEAD still throws", () => {
+    expect(() => releaseReadiness("## v0.20.3\n", ["v0.20.5"], ["v0.20.5"])).toThrow(
+      /strictly greater/,
+    );
+  });
+
+  test("several release tags on HEAD accept the one the top heading names", () => {
+    expect(
+      releaseReadiness("## v0.20.5\n", ["v0.20.4", "v0.20.5"], ["v0.20.5", "v0.20.4"]),
+    ).toEqual({ kind: "released", tag: "v0.20.5" });
+  });
+
+  test("several release tags on HEAD leave a heading above them all pending", () => {
+    expect(releaseReadiness("## v0.21.0\n", ["v0.20.5"], ["v0.20.5", "v0.20.4"])).toEqual({
+      kind: "pending",
+      version: "0.21.0",
+    });
+  });
+
+  test("several release tags on HEAD throw when the heading fell below them", () => {
+    expect(() => releaseReadiness("## v0.20.3\n", ["v0.20.5"], ["v0.20.5", "v0.20.4"])).toThrow(
+      /strictly greater/,
+    );
+  });
+
+  test("a changelog with no version heading throws even with a tag on HEAD", () => {
+    expect(() => releaseReadiness("# Changelog\n", ["v0.20.5"], ["v0.20.5"])).toThrow(
+      /no ## vX\.Y\.Z version heading/,
+    );
+  });
+});
+
 type CommandRunner = (cmd: string[]) => { code: number; output: string };
 
 // Anchored to the repo root the changelog is read from, not the process cwd, so
@@ -109,6 +182,11 @@ function repoReleaseTags(runner: CommandRunner): string[] {
   return code === 0 ? releaseTagsAt(output.split("\n")) : [];
 }
 
+function repoTagsAtHead(runner: CommandRunner): string[] {
+  const { code, output } = runner(["git", "tag", "--points-at", "HEAD"]);
+  return code === 0 ? releaseTagsAt(output.split("\n")) : [];
+}
+
 describe("repoReleaseTags", () => {
   test("filters the runner's tag lines through releaseTagsAt", () => {
     const runner: CommandRunner = () => ({ code: 0, output: "v1.2.3\nnightly\nv1.2\n" });
@@ -121,6 +199,18 @@ describe("repoReleaseTags", () => {
   });
 });
 
+describe("repoTagsAtHead", () => {
+  test("filters the runner's HEAD tag lines through releaseTagsAt", () => {
+    const runner: CommandRunner = () => ({ code: 0, output: "v1.2.3\nnightly\nv1.2\n" });
+    expect(repoTagsAtHead(runner)).toEqual(["v1.2.3"]);
+  });
+
+  test("yields no tags when the runner exits non-zero", () => {
+    const runner: CommandRunner = () => ({ code: 128, output: "v1.2.3\n" });
+    expect(repoTagsAtHead(runner)).toEqual([]);
+  });
+});
+
 describe("committed changelog is release-ready", () => {
   const tags = repoReleaseTags(spawnRunner);
   const body = readFileSync(
@@ -128,8 +218,15 @@ describe("committed changelog is release-ready", () => {
     "utf8",
   );
 
-  test.skipIf(tags.length === 0)("projects a release target over the repo's latest tag", () => {
-    expect(resolveReleaseTarget(body, tags)).toMatch(/^\d+\.\d+\.\d+$/);
+  const tagsAtHead = repoTagsAtHead(spawnRunner);
+
+  test.skipIf(tags.length === 0)("is releasable in whichever state HEAD is in", () => {
+    const readiness = releaseReadiness(body, tags, tagsAtHead);
+    if (readiness.kind === "released") {
+      expect(readiness.tag).toBe(`v${parseTopChangelogVersion(body)}`);
+    } else {
+      expect(readiness.version).toMatch(/^\d+\.\d+\.\d+$/);
+    }
   });
 
   test("carries no Unreleased heading in any casing or suffix", () => {
