@@ -14,7 +14,7 @@ import {
   EDITOR_ROOT_ENV,
   type EditorProbe,
   type ProbedPath,
-  probeEditorConfigFiles,
+  probeInstalledEditor,
 } from "./installed-editor-version";
 
 export interface RunSetTargetResult {
@@ -29,7 +29,7 @@ export interface RunSetTargetOptions {
   readonly cwd: string;
   readonly token?: string;
   readonly detected?: boolean;
-  readonly probe?: () => EditorProbe;
+  readonly probe?: () => Promise<EditorProbe>;
   readonly resolvableTargets?: readonly string[];
 }
 
@@ -77,15 +77,19 @@ function undetectedError(probed: readonly ProbedPath[]): string {
   return `${opening}; nothing was written. Paths read:\n${lines}\n${PROBE_ACTION}`;
 }
 
-// Resolve the value to write: `--detected` reads the installed editor (never
-// falling back to current-stable), otherwise the positional token is validated
+// Resolve the value to write: `--detected` reads the editor (never falling back
+// to current-stable), otherwise the positional token is validated
 // verbatim — channels and versions are kept as the user expressed them. Channels
 // resolve their head at build time and are not registry members, so only a
 // concrete version reaches the membership check.
-function resolveValue(opts: RunSetTargetOptions): { value: string } | { error: string } {
+async function resolveValue(
+  opts: RunSetTargetOptions,
+): Promise<{ value: string } | { error: string }> {
   const resolvableTargets = opts.resolvableTargets ?? resolvableTargetVersions();
   if (opts.detected) {
-    const { version, probed } = (opts.probe ?? probeEditorConfigFiles)();
+    const { version, probed } = await (
+      opts.probe ?? (() => probeInstalledEditor({ cwd: opts.cwd }))
+    )();
     if (version === null) {
       return { error: undetectedError(probed) };
     }
@@ -119,8 +123,8 @@ function resolveValue(opts: RunSetTargetOptions): { value: string } | { error: s
   return { value: opts.token };
 }
 
-export function runSetTarget(opts: RunSetTargetOptions): RunSetTargetResult {
-  const resolved = resolveValue(opts);
+export async function runSetTarget(opts: RunSetTargetOptions): Promise<RunSetTargetResult> {
+  const resolved = await resolveValue(opts);
   if ("error" in resolved) {
     return fail(resolved.error);
   }

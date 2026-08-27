@@ -5340,7 +5340,7 @@ describe("dispatch set-target", () => {
     const { io } = captureStreams();
 
     const code = await dispatch(["set-target", "--detected", cwd], io, {
-      probeEditor: () => ({ version: "1.13.1", probed: [] }),
+      probeEditor: async () => ({ version: "1.13.1", probed: [] }),
     });
 
     expect(code).toBe(0);
@@ -5352,7 +5352,7 @@ describe("dispatch set-target", () => {
     const { io } = captureStreams();
 
     const code = await dispatch(["set-target", "--detect", cwd], io, {
-      probeEditor: () => ({ version: "1.13.1", probed: [] }),
+      probeEditor: async () => ({ version: "1.13.1", probed: [] }),
     });
 
     expect(code).toBe(0);
@@ -5373,7 +5373,7 @@ describe("dispatch set-target", () => {
     const { io, err } = captureStreams();
 
     const code = await dispatch(["set-target", "--detected", "1.13.1", cwd], io, {
-      probeEditor: () => ({ version: "1.13.1", probed: [] }),
+      probeEditor: async () => ({ version: "1.13.1", probed: [] }),
     });
 
     expect(code).toBe(1);
@@ -5480,5 +5480,114 @@ describe("dispatch reload", () => {
 
     expect(code).toBe(1);
     expect(err()).toContain("no running Defold editor");
+  });
+});
+
+describe("dispatch running-editor precedence", () => {
+  let cwd: string;
+
+  beforeEach(() => {
+    cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-running-editor-"));
+  });
+
+  afterEach(() => {
+    rmSync(cwd, { recursive: true, force: true });
+  });
+
+  function writePortFile(port = 4242): void {
+    mkdirSync(path.join(cwd, ".internal"), { recursive: true });
+    writeFileSync(path.join(cwd, ".internal", "editor.port"), `${port}\n`);
+  }
+
+  function scaffoldProject(pkg: Record<string, unknown>): void {
+    writeFileSync(
+      path.join(cwd, "tsconfig.json"),
+      JSON.stringify({ compilerOptions: { strict: true }, include: ["src/**/*.ts"] }, null, 2),
+    );
+    mkdirSync(path.join(cwd, "src"), { recursive: true });
+    writeFileSync(path.join(cwd, "src", "main.ts"), "export const a = 1;\n");
+    writeFileSync(path.join(cwd, "package.json"), `${JSON.stringify(pkg, null, 2)}\n`);
+  }
+
+  test("with no editor open the shared tail stays synchronous", () => {
+    // The value dispatch actually returned, not an awaited view of it: an
+    // `await` hoisted above the decline branch turns this into a Promise and
+    // converts every command's return type with it.
+    const { io } = captureStreams();
+
+    const result = dispatch(["init", cwd], io);
+
+    expect(typeof result).toBe("number");
+    expect(result).not.toBeInstanceOf(Promise);
+  });
+
+  test("with an editor open the same command resolves through a promise", async () => {
+    writePortFile();
+    let probed = false;
+    const { io } = captureStreams();
+
+    const result = dispatch(["init", cwd], io, {
+      probeEditor: async () => {
+        probed = true;
+        return { version: null, probed: [] };
+      },
+    });
+
+    expect(result).toBeInstanceOf(Promise);
+    expect(typeof (await result)).toBe("number");
+    expect(probed).toBe(true);
+  });
+
+  test("an open editor is probed once for the whole command", async () => {
+    scaffoldProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+    writePortFile();
+    let probes = 0;
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd], io, {
+      probeEditor: async () => {
+        probes += 1;
+        return { version: "1.13.0", probed: [] };
+      },
+    });
+
+    expect(code).toBe(0);
+    expect(probes).toBe(1);
+    // The drift notice is rendered from the probed version, so the count above
+    // is a count of the reads production actually needed.
+    expect(err()).toContain("1.13.0");
+    expect(err()).toContain("1.12.4");
+  });
+
+  test("the running editor outranks the installed-editor lane", async () => {
+    scaffoldProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+    writePortFile();
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd], io, {
+      probeEditor: async () => ({ version: "1.13.1", probed: [] }),
+      detectEditorVersion: () => "1.9.8",
+    });
+
+    expect(code).toBe(0);
+    expect(err()).toContain("1.13.1");
+    expect(err()).not.toContain("1.9.8");
+  });
+
+  test("an editor that never answers cannot stall the command", async () => {
+    scaffoldProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+    writePortFile();
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd], io, {
+      // Never settles, exactly as a stale port file naming a listening but mute
+      // process behaves. Only production's own deadline can end this.
+      probeEditor: () => new Promise<never>(() => {}),
+      editorProbeTimeoutMs: 5,
+      detectEditorVersion: () => "1.13.0",
+    });
+
+    expect(code).toBe(0);
+    expect(err()).toContain("1.13.0");
   });
 });

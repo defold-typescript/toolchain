@@ -206,20 +206,40 @@ The active target resolves with this precedence:
 
 1. `--defold-target <version|stable|beta|alpha>` on the command line (highest),
 2. the `package.json` `defold-typescript.defold-target` pin,
-3. the **installed Defold editor's `version`** (lowest-precedence fallback),
-4. the current-stable default.
+3. the **running Defold editor's `version`**, when one is open on this project,
+4. the **installed Defold editor's `version`** (lowest-precedence fallback),
+5. the current-stable default.
 
-The installed-editor detection reads the editor bundle's `config` file from
-its conventional per-OS location (for example
-`/Applications/Defold.app/Contents/Resources/config` on macOS,
-`~/Defold/config` on Linux, `%LOCALAPPDATA%\Defold\config` or
-`%PROGRAMFILES%\Defold\config` on Windows), parses the `version = ...` line,
-and uses that value when no flag or pin is present. The first candidate that
-parses wins, and an unknown platform — or no editor installed — reports
-`detected: null` and falls through to the current-stable default. The exact
-bundle paths are pinned for live verification against a real install; the
-probe mechanics (per-OS candidate order, parse, hit/miss) are unit-tested
-synthetically and the production reader is an injectable seam.
+The running editor is asked first because it is the only source that knows
+which editor you are actually using: a published `.internal/editor.port` file
+is evidence that *this* project is open in *that* instance right now, where
+every installed-editor candidate below is a guess about the machine. It is
+scoped to the project — an editor open on a different project does not answer
+here — and a closed editor costs nothing, because the absence of the port file
+is decided with a single filesystem check before any request is made. A stale
+port file naming a process that never replies cannot hold a command either:
+the request runs under a deadline and falls through to the installed-editor
+lane when it expires.
+
+The installed-editor detection reads the editor bundle's `config` file and
+parses its `version = ...` line. `DEFOLD_TYPESCRIPT_EDITOR` is consulted
+first: set it to the folder containing that `config` file (the bundle root or
+its `Contents/Resources` interior both work) and the per-OS conventions are
+skipped. Without it, the conventional locations are tried in order — for
+example `/Applications/Defold.app/Contents/Resources/config` and
+`~/Applications/Defold.app/Contents/Resources/config` on macOS,
+`~/Defold/config` and `/opt/Defold/config` on Linux, and
+`%LOCALAPPDATA%\Defold\config`, `%PROGRAMFILES%\Defold\config` or
+`%USERPROFILE%\Defold\config` on Windows. The first candidate that parses
+wins, and an unknown platform — or no editor found — reports `detected: null`
+and falls through to the current-stable default.
+
+The Windows conventions are necessarily incomplete: the editor ships there as
+a portable archive the user extracts wherever they like, so no list of paths
+can cover every install. `DEFOLD_TYPESCRIPT_EDITOR` is the answer for any
+install that is not at a conventional path. The probe mechanics (per-OS
+candidate order, parse, hit/miss) are unit-tested synthetically and the
+production reader is an injectable seam.
 
 ## What `--json` reports
 
@@ -230,8 +250,8 @@ The resolved target is reported in `--json` output:
   resolved to.
 - `defoldVersionSource` — which tier resolved the target (`flag` / `pin` /
   `detected` / `default`), so an agent script can tell whether it came from the
-  command line, the `package.json` pin, the installed editor, or the hardcoded
-  default.
+  command line, the `package.json` pin, an editor (running or installed), or
+  the hardcoded default.
 - `defoldChannel` — the channel name for a channel target, or `null` for a
   fixed-version target.
 - `defoldSha` — the resolved channel-head sha for a channel target, or `null`

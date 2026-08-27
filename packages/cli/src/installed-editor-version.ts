@@ -89,6 +89,9 @@ export interface DetectInstalledEditorVersionOpts {
   readonly home?: () => string;
   readonly readConfig?: (path: string) => string | null;
   readonly evalVersion?: (cwd: string, signal?: AbortSignal) => Promise<string | null>;
+  // The deadline the running-editor lane runs under. Owned by the caller, which
+  // is the only layer that knows what the command can afford to wait.
+  readonly signal?: AbortSignal;
 }
 
 export interface ProbedPath {
@@ -148,7 +151,7 @@ export async function probeInstalledEditor(
   // read" meaning for a source that is not a config file.
   const portPath = join(cwd, EDITOR_PORT_FILE);
   if (!runningEditorDeclines(cwd)) {
-    const version = await evalVersion(cwd);
+    const version = await evalVersion(cwd, opts.signal);
     if (version !== null) {
       return { version, probed: [{ path: portPath, reason: "found" }] };
     }
