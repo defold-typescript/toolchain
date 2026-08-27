@@ -1,7 +1,12 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import { EDITOR_PORT_FILE, evalEditor, readEditorPort } from "./editor-attach";
+import {
+  EDITOR_PORT_FILE,
+  type EditorTransport,
+  evalEditor,
+  readEditorPort,
+} from "./editor-attach";
 
 export const EDITOR_VERSION_KEY = "version";
 
@@ -74,8 +79,12 @@ export function runningEditorDeclines(cwd: string): boolean {
   return readEditorPort(cwd) === null;
 }
 
-const defaultEvalVersion = async (cwd: string, signal?: AbortSignal): Promise<string | null> => {
-  const value = await evalEditor(cwd, "return editor.version", undefined, signal);
+const defaultEvalVersion = async (
+  cwd: string,
+  signal?: AbortSignal,
+  transport?: EditorTransport,
+): Promise<string | null> => {
+  const value = await evalEditor(cwd, "return editor.version", transport, signal);
   // `/eval` renders every value through `tostring`, so a Lua `nil` arrives as
   // the text "nil" and is indistinguishable from that string. Treating it as no
   // answer is right for a version question and wrong for nothing this asks.
@@ -89,6 +98,11 @@ export interface DetectInstalledEditorVersionOpts {
   readonly home?: () => string;
   readonly readConfig?: (path: string) => string | null;
   readonly evalVersion?: (cwd: string, signal?: AbortSignal) => Promise<string | null>;
+  // The socket the default adapter talks to, injected strictly *beneath* it so
+  // the field it reads and the answers it rejects stay production's own. When
+  // `evalVersion` replaces the adapter wholesale there is no socket left to
+  // inject and this is simply unreached.
+  readonly transport?: EditorTransport;
   // The deadline the running-editor lane runs under. Owned by the caller, which
   // is the only layer that knows what the command can afford to wait.
   readonly signal?: AbortSignal;
@@ -146,7 +160,9 @@ export async function probeInstalledEditor(
   opts: DetectInstalledEditorVersionOpts = {},
 ): Promise<EditorProbe> {
   const cwd = opts.cwd ?? process.cwd();
-  const evalVersion = opts.evalVersion ?? defaultEvalVersion;
+  const evalVersion =
+    opts.evalVersion ??
+    ((c: string, signal?: AbortSignal) => defaultEvalVersion(c, signal, opts.transport));
   // The entry names the port file so the report keeps its "here is what was
   // read" meaning for a source that is not a config file.
   const portPath = join(cwd, EDITOR_PORT_FILE);
