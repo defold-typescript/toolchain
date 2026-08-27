@@ -72,7 +72,10 @@ head without touching the network's download path.
 
 1. the `--java <path>` flag, or the `DEFOLD_JAVA` environment variable,
 2. `java` on your `PATH`,
-3. the JDK bundled inside an installed Defold editor.
+3. the JDK bundled inside an installed Defold editor — the same locations the
+   version probe reads, so `DEFOLD_TYPESCRIPT_EDITOR` points this lane at a
+   non-standard install too (see
+   [`pinning-defold-target`](./pinning-defold-target.md)).
 
 If none resolve, the command errors and names all three. `status` resolves Java
 the same way — honoring `--java` / `DEFOLD_JAVA` before `PATH` and the bundled

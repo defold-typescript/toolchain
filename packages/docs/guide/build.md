@@ -87,7 +87,9 @@ The first run downloads a version-matched `bob.jar` into a cache dir
 `$XDG_CACHE_HOME/defold-typescript/bob`, falling back to
 `~/.cache/defold-typescript/bob`) and reuses it afterward. `bob` needs a JVM. It
 resolves one in order: the `--java <path>` flag (or `DEFOLD_JAVA`), then `java`
-on your `PATH`, then the JDK bundled inside an installed Defold editor. If none
+on your `PATH`, then the JDK bundled inside an installed Defold editor — which
+honors `DEFOLD_TYPESCRIPT_EDITOR` for an install that is not at a conventional
+path (see [`pinning-defold-target`](./pinning-defold-target.md)). If none
 resolve, the command errors and names all three. Native-extension projects can
 pass `--build-server <url>`. `bob`'s exit code
 propagates, so a failed build fails the command.
