@@ -1,7 +1,15 @@
 import { describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import {
+  EVAL_AUTH_SCHEME,
+  EVAL_MULTI_RETURN_EXAMPLE,
+  EVAL_NON_SUCCESS_STATUSES,
+  EVAL_REQUEST_MEDIA_TYPE,
+  EVAL_ROUTE,
+  SPEC_BODY,
+} from "../test/fixtures/editor-openapi";
 import {
   consoleLines,
   consoleWatermark,
@@ -336,38 +344,6 @@ describe("readEditorToken", () => {
   });
 });
 
-// The editor's own `GET /openapi.json`, recorded verbatim from a running 1.13.1
-// editor. The `/eval` cases read the route, the security scheme and the request
-// and response examples out of it rather than restating them, so a client written
-// to a guessed envelope cannot pass.
-const EDITOR_SPEC = JSON.parse(
-  readFileSync(path.join(import.meta.dir, "..", "test", "fixtures", "editor-openapi.json"), "utf8"),
-) as {
-  info: { title: string };
-  components: { securitySchemes: Record<string, { scheme: string }> };
-  paths: Record<
-    string,
-    {
-      post?: {
-        security?: readonly Record<string, readonly string[]>[];
-        requestBody?: { content: Record<string, { example: string }> };
-        responses: Record<string, { content?: Record<string, { example: string }> }>;
-      };
-    }
-  >;
-};
-
-const EVAL_ROUTE = "/eval";
-const EVAL_OP = EDITOR_SPEC.paths[EVAL_ROUTE]?.post;
-const EVAL_SCHEME_NAME = Object.keys(EVAL_OP?.security?.[0] ?? {})[0] ?? "";
-// "bearer" in the spec, "Bearer" on the wire -- the scheme name is what the
-// fixture pins, the capitalization is HTTP's.
-const EVAL_AUTH_SCHEME = EDITOR_SPEC.components.securitySchemes[EVAL_SCHEME_NAME]?.scheme ?? "";
-const EVAL_REQUEST_MEDIA_TYPE = Object.keys(EVAL_OP?.requestBody?.content ?? {})[0] ?? "";
-const EVAL_MULTI_RETURN_EXAMPLE = EVAL_OP?.responses["200"]?.content?.[EVAL_REQUEST_MEDIA_TYPE]
-  ?.example as string;
-
-const SPEC_BODY = JSON.stringify(EDITOR_SPEC);
 const TOKEN = "6ee9f0b3-3f5e-4a1e-9a0f-2c7d4b8e1a55";
 
 interface EvalCall {
@@ -456,11 +432,9 @@ describe("evalEditor", () => {
   });
 
   test("resolves null for the non-success statuses the spec documents", async () => {
-    for (const status of Object.keys(EDITOR_SPEC.paths[EVAL_ROUTE]?.post?.responses ?? {}).filter(
-      (code) => code !== "200",
-    )) {
+    for (const status of EVAL_NON_SUCCESS_STATUSES) {
       const cwd = readyProject();
-      const { transport } = evalTransport(response(Number(status), "eval:1 boom\n"));
+      const { transport } = evalTransport(response(status, "eval:1 boom\n"));
 
       expect(await evalEditor(cwd, "return editor.version", transport)).toBeNull();
     }
