@@ -36,11 +36,7 @@ import { COMMAND_NAMES, renderHelp, renderHelpJson } from "./help";
 import { runInit } from "./init";
 import { runInitAgents } from "./init-agents";
 import { installHint } from "./install-reminder";
-import {
-  detectInstalledEditorVersion,
-  type EditorProbe,
-  probeInstalledEditor,
-} from "./installed-editor-version";
+import { type EditorProbe, probeEditorConfigFiles } from "./installed-editor-version";
 import { renderResult } from "./json-output";
 import type { VendoredLibrary } from "./library-match";
 import type { RefDocResolveOptions } from "./materialize";
@@ -349,7 +345,7 @@ function dispatchCommand(
       cwd: setTargetCwd,
       ...(token !== undefined ? { token } : {}),
       ...(detectedMode
-        ? { detected: true, probe: internals?.probeEditor ?? probeInstalledEditor }
+        ? { detected: true, probe: internals?.probeEditor ?? probeEditorConfigFiles }
         : {}),
     });
     if (json) {
@@ -395,7 +391,9 @@ function dispatchCommand(
   let installedEditorVersion: string | null = null;
   const detectInstalled = (): string | null => {
     if (!installedEditorRead) {
-      installedEditorVersion = (internals?.detectEditorVersion ?? detectInstalledEditorVersion)();
+      installedEditorVersion = (
+        internals?.detectEditorVersion ?? (() => probeEditorConfigFiles().version)
+      )();
       installedEditorRead = true;
     }
     return installedEditorVersion;

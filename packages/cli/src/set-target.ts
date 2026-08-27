@@ -14,7 +14,7 @@ import {
   EDITOR_ROOT_ENV,
   type EditorProbe,
   type ProbedPath,
-  probeInstalledEditor,
+  probeEditorConfigFiles,
 } from "./installed-editor-version";
 
 export interface RunSetTargetResult {
@@ -85,7 +85,7 @@ function undetectedError(probed: readonly ProbedPath[]): string {
 function resolveValue(opts: RunSetTargetOptions): { value: string } | { error: string } {
   const resolvableTargets = opts.resolvableTargets ?? resolvableTargetVersions();
   if (opts.detected) {
-    const { version, probed } = (opts.probe ?? probeInstalledEditor)();
+    const { version, probed } = (opts.probe ?? probeEditorConfigFiles)();
     if (version === null) {
       return { error: undetectedError(probed) };
     }
