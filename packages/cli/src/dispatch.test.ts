@@ -5340,7 +5340,7 @@ describe("dispatch set-target", () => {
     const { io } = captureStreams();
 
     const code = await dispatch(["set-target", "--detected", cwd], io, {
-      detectEditorVersion: () => "1.13.1",
+      probeEditor: () => ({ version: "1.13.1", probed: [] }),
     });
 
     expect(code).toBe(0);
@@ -5352,7 +5352,7 @@ describe("dispatch set-target", () => {
     const { io } = captureStreams();
 
     const code = await dispatch(["set-target", "--detect", cwd], io, {
-      detectEditorVersion: () => "1.13.1",
+      probeEditor: () => ({ version: "1.13.1", probed: [] }),
     });
 
     expect(code).toBe(0);
@@ -5373,7 +5373,7 @@ describe("dispatch set-target", () => {
     const { io, err } = captureStreams();
 
     const code = await dispatch(["set-target", "--detected", "1.13.1", cwd], io, {
-      detectEditorVersion: () => "1.13.1",
+      probeEditor: () => ({ version: "1.13.1", probed: [] }),
     });
 
     expect(code).toBe(1);
