@@ -18,7 +18,7 @@ changes are called out first because the toolchain is pre-1.0.
 
 ### Improved
 
-- **The Defold version can come from the editor you already have open.** With this project open in the Defold editor, the toolchain reads the version from that editor over its local API instead of inferring it from an installed `config` file; a project with no editor open is unaffected and keeps the existing per-OS search.
+- **The Defold version can come from the editor you already have open.** With this project open in the Defold editor, [version resolution](./pinning-defold-target.md) takes the version from that running editor rather than guessing at an install path, so `set-target --detected` pins what you are actually running and the pin-drift notice compares against that same live version. A project with no editor open is unaffected, and an editor that stops answering falls back instead of holding the command.
 
 ### Fixed
 

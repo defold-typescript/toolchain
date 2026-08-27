@@ -36,7 +36,12 @@ import { COMMAND_NAMES, renderHelp, renderHelpJson } from "./help";
 import { runInit } from "./init";
 import { runInitAgents } from "./init-agents";
 import { installHint } from "./install-reminder";
-import { type EditorProbe, probeEditorConfigFiles } from "./installed-editor-version";
+import {
+  type EditorProbe,
+  probeEditorConfigFiles,
+  probeInstalledEditor,
+  runningEditorDeclines,
+} from "./installed-editor-version";
 import { renderResult } from "./json-output";
 import type { VendoredLibrary } from "./library-match";
 import type { RefDocResolveOptions } from "./materialize";
@@ -79,7 +84,7 @@ export interface DispatchInternals {
   // `set-target --detected` needs the *report* as well as the version — the
   // failure message names every path read and why — so it takes the wider probe
   // rather than `detectEditorVersion`, which stays the drift-notice seam above.
-  readonly probeEditor?: () => EditorProbe;
+  readonly probeEditor?: (signal?: AbortSignal) => Promise<EditorProbe>;
   // `wall` takes its target directories as positionals (not a cwd path arg like
   // the other commands), so tests inject the project root and TTY state here.
   readonly cwd?: string;
@@ -341,33 +346,38 @@ function dispatchCommand(
     const token = detectedMode ? undefined : rest[0];
     const pathArg = detectedMode ? rest[0] : rest[1];
     const setTargetCwd = pathArg ? path.resolve(pathArg) : process.cwd();
-    const result = runSetTarget({
-      cwd: setTargetCwd,
-      ...(token !== undefined ? { token } : {}),
-      ...(detectedMode
-        ? { detected: true, probe: internals?.probeEditor ?? probeEditorConfigFiles }
-        : {}),
-    });
-    if (json) {
-      io.stdout.write(
-        renderResult({
-          command: "set-target",
-          ...(result.error !== undefined ? { error: result.error } : {}),
-          written: result.written,
-          ...(result.from !== undefined ? { from: result.from } : {}),
-          ...(result.to !== undefined ? { to: result.to } : {}),
-        }),
-      );
-    } else if (!result.ok) {
-      io.stderr.write(`${result.error}\n`);
-    } else if (result.written.length === 0) {
-      io.stdout.write(`defold-typescript set-target: already ${result.to}\n`);
-    } else {
-      io.stdout.write(
-        `defold-typescript set-target: ${result.from ?? "(unset)"} -> ${result.to}\n`,
-      );
-    }
-    return result.ok ? 0 : 1;
+    return (async () => {
+      const result = await runSetTarget({
+        cwd: setTargetCwd,
+        ...(token !== undefined ? { token } : {}),
+        ...(detectedMode
+          ? {
+              detected: true,
+              probe: internals?.probeEditor ?? (() => probeInstalledEditor({ cwd: setTargetCwd })),
+            }
+          : {}),
+      });
+      if (json) {
+        io.stdout.write(
+          renderResult({
+            command: "set-target",
+            ...(result.error !== undefined ? { error: result.error } : {}),
+            written: result.written,
+            ...(result.from !== undefined ? { from: result.from } : {}),
+            ...(result.to !== undefined ? { to: result.to } : {}),
+          }),
+        );
+      } else if (!result.ok) {
+        io.stderr.write(`${result.error}\n`);
+      } else if (result.written.length === 0) {
+        io.stdout.write(`defold-typescript set-target: already ${result.to}\n`);
+      } else {
+        io.stdout.write(
+          `defold-typescript set-target: ${result.from ?? "(unset)"} -> ${result.to}\n`,
+        );
+      }
+      return result.ok ? 0 : 1;
+    })();
   }
 
   // One read of package.json feeds both the pin and its diagnostics, so every
@@ -384,12 +394,12 @@ function dispatchCommand(
       io.stderr.write(`defold-typescript ${command}: ${diagnostic}\n`);
     }
   }
-  // The installed editor feeds two sites now — the no-flag/no-pin resolution
-  // fallback below and the pin-drift check after `target` resolves — so read it
-  // at most once and memoize.
+  // The editor feeds two sites below -- the no-flag/no-pin resolution fallback
+  // and the pin-drift check after `target` resolves -- so it is read at most
+  // once per command and that one answer is reused.
   let installedEditorRead = false;
   let installedEditorVersion: string | null = null;
-  const detectInstalled = (): string | null => {
+  const syncEditorVersion = (): string | null => {
     if (!installedEditorRead) {
       installedEditorVersion = (
         internals?.detectEditorVersion ?? (() => probeEditorConfigFiles().version)
@@ -398,820 +408,933 @@ function dispatchCommand(
     }
     return installedEditorVersion;
   };
-  let detected: string | undefined;
-  if (defoldTargetFlag === undefined && pin === undefined) {
-    const result = detectInstalled();
-    if (result !== null) {
-      detected = result;
-    }
-  }
-  let target: ReturnType<typeof resolveDefoldTarget>;
-  try {
-    target = resolveDefoldTarget({
-      ...(defoldTargetFlag !== undefined ? { flag: defoldTargetFlag } : {}),
-      ...(pin !== undefined ? { pin } : {}),
-      ...(detected !== undefined ? { detected } : {}),
-    });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    if (json) {
-      io.stdout.write(renderResult({ command: "build", error: message }));
-    } else {
-      io.stderr.write(`${message}\n`);
-    }
-    return 1;
-  }
-  const targetSource = target.source;
-  // A concrete-version pin can silently lag the installed editor after an upgrade;
-  // warn across the build-the-project loop so the user knows `set-target --detected`
-  // exists. That loop is `build`/`upgrade`/`update` plus the heads-down commands
-  // `watch`/`run` and `bob build|bundle|run` — the developer who keeps a watcher
-  // running, only ever `run`s, or drives builds through `bob` never crosses the
-  // first three. `bob status`/`bob resolve` inspect rather than build, so they stay
-  // out. A channel pin tracks its head, and a flag override is covered by the
-  // override notice, so both stay out of this gate — leaving `pinnedVersion`
-  // undefined keeps the editor undetected for them.
-  const bobBuildsProject =
-    command === "bob" && (rest[0] === "build" || rest[0] === "bundle" || rest[0] === "run");
-  const driftCheckedCommand =
-    command === "build" ||
-    command === "upgrade" ||
-    command === "update" ||
-    command === "watch" ||
-    command === "run" ||
-    bobBuildsProject;
-  const pinnedVersion =
-    driftCheckedCommand && target.kind === "version" && target.source === "pin"
-      ? target.version
-      : undefined;
-  const installedForDrift =
-    pinnedVersion !== undefined ? (detectInstalled() ?? undefined) : undefined;
-  const driftNotice = describeInstalledPinMismatch(installedForDrift, pinnedVersion);
-  const pinMismatch =
-    installedForDrift !== undefined && pinnedVersion !== undefined && driftNotice.length > 0
-      ? { installed: installedForDrift, pinned: pinnedVersion }
-      : undefined;
-  // A channel target tracks a moving head, so "the registry does not carry it"
-  // is not a statement about anything the user declared; only a concrete version
-  // the user pinned or passed can be unprovidable.
-  const unresolvableTarget =
-    driftCheckedCommand &&
-    target.kind === "version" &&
-    (targetSource === "pin" || targetSource === "flag") &&
-    !selectApiSurface(target.version).available
-      ? target.version
-      : undefined;
-  const resolvableTargets = unresolvableTarget === undefined ? [] : resolvableTargetVersions();
-  const unresolvableNotice = unresolvableTargetNotice(
-    unresolvableTarget,
-    targetSource,
-    resolvableTargets,
-  );
-  // The no-surface outcome is stated outright rather than left to be inferred
-  // from a null `materializedSurface` the non-build commands never report.
-  const unresolvableTargetField =
-    unresolvableTarget === undefined
-      ? {}
-      : { unresolvableTarget: { target: unresolvableTarget, available: resolvableTargets } };
-  // One array for both pin verdicts: every stderr loop and `warnings` spread
-  // below carries them together, so neither can gain a channel the other lacks.
-  const pinNotices = [...driftNotice, ...unresolvableNotice];
-  // `driftNotice` is already empty for undetected editors, matching versions,
-  // channel pins, and every command outside `driftCheckedCommand`, so the
-  // escalation inherits that gate exactly rather than re-deriving it;
-  // `unresolvableNotice` carries the same command gate.
-  drift.escalate = failOnDrift && pinNotices.length > 0;
-  const channelFetch =
-    internals?.fetchChannelInfo ?? internals?.resolveOpts?.fetchChannelInfo ?? fetchChannelInfo;
-  const versionFetch = internals?.fetchVersionInfo ?? fetchVersionInfo;
-  // A version target's head is synchronous (no channel info.json probe); a
-  // channel target resolves its head — `{version, sha}` — via the fetch above.
-  const syncHead: ResolvedTargetHead | undefined =
-    target.kind === "version" ? { version: target.version, channel: null, sha: null } : undefined;
-  const resolveHead = (): Promise<ResolvedTargetHead> =>
-    resolveTargetHead(target, { fetchChannelInfo: channelFetch, fetchVersionInfo: versionFetch });
-  // Ref-doc resolution addresses the channel head; the fetch seam in
-  // `internals.resolveOpts` (spread last) still wins for tests.
-  const refDocOptsFor = (head: ResolvedTargetHead): RefDocResolveOptions => ({
-    ...(head.channel ? { channel: head.channel } : {}),
-    ...internals?.resolveOpts,
-  });
+  const timeoutMs = internals?.editorProbeTimeoutMs ?? EDITOR_PROBE_TIMEOUT_MS;
 
-  if (command === "init") {
-    const runInitFlow = (head: ResolvedTargetHead): number => {
-      try {
-        if (rest[0] === undefined) {
-          throw new Error(
-            'defold-typescript init: a destination folder is required. Pass "." for the current folder, or a path like "my-game".',
-          );
-        }
-        const { written, operations, warnings } = runInit({
-          cwd,
-          force,
-          ...(templateFlag !== undefined ? { template: templateFlag } : {}),
-        });
-        const initWarnings = [...targetDiagnostics, ...warnings];
-        if (json) {
-          io.stdout.write(
-            renderResult({
-              command: "init",
-              written,
-              operations,
-              ...(initWarnings.length > 0 ? { warnings: initWarnings } : {}),
-              defoldVersion: head.version,
-              defoldVersionSource: targetSource,
-              defoldChannel: head.channel,
-              defoldSha: head.sha,
-              apiSurface: selectApiSurface(head.version).surfaceId,
-              installCommand: installHint(),
-            }),
-          );
-        } else {
-          io.stdout.write(
-            `defold-typescript init: wrote ${written.length} files: ${written.join(", ")}\n`,
-          );
-          for (const op of operations) {
-            io.stdout.write(`  ${op.target}: ${op.status}${op.detail ? ` — ${op.detail}` : ""}\n`);
-          }
-          for (const warning of warnings) {
-            io.stderr.write(`defold-typescript init: ${warning}\n`);
-          }
-          if (!suppressInstallReminder) {
-            io.stdout.write(`Next: run \`${installHint()}\` to install dependencies.\n`);
-          }
-        }
-        return 0;
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        if (json) {
-          io.stdout.write(renderResult({ command: "init", error: message }));
-        } else {
-          io.stderr.write(`${message}\n`);
-        }
-        return 1;
+  // One body, two entries. The declining path calls it with the synchronous
+  // lane's reader and returns whatever it returns; the running-editor path
+  // awaits the probe first and calls the same body with the answer. A second
+  // copy of this tail would drift, and the drift would only ever show up for
+  // users who have the editor open.
+  const withEditorVersion = (detectInstalled: () => string | null): number | Promise<number> => {
+    let detected: string | undefined;
+    if (defoldTargetFlag === undefined && pin === undefined) {
+      const result = detectInstalled();
+      if (result !== null) {
+        detected = result;
       }
-    };
-    return syncHead !== undefined
-      ? runInitFlow(syncHead)
-      : (async (): Promise<number> => runInitFlow(await resolveHead()))();
-  }
-
-  if (command === "init-agents") {
+    }
+    let target: ReturnType<typeof resolveDefoldTarget>;
     try {
-      if (rest[0] === undefined) {
-        throw new Error(
-          'defold-typescript init-agents: a destination folder is required. Pass "." for the current folder, or a path like "my-game".',
-        );
-      }
-      const { written } = runInitAgents({ cwd });
-      if (json) {
-        io.stdout.write(renderResult({ command: "init-agents", written }));
-      } else {
-        io.stdout.write(
-          `defold-typescript init-agents: wrote ${written.length} files: ${written.join(", ")}\n`,
-        );
-      }
-      return 0;
+      target = resolveDefoldTarget({
+        ...(defoldTargetFlag !== undefined ? { flag: defoldTargetFlag } : {}),
+        ...(pin !== undefined ? { pin } : {}),
+        ...(detected !== undefined ? { detected } : {}),
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       if (json) {
-        io.stdout.write(renderResult({ command: "init-agents", error: message }));
+        io.stdout.write(renderResult({ command: "build", error: message }));
       } else {
         io.stderr.write(`${message}\n`);
       }
       return 1;
     }
-  }
+    const targetSource = target.source;
+    // A concrete-version pin can silently lag the installed editor after an upgrade;
+    // warn across the build-the-project loop so the user knows `set-target --detected`
+    // exists. That loop is `build`/`upgrade`/`update` plus the heads-down commands
+    // `watch`/`run` and `bob build|bundle|run` — the developer who keeps a watcher
+    // running, only ever `run`s, or drives builds through `bob` never crosses the
+    // first three. `bob status`/`bob resolve` inspect rather than build, so they stay
+    // out. A channel pin tracks its head, and a flag override is covered by the
+    // override notice, so both stay out of this gate — leaving `pinnedVersion`
+    // undefined keeps the editor undetected for them.
+    const bobBuildsProject =
+      command === "bob" && (rest[0] === "build" || rest[0] === "bundle" || rest[0] === "run");
+    const driftCheckedCommand =
+      command === "build" ||
+      command === "upgrade" ||
+      command === "update" ||
+      command === "watch" ||
+      command === "run" ||
+      bobBuildsProject;
+    const pinnedVersion =
+      driftCheckedCommand && target.kind === "version" && target.source === "pin"
+        ? target.version
+        : undefined;
+    const installedForDrift =
+      pinnedVersion !== undefined ? (detectInstalled() ?? undefined) : undefined;
+    const driftNotice = describeInstalledPinMismatch(installedForDrift, pinnedVersion);
+    const pinMismatch =
+      installedForDrift !== undefined && pinnedVersion !== undefined && driftNotice.length > 0
+        ? { installed: installedForDrift, pinned: pinnedVersion }
+        : undefined;
+    // A channel target tracks a moving head, so "the registry does not carry it"
+    // is not a statement about anything the user declared; only a concrete version
+    // the user pinned or passed can be unprovidable.
+    const unresolvableTarget =
+      driftCheckedCommand &&
+      target.kind === "version" &&
+      (targetSource === "pin" || targetSource === "flag") &&
+      !selectApiSurface(target.version).available
+        ? target.version
+        : undefined;
+    const resolvableTargets = unresolvableTarget === undefined ? [] : resolvableTargetVersions();
+    const unresolvableNotice = unresolvableTargetNotice(
+      unresolvableTarget,
+      targetSource,
+      resolvableTargets,
+    );
+    // The no-surface outcome is stated outright rather than left to be inferred
+    // from a null `materializedSurface` the non-build commands never report.
+    const unresolvableTargetField =
+      unresolvableTarget === undefined
+        ? {}
+        : { unresolvableTarget: { target: unresolvableTarget, available: resolvableTargets } };
+    // One array for both pin verdicts: every stderr loop and `warnings` spread
+    // below carries them together, so neither can gain a channel the other lacks.
+    const pinNotices = [...driftNotice, ...unresolvableNotice];
+    // `driftNotice` is already empty for undetected editors, matching versions,
+    // channel pins, and every command outside `driftCheckedCommand`, so the
+    // escalation inherits that gate exactly rather than re-deriving it;
+    // `unresolvableNotice` carries the same command gate.
+    drift.escalate = failOnDrift && pinNotices.length > 0;
+    const channelFetch =
+      internals?.fetchChannelInfo ?? internals?.resolveOpts?.fetchChannelInfo ?? fetchChannelInfo;
+    const versionFetch = internals?.fetchVersionInfo ?? fetchVersionInfo;
+    // A version target's head is synchronous (no channel info.json probe); a
+    // channel target resolves its head — `{version, sha}` — via the fetch above.
+    const syncHead: ResolvedTargetHead | undefined =
+      target.kind === "version" ? { version: target.version, channel: null, sha: null } : undefined;
+    const resolveHead = (): Promise<ResolvedTargetHead> =>
+      resolveTargetHead(target, { fetchChannelInfo: channelFetch, fetchVersionInfo: versionFetch });
+    // Ref-doc resolution addresses the channel head; the fetch seam in
+    // `internals.resolveOpts` (spread last) still wins for tests.
+    const refDocOptsFor = (head: ResolvedTargetHead): RefDocResolveOptions => ({
+      ...(head.channel ? { channel: head.channel } : {}),
+      ...internals?.resolveOpts,
+    });
 
-  if (command === "setup-debug") {
-    return (async (): Promise<number> => {
-      const result = await runSetupDebug({
-        cwd,
-        json,
-        ...(scriptFlag !== undefined ? { script: scriptFlag } : {}),
-      });
-      if (json) {
-        io.stdout.write(
-          renderResult(
-            result.ok
-              ? {
-                  command: "setup-debug",
-                  written: result.written,
-                  actions: result.actions,
-                  manualSteps: result.manualSteps,
-                  ...(result.addedTo !== undefined ? { addedTo: result.addedTo } : {}),
-                  removedFrom: result.removedFrom ?? [],
-                  bootPath: result.bootPath ?? [],
-                }
-              : { command: "setup-debug", error: result.error ?? "setup-debug failed" },
-          ),
-        );
-      } else if (result.ok) {
-        io.stdout.write(
-          `defold-typescript setup-debug: wrote ${result.written.length} files: ${result.written.join(", ")}\n`,
-        );
-        if (result.addedTo !== undefined) {
-          io.stdout.write(`Debugger bootstrap added to: ${result.addedTo}\n`);
+    if (command === "init") {
+      const runInitFlow = (head: ResolvedTargetHead): number => {
+        try {
+          if (rest[0] === undefined) {
+            throw new Error(
+              'defold-typescript init: a destination folder is required. Pass "." for the current folder, or a path like "my-game".',
+            );
+          }
+          const { written, operations, warnings } = runInit({
+            cwd,
+            force,
+            ...(templateFlag !== undefined ? { template: templateFlag } : {}),
+          });
+          const initWarnings = [...targetDiagnostics, ...warnings];
+          if (json) {
+            io.stdout.write(
+              renderResult({
+                command: "init",
+                written,
+                operations,
+                ...(initWarnings.length > 0 ? { warnings: initWarnings } : {}),
+                defoldVersion: head.version,
+                defoldVersionSource: targetSource,
+                defoldChannel: head.channel,
+                defoldSha: head.sha,
+                apiSurface: selectApiSurface(head.version).surfaceId,
+                installCommand: installHint(),
+              }),
+            );
+          } else {
+            io.stdout.write(
+              `defold-typescript init: wrote ${written.length} files: ${written.join(", ")}\n`,
+            );
+            for (const op of operations) {
+              io.stdout.write(
+                `  ${op.target}: ${op.status}${op.detail ? ` — ${op.detail}` : ""}\n`,
+              );
+            }
+            for (const warning of warnings) {
+              io.stderr.write(`defold-typescript init: ${warning}\n`);
+            }
+            if (!suppressInstallReminder) {
+              io.stdout.write(`Next: run \`${installHint()}\` to install dependencies.\n`);
+            }
+          }
+          return 0;
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          if (json) {
+            io.stdout.write(renderResult({ command: "init", error: message }));
+          } else {
+            io.stderr.write(`${message}\n`);
+          }
+          return 1;
         }
-        if (result.removedFrom !== undefined && result.removedFrom.length > 0) {
-          io.stdout.write(`Removed stale bootstrap from: ${result.removedFrom.join(", ")}\n`);
-        }
-        if (result.bootPath !== undefined && result.bootPath.length > 0) {
-          io.stdout.write(`Boot path: ${result.bootPath.join(" -> ")}\n`);
-        }
-        io.stdout.write("Remaining manual steps:\n");
-        for (const step of result.manualSteps) {
-          io.stdout.write(`  - ${step}\n`);
-        }
-      } else {
-        io.stderr.write(`${result.error}\n`);
-      }
-      return result.ok ? 0 : 1;
-    })();
-  }
+      };
+      return syncHead !== undefined
+        ? runInitFlow(syncHead)
+        : (async (): Promise<number> => runInitFlow(await resolveHead()))();
+    }
 
-  if (command === "build") {
-    return (async (): Promise<number> => {
-      const { runBuild } = await import("./build");
-      const {
-        ensureMaterializedReference,
-        materializeApiSurface,
-        materializeRefDocSurface,
-        resolveRegisteredSurfaceGeneratedDir,
-      } = await import("./materialize");
-
-      let head: ResolvedTargetHead;
+    if (command === "init-agents") {
       try {
-        head = syncHead ?? (await resolveHead());
+        if (rest[0] === undefined) {
+          throw new Error(
+            'defold-typescript init-agents: a destination folder is required. Pass "." for the current folder, or a path like "my-game".',
+          );
+        }
+        const { written } = runInitAgents({ cwd });
+        if (json) {
+          io.stdout.write(renderResult({ command: "init-agents", written }));
+        } else {
+          io.stdout.write(
+            `defold-typescript init-agents: wrote ${written.length} files: ${written.join(", ")}\n`,
+          );
+        }
+        return 0;
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         if (json) {
-          io.stdout.write(renderResult({ command: "build", error: message }));
+          io.stdout.write(renderResult({ command: "init-agents", error: message }));
         } else {
           io.stderr.write(`${message}\n`);
         }
         return 1;
       }
-      // One-shot: resolve, name the editor, move on. No console stream and no
-      // retry -- `build` finishes in under a second, replaying a console that
-      // predates the command would say nothing about it, and a missing editor is
-      // the ordinary case in CI. Under `--json` the probe is skipped outright,
-      // since its only product is a human line the machine stream must not carry.
-      if (!json) {
-        const { resolveEditor } = await import("./editor-attach");
-        const editorClient = internals?.editorClient;
-        // Bounded: a stale port file can name a process that listens but never
-        // answers, and this probe's only product is one human status line -- it
-        // must never be able to hold the build. A timed-out probe is silent,
-        // exactly as a missing editor is.
-        const probe = new AbortController();
-        const timeoutMs = internals?.editorProbeTimeoutMs ?? EDITOR_PROBE_TIMEOUT_MS;
-        let timer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
-          timer = null;
-          probe.abort();
-        }, timeoutMs);
-        const endpoint = await Promise.race([
-          editorClient
-            ? editorClient.resolve(cwd, probe.signal)
-            : resolveEditor(cwd, undefined, probe.signal),
-          new Promise<null>((resolve) => {
-            probe.signal.addEventListener("abort", () => resolve(null));
-          }),
-        ]).catch(() => null);
-        if (timer !== null) clearTimeout(timer);
-        if (endpoint !== null) {
-          io.stderr.write(
-            `defold-typescript build: attached to Defold editor at ${endpoint.baseUrl}\n`,
-          );
-        }
-      }
+    }
 
-      const surface = selectApiSurface(head.version);
-      const apiSurface = surface.surfaceId;
-      const refDocResolveOpts = refDocOptsFor(head);
-      const sourceGeneratedDir =
-        internals?.sourceGeneratedDir ?? resolveRegisteredSurfaceGeneratedDir(surface.surfaceId);
-
-      const reportBuild = (
-        written: readonly string[],
-        warnings: readonly string[],
-        materializedDir: string | null,
-      ): number => {
-        ensureMaterializedReference(cwd, materializedDir);
-        // walls are opt-in via the wall command
+    if (command === "setup-debug") {
+      return (async (): Promise<number> => {
+        const result = await runSetupDebug({
+          cwd,
+          json,
+          ...(scriptFlag !== undefined ? { script: scriptFlag } : {}),
+        });
         if (json) {
           io.stdout.write(
-            renderResult({
-              command: "build",
-              written,
-              warnings: [...pinNotices, ...targetDiagnostics, ...warnings],
-              defoldVersion: head.version,
-              defoldVersionSource: targetSource,
-              defoldChannel: head.channel,
-              defoldSha: head.sha,
-              apiSurface,
-              materializedSurface: materializedDir,
-              ...(pinMismatch ? { pinMismatch } : {}),
-              ...unresolvableTargetField,
+            renderResult(
+              result.ok
+                ? {
+                    command: "setup-debug",
+                    written: result.written,
+                    actions: result.actions,
+                    manualSteps: result.manualSteps,
+                    ...(result.addedTo !== undefined ? { addedTo: result.addedTo } : {}),
+                    removedFrom: result.removedFrom ?? [],
+                    bootPath: result.bootPath ?? [],
+                  }
+                : { command: "setup-debug", error: result.error ?? "setup-debug failed" },
+            ),
+          );
+        } else if (result.ok) {
+          io.stdout.write(
+            `defold-typescript setup-debug: wrote ${result.written.length} files: ${result.written.join(", ")}\n`,
+          );
+          if (result.addedTo !== undefined) {
+            io.stdout.write(`Debugger bootstrap added to: ${result.addedTo}\n`);
+          }
+          if (result.removedFrom !== undefined && result.removedFrom.length > 0) {
+            io.stdout.write(`Removed stale bootstrap from: ${result.removedFrom.join(", ")}\n`);
+          }
+          if (result.bootPath !== undefined && result.bootPath.length > 0) {
+            io.stdout.write(`Boot path: ${result.bootPath.join(" -> ")}\n`);
+          }
+          io.stdout.write("Remaining manual steps:\n");
+          for (const step of result.manualSteps) {
+            io.stdout.write(`  - ${step}\n`);
+          }
+        } else {
+          io.stderr.write(`${result.error}\n`);
+        }
+        return result.ok ? 0 : 1;
+      })();
+    }
+
+    if (command === "build") {
+      return (async (): Promise<number> => {
+        const { runBuild } = await import("./build");
+        const {
+          ensureMaterializedReference,
+          materializeApiSurface,
+          materializeRefDocSurface,
+          resolveRegisteredSurfaceGeneratedDir,
+        } = await import("./materialize");
+
+        let head: ResolvedTargetHead;
+        try {
+          head = syncHead ?? (await resolveHead());
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          if (json) {
+            io.stdout.write(renderResult({ command: "build", error: message }));
+          } else {
+            io.stderr.write(`${message}\n`);
+          }
+          return 1;
+        }
+        // One-shot: resolve, name the editor, move on. No console stream and no
+        // retry -- `build` finishes in under a second, replaying a console that
+        // predates the command would say nothing about it, and a missing editor is
+        // the ordinary case in CI. Under `--json` the probe is skipped outright,
+        // since its only product is a human line the machine stream must not carry.
+        if (!json) {
+          const { resolveEditor } = await import("./editor-attach");
+          const editorClient = internals?.editorClient;
+          // Bounded: a stale port file can name a process that listens but never
+          // answers, and this probe's only product is one human status line -- it
+          // must never be able to hold the build. A timed-out probe is silent,
+          // exactly as a missing editor is.
+          const probe = new AbortController();
+          let timer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+            timer = null;
+            probe.abort();
+          }, timeoutMs);
+          const endpoint = await Promise.race([
+            editorClient
+              ? editorClient.resolve(cwd, probe.signal)
+              : resolveEditor(cwd, undefined, probe.signal),
+            new Promise<null>((resolve) => {
+              probe.signal.addEventListener("abort", () => resolve(null));
             }),
-          );
-        } else {
-          io.stdout.write(
-            `defold-typescript build: wrote ${written.length} files: ${written.join(", ")}\n`,
-          );
-          for (const notice of pinNotices) {
-            io.stderr.write(`defold-typescript build: ${notice}\n`);
-          }
-          for (const warning of warnings) {
-            io.stderr.write(`defold-typescript build: ${warning}\n`);
+          ]).catch(() => null);
+          if (timer !== null) clearTimeout(timer);
+          if (endpoint !== null) {
+            io.stderr.write(
+              `defold-typescript build: attached to Defold editor at ${endpoint.baseUrl}\n`,
+            );
           }
         }
-        return 0;
-      };
-      const reportError = (err: unknown): number => {
-        const message = err instanceof Error ? err.message : String(err);
-        if (json) {
-          io.stdout.write(renderResult({ command: "build", error: message }));
-        } else {
-          io.stderr.write(`${message}\n`);
+
+        const surface = selectApiSurface(head.version);
+        const apiSurface = surface.surfaceId;
+        const refDocResolveOpts = refDocOptsFor(head);
+        const sourceGeneratedDir =
+          internals?.sourceGeneratedDir ?? resolveRegisteredSurfaceGeneratedDir(surface.surfaceId);
+
+        const reportBuild = (
+          written: readonly string[],
+          warnings: readonly string[],
+          materializedDir: string | null,
+        ): number => {
+          ensureMaterializedReference(cwd, materializedDir);
+          // walls are opt-in via the wall command
+          if (json) {
+            io.stdout.write(
+              renderResult({
+                command: "build",
+                written,
+                warnings: [...pinNotices, ...targetDiagnostics, ...warnings],
+                defoldVersion: head.version,
+                defoldVersionSource: targetSource,
+                defoldChannel: head.channel,
+                defoldSha: head.sha,
+                apiSurface,
+                materializedSurface: materializedDir,
+                ...(pinMismatch ? { pinMismatch } : {}),
+                ...unresolvableTargetField,
+              }),
+            );
+          } else {
+            io.stdout.write(
+              `defold-typescript build: wrote ${written.length} files: ${written.join(", ")}\n`,
+            );
+            for (const notice of pinNotices) {
+              io.stderr.write(`defold-typescript build: ${notice}\n`);
+            }
+            for (const warning of warnings) {
+              io.stderr.write(`defold-typescript build: ${warning}\n`);
+            }
+          }
+          return 0;
+        };
+        const reportError = (err: unknown): number => {
+          const message = err instanceof Error ? err.message : String(err);
+          if (json) {
+            io.stdout.write(renderResult({ command: "build", error: message }));
+          } else {
+            io.stderr.write(`${message}\n`);
+          }
+          return 1;
+        };
+
+        const isRefDocSurface =
+          surface.available &&
+          surface.surfaceId !== null &&
+          surface.surfaceId !== CURRENT_STABLE_SURFACE_ID &&
+          sourceGeneratedDir === null;
+
+        if (isRefDocSurface) {
+          const surfaceId = surface.surfaceId as string;
+          try {
+            const { written, warnings } = runBuild({ cwd });
+            const { materializedDir } = await materializeRefDocSurface({
+              cwd,
+              surfaceId,
+              resolveOpts: refDocResolveOpts,
+              ...(internals?.refDocRegistry ? { registry: internals.refDocRegistry } : {}),
+            });
+            if (!json && materializedDir === null) {
+              io.stderr.write(
+                `defold-typescript build: could not materialize ${surfaceId}; the default surface stays active\n`,
+              );
+            }
+            return reportBuild(written, warnings, materializedDir);
+          } catch (err) {
+            return reportError(err);
+          }
         }
-        return 1;
-      };
 
-      const isRefDocSurface =
-        surface.available &&
-        surface.surfaceId !== null &&
-        surface.surfaceId !== CURRENT_STABLE_SURFACE_ID &&
-        sourceGeneratedDir === null;
-
-      if (isRefDocSurface) {
-        const surfaceId = surface.surfaceId as string;
         try {
           const { written, warnings } = runBuild({ cwd });
+          const { materializedDir } = materializeApiSurface({
+            cwd,
+            surface,
+            sourceGeneratedDir,
+          });
+          return reportBuild(written, warnings, materializedDir);
+        } catch (err) {
+          return reportError(err);
+        }
+      })();
+    }
+
+    if (command === "watch") {
+      return (async (): Promise<number> => {
+        const { recursiveWatcherFactory, runWatch } = await import("./watch");
+        const {
+          ensureMaterializedReference,
+          materializeApiSurface,
+          materializeRefDocSurface,
+          resolveRegisteredSurfaceGeneratedDir,
+        } = await import("./materialize");
+        const { runResolve } = await import("./resolve");
+
+        let head: ResolvedTargetHead;
+        try {
+          head = syncHead ?? (await resolveHead());
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          io.stderr.write(`${message}\n`);
+          return 1;
+        }
+        const surface = selectApiSurface(head.version);
+        const refDocResolveOpts = refDocOptsFor(head);
+        const sourceGeneratedDir =
+          internals?.sourceGeneratedDir ?? resolveRegisteredSurfaceGeneratedDir(surface.surfaceId);
+
+        const isRefDocSurface =
+          surface.available &&
+          surface.surfaceId !== null &&
+          surface.surfaceId !== CURRENT_STABLE_SURFACE_ID &&
+          sourceGeneratedDir === null;
+
+        let syncSurface: (() => void) | undefined;
+        let componentWatcherFactory: WatcherFactory | undefined;
+        let resolveSurface: (() => void | Promise<void>) | undefined;
+        if (!isRefDocSurface) {
+          syncSurface = (): void => {
+            const { materializedDir } = materializeApiSurface({
+              cwd,
+              surface,
+              sourceGeneratedDir,
+            });
+            ensureMaterializedReference(cwd, materializedDir);
+            // walls are opt-in via the wall command
+          };
+          componentWatcherFactory = internals
+            ? internals.componentWatcherFactory
+            : recursiveWatcherFactory;
+          const resolveSeams = internals?.resolveInternals;
+          resolveSurface = async (): Promise<void> => {
+            const result = await runResolve({
+              cwd,
+              ...(resolveSeams?.cacheDir !== undefined ? { cacheDir: resolveSeams.cacheDir } : {}),
+              ...(resolveSeams?.download ? { download: resolveSeams.download } : {}),
+              ...(resolveSeams?.readZip ? { readZip: resolveSeams.readZip } : {}),
+              ...(resolveSeams?.libraryRegistry
+                ? { libraryRegistry: resolveSeams.libraryRegistry }
+                : {}),
+              ...(resolveSeams?.libraryGeneratedDir !== undefined
+                ? { libraryGeneratedDir: resolveSeams.libraryGeneratedDir }
+                : {}),
+            });
+            if (json) {
+              io.stdout.write(
+                renderResult(
+                  result.ok
+                    ? {
+                        command: "resolve",
+                        materializedSurface: result.materializedSurface,
+                        extensions: result.extensions,
+                        libraries: result.libraries,
+                      }
+                    : { command: "resolve", error: result.error ?? "resolve failed" },
+                ),
+              );
+            } else if (!result.ok) {
+              io.stderr.write(`${result.error ?? "resolve failed"}\n`);
+            } else if (result.materializedSurface !== null) {
+              io.stdout.write(`defold-typescript resolve: wrote ${result.materializedSurface}\n`);
+            }
+          };
+        }
+
+        const launchWatch = (): Promise<number> => {
+          // The JSON `start` event carries pin diagnostics; prepend the drift notice
+          // so `--json` surfaces it there once. The non-JSON stderr line has no such
+          // startup channel (watch.ts prints `pinDiagnostics` only in JSON mode), so
+          // emit it here, once, before the watcher opens — never per rebuild.
+          const pinDiagnostics = [...pinNotices, ...targetDiagnostics];
+          if (!json) {
+            for (const notice of pinNotices) {
+              io.stderr.write(`defold-typescript watch: ${notice}\n`);
+            }
+          }
+          const watchOpts: RunWatchOptions = {
+            cwd,
+            stdout: io.stdout,
+            stderr: io.stderr,
+            ...(internals?.watcherFactory ? { watcherFactory: internals.watcherFactory } : {}),
+            ...(internals?.debounceMs !== undefined ? { debounceMs: internals.debounceMs } : {}),
+            ...(syncSurface ? { syncSurface } : {}),
+            ...(componentWatcherFactory ? { componentWatcherFactory } : {}),
+            ...(resolveSurface ? { resolveSurface } : {}),
+            ...(json ? { json: true } : {}),
+            ...(pinDiagnostics.length > 0 ? { pinDiagnostics } : {}),
+            ...(pinMismatch ? { pinMismatch } : {}),
+            ...(hotReload ? { hotReload: true } : {}),
+            ...(internals?.editorClient ? { editorClient: internals.editorClient } : {}),
+          };
+          const handle = runWatch(watchOpts);
+          if (internals) {
+            internals.onWatchStart?.(handle);
+          } else {
+            process.once("SIGINT", () => handle.stop());
+          }
+          return handle.done.catch((err: unknown) => {
+            const message = err instanceof Error ? err.message : String(err);
+            io.stderr.write(`${message}\n`);
+            return 1;
+          });
+        };
+
+        // A pinned ref-doc surface is generated on the fly, so it has no
+        // `syncSurface`; generate it once at startup the same way `build` does,
+        // then start the watcher. The full surface materializes; walls are opt-in
+        // via the wall command.
+        if (isRefDocSurface) {
+          const surfaceId = surface.surfaceId as string;
           const { materializedDir } = await materializeRefDocSurface({
             cwd,
             surfaceId,
             resolveOpts: refDocResolveOpts,
             ...(internals?.refDocRegistry ? { registry: internals.refDocRegistry } : {}),
           });
-          if (!json && materializedDir === null) {
-            io.stderr.write(
-              `defold-typescript build: could not materialize ${surfaceId}; the default surface stays active\n`,
-            );
-          }
-          return reportBuild(written, warnings, materializedDir);
-        } catch (err) {
-          return reportError(err);
-        }
-      }
-
-      try {
-        const { written, warnings } = runBuild({ cwd });
-        const { materializedDir } = materializeApiSurface({
-          cwd,
-          surface,
-          sourceGeneratedDir,
-        });
-        return reportBuild(written, warnings, materializedDir);
-      } catch (err) {
-        return reportError(err);
-      }
-    })();
-  }
-
-  if (command === "watch") {
-    return (async (): Promise<number> => {
-      const { recursiveWatcherFactory, runWatch } = await import("./watch");
-      const {
-        ensureMaterializedReference,
-        materializeApiSurface,
-        materializeRefDocSurface,
-        resolveRegisteredSurfaceGeneratedDir,
-      } = await import("./materialize");
-      const { runResolve } = await import("./resolve");
-
-      let head: ResolvedTargetHead;
-      try {
-        head = syncHead ?? (await resolveHead());
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        io.stderr.write(`${message}\n`);
-        return 1;
-      }
-      const surface = selectApiSurface(head.version);
-      const refDocResolveOpts = refDocOptsFor(head);
-      const sourceGeneratedDir =
-        internals?.sourceGeneratedDir ?? resolveRegisteredSurfaceGeneratedDir(surface.surfaceId);
-
-      const isRefDocSurface =
-        surface.available &&
-        surface.surfaceId !== null &&
-        surface.surfaceId !== CURRENT_STABLE_SURFACE_ID &&
-        sourceGeneratedDir === null;
-
-      let syncSurface: (() => void) | undefined;
-      let componentWatcherFactory: WatcherFactory | undefined;
-      let resolveSurface: (() => void | Promise<void>) | undefined;
-      if (!isRefDocSurface) {
-        syncSurface = (): void => {
-          const { materializedDir } = materializeApiSurface({
-            cwd,
-            surface,
-            sourceGeneratedDir,
-          });
           ensureMaterializedReference(cwd, materializedDir);
-          // walls are opt-in via the wall command
-        };
-        componentWatcherFactory = internals
-          ? internals.componentWatcherFactory
-          : recursiveWatcherFactory;
-        const resolveSeams = internals?.resolveInternals;
-        resolveSurface = async (): Promise<void> => {
-          const result = await runResolve({
-            cwd,
-            ...(resolveSeams?.cacheDir !== undefined ? { cacheDir: resolveSeams.cacheDir } : {}),
-            ...(resolveSeams?.download ? { download: resolveSeams.download } : {}),
-            ...(resolveSeams?.readZip ? { readZip: resolveSeams.readZip } : {}),
-            ...(resolveSeams?.libraryRegistry
-              ? { libraryRegistry: resolveSeams.libraryRegistry }
-              : {}),
-            ...(resolveSeams?.libraryGeneratedDir !== undefined
-              ? { libraryGeneratedDir: resolveSeams.libraryGeneratedDir }
-              : {}),
-          });
+          return launchWatch();
+        }
+
+        return launchWatch();
+      })();
+    }
+
+    if (command === "wall") {
+      return (async (): Promise<number> => {
+        const { applyWallSelection, currentWalledDirs, eligibleWalls } = await import("./wall");
+        const { resolveSourceWalls } = await import("./directory-walls");
+        const wallCwd = internals?.cwd ?? process.cwd();
+        const dirs = rest;
+        const toJsonWall = (w: { dir: string; kind: string }): { dir: string; kind: string } => ({
+          dir: w.dir,
+          kind: w.kind,
+        });
+        const reportWalls = (walls: { dir: string; kind: string }[]): void => {
           if (json) {
             io.stdout.write(
-              renderResult(
-                result.ok
-                  ? {
-                      command: "resolve",
-                      materializedSurface: result.materializedSurface,
-                      extensions: result.extensions,
-                      libraries: result.libraries,
-                    }
-                  : { command: "resolve", error: result.error ?? "resolve failed" },
-              ),
+              renderResult({ command: "wall", directoryWalls: walls.map(toJsonWall) }),
             );
-          } else if (!result.ok) {
-            io.stderr.write(`${result.error ?? "resolve failed"}\n`);
-          } else if (result.materializedSurface !== null) {
-            io.stdout.write(`defold-typescript resolve: wrote ${result.materializedSurface}\n`);
+          } else if (walls.length === 0) {
+            io.stdout.write("defold-typescript wall: no directories walled\n");
+          } else {
+            io.stdout.write(
+              `defold-typescript wall: walled ${walls.map((w) => w.dir).join(", ")}\n`,
+            );
           }
         };
-      }
 
-      const launchWatch = (): Promise<number> => {
-        // The JSON `start` event carries pin diagnostics; prepend the drift notice
-        // so `--json` surfaces it there once. The non-JSON stderr line has no such
-        // startup channel (watch.ts prints `pinDiagnostics` only in JSON mode), so
-        // emit it here, once, before the watcher opens — never per rebuild.
-        const pinDiagnostics = [...pinNotices, ...targetDiagnostics];
-        if (!json) {
-          for (const notice of pinNotices) {
-            io.stderr.write(`defold-typescript watch: ${notice}\n`);
-          }
-        }
-        const watchOpts: RunWatchOptions = {
-          cwd,
-          stdout: io.stdout,
-          stderr: io.stderr,
-          ...(internals?.watcherFactory ? { watcherFactory: internals.watcherFactory } : {}),
-          ...(internals?.debounceMs !== undefined ? { debounceMs: internals.debounceMs } : {}),
-          ...(syncSurface ? { syncSurface } : {}),
-          ...(componentWatcherFactory ? { componentWatcherFactory } : {}),
-          ...(resolveSurface ? { resolveSurface } : {}),
-          ...(json ? { json: true } : {}),
-          ...(pinDiagnostics.length > 0 ? { pinDiagnostics } : {}),
-          ...(pinMismatch ? { pinMismatch } : {}),
-          ...(hotReload ? { hotReload: true } : {}),
-          ...(internals?.editorClient ? { editorClient: internals.editorClient } : {}),
-        };
-        const handle = runWatch(watchOpts);
-        if (internals) {
-          internals.onWatchStart?.(handle);
-        } else {
-          process.once("SIGINT", () => handle.stop());
-        }
-        return handle.done.catch((err: unknown) => {
-          const message = err instanceof Error ? err.message : String(err);
-          io.stderr.write(`${message}\n`);
-          return 1;
-        });
-      };
-
-      // A pinned ref-doc surface is generated on the fly, so it has no
-      // `syncSurface`; generate it once at startup the same way `build` does,
-      // then start the watcher. The full surface materializes; walls are opt-in
-      // via the wall command.
-      if (isRefDocSurface) {
-        const surfaceId = surface.surfaceId as string;
-        const { materializedDir } = await materializeRefDocSurface({
-          cwd,
-          surfaceId,
-          resolveOpts: refDocResolveOpts,
-          ...(internals?.refDocRegistry ? { registry: internals.refDocRegistry } : {}),
-        });
-        ensureMaterializedReference(cwd, materializedDir);
-        return launchWatch();
-      }
-
-      return launchWatch();
-    })();
-  }
-
-  if (command === "wall") {
-    return (async (): Promise<number> => {
-      const { applyWallSelection, currentWalledDirs, eligibleWalls } = await import("./wall");
-      const { resolveSourceWalls } = await import("./directory-walls");
-      const wallCwd = internals?.cwd ?? process.cwd();
-      const dirs = rest;
-      const toJsonWall = (w: { dir: string; kind: string }): { dir: string; kind: string } => ({
-        dir: w.dir,
-        kind: w.kind,
-      });
-      const reportWalls = (walls: { dir: string; kind: string }[]): void => {
-        if (json) {
-          io.stdout.write(renderResult({ command: "wall", directoryWalls: walls.map(toJsonWall) }));
-        } else if (walls.length === 0) {
-          io.stdout.write("defold-typescript wall: no directories walled\n");
-        } else {
-          io.stdout.write(`defold-typescript wall: walled ${walls.map((w) => w.dir).join(", ")}\n`);
-        }
-      };
-
-      if (wallList) {
-        const current = currentWalledDirs(wallCwd);
-        const eligible = eligibleWalls(wallCwd);
-        const currentWalls = eligible.filter((w) => current.includes(w.dir));
-        const resolved = resolveSourceWalls(wallCwd, current);
-        if (json) {
-          io.stdout.write(
-            renderResult({
-              command: "wall",
-              directoryWalls: currentWalls.map(toJsonWall),
-              eligible: eligible.map(toJsonWall),
-              resolved: resolved.map((r) => ({
-                dir: r.dir,
-                kind: r.kind,
-                declaredIn: r.declaredIn,
-                origin: r.origin,
-              })),
-            }),
-          );
-        } else {
-          const inherited = resolved.filter((r) => r.origin === "inherited");
-          const inheritedNote =
-            inherited.length === 0
-              ? ""
-              : `; inherited [${inherited.map((r) => `${r.dir} <- ${r.declaredIn}`).join(", ")}]`;
-          io.stdout.write(
-            `defold-typescript wall: walled [${current.join(", ")}]; eligible [${eligible
-              .map((w) => w.dir)
-              .join(", ")}]${inheritedNote}\n`,
-          );
-        }
-        return 0;
-      }
-
-      if (dirs.length > 0) {
-        try {
+        if (wallList) {
           const current = currentWalledDirs(wallCwd);
-          const desired = wallRemove
-            ? current.filter((d) => !dirs.includes(d))
-            : [...current, ...dirs];
-          reportWalls(applyWallSelection(wallCwd, desired));
+          const eligible = eligibleWalls(wallCwd);
+          const currentWalls = eligible.filter((w) => current.includes(w.dir));
+          const resolved = resolveSourceWalls(wallCwd, current);
+          if (json) {
+            io.stdout.write(
+              renderResult({
+                command: "wall",
+                directoryWalls: currentWalls.map(toJsonWall),
+                eligible: eligible.map(toJsonWall),
+                resolved: resolved.map((r) => ({
+                  dir: r.dir,
+                  kind: r.kind,
+                  declaredIn: r.declaredIn,
+                  origin: r.origin,
+                })),
+              }),
+            );
+          } else {
+            const inherited = resolved.filter((r) => r.origin === "inherited");
+            const inheritedNote =
+              inherited.length === 0
+                ? ""
+                : `; inherited [${inherited.map((r) => `${r.dir} <- ${r.declaredIn}`).join(", ")}]`;
+            io.stdout.write(
+              `defold-typescript wall: walled [${current.join(", ")}]; eligible [${eligible
+                .map((w) => w.dir)
+                .join(", ")}]${inheritedNote}\n`,
+            );
+          }
           return 0;
+        }
+
+        if (dirs.length > 0) {
+          try {
+            const current = currentWalledDirs(wallCwd);
+            const desired = wallRemove
+              ? current.filter((d) => !dirs.includes(d))
+              : [...current, ...dirs];
+            reportWalls(applyWallSelection(wallCwd, desired));
+            return 0;
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            if (json) {
+              io.stdout.write(renderResult({ command: "wall", error: message }));
+            } else {
+              io.stderr.write(`${message}\n`);
+            }
+            return 1;
+          }
+        }
+
+        // `--json` is machine-driven intent, so it never prompts even on a TTY.
+        const interactive = !json && (internals?.isTty ?? Boolean(process.stdout.isTTY));
+        if (!interactive) {
+          io.stderr.write(
+            "defold-typescript wall: no directory given; pass <dir> or run in a terminal for the interactive menu\n",
+          );
+          return 1;
+        }
+        const { runWallInteractive } = await import("./wall-interactive");
+        try {
+          reportWalls(
+            await runWallInteractive(
+              wallCwd,
+              internals?.wallCheckbox ? { checkbox: internals.wallCheckbox } : {},
+            ),
+          );
+          return 0;
+        } catch (err) {
+          io.stderr.write(`${err instanceof Error ? err.message : String(err)}\n`);
+          return 1;
+        }
+      })();
+    }
+
+    if (command === "resolve") {
+      const seams = internals?.resolveInternals;
+      return (async (): Promise<number> => {
+        const { runResolve } = await import("./resolve");
+        let head: ResolvedTargetHead;
+        try {
+          head = syncHead ?? (await resolveHead());
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
           if (json) {
-            io.stdout.write(renderResult({ command: "wall", error: message }));
+            io.stdout.write(renderResult({ command: "resolve", error: message }));
           } else {
             io.stderr.write(`${message}\n`);
           }
           return 1;
         }
-      }
-
-      // `--json` is machine-driven intent, so it never prompts even on a TTY.
-      const interactive = !json && (internals?.isTty ?? Boolean(process.stdout.isTTY));
-      if (!interactive) {
-        io.stderr.write(
-          "defold-typescript wall: no directory given; pass <dir> or run in a terminal for the interactive menu\n",
-        );
-        return 1;
-      }
-      const { runWallInteractive } = await import("./wall-interactive");
-      try {
-        reportWalls(
-          await runWallInteractive(
-            wallCwd,
-            internals?.wallCheckbox ? { checkbox: internals.wallCheckbox } : {},
-          ),
-        );
-        return 0;
-      } catch (err) {
-        io.stderr.write(`${err instanceof Error ? err.message : String(err)}\n`);
-        return 1;
-      }
-    })();
-  }
-
-  if (command === "resolve") {
-    const seams = internals?.resolveInternals;
-    return (async (): Promise<number> => {
-      const { runResolve } = await import("./resolve");
-      let head: ResolvedTargetHead;
-      try {
-        head = syncHead ?? (await resolveHead());
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        if (json) {
-          io.stdout.write(renderResult({ command: "resolve", error: message }));
-        } else {
-          io.stderr.write(`${message}\n`);
-        }
-        return 1;
-      }
-      const result = await runResolve({
-        cwd,
-        ...(seams?.cacheDir !== undefined ? { cacheDir: seams.cacheDir } : {}),
-        ...(seams?.download ? { download: seams.download } : {}),
-        ...(seams?.readZip ? { readZip: seams.readZip } : {}),
-        ...(seams?.libraryRegistry ? { libraryRegistry: seams.libraryRegistry } : {}),
-        ...(seams?.libraryGeneratedDir !== undefined
-          ? { libraryGeneratedDir: seams.libraryGeneratedDir }
-          : {}),
-        ...(frozen ? { freeze: true } : {}),
-      });
-      if (json) {
-        io.stdout.write(
-          renderResult(
-            result.ok
-              ? {
-                  command: "resolve",
-                  ...(targetDiagnostics.length > 0 ? { warnings: targetDiagnostics } : {}),
-                  defoldVersion: head.version,
-                  defoldVersionSource: targetSource,
-                  defoldChannel: head.channel,
-                  defoldSha: head.sha,
-                  apiSurface: selectApiSurface(head.version).surfaceId,
-                  materializedSurface: result.materializedSurface,
-                  extensions: result.extensions,
-                  libraries: result.libraries,
-                }
-              : { command: "resolve", error: result.error ?? "resolve failed" },
-          ),
-        );
-        if (frozen && result.ok) {
-          const drifted = result.extensions.filter((e) => e.pinStatus === "drift");
-          if (drifted.length > 0) {
-            io.stderr.write(
-              `defold-typescript resolve: ${drifted.length} extension pin(s) drifted:\n`,
-            );
-            for (const ext of drifted) {
-              io.stderr.write(
-                `  ${ext.url}: ${ext.pinnedVersion ?? "(none)"} -> ${ext.resolvedVersion}\n`,
-              );
-            }
-          }
-        }
-      } else if (result.ok) {
-        if (result.extensions.length === 0) {
-          io.stdout.write("defold-typescript resolve: no extension dependencies declared\n");
-        } else {
-          for (const ext of result.extensions) {
-            if (ext.assetOnly) {
-              const library = result.libraries.find((lib) => lib.url === ext.url);
-              if (library?.verified) {
-                io.stdout.write(
-                  `  ${library.modules.join(", ")} <- ${ext.url} (vendored library)\n`,
-                );
-              } else if (library !== undefined) {
-                io.stderr.write(
-                  `defold-typescript resolve: unverified library match for ${ext.url}: repo name matched but no shipped module path was found in the archive; not materialized\n`,
-                );
-              } else {
-                io.stdout.write(`  ${ext.url}: asset-only, skipped\n`);
-              }
-            } else {
-              io.stdout.write(
-                `  ${ext.namespaces.join(", ")} <- ${ext.url} (${ext.scriptApiCount} .script_api, ${ext.provenance})\n`,
-              );
-            }
-          }
-          if (result.materializedSurface !== null) {
-            io.stdout.write(`defold-typescript resolve: wrote ${result.materializedSurface}\n`);
-          }
-        }
-        const drifted = result.extensions.filter((e) => e.pinStatus === "drift");
-        for (const ext of drifted) {
-          io.stderr.write(
-            `defold-typescript resolve: pin drift for ${ext.url}: ${ext.pinnedVersion ?? "(none)"} -> ${ext.resolvedVersion}\n`,
-          );
-        }
-      } else {
-        io.stderr.write(`${result.error}\n`);
-      }
-      if (!result.ok) {
-        return 1;
-      }
-      const drifted = result.extensions.filter((e) => e.pinStatus === "drift");
-      return frozen && drifted.length > 0 ? 1 : 0;
-    })();
-  }
-
-  if (command === "reload") {
-    return (async (): Promise<number> => {
-      const { runReload } = await import("./reload");
-      const parsedWait = waitFlag === undefined ? undefined : Number(waitFlag);
-      if (parsedWait !== undefined && (!Number.isFinite(parsedWait) || parsedWait < 0)) {
-        io.stderr.write(`defold-typescript reload: --wait expects milliseconds, got ${waitFlag}\n`);
-        return 1;
-      }
-      return runReload({
-        cwd,
-        stdout: io.stdout,
-        stderr: io.stderr,
-        ...(json ? { json: true } : {}),
-        ...(reloadExtensions ? { extensions: true } : {}),
-        ...(parsedWait === undefined ? {} : { waitMs: parsedWait }),
-        ...(internals?.editorClient ? { editorClient: internals.editorClient } : {}),
-      });
-    })();
-  }
-
-  if (command === "bob") {
-    const subcommand = rest[0];
-    const bobCwd = cwd;
-    const defoldIo: DefoldIo = { ...defaultDefoldIo(), ...internals?.defoldIo };
-
-    if (subcommand === "status") {
-      const javaOverride = javaFlag ?? process.env.DEFOLD_JAVA;
-      return (async (): Promise<number> => {
-        const status = await reportBobStatus({
-          target,
-          cacheDir: defoldIo.cacheDir,
-          ...(javaOverride !== undefined ? { java: javaOverride } : {}),
-          io: {
-            fetchChannelInfo: channelFetch,
-            fetchVersionInfo: versionFetch,
-            probe: defoldIo.probe,
-            javaProbe: defoldIo.javaProbe,
-            ...(defoldIo.bundledJava !== undefined ? { bundledJava: defoldIo.bundledJava } : {}),
-          },
+        const result = await runResolve({
+          cwd,
+          ...(seams?.cacheDir !== undefined ? { cacheDir: seams.cacheDir } : {}),
+          ...(seams?.download ? { download: seams.download } : {}),
+          ...(seams?.readZip ? { readZip: seams.readZip } : {}),
+          ...(seams?.libraryRegistry ? { libraryRegistry: seams.libraryRegistry } : {}),
+          ...(seams?.libraryGeneratedDir !== undefined
+            ? { libraryGeneratedDir: seams.libraryGeneratedDir }
+            : {}),
+          ...(frozen ? { freeze: true } : {}),
         });
         if (json) {
           io.stdout.write(
             renderResult(
-              status.ok
+              result.ok
                 ? {
-                    command: "bob",
-                    subcommand: "status",
-                    ...(status.version !== null ? { defoldVersion: status.version } : {}),
+                    command: "resolve",
+                    ...(targetDiagnostics.length > 0 ? { warnings: targetDiagnostics } : {}),
+                    defoldVersion: head.version,
                     defoldVersionSource: targetSource,
-                    defoldChannel: status.channel,
-                    defoldSha: status.sha,
-                    bobJar: status.bobJar,
-                    java: status.java,
+                    defoldChannel: head.channel,
+                    defoldSha: head.sha,
+                    apiSurface: selectApiSurface(head.version).surfaceId,
+                    materializedSurface: result.materializedSurface,
+                    extensions: result.extensions,
+                    libraries: result.libraries,
                   }
-                : {
-                    command: "bob",
-                    subcommand: "status",
-                    error: status.error ?? "bob status failed",
-                  },
+                : { command: "resolve", error: result.error ?? "resolve failed" },
             ),
           );
-        } else {
-          const selector = target.kind === "version" ? target.version : target.channel;
-          io.stdout.write("defold-typescript bob status:\n");
-          io.stdout.write(`  target: ${selector} (${targetSource})\n`);
-          io.stdout.write(`  version: ${status.version ?? "(unresolved)"}\n`);
-          io.stdout.write(`  channel: ${status.channel ?? "(none)"}\n`);
-          io.stdout.write(`  sha: ${status.sha ?? "(unresolved)"}\n`);
-          io.stdout.write(
-            `  bob.jar: ${status.bobJar.path ?? "(unresolved)"} ${status.bobJar.cached ? "(cached)" : "(not cached)"}\n`,
-          );
-          io.stdout.write(`  java: ${status.java ?? "(not found)"}\n`);
-          if (!status.ok) {
-            io.stderr.write(`${status.error ?? "bob status failed"}\n`);
+          if (frozen && result.ok) {
+            const drifted = result.extensions.filter((e) => e.pinStatus === "drift");
+            if (drifted.length > 0) {
+              io.stderr.write(
+                `defold-typescript resolve: ${drifted.length} extension pin(s) drifted:\n`,
+              );
+              for (const ext of drifted) {
+                io.stderr.write(
+                  `  ${ext.url}: ${ext.pinnedVersion ?? "(none)"} -> ${ext.resolvedVersion}\n`,
+                );
+              }
+            }
           }
+        } else if (result.ok) {
+          if (result.extensions.length === 0) {
+            io.stdout.write("defold-typescript resolve: no extension dependencies declared\n");
+          } else {
+            for (const ext of result.extensions) {
+              if (ext.assetOnly) {
+                const library = result.libraries.find((lib) => lib.url === ext.url);
+                if (library?.verified) {
+                  io.stdout.write(
+                    `  ${library.modules.join(", ")} <- ${ext.url} (vendored library)\n`,
+                  );
+                } else if (library !== undefined) {
+                  io.stderr.write(
+                    `defold-typescript resolve: unverified library match for ${ext.url}: repo name matched but no shipped module path was found in the archive; not materialized\n`,
+                  );
+                } else {
+                  io.stdout.write(`  ${ext.url}: asset-only, skipped\n`);
+                }
+              } else {
+                io.stdout.write(
+                  `  ${ext.namespaces.join(", ")} <- ${ext.url} (${ext.scriptApiCount} .script_api, ${ext.provenance})\n`,
+                );
+              }
+            }
+            if (result.materializedSurface !== null) {
+              io.stdout.write(`defold-typescript resolve: wrote ${result.materializedSurface}\n`);
+            }
+          }
+          const drifted = result.extensions.filter((e) => e.pinStatus === "drift");
+          for (const ext of drifted) {
+            io.stderr.write(
+              `defold-typescript resolve: pin drift for ${ext.url}: ${ext.pinnedVersion ?? "(none)"} -> ${ext.resolvedVersion}\n`,
+            );
+          }
+        } else {
+          io.stderr.write(`${result.error}\n`);
         }
-        return status.ok ? 0 : 1;
+        if (!result.ok) {
+          return 1;
+        }
+        const drifted = result.extensions.filter((e) => e.pinStatus === "drift");
+        return frozen && drifted.length > 0 ? 1 : 0;
       })();
     }
 
-    if (subcommand === "run") {
-      const runEngine: RunEngine = { ...defaultRunEngine(), ...internals?.runInternals };
+    if (command === "reload") {
+      return (async (): Promise<number> => {
+        const { runReload } = await import("./reload");
+        const parsedWait = waitFlag === undefined ? undefined : Number(waitFlag);
+        if (parsedWait !== undefined && (!Number.isFinite(parsedWait) || parsedWait < 0)) {
+          io.stderr.write(
+            `defold-typescript reload: --wait expects milliseconds, got ${waitFlag}\n`,
+          );
+          return 1;
+        }
+        return runReload({
+          cwd,
+          stdout: io.stdout,
+          stderr: io.stderr,
+          ...(json ? { json: true } : {}),
+          ...(reloadExtensions ? { extensions: true } : {}),
+          ...(parsedWait === undefined ? {} : { waitMs: parsedWait }),
+          ...(internals?.editorClient ? { editorClient: internals.editorClient } : {}),
+        });
+      })();
+    }
+
+    if (command === "bob") {
+      const subcommand = rest[0];
+      const bobCwd = cwd;
+      const defoldIo: DefoldIo = { ...defaultDefoldIo(), ...internals?.defoldIo };
+
+      if (subcommand === "status") {
+        const javaOverride = javaFlag ?? process.env.DEFOLD_JAVA;
+        return (async (): Promise<number> => {
+          const status = await reportBobStatus({
+            target,
+            cacheDir: defoldIo.cacheDir,
+            ...(javaOverride !== undefined ? { java: javaOverride } : {}),
+            io: {
+              fetchChannelInfo: channelFetch,
+              fetchVersionInfo: versionFetch,
+              probe: defoldIo.probe,
+              javaProbe: defoldIo.javaProbe,
+              ...(defoldIo.bundledJava !== undefined ? { bundledJava: defoldIo.bundledJava } : {}),
+            },
+          });
+          if (json) {
+            io.stdout.write(
+              renderResult(
+                status.ok
+                  ? {
+                      command: "bob",
+                      subcommand: "status",
+                      ...(status.version !== null ? { defoldVersion: status.version } : {}),
+                      defoldVersionSource: targetSource,
+                      defoldChannel: status.channel,
+                      defoldSha: status.sha,
+                      bobJar: status.bobJar,
+                      java: status.java,
+                    }
+                  : {
+                      command: "bob",
+                      subcommand: "status",
+                      error: status.error ?? "bob status failed",
+                    },
+              ),
+            );
+          } else {
+            const selector = target.kind === "version" ? target.version : target.channel;
+            io.stdout.write("defold-typescript bob status:\n");
+            io.stdout.write(`  target: ${selector} (${targetSource})\n`);
+            io.stdout.write(`  version: ${status.version ?? "(unresolved)"}\n`);
+            io.stdout.write(`  channel: ${status.channel ?? "(none)"}\n`);
+            io.stdout.write(`  sha: ${status.sha ?? "(unresolved)"}\n`);
+            io.stdout.write(
+              `  bob.jar: ${status.bobJar.path ?? "(unresolved)"} ${status.bobJar.cached ? "(cached)" : "(not cached)"}\n`,
+            );
+            io.stdout.write(`  java: ${status.java ?? "(not found)"}\n`);
+            if (!status.ok) {
+              io.stderr.write(`${status.error ?? "bob status failed"}\n`);
+            }
+          }
+          return status.ok ? 0 : 1;
+        })();
+      }
+
+      if (subcommand === "run") {
+        const runEngine: RunEngine = { ...defaultRunEngine(), ...internals?.runInternals };
+        const javaOverride = javaFlag ?? process.env.DEFOLD_JAVA;
+        return (async (): Promise<number> => {
+          try {
+            // Emitted before the first network call: the pin verdict is already
+            // known here, so a run that dies in `resolveHead()` still reports it.
+            // This puts the pin verdict ahead of `runnable.warnings` on stderr,
+            // which is the intended order — the verdict qualifies the run.
+            if (!json) {
+              for (const notice of pinNotices) {
+                io.stderr.write(`defold-typescript bob run: ${notice}\n`);
+              }
+            }
+            const head = await resolveHead();
+            if (head.sha === null) {
+              throw new Error(
+                `defold-typescript bob: could not resolve an artifact sha for Defold ${head.version}.`,
+              );
+            }
+            const prepared = await prepareBobRun({
+              cwd: bobCwd,
+              head: { version: head.version, channel: head.channel, sha: head.sha },
+              ...(javaOverride !== undefined ? { java: javaOverride } : {}),
+              ...(buildServerFlag !== undefined ? { buildServer: buildServerFlag } : {}),
+              io: { ...defoldIo, platform: runEngine.platform, arch: runEngine.arch },
+            });
+            if (!prepared.ok || prepared.runnable === undefined) {
+              // A failed build short-circuits with Bob's exit code; an engine-ensure
+              // failure (download offline, no engine) returns 1 with its error.
+              const failedBuild = prepared.buildExitCode !== 0;
+              if (json) {
+                io.stdout.write(
+                  renderResult({
+                    command: "bob",
+                    subcommand: "run",
+                    build: { exitCode: prepared.buildExitCode },
+                    error: prepared.error ?? `bob build exited with code ${prepared.buildExitCode}`,
+                    ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
+                    ...(pinMismatch ? { pinMismatch } : {}),
+                    ...unresolvableTargetField,
+                  }),
+                );
+              } else {
+                io.stderr.write(
+                  `${
+                    prepared.error ??
+                    `defold-typescript bob run: bob build exited with code ${prepared.buildExitCode}`
+                  }\n`,
+                );
+              }
+              return failedBuild ? prepared.buildExitCode : 1;
+            }
+            const { runnable } = prepared;
+            for (const warning of runnable.warnings) {
+              io.stderr.write(`defold-typescript bob run: ${warning}\n`);
+            }
+            const exitCode = await launchEngine(runnable, {
+              platform: runEngine.platform,
+              spawn: runEngine.spawn,
+              copyAside: runEngine.copyAside,
+              chmod: runEngine.chmod,
+            });
+            if (json) {
+              io.stdout.write(
+                renderResult({
+                  command: "bob",
+                  subcommand: "run",
+                  build: { exitCode: prepared.buildExitCode },
+                  launch: { enginePath: runnable.enginePath, exitCode },
+                  ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
+                  ...(pinMismatch ? { pinMismatch } : {}),
+                  ...unresolvableTargetField,
+                }),
+              );
+            }
+            return exitCode;
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            if (json) {
+              io.stdout.write(
+                renderResult({
+                  command: "bob",
+                  subcommand: "run",
+                  error: message,
+                  ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
+                  ...(pinMismatch ? { pinMismatch } : {}),
+                  ...unresolvableTargetField,
+                }),
+              );
+            } else {
+              io.stderr.write(`${message}\n`);
+            }
+            return 1;
+          }
+        })();
+      }
+
+      if (!isBobSubcommand(subcommand)) {
+        io.stderr.write(BOB_USAGE);
+        return 1;
+      }
       const javaOverride = javaFlag ?? process.env.DEFOLD_JAVA;
       return (async (): Promise<number> => {
         try {
-          // Emitted before the first network call: the pin verdict is already
-          // known here, so a run that dies in `resolveHead()` still reports it.
-          // This puts the pin verdict ahead of `runnable.warnings` on stderr,
-          // which is the intended order — the verdict qualifies the run.
+          // Emitted before the first network call, for the same reason as the
+          // `bob run` branch above: the verdict is knowable without it.
           if (!json) {
             for (const notice of pinNotices) {
-              io.stderr.write(`defold-typescript bob run: ${notice}\n`);
+              io.stderr.write(`defold-typescript bob ${subcommand}: ${notice}\n`);
             }
           }
           const head = await resolveHead();
@@ -1220,70 +1343,63 @@ function dispatchCommand(
               `defold-typescript bob: could not resolve an artifact sha for Defold ${head.version}.`,
             );
           }
-          const prepared = await prepareBobRun({
+          const result = await runBobCommand({
             cwd: bobCwd,
-            head: { version: head.version, channel: head.channel, sha: head.sha },
+            subcommand,
+            capture: json,
             ...(javaOverride !== undefined ? { java: javaOverride } : {}),
             ...(buildServerFlag !== undefined ? { buildServer: buildServerFlag } : {}),
-            io: { ...defoldIo, platform: runEngine.platform, arch: runEngine.arch },
-          });
-          if (!prepared.ok || prepared.runnable === undefined) {
-            // A failed build short-circuits with Bob's exit code; an engine-ensure
-            // failure (download offline, no engine) returns 1 with its error.
-            const failedBuild = prepared.buildExitCode !== 0;
-            if (json) {
-              io.stdout.write(
-                renderResult({
-                  command: "bob",
-                  subcommand: "run",
-                  build: { exitCode: prepared.buildExitCode },
-                  error: prepared.error ?? `bob build exited with code ${prepared.buildExitCode}`,
-                  ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
-                  ...(pinMismatch ? { pinMismatch } : {}),
-                  ...unresolvableTargetField,
-                }),
-              );
-            } else {
-              io.stderr.write(
-                `${
-                  prepared.error ??
-                  `defold-typescript bob run: bob build exited with code ${prepared.buildExitCode}`
-                }\n`,
-              );
-            }
-            return failedBuild ? prepared.buildExitCode : 1;
-          }
-          const { runnable } = prepared;
-          for (const warning of runnable.warnings) {
-            io.stderr.write(`defold-typescript bob run: ${warning}\n`);
-          }
-          const exitCode = await launchEngine(runnable, {
-            platform: runEngine.platform,
-            spawn: runEngine.spawn,
-            copyAside: runEngine.copyAside,
-            chmod: runEngine.chmod,
+            head: { version: head.version, channel: head.channel, sha: head.sha },
+            io: defoldIo,
           });
           if (json) {
+            const withOutput = result.output !== undefined ? { output: result.output } : {};
+            const driftFields = {
+              ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
+              ...(pinMismatch ? { pinMismatch } : {}),
+              ...unresolvableTargetField,
+            };
+            const headFields = {
+              defoldVersion: result.defoldVersion,
+              defoldVersionSource: targetSource,
+              defoldChannel: result.defoldChannel,
+              defoldSha: result.defoldSha,
+            };
             io.stdout.write(
-              renderResult({
-                command: "bob",
-                subcommand: "run",
-                build: { exitCode: prepared.buildExitCode },
-                launch: { enginePath: runnable.enginePath, exitCode },
-                ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
-                ...(pinMismatch ? { pinMismatch } : {}),
-                ...unresolvableTargetField,
-              }),
+              renderResult(
+                result.ok
+                  ? {
+                      command: "bob",
+                      subcommand: result.subcommand,
+                      exitCode: result.exitCode,
+                      ...driftFields,
+                      ...headFields,
+                      ...withOutput,
+                    }
+                  : {
+                      command: "bob",
+                      subcommand: result.subcommand,
+                      exitCode: result.exitCode,
+                      error: `bob ${result.subcommand} exited with code ${result.exitCode}`,
+                      ...driftFields,
+                      ...headFields,
+                      ...withOutput,
+                    },
+              ),
+            );
+          } else if (!result.ok) {
+            io.stderr.write(
+              `defold-typescript bob ${result.subcommand}: bob exited with code ${result.exitCode}\n`,
             );
           }
-          return exitCode;
+          return result.exitCode;
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
           if (json) {
             io.stdout.write(
               renderResult({
                 command: "bob",
-                subcommand: "run",
+                subcommand,
                 error: message,
                 ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
                 ...(pinMismatch ? { pinMismatch } : {}),
@@ -1298,205 +1414,143 @@ function dispatchCommand(
       })();
     }
 
-    if (!isBobSubcommand(subcommand)) {
-      io.stderr.write(BOB_USAGE);
-      return 1;
-    }
-    const javaOverride = javaFlag ?? process.env.DEFOLD_JAVA;
-    return (async (): Promise<number> => {
+    if (command === "run") {
+      const engine: RunEngine = { ...defaultRunEngine(), ...internals?.runInternals };
+      const dashIndex = rest.indexOf("--");
+      const extraArgs = dashIndex === -1 ? [] : rest.slice(dashIndex + 1);
+
+      let runnable: Runnable;
       try {
-        // Emitted before the first network call, for the same reason as the
-        // `bob run` branch above: the verdict is knowable without it.
-        if (!json) {
-          for (const notice of pinNotices) {
-            io.stderr.write(`defold-typescript bob ${subcommand}: ${notice}\n`);
-          }
-        }
-        const head = await resolveHead();
-        if (head.sha === null) {
-          throw new Error(
-            `defold-typescript bob: could not resolve an artifact sha for Defold ${head.version}.`,
-          );
-        }
-        const result = await runBobCommand({
-          cwd: bobCwd,
-          subcommand,
-          capture: json,
-          ...(javaOverride !== undefined ? { java: javaOverride } : {}),
-          ...(buildServerFlag !== undefined ? { buildServer: buildServerFlag } : {}),
-          head: { version: head.version, channel: head.channel, sha: head.sha },
-          io: defoldIo,
-        });
-        if (json) {
-          const withOutput = result.output !== undefined ? { output: result.output } : {};
-          const driftFields = {
-            ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
-            ...(pinMismatch ? { pinMismatch } : {}),
-            ...unresolvableTargetField,
-          };
-          const headFields = {
-            defoldVersion: result.defoldVersion,
-            defoldVersionSource: targetSource,
-            defoldChannel: result.defoldChannel,
-            defoldSha: result.defoldSha,
-          };
-          io.stdout.write(
-            renderResult(
-              result.ok
-                ? {
-                    command: "bob",
-                    subcommand: result.subcommand,
-                    exitCode: result.exitCode,
-                    ...driftFields,
-                    ...headFields,
-                    ...withOutput,
-                  }
-                : {
-                    command: "bob",
-                    subcommand: result.subcommand,
-                    exitCode: result.exitCode,
-                    error: `bob ${result.subcommand} exited with code ${result.exitCode}`,
-                    ...driftFields,
-                    ...headFields,
-                    ...withOutput,
-                  },
-            ),
-          );
-        } else if (!result.ok) {
-          io.stderr.write(
-            `defold-typescript bob ${result.subcommand}: bob exited with code ${result.exitCode}\n`,
-          );
-        }
-        return result.exitCode;
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        if (json) {
-          io.stdout.write(
-            renderResult({
-              command: "bob",
-              subcommand,
-              error: message,
-              ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
-              ...(pinMismatch ? { pinMismatch } : {}),
-              ...unresolvableTargetField,
-            }),
-          );
-        } else {
-          io.stderr.write(`${message}\n`);
-        }
-        return 1;
-      }
-    })();
-  }
-
-  if (command === "run") {
-    const engine: RunEngine = { ...defaultRunEngine(), ...internals?.runInternals };
-    const dashIndex = rest.indexOf("--");
-    const extraArgs = dashIndex === -1 ? [] : rest.slice(dashIndex + 1);
-
-    let runnable: Runnable;
-    try {
-      runnable = resolveRunnable({
-        cwd,
-        platform: engine.platform,
-        arch: engine.arch,
-        probe: engine.probe,
-      });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      if (json) {
-        io.stdout.write(renderResult({ command: "run", error: message }));
-      } else {
-        io.stderr.write(`${message}\n`);
-      }
-      return 1;
-    }
-
-    for (const warning of runnable.warnings) {
-      io.stderr.write(`defold-typescript run: ${warning}\n`);
-    }
-    // The drift notice is mutually exclusive with its JSON form: stderr here,
-    // folded into `warnings`/`pinMismatch` below under `--json` (as `build` does).
-    if (!json) {
-      for (const notice of pinNotices) {
-        io.stderr.write(`defold-typescript run: ${notice}\n`);
-      }
-    }
-
-    return launchEngine(runnable, {
-      platform: engine.platform,
-      spawn: engine.spawn,
-      extraArgs,
-      copyAside: engine.copyAside,
-      chmod: engine.chmod,
-    }).then((exitCode) => {
-      if (json) {
-        io.stdout.write(
-          renderResult({
-            command: "run",
-            enginePath: runnable.enginePath,
-            projectc: runnable.projectcPath,
-            exitCode,
-            ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
-            ...(pinMismatch ? { pinMismatch } : {}),
-            ...unresolvableTargetField,
-          }),
-        );
-      }
-      return exitCode;
-    });
-  }
-
-  if (command === "upgrade" || command === "update") {
-    return (async (): Promise<number> => {
-      const running = internals?.cliVersion ?? readCliVersion();
-      try {
-        const outcome = await runUpgrade({
+        runnable = resolveRunnable({
           cwd,
-          running,
-          capture: json,
-          ...(internals?.upgradeInternals ? { io: internals.upgradeInternals } : {}),
+          platform: engine.platform,
+          arch: engine.arch,
+          probe: engine.probe,
         });
-        if (json) {
-          io.stdout.write(
-            renderResult({
-              command: "upgrade",
-              written: outcome.written,
-              from: outcome.from,
-              to: outcome.to,
-              handedOff: outcome.handedOff,
-              ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
-              ...(pinMismatch ? { pinMismatch } : {}),
-              ...unresolvableTargetField,
-              ...(outcome.error !== undefined ? { error: outcome.error } : {}),
-              ...(outcome.output !== undefined ? { output: outcome.output } : {}),
-            }),
-          );
-        } else if (outcome.error !== undefined) {
-          io.stderr.write(`${outcome.error}\n`);
-        } else {
-          for (const notice of pinNotices) {
-            io.stderr.write(`defold-typescript upgrade: ${notice}\n`);
-          }
-          io.stdout.write(
-            `defold-typescript upgrade: ${outcome.from} -> ${outcome.to}${
-              outcome.handedOff ? "" : " (already latest; re-scaffolded managed files)"
-            }\n`,
-          );
-        }
-        return outcome.exitCode;
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         if (json) {
-          io.stdout.write(renderResult({ command: "upgrade", error: message }));
+          io.stdout.write(renderResult({ command: "run", error: message }));
         } else {
           io.stderr.write(`${message}\n`);
         }
         return 1;
       }
-    })();
-  }
 
-  io.stderr.write(USAGE);
-  return 1;
+      for (const warning of runnable.warnings) {
+        io.stderr.write(`defold-typescript run: ${warning}\n`);
+      }
+      // The drift notice is mutually exclusive with its JSON form: stderr here,
+      // folded into `warnings`/`pinMismatch` below under `--json` (as `build` does).
+      if (!json) {
+        for (const notice of pinNotices) {
+          io.stderr.write(`defold-typescript run: ${notice}\n`);
+        }
+      }
+
+      return launchEngine(runnable, {
+        platform: engine.platform,
+        spawn: engine.spawn,
+        extraArgs,
+        copyAside: engine.copyAside,
+        chmod: engine.chmod,
+      }).then((exitCode) => {
+        if (json) {
+          io.stdout.write(
+            renderResult({
+              command: "run",
+              enginePath: runnable.enginePath,
+              projectc: runnable.projectcPath,
+              exitCode,
+              ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
+              ...(pinMismatch ? { pinMismatch } : {}),
+              ...unresolvableTargetField,
+            }),
+          );
+        }
+        return exitCode;
+      });
+    }
+
+    if (command === "upgrade" || command === "update") {
+      return (async (): Promise<number> => {
+        const running = internals?.cliVersion ?? readCliVersion();
+        try {
+          const outcome = await runUpgrade({
+            cwd,
+            running,
+            capture: json,
+            ...(internals?.upgradeInternals ? { io: internals.upgradeInternals } : {}),
+          });
+          if (json) {
+            io.stdout.write(
+              renderResult({
+                command: "upgrade",
+                written: outcome.written,
+                from: outcome.from,
+                to: outcome.to,
+                handedOff: outcome.handedOff,
+                ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
+                ...(pinMismatch ? { pinMismatch } : {}),
+                ...unresolvableTargetField,
+                ...(outcome.error !== undefined ? { error: outcome.error } : {}),
+                ...(outcome.output !== undefined ? { output: outcome.output } : {}),
+              }),
+            );
+          } else if (outcome.error !== undefined) {
+            io.stderr.write(`${outcome.error}\n`);
+          } else {
+            for (const notice of pinNotices) {
+              io.stderr.write(`defold-typescript upgrade: ${notice}\n`);
+            }
+            io.stdout.write(
+              `defold-typescript upgrade: ${outcome.from} -> ${outcome.to}${
+                outcome.handedOff ? "" : " (already latest; re-scaffolded managed files)"
+              }\n`,
+            );
+          }
+          return outcome.exitCode;
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          if (json) {
+            io.stdout.write(renderResult({ command: "upgrade", error: message }));
+          } else {
+            io.stderr.write(`${message}\n`);
+          }
+          return 1;
+        }
+      })();
+    }
+
+    io.stderr.write(USAGE);
+    return 1;
+  };
+
+  // Asking the running editor costs an HTTP round trip, so it is asked only
+  // when one is actually open on this project. That decline is a single
+  // `stat`, which is what keeps every command in an editor-less project --
+  // every CI run, every test -- on the synchronous return it has today.
+  if (runningEditorDeclines(cwd)) {
+    return withEditorVersion(syncEditorVersion);
+  }
+  return (async () => {
+    const probe = new AbortController();
+    const timer = setTimeout(() => probe.abort(), timeoutMs);
+    const probeEditor =
+      internals?.probeEditor ??
+      ((signal?: AbortSignal) =>
+        probeInstalledEditor({ cwd, ...(signal !== undefined ? { signal } : {}) }));
+    // A stale port file can name a process that listens but never answers, so
+    // the deadline has to be able to end the wait even when the probe cannot.
+    const probed = await Promise.race([
+      probeEditor(probe.signal).catch(() => null),
+      new Promise<null>((resolve) => {
+        probe.signal.addEventListener("abort", () => resolve(null));
+      }),
+    ]);
+    clearTimeout(timer);
+    // A silent editor is not an answer: fall back to the lane that needs no
+    // network, exactly as if none were open.
+    return withEditorVersion(probed === null ? syncEditorVersion : () => probed.version);
+  })();
 }
