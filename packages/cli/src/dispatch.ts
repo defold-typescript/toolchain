@@ -36,7 +36,11 @@ import { COMMAND_NAMES, renderHelp, renderHelpJson } from "./help";
 import { runInit } from "./init";
 import { runInitAgents } from "./init-agents";
 import { installHint } from "./install-reminder";
-import { detectInstalledEditorVersion } from "./installed-editor-version";
+import {
+  detectInstalledEditorVersion,
+  type EditorProbe,
+  probeInstalledEditor,
+} from "./installed-editor-version";
 import { renderResult } from "./json-output";
 import type { VendoredLibrary } from "./library-match";
 import type { RefDocResolveOptions } from "./materialize";
@@ -76,6 +80,10 @@ export interface DispatchInternals {
   // deterministic. Detection is the lowest-precedence Defold version source
   // (below the package.json pin, above the hardcoded default).
   readonly detectEditorVersion?: () => string | null;
+  // `set-target --detected` needs the *report* as well as the version — the
+  // failure message names every path read and why — so it takes the wider probe
+  // rather than `detectEditorVersion`, which stays the drift-notice seam above.
+  readonly probeEditor?: () => EditorProbe;
   // `wall` takes its target directories as positionals (not a cwd path arg like
   // the other commands), so tests inject the project root and TTY state here.
   readonly cwd?: string;
@@ -341,7 +349,7 @@ function dispatchCommand(
       cwd: setTargetCwd,
       ...(token !== undefined ? { token } : {}),
       ...(detectedMode
-        ? { detected: true, detect: internals?.detectEditorVersion ?? detectInstalledEditorVersion }
+        ? { detected: true, probe: internals?.probeEditor ?? probeInstalledEditor }
         : {}),
     });
     if (json) {
