@@ -14,6 +14,14 @@ Entries are curated by hand from the git history; the most recent releases are
 listed per-patch, older releases are rolled up per minor version. Breaking
 changes are called out first because the toolchain is pre-1.0.
 
+## v0.28.3
+
+### Fixed
+
+- **[`init-agents`](./init-agents.md) has its own CLI page**, listed with the other verbs: what the managed `AGENTS.md` block carries, why re-runs never touch your own notes, how it differs from the contract [`init`](./init.md) and [`upgrade`](./upgrade.md) already write, and its `--json` envelope.
+- **A re-run that changes nothing now leaves `AGENTS.md` alone.** `init-agents` (and `init --force`) used to rewrite an already-current contract and report it as written; the file keeps its timestamp and the `--json` `written` list stays empty.
+- **The usage line names every command.** Running the CLI with no verb, or an unrecognized one, printed a list that omitted [`set-target`](./set-target.md), [`upgrade`](./upgrade.md), and [`reload`](./reload.md); it now lists them all and points at `--help` for each command's flags.
+
 ## v0.28.2
 
 ### Improved

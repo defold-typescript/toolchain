@@ -399,6 +399,12 @@ e.g. your own `src/main.ts` or engine sources already present). Branch on
 **Goal:** drop an agent contract at the project root so any harness (or human)
 opening the repo finds the conventions and a pointer to the installed guide.
 
+> [!TIP] A fresh [`init`](./init.md) already wrote this contract — its scaffold
+> creates `AGENTS.md` + `CLAUDE.md` for you — and [`upgrade`](./upgrade.md)
+> refreshes the managed block, as does `init . --force`. Run the standalone
+> [`init-agents`](./init-agents.md) verb below when the project has no contract,
+> or to restore a block that was edited or deleted.
+
 **Command:**
 
 ```sh
@@ -406,8 +412,10 @@ bunx @defold-typescript/cli@latest init-agents . --json
 ```
 
 Like `init`, `init-agents` requires an explicit destination — pass a path or `.`
-for the current folder; a missing path fails fast (`ok: false`). This writes two files. `AGENTS.md` carries a managed block delimited by HTML
-comment markers; `CLAUDE.md` is the single line `@AGENTS.md`, re-exporting it.
+for the current folder; a missing path fails fast (`ok: false`). It writes up to
+two files — a run that finds both already current writes neither, and reports an
+empty `written`. `AGENTS.md` carries a managed block delimited by HTML comment
+markers; a fresh `CLAUDE.md` is the single line `@AGENTS.md`, re-exporting it.
 Only the content **between** the markers is ever rewritten, so any notes you add
 above or below the block survive re-runs untouched. If `AGENTS.md` already exists
 without the markers, the block is appended after one blank line and your prior
@@ -415,12 +423,6 @@ content is left intact; a `CLAUDE.md` that already equals `@AGENTS.md` is left
 byte-for-byte unchanged. The block is versionless — its pointers resolve to
 `node_modules/@defold-typescript/docs/llms.txt` and `llms-full.txt`, which the
 install swaps under the same paths — so the verb is safe to re-run any time.
-
-[`init`](./init.md) writes the same contract as part of its scaffold: a fresh
-project gets `AGENTS.md` + `CLAUDE.md` created, but a plain re-init leaves an
-existing contract untouched. Re-syncing the managed block on a project that
-already has one is the `--force` path — `init . --force` (or the standalone
-`init-agents` verb) refreshes the block after an upgrade.
 
 **Returns:**
 
@@ -434,9 +436,11 @@ On failure:
 { "command": "init-agents", "ok": false, "error": "<message>" }
 ```
 
-**Reading `ok`:** if `ok` is `true`, `written` lists the files touched in order;
-a re-run that changes nothing omits the untouched file. If `ok` is `false`, stop
-and surface `error`; nothing was written.
+**Reading `ok`:** if `ok` is `true`, `written` lists the files touched in order —
+`[]` when the contract was already current, since a write that would reproduce a
+file byte-for-byte is skipped. If `ok` is `false`, stop and surface `error`, and
+do not assume the project is untouched: the files are written one after another,
+so a failure on the second leaves the first on disk.
 
 ## Upgrade the toolchain
 

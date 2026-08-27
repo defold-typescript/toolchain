@@ -59,6 +59,21 @@ describe("runInitAgents", () => {
     expect(result.written).toEqual(["AGENTS.md", "CLAUDE.md"]);
   });
 
+  test("a re-run that changes nothing reports no file as written", () => {
+    runInitAgents({ cwd });
+
+    expect(runInitAgents({ cwd }).written).toEqual([]);
+  });
+
+  test("a re-run reports AGENTS.md only when the managed block actually changes", () => {
+    runInitAgents({ cwd });
+    const stale = read("AGENTS.md").replace(renderAgentsBlock(), "stale contract");
+    write("AGENTS.md", stale);
+
+    expect(runInitAgents({ cwd }).written).toEqual(["AGENTS.md"]);
+    expect(betweenMarkers(read("AGENTS.md"))).toBe(renderAgentsBlock());
+  });
+
   test("re-run with no user content is byte-for-byte idempotent in the block", () => {
     runInitAgents({ cwd });
     runInitAgents({ cwd });

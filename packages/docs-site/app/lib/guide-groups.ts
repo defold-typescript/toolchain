@@ -35,6 +35,7 @@ export const GUIDE_GROUPS: GuideGroup[] = [
     subtitle: "The command-line verbs you run day to day.",
     slugs: [
       "init",
+      "init-agents",
       "upgrade",
       "set-target",
       "watch",

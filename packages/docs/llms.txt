@@ -30,6 +30,7 @@ Only guide pages are inlined into `llms-full.txt`; pages marked `llms-full: fals
 - [Vector math](guide/vector-math.md)
 - [Editor scripts](guide/editor-scripts.md)
 - [init](guide/init.md)
+- [init-agents](guide/init-agents.md)
 - [upgrade](guide/upgrade.md)
 - [set-target](guide/set-target.md)
 - [watch](guide/watch.md)

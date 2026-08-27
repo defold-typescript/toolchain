@@ -16,12 +16,18 @@ Use the `@latest` tag when you scaffold: `bunx` caches binaries, and `init` is
 what writes your `@defold-typescript/types` version pin, so a stale cache would
 pin an older release.
 
+> [!TIP] `init` also writes the agent contract — `AGENTS.md` + `CLAUDE.md` — when
+> the project has none, so a freshly scaffolded project needs no separate
+> [`init-agents`](./init-agents.md) run. A contract already there is left
+> untouched by a plain re-init; `init . --force` re-syncs its managed block, and
+> so does [`upgrade`](./upgrade.md).
+
 ## A destination is required
 
 `init` takes an explicit destination — there is no implicit "current folder"
 default, so it never scaffolds where you did not mean to. Pass a path to create
 (or add to) that folder, or `.` to target the folder you are already in. The same
-rule applies to [`init-agents`](./agent-runbooks.md#install-the-agent-contract).
+rule applies to [`init-agents`](./init-agents.md).
 
 ## Two modes
 
@@ -51,9 +57,10 @@ rule applies to [`init-agents`](./agent-runbooks.md#install-the-agent-contract).
 Both modes also write the agent contract — `AGENTS.md` (a managed block delimited
 by HTML-comment markers) and `CLAUDE.md` (`@AGENTS.md`) — **when it is absent**. A
 plain re-init leaves a contract you already have untouched; re-syncing the managed
-block after an upgrade is the `--force` path (see the flag below). Content you add
+block is the `--force` path (see the flag below), which is also what
+[`upgrade`](./upgrade.md) runs for you. Content you add
 above or below the markers always survives. This is the same contract the
-standalone [`init-agents`](./agent-runbooks.md#install-the-agent-contract) verb
+standalone [`init-agents`](./init-agents.md) verb
 writes.
 
 Scaffolded config files (`tsconfig.json`, `biome.json`, `.vscode/`, `mise.toml`)
