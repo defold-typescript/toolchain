@@ -21,7 +21,7 @@
 
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { projectedReleaseVersion } from "./changelog-version.ts";
+import { parseTopChangelogVersion, projectedReleaseVersion } from "./changelog-version.ts";
 
 const SEMVER = /^(\d+)\.(\d+)\.(\d+)$/;
 
@@ -98,6 +98,30 @@ export function latestReleaseTag(tags: readonly string[]): string {
 
 export function resolveReleaseTarget(changelogBody: string, tags: readonly string[]): string {
   return projectedReleaseVersion(changelogBody, latestReleaseTag(tags));
+}
+
+export type ReleaseReadiness =
+  | { readonly kind: "released"; readonly tag: string }
+  | { readonly kind: "pending"; readonly version: string };
+
+// Which release state the repository is in. `released` is the narrow case where
+// the top heading is itself tagged on HEAD — the release commit as cut, where the
+// tag and the heading are equal *by construction* and the strictly-greater rule
+// would red a healthy tree. Every other state is `pending` and goes through the
+// unchanged projection, so the strictly-greater rule still governs each commit
+// after a tag, and a changelog that has fallen at or below the tags still throws.
+// Opening the next heading while still sitting on the release commit is a healthy
+// pending state, not a mismatch.
+export function releaseReadiness(
+  changelogBody: string,
+  tags: readonly string[],
+  tagsAtHead: readonly string[],
+): ReleaseReadiness {
+  const top = parseTopChangelogVersion(changelogBody);
+  if (top !== null && releaseTagsAt(tagsAtHead).includes(`v${top}`)) {
+    return { kind: "released", tag: `v${top}` };
+  }
+  return { kind: "pending", version: resolveReleaseTarget(changelogBody, tags) };
 }
 
 function run(cmd: string[], opts: { inherit?: boolean } = {}): { code: number; output: string } {
@@ -205,25 +229,26 @@ function main(): void {
   // A release tag already on HEAD means this exact commit shipped; recovering a
   // partial publish means re-running the Release workflow on that tag (publish
   // is idempotent), never cutting a fresh version off the same tree.
-  const releasedTags = releaseTagsAt(run(["git", "tag", "--points-at", "HEAD"]).output.split("\n"));
-  if (releasedTags.length > 0) {
+  const tagsAtHead = releaseTagsAt(run(["git", "tag", "--points-at", "HEAD"]).output.split("\n"));
+  const tags = run(["git", "tag"]).output.split("\n");
+  const latestTag = latestReleaseTag(tags);
+  if (tagsAtHead.length > 0) {
     die(
-      `HEAD ${head.slice(0, 9)} already carries ${releasedTags.join(", ")}; ` +
+      `HEAD ${head.slice(0, 9)} already carries ${tagsAtHead.join(", ")}; ` +
         "re-run the Release workflow on that tag instead of cutting a new version off the same commit",
     );
   }
-
-  const tags = run(["git", "tag"]).output.split("\n");
-  const latestTag = latestReleaseTag(tags);
-  let target: string;
+  let readiness: ReleaseReadiness;
   try {
-    target = resolveReleaseTarget(
+    readiness = releaseReadiness(
       readFileSync(new URL("../packages/docs/guide/changelog.md", import.meta.url), "utf8"),
       tags,
+      tagsAtHead,
     );
   } catch (err) {
     die((err as Error).message);
   }
+  const target = readiness.kind === "pending" ? readiness.version : readiness.tag.slice(1);
   const tag = `v${target}`;
 
   process.stdout.write(
