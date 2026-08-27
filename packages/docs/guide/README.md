@@ -15,7 +15,7 @@ Build your [Defold](https://defold.com/) game in [TypeScript](https://www.typesc
 
 - **The full Defold API, typed** — every module and namespace is typed from the official reference, so `go`, `gui`, `vmath`, `msg`, and the rest autocomplete and type-check as you write, with the reference documentation rendered into the hover text.
 - **Compiles to plain Lua** — your TypeScript runs through the battle-tested [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) compiler down to the Lua Defold already runs: no engine fork, no proprietary runtime, no lock-in.
-- **Typed scripts end to end** — `self`, `on_message`, and `on_input` payloads are typed through `defineScript`, `defineGuiScript`, and `defineRenderScript`.
+- **Typed scripts end to end** — `self`, `on_message`, and `on_input` payloads are typed through `defineScript`, `defineGuiScript`, and `defineRenderScript`; `defineEditorScript` types the editor extensions themselves.
 - **The editor completes what your project declares** — game-object paths, component ids, node ids, animation ids, resource paths, `game.project` config keys, and input action ids are read from your own project files and offered inside the string that needs them.
 - **Pin the API to the engine you ship** — lock a project to a [Defold release](./pinning-defold-target.md) so the types match the runtime you build against, and [wall](./wall.md) a directory to one script kind so its files see only the surface that kind really has.
 - **Community libraries, typed on demand** — declare a supported library as a dependency and [`resolve`](./resolve.md) materializes its types; each one is maintained here against a pinned upstream rather than scraped at install time.
