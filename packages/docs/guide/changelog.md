@@ -14,15 +14,20 @@ Entries are curated by hand from the git history; the most recent releases are
 listed per-patch, older releases are rolled up per minor version. Breaking
 changes are called out first because the toolchain is pre-1.0.
 
-## v0.29.0
+## v0.28.2
 
 ### Improved
 
-- **The Defold version can come from the editor you already have open.** With this project open in the Defold editor, [version resolution](./pinning-defold-target.md) takes the version from that running editor rather than guessing at an install path, so `set-target --detected` pins what you are actually running and the pin-drift notice compares against that same live version. A project with no editor open is unaffected, and an editor that stops answering falls back instead of holding the command.
+- **The Defold version can come from the editor you already have open.** With this project open in the editor, [version resolution](./pinning-defold-target.md#recording-the-projects-defold-target) asks that editor directly instead of guessing at an install path.
+  - **[`set-target --detected`](./set-target.md#--detected)** — pins the version you are actually running, not whatever a conventional install path happens to hold.
+  - **Pin-drift notice** — compares your pin against that same live version, so [`build`](./build.md) and [`watch`](./watch.md) stop reporting drift against an editor you are not using.
+  - **Nothing open, or an editor gone quiet** — unchanged behaviour: detection falls back to reading the editor's `config` on disk, and an editor that stops answering is abandoned rather than left holding the command.
 
 ### Fixed
 
-- **[`set-target --detected`](./set-target.md) finds an editor the toolchain would not have guessed, and says where it looked when it still cannot.** Set `DEFOLD_TYPESCRIPT_EDITOR` to the folder holding the editor's `config` and it is read ahead of the conventional per-OS locations — the answer for a Windows install, which is a portable archive extracted wherever you like. A miss now lists every path it read and why, instead of telling you to install the Defold you already have.
+- **[`set-target --detected`](./set-target.md#--detected) finds editors the toolchain would not have guessed, and says where it looked when it still cannot.**
+  - **[`DEFOLD_TYPESCRIPT_EDITOR`](./set-target.md#defold_typescript_editor)** — point it at the folder holding the editor's `config` and it is read ahead of the conventional per-OS locations. This is the answer for a Windows install, which is a portable archive you extract wherever you like.
+  - **Failure message** — a miss now lists every path it read and why, instead of telling you to install the Defold you already have.
 
 ## v0.28.1
 
