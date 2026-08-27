@@ -1,6 +1,23 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
+export type EditorPaths = Record<
+  string,
+  {
+    post?: {
+      security?: readonly Record<string, readonly string[]>[];
+      requestBody?: { content: Record<string, { example: string }> };
+      responses: Record<string, { content?: Record<string, { example: string }> }>;
+    };
+  }
+>;
+
+export type EditorSpec = {
+  info: { title: string };
+  components: { securitySchemes: Record<string, { scheme: string }> };
+  paths: EditorPaths;
+};
+
 /**
  * The editor's own `GET /openapi.json`, recorded verbatim from a running 1.13.1
  * editor. Every value below is *derived* from it at load time and none is
@@ -10,25 +27,36 @@ import { join } from "node:path";
  */
 export const EDITOR_SPEC = JSON.parse(
   readFileSync(join(import.meta.dir, "editor-openapi.json"), "utf8"),
-) as {
-  info: { title: string };
-  components: { securitySchemes: Record<string, { scheme: string }> };
-  paths: Record<
-    string,
-    {
-      post?: {
-        security?: readonly Record<string, readonly string[]>[];
-        requestBody?: { content: Record<string, { example: string }> };
-        responses: Record<string, { content?: Record<string, { example: string }> }>;
-      };
-    }
-  >;
-};
+) as EditorSpec;
 
 /** What a stub transport answers `GET /openapi.json` with. */
 export const SPEC_BODY = JSON.stringify(EDITOR_SPEC);
 
-export const EVAL_ROUTE = "/eval";
+/**
+ * The one route the other exports below descend from: the single `POST` the
+ * recording gives a security requirement, a request body and a `200` body
+ * example. Throws rather than guessing when the recording documents no such
+ * operation or more than one.
+ */
+export function evalRouteOf(spec: Pick<EditorSpec, "paths">): string {
+  const matched = Object.entries(spec.paths).flatMap(([route, { post }]) => {
+    if (post === undefined) return [];
+    const secured = Object.keys(post.security?.[0] ?? {}).length > 0;
+    const sends = Object.keys(post.requestBody?.content ?? {}).length > 0;
+    const answers = Object.values(post.responses["200"]?.content ?? {}).some(
+      (media) => media.example !== undefined,
+    );
+    return secured && sends && answers ? [route] : [];
+  });
+  if (matched.length !== 1) {
+    throw new Error(
+      `editor-openapi.json: expected exactly one POST declaring a security requirement, a request body and a 200 body example; found ${matched.length} (${matched.join(", ") || "none"})`,
+    );
+  }
+  return matched[0] as string;
+}
+
+export const EVAL_ROUTE = evalRouteOf(EDITOR_SPEC);
 
 const EVAL_OP = EDITOR_SPEC.paths[EVAL_ROUTE]?.post;
 const EVAL_SCHEME_NAME = Object.keys(EVAL_OP?.security?.[0] ?? {})[0] ?? "";
