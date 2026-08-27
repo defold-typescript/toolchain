@@ -152,6 +152,27 @@ export function probeEditorConfigFiles(opts: DetectInstalledEditorVersionOpts = 
   return { version: null, probed };
 }
 
+/**
+ * The report for a running-editor lane that produced no version: the port file
+ * leads it, carrying why, and the filesystem lane follows with whatever it read.
+ *
+ * Both of `probeInstalledEditor`'s miss arms return this, and so does the
+ * caller-side deadline that abandons a probe still in flight — a second copy of
+ * the assembly would drift, and the drift would only ever surface for a user
+ * whose editor has stopped answering.
+ */
+export function editorLaneFallback(
+  reason: Extract<ProbedPath["reason"], "no-answer" | "no-editor-open">,
+  opts: DetectInstalledEditorVersionOpts = {},
+): EditorProbe {
+  const cwd = opts.cwd ?? process.cwd();
+  const fallback = probeEditorConfigFiles(opts);
+  return {
+    version: fallback.version,
+    probed: [{ path: join(cwd, EDITOR_PORT_FILE), reason }, ...fallback.probed],
+  };
+}
+
 // The running editor is asked first: a published port file is evidence that
 // *this project* is open in *that* instance right now, where every config
 // candidate below is only a guess about the machine. No timeout is owned here —
@@ -171,17 +192,9 @@ export async function probeInstalledEditor(
     if (version !== null) {
       return { version, probed: [{ path: portPath, reason: "found" }] };
     }
-    const fallback = probeEditorConfigFiles(opts);
-    return {
-      version: fallback.version,
-      probed: [{ path: portPath, reason: "no-answer" }, ...fallback.probed],
-    };
+    return editorLaneFallback("no-answer", opts);
   }
-  const fallback = probeEditorConfigFiles(opts);
-  return {
-    version: fallback.version,
-    probed: [{ path: portPath, reason: "no-editor-open" }, ...fallback.probed],
-  };
+  return editorLaneFallback("no-editor-open", opts);
 }
 
 export async function detectInstalledEditorVersion(

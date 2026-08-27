@@ -115,13 +115,13 @@ A channel is spelled the same way — swap the version for a channel name:
 
 The pin is written by `set-target` (or hand-edited). `set-target <token>` writes
 the `defold-target` pin to a version or channel; `set-target --detected` syncs it
-to the installed Defold editor's version. By contrast, `--defold-target` is a
+to the detected Defold editor's version. By contrast, `--defold-target` is a
 per-run override that never writes `package.json`, by design — a throwaway build
 against an older surface cannot silently re-pin the project. When the flag
 overrides a live pin, the CLI now says so — on stderr for a normal run and in the
 `warnings` array under `--json` — naming both the flag value and the pin it
 shadowed, and pointing at how to persist the target. The reverse drift is caught
-too: when the installed editor differs from a pinned version, the whole
+too: when the detected editor differs from a pinned version, the whole
 build-the-project loop — `build`, `upgrade` (and its `update` synonym), `watch`
 (once at startup, never per rebuild), `run`, and `bob build`/`bundle`/`run` —
 warns, naming both the installed version and the pin, and pointing back at
@@ -156,7 +156,7 @@ rather than an error, exactly as `--frozen` and `--force` are off their own
 commands. Do not confuse it with `resolve --frozen`, which is a different
 mechanism entirely: `--frozen` fails when a *native-extension* download would be
 needed because the cache missed, while `--fail-on-drift` fails when the
-*installed editor* has drifted from the version pin. Neither implies the other,
+*detected editor* has drifted from the version pin. Neither implies the other,
 and `--fail-on-drift` never appears on `resolve`.
 
 `set-target` is a **writer** scoped like `init`'s pin write: it reads
@@ -177,9 +177,9 @@ pinned writes nothing. It does not materialize a surface or repoint
   reinstall the types package, or pin a channel. Channels bypass the check
   entirely, because they resolve their head at build time and are not registry
   members, so they keep working precisely when the registry does not;
-- `set-target --detected` (alias `--detect`) pins the installed editor's version,
-  erroring when no Defold editor is detected rather than falling back. An
-  installed editor the registry cannot provide is rejected the same way, rather
+- `set-target --detected` (alias `--detect`) pins the detected editor's version,
+  erroring when no Defold editor is detected rather than falling back. A
+  detected editor the registry cannot provide is rejected the same way, rather
   than syncing to a pin the toolchain cannot honor;
 - an optional trailing path targets a project other than the current folder.
 
@@ -268,9 +268,9 @@ The resolved target is reported in `--json` output:
 On drift, every command in the build-the-project loop — `build`, `upgrade` (and
 its `update` synonym), `watch` (on its `start` event), `run`, and `bob
 build`/`bundle`/`run` — adds a `pinMismatch: { installed, pinned }` object
-(alongside the notice in the `warnings` array) naming the installed editor version
-and the pinned version. It is absent when the two match, when no editor is
-detected, and for a channel pin.
+(alongside the notice in the `warnings` array) naming the detected editor's
+version under `installed`, and the pinned version. It is absent when the two
+match, when no editor is detected, and for a channel pin.
 
 A target the toolchain cannot provide adds an `unresolvableTarget: { target,
 available }` object naming the pin (or the `--defold-target` value) and the

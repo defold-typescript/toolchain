@@ -14,7 +14,7 @@ import { readCliVersion } from "./cli-version";
 import {
   type DefoldChannel,
   type DefoldTargetSource,
-  describeInstalledPinMismatch,
+  describeDetectedPinMismatch,
   describeTargetOverride,
   diagnoseDefoldNamespace,
   fetchChannelInfo,
@@ -24,6 +24,7 @@ import {
   resolveDefoldTarget,
   resolveTargetHead,
 } from "./defold-target";
+import type { EditorTransport } from "./editor-attach";
 import {
   defaultRunEngine,
   launchEngine,
@@ -38,6 +39,7 @@ import { runInitAgents } from "./init-agents";
 import { installHint } from "./install-reminder";
 import {
   type EditorProbe,
+  editorLaneFallback,
   probeEditorConfigFiles,
   probeInstalledEditor,
   runningEditorDeclines,
@@ -75,8 +77,8 @@ export interface DispatchInternals {
     readonly libraryRegistry?: readonly VendoredLibrary[];
     readonly libraryGeneratedDir?: string | null;
   };
-  // Reads the installed Defold editor's `config` and returns its `version` key,
-  // or null when no installed editor is detected. The default is the live
+  // Reads the detected Defold editor's `config` and returns its `version` key,
+  // or null when no editor is detected. The default is the live
   // filesystem probe; tests inject a fixed value to keep the dispatch path
   // deterministic. Detection is the lowest-precedence Defold version source
   // (below the package.json pin, above the hardcoded default).
@@ -85,6 +87,11 @@ export interface DispatchInternals {
   // failure message names every path read and why — so it takes the wider probe
   // rather than `detectEditorVersion`, which stays the drift-notice seam above.
   readonly probeEditor?: (signal?: AbortSignal) => Promise<EditorProbe>;
+  // The socket the default probe's `/eval` adapter talks to, injected strictly
+  // *beneath* `probeEditor` so the source the probe chooses stays production's
+  // own. When `probeEditor` is supplied it wins and this is simply unreached: a
+  // replaced probe has no socket left to inject.
+  readonly editorTransport?: EditorTransport;
   // `wall` takes its target directories as positionals (not a cwd path arg like
   // the other commands), so tests inject the project root and TTY state here.
   readonly cwd?: string;
@@ -172,7 +179,7 @@ function readPackageJson(cwd: string): unknown {
 // materializes no surface at all, so without a notice the project keeps
 // compiling against the *newer* default surface — accepting APIs the pinned
 // engine lacks — and still exits 0. `detected` and `default` sources stay out:
-// neither is a declared intent, and an installed editor ahead of the registry
+// neither is a declared intent, and a detected editor ahead of the registry
 // would otherwise nag on every build.
 function unresolvableTargetNotice(
   target: string | undefined,
@@ -322,6 +329,10 @@ function dispatchCommand(
     return 1;
   }
 
+  // Every lane that asks the running editor waits under one deadline, so the
+  // command that writes the pin cannot outlast the build loop it races.
+  const timeoutMs = internals?.editorProbeTimeoutMs ?? EDITOR_PROBE_TIMEOUT_MS;
+
   if (command === "set-target") {
     // Pin writer, not a target resolver: it never runs the resolution machinery
     // below. With `--detected` the sole positional is the path; otherwise the
@@ -346,6 +357,30 @@ function dispatchCommand(
     const token = detectedMode ? undefined : rest[0];
     const pathArg = detectedMode ? rest[0] : rest[1];
     const setTargetCwd = pathArg ? path.resolve(pathArg) : process.cwd();
+    // A stale port file can name a process that accepts and never answers, and
+    // the probe owns no deadline of its own, so the wait is bounded here — the
+    // only layer that knows what this command can afford. The signal rides along
+    // for a transport that does honor it; the race is what ends one that does
+    // not. On abandonment the report is the same assembly the probe's own
+    // no-answer arm returns, so the miss reads identically either way.
+    const boundedEditorProbe = async (): Promise<EditorProbe> => {
+      const probeOpts = {
+        cwd: setTargetCwd,
+        ...(internals?.editorTransport !== undefined
+          ? { transport: internals.editorTransport }
+          : {}),
+      };
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      const probed = await Promise.race([
+        probeInstalledEditor({ ...probeOpts, signal: controller.signal }).catch(() => null),
+        new Promise<null>((resolve) => {
+          controller.signal.addEventListener("abort", () => resolve(null));
+        }),
+      ]);
+      clearTimeout(timer);
+      return probed ?? editorLaneFallback("no-answer", probeOpts);
+    };
     return (async () => {
       const result = await runSetTarget({
         cwd: setTargetCwd,
@@ -353,7 +388,7 @@ function dispatchCommand(
         ...(detectedMode
           ? {
               detected: true,
-              probe: internals?.probeEditor ?? (() => probeInstalledEditor({ cwd: setTargetCwd })),
+              probe: boundedEditorProbe,
             }
           : {}),
       });
@@ -408,7 +443,6 @@ function dispatchCommand(
     }
     return installedEditorVersion;
   };
-  const timeoutMs = internals?.editorProbeTimeoutMs ?? EDITOR_PROBE_TIMEOUT_MS;
 
   // One body, two entries. The declining path calls it with the synchronous
   // lane's reader and returns whatever it returns; the running-editor path
@@ -440,7 +474,7 @@ function dispatchCommand(
       return 1;
     }
     const targetSource = target.source;
-    // A concrete-version pin can silently lag the installed editor after an upgrade;
+    // A concrete-version pin can silently lag the detected editor after an upgrade;
     // warn across the build-the-project loop so the user knows `set-target --detected`
     // exists. That loop is `build`/`upgrade`/`update` plus the heads-down commands
     // `watch`/`run` and `bob build|bundle|run` — the developer who keeps a watcher
@@ -464,7 +498,7 @@ function dispatchCommand(
         : undefined;
     const installedForDrift =
       pinnedVersion !== undefined ? (detectInstalled() ?? undefined) : undefined;
-    const driftNotice = describeInstalledPinMismatch(installedForDrift, pinnedVersion);
+    const driftNotice = describeDetectedPinMismatch(installedForDrift, pinnedVersion);
     const pinMismatch =
       installedForDrift !== undefined && pinnedVersion !== undefined && driftNotice.length > 0
         ? { installed: installedForDrift, pinned: pinnedVersion }
@@ -1539,7 +1573,13 @@ function dispatchCommand(
     const probeEditor =
       internals?.probeEditor ??
       ((signal?: AbortSignal) =>
-        probeInstalledEditor({ cwd, ...(signal !== undefined ? { signal } : {}) }));
+        probeInstalledEditor({
+          cwd,
+          ...(signal !== undefined ? { signal } : {}),
+          ...(internals?.editorTransport !== undefined
+            ? { transport: internals.editorTransport }
+            : {}),
+        }));
     // A stale port file can name a process that listens but never answers, so
     // the deadline has to be able to end the wait even when the probe cannot.
     const probed = await Promise.race([
