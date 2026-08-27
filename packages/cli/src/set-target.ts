@@ -66,10 +66,10 @@ function membershipError(
 // defect: the fix is to say which paths were read and why each one failed, so a
 // miss is actionable rather than a flat denial. The report is folded into the
 // single `error` string — the `--json` envelope stays `{command, ok, error}`.
-const PROBE_ACTION = `Set ${EDITOR_ROOT_ENV} to the folder containing the editor's \`config\` file (the bundle root or its Contents/Resources interior both work), or pass a version|stable|beta|alpha token.`;
+const PROBE_ACTION = `Open this project in the Defold editor, or set ${EDITOR_ROOT_ENV} to the folder containing the editor's \`config\` file (the bundle root or its Contents/Resources interior both work), or pass a version|stable|beta|alpha token.`;
 
 function undetectedError(probed: readonly ProbedPath[]): string {
-  const opening = "defold-typescript set-target: no installed Defold editor was detected";
+  const opening = "defold-typescript set-target: no Defold editor was detected";
   if (probed.length === 0) {
     return `${opening}, and no candidate location is known for this platform; nothing was written. ${PROBE_ACTION}`;
   }
@@ -95,7 +95,7 @@ async function resolveValue(
     }
     const error = membershipError(
       version,
-      `the installed Defold editor (${version})`,
+      `the detected Defold editor (${version})`,
       resolvableTargets,
     );
     return error === null ? { value: version } : { error };

@@ -43,17 +43,17 @@ const COMMANDS: readonly HelpCommand[] = [
     flags: [
       {
         flag: "--fail-on-drift",
-        desc: "exit non-zero when the installed Defold editor differs from the version pin",
+        desc: "exit non-zero when the detected Defold editor differs from the version pin",
       },
     ],
   },
   {
     name: "set-target",
     summary:
-      "Write the package.json defold-target pin to a version or channel, or sync it to the installed editor.",
+      "Write the package.json defold-target pin to a version or channel, or sync it to the detected editor.",
     usage: "bunx @defold-typescript/cli set-target <version|stable|beta|alpha> [path]",
     flags: [
-      { flag: "--detected", desc: "pin the installed Defold editor's version instead of a token" },
+      { flag: "--detected", desc: "pin the detected Defold editor's version instead of a token" },
       { flag: "--detect", desc: "synonym for --detected" },
     ],
   },
@@ -69,7 +69,7 @@ const COMMANDS: readonly HelpCommand[] = [
       { flag: "--force", desc: "rebuild even when outputs look current" },
       {
         flag: "--fail-on-drift",
-        desc: "exit non-zero when the installed Defold editor differs from the version pin",
+        desc: "exit non-zero when the detected Defold editor differs from the version pin",
       },
     ],
   },
@@ -88,7 +88,7 @@ const COMMANDS: readonly HelpCommand[] = [
       },
       {
         flag: "--fail-on-drift",
-        desc: "exit non-zero when the installed Defold editor differs from the version pin",
+        desc: "exit non-zero when the detected Defold editor differs from the version pin",
       },
     ],
   },
@@ -148,7 +148,7 @@ const COMMANDS: readonly HelpCommand[] = [
       { flag: "--build-server <url>", desc: "native-extension build-server URL" },
       {
         flag: "--fail-on-drift",
-        desc: "exit non-zero when the installed Defold editor differs from the version pin",
+        desc: "exit non-zero when the detected Defold editor differs from the version pin",
       },
     ],
   },
@@ -160,7 +160,7 @@ const COMMANDS: readonly HelpCommand[] = [
       { flag: "-- <args>", desc: "pass everything after -- through to the engine" },
       {
         flag: "--fail-on-drift",
-        desc: "exit non-zero when the installed Defold editor differs from the version pin",
+        desc: "exit non-zero when the detected Defold editor differs from the version pin",
       },
     ],
   },

@@ -15,6 +15,8 @@ import {
   detectInstalledEditorVersion,
   EDITOR_VERSION_KEY,
   editorConfigCandidates,
+  editorLaneFallback,
+  probeEditorConfigFiles,
   probeInstalledEditor,
   runningEditorDeclines,
 } from "./installed-editor-version";
@@ -665,5 +667,46 @@ describe("probeInstalledEditor default /eval adapter", () => {
     expect(calls).toEqual([]);
     expect(result.probed[0]).toEqual(noEditorEntry(cwd));
     expect(result.version).toBe("1.12.4");
+  });
+});
+
+// The timeout arm in `dispatch` abandons a probe that never answers and has to
+// report the same thing the probe's own `no-answer` arm reports. These defend
+// the one assembly both of them call, which is what keeps them from drifting
+// apart where only a user with a hung editor would ever see it.
+describe("editorLaneFallback", () => {
+  const home = (): string => "/home/u";
+  const missingEverywhere = { platform: "darwin" as const, home, readConfig: () => null };
+
+  test("leads with the port file and its reason, then delegates to the config lane", () => {
+    const cwd = portlessProject();
+
+    const result = editorLaneFallback("no-answer", { cwd, ...missingEverywhere });
+
+    expect(result.probed[0]).toEqual({ path: join(cwd, EDITOR_PORT_FILE), reason: "no-answer" });
+    // The tail is whatever the config lane reads, not a second list: an entry
+    // this assembly invented would not appear in the lane's own report.
+    const lane = probeEditorConfigFiles({ cwd, ...missingEverywhere });
+    expect(result.probed.slice(1)).toEqual([...lane.probed]);
+    expect(result.version).toBe(lane.version);
+  });
+
+  test("the probe's own no-answer arm is this same assembly", async () => {
+    const cwd = projectWithEditorReady();
+    const { transport } = recordingTransport(() => evalSuccessBody("nil"));
+    const opts = { cwd, ...missingEverywhere, transport };
+
+    const result = await probeInstalledEditor(opts);
+
+    expect(result).toEqual(editorLaneFallback("no-answer", opts));
+  });
+
+  test("the probe's own no-editor-open arm is this same assembly", async () => {
+    const cwd = portlessProject();
+    const opts = { cwd, ...missingEverywhere, readConfig: () => "version = 1.12.4\n" };
+
+    const result = await probeInstalledEditor(opts);
+
+    expect(result).toEqual(editorLaneFallback("no-editor-open", opts));
   });
 });

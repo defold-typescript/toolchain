@@ -14,7 +14,7 @@ type-checking, see [Pinning the Defold target](./pinning-defold-target.md).
 ```sh
 bunx @defold-typescript/cli set-target 1.13.1        # pin a fixed version
 bunx @defold-typescript/cli set-target stable        # pin a release channel
-bunx @defold-typescript/cli set-target --detected    # sync to the installed editor
+bunx @defold-typescript/cli set-target --detected    # sync to the detected editor
 bunx @defold-typescript/cli set-target 1.13.1 path/to/project
 ```
 
@@ -87,29 +87,31 @@ working precisely when the registry does not.
 
 ## `--detected`
 
-`--detected` (alias `--detect`) pins the installed Defold editor's version, read
-from the editor bundle's `config` file at its conventional per-OS location. It
+`--detected` (alias `--detect`) pins the detected Defold editor's version, taken
+from this project's running editor when one is open, and otherwise from the
+editor bundle's `config` file at its conventional per-OS location. It
 is the answer to the drift warning that [`build`](./build.md),
 [`upgrade`](./upgrade.md), [`watch`](./watch.md), [`run`](./run.md), and
-[`bob`](./bob.md) print when your installed editor differs from the pin.
+[`bob`](./bob.md) print when your detected editor differs from the pin.
 
 It never falls back. With no editor detected it errors rather than guessing —
 and it tells you which paths it read and why each one did not answer:
 
 ```
-defold-typescript set-target: no installed Defold editor was detected; nothing
-was written. Paths read:
+defold-typescript set-target: no Defold editor was detected; nothing was
+written. Paths read:
   /home/u/Defold/config (missing)
   /opt/Defold/config (no-version-key)
-Set DEFOLD_TYPESCRIPT_EDITOR to the folder containing the editor's `config`
-file (the bundle root or its Contents/Resources interior both work), or pass a
-version|stable|beta|alpha token.
+Open this project in the Defold editor, or set DEFOLD_TYPESCRIPT_EDITOR to the
+folder containing the editor's `config` file (the bundle root or its
+Contents/Resources interior both work), or pass a version|stable|beta|alpha
+token.
 ```
 
 `missing` means nothing was there to read; `no-version-key` means a `config`
 was read but carried no `version` line.
 
-An installed editor whose version the registry cannot provide is rejected the
+A detected editor whose version the registry cannot provide is rejected the
 same way a bad token is, rather than syncing the pin to a target the toolchain
 cannot honor.
 
