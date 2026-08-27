@@ -5305,18 +5305,76 @@ describe("dispatch upgrade", () => {
   });
 });
 
+function writePkg(value: unknown): void {
+  writeFileSync(path.join(cwd, "package.json"), `${JSON.stringify(value, null, 2)}\n`);
+}
+
+function pinOf(): string {
+  const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8")) as {
+    "defold-typescript": { "defold-target": string };
+  };
+  return pkg["defold-typescript"]["defold-target"];
+}
+
+const EDITOR_TOKEN = "6ee9f0b3-3f5e-4a1e-9a0f-2c7d4b8e1a55";
+
+function openEditorOn(dir: string): void {
+  mkdirSync(path.join(dir, ".internal"), { recursive: true });
+  writeFileSync(path.join(dir, EDITOR_PORT_FILE), "58433");
+  writeFileSync(path.join(dir, EDITOR_TOKEN_FILE), EDITOR_TOKEN);
+}
+
+interface RecordedCall {
+  readonly url: string;
+  readonly method: string;
+  readonly headers: Readonly<Record<string, string>> | undefined;
+  readonly body: string | undefined;
+}
+
+// Answers the handshake from the recorded spec and hands `/eval` to the case,
+// which decides from the posted body.
+function recordingTransport(evalBody: (posted: string) => string): {
+  readonly transport: EditorTransport;
+  readonly calls: RecordedCall[];
+} {
+  const calls: RecordedCall[] = [];
+  const transport: EditorTransport = async (url, init) => {
+    calls.push({ url, method: init?.method ?? "GET", headers: init?.headers, body: init?.body });
+    const body = url.endsWith("/openapi.json") ? SPEC_BODY : evalBody(init?.body ?? "");
+    return { status: 200, text: async () => body };
+  };
+  return { transport, calls };
+}
+
+// Dispatch hands the probe nothing but a cwd, so the config lane is steered
+// the way a user steers it. The override is read ahead of every per-OS path,
+// which is what keeps these deterministic on a machine that has Defold
+// installed. One copy serves every `--detected` describe below: a second
+// independently-maintained steering helper is exactly the drift these cases
+// exist to rule out.
+let editorRoots: string[] = [];
+function configLaneAnswers(version: string): void {
+  const root = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-editor-root-"));
+  writeFileSync(path.join(root, "config"), `version = ${version}\n`);
+  editorRoots.push(root);
+  process.env[EDITOR_ROOT_ENV] = root;
+}
+
+const savedEditorRoot = process.env[EDITOR_ROOT_ENV];
+
+afterEach(() => {
+  if (savedEditorRoot === undefined) {
+    delete process.env[EDITOR_ROOT_ENV];
+  } else {
+    process.env[EDITOR_ROOT_ENV] = savedEditorRoot;
+  }
+  for (const root of editorRoots) {
+    rmSync(root, { recursive: true, force: true });
+  }
+  editorRoots = [];
+});
+
 describe("dispatch set-target", () => {
-  function writePkg(value: unknown): void {
-    writeFileSync(path.join(cwd, "package.json"), `${JSON.stringify(value, null, 2)}\n`);
-  }
-
-  function pinOf(): string {
-    const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8")) as {
-      "defold-typescript": { "defold-target": string };
-    };
-    return pkg["defold-typescript"]["defold-target"];
-  }
-
   test("set-target <token> writes the pin and reports from -> to", async () => {
     writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
     const { io, out } = captureStreams();
@@ -5344,30 +5402,6 @@ describe("dispatch set-target", () => {
     });
   });
 
-  test("set-target --detected writes the injected detected version", async () => {
-    writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
-    const { io } = captureStreams();
-
-    const code = await dispatch(["set-target", "--detected", cwd], io, {
-      probeEditor: async () => ({ version: "1.13.1", probed: [] }),
-    });
-
-    expect(code).toBe(0);
-    expect(pinOf()).toBe("1.13.1");
-  });
-
-  test("--detect is a synonym of --detected", async () => {
-    writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
-    const { io } = captureStreams();
-
-    const code = await dispatch(["set-target", "--detect", cwd], io, {
-      probeEditor: async () => ({ version: "1.13.1", probed: [] }),
-    });
-
-    expect(code).toBe(0);
-    expect(pinOf()).toBe("1.13.1");
-  });
-
   test("neither a token nor --detected is a usage error", async () => {
     const { io, err } = captureStreams();
 
@@ -5391,78 +5425,63 @@ describe("dispatch set-target", () => {
   });
 });
 
+// These replace the probe *including its choice of source*, which is the seam
+// the shared dispatch tail already selects on. The config lane is steered to a
+// different resolvable version in every case, so the pin they expect is one
+// only the injected probe can produce — never a coincidence of the host's
+// installed editor.
+describe("dispatch set-target --detected with an injected probe", () => {
+  test("--detected writes the version only the injected probe can supply", async () => {
+    writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
+    configLaneAnswers("1.12.4");
+    const { io } = captureStreams();
+
+    const code = await dispatch(["set-target", "--detected", cwd], io, {
+      probeEditor: async () => ({ version: "1.13.0", probed: [] }),
+    });
+
+    expect(code).toBe(0);
+    expect(pinOf()).toBe("1.13.0");
+  });
+
+  test("--detect is a synonym of --detected", async () => {
+    writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
+    configLaneAnswers("1.12.4");
+    const { io } = captureStreams();
+
+    const code = await dispatch(["set-target", "--detect", cwd], io, {
+      probeEditor: async () => ({ version: "1.13.0", probed: [] }),
+    });
+
+    expect(code).toBe(0);
+    expect(pinOf()).toBe("1.13.0");
+  });
+
+  test("probeEditor wins over editorTransport, which is never called", async () => {
+    writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
+    // A real editor is open on the project, so the default probe would reach
+    // the transport: an empty recording is what proves it was never built.
+    openEditorOn(cwd);
+    configLaneAnswers("1.12.4");
+    const { transport, calls } = recordingTransport(() => evalSuccessBody("1.12.4"));
+    const { io } = captureStreams();
+
+    const code = await dispatch(["set-target", "--detected", cwd], io, {
+      probeEditor: async () => ({ version: "1.13.0", probed: [] }),
+      editorTransport: transport,
+    });
+
+    expect(code).toBe(0);
+    expect(pinOf()).toBe("1.13.0");
+    expect(calls).toEqual([]);
+  });
+});
+
 // The `--detected` cases above inject `probeEditor`, which replaces the probe
 // *including its choice of source*. These drive the default expression instead,
 // injecting only the socket beneath it, so what the command asks and where it
 // asks it are production's own.
 describe("dispatch set-target --detected through the default probe", () => {
-  const EDITOR_TOKEN = "6ee9f0b3-3f5e-4a1e-9a0f-2c7d4b8e1a55";
-
-  interface RecordedCall {
-    readonly url: string;
-    readonly method: string;
-    readonly headers: Readonly<Record<string, string>> | undefined;
-    readonly body: string | undefined;
-  }
-
-  // Answers the handshake from the recorded spec and hands `/eval` to the case,
-  // which decides from the posted body.
-  function recordingTransport(evalBody: (posted: string) => string): {
-    readonly transport: EditorTransport;
-    readonly calls: RecordedCall[];
-  } {
-    const calls: RecordedCall[] = [];
-    const transport: EditorTransport = async (url, init) => {
-      calls.push({ url, method: init?.method ?? "GET", headers: init?.headers, body: init?.body });
-      const body = url.endsWith("/openapi.json") ? SPEC_BODY : evalBody(init?.body ?? "");
-      return { status: 200, text: async () => body };
-    };
-    return { transport, calls };
-  }
-
-  function writePkg(value: unknown): void {
-    writeFileSync(path.join(cwd, "package.json"), `${JSON.stringify(value, null, 2)}\n`);
-  }
-
-  function pinOf(): string {
-    const pkg = JSON.parse(readFileSync(path.join(cwd, "package.json"), "utf8")) as {
-      "defold-typescript": { "defold-target": string };
-    };
-    return pkg["defold-typescript"]["defold-target"];
-  }
-
-  function openEditorOn(dir: string): void {
-    mkdirSync(path.join(dir, ".internal"), { recursive: true });
-    writeFileSync(path.join(dir, EDITOR_PORT_FILE), "58433");
-    writeFileSync(path.join(dir, EDITOR_TOKEN_FILE), EDITOR_TOKEN);
-  }
-
-  // Dispatch hands the probe nothing but a cwd, so the config lane is steered
-  // the way a user steers it. The override is read ahead of every per-OS path,
-  // which is what keeps these deterministic on a machine that has Defold
-  // installed.
-  let editorRoots: string[] = [];
-  function configLaneAnswers(version: string): void {
-    const root = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-editor-root-"));
-    writeFileSync(path.join(root, "config"), `version = ${version}\n`);
-    editorRoots.push(root);
-    process.env[EDITOR_ROOT_ENV] = root;
-  }
-
-  const savedEditorRoot = process.env[EDITOR_ROOT_ENV];
-
-  afterEach(() => {
-    if (savedEditorRoot === undefined) {
-      delete process.env[EDITOR_ROOT_ENV];
-    } else {
-      process.env[EDITOR_ROOT_ENV] = savedEditorRoot;
-    }
-    for (const root of editorRoots) {
-      rmSync(root, { recursive: true, force: true });
-    }
-    editorRoots = [];
-  });
-
   test("--detected takes the version the running editor answered", async () => {
     writePkg({ "defold-typescript": { "defold-target": "1.12.4" } });
     openEditorOn(cwd);
