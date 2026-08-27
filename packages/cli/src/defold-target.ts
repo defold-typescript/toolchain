@@ -93,7 +93,7 @@ export function describeTargetOverride(
 // tracks its head and never lags), so this helper never sees a channel token.
 // The notice is advisory by default and escalates to a non-zero exit under
 // `--fail-on-drift`, so the text claims only what holds in both modes.
-export function describeInstalledPinMismatch(
+export function describeDetectedPinMismatch(
   installed: string | undefined,
   pinned: string | undefined,
 ): readonly string[] {
@@ -101,7 +101,7 @@ export function describeInstalledPinMismatch(
     return [];
   }
   return [
-    `the installed Defold editor (${installed}) differs from the "defold-target" pin (${pinned}); run \`set-target --detected\` to sync the pin. This does not change the pin.`,
+    `the detected Defold editor (${installed}) differs from the "defold-target" pin (${pinned}); run \`set-target --detected\` to sync the pin. This does not change the pin.`,
   ];
 }
 
