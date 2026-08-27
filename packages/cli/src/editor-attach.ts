@@ -10,7 +10,12 @@ export interface EditorResponse {
 
 export type EditorTransport = (
   url: string,
-  init?: { readonly method?: string; readonly signal?: AbortSignal | undefined },
+  init?: {
+    readonly method?: string;
+    readonly signal?: AbortSignal | undefined;
+    readonly headers?: Readonly<Record<string, string>>;
+    readonly body?: string;
+  },
 ) => Promise<EditorResponse>;
 
 export interface EditorEndpoint {
@@ -27,11 +32,15 @@ export type ReloadOutcome = "accepted" | "skipped" | "unavailable";
 
 export const EDITOR_PORT_FILE = path.join(".internal", "editor.port");
 
+export const EDITOR_TOKEN_FILE = path.join(".internal", "editor.token");
+
 export const EDITOR_API_TITLE = "Defold Editor HTTP API";
 
 const defaultTransport: EditorTransport = (url, init) =>
   fetch(url, {
     ...(init?.method === undefined ? {} : { method: init.method }),
+    ...(init?.headers === undefined ? {} : { headers: init.headers }),
+    ...(init?.body === undefined ? {} : { body: init.body }),
     signal: init?.signal ?? null,
   });
 
@@ -55,6 +64,23 @@ export function readEditorPort(cwd: string): number | null {
 }
 
 /**
+ * The per-session token a running editor published, or `null` when no editor is
+ * open. `.internal/editor.token` is written and removed alongside the port file,
+ * so an absent, empty, or half-written file is the ordinary "no editor" state
+ * and never an error -- this runs on the build hot path and must not throw.
+ */
+export function readEditorToken(cwd: string): string | null {
+  let raw: string;
+  try {
+    raw = readFileSync(path.join(cwd, EDITOR_TOKEN_FILE), "utf8");
+  } catch {
+    return null;
+  }
+  const trimmed = raw.trim();
+  return trimmed === "" ? null : trimmed;
+}
+
+/**
  * Confirms the port actually belongs to a Defold editor before anything is sent
  * to it: the port is random per session and the file outlives a crash, so a
  * stale port can point at an unrelated local process.
@@ -72,6 +98,67 @@ export async function resolveEditor(
     if (res.status !== 200) return null;
     const doc = JSON.parse(await res.text()) as { info?: { title?: unknown } };
     return doc.info?.title === EDITOR_API_TITLE ? { baseUrl } : null;
+  } catch {
+    return null;
+  }
+}
+
+const EVAL_RETURN_PREFIX = "=> ";
+
+/**
+ * `/eval` answers `text/plain`: the printed output first, then one
+ * `=> <tostring(value)>` line per returned value. Only the *trailing* run of
+ * prefixed lines is read back, so printed text that happens to start with the
+ * marker widens the run and the caller sees an unusable multi-value answer
+ * rather than a confidently wrong one.
+ */
+function parseEvalReturns(body: string): string[] {
+  const lines = body.split("\n");
+  while (lines.length > 0 && lines[lines.length - 1] === "") lines.pop();
+  const returns: string[] = [];
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    const line = lines[i];
+    if (line === undefined || !line.startsWith(EVAL_RETURN_PREFIX)) break;
+    returns.unshift(line.slice(EVAL_RETURN_PREFIX.length));
+  }
+  return returns;
+}
+
+/**
+ * Evaluates `expr` in the editor's extension runtime and resolves the single
+ * value it returned, or `null` for every other outcome.
+ *
+ * `/eval` reaches `editor.execute`, so this is arbitrary local code execution.
+ * It is only ever addressed at `localhost`, on a port this project's own
+ * `.internal/` published, authenticated with that same directory's per-session
+ * token: reaching it already requires read access to the project. Nothing here
+ * may be routed to, or reachable from, a network-facing surface.
+ *
+ * Absent port file short-circuits before any transport call at all, which is
+ * what keeps the common no-editor case off the network on the build hot path.
+ * Nothing throws and nothing propagates: a probe must never fail a build.
+ */
+export async function evalEditor(
+  cwd: string,
+  expr: string,
+  transport: EditorTransport = defaultTransport,
+  signal?: AbortSignal,
+): Promise<string | null> {
+  if (readEditorPort(cwd) === null) return null;
+  try {
+    const endpoint = await resolveEditor(cwd, transport, signal);
+    if (endpoint === null) return null;
+    const token = readEditorToken(cwd);
+    if (token === null) return null;
+    const res = await transport(`${endpoint.baseUrl}/eval`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "text/plain" },
+      body: expr,
+      signal,
+    });
+    if (res.status !== 200) return null;
+    const returns = parseEvalReturns(await res.text());
+    return returns.length === 1 ? (returns[0] ?? null) : null;
   } catch {
     return null;
   }
