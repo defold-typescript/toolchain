@@ -16,8 +16,17 @@ const FENCE_TOKEN = /^\s*(`{3,}|~{3,})(.*)$/;
 export function stripSrcRootDefinitions(body: string): string {
   let fence: string | null = null;
   let removed = false;
+  // A definition is authored on its own line after a blank one, so dropping it
+  // leaves a doubled blank behind. Swallow that single blank at the removal
+  // site: normalizing whitespace across the whole document would also rewrite
+  // authored blank runs elsewhere, including inside fenced code.
+  let swallowBlank = false;
   const kept: string[] = [];
   for (const line of body.split("\n")) {
+    if (swallowBlank) {
+      swallowBlank = false;
+      if (line === "") continue;
+    }
     const token = FENCE_TOKEN.exec(line);
     const marker = token?.[1] ?? "";
     const rest = token?.[2] ?? "";
@@ -38,10 +47,11 @@ export function stripSrcRootDefinitions(body: string): string {
     }
     if (DEFINITION.test(line)) {
       removed = true;
+      swallowBlank = (kept.at(-1) ?? "") === "";
       continue;
     }
     kept.push(line);
   }
   if (!removed) return body;
-  return kept.join("\n").replace(/\n{3,}/g, "\n\n");
+  return kept.join("\n");
 }
