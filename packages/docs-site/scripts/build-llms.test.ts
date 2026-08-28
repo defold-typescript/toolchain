@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { loadCombinedSurface, versionsWithDiskFixtures } from "../app/lib/api-surface-loader";
 import { withBase } from "../app/lib/base";
 import { listGuidePages } from "../app/lib/guide-loader";
+import { SRC_ROOT_FOOTNOTE_ID, SRC_ROOT_FOOTNOTE_LINE } from "../app/lib/src-root-note";
 import {
   buildLlmsFull,
   buildLlmsTxt,
@@ -417,4 +418,30 @@ describe("no duplicated version-merge logic", () => {
     // and it does not re-derive the availability matrix on its own
     expect(source).not.toContain("deriveAvailabilityMatrix");
   });
+});
+
+describe("src/ source-root footnote in the corpus", () => {
+  for (const [name, target] of [
+    ["package", PACKAGE_TARGET],
+    ["site", SITE_TARGET],
+  ] as const) {
+    test(`the ${name} target defines the note exactly once, before the guide`, () => {
+      const full = buildLlmsFull(target);
+      const definitions = full
+        .split("\n")
+        .filter((line) => line.startsWith(`${SRC_ROOT_FOOTNOTE_LINE.slice(0, 12)}`));
+      expect(definitions).toEqual([SRC_ROOT_FOOTNOTE_LINE]);
+      expect(full.indexOf(SRC_ROOT_FOOTNOTE_LINE)).toBeLessThan(full.indexOf("## Guide\n"));
+    });
+
+    test(`the ${name} target keeps the inlined references, all after the definition`, () => {
+      const full = buildLlmsFull(target);
+      const corpus = guideCorpus(full);
+      const references = corpus.split(`[^${SRC_ROOT_FOOTNOTE_ID}]`).length - 1;
+      expect(references).toBeGreaterThan(1);
+      expect(full.indexOf(SRC_ROOT_FOOTNOTE_LINE)).toBeLessThan(
+        full.indexOf(`[^${SRC_ROOT_FOOTNOTE_ID}]`, full.indexOf("## Guide\n")),
+      );
+    });
+  }
 });

@@ -15,7 +15,7 @@ bunx @defold-typescript/cli watch
 
 `watch` holds one long-lived transpile session and re-reads and rewrites only the
 files you actually edit, skipping the re-glob and re-read of unchanged sources, so
-a rebuild after a save is near-instant. Each source under `src/` becomes exactly
+a rebuild after a save is near-instant. Each source under `src/`[^src-root] becomes exactly
 one output, the same mapping [`build`](./build.md) uses: a lifecycle-factory file
 becomes a Defold component (`src/main.ts` -> `src/main.ts.script`), a plain module
 becomes a Lua module (`src/util.ts` -> `src/util.lua`). Adding or removing a
@@ -114,3 +114,5 @@ If you use [mise](https://mise.jdx.dev), the scaffolded `mise.toml` exposes the
 loop as `mise run defold-typescript:watch`. Like [`build`](./build.md), it carries
 no version tag, so `bunx` resolves the `@defold-typescript/cli` that `init` pinned
 as a devDependency — the version locked alongside your `@defold-typescript/types`.
+
+[^src-root]: `src/` is this guide's shorthand and the scaffold's default, not a fixed location. Your source roots are the `include` globs in `tsconfig.json` — `["src/**/*.ts"]` out of the box, and any list of folders you set; `build` and `watch` compile exactly what those globs match, and ignore `exclude`.

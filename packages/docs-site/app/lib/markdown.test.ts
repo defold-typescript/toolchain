@@ -494,4 +494,13 @@ describe("renderMarkdown", () => {
       html.match(/<span style="--shiki-light:#[0-9a-fA-F]+;--shiki-dark:#[0-9a-fA-F]+"/g) ?? [];
     expect(tokenSpans.length).toBeGreaterThanOrEqual(3);
   });
+  test("renders a footnote reference and definition as a footnotes section", async () => {
+    const html = await renderMarkdown(
+      "Sources live in `src/`[^src-root].\n\n[^src-root]: The `include` globs in `tsconfig.json` decide.\n",
+    );
+    expect(html).toContain("footnote-ref");
+    expect(html).toContain("footnotes");
+    expect(html).toContain("<code>tsconfig.json</code>");
+    expect(html).not.toContain("[^src-root]");
+  });
 });

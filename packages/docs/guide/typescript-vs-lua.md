@@ -94,7 +94,7 @@ module's returned table.
 | `local foo = require("foo")` (whole table) | `import * as foo from "./foo"`                 |
 
 Use **relative** specifiers (`"./foo"`, `"../lib/util"`) for your own files under
-`src/`. Engine APIs are different: the namespaces `go`, `msg`, `vmath`, `sprite`,
+`src/`[^src-root]. Engine APIs are different: the namespaces `go`, `msg`, `vmath`, `sprite`,
 `gui`, `render`, and the rest ship from `@defold-typescript/types` as **ambient
 globals**, so you call `vmath.vector3(…)` or `msg.post(…)` with no import at all.
 You only `import` your own modules.
@@ -216,3 +216,5 @@ a runtime surprise.
   `v3.add(other)` instead.
 - [Getting started](./getting-started.md) — scaffold, write a script, build to
   Lua.
+
+[^src-root]: `src/` is this guide's shorthand and the scaffold's default, not a fixed location. Your source roots are the `include` globs in `tsconfig.json` — `["src/**/*.ts"]` out of the box, and any list of folders you set; `build` and `watch` compile exactly what those globs match, and ignore `exclude`.

@@ -14,6 +14,12 @@ Entries are curated by hand from the git history; the most recent releases are
 listed per-patch, older releases are rolled up per minor version. Breaking
 changes are called out first because the toolchain is pre-1.0.
 
+## v0.28.4
+
+### Improved
+
+- **The guide now says `src/` is a default, not a fixed location.** Every page that names `src/` as where your TypeScript lives carries a footnote pointing at the `include` globs in `tsconfig.json` — the scope [`build`](./build.md) and [`watch`](./watch.md) actually compile.
+
 ## v0.28.3
 
 ### Fixed
