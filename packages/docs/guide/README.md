@@ -62,7 +62,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - [set-target](./set-target.md) — write the `defold-target` pin: a fixed version, a release channel (`stable`/`beta`/`alpha`), or `--detected` to sync it to the detected Defold editor, with the typo caught at write time rather than at build time.
 - [watch](./watch.md) — the incremental rebuild loop: recompile Lua on every save beside the Defold editor, push each successful rebuild into the running game with `--hot-reload`, and re-resolve the extension surface on `game.project` changes.
 - [reload](./reload.md) — push one reload into the running game and read the editor console for a bounded window, so a script learns whether an error surfaced there instead of trusting the editor's "queued" response.
-- [build](./build.md) — one-shot transpile of every `src/` TypeScript file to Lua, plus the headless `defold` subcommand that drives `bob` to build and bundle the project.
+- [build](./build.md) — one-shot transpile of every `src/`[^src-root] TypeScript file to Lua, plus the headless `defold` subcommand that drives `bob` to build and bundle the project.
 - [run](./run.md) — launch the compiled project from `build/default` (or a native-extension `dmengine`) with no transpile and no Bob, forwarding engine args after `--` and propagating the engine exit code.
 - [bob](./bob.md) — drive Defold's headless `bob.jar` build tool: the `resolve`/`build`/`bundle`/`status`/`run` subcommands, the sha-keyed jar cache, Java resolution, and target selection.
 - [wall](./wall.md) — opt-in per-directory API walls that narrow a single-kind source directory to its script-kind surface, in interactive and flag forms.
@@ -101,3 +101,5 @@ The sections below mirror the top navigation; each lists the pages in its left-s
     * [`llms.txt`](https://defold-typescript.github.io/toolchain/llms.txt) is the map (start here)
     * [`llms-full.txt`](https://defold-typescript.github.io/toolchain/llms-full.txt) is the full corpus (grep it, never read it whole). The same pair ships into a consumer's `node_modules/@defold-typescript/docs/` on install.
     * [`init-agents`](./init-agents.md) wires them up — it writes the managed `AGENTS.md` / `CLAUDE.md` block that points your agent at both files and at the runbooks, so a fresh session orients from the project's own documentation instead of from training-data recall.
+
+[^src-root]: `src/` is this guide's shorthand and the scaffold's default, not a fixed location. Your source roots are the `include` globs in `tsconfig.json` — `["src/**/*.ts"]` out of the box, and any list of folders you set; `build` and `watch` compile exactly what those globs match, and ignore `exclude`.

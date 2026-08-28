@@ -42,7 +42,7 @@ The npm package [`@defold-typescript/cli`](https://www.npmjs.com/package/@defold
 
     > This scaffolds a new Defold project into the current folder — the same as creating one from the Defold start screen. Prefer to start in Defold? Create the project there first, then run the same `init .` inside it: `init` detects the existing `game.project` and just adds the TypeScript surface, leaving your scene untouched.
 
-    `init .` writes a sample `src/main.ts` and a boot `main/main.collection`. Nothing else is generated — you add the game's files as you go:
+    `init .` writes a sample `src/main.ts`[^src-root] and a boot `main/main.collection`. Nothing else is generated — you add the game's files as you go:
 
     ```text
     tetris/
@@ -1215,3 +1215,5 @@ Two reasonable places to draw the preview:
 - **In `board.ts` itself, above the grid.** Generate a second 4×4 set of `gui.new_box_node`s above `ORIGIN_Y` and repaint them the same way `redraw` repaints the grid. Cheaper to wire (no protocol change), but the board script owns two render surfaces.
 
 Either way, the change is small in `board.ts`. The lesson is the **peek-vs-consume split** in `pieces.ts`, which generalizes to "the bag is a stateful randomizer" — the same shape a real Tetris uses for hold-piece and queue-length previews.
+
+[^src-root]: `src/` is this guide's shorthand and the scaffold's default, not a fixed location. Your source roots are the `include` globs in `tsconfig.json` — `["src/**/*.ts"]` out of the box, and any list of folders you set; `build` and `watch` compile exactly what those globs match, and ignore `exclude`.

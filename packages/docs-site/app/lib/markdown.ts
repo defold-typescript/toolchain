@@ -8,6 +8,7 @@ import {
   transformerNotationHighlight,
 } from "@shikijs/transformers";
 import MarkdownIt from "markdown-it";
+import footnotePlugin from "markdown-it-footnote";
 import { type BundledLanguage, createHighlighter, type Highlighter } from "shiki";
 import { withBase } from "./base";
 import { slugify } from "./headings";
@@ -202,6 +203,11 @@ export async function renderMarkdown(
   const source = opts.firstHeading ? replaceFirstHeading(markdown, opts.firstHeading) : markdown;
   const highlighter = await getHighlighter();
   const md = MarkdownIt({ html: true, linkify: true });
+  // GitHub-flavored footnotes: the one syntax the rendered site, the raw
+  // `guide/*.md` on GitHub, and the plain-text corpus all understand. Footnote
+  // definitions are block-level and carry no headings, so the rulers below see
+  // nothing from them.
+  md.use(footnotePlugin);
   // Slugify heading ids so the right-side TOC can link to them deterministically.
   // Duplicates get a `-2`, `-3` suffix the same way GitHub does.
   const slugCounts = new Map<string, number>();
