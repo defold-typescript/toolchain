@@ -27,7 +27,7 @@ bunx @defold-typescript/cli setup-debug
 
 - Adds the `lldebugger` library dependency to `game.project` (at the next free `dependencies#N` index, skipped if already present).
 - Writes the ambient `src/lldebugger.debug.d.ts` (the `@noResolution declare module`) alongside the entry-script edit, regenerated whole and skipped when already current.
-- Injects the gated `lldebugger.start()` bootstrap into your entry script inside a managed `BEGIN`/`END` block. A re-run refreshes the block if its wording drifted and is otherwise a no-op; a legacy single-marker block from an older version is upgraded in place. The block is kept in exactly one script: any stale managed block in another `src/` script is stripped on each run.
+- Injects the gated `lldebugger.start()` bootstrap into your entry script inside a managed `BEGIN`/`END` block. A re-run refreshes the block if its wording drifted and is otherwise a no-op; a legacy single-marker block from an older version is upgraded in place. The block is kept in exactly one script: any stale managed block in another `src/`[^src-root] script is stripped on each run.
 
 It selects the entry script from the Defold boot path: starting at `game.project`'s `[bootstrap] main_collection`, it walks the referenced `.collection` files (including nested `collection:` references) and collects every `.ts.script` component, mapping each back to its source `.ts`. A single boot-path script is wired automatically; with several, pass `--script <path>` to choose one or run interactively (without `--json`) to pick from a prompt, and `--json` errors naming the candidates. When the boot path reaches no `.ts.script` (or there is no `[bootstrap]`), it falls back to scanning `src/**/*.ts` for a lifecycle-factory call (`defineScript`/`defineGuiScript`/`defineRenderScript`). The plain output names the script added to, any scripts the block was removed from, and the boot-path trace behind the choice; `--json` emits a machine-readable `{command, ok, written, actions, manualSteps, addedTo, removedFrom, bootPath}` result. The same command is available as the `defold-typescript:setup-debug` mise task.
 
@@ -104,3 +104,5 @@ The CLI build loop above is the primary path and needs no editor. If you prefer,
 
 - [Script lifecycle](script-lifecycle.md) — typing `self` and the lifecycle hooks you will step through.
 - [Code editor setup](editor-setup.md) — the rest of the scaffolded `.vscode/` config and the watch loop.
+
+[^src-root]: `src/` is this guide's shorthand and the scaffold's default, not a fixed location. Your source roots are the `include` globs in `tsconfig.json` — `["src/**/*.ts"]` out of the box, and any list of folders you set; `build` and `watch` compile exactly what those globs match, and ignore `exclude`.

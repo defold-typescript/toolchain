@@ -8,6 +8,7 @@ import { parseFrontmatter } from "../app/lib/frontmatter";
 import type { GuidePage } from "../app/lib/guide";
 import { listGuidePages } from "../app/lib/guide-loader";
 import { buildNav, humanize, type NavLink } from "../app/lib/nav";
+import { SRC_ROOT_FOOTNOTE_LINE, stripSrcRootDefinitions } from "../app/lib/src-root-note";
 
 // Anchored on the script's own location, never `process.cwd()`: the regeneration
 // test imports these generators and runs from the repo root, so a cwd-relative
@@ -269,13 +270,18 @@ export function buildLlmsFull(target: LlmsTarget = SITE_TARGET): string {
   const lines: string[] = [
     ...target.header(pages),
     ...agentContract(combined.versions),
+    // The note is authored into each guide page so the raw markdown stays
+    // self-contained; here the copies are stripped and it is stated once, so the
+    // corpus carries one definition every inlined reference resolves to.
+    SRC_ROOT_FOOTNOTE_LINE,
+    "",
     "## Guide",
     "",
   ];
   for (const page of pages) {
     if (!page.includeInLlmsFull) continue;
     const body = parseFrontmatter(readFileSync(join(GUIDE_DIR, page.file), "utf8")).body.trimEnd();
-    lines.push(stripGuideChrome(body), "");
+    lines.push(stripSrcRootDefinitions(stripGuideChrome(body)), "");
   }
   lines.push("## API", "");
   const defaultSurface = loadApiSurface(TYPES_DIR);

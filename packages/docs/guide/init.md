@@ -35,7 +35,7 @@ rule applies to [`init-agents`](./init-agents.md).
 
 - **New project.** In an empty or non-Defold folder it synthesizes a full Defold
   project (`game.project`, `main/main.collection`, `input/game.input_binding`)
-  alongside the TypeScript surface (`src/main.ts`, `tsconfig.json`,
+  alongside the TypeScript surface (`src/main.ts`[^src-root], `tsconfig.json`,
   `package.json`, `.gitignore`, `.gitattributes`, `.defignore`, `biome.json`,
   `mise.toml`, `.vscode/`) and the
   agent contract (`AGENTS.md`, `CLAUDE.md`).
@@ -116,3 +116,5 @@ fast and lists the valid templates:
 ```
 defold-typescript init: unknown template "foo". Valid templates: default, minimal.
 ```
+
+[^src-root]: `src/` is this guide's shorthand and the scaffold's default, not a fixed location. Your source roots are the `include` globs in `tsconfig.json` — `["src/**/*.ts"]` out of the box, and any list of folders you set; `build` and `watch` compile exactly what those globs match, and ignore `exclude`.

@@ -66,7 +66,7 @@ already has a `game.project`).
    `bunx @defold-typescript/cli@latest init .` (the `.` targets the current
    folder; `init` requires an explicit destination). With a `game.project` present,
    `init` runs in *add-TypeScript mode*: it writes only the TypeScript surface
-   (a `tsconfig.json`, dev-deps merged into `package.json`, and a `src/main.ts`
+   (a `tsconfig.json`, dev-deps merged into `package.json`, and a `src/main.ts`[^src-root]
    only if one does not already exist) and refuses to overwrite a conflicting
    TS config unless you pass `--force`. Your existing `src/*.ts` and
    `game.project` are left alone.
@@ -141,3 +141,5 @@ naming from the scaffold `.gitignore`; the per-kind type entrypoints from
 `tsconfig.json` (its `luaTarget`, `luaLibImport`, `outDir`, plugin list) — the
 upstream template's config file could not be read at authoring time, so this
 guide does not assert those values; consult your own template's `tsconfig.json`.
+
+[^src-root]: `src/` is this guide's shorthand and the scaffold's default, not a fixed location. Your source roots are the `include` globs in `tsconfig.json` — `["src/**/*.ts"]` out of the box, and any list of folders you set; `build` and `watch` compile exactly what those globs match, and ignore `exclude`.
