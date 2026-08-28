@@ -73,7 +73,7 @@ walled, because no single narrowing applies. `build` and `watch` never touch
 walls — they are entirely yours to manage.
 
 **Inheritance.** A wall narrows every directory beneath it, so declare it at the
-boundary — `src/gui`, not `src/gui/hud` and `src/gui/menu` separately. A
+boundary — `src/gui`[^src-root], not `src/gui/hud` and `src/gui/menu` separately. A
 directory whose sources all live in subdirectories is eligible on their behalf,
 and a `src/gui/settings/` added later is narrowed with no second `wall` run.
 
@@ -158,3 +158,5 @@ subpaths. `build` enforces this: a walled source that imports a lifecycle factor
 from the main entry fails the build before transpile, naming the file and the kind
 subpath it should import from instead. (`watch` does not enforce it yet — its
 session path is a separate slice.)
+
+[^src-root]: `src/` is this guide's shorthand and the scaffold's default, not a fixed location. Your source roots are the `include` globs in `tsconfig.json` — `["src/**/*.ts"]` out of the box, and any list of folders you set; `build` and `watch` compile exactly what those globs match, and ignore `exclude`.

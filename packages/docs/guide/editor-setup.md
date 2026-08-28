@@ -3,7 +3,7 @@ toc-title: Editor setup
 ---
 # Code editor setup
 
-Open the Defold project folder in VSCode or any editor with TypeScript support. Use the folder that contains `game.project`, `src/`, and `tsconfig.json`.
+Open the Defold project folder in VSCode or any editor with TypeScript support. Use the folder that contains `game.project`, `src/`[^src-root], and `tsconfig.json`.
 
 ## What `tsconfig.json` provides
 
@@ -92,3 +92,5 @@ It rebuilds Lua when files under `src/` change; run the game from the Defold edi
 - **`defold-typescript:upgrade`** — `bunx @defold-typescript/cli@latest upgrade`. The deliberate upgrade path; see [`upgrade`](./upgrading.md).
 
 > [!NOTE] As you might noticed, the majority of commands that `mise.toml` scaffolds carry no `@latest` version tag after `/cli`. This ensures that inside an installed project `bunx` resolves the `@defold-typescript/cli` as a pinned devDependency. The commands this way run the version locked alongside the pinned `@defold-typescript/types`. The `upgrade` is the only task that intentionally pulls `@latest`. As a result, the `upgrade` verb re-pins both managed deps to the new CLI's version and reinstalls.
+
+[^src-root]: `src/` is this guide's shorthand and the scaffold's default, not a fixed location. Your source roots are the `include` globs in `tsconfig.json` — `["src/**/*.ts"]` out of the box, and any list of folders you set; `build` and `watch` compile exactly what those globs match, and ignore `exclude`.

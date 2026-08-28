@@ -3,7 +3,7 @@ toc-title: build
 ---
 # Build
 
-`build` transpiles every TypeScript file under `src/` to Lua and writes the result
+`build` transpiles every TypeScript file under `src/`[^src-root] to Lua and writes the result
 into the Defold project tree — a one-shot compile. For the incremental loop you
 run while editing, see [`watch`](./watch.md).
 
@@ -143,3 +143,5 @@ capturable); a single envelope prints on exit:
 ```json
 { "command": "run", "ok": true, "enginePath": "build/arm64-macos/dmengine", "projectc": "build/default/game.projectc", "exitCode": 0 }
 ```
+
+[^src-root]: `src/` is this guide's shorthand and the scaffold's default, not a fixed location. Your source roots are the `include` globs in `tsconfig.json` — `["src/**/*.ts"]` out of the box, and any list of folders you set; `build` and `watch` compile exactly what those globs match, and ignore `exclude`.

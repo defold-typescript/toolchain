@@ -113,7 +113,7 @@ If the scaffolded `@defold-typescript/types` pin still looks older than the CLI 
 
 ## Write a script
 
-By default, only `.ts` files under the project's `src/` folder are compiled. That scope is the `include` array in `tsconfig.json` (both `build` and `watch` honor it) — widen it to manage more folders:
+By default, only `.ts` files under the project's `src/`[^src-root] folder are compiled. That scope is the `include` array in `tsconfig.json` (both `build` and `watch` honor it) — widen it to manage more folders:
 
 ```json
 {
@@ -161,3 +161,5 @@ While you edit, run [`watch`](./watch.md) instead: it rebuilds incrementally on 
 
 Run `bunx @defold-typescript/cli --help` for the command list and global flags, or `bunx @defold-typescript/cli <command> --help` for a single command's usage and flags; add `--json` for machine-readable help. The bare `defold-typescript …` form works after a global install.
 
+
+[^src-root]: `src/` is this guide's shorthand and the scaffold's default, not a fixed location. Your source roots are the `include` globs in `tsconfig.json` — `["src/**/*.ts"]` out of the box, and any list of folders you set; `build` and `watch` compile exactly what those globs match, and ignore `exclude`.

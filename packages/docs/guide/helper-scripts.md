@@ -24,7 +24,7 @@ gives you for free.
 ## Put them in `/scripts`, not `src/`
 
 Keep helper scripts in a `/scripts` folder at the project root. **Do not** put
-them under `src/` — the Defold build compiles source by `tsconfig.include`
+them under `src/`[^src-root] — the Defold build compiles source by `tsconfig.include`
 (default `src/**/*.ts`) and **ignores `exclude`**, so any `.ts` file under
 `src/**` is transpiled to Lua and shipped into your game, whether you meant it
 to be or not.
@@ -79,3 +79,5 @@ console.log(`${files.length} level files`);
 
 Run it with `bun scripts/count-levels.ts`. It imports a `node:*` builtin, is
 typed by `scripts/tsconfig.json`, and never touches the Lua build.
+
+[^src-root]: `src/` is this guide's shorthand and the scaffold's default, not a fixed location. Your source roots are the `include` globs in `tsconfig.json` — `["src/**/*.ts"]` out of the box, and any list of folders you set; `build` and `watch` compile exactly what those globs match, and ignore `exclude`.

@@ -633,6 +633,44 @@
     --admonition-color: #f85149;
   }
 
+  /* GitHub-flavored footnotes: a muted rule separates the notes from the page
+     body, and the note text sits a step smaller than the prose it annotates. */
+  .prose .footnotes-sep {
+    margin: 2.4em 0 1.2em;
+    border: 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .prose .footnotes {
+    font-size: 0.9em;
+    color: var(--color-text-muted);
+  }
+
+  .prose .footnotes ol {
+    margin: 0;
+  }
+
+  .prose .footnote-ref a,
+  .prose .footnote-backref {
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  /* Both ends of a footnote jump are scroll targets under the sticky topbar:
+     the `[1]` marker lands on the note, the back-arrow lands on the marker.
+     Neither is a heading, so each needs the same offset the headings carry or
+     the topbar covers whatever was jumped to. `--topbar-height` is published
+     from the real header, so this tracks the taller mobile bar too. */
+  .prose .footnote-ref a,
+  .prose .footnotes li {
+    scroll-margin-top: calc(var(--topbar-height, 3.5rem) + 1.5rem);
+  }
+
+  .prose .footnote-ref a:hover,
+  .prose .footnote-backref:hover {
+    text-decoration: underline;
+  }
+
   .prose details.more {
     margin: 1.2em 0;
     padding: 0.6em 1em;

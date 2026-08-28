@@ -150,7 +150,7 @@ is the engine.
 ## Helper and codegen scripts (Bun, `/scripts`)
 
 When a task needs a build tool, a codegen pass, or a one-off maintenance script,
-do **not** write it into `src/` and do **not** run it with `node`. Two rules
+do **not** write it into `src/`[^src-root] and do **not** run it with `node`. Two rules
 keep such scripts off the game's Lua build path:
 
 - **Location:** put the script in a project-root `/scripts` folder. The Defold
@@ -1281,3 +1281,5 @@ otherwise fire this every few weeks.
 
 The issue title is keyed on the upstream version alone, so reruns before the bump
 lands find the existing issue instead of filing duplicates.
+
+[^src-root]: `src/` is this guide's shorthand and the scaffold's default, not a fixed location. Your source roots are the `include` globs in `tsconfig.json` — `["src/**/*.ts"]` out of the box, and any list of folders you set; `build` and `watch` compile exactly what those globs match, and ignore `exclude`.
