@@ -100,6 +100,30 @@ describe("stripSrcRootDefinitions", () => {
 
   test("collapses the blank run the removal leaves behind", () => {
     const body = `Prose${REFERENCE}.\n\n${SRC_ROOT_FOOTNOTE_LINE}\n\nAfter.\n`;
-    expect(stripSrcRootDefinitions(body)).not.toMatch(/\n{3,}/);
+    expect(stripSrcRootDefinitions(body)).toBe(`Prose${REFERENCE}.\n\nAfter.\n`);
+  });
+
+  test("preserves unrelated blank runs", () => {
+    const body = [
+      `Intro${REFERENCE}.`,
+      "",
+      "```ts",
+      "line one",
+      "",
+      "",
+      "line two",
+      "```",
+      "",
+      "",
+      "",
+      "Distant prose, far from any definition.",
+      "",
+      SRC_ROOT_FOOTNOTE_LINE,
+      "",
+    ].join("\n");
+    // Only the definition and the one blank line above it go; every other blank
+    // run is authored content the strip must not touch.
+    const expected = body.replace(`\n\n${SRC_ROOT_FOOTNOTE_LINE}`, "");
+    expect(stripSrcRootDefinitions(body)).toBe(expected);
   });
 });
