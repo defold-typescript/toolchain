@@ -12,7 +12,7 @@ import footnotePlugin from "markdown-it-footnote";
 import { type BundledLanguage, createHighlighter, type Highlighter } from "shiki";
 import { withBase } from "./base";
 import { slugify } from "./headings";
-import { splitSignatureBrandLinks } from "./signature-brand-links";
+import { type SignatureSymbolTarget, splitSignatureBrandLinks } from "./signature-brand-links";
 
 const nodeRequire = createRequire(import.meta.url);
 
@@ -197,7 +197,7 @@ export async function renderMarkdown(
   opts: {
     firstHeading?: string;
     highlightSignatureHeadings?: boolean;
-    signatureSymbolLinks?: ReadonlyMap<string, string>;
+    signatureSymbolLinks?: ReadonlyMap<string, SignatureSymbolTarget>;
   } = {},
 ): Promise<string> {
   const source = opts.firstHeading ? replaceFirstHeading(markdown, opts.firstHeading) : markdown;
@@ -209,8 +209,16 @@ export async function renderMarkdown(
   // nothing from them.
   md.use(footnotePlugin);
   // Slugify heading ids so the right-side TOC can link to them deterministically.
-  // Duplicates get a `-2`, `-3` suffix the same way GitHub does.
+  // Duplicates get a `-1`, `-2` suffix — the nth repeat of a slug is `<base>-<n>`,
+  // counting the first occurrence as 0.
   const slugCounts = new Map<string, number>();
+  // Heading text -> the id actually minted for it, last occurrence winning. This
+  // is how a `{ route, heading }` target below resolves: the last heading
+  // carrying a shape's exact text is always that shape's own heading (the `type`
+  // section renders last, nothing follows it, and a shape's members are headed
+  // `Shape.member`), so last-wins picks the shape over an identically-texted
+  // section heading. First-wins would resolve to the section heading instead.
+  const mintedIds = new Map<string, string>();
   md.core.ruler.push("slugify-headings", (state) => {
     for (let i = 0; i < state.tokens.length; i++) {
       const token = state.tokens[i];
@@ -238,6 +246,7 @@ export async function renderMarkdown(
       const n = slugCounts.get(base) ?? 0;
       slugCounts.set(base, n + 1);
       const id = n === 0 ? base : `${base}-${n}`;
+      mintedIds.set(text, id);
       token.attrSet("id", id);
       const open = new state.Token("html_inline", "", 0);
       open.content = headingLinkOpen(id, text);
@@ -503,7 +512,20 @@ export async function renderMarkdown(
   // anchors exist and the transform can split them into sibling links (never nest
   // an anchor inside the signature code).
   if (opts.signatureSymbolLinks) {
-    html = splitSignatureBrandLinks(html, opts.signatureSymbolLinks);
+    // Resolve the structured targets against the ids the render just minted,
+    // preserving insertion order so a later entry still displaces an earlier one
+    // of the same name. A target naming a heading this page did not render is
+    // dropped, leaving that token inert rather than linking it into nothing.
+    const resolved = new Map<string, string>();
+    for (const [name, target] of opts.signatureSymbolLinks) {
+      if (typeof target === "string") {
+        resolved.set(name, target);
+        continue;
+      }
+      const id = mintedIds.get(target.heading);
+      if (id) resolved.set(name, `${target.route}#${id}`);
+    }
+    html = splitSignatureBrandLinks(html, resolved);
   }
   return html;
 }

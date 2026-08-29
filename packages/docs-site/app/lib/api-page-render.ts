@@ -25,7 +25,7 @@ import {
 import { type ApiVersion, versionsWithDiskFixtures } from "./api-surface-loader";
 import type { BadgeCountTable } from "./api-surface-pref";
 import { type NamespaceBadgeCounts, reachableBadgeCounts } from "./combined-surface";
-import { slugify } from "./headings";
+import type { SignatureSymbolTarget } from "./signature-brand-links";
 import { buildSymbolIndex } from "./symbol-index";
 import { linkifySymbolMentions } from "./symbol-linkify";
 import { resolveVersionWindow } from "./version-window";
@@ -604,15 +604,20 @@ export function apiLinkify(pages: ApiPage[]): (text: string) => string {
 // by bare name to that page's own route — a surface-global bare-name table would
 // mislink the nine shape names declared on more than one page. The fallback
 // `Types` group label names no shape, and a shape called `Opaque` never displaces
-// the global entry.
-export function apiSignatureSymbolLinks(pages: ApiPage[], page?: ApiPage): Map<string, string> {
-  const links = new Map<string, string>();
+// the global entry. A shape's anchor is deferred to `renderMarkdown` as
+// `{ route, heading }` rather than fixed here: the heading id is only known once
+// the render has de-duplicated it against every earlier heading on the page.
+export function apiSignatureSymbolLinks(
+  pages: ApiPage[],
+  page?: ApiPage,
+): Map<string, SignatureSymbolTarget> {
+  const links = new Map<string, SignatureSymbolTarget>();
   if (page) {
     for (const group of groupTypeSymbols(
       apiModuleSymbols(page, page.translations).filter((s) => s.kind === "type"),
     )) {
       if (group.label === "Types") continue;
-      links.set(group.label, `${page.route}#${slugify(group.label)}`);
+      links.set(group.label, { route: page.route, heading: group.label });
     }
   }
   const route = buildSymbolIndex(pages).Opaque?.route;

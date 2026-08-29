@@ -8,6 +8,7 @@ import { searchIndexOutputs } from "../../scripts/build-search-index";
 import { symbolIndexOutputs } from "../../scripts/build-symbol-index";
 import { groupApiIndexPages } from "../components/api-index-sections";
 import apiNamespaceRoute, { createApiNamespaceRoute } from "../routes/api/[namespace]";
+import { createVersionedApiNamespaceRoute } from "../routes/api/[version]/[namespace]";
 import combinedNamespaceRoute from "../routes/api/combined/[namespace]";
 import {
   AXIS,
@@ -16,6 +17,7 @@ import {
   makeWindowedTypesDir,
   NEWEST,
   OLDEST,
+  TYPEDEF_SHAPE_NAME,
   versionId,
 } from "./__fixtures__/windowed-surface";
 import {
@@ -36,6 +38,7 @@ import {
   readStoredRange,
   resolveApiSurfaceRedirect,
 } from "./api-surface-pref";
+import { allPageHeadings } from "./headings";
 import { searchIndexFileForRoute } from "./search-index";
 import { symbolIndexFileForRoute } from "./symbol-index";
 
@@ -793,6 +796,82 @@ describe("api routing migration — the rendered version index is the guarded su
       const libraries = independent().filter((page) => page.category === "library");
       expect(libraries.length).toBeGreaterThan(0);
       for (const page of libraries) expect(hrefs.has(page.route)).toBe(false);
+    });
+  });
+});
+
+// Both namespace routes build their signature deep-link map from the page they
+// are about to render, and each does it on one line no test executed: dropping
+// the `page` argument leaves every helper test green while the rendered page
+// loses its shape links. So these mount the real handlers and read the links
+// back off the response, with the expected anchor taken from that same response.
+describe("api routing migration — the rendered namespace page carries its shape links", () => {
+  const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
+  const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
+
+  // `name -> href` for every signature deep-link in a rendered page.
+  const symbolLinks = (html: string): Map<string, string> =>
+    new Map(
+      [
+        ...html.matchAll(/<a class="signature-symbol-link" href="([^"]*)">(?:<[^>]*>)*([^<]*)/g),
+      ].map((m) => [m[2] as string, m[1] as string]),
+    );
+
+  const headingId = (html: string, text: string): string | undefined =>
+    allPageHeadings(html)
+      .filter((h) => h.text === text)
+      .pop()?.id;
+
+  test("the canonical route links a shape token to that shape's heading on its own page", async () => {
+    const app = new Hono();
+    app.get(
+      "/api/:namespace",
+      ...createApiNamespaceRoute({
+        typesDir: REAL_TYPES_DIR,
+        libraryTypesDir: REAL_LIBRARY_TYPES_DIR,
+      }),
+    );
+    const res = await app.request("/api/monarch.monarch");
+    expect(res.status).toBe(200);
+    const html = await res.text();
+
+    const id = headingId(html, "ShowOptions");
+    expect(id).toBeDefined();
+    // Dropping the route's `page` argument leaves `Opaque` alone in the map, so
+    // `ShowOptions` renders as inert text and this membership check reds.
+    expect(symbolLinks(html).get("ShowOptions")).toBe(`/api/monarch.monarch#${id}`);
+  });
+
+  describe("the versioned route, over a fixture surface that carries a shape", () => {
+    let dir = "";
+    beforeAll(() => {
+      dir = makeWindowedTypesDir({ typedefShape: true });
+    });
+    afterAll(() => {
+      if (dir) rmSync(dir, { recursive: true, force: true });
+    });
+
+    test("links the shape token to the shape heading, not the colliding section heading", async () => {
+      const app = new Hono();
+      app.get(
+        "/api/:version/:namespace",
+        ...createVersionedApiNamespaceRoute({ typesDir: dir, libraryTypesDir: dir }),
+      );
+      const res = await app.request(`/api/${versionId(NEWEST)}/demo`);
+      expect(res.status).toBe(200);
+      const html = await res.text();
+
+      // The fixture shape is named for the module-function section heading, so
+      // the page mints two ids for the same text and only the last is the shape's.
+      const collided = allPageHeadings(html).filter(
+        (h) => h.level === 2 && h.text === TYPEDEF_SHAPE_NAME,
+      );
+      expect(collided.length).toBe(2);
+      const id = (collided[collided.length - 1] as (typeof collided)[number]).id;
+      expect(id).not.toBe((collided[0] as (typeof collided)[number]).id);
+
+      const href = symbolLinks(html).get(TYPEDEF_SHAPE_NAME);
+      expect(href).toBe(`/api/${versionId(NEWEST)}/demo#${id}`);
     });
   });
 });

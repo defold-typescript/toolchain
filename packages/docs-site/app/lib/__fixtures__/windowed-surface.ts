@@ -45,6 +45,15 @@ export const AXIS = [NEWEST, MIDDLE, OLDEST];
 export const HISTORICAL_ONLY_NAMESPACE = "gone";
 export const HISTORICAL_ONLY_SYMBOL = "gone.thing";
 
+// `typedefShape` gives `demo` a member-bearing typedef named for the module-function
+// section heading, plus `demo.configure(opts: Functions)` whose recorded declaration
+// names it too. The shape's own `## Functions` heading therefore collides by slug
+// with the section's, which is the only way to observe that a signature deep-link
+// resolves against the id the render minted rather than the bare label. Off by
+// default, so every existing caller sees an unchanged registry.
+export const TYPEDEF_SHAPE_NAME = "Functions";
+export const TYPEDEF_SHAPE_CONSUMER = "demo.configure";
+
 export const versionId = (bare: string): string => `defold-${bare}`;
 
 const param = (name: string, types: string[]) => ({
@@ -70,6 +79,22 @@ const doc = (namespace: string, elements: unknown[]): string =>
 // whose *declaration* moves, which is what a capped window has to resolve.
 const evolving = fn("demo.evolving", [param("a", ["string"])]);
 
+// The shape consumer: its one parameter is typed by the typedef below, so the
+// rendered signature carries a `Functions` token for the link map to claim.
+const shapeConsumer = fn(TYPEDEF_SHAPE_CONSUMER, [param("opts", [TYPEDEF_SHAPE_NAME])]);
+
+// The member-bearing typedef itself. `apiModuleSymbols` projects each member as a
+// `Functions.<member>` `type` symbol, which `groupTypeSymbols` gathers back under
+// one `Functions` heading.
+const shapeTypedef = {
+  type: "TYPEDEF",
+  name: TYPEDEF_SHAPE_NAME,
+  functions: [
+    { name: "run", brief: "Run it.", description: "Run it.", parameters: [], returnvalues: [] },
+  ],
+  properties: [{ name: "count", types: ["number"] }],
+};
+
 const demoFunctions: Record<string, unknown[]> = {
   [NEWEST]: [fn("demo.always"), fn("demo.added_in_two"), fn("demo.newest_only"), evolving],
   [MIDDLE]: [fn("demo.always"), fn("demo.added_in_two"), evolving],
@@ -90,12 +115,24 @@ const evolvingDeclaration: Record<string, string> = {
 // same in every version that carries it.
 const flatDeclaration = (name: string): string => `function ${name}(): void;`;
 
+// The authoritative declaration a rendered signature is built from. The shape
+// consumer needs its parameter type spelled out here too: the render prefers the
+// recorded declaration over the ref-doc-derived one, so a flat `(): void` here
+// would erase the very token the link map is supposed to claim.
+function declarationFor(name: string, version: string): string {
+  if (name === "demo.evolving") return evolvingDeclaration[version] as string;
+  if (name === TYPEDEF_SHAPE_CONSUMER) {
+    return `function ${name}(opts: ${TYPEDEF_SHAPE_NAME}): void;`;
+  }
+  return flatDeclaration(name);
+}
+
 // Keyed through the production identity encoding rather than a transcribed
 // literal, so the artifact cannot drift from what `buildCombinedSurface` looks up.
 function signaturesFor(namespace: string, module: ApiModule, version: string): [string, string][] {
   return module.functions.map((f) => [
     symbolIdentityKey(funcIdentity(namespace, f)),
-    f.name === "demo.evolving" ? (evolvingDeclaration[version] as string) : flatDeclaration(f.name),
+    declarationFor(f.name, version),
   ]);
 }
 
@@ -106,6 +143,8 @@ function signaturesFor(namespace: string, module: ApiModule, version: string): [
 export interface WindowedTypesDirOptions {
   /** Include the curated-availability namespace described above. */
   deprecationWidened?: boolean;
+  /** Give `demo` the slug-colliding typedef shape described above. */
+  typedefShape?: boolean;
 }
 
 export function makeWindowedTypesDir(options: WindowedTypesDirOptions = {}): string {
@@ -118,7 +157,9 @@ export function makeWindowedTypesDir(options: WindowedTypesDirOptions = {}): str
     mkdirSync(join(dir, fixturesDir), { recursive: true });
     const entries: [string, string][] = [];
 
-    const demoRaw = doc("demo", demoFunctions[bare] as unknown[]);
+    const demoElements = [...(demoFunctions[bare] as unknown[])];
+    if (options.typedefShape) demoElements.push(shapeConsumer, shapeTypedef);
+    const demoRaw = doc("demo", demoElements);
     writeFileSync(join(dir, fixturesDir, "demo_doc.json"), demoRaw);
     entries.push(...signaturesFor("demo", parseDefoldApiDoc(JSON.parse(demoRaw)), bare));
 

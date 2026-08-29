@@ -17,6 +17,15 @@
 
 import { withBase } from "./base";
 
+// What a signature token resolves to. A plain route is a whole-page target (the
+// global-type brands); a page shape is `{ route, heading }` because its anchor is
+// not knowable until the render mints the heading id — a shape whose name
+// slugifies to the same string as an earlier heading gets a de-duplication
+// suffix, so a target built from the label alone would point at that earlier
+// heading. `renderMarkdown` resolves the union down to plain hrefs, so
+// `splitSignatureBrandLinks` below never sees it.
+export type SignatureSymbolTarget = string | { route: string; heading: string };
+
 const CODE_OPEN = '<code class="api-signature shiki">';
 const CODE_CLOSE = "</code>";
 
