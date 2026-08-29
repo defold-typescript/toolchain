@@ -268,6 +268,8 @@ export function combinedParams(): { namespace: string }[] {
 
 // Namespace -> GitHub `<owner>/<repo>` origin, the lineage the Libraries tree,
 // the index cards, and each library page heading all group and title themselves by.
-export function libraryOrigins(): Map<string, LibraryOrigin> {
-  return libraryOriginByNamespace(LIBRARY_TYPES_DIR);
+export function libraryOrigins(
+  libraryTypesDir: string = LIBRARY_TYPES_DIR,
+): Map<string, LibraryOrigin> {
+  return libraryOriginByNamespace(libraryTypesDir);
 }

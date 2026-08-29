@@ -53,8 +53,8 @@ export function LibraryHeading({
 // redirect, a known-version exact index (default included), and — otherwise — a
 // canonical namespace page (a Combined engine page, or a version-independent one).
 // The 3-segment `/api/:version/:namespace` route lives in its own file.
-// What the version-index branch needs to read a surface that is not the docs-site
-// cwd's: the two dirs its loaders take. Deliberately *not* a page-source callback
+// What the version-index and canonical-namespace branches need to read a surface
+// that is not the docs-site cwd's: the two dirs their loaders take. Deliberately *not* a page-source callback
 // — injecting `pagesForVersion` would let a test supply `versionIndexPages` while
 // production supplied anything, which is this guard's own bug one layer down.
 export interface ApiSurfaceDirs {
@@ -101,10 +101,10 @@ export function createApiNamespaceRoute(dirs: ApiSurfaceDirs = {}) {
 
       // Otherwise a canonical namespace: dispatch on its owning surface. An unknown
       // namespace 404s.
-      const owner = apiNamespaceOwner(param);
+      const owner = apiNamespaceOwner(param, dirs.typesDir, dirs.libraryTypesDir);
       if (!owner) return c.notFound();
 
-      const pages = canonicalApiPages();
+      const pages = canonicalApiPages(dirs.typesDir, dirs.libraryTypesDir);
       const page = pages.find((entry) => entry.namespace === param);
       if (!page) return c.notFound();
 
@@ -120,7 +120,10 @@ export function createApiNamespaceRoute(dirs: ApiSurfaceDirs = {}) {
       // Library pages render their heading as the styled `owner/repo/namespace`
       // path (matching the /libraries index), so the markdown body omits its H1.
       if (page.category === "library") {
-        const { owner: repoOwner, repo } = libraryLineage(page.namespace, libraryOrigins());
+        const { owner: repoOwner, repo } = libraryLineage(
+          page.namespace,
+          libraryOrigins(dirs.libraryTypesDir),
+        );
         const body = await renderMarkdown(
           apiPageMarkdown(page, linkify, { omitHeading: true, resolveReplacement }),
           { highlightSignatureHeadings: true, signatureSymbolLinks },
