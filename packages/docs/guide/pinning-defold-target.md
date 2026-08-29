@@ -337,10 +337,13 @@ How the surface is produced depends on the resolved version:
   are offline. The generated faux package carries a `core-types.d.ts` that
   re-exports the installed `@defold-typescript/types/core-types`, so its branded
   engine types stay unified with the ones your code imports rather than minting a
-  nominally distinct copy. It also carries `engine-globals.d.ts` and side-effect imports it from
-  the surface `index.d.ts`, so the engine types (`Vector3`, `Hash`, `Url`, …)
-  are ambient globals — name them with no import, matching the namespace
-  ergonomics (`vmath`, `go`, …).
+  nominally distinct copy. It also carries the same hand-authored augmentations a
+  current-version surface gets — `engine-globals.d.ts`, the [`vmath`](/api/vmath),
+  [`go`](/api/go) and [`msg`](/api/msg) overloads, and the message and
+  window-event guards — each side-effect imported from the surface `index.d.ts`.
+  So the engine types (`Vector3`, `Hash`, `Url`, …) are ambient globals — name
+  them with no import, matching the namespace ergonomics (`vmath`, `go`, …) —
+  and a pinned project compiles the same call sites an unpinned one does.
 
 The `.defold-types/` directory is generated output, so build adds it to the
 project `.gitignore`. The materialized directory is reported in `--json` output
