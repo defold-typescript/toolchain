@@ -249,6 +249,72 @@ describe("a materialized pin binds the package specifier", () => {
     }
   });
 
+  test("a pinned surface still narrows builtin-message payloads", () => {
+    const fixture = scaffold({
+      "proof.ts": [
+        IDIOMATIC_IMPORT,
+        "void defineScript;",
+        'msg.post("#", "set_parent", { totally_not_a_field: 1 });',
+        "",
+      ].join("\n"),
+    });
+    try {
+      // `msg.post` has two overloads and TypeScript reports only the last
+      // one's error, which fails on `message_id` — so the offending payload
+      // field never reaches the output by this route. The paired accepting row
+      // below is what separates this from blanket breakage; the row after it
+      // names the field through the interface the carry restores.
+      expect(typecheck(fixture).exitCode).not.toBe(0);
+    } finally {
+      rmSync(fixture.cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("and still accepts a correct builtin-message payload", () => {
+    // Without this row the assertion above also passes when the whole surface
+    // fails to compile for an unrelated reason.
+    const fixture = scaffold({
+      "proof.ts": [
+        IDIOMATIC_IMPORT,
+        "void defineScript;",
+        'msg.post("#", "set_parent", { keep_world_transform: 1 });',
+        "",
+      ].join("\n"),
+    });
+    try {
+      const { exitCode, output } = typecheck(fixture);
+      if (exitCode !== 0) {
+        throw new Error(`a correct builtin-message payload must type-check:\n${output}`);
+      }
+      expect(exitCode).toBe(0);
+    } finally {
+      rmSync(fixture.cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("the carried builtin-message interface names the offending field", () => {
+    // The `msg.post` rows above prove the pin narrows; this proves what it
+    // narrows *against* is the real declared payload shape rather than an
+    // `any` that happens to reject. Before the carry `BuiltinMessages` is not
+    // declared at all, so the annotation errors without ever naming the field.
+    const fixture = scaffold({
+      "proof.ts": [
+        IDIOMATIC_IMPORT,
+        "void defineScript;",
+        'const payload: BuiltinMessages["set_parent"] = { totally_not_a_field: 1 };',
+        "void payload;",
+        "",
+      ].join("\n"),
+    });
+    try {
+      const { exitCode, output } = typecheck(fixture);
+      expect(exitCode).not.toBe(0);
+      expect(output).toContain("totally_not_a_field");
+    } finally {
+      rmSync(fixture.cwd, { recursive: true, force: true });
+    }
+  });
+
   test("the written tsconfig is what enforces the pin, not the fixture", () => {
     const fixture = scaffold({ "proof.ts": ["export {};", ""].join("\n") });
     try {

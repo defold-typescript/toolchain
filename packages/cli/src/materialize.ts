@@ -157,6 +157,25 @@ function relativeSpecifier(value: string): string {
 // relative `./core-types` import resolves to this re-export.
 const CORE_TYPES_REEXPORT = 'export * from "@defold-typescript/types/core-types";\n';
 
+// Generated modules that a versioned snapshot does not carry but the copied
+// `src/` augmentations reference — `msg-overloads`/`message-guard` name
+// `BuiltinMessages`, so without this the pinned surface declares neither and
+// the payload type collapses to `any` under the consumer's `skipLibCheck`.
+//
+// Written out rather than derived from `generated/kinds/script.d.ts`, which is
+// the single source of truth for the `src/` augmentations above: that index
+// describes the *current* package while this surface is pinned, so deriving
+// from it would copy a namespace added after the pinned version back into the
+// pin and defeat it. This set is short and version-independent by
+// construction, which is the property being relied on.
+const GENERATED_SIBLING_CARRY = ["builtin-messages"] as const;
+
+// The brand must resolve inside the surface: a copied declaration importing
+// `../src/core-types` would reach outside it, or dangle.
+function rewriteCoreTypesImport(declaration: string): string {
+  return declaration.replace(/from "[^"]*\/src\/core-types"/g, 'from "./core-types"');
+}
+
 export interface MaterializeApiSurfaceOptions {
   readonly cwd: string;
   readonly surface: SelectedApiSurface;
@@ -502,6 +521,13 @@ export function materializeApiSurface(
   const srcDir = usesPackagedSurface
     ? path.join(typesRoot, "src")
     : path.resolve(sourceGeneratedDir, "..", "src");
+  // The *current* package's generated tree, resolved as the sibling of the
+  // `src/` above. For a pinned target `sourceGeneratedDir` is the versioned
+  // snapshot underneath it, so the two are distinct; for an unpinned one they
+  // are the same dir and every carry candidate is already among `sources`.
+  const currentGeneratedDir = usesPackagedSurface
+    ? path.join(typesRoot, "generated")
+    : path.resolve(sourceGeneratedDir, "..", "generated");
   const scriptKindEntry = usesPackagedSurface
     ? path.join(typesRoot, "generated", "kinds", "script.d.ts")
     : path.join(sourceGeneratedDir, "kinds", "script.d.ts");
@@ -515,6 +541,17 @@ export function materializeApiSurface(
   const includeCoreTypes = overloads.length > 0 && existsSync(coreTypesSrc);
   const engineGlobalsSrc = path.join(srcDir, "engine-globals.d.ts");
   const includeEngineGlobals = includeCoreTypes && existsSync(engineGlobalsSrc);
+
+  // Gated on `includeCoreTypes` like `engine-globals`: with no augmentations
+  // carried, nothing in the surface references these, and the copy would only
+  // dangle on the `core-types` re-export that is not written either.
+  const carriedSiblings = includeCoreTypes
+    ? GENERATED_SIBLING_CARRY.filter(
+        (name) =>
+          !sources.includes(`${name}.d.ts`) &&
+          existsSync(path.join(currentGeneratedDir, `${name}.d.ts`)),
+      )
+    : [];
 
   const srcDerived = new Set(overloads.map((file) => file.replace(/\.d\.ts$/, "")));
   if (includeCoreTypes) {
@@ -543,6 +580,9 @@ export function materializeApiSurface(
   if (includeEngineGlobals) {
     wanted.add("engine-globals.d.ts");
   }
+  for (const name of carriedSiblings) {
+    wanted.add(`${name}.d.ts`);
+  }
   for (const file of editorPlan?.rootNames ?? []) {
     wanted.add(file);
   }
@@ -554,9 +594,8 @@ export function materializeApiSurface(
   }
 
   for (const file of sources) {
-    const declaration = readFileSync(path.join(sourceGeneratedDir, file), "utf8").replace(
-      /from "[^"]*\/src\/core-types"/g,
-      'from "./core-types"',
+    const declaration = rewriteCoreTypesImport(
+      readFileSync(path.join(sourceGeneratedDir, file), "utf8"),
     );
     writeFileSync(path.join(absDir, file), declaration);
   }
@@ -569,8 +608,15 @@ export function materializeApiSurface(
   for (const file of overloads) {
     writeFileSync(path.join(absDir, file), readFileSync(path.join(srcDir, file), "utf8"));
   }
+  for (const name of carriedSiblings) {
+    writeFileSync(
+      path.join(absDir, `${name}.d.ts`),
+      rewriteCoreTypesImport(readFileSync(path.join(currentGeneratedDir, `${name}.d.ts`), "utf8")),
+    );
+  }
 
   const modules = [...sources, ...overloads].map((file) => file.replace(/\.d\.ts$/, ""));
+  modules.push(...carriedSiblings);
   if (includeEngineGlobals) {
     modules.push("engine-globals");
   }

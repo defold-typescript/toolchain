@@ -266,6 +266,146 @@ describe("materializeApiSurface", () => {
   });
 });
 
+describe("materializeApiSurface generated-sibling carry", () => {
+  // The real geometry a pin has: the snapshot dir is *not* the package's
+  // `generated/`, so the two are distinguishable sources for the same module
+  // name. A flat fixture collapses them and can prove neither carry nor skip.
+  interface PinnedFixture {
+    readonly root: string;
+    readonly snapshot: string;
+    readonly currentGenerated: string;
+  }
+
+  function seedPinnedFixture(opts: {
+    snapshotModules: string[];
+    currentModules: string[];
+    kindExtraImports?: string[];
+    snapshotBuiltinMessages?: string;
+    currentBuiltinMessages?: string;
+  }): PinnedFixture {
+    const root = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-pinroot-"));
+    const snapshot = path.join(root, "snapshot");
+    const currentGenerated = path.join(root, "generated");
+    const src = path.join(root, "src");
+    const kinds = path.join(snapshot, "kinds");
+    mkdirSync(kinds, { recursive: true });
+    mkdirSync(currentGenerated, { recursive: true });
+    mkdirSync(src, { recursive: true });
+
+    for (const mod of opts.snapshotModules) {
+      writeFileSync(path.join(snapshot, `${mod}.d.ts`), `declare const __${mod}: unknown;\n`);
+    }
+    for (const mod of opts.currentModules) {
+      writeFileSync(
+        path.join(currentGenerated, `${mod}.d.ts`),
+        `declare const __current_${mod}: unknown;\n`,
+      );
+    }
+    if (opts.snapshotBuiltinMessages !== undefined) {
+      writeFileSync(path.join(snapshot, "builtin-messages.d.ts"), opts.snapshotBuiltinMessages);
+    }
+    if (opts.currentBuiltinMessages !== undefined) {
+      writeFileSync(
+        path.join(currentGenerated, "builtin-messages.d.ts"),
+        opts.currentBuiltinMessages,
+      );
+    }
+
+    writeFileSync(
+      path.join(kinds, "script.d.ts"),
+      [
+        ...opts.snapshotModules.map((mod) => `import "../${mod}";`),
+        ...(opts.kindExtraImports ?? []),
+        'import "../../src/msg-overloads";',
+        'import "../builtin-messages";',
+        "",
+      ].join("\n"),
+    );
+    writeFileSync(
+      path.join(src, "core-types.ts"),
+      "export type Hash = { readonly __hash: unique symbol };\n",
+    );
+    writeFileSync(
+      path.join(src, "msg-overloads.d.ts"),
+      'import type { Hash } from "./core-types";\ndeclare global {\n  namespace msg {\n    function post(receiver: Hash): void;\n  }\n}\nexport {};\n',
+    );
+    return { root, snapshot, currentGenerated };
+  }
+
+  function materializePinned(fixture: PinnedFixture): string {
+    materializeApiSurface({ cwd, surface: CURRENT, sourceGeneratedDir: fixture.snapshot });
+    return path.join(cwd, ".defold-types", surfaceDir("defold-1.12.4"));
+  }
+
+  test("a pinned source dir gains the generated sibling", () => {
+    const fixture = seedPinnedFixture({
+      snapshotModules: ["msg"],
+      currentModules: [],
+      currentBuiltinMessages:
+        'import type { Hash } from "../src/core-types";\ndeclare global {\n  interface BuiltinMessages {\n    set_parent: { keep_world_transform: number; parent_id: Hash };\n  }\n}\nexport {};\n',
+    });
+    try {
+      const dir = materializePinned(fixture);
+
+      const carried = path.join(dir, "builtin-messages.d.ts");
+      expect(existsSync(carried)).toBe(true);
+
+      // The brand must resolve inside the surface, or the pinned copy silently
+      // mints a second `unique symbol` against the installed package.
+      const contents = readFileSync(carried, "utf8");
+      expect(contents).toContain('from "./core-types"');
+      expect(contents).not.toContain("src/core-types");
+
+      expect(readFileSync(path.join(dir, "index.d.ts"), "utf8")).toContain(
+        'import "./builtin-messages";',
+      );
+    } finally {
+      rmSync(fixture.root, { recursive: true, force: true });
+    }
+  });
+
+  test("a source dir that already ships it is not double-written", () => {
+    const snapshotCopy =
+      "declare global {\n  interface BuiltinMessages {\n    __from_snapshot: Record<string, never>;\n  }\n}\nexport {};\n";
+    const fixture = seedPinnedFixture({
+      snapshotModules: ["msg"],
+      currentModules: [],
+      snapshotBuiltinMessages: snapshotCopy,
+      currentBuiltinMessages:
+        "declare global {\n  interface BuiltinMessages {\n    __from_current: Record<string, never>;\n  }\n}\nexport {};\n",
+    });
+    try {
+      const dir = materializePinned(fixture);
+
+      // The pinned snapshot wins when it has an opinion.
+      expect(readFileSync(path.join(dir, "builtin-messages.d.ts"), "utf8")).toBe(snapshotCopy);
+    } finally {
+      rmSync(fixture.root, { recursive: true, force: true });
+    }
+  });
+
+  test("the carry is not a kind-index sweep", () => {
+    // A namespace the current package has and the pin does not. Deriving the
+    // carry set from the kind index would copy it back into the pin.
+    const fixture = seedPinnedFixture({
+      snapshotModules: ["msg"],
+      currentModules: ["postpin"],
+      kindExtraImports: ['import "../postpin";'],
+      currentBuiltinMessages: "declare global {\n  interface BuiltinMessages {}\n}\nexport {};\n",
+    });
+    try {
+      const dir = materializePinned(fixture);
+
+      expect(existsSync(path.join(dir, "postpin.d.ts"))).toBe(false);
+      expect(readFileSync(path.join(dir, "index.d.ts"), "utf8")).not.toContain(
+        'import "./postpin";',
+      );
+    } finally {
+      rmSync(fixture.root, { recursive: true, force: true });
+    }
+  });
+});
+
 describe("materializeApiSurface full surface (no kind narrowing)", () => {
   function materializedNames(): string[] {
     const dir = path.join(cwd, ".defold-types", surfaceDir("defold-1.12.4"));
