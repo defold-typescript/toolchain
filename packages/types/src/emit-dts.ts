@@ -392,6 +392,21 @@ const B2D_CAST_HIT_FIELDS: readonly TableField[] = [
   { name: "fraction", types: ["number"] },
 ];
 
+// The physics shape record, shared by `physics.get_shape`'s return and
+// `physics.set_shape`'s cross-referencing `table` param. The ref-doc describes
+// it as one `<dl>` for the common `type` field followed by one `<dl>` per shape
+// kind (sphere: `diameter`; box: `dimensions`; capsule: `diameter` + `height`),
+// which parseTableFields flattens into a single list — emitting `diameter`
+// twice. Field order is the doc's first-occurrence order, and every
+// kind-specific field is optional because only one kind's fields are present
+// per value.
+const PHYSICS_SHAPE_TABLE_FIELDS: readonly TableField[] = [
+  { name: "type", types: ["number"] },
+  { name: "diameter", types: ["number"], optional: true },
+  { name: "dimensions", types: ["vector3"], optional: true },
+  { name: "height", types: ["number"], optional: true },
+];
+
 export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new Map([
   ["collectionfactory.create:return:ids", { kind: "mapping", key: "hash", value: "hash" }],
   // font.get_info's `info` return is a `<dl>` with `path: hash` and a nested
@@ -1045,6 +1060,8 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   ["b2d.world.cast_mover:param:filter", { kind: "object", fields: B2D_MOVER_FILTER_FIELDS }],
   ["b2d.world.collide_mover:param:capsule", { kind: "object", fields: B2D_CAPSULE_FIELDS }],
   ["b2d.world.collide_mover:param:filter", { kind: "object", fields: B2D_MOVER_FILTER_FIELDS }],
+  ["physics.get_shape:return:table", { kind: "object", fields: PHYSICS_SHAPE_TABLE_FIELDS }],
+  ["physics.set_shape:param:table", { kind: "object", fields: PHYSICS_SHAPE_TABLE_FIELDS }],
 ]);
 
 // Slot-keyed (`element:param:name`, mirroring TABLE_SLOT_CURATIONS) replacements

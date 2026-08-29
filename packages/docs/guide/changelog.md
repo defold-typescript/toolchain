@@ -14,7 +14,11 @@ Entries are curated by hand from the git history; the most recent releases are
 listed per-patch, older releases are rolled up per minor version. Breaking
 changes are called out first because the toolchain is pre-1.0.
 
-## v0.28.4
+## v0.29.0
+
+### Breaking
+
+- **[`physics.get_shape`](/api/physics) now types its result as the variant record it is.** The declaration listed `diameter` twice — invalid TypeScript that `skipLibCheck` hid — and marked every shape-kind field required; `diameter`, `dimensions` and `height` are now optional, so reading one takes a narrow (`if (shape.diameter !== undefined)`). [`physics.set_shape`](/api/physics) takes the same field set and loses its duplicate too.
 
 ### Improved
 

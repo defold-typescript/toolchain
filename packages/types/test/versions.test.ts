@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { basename, resolve } from "node:path";
+import { resolve } from "node:path";
 import { materializeVersionedSurface } from "../scripts/materialize-version";
 import { loadApiTargets } from "../scripts/regen";
 import { SYNC_MANIFEST, type ZipAccessor } from "../scripts/sync-api-docs";
@@ -207,37 +207,11 @@ describe("versioned API surface — src augmentations reach the consumer", () =>
   });
 });
 
-// The one diagnostic a clean materialized surface is allowed to carry:
-// `physics.get_shape` records `diameter` twice, a defect in the generated
-// record that this gate tolerates rather than fixes. Keyed on file basename +
-// code + message and deliberately not on a line number, so regenerating
-// `physics.d.ts` moves the duplicate without re-baselining the exemption.
-const KNOWN_SURFACE_DEFECT = {
-  file: "physics.d.ts",
-  code: "TS2300",
-  message: "Duplicate identifier 'diameter'.",
-};
-
-const DIAGNOSTIC_LINE = /^(.+)\(\d+,\d+\): error (TS\d+): (.+)$/;
-
-function isKnownSurfaceDefect(line: string): boolean {
-  const match = DIAGNOSTIC_LINE.exec(line);
-  if (!match) return false;
-  const [, path, code, message] = match;
-  if (path === undefined) return false;
-  return (
-    basename(path) === KNOWN_SURFACE_DEFECT.file &&
-    code === KNOWN_SURFACE_DEFECT.code &&
-    message === KNOWN_SURFACE_DEFECT.message
-  );
-}
-
 function unexpectedDiagnostics(output: string): string[] {
   return output
     .split("\n")
     .map((line) => line.trim())
-    .filter((line) => /error TS\d+:/.test(line))
-    .filter((line) => !isKnownSurfaceDefect(line));
+    .filter((line) => /error TS\d+:/.test(line));
 }
 
 async function materializeStrictSurface(): Promise<{
@@ -287,7 +261,7 @@ const GUARD_MUTATIONS = [
     code: "TS2305",
   },
   {
-    row: "duplicate outside the exemption",
+    row: "duplicate",
     apply: (source: string) => `${source}declare type DupProbe = { a: string; a: number };\n`,
     code: "TS2300",
   },
@@ -299,13 +273,6 @@ describe("versioned API surface — strict resolution", () => {
     try {
       const { output } = typecheck(tsconfigPath);
       expect(unexpectedDiagnostics(output)).toEqual([]);
-      if (!output.split("\n").some((line) => isKnownSurfaceDefect(line.trim()))) {
-        throw new Error(
-          "the physics.d.ts duplicate-'diameter' exemption no longer has a subject — the " +
-            "defect appears fixed. Delete KNOWN_SURFACE_DEFECT, its filter in " +
-            "unexpectedDiagnostics, and this assertion.",
-        );
-      }
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -333,7 +300,6 @@ describe("versioned API surface — strict resolution", () => {
                 `returned:\n${rejected.join("\n")}`,
             );
           }
-          expect(rejected.filter((line) => line.includes(KNOWN_SURFACE_DEFECT.file))).toEqual([]);
         } finally {
           writeFileSync(guardPath, pristine);
         }
