@@ -50,11 +50,35 @@ export interface MarkdownDoc {
 // Only the literal `function` keyword is accepted before the receiver — a general
 // `\w+\s+` prefix would make prose like `### see rendy.set(...)` read as a signature.
 const HEADER = /^#{2,3}\s+(?:function\s+)?([A-Za-z_][\w]*)\.([A-Za-z_][\w]*)\((.*)\)\s*$/;
-const PARAM_MARKER = /^\*\*PARAM(?:ETER|ETERS)?\*\*\s*$/;
-const RETURN_MARKER = /^\*\*RETURNS?\*\*\s*$/;
+// The corpus writes its slot-list markers in more than one dialect: the vendored
+// fixtures carry 85 `**PARAMETERS**` / 37 `**RETURN**` bold-caps lines, while
+// yagames writes 47 `**Parameters:**` / 22 `**Returns:**`. Naming the spellings
+// once and deriving both markers from them states the dialect in a single place
+// instead of spreading it across two hand-written regexes.
+const SLOT_MARKER_SPELLINGS = {
+  params: ["PARAM", "PARAMETER", "PARAMETERS"],
+  returns: ["RETURN", "RETURNS"],
+} as const;
+
+/** Build a marker regex from a spelling list. Case-insensitivity plus an optional
+ * colon folds `**PARAMETERS**`, `**Parameters**` and `**Parameters:**` into one
+ * rule, so a new dialect is a spelling, not a regex. The colon is accepted on
+ * either side of the closing `**` because yagames — the corpus's only mixed-case
+ * dialect, all 47 + 22 of its markers — writes it inside. */
+function markerPattern(spellings: readonly string[]): RegExp {
+  return new RegExp(`^\\*\\*(?:${spellings.join("|")}):?\\*\\*:?\\s*$`, "i");
+}
+
+const PARAM_MARKER = markerPattern(SLOT_MARKER_SPELLINGS.params);
+const RETURN_MARKER = markerPattern(SLOT_MARKER_SPELLINGS.returns);
 // A bullet with a backticked name and a required `(type)` group. A named bullet
-// missing the `(type)` group is an unresolvable row (see `parseSlot`).
+// matching neither this nor `COLON_BULLET` is an unresolvable row (see `parseSlot`).
 const TYPED_BULLET = /^\*\s+`([^`]+)`\s*\(([^)]*)\)\s*-?\s*(.*)$/;
+// The second row dialect, with name and type together inside the backticks
+// (`* `path: string` - doc`). A parenthesised row can never reach this arm: its
+// type sits outside the backticks, so no colon is there to match. Capture groups
+// are laid out as `TYPED_BULLET`'s, so `parseSlot` reads either the same way.
+const COLON_BULLET = /^\*\s+`\s*([^`:\s]+)\s*:\s*([^`]+?)\s*`\s*-?\s*(.*)$/;
 const NAMED_BULLET = /^\*\s+`([^`]+)`/;
 
 /** Bracketed header arguments are optional; collect their bare names. A bracket
@@ -121,26 +145,27 @@ function splitTypes(group: string): string[] {
   return tokens.map((token) => token.trim()).filter((token) => token.length > 0);
 }
 
-/** Parse one `* `name` (type) doc` bullet into a slot, splitting a `a|b|nil` or
- * `a, b, nil` union into single tokens. Throws naming `fnName` when the bullet
- * names a parameter but carries no `(type)`. */
+/** Parse one slot bullet — either `* `name` (type) doc` or the backticked
+ * `* `name: type` doc` form — splitting a `a|b|nil` or `a, b, nil` union into
+ * single tokens. Throws naming `fnName` when the bullet names a parameter but
+ * matches neither row dialect. */
 function parseSlot(
   label: string,
   fnName: string,
   line: string,
   optionalNames: Set<string>,
 ): MarkdownParam {
-  const typed = TYPED_BULLET.exec(line);
-  if (typed === null) {
+  const row = TYPED_BULLET.exec(line) ?? COLON_BULLET.exec(line);
+  if (row === null) {
     const named = NAMED_BULLET.exec(line);
     const name = named?.[1] ?? line.trim();
     throw new Error(
       `parse-markdown-api: ${label}: ${fnName} row for \`${name}\` has no (type) — cannot resolve to a typed param (row: ${line.trim()})`,
     );
   }
-  const name = typed[1] as string;
-  const types = splitTypes(typed[2] as string);
-  const slot: MarkdownParam = { name, doc: (typed[3] as string).trim(), types };
+  const name = row[1] as string;
+  const types = splitTypes(row[2] as string);
+  const slot: MarkdownParam = { name, doc: (row[3] as string).trim(), types };
   if (optionalNames.has(name)) slot.is_optional = "True";
   return slot;
 }
@@ -176,16 +201,27 @@ function parseSection(
   const returnvalues: MarkdownParam[] = [];
   let mode: "none" | "params" | "returns" = "none";
   let sawMarker = false;
+  // Tracked per marker kind, not once for the section: a row under a marker is
+  // already loud (`parseSlot` throws), so the one silent hole left is a marker
+  // whose list holds no readable row at all — a README writing `- name (type)`
+  // rather than a starred, backticked row. `closedBy` keeps the first line that
+  // ended such a list, to name it in the refusal.
+  const seen: Record<"params" | "returns", boolean> = { params: false, returns: false };
+  const closedBy: Partial<Record<"params" | "returns", string>> = {};
+  const collected = (kind: "params" | "returns") =>
+    kind === "params" ? parameters.length : returnvalues.length;
 
   for (const line of body) {
     if (PARAM_MARKER.test(line)) {
       mode = "params";
       sawMarker = true;
+      seen.params = true;
       continue;
     }
     if (RETURN_MARKER.test(line)) {
       mode = "returns";
       sawMarker = true;
+      seen.returns = true;
       continue;
     }
     const isBullet = line.trimStart().startsWith("* ");
@@ -197,12 +233,31 @@ function parseSection(
       returnvalues.push(parseSlot(label, fnName, line, optionalNames));
       continue;
     }
-    // Any non-bullet line closes an open list, so a blank line before an
-    // option-table's `Acceptable values:` bullets stops them being captured.
-    mode = "none";
-    if (!sawMarker && line.trim().length > 0 && !line.startsWith("---")) {
+    const isBlank = line.trim().length === 0;
+    if (mode !== "none" && !isBlank && collected(mode) === 0) {
+      closedBy[mode] ??= line.trim();
+    }
+    // A non-blank, non-bullet line closes an open list — that prose line is what
+    // stops an option-table's `Acceptable values:` bullets being captured into the
+    // list above it. A blank line does not close one: markdown routinely separates
+    // a marker paragraph from its list with a blank, and checkpoint's README
+    // writes all seven of its lists that way.
+    if (!isBlank) mode = "none";
+    if (!sawMarker && !isBlank && !line.startsWith("---")) {
       descriptionLines.push(line.trim());
     }
+  }
+
+  for (const kind of ["params", "returns"] as const) {
+    if (!seen[kind] || collected(kind) > 0) continue;
+    const marker = kind === "params" ? "PARAMETERS" : "RETURN";
+    const offending = closedBy[kind];
+    throw new Error(
+      `parse-markdown-api: ${label}: ${fnName} has a **${marker}** marker but no readable row — ` +
+        (offending === undefined
+          ? "nothing follows it"
+          : `the list is closed by an unreadable line (row: ${offending})`),
+    );
   }
 
   return { description: descriptionLines.join(" "), parameters, returnvalues };
