@@ -45,8 +45,10 @@ export default createRoute(
     const resolveReplacement = apiReplacementResolver(pages);
     // Global-type brands (`Opaque`) are version-independent — they live only on
     // the canonical `/api/Opaque` page, not per version — so resolve the
-    // signature deep-links against the canonical surface, not this version's.
-    const signatureSymbolLinks = apiSignatureSymbolLinks(canonicalApiPages());
+    // signature deep-links against the canonical surface, not this version's. A
+    // typedef shape is the opposite: it belongs to the page rendering it, so the
+    // windowed page contributes its own shapes at its own versioned route.
+    const signatureSymbolLinks = apiSignatureSymbolLinks(canonicalApiPages(), page);
     // A windowed page *is* a union across versions, so the availability marker
     // layer is meaningful here exactly as it is on the canonical route — and the
     // client `?since=` filter reads the per-symbol span markers it emits. The

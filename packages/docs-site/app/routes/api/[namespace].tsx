@@ -113,8 +113,9 @@ export function createApiNamespaceRoute(dirs: ApiSurfaceDirs = {}) {
       const linkify = apiLinkify(pages);
       const resolveReplacement = apiReplacementResolver(pages);
       // Deep-link `Opaque` brand tokens in rendered signatures to this surface's
-      // `/api/Opaque` Reference page.
-      const signatureSymbolLinks = apiSignatureSymbolLinks(pages);
+      // `/api/Opaque` Reference page, and this page's own typedef shapes to their
+      // headings on it. Both render sites below render this same page.
+      const signatureSymbolLinks = apiSignatureSymbolLinks(pages, page);
 
       // Library pages render their heading as the styled `owner/repo/namespace`
       // path (matching the /libraries index), so the markdown body omits its H1.
