@@ -4,21 +4,14 @@ import { resolve } from "node:path";
 import { materializeVersionedSurface } from "../scripts/materialize-version";
 import { loadApiTargets } from "../scripts/regen";
 import { SYNC_MANIFEST, type ZipAccessor } from "../scripts/sync-api-docs";
+import {
+  typecheckSurface as typecheck,
+  unexpectedDiagnostics,
+  writeStrictSurfaceTsconfig,
+} from "./strict-resolution";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const VERSIONS_DIR = resolve(PACKAGE_ROOT, "test-d", "versions");
-
-function typecheck(tsconfigPath: string): { exitCode: number; output: string } {
-  const proc = Bun.spawnSync(["bunx", "tsc", "-p", tsconfigPath, "--noEmit"], {
-    stdout: "pipe",
-    stderr: "pipe",
-    timeout: 60_000,
-  });
-  return {
-    exitCode: proc.exitCode,
-    output: `${proc.stdout.toString()}${proc.stderr.toString()}`,
-  };
-}
 
 const noDownload = async (): Promise<Uint8Array> => {
   throw new Error("download should not be called");
@@ -207,13 +200,6 @@ describe("versioned API surface — src augmentations reach the consumer", () =>
   });
 });
 
-function unexpectedDiagnostics(output: string): string[] {
-  return output
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => /error TS\d+:/.test(line));
-}
-
 async function materializeStrictSurface(): Promise<{
   root: string;
   destDir: string;
@@ -224,28 +210,12 @@ async function materializeStrictSurface(): Promise<{
   const root = mkdtempSync(resolve(PACKAGE_ROOT, "mat-strict-"));
   const destDir = resolve(root, "versions", "defold-1.12.4");
   await materializeVersionedSurface(target, { destDir });
-  const tsconfigPath = resolve(root, "tsconfig.json");
-  writeFileSync(
-    tsconfigPath,
-    `${JSON.stringify(
-      {
-        extends: "../../../tsconfig.json",
-        compilerOptions: {
-          noEmit: true,
-          // The consumer shape (`typeRoots` + `types`, inheriting
-          // `skipLibCheck: true`) is exactly what hides an unresolved name
-          // in a shipped declaration, so check the surface's own files
-          // directly with lib checking on.
-          skipLibCheck: false,
-          types: [],
-          paths: { "@defold-typescript/types/*": ["../src/*"] },
-        },
-        include: ["versions/defold-1.12.4/**/*.d.ts"],
-      },
-      null,
-      2,
-    )}\n`,
-  );
+  const tsconfigPath = writeStrictSurfaceTsconfig({
+    dir: root,
+    extendsPath: "../../../tsconfig.json",
+    include: ["versions/defold-1.12.4/**/*.d.ts"],
+    paths: { "@defold-typescript/types/*": ["../src/*"] },
+  });
   return { root, destDir, tsconfigPath };
 }
 
