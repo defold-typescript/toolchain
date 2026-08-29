@@ -264,7 +264,7 @@ interface RangeSelectorRoot {
  * Reflect the active range into both selector columns: in each column the option
  * matching that column's bound gets `aria-current="page"`, the accent classes and
  * a dot, every other option in that column is cleared, and the column's
- * `[data-range-summary]` label is set from the active option's label span. The
+ * `[data-range-summary]` label is set from the active option's bare form. The
  * two columns are reconciled independently, so narrowing one bound never clears
  * the other's marker. The document element also records the reconciled range so
  * CSS can key off it. The server renders the summary and active option for the
@@ -312,8 +312,19 @@ export function reconcileRangeSelector(root: RangeSelectorRoot, range: ApiSurfac
     const bound = summary.getAttribute("data-range-summary");
     const active = bound === "from" ? activeFrom : bound === "to" ? activeTo : undefined;
     if (!active) continue;
+    // The option advertises the bare form the closed chrome wants; its visible
+    // span keeps the prefixed label, so reading the span back would undo the
+    // difference. The span and the raw bound stay as fallbacks for a cached page
+    // rendered before the attribute existed.
+    const short = active.getAttribute("data-range-short");
     const label = active.querySelector("span");
-    summary.textContent = label ? label.textContent : bound === "from" ? range.from : range.to;
+    summary.textContent = short
+      ? short
+      : label
+        ? label.textContent
+        : bound === "from"
+          ? range.from
+          : range.to;
   }
 }
 

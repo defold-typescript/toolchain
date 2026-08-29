@@ -388,6 +388,13 @@ describe("reconcileRangeSelector (DOM contract)", () => {
     "defold-1.12.4": "Defold 1.12.4",
     "defold-1.12.0": "Defold 1.12.0",
   };
+  // The bare form the rendered option advertises on `data-range-short`, which is
+  // what the closed chrome shows once this reconciliation has run.
+  const SHORT: Record<string, string> = {
+    "defold-1.13.0": "1.13.0",
+    "defold-1.12.4": "1.12.4",
+    "defold-1.12.0": "1.12.0",
+  };
 
   function selectorDom() {
     const doc = new FakeDoc();
@@ -402,6 +409,7 @@ describe("reconcileRangeSelector (DOM contract)", () => {
         const option = doc.createElement("a");
         option.setAttribute("data-range-option", id);
         option.setAttribute("data-range-bound", bound);
+        option.setAttribute("data-range-short", SHORT[id] as string);
         const label = doc.createElement("span");
         label.textContent = LABELS[id] as string;
         option.appendChild(label);
@@ -429,8 +437,16 @@ describe("reconcileRangeSelector (DOM contract)", () => {
     expect(optionFor("from", "defold-1.12.4")?.getAttribute("aria-current")).toBe("page");
     expect(optionFor("from", "defold-1.12.4")?.className).toContain("text-accent");
     expect(optionFor("to", DEFAULT)?.getAttribute("aria-current")).toBe("page");
-    expect(summaryFor("from")?.textContent).toBe("Defold 1.12.4");
+    expect(summaryFor("from")?.textContent).toBe("1.12.4");
+    expect(summaryFor("to")?.textContent).toBe("1.13.0");
+  });
+
+  test("a stale cached option with no bare form degrades to the option's own text", () => {
+    const { root, optionFor, summaryFor } = selectorDom();
+    optionFor("to", DEFAULT)?.removeAttribute("data-range-short");
+    reconcileRangeSelector(root, { from: "defold-1.12.4", to: DEFAULT });
     expect(summaryFor("to")?.textContent).toBe("Defold 1.13.0");
+    expect(summaryFor("from")?.textContent).toBe("1.12.4");
   });
 
   test("clears the previously-marked option in each column independently", () => {
