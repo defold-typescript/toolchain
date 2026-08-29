@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { basename, resolve } from "node:path";
 import { materializeVersionedSurface } from "../scripts/materialize-version";
 import { loadApiTargets } from "../scripts/regen";
 import { SYNC_MANIFEST, type ZipAccessor } from "../scripts/sync-api-docs";
@@ -207,44 +207,137 @@ describe("versioned API surface — src augmentations reach the consumer", () =>
   });
 });
 
+// The one diagnostic a clean materialized surface is allowed to carry:
+// `physics.get_shape` records `diameter` twice, a defect in the generated
+// record that this gate tolerates rather than fixes. Keyed on file basename +
+// code + message and deliberately not on a line number, so regenerating
+// `physics.d.ts` moves the duplicate without re-baselining the exemption.
+const KNOWN_SURFACE_DEFECT = {
+  file: "physics.d.ts",
+  code: "TS2300",
+  message: "Duplicate identifier 'diameter'.",
+};
+
+const DIAGNOSTIC_LINE = /^(.+)\(\d+,\d+\): error (TS\d+): (.+)$/;
+
+function isKnownSurfaceDefect(line: string): boolean {
+  const match = DIAGNOSTIC_LINE.exec(line);
+  if (!match) return false;
+  const [, path, code, message] = match;
+  if (path === undefined) return false;
+  return (
+    basename(path) === KNOWN_SURFACE_DEFECT.file &&
+    code === KNOWN_SURFACE_DEFECT.code &&
+    message === KNOWN_SURFACE_DEFECT.message
+  );
+}
+
+function unexpectedDiagnostics(output: string): string[] {
+  return output
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => /error TS\d+:/.test(line))
+    .filter((line) => !isKnownSurfaceDefect(line));
+}
+
+async function materializeStrictSurface(): Promise<{
+  root: string;
+  destDir: string;
+  tsconfigPath: string;
+}> {
+  const target = loadApiTargets().find((candidate) => candidate.id === "defold-1.12.4");
+  if (!target) throw new Error("no defold-1.12.4 target");
+  const root = mkdtempSync(resolve(PACKAGE_ROOT, "mat-strict-"));
+  const destDir = resolve(root, "versions", "defold-1.12.4");
+  await materializeVersionedSurface(target, { destDir });
+  const tsconfigPath = resolve(root, "tsconfig.json");
+  writeFileSync(
+    tsconfigPath,
+    `${JSON.stringify(
+      {
+        extends: "../../../tsconfig.json",
+        compilerOptions: {
+          noEmit: true,
+          // The consumer shape (`typeRoots` + `types`, inheriting
+          // `skipLibCheck: true`) is exactly what hides an unresolved name
+          // in a shipped declaration, so check the surface's own files
+          // directly with lib checking on.
+          skipLibCheck: false,
+          types: [],
+          paths: { "@defold-typescript/types/*": ["../src/*"] },
+        },
+        include: ["versions/defold-1.12.4/**/*.d.ts"],
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  return { root, destDir, tsconfigPath };
+}
+
+const GUARD_MUTATIONS = [
+  {
+    row: "missing module",
+    apply: (source: string) => source.replace('from "./core-types"', 'from "./core-types-gone"'),
+    code: "TS2307",
+  },
+  {
+    row: "missing export",
+    apply: (source: string) => source.replace("{ Hash }", "{ HashNotAThing as Hash }"),
+    code: "TS2305",
+  },
+  {
+    row: "duplicate outside the exemption",
+    apply: (source: string) => `${source}declare type DupProbe = { a: string; a: number };\n`,
+    code: "TS2300",
+  },
+];
+
 describe("versioned API surface — strict resolution", () => {
-  test("no declaration in a materialized surface references a name the surface does not declare", async () => {
-    const target = loadApiTargets().find((candidate) => candidate.id === "defold-1.12.4");
-    if (!target) throw new Error("no defold-1.12.4 target");
-    const root = mkdtempSync(resolve(PACKAGE_ROOT, "mat-strict-"));
+  test("no declaration in a materialized surface references a name the surface does not resolve", async () => {
+    const { root, tsconfigPath } = await materializeStrictSurface();
     try {
-      const destDir = resolve(root, "versions", "defold-1.12.4");
-      await materializeVersionedSurface(target, { destDir });
-      const tsconfigPath = resolve(root, "tsconfig.json");
-      writeFileSync(
-        tsconfigPath,
-        `${JSON.stringify(
-          {
-            extends: "../../../tsconfig.json",
-            compilerOptions: {
-              noEmit: true,
-              // The consumer shape (`typeRoots` + `types`, inheriting
-              // `skipLibCheck: true`) is exactly what hides an unresolved name
-              // in a shipped declaration, so check the surface's own files
-              // directly with lib checking on.
-              skipLibCheck: false,
-              types: [],
-              paths: { "@defold-typescript/types/*": ["../src/*"] },
-            },
-            include: ["versions/defold-1.12.4/**/*.d.ts"],
-          },
-          null,
-          2,
-        )}\n`,
-      );
       const { output } = typecheck(tsconfigPath);
-      // Scoped to TS2304 (cannot find name): `physics.d.ts` carries a
-      // pre-existing TS2300 duplicate identifier this step does not own.
-      const unresolved = output
-        .split("\n")
-        .filter((line) => line.includes("error TS2304"))
-        .join("\n");
-      expect(unresolved).toBe("");
+      expect(unexpectedDiagnostics(output)).toEqual([]);
+      if (!output.split("\n").some((line) => isKnownSurfaceDefect(line.trim()))) {
+        throw new Error(
+          "the physics.d.ts duplicate-'diameter' exemption no longer has a subject — the " +
+            "defect appears fixed. Delete KNOWN_SURFACE_DEFECT, its filter in " +
+            "unexpectedDiagnostics, and this assertion.",
+        );
+      }
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("a carried declaration that cannot resolve its module or member is rejected", async () => {
+    const { root, destDir, tsconfigPath } = await materializeStrictSurface();
+    try {
+      const guardPath = resolve(destDir, "message-guard.d.ts");
+      const pristine = readFileSync(guardPath, "utf8");
+      for (const mutation of GUARD_MUTATIONS) {
+        const mutated = mutation.apply(pristine);
+        if (mutated === pristine) {
+          throw new Error(
+            `mutation "${mutation.row}" was inert — the carried message-guard.d.ts no longer ` +
+              "carries the text this row rewrites, so the row proves nothing",
+          );
+        }
+        writeFileSync(guardPath, mutated);
+        try {
+          const rejected = unexpectedDiagnostics(typecheck(tsconfigPath).output);
+          if (!rejected.some((line) => line.includes(`error ${mutation.code}:`))) {
+            throw new Error(
+              `mutation "${mutation.row}" was not rejected with ${mutation.code}; the gate ` +
+                `returned:\n${rejected.join("\n")}`,
+            );
+          }
+          expect(rejected.filter((line) => line.includes(KNOWN_SURFACE_DEFECT.file))).toEqual([]);
+        } finally {
+          writeFileSync(guardPath, pristine);
+        }
+      }
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
