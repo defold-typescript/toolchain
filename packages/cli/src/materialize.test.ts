@@ -1460,3 +1460,40 @@ describe("materialized surface identity", () => {
     expect(surfaceStampStatus(dir)).toBe("missing");
   });
 });
+
+describe("materialization parity across both writers", () => {
+  test("parity guard: both materialization paths carry the same augmentation set", async () => {
+    const pkgRoot = path.resolve(import.meta.dir, "..", "..", "types");
+    const { SRC_AUGMENTATION_MODULES } = (await import(
+      path.join(pkgRoot, "scripts", "regen.ts")
+    )) as { SRC_AUGMENTATION_MODULES: readonly string[] };
+
+    materializeApiSurface({
+      cwd,
+      surface: CURRENT,
+      sourceGeneratedDir: path.join(pkgRoot, "generated"),
+    });
+    const packagedDir = path.join(cwd, ".defold-types", surfaceDir("defold-1.12.4"));
+
+    const pinnedCwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-materialize-"));
+    const resolveOpts = labelRefDocResolveOpts();
+    try {
+      await materializeRefDocSurface({ cwd: pinnedCwd, surfaceId: "defold-1.9.8", resolveOpts });
+      const pinnedDir = path.join(pinnedCwd, ".defold-types", surfaceDir("defold-1.9.8"));
+
+      const carried = (dir: string): string[] =>
+        SRC_AUGMENTATION_MODULES.filter((name) =>
+          existsSync(path.join(dir, `${name}.d.ts`)),
+        ).sort();
+
+      expect(carried(packagedDir).length).toBe(SRC_AUGMENTATION_MODULES.length);
+      expect(carried(pinnedDir)).toEqual(carried(packagedDir));
+      expect(readFileSync(path.join(pinnedDir, "core-types.d.ts"), "utf8")).toBe(
+        readFileSync(path.join(packagedDir, "core-types.d.ts"), "utf8"),
+      );
+    } finally {
+      rmSync(pinnedCwd, { recursive: true, force: true });
+      rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
+    }
+  });
+});

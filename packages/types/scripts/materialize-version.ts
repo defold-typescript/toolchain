@@ -7,12 +7,18 @@ import {
   KIND_MODULE_MANIFEST,
   type KindManifestEntry,
   kindStdlibReferences,
+  loadSrcAugmentations,
   loadTargetEditorModules,
   type ResolveTargetOptions,
   resolveTargetModules,
 } from "./regen";
 
-export { RUNTIME_KIND_MANIFEST, targetKindManifest } from "./regen";
+export { RUNTIME_KIND_MANIFEST, SRC_AUGMENTATION_MODULES, targetKindManifest } from "./regen";
+
+// The surface's own `core-types` module: a re-export of the installed package's,
+// so every declaration in the surface reaches the brand types through a
+// specifier that resolves from the surface root wherever it is written.
+export const CORE_TYPES_REEXPORT = 'export * from "@defold-typescript/types/core-types";\n';
 
 export interface RenderMaterializedKindIndexOptions {
   readonly kind: string;
@@ -64,6 +70,10 @@ export interface BuildVersionedSurfaceOptions {
   // file and its aggregate-index import. Lets a caller narrow the surface to a
   // script kind without the generator knowing what a script kind is.
   readonly excludeModules?: readonly string[];
+  // The hand-authored `src/*` augmentations to carry beside the modules.
+  // Defaults to reading them from the types package on disk; a caller with no
+  // filesystem (a Worker) supplies the bytes and gets an identical file map.
+  readonly augmentations?: readonly VersionedSurfaceFile[];
 }
 
 export interface MaterializeVersionedSurfaceOptions extends BuildVersionedSurfaceOptions {
@@ -82,6 +92,15 @@ export interface VersionedSurfaceFile {
 // the aggregate side-effect entrypoint and a minimal package.json. Pure — no
 // `node:fs` — so a Worker with no filesystem can serve a version generated at
 // request time; `materializeVersionedSurface` is the disk sink over the same map.
+// A surface is self-contained: every declaration reaches `core-types` through a
+// specifier relative to the surface root, not through the target's in-repo
+// `coreTypesImport`. An editor VM module sits one directory down and so needs
+// the deeper form.
+function surfaceCoreTypesImport(outFile: string): string {
+  const depth = outFile.split("/").length - 1;
+  return depth === 0 ? "./core-types" : `${"../".repeat(depth)}core-types`;
+}
+
 export async function buildVersionedSurfaceFiles(
   target: ApiTarget,
   opts: BuildVersionedSurfaceOptions = {},
@@ -99,15 +118,33 @@ export async function buildVersionedSurfaceFiles(
     opts.resolveOpts?.packageRoot ?? undefined,
   ).filter((entry) => kept(entry.outFile));
 
+  const augmentations = (
+    opts.augmentations ?? loadSrcAugmentations(opts.resolveOpts?.packageRoot ?? undefined)
+  ).filter((file) => kept(file.path));
+
   const files: VersionedSurfaceFile[] = [...modules, ...editorModules].map((entry) => ({
     path: entry.outFile,
-    contents: generateModuleDeclaration(entry).contents,
+    contents: generateModuleDeclaration({
+      ...entry,
+      importsFrom: surfaceCoreTypesImport(entry.outFile),
+    }).contents,
   }));
 
+  files.push(...augmentations);
+  files.push({ path: "core-types.d.ts", contents: CORE_TYPES_REEXPORT });
+
   // The aggregate entrypoint stays the runtime surface: importing the editor VM
-  // there would drag it into every program that pins this version.
+  // there would drag it into every program that pins this version. `core-types`
+  // is type-only and stays out of it, exactly as on the packaged path.
   const versioned = modules.map((entry) => ({ ...entry, versionId: target.id }));
-  files.push({ path: "index.d.ts", contents: generateVersionIndex(target.id, versioned) });
+  files.push({
+    path: "index.d.ts",
+    contents: generateVersionIndex(
+      target.id,
+      versioned,
+      augmentations.map((file) => file.path.replace(/\.d\.ts$/, "")),
+    ),
+  });
 
   files.push({
     path: "package.json",

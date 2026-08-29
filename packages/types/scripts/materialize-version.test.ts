@@ -11,6 +11,7 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import {
   buildVersionedSurfaceFiles,
+  CORE_TYPES_REEXPORT,
   materializeVersionedSurface,
   renderMaterializedKindIndex,
 } from "./materialize-version";
@@ -19,7 +20,9 @@ import {
   generateModuleDeclaration,
   generateVersionIndex,
   loadApiTargets,
+  loadSrcAugmentations,
   resolveTargetModules,
+  SRC_AUGMENTATION_MODULES,
 } from "./regen";
 import { SYNC_MANIFEST, type ZipAccessor } from "./sync-api-docs";
 
@@ -113,6 +116,13 @@ function multiKindTarget(): ApiTarget {
   };
 }
 
+// The surface-root files a materialized surface carries beside its modules,
+// derived from the production augmentation set rather than restated here.
+const AUGMENTATION_PATHS = [
+  ...SRC_AUGMENTATION_MODULES.map((name) => `${name}.d.ts`),
+  "core-types.d.ts",
+];
+
 describe("renderMaterializedKindIndex", () => {
   test("gui-script imports the universal modules plus the restricted gui, never render", () => {
     const out = renderMaterializedKindIndex({
@@ -191,7 +201,9 @@ describe("materializeVersionedSurface", () => {
     expect(label).toContain("get_text");
 
     expect(readFileSync(resolve(destDir, "index.d.ts"), "utf8")).toBe(
-      'import "./label";\n\nexport {};\n',
+      `${['import "./label";', ...SRC_AUGMENTATION_MODULES.map((n) => `import "./${n}";`)].join(
+        "\n",
+      )}\n\nexport {};\n`,
     );
 
     const pkg = JSON.parse(readFileSync(resolve(destDir, "package.json"), "utf8")) as {
@@ -257,7 +269,7 @@ describe("materializeVersionedSurface", () => {
 });
 
 describe("buildVersionedSurfaceFiles", () => {
-  test("returns one entry per module plus index.d.ts and package.json, and nothing else", async () => {
+  test("returns one entry per module and augmentation plus index.d.ts and package.json, and nothing else", async () => {
     const { fakeZip, cacheDir } = labelRefDocZip();
     const target = defold198Target();
     const resolveOpts = { cacheDir, readZip: () => fakeZip, download: noDownload };
@@ -265,17 +277,24 @@ describe("buildVersionedSurfaceFiles", () => {
     const files = await buildVersionedSurfaceFiles(target, { resolveOpts });
 
     const modules = await resolveTargetModules(target, resolveOpts);
-    const expectedPaths = [...modules.map((entry) => entry.outFile), "index.d.ts", "package.json"];
+    const expectedPaths = [
+      ...modules.map((entry) => entry.outFile),
+      ...AUGMENTATION_PATHS,
+      "index.d.ts",
+      "package.json",
+    ];
     expect(files.map((file) => file.path)).toEqual(expectedPaths);
 
     for (const entry of modules) {
       const file = files.find((f) => f.path === entry.outFile);
-      expect(file?.contents).toBe(generateModuleDeclaration(entry).contents);
+      expect(file?.contents).toBe(
+        generateModuleDeclaration({ ...entry, importsFrom: "./core-types" }).contents,
+      );
     }
 
     const versioned = modules.map((entry) => ({ ...entry, versionId: target.id }));
     expect(files.find((f) => f.path === "index.d.ts")?.contents).toBe(
-      generateVersionIndex(target.id, versioned),
+      generateVersionIndex(target.id, versioned, [...SRC_AUGMENTATION_MODULES]),
     );
   });
 
@@ -333,7 +352,7 @@ describe("buildVersionedSurfaceFiles", () => {
     expect(index).toContain('import "./sprite";');
   });
 
-  test("entry order is modules in resolveTargetModules order, then index.d.ts, then package.json", async () => {
+  test("entry order is modules in resolveTargetModules order, then augmentations, then index.d.ts, then package.json", async () => {
     const { fakeZip, cacheDir } = multiKindRefDocZip();
     const target = multiKindTarget();
     const resolveOpts = { cacheDir, readZip: () => fakeZip, download: noDownload };
@@ -343,6 +362,7 @@ describe("buildVersionedSurfaceFiles", () => {
     const modules = await resolveTargetModules(target, resolveOpts);
     expect(files.map((file) => file.path)).toEqual([
       ...modules.map((entry) => entry.outFile),
+      ...AUGMENTATION_PATHS,
       "index.d.ts",
       "package.json",
     ]);
@@ -364,5 +384,124 @@ describe("buildVersionedSurfaceFiles", () => {
     for (const file of files) {
       expect(readFileSync(resolve(destDir, file.path), "utf8")).toBe(file.contents);
     }
+  });
+});
+
+function committedTarget(id: string): ApiTarget {
+  const target = loadApiTargets().find((t) => t.id === id);
+  if (!target) throw new Error(`no ${id} target`);
+  return target;
+}
+
+describe("buildVersionedSurfaceFiles src augmentation carry", () => {
+  test("SRC_AUGMENTATION_MODULES is the kind manifest's src set, not a second list", () => {
+    const scriptKind = readFileSync(
+      resolve(PACKAGE_ROOT, "generated", "kinds", "script.d.ts"),
+      "utf8",
+    );
+    const fromKindIndex = [...scriptKind.matchAll(/^import "\.\.\/\.\.\/src\/([^"]+)";$/gm)]
+      .map((match) => match[1] ?? "")
+      .sort();
+    expect(fromKindIndex.length).toBeGreaterThan(0);
+    expect([...SRC_AUGMENTATION_MODULES].sort()).toEqual(fromKindIndex);
+  });
+
+  test("carries every src augmentation the kind manifest names", async () => {
+    const files = await buildVersionedSurfaceFiles(committedTarget("defold-1.12.4"));
+
+    for (const name of SRC_AUGMENTATION_MODULES) {
+      const file = files.find((f) => f.path === `${name}.d.ts`);
+      expect(`${name}: ${file === undefined ? "absent" : "present"}`).toBe(`${name}: present`);
+      expect(file?.contents).toBe(
+        readFileSync(resolve(PACKAGE_ROOT, "src", `${name}.d.ts`), "utf8"),
+      );
+    }
+    expect(files.find((f) => f.path === "core-types.d.ts")?.contents).toBe(CORE_TYPES_REEXPORT);
+  });
+
+  test("the aggregate index imports each augmentation", async () => {
+    const target = committedTarget("defold-1.12.4");
+    const files = await buildVersionedSurfaceFiles(target);
+    const index = files.find((f) => f.path === "index.d.ts")?.contents ?? "";
+
+    for (const name of SRC_AUGMENTATION_MODULES) {
+      expect(index).toContain(`import "./${name}";`);
+    }
+    for (const module of target.modules) {
+      expect(index).toContain(`import "./${module.outFile.replace(/\.d\.ts$/, "")}";`);
+    }
+    // `core-types` is type-only and carries no side effect, exactly as on the
+    // packaged path.
+    expect(index).not.toContain('import "./core-types";');
+  });
+
+  test("an added augmentation reaches the surface with no second edit", async () => {
+    const { fakeZip, cacheDir } = labelRefDocZip();
+    const extra = { path: "synthetic-augmentation.d.ts", contents: "export {};\n" };
+
+    const files = await buildVersionedSurfaceFiles(defold198Target(), {
+      augmentations: [...loadSrcAugmentations(), extra],
+      resolveOpts: { cacheDir, readZip: () => fakeZip, download: noDownload },
+    });
+
+    expect(files.find((f) => f.path === extra.path)?.contents).toBe(extra.contents);
+    expect(files.find((f) => f.path === "index.d.ts")?.contents).toContain(
+      'import "./synthetic-augmentation";',
+    );
+  });
+
+  test("excludeModules drops an augmentation by bare name", async () => {
+    const { fakeZip, cacheDir } = labelRefDocZip();
+
+    const files = await buildVersionedSurfaceFiles(defold198Target(), {
+      excludeModules: ["vmath-overloads"],
+      resolveOpts: { cacheDir, readZip: () => fakeZip, download: noDownload },
+    });
+
+    expect(files.map((f) => f.path)).not.toContain("vmath-overloads.d.ts");
+    expect(files.map((f) => f.path)).toContain("go-overloads.d.ts");
+    const index = files.find((f) => f.path === "index.d.ts")?.contents ?? "";
+    expect(index).not.toContain('import "./vmath-overloads";');
+    expect(index).toContain('import "./go-overloads";');
+  });
+
+  test("a ref-doc-sourced target carries them too", async () => {
+    const { fakeZip, cacheDir } = labelRefDocZip();
+
+    const files = await buildVersionedSurfaceFiles(defold198Target(), {
+      resolveOpts: { cacheDir, readZip: () => fakeZip, download: noDownload },
+    });
+
+    const paths = files.map((f) => f.path);
+    for (const name of SRC_AUGMENTATION_MODULES) {
+      expect(paths).toContain(`${name}.d.ts`);
+    }
+    expect(paths).toContain("core-types.d.ts");
+  });
+
+  test("no emitted declaration names a path outside the surface", async () => {
+    // `defold-1.13.0` spells its brand import as the in-repo
+    // `../../../src/core-types` and declares editor VM modules one directory
+    // down, so both the retarget and its depth rule are exercised.
+    const files = await buildVersionedSurfaceFiles(committedTarget("defold-1.13.0"));
+
+    let checked = 0;
+    let nested = 0;
+    for (const file of files) {
+      if (!file.path.endsWith(".d.ts")) continue;
+      expect(`${file.path} must not escape the surface: ${file.contents}`).not.toContain("../../");
+      if (file.path === "core-types.d.ts") continue;
+      const depth = file.path.split("/").length - 1;
+      const expected = depth === 0 ? "./core-types" : "../core-types";
+      for (const match of file.contents.matchAll(/from "([^"]+)"/g)) {
+        const specifier = match[1] ?? "";
+        if (!specifier.endsWith("core-types")) continue;
+        expect(`${file.path} -> ${specifier}`).toBe(`${file.path} -> ${expected}`);
+        checked++;
+        if (depth > 0) nested++;
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
+    expect(nested).toBeGreaterThan(0);
   });
 });
