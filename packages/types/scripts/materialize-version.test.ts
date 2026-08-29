@@ -17,10 +17,12 @@ import {
 } from "./materialize-version";
 import {
   type ApiTarget,
+  generateBuiltinMessagesDeclaration,
   generateModuleDeclaration,
   generateVersionIndex,
   loadApiTargets,
   loadSrcAugmentations,
+  MESSAGES_MANIFEST,
   resolveTargetModules,
   SRC_AUGMENTATION_MODULES,
 } from "./regen";
@@ -117,10 +119,17 @@ function multiKindTarget(): ApiTarget {
 }
 
 // The surface-root files a materialized surface carries beside its modules,
-// derived from the production augmentation set rather than restated here.
-const AUGMENTATION_PATHS = [
+// derived from the production sets rather than restated here.
+const SURFACE_ROOT_PATHS = [
   ...SRC_AUGMENTATION_MODULES.map((name) => `${name}.d.ts`),
   "core-types.d.ts",
+  MESSAGES_MANIFEST.outFile,
+];
+
+// The bare names the aggregate index imports after the modules, in emit order.
+const SURFACE_EXTRA_IMPORTS = [
+  MESSAGES_MANIFEST.outFile.replace(/\.d\.ts$/, ""),
+  ...SRC_AUGMENTATION_MODULES,
 ];
 
 describe("renderMaterializedKindIndex", () => {
@@ -201,7 +210,7 @@ describe("materializeVersionedSurface", () => {
     expect(label).toContain("get_text");
 
     expect(readFileSync(resolve(destDir, "index.d.ts"), "utf8")).toBe(
-      `${['import "./label";', ...SRC_AUGMENTATION_MODULES.map((n) => `import "./${n}";`)].join(
+      `${['import "./label";', ...SURFACE_EXTRA_IMPORTS.map((n) => `import "./${n}";`)].join(
         "\n",
       )}\n\nexport {};\n`,
     );
@@ -279,7 +288,7 @@ describe("buildVersionedSurfaceFiles", () => {
     const modules = await resolveTargetModules(target, resolveOpts);
     const expectedPaths = [
       ...modules.map((entry) => entry.outFile),
-      ...AUGMENTATION_PATHS,
+      ...SURFACE_ROOT_PATHS,
       "index.d.ts",
       "package.json",
     ];
@@ -294,7 +303,7 @@ describe("buildVersionedSurfaceFiles", () => {
 
     const versioned = modules.map((entry) => ({ ...entry, versionId: target.id }));
     expect(files.find((f) => f.path === "index.d.ts")?.contents).toBe(
-      generateVersionIndex(target.id, versioned, [...SRC_AUGMENTATION_MODULES]),
+      generateVersionIndex(target.id, versioned, SURFACE_EXTRA_IMPORTS),
     );
   });
 
@@ -362,7 +371,7 @@ describe("buildVersionedSurfaceFiles", () => {
     const modules = await resolveTargetModules(target, resolveOpts);
     expect(files.map((file) => file.path)).toEqual([
       ...modules.map((entry) => entry.outFile),
-      ...AUGMENTATION_PATHS,
+      ...SURFACE_ROOT_PATHS,
       "index.d.ts",
       "package.json",
     ]);
@@ -477,6 +486,36 @@ describe("buildVersionedSurfaceFiles src augmentation carry", () => {
       expect(paths).toContain(`${name}.d.ts`);
     }
     expect(paths).toContain("core-types.d.ts");
+  });
+
+  test("carries the generated builtin-messages module", async () => {
+    const files = await buildVersionedSurfaceFiles(committedTarget("defold-1.12.4"));
+
+    const file = files.find((f) => f.path === "builtin-messages.d.ts");
+    expect(file === undefined ? "absent" : "present").toBe("present");
+    expect(file?.contents).toBe(
+      generateBuiltinMessagesDeclaration(MESSAGES_MANIFEST, { importsFrom: "./core-types" }),
+    );
+  });
+
+  test("the aggregate index imports the generated builtin-messages module", async () => {
+    const files = await buildVersionedSurfaceFiles(committedTarget("defold-1.12.4"));
+    const index = files.find((f) => f.path === "index.d.ts")?.contents ?? "";
+
+    expect(index).toContain('import "./builtin-messages";');
+  });
+
+  test("excludeModules drops builtin-messages by bare name", async () => {
+    const { fakeZip, cacheDir } = labelRefDocZip();
+
+    const files = await buildVersionedSurfaceFiles(defold198Target(), {
+      excludeModules: ["builtin-messages"],
+      resolveOpts: { cacheDir, readZip: () => fakeZip, download: noDownload },
+    });
+
+    expect(files.map((f) => f.path)).not.toContain("builtin-messages.d.ts");
+    const index = files.find((f) => f.path === "index.d.ts")?.contents ?? "";
+    expect(index).not.toContain('import "./builtin-messages";');
   });
 
   test("no emitted declaration names a path outside the surface", async () => {
