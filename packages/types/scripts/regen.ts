@@ -551,6 +551,34 @@ const UNIVERSAL_EXTRA_IMPORTS: readonly string[] = [
   "../../src/vmath-overloads",
 ];
 
+const SRC_IMPORT_PREFIX = "../../src/";
+
+// The hand-authored `src/*` augmentations a complete script surface needs,
+// derived from the one declaration the generated kind index renders from so a
+// new augmentation reaches every materialization path with no second edit.
+export const SRC_AUGMENTATION_MODULES: readonly string[] = UNIVERSAL_EXTRA_IMPORTS.filter(
+  (specifier) => specifier.startsWith(SRC_IMPORT_PREFIX),
+).map((specifier) => specifier.slice(SRC_IMPORT_PREFIX.length));
+
+// Read those augmentations as surface-root files. Mirrors
+// `loadTargetEditorModules`: a missing file throws with its path rather than
+// filtering silently, so a renamed augmentation fails loud instead of vanishing
+// from every materialized surface.
+export function loadSrcAugmentations(
+  packageRoot: string = PACKAGE_ROOT,
+): { path: string; contents: string }[] {
+  return SRC_AUGMENTATION_MODULES.map((name) => {
+    const from = resolve(packageRoot, "src", `${name}.d.ts`);
+    let contents: string;
+    try {
+      contents = readFileSync(from, "utf8");
+    } catch {
+      throw new Error(`src augmentation "${name}" not found: ${from}`);
+    }
+    return { path: `${name}.d.ts`, contents };
+  });
+}
+
 const DEFAULT_FACTORY_MODULE = "../../src/lifecycle";
 
 export interface KindManifestEntry {
@@ -654,11 +682,17 @@ export function generateKindIndex(kind: string, target: ApiTarget = DEFAULT_TARG
 export function generateVersionIndex(
   versionId: string,
   manifest: readonly VersionedModuleManifestEntry[] = VERSIONED_MODULE_MANIFEST,
+  // Bare names appended after the module imports. A materialized surface carries
+  // the `src/*` augmentations beside its modules; the in-repo emit does not.
+  extraImports: readonly string[] = [],
 ): string {
-  const imports = manifest
-    .filter((entry) => entry.versionId === versionId && entry.editor !== true)
-    .map((entry) => entry.outFile.replace(/\.d\.ts$/, ""))
-    .sort()
+  const imports = [
+    ...manifest
+      .filter((entry) => entry.versionId === versionId && entry.editor !== true)
+      .map((entry) => entry.outFile.replace(/\.d\.ts$/, ""))
+      .sort(),
+    ...extraImports,
+  ]
     .map((module) => `import "./${module}";`)
     .join("\n");
   return `${imports}\n\nexport {};\n`;

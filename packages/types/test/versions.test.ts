@@ -78,7 +78,16 @@ function writeProofConfig(root: string, proof: string, surfaceId = "defold-1.9.8
     `${JSON.stringify(
       {
         extends: "../../../tsconfig.json",
-        compilerOptions: { noEmit: true, typeRoots: ["versions"], types: [surfaceId] },
+        compilerOptions: {
+          noEmit: true,
+          typeRoots: ["versions"],
+          types: [surfaceId],
+          // A materialized surface reaches its brand types through the
+          // installed package specifier, exactly as a real consumer does; the
+          // proof root is not under a node_modules that carries the link, so
+          // map it to the package this test is part of.
+          paths: { "@defold-typescript/types/*": ["../src/*"] },
+        },
         include: ["proof.ts"],
       },
       null,
@@ -154,6 +163,46 @@ describe("versioned API surface — consumer tsconfig proof", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
       rmSync(cacheDir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("versioned API surface — src augmentations reach the consumer", () => {
+  test("augmentation-dependent call sites compile against a materialized surface", async () => {
+    const target = loadApiTargets().find((candidate) => candidate.id === "defold-1.12.4");
+    if (!target) throw new Error("no defold-1.12.4 target");
+    const root = mkdtempSync(resolve(PACKAGE_ROOT, "mat-proof-"));
+    try {
+      await materializeVersionedSurface(target, {
+        destDir: resolve(root, "versions", "defold-1.12.4"),
+      });
+      const tsconfigPath = writeProofConfig(
+        root,
+        [
+          "export {};",
+          // vmath-overloads: the generic clamp preserves its input type.
+          "const _clamped: number = vmath.clamp(1, 0, 2);",
+          // go-overloads + scene-addresses: the property overload set.
+          'const _pos = go.get("/player", "position");',
+          // engine-globals: the hash brand round-trips.
+          'const _h: Hash = hash("score");',
+          "const _hex: string = hash_to_hex(_h);",
+          "void _clamped;",
+          "void _pos;",
+          "void _hex;",
+          "",
+        ].join("\n"),
+        "defold-1.12.4",
+      );
+      const { exitCode, output } = typecheck(tsconfigPath);
+      if (exitCode !== 0) {
+        throw new Error(
+          `defold-1.12.4 surface did not carry the src augmentations to the consumer:\n${output}`,
+        );
+      }
+      expect(exitCode).toBe(0);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
     }
   });
 });
