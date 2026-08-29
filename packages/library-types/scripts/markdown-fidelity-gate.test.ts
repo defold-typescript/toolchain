@@ -1417,7 +1417,14 @@ for (const record of LIBRARY_RECORDS) describeLibraryDecisions(record);
  * severed, the authored fork — it was compared against. Derived from the records
  * themselves so a new library extends the coverage by existing. */
 function verdictFixturePaths(): string[] {
-  const paths = new Set<string>([AUTHORED_SNAPSHOT, "fixtures/markdown/orthographic.camera.md"]);
+  const paths = new Set<string>([
+    AUTHORED_SNAPSHOT,
+    "fixtures/markdown/orthographic.camera.md",
+    // checkpoint ships no `LibraryRecord` — it was authored from birth, so the
+    // loop below never reaches it — but the re-measurement block below reads its
+    // README, so the pin has to cover it explicitly.
+    "fixtures/markdown/checkpoint.checkpoint.md",
+  ]);
   for (const record of LIBRARY_RECORDS) {
     for (const decision of record.decisions) {
       const moduleId = `${record.prefix}${decision.module}`;
@@ -1590,6 +1597,8 @@ const VENDORED_FIXTURE_HASHES: Record<string, string> = {
     "0fd171fbc8b3d7c04457665640ee46a902bbc8aba63c68789a473e89f1cb0451",
   "fixtures/markdown/monarch.transitions.gui.md":
     "7eab84dbe50480492be688804481d9ad322c281579816eb95364c0521e75e8e8",
+  "fixtures/markdown/checkpoint.checkpoint.md":
+    "77ee9144b452d676e103baf1c043cde40ee1969d2dab063453c43362a71be989",
   "fixtures/markdown/orthographic.camera.md":
     "688407034ede0cc4b3ddd6d79609d0e965123c6781724828ac9ced401c6b9995",
   "fixtures/markdown/persist.persist.md":
@@ -2003,15 +2012,28 @@ describe("yagames doc-dialect evidence at tag 0.19.0", () => {
       ),
     );
 
-  // The refusal is a dialect gap, not an absent API doc: the snapshot carries 70
-  // backticked `#### <recv>.<fn>(...)` headings (66 `yagames.`, 4 `sitelock.`),
-  // 47 `**Parameters:**` and 22 `**Returns:**` markers, and 76 typed bullets in
-  // the `` `x` <kbd>type</kbd> `` form — never the `` `x` (type) `` spelling
-  // `TYPED_BULLET` accepts, so the parser reads zero of them. Those figures are
-  // properties of the vendored fixture rather than of the parser, and the digest
-  // pin above is what holds them; the record's header comment reads the same.
-  test("the front-end refuses the snapshot", () => {
+  // The refusal is a dialect gap, not an absent API doc — but it is a
+  // *heading-level* gap. The snapshot documents all 70 signatures as backticked
+  // `#### <recv>.<fn>(...)` headings (66 `yagames.`, 4 `sitelock.`), and h4 sits
+  // outside `HEADER`'s `#{2,3}` range, so `sections()` finds nothing and the
+  // `elements.length === 0` throw fires before any row is read. The marker
+  // spellings this fixture uses — 47 `**Parameters:**`, 22 `**Returns:**` — are
+  // recognised by the front-end, so they no longer bear on the refusal; neither
+  // do its 76 bullets in the `` `x` <kbd>type</kbd> `` form, which the parser
+  // never reaches. Those figures are properties of the vendored fixture rather
+  // than of the parser, and the digest pin above is what holds them.
+  test("the front-end refuses the snapshot, and on the heading level", () => {
     expect(() => parseMarkdownApi(readme(), "yagames.yagames")).toThrow(/signature/);
+    // Load-bearing for the reason above: were any signature to sit at `##`/`###`,
+    // the widened marker rule would read its list and this refusal would change
+    // kind without the record noticing.
+    const inRange = /^#{2,3}\s+(?:function\s+)?[A-Za-z_]\w*\.[A-Za-z_]\w*\(.*\)\s*$/;
+    expect(
+      readme()
+        .split("\n")
+        .filter((line) => inRange.test(line)),
+    ).toEqual([]);
+    expect(headings()).toHaveLength(70);
   });
 
   // Exact rather than a count, because this is also what gates the sticky-banner
@@ -2063,6 +2085,79 @@ describe("yagames doc-dialect evidence at tag 0.19.0", () => {
     expect(classificationModule("yagames.yagames", severedFor(YAGAMES, "yagames"))).toBe(
       "yagames.yagames",
     );
+  });
+});
+
+describe("checkpoint markdown re-measurement at pin e4268ff", () => {
+  const README = "fixtures/markdown/checkpoint.checkpoint.md";
+  const readme = () => readFileSync(join(PACKAGE_ROOT, README), "utf8");
+  const parse = () => parseMarkdownApi(readme(), "checkpoint.checkpoint");
+
+  // `authored-add-checkpoint` measured this README against the narrow front-end
+  // and got 4 elements, every one with `parameters: []` and `returnvalues: []` —
+  // silently, because the uppercase-only markers matched nothing. The widened
+  // front-end reads the markers and the `path: string` rows, so that silent shape
+  // is gone; what it now hits is a row dialect this repo does not accept.
+  test("the widened front-end reads the headings the narrow one already saw", () => {
+    const HEADING = /^#{2,3}\s+(?:function\s+)?([A-Za-z_]\w*\.[A-Za-z_]\w*)\(.*\)\s*$/;
+    const named = readme()
+      .split("\n")
+      .map((line) => line.match(HEADING))
+      .filter((match): match is RegExpMatchArray => match !== null)
+      .map((match) => match[1] as string);
+    expect(named).toEqual([
+      "checkpoint.read",
+      "checkpoint.write",
+      "checkpoint.exists",
+      "checkpoint.list",
+    ]);
+  });
+
+  test("the refusal has moved to checkpoint's nameless return rows", () => {
+    // Not the `**PARAMETERS**` marker refusal and not the no-signature refusal:
+    // the parser gets through the heading, the marker and the parameter list, and
+    // stops on `* `boolean` Success or failure.` — a backticked *type* with no
+    // name, which is neither the `(type)` form nor the `name: type` form. Naming
+    // that slot would be invention, so the row stays unresolvable by design.
+    expect(parse).toThrow(/checkpoint\.read/);
+    expect(parse).toThrow(/\* `boolean` Success or failure\./);
+    expect(parse).not.toThrow(/signature/);
+    expect(parse).not.toThrow(/marker but no readable row/);
+  });
+
+  // The recorded authored-lane reasons the widening does not touch.
+  test("the two constants stay outside anything the front-end could emit", () => {
+    // Both are documented only inside the Minimal API Reference's ```lua fence,
+    // and the front-end lifts an element from a `##`/`###` signature heading
+    // alone — it emits `FUNCTION` and nothing else, so no README dialect reaches
+    // them. The authored declaration is the only source that has them.
+    for (const name of ["project_title", "project_save_path"]) {
+      expect(readme()).toContain(`checkpoint.${name}`);
+      expect(readme()).not.toMatch(new RegExp(`^#{2,3}\\s+checkpoint\\.${name}\\b`, "m"));
+      expect(
+        readFileSync(join(PACKAGE_ROOT, "fixtures/authored/checkpoint.checkpoint.d.ts"), "utf8"),
+      ).toContain(`const ${name}: string;`);
+    }
+  });
+
+  test("`read`'s documented returns still disagree with the authored declaration", () => {
+    // The README gives `read` the same `boolean` / `string` pair it gives `write`,
+    // but checkpoint returns the *loaded value* on success — which is why the
+    // authored declaration carries a `T` the prose has no way to express. A README
+    // that says the wrong thing cannot become the source, however well it parses.
+    expect(readme()).toContain("local data, err = checkpoint.read(path)");
+    expect(
+      readFileSync(join(PACKAGE_ROOT, "fixtures/authored/checkpoint.checkpoint.d.ts"), "utf8"),
+    ).toContain(
+      "function read<T = unknown>(path: string): LuaMultiReturn<[T | false, string | undefined]>;",
+    );
+  });
+
+  test("the README is pin-covered, so a silent re-vendor reds", () => {
+    expect(verdictFixturePaths()).toContain(README);
+    expect(VENDORED_FIXTURE_HASHES[README]).toBeDefined();
+    // Upstream, not authored-lane: this digest is never re-baselined.
+    expect(driftRemedy(README).digestMayBeUpdated).toBe(false);
   });
 });
 

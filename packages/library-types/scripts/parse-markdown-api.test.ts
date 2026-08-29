@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import {
@@ -458,5 +459,156 @@ describe("parseMarkdownApi loud-fails on an unresolvable row", () => {
       "",
     ].join("\n");
     expect(() => parseMarkdownApi(mixed)).toThrow(/prefix/);
+  });
+});
+
+/** Name, ordered slots, their types and their optionality, as one readable line
+ * per element — the projection a dialect widening must leave untouched. */
+function signature(e: MarkdownElement): string {
+  const slot = (p: MarkdownParam) => `${p.name}${p.is_optional ? "?" : ""}:${p.types.join("|")}`;
+  const returns = e.returnvalues.map(slot).join(", ");
+  return `${e.name}(${e.parameters.map(slot).join(", ")}) -> ${returns.length > 0 ? returns : "()"}`;
+}
+
+describe("the marker and row dialect widening leaves the orthographic parse unchanged", () => {
+  const doc = parseMarkdownApi(FIXTURE);
+
+  test("every element keeps its name, order, slot names, types and optionality", () => {
+    expect(doc.elements.map(signature)).toEqual([
+      "camera.get_view(camera_id:hash|url|nil) -> view:matrix",
+      "camera.get_viewport(camera_id:hash|url|nil) -> x:number, y:number, w:number, h:number",
+      "camera.get_projection(camera_id:hash|url|nil) -> projection:matrix",
+      "camera.shake(camera_id:hash|url, intensity?:number, duration?:number, direction?:hash, cb?:function) -> ()",
+      "camera.stop_shaking(camera_id:hash|url) -> ()",
+      "camera.recoil(camera_id:hash|url, offset:vector3, duration?:number) -> ()",
+      "camera.get_offset(camera_id:hash|url|nil) -> offset:vector3",
+      "camera.get_zoom(camera_id:hash|url|nil) -> zoom:number",
+      "camera.set_zoom(camera_id:hash|url|nil, zoom:number) -> ()",
+      "camera.get_automatic_zoom() -> auto_zoom:boolean",
+      "camera.set_automatic_zoom(enabled:boolean) -> ()",
+      "camera.follow(camera_id:hash|url|nil, targets:hash|url|table, options?:table) -> ()",
+      "camera.follow_offset(camera_id:hash|url|nil, offset:vector3) -> ()",
+      "camera.unfollow(camera_id:hash|url|nil) -> ()",
+      "camera.deadzone(camera_id:hash|url|nil, left:number, top:number, right:number, bottom:number) -> ()",
+      "camera.bounds(camera_id:hash|url|nil, left:number, top:number, right:number, bottom:number) -> ()",
+      "camera.screen_to_world(camera_id:hash|url|nil, screen:vector3) -> world_coords:vector3",
+      "camera.screen_to_world_bounds(camera_id:hash|url|nil) -> bounds:vector4",
+      "camera.world_to_screen(camera_id:hash|url|nil, world:vector3) -> screen_coords:vector3",
+      "camera.get_window_size() -> width:number, height:number",
+      "camera.get_display_size() -> width:number, height:number",
+    ]);
+  });
+
+  test("the whole parsed doc, slot prose included, is byte-identical", () => {
+    // The signature projection above is deliberately lossy — it drops every
+    // slot's `doc` and the module description. This digest closes that gap: it
+    // moves for any parse change at all, so a widening that rewords a slot's
+    // prose cannot pass while the readable projection still matches.
+    const digest = createHash("sha256").update(JSON.stringify(doc)).digest("hex");
+    expect(digest).toBe("8e22469c8e386f0b3d5edb5923d7d77afa830ececdffb80c6940c94bc9751143");
+  });
+});
+
+describe("the marker dialect accepts every spelling the corpus vendors", () => {
+  const withMarker = (marker: string) =>
+    [
+      "### mod.load(path)",
+      "Load a file.",
+      "",
+      marker,
+      "* `path: string` - the path to load",
+      "",
+    ].join("\n");
+
+  test("a backticked `name: type` row under `**Parameters**` reads as a typed slot", () => {
+    const doc = parseMarkdownApi(withMarker("**Parameters**"));
+    expect(doc.elements).toHaveLength(1);
+    expect(doc.elements[0]?.parameters).toEqual([
+      { name: "path", doc: "the path to load", types: ["string"] },
+    ]);
+  });
+
+  test("the colon-suffixed and lowercase spellings parse identically", () => {
+    const bare = parseMarkdownApi(withMarker("**Parameters**"));
+    expect(parseMarkdownApi(withMarker("**Parameters:**"))).toEqual(bare);
+    expect(parseMarkdownApi(withMarker("**parameters**"))).toEqual(bare);
+    expect(parseMarkdownApi(withMarker("**PARAMETERS**"))).toEqual(bare);
+  });
+
+  test("the mixed-case return spellings are recognised too", () => {
+    const returns = (marker: string) =>
+      parseMarkdownApi(["### mod.get()", marker, "* `value: number` - the value", ""].join("\n"))
+        .elements[0]?.returnvalues;
+    expect(returns("**Returns:**")).toEqual([
+      { name: "value", doc: "the value", types: ["number"] },
+    ]);
+    expect(returns("**Return**")).toEqual(returns("**Returns:**"));
+    expect(returns("**RETURNS**")).toEqual(returns("**Returns:**"));
+  });
+
+  test("both row forms coexist in one section, neither shadowing the other", () => {
+    const doc = parseMarkdownApi(
+      [
+        "### mod.fn(a, b)",
+        "**PARAMETERS**",
+        "* `a` (number) - the parenthesised arm",
+        "* `b: string` - the colon arm",
+        "",
+      ].join("\n"),
+    );
+    expect(doc.elements[0]?.parameters).toEqual([
+      { name: "a", doc: "the parenthesised arm", types: ["number"] },
+      { name: "b", doc: "the colon arm", types: ["string"] },
+    ]);
+  });
+
+  test("a colon row's union splits through the shared splitTypes", () => {
+    const doc = parseMarkdownApi(
+      ["### mod.fn(a)", "**Parameters:**", "* `a: string|nil` - maybe a string", ""].join("\n"),
+    );
+    expect(doc.elements[0]?.parameters[0]?.types).toEqual(["string", "nil"]);
+  });
+
+  test("a bracketed header argument still marks a colon row optional", () => {
+    const doc = parseMarkdownApi(
+      ["### mod.fn([a])", "**Parameters:**", "* `a: number` - maybe", ""].join("\n"),
+    );
+    expect(doc.elements[0]?.parameters[0]?.is_optional).toBe("True");
+  });
+});
+
+describe("parseMarkdownApi loud-fails on a marker whose list it cannot read", () => {
+  const dashRows = [
+    "### mod.get(x)",
+    "Get a thing.",
+    "",
+    "**RETURN**",
+    "- value (number)",
+    "",
+  ].join("\n");
+
+  test("throws naming the function and the offending row", () => {
+    expect(() => parseMarkdownApi(dashRows)).toThrow(/mod\.get/);
+    expect(() => parseMarkdownApi(dashRows)).toThrow(/- value \(number\)/);
+  });
+
+  test("the refusal is distinguishable from the no-signature refusal", () => {
+    // The empty-document refusal matches /signature/ and several recorded
+    // verdicts key on that matcher; this one must not be swallowed by it.
+    expect(() => parseMarkdownApi("# Just prose\n")).toThrow(/signature/);
+    expect(() => parseMarkdownApi(dashRows)).not.toThrow(/signature/);
+  });
+
+  test("a marker followed by prose alone throws the same refusal", () => {
+    const proseOnly = ["### mod.get(x)", "**PARAMETERS**", "See the table below.", ""].join("\n");
+    expect(() => parseMarkdownApi(proseOnly)).toThrow(/mod\.get/);
+    expect(() => parseMarkdownApi(proseOnly)).not.toThrow(/signature/);
+  });
+
+  test("a signature documented with no marker at all stays legal", () => {
+    // rendy documents all 11 of its functions this way; refusing on slot count
+    // alone rather than on "marker seen, zero slots" would red 30 sections.
+    const markerless = ["### mod.tick()", "Advance one frame.", ""].join("\n");
+    expect(parseMarkdownApi(markerless).elements[0]?.parameters).toEqual([]);
   });
 });
