@@ -237,7 +237,7 @@ Should be called on final, where druid instance is destroyed.
 
 </div>
 
-## Types
+## druid_back_handler
 
 ### \`druid_back_handler.init(callback?: ((...args: any[]) => unknown) | undefined, params?: unknown | undefined)\`
 
@@ -267,6 +267,8 @@ fun(self: druid.back_handler, params: any?) Trigger on back handler action
 Custom args to pass in the callback
 
 </div>
+
+## druid_blocker
 
 ### \`druid_blocker.init(node: Opaque<"node"> | string)\`
 
@@ -316,6 +318,8 @@ The node that will block input
 
 </div>
 
+## druid_button_style
+
 ### \`druid_button_style.LONGTAP_TIME: number | undefined\`
 
 <div class="api-symbol-body">
@@ -351,6 +355,8 @@ Time between double taps. Default: 0.4
 ### \`druid_button_style.on_mouse_hover: ((self: druid_button, node: Opaque<"node">, hover_state: boolean) => void) | undefined\`
 
 ### \`druid_button_style.on_set_enabled: ((self: druid_button, node: Opaque<"node">, enabled_state: boolean | undefined) => void) | undefined\`
+
+## druid_button
 
 ### \`druid_button.init(node_or_node_id: Opaque<"node"> | string, callback?: (() => void) | undefined, custom_args?: unknown | undefined, anim_node?: Opaque<"node"> | string | undefined)\`
 
@@ -722,6 +728,8 @@ Style for this button
 
 </div>
 
+## druid_drag_style
+
 ### \`druid_drag_style.DRAG_DEADZONE: number\`
 
 <div class="api-symbol-body">
@@ -737,6 +745,8 @@ Distance in pixels to start dragging. Default: 10
 If screen aspect ratio affects on drag values. Default: false
 
 </div>
+
+## druid_drag
 
 ### \`druid_drag.init(node_or_node_id: Opaque<"node"> | string, on_drag_callback: (self: unknown, dx: number, dy: number, x: number, y: number, touch: touch) => void)\`
 
@@ -1023,6 +1033,8 @@ The touch start position
 
 </div>
 
+## druid_hover_style
+
 ### \`druid_hover_style.ON_HOVER_CURSOR: string | number | undefined\`
 
 <div class="api-symbol-body">
@@ -1038,6 +1050,8 @@ Mouse hover style on node hover
 Mouse hover style on node mouse hover
 
 </div>
+
+## druid_hover
 
 ### \`druid_hover.init(node: Opaque<"node">, on_hover_callback: (...args: any[]) => unknown, on_mouse_hover: (...args: any[]) => unknown)\`
 
@@ -1179,6 +1193,8 @@ Click zone of the hover component
 
 </div>
 
+## druid_scroll_style
+
 ### \`druid_scroll_style.FRICT: number | undefined\`
 
 <div class="api-symbol-body">
@@ -1274,6 +1290,8 @@ If true, invert direction for touchpad and mouse wheel scroll. Default: false
 If true, wheel will add inertion to scroll. Direct set position otherwise.. Default: false
 
 </div>
+
+## druid_scroll
 
 ### \`druid_scroll.init(view_node: string | Opaque<"node">, content_node: string | Opaque<"node">)\`
 
@@ -1759,6 +1777,8 @@ Component style parameters
 
 </div>
 
+## druid_grid_style
+
 ### \`druid_grid_style.IS_DYNAMIC_NODE_POSES: boolean | undefined\`
 
 <div class="api-symbol-body">
@@ -1774,6 +1794,8 @@ If true, always center grid content as grid pivot sets. Default: false
 If true, always align last row of the grid as grid pivot sets. Default: false
 
 </div>
+
+## druid_grid
 
 ### \`druid_grid.init(parent: string | Opaque<"node">, element: Opaque<"node">, in_row?: number | undefined)\`
 
@@ -2234,6 +2256,8 @@ Style
 
 </div>
 
+## druid_text_style
+
 ### \`druid_text_style.TRIM_POSTFIX: string | undefined\`
 
 <div class="api-symbol-body">
@@ -2265,6 +2289,8 @@ Amount of iterations for text adjust by height. Default: 20
 Scale step on each height adjust step. Default: 0.02
 
 </div>
+
+## druid_text
 
 ### \`druid_text.init(node: string | Opaque<"node">, value?: string | undefined, adjust_type?: druid_text_adjust_type | undefined)\`
 
@@ -2540,6 +2566,8 @@ The current scale of the text
 
 </div>
 
+## druid_component_meta
+
 ### \`druid_component_meta.template: string\`
 
 ### \`druid_component_meta.context: LuaTable\`
@@ -2558,6 +2586,8 @@ The current scale of the text
 
 ### \`druid_component_meta.instance_class: LuaTable\`
 
+## druid_component_component
+
 ### \`druid_component_component.name: string\`
 
 ### \`druid_component_component.input_priority: number\`
@@ -2567,6 +2597,8 @@ The current scale of the text
 ### \`druid_component_component._is_input_priority_changed: boolean\`
 
 ### \`druid_component_component._uid: number\`
+
+## druid_component
 
 ### \`druid_component.set_style<T>(self: T, druid_style?: LuaTable | undefined): T\`
 
@@ -2743,6 +2775,8 @@ Get parent component
 
 </div>
 
+## druid_rich_input
+
 ### \`druid_rich_input.init(template: string, nodes: LuaTable)\`
 
 <div class="api-symbol-body">
@@ -2878,6 +2912,8 @@ The position of the cursor
 
 </div>
 
+## druid_rich_text_settings
+
 ### \`druid_rich_text_settings.parent: Opaque<"node">\`
 
 ### \`druid_rich_text_settings.size: number\`
@@ -2918,6 +2954,8 @@ The position of the cursor
 
 ### \`druid_rich_text_settings.height: number\`
 
+## druid_rich_text_word
+
 ### \`druid_rich_text_word.node: Opaque<"node">\`
 
 ### \`druid_rich_text_word.relative_scale: number\`
@@ -2956,6 +2994,8 @@ The position of the cursor
 
 ### \`druid_rich_text_word.tags: LuaTable<string, boolean>\`
 
+## druid_rich_text_word_image
+
 ### \`druid_rich_text_word_image.texture: string\`
 
 ### \`druid_rich_text_word_image.anim: string\`
@@ -2964,15 +3004,21 @@ The position of the cursor
 
 ### \`druid_rich_text_word_image.height: number\`
 
+## druid_rich_text_style
+
 ### \`druid_rich_text_style.ADJUST_STEPS: number\`
 
 ### \`druid_rich_text_style.ADJUST_SCALE_DELTA: number\`
+
+## druid_rich_text_lines_metrics
 
 ### \`druid_rich_text_lines_metrics.text_width: number\`
 
 ### \`druid_rich_text_lines_metrics.text_height: number\`
 
 ### \`druid_rich_text_lines_metrics.lines: LuaTable<number, druid_rich_text_metrics>\`
+
+## druid_rich_text_metrics
 
 ### \`druid_rich_text_metrics.width: number\`
 
@@ -2983,6 +3029,8 @@ The position of the cursor
 ### \`druid_rich_text_metrics.offset_y: number | undefined\`
 
 ### \`druid_rich_text_metrics.node_size: Vector3 | undefined\`
+
+## druid_rich_text
 
 ### \`druid_rich_text.init(text_node: Opaque<"node"> | string, value?: string | undefined)\`
 
@@ -3179,6 +3227,8 @@ The text prefab node
 
 </div>
 
+## druid_container_style
+
 ### \`druid_container_style.DRAGGABLE_CORNER_SIZE: Vector3\`
 
 <div class="api-symbol-body">
@@ -3194,6 +3244,8 @@ Size of box node for debug draggable corners
 Color of debug draggable corners
 
 </div>
+
+## druid_container
 
 ### \`druid_container.init(node: Opaque<"node">, mode: string, callback?: ((self: druid_container, size: Vector3) => void) | undefined)\`
 
@@ -3590,6 +3642,8 @@ The draggable corners
 
 </div>
 
+## druid_data_list
+
 ### \`druid_data_list.init(scroll: druid_scroll, grid: druid_grid, create_function: (...args: any[]) => unknown)\`
 
 <div class="api-symbol-body">
@@ -3824,6 +3878,8 @@ The scroll progress
 
 </div>
 
+## druid_hotkey_style
+
 ### \`druid_hotkey_style.MODIFICATORS: string[] | Hash[]\`
 
 <div class="api-symbol-body">
@@ -3839,6 +3895,8 @@ The list of action_id as hotkey modificators
 Time in seconds to keep modificator active after release
 
 </div>
+
+## druid_hotkey
 
 ### \`druid_hotkey.init(keys: string[] | string, callback: (...args: any[]) => unknown, callback_argument?: unknown | undefined)\`
 
@@ -3929,6 +3987,8 @@ The style of the hotkey component
 
 </div>
 
+## druid_input_style
+
 ### \`druid_input_style.MASK_DEFAULT_CHAR: string\`
 
 <div class="api-symbol-body">
@@ -3984,6 +4044,8 @@ Callback on input field unselecting
 Callback on wrong user input
 
 </div>
+
+## druid_input
 
 ### \`druid_input.init(click_node: Opaque<"node">, text_node: Opaque<"node"> | druid_text, keyboard_type?: Opaque<"constant"> | undefined)\`
 
@@ -4204,6 +4266,8 @@ The style of the input component
 
 </div>
 
+## druid_lang_text
+
 ### \`druid_lang_text.init(node: string | Opaque<"node">, locale_id?: string | undefined, adjust_type?: string | undefined)\`
 
 <div class="api-symbol-body">
@@ -4305,11 +4369,15 @@ fun(self: druid.lang_text) The event triggered when the text is changed
 
 </div>
 
+## druid_layout_row_data
+
 ### \`druid_layout_row_data.width: number\`
 
 ### \`druid_layout_row_data.height: number\`
 
 ### \`druid_layout_row_data.count: number\`
+
+## druid_layout_rows_data
 
 ### \`druid_layout_rows_data.total_width: number\`
 
@@ -4320,6 +4388,8 @@ fun(self: druid.lang_text) The event triggered when the text is changed
 ### \`druid_layout_rows_data.nodes_height: LuaTable<Opaque<"node">, number>\`
 
 ### \`druid_layout_rows_data.rows: druid_layout_row_data[]\`
+
+## druid_layout
 
 ### \`druid_layout.init(node_or_node_id: Opaque<"node"> | string, layout_type: druid_layout_type)\`
 
@@ -4670,6 +4740,8 @@ fun(self: druid.layout, size: vector3) The event triggered when the size of the 
 
 </div>
 
+## druid_progress_style
+
 ### \`druid_progress_style.SPEED: number | undefined\`
 
 <div class="api-symbol-body">
@@ -4685,6 +4757,8 @@ Progress bar fill rate. Higher value means faster fill. Default: 5
 Minimum step to fill progress bar. Default: 0.005
 
 </div>
+
+## druid_progress
 
 ### \`druid_progress.init(node: string | Opaque<"node">, key: string, init_value?: number | undefined)\`
 
@@ -4850,6 +4924,8 @@ Property for scaling the progress bar
 
 </div>
 
+## druid_slider
+
 ### \`druid_slider.init(node: Opaque<"node">, end_pos: Vector3, callback?: ((...args: any[]) => unknown) | undefined)\`
 
 <div class="api-symbol-body">
@@ -4985,6 +5061,8 @@ The style of the slider
 
 </div>
 
+## druid_swipe_style
+
 ### \`druid_swipe_style.SWIPE_TIME: number | undefined\`
 
 <div class="api-symbol-body">
@@ -5008,6 +5086,8 @@ Minimum distance for swipe trigger. Default: 50
 If true, trigger on swipe moving, not only release action. Default: false
 
 </div>
+
+## druid_swipe
 
 ### \`druid_swipe.init(node_or_node_id: Opaque<"node"> | string, on_swipe_callback: (...args: any[]) => unknown)\`
 
@@ -5096,6 +5176,8 @@ The style of the swipe
 The click zone of the swipe
 
 </div>
+
+## druid_timer
 
 ### \`druid_timer.init(node: Opaque<"node">, seconds_from?: number | undefined, seconds_to?: number | undefined, callback?: ((...args: any[]) => unknown) | undefined)\`
 
@@ -5223,6 +5305,8 @@ True if the timer is on
 
 </div>
 
+## druid_system_animation_data
+
 ### \`druid_system_animation_data.frames: LuaTable<number, LuaTable<string, number>>\`
 
 <div class="api-symbol-body">
@@ -5279,6 +5363,8 @@ Vector with UV coordinates and size
 
 </div>
 
+## druid_logger
+
 ### \`druid_logger.trace: (message: string, context: unknown) => void\`
 
 ### \`druid_logger.debug: (message: string, context: unknown) => void\`
@@ -5288,6 +5374,8 @@ Vector with UV coordinates and size
 ### \`druid_logger.warn: (message: string, context: unknown) => void\`
 
 ### \`druid_logger.error: (message: string, context: unknown) => void\`
+
+## GUITextMetrics
 
 ### \`GUITextMetrics.width: number\`
 
@@ -5300,6 +5388,8 @@ Vector with UV coordinates and size
 ### \`GUITextMetrics.offset_x: number\`
 
 ### \`GUITextMetrics.offset_y: number\`
+
+## utf8
 
 ### \`utf8.len: (s: string) => number\`
 
@@ -5332,6 +5422,8 @@ Vector with UV coordinates and size
 ### \`utf8.upper: () => void\`
 
 ### \`utf8.rep: () => void\`
+
+## action
 
 ### \`action.value: number\`
 
@@ -5453,6 +5545,8 @@ The text input.
 
 </div>
 
+## touch
+
 ### \`touch.id: number\`
 
 <div class="api-symbol-body">
@@ -5540,6 +5634,8 @@ Accelerometer y value (if present).
 Accelerometer z value (if present).
 
 </div>
+
+## druid_instance
 
 ### \`druid_instance._can_use_input_component(component: druid_component): boolean\`
 

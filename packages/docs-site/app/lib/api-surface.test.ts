@@ -23,6 +23,7 @@ import {
   exampleMarkdownFor,
   functionOverviewCards,
   groupFunctionSymbols,
+  groupTypeSymbols,
   mapDocType,
   outerCallArity,
   windowedBadgeCategory,
@@ -2500,6 +2501,55 @@ describe("groupFunctionSymbols", () => {
 
   test("yields an empty array for empty input", () => {
     expect(groupFunctionSymbols([])).toEqual([]);
+  });
+});
+
+describe("groupTypeSymbols", () => {
+  function typeSymbol(name: string): ApiSymbol {
+    return {
+      kind: "type",
+      name,
+      signature: name,
+      docMarkdown: "",
+      parameters: [],
+      returnValues: [],
+    };
+  }
+
+  test("returns one group per owning shape, labeled bare, preserving both orders", () => {
+    const groups = groupTypeSymbols([
+      typeSymbol("ShowOptions.visible"),
+      typeSymbol("Transition.easing"),
+      typeSymbol("ShowOptions.sequential"),
+    ]);
+    expect(groups).toEqual([
+      {
+        label: "ShowOptions",
+        symbols: [typeSymbol("ShowOptions.visible"), typeSymbol("ShowOptions.sequential")],
+      },
+      { label: "Transition", symbols: [typeSymbol("Transition.easing")] },
+    ]);
+  });
+
+  test("splits at the first dot, so a dotted member stays with its shape", () => {
+    const groups = groupTypeSymbols([typeSymbol("Config.window.width")]);
+    expect(groups).toEqual([{ label: "Config", symbols: [typeSymbol("Config.window.width")] }]);
+  });
+
+  test("collects dotless names into a single trailing Types group", () => {
+    const groups = groupTypeSymbols([
+      typeSymbol("loose"),
+      typeSymbol("Shape.member"),
+      typeSymbol("other"),
+    ]);
+    expect(groups).toEqual([
+      { label: "Shape", symbols: [typeSymbol("Shape.member")] },
+      { label: "Types", symbols: [typeSymbol("loose"), typeSymbol("other")] },
+    ]);
+  });
+
+  test("yields an empty array for empty input", () => {
+    expect(groupTypeSymbols([])).toEqual([]);
   });
 });
 
