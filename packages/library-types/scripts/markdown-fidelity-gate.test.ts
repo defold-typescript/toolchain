@@ -2096,23 +2096,27 @@ describe("checkpoint markdown re-measurement at pin e4268ff", () => {
   // `authored-add-checkpoint` measured this README against the narrow front-end
   // and got 4 elements, every one with `parameters: []` and `returnvalues: []` —
   // silently, because the uppercase-only markers matched nothing. The widened
-  // front-end reads the markers and the `path: string` rows, so that silent shape
-  // is gone; what it now hits is a row dialect this repo does not accept.
-  test("the widened front-end reads the headings the narrow one already saw", () => {
-    const HEADING = /^#{2,3}\s+(?:function\s+)?([A-Za-z_]\w*\.[A-Za-z_]\w*)\(.*\)\s*$/;
-    const named = readme()
-      .split("\n")
-      .map((line) => line.match(HEADING))
-      .filter((match): match is RegExpMatchArray => match !== null)
-      .map((match) => match[1] as string);
-    expect(named).toEqual([
-      "checkpoint.read",
-      "checkpoint.write",
-      "checkpoint.exists",
-      "checkpoint.list",
-    ]);
-  });
-
+  // front-end reads the mixed-case markers and the backticked `path: string`
+  // rows, and then refuses `read`'s nameless `` * `boolean` `` return row: a
+  // dialect this repo does not accept. That refusal is the one thing below a
+  // production call can move, and the test after this comment is where it lives.
+  //
+  // Three facts the authored-lane record carries are *not* assertions here. The
+  // four `###` signatures the narrow front-end already saw, the two constants
+  // documented only inside the Minimal API Reference's ```lua fence, and the
+  // README's `boolean` / `string` pair for `read` — wrong, because checkpoint
+  // returns the loaded value and the authored declaration carries a `T` the
+  // prose cannot express — are all three
+  // properties of the vendored README rather than of the parser.
+  // The digest pin asserted below is what holds them; no `expect` in this block
+  // does, because an `expect` over a fixture reads as parser coverage it is not.
+  //
+  // Their production-coupled counterparts live elsewhere:
+  // `parse-markdown-api.test.ts:59` asserts the front-end emits `FUNCTION` and
+  // nothing else over a live target, and the `checkpoint.checkpoint type claims
+  // upstream states only in its body` describe in `sync-authored-types.test.ts`
+  // reads both constants and `read`'s real return shape off the lowered
+  // `api-doc/checkpoint.json` model.
   test("the refusal has moved to checkpoint's nameless return rows", () => {
     // Not the `**PARAMETERS**` marker refusal and not the no-signature refusal:
     // the parser gets through the heading, the marker and the parameter list, and
@@ -2123,34 +2127,6 @@ describe("checkpoint markdown re-measurement at pin e4268ff", () => {
     expect(parse).toThrow(/\* `boolean` Success or failure\./);
     expect(parse).not.toThrow(/signature/);
     expect(parse).not.toThrow(/marker but no readable row/);
-  });
-
-  // The recorded authored-lane reasons the widening does not touch.
-  test("the two constants stay outside anything the front-end could emit", () => {
-    // Both are documented only inside the Minimal API Reference's ```lua fence,
-    // and the front-end lifts an element from a `##`/`###` signature heading
-    // alone — it emits `FUNCTION` and nothing else, so no README dialect reaches
-    // them. The authored declaration is the only source that has them.
-    for (const name of ["project_title", "project_save_path"]) {
-      expect(readme()).toContain(`checkpoint.${name}`);
-      expect(readme()).not.toMatch(new RegExp(`^#{2,3}\\s+checkpoint\\.${name}\\b`, "m"));
-      expect(
-        readFileSync(join(PACKAGE_ROOT, "fixtures/authored/checkpoint.checkpoint.d.ts"), "utf8"),
-      ).toContain(`const ${name}: string;`);
-    }
-  });
-
-  test("`read`'s documented returns still disagree with the authored declaration", () => {
-    // The README gives `read` the same `boolean` / `string` pair it gives `write`,
-    // but checkpoint returns the *loaded value* on success — which is why the
-    // authored declaration carries a `T` the prose has no way to express. A README
-    // that says the wrong thing cannot become the source, however well it parses.
-    expect(readme()).toContain("local data, err = checkpoint.read(path)");
-    expect(
-      readFileSync(join(PACKAGE_ROOT, "fixtures/authored/checkpoint.checkpoint.d.ts"), "utf8"),
-    ).toContain(
-      "function read<T = unknown>(path: string): LuaMultiReturn<[T | false, string | undefined]>;",
-    );
   });
 
   test("the README is pin-covered, so a silent re-vendor reds", () => {
