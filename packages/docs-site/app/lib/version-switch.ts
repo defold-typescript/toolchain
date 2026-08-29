@@ -7,6 +7,12 @@ export interface RangeSelectorOption {
   id: string;
   /** Human chrome label derived from the id via {@link versionLabel}. */
   label: string;
+  /**
+   * The bare version the *closed* chrome shows, via {@link versionShortLabel}.
+   * The prefix is redundant once the control names the reference it belongs to,
+   * so it survives only inside the popup, where `label` still carries it.
+   */
+  shortLabel: string;
   /** The destination, with the clamp and the namespace fallback already applied. */
   href: string;
   isCurrent: boolean;
@@ -27,14 +33,27 @@ export interface RangeSelector {
 }
 
 /**
+ * The bare version an absolute `defold-<semver>` id names (`defold-1.13.0` ->
+ * `1.13.0`), for chrome that has already established which reference it is
+ * showing. Any id that is not a `defold-` release passes through unchanged, so
+ * synthetic fixture ids and future non-Defold targets stay readable without a
+ * lookup table.
+ */
+export function versionShortLabel(id: string): string {
+  const match = /^defold-(.+)$/.exec(id);
+  return match ? (match[1] as string) : id;
+}
+
+/**
  * Human label for a version selector / index chrome, derived from the absolute
- * `defold-<semver>` id (`defold-1.13.0` -> `Defold 1.13.0`). Any id that is not
- * a `defold-` release passes through unchanged, so synthetic fixture ids and
- * future non-Defold targets stay readable without a lookup table.
+ * `defold-<semver>` id (`defold-1.13.0` -> `Defold 1.13.0`), with the same
+ * pass-through for a non-release id. Expressed over {@link versionShortLabel} —
+ * a pass-through *is* the shape that returns the id unchanged — so the two can
+ * never disagree about which ids are releases.
  */
 export function versionLabel(id: string): string {
-  const match = /^defold-(.+)$/.exec(id);
-  return match ? `Defold ${match[1]}` : id;
+  const short = versionShortLabel(id);
+  return short === id ? id : `Defold ${short}`;
 }
 
 export interface BuildRangeSelectorInput {
@@ -94,7 +113,13 @@ export function buildRangeSelector({
   const column = (options: typeof hrefs.from): RangeSelectorOption[] =>
     options.map((option) => {
       const id = idFor(option.version);
-      return { id, label: versionLabel(id), href: option.href, isCurrent: option.isCurrent };
+      return {
+        id,
+        label: versionLabel(id),
+        shortLabel: versionShortLabel(id),
+        href: option.href,
+        isCurrent: option.isCurrent,
+      };
     });
   const oldestId = ids[ids.length - 1];
   return {

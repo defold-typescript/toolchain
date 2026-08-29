@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { ApiVersion } from "./api-surface-loader";
-import { buildRangeSelector, isApiRoute, versionLabel } from "./version-switch";
+import { buildRangeSelector, isApiRoute, versionLabel, versionShortLabel } from "./version-switch";
 
 // Newest-first, in the route-id vocabulary every `/api/<id>/…` path and the
 // persisted range preference use.
@@ -37,6 +37,18 @@ describe("buildRangeSelector", () => {
     ]);
     expect(selector.from.filter((o) => o.isCurrent).map((o) => o.id)).toEqual([MIDDLE]);
     expect(selector.to.filter((o) => o.isCurrent).map((o) => o.id)).toEqual([NEWEST]);
+  });
+
+  test("every option carries both labels: bare for the chrome, prefixed for the popup", () => {
+    const selector = build({ from: MIDDLE, to: NEWEST }, "/api/defold-1.13.0/shared");
+    for (const column of [selector.from, selector.to]) {
+      expect(column.map((o) => o.shortLabel)).toEqual(["1.13.0", "1.12.4", "1.12.0"]);
+      expect(column.map((o) => o.label)).toEqual([
+        "Defold 1.13.0",
+        "Defold 1.12.4",
+        "Defold 1.12.0",
+      ]);
+    }
   });
 
   test("every option is a plain pre-clamped link — the markup holds no logic", () => {
@@ -140,6 +152,18 @@ describe("buildRangeSelector", () => {
       range: { from: "nightly", to: "nightly" },
     });
     expect(selector.to[0]?.href).toBe("/api/nightly/go");
+  });
+});
+
+describe("versionShortLabel", () => {
+  test("strips the release prefix, leaving the bare semver the chrome shows", () => {
+    expect(versionShortLabel("defold-1.13.0")).toBe("1.13.0");
+    expect(versionShortLabel("defold-1.12.4")).toBe("1.12.4");
+  });
+
+  test("passes a non-defold id through unchanged, matching versionLabel's fallback", () => {
+    expect(versionShortLabel("combined")).toBe("combined");
+    expect(versionShortLabel("nightly")).toBe("nightly");
   });
 });
 
