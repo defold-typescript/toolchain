@@ -43,6 +43,19 @@ function split(html: string): { summary: string; popup: string } {
   return { summary: html.slice(0, end), popup: html.slice(end) };
 }
 
+// The chevron further down the summary is decorative too, so an unscoped
+// `aria-hidden` search is satisfied by either carrier. Locating the glyph's own
+// wrapper by the `?raw` bytes production injects keeps each assertion on one.
+function glyphWrapperTag(summary: string, glyph: string): string {
+  const at = summary.indexOf(glyph);
+  expect(at).toBeGreaterThan(0);
+  const open = summary.lastIndexOf("<", at - 1);
+  expect(open).toBeGreaterThan(-1);
+  const close = summary.indexOf(">", open);
+  expect(close).toBeGreaterThan(open);
+  return summary.slice(open, close + 1);
+}
+
 describe("RangeColumn", () => {
   test("shows the bare version in the closed chrome and the full label in the popup", () => {
     const { summary, popup } = split(render("to"));
@@ -73,7 +86,9 @@ describe("RangeColumn", () => {
     const { summary } = split(render("from"));
     expect(summary).toContain("sr-only");
     expect(summary).toContain(">From<");
-    expect(summary).toContain('aria-hidden="true"');
+    expect(glyphWrapperTag(summary, rightGlyphRaw)).toContain('aria-hidden="true"');
+    const afterGlyph = summary.slice(summary.indexOf(rightGlyphRaw) + rightGlyphRaw.length);
+    expect(afterGlyph).toContain('aria-hidden="true"');
   });
 
   test("the oldest-tracked footnote keeps the full label", () => {
