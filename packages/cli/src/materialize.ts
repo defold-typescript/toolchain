@@ -791,9 +791,9 @@ export interface MaterializeRefDocSurfaceOptions {
 // `.defold-types/<id>/`. The target may use committed fixtures or resolved
 // reference docs. The generator ships in the types package and is imported by
 // resolved path so the current build path avoids fixture-reading side effects.
-// The faux package is made self-contained by emitting core-type imports as a
-// sibling `./core-types` and copying `core-types.d.ts` in, so the surface
-// resolves from a real `.defold-types/<id>/` regardless of dest depth.
+// The generator makes the faux package self-contained on its own — brand imports
+// resolve from the surface root and the `src/*` augmentations ride along — so
+// this writer adds only the per-kind subpaths and the package metadata.
 export async function materializeRefDocSurface(
   opts: MaterializeRefDocSurfaceOptions,
 ): Promise<MaterializeApiSurfaceResult> {
@@ -817,18 +817,10 @@ export async function materializeRefDocSurface(
     const mod = (await import(
       path.join(root, "scripts", "materialize-version.ts")
     )) as MaterializeVersionedSurfaceModule;
-    const selfContained = { ...target, coreTypesImport: "./core-types" };
-    await mod.materializeVersionedSurface(selfContained, {
+    await mod.materializeVersionedSurface(target, {
       destDir: absDir,
       ...(resolveOpts ? { resolveOpts } : {}),
     });
-    writeFileSync(path.join(absDir, "core-types.d.ts"), CORE_TYPES_REEXPORT);
-    copyFileSync(
-      path.join(root, "src", "engine-globals.d.ts"),
-      path.join(absDir, "engine-globals.d.ts"),
-    );
-    const indexPath = path.join(absDir, "index.d.ts");
-    writeFileSync(indexPath, `import "./engine-globals";\n${readFileSync(indexPath, "utf8")}`);
 
     // The editor documents the target declared, plain namespace first so the
     // kind index reads the way the committed one does. They sit beside the

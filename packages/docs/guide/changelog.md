@@ -21,6 +21,10 @@ changes are called out first because the toolchain is pre-1.0.
 - **Converting a project no longer tells you to run [`init-agents`](./init-agents.md) first.** [`init`](./init.md) already writes the `AGENTS.md` / `CLAUDE.md` agent contract, so [Getting started](./getting-started.md) now names `init-agents` only as the repair for a contract that is missing or has lost its managed block.
 - **The guide now says `src/` is a default, not a fixed location.** Every page that names `src/` as where your TypeScript lives carries a footnote pointing at the `include` globs in `tsconfig.json` — the scope [`build`](./build.md) and [`watch`](./watch.md) actually compile.
 
+### Fixed
+
+- **A [pinned Defold target](./pinning-defold-target.md) now gets the same typed surface as an unpinned project.** The materialized surface was missing every hand-authored augmentation — the [`vmath`](/api/vmath), [`go`](/api/go) and [`msg`](/api/msg) overloads, the message and window-event guards, and the global `hash`/`pprint` declarations — so code that compiled on the current version stopped compiling once you pinned.
+
 ## v0.28.3
 
 ### Fixed
