@@ -23,7 +23,7 @@ changes are called out first because the toolchain is pre-1.0.
 
 ### Fixed
 
-- **A [pinned Defold target](./pinning-defold-target.md) now gets the same typed surface as an unpinned project.** The materialized surface was missing every hand-authored augmentation — the [`vmath`](/api/vmath), [`go`](/api/go) and [`msg`](/api/msg) overloads, the message and window-event guards, and the global `hash`/`pprint` declarations — so code that compiled on the current version stopped compiling once you pinned.
+- **A [pinned Defold target](./pinning-defold-target.md) now gets the same typed surface as an unpinned project.** The materialized surface was missing every hand-authored augmentation — the [`vmath`](/api/vmath), [`go`](/api/go) and [`msg`](/api/msg) overloads, the message and window-event guards, and the global `hash`/`pprint` declarations — along with the built-in message table those guards and overloads are written against, so code that compiled on the current version stopped compiling once you pinned and `msg.post` payload checking quietly fell back to `any`.
 
 ## v0.28.3
 
