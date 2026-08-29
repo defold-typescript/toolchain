@@ -2,6 +2,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import {
   type ApiTarget,
+  generateBuiltinMessagesDeclaration,
   generateModuleDeclaration,
   generateVersionIndex,
   KIND_MODULE_MANIFEST,
@@ -9,6 +10,7 @@ import {
   kindStdlibReferences,
   loadSrcAugmentations,
   loadTargetEditorModules,
+  MESSAGES_MANIFEST,
   type ResolveTargetOptions,
   resolveTargetModules,
 } from "./regen";
@@ -133,17 +135,30 @@ export async function buildVersionedSurfaceFiles(
   files.push(...augmentations);
   files.push({ path: "core-types.d.ts", contents: CORE_TYPES_REEXPORT });
 
+  // A generated sibling rather than a `src/*` augmentation, so it falls outside
+  // `SRC_AUGMENTATION_MODULES` — but the carried `msg-overloads` and
+  // `message-guard` reference `BuiltinMessages`, so a surface without it ships
+  // dangling names. The emit is version-independent, so render it here.
+  const generated = [
+    {
+      path: MESSAGES_MANIFEST.outFile,
+      contents: generateBuiltinMessagesDeclaration(MESSAGES_MANIFEST, {
+        importsFrom: surfaceCoreTypesImport(MESSAGES_MANIFEST.outFile),
+      }),
+    },
+  ].filter((file) => kept(file.path));
+  files.push(...generated);
+
   // The aggregate entrypoint stays the runtime surface: importing the editor VM
   // there would drag it into every program that pins this version. `core-types`
   // is type-only and stays out of it, exactly as on the packaged path.
   const versioned = modules.map((entry) => ({ ...entry, versionId: target.id }));
   files.push({
     path: "index.d.ts",
-    contents: generateVersionIndex(
-      target.id,
-      versioned,
-      augmentations.map((file) => file.path.replace(/\.d\.ts$/, "")),
-    ),
+    contents: generateVersionIndex(target.id, versioned, [
+      ...generated.map((file) => file.path.replace(/\.d\.ts$/, "")),
+      ...augmentations.map((file) => file.path.replace(/\.d\.ts$/, "")),
+    ]),
   });
 
   files.push({

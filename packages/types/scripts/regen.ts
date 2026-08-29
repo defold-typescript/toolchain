@@ -10,6 +10,7 @@ import {
 } from "../src/emit-dts";
 import {
   applyMessageDeprecations,
+  type EmitBuiltinMessagesOptions,
   emitBuiltinMessages,
   parseMessagesDoc,
 } from "../src/emit-messages";
@@ -359,8 +360,11 @@ export const MESSAGES_MANIFEST: MessagesManifestEntry = {
   outFile: "builtin-messages.d.ts",
 };
 
-export function generateBuiltinMessagesDeclaration(entry: MessagesManifestEntry): string {
-  return emitBuiltinMessages(applyMessageDeprecations(parseMessagesDoc(entry.doc)));
+export function generateBuiltinMessagesDeclaration(
+  entry: MessagesManifestEntry,
+  opts: EmitBuiltinMessagesOptions = {},
+): string {
+  return emitBuiltinMessages(applyMessageDeprecations(parseMessagesDoc(entry.doc)), opts);
 }
 
 export interface GenerateResult {
