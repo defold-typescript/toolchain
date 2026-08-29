@@ -140,7 +140,17 @@ function parsePayload(raw: unknown): MessageField[] {
   return fields;
 }
 
-export function emitBuiltinMessages(catalog: MessageCatalog): string {
+export interface EmitBuiltinMessagesOptions {
+  // Where the brand types are reached from. Defaults to the committed
+  // `generated/` emit's sibling-relative path; a materialized surface has no
+  // `src/` above it and supplies its own surface-root specifier.
+  readonly importsFrom?: string;
+}
+
+export function emitBuiltinMessages(
+  catalog: MessageCatalog,
+  opts: EmitBuiltinMessagesOptions = {},
+): string {
   const entries = [...catalog.entries].sort((a, b) => a.name.localeCompare(b.name));
   const body = entries.map(emitEntry).join("\n");
   const inner = [
@@ -155,8 +165,9 @@ export function emitBuiltinMessages(catalog: MessageCatalog): string {
     "",
   ].join("\n");
   const used = collectEngineTypes(inner);
+  const importsFrom = opts.importsFrom ?? "../src/core-types";
   const importLine =
-    used.length === 0 ? "" : `import type { ${used.join(", ")} } from "../src/core-types";\n\n`;
+    used.length === 0 ? "" : `import type { ${used.join(", ")} } from "${importsFrom}";\n\n`;
   return `${importLine}${inner}`;
 }
 

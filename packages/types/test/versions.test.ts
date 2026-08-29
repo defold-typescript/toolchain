@@ -206,3 +206,47 @@ describe("versioned API surface — src augmentations reach the consumer", () =>
     }
   });
 });
+
+describe("versioned API surface — strict resolution", () => {
+  test("no declaration in a materialized surface references a name the surface does not declare", async () => {
+    const target = loadApiTargets().find((candidate) => candidate.id === "defold-1.12.4");
+    if (!target) throw new Error("no defold-1.12.4 target");
+    const root = mkdtempSync(resolve(PACKAGE_ROOT, "mat-strict-"));
+    try {
+      const destDir = resolve(root, "versions", "defold-1.12.4");
+      await materializeVersionedSurface(target, { destDir });
+      const tsconfigPath = resolve(root, "tsconfig.json");
+      writeFileSync(
+        tsconfigPath,
+        `${JSON.stringify(
+          {
+            extends: "../../../tsconfig.json",
+            compilerOptions: {
+              noEmit: true,
+              // The consumer shape (`typeRoots` + `types`, inheriting
+              // `skipLibCheck: true`) is exactly what hides an unresolved name
+              // in a shipped declaration, so check the surface's own files
+              // directly with lib checking on.
+              skipLibCheck: false,
+              types: [],
+              paths: { "@defold-typescript/types/*": ["../src/*"] },
+            },
+            include: ["versions/defold-1.12.4/**/*.d.ts"],
+          },
+          null,
+          2,
+        )}\n`,
+      );
+      const { output } = typecheck(tsconfigPath);
+      // Scoped to TS2304 (cannot find name): `physics.d.ts` carries a
+      // pre-existing TS2300 duplicate identifier this step does not own.
+      const unresolved = output
+        .split("\n")
+        .filter((line) => line.includes("error TS2304"))
+        .join("\n");
+      expect(unresolved).toBe("");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
