@@ -1128,6 +1128,24 @@ describe("emitDeclarations", () => {
     expect(line).not.toContain("Record<");
   });
 
+  test("emits physics.get_shape's variant return with one diameter and optional kind fields", () => {
+    const module = parseDefoldApiDoc(physicsDoc);
+    const out = emitDeclarations(module);
+    const line = out.split("\n").find((l) => l.includes("function get_shape(")) ?? "";
+    expect(line).toContain(
+      "{ type: number; diameter?: number; dimensions?: Vector3; height?: number }",
+    );
+  });
+
+  test("emits physics.set_shape's data param with the same field set, every field optional", () => {
+    const module = parseDefoldApiDoc(physicsDoc);
+    const out = emitDeclarations(module);
+    const line = out.split("\n").find((l) => l.includes("function set_shape(")) ?? "";
+    expect(line).toContain(
+      "table: { type?: number; diameter?: number; dimensions?: Vector3; height?: number }",
+    );
+  });
+
   test("vmath emit matches the committed snapshot", () => {
     const module = parseDefoldApiDoc(vmathDoc);
     const out = emitDeclarations(module);
@@ -2049,6 +2067,8 @@ describe("TABLE_SLOT_CURATIONS", () => {
       "b2d.world.cast_mover:param:filter",
       "b2d.world.collide_mover:param:capsule",
       "b2d.world.collide_mover:param:filter",
+      "physics.get_shape:return:table",
+      "physics.set_shape:param:table",
     ]);
     expect(TABLE_SLOT_CURATIONS.get("compute.set_constants:param:constants")).toEqual({
       kind: "keyed-object",
@@ -2076,6 +2096,24 @@ describe("TABLE_SLOT_CURATIONS", () => {
         { name: "fraction", types: ["number"] },
       ],
     });
+    expect(TABLE_SLOT_CURATIONS.get("physics.get_shape:return:table")).toEqual({
+      kind: "object",
+      fields: [
+        { name: "type", types: ["number"] },
+        { name: "diameter", types: ["number"], optional: true },
+        { name: "dimensions", types: ["vector3"], optional: true },
+        { name: "height", types: ["number"], optional: true },
+      ],
+    });
+  });
+
+  test("physics get_shape and set_shape share one shape-record constant", () => {
+    const getShape = TABLE_SLOT_CURATIONS.get("physics.get_shape:return:table");
+    const setShape = TABLE_SLOT_CURATIONS.get("physics.set_shape:param:table");
+    if (getShape?.kind !== "object" || setShape?.kind !== "object") {
+      throw new Error("both physics shape slots must be object curations");
+    }
+    expect(setShape.fields).toBe(getShape.fields);
   });
 
   test("keyed-object curation re-keys the parser-recovered args table by name", () => {

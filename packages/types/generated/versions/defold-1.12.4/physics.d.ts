@@ -183,7 +183,7 @@ declare global {
      * end
      * `
      */
-    function get_shape(url: string | Hash | Url, shape: string | Hash): { type: number; diameter: number; dimensions: Vector3; diameter: number; height: number };
+    function get_shape(url: string | Hash | Url, shape: string | Hash): { type: number; diameter?: number; dimensions?: Vector3; height?: number };
     /**
      * Ray casts are used to test for intersections against collision objects in the physics world.
      * Collision objects of types kinematic, dynamic and static are tested against. Trigger objects
@@ -474,7 +474,7 @@ declare global {
      * end
      * `
      */
-    function set_shape(url: string | Hash | Url, shape: string | Hash, table: { type?: number; diameter?: number; dimensions?: Vector3; diameter?: number; height?: number }): void;
+    function set_shape(url: string | Hash | Url, shape: string | Hash, table: { type?: number; diameter?: number; dimensions?: Vector3; height?: number }): void;
     /**
      * Flips the collision shapes vertically for a collision object
      *
