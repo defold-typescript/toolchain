@@ -329,14 +329,30 @@ describe("apiPageMarkdown", () => {
     expect(md).not.toContain(`\`${thin}\``);
   });
 
-  test("renders member-bearing typedefs as a Types section", () => {
+  test("renders member-bearing typedefs under a per-shape heading", () => {
     const md = apiPageMarkdown(typedefPage(), (t) => t);
-    expect(md).toContain("## Types");
+    expect(md).toContain("## LoggerInstance");
+    expect(md).not.toContain("## Types");
     expect(md).toContain("### `LoggerInstance.info(message: string)`");
     expect(md).toContain("Writes an info message.");
     expect(md).toContain("- `message`: `string` — message text");
     expect(md).toContain("### `LoggerInstance.level: number`");
     expect(md).toContain("Current log level.");
+  });
+
+  test("gives each shape on a page its own heading, in surface order", () => {
+    const page = typedefPage();
+    page.module.typedefs = [
+      ...(page.module.typedefs ?? []),
+      {
+        name: "LoggerConfig",
+        properties: [{ name: "level", brief: "", description: "Threshold.", types: ["number"] }],
+      },
+    ];
+    const md = apiPageMarkdown(page, (t) => t);
+    expect(md).toContain("## LoggerInstance");
+    expect(md.indexOf("## LoggerConfig")).toBeGreaterThan(md.indexOf("## LoggerInstance"));
+    expect(md).toContain("### `LoggerConfig.level: number`");
   });
 });
 

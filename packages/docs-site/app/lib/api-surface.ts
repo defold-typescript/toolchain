@@ -405,6 +405,39 @@ export function groupFunctionSymbols(functions: ApiSymbol[]): ApiSymbolGroup[] {
 }
 
 /**
+ * Partition a namespace's `type` symbols for `/api` rendering: one group per
+ * owning shape, in first-appearance order, labeled with the bare shape name.
+ * `apiModuleSymbols` projects every typedef member as `<Shape>.<member>`, so the
+ * split is at the *first* `.` — a member whose own name carries a dot stays with
+ * its shape rather than minting one. Giving each shape a heading is what makes a
+ * shape linkable at all: a signature token naming it resolves to that heading's
+ * anchor. A name with no `.` owns no shape, so those collect in one trailing
+ * `Types` group. Input order is preserved within every group. Presentation-only
+ * — does not feed the search index or `apiModuleSymbols`.
+ */
+export function groupTypeSymbols(types: ApiSymbol[]): ApiSymbolGroup[] {
+  const loose: ApiSymbol[] = [];
+  const byShape = new Map<string, ApiSymbol[]>();
+
+  for (const type of types) {
+    const dot = type.name.indexOf(".");
+    if (dot === -1) {
+      loose.push(type);
+      continue;
+    }
+    const shape = type.name.slice(0, dot);
+    const bucket = byShape.get(shape);
+    if (bucket) bucket.push(type);
+    else byShape.set(shape, [type]);
+  }
+
+  const groups: ApiSymbolGroup[] = [];
+  for (const [shape, symbols] of byShape) groups.push({ label: shape, symbols });
+  if (loose.length > 0) groups.push({ label: "Types", symbols: loose });
+  return groups;
+}
+
+/**
  * Compact per-group function index for the top of an `/api/<namespace>` page:
  * a bulleted list whose links use each function's full `signature` (parameter
  * and return types included) and point down to the detailed `### \`signature\``

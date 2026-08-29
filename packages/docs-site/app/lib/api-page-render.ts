@@ -18,12 +18,14 @@ import {
   type CategoryWindow,
   functionOverviewCards,
   groupFunctionSymbols,
+  groupTypeSymbols,
   type LibraryMeta,
   windowedBadgeCategory,
 } from "./api-surface";
 import { type ApiVersion, versionsWithDiskFixtures } from "./api-surface-loader";
 import type { BadgeCountTable } from "./api-surface-pref";
 import { type NamespaceBadgeCounts, reachableBadgeCounts } from "./combined-surface";
+import { slugify } from "./headings";
 import { buildSymbolIndex } from "./symbol-index";
 import { linkifySymbolMentions } from "./symbol-linkify";
 import { resolveVersionWindow } from "./version-window";
@@ -564,6 +566,16 @@ export function apiPageMarkdown(
       }
       continue;
     }
+    // Each typedef shape gets its own heading so a signature token naming it has
+    // an anchor to deep-link to; `Types` survives only as the fallback label
+    // `groupTypeSymbols` gives an unprefixed symbol.
+    if (kind === "type") {
+      for (const typeGroup of groupTypeSymbols(group)) {
+        lines.push(`## ${typeGroup.label}`, "");
+        for (const symbol of typeGroup.symbols) emitSymbol(symbol);
+      }
+      continue;
+    }
     lines.push(`## ${label}`, "");
     for (const symbol of group) emitSymbol(symbol);
   }
@@ -583,14 +595,29 @@ export function apiLinkify(pages: ApiPage[]): (text: string) => string {
 }
 
 // The `name → route` map that `renderMarkdown`'s `signatureSymbolLinks` uses to
-// deep-link global-type brand tokens inside rendered signatures, resolved through
-// `buildSymbolIndex`. Today only `Opaque` is populated (a bare `Opaque` in a
-// signature is always the generic engine-handle brand). Empty when the given
-// surface carries no such page — global types are version-independent, so the
-// versioned route resolves this against the canonical surface, not its own pages.
-export function apiSignatureSymbolLinks(pages: ApiPage[]): Map<string, string> {
+// deep-link type tokens inside rendered signatures. Two sources with different
+// scopes. `Opaque` — the generic engine-handle brand — resolves through
+// `buildSymbolIndex` over `pages`, and is empty when that surface carries no such
+// page: global types are version-independent, so the versioned route resolves
+// this against the canonical surface, not its own pages. A typedef shape, by
+// contrast, belongs to the page that renders it, so `page`'s own shapes are keyed
+// by bare name to that page's own route — a surface-global bare-name table would
+// mislink the nine shape names declared on more than one page. The fallback
+// `Types` group label names no shape, and a shape called `Opaque` never displaces
+// the global entry.
+export function apiSignatureSymbolLinks(pages: ApiPage[], page?: ApiPage): Map<string, string> {
+  const links = new Map<string, string>();
+  if (page) {
+    for (const group of groupTypeSymbols(
+      apiModuleSymbols(page, page.translations).filter((s) => s.kind === "type"),
+    )) {
+      if (group.label === "Types") continue;
+      links.set(group.label, `${page.route}#${slugify(group.label)}`);
+    }
+  }
   const route = buildSymbolIndex(pages).Opaque?.route;
-  return route ? new Map([["Opaque", route]]) : new Map();
+  if (route) links.set("Opaque", route);
+  return links;
 }
 
 // A replacement-link resolver scoped to one surface's pages. `buildSymbolIndex`

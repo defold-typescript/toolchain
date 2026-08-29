@@ -24,6 +24,7 @@ changes are called out first because the toolchain is pre-1.0.
 
 - **Converting a project no longer tells you to run [`init-agents`](./init-agents.md) first.** [`init`](./init.md) already writes the `AGENTS.md` / `CLAUDE.md` agent contract, so [Getting started](./getting-started.md) now names `init-agents` only as the repair for a contract that is missing or has lost its managed block.
 - **The guide now says `src/` is a default, not a fixed location.** Every page that names `src/` as where your TypeScript lives carries a footnote pointing at the `include` globs in `tsconfig.json` — the scope [`build`](./build.md) and [`watch`](./watch.md) actually compile.
+- **A typedef in the [API reference](/api) now has its own heading, and signatures link to it.** Each shape a page documents gets a heading of its own in the "On this page" list instead of sharing one `Types` section, and a parameter or return type naming one of that page's shapes is a link straight to it.
 
 ### Fixed
 
