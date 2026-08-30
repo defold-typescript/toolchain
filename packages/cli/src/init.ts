@@ -9,6 +9,7 @@ import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import { formatJsonLikeBiome } from "./format-json";
 import { runInitAgents } from "./init-agents";
 import { mergeMiseToml } from "./mise-scaffold";
+import { SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 import { DEFAULT_TYPES_ENTRYPOINT } from "./script-kind";
 import { mergeVscodeTasks, VSCODE_TASKS_CONTENT } from "./vscode-tasks";
 
@@ -913,9 +914,20 @@ function writeTsSurface(
   }
   compilerOptions.plugins = plugins;
 
+  const existingInclude = Array.isArray(existing?.include)
+    ? (existing.include as unknown[]).filter((entry): entry is string => typeof entry === "string")
+    : ["src/**/*.ts"];
+  // The exact declaration path, never a glob: `.defold-types` is the project's
+  // typeRoots, so a pattern there would sweep every other materialized surface
+  // into the transpile source set. An `include` entry matching nothing is
+  // silently ignored, so naming it before `scene-types` first runs is safe.
+  const include = existingInclude.includes(SCENE_ADDRESSES_DECLARATION)
+    ? existingInclude
+    : [...existingInclude, SCENE_ADDRESSES_DECLARATION];
+
   const tsconfig: Record<string, unknown> = {
     compilerOptions,
-    include: existing?.include ?? ["src/**/*.ts"],
+    include,
   };
   const pruned = pruneMainTsExclude(existing?.exclude);
   if (pruned !== undefined) {

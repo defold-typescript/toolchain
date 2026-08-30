@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { runInit } from "./init";
+import { SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 import {
   compareSemver,
   defaultUpgradeIo,
@@ -197,6 +199,30 @@ describe("runUpgrade", () => {
     expect(isHandOff(spawned[0] as SpawnRecord)).toBe(true);
     expect(isHandOff(spawned[1] as SpawnRecord)).toBe(false);
     expect(spawned.map((s) => s.capture)).toEqual([true, true]);
+  });
+
+  test("the in-process path leaves the same include as init, declaration entry included", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    const { io } = upgradeIo({ latest: "1.3.0" });
+
+    await runUpgrade({ cwd, running: "1.3.0", capture: true, io });
+
+    const upgraded = JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")) as {
+      include: string[];
+    };
+    expect(upgraded.include).toContain(SCENE_ADDRESSES_DECLARATION);
+
+    const fresh = mkdtempSync(path.join(os.tmpdir(), "defold-ts-upgrade-parity-"));
+    try {
+      writeFileSync(path.join(fresh, "game.project"), "[project]\n");
+      runInit({ cwd: fresh });
+      const scaffolded = JSON.parse(readFileSync(path.join(fresh, "tsconfig.json"), "utf8")) as {
+        include: string[];
+      };
+      expect(upgraded.include).toEqual(scaffolded.include);
+    } finally {
+      rmSync(fresh, { recursive: true, force: true });
+    }
   });
 
   test("capture reaches the install on the already-latest in-process path", async () => {
