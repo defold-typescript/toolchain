@@ -565,7 +565,7 @@ function dispatchCommand(
         try {
           if (rest[0] === undefined) {
             throw new Error(
-              'defold-typescript init: a destination folder is required. Pass "." for the current folder, or a path like "my-game".',
+              'defold-typescript init: a destination folder is required. Pass "." for the current folder, or a path like "path/to/project".',
             );
           }
           const { written, operations, warnings } = runInit({
@@ -625,7 +625,7 @@ function dispatchCommand(
       try {
         if (rest[0] === undefined) {
           throw new Error(
-            'defold-typescript init-agents: a destination folder is required. Pass "." for the current folder, or a path like "my-game".',
+            'defold-typescript init-agents: a destination folder is required. Pass "." for the current folder, or a path like "path/to/project".',
           );
         }
         const { written } = runInitAgents({ cwd });

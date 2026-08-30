@@ -10,8 +10,8 @@ for them — `msg.post`'s receiver, `go.get`'s url, and every other address
 parameter.
 
 ```sh
-bunx @defold-typescript/cli scene-types .        # current folder
-bunx @defold-typescript/cli scene-types my-game  # a specific project
+bunx @defold-typescript/cli scene-types .                # current folder
+bunx @defold-typescript/cli scene-types path/to/project  # a specific project
 ```
 
 > [!TIP] [`build`](./build.md) regenerates this declaration before it transpiles,

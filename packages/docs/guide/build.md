@@ -128,9 +128,9 @@ Once `build/default` holds a compiled project (from `bob build` or `bob run`),
 `run` launches it directly — no transpile, no Bob, no engine download:
 
 ```sh
-bunx @defold-typescript/cli run              # launch ./build/default
-bunx @defold-typescript/cli run my-game      # launch a project in another folder
-bunx @defold-typescript/cli run -- --windowed  # pass engine args after --
+bunx @defold-typescript/cli run                  # launch ./build/default
+bunx @defold-typescript/cli run path/to/project  # launch a project in another folder
+bunx @defold-typescript/cli run -- --windowed    # pass engine args after --
 ```
 
 `run` launches the native-extension build engine

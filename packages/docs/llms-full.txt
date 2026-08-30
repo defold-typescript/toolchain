@@ -47,7 +47,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 
 #### Get started
 
-- [Getting started](./getting-started.md) — install Bun, scaffold a new project with `bunx @defold-typescript/cli@latest init my-game`, add TypeScript to an existing Defold project with `init .`, write a one-screen script, and build to Lua with `bunx @defold-typescript/cli build`.
+- [Getting started](./getting-started.md) — install Bun, scaffold a new project with `bunx @defold-typescript/cli@latest init path/to/project`, add TypeScript to an existing Defold project with `init .`, write a one-screen script, and build to Lua with `bunx @defold-typescript/cli build`.
 - [Editor setup](./editor-setup.md) — open the project in VSCode, use the generated `tsconfig.json`, and run `bunx @defold-typescript/cli watch` beside the Defold editor.
 - [Defold editor](./defold-editor.md) — install Defold, open the generated project folder, attach a compiled script (`.ts.script`, `.ts.gui_script`, or `.ts.render_script`) to its game object, GUI scene, or render pipeline, and run the game (TypeScript is transpiled to Lua by the CLI, not the editor).
 
@@ -144,13 +144,13 @@ You need Bun `>= 1.3`.
 The package is scoped, so run it through `bunx` by its full name — no install required:
 
 ```sh
-bunx @defold-typescript/cli@latest init my-game
-cd my-game
+bunx @defold-typescript/cli@latest init path/to/project
+cd path/to/project
 git init
 bun install
 ```
 
-> `my-game` will be created if it doesn't exist.
+> `path/to/project` will be created if it doesn't exist.
 >
 > **Optional**: Run `bunx @defold-typescript/cli@latest init-agents .` to initialize `AGENTS.md` and `CLAUDE.md` files.
 
@@ -386,7 +386,7 @@ In the CLI-driven loop you author code in TypeScript and build from the command 
 1. Start Defold to open the launcher. (If the editor is already open, choose **File** → **Open Project** to bring the launcher back up.)
 2. On the launcher, click **Open From Disk...** and select the `game.project` file in your project folder.
 
-For a project created with `bunx @defold-typescript/cli@latest init my-game`, that is the destination folder you named — the same folder where you run the CLI commands.
+For a project created with `bunx @defold-typescript/cli@latest init path/to/project`, that is the destination folder you named — the same folder where you run the CLI commands.
 
 #### Build before running
 
@@ -1870,8 +1870,8 @@ to an existing Defold project. It writes the files and stops; run `bun install`
 afterward (it prints the reminder).
 
 ```sh
-bunx @defold-typescript/cli@latest init my-game   # new project in ./my-game
-bunx @defold-typescript/cli@latest init .         # scaffold / add to the current folder
+bunx @defold-typescript/cli@latest init path/to/project  # new project at that path
+bunx @defold-typescript/cli@latest init .                # scaffold / add to the current folder
 ```
 
 Use the `@latest` tag when you scaffold: `bunx` caches binaries, and `init` is
@@ -1959,7 +1959,7 @@ the scaffold stops shipping is removed with whatever you added to it.
 Pick a template with `--template <name>` when creating a new project:
 
 ```sh
-bunx @defold-typescript/cli@latest init my-game --template minimal
+bunx @defold-typescript/cli@latest init path/to/project --template minimal
 ```
 
 - **`default`** — the opinionated layout you get when you omit `--template`: a
@@ -1987,8 +1987,8 @@ tells any AI harness (or human) opening the repo how this project is built and
 where the installed docs are, and `CLAUDE.md`, which re-exports it.
 
 ```sh
-bunx @defold-typescript/cli init-agents .        # current folder
-bunx @defold-typescript/cli init-agents my-game  # a specific project
+bunx @defold-typescript/cli init-agents .                # current folder
+bunx @defold-typescript/cli init-agents path/to/project  # a specific project
 ```
 
 > [!TIP] [`init`](./init.md) already writes this contract as part of its
@@ -2359,6 +2359,12 @@ editor's integrated terminal and leave it running while you work; the
 bunx @defold-typescript/cli watch
 ```
 
+> [!TIP] `watch` keeps two derived surfaces current while it runs: it re-runs
+> [`resolve`](./resolve.md) on a `game.project` save, and regenerates the
+> [scene-address declaration](./scene-types.md) on a `.go` or `.collection` save.
+> Only the scene declaration is bootstrapped at startup — run `resolve` once
+> before `watch`.
+
 #### What it does
 
 `watch` holds one long-lived transpile session and re-reads and rewrites only the
@@ -2375,18 +2381,17 @@ from the editor after a rebuild completes.
 
 #### Keeping the extension surface current
 
-> [!TIP] `watch` re-runs [`resolve`](./resolve.md) whenever you save
-> `game.project`, re-materializing `.defold-types/extensions/` from the declared
-> `[dependencies]`. It does **not** bootstrap that surface: run `resolve` once
-> before `watch` so the initial extension types exist; `watch` only reconciles
-> later `[dependencies]` edits.
+`watch` re-runs [`resolve`](./resolve.md) whenever you save `game.project`,
+re-materializing `.defold-types/extensions/` from the declared `[dependencies]`.
+It does **not** bootstrap that surface: run `resolve` once before `watch` so the
+initial extension types exist; `watch` only reconciles later `[dependencies]`
+edits.
 
 #### Keeping the scene addresses current
 
-> [!TIP] `watch` regenerates the [scene-address declaration](./scene-types.md)
-> after its initial build, and again on every `.go` or `.collection` save.
-> Unlike the extension surface this needs no bootstrap run — that startup pass
-> writes it.
+`watch` regenerates the [scene-address declaration](./scene-types.md) after its
+initial build, and again on every `.go` or `.collection` save. Unlike the
+extension surface this needs no bootstrap run — that startup pass writes it.
 
 #### Runtime errors in the terminal
 
@@ -2708,9 +2713,9 @@ Once `build/default` holds a compiled project (from `bob build` or `bob run`),
 `run` launches it directly — no transpile, no Bob, no engine download:
 
 ```sh
-bunx @defold-typescript/cli run              # launch ./build/default
-bunx @defold-typescript/cli run my-game      # launch a project in another folder
-bunx @defold-typescript/cli run -- --windowed  # pass engine args after --
+bunx @defold-typescript/cli run                  # launch ./build/default
+bunx @defold-typescript/cli run path/to/project  # launch a project in another folder
+bunx @defold-typescript/cli run -- --windowed    # pass engine args after --
 ```
 
 `run` launches the native-extension build engine
@@ -2740,9 +2745,9 @@ there. `run` does no transpile, runs no Bob, and downloads nothing: it finds the
 engine, launches it, and streams the game to your terminal.
 
 ```sh
-bunx @defold-typescript/cli run                 # launch ./build/default
-bunx @defold-typescript/cli run my-game         # launch a project in another folder
-bunx @defold-typescript/cli run -- --verbose    # forward engine args after --
+bunx @defold-typescript/cli run                  # launch ./build/default
+bunx @defold-typescript/cli run path/to/project  # launch a project in another folder
+bunx @defold-typescript/cli run -- --verbose     # forward engine args after --
 ```
 
 The optional `[path]` is the project directory; it defaults to the current
@@ -2775,7 +2780,7 @@ Everything after `--` passes through to the launched engine untouched:
 
 ```sh
 bunx @defold-typescript/cli run -- --verbose
-bunx @defold-typescript/cli run my-game -- --config=display.width=1280
+bunx @defold-typescript/cli run path/to/project -- --config=display.width=1280
 ```
 
 Only the tokens before `--` are the command's own (the project path); the rest
@@ -3097,6 +3102,10 @@ bunx @defold-typescript/cli resolve        # defaults to the current directory
 bunx @defold-typescript/cli resolve path/to/project
 ```
 
+> [!TIP] [`watch`](./watch.md) re-runs `resolve` for you whenever you save
+> `game.project`. It does not bootstrap the surface, though — run `resolve` once
+> yourself before starting `watch`.
+
 It reads every `dependencies#N` URL under `[project]` in `game.project`. A
 `game.project` with no `[project]` section is an error; a `[project]` with no
 `dependencies#N` keys reports `no extension dependencies declared` and exits `0`.
@@ -3105,11 +3114,11 @@ It reads every `dependencies#N` URL under `[project]` in `game.project`. A
 
 `resolve` inspects each declared archive and sorts it into one of three kinds:
 
-| Kind | Detected by | What `resolve` produces |
-| ---- | ----------- | ----------------------- |
-| **Native extension** | the archive carries one or more `.script_api` docs | one ambient namespace per doc in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list |
+| Kind                          | Detected by                                                                                        | What `resolve` produces                                                                                                           |
+| ----------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **Native extension**          | the archive carries one or more `.script_api` docs                                                 | one ambient namespace per doc in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list                    |
 | **Vendored pure-Lua library** | the repo name matches the `@defold-typescript/library-types` corpus, confirmed against the archive | the committed `.d.ts` materialized into `.defold-types/libraries@<cliVersion>/`, plus that same name on the tsconfig `types` list |
-| **Asset-only / content** | no `.script_api` and no library match — fonts, asset packs, other content archives | nothing: reported and skipped |
+| **Asset-only / content**      | no `.script_api` and no library match — fonts, asset packs, other content archives                 | nothing: reported and skipped                                                                                                     |
 
 A skipped **asset-only** archive is never a failure — `resolve` still exits `0`
 and materializes types for the dependencies that do carry them. A typical run:
@@ -3228,8 +3237,8 @@ for them — `msg.post`'s receiver, `go.get`'s url, and every other address
 parameter.
 
 ```sh
-bunx @defold-typescript/cli scene-types .        # current folder
-bunx @defold-typescript/cli scene-types my-game  # a specific project
+bunx @defold-typescript/cli scene-types .                # current folder
+bunx @defold-typescript/cli scene-types path/to/project  # a specific project
 ```
 
 > [!TIP] [`build`](./build.md) regenerates this declaration before it transpiles,
@@ -3890,7 +3899,7 @@ TypeScript layer added to an existing Defold project.
 **Command (fresh project, new folder):**
 
 ```sh
-bunx @defold-typescript/cli@latest init my-game --json
+bunx @defold-typescript/cli@latest init path/to/project --json
 ```
 
 **Command (existing Defold project — run inside the folder that holds
@@ -6971,7 +6980,7 @@ tooling and configuration, not a rewrite.
 | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | `@ts-defold/types` — Defold TypeScript definitions                                                                      | `@defold-typescript/types` — ambient, type-only engine surface                                                                      |
 | `@ts-defold/type-gen` — dev-dep that generates those types                                                              | type generation is internal to `@defold-typescript/types`; it is never a consumer dependency                                        |
-| `@ts-defold/create` — `npm init @ts-defold my-game` (resolves GitHub `tsd-template-*` templates, or a local/remote zip) | `bunx @defold-typescript/cli@latest init my-game` — built-in templates via `init my-game --template <name>` (`default` / `minimal`) |
+| `@ts-defold/create` — `npm init @ts-defold my-game` (resolves GitHub `tsd-template-*` templates, or a local/remote zip) | `bunx @defold-typescript/cli@latest init path/to/project` — built-in templates via `init path/to/project --template <name>` (`default` / `minimal`) |
 | template `npm run build` (compile, no watcher)                                                                          | `defold-typescript build`                                                                                                           |
 | template `npm run dev` (watch: compile + emit lua/script on save)                                                       | `defold-typescript watch`                                                                                                           |
 | — (no first-party editor-diagnostics package verified)                                                                  | `@defold-typescript/tstl-plugin` — live transpile diagnostics in the editor                                                         |

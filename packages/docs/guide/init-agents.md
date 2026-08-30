@@ -8,8 +8,8 @@ tells any AI harness (or human) opening the repo how this project is built and
 where the installed docs are, and `CLAUDE.md`, which re-exports it.
 
 ```sh
-bunx @defold-typescript/cli init-agents .        # current folder
-bunx @defold-typescript/cli init-agents my-game  # a specific project
+bunx @defold-typescript/cli init-agents .                # current folder
+bunx @defold-typescript/cli init-agents path/to/project  # a specific project
 ```
 
 > [!TIP] [`init`](./init.md) already writes this contract as part of its

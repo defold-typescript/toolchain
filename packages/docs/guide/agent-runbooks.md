@@ -347,7 +347,7 @@ TypeScript layer added to an existing Defold project.
 **Command (fresh project, new folder):**
 
 ```sh
-bunx @defold-typescript/cli@latest init my-game --json
+bunx @defold-typescript/cli@latest init path/to/project --json
 ```
 
 **Command (existing Defold project — run inside the folder that holds
