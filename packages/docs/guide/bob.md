@@ -51,6 +51,12 @@ A failed build short-circuits with Bob's exit code and never launches. Once
 `build/default` and an engine exist, [`run`](./run.md) relaunches directly —
 no rebuild, no Bob, no download.
 
+A successful `bob build` records the Defold head it built with beside the
+compiled tree, and `bob run` records the same head beside the engine it caches.
+That is what lets [`run`](./run.md) refuse a pair left mismatched by a pin bump
+instead of launching it. `bob run` always rewrites both, so it is also the way
+to clear such a refusal.
+
 ## The bob.jar cache
 
 The first run downloads a `bob.jar` into a cache directory and reuses it

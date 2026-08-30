@@ -11,7 +11,14 @@ import type {
   ResolvedTargetHead,
 } from "./defold-target";
 import { resolveTargetHead } from "./defold-target";
-import { ENGINE_MARKER_REL, type Runnable, resolveRunnable } from "./engine-launch";
+import {
+  BUILD_MARKER_REL,
+  type BuildMarker,
+  ENGINE_MARKER_REL,
+  type EngineMarker,
+  type Runnable,
+  resolveRunnable,
+} from "./engine-launch";
 import { detectEditorBundledJava } from "./installed-editor-version";
 
 export const BOB_SUBCOMMANDS = ["resolve", "build", "bundle"] as const;
@@ -83,6 +90,10 @@ export async function runBobCommand(opts: {
   capture?: boolean;
   head: { readonly version: string; readonly channel: string | null; readonly sha: string };
   io: DefoldIo;
+  writeBuildMarker?: (
+    cwd: string,
+    head: { readonly version: string; readonly sha: string },
+  ) => Promise<void>;
 }): Promise<BobCommandResult> {
   const { io, head } = opts;
   const { jarPath, cached } = resolveBobJar({
@@ -105,6 +116,9 @@ export async function runBobCommand(opts: {
     ...(opts.buildServer !== undefined ? { buildServer: opts.buildServer } : {}),
   });
   const { exitCode, output } = await io.spawn(argv, opts.cwd, { capture: opts.capture ?? false });
+  if (opts.subcommand === "build" && exitCode === 0) {
+    await (opts.writeBuildMarker ?? writeBuildMarker)(opts.cwd, head);
+  }
   return {
     ok: exitCode === 0,
     subcommand: opts.subcommand,
@@ -124,12 +138,32 @@ export interface PrepareBobRunResult {
   readonly error?: string;
 }
 
-// Persist the resolved engine path where the `run` resolver reads it, so a later
-// top-level `run` finds the same cached engine.
-async function writeEngineMarker(cwd: string, enginePath: string): Promise<void> {
-  const markerPath = join(cwd, ENGINE_MARKER_REL);
+async function writeMarkerFile(cwd: string, rel: string, marker: object): Promise<void> {
+  const markerPath = join(cwd, rel);
   mkdirSync(dirname(markerPath), { recursive: true });
-  await writeFile(markerPath, `${enginePath}\n`);
+  await writeFile(markerPath, `${JSON.stringify(marker)}\n`);
+}
+
+// Persist the resolved engine path and the head it was fetched at where the
+// `run` resolver reads them, so a later top-level `run` finds the same cached
+// engine and can tell whether it still matches the compiled tree.
+async function writeEngineMarker(
+  cwd: string,
+  enginePath: string,
+  head: { readonly version: string; readonly sha: string },
+): Promise<void> {
+  const marker: EngineMarker = { enginePath, sha: head.sha, version: head.version };
+  await writeMarkerFile(cwd, ENGINE_MARKER_REL, marker);
+}
+
+// Stamp the compiled tree with the head that produced it. Written only from a
+// successful `build`, so the marker always means "compiled at this head".
+async function writeBuildMarker(
+  cwd: string,
+  head: { readonly version: string; readonly sha: string },
+): Promise<void> {
+  const marker: BuildMarker = { sha: head.sha, version: head.version };
+  await writeMarkerFile(cwd, BUILD_MARKER_REL, marker);
 }
 
 // `bob run` composite (Bob has no native run): debug-build, ensure a
@@ -144,8 +178,17 @@ export async function prepareBobRun(opts: {
   java?: string;
   buildServer?: string;
   io: DefoldIo & { readonly platform: NodeJS.Platform; readonly arch: string };
-  writeMarker?: (cwd: string, enginePath: string) => Promise<void>;
-  readEngineMarker?: (cwd: string) => string | null;
+  writeMarker?: (
+    cwd: string,
+    enginePath: string,
+    head: { readonly version: string; readonly sha: string },
+  ) => Promise<void>;
+  writeBuildMarker?: (
+    cwd: string,
+    head: { readonly version: string; readonly sha: string },
+  ) => Promise<void>;
+  readEngineMarker?: (cwd: string) => EngineMarker | null;
+  readBuildMarker?: (cwd: string) => BuildMarker | null;
 }): Promise<PrepareBobRunResult> {
   const { cwd, head, io } = opts;
   const writeMarker = opts.writeMarker ?? writeEngineMarker;
@@ -157,6 +200,7 @@ export async function prepareBobRun(opts: {
     ...(opts.buildServer !== undefined ? { buildServer: opts.buildServer } : {}),
     head,
     io,
+    ...(opts.writeBuildMarker !== undefined ? { writeBuildMarker: opts.writeBuildMarker } : {}),
   });
   if (build.exitCode !== 0) {
     return { ok: false, buildExitCode: build.exitCode };
@@ -188,7 +232,7 @@ export async function prepareBobRun(opts: {
         };
       }
     }
-    await writeMarker(cwd, enginePath);
+    await writeMarker(cwd, enginePath, head);
   }
 
   try {
@@ -198,6 +242,7 @@ export async function prepareBobRun(opts: {
       arch: io.arch,
       probe: io.probe,
       ...(opts.readEngineMarker !== undefined ? { readEngineMarker: opts.readEngineMarker } : {}),
+      ...(opts.readBuildMarker !== undefined ? { readBuildMarker: opts.readBuildMarker } : {}),
     });
     return { ok: true, buildExitCode: build.exitCode, runnable };
   } catch (err) {
