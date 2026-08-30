@@ -84,7 +84,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - [bob](./bob.md) — drive Defold's headless `bob.jar` build tool: the `resolve`/`build`/`bundle`/`status`/`run` subcommands, the sha-keyed jar cache, Java resolution, and target selection.
 - [wall](./wall.md) — opt-in per-directory API walls that narrow a single-kind source directory to its script-kind surface, in interactive and flag forms.
 - [resolve](./resolve.md) — generate ambient TypeScript namespaces from your `game.project` native-extension dependencies, with pin/drift detection and a `--frozen` lockfile mode.
-- [scene-types](./scene-types.md) — generate the scene-address declaration from your `.collection`/`.go` files so game-object paths and component ids complete in the editor; where it lands, the one `include` line that puts it in your program, and why it can never reject an address.
+- [scene-types](./scene-types.md) — generate the scene-address declaration from your `.collection`/`.go` files so game-object paths and component ids complete in the editor; how `build` and `watch` keep it current, how `init` and `upgrade` wire it into your program, and why it can never reject an address.
 
 ##### Toolchain & workflow
 
@@ -2375,11 +2375,18 @@ from the editor after a rebuild completes.
 
 #### Keeping the extension surface current
 
-`watch` re-runs [`resolve`](./resolve.md) whenever you save `game.project`,
-re-materializing `.defold-types/extensions/` from the declared `[dependencies]`.
-It does **not** bootstrap that surface: run `resolve` once before `watch` so the
-initial extension types exist; `watch` only reconciles later `[dependencies]`
-edits.
+> [!TIP] `watch` re-runs [`resolve`](./resolve.md) whenever you save
+> `game.project`, re-materializing `.defold-types/extensions/` from the declared
+> `[dependencies]`. It does **not** bootstrap that surface: run `resolve` once
+> before `watch` so the initial extension types exist; `watch` only reconciles
+> later `[dependencies]` edits.
+
+#### Keeping the scene addresses current
+
+> [!TIP] `watch` regenerates the [scene-address declaration](./scene-types.md)
+> after its initial build, and again on every `.go` or `.collection` save.
+> Unlike the extension surface this needs no bootstrap run — that startup pass
+> writes it.
 
 #### Runtime errors in the terminal
 
@@ -2583,6 +2590,10 @@ run while editing, see [`watch`](./watch.md).
 ```sh
 bunx @defold-typescript/cli build
 ```
+
+> [!TIP] `build` regenerates the [scene-address declaration](./scene-types.md)
+> before it transpiles, so a game object you added since the last build is
+> already a completion on the addresses this compile checks against.
 
 #### What it does
 
@@ -3150,10 +3161,11 @@ skipped rather than failing the run.
 
 #### Keeping types in sync with `watch`
 
-A running [`watch`](./watch.md) re-resolves on every `game.project` save, so
-editing `[dependencies]` while `watch` is up refreshes `.defold-types/` with no
-extra command. `watch` only reconciles on save — it does not bootstrap the
-surface — so run `resolve` once first to materialize the initial types.
+> [!TIP] A running [`watch`](./watch.md) re-resolves on every `game.project`
+> save, so editing `[dependencies]` while `watch` is up refreshes
+> `.defold-types/` with no extra command. `watch` only reconciles on save — it
+> does not bootstrap the surface — so run `resolve` once first to materialize
+> the initial types.
 
 #### Flags
 
@@ -3219,6 +3231,11 @@ parameter.
 bunx @defold-typescript/cli scene-types .        # current folder
 bunx @defold-typescript/cli scene-types my-game  # a specific project
 ```
+
+> [!TIP] [`build`](./build.md) regenerates this declaration before it transpiles,
+> and [`watch`](./watch.md) refreshes it whenever you save a `.go` or
+> `.collection`. Reach for the verb itself for a one-off, or for a CI step that
+> runs neither.
 
 The declaration lands at `.defold-types/scene-addresses.d.ts`, beside the
 [materialized API surface](./pinning-defold-target.md). Like everything else

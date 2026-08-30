@@ -78,10 +78,11 @@ skipped rather than failing the run.
 
 ## Keeping types in sync with `watch`
 
-A running [`watch`](./watch.md) re-resolves on every `game.project` save, so
-editing `[dependencies]` while `watch` is up refreshes `.defold-types/` with no
-extra command. `watch` only reconciles on save — it does not bootstrap the
-surface — so run `resolve` once first to materialize the initial types.
+> [!TIP] A running [`watch`](./watch.md) re-resolves on every `game.project`
+> save, so editing `[dependencies]` while `watch` is up refreshes
+> `.defold-types/` with no extra command. `watch` only reconciles on save — it
+> does not bootstrap the surface — so run `resolve` once first to materialize
+> the initial types.
 
 ## Flags
 
