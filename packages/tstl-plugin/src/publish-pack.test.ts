@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { resolve } from "node:path";
+import { basename, resolve } from "node:path";
 import { completionProxy, type PluginFactory } from "./completion-harness";
 import { DEFOLD_COMPLETION_SOURCE } from "./scene-completions";
 
@@ -123,6 +123,9 @@ const consumer = fs.mkdtempSync(path.join(os.tmpdir(), "tstl-plugin-consumer-"))
 const scope = path.join(consumer, "node_modules", manifest.name.split("/")[0]);
 fs.mkdirSync(scope, { recursive: true });
 fs.symlinkSync(pkgDir, path.join(consumer, "node_modules", manifest.name), "dir");
+// A package-name specifier required from outside the package is the one route
+// node resolves through the \`exports\` map; every other route here reads \`main\`.
+const consumerReq = createRequire(path.join(consumer, "package.json"));
 
 const report = {};
 const shapeOf = (load) => {
@@ -147,9 +150,18 @@ const loaded = ts.sys.require(consumer, manifest.name);
 report.resolvedFrom = loaded.modulePath === undefined ? "unresolved" : path.basename(loaded.modulePath);
 report.byTsserver = loaded.error ? "threw " + (loaded.error.code || loaded.error.message) : shapeOf(() => loaded.module);
 report.byMain = shapeOf(() => req(manifest.main));
+report.requireConditionFrom = (() => {
+  try {
+    return path.basename(consumerReq.resolve(manifest.name));
+  } catch (error) {
+    return "threw " + (error.code || error.message);
+  }
+})();
+report.byRequireCondition = shapeOf(() => consumerReq(manifest.name));
 
 const byTsserverValue = loaded.error ? undefined : loaded.module;
 const byMainValue = valueOf(() => req(manifest.main));
+const byRequireConditionValue = valueOf(() => consumerReq(manifest.name));
 import(manifest.name)
   .then((mod) => {
     report.imported = shapeOf(() => mod.default);
@@ -157,11 +169,14 @@ import(manifest.name)
     // values and comparing them on the other side would prove nothing.
     report.sameAsImport = byTsserverValue !== undefined && byTsserverValue === mod.default;
     report.mainSameAsImport = byMainValue !== undefined && byMainValue === mod.default;
+    report.requireConditionSameAsImport =
+      byRequireConditionValue !== undefined && byRequireConditionValue === mod.default;
   })
   .catch((error) => {
     report.imported = "threw " + (error.code || error.message);
     report.sameAsImport = false;
     report.mainSameAsImport = false;
+    report.requireConditionSameAsImport = false;
   })
   .finally(() => {
     fs.rmSync(consumer, { recursive: true, force: true });
@@ -207,9 +222,18 @@ describe("@defold-typescript/tstl-plugin require-shaped entry", () => {
     expect(probe.imported).toBe("factory");
   });
 
+  test("the require export condition resolves to the shipped CommonJS entry", async () => {
+    const manifest = await Bun.file(resolve(PKG_DIR, "package.json")).json();
+    // Read from the field itself: an `exports` map suppresses `main` for a
+    // package-name specifier, so this is the file a CommonJS consumer loads.
+    expect(probe.requireConditionFrom).toBe(basename(manifest.exports["."].require as string));
+    expect(probe.byRequireCondition).toBe("factory");
+  });
+
   test("both published conditions expose one factory", () => {
     expect(probe.sameAsImport).toBe(true);
     expect(probe.mainSameAsImport).toBe(true);
+    expect(probe.requireConditionSameAsImport).toBe(true);
   });
 
   test("built entries carry no build-machine path into their resolution base", async () => {
