@@ -29,6 +29,7 @@ import {
   renderClaudeBlock,
 } from "./init-agents";
 import { MISE_TASKS_TOML } from "./mise-scaffold";
+import { SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 
 const CLI_VERSION = (
   JSON.parse(readFileSync(path.join(import.meta.dir, "..", "package.json"), "utf8")) as {
@@ -2154,10 +2155,36 @@ describe("runInit (merges an existing tsconfig)", () => {
     expect(readTsconfig().compilerOptions.strict).toBe(false);
   });
 
-  test("leaves an existing include untouched", () => {
+  test("preserves an existing include and appends the scene-address declaration", () => {
     seedExistingTsconfig(RESOLVE_SHAPED);
     runInit({ cwd, force: true });
-    expect(readTsconfig().include).toEqual(["game/**/*.ts"]);
+    expect(readTsconfig().include).toEqual(["game/**/*.ts", SCENE_ADDRESSES_DECLARATION]);
+  });
+
+  test("appends the declaration after a hand-edited include, preserving every user pattern", () => {
+    seedExistingTsconfig({
+      compilerOptions: { types: ["defold-1.12.4"] },
+      include: ["src/**/*.ts", "shared/**/*.ts"],
+    });
+
+    runInit({ cwd, force: true });
+
+    expect(readTsconfig().include).toEqual([
+      "src/**/*.ts",
+      "shared/**/*.ts",
+      SCENE_ADDRESSES_DECLARATION,
+    ]);
+  });
+
+  test("does not duplicate the declaration when the include already carries it", () => {
+    seedExistingTsconfig({
+      compilerOptions: { types: ["defold-1.12.4"] },
+      include: ["src/**/*.ts", SCENE_ADDRESSES_DECLARATION],
+    });
+
+    runInit({ cwd, force: true });
+
+    expect(readTsconfig().include).toEqual(["src/**/*.ts", SCENE_ADDRESSES_DECLARATION]);
   });
 
   test("never adds src/main.ts to exclude for a user-authored project; preserves user exclude", () => {
@@ -2225,7 +2252,7 @@ describe("runInit (merges an existing tsconfig)", () => {
     const tsconfig = readTsconfig();
     expect(tsconfig.compilerOptions.types).toEqual(["@defold-typescript/types"]);
     expect(tsconfig.compilerOptions.plugins).toContainEqual({ name: PLUGIN });
-    expect(tsconfig.include).toEqual(["src/**/*.ts"]);
+    expect(tsconfig.include).toEqual(["src/**/*.ts", SCENE_ADDRESSES_DECLARATION]);
     expect(tsconfig.exclude).toBeUndefined();
   });
 

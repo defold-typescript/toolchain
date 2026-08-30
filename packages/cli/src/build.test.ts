@@ -6,6 +6,8 @@ import { Writable } from "node:stream";
 import { runBuild } from "./build";
 import { GENERATED_BANNER } from "./build-output";
 import { dispatch } from "./dispatch";
+import { runInit } from "./init";
+import { runSceneTypes, SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 import type { WatchEditorClient } from "./watch";
 
 function countMatches(haystack: string, needle: RegExp): number {
@@ -42,6 +44,66 @@ const MAIN_SCRIPT =
 
 const EMPTY_SCRIPT =
   'import { defineScript } from "@defold-typescript/types";\nexport default defineScript({});\n';
+
+describe("runBuild (a scene-address declaration inside include)", () => {
+  // Scaffold with the real writer, then fill the declaration with the real
+  // generator, so the entry under test is the one `init` emits and the file it
+  // names is the one `scene-types` writes.
+  function scaffoldWithDeclaration(): void {
+    writeFile("game.project", "[project]\n");
+    writeFile(
+      "game/player.collection",
+      'instances {\n  id: "player"\n  prototype: "/game/player.go"\n}\n',
+    );
+    writeFile("game/player.go", 'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n');
+    // A `.go` on disk reads as an existing project, so `init` skips scaffolding
+    // `src/main.ts`; the build needs a real source to have anything to emit.
+    writeFile("src/main.ts", MAIN_SCRIPT);
+    runInit({ cwd });
+    const result = runSceneTypes({ cwd });
+    expect(result.wrote).toBe(true);
+  }
+
+  test("builds successfully and emits no output derived from the declaration", () => {
+    scaffoldWithDeclaration();
+
+    const result = runBuild({ cwd });
+
+    expect(result.written).not.toContain(SCENE_ADDRESSES_DECLARATION);
+    expect(result.written.some((rel) => rel.includes("scene-addresses"))).toBe(false);
+    expect(result.written.length).toBeGreaterThan(0);
+  });
+
+  test("the orphan scan stays quiet about the declaration", () => {
+    scaffoldWithDeclaration();
+
+    const result = runBuild({ cwd });
+
+    expect(result.warnings.some((w) => w.includes("scene-addresses"))).toBe(false);
+  });
+
+  test("a source indexing an address the declaration carries compiles", () => {
+    scaffoldWithDeclaration();
+    const declaration = readFileSync(path.join(cwd, SCENE_ADDRESSES_DECLARATION), "utf8");
+    expect(declaration).toContain('"/player"');
+    writeFile(
+      "src/addresses.ts",
+      'export const hero: keyof SceneGameObjectAddresses = "/player";\n',
+    );
+
+    expect(() => runBuild({ cwd })).not.toThrow();
+  });
+
+  test("a source indexing an address the declaration does not carry fails the build", () => {
+    scaffoldWithDeclaration();
+    writeFile(
+      "src/addresses.ts",
+      'export const ghost: keyof SceneGameObjectAddresses = "/nobody";\n',
+    );
+
+    expect(() => runBuild({ cwd })).toThrow(/nobody/);
+  });
+});
 
 describe("runBuild", () => {
   test("transpiles a single lifecycle source to a Defold script component", () => {
