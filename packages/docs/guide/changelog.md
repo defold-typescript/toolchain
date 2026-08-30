@@ -24,6 +24,7 @@ changes are called out first because the toolchain is pre-1.0.
 
 - **A [pinned Defold target](./pinning-defold-target.md) can call the Lua standard library again.** The surface written for a pin omitted the `lua-types` references the package entrypoint carries, so `math`, `string`, `table`, `os` and `bit` stopped resolving in your own sources the moment you pinned; both writers now lead the surface's `index.d.ts` with them.
 - **The editor plugin now loads in a real editor.** `@defold-typescript/tstl-plugin` exposed only an ESM entry, which the TypeScript language server loads and then skips for not being a plugin factory — so [scene completions, the provenance panel, and the unreachable-`#fragment` suggestion](./transpile-diagnostics.md) never appeared outside the test suite; the package now ships a `require`-shaped entry the plugin loader accepts.
+- **[`watch`](./watch.md) keeps the [scene-address declaration](./scene-types.md) current on a [pinned Defold target](./pinning-defold-target.md) too.** A pinned project wired neither the scene watcher nor the generator, so the declaration was never written at startup and never refreshed when you saved a `.go` or `.collection` — an unpinned project already did both.
 
 ## v0.29.0
 
