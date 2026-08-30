@@ -45,6 +45,14 @@ function scaffold(sources: Record<string, string>): Fixture {
   // fixture would "pass" for the wrong reason.
   mkdirSync(path.join(cwd, "node_modules", "@defold-typescript"), { recursive: true });
   symlinkSync(PKG_ROOT, path.join(cwd, "node_modules", "@defold-typescript", "types"));
+  // `lua-types` is a dependency of the types package, so an install hoists it
+  // beside it. The surface's own `index.d.ts` resolves the stdlib directives
+  // from its real location under `cwd`, not through the package symlink, so
+  // without this the directives fail to resolve and `skipLibCheck` hides it.
+  symlinkSync(
+    path.join(PKG_ROOT, "node_modules", "lua-types"),
+    path.join(cwd, "node_modules", "lua-types"),
+  );
 
   const tsconfigPath = path.join(cwd, "tsconfig.json");
   writeFileSync(
@@ -310,6 +318,37 @@ describe("a materialized pin binds the package specifier", () => {
       const { exitCode, output } = typecheck(fixture);
       expect(exitCode).not.toBe(0);
       expect(output).toContain("totally_not_a_field");
+    } finally {
+      rmSync(fixture.cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("a pinned surface still resolves the Lua standard library", () => {
+    const fixture = scaffold({
+      "proof.ts": [
+        IDIOMATIC_IMPORT,
+        "void defineScript;",
+        "const _floor: number = math.floor(1.5);",
+        'const _fmt: string = string.format("%d", 1);',
+        "const _list: number[] = [];",
+        "table.insert(_list, 1);",
+        "const _now: number = os.time();",
+        // `bit` rides the jit-only directive alone, so it is the only call
+        // here that fails if that second line is dropped on its own.
+        "const _band: number = bit.band(1, 2);",
+        "void _floor;",
+        "void _fmt;",
+        "void _now;",
+        "void _band;",
+        "",
+      ].join("\n"),
+    });
+    try {
+      const { exitCode, output } = typecheck(fixture);
+      if (exitCode !== 0) {
+        throw new Error(`a pinned surface must still carry the Lua stdlib:\n${output}`);
+      }
+      expect(exitCode).toBe(0);
     } finally {
       rmSync(fixture.cwd, { recursive: true, force: true });
     }

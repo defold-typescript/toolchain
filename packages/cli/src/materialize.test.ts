@@ -37,6 +37,11 @@ function surfaceDir(surfaceId: string): string {
   return surfaceDirName(surfaceId, readCliVersion());
 }
 
+// The surface index leads with the Lua stdlib directives; the rows below
+// defend the module list, so they carry the prefix rather than restate it.
+const STDLIB_REFERENCES =
+  '/// <reference types="lua-types/5.1" />\n/// <reference types="lua-types/special/jit-only" />\n';
+
 function typecheck(tsconfigPath: string): { exitCode: number; output: string } {
   const proc = Bun.spawnSync(["bunx", "tsc", "-p", tsconfigPath, "--noEmit"], {
     stdout: "pipe",
@@ -87,7 +92,7 @@ describe("materializeApiSurface", () => {
     expect(readFileSync(path.join(dir, "sprite.d.ts"), "utf8")).toContain("__sprite");
 
     expect(readFileSync(path.join(dir, "index.d.ts"), "utf8")).toBe(
-      'import "./label";\nimport "./sprite";\n\nexport {};\n',
+      `${STDLIB_REFERENCES}import "./label";\nimport "./sprite";\n\nexport {};\n`,
     );
 
     const pkg = JSON.parse(readFileSync(path.join(dir, "package.json"), "utf8")) as {
@@ -261,7 +266,7 @@ describe("materializeApiSurface", () => {
     expect(existsSync(path.join(dir, "sprite.d.ts"))).toBe(false);
     expect(existsSync(path.join(dir, "label.d.ts"))).toBe(true);
     expect(readFileSync(path.join(dir, "index.d.ts"), "utf8")).toBe(
-      'import "./label";\n\nexport {};\n',
+      `${STDLIB_REFERENCES}import "./label";\n\nexport {};\n`,
     );
   });
 });
@@ -426,13 +431,13 @@ describe("materializeApiSurface full surface (no kind narrowing)", () => {
 
     expect(materializedNames().sort()).toEqual(["gui.d.ts", "label.d.ts", "render.d.ts"]);
     expect(indexContents()).toBe(
-      'import "./gui";\nimport "./label";\nimport "./render";\n\nexport {};\n',
+      `${STDLIB_REFERENCES}import "./gui";\nimport "./label";\nimport "./render";\n\nexport {};\n`,
     );
   });
 
   test("re-materializing is stable and keeps the full surface", () => {
     seedSource(["label", "gui", "render"]);
-    const expectedIndex = 'import "./gui";\nimport "./label";\nimport "./render";\n\nexport {};\n';
+    const expectedIndex = `${STDLIB_REFERENCES}import "./gui";\nimport "./label";\nimport "./render";\n\nexport {};\n`;
 
     materializeApiSurface({ cwd, surface: CURRENT, sourceGeneratedDir: sourceDir });
     materializeApiSurface({ cwd, surface: CURRENT, sourceGeneratedDir: sourceDir });

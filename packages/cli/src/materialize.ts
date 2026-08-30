@@ -621,7 +621,15 @@ export function materializeApiSurface(
     modules.push("engine-globals");
   }
   const imports = modules.map((mod) => `import "./${mod}";`).join("\n");
-  writeFileSync(path.join(absDir, "index.d.ts"), `${imports}\n\nexport {};\n`);
+  // The pinned consumer reaches this file through `root/index.d.ts` and never
+  // loads the package entrypoint that normally carries the Lua stdlib, so the
+  // directives lead the surface index instead. The CLI reaches the types
+  // scripts only through a runtime `import()` of a resolved path, so there is
+  // no static import to share `LUA_STDLIB_REFERENCES` through; the two
+  // consumer proofs, one per writer, are what keep the paths in step.
+  const stdlibReferences =
+    '/// <reference types="lua-types/5.1" />\n/// <reference types="lua-types/special/jit-only" />\n';
+  writeFileSync(path.join(absDir, "index.d.ts"), `${stdlibReferences}${imports}\n\nexport {};\n`);
 
   writePinnedRootEntrypoint(absDir, typesRoot);
 
