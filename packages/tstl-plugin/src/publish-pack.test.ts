@@ -46,10 +46,15 @@ describe("@defold-typescript/tstl-plugin publish surface", () => {
   build(PKG_DIR);
   const paths = packedPaths(PKG_DIR);
 
-  test("ships the built dist surface", () => {
+  test("ships the built dist surface", async () => {
+    const manifest = await Bun.file(resolve(PKG_DIR, "package.json")).json();
     expect(paths).toContain("package.json");
     expect(paths).toContain("dist/index.js");
     expect(paths).toContain("dist/index.d.ts");
+    // Read from `main` rather than hardcoding: a consumer resolving the package
+    // under Node10 rules loads exactly this file, so the assertion has to follow
+    // the field it defends.
+    expect(paths).toContain((manifest.main as string).replace(/^\.\//, ""));
   });
 
   test("excludes tests, snapshots, and dev scripts", () => {
@@ -130,16 +135,33 @@ const shapeOf = (load) => {
   }
 };
 
+const valueOf = (load) => {
+  try {
+    return load();
+  } catch {
+    return undefined;
+  }
+};
+
 const loaded = ts.sys.require(consumer, manifest.name);
 report.resolvedFrom = loaded.modulePath === undefined ? "unresolved" : path.basename(loaded.modulePath);
 report.byTsserver = loaded.error ? "threw " + (loaded.error.code || loaded.error.message) : shapeOf(() => loaded.module);
 report.byMain = shapeOf(() => req(manifest.main));
+
+const byTsserverValue = loaded.error ? undefined : loaded.module;
+const byMainValue = valueOf(() => req(manifest.main));
 import(manifest.name)
   .then((mod) => {
     report.imported = shapeOf(() => mod.default);
+    // Identity can only be observed inside this one process; serialising the
+    // values and comparing them on the other side would prove nothing.
+    report.sameAsImport = byTsserverValue !== undefined && byTsserverValue === mod.default;
+    report.mainSameAsImport = byMainValue !== undefined && byMainValue === mod.default;
   })
   .catch((error) => {
     report.imported = "threw " + (error.code || error.message);
+    report.sameAsImport = false;
+    report.mainSameAsImport = false;
   })
   .finally(() => {
     fs.rmSync(consumer, { recursive: true, force: true });
@@ -147,7 +169,7 @@ import(manifest.name)
   });
 `;
 
-function nodeEntryProbe(): Record<string, string> {
+function nodeEntryProbe(): Record<string, string | boolean> {
   const proc = Bun.spawnSync(["node", "-e", NODE_ENTRY_PROBE], {
     cwd: PKG_DIR,
     env: {
@@ -162,7 +184,7 @@ function nodeEntryProbe(): Record<string, string> {
   if (proc.exitCode !== 0 || stdout === "") {
     throw new Error(`node entry probe failed:\n${proc.stderr.toString()}${stdout}`);
   }
-  return JSON.parse(stdout) as Record<string, string>;
+  return JSON.parse(stdout) as Record<string, string | boolean>;
 }
 
 const ADDRESS_SOURCE = 'msg.post("#", "hello");\n';
@@ -183,6 +205,11 @@ describe("@defold-typescript/tstl-plugin require-shaped entry", () => {
 
   test("importing the package still yields the factory as its default export", () => {
     expect(probe.imported).toBe("factory");
+  });
+
+  test("both published conditions expose one factory", () => {
+    expect(probe.sameAsImport).toBe(true);
+    expect(probe.mainSameAsImport).toBe(true);
   });
 
   test("built entries carry no build-machine path into their resolution base", async () => {
