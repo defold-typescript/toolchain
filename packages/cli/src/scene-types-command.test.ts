@@ -105,6 +105,16 @@ function probeDiagnostics(probe: string): readonly ts.Diagnostic[] {
   return [...program.getSemanticDiagnostics(), ...program.getSyntacticDiagnostics()];
 }
 
+// What this suite proves: the declaration's content (through the checker), that
+// an unchanged re-run leaves the file's mtime alone, that a scene edit rewrites
+// it, the `--json` envelope, the empty-project case, and that `build/` output is
+// not read back as project scenes.
+//
+// Atomic replacement is not among them. Every assertion below reads the
+// destination after the verb returns, so swapping `writeIfChanged`'s staged
+// write + `renameSync` for a direct `writeFileSync(target, contents)` leaves all
+// of it green. That the write lands through a temp file is checked by reading
+// the writer, not by this suite.
 describe("scene-types verb", () => {
   test("writes the declaration where the project's types live, and the ids reach keyof", async () => {
     scaffoldProject();
