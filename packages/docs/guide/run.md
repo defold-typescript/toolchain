@@ -18,7 +18,7 @@ bunx @defold-typescript/cli run -- --verbose     # forward engine args after --
 ```
 
 The optional `[path]` is the project directory; it defaults to the current
-directory. When the tree is not launchable, `run` reports one of two distinct
+directory. When the tree is not launchable, `run` reports one of three distinct
 resolver errors and exits `1` without launching:
 
 - **no compiled project** — `build/default/game.projectc` is missing:
@@ -27,6 +27,13 @@ resolver errors and exits `1` without launching:
   `no engine for <platform>; run "bob run" to download and cache one`. A plain
   project built with `bob build` alone lands here, because only `bob run`
   fetches and caches the stock engine.
+- **version disagreement** — both are present but were produced by different
+  Defold versions: `build/default was compiled by Defold <build> but the cached
+  engine is <engine>; run "bob run" to refresh the engine for the current
+  target`. Bumping your pin and rebuilding leaves the previously cached engine
+  behind; launching that pair makes Defold report `FORMAT_ERROR`, so `run`
+  refuses instead. `bob run` re-fetches the engine for the current head and
+  clears it.
 
 ## What it launches
 

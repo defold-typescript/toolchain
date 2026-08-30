@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import * as os from "node:os";
 import { join } from "node:path";
 import { bobCachePath, engineCachePath } from "./bob";
 import {
@@ -10,6 +12,7 @@ import {
 } from "./bob-command";
 import { engineDownloadUrl } from "./debug-launcher";
 import type { DefoldTarget } from "./defold-target";
+import { readBuildMarker, readEngineMarker } from "./engine-launch";
 
 const SHA = "8fd9f9f5c6e1bd91b8c0f0a3a7d2e1c4b5a60798";
 
@@ -60,6 +63,23 @@ describe("composeBobArgv", () => {
 
 const HEAD = { version: "1.12.4", channel: null, sha: SHA } as const;
 
+// Every test below drives a synthetic cwd, so the real marker writers are held
+// off behind their seams unless the test is specifically round-tripping them.
+const NO_BUILD_MARKER = async (): Promise<void> => {};
+
+function markerRecorder(): {
+  writeBuildMarker: (cwd: string, head: { version: string; sha: string }) => Promise<void>;
+  writes: Array<{ cwd: string; sha: string; version: string }>;
+} {
+  const writes: Array<{ cwd: string; sha: string; version: string }> = [];
+  return {
+    writes,
+    writeBuildMarker: async (cwd, head) => {
+      writes.push({ cwd, sha: head.sha, version: head.version });
+    },
+  };
+}
+
 function fakeIo(overrides: Partial<DefoldIo> = {}): DefoldIo & {
   spawned: string[][];
   captures: boolean[];
@@ -92,20 +112,38 @@ describe("runBobCommand", () => {
 
   test("spawns the composed argv and reports ok on a zero exit", async () => {
     const io = fakeIo();
-    const result = await runBobCommand({ cwd: "/proj", subcommand: "resolve", head: HEAD, io });
+    const result = await runBobCommand({
+      cwd: "/proj",
+      subcommand: "resolve",
+      head: HEAD,
+      io,
+      writeBuildMarker: NO_BUILD_MARKER,
+    });
     expect(io.spawned).toEqual([["java", "-jar", jar, "resolve"]]);
     expect(result).toMatchObject({ ok: true, subcommand: "resolve", exitCode: 0 });
   });
 
   test("does not download when the jar is already cached", async () => {
     const io = fakeIo({ probe: () => true });
-    await runBobCommand({ cwd: "/proj", subcommand: "build", head: HEAD, io });
+    await runBobCommand({
+      cwd: "/proj",
+      subcommand: "build",
+      head: HEAD,
+      io,
+      writeBuildMarker: NO_BUILD_MARKER,
+    });
     expect(io.downloaded).toEqual([]);
   });
 
   test("downloads the jar to its cache target when absent", async () => {
     const io = fakeIo({ probe: () => false });
-    await runBobCommand({ cwd: "/proj", subcommand: "build", head: HEAD, io });
+    await runBobCommand({
+      cwd: "/proj",
+      subcommand: "build",
+      head: HEAD,
+      io,
+      writeBuildMarker: NO_BUILD_MARKER,
+    });
     expect(io.downloaded).toEqual([
       { url: `https://d.defold.com/archive/stable/${SHA}/bob/bob.jar`, dest: jar },
     ]);
@@ -113,7 +151,13 @@ describe("runBobCommand", () => {
 
   test("propagates a non-zero bob exit code as a failed result", async () => {
     const io = fakeIo({ spawn: async () => ({ exitCode: 17 }) });
-    const result = await runBobCommand({ cwd: "/proj", subcommand: "bundle", head: HEAD, io });
+    const result = await runBobCommand({
+      cwd: "/proj",
+      subcommand: "bundle",
+      head: HEAD,
+      io,
+      writeBuildMarker: NO_BUILD_MARKER,
+    });
     expect(result.ok).toBe(false);
     expect(result.exitCode).toBe(17);
   });
@@ -127,6 +171,7 @@ describe("runBobCommand", () => {
       buildServer: "https://build.example",
       head: HEAD,
       io,
+      writeBuildMarker: NO_BUILD_MARKER,
     });
     const argv = io.spawned[0] ?? [];
     expect(argv[0]).toBe("/jdk/bin/java");
@@ -136,7 +181,13 @@ describe("runBobCommand", () => {
 
   test("selects inherit mode by default and carries no captured output", async () => {
     const io = fakeIo();
-    const result = await runBobCommand({ cwd: "/proj", subcommand: "resolve", head: HEAD, io });
+    const result = await runBobCommand({
+      cwd: "/proj",
+      subcommand: "resolve",
+      head: HEAD,
+      io,
+      writeBuildMarker: NO_BUILD_MARKER,
+    });
     expect(io.captures).toEqual([false]);
     expect(result.output).toBeUndefined();
   });
@@ -155,6 +206,7 @@ describe("runBobCommand", () => {
       capture: true,
       head: HEAD,
       io,
+      writeBuildMarker: NO_BUILD_MARKER,
     });
     expect(seenCapture).toBe(true);
     expect(result.output).toBe("bob: done");
@@ -163,7 +215,13 @@ describe("runBobCommand", () => {
   test("downloads the bob.jar for the resolved head sha, not a stable head", async () => {
     const io = fakeIo({ probe: () => false });
     const head = { version: "1.13.0", channel: "beta", sha: "beta-sha" } as const;
-    await runBobCommand({ cwd: "/proj", subcommand: "build", head, io });
+    await runBobCommand({
+      cwd: "/proj",
+      subcommand: "build",
+      head,
+      io,
+      writeBuildMarker: NO_BUILD_MARKER,
+    });
     expect(io.downloaded).toEqual([
       {
         url: "https://d.defold.com/archive/stable/beta-sha/bob/bob.jar",
@@ -175,14 +233,82 @@ describe("runBobCommand", () => {
   test("skips download when the head-sha jar is already cached", async () => {
     const io = fakeIo({ probe: () => true });
     const head = { version: "1.13.0", channel: "beta", sha: "beta-sha" } as const;
-    await runBobCommand({ cwd: "/proj", subcommand: "build", head, io });
+    await runBobCommand({
+      cwd: "/proj",
+      subcommand: "build",
+      head,
+      io,
+      writeBuildMarker: NO_BUILD_MARKER,
+    });
     expect(io.downloaded).toEqual([]);
+  });
+
+  test("records the head it built with on a successful build", async () => {
+    const rec = markerRecorder();
+    const io = fakeIo();
+    await runBobCommand({
+      cwd: "/proj",
+      subcommand: "build",
+      head: { version: "1.13.1", channel: "stable", sha: "sha-1131" },
+      io,
+      writeBuildMarker: rec.writeBuildMarker,
+    });
+    expect(rec.writes).toEqual([{ cwd: "/proj", sha: "sha-1131", version: "1.13.1" }]);
+  });
+
+  test("records nothing when the build spawn exits non-zero", async () => {
+    const rec = markerRecorder();
+    const io = fakeIo({ spawn: async () => ({ exitCode: 3 }) });
+    await runBobCommand({
+      cwd: "/proj",
+      subcommand: "build",
+      head: HEAD,
+      io,
+      writeBuildMarker: rec.writeBuildMarker,
+    });
+    expect(rec.writes).toEqual([]);
+  });
+
+  test("records nothing for a successful resolve or bundle", async () => {
+    const rec = markerRecorder();
+    for (const subcommand of ["resolve", "bundle"]) {
+      await runBobCommand({
+        cwd: "/proj",
+        subcommand,
+        head: HEAD,
+        io: fakeIo(),
+        writeBuildMarker: rec.writeBuildMarker,
+      });
+    }
+    expect(rec.writes).toEqual([]);
+  });
+
+  test("writes a build marker the resolver reads back", async () => {
+    const dir = mkdtempSync(join(os.tmpdir(), "defold-typescript-bob-marker-"));
+    mkdirSync(join(dir, "build"), { recursive: true });
+    try {
+      await runBobCommand({
+        cwd: dir,
+        subcommand: "build",
+        head: { version: "1.13.1", channel: "stable", sha: "sha-1131" },
+        io: fakeIo(),
+      });
+      expect(readBuildMarker(dir)).toEqual({ sha: "sha-1131", version: "1.13.1" });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   test("carries the resolved version, channel, and sha on the result", async () => {
     const io = fakeIo();
     const head = { version: "1.13.0", channel: "beta", sha: "beta-sha" } as const;
-    const result = await runBobCommand({ cwd: "/proj", subcommand: "resolve", head, io });
+    const result = await runBobCommand({
+      cwd: "/proj",
+      subcommand: "resolve",
+      head,
+      io,
+      writeBuildMarker: NO_BUILD_MARKER,
+    });
     expect(result).toMatchObject({
       defoldVersion: "1.13.0",
       defoldChannel: "beta",
@@ -325,6 +451,7 @@ describe("prepareBobRun", () => {
       writeMarker: async (cwd, enginePath) => {
         markerWrites.push({ cwd, enginePath });
       },
+      writeBuildMarker: NO_BUILD_MARKER,
     });
     expect(result).toMatchObject({ ok: true, buildExitCode: 0 });
     expect(result.runnable?.enginePath).toBe(buildEngine);
@@ -356,7 +483,9 @@ describe("prepareBobRun", () => {
       writeMarker: async (cwd, enginePath) => {
         markerWrites.push({ cwd, enginePath });
       },
-      readEngineMarker: () => engineCache,
+      writeBuildMarker: NO_BUILD_MARKER,
+      readEngineMarker: () => ({ enginePath: engineCache, sha: SHA, version: HEAD.version }),
+      readBuildMarker: () => ({ sha: SHA, version: HEAD.version }),
     });
     expect(downloaded).toEqual([{ url: engineUrl, dest: engineCache }]);
     expect(markerWrites).toEqual([{ cwd: RUN_CWD, enginePath: engineCache }]);
@@ -384,6 +513,7 @@ describe("prepareBobRun", () => {
       writeMarker: async () => {
         markerWrites.push(1);
       },
+      writeBuildMarker: NO_BUILD_MARKER,
     });
     expect(result.ok).toBe(false);
     expect(result.buildExitCode).toBe(5);
@@ -415,7 +545,9 @@ describe("prepareBobRun", () => {
         },
       },
       writeMarker: async () => {},
-      readEngineMarker: () => engineCache,
+      writeBuildMarker: NO_BUILD_MARKER,
+      readEngineMarker: () => ({ enginePath: engineCache, sha: SHA, version: HEAD.version }),
+      readBuildMarker: () => ({ sha: SHA, version: HEAD.version }),
     });
     const argv = spawned[0] ?? [];
     expect(argv[0]).toBe("/jdk/bin/java");
@@ -423,6 +555,39 @@ describe("prepareBobRun", () => {
     expect(argv).toContain("https://build.example");
     expect(downloaded).toEqual([]);
     expect(result.runnable?.enginePath).toBe(engineCache);
+  });
+
+  test("writes an engine marker carrying the resolved head that readEngineMarker reads back", async () => {
+    const dir = mkdtempSync(join(os.tmpdir(), "defold-typescript-engine-marker-"));
+    mkdirSync(join(dir, "build", "default"), { recursive: true });
+    const dirProjectc = join(dir, "build", "default", "game.projectc");
+    const present = new Set<string>([dirProjectc, jar]);
+    try {
+      const result = await prepareBobRun({
+        cwd: dir,
+        head: { version: "1.13.1", channel: "stable", sha: "sha-1131" },
+        io: {
+          cacheDir: "/c",
+          platform: "darwin",
+          arch: "arm64",
+          probe: (p) => present.has(p),
+          javaProbe: () => true,
+          spawn: async () => ({ exitCode: 0 }),
+          download: async (_url, dest) => {
+            present.add(dest);
+          },
+        },
+        writeBuildMarker: NO_BUILD_MARKER,
+      });
+      expect(result.ok).toBe(true);
+      expect(readEngineMarker(dir)).toEqual({
+        enginePath: result.runnable?.enginePath ?? "",
+        sha: "sha-1131",
+        version: "1.13.1",
+      });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   test("an offline engine download returns ok:false with an actionable error and no runnable", async () => {
@@ -441,6 +606,7 @@ describe("prepareBobRun", () => {
         },
       },
       writeMarker: async () => {},
+      writeBuildMarker: NO_BUILD_MARKER,
     });
     expect(result.ok).toBe(false);
     expect(result.runnable).toBeUndefined();
