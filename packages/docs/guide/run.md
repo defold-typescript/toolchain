@@ -27,13 +27,20 @@ resolver errors and exits `1` without launching:
   `no engine for <platform>; run "bob run" to download and cache one`. A plain
   project built with `bob build` alone lands here, because only `bob run`
   fetches and caches the stock engine.
-- **version disagreement** — both are present but were produced by different
-  Defold versions: `build/default was compiled by Defold <build> but the cached
-  engine is <engine>; run "bob run" to refresh the engine for the current
-  target`. Bumping your pin and rebuilding leaves the previously cached engine
-  behind; launching that pair makes Defold report `FORMAT_ERROR`, so `run`
-  refuses instead. `bob run` re-fetches the engine for the current head and
-  clears it.
+- **version disagreement** — both are present, both record the Defold version
+  they were produced at, and the two disagree: `build/default was compiled by
+  Defold <build> but the cached engine is <engine>; run "bob run" to refresh the
+  engine for the current target`. Bumping your pin and rebuilding leaves the
+  previously cached engine behind; launching that pair makes Defold report
+  `FORMAT_ERROR`, so `run` refuses instead. `bob run` re-fetches the engine for
+  the current head and clears it.
+
+Two lanes pass the version check without being examined. An engine cached before
+the toolchain recorded versions is a bare path with nothing to compare, so it
+stays launchable; the first [`bob run`](./bob.md) replaces it with an identified
+marker the check reads from then on. A native-extension `build/<platform>/dmengine`
+is produced by the same [`bob build`](./bob.md) as the data beside it, so `run`
+launches it without consulting either marker.
 
 ## What it launches
 
