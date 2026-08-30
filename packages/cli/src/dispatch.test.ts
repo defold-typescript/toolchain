@@ -1,5 +1,13 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { Writable } from "node:stream";
@@ -19,7 +27,7 @@ import { dispatch } from "./dispatch";
 import { EDITOR_PORT_FILE, EDITOR_TOKEN_FILE, type EditorTransport } from "./editor-attach";
 import { type ExtensionZip, extensionArchiveKey } from "./extension-archive";
 import { EDITOR_ROOT_ENV } from "./installed-editor-version";
-import { surfaceDirName } from "./materialize";
+import { MATERIALIZED_ROOT, surfaceDirName } from "./materialize";
 import {
   labelRefDocResolveOpts,
   multiKindRefDocResolveOpts,
@@ -27,6 +35,7 @@ import {
   noDownload,
 } from "./ref-doc-test-fixture";
 import { runResolve } from "./resolve";
+import { SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 import { defaultUpgradeIo } from "./upgrade";
 import type {
   EditorReloadCommand,
@@ -111,6 +120,16 @@ function makeEditorClient(baseUrl = "http://localhost:4242"): FakeEditorClient {
     posts,
     resolveCount: () => resolves,
   };
+}
+
+// `build` regenerates the scene-address declaration under `.defold-types`, so
+// the directory's existence no longer answers whether a surface materialized.
+// Its contents still do.
+function materializedSurfaceEntries(): string[] {
+  const root = path.join(cwd, MATERIALIZED_ROOT);
+  if (!existsSync(root)) return [];
+  const declaration = path.posix.basename(SCENE_ADDRESSES_DECLARATION);
+  return readdirSync(root).filter((entry) => entry !== declaration);
 }
 
 function watchHandle(): {
@@ -1082,7 +1101,7 @@ describe("dispatch", () => {
       target: UNREGISTERED_TARGET,
       available: registeredTargetVersions(),
     });
-    expect(existsSync(path.join(cwd, ".defold-types"))).toBe(false);
+    expect(materializedSurfaceEntries()).toEqual([]);
   });
 
   test("build --fail-on-drift escalates an unresolvable pin and leaves the notice unchanged", async () => {
@@ -1703,7 +1722,7 @@ describe("dispatch", () => {
     expect(code).toBe(0);
     const parsed = JSON.parse(out()) as { materializedSurface: string | null };
     expect(parsed.materializedSurface).toBeNull();
-    expect(existsSync(path.join(cwd, ".defold-types"))).toBe(false);
+    expect(materializedSurfaceEntries()).toEqual([]);
   });
 
   test("build --json on a pinned ref-doc version generates the surface on the fly", async () => {
@@ -1818,7 +1837,7 @@ describe("dispatch", () => {
     expect(err()).toBe("");
     const parsed = JSON.parse(out()) as { materializedSurface: string | null };
     expect(parsed.materializedSurface).toBeNull();
-    expect(existsSync(path.join(cwd, ".defold-types"))).toBe(false);
+    expect(materializedSurfaceEntries()).toEqual([]);
 
     rmSync(emptyCache, { recursive: true, force: true });
   });
@@ -5757,5 +5776,60 @@ describe("dispatch running-editor precedence", () => {
 
     expect(code).toBe(0);
     expect(err()).toContain("1.13.0");
+  });
+});
+
+describe("watch scene-address surface wiring", () => {
+  const PLAYER_ONLY = 'instances {\n  id: "player"\n  prototype: "/game/player.go"\n}\n';
+  const PLAYER_AND_ENEMY = `${PLAYER_ONLY}instances {\n  id: "enemy"\n  prototype: "/game/enemy.go"\n}\n`;
+
+  function write(rel: string, contents: string): void {
+    const abs = path.join(cwd, rel);
+    mkdirSync(path.dirname(abs), { recursive: true });
+    writeFileSync(abs, contents);
+  }
+
+  test("a scene save through the real watch wiring rewrites the declaration", async () => {
+    write(
+      "tsconfig.json",
+      JSON.stringify({ compilerOptions: { strict: true }, include: ["src/**/*.ts"] }, null, 2),
+    );
+    write("src/main.ts", "export const a = 1;\n");
+    write("game.project", "[project]\n");
+    write("game/player.collection", PLAYER_ONLY);
+    write("game/player.go", 'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n');
+
+    const { io } = captureStreams();
+    const main: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+    let triggerComponent: ((kind: "change" | "rename", rel: string) => void) | undefined;
+    const component: WatcherFactory = (_dir, onEvent): Watcher => {
+      triggerComponent = (kind, rel) => onEvent({ kind, path: rel });
+      return { close() {} };
+    };
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      onWatchStart,
+      detectEditorVersion: () => null,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+
+    const declarationPath = path.join(cwd, SCENE_ADDRESSES_DECLARATION);
+    expect(readFileSync(declarationPath, "utf8")).not.toContain('"/enemy"');
+
+    write("game/player.collection", PLAYER_AND_ENEMY);
+    write("game/enemy.go", 'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n');
+    triggerComponent?.("change", "game/player.collection");
+    await handle.waitForIdle();
+
+    expect(readFileSync(declarationPath, "utf8")).toContain('"/enemy"');
+
+    handle.stop();
+    expect(await result).toBe(0);
   });
 });
