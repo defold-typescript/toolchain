@@ -8,6 +8,7 @@ export type CliCommand =
   | "bob"
   | "wall"
   | "resolve"
+  | "scene-types"
   | "run"
   | "reload"
   | "upgrade"
@@ -51,6 +52,10 @@ export interface RenderResultInput {
     readonly declaredIn: string;
     readonly origin: "declared" | "inherited";
   }[];
+  // `scene-types` reports the declaration's path on every run and `written` for
+  // whether this run actually rewrote it; an unchanged project reports the path
+  // with an empty `written`.
+  readonly declaration?: string;
   readonly installCommand?: string;
   readonly manualSteps?: readonly string[];
   readonly actions?: Record<string, string>;
@@ -121,10 +126,12 @@ export function renderResult(input: RenderResultInput): string {
   const withEligible = "eligible" in input ? { ...withWalls, eligible: input.eligible } : withWalls;
   const withResolved =
     "resolved" in input ? { ...withEligible, resolved: input.resolved } : withEligible;
+  const withDeclaration =
+    "declaration" in input ? { ...withResolved, declaration: input.declaration } : withResolved;
   const withInstall =
     "installCommand" in input
-      ? { ...withResolved, installCommand: input.installCommand }
-      : withResolved;
+      ? { ...withDeclaration, installCommand: input.installCommand }
+      : withDeclaration;
   const withManual =
     "manualSteps" in input ? { ...withInstall, manualSteps: input.manualSteps } : withInstall;
   const withActions = "actions" in input ? { ...withManual, actions: input.actions } : withManual;

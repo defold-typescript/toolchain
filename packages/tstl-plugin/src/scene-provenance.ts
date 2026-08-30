@@ -1,4 +1,5 @@
 import {
+  ANIMATION_ASSET_EXTENSIONS,
   buildConfigKeyIndex,
   buildGuiNodeIndex,
   buildInputActionIndex,
@@ -8,18 +9,15 @@ import {
   type ClassifiedSlot,
   componentIdOfSameObjectAddress,
   computeOutputRel,
-  isAddressClass,
-  isFragmentCaret,
-} from "@defold-typescript/transpiler";
-import { readBuildConfigFromHost } from "./build-config";
-import {
-  ANIMATION_ASSET_EXTENSIONS,
   displayPathOf,
   GAME_PROJECT_DOCUMENT,
   GUI_EXTENSIONS,
   INPUT_BINDING_EXTENSIONS,
+  isAddressClass,
+  isFragmentCaret,
   PROJECT_EXTENSIONS,
-} from "./scene-documents";
+} from "@defold-typescript/transpiler";
+import { readBuildConfigFromHost } from "./build-config";
 import type { SceneIndexCache } from "./scene-index-cache";
 
 // Keys of their own under the same cache the completion indexes use, so a
