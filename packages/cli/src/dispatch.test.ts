@@ -5832,4 +5832,86 @@ describe("watch scene-address surface wiring", () => {
     handle.stop();
     expect(await result).toBe(0);
   });
+
+  test("watch on a pinned ref-doc target regenerates the scene declaration", async () => {
+    write(
+      "tsconfig.json",
+      JSON.stringify({ compilerOptions: { strict: true }, include: ["src/**/*.ts"] }, null, 2),
+    );
+    write("src/main.ts", "export const a = 1;\n");
+    write(
+      "package.json",
+      `${JSON.stringify({ "defold-typescript": { "defold-target": "1.9.8" } }, null, 2)}\n`,
+    );
+    write("game.project", "[project]\n");
+    write("main.script", "");
+    write("game/player.collection", PLAYER_ONLY);
+    write("game/player.go", 'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n');
+
+    const resolveOpts = multiKindRefDocResolveOpts();
+    const { io, err } = captureStreams();
+    const main: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+    let triggerComponent: ((kind: "change" | "rename", rel: string) => void) | undefined;
+    const component: WatcherFactory = (_dir, onEvent): Watcher => {
+      triggerComponent = (kind, rel) => onEvent({ kind, path: rel });
+      return { close() {} };
+    };
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      resolveOpts,
+      refDocRegistry: [multiKindRefDocTarget()],
+      onWatchStart,
+      detectEditorVersion: () => null,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+
+    const declarationPath = path.join(cwd, SCENE_ADDRESSES_DECLARATION);
+    expect(existsSync(declarationPath)).toBe(true);
+    expect(readFileSync(declarationPath, "utf8")).not.toContain('"/enemy"');
+
+    write("game/player.collection", PLAYER_AND_ENEMY);
+    write("game/enemy.go", 'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n');
+    triggerComponent?.("change", "game/player.collection");
+    await handle.waitForIdle();
+
+    expect(readFileSync(declarationPath, "utf8")).toContain('"/enemy"');
+
+    // The pinned surface has no `syncSurface`; a component save must leave the
+    // tsconfig mapping the startup materialization wrote exactly as it is.
+    const tsconfigPath = path.join(cwd, "tsconfig.json");
+    const pinnedPaths = (
+      JSON.parse(readFileSync(tsconfigPath, "utf8")) as {
+        compilerOptions: { paths?: Record<string, string[]> };
+      }
+    ).compilerOptions.paths;
+    expect(pinnedPaths).toBeDefined();
+
+    triggerComponent?.("change", "main.script");
+    await handle.waitForIdle();
+
+    expect(
+      (
+        JSON.parse(readFileSync(tsconfigPath, "utf8")) as {
+          compilerOptions: { paths?: Record<string, string[]> };
+        }
+      ).compilerOptions.paths,
+    ).toEqual(pinnedPaths);
+
+    const dir = path.join(cwd, ".defold-types", surfaceDir("defold-1.9.8"));
+    expect(existsSync(path.join(dir, "sprite.d.ts"))).toBe(true);
+    expect(existsSync(path.join(dir, "gui.d.ts"))).toBe(true);
+    expect(existsSync(path.join(dir, "render.d.ts"))).toBe(true);
+    expect(failureOutput(err())).toBe("");
+
+    handle.stop();
+    expect(await result).toBe(0);
+
+    rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
+  });
 });

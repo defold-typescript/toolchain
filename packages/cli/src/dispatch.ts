@@ -901,10 +901,32 @@ function dispatchCommand(
           surface.surfaceId !== CURRENT_STABLE_SURFACE_ID &&
           sourceGeneratedDir === null;
 
+        // The two scene surfaces are wired on every target: a pinned ref-doc
+        // project's addresses change on a scene save exactly as an unpinned
+        // one's do. Only `syncSurface` and `resolveSurface` are target-shaped.
+        const componentWatcherFactory = internals
+          ? internals.componentWatcherFactory
+          : recursiveWatcherFactory;
+        // The reporting `scene-types` does, minus the up-to-date line: a watch
+        // regenerates on every scene save, and most of them write nothing.
+        // `watch.ts` emits the `sceneTypes` watch event around this closure.
+        const sceneTypesSurface = (): void => {
+          const { declaration, wrote } = runSceneTypes({ cwd });
+          if (json) {
+            io.stdout.write(
+              renderResult({
+                command: "scene-types",
+                declaration,
+                written: wrote ? [declaration] : [],
+              }),
+            );
+          } else if (wrote) {
+            io.stdout.write(`defold-typescript scene-types: wrote ${declaration}\n`);
+          }
+        };
+
         let syncSurface: (() => void) | undefined;
-        let componentWatcherFactory: WatcherFactory | undefined;
         let resolveSurface: (() => void | Promise<void>) | undefined;
-        let sceneTypesSurface: (() => void | Promise<void>) | undefined;
         if (!isRefDocSurface) {
           syncSurface = (): void => {
             const { materializedDir } = materializeApiSurface({
@@ -915,9 +937,6 @@ function dispatchCommand(
             ensureMaterializedReference(cwd, materializedDir);
             // walls are opt-in via the wall command
           };
-          componentWatcherFactory = internals
-            ? internals.componentWatcherFactory
-            : recursiveWatcherFactory;
           const resolveSeams = internals?.resolveInternals;
           resolveSurface = async (): Promise<void> => {
             const result = await runResolve({
@@ -951,23 +970,6 @@ function dispatchCommand(
               io.stdout.write(`defold-typescript resolve: wrote ${result.materializedSurface}\n`);
             }
           };
-          // The reporting `scene-types` does, minus the up-to-date line: a watch
-          // regenerates on every scene save, and most of them write nothing.
-          // `watch.ts` emits the `sceneTypes` watch event around this closure.
-          sceneTypesSurface = (): void => {
-            const { declaration, wrote } = runSceneTypes({ cwd });
-            if (json) {
-              io.stdout.write(
-                renderResult({
-                  command: "scene-types",
-                  declaration,
-                  written: wrote ? [declaration] : [],
-                }),
-              );
-            } else if (wrote) {
-              io.stdout.write(`defold-typescript scene-types: wrote ${declaration}\n`);
-            }
-          };
         }
 
         const launchWatch = (): Promise<number> => {
@@ -990,7 +992,7 @@ function dispatchCommand(
             ...(syncSurface ? { syncSurface } : {}),
             ...(componentWatcherFactory ? { componentWatcherFactory } : {}),
             ...(resolveSurface ? { resolveSurface } : {}),
-            ...(sceneTypesSurface ? { sceneTypesSurface } : {}),
+            sceneTypesSurface,
             ...(json ? { json: true } : {}),
             ...(pinDiagnostics.length > 0 ? { pinDiagnostics } : {}),
             ...(pinMismatch ? { pinMismatch } : {}),
