@@ -18,7 +18,7 @@ changes are called out first because the toolchain is pre-1.0.
 
 ### Improved
 
-- **[`scene-types`](./scene-types.md) turns your project's scenes into completions.** The new verb reads every `.collection` and `.go` and writes the game-object paths and component ids it finds to `.defold-types/scene-addresses.d.ts`, which [`init`](./init.md) and [`upgrade`](./upgrade.md) now name in your `tsconfig.json` `include` for you, so the editor suggests them on address slots like `msg.post`'s receiver with no manual wiring. The aliases stay widened, so a runtime-composed address is never rejected, and a re-run over unchanged scenes writes nothing.
+- **[`scene-types`](./scene-types.md) turns your project's scenes into completions, and keeps them current on its own.** The game-object paths and component ids in every `.collection` and `.go` land in `.defold-types/scene-addresses.d.ts` — named in your `tsconfig.json` by [`init`](./init.md) and [`upgrade`](./upgrade.md), refreshed by [`build`](./build.md) before it transpiles and by [`watch`](./watch.md) on every scene save — so address slots like `msg.post`'s receiver suggest real addresses while still accepting one composed at runtime.
 
 ### Fixed
 

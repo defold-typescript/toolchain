@@ -184,7 +184,14 @@ export function renderResult(input: RenderResultInput): string {
   return `${JSON.stringify(payload)}\n`;
 }
 
-export type WatchEventName = "build" | "rebuild" | "reload" | "resolve" | "start" | "stop";
+export type WatchEventName =
+  | "build"
+  | "rebuild"
+  | "reload"
+  | "resolve"
+  | "sceneTypes"
+  | "start"
+  | "stop";
 
 export interface WatchErrorEntry {
   readonly file?: string;

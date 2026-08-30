@@ -1,4 +1,4 @@
-import type { ScriptKind } from "@defold-typescript/transpiler";
+import { SCENE_EXTENSIONS, type ScriptKind } from "@defold-typescript/transpiler";
 
 export type { ScriptKind };
 
@@ -30,6 +30,13 @@ export function isComponentPath(relPath: string): boolean {
     return false;
   }
   return Object.keys(KIND_BY_EXT).some((ext) => relPath.endsWith(ext));
+}
+
+// The scene sources the address universe is read from. The extension list is
+// the transpiler's own, so the watch trigger and the generator's walk cannot
+// come to disagree about what a scene is.
+export function isScenePath(relPath: string): boolean {
+  return SCENE_EXTENSIONS.some((ext) => relPath.endsWith(ext));
 }
 
 export function selectScriptKind(kinds: Set<ScriptKind>): ScriptKind | null {

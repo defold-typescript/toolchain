@@ -1,5 +1,13 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { Writable } from "node:stream";
@@ -17,6 +25,7 @@ import type {
   WatchEditorClient as PublicWatchEditorClient,
 } from "./index";
 import { surfaceDirName } from "./materialize";
+import { runSceneTypes, SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 import {
   createWatchEditorClient,
   type EditorReloadCommand,
@@ -2689,5 +2698,276 @@ describe("runWatch console support is optional", () => {
 
     handle.stop();
     expect(await handle.done).toBe(0);
+  });
+});
+
+describe("runWatch scene-address regeneration", () => {
+  const PLAYER_ONLY = 'instances {\n  id: "player"\n  prototype: "/game/player.go"\n}\n';
+  const PLAYER_AND_ENEMY = `${PLAYER_ONLY}instances {\n  id: "enemy"\n  prototype: "/game/enemy.go"\n}\n`;
+
+  function writeScenes(collection: string): void {
+    writeProjectFile("game.project", "[project]\n");
+    writeProjectFile("game/player.collection", collection);
+    writeProjectFile(
+      "game/player.go",
+      'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n',
+    );
+  }
+
+  function scaffold(collection = PLAYER_ONLY): void {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    writeScenes(collection);
+  }
+
+  function declarationPath(): string {
+    return path.join(cwd, SCENE_ADDRESSES_DECLARATION);
+  }
+
+  // The closure `dispatch` builds, reduced to the part these tests own: the
+  // generator itself, run against the same project the watcher observes.
+  function realSceneSurface(): () => void {
+    return () => {
+      runSceneTypes({ cwd });
+    };
+  }
+
+  test("a .collection save regenerates the declaration, and waitForIdle covers the regeneration", async () => {
+    scaffold();
+    const { stdout, stderr } = captureStreams();
+    const main = makeFactory();
+    const component = makeFactory();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      debounceMs: 5,
+      watcherFactory: main.factory,
+      componentWatcherFactory: component.factory,
+      sceneTypesSurface: realSceneSurface(),
+    });
+    await handle.waitForIdle();
+    expect(readFileSync(declarationPath(), "utf8")).not.toContain('"/enemy"');
+
+    writeScenes(PLAYER_AND_ENEMY);
+    writeProjectFile(
+      "game/enemy.go",
+      'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n',
+    );
+    component.trigger("change", "game/player.collection");
+    await handle.waitForIdle();
+
+    // Read straight after idle, with no settling delay: a regeneration outside
+    // `waitForIdle`'s membership would leave this assertion racing the timer.
+    expect(readFileSync(declarationPath(), "utf8")).toContain('"/enemy"');
+
+    handle.stop();
+    expect(await handle.done).toBe(0);
+  });
+
+  test("a deleted .go regenerates too, because the trigger reads the event path", async () => {
+    scaffold(PLAYER_AND_ENEMY);
+    writeProjectFile(
+      "game/enemy.go",
+      'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n',
+    );
+    const { stdout, stderr } = captureStreams();
+    const main = makeFactory();
+    const component = makeFactory();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      debounceMs: 5,
+      watcherFactory: main.factory,
+      componentWatcherFactory: component.factory,
+      sceneTypesSurface: realSceneSurface(),
+    });
+    await handle.waitForIdle();
+    expect(readFileSync(declarationPath(), "utf8")).toContain('"/enemy"');
+
+    rmSync(path.join(cwd, "game/enemy.go"), { force: true });
+    writeScenes(PLAYER_ONLY);
+    expect(existsSync(path.join(cwd, "game/enemy.go"))).toBe(false);
+    component.trigger("rename", "game/enemy.go");
+    await handle.waitForIdle();
+
+    expect(readFileSync(declarationPath(), "utf8")).not.toContain('"/enemy"');
+
+    handle.stop();
+    expect(await handle.done).toBe(0);
+  });
+
+  test("a .ts source save does not regenerate the declaration", async () => {
+    scaffold();
+    const { stdout, stderr } = captureStreams();
+    const main = makeFactory();
+    const component = makeFactory();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      debounceMs: 5,
+      watcherFactory: main.factory,
+      componentWatcherFactory: component.factory,
+      sceneTypesSurface: realSceneSurface(),
+    });
+    await handle.waitForIdle();
+    const before = statSync(declarationPath()).mtimeMs;
+
+    // A scene edit is on disk but only the source event fires, so a regeneration
+    // here can only come from the filter having been widened past scenes.
+    writeScenes(PLAYER_AND_ENEMY);
+    writeProjectFile("src/main.ts", scriptSource(2));
+    main.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    expect(statSync(declarationPath()).mtimeMs).toBe(before);
+
+    handle.stop();
+    expect(await handle.done).toBe(0);
+  });
+
+  test("a scene save whose content changes nothing leaves the declaration untouched", async () => {
+    scaffold();
+    const { stdout, stderr } = captureStreams();
+    const main = makeFactory();
+    const component = makeFactory();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      debounceMs: 5,
+      watcherFactory: main.factory,
+      componentWatcherFactory: component.factory,
+      sceneTypesSurface: realSceneSurface(),
+    });
+    await handle.waitForIdle();
+    const before = statSync(declarationPath()).mtimeMs;
+
+    component.trigger("change", "game/player.collection");
+    await handle.waitForIdle();
+
+    expect(statSync(declarationPath()).mtimeMs).toBe(before);
+
+    handle.stop();
+    expect(await handle.done).toBe(0);
+  });
+
+  test("json mode emits one sceneTypes event per scene save", async () => {
+    scaffold();
+    const { stdout, stderr, out } = captureStreams();
+    const main = makeFactory();
+    const component = makeFactory();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      json: true,
+      debounceMs: 5,
+      watcherFactory: main.factory,
+      componentWatcherFactory: component.factory,
+      sceneTypesSurface: realSceneSurface(),
+    });
+    await handle.waitForIdle();
+    const atStartup = countMatches(out(), /"event":"sceneTypes"/g);
+
+    writeScenes(PLAYER_AND_ENEMY);
+    component.trigger("change", "game/player.collection");
+    await handle.waitForIdle();
+
+    expect(countMatches(out(), /"event":"sceneTypes"/g)).toBe(atStartup + 1);
+    for (const line of out().trimEnd().split("\n")) {
+      expect(() => JSON.parse(line) as unknown).not.toThrow();
+    }
+
+    handle.stop();
+    expect(await handle.done).toBe(0);
+  });
+
+  test("a throwing regeneration reports the error under --json and the watcher stays alive", async () => {
+    scaffold();
+    const { stdout, stderr, out } = captureStreams();
+    const main = makeFactory();
+    const component = makeFactory();
+    let failNext = false;
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      json: true,
+      debounceMs: 5,
+      watcherFactory: main.factory,
+      componentWatcherFactory: component.factory,
+      sceneTypesSurface: () => {
+        if (failNext) throw new Error("scene read failed");
+        runSceneTypes({ cwd });
+      },
+    });
+    await handle.waitForIdle();
+
+    failNext = true;
+    component.trigger("change", "game/player.collection");
+    await handle.waitForIdle();
+
+    const failure = out()
+      .trimEnd()
+      .split("\n")
+      .map((line) => JSON.parse(line) as Record<string, unknown>)
+      .find((entry) => entry.event === "sceneTypes" && entry.ok === false);
+    expect(failure).toEqual({
+      command: "watch",
+      event: "sceneTypes",
+      ok: false,
+      error: "scene read failed",
+    });
+
+    // Still serving: a source rebuild after the failed regeneration still emits.
+    writeProjectFile("src/main.ts", scriptSource(2));
+    main.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+    expect(countMatches(out(), /"event":"rebuild"/g)).toBe(1);
+
+    handle.stop();
+    expect(await handle.done).toBe(0);
+  });
+
+  test("stop() during a pending scene debounce cancels it and emits no late event", async () => {
+    scaffold();
+    const { stdout, stderr, out } = captureStreams();
+    const main = makeFactory();
+    const component = makeFactory();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      json: true,
+      debounceMs: 50,
+      watcherFactory: main.factory,
+      componentWatcherFactory: component.factory,
+      sceneTypesSurface: realSceneSurface(),
+    });
+    await handle.waitForIdle();
+    const atStartup = countMatches(out(), /"event":"sceneTypes"/g);
+
+    writeScenes(PLAYER_AND_ENEMY);
+    component.trigger("change", "game/player.collection");
+    handle.stop();
+    await handle.waitForIdle();
+    expect(await handle.done).toBe(0);
+
+    await new Promise((r) => setTimeout(r, 150));
+
+    // An uncleared debounce timer regenerates after the watch is gone, which the
+    // suppressed event alone would not reveal.
+    expect(readFileSync(declarationPath(), "utf8")).not.toContain('"/enemy"');
+    expect(countMatches(out(), /"event":"sceneTypes"/g)).toBe(atStartup);
   });
 });

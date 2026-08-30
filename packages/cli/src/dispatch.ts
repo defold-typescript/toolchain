@@ -834,6 +834,7 @@ function dispatchCommand(
         if (isRefDocSurface) {
           const surfaceId = surface.surfaceId as string;
           try {
+            runSceneTypes({ cwd });
             const { written, warnings } = runBuild({ cwd });
             const { materializedDir } = await materializeRefDocSurface({
               cwd,
@@ -853,6 +854,10 @@ function dispatchCommand(
         }
 
         try {
+          // Ahead of the transpile, not after it: the declaration is inside
+          // `include`, so a build that regenerated afterwards would type-check
+          // against the previous run's address universe.
+          runSceneTypes({ cwd });
           const { written, warnings } = runBuild({ cwd });
           const { materializedDir } = materializeApiSurface({
             cwd,
@@ -899,6 +904,7 @@ function dispatchCommand(
         let syncSurface: (() => void) | undefined;
         let componentWatcherFactory: WatcherFactory | undefined;
         let resolveSurface: (() => void | Promise<void>) | undefined;
+        let sceneTypesSurface: (() => void | Promise<void>) | undefined;
         if (!isRefDocSurface) {
           syncSurface = (): void => {
             const { materializedDir } = materializeApiSurface({
@@ -945,6 +951,23 @@ function dispatchCommand(
               io.stdout.write(`defold-typescript resolve: wrote ${result.materializedSurface}\n`);
             }
           };
+          // The reporting `scene-types` does, minus the up-to-date line: a watch
+          // regenerates on every scene save, and most of them write nothing.
+          // `watch.ts` emits the `sceneTypes` watch event around this closure.
+          sceneTypesSurface = (): void => {
+            const { declaration, wrote } = runSceneTypes({ cwd });
+            if (json) {
+              io.stdout.write(
+                renderResult({
+                  command: "scene-types",
+                  declaration,
+                  written: wrote ? [declaration] : [],
+                }),
+              );
+            } else if (wrote) {
+              io.stdout.write(`defold-typescript scene-types: wrote ${declaration}\n`);
+            }
+          };
         }
 
         const launchWatch = (): Promise<number> => {
@@ -967,6 +990,7 @@ function dispatchCommand(
             ...(syncSurface ? { syncSurface } : {}),
             ...(componentWatcherFactory ? { componentWatcherFactory } : {}),
             ...(resolveSurface ? { resolveSurface } : {}),
+            ...(sceneTypesSurface ? { sceneTypesSurface } : {}),
             ...(json ? { json: true } : {}),
             ...(pinDiagnostics.length > 0 ? { pinDiagnostics } : {}),
             ...(pinMismatch ? { pinMismatch } : {}),
