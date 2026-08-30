@@ -1,5 +1,13 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { Writable } from "node:stream";
@@ -729,5 +737,91 @@ describe("build editor attach", () => {
     }
     expect(out()).not.toContain("http://localhost:4242");
     expect(err()).not.toContain("http://localhost:4242");
+  });
+});
+
+describe("build regenerates the scene-address declaration", () => {
+  // The scaffold `init` writes, without ever running the generator: the
+  // declaration's absence is the starting state one of these tests asserts, and
+  // the others reach a stale state by editing scenes after a generation.
+  function scaffoldScenes(): void {
+    writeFile("game.project", "[project]\n");
+    writeFile(
+      "game/player.collection",
+      'instances {\n  id: "player"\n  prototype: "/game/player.go"\n}\n',
+    );
+    writeFile("game/player.go", 'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n');
+    // A `.go` on disk reads as an existing project, so `init` skips scaffolding
+    // `src/main.ts`; the build needs a real source to have anything to emit.
+    writeFile("src/main.ts", MAIN_SCRIPT);
+    runInit({ cwd });
+  }
+
+  function addEnemyGameObject(): void {
+    writeFile("game/enemy.go", 'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n');
+    writeFile(
+      "game/player.collection",
+      'instances {\n  id: "player"\n  prototype: "/game/player.go"\n}\n' +
+        'instances {\n  id: "enemy"\n  prototype: "/game/enemy.go"\n}\n',
+    );
+  }
+
+  async function headlessBuild(io: { stdout: Writable; stderr: Writable }): Promise<number> {
+    return await dispatch(["build", cwd], io, { editorClient: makeBuildEditor(null).client });
+  }
+
+  test("a declaration stale since the last scene-types run is brought back to the scenes on disk", async () => {
+    scaffoldScenes();
+    expect(runSceneTypes({ cwd }).wrote).toBe(true);
+    addEnemyGameObject();
+    const declarationPath = path.join(cwd, SCENE_ADDRESSES_DECLARATION);
+    expect(readFileSync(declarationPath, "utf8")).not.toContain('"/enemy"');
+
+    const { io } = captureStreams();
+    const code = await headlessBuild(io);
+
+    expect(code).toBe(0);
+    expect(readFileSync(declarationPath, "utf8")).toContain('"/enemy"');
+  });
+
+  test("a project with no declaration at all gets one written, and still compiles", async () => {
+    scaffoldScenes();
+    const declarationPath = path.join(cwd, SCENE_ADDRESSES_DECLARATION);
+    expect(existsSync(declarationPath)).toBe(false);
+
+    const { io } = captureStreams();
+    const code = await headlessBuild(io);
+
+    expect(code).toBe(0);
+    expect(readFileSync(declarationPath, "utf8")).toContain('"/player"');
+    expect(existsSync(path.join(cwd, "src/main.ts.script"))).toBe(true);
+  });
+
+  test("a source indexing a game object added since the last generation compiles", async () => {
+    scaffoldScenes();
+    expect(runSceneTypes({ cwd }).wrote).toBe(true);
+    addEnemyGameObject();
+    writeFile("src/addresses.ts", 'export const foe: keyof SceneGameObjectAddresses = "/enemy";\n');
+
+    const { io, err } = captureStreams();
+    const code = await headlessBuild(io);
+
+    // Regeneration ordered after the transpile leaves `/enemy` out of the
+    // program the compile checks, which is a type error rather than a 0.
+    expect(err()).not.toContain("/enemy");
+    expect(code).toBe(0);
+  });
+
+  test("an unchanged scene universe leaves the declaration untouched", async () => {
+    scaffoldScenes();
+    expect(runSceneTypes({ cwd }).wrote).toBe(true);
+    const declarationPath = path.join(cwd, SCENE_ADDRESSES_DECLARATION);
+    const before = statSync(declarationPath).mtimeMs;
+
+    const { io } = captureStreams();
+    const code = await headlessBuild(io);
+
+    expect(code).toBe(0);
+    expect(statSync(declarationPath).mtimeMs).toBe(before);
   });
 });
