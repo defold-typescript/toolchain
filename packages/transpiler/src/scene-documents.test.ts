@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { buildSceneComponentIndex } from "@defold-typescript/transpiler";
+import { buildSceneComponentIndex } from "./scene-component-index";
 import {
   listProjectResourcePaths,
   readSceneDocuments,
