@@ -2751,7 +2751,7 @@ bunx @defold-typescript/cli run -- --verbose     # forward engine args after --
 ```
 
 The optional `[path]` is the project directory; it defaults to the current
-directory. When the tree is not launchable, `run` reports one of two distinct
+directory. When the tree is not launchable, `run` reports one of three distinct
 resolver errors and exits `1` without launching:
 
 - **no compiled project** — `build/default/game.projectc` is missing:
@@ -2760,6 +2760,13 @@ resolver errors and exits `1` without launching:
   `no engine for <platform>; run "bob run" to download and cache one`. A plain
   project built with `bob build` alone lands here, because only `bob run`
   fetches and caches the stock engine.
+- **version disagreement** — both are present but were produced by different
+  Defold versions: `build/default was compiled by Defold <build> but the cached
+  engine is <engine>; run "bob run" to refresh the engine for the current
+  target`. Bumping your pin and rebuilding leaves the previously cached engine
+  behind; launching that pair makes Defold report `FORMAT_ERROR`, so `run`
+  refuses instead. `bob run` re-fetches the engine for the current head and
+  clears it.
 
 #### What it launches
 
@@ -2869,6 +2876,12 @@ bob, your typings, and the running engine agree:
 A failed build short-circuits with Bob's exit code and never launches. Once
 `build/default` and an engine exist, [`run`](./run.md) relaunches directly —
 no rebuild, no Bob, no download.
+
+A successful `bob build` records the Defold head it built with beside the
+compiled tree, and `bob run` records the same head beside the engine it caches.
+That is what lets [`run`](./run.md) refuse a pair left mismatched by a pin bump
+instead of launching it. `bob run` always rewrites both, so it is also the way
+to clear such a refusal.
 
 #### The bob.jar cache
 

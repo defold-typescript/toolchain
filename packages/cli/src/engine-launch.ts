@@ -8,6 +8,22 @@ import {
 } from "./debug-launcher";
 
 export const ENGINE_MARKER_REL = "build/.defold-typescript-engine";
+export const BUILD_MARKER_REL = "build/.defold-typescript-build";
+
+// The head a cached engine was fetched at. `sha`/`version` are null for a marker
+// written before either was recorded, which stays launchable but unverifiable.
+export interface EngineMarker {
+  readonly enginePath: string;
+  readonly sha: string | null;
+  readonly version: string | null;
+}
+
+// The head that compiled `build/default`. Has no legacy form, so a marker
+// without a sha is not one.
+export interface BuildMarker {
+  readonly sha: string;
+  readonly version: string | null;
+}
 
 export interface Runnable {
   readonly enginePath: string;
@@ -21,18 +37,81 @@ export interface ResolveRunnableOptions {
   readonly platform: NodeJS.Platform;
   readonly arch: string;
   readonly probe: (candidate: string) => boolean;
-  readonly readEngineMarker?: (cwd: string) => string | null;
+  readonly readEngineMarker?: (cwd: string) => EngineMarker | null;
+  readonly readBuildMarker?: (cwd: string) => BuildMarker | null;
 }
 
-// Reads the absolute path a prior `bob run` cached its stock engine to; absent
-// or blank means "no marker".
-export function readEngineMarker(cwd: string): string | null {
+function readMarkerFile(cwd: string, rel: string): string | null {
   try {
-    const marker = readFileSync(path.join(cwd, ENGINE_MARKER_REL), "utf8").trim();
-    return marker.length > 0 ? marker : null;
+    const contents = readFileSync(path.join(cwd, rel), "utf8").trim();
+    return contents.length > 0 ? contents : null;
   } catch {
     return null;
   }
+}
+
+function parseMarkerJson(contents: string): Record<string, unknown> | null {
+  if (!contents.startsWith("{")) {
+    return null;
+  }
+  try {
+    const parsed: unknown = JSON.parse(contents);
+    return typeof parsed === "object" && parsed !== null
+      ? (parsed as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function markerField(fields: Record<string, unknown>, key: string): string | null {
+  const value = fields[key];
+  if (typeof value !== "string") {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+// Reads where a prior `bob run` cached its stock engine, and the head it was
+// fetched at. Markers written before this repo recorded an identity are bare
+// paths; they still resolve, with a null sha and version.
+export function readEngineMarker(cwd: string): EngineMarker | null {
+  const contents = readMarkerFile(cwd, ENGINE_MARKER_REL);
+  if (contents === null) {
+    return null;
+  }
+  if (!contents.startsWith("{")) {
+    return { enginePath: contents, sha: null, version: null };
+  }
+  const fields = parseMarkerJson(contents);
+  if (fields === null) {
+    return null;
+  }
+  const enginePath = markerField(fields, "enginePath");
+  return enginePath === null
+    ? null
+    : { enginePath, sha: markerField(fields, "sha"), version: markerField(fields, "version") };
+}
+
+// Reads the head `bob build` compiled `build/default` with.
+export function readBuildMarker(cwd: string): BuildMarker | null {
+  const contents = readMarkerFile(cwd, BUILD_MARKER_REL);
+  if (contents === null) {
+    return null;
+  }
+  const fields = parseMarkerJson(contents);
+  if (fields === null) {
+    return null;
+  }
+  const sha = markerField(fields, "sha");
+  return sha === null ? null : { sha, version: markerField(fields, "version") };
+}
+
+// Name a recorded head the way a user would recognize it, falling back to a
+// short sha for a marker that recorded no version.
+function describeHead(head: { sha: string; version: string | null }): string {
+  return head.version ?? head.sha.slice(0, 7);
 }
 
 // Pure resolver shared by `run` and `bob run`: answer which engine + compiled
@@ -40,6 +119,7 @@ export function readEngineMarker(cwd: string): string | null {
 export function resolveRunnable(opts: ResolveRunnableOptions): Runnable {
   const { cwd, platform, arch, probe } = opts;
   const readMarker = opts.readEngineMarker ?? readEngineMarker;
+  const readBuild = opts.readBuildMarker ?? readBuildMarker;
 
   const projectcPath = path.join(cwd, "build", "default", "game.projectc");
   if (!probe(projectcPath)) {
@@ -58,8 +138,14 @@ export function resolveRunnable(opts: ResolveRunnableOptions): Runnable {
   }
 
   const marker = readMarker(cwd);
-  if (marker && probe(marker)) {
-    return { enginePath: marker, projectcPath, target, warnings: [] };
+  if (marker && probe(marker.enginePath)) {
+    const build = readBuild(cwd);
+    if (marker.sha !== null && build !== null && build.sha !== marker.sha) {
+      throw new Error(
+        `defold-typescript run: build/default was compiled by Defold ${describeHead(build)} but the cached engine is ${describeHead({ sha: marker.sha, version: marker.version })}; run "bob run" to refresh the engine for the current target.`,
+      );
+    }
+    return { enginePath: marker.enginePath, projectcPath, target, warnings: [] };
   }
 
   throw new Error(
