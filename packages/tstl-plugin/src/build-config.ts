@@ -1,5 +1,9 @@
-import { type BuildConfig, DEFAULT_INCLUDE, parseBuildConfig } from "@defold-typescript/transpiler";
-import type { SceneReadHost } from "./scene-documents";
+import {
+  type BuildConfig,
+  DEFAULT_INCLUDE,
+  parseBuildConfig,
+  type SceneReadHost,
+} from "@defold-typescript/transpiler";
 
 // Alongside output is what the build itself does with no `outDir`, so it is also
 // the honest answer when the config cannot be read: a wrong guess would offer

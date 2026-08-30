@@ -1,4 +1,4 @@
-import { isDefignoredPath } from "@defold-typescript/transpiler";
+import { isDefignoredPath } from "./project-resources";
 
 // The narrow slice of `ts.server.ServerHost` this needs: the real host
 // satisfies it structurally, and a test fake is two methods rather than a whole

@@ -1,4 +1,3 @@
-import type * as ts from "typescript";
 import {
   displayPathOf,
   isExcludedProjectPath,
@@ -6,7 +5,8 @@ import {
   readSceneDocuments,
   SCENE_EXTENSIONS,
   type SceneReadHost,
-} from "./scene-documents";
+} from "@defold-typescript/transpiler";
+import type * as ts from "typescript";
 
 // `SceneReadHost` plus the two watch facilities `ts.System` declares as
 // optional, typed off the editor's own callback types so the real

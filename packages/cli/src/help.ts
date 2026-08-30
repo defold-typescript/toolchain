@@ -135,6 +135,13 @@ const COMMANDS: readonly HelpCommand[] = [
     ],
   },
   {
+    name: "scene-types",
+    summary:
+      "Generate the scene-address declaration so game-object paths and component ids complete in the editor.",
+    usage: "bunx @defold-typescript/cli scene-types [path]",
+    flags: [],
+  },
+  {
     name: "bob",
     summary:
       "Run Defold's headless bob.jar resolve/build/bundle commands, status for a dry-run report, or run to download-target + debug build + launch.",
