@@ -23,7 +23,7 @@ import {
   resolveEditor,
 } from "./editor-attach";
 import { renderWatchEvent } from "./json-output";
-import { isComponentPath, isSkipped } from "./script-kind";
+import { isComponentPath, isScenePath, isSkipped } from "./script-kind";
 
 export interface WatchEvent {
   readonly kind: "change" | "rename";
@@ -93,6 +93,7 @@ export interface RunWatchOptions {
   readonly syncSurface?: () => void;
   readonly componentWatcherFactory?: WatcherFactory;
   readonly resolveSurface?: () => void | Promise<void>;
+  readonly sceneTypesSurface?: () => void | Promise<void>;
   readonly json?: boolean;
   readonly pinDiagnostics?: readonly string[];
   readonly pinMismatch?: { readonly installed: string; readonly pinned: string };
@@ -229,9 +230,11 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   let scheduled: ReturnType<typeof setTimeout> | null = null;
   let syncScheduled: ReturnType<typeof setTimeout> | null = null;
   let resolveScheduled: ReturnType<typeof setTimeout> | null = null;
+  let sceneScheduled: ReturnType<typeof setTimeout> | null = null;
   let rebuildBusy = false;
   let syncBusy = false;
   let resolveBusy = false;
+  let sceneBusy = false;
   let reloadBusy = false;
   let attachBusy = false;
   let stopped = false;
@@ -239,7 +242,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   const pending = new Set<string>();
 
   function notifyIdle(): void {
-    if (rebuildBusy || syncBusy || resolveBusy || reloadBusy || attachBusy) return;
+    if (rebuildBusy || syncBusy || resolveBusy || sceneBusy || reloadBusy || attachBusy) return;
     const resolvers = idleResolvers;
     idleResolvers = [];
     for (const resolve of resolvers) resolve();
@@ -495,7 +498,17 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
 
   function onComponentEvent(e: WatchEvent): void {
     if (stopped) return;
-    if (!e.path || isSkipped(e.path) || !isComponentPath(e.path)) return;
+    if (!e.path || isSkipped(e.path)) return;
+    // Keyed on the event path, never on the file: a renamed or deleted scene
+    // changes the address universe exactly as a saved one does, and it is
+    // already gone from disk by the time the event arrives.
+    if (isScenePath(e.path)) {
+      sceneBusy = true;
+      if (sceneScheduled) clearTimeout(sceneScheduled);
+      sceneScheduled = setTimeout(runSceneTypesSurface, debounceMs);
+      return;
+    }
+    if (!isComponentPath(e.path)) return;
     syncBusy = true;
     if (syncScheduled) clearTimeout(syncScheduled);
     syncScheduled = setTimeout(runSync, debounceMs);
@@ -530,6 +543,31 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     notifyIdle();
   }
 
+  async function runSceneTypesSurface(): Promise<void> {
+    sceneScheduled = null;
+    try {
+      await opts.sceneTypesSurface?.();
+      if (!stopped && opts.json) {
+        stdout.write(renderWatchEvent({ event: "sceneTypes" }));
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      // The rejecting path has two writers of its own, so the guard covers both:
+      // a stopped watch is silent whichever way a late regeneration settles.
+      if (!stopped) {
+        if (opts.json) {
+          stdout.write(renderWatchEvent({ event: "sceneTypes", error: message }));
+        } else {
+          stderr.write(`${message}\n`);
+        }
+      }
+    }
+    // Unconditional: the guard suppresses the reporting, never the bookkeeping,
+    // so a late settle cannot leave `waitForIdle` parked.
+    sceneBusy = false;
+    notifyIdle();
+  }
+
   function stop(): void {
     if (stopped) return;
     stopped = true;
@@ -545,6 +583,10 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       clearTimeout(resolveScheduled);
       resolveScheduled = null;
     }
+    if (sceneScheduled) {
+      clearTimeout(sceneScheduled);
+      sceneScheduled = null;
+    }
     watcher.close();
     componentWatcher?.close();
     // Order matters: the abort is what unparks a stream waiting on the socket,
@@ -559,6 +601,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     rebuildBusy = false;
     syncBusy = false;
     resolveBusy = false;
+    sceneBusy = false;
     reloadBusy = false;
     attachBusy = false;
     notifyIdle();
@@ -566,12 +609,20 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   }
 
   function waitForIdle(): Promise<void> {
-    if (!rebuildBusy && !syncBusy && !resolveBusy && !reloadBusy && !attachBusy) {
+    if (!rebuildBusy && !syncBusy && !resolveBusy && !sceneBusy && !reloadBusy && !attachBusy) {
       return Promise.resolve();
     }
     return new Promise<void>((resolve) => {
       idleResolvers.push(resolve);
     });
+  }
+
+  // After the initial build, never before it: the first compile is not delayed
+  // by a project walk, and the regeneration that follows corrects the addresses
+  // it checked against.
+  if (opts.sceneTypesSurface) {
+    sceneBusy = true;
+    void runSceneTypesSurface();
   }
 
   scheduleAttach();
