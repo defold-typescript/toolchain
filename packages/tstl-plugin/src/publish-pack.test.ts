@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { resolve } from "node:path";
+import { completionProxy, type PluginFactory } from "./completion-harness";
+import { DEFOLD_COMPLETION_SOURCE } from "./scene-completions";
 
 const PKG_DIR = resolve(import.meta.dir, "..");
 
@@ -91,5 +94,126 @@ describe("@defold-typescript/tstl-plugin publish surface", () => {
     for (const specifier of relativeImportSpecifiers(resolve(PKG_DIR, "dist/index.js"))) {
       expect(specifier).toMatch(/\.js$/);
     }
+  });
+});
+
+// `bun`'s own `createRequire` honours the `bun` export condition and lands on
+// `src/index.ts`, so the resolution tsserver performs can only be observed from
+// a real node process. The probe drives `ts.sys.require` — the exact loader
+// `Project#enableProxy` is handed — against a consumer-shaped `node_modules`,
+// because that path resolves through `main` under Node10 rules and never reads
+// the `exports` map.
+const NODE_ENTRY_PROBE = `
+const fs = require("node:fs");
+const os = require("node:os");
+const path = require("node:path");
+const { createRequire } = require("node:module");
+
+const pkgDir = process.env.PLUGIN_PKG_DIR;
+const req = createRequire(pkgDir + "/package.json");
+const manifest = req("./package.json");
+const ts = require(process.env.PLUGIN_TYPESCRIPT_DIR);
+
+const consumer = fs.mkdtempSync(path.join(os.tmpdir(), "tstl-plugin-consumer-"));
+const scope = path.join(consumer, "node_modules", manifest.name.split("/")[0]);
+fs.mkdirSync(scope, { recursive: true });
+fs.symlinkSync(pkgDir, path.join(consumer, "node_modules", manifest.name), "dir");
+
+const report = {};
+const shapeOf = (load) => {
+  try {
+    const value = load();
+    if (typeof value !== "function") return typeof value;
+    return typeof value({ typescript: ts }).create === "function" ? "factory" : "function";
+  } catch (error) {
+    return "threw " + (error.code || error.message);
+  }
+};
+
+const loaded = ts.sys.require(consumer, manifest.name);
+report.resolvedFrom = loaded.modulePath === undefined ? "unresolved" : path.basename(loaded.modulePath);
+report.byTsserver = loaded.error ? "threw " + (loaded.error.code || loaded.error.message) : shapeOf(() => loaded.module);
+report.byMain = shapeOf(() => req(manifest.main));
+import(manifest.name)
+  .then((mod) => {
+    report.imported = shapeOf(() => mod.default);
+  })
+  .catch((error) => {
+    report.imported = "threw " + (error.code || error.message);
+  })
+  .finally(() => {
+    fs.rmSync(consumer, { recursive: true, force: true });
+    process.stdout.write(JSON.stringify(report));
+  });
+`;
+
+function nodeEntryProbe(): Record<string, string> {
+  const proc = Bun.spawnSync(["node", "-e", NODE_ENTRY_PROBE], {
+    cwd: PKG_DIR,
+    env: {
+      ...process.env,
+      PLUGIN_PKG_DIR: PKG_DIR,
+      PLUGIN_TYPESCRIPT_DIR: resolve(PKG_DIR, "node_modules/typescript"),
+    },
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const stdout = proc.stdout.toString();
+  if (proc.exitCode !== 0 || stdout === "") {
+    throw new Error(`node entry probe failed:\n${proc.stderr.toString()}${stdout}`);
+  }
+  return JSON.parse(stdout) as Record<string, string>;
+}
+
+const ADDRESS_SOURCE = 'msg.post("#", "hello");\n';
+const FRAGMENT_POSITION = ADDRESS_SOURCE.indexOf('"#"') + 2;
+
+describe("@defold-typescript/tstl-plugin require-shaped entry", () => {
+  build(PKG_DIR);
+  const probe = nodeEntryProbe();
+
+  test("the loader tsserver uses reaches a callable factory", () => {
+    expect(probe.resolvedFrom).toBe("index.cjs");
+    expect(probe.byTsserver).toBe("factory");
+  });
+
+  test("requiring the manifest main directly yields a callable factory", () => {
+    expect(probe.byMain).toBe("factory");
+  });
+
+  test("importing the package still yields the factory as its default export", () => {
+    expect(probe.imported).toBe("factory");
+  });
+
+  test("built entries carry no build-machine path into their resolution base", async () => {
+    const manifest = await Bun.file(resolve(PKG_DIR, "package.json")).json();
+    for (const entry of [manifest.main as string, manifest.exports["."].import as string]) {
+      const source = readFileSync(resolve(PKG_DIR, entry), "utf8");
+      // A bundler that folds `import.meta.url` into the builder's own absolute
+      // path leaves `createRequire` resolving against a directory no consumer
+      // has: the URL parameter table never loads and every completion silently
+      // returns the base result.
+      expect(source).not.toContain(PKG_DIR);
+    }
+  });
+});
+
+describe("@defold-typescript/tstl-plugin contributed entry through the built plugin", () => {
+  build(PKG_DIR);
+
+  test("the entry tsserver loads contributes scene completions", async () => {
+    const manifest = await Bun.file(resolve(PKG_DIR, "package.json")).json();
+    const requireFromPkg = createRequire(resolve(PKG_DIR, "package.json"));
+    const factory = requireFromPkg(manifest.main as string) as PluginFactory;
+    const service = completionProxy({
+      source: ADDRESS_SOURCE,
+      base: undefined,
+      init: factory,
+    });
+    const result = service.getCompletionsAtPosition("main.ts", FRAGMENT_POSITION, undefined);
+    const contributed = (result?.entries ?? []).filter(
+      (entry) => entry.source === DEFOLD_COMPLETION_SOURCE,
+    );
+    expect(contributed.map((entry) => entry.name)).toEqual(["board", "hud"]);
   });
 });

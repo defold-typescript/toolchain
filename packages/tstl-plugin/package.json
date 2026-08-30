@@ -11,26 +11,28 @@
   "homepage": "https://github.com/defold-typescript/toolchain#readme",
   "bugs": "https://github.com/defold-typescript/toolchain/issues",
   "type": "module",
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "bun": "./src/index.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     }
   },
   "files": [
     "dist",
     "src",
     "!src/**/*.test.ts",
+    "!src/**/completion-harness.ts",
     "!src/**/__snapshots__"
   ],
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "build": "rm -rf dist && bun build src/index.ts --target=node --format=esm --packages=external --outdir=dist && tsc -p tsconfig.build.json --emitDeclarationOnly",
+    "build": "rm -rf dist && bun build src/index.ts --target=node --format=esm --packages=external --outdir=dist && cp src/require-entry.cjs dist/index.cjs && tsc -p tsconfig.build.json --emitDeclarationOnly",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "bun test"
   },
