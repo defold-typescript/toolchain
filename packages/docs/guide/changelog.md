@@ -14,6 +14,12 @@ Entries are curated by hand from the git history; the most recent releases are
 listed per-patch, older releases are rolled up per minor version. Breaking
 changes are called out first because the toolchain is pre-1.0.
 
+## v0.30.1
+
+### Fixed
+
+- **[`run`](./run.md) no longer launches an engine and a build that came from different Defold versions.** Bumping your [pin](./pinning-defold-target.md) and rebuilding left the previously cached engine in place, and launching that pair made Defold report `FORMAT_ERROR`; [`bob build`](./bob.md) and `bob run` now record the head each half was produced at, and `run` reports the two versions and points you at `bob run` instead of launching.
+
 ## v0.30.0
 
 ### Improved
