@@ -11,6 +11,10 @@ run while editing, see [`watch`](./watch.md).
 bunx @defold-typescript/cli build
 ```
 
+> [!TIP] `build` regenerates the [scene-address declaration](./scene-types.md)
+> before it transpiles, so a game object you added since the last build is
+> already a completion on the addresses this compile checks against.
+
 ## What it does
 
 Each source becomes exactly one output. A file with an
