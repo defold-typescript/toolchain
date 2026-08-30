@@ -7,6 +7,7 @@ import {
   type ApiTarget,
   generateModuleDeclaration,
   generateVersionIndex,
+  LUA_STDLIB_REFERENCES,
   loadApiTargets,
   loadTargetModules,
   MODULE_MANIFEST,
@@ -239,7 +240,9 @@ describe("api-targets registry", () => {
       "synthetic/sprite.d.ts",
     ]);
     const index = generateVersionIndex("synthetic", versioned);
-    expect(index).toBe('import "./label";\nimport "./sprite";\n\nexport {};\n');
+    expect(index).toBe(
+      `${LUA_STDLIB_REFERENCES}import "./label";\nimport "./sprite";\n\nexport {};\n`,
+    );
   });
 
   test("missing fixture path fails with a useful error", () => {

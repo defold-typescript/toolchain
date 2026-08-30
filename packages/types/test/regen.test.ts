@@ -12,6 +12,7 @@ import {
   generateVersionIndex,
   KIND_MODULE_MANIFEST,
   type KindManifestEntry,
+  LUA_STDLIB_REFERENCES,
   loadApiTargets,
   MESSAGES_MANIFEST,
   MODULE_MANIFEST,
@@ -500,7 +501,9 @@ describe("per-target editor surface", () => {
   test("the editor surface stays out of a version's runtime aggregate index", () => {
     const { targets, root } = targetsOf();
     const versioned = versionedModuleManifest(targets, root);
-    expect(generateVersionIndex("declaring", versioned)).toBe('import "./label";\n\nexport {};\n');
+    expect(generateVersionIndex("declaring", versioned)).toBe(
+      `${LUA_STDLIB_REFERENCES}import "./label";\n\nexport {};\n`,
+    );
   });
 
   test("the editor-script kind index names the declaring target's own editor modules", () => {
