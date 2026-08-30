@@ -200,6 +200,48 @@ describe("versioned API surface — src augmentations reach the consumer", () =>
   });
 });
 
+describe("versioned API surface — the Lua stdlib reaches the consumer", () => {
+  test("stdlib call sites compile against a materialized surface", async () => {
+    const target = loadApiTargets().find((candidate) => candidate.id === "defold-1.12.4");
+    if (!target) throw new Error("no defold-1.12.4 target");
+    const root = mkdtempSync(resolve(PACKAGE_ROOT, "mat-proof-"));
+    try {
+      await materializeVersionedSurface(target, {
+        destDir: resolve(root, "versions", "defold-1.12.4"),
+      });
+      const tsconfigPath = writeProofConfig(
+        root,
+        [
+          "export {};",
+          "const _floor: number = math.floor(1.5);",
+          'const _fmt: string = string.format("%d", 1);',
+          "const _list: number[] = [];",
+          "table.insert(_list, 1);",
+          "const _now: number = os.time();",
+          // `bit` rides the jit-only directive alone, so it is the only call
+          // here that fails if that second line is dropped on its own.
+          "const _band: number = bit.band(1, 2);",
+          "void _floor;",
+          "void _fmt;",
+          "void _now;",
+          "void _band;",
+          "",
+        ].join("\n"),
+        "defold-1.12.4",
+      );
+      const { exitCode, output } = typecheck(tsconfigPath);
+      if (exitCode !== 0) {
+        throw new Error(
+          `defold-1.12.4 surface did not carry the Lua stdlib to the consumer:\n${output}`,
+        );
+      }
+      expect(exitCode).toBe(0);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
 async function materializeStrictSurface(): Promise<{
   root: string;
   destDir: string;

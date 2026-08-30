@@ -20,6 +20,7 @@ import {
   generateBuiltinMessagesDeclaration,
   generateModuleDeclaration,
   generateVersionIndex,
+  LUA_STDLIB_REFERENCES,
   loadApiTargets,
   loadSrcAugmentations,
   MESSAGES_MANIFEST,
@@ -210,9 +211,10 @@ describe("materializeVersionedSurface", () => {
     expect(label).toContain("get_text");
 
     expect(readFileSync(resolve(destDir, "index.d.ts"), "utf8")).toBe(
-      `${['import "./label";', ...SURFACE_EXTRA_IMPORTS.map((n) => `import "./${n}";`)].join(
-        "\n",
-      )}\n\nexport {};\n`,
+      `${LUA_STDLIB_REFERENCES}${[
+        'import "./label";',
+        ...SURFACE_EXTRA_IMPORTS.map((n) => `import "./${n}";`),
+      ].join("\n")}\n\nexport {};\n`,
     );
 
     const pkg = JSON.parse(readFileSync(resolve(destDir, "package.json"), "utf8")) as {

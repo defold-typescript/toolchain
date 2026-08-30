@@ -699,7 +699,10 @@ export function generateVersionIndex(
   ]
     .map((module) => `import "./${module}";`)
     .join("\n");
-  return `${imports}\n\nexport {};\n`;
+  // A pinned consumer names this surface in `types` and never loads the
+  // package entrypoint, so the stdlib directives have to lead here too. A
+  // runtime surface is LuaJIT, so it takes both lines.
+  return `${LUA_STDLIB_REFERENCES}${imports}\n\nexport {};\n`;
 }
 
 // The `src/`-relative prefix a kind index living in `<generatedDir>/kinds/` needs
