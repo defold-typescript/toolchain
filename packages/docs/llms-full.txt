@@ -3269,7 +3269,8 @@ succeeds and writes an empty-but-valid declaration.
 #### Putting it in your program
 
 The generator writes the file; your `tsconfig.json` decides whether the compiler
-reads it. Add it to `include` once:
+reads it. `init` and `upgrade` wire that up for you — both write an `include`
+that already names the declaration:
 
 ```json
 {
@@ -3277,8 +3278,18 @@ reads it. Add it to `include` once:
 }
 ```
 
-Without that line the file is written and ignored, and the addresses stay
-un-suggested — which is the same behavior as not running the verb.
+Your own `include` patterns are preserved and the entry is appended only when
+it is absent, so re-running either verb never duplicates it. On a project
+scaffolded before this was automatic, one `defold-typescript upgrade` adds the
+entry; adding the line by hand works just as well. Without it the file is
+written and ignored, and the addresses stay un-suggested — the same behavior as
+not running the verb.
+
+The entry names the file exactly rather than globbing `.defold-types/`, which
+is the project's `typeRoots`: a pattern there would pull every other
+materialized surface into the build's transpile source set. An `include` entry
+that matches nothing is ignored, so the entry is harmless before the verb has
+ever run.
 
 #### Re-runs cost nothing
 
