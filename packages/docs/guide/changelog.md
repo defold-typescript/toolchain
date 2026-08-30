@@ -14,6 +14,12 @@ Entries are curated by hand from the git history; the most recent releases are
 listed per-patch, older releases are rolled up per minor version. Breaking
 changes are called out first because the toolchain is pre-1.0.
 
+## v0.29.1
+
+### Fixed
+
+- **The editor plugin now loads in a real editor.** `@defold-typescript/tstl-plugin` exposed only an ESM entry, which the TypeScript language server loads and then skips for not being a plugin factory — so [scene completions, the provenance panel, and the unreachable-`#fragment` suggestion](./transpile-diagnostics.md) never appeared outside the test suite; the package now ships a `require`-shaped entry the plugin loader accepts.
+
 ## v0.29.0
 
 ### Breaking

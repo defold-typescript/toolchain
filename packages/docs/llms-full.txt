@@ -3221,6 +3221,8 @@ override the root; archives then land under `$DEFOLD_TYPESCRIPT_CACHE/extensions
 
 The plugin is added as a managed devDependency at the same time, pinned in lockstep with the other `@defold-typescript/*` packages, so it resolves from your project's `node_modules` once you run `bun install`.
 
+Your editor loads the plugin through its own bundled Node runtime, which has to support `require()` of an ES module — Node 20.19 or newer, or 22.12 on the 22.x line. An editor on an older runtime skips the plugin without saying so and gives you plain TypeScript.
+
 #### What it surfaces
 
 The plugin runs the **same TypeScript-to-Lua diagnostic pass the `build` command uses** against the program your editor already has open, and reports anything the transpiler cannot lower — directly on the offending source span. You see the squiggle in the editor as you type, instead of discovering the failure when you run `build`. Because editor and build share one diagnostic source, they cannot disagree about what is unsupported.
