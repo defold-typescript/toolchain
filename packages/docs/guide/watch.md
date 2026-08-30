@@ -27,11 +27,18 @@ from the editor after a rebuild completes.
 
 ## Keeping the extension surface current
 
-`watch` re-runs [`resolve`](./resolve.md) whenever you save `game.project`,
-re-materializing `.defold-types/extensions/` from the declared `[dependencies]`.
-It does **not** bootstrap that surface: run `resolve` once before `watch` so the
-initial extension types exist; `watch` only reconciles later `[dependencies]`
-edits.
+> [!TIP] `watch` re-runs [`resolve`](./resolve.md) whenever you save
+> `game.project`, re-materializing `.defold-types/extensions/` from the declared
+> `[dependencies]`. It does **not** bootstrap that surface: run `resolve` once
+> before `watch` so the initial extension types exist; `watch` only reconciles
+> later `[dependencies]` edits.
+
+## Keeping the scene addresses current
+
+> [!TIP] `watch` regenerates the [scene-address declaration](./scene-types.md)
+> after its initial build, and again on every `.go` or `.collection` save.
+> Unlike the extension surface this needs no bootstrap run — that startup pass
+> writes it.
 
 ## Runtime errors in the terminal
 

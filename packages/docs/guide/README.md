@@ -67,7 +67,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - [bob](./bob.md) — drive Defold's headless `bob.jar` build tool: the `resolve`/`build`/`bundle`/`status`/`run` subcommands, the sha-keyed jar cache, Java resolution, and target selection.
 - [wall](./wall.md) — opt-in per-directory API walls that narrow a single-kind source directory to its script-kind surface, in interactive and flag forms.
 - [resolve](./resolve.md) — generate ambient TypeScript namespaces from your `game.project` native-extension dependencies, with pin/drift detection and a `--frozen` lockfile mode.
-- [scene-types](./scene-types.md) — generate the scene-address declaration from your `.collection`/`.go` files so game-object paths and component ids complete in the editor; where it lands, the one `include` line that puts it in your program, and why it can never reject an address.
+- [scene-types](./scene-types.md) — generate the scene-address declaration from your `.collection`/`.go` files so game-object paths and component ids complete in the editor; how `build` and `watch` keep it current, how `init` and `upgrade` wire it into your program, and why it can never reject an address.
 
 ### Toolchain & workflow
 
