@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import {
+  ANIMATION_ASSET_EXTENSIONS,
   buildConfigKeyIndex,
   buildGuiNodeIndex,
   buildInputActionIndex,
@@ -10,9 +11,14 @@ import {
   type ClassifiedSlot,
   componentIdOfSameObjectAddress,
   computeOutputRel,
+  displayPathOf,
+  GAME_PROJECT_DOCUMENT,
+  GUI_EXTENSIONS,
   getProgramDiagnostics,
+  INPUT_BINDING_EXTENSIONS,
   isAddressClass,
   isFragmentCaret,
+  PROJECT_EXTENSIONS,
   resolveClassifiedSlotAtPosition,
 } from "@defold-typescript/transpiler";
 import type { UrlParameterTable } from "@defold-typescript/types";
@@ -25,14 +31,6 @@ import {
   CONTRIBUTED_ENTRY_KIND,
   DEFOLD_COMPLETION_SOURCE,
 } from "./scene-completions";
-import {
-  ANIMATION_ASSET_EXTENSIONS,
-  displayPathOf,
-  GAME_PROJECT_DOCUMENT,
-  GUI_EXTENSIONS,
-  INPUT_BINDING_EXTENSIONS,
-  PROJECT_EXTENSIONS,
-} from "./scene-documents";
 import {
   createSceneIndexCache,
   type SceneIndexCache,

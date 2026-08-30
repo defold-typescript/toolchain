@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import type { SceneReadHost } from "@defold-typescript/transpiler";
 import { readBuildConfigFromHost } from "./build-config";
-import type { SceneReadHost } from "./scene-documents";
 
 function hostServing(files: Record<string, string>): SceneReadHost {
   return {

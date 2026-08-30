@@ -13,8 +13,22 @@ export {
 } from "./output-paths";
 export { getProgramDiagnostics } from "./program-diagnostics";
 export { isDefignoredPath, SCAFFOLDED_DEFIGNORE_LINES } from "./project-resources";
+export { buildSceneAddressDeclaration } from "./scene-address-declaration";
 export type { SceneComponentIndex } from "./scene-component-index";
 export { buildSceneComponentIndex } from "./scene-component-index";
+export type { SceneReadHost } from "./scene-documents";
+export {
+  ANIMATION_ASSET_EXTENSIONS,
+  displayPathOf,
+  GAME_PROJECT_DOCUMENT,
+  GUI_EXTENSIONS,
+  INPUT_BINDING_EXTENSIONS,
+  isExcludedProjectPath,
+  listProjectResourcePaths,
+  PROJECT_EXTENSIONS,
+  readSceneDocuments,
+  SCENE_EXTENSIONS,
+} from "./scene-documents";
 export type { SceneObjectPathIndex } from "./scene-object-path-index";
 export { buildSceneObjectPathIndex } from "./scene-object-path-index";
 export type { SceneMessage } from "./scene-text-format";

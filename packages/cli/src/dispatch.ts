@@ -47,6 +47,7 @@ import {
 import { renderResult } from "./json-output";
 import type { VendoredLibrary } from "./library-match";
 import type { RefDocResolveOptions } from "./materialize";
+import { runSceneTypes } from "./scene-types-command";
 import { runSetTarget } from "./set-target";
 import { runSetupDebug } from "./setup-debug";
 import { runUpgrade, type UpgradeIo } from "./upgrade";
@@ -640,6 +641,29 @@ function dispatchCommand(
         const message = err instanceof Error ? err.message : String(err);
         if (json) {
           io.stdout.write(renderResult({ command: "init-agents", error: message }));
+        } else {
+          io.stderr.write(`${message}\n`);
+        }
+        return 1;
+      }
+    }
+
+    if (command === "scene-types") {
+      try {
+        const { declaration, wrote } = runSceneTypes({ cwd });
+        const written = wrote ? [declaration] : [];
+        if (json) {
+          io.stdout.write(renderResult({ command: "scene-types", declaration, written }));
+        } else if (wrote) {
+          io.stdout.write(`defold-typescript scene-types: wrote ${declaration}\n`);
+        } else {
+          io.stdout.write(`defold-typescript scene-types: ${declaration} is already up to date.\n`);
+        }
+        return 0;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        if (json) {
+          io.stdout.write(renderResult({ command: "scene-types", error: message }));
         } else {
           io.stderr.write(`${message}\n`);
         }
