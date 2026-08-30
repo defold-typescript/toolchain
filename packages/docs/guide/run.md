@@ -12,9 +12,9 @@ there. `run` does no transpile, runs no Bob, and downloads nothing: it finds the
 engine, launches it, and streams the game to your terminal.
 
 ```sh
-bunx @defold-typescript/cli run                 # launch ./build/default
-bunx @defold-typescript/cli run my-game         # launch a project in another folder
-bunx @defold-typescript/cli run -- --verbose    # forward engine args after --
+bunx @defold-typescript/cli run                  # launch ./build/default
+bunx @defold-typescript/cli run path/to/project  # launch a project in another folder
+bunx @defold-typescript/cli run -- --verbose     # forward engine args after --
 ```
 
 The optional `[path]` is the project directory; it defaults to the current
@@ -47,7 +47,7 @@ Everything after `--` passes through to the launched engine untouched:
 
 ```sh
 bunx @defold-typescript/cli run -- --verbose
-bunx @defold-typescript/cli run my-game -- --config=display.width=1280
+bunx @defold-typescript/cli run path/to/project -- --config=display.width=1280
 ```
 
 Only the tokens before `--` are the command's own (the project path); the rest

@@ -14,6 +14,10 @@ bunx @defold-typescript/cli resolve        # defaults to the current directory
 bunx @defold-typescript/cli resolve path/to/project
 ```
 
+> [!TIP] [`watch`](./watch.md) re-runs `resolve` for you whenever you save
+> `game.project`. It does not bootstrap the surface, though — run `resolve` once
+> yourself before starting `watch`.
+
 It reads every `dependencies#N` URL under `[project]` in `game.project`. A
 `game.project` with no `[project]` section is an error; a `[project]` with no
 `dependencies#N` keys reports `no extension dependencies declared` and exits `0`.
@@ -22,11 +26,11 @@ It reads every `dependencies#N` URL under `[project]` in `game.project`. A
 
 `resolve` inspects each declared archive and sorts it into one of three kinds:
 
-| Kind | Detected by | What `resolve` produces |
-| ---- | ----------- | ----------------------- |
-| **Native extension** | the archive carries one or more `.script_api` docs | one ambient namespace per doc in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list |
+| Kind                          | Detected by                                                                                        | What `resolve` produces                                                                                                           |
+| ----------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **Native extension**          | the archive carries one or more `.script_api` docs                                                 | one ambient namespace per doc in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list                    |
 | **Vendored pure-Lua library** | the repo name matches the `@defold-typescript/library-types` corpus, confirmed against the archive | the committed `.d.ts` materialized into `.defold-types/libraries@<cliVersion>/`, plus that same name on the tsconfig `types` list |
-| **Asset-only / content** | no `.script_api` and no library match — fonts, asset packs, other content archives | nothing: reported and skipped |
+| **Asset-only / content**      | no `.script_api` and no library match — fonts, asset packs, other content archives                 | nothing: reported and skipped                                                                                                     |
 
 A skipped **asset-only** archive is never a failure — `resolve` still exits `0`
 and materializes types for the dependencies that do carry them. A typical run:

@@ -8,8 +8,8 @@ to an existing Defold project. It writes the files and stops; run `bun install`
 afterward (it prints the reminder).
 
 ```sh
-bunx @defold-typescript/cli@latest init my-game   # new project in ./my-game
-bunx @defold-typescript/cli@latest init .         # scaffold / add to the current folder
+bunx @defold-typescript/cli@latest init path/to/project  # new project at that path
+bunx @defold-typescript/cli@latest init .                # scaffold / add to the current folder
 ```
 
 Use the `@latest` tag when you scaffold: `bunx` caches binaries, and `init` is
@@ -97,7 +97,7 @@ the scaffold stops shipping is removed with whatever you added to it.
 Pick a template with `--template <name>` when creating a new project:
 
 ```sh
-bunx @defold-typescript/cli@latest init my-game --template minimal
+bunx @defold-typescript/cli@latest init path/to/project --template minimal
 ```
 
 - **`default`** — the opinionated layout you get when you omit `--template`: a

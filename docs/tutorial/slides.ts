@@ -66,7 +66,7 @@ export const slides: Slide[] = [
       {
         kind: "bullets",
         items: [
-          "`bunx @defold-typescript/cli@latest init my-game && cd my-game`",
+          "`bunx @defold-typescript/cli@latest init path/to/project && cd path/to/project`",
           "`bun install` (the `init` install reminder tells you to run it)",
           "`bunx @defold-typescript/cli build` (one-shot transpile to Lua)",
           "`bunx @defold-typescript/cli watch` (rebuild on save while you iterate)",

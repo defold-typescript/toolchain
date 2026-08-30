@@ -24,13 +24,13 @@ You need Bun `>= 1.3`.
 The package is scoped, so run it through `bunx` by its full name — no install required:
 
 ```sh
-bunx @defold-typescript/cli@latest init my-game
-cd my-game
+bunx @defold-typescript/cli@latest init path/to/project
+cd path/to/project
 git init
 bun install
 ```
 
-> `my-game` will be created if it doesn't exist.
+> `path/to/project` will be created if it doesn't exist.
 >
 > **Optional**: Run `bunx @defold-typescript/cli@latest init-agents .` to initialize `AGENTS.md` and `CLAUDE.md` files.
 
