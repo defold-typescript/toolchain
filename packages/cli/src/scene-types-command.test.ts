@@ -14,8 +14,12 @@ import { Writable } from "node:stream";
 import * as ts from "typescript";
 import { dispatch } from "./dispatch";
 import { MATERIALIZED_ROOT } from "./materialize";
+import { SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 
-const DECLARATION_REL = path.join(MATERIALIZED_ROOT, "scene-addresses.d.ts");
+// The value production reports, not a re-derivation of it: `path.join` here
+// would yield a backslash on Windows and disagree with the POSIX path the
+// command actually emits.
+const DECLARATION_REL = SCENE_ADDRESSES_DECLARATION;
 
 let cwd: string;
 
@@ -116,6 +120,17 @@ function probeDiagnostics(probe: string): readonly ts.Diagnostic[] {
 // of it green. That the write lands through a temp file is checked by reading
 // the writer, not by this suite.
 describe("scene-types verb", () => {
+  // The declaration path is reported verbatim in `--json` and on stdout, so it
+  // has to be the same string on every OS. `path.join` would make it
+  // `.defold-types\scene-addresses.d.ts` on Windows.
+  test("reports the declaration path POSIX-style on every platform", () => {
+    expect(SCENE_ADDRESSES_DECLARATION).not.toContain("\\");
+    expect(SCENE_ADDRESSES_DECLARATION.split("/")).toEqual([
+      MATERIALIZED_ROOT,
+      "scene-addresses.d.ts",
+    ]);
+  });
+
   test("writes the declaration where the project's types live, and the ids reach keyof", async () => {
     scaffoldProject();
 
