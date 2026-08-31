@@ -200,6 +200,14 @@
     "evidence": "hashed id of the animation to play"
   },
   {
+    "fqn": "gui.play_flipbook",
+    "parameter": "animation",
+    "class": "animation",
+    "nodeParameter": "node",
+    "source": "generated",
+    "evidence": "animation id"
+  },
+  {
     "fqn": "resource.atlas",
     "parameter": "path",
     "class": "resource-path",

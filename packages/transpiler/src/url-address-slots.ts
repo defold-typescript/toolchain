@@ -17,14 +17,18 @@ import * as ts from "typescript";
 // fragment. `addressText` is the statically-known text of the sibling argument
 // the entry names as its address companion — present only for a class that
 // declares one, and only when that argument is a plain string literal.
-// `resourceExtensions` is the same shape for the file extensions a resource slot
-// accepts: present only when the entry declares them.
+// `nodeParameter` is the alternative companion, carried through as the entry
+// wrote it: it names a gui node rather than an address, so nothing is read out
+// of the argument and its presence alone says the candidates are scoped by the
+// scene owning the script. `resourceExtensions` is the same shape for the file
+// extensions a resource slot accepts: present only when the entry declares them.
 export interface ClassifiedSlot {
   readonly class: UrlParameterClass;
   readonly text: string;
   readonly textStart: number;
   readonly fragmentStart: number;
   readonly addressText?: string;
+  readonly nodeParameter?: string;
   readonly resourceExtensions?: readonly string[];
 }
 
@@ -283,6 +287,9 @@ export function resolveClassifiedSlotAtPosition(input: {
     textStart,
     fragmentStart: hash === -1 ? -1 : textStart + hash + 1,
     ...(addressText === undefined ? {} : { addressText }),
+    ...(classified.entry.nodeParameter === undefined
+      ? {}
+      : { nodeParameter: classified.entry.nodeParameter }),
     ...(classified.entry.resourceExtensions === undefined
       ? {}
       : { resourceExtensions: classified.entry.resourceExtensions }),

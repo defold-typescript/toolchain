@@ -186,6 +186,22 @@ const SIBLING_SPRITE_DOCUMENTS: Record<string, string> = {
   "assets/cape.atlas": atlasDocument("flap", "furl"),
 };
 
+// A gui flipbook slot, scoped by the `.gui` scene that names this file's
+// generated gui script rather than by a sibling address literal.
+const GUI_FLIPBOOK_SOURCE = 'gui.play_flipbook(gui.get_node("box"), "");\n';
+const GUI_FLIPBOOK_POSITION = GUI_FLIPBOOK_SOURCE.indexOf('""') + 1;
+
+// Two scenes naming two different generated gui scripts, so a project-wide
+// union over every atlas would be visible: only `hud.gui` claims `main.ts`.
+const GUI_FLIPBOOK_DOCUMENTS: Record<string, string> = {
+  "main/hud.gui":
+    'script: "/main.ts.gui_script"\ntextures {\n  name: "hud"\n  texture: "/assets/hud.atlas"\n}\n',
+  "main/menu.gui":
+    'script: "/other.ts.gui_script"\ntextures {\n  name: "menu"\n  texture: "/assets/menu.atlas"\n}\n',
+  "assets/hud.atlas": atlasDocument("blink", "pulse"),
+  "assets/menu.atlas": atlasDocument("fade", "slide"),
+};
+
 describe("tstl-plugin", () => {
   test("appends transpiler diagnostics to the base service's", () => {
     const { service, base } = decoratedService(UNSUPPORTED_SOURCE);
@@ -526,6 +542,35 @@ describe("tstl-plugin", () => {
       serverHost: false,
     });
     expect(service.getCompletionsAtPosition("main.ts", ANIMATION_POSITION, undefined)).toBe(base);
+  });
+
+  test("a gui flipbook slot offers its own scene's animations", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const service = completionProxy({
+      source: GUI_FLIPBOOK_SOURCE,
+      base,
+      documents: GUI_FLIPBOOK_DOCUMENTS,
+    });
+    const result = service.getCompletionsAtPosition("main.ts", GUI_FLIPBOOK_POSITION, undefined);
+    expect(result?.entries[0]).toBe(base.entries[0] as ts.CompletionEntry);
+    expect(result?.entries.map((e) => e.name)).toEqual(["zzz", "blink", "pulse"]);
+    for (const built of result?.entries.slice(1) ?? []) {
+      expect(built.replacementSpan).toEqual({ start: GUI_FLIPBOOK_POSITION, length: 0 });
+      expect(built.sortText > LOCATION_PRIORITY).toBe(true);
+    }
+  });
+
+  test("a gui scene the file does not own contributes nothing", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const service = completionProxy({
+      source: GUI_FLIPBOOK_SOURCE,
+      base,
+      documents: GUI_FLIPBOOK_DOCUMENTS,
+      fileName: "unowned.ts",
+    });
+    expect(service.getCompletionsAtPosition("unowned.ts", GUI_FLIPBOOK_POSITION, undefined)).toBe(
+      base,
+    );
   });
 
   test("an address slot still offers component ids, never an animation id", () => {

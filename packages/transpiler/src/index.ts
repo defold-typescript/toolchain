@@ -1,4 +1,6 @@
 export { buildConfigKeyIndex } from "./config-key-index";
+export type { GuiFlipbookIndex } from "./gui-flipbook-index";
+export { buildGuiFlipbookIndex } from "./gui-flipbook-index";
 export type { GuiNodeIndex } from "./gui-node-index";
 export { buildGuiNodeIndex } from "./gui-node-index";
 export { buildInputActionIndex } from "./input-action-index";

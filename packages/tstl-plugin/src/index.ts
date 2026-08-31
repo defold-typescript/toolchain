@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import {
   ANIMATION_ASSET_EXTENSIONS,
   buildConfigKeyIndex,
+  buildGuiFlipbookIndex,
   buildGuiNodeIndex,
   buildInputActionIndex,
   buildSceneComponentIndex,
@@ -131,22 +132,44 @@ function nodeEntries(
 }
 
 // Also no caret guard, and the same forward output-path mapping — but scoped
-// one step further than a node id: to the sprite component the slot's *sibling*
-// literal addresses on the one game object that owns this script. Every
-// unresolved link returns nothing rather than a project-wide guess, because a
-// `sprite.play_flipbook` id the addressed atlas does not declare is a runtime
-// crash.
+// one step further than a node id, in whichever of the two ways the slot's own
+// entry declares. Every unresolved link returns nothing rather than a
+// project-wide guess, because an animation id the resolved atlas does not
+// declare is a runtime crash.
+//
+// The branch is the table's own discriminator rather than a second arm in the
+// class chain: an `animation` entry names either an address companion or a node
+// companion, and the drift guard is what keeps it to exactly one.
 function animationEntries(
   slot: ClassifiedSlot,
   cache: SceneIndexCache,
   fileName: string,
   baseEntries: readonly ts.CompletionEntry[],
 ): ts.CompletionEntry[] {
+  const { projectRoot } = cache;
+  // Scoped to the `.gui` scene naming this file's generated gui script, never
+  // to the node the call addresses: `gui.set_texture` retargets a node at
+  // runtime, so the scene's textures are the honest universe.
+  if (slot.nodeParameter !== undefined) {
+    const index = cache.derived("gui-flipbook", () =>
+      buildGuiFlipbookIndex({
+        scenes: cache.documents(GUI_EXTENSIONS).documents,
+        assets: cache.documents(ANIMATION_ASSET_EXTENSIONS).documents,
+      }),
+    );
+    const config = readBuildConfigFromHost(cache.host, projectRoot);
+    const resource = computeOutputRel(displayPathOf(projectRoot, fileName), config, "gui-script");
+    const declared = index.byScriptResource.get(resource);
+    return declared === undefined
+      ? []
+      : buildWholeLiteralCompletionEntries({ slot, ids: new Set(declared.keys()), baseEntries });
+  }
+  // Scoped to the sprite component the slot's *sibling* literal addresses on the
+  // one game object that owns this script.
   const component = componentIdOfSameObjectAddress(slot.addressText ?? "");
   if (component === undefined) {
     return [];
   }
-  const { projectRoot } = cache;
   const index = cache.derived("sprite-animations", () =>
     buildSpriteAnimationIndex({
       scenes: cache.documents().documents,
