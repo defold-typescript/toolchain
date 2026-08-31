@@ -167,6 +167,24 @@ const CONTESTED_ANIMATION_DOCUMENTS: Record<string, string> = {
     'components {\n  id: "sprite"\n  component: "/assets/hero.sprite"\n}\n',
 };
 
+const GUI_FLIPBOOK_SOURCE = 'gui.play_flipbook(gui.get_node("box"), "blink");\n';
+
+// One scene naming the edited file's generated gui script and two textures, so
+// a credited atlas is the one really declaring the id rather than the scene
+// that named it — and a second scene claiming another script, whose animations
+// a project-wide union would credit here too.
+const GUI_FLIPBOOK_DOCUMENTS: Record<string, string> = {
+  "main/hud.gui":
+    'script: "/main.ts.gui_script"\n' +
+    'textures {\n  name: "hud"\n  texture: "/assets/hud.atlas"\n}\n' +
+    'textures {\n  name: "fx"\n  texture: "/assets/fx.atlas"\n}\n',
+  "main/menu.gui":
+    'script: "/other.ts.gui_script"\ntextures {\n  name: "menu"\n  texture: "/assets/menu.atlas"\n}\n',
+  "assets/hud.atlas": 'animations {\n  id: "blink"\n}\n',
+  "assets/fx.atlas": 'animations {\n  id: "pulse"\n}\n',
+  "assets/menu.atlas": 'animations {\n  id: "fade"\n}\n',
+};
+
 // A collection composing `/hero` through an instanced collection, so the
 // declaring document is the one naming the leaf rather than the root that
 // prefixed it.
@@ -377,6 +395,26 @@ describe("resolveEntryProvenance", () => {
         fileName: "main.ts",
         entryName: "walk",
       }),
+    ).toEqual([]);
+  });
+
+  test("a gui flipbook entry is credited to the atlas that declares it", () => {
+    const { cache } = cacheOver(GUI_FLIPBOOK_DOCUMENTS);
+    const { slot, position } = slotIn(GUI_FLIPBOOK_SOURCE, '"blink"');
+    expect(slot.class).toBe("animation");
+    expect(
+      resolveEntryProvenance({ slot, position, cache, fileName: "main.ts", entryName: "blink" }),
+    ).toEqual(["assets/hud.atlas"]);
+    expect(
+      resolveEntryProvenance({ slot, position, cache, fileName: "main.ts", entryName: "pulse" }),
+    ).toEqual(["assets/fx.atlas"]);
+    // Declared by a scene claiming a different script, and by no texture this
+    // one names.
+    expect(
+      resolveEntryProvenance({ slot, position, cache, fileName: "main.ts", entryName: "fade" }),
+    ).toEqual([]);
+    expect(
+      resolveEntryProvenance({ slot, position, cache, fileName: "unowned.ts", entryName: "blink" }),
     ).toEqual([]);
   });
 

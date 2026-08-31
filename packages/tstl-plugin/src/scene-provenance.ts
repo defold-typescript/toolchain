@@ -1,6 +1,7 @@
 import {
   ANIMATION_ASSET_EXTENSIONS,
   buildConfigKeyIndex,
+  buildGuiFlipbookIndex,
   buildGuiNodeIndex,
   buildInputActionIndex,
   buildSceneComponentIndex,
@@ -28,6 +29,7 @@ const ACTION_PROVENANCE = "provenance:input-actions";
 const GUI_PROVENANCE = "provenance:gui-nodes";
 const PATH_PROVENANCE = "provenance:object-paths";
 const ANIMATION_PROVENANCE = "provenance:sprite-animations";
+const GUI_ANIMATION_PROVENANCE = "provenance:gui-flipbook";
 
 type Provenance = ReadonlyMap<string, readonly string[]>;
 
@@ -127,6 +129,33 @@ function pathProvenance(cache: SceneIndexCache): Provenance {
   );
 }
 
+// Scoped exactly the way the gui flipbook completion is: to the `.gui` scene
+// naming this file's generated gui script. The index already records which
+// named texture declared each id, so the answer is read straight off it — and
+// an id no named texture carries is answered with silence rather than the
+// scene that failed to declare it.
+function guiAnimationProvenance(input: {
+  cache: SceneIndexCache;
+  fileName: string;
+  entryName: string;
+}): readonly string[] {
+  const { cache, fileName, entryName } = input;
+  const index = cache.derived(GUI_ANIMATION_PROVENANCE, () =>
+    buildGuiFlipbookIndex({
+      scenes: cache.documents(GUI_EXTENSIONS).documents,
+      assets: cache.documents(ANIMATION_ASSET_EXTENSIONS).documents,
+    }),
+  );
+  const config = readBuildConfigFromHost(cache.host, cache.projectRoot);
+  const resource = computeOutputRel(
+    displayPathOf(cache.projectRoot, fileName),
+    config,
+    "gui-script",
+  );
+  const declarers = index.byScriptResource.get(resource)?.get(entryName);
+  return declarers === undefined ? [] : [...declarers].sort();
+}
+
 // Scoped exactly the way the animation completion is: to the sprite component
 // the slot's sibling literal addresses on the one game object owning this
 // script, resolved through the same helper so the two cannot disagree about
@@ -140,6 +169,9 @@ function animationProvenance(input: {
   entryName: string;
 }): readonly string[] {
   const { slot, cache, fileName, entryName } = input;
+  if (slot.nodeParameter !== undefined) {
+    return guiAnimationProvenance({ cache, fileName, entryName });
+  }
   const component = componentIdOfSameObjectAddress(slot.addressText ?? "");
   if (component === undefined) return [];
   const index = cache.derived(ANIMATION_PROVENANCE, () =>
