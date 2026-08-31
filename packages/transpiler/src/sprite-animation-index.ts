@@ -1,3 +1,4 @@
+import { normalizeDocumentKey, readAnimationSources, resourceKey } from "./animation-sources";
 import { parseSceneTextFormat, type SceneMessage, SceneTextFormatError } from "./scene-text-format";
 
 // The animation ids each script may play, keyed first by the project-relative
@@ -14,23 +15,6 @@ export interface SpriteAnimationIndex {
   readonly unresolved: readonly string[];
 }
 
-// Resource paths inside a scene are project-absolute; the index is keyed the
-// way `buildGuiNodeIndex` keys its own, with the leading `/` dropped, so a
-// caller maps the file it holds forward through the build's output-path math
-// and looks the result up here.
-function resourceKey(resource: string): string {
-  return resource.startsWith("/") ? resource.slice(1) : resource;
-}
-
-// The keys a caller supplies name files on the host, so they may arrive with
-// native separators; the resource paths they are matched against come out of
-// scene content and are always `/`-separated. Normalizing here enforces that
-// contract at the boundary instead of leaving it to whichever caller happens
-// to build the maps.
-function normalizeDocumentKey(path: string): string {
-  return path.replaceAll("\\", "/");
-}
-
 const SCRIPT_SUFFIX = ".script";
 const SPRITE_SUFFIX = ".sprite";
 
@@ -42,31 +26,18 @@ function childrenOf(message: SceneMessage, name: string): readonly SceneMessage[
   return message.messages.get(name) ?? [];
 }
 
-// Only `animations { id: … }` counts. Defold may also expose a bare
-// `images { image: … }` entry as a one-frame animation named after the file,
-// which is unverified here — and a wrong suggestion in this slot is a runtime
-// crash rather than a no-op.
-function declaredAnimations(document: SceneMessage): Set<string> {
-  const ids = new Set<string>();
-  for (const animation of childrenOf(document, "animations")) {
-    for (const id of animation.fields.get("id") ?? []) {
-      if (id !== "") ids.add(id);
-    }
-  }
-  return ids;
-}
-
 interface AssetIndex {
   readonly animationsByTileSet: Map<string, Set<string>>;
   readonly tileSetBySprite: Map<string, string>;
 }
 
 function readAssets(assets: ReadonlyMap<string, string>, unresolved: string[]): AssetIndex {
-  const animationsByTileSet = new Map<string, Set<string>>();
+  const animationsByTileSet = readAnimationSources(assets, unresolved);
   const tileSetBySprite = new Map<string, string>();
 
   for (const [path, text] of assets) {
     const displayPath = normalizeDocumentKey(path);
+    if (!displayPath.endsWith(SPRITE_SUFFIX)) continue;
     let document: SceneMessage;
     try {
       document = parseSceneTextFormat(text);
@@ -75,12 +46,8 @@ function readAssets(assets: ReadonlyMap<string, string>, unresolved: string[]): 
       unresolved.push(`${displayPath}: could not be parsed (${error.message})`);
       continue;
     }
-    if (displayPath.endsWith(SPRITE_SUFFIX)) {
-      const tileSet = firstField(document, "tile_set");
-      if (tileSet !== undefined) tileSetBySprite.set(displayPath, resourceKey(tileSet));
-      continue;
-    }
-    animationsByTileSet.set(displayPath, declaredAnimations(document));
+    const tileSet = firstField(document, "tile_set");
+    if (tileSet !== undefined) tileSetBySprite.set(displayPath, resourceKey(tileSet));
   }
 
   return { animationsByTileSet, tileSetBySprite };

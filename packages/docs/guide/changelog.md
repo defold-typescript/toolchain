@@ -14,7 +14,11 @@ Entries are curated by hand from the git history; the most recent releases are
 listed per-patch, older releases are rolled up per minor version. Breaking
 changes are called out first because the toolchain is pre-1.0.
 
-## v0.30.1
+## v0.31.0
+
+### Improved
+
+- **[`gui.play_flipbook`](/api/gui) now completes its animation name.** Put the caret in the `animation` argument and the plugin offers the animations declared by the textures the one `.gui` scene owning your gui script names — never a project-wide union — and the [provenance panel](./transpile-diagnostics.md) credits the atlas that really declares each one.
 
 ### Fixed
 

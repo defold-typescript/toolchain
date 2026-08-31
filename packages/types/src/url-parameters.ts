@@ -6,8 +6,10 @@ import type { ApiModule } from "./api-doc";
 // naming a mesh inside the model asset), so a slot is classified only
 // deliberately. The first three address the scene graph; `gui-node` names a node
 // inside the one `.gui` that owns the script, which is not an address at all;
-// `animation` names a block inside the atlas of a component a *sibling*
-// argument addresses, which is why it is the one class needing a companion;
+// `animation` names a block inside an atlas reached through a *companion*
+// parameter of the same call — the sibling literal addressing a sprite
+// component, or the gui node whose scene declares its textures — which is why
+// it is the one class needing a companion;
 // `resource-path` names a project file outright, so it is scoped by the
 // extensions its entry declares rather than by anything in the scene graph;
 // `config-key` names a `<section>.<key>` entry in the project's own
@@ -38,6 +40,12 @@ export interface UrlParameterEntry {
   // shape would fan the table's one interface out into a union for a single
   // optional field.
   addressParameter?: string;
+  // The alternative to `addressParameter`: the parameter naming the gui node
+  // this call animates, which scopes the candidates to the `.gui` scene owning
+  // the script rather than to a component a sibling literal addresses. An
+  // `animation` entry declares exactly one of the two, enforced by the same
+  // drift guard and for the same reason.
+  nodeParameter?: string;
   // The file extensions this slot's literal may name, each written with its
   // leading dot. Required for `resource-path` and absent otherwise — enforced by
   // the drift guard for the same reason `addressParameter` is. Recorded per

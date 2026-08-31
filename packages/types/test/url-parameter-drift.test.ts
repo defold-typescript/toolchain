@@ -81,33 +81,53 @@ describe("url-parameters.json generated entries", () => {
     expect(slots.get("gui.get_node#id")?.types).toEqual(["string", "hash"]);
   });
 
-  test("the animation-id class is recorded against the one slot that carries it", () => {
+  test("the animation-id class is recorded against the two slots that carry it", () => {
     const animations = table
       .filter((entry) => entry.class === "animation")
       .map((entry) => `${entry.fqn}#${entry.parameter}`);
-    expect(animations).toEqual(["sprite.play_flipbook#id"]);
+    expect(animations).toEqual(["sprite.play_flipbook#id", "gui.play_flipbook#animation"]);
     expect(slots.get("sprite.play_flipbook#id")?.types).toEqual(["string", "hash"]);
+    expect(slots.get("gui.play_flipbook#animation")?.types).toEqual(["string", "hash"]);
   });
 
-  test("every animation entry names an address companion that is a live sibling slot", () => {
+  test("every animation entry names exactly one live scope companion", () => {
     // The companion is what scopes the candidate set. A typo here would not fail
     // anything at runtime — it would silently disable every suggestion — so the
-    // name is checked against the same slot universe the classes are.
+    // name is checked against the same slot universe the classes are. The two
+    // companions are alternatives, not a pair: an entry naming both would leave
+    // the plugin's class arm with no discriminator to dispatch on.
     const unresolved: string[] = [];
     for (const entry of table.filter((candidate) => candidate.class === "animation")) {
       const key = `${entry.fqn}#${entry.parameter}`;
-      if (entry.addressParameter === undefined) {
-        unresolved.push(`${key}: an animation entry must name an addressParameter`);
-        continue;
-      }
-      const companion = slots.get(`${entry.fqn}#${entry.addressParameter}`);
-      if (!companion) {
-        unresolved.push(`${key}: ${entry.fqn} declares no ${entry.addressParameter} parameter`);
-        continue;
-      }
-      if (!parameterTypesSatisfyClass(companion.types, "component")) {
+      const named = [entry.addressParameter, entry.nodeParameter].filter(
+        (name) => name !== undefined,
+      );
+      if (named.length !== 1) {
         unresolved.push(
-          `${key}: ${entry.addressParameter} is ${JSON.stringify(companion.types)}, which cannot address a component`,
+          `${key}: an animation entry must name exactly one of addressParameter/nodeParameter, not ${named.length}`,
+        );
+        continue;
+      }
+      const companionName = named[0] as string;
+      const companion = slots.get(`${entry.fqn}#${companionName}`);
+      if (!companion) {
+        unresolved.push(`${key}: ${entry.fqn} declares no ${companionName} parameter`);
+        continue;
+      }
+      if (entry.addressParameter !== undefined) {
+        if (!parameterTypesSatisfyClass(companion.types, "component")) {
+          unresolved.push(
+            `${key}: ${companionName} is ${JSON.stringify(companion.types)}, which cannot address a component`,
+          );
+        }
+        continue;
+      }
+      // A gui node object, not a `string | hash` node *id*: the scope is read
+      // off the scene that owns the script, so the companion must be the node
+      // handle the call operates on rather than anything a class shape covers.
+      if (!companion.types.some((token) => token.toLowerCase() === "node")) {
+        unresolved.push(
+          `${key}: ${companionName} is ${JSON.stringify(companion.types)}, which is not a gui node`,
         );
       }
     }
@@ -233,10 +253,14 @@ describe("url-parameters.json generated entries", () => {
     expect(unresolved).toEqual([]);
   });
 
-  test("only an animation entry carries an address companion", () => {
+  test("only an animation entry carries a scope companion", () => {
     expect(
       table
-        .filter((entry) => entry.class !== "animation" && entry.addressParameter !== undefined)
+        .filter(
+          (entry) =>
+            entry.class !== "animation" &&
+            (entry.addressParameter !== undefined || entry.nodeParameter !== undefined),
+        )
         .map((entry) => `${entry.fqn}#${entry.parameter}`),
     ).toEqual([]);
   });
