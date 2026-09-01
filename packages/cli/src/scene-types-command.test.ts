@@ -15,6 +15,10 @@ import * as ts from "typescript";
 import { dispatch } from "./dispatch";
 import { MATERIALIZED_ROOT } from "./materialize";
 import { createIncompleteReporter, SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
+import {
+  scaffoldUnresolvedDependency,
+  UNRESOLVED_DEPENDENCY_URL,
+} from "./unresolved-dependency-fixture";
 
 // The value production reports, not a re-derivation of it: `path.join` here
 // would yield a backslash on Windows and disagree with the POSIX path the
@@ -64,16 +68,6 @@ async function run(
   const { io, out, err } = captureStreams();
   const code = await dispatch([...args, cwd], io);
   return { code, out: out(), err: err(), json: () => JSON.parse(out().trim()) };
-}
-
-const DEPENDENCY_URL = "https://github.com/Insality/druid/archive/refs/tags/16.zip";
-
-// A project that declares a dependency the last `resolve` never materialized:
-// `game.project` names the URL and nothing under the dependency root answers for
-// it. This is the hole `readSceneDocuments` names and the CLI has to report.
-function scaffoldUnresolvedDependency(): void {
-  scaffoldProject();
-  write("game.project", `[project]\ntitle = demo\ndependencies#0 = ${DEPENDENCY_URL}\n`);
 }
 
 function scaffoldProject(): void {
@@ -251,20 +245,20 @@ describe("scene-types verb", () => {
   });
 
   test("an unresolved dependency is named on stderr, and the declaration is still written", async () => {
-    scaffoldUnresolvedDependency();
+    scaffoldUnresolvedDependency(cwd);
 
     const { code, err } = await run("scene-types");
 
     expect(code).toBe(0);
     expect(err).toContain("defold-typescript scene-types:");
-    expect(err).toContain(DEPENDENCY_URL);
+    expect(err).toContain(UNRESOLVED_DEPENDENCY_URL);
     // The project's own scenes still reach the declaration: a partial universe
     // is a warning, never a refusal to write.
     expect(readFileSync(path.join(cwd, DECLARATION_REL), "utf8")).toContain('"/player/player"');
   });
 
   test("--json carries the same reasons on the warnings channel", async () => {
-    scaffoldUnresolvedDependency();
+    scaffoldUnresolvedDependency(cwd);
 
     const { code, json, err } = await run("scene-types", "--json");
 
@@ -272,11 +266,13 @@ describe("scene-types verb", () => {
     expect(err).toBe("");
     const parsed = json() as { ok: boolean; warnings?: readonly string[] };
     expect(parsed.ok).toBe(true);
-    expect(parsed.warnings?.some((warning) => warning.includes(DEPENDENCY_URL))).toBe(true);
+    expect(parsed.warnings?.some((warning) => warning.includes(UNRESOLVED_DEPENDENCY_URL))).toBe(
+      true,
+    );
   });
 
   test("build reports the holes beside its own warnings", async () => {
-    scaffoldUnresolvedDependency();
+    scaffoldUnresolvedDependency(cwd);
     write(
       "tsconfig.json",
       JSON.stringify({ compilerOptions: { strict: true }, include: ["src/**/*.ts"] }, null, 2),
@@ -287,7 +283,7 @@ describe("scene-types verb", () => {
 
     expect(code).toBe(0);
     expect(err).toContain("defold-typescript build:");
-    expect(err).toContain(DEPENDENCY_URL);
+    expect(err).toContain(UNRESOLVED_DEPENDENCY_URL);
   });
 
   test("the build output bob writes is not read back as project scenes", async () => {
