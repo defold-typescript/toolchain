@@ -3364,6 +3364,31 @@ files say which ids exist, not which object each address is reachable from, so
 this is the address the generator can prove; a cross-object `"/player#sprite"`
 still type-checks, it is simply not offered as a completion.
 
+#### Which world an address resolves in
+
+An address has two axes: **which world**, then **which path inside it**. Defold
+runs more than one game world at a time, and the same `/enemy` in two of them is
+two different objects — so the generator says which one each key means.
+
+- A **bare** key like `/player/player` is the **bootstrap world**: the one
+  collection your `game.project` names under `[bootstrap] main_collection`.
+- A `socket:/path` key like `mylevel:/enemy` is a **proxy world**. A collection
+  opened through a collection proxy runs in a world of its own, named by the
+  proxied collection's own `name:` field — not the proxy component's id, and not
+  the file name. From outside that world its objects are only reachable through
+  that socket, so they are never offered bare.
+- A **collection factory prototype** has **no static address at all**. Its
+  objects only exist under a runtime-generated `/collection[N]/` prefix, so the
+  generator offers nothing for them rather than an address that could never
+  resolve.
+
+If your `game.project` cannot be read, or declares no `[bootstrap]
+main_collection`, no key is offered bare and the reason is named on the warning
+channel — the generator says what it could not settle instead of guessing that
+every collection is a root. A collection nothing reaches — no bootstrap, proxy,
+instance or factory reference — is reported the same way, and contributes no
+address.
+
 #### Your library dependencies count too
 
 The universe is your project's own scenes **plus** whatever

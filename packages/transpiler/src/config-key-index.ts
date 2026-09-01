@@ -33,3 +33,28 @@ export function buildConfigKeyIndex(gameProjectText: string): ReadonlySet<string
   }
   return keys;
 }
+
+// One declared value, read the same way `buildConfigKeyIndex` reads the whole
+// file. The section is matched in full rather than as a prefix, so a
+// `main_collection_backup` beside `main_collection` answers neither.
+export function readGameProjectSetting(
+  gameProjectText: string,
+  section: string,
+  key: string,
+): string | undefined {
+  let current: string | undefined;
+  for (const line of gameProjectText.split("\n")) {
+    const header = sectionNameOf(line);
+    if (header !== undefined) {
+      current = header;
+      continue;
+    }
+    if (current !== section) continue;
+    const separator = line.indexOf("=");
+    if (separator === -1) continue;
+    if (line.slice(0, separator).trim() !== key) continue;
+    const value = line.slice(separator + 1).trim();
+    if (value !== "") return value;
+  }
+  return undefined;
+}

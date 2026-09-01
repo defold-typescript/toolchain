@@ -209,6 +209,7 @@ const GUI_FLIPBOOK_DOCUMENTS: Record<string, string> = {
 // declaring document is the one naming the leaf rather than the root that
 // prefixed it.
 const PATH_DOCUMENTS: Record<string, string> = {
+  "game.project": "[bootstrap]\nmain_collection = /main/main.collectionc\n",
   "main/main.collection":
     'collection_instances {\n  id: "world"\n  collection: "/main/world.collection"\n}\n',
   "main/world.collection": 'instances {\n  id: "hero"\n  prototype: "/main/board.go"\n}\n',

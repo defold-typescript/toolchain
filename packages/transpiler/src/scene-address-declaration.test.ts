@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import * as ts from "typescript";
 import { buildSceneAddressDeclaration } from "./scene-address-declaration";
+import { buildSceneCollectionRoles } from "./scene-collection-roles";
 
 // The shipped interfaces, read from `@defold-typescript/types` rather than
 // restated here: the whole assertion is that the emitted declaration augments
@@ -62,9 +63,29 @@ const NESTED_COLLECTION = new Map([
   ],
 ]);
 
+const NESTED_GAME_PROJECT = "[bootstrap]\nmain_collection = /game/game.collectionc\n";
+
+// The declaration built the way production builds it: the roles come from the
+// same documents plus the project's own `game.project`, never from a
+// hand-assembled role set the generator would then be tested against.
+function declarationFor(
+  documents: ReadonlyMap<string, string>,
+  gameProject: string | undefined,
+  references: Record<string, string> = {},
+): string {
+  return buildSceneAddressDeclaration(
+    documents,
+    buildSceneCollectionRoles({
+      documents,
+      references: new Map(Object.entries(references)),
+      gameProject,
+    }),
+  );
+}
+
 describe("scene address declaration", () => {
   test("the composed game-object paths reach keyof SceneGameObjectAddresses", () => {
-    const declaration = buildSceneAddressDeclaration(NESTED_COLLECTION);
+    const declaration = declarationFor(NESTED_COLLECTION, NESTED_GAME_PROJECT);
     expect(
       messagesOf(
         probeDiagnostics(
@@ -76,7 +97,7 @@ describe("scene address declaration", () => {
   });
 
   test("the component ids reach keyof SceneComponentAddresses as same-object addresses", () => {
-    const declaration = buildSceneAddressDeclaration(NESTED_COLLECTION);
+    const declaration = declarationFor(NESTED_COLLECTION, NESTED_GAME_PROJECT);
     expect(
       messagesOf(
         probeDiagnostics(
@@ -89,7 +110,7 @@ describe("scene address declaration", () => {
   });
 
   test("an address the project never declares is not a key", () => {
-    const declaration = buildSceneAddressDeclaration(NESTED_COLLECTION);
+    const declaration = declarationFor(NESTED_COLLECTION, NESTED_GAME_PROJECT);
     const diagnostics = probeDiagnostics(
       declaration,
       'const absent: keyof SceneGameObjectAddresses = "/player";\nexport { absent };\n',
@@ -101,7 +122,7 @@ describe("scene address declaration", () => {
   });
 
   test("the keys are emitted sorted", () => {
-    const declaration = buildSceneAddressDeclaration(
+    const declaration = declarationFor(
       new Map([
         [
           "main.collection",
@@ -110,6 +131,7 @@ describe("scene address declaration", () => {
             'instances {\n  id: "middle"\n  prototype: "/a.go"\n}\n',
         ],
       ]),
+      "[bootstrap]\nmain_collection = /main.collection\n",
     );
     const keys = [...declaration.matchAll(/^ {4}"(\/[^"]*)": true;$/gm)].map((m) => m[1]);
     expect(keys).toEqual(["/alpha", "/middle", "/zebra"]);
@@ -118,13 +140,13 @@ describe("scene address declaration", () => {
   test("the emission does not depend on the order the documents were read in", () => {
     const entries = [...NESTED_COLLECTION];
     const reversed = new Map([...entries].reverse());
-    expect(buildSceneAddressDeclaration(reversed)).toBe(
-      buildSceneAddressDeclaration(NESTED_COLLECTION),
+    expect(declarationFor(reversed, NESTED_GAME_PROJECT)).toBe(
+      declarationFor(NESTED_COLLECTION, NESTED_GAME_PROJECT),
     );
   });
 
   test("an empty project emits a declaration that compiles and leaves both keyof never", () => {
-    const declaration = buildSceneAddressDeclaration(new Map());
+    const declaration = declarationFor(new Map(), undefined);
     expect(
       messagesOf(
         probeDiagnostics(
@@ -136,5 +158,62 @@ describe("scene address declaration", () => {
         ),
       ),
     ).toEqual([]);
+  });
+  test("a socket-qualified key reaches keyof SceneGameObjectAddresses, colon and all", () => {
+    const declaration = declarationFor(
+      new Map([
+        [
+          "main/main.collection",
+          'instances {\n  id: "loader"\n  prototype: "/main/loader.go"\n}\n',
+        ],
+        [
+          "main/loader.go",
+          'embedded_components {\n  id: "loader"\n  type: "collectionproxy"\n' +
+            '  data: "collection: \\"/levels/level1.collection\\"\\n"\n}\n',
+        ],
+        [
+          "levels/level1.collection",
+          'name: "mylevel"\ninstances {\n  id: "enemy"\n  prototype: "/levels/enemy.go"\n}\n',
+        ],
+      ]),
+      "[bootstrap]\nmain_collection = /main/main.collection\n",
+    );
+
+    expect(
+      messagesOf(
+        probeDiagnostics(
+          declaration,
+          'const qualified: keyof SceneGameObjectAddresses = "mylevel:/enemy";\nexport { qualified };\n',
+        ),
+      ),
+    ).toEqual([]);
+  });
+
+  test("a factory prototype's path is not a key", () => {
+    const declaration = declarationFor(
+      new Map([
+        [
+          "main/main.collection",
+          'instances {\n  id: "spawner"\n  prototype: "/main/spawner.go"\n}\n',
+        ],
+        [
+          "main/spawner.go",
+          'embedded_components {\n  id: "spawner"\n  type: "collectionfactory"\n' +
+            '  data: "prototype: \\"/spawn/pack.collection\\"\\n"\n}\n',
+        ],
+        [
+          "spawn/pack.collection",
+          'name: "pack"\ninstances {\n  id: "enemy"\n  prototype: "/spawn/enemy.go"\n}\n',
+        ],
+      ]),
+      "[bootstrap]\nmain_collection = /main/main.collection\n",
+    );
+
+    expect(
+      probeDiagnostics(
+        declaration,
+        'const absent: keyof SceneGameObjectAddresses = "/enemy";\nexport { absent };\n',
+      ).map((d) => [d.file?.fileName, d.code]),
+    ).toEqual([[PROBE_FILE, 2322]]);
   });
 });

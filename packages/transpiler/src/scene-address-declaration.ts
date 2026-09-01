@@ -1,3 +1,4 @@
+import type { SceneCollectionRoles } from "./scene-collection-roles";
 import { buildSceneComponentIndex } from "./scene-component-index";
 import { buildSceneObjectPathIndex } from "./scene-object-path-index";
 
@@ -33,7 +34,8 @@ function bodyOf(keys: readonly string[]): string {
 /**
  * The global augmentation that fills `SceneGameObjectAddresses` and
  * `SceneComponentAddresses` from already-read scene sources — keys are
- * project-relative display paths, values are file text.
+ * project-relative display paths, values are file text. `roles` says which
+ * world each collection is, so a path key carries the world it resolves in.
  *
  * Pure, like the two indexes it composes: the filesystem walk belongs to the
  * caller. Keys are sorted so a project whose scenes did not change re-emits a
@@ -41,8 +43,11 @@ function bodyOf(keys: readonly string[]): string {
  * same bytes as well; a `Set` iteration order leaking into the output would
  * make every regeneration rewrite the file and re-check the whole program.
  */
-export function buildSceneAddressDeclaration(documents: ReadonlyMap<string, string>): string {
-  const paths = [...buildSceneObjectPathIndex(documents).paths];
+export function buildSceneAddressDeclaration(
+  documents: ReadonlyMap<string, string>,
+  roles: SceneCollectionRoles,
+): string {
+  const paths = [...buildSceneObjectPathIndex(documents, roles).paths];
   const components = componentAddressesOf(documents);
 
   return `${BANNER}

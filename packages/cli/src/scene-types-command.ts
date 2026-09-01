@@ -2,9 +2,13 @@ import { mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync
 import * as path from "node:path";
 import {
   buildSceneAddressDeclaration,
+  buildSceneCollectionRoles,
   buildSceneComponentIndex,
+  COLLECTION_REFERENCE_EXTENSIONS,
   displayPathOf,
+  GAME_PROJECT_DOCUMENT,
   isExcludedProjectPath,
+  PROJECT_EXTENSIONS,
   readSceneDocuments,
   type SceneComponentIndex,
   type SceneReadHost,
@@ -22,12 +26,20 @@ export interface SceneTypesResult {
   readonly declaration: string;
   readonly wrote: boolean;
   /**
-   * Every hole the walk found in the address universe, verbatim from
-   * `readSceneDocuments`. The strings are already phrased for a reader, so a
-   * second wording layer here would be a duplicate model of what the walk
-   * decided.
+   * Every hole in the address universe: what the walk could not read, then what
+   * the world classification could not settle. The strings are already phrased
+   * for a reader, so a second wording layer here would be a duplicate model of
+   * what each step decided.
    */
   readonly incomplete: readonly string[];
+  /**
+   * The subset of `incomplete` the *walk* produced — the files and dependencies
+   * it could not read. Only these can hide a component id, so only these
+   * suppress the build's `#fragment` reachability check: an unreadable
+   * `game.project`, or a collection no world opens, leaves every component id
+   * the walk did read provably present.
+   */
+  readonly unread: readonly string[];
   /**
    * The component-id universe the same walk read, for a consumer that has to
    * decide whether an address can resolve. Its own `incomplete` records only
@@ -124,15 +136,33 @@ function writeIfChanged(target: string, contents: string): boolean {
  * in `@defold-typescript/types` stay widened.
  */
 export function runSceneTypes(opts: { cwd: string }): SceneTypesResult {
-  const { documents, unreadable } = readSceneDocuments(fsSceneReadHost(), opts.cwd);
+  const host = fsSceneReadHost();
+  const { documents, unreadable } = readSceneDocuments(host, opts.cwd);
+  // The proxy and factory documents are read as their own walk rather than
+  // folded into `SCENE_EXTENSIONS`, which would feed non-scene text to
+  // `buildSceneComponentIndex`.
+  const references = readSceneDocuments(host, opts.cwd, COLLECTION_REFERENCE_EXTENSIONS);
+  // A second walk over the same project repeats every dependency-level reason
+  // the first already gave, so only a reason this walk alone found is new.
+  for (const reason of references.unreadable) {
+    if (!unreadable.includes(reason)) unreadable.push(reason);
+  }
+  const roles = buildSceneCollectionRoles({
+    documents,
+    references: references.documents,
+    gameProject: readSceneDocuments(host, opts.cwd, PROJECT_EXTENSIONS).documents.get(
+      GAME_PROJECT_DOCUMENT,
+    ),
+  });
   const wrote = writeIfChanged(
     path.join(opts.cwd, SCENE_ADDRESSES_DECLARATION),
-    buildSceneAddressDeclaration(documents),
+    buildSceneAddressDeclaration(documents, roles),
   );
   return {
     declaration: SCENE_ADDRESSES_DECLARATION,
     wrote,
-    incomplete: unreadable,
+    incomplete: [...unreadable, ...roles.incomplete],
+    unread: unreadable,
     index: buildSceneComponentIndex(documents),
     hasScenes: documents.size > 0,
   };
@@ -149,6 +179,10 @@ export function runSceneTypes(opts: { cwd: string }): SceneTypesResult {
  *   walk could not reach — so a fragment declared only by an unresolved library
  *   reports the check as suppressed rather than the fragment as unreachable,
  *   reusing the check's own suppression rule instead of adding a second one;
+ * - only what the *walk* could not read suppresses the check. A hole in the
+ *   world classification — an unreadable `game.project`, a collection no world
+ *   opens — changes which addresses are offered, not which component ids were
+ *   read, so it is reported to the user without silencing the check;
  * - a project with no scene sources at all *and no walk failure* is not reported
  *   as suppressed. It has no address universe to speak of, so there is nothing a
  *   reader could act on, and saying so on every build would be noise — the same
@@ -158,9 +192,9 @@ export function runSceneTypes(opts: { cwd: string }): SceneTypesResult {
  *   as suppressed like any other hole.
  */
 export function sceneIndexForBuild(result: SceneTypesResult): SceneComponentIndex | undefined {
-  if (!result.hasScenes && result.incomplete.length === 0) return undefined;
+  if (!result.hasScenes && result.unread.length === 0) return undefined;
   return {
     ids: result.index.ids,
-    incomplete: [...result.index.incomplete, ...result.incomplete],
+    incomplete: [...result.index.incomplete, ...result.unread],
   };
 }

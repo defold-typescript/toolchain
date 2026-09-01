@@ -19,6 +19,12 @@ export const SCENE_EXTENSIONS = [".go", ".collection"];
 export const GUI_EXTENSIONS = [".gui"];
 export const INPUT_BINDING_EXTENSIONS = [".input_binding"];
 
+// The component files that name a collection without instancing it: a
+// `.collectionproxy` opens it as its own world, a `.collectionfactory` spawns
+// copies of it at runtime. Deliberately not folded into `SCENE_EXTENSIONS`,
+// which would feed non-scene text to `buildSceneComponentIndex`.
+export const COLLECTION_REFERENCE_EXTENSIONS = [".collectionproxy", ".collectionfactory"];
+
 // The documents an animation id is declared by, plus every hop taken to reach
 // one: an atlas or tile source names a sprite's ids outright, a `.animationset`
 // names the files whose basenames are a model's ids, and a `.sprite` or

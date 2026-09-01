@@ -36,6 +36,7 @@ import {
   createSceneIndexCache,
   type SceneIndexCache,
   type SceneWatchHost,
+  sceneCollectionRolesOf,
 } from "./scene-index-cache";
 import { resolveEntryProvenance } from "./scene-provenance";
 
@@ -102,7 +103,8 @@ function objectPathEntries(
     slot,
     paths: cache.derived(
       "object-paths",
-      () => buildSceneObjectPathIndex(cache.documents().documents).paths,
+      () =>
+        buildSceneObjectPathIndex(cache.documents().documents, sceneCollectionRolesOf(cache)).paths,
     ),
     baseEntries,
   });

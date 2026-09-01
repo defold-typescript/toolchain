@@ -3,7 +3,7 @@ export {
   buildComponentAnimationIndex,
   componentIdOfSameObjectAddress,
 } from "./component-animation-index";
-export { buildConfigKeyIndex } from "./config-key-index";
+export { buildConfigKeyIndex, readGameProjectSetting } from "./config-key-index";
 export type { GuiFlipbookIndex } from "./gui-flipbook-index";
 export { buildGuiFlipbookIndex } from "./gui-flipbook-index";
 export type { GuiNodeIndex } from "./gui-node-index";
@@ -36,11 +36,14 @@ export {
 export { getProgramDiagnostics } from "./program-diagnostics";
 export { isDefignoredPath, SCAFFOLDED_DEFIGNORE_LINES } from "./project-resources";
 export { buildSceneAddressDeclaration } from "./scene-address-declaration";
+export type { SceneCollectionRoles, SceneCollectionRolesInput } from "./scene-collection-roles";
+export { buildSceneCollectionRoles } from "./scene-collection-roles";
 export type { SceneComponentIndex } from "./scene-component-index";
 export { buildSceneComponentIndex } from "./scene-component-index";
 export type { SceneReadHost } from "./scene-documents";
 export {
   ANIMATION_ASSET_EXTENSIONS,
+  COLLECTION_REFERENCE_EXTENSIONS,
   displayPathOf,
   GAME_PROJECT_DOCUMENT,
   GUI_EXTENSIONS,
