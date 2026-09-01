@@ -14,9 +14,15 @@ import { Writable } from "node:stream";
 import * as ts from "typescript";
 import { dispatch } from "./dispatch";
 import { MATERIALIZED_ROOT } from "./materialize";
-import { createIncompleteReporter, SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
+import {
+  createIncompleteReporter,
+  runSceneTypes,
+  SCENE_ADDRESSES_DECLARATION,
+  sceneIndexForBuild,
+} from "./scene-types-command";
 import {
   scaffoldUnresolvedDependency,
+  scaffoldUnresolvedDependencyManifest,
   UNRESOLVED_DEPENDENCY_URL,
 } from "./unresolved-dependency-fixture";
 
@@ -296,6 +302,19 @@ describe("scene-types verb", () => {
     await run("scene-types");
 
     expect(readFileSync(path.join(cwd, DECLARATION_REL), "utf8")).not.toContain('"#ghost"');
+  });
+});
+
+describe("sceneIndexForBuild", () => {
+  test("a scene-less project whose walk failed still yields an index", () => {
+    scaffoldUnresolvedDependencyManifest(cwd);
+
+    const index = sceneIndexForBuild(runSceneTypes({ cwd }));
+
+    expect(index).toBeDefined();
+    expect(index?.incomplete.some((reason) => reason.includes(UNRESOLVED_DEPENDENCY_URL))).toBe(
+      true,
+    );
   });
 });
 

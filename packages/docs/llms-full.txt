@@ -2658,8 +2658,9 @@ things bound it:
   hole — an unparseable scene, or a dependency `game.project` declares that
   [`resolve`](./resolve.md) has not materialized — naming the reasons. A
   suppressed check found nothing because it did not run, which is not the same
-  as finding nothing. Projects with no scenes at all are silent: there is no
-  address universe to check against.
+  as finding nothing. A project with no scenes *and* no hole is silent: there is
+  no address universe to check against. A project whose scenes are missing
+  because its dependency is missing still reports the check as suppressed.
 
 [`watch`](./watch.md) runs the same check on every rebuild, so an address you
 break is reported on the edit that broke it rather than at the next restart. The
