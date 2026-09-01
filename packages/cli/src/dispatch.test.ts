@@ -862,6 +862,45 @@ describe("dispatch", () => {
     rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
   });
 
+  test("build --json reports an unreachable fragment as prose and as an entry", async () => {
+    scaffoldReachabilityBuild();
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--json"], io, { detectEditorVersion: () => null });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as {
+      ok: boolean;
+      warnings: readonly string[];
+      unreachableAddresses?: readonly { file: string; fragment: string; message: string }[];
+    };
+    expect(parsed.ok).toBe(true);
+    expect(parsed.warnings.some((w) => w.includes("nobody"))).toBe(true);
+    expect(parsed.unreachableAddresses).toHaveLength(1);
+    expect(parsed.unreachableAddresses?.[0]?.file).toBe("src/main.ts");
+    expect(parsed.unreachableAddresses?.[0]?.fragment).toBe("nobody");
+    expect(parsed.unreachableAddresses?.[0]?.message).toContain("nobody");
+  });
+
+  // The one failure a `--json` consumer could not recover from: a check that
+  // could not run rendering as a check that found nothing.
+  test("build --json emits no entries for a suppressed check and says so in warnings", async () => {
+    scaffoldReachabilityBuild();
+    scaffoldUnresolvedDependency(cwd);
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--json"], io, { detectEditorVersion: () => null });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as {
+      warnings: readonly string[];
+      unreachableAddresses?: readonly unknown[];
+    };
+    expect(parsed.unreachableAddresses).toBeUndefined();
+    expect(parsed.warnings.some((w) => w.includes("did not run"))).toBe(true);
+    expect(parsed.warnings.some((w) => w.includes("nobody"))).toBe(false);
+  });
+
   test("build --defold-target overrides the pin", async () => {
     scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.9.8" } });
     const { io, out } = captureStreams();
@@ -6208,5 +6247,126 @@ describe("watch scene-address surface wiring", () => {
     ).toBe(4);
 
     rmSync(sourceGeneratedDir, { recursive: true, force: true });
+  });
+
+  const POST_TO = (fragment: string): string =>
+    `import { defineScript } from "@defold-typescript/types";\nexport default defineScript({ init() { msg.post("#${fragment}", "hello"); } });\n`;
+
+  // A project whose one scene declares `sprite` and whose one source addresses
+  // it, so the address universe is complete and the first rebuild decides the
+  // fragment on its own.
+  function scaffoldReachableWatchProject(): void {
+    write(
+      "tsconfig.json",
+      JSON.stringify({ compilerOptions: { strict: true }, include: ["src/**/*.ts"] }, null, 2),
+    );
+    write("game.project", "[project]\n");
+    write("game/player.go", 'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n');
+    write("src/main.ts", POST_TO("sprite"));
+  }
+
+  function reachabilityWatcherPair(): {
+    main: WatcherFactory;
+    component: WatcherFactory;
+    triggerMain: () => void;
+  } {
+    let onMain: ((kind: "change" | "rename", rel: string) => void) | undefined;
+    return {
+      main: (_dir, onEvent): Watcher => {
+        onMain = (kind, rel) => onEvent({ kind, path: rel });
+        return { close() {} };
+      },
+      component: (_dir, _onEvent): Watcher => ({ close() {} }),
+      triggerMain: () => onMain?.("change", "src/main.ts"),
+    };
+  }
+
+  test("watch prints a rebuild's unreachable fragment on stderr", async () => {
+    scaffoldReachableWatchProject();
+    const { io, out, err } = captureStreams();
+    const { main, component, triggerMain } = reachabilityWatcherPair();
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      detectEditorVersion: () => null,
+      onWatchStart,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+    expect(err()).not.toContain("nobody");
+
+    write("src/main.ts", POST_TO("nobody"));
+    triggerMain();
+    await handle.waitForIdle();
+
+    handle.stop();
+    expect(await result).toBe(0);
+
+    const reported = err()
+      .split("\n")
+      .filter((line) => line.includes("nobody"));
+    expect(reported.length).toBeGreaterThan(0);
+    expect(reported.every((line) => line.startsWith("defold-typescript watch: "))).toBe(true);
+    expect(reported.some((line) => line.includes("src/main.ts"))).toBe(true);
+    // The findings are advisory: the cycle sentinel still closes the rebuild.
+    expect(out()).toContain("defold-typescript watch: build finished");
+  });
+
+  test("watch --json carries a rebuild's finding as prose and as an entry", async () => {
+    scaffoldReachableWatchProject();
+    const { io, out } = captureStreams();
+    const { main, component, triggerMain } = reachabilityWatcherPair();
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd, "--json"], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      detectEditorVersion: () => null,
+      onWatchStart,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+
+    write("src/main.ts", POST_TO("nobody"));
+    triggerMain();
+    await handle.waitForIdle();
+
+    handle.stop();
+    expect(await result).toBe(0);
+
+    const rebuild = out()
+      .split("\n")
+      .filter((line) => line !== "")
+      .map(
+        (line) =>
+          JSON.parse(line) as {
+            command: string;
+            event?: string;
+            ok?: boolean;
+            warnings?: readonly string[];
+            unreachableAddresses?: readonly {
+              file: string;
+              fragment: string;
+              message: string;
+            }[];
+          },
+      )
+      .find((line) => line.command === "watch" && line.event === "rebuild");
+
+    expect(rebuild?.ok).toBe(true);
+    expect(rebuild?.warnings?.some((w) => w.includes("nobody"))).toBe(true);
+    expect(rebuild?.unreachableAddresses).toEqual([
+      {
+        file: "src/main.ts",
+        fragment: "nobody",
+        message: expect.stringContaining("nobody") as unknown as string,
+      },
+    ]);
   });
 });

@@ -1,6 +1,6 @@
 import { existsSync, watch as fsWatch } from "node:fs";
 import * as path from "node:path";
-import { SCRIPT_SUFFIX_BY_KIND } from "@defold-typescript/transpiler";
+import { SCRIPT_SUFFIX_BY_KIND, type SceneComponentIndex } from "@defold-typescript/transpiler";
 import {
   BuildFailureError,
   isFileIncluded,
@@ -94,6 +94,12 @@ export interface RunWatchOptions {
   readonly componentWatcherFactory?: WatcherFactory;
   readonly resolveSurface?: () => void | Promise<void>;
   readonly sceneTypesSurface?: () => void | Promise<void>;
+  /**
+   * The component-id universe every build in this watch checks `#fragment`
+   * addresses against. Read afresh per build, so the regeneration
+   * `sceneTypesSurface` performs is visible to the next rebuild.
+   */
+  readonly sceneIndex?: () => SceneComponentIndex | undefined;
   readonly json?: boolean;
   readonly pinDiagnostics?: readonly string[];
   readonly pinMismatch?: { readonly installed: string; readonly pinned: string };
@@ -198,13 +204,23 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   }
   try {
     opts.syncSurface?.();
-    session = createBuildSession({ cwd });
+    session = createBuildSession({
+      cwd,
+      ...(opts.sceneIndex ? { sceneIndex: opts.sceneIndex } : {}),
+    });
     config = readBuildConfig(cwd);
     if (!opts.json) stdout.write(BUILD_STARTED_LINE);
     try {
-      const { written, warnings } = session.buildAll();
+      const { written, warnings, unreachableAddresses } = session.buildAll();
       if (opts.json) {
-        stdout.write(renderWatchEvent({ event: "build", written, warnings }));
+        stdout.write(
+          renderWatchEvent({
+            event: "build",
+            written,
+            warnings,
+            ...(unreachableAddresses.length > 0 ? { unreachableAddresses } : {}),
+          }),
+        );
       } else {
         stdout.write(formatBuildLine(written));
         for (const warning of warnings) {
@@ -444,12 +460,24 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     }
     if (!opts.json) stdout.write(BUILD_STARTED_LINE);
     try {
-      const { written } = session.applyEvents(changed, removed);
-      stdout.write(
-        opts.json
-          ? renderWatchEvent({ event: "rebuild", written, changed, removed })
-          : formatBuildLine(written),
-      );
+      const { written, warnings, unreachableAddresses } = session.applyEvents(changed, removed);
+      if (opts.json) {
+        stdout.write(
+          renderWatchEvent({
+            event: "rebuild",
+            written,
+            changed,
+            removed,
+            warnings,
+            ...(unreachableAddresses.length > 0 ? { unreachableAddresses } : {}),
+          }),
+        );
+      } else {
+        stdout.write(formatBuildLine(written));
+        for (const warning of warnings) {
+          stderr.write(`defold-typescript watch: ${warning}\n`);
+        }
+      }
       // Inside the success branch on purpose: reloading after a failed build
       // would push the previous emit's Lua into the running game.
       scheduleReload(written);

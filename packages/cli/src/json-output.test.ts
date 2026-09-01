@@ -198,4 +198,65 @@ describe("renderWatchEvent", () => {
     expect(renderWatchEvent({ event: "stop" }).endsWith("\n")).toBe(true);
     expect(renderWatchEvent({ event: "stop" }).trimEnd()).not.toContain("\n");
   });
+
+  test("omits unreachableAddresses on a rebuild event that was not given any", () => {
+    const parsed = JSON.parse(renderWatchEvent({ event: "rebuild", written: [] })) as Record<
+      string,
+      unknown
+    >;
+    expect("unreachableAddresses" in parsed).toBe(false);
+  });
+
+  test("carries unreachableAddresses on a rebuild event beside the prose warnings", () => {
+    const parsed = JSON.parse(
+      renderWatchEvent({
+        event: "rebuild",
+        written: [],
+        warnings: ['src/main.ts: no `.go` declares "nobody"'],
+        unreachableAddresses: [
+          { file: "src/main.ts", fragment: "nobody", message: 'no `.go` declares "nobody"' },
+        ],
+      }),
+    ) as Record<string, unknown>;
+    expect(parsed.unreachableAddresses).toEqual([
+      { file: "src/main.ts", fragment: "nobody", message: 'no `.go` declares "nobody"' },
+    ]);
+    expect(parsed.warnings).toHaveLength(1);
+  });
+});
+
+describe("renderResult unreachableAddresses", () => {
+  test("omits the field when the build passed none", () => {
+    const parsed = JSON.parse(renderResult({ command: "build", written: [] })) as Record<
+      string,
+      unknown
+    >;
+    expect("unreachableAddresses" in parsed).toBe(false);
+  });
+
+  test("carries one entry per finding, beside the prose warnings", () => {
+    const parsed = JSON.parse(
+      renderResult({
+        command: "build",
+        written: [],
+        warnings: ["src/a.ts: nobody", "src/b.ts: nowhere"],
+        unreachableAddresses: [
+          { file: "src/a.ts", fragment: "nobody", message: "nobody" },
+          { file: "src/b.ts", fragment: "nowhere", message: "nowhere" },
+        ],
+      }),
+    ) as Record<string, unknown>;
+    expect(parsed.unreachableAddresses).toEqual([
+      { file: "src/a.ts", fragment: "nobody", message: "nobody" },
+      { file: "src/b.ts", fragment: "nowhere", message: "nowhere" },
+    ]);
+    expect(parsed.warnings).toHaveLength(2);
+  });
+
+  test("renders an explicitly empty array rather than dropping it", () => {
+    const parsed = JSON.parse(
+      renderResult({ command: "build", written: [], unreachableAddresses: [] }),
+    ) as Record<string, unknown>;
+    expect(parsed.unreachableAddresses).toEqual([]);
+  });
 });
