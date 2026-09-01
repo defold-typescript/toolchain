@@ -2,13 +2,13 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import {
   ANIMATION_ASSET_EXTENSIONS,
+  buildComponentAnimationIndex,
   buildConfigKeyIndex,
   buildGuiFlipbookIndex,
   buildGuiNodeIndex,
   buildInputActionIndex,
   buildSceneComponentIndex,
   buildSceneObjectPathIndex,
-  buildSpriteAnimationIndex,
   type ClassifiedSlot,
   componentIdOfSameObjectAddress,
   computeOutputRel,
@@ -164,14 +164,14 @@ function animationEntries(
       ? []
       : buildWholeLiteralCompletionEntries({ slot, ids: new Set(declared.keys()), baseEntries });
   }
-  // Scoped to the sprite component the slot's *sibling* literal addresses on the
-  // one game object that owns this script.
+  // Scoped to the sprite or model component the slot's *sibling* literal
+  // addresses on the one game object that owns this script.
   const component = componentIdOfSameObjectAddress(slot.addressText ?? "");
   if (component === undefined) {
     return [];
   }
-  const index = cache.derived("sprite-animations", () =>
-    buildSpriteAnimationIndex({
+  const index = cache.derived("component-animations", () =>
+    buildComponentAnimationIndex({
       scenes: cache.documents().documents,
       assets: cache.documents(ANIMATION_ASSET_EXTENSIONS).documents,
     }),

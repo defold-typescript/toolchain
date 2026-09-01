@@ -1,3 +1,8 @@
+export type { ComponentAnimationIndex } from "./component-animation-index";
+export {
+  buildComponentAnimationIndex,
+  componentIdOfSameObjectAddress,
+} from "./component-animation-index";
 export { buildConfigKeyIndex } from "./config-key-index";
 export type { GuiFlipbookIndex } from "./gui-flipbook-index";
 export { buildGuiFlipbookIndex } from "./gui-flipbook-index";
@@ -37,11 +42,6 @@ export type { SceneMessage } from "./scene-text-format";
 export { parseSceneTextFormat, SceneTextFormatError } from "./scene-text-format";
 export type { TranspileSession } from "./session";
 export { createTranspileSession } from "./session";
-export type { SpriteAnimationIndex } from "./sprite-animation-index";
-export {
-  buildSpriteAnimationIndex,
-  componentIdOfSameObjectAddress,
-} from "./sprite-animation-index";
 export type {
   TranspileDiagnostic,
   TranspileProjectInput,
