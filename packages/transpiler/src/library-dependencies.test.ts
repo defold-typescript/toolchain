@@ -37,6 +37,10 @@ const LIBRARY_ENTRIES = [
   "lib-1.2.3/druid/druid.collection",
   "lib-1.2.3/druid/nested/deep.go",
   "lib-1.2.3/druid/druid.lua",
+  "lib-1.2.3/druid/window.collectionproxy",
+  "lib-1.2.3/druid/spawner.collectionfactory",
+  "lib-1.2.3/druid/vendor.project",
+  "lib-1.2.3/druid/druid.input_binding",
   "lib-1.2.3/extra/x.gui",
   "lib-1.2.3/example/demo.collection",
 ];
@@ -48,6 +52,8 @@ const UNSAFE_LIBRARY_ENTRIES = [
   "lib-1.2.3/druid/..\\..\\..\\..\\win.collection",
   "lib-1.2.3/druid/./x.collection",
   "lib-1.2.3/druid//y.collection",
+  "lib-1.2.3/druid/../../../../evil.collectionproxy",
+  "lib-1.2.3/druid/../../../../evil.collectionfactory",
 ];
 
 const LIBRARY_ENTRIES_WITH_UNSAFE = [...LIBRARY_ENTRIES, ...UNSAFE_LIBRARY_ENTRIES];
@@ -72,23 +78,30 @@ describe("archiveWrapperOf", () => {
 });
 
 describe("LIBRARY_SCENE_EXTENSIONS", () => {
-  test("carries the scene, gui and animation-asset kinds and no project kind", () => {
+  test("carries the scene, gui, animation-asset and collection-reference kinds and no project kind", () => {
     expect(LIBRARY_SCENE_EXTENSIONS).toContain(".collection");
     expect(LIBRARY_SCENE_EXTENSIONS).toContain(".go");
     expect(LIBRARY_SCENE_EXTENSIONS).toContain(".gui");
     expect(LIBRARY_SCENE_EXTENSIONS).toContain(".atlas");
     expect(LIBRARY_SCENE_EXTENSIONS).toContain(".animationset");
+    expect(LIBRARY_SCENE_EXTENSIONS).toContain(".collectionproxy");
+    expect(LIBRARY_SCENE_EXTENSIONS).toContain(".collectionfactory");
     expect(LIBRARY_SCENE_EXTENSIONS).not.toContain(".project");
     expect(LIBRARY_SCENE_EXTENSIONS).not.toContain(".input_binding");
   });
 });
 
 describe("libraryIncludedEntries", () => {
-  test("shares only the scene-kind files under the dirs its own game.project includes", () => {
+  test("shares every address-universe kind under the dirs its own game.project includes", () => {
     const { shared, reasons } = libraryIncludedEntries(LIBRARY_ENTRIES, LIBRARY_GAME_PROJECT);
     expect(shared).toEqual([
       { entry: "lib-1.2.3/druid/druid.collection", path: "druid/druid.collection" },
       { entry: "lib-1.2.3/druid/nested/deep.go", path: "druid/nested/deep.go" },
+      {
+        entry: "lib-1.2.3/druid/spawner.collectionfactory",
+        path: "druid/spawner.collectionfactory",
+      },
+      { entry: "lib-1.2.3/druid/window.collectionproxy", path: "druid/window.collectionproxy" },
       { entry: "lib-1.2.3/extra/x.gui", path: "extra/x.gui" },
     ]);
     expect(reasons).toEqual([]);
@@ -109,6 +122,11 @@ describe("libraryIncludedEntries", () => {
     expect(shared).toEqual([
       { entry: "lib-1.2.3/druid/druid.collection", path: "druid/druid.collection" },
       { entry: "lib-1.2.3/druid/nested/deep.go", path: "druid/nested/deep.go" },
+      {
+        entry: "lib-1.2.3/druid/spawner.collectionfactory",
+        path: "druid/spawner.collectionfactory",
+      },
+      { entry: "lib-1.2.3/druid/window.collectionproxy", path: "druid/window.collectionproxy" },
       { entry: "lib-1.2.3/extra/x.gui", path: "extra/x.gui" },
     ]);
   });

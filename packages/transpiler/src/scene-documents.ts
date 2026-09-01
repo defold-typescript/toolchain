@@ -37,10 +37,13 @@ export const ANIMATION_ASSET_EXTENSIONS = [
   ".animationset",
 ];
 
-// The file kinds a library shares into the address universe. `.input_binding`
-// and `.project` are deliberately absent: `game.project` names exactly one
-// active binding file, and a vendored `*.project` declares keys this project's
-// readers cannot resolve — the rule `PROJECT_EXTENSIONS` states below.
+// The file kinds a library shares into the address universe: the documents that
+// declare ids, plus the ones that *classify* a collection into the world it is —
+// a library's own `.collectionproxy` is what says its collection is a proxy
+// world rather than reached by nothing. `.input_binding` and `.project` are
+// deliberately absent: `game.project` names exactly one active binding file, and
+// a vendored `*.project` declares keys this project's readers cannot resolve —
+// the rule `PROJECT_EXTENSIONS` states below.
 //
 // It lives here rather than beside its reader for the reason the sets above do,
 // plus one more: `library-dependencies.ts` and this file import each other, and
@@ -50,6 +53,7 @@ export const LIBRARY_SCENE_EXTENSIONS = [
   ...SCENE_EXTENSIONS,
   ...GUI_EXTENSIONS,
   ...ANIMATION_ASSET_EXTENSIONS,
+  ...COLLECTION_REFERENCE_EXTENSIONS,
 ];
 
 // The walk returns every `.project` the project holds, so the lookup is by

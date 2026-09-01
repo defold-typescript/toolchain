@@ -81,11 +81,13 @@ address.
 The universe is your project's own scenes **plus** whatever
 [`resolve`](./resolve.md) last unpacked from your library dependencies. A
 library shares the collections, game objects and gui scenes under the
-`[library] include_dirs` its own `game.project` declares, and Defold merges
-those into your project's namespace — so a collection a library holds at
-`druid/druid.collection` is `/druid/druid.collection` to you, and instancing it
-in one of your own collections contributes its objects' addresses exactly as a
-local collection would.
+`[library] include_dirs` its own `game.project` declares — along with the
+`.collectionproxy` and `.collectionfactory` components that classify them — and
+Defold merges those into your project's namespace, so a collection a library
+holds at `druid/druid.collection` is `/druid/druid.collection` to you, and
+instancing it in one of your own collections contributes its objects' addresses
+exactly as a local collection would. A library collection its own proxy opens is
+addressed under that collection's socket, the same as one of your own.
 
 Two consequences worth knowing:
 
