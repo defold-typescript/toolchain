@@ -23,7 +23,7 @@ function universe(...ids: string[]): SceneComponentIndex {
 
 describe("scanUrlFragmentReachability", () => {
   test("a checked report with findings becomes one warning per finding", () => {
-    const warnings = scanUrlFragmentReachability({
+    const { warnings } = scanUrlFragmentReachability({
       program: programFor("src/main.ts", 'msg.post("#nobody", "hello");\n'),
       index: universe("controller"),
       table: TABLE,
@@ -41,7 +41,7 @@ describe("scanUrlFragmentReachability", () => {
         index: universe("nobody"),
         table: TABLE,
       }),
-    ).toEqual([]);
+    ).toEqual({ warnings: [], entries: [] });
   });
 
   test("one warning per finding, each naming its own file", () => {
@@ -55,7 +55,7 @@ describe("scanUrlFragmentReachability", () => {
       throw new Error("session produced no program");
     }
 
-    const warnings = scanUrlFragmentReachability({ program, index: universe(), table: TABLE });
+    const { warnings } = scanUrlFragmentReachability({ program, index: universe(), table: TABLE });
 
     expect(warnings).toHaveLength(2);
     expect(warnings.find((w) => w.includes("src/a.ts"))).toContain("nobody");
@@ -63,7 +63,7 @@ describe("scanUrlFragmentReachability", () => {
   });
 
   test("a suppressed report becomes one line carrying every reason", () => {
-    const warnings = scanUrlFragmentReachability({
+    const { warnings, entries } = scanUrlFragmentReachability({
       program: programFor("src/main.ts", 'msg.post("#nobody", "hello");\n'),
       index: {
         ids: new Set<string>(),
@@ -72,6 +72,9 @@ describe("scanUrlFragmentReachability", () => {
       table: TABLE,
     });
 
+    // A suppressed check has nothing structured to say; the absent entries must
+    // never read as "no unreachable addresses".
+    expect(entries).toEqual([]);
     expect(warnings).toHaveLength(1);
     const [warning] = warnings;
     expect(warning).toContain("game/a.go: could not be read");
@@ -79,5 +82,23 @@ describe("scanUrlFragmentReachability", () => {
     // A suppressed check must never read as one that found nothing.
     expect(warning).toContain("did not run");
     expect(warning).not.toContain("nobody");
+  });
+
+  test("each finding renders as an entry carrying its file, fragment and message", () => {
+    const { warnings, entries } = scanUrlFragmentReachability({
+      program: programFor("src/main.ts", 'msg.post("#nobody", "hello");\n'),
+      index: universe("controller"),
+      table: TABLE,
+    });
+
+    expect(entries).toEqual([
+      {
+        file: "src/main.ts",
+        fragment: "nobody",
+        message: expect.stringContaining("nobody") as unknown as string,
+      },
+    ]);
+    // The two renderings come from one scan, so they can never disagree.
+    expect(warnings[0]).toContain(entries[0]?.message as string);
   });
 });

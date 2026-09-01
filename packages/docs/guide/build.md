@@ -76,6 +76,15 @@ things bound it:
   as finding nothing. Projects with no scenes at all are silent: there is no
   address universe to check against.
 
+[`watch`](./watch.md) runs the same check on every rebuild, so an address you
+break is reported on the edit that broke it rather than at the next restart. The
+whole project is re-checked each time, not just the file you saved: a fragment
+can go bad because a scene changed, and one that is still broken keeps being
+reported until you fix it or declare the component. Saving a `.go`/`.collection`
+refreshes the address universe the next rebuild checks against. The very first
+build of a watch session is the exception — it runs before the scene walk, so
+the check starts from the first rebuild.
+
 `build` never narrows the API surface — it builds against whatever entrypoint your
 `tsconfig` names, the full `@defold-typescript/types` by default. Opt into
 per-directory narrowing with [`wall`](./wall.md).
@@ -88,7 +97,8 @@ version locked alongside your `@defold-typescript/types`. Reserve `@latest` for
 ## Flags
 
 - `--json` — emit the build result as a single JSON object (including the
-  `warnings` array) for agents and scripts. See
+  `warnings` array and, when the reachability check found any, a structured
+  `unreachableAddresses` array) for agents and scripts. See
   [Agent runbooks](./agent-runbooks.md#machine-readable-output).
 
 ## Headless builds (no editor)

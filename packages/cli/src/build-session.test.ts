@@ -10,6 +10,7 @@ import {
 } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import type { SceneComponentIndex } from "@defold-typescript/transpiler";
 import { runBuild } from "./build";
 import { GENERATED_BANNER } from "./build-output";
 import { createBuildSession } from "./build-session";
@@ -268,5 +269,60 @@ describe("createBuildSession", () => {
     writeIn(cwd, "src/main.ts", `${MAIN_NO_IMPORT}export const extra = 1;\n`);
     const incremental = session.applyEvents(["src/main.ts"], []);
     expect(incremental.warnings).toEqual([]);
+  });
+  const POST_TO = (fragment: string): string =>
+    `import { defineScript } from "@defold-typescript/types";\nexport default defineScript({ init() { msg.post("#${fragment}", "hello"); } });\n`;
+
+  function universe(...ids: string[]): SceneComponentIndex {
+    return { ids: new Set(ids), incomplete: [] };
+  }
+
+  test("applyEvents reports a fragment that a source edit broke", () => {
+    writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
+    writeIn(cwd, "src/main.ts", POST_TO("sprite"));
+
+    const session = createBuildSession({ cwd, sceneIndex: () => universe("sprite") });
+    const first = session.buildAll();
+    expect(first.warnings).toEqual([]);
+    const mainOutput = first.written.find((rel) => rel.includes("main"));
+
+    writeIn(cwd, "src/main.ts", POST_TO("nobody"));
+    const rebuilt = session.applyEvents(["src/main.ts"], []);
+
+    expect(rebuilt.warnings.some((w) => w.includes("nobody"))).toBe(true);
+    expect(rebuilt.warnings.some((w) => w.includes("src/main.ts"))).toBe(true);
+    expect(rebuilt.written).toContain(mainOutput as string);
+  });
+
+  test("applyEvents reports a fragment broken in a file it was not handed", () => {
+    writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
+    writeIn(cwd, "src/a.ts", POST_TO("nobody"));
+    writeIn(cwd, "src/b.ts", "export const b = 1;\n");
+
+    const session = createBuildSession({ cwd, sceneIndex: () => universe("sprite") });
+    expect(session.buildAll().warnings.some((w) => w.includes("src/a.ts"))).toBe(true);
+
+    writeIn(cwd, "src/b.ts", "export const b = 2;\n");
+    const rebuilt = session.applyEvents(["src/b.ts"], []);
+
+    expect(rebuilt.warnings.some((w) => w.includes("src/a.ts") && w.includes("nobody"))).toBe(true);
+  });
+
+  test("applyEvents stops reporting once the scene declares the component", () => {
+    writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
+    writeIn(cwd, "src/main.ts", POST_TO("nobody"));
+
+    let ids = new Set<string>(["sprite"]);
+    const session = createBuildSession({
+      cwd,
+      sceneIndex: () => ({ ids, incomplete: [] }),
+    });
+    expect(session.buildAll().warnings.some((w) => w.includes("nobody"))).toBe(true);
+
+    ids = new Set<string>(["sprite", "nobody"]);
+    writeIn(cwd, "src/main.ts", `${POST_TO("nobody")}export const touched = 1;\n`);
+    const rebuilt = session.applyEvents(["src/main.ts"], []);
+
+    expect(rebuilt.warnings).toEqual([]);
   });
 });
