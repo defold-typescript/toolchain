@@ -497,6 +497,10 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     if (!e.path) return;
     if (toPosix(e.path) === "game.project") {
       resolveBusy = true;
+      // The resolve chains a scene regeneration, so `waitForIdle` has to cover
+      // the pair from the moment the event lands — not from the moment the
+      // second half starts.
+      sceneBusy = true;
       if (resolveScheduled) clearTimeout(resolveScheduled);
       resolveScheduled = setTimeout(runResolveSurface, debounceMs);
       return;
@@ -566,6 +570,22 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
           stderr.write(`${message}\n`);
         }
       }
+    }
+    // `game.project` decides both which collection is the bootstrap world and
+    // which libraries the walk can read, so the declaration is stale until the
+    // resolve it just ran has settled. Chained here rather than debounced
+    // alongside so the regeneration reads the surface the resolve materialized,
+    // and held inside `resolveBusy` so `notifyIdle` cannot fire between the two.
+    if (!stopped) {
+      // A scene save already pending is subsumed by this run; its timer would
+      // otherwise regenerate a second time, and outlive `stop`.
+      if (sceneScheduled) {
+        clearTimeout(sceneScheduled);
+        sceneScheduled = null;
+      }
+      await runSceneTypesSurface(true);
+    } else {
+      sceneBusy = false;
     }
     // Unconditional: the guard suppresses the reporting, never the bookkeeping,
     // so a late settle cannot leave `waitForIdle` parked.
