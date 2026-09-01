@@ -11,11 +11,16 @@ import {
 import * as os from "node:os";
 import * as path from "node:path";
 import { Writable } from "node:stream";
-import { runBuild } from "./build";
+import type { SceneComponentIndex } from "@defold-typescript/transpiler";
+import { type RunBuildResult, runBuild } from "./build";
 import { GENERATED_BANNER } from "./build-output";
 import { dispatch } from "./dispatch";
 import { runInit } from "./init";
-import { runSceneTypes, SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
+import {
+  runSceneTypes,
+  SCENE_ADDRESSES_DECLARATION,
+  sceneIndexForBuild,
+} from "./scene-types-command";
 import type { WatchEditorClient } from "./watch";
 
 function countMatches(haystack: string, needle: RegExp): number {
@@ -823,5 +828,92 @@ describe("build regenerates the scene-address declaration", () => {
 
     expect(code).toBe(0);
     expect(statSync(declarationPath).mtimeMs).toBe(before);
+  });
+});
+
+describe("runBuild reports unreachable component addresses", () => {
+  // A real scene universe on disk: the component id the check proves reachable
+  // comes from `runSceneTypes` reading these files, never from a set the test
+  // hands to production.
+  function scaffoldAddressProject(): void {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("game.project", "[project]\n");
+    writeFile("game/player.go", 'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n');
+  }
+
+  // The same conditional spread the two dispatch build branches use, so the
+  // test drives `runBuild` exactly the way production does.
+  function buildWith(sceneIndex: SceneComponentIndex | undefined): RunBuildResult {
+    return runBuild({ cwd, ...(sceneIndex !== undefined ? { sceneIndex } : {}) });
+  }
+
+  function postTo(address: string): string {
+    return (
+      'import { defineScript } from "@defold-typescript/types";\n' +
+      `export default defineScript({ init() { msg.post("${address}", "hello"); } });\n`
+    );
+  }
+
+  test("an unresolvable fragment becomes a build warning and the build succeeds", () => {
+    scaffoldAddressProject();
+    writeFile("src/main.ts", postTo("#nobody"));
+
+    const result = buildWith(sceneIndexForBuild(runSceneTypes({ cwd })));
+
+    const warning = result.warnings.find((w) => w.includes("nobody"));
+    expect(warning).toBeDefined();
+    expect(warning).toContain("src/main.ts");
+    expect(result.written).toContain("src/main.ts.script");
+
+    // The finding is advisory: the same project addressing a component the
+    // scenes do declare emits exactly the same set.
+    writeFile("src/main.ts", postTo("#sprite"));
+    const reachable = buildWith(sceneIndexForBuild(runSceneTypes({ cwd })));
+
+    expect(reachable.warnings.some((w) => w.includes("nobody"))).toBe(false);
+    expect(result.written).toEqual(reachable.written);
+  });
+
+  test("a hole in the universe suppresses the check instead of reporting the fragment", () => {
+    scaffoldAddressProject();
+    writeFile("src/main.ts", postTo("#nobody"));
+    const { index } = runSceneTypes({ cwd });
+
+    const result = runBuild({
+      cwd,
+      sceneIndex: { ids: index.ids, incomplete: ["game/lib.collection: could not be read"] },
+    });
+
+    const suppressed = result.warnings.find((w) => w.includes("did not run"));
+    expect(suppressed).toBeDefined();
+    expect(suppressed).toContain("game/lib.collection: could not be read");
+    expect(result.warnings.some((w) => w.includes("nobody"))).toBe(false);
+  });
+
+  test("a caller passing no index gets no reachability warning at all", () => {
+    scaffoldAddressProject();
+    writeFile("src/main.ts", postTo("#nobody"));
+
+    const result = runBuild({ cwd });
+
+    expect(result.warnings.some((w) => w.includes("nobody"))).toBe(false);
+    expect(result.warnings.some((w) => w.includes("did not run"))).toBe(false);
+  });
+
+  test("a project with no scenes is not reported as a suppressed check", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("game.project", "[project]\n");
+    writeFile("src/main.ts", postTo("#nobody"));
+    const sceneTypes = runSceneTypes({ cwd });
+
+    // The parse universe on its own does call a scene-less project a hole; the
+    // build's index is what decides there is nothing to report.
+    expect(sceneTypes.index.incomplete.length).toBeGreaterThan(0);
+    expect(sceneIndexForBuild(sceneTypes)).toBeUndefined();
+
+    const result = buildWith(sceneIndexForBuild(sceneTypes));
+
+    expect(result.warnings.some((w) => w.includes("did not run"))).toBe(false);
+    expect(result.warnings.some((w) => w.includes("nobody"))).toBe(false);
   });
 });

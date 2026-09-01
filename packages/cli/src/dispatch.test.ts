@@ -783,6 +783,85 @@ describe("dispatch", () => {
     rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
   });
 
+  // Both build branches hand `runBuild` the *composed* index — the scene
+  // walk's `unreadable` reasons folded into the component index's own
+  // `incomplete` — so a fragment declared only by an unresolved library reports
+  // the check as suppressed rather than reporting the fragment unreachable.
+  function scaffoldReachabilityBuild(pkg?: Record<string, unknown>): void {
+    scaffoldBuildProject(pkg);
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    mkdirSync(path.join(cwd, "game"), { recursive: true });
+    writeFileSync(
+      path.join(cwd, "game", "player.go"),
+      'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n',
+    );
+    writeFileSync(path.join(cwd, "src", "main.ts"), 'msg.post("#nobody", "hello");\n');
+  }
+
+  test("an unreachable fragment reaches stderr from the ordinary build branch", async () => {
+    scaffoldReachabilityBuild();
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd], io, { detectEditorVersion: () => null });
+
+    expect(code).toBe(0);
+    expect(err()).toContain("nobody");
+    expect(err()).toContain("src/main.ts");
+  });
+
+  test("an unreachable fragment reaches stderr from the ref-doc-surface branch", async () => {
+    scaffoldReachabilityBuild({ "defold-typescript": { "defold-target": "1.9.8" } });
+    const resolveOpts = labelRefDocResolveOpts();
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd], io, {
+      resolveOpts,
+      detectEditorVersion: () => null,
+    });
+
+    expect(code).toBe(0);
+    expect(err()).toContain("nobody");
+    expect(err()).toContain("src/main.ts");
+
+    rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
+  });
+
+  test("a declared-but-unresolved dependency suppresses the check on the ordinary branch", async () => {
+    scaffoldReachabilityBuild();
+    scaffoldUnresolvedDependency(cwd);
+    writeFileSync(path.join(cwd, "src", "main.ts"), 'msg.post("#nobody", "hello");\n');
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd], io, { detectEditorVersion: () => null });
+
+    expect(code).toBe(0);
+    expect(err()).toContain("did not run");
+    expect(err()).not.toContain("nobody");
+  });
+
+  test("a declared-but-unresolved dependency suppresses the check on the ref-doc branch", async () => {
+    scaffoldReachabilityBuild({ "defold-typescript": { "defold-target": "1.9.8" } });
+    scaffoldUnresolvedDependency(cwd);
+    writeFileSync(path.join(cwd, "src", "main.ts"), 'msg.post("#nobody", "hello");\n');
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      `${JSON.stringify({ "defold-typescript": { "defold-target": "1.9.8" } }, null, 2)}\n`,
+    );
+    const resolveOpts = labelRefDocResolveOpts();
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd], io, {
+      resolveOpts,
+      detectEditorVersion: () => null,
+    });
+
+    expect(code).toBe(0);
+    expect(err()).toContain("did not run");
+    expect(err()).not.toContain("nobody");
+
+    rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
+  });
+
   test("build --defold-target overrides the pin", async () => {
     scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.9.8" } });
     const { io, out } = captureStreams();
