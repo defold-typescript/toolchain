@@ -13,11 +13,16 @@ import { parseSceneTextFormat, type SceneMessage, SceneTextFormatError } from ".
 // means the component resolved and declares no animation.
 export interface ComponentAnimationIndex {
   readonly byScriptResource: ReadonlyMap<string, ReadonlyMap<string, ReadonlySet<string>>>;
-  // The display path of the document each keyed component's ids were read from
-  // — an atlas or tile source for a sprite, an animation set for a model —
-  // under the same two keys. Present for exactly the components
-  // `byScriptResource` keys, so the two can never disagree about a resource.
-  readonly sourceByScriptResource: ReadonlyMap<string, ReadonlyMap<string, string>>;
+  // The display path of the document declaring each animation id — an atlas or
+  // tile source for a sprite, and for a model the animation set that *lists the
+  // entry* producing the id rather than the root the `.model` points at — under
+  // the same two keys plus the id itself. Its per-component key set is exactly
+  // that component's id set in `byScriptResource`, so the two can never
+  // disagree about which ids a component declares.
+  readonly sourceByScriptResource: ReadonlyMap<
+    string,
+    ReadonlyMap<string, ReadonlyMap<string, string>>
+  >;
   readonly unresolved: readonly string[];
 }
 
@@ -111,7 +116,8 @@ function readAssets(assets: ReadonlyMap<string, string>, unresolved: string[]): 
   };
 }
 
-// The ids one animation set contributes, or `undefined` when the chain itself
+// The ids one animation set contributes, each mapped to the display path of the
+// set that lists the entry producing it, or `undefined` when the chain itself
 // could not be read. An entry in an unsupported format is refused on its own
 // and the rest of the set still stands, because that entry is a build error the
 // author sees; a missing document or a cycle breaks the chain instead, and a
@@ -120,51 +126,58 @@ function readAssets(assets: ReadonlyMap<string, string>, unresolved: string[]): 
 function resolveAnimationSet(input: {
   path: string;
   prefix: string;
-  visited: Set<string>;
+  stack: Set<string>;
   assets: AssetIndex;
   unresolved: string[];
-}): Set<string> | undefined {
-  const { path, prefix, visited, assets, unresolved } = input;
+}): Map<string, string> | undefined {
+  const { path, prefix, stack, assets, unresolved } = input;
   const entries = assets.entriesByAnimationSet.get(path);
   if (entries === undefined) return undefined;
 
-  visited.add(path);
-  const ids = new Set<string>();
-  for (const entry of entries) {
-    const key = resourceKey(entry);
-    if (MESH_SUFFIXES.some((suffix) => key.endsWith(suffix))) {
-      ids.add(prefix + basename(key));
-      continue;
+  // Branch-local, not global: a set reached from two different entries is
+  // reached twice legitimately, and only a set re-entered while still being
+  // read is a cycle.
+  stack.add(path);
+  try {
+    const ids = new Map<string, string>();
+    for (const entry of entries) {
+      const key = resourceKey(entry);
+      if (MESH_SUFFIXES.some((suffix) => key.endsWith(suffix))) {
+        ids.set(prefix + basename(key), path);
+        continue;
+      }
+      if (!key.endsWith(ANIMATION_SET_SUFFIX)) {
+        unresolved.push(
+          `${path}: the entry ${entry} is not a .gltf, .glb or .animationset, so it declares no animation id`,
+        );
+        continue;
+      }
+      if (!assets.entriesByAnimationSet.has(key)) {
+        unresolved.push(
+          `${path}: the entry ${entry} is not among the project's animation set documents`,
+        );
+        return undefined;
+      }
+      if (stack.has(key)) {
+        unresolved.push(
+          `${path}: the entry ${entry} re-enters an animation set already being read, so the chain is cyclic`,
+        );
+        return undefined;
+      }
+      const nested = resolveAnimationSet({
+        path: key,
+        prefix: `${prefix + basename(key)}/`,
+        stack,
+        assets,
+        unresolved,
+      });
+      if (nested === undefined) return undefined;
+      for (const [id, declaring] of nested) if (!ids.has(id)) ids.set(id, declaring);
     }
-    if (!key.endsWith(ANIMATION_SET_SUFFIX)) {
-      unresolved.push(
-        `${path}: the entry ${entry} is not a .gltf, .glb or .animationset, so it declares no animation id`,
-      );
-      continue;
-    }
-    if (!assets.entriesByAnimationSet.has(key)) {
-      unresolved.push(
-        `${path}: the entry ${entry} is not among the project's animation set documents`,
-      );
-      return undefined;
-    }
-    if (visited.has(key)) {
-      unresolved.push(
-        `${path}: the entry ${entry} re-enters an animation set already being read, so the chain is cyclic`,
-      );
-      return undefined;
-    }
-    const nested = resolveAnimationSet({
-      path: key,
-      prefix: `${prefix + basename(key)}/`,
-      visited,
-      assets,
-      unresolved,
-    });
-    if (nested === undefined) return undefined;
-    for (const id of nested) ids.add(id);
+    return ids;
+  } finally {
+    stack.delete(path);
   }
-  return ids;
 }
 
 // The animation-declaring components of one game object, as
@@ -270,7 +283,10 @@ export function buildComponentAnimationIndex(input: {
   const unresolved: string[] = [];
   const assets = readAssets(input.assets, unresolved);
   const byScriptResource = new Map<string, ReadonlyMap<string, ReadonlySet<string>>>();
-  const sourceByScriptResource = new Map<string, ReadonlyMap<string, string>>();
+  const sourceByScriptResource = new Map<
+    string,
+    ReadonlyMap<string, ReadonlyMap<string, string>>
+  >();
   const claimedBy = new Map<string, string>();
 
   // A `.go` document is a game object at its root; a `.collection` carries one
@@ -304,10 +320,10 @@ export function buildComponentAnimationIndex(input: {
     id: string,
     source: AnimationSource,
     displayPath: string,
-  ): Set<string> | undefined {
+  ): Map<string, string> | undefined {
     if (source.kind === "sprite") {
       const declared = assets.animationsByTileSet.get(source.path);
-      if (declared !== undefined) return declared;
+      if (declared !== undefined) return new Map([...declared].map((name) => [name, source.path]));
       unresolved.push(
         `${displayPath}: the sprite component "${id}" names the tile source /${source.path}, which is not among the project's asset documents`,
       );
@@ -316,7 +332,7 @@ export function buildComponentAnimationIndex(input: {
     const resolved = resolveAnimationSet({
       path: source.path,
       prefix: "",
-      visited: new Set(),
+      stack: new Set(),
       assets,
       unresolved,
     });
@@ -335,12 +351,12 @@ export function buildComponentAnimationIndex(input: {
 
     const sources = componentAnimationSources(object, displayPath, assets, unresolved);
     const animations = new Map<string, ReadonlySet<string>>();
-    const declaringSources = new Map<string, string>();
+    const declaringSources = new Map<string, ReadonlyMap<string, string>>();
     for (const [id, source] of sources) {
-      const ids = idsOf(id, source, displayPath);
-      if (ids === undefined) continue;
-      animations.set(id, ids);
-      declaringSources.set(id, source.path);
+      const resolved = idsOf(id, source, displayPath);
+      if (resolved === undefined) continue;
+      animations.set(id, new Set(resolved.keys()));
+      declaringSources.set(id, resolved);
     }
 
     for (const key of scripts) {

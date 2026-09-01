@@ -180,7 +180,9 @@ const MODEL_ANIMATION_DOCUMENTS: Record<string, string> = {
   "models/hero.model": 'mesh: "/meshes/hero.gltf"\nanimations: "/anims/hero.animationset"\n',
   "anims/hero.animationset":
     'animations {\n  animation: "/anims/idle.gltf"\n}\n' +
-    'animations {\n  animation: "/anims/run.glb"\n}\n',
+    'animations {\n  animation: "/anims/run.glb"\n}\n' +
+    'animations {\n  animation: "/anims/combat.animationset"\n}\n',
+  "anims/combat.animationset": 'animations {\n  animation: "/anims/slash.gltf"\n}\n',
   "assets/hero.sprite": 'tile_set: "/assets/hero.atlas"\n',
   "assets/hero.atlas": 'animations {\n  id: "walk"\n}\n',
 };
@@ -446,9 +448,23 @@ describe("resolveEntryProvenance", () => {
     expect(
       resolveEntryProvenance({ slot, position, cache, fileName: "main.ts", entryName: "run" }),
     ).toEqual(["anims/hero.animationset"]);
+    // Listed by the nested set, so the root set the `.model` points at is the
+    // wrong answer even though the chain starts there.
+    expect(
+      resolveEntryProvenance({
+        slot,
+        position,
+        cache,
+        fileName: "main.ts",
+        entryName: "combat/slash",
+      }),
+    ).toEqual(["anims/combat.animationset"]);
     // Declared by the sibling sprite's atlas, and by no set this model names.
     expect(
       resolveEntryProvenance({ slot, position, cache, fileName: "main.ts", entryName: "walk" }),
+    ).toEqual([]);
+    expect(
+      resolveEntryProvenance({ slot, position, cache, fileName: "main.ts", entryName: "nowhere" }),
     ).toEqual([]);
   });
 
