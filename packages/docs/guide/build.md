@@ -58,6 +58,24 @@ but Bob's headless build accepts it and the game object fails at runtime. The
 warning names the scene file and the offending path; wrap the mesh in a `.model`
 (with a `materials` block) and point the component at the `.model`.
 
+A full build also checks every address literal your code posts to — `msg.post`,
+`go.get`, `go.animate` and every other slot the toolchain classifies as an
+address — against the component ids your scenes declare, and warns when the
+`#fragment` names a component no `.go` or `.collection` in the project has. Three
+things bound it:
+
+- It reports only the `#fragment`, never the path before it. A path is
+  undecidable: `factory.create` can invent a game object at any path at runtime,
+  but it can never invent a component.
+- It never rejects a build or changes the exit code. Like the other two scans it
+  warns and moves on.
+- It reports itself as *suppressed* whenever the component-id universe has a
+  hole — an unparseable scene, or a dependency `game.project` declares that
+  [`resolve`](./resolve.md) has not materialized — naming the reasons. A
+  suppressed check found nothing because it did not run, which is not the same
+  as finding nothing. Projects with no scenes at all are silent: there is no
+  address universe to check against.
+
 `build` never narrows the API surface — it builds against whatever entrypoint your
 `tsconfig` names, the full `@defold-typescript/types` by default. Opt into
 per-directory narrowing with [`wall`](./wall.md).

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
-import { transpileProject } from "@defold-typescript/transpiler";
+import { createTranspileSession, type SceneComponentIndex } from "@defold-typescript/transpiler";
 import {
   collectFailures,
   computeOutputRel,
@@ -17,6 +17,8 @@ import {
 import { scanOrphanOutputs } from "./orphan-scan";
 import { scanFilesSync } from "./scan";
 import { scanSceneResourceRefs } from "./scene-resource-scan";
+import { loadUrlParameterTable } from "./url-parameter-table";
+import { scanUrlFragmentReachability } from "./url-reachability-scan";
 import { findWallImportViolations } from "./wall-import-guardrail";
 
 function throwOnWallImportViolations(cwd: string, files: Record<string, string>): void {
@@ -37,6 +39,13 @@ function throwOnWallImportViolations(cwd: string, files: Record<string, string>)
 
 export interface RunBuildOptions {
   readonly cwd: string;
+  /**
+   * The component-id universe the build checks `#fragment` addresses against,
+   * with every hole the caller knows about folded into its `incomplete`.
+   * Optional: a caller that has not read the project's scenes gets the build it
+   * always got, with no reachability warnings either way.
+   */
+  readonly sceneIndex?: SceneComponentIndex;
 }
 
 export interface RunBuildResult {
@@ -45,7 +54,7 @@ export interface RunBuildResult {
 }
 
 export function runBuild(opts: RunBuildOptions): RunBuildResult {
-  const { cwd } = opts;
+  const { cwd, sceneIndex } = opts;
   const config = readBuildConfig(cwd);
 
   const seen = new Set<string>();
@@ -67,7 +76,12 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
 
   throwOnWallImportViolations(cwd, files);
 
-  const result = transpileProject({ files });
+  // A session rather than `transpileProject`: the one-shot entry never surfaces
+  // a `ts.Program`, and the reachability check needs one. Its compiler options
+  // are kept in lockstep with `transpileProject`'s, which
+  // `session.test.ts`'s output-equivalence cases are what hold.
+  const session = createTranspileSession();
+  const result = session.update(files);
   const failures = collectFailures(result.diagnostics);
 
   const written: string[] = [];
@@ -103,6 +117,13 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
   }
 
   throwIfFailures(failures);
-  const warnings = [...scanOrphanOutputs(cwd, sources, config), ...scanSceneResourceRefs(cwd)];
+  const program = session.getProgram();
+  const warnings = [
+    ...scanOrphanOutputs(cwd, sources, config),
+    ...scanSceneResourceRefs(cwd),
+    ...(sceneIndex && program
+      ? scanUrlFragmentReachability({ program, index: sceneIndex, table: loadUrlParameterTable() })
+      : []),
+  ];
   return { written: written.sort(), warnings };
 }
