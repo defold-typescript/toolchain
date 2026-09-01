@@ -3191,6 +3191,32 @@ materialized, so a collision cannot inject the wrong types. A declared library
 whose vendored `.d.ts` is missing from the shipped corpus is likewise warned and
 skipped rather than failing the run.
 
+#### Dependency scene sources
+
+A Defold library also shares **scenes** — the `.collection`, `.go`, `.gui` and
+animation-asset files under the directories its own `game.project` lists in
+`[library] include_dirs`. Those files declare real addresses your code can post
+to, so `resolve` unpacks each dependency's shared set into
+
+```
+.defold-types/dependencies/<archive key>/<the path Defold addresses it by>
+```
+
+alongside a `dependencies.json` naming each key's URL. A library's
+`druid/druid.gui` therefore lands at its merged resource path, `druid/druid.gui`,
+exactly as a depending project addresses it.
+
+`resolve` does the unpacking (rather than the editor plugin reading archives
+itself) because opening a zip needs a subprocess, which cannot run inside the
+editor's synchronous TypeScript server. `/.defold-types` is listed in the
+scaffolded `.defignore`, so bob never sees these copies and cannot double-load a
+library scene.
+
+The surface reconciles like every other: removing a dependency deletes its
+directory, and removing the last one deletes `dependencies/` entirely. A
+dependency that shares nothing — no `game.project` in the archive, or one with no
+`[library] include_dirs` — is named on `stderr` and never fails the run.
+
 #### Keeping types in sync with `watch`
 
 > [!TIP] A running [`watch`](./watch.md) re-resolves on every `game.project`
@@ -3206,7 +3232,7 @@ skipped rather than failing the run.
 - `--json` — emit one machine-readable object per run. See
   [Agent runbooks](./agent-runbooks.md#machine-readable-output) for the shape
   (`materializedSurface`; per extension `namespaces`, `provenance`,
-  `resolvedVersion`, `pinnedVersion`, `pinStatus`; and a `libraries` array with
+  `resolvedVersion`, `pinnedVersion`, `pinStatus`, `sceneSources`; and a `libraries` array with
   each match's `source`, `modules`, `provenance`, and `verified`).
 
 #### Pinning extension versions
@@ -3661,9 +3687,10 @@ stderr.
 [`resolve --json`](./resolve.md) reports `materializedSurface` (the written
 directory, or `null` when nothing was materialized) and, per extension, the `url`,
 generated `namespaces`, `scriptApiCount`, `provenance` (`cache` or `download`),
-whether it was `assetOnly`, the `resolvedVersion` (sha256 digest of the resolved
-archive bytes), — when the project pins that url — the `pinnedVersion`, and the
-`pinStatus` (`unpinned` / `match` / `drift`). A separate `libraries` array reports
+whether it was `assetOnly`, `sceneSources` (how many [shared scene
+files](./resolve.md#dependency-scene-sources) it unpacked), the `resolvedVersion`
+(sha256 digest of the resolved archive bytes), — when the project pins that url —
+the `pinnedVersion`, and the `pinStatus` (`unpinned` / `match` / `drift`). A separate `libraries` array reports
 each asset-only dependency that matched a [vendored
 library](./resolve.md#vendored-library-types) — its `url`, `source` (the vendored
 source identity), materialized `modules`, `provenance` (`vendored`), and `verified`.
@@ -3683,6 +3710,7 @@ downloaded archive did not confirm; it is reported but never materialized:
       "scriptApiCount": 1,
       "provenance": "download",
       "assetOnly": false,
+      "sceneSources": 0,
       "resolvedVersion": "sha256:ab12…",
       "pinnedVersion": "sha256:ab12…",
       "pinStatus": "match"
@@ -4116,6 +4144,7 @@ and `package.json` to exactly the declared set.
       "namespaces": ["<namespace>"],
       "scriptApiCount": 1,
       "assetOnly": false,
+      "sceneSources": 0,
       "resolvedVersion": "<version>",
       "pinStatus": "<unpinned | match | drift>"
     }
@@ -4133,8 +4162,9 @@ On failure:
 `materializedSurface` is the regenerated surface directory
 (`.defold-types/extensions`), and `extensions` records where each dependency
 came from (`provenance`), how many `.script_api` files it contributed
-(`scriptApiCount`; an `assetOnly` dependency contributes no types), and its pin
-state (`resolvedVersion`/`pinStatus`). The `written` array is always empty for
+(`scriptApiCount`; an `assetOnly` dependency contributes no types), how many
+scene sources it shared (`sceneSources`), and its pin state
+(`resolvedVersion`/`pinStatus`). The `written` array is always empty for
 `resolve`. If `ok` is `false`, surface `error`; the existing surface is left
 untouched.
 

@@ -31,6 +31,8 @@ function bundle(declarations: EmittedExtension[]): ExtensionDeclarations {
     resolvedVersion: "sha256:stub",
     declarations,
     luaModules: [],
+    sceneSources: [],
+    sceneReasons: [],
   };
 }
 

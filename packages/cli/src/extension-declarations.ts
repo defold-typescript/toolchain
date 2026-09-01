@@ -7,9 +7,11 @@
 // an empty `declarations` list and are reported, not failed. Writing into
 // `.defold-types/` and the CLI `resolve` verb stay later slices.
 
+import { archiveWrapperOf, libraryIncludedEntries } from "@defold-typescript/transpiler";
 import {
   defaultReadZip,
   type ExtensionArchiveProvenance,
+  type ExtensionZip,
   type ResolveExtensionArchiveOptions,
   resolveExtensions,
 } from "./extension-archive";
@@ -26,23 +28,54 @@ export interface ExtensionDeclarations {
   // leading GitHub archive-wrapper dir stripped). Downstream library matching
   // verifies a repo-name match against these before emitting.
   readonly luaModules: string[];
+  // The scene sources the archive's own `game.project` shares, at the resource
+  // path a depending project addresses them by. Filled on both arms: a
+  // collection-only library takes the asset-only one.
+  readonly sceneSources: { path: string; text: string }[];
+  // Why an archive shares nothing, when it shares nothing. A silent empty result
+  // is exactly the hole this surface exists to close.
+  readonly sceneReasons: string[];
+}
+
+// The archive's own `game.project`, read through the wrapper strip so a library
+// packed under `<repo>-<ref>/` is found the same way a bare one is.
+function archiveGameProject(zip: ExtensionZip): string | undefined {
+  const entries = zip.entries();
+  const wrapper = archiveWrapperOf(entries);
+  for (const entry of entries) {
+    const path = wrapper === undefined ? entry : entry.slice(wrapper.length + 1);
+    if (path === "game.project") {
+      return zip.read(entry);
+    }
+  }
+  return undefined;
+}
+
+function archiveSceneSources(zip: ExtensionZip): {
+  sceneSources: { path: string; text: string }[];
+  sceneReasons: string[];
+} {
+  const { shared, reasons } = libraryIncludedEntries(zip.entries(), archiveGameProject(zip));
+  return {
+    sceneSources: shared.map(({ entry, path }) => ({ path, text: zip.read(entry) })),
+    sceneReasons: reasons,
+  };
 }
 
 // Turn the archive's `.lua` entry paths into dotted require paths: strip the
 // leading archive-wrapper dir (GitHub packs everything under `<repo>-<ref>/`)
-// and the `.lua` suffix, then join with dots. Sorted and de-duplicated.
+// and the `.lua` suffix, then join with dots. Sorted and de-duplicated. The
+// strip is `archiveWrapperOf`, shared with the library scene-source reader so
+// the two halves of one archive cannot disagree about where its root is.
 function archiveLuaModules(entries: readonly string[]): string[] {
+  const wrapper = archiveWrapperOf(entries);
   const modules = new Set<string>();
   for (const entry of entries) {
     if (!/\.lua$/i.test(entry)) {
       continue;
     }
-    const segments = entry.split("/");
-    const withoutWrapper = segments.length > 1 ? segments.slice(1) : segments;
-    const dotted = withoutWrapper
-      .join("/")
-      .replace(/\.lua$/i, "")
-      .replace(/\//g, ".");
+    const withoutWrapper = wrapper === undefined ? entry : entry.slice(wrapper.length + 1);
+    const dotted = withoutWrapper.replace(/\.lua$/i, "").replace(/\//g, ".");
     if (dotted.length > 0) {
       modules.add(dotted);
     }
@@ -61,6 +94,7 @@ export async function resolveExtensionDeclarations(
   for (const archive of resolved) {
     const zip = await open(archive.archivePath);
     const luaModules = archiveLuaModules(zip.entries());
+    const { sceneSources, sceneReasons } = archiveSceneSources(zip);
     if (archive.assetOnly) {
       bundles.push({
         url: archive.url,
@@ -69,6 +103,8 @@ export async function resolveExtensionDeclarations(
         resolvedVersion: archive.resolvedVersion,
         declarations: [],
         luaModules,
+        sceneSources,
+        sceneReasons,
       });
       continue;
     }
@@ -83,6 +119,8 @@ export async function resolveExtensionDeclarations(
       resolvedVersion: archive.resolvedVersion,
       declarations,
       luaModules,
+      sceneSources,
+      sceneReasons,
     });
   }
   return bundles;

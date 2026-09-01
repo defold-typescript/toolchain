@@ -98,6 +98,7 @@ describe("runResolve", () => {
         provenance: "download",
         namespaces: ["alpha"],
         scriptApiCount: 1,
+        sceneSources: 0,
         assetOnly: false,
         resolvedVersion: expect.stringMatching(/^sha256:[0-9a-f]{64}$/) as unknown as string,
         pinStatus: "unpinned",
@@ -129,6 +130,7 @@ describe("runResolve", () => {
         provenance: "download",
         namespaces: [],
         scriptApiCount: 0,
+        sceneSources: 0,
         assetOnly: true,
         resolvedVersion: expect.stringMatching(/^sha256:[0-9a-f]{64}$/) as unknown as string,
         pinStatus: "unpinned",
@@ -957,5 +959,114 @@ describe("runResolve a multi-module same-repo LuaLS library", () => {
       compilerOptions: { types: string[] };
     };
     expect(tsconfig.compilerOptions.types).toContain(LIBRARIES_DIR);
+  });
+});
+
+describe("runResolve dependency scene sources", () => {
+  const DRUID_GAME_PROJECT = `[project]\ntitle = Druid\n\n[library]\ninclude_dirs = druid\n`;
+  const DRUID_COLLECTION = 'name: "druid"\n';
+
+  function druidArchive(url: string): Record<string, FakeArchive> {
+    return {
+      [extensionArchiveKey(url)]: {
+        entries: [
+          "druid-1.2.3/game.project",
+          "druid-1.2.3/druid/druid.collection",
+          "druid-1.2.3/druid/druid.lua",
+          "druid-1.2.3/example/demo.collection",
+        ],
+        contents: {
+          "druid-1.2.3/game.project": DRUID_GAME_PROJECT,
+          "druid-1.2.3/druid/druid.collection": DRUID_COLLECTION,
+        },
+      },
+    };
+  }
+
+  test("each dependency's shared scenes land under its archive key at the merged path", async () => {
+    const cwd = tmp();
+    const url = "https://github.com/Insality/druid/archive/1.2.3.zip";
+    writeProject(cwd, `[project]\ntitle = Test\ndependencies#0 = ${url}\n`);
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(druidArchive(url)),
+      libraryRegistry: [],
+      libraryGeneratedDir: null,
+    });
+
+    expect(result.ok).toBe(true);
+    const key = extensionArchiveKey(url);
+    const root = join(cwd, ".defold-types", "dependencies");
+    expect(readFileSync(join(root, key, "druid", "druid.collection"), "utf8")).toBe(
+      DRUID_COLLECTION,
+    );
+    expect(existsSync(join(root, key, "example", "demo.collection"))).toBe(false);
+    expect(existsSync(join(root, key, "druid", "druid.lua"))).toBe(false);
+    expect(JSON.parse(readFileSync(join(root, "dependencies.json"), "utf8"))).toEqual({
+      dependencies: [{ key, url }],
+    });
+    expect(result.extensions[0]?.sceneSources).toBe(1);
+  });
+
+  test("removing every dependency removes the materialized dependency surface", async () => {
+    const cwd = tmp();
+    const url = "https://github.com/Insality/druid/archive/1.2.3.zip";
+    writeProject(cwd, `[project]\ntitle = Test\ndependencies#0 = ${url}\n`);
+    await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(druidArchive(url)),
+      libraryRegistry: [],
+      libraryGeneratedDir: null,
+    });
+    expect(existsSync(join(cwd, ".defold-types", "dependencies"))).toBe(true);
+
+    writeProject(cwd, `[project]\ntitle = Test\n`);
+    const result = await runResolve({ cwd, cacheDir: tmp(), download: someBytes });
+
+    expect(result.ok).toBe(true);
+    expect(existsSync(join(cwd, ".defold-types", "dependencies"))).toBe(false);
+  });
+
+  test("a dependency that shares no scene source is warned about, not failed", async () => {
+    const cwd = tmp();
+    const url = "https://example.com/asset-only.zip";
+    writeProject(cwd, `[project]\ntitle = Test\ndependencies#0 = ${url}\n`);
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(url)]: {
+        entries: ["asset-1.0/sprite.png", "asset-1.0/sound.ogg"],
+        contents: {},
+      },
+    };
+
+    const warnings: string[] = [];
+    const originalWarn = console.warn;
+    console.warn = (...args: unknown[]) => {
+      warnings.push(args.map(String).join(" "));
+    };
+    let result: Awaited<ReturnType<typeof runResolve>>;
+    try {
+      result = await runResolve({
+        cwd,
+        cacheDir: tmp(),
+        download: someBytes,
+        readZip: makeReadZip(byKey),
+        libraryRegistry: [],
+        libraryGeneratedDir: null,
+      });
+    } finally {
+      console.warn = originalWarn;
+    }
+
+    expect(result.ok).toBe(true);
+    expect(result.extensions[0]?.assetOnly).toBe(true);
+    expect(result.extensions[0]?.sceneSources).toBe(0);
+    expect(existsSync(join(cwd, ".defold-types", "dependencies"))).toBe(false);
+    expect(warnings.join("\n")).toContain(url);
+    expect(warnings.join("\n")).toContain("game.project");
   });
 });
