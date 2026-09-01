@@ -19,7 +19,7 @@ import {
   PROJECT_EXTENSIONS,
 } from "@defold-typescript/transpiler";
 import { readBuildConfigFromHost } from "./build-config";
-import type { SceneIndexCache } from "./scene-index-cache";
+import { type SceneIndexCache, sceneCollectionRolesOf } from "./scene-index-cache";
 
 // Keys of their own under the same cache the completion indexes use, so a
 // provenance map is thrown away with every index it was derived beside — and
@@ -125,7 +125,9 @@ function nodeProvenance(cache: SceneIndexCache, fileName: string): Provenance {
 function pathProvenance(cache: SceneIndexCache): Provenance {
   return cache.derived(
     PATH_PROVENANCE,
-    () => buildSceneObjectPathIndex(cache.documents().documents).declaredIn,
+    () =>
+      buildSceneObjectPathIndex(cache.documents().documents, sceneCollectionRolesOf(cache))
+        .declaredIn,
   );
 }
 

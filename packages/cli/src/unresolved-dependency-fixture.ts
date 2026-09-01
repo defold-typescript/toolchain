@@ -21,7 +21,7 @@ export function scaffoldUnresolvedDependencyManifest(cwd: string): void {
   write(
     cwd,
     "game.project",
-    `[project]\ntitle = demo\ndependencies#0 = ${UNRESOLVED_DEPENDENCY_URL}\n`,
+    `[bootstrap]\nmain_collection = /game/game.collectionc\n\n[project]\ntitle = demo\ndependencies#0 = ${UNRESOLVED_DEPENDENCY_URL}\n`,
   );
 }
 

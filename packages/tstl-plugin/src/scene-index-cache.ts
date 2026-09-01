@@ -1,10 +1,15 @@
 import {
+  buildSceneCollectionRoles,
+  COLLECTION_REFERENCE_EXTENSIONS,
   displayPathOf,
+  GAME_PROJECT_DOCUMENT,
   isExcludedProjectPath,
   LIBRARY_DEPENDENCY_ROOT,
   listProjectResourcePaths,
+  PROJECT_EXTENSIONS,
   readSceneDocuments,
   SCENE_EXTENSIONS,
+  type SceneCollectionRoles,
   type SceneReadHost,
 } from "@defold-typescript/transpiler";
 import type * as ts from "typescript";
@@ -179,4 +184,20 @@ export function createSceneIndexCache(host: SceneWatchHost, projectRoot: string)
       derivedCache.clear();
     },
   };
+}
+
+// The world each collection is, read through the cache so the completion path
+// and the provenance path share one classification — and so the walk over the
+// proxy/factory documents and `game.project` is invalidated by the same
+// watchers the scene walk is. Both call sites go through here rather than
+// building roles of their own, which is what would let one of them drift back
+// to offering every collection's paths bare.
+export function sceneCollectionRolesOf(cache: SceneIndexCache): SceneCollectionRoles {
+  return cache.derived("collection-roles", () =>
+    buildSceneCollectionRoles({
+      documents: cache.documents().documents,
+      references: cache.documents(COLLECTION_REFERENCE_EXTENSIONS).documents,
+      gameProject: cache.documents(PROJECT_EXTENSIONS).documents.get(GAME_PROJECT_DOCUMENT),
+    }),
+  );
 }

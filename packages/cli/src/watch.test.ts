@@ -2706,7 +2706,10 @@ describe("runWatch scene-address regeneration", () => {
   const PLAYER_AND_ENEMY = `${PLAYER_ONLY}instances {\n  id: "enemy"\n  prototype: "/game/enemy.go"\n}\n`;
 
   function writeScenes(collection: string): void {
-    writeProjectFile("game.project", "[project]\n");
+    writeProjectFile(
+      "game.project",
+      "[bootstrap]\nmain_collection = /game/player.collectionc\n\n[project]\n",
+    );
     writeProjectFile("game/player.collection", collection);
     writeProjectFile(
       "game/player.go",

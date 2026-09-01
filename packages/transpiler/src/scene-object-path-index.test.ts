@@ -1,117 +1,286 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { buildSceneCollectionRoles } from "./scene-collection-roles";
 import { buildSceneObjectPathIndex } from "./scene-object-path-index";
 
 const EXAMPLES_DIR = join(import.meta.dir, "../../../docs/examples");
+
+function committedText(project: string, ...segments: string[]): string {
+  return readFileSync(join(EXAMPLES_DIR, project, segments.join("/")), "utf8");
+}
 
 // Keyed by the path *inside* the example project, because that is what a
 // `collection:` resource resolves to — an index keyed relative to the examples
 // directory would never join one collection to another.
 function committed(project: string, ...segments: string[]): [string, string] {
   const rel = segments.join("/");
-  return [rel, readFileSync(join(EXAMPLES_DIR, project, rel), "utf8")];
+  return [rel, committedText(project, rel)];
 }
 
-function pathsOf(documents: Iterable<readonly [string, string]>): string[] {
-  const index = buildSceneObjectPathIndex(new Map(documents));
-  expect(index.incomplete).toEqual([]);
+interface Universe {
+  documents: Iterable<readonly [string, string]>;
+  // The `[bootstrap] main_collection` value, or absent for a project whose
+  // `game.project` the walk could not read.
+  bootstrap?: string;
+  references?: Record<string, string>;
+  gameProject?: string;
+}
+
+function indexOver(universe: Universe) {
+  const documents = new Map(universe.documents);
+  const gameProject =
+    universe.gameProject ??
+    (universe.bootstrap === undefined
+      ? undefined
+      : `[bootstrap]\nmain_collection = ${universe.bootstrap}\n`);
+  const roles = buildSceneCollectionRoles({
+    documents,
+    references: new Map(Object.entries(universe.references ?? {})),
+    gameProject,
+  });
+  return { index: buildSceneObjectPathIndex(documents, roles), roles };
+}
+
+// The index found no hole of its own: what the *roles* could not settle is
+// asserted where it is produced, and is carried through here rather than
+// re-stated.
+function pathsOf(universe: Universe): string[] {
+  const { index, roles } = indexOver(universe);
+  expect(index.incomplete).toEqual([...roles.incomplete]);
   return [...index.paths].sort();
 }
 
-function declaredInOf(
-  documents: Iterable<readonly [string, string]>,
-): Record<string, readonly string[]> {
-  const index = buildSceneObjectPathIndex(new Map(documents));
-  expect(index.incomplete).toEqual([]);
+function declaredInOf(universe: Universe): Record<string, readonly string[]> {
+  const { index, roles } = indexOver(universe);
+  expect(index.incomplete).toEqual([...roles.incomplete]);
   return Object.fromEntries([...index.declaredIn].sort(([a], [b]) => a.localeCompare(b)));
+}
+
+// A `.go` opening a proxy on the collection it names, in the embedded form.
+function proxyObject(collection: string): string {
+  return (
+    'embedded_components {\n  id: "loader"\n  type: "collectionproxy"\n' +
+    `  data: "collection: \\"${collection}\\"\\n"\n}\n`
+  );
+}
+
+function factoryObject(collection: string): string {
+  return (
+    'embedded_components {\n  id: "spawner"\n  type: "collectionfactory"\n' +
+    `  data: "prototype: \\"${collection}\\"\\n"\n}\n`
+  );
 }
 
 describe("buildSceneObjectPathIndex", () => {
   test("an instance and an embedded instance are each one leaf segment", () => {
     expect(
-      pathsOf([
-        [
-          "main.collection",
-          'instances {\n  id: "hero"\n  prototype: "/hero.go"\n}\n' +
-            'embedded_instances {\n  id: "level"\n  data: ""\n}\n',
+      pathsOf({
+        bootstrap: "/main.collection",
+        documents: [
+          [
+            "main.collection",
+            'instances {\n  id: "hero"\n  prototype: "/hero.go"\n}\n' +
+              'embedded_instances {\n  id: "level"\n  data: ""\n}\n',
+          ],
+          ["hero.go", 'components {\n  id: "script"\n  component: "/hero.script"\n}\n'],
         ],
-        ["hero.go", 'components {\n  id: "script"\n  component: "/hero.script"\n}\n'],
-      ]),
+      }),
     ).toEqual(["/hero", "/level"]);
   });
 
   test("a collection instance prefixes the collection's paths and is never a path itself", () => {
     expect(
-      pathsOf([
-        [
-          "game/game.collection",
-          'collection_instances {\n  id: "player"\n  collection: "/game/player.collection"\n}\n',
+      pathsOf({
+        bootstrap: "/game/game.collection",
+        documents: [
+          [
+            "game/game.collection",
+            'collection_instances {\n  id: "player"\n  collection: "/game/player.collection"\n}\n',
+          ],
+          ["game/player.collection", 'embedded_instances {\n  id: "player"\n  data: ""\n}\n'],
         ],
-        ["game/player.collection", 'embedded_instances {\n  id: "player"\n  data: ""\n}\n'],
-      ]),
+      }),
     ).toEqual(["/player/player"]);
   });
 
   test("one more level of nesting composes three segments", () => {
     expect(
-      pathsOf([
-        [
-          "world.collection",
-          'collection_instances {\n  id: "arena"\n  collection: "/game.collection"\n}\n',
+      pathsOf({
+        bootstrap: "/world.collection",
+        documents: [
+          [
+            "world.collection",
+            'collection_instances {\n  id: "arena"\n  collection: "/game.collection"\n}\n',
+          ],
+          [
+            "game.collection",
+            'collection_instances {\n  id: "player"\n  collection: "/player.collection"\n}\n',
+          ],
+          ["player.collection", 'instances {\n  id: "body"\n  prototype: "/body.go"\n}\n'],
         ],
-        [
-          "game.collection",
-          'collection_instances {\n  id: "player"\n  collection: "/player.collection"\n}\n',
-        ],
-        ["player.collection", 'instances {\n  id: "body"\n  prototype: "/body.go"\n}\n'],
-      ]),
+      }),
     ).toEqual(["/arena/player/body"]);
   });
 
   test("a `children:` edge is a transform relation, never a path segment", () => {
     expect(
-      pathsOf([
-        [
-          "main.collection",
-          'instances {\n  id: "hero"\n  prototype: "/hero.go"\n  children: "sword"\n}\n' +
-            'instances {\n  id: "sword"\n  prototype: "/sword.go"\n}\n',
+      pathsOf({
+        bootstrap: "/main.collection",
+        documents: [
+          [
+            "main.collection",
+            'instances {\n  id: "hero"\n  prototype: "/hero.go"\n  children: "sword"\n}\n' +
+              'instances {\n  id: "sword"\n  prototype: "/sword.go"\n}\n',
+          ],
         ],
-      ]),
+      }),
     ).toEqual(["/hero", "/sword"]);
   });
 
-  test("a `.go` document contributes nothing, having no id of its own", () => {
+  test("a component block is never a leaf segment, wherever it sits", () => {
     expect(
-      pathsOf([
-        [
-          "hero.go",
-          'components {\n  id: "script"\n  component: "/hero.script"\n}\n' +
-            'embedded_components {\n  id: "sprite"\n  type: "sprite"\n  data: ""\n}\n',
+      pathsOf({
+        bootstrap: "/main.collection",
+        documents: [
+          [
+            "main.collection",
+            'instances {\n  id: "hero"\n  prototype: "/hero.go"\n}\n' +
+              'components {\n  id: "script"\n  component: "/main.script"\n}\n' +
+              'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n',
+          ],
         ],
-      ]),
-    ).toEqual([]);
+      }),
+    ).toEqual(["/hero"]);
   });
 
   test("composes the committed platformer's own two collections", () => {
     expect(
-      pathsOf([
-        committed("platformer", "game", "game.collection"),
-        committed("platformer", "game", "player.collection"),
-      ]),
+      pathsOf({
+        gameProject: committedText("platformer", "game.project"),
+        documents: [
+          committed("platformer", "game", "game.collection"),
+          committed("platformer", "game", "player.collection"),
+        ],
+      }),
     ).toEqual(["/level", "/player/player"]);
   });
 
+  test("only the bootstrap collection contributes bare paths", () => {
+    expect(
+      pathsOf({
+        bootstrap: "/main/main.collection",
+        documents: [
+          ["main/main.collection", 'instances {\n  id: "hero"\n  prototype: "/main/hero.go"\n}\n'],
+          [
+            "main/menu.collection",
+            'name: "menu"\ninstances {\n  id: "title"\n  prototype: "/main/title.go"\n}\n',
+          ],
+        ],
+      }),
+    ).toEqual(["/hero"]);
+  });
+
+  test("a proxy world contributes socket-qualified paths, prefixing the composed path", () => {
+    expect(
+      pathsOf({
+        bootstrap: "/main/main.collection",
+        documents: [
+          [
+            "main/main.collection",
+            'instances {\n  id: "loader"\n  prototype: "/main/loader.go"\n}\n',
+          ],
+          ["main/loader.go", proxyObject("/levels/level1.collection")],
+          [
+            "levels/level1.collection",
+            'name: "mylevel"\ninstances {\n  id: "enemy"\n  prototype: "/levels/enemy.go"\n}\n' +
+              'collection_instances {\n  id: "pack"\n  collection: "/levels/pack.collection"\n}\n',
+          ],
+          [
+            "levels/pack.collection",
+            'instances {\n  id: "enemy"\n  prototype: "/levels/enemy.go"\n}\n',
+          ],
+        ],
+      }),
+    ).toEqual(["/loader", "mylevel:/enemy", "mylevel:/pack/enemy"]);
+  });
+
+  test("a factory prototype contributes no static path, bare or qualified", () => {
+    expect(
+      pathsOf({
+        bootstrap: "/main/main.collection",
+        documents: [
+          [
+            "main/main.collection",
+            'instances {\n  id: "spawner"\n  prototype: "/main/spawner.go"\n}\n',
+          ],
+          ["main/spawner.go", factoryObject("/spawn/pack.collection")],
+          [
+            "spawn/pack.collection",
+            'name: "pack"\ninstances {\n  id: "enemy"\n  prototype: "/spawn/enemy.go"\n}\n',
+          ],
+        ],
+      }),
+    ).toEqual(["/spawner"]);
+  });
+
+  test("a collection both instanced and proxied contributes under both roles", () => {
+    expect(
+      pathsOf({
+        bootstrap: "/main/main.collection",
+        documents: [
+          [
+            "main/main.collection",
+            'instances {\n  id: "loader"\n  prototype: "/main/loader.go"\n}\n' +
+              'collection_instances {\n  id: "preview"\n  collection: "/levels/level1.collection"\n}\n',
+          ],
+          ["main/loader.go", proxyObject("/levels/level1.collection")],
+          [
+            "levels/level1.collection",
+            'name: "mylevel"\ninstances {\n  id: "enemy"\n  prototype: "/levels/enemy.go"\n}\n',
+          ],
+        ],
+      }),
+    ).toEqual(["/loader", "/preview/enemy", "mylevel:/enemy"]);
+  });
+
+  test("a project with no readable game.project has no bare path and a named incomplete entry", () => {
+    const { index } = indexOver({
+      documents: [
+        ["main/main.collection", 'instances {\n  id: "hero"\n  prototype: "/main/hero.go"\n}\n'],
+      ],
+    });
+    expect([...index.paths]).toEqual([]);
+    expect(index.incomplete.join("\n")).toContain("game.project");
+  });
+
+  test("the roles' reasons reach the index's incomplete", () => {
+    const { index, roles } = indexOver({
+      bootstrap: "/main/main.collection",
+      documents: [
+        ["main/main.collection", 'instances {\n  id: "hero"\n  prototype: "/main/hero.go"\n}\n'],
+        [
+          "main/orphan.collection",
+          'instances {\n  id: "ghost"\n  prototype: "/main/ghost.go"\n}\n',
+        ],
+      ],
+    });
+    expect(roles.incomplete).toHaveLength(1);
+    expect(index.incomplete).toEqual([...roles.incomplete]);
+    expect([...index.paths]).toEqual(["/hero"]);
+  });
+
   test("a collection_instances naming a collection the map does not hold is a named gap", () => {
-    const index = buildSceneObjectPathIndex(
-      new Map([
+    const { index } = indexOver({
+      bootstrap: "/main.collection",
+      documents: [
         [
           "main.collection",
           'instances {\n  id: "hero"\n  prototype: "/hero.go"\n}\n' +
             'collection_instances {\n  id: "enemies"\n  collection: "/spawn/wave.collection"\n}\n',
         ],
-      ]),
-    );
+      ],
+    });
     expect([...index.paths].sort()).toEqual(["/hero"]);
     expect(index.incomplete).toHaveLength(1);
     expect(index.incomplete[0]).toContain("main.collection");
@@ -119,102 +288,164 @@ describe("buildSceneObjectPathIndex", () => {
   });
 
   test("an unparseable document contributes no path while every other document's still land", () => {
-    const index = buildSceneObjectPathIndex(
-      new Map([
+    const { index } = indexOver({
+      bootstrap: "/fine.collection",
+      documents: [
         ["broken.collection", 'instances {\n  id: "hero"\n'],
         ["fine.collection", 'instances {\n  id: "hud"\n  prototype: "/hud.go"\n}\n'],
-      ]),
-    );
+      ],
+    });
     expect([...index.paths].sort()).toEqual(["/hud"]);
-    expect(index.incomplete).toHaveLength(1);
-    expect(index.incomplete[0]).toContain("broken.collection");
+    expect(index.incomplete.join("\n")).toContain("broken.collection");
   });
 
   test("two collections instancing each other are named rather than walked forever", () => {
-    const index = buildSceneObjectPathIndex(
-      new Map([
+    const { index } = indexOver({
+      bootstrap: "/fine.collection",
+      documents: [
         ["a.collection", 'collection_instances {\n  id: "b"\n  collection: "/b.collection"\n}\n'],
         ["b.collection", 'collection_instances {\n  id: "a"\n  collection: "/a.collection"\n}\n'],
         ["fine.collection", 'instances {\n  id: "hud"\n  prototype: "/hud.go"\n}\n'],
-      ]),
-    );
+      ],
+    });
     expect([...index.paths].sort()).toEqual(["/hud"]);
-    expect(index.incomplete).toHaveLength(1);
-    expect(index.incomplete.join("\n")).toContain(".collection");
+    expect(index.incomplete.join("\n")).toContain("cycle");
   });
 
   test("an empty document map is incomplete, not an empty-but-complete universe", () => {
-    const index = buildSceneObjectPathIndex(new Map());
+    const { index } = indexOver({ documents: [] });
     expect([...index.paths]).toEqual([]);
-    expect(index.incomplete).toHaveLength(1);
+    expect(index.incomplete.join("\n")).toContain("no scene sources were read");
   });
 
   test("a leaf id is attributed to the document carrying its block", () => {
     expect(
-      declaredInOf([
-        [
-          "main.collection",
-          'instances {\n  id: "hero"\n  prototype: "/hero.go"\n}\n' +
-            'embedded_instances {\n  id: "level"\n  data: ""\n}\n',
+      declaredInOf({
+        bootstrap: "/main.collection",
+        documents: [
+          [
+            "main.collection",
+            'instances {\n  id: "hero"\n  prototype: "/hero.go"\n}\n' +
+              'embedded_instances {\n  id: "level"\n  data: ""\n}\n',
+          ],
+          ["hero.go", 'components {\n  id: "script"\n  component: "/hero.script"\n}\n'],
         ],
-        ["hero.go", 'components {\n  id: "script"\n  component: "/hero.script"\n}\n'],
-      ]),
+      }),
     ).toEqual({ "/hero": ["main.collection"], "/level": ["main.collection"] });
   });
 
   test("a composed path names the document declaring its leaf, not the one that prefixed it", () => {
     expect(
-      declaredInOf([
-        [
-          "game/game.collection",
-          'collection_instances {\n  id: "player"\n  collection: "/game/player.collection"\n}\n',
+      declaredInOf({
+        bootstrap: "/game/game.collection",
+        documents: [
+          [
+            "game/game.collection",
+            'collection_instances {\n  id: "player"\n  collection: "/game/player.collection"\n}\n',
+          ],
+          ["game/player.collection", 'embedded_instances {\n  id: "player"\n  data: ""\n}\n'],
         ],
-        ["game/player.collection", 'embedded_instances {\n  id: "player"\n  data: ""\n}\n'],
-      ]),
+      }),
     ).toEqual({ "/player/player": ["game/player.collection"] });
   });
 
   test("attribution follows the leaf through every level of nesting", () => {
     expect(
-      declaredInOf([
-        [
-          "world.collection",
-          'collection_instances {\n  id: "arena"\n  collection: "/game.collection"\n}\n',
+      declaredInOf({
+        bootstrap: "/world.collection",
+        documents: [
+          [
+            "world.collection",
+            'collection_instances {\n  id: "arena"\n  collection: "/game.collection"\n}\n',
+          ],
+          [
+            "game.collection",
+            'collection_instances {\n  id: "player"\n  collection: "/player.collection"\n}\n',
+          ],
+          ["player.collection", 'instances {\n  id: "body"\n  prototype: "/body.go"\n}\n'],
         ],
-        [
-          "game.collection",
-          'collection_instances {\n  id: "player"\n  collection: "/player.collection"\n}\n',
-        ],
-        ["player.collection", 'instances {\n  id: "body"\n  prototype: "/body.go"\n}\n'],
-      ]),
+      }),
     ).toEqual({ "/arena/player/body": ["player.collection"] });
   });
 
-  test("a path two un-instanced documents both declare names both, sorted", () => {
+  test("declaredIn keys the socket-qualified paths too", () => {
     expect(
-      declaredInOf([
-        ["second.collection", 'instances {\n  id: "hud"\n  prototype: "/hud.go"\n}\n'],
-        ["first.collection", 'instances {\n  id: "hud"\n  prototype: "/hud.go"\n}\n'],
-      ]),
-    ).toEqual({ "/hud": ["first.collection", "second.collection"] });
+      declaredInOf({
+        bootstrap: "/main/main.collection",
+        documents: [
+          [
+            "main/main.collection",
+            'instances {\n  id: "loader"\n  prototype: "/main/loader.go"\n}\n',
+          ],
+          ["main/loader.go", proxyObject("/levels/level1.collection")],
+          [
+            "levels/level1.collection",
+            'name: "mylevel"\ncollection_instances {\n  id: "pack"\n  collection: "/levels/pack.collection"\n}\n',
+          ],
+          [
+            "levels/pack.collection",
+            'instances {\n  id: "enemy"\n  prototype: "/levels/enemy.go"\n}\n',
+          ],
+        ],
+      }),
+    ).toEqual({
+      "/loader": ["main/main.collection"],
+      "mylevel:/pack/enemy": ["levels/pack.collection"],
+    });
+  });
+
+  test("a path two worlds sharing one socket both declare names both, sorted", () => {
+    const { index } = indexOver({
+      bootstrap: "/main/main.collection",
+      documents: [
+        [
+          "main/main.collection",
+          'instances {\n  id: "one"\n  prototype: "/main/one.go"\n}\n' +
+            'instances {\n  id: "two"\n  prototype: "/main/two.go"\n}\n',
+        ],
+        ["main/one.go", proxyObject("/levels/second.collection")],
+        ["main/two.go", proxyObject("/levels/first.collection")],
+        [
+          "levels/first.collection",
+          'name: "mylevel"\ninstances {\n  id: "hud"\n  prototype: "/hud.go"\n}\n',
+        ],
+        [
+          "levels/second.collection",
+          'name: "mylevel"\ninstances {\n  id: "hud"\n  prototype: "/hud.go"\n}\n',
+        ],
+      ],
+    });
+    expect(index.declaredIn.get("mylevel:/hud")).toEqual([
+      "levels/first.collection",
+      "levels/second.collection",
+    ]);
   });
 
   test("a document instanced under two roots is attributed once, not once per root", () => {
     expect(
-      declaredInOf([
-        ["a.collection", 'collection_instances {\n  id: "p"\n  collection: "/p.collection"\n}\n'],
-        ["b.collection", 'collection_instances {\n  id: "p"\n  collection: "/p.collection"\n}\n'],
-        ["p.collection", 'instances {\n  id: "body"\n  prototype: "/body.go"\n}\n'],
-      ]),
-    ).toEqual({ "/p/body": ["p.collection"] });
+      declaredInOf({
+        bootstrap: "/a.collection",
+        documents: [
+          [
+            "a.collection",
+            'collection_instances {\n  id: "p"\n  collection: "/p.collection"\n}\n' +
+              'collection_instances {\n  id: "q"\n  collection: "/p.collection"\n}\n',
+          ],
+          ["p.collection", 'instances {\n  id: "body"\n  prototype: "/body.go"\n}\n'],
+        ],
+      }),
+    ).toEqual({ "/p/body": ["p.collection"], "/q/body": ["p.collection"] });
   });
 
   test("attributes the committed platformer's own composed paths", () => {
     expect(
-      declaredInOf([
-        committed("platformer", "game", "game.collection"),
-        committed("platformer", "game", "player.collection"),
-      ]),
+      declaredInOf({
+        gameProject: committedText("platformer", "game.project"),
+        documents: [
+          committed("platformer", "game", "game.collection"),
+          committed("platformer", "game", "player.collection"),
+        ],
+      }),
     ).toEqual({
       "/level": ["game/game.collection"],
       "/player/player": ["game/player.collection"],
