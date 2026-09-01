@@ -13,9 +13,10 @@ bunx @defold-typescript/cli watch
 
 > [!TIP] `watch` keeps two derived surfaces current while it runs: it re-runs
 > [`resolve`](./resolve.md) on a `game.project` save, and regenerates the
-> [scene-address declaration](./scene-types.md) on a `.go` or `.collection` save.
-> Only the scene declaration is bootstrapped at startup — run `resolve` once
-> before `watch`.
+> [scene-address declaration](./scene-types.md) on a `.go`, `.collection`,
+> `.collectionproxy` or `.collectionfactory` save — and on a `game.project` save
+> too, once that resolve has settled. Only the scene declaration is bootstrapped
+> at startup — run `resolve` once before `watch`.
 
 ## What it does
 
@@ -42,8 +43,19 @@ edits.
 ## Keeping the scene addresses current
 
 `watch` regenerates the [scene-address declaration](./scene-types.md) after its
-initial build, and again on every `.go` or `.collection` save. Unlike the
-extension surface this needs no bootstrap run — that startup pass writes it.
+initial build, and again on every save that can move an address: a `.go` or
+`.collection`, a standalone `.collectionproxy` or `.collectionfactory`, and
+`game.project`. Unlike the extension surface this needs no bootstrap run — that
+startup pass writes it.
+
+The reference documents are there because they are what says *which world* a
+collection is — a `.collectionproxy` opens one as its own socket, a
+`.collectionfactory` marks one as a prototype with no static path — so retargeting
+one moves the addresses the declaration offers. `game.project` is there for
+`[bootstrap] main_collection`, which decides whose paths are bare. A
+`game.project` save runs one regeneration, after the [`resolve`](./resolve.md)
+above has settled, so the walk reads the dependencies that resolve just
+materialized.
 
 Each of those saves also re-checks the project's `#fragment` addresses against
 the refreshed universe, so a component you remove is reported before you touch

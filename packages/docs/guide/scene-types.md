@@ -15,9 +15,9 @@ bunx @defold-typescript/cli scene-types path/to/project  # a specific project
 ```
 
 > [!TIP] [`build`](./build.md) regenerates this declaration before it transpiles,
-> and [`watch`](./watch.md) refreshes it whenever you save a `.go` or
-> `.collection`. Reach for the verb itself for a one-off, or for a CI step that
-> runs neither.
+> and [`watch`](./watch.md) refreshes it whenever you save a `.go`, a
+> `.collection`, a `.collectionproxy` or `.collectionfactory`, or `game.project`.
+> Reach for the verb itself for a one-off, or for a CI step that runs neither.
 
 The declaration lands at `.defold-types/scene-addresses.d.ts`, beside the
 [materialized API surface](./pinning-defold-target.md). Like everything else

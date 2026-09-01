@@ -6610,4 +6610,345 @@ describe("watch scene-address surface wiring", () => {
     expect(last?.warnings).toEqual([]);
     expect(Object.hasOwn(last as object, "unreachableAddresses")).toBe(false);
   });
+
+  // A bootstrap world holding the object that opens a proxy world, so the
+  // reference document alone decides which collection the socket addresses.
+  function scaffoldProxiedProject(target: string): void {
+    write(
+      "tsconfig.json",
+      JSON.stringify({ compilerOptions: { strict: true }, include: ["src/**/*.ts"] }, null, 2),
+    );
+    write("src/main.ts", "export const a = 1;\n");
+    write("game.project", "[bootstrap]\nmain_collection = /game/game.collectionc\n\n[project]\n");
+    write(
+      "game/game.collection",
+      'instances {\n  id: "loader"\n  prototype: "/game/loader.go"\n}\n',
+    );
+    write(
+      "game/loader.go",
+      'components {\n  id: "loader"\n  component: "/levels/level.collectionproxy"\n}\n',
+    );
+    write("levels/level.collectionproxy", `collection: "${target}"\n`);
+    write(
+      "levels/level1.collection",
+      'name: "mylevel"\ninstances {\n  id: "enemy"\n  prototype: "/game/enemy.go"\n}\n',
+    );
+    write(
+      "levels/level2.collection",
+      'name: "otherlevel"\ninstances {\n  id: "boss"\n  prototype: "/game/enemy.go"\n}\n',
+    );
+    write("game/enemy.go", 'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n');
+  }
+
+  test("retargeting a standalone .collectionproxy moves the world the declaration offers", async () => {
+    scaffoldProxiedProject("/levels/level1.collection");
+
+    const { io } = captureStreams();
+    const main: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+    let triggerComponent: ((kind: "change" | "rename", rel: string) => void) | undefined;
+    const component: WatcherFactory = (_dir, onEvent): Watcher => {
+      triggerComponent = (kind, rel) => onEvent({ kind, path: rel });
+      return { close() {} };
+    };
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      onWatchStart,
+      detectEditorVersion: () => null,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+
+    const declarationPath = path.join(cwd, SCENE_ADDRESSES_DECLARATION);
+    expect(readFileSync(declarationPath, "utf8")).toContain('"mylevel:/enemy"');
+    expect(readFileSync(declarationPath, "utf8")).not.toContain('"otherlevel:/boss"');
+
+    write("levels/level.collectionproxy", 'collection: "/levels/level2.collection"\n');
+    triggerComponent?.("change", "levels/level.collectionproxy");
+    await handle.waitForIdle();
+
+    const retargeted = readFileSync(declarationPath, "utf8");
+    expect(retargeted).toContain('"otherlevel:/boss"');
+    expect(retargeted).not.toContain('"mylevel:/enemy"');
+
+    handle.stop();
+    expect(await result).toBe(0);
+  });
+
+  // A collection reached by nothing is a named hole; a `.collectionfactory`
+  // naming it as a prototype is what closes that hole. The declaration's keys
+  // are the same either way — a factory prototype has no static path — so the
+  // classification is what a save has to reach.
+  function scaffoldFactoryProject(): void {
+    write(
+      "tsconfig.json",
+      JSON.stringify({ compilerOptions: { strict: true }, include: ["src/**/*.ts"] }, null, 2),
+    );
+    write("src/main.ts", "export const a = 1;\n");
+    write("game.project", "[bootstrap]\nmain_collection = /game/game.collectionc\n\n[project]\n");
+    write(
+      "game/game.collection",
+      'instances {\n  id: "spawner"\n  prototype: "/game/spawner.go"\n}\n',
+    );
+    write(
+      "game/spawner.go",
+      'components {\n  id: "spawner"\n  component: "/game/enemy.collectionfactory"\n}\n',
+    );
+    write(
+      "game/enemy.collection",
+      'instances {\n  id: "enemy"\n  prototype: "/game/enemy.go"\n}\n',
+    );
+    write("game/enemy.go", 'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n');
+  }
+
+  function unclassifiedReasonCount(stderrText: string): number {
+    return stderrText
+      .split("\n")
+      .filter(
+        (line) =>
+          SCENE_TYPES_WARNING.test(line) &&
+          line.includes("game/enemy.collection: is reached by no"),
+      ).length;
+  }
+
+  test("a .collectionfactory save classifies its prototype, and unclassifies it when removed", async () => {
+    scaffoldFactoryProject();
+
+    const { io, err } = captureStreams();
+    const main: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+    let triggerComponent: ((kind: "change" | "rename", rel: string) => void) | undefined;
+    const component: WatcherFactory = (_dir, onEvent): Watcher => {
+      triggerComponent = (kind, rel) => onEvent({ kind, path: rel });
+      return { close() {} };
+    };
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      onWatchStart,
+      detectEditorVersion: () => null,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+
+    // No reference document yet: the prototype collection is reached by nothing.
+    expect(unclassifiedReasonCount(err())).toBe(1);
+
+    write("game/enemy.collectionfactory", 'prototype: "/game/enemy.collection"\n');
+    triggerComponent?.("change", "game/enemy.collectionfactory");
+    await handle.waitForIdle();
+
+    // The reporter only repeats a reason that went away and came back, so the
+    // count holding at one is what says the hole closed.
+    expect(unclassifiedReasonCount(err())).toBe(1);
+
+    rmSync(path.join(cwd, "game/enemy.collectionfactory"));
+    triggerComponent?.("rename", "game/enemy.collectionfactory");
+    await handle.waitForIdle();
+
+    expect(unclassifiedReasonCount(err())).toBe(2);
+
+    handle.stop();
+    expect(await result).toBe(0);
+  });
+
+  test("a reference-document save regenerates without rebuilding or resyncing", async () => {
+    scaffoldProxiedProject("/levels/level1.collection");
+
+    const { io, out } = captureStreams();
+    const main: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+    let triggerComponent: ((kind: "change" | "rename", rel: string) => void) | undefined;
+    const component: WatcherFactory = (_dir, onEvent): Watcher => {
+      triggerComponent = (kind, rel) => onEvent({ kind, path: rel });
+      return { close() {} };
+    };
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd, "--json"], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      onWatchStart,
+      detectEditorVersion: () => null,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+
+    const tsconfigPath = path.join(cwd, "tsconfig.json");
+    const beforeTsconfig = readFileSync(tsconfigPath, "utf8");
+    const atStartup = sceneTypesEvents(out()).length;
+
+    write("levels/level.collectionproxy", 'collection: "/levels/level2.collection"\n');
+    triggerComponent?.("change", "levels/level.collectionproxy");
+    await handle.waitForIdle();
+
+    handle.stop();
+    expect(await result).toBe(0);
+
+    expect(sceneTypesEvents(out()).length).toBe(atStartup + 1);
+    expect(
+      out()
+        .split("\n")
+        .filter((line) => line !== "")
+        .map((line) => JSON.parse(line) as { command: string; event?: string })
+        .some((line) => line.command === "watch" && line.event === "rebuild"),
+    ).toBe(false);
+    expect(readFileSync(tsconfigPath, "utf8")).toBe(beforeTsconfig);
+  });
+
+  // Two candidate worlds, so the only thing deciding which one's paths are bare
+  // is the `[bootstrap] main_collection` line the save rewrites.
+  function scaffoldTwoWorldProject(bootstrap: string): void {
+    write(
+      "tsconfig.json",
+      JSON.stringify({ compilerOptions: { strict: true }, include: ["src/**/*.ts"] }, null, 2),
+    );
+    write("src/main.ts", "export const a = 1;\n");
+    write("game.project", `[bootstrap]\nmain_collection = ${bootstrap}\n\n[project]\n`);
+    write(
+      "game/alpha.collection",
+      'instances {\n  id: "alpha"\n  prototype: "/game/thing.go"\n}\n',
+    );
+    write("game/beta.collection", 'instances {\n  id: "beta"\n  prototype: "/game/thing.go"\n}\n');
+    write("game/thing.go", 'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n');
+  }
+
+  test("switching [bootstrap] main_collection rewrites the declaration on that save", async () => {
+    scaffoldTwoWorldProject("/game/alpha.collectionc");
+
+    const { io } = captureStreams();
+    let triggerMain: ((kind: "change" | "rename", rel: string) => void) | undefined;
+    const main: WatcherFactory = (_dir, onEvent): Watcher => {
+      triggerMain = (kind, rel) => onEvent({ kind, path: rel });
+      return { close() {} };
+    };
+    const component: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+
+    const cacheDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-"));
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      detectEditorVersion: () => null,
+      resolveInternals: {
+        cacheDir,
+        download: async () => {
+          throw new Error("this project declares no dependencies");
+        },
+      },
+      onWatchStart,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+
+    const declarationPath = path.join(cwd, SCENE_ADDRESSES_DECLARATION);
+    expect(readFileSync(declarationPath, "utf8")).toContain('"/alpha"');
+    expect(readFileSync(declarationPath, "utf8")).not.toContain('"/beta"');
+
+    write("game.project", "[bootstrap]\nmain_collection = /game/beta.collectionc\n\n[project]\n");
+    triggerMain?.("change", "game.project");
+    await handle.waitForIdle();
+
+    const switched = readFileSync(declarationPath, "utf8");
+    expect(switched).toContain('"/beta"');
+    expect(switched).not.toContain('"/alpha"');
+
+    handle.stop();
+    expect(await result).toBe(0);
+
+    rmSync(cacheDir, { recursive: true, force: true });
+  });
+
+  test("a game.project regeneration repeating a startup reason adds no second line", async () => {
+    const sourceGeneratedDir = scaffoldWatchableProject();
+    const { io, err } = captureStreams();
+    let triggerMain: ((kind: "change" | "rename", rel: string) => void) | undefined;
+    const main: WatcherFactory = (_dir, onEvent): Watcher => {
+      triggerMain = (kind, rel) => onEvent({ kind, path: rel });
+      return { close() {} };
+    };
+    const component: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      sourceGeneratedDir,
+      detectEditorVersion: () => null,
+      onWatchStart,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+
+    expect(unresolvedReasonCount(err())).toBe(1);
+
+    triggerMain?.("change", "game.project");
+    await handle.waitForIdle();
+
+    expect(unresolvedReasonCount(err())).toBe(1);
+
+    handle.stop();
+    expect(await result).toBe(0);
+
+    rmSync(sourceGeneratedDir, { recursive: true, force: true });
+  });
+
+  test("the game.project regeneration reports reachability, as a scene save does", async () => {
+    scaffoldTwoWorldProject("/game/alpha.collectionc");
+
+    const { io, out } = captureStreams();
+    let triggerMain: ((kind: "change" | "rename", rel: string) => void) | undefined;
+    const main: WatcherFactory = (_dir, onEvent): Watcher => {
+      triggerMain = (kind, rel) => onEvent({ kind, path: rel });
+      return { close() {} };
+    };
+    const component: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+
+    const cacheDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-"));
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd, "--json"], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      detectEditorVersion: () => null,
+      resolveInternals: {
+        cacheDir,
+        download: async () => {
+          throw new Error("this project declares no dependencies");
+        },
+      },
+      onWatchStart,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+
+    write("game.project", "[bootstrap]\nmain_collection = /game/beta.collectionc\n\n[project]\n");
+    triggerMain?.("change", "game.project");
+    await handle.waitForIdle();
+
+    handle.stop();
+    expect(await result).toBe(0);
+
+    const events = sceneTypesEvents(out());
+    expect(events.length).toBe(2);
+    // The startup regeneration deliberately reports nothing and so carries no
+    // `warnings` key; a reporting one carries the key even when it is empty.
+    expect(Object.hasOwn(events[0] as object, "warnings")).toBe(false);
+    expect(Object.hasOwn(events[1] as object, "warnings")).toBe(true);
+
+    rmSync(cacheDir, { recursive: true, force: true });
+  });
 });

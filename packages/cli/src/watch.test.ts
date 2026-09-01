@@ -922,9 +922,13 @@ describe("runWatch resolve surface", () => {
     await new Promise((r) => setTimeout(r, 20));
     await handle.waitForIdle();
 
-    const newLines = out().slice(before.length).trimEnd().split("\n");
-    const last = JSON.parse(newLines[newLines.length - 1] as string) as Record<string, unknown>;
-    expect(last).toEqual({ command: "watch", event: "resolve", ok: true, written: [] });
+    const newLines = out()
+      .slice(before.length)
+      .trimEnd()
+      .split("\n")
+      .map((line) => JSON.parse(line) as Record<string, unknown>);
+    const resolved = newLines.filter((entry) => entry.event === "resolve");
+    expect(resolved).toEqual([{ command: "watch", event: "resolve", ok: true, written: [] }]);
 
     handle.stop();
     await handle.done;
@@ -2972,5 +2976,205 @@ describe("runWatch scene-address regeneration", () => {
     // suppressed event alone would not reveal.
     expect(readFileSync(declarationPath(), "utf8")).not.toContain('"/enemy"');
     expect(countMatches(out(), /"event":"sceneTypes"/g)).toBe(atStartup);
+  });
+});
+
+// `[bootstrap] main_collection` decides which world's addresses are bare, and
+// the dependency surface a resolve materializes decides which libraries the
+// walk can read at all — so the regeneration a `game.project` save needs is the
+// one that runs *after* the resolve, not beside it.
+describe("runWatch game.project scene regeneration", () => {
+  const PLAYER_ONLY = 'instances {\n  id: "player"\n  prototype: "/game/player.go"\n}\n';
+
+  function scaffold(): void {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    writeProjectFile(
+      "game.project",
+      "[bootstrap]\nmain_collection = /game/player.collectionc\n\n[project]\n",
+    );
+    writeProjectFile("game/player.collection", PLAYER_ONLY);
+    writeProjectFile(
+      "game/player.go",
+      'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n',
+    );
+  }
+
+  test("a game.project event runs the resolve first and the regeneration second", async () => {
+    scaffold();
+    const { stdout, stderr } = captureStreams();
+    const factory = makeFactory();
+    const order: string[] = [];
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      debounceMs: 5,
+      watcherFactory: factory.factory,
+      resolveSurface: async () => {
+        order.push("resolve:start");
+        await new Promise((r) => setTimeout(r, 10));
+        order.push("resolve:end");
+      },
+      sceneTypesSurface: () => {
+        order.push("scene");
+      },
+    });
+    await handle.waitForIdle();
+    order.length = 0;
+
+    factory.trigger("change", "game.project");
+    await handle.waitForIdle();
+
+    expect(order).toEqual(["resolve:start", "resolve:end", "scene"]);
+
+    handle.stop();
+    expect(await handle.done).toBe(0);
+  });
+
+  test("waitForIdle covers the pair, so it never settles between the halves", async () => {
+    scaffold();
+    const { stdout, stderr } = captureStreams();
+    const factory = makeFactory();
+    let releaseScene: (() => void) | undefined;
+    const scenePending = new Promise<void>((r) => {
+      releaseScene = r;
+    });
+    let sceneStarted = false;
+    // The startup regeneration runs through this same surface; parking it too
+    // would hang `waitForIdle` before the event under test is ever sent.
+    let holdScene = false;
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      debounceMs: 5,
+      watcherFactory: factory.factory,
+      resolveSurface: () => {},
+      sceneTypesSurface: () => {
+        if (!holdScene) return;
+        sceneStarted = true;
+        return scenePending;
+      },
+    });
+    await handle.waitForIdle();
+    holdScene = true;
+
+    factory.trigger("change", "game.project");
+    await new Promise((r) => setTimeout(r, 20));
+    expect(sceneStarted).toBe(true);
+
+    let settled = false;
+    const idleProbe = handle.waitForIdle().then(() => {
+      settled = true;
+    });
+    await new Promise((r) => setTimeout(r, 20));
+    expect(settled).toBe(false);
+
+    releaseScene?.();
+    await idleProbe;
+    expect(settled).toBe(true);
+
+    handle.stop();
+    expect(await handle.done).toBe(0);
+  });
+
+  test("with no resolveSurface the game.project event still regenerates and still emits resolve", async () => {
+    scaffold();
+    const { stdout, stderr, out } = captureStreams();
+    const factory = makeFactory();
+    let sceneCalls = 0;
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      json: true,
+      debounceMs: 5,
+      watcherFactory: factory.factory,
+      sceneTypesSurface: () => {
+        sceneCalls++;
+      },
+    });
+    await handle.waitForIdle();
+    const atStartup = sceneCalls;
+    const sceneEventsAtStartup = countMatches(out(), /"event":"sceneTypes"/g);
+
+    factory.trigger("change", "game.project");
+    await handle.waitForIdle();
+
+    expect(sceneCalls).toBe(atStartup + 1);
+    expect(countMatches(out(), /"event":"resolve"/g)).toBe(1);
+    expect(countMatches(out(), /"event":"sceneTypes"/g)).toBe(sceneEventsAtStartup + 1);
+
+    handle.stop();
+    expect(await handle.done).toBe(0);
+  });
+
+  test("a game.project event on a stopped watch regenerates nothing and emits nothing", async () => {
+    scaffold();
+    const { stdout, stderr, out } = captureStreams();
+    const factory = makeFactory();
+    let sceneCalls = 0;
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      json: true,
+      debounceMs: 5,
+      watcherFactory: factory.factory,
+      resolveSurface: () => {},
+      sceneTypesSurface: () => {
+        sceneCalls++;
+      },
+    });
+    await handle.waitForIdle();
+    const atStartup = sceneCalls;
+    const resolveAtStartup = countMatches(out(), /"event":"resolve"/g);
+    const sceneAtStartup = countMatches(out(), /"event":"sceneTypes"/g);
+
+    factory.trigger("change", "game.project");
+    handle.stop();
+    expect(await handle.done).toBe(0);
+    await new Promise((r) => setTimeout(r, 40));
+
+    expect(sceneCalls).toBe(atStartup);
+    expect(countMatches(out(), /"event":"resolve"/g)).toBe(resolveAtStartup);
+    expect(countMatches(out(), /"event":"sceneTypes"/g)).toBe(sceneAtStartup);
+  });
+
+  test("a rejecting resolveSurface still clears both flags, so waitForIdle never parks", async () => {
+    scaffold();
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    let sceneCalls = 0;
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      debounceMs: 5,
+      watcherFactory: factory.factory,
+      resolveSurface: () => Promise.reject(new Error("resolve blew up")),
+      sceneTypesSurface: () => {
+        sceneCalls++;
+      },
+    });
+    await handle.waitForIdle();
+    const atStartup = sceneCalls;
+
+    factory.trigger("change", "game.project");
+    await handle.waitForIdle();
+
+    expect(err()).toContain("resolve blew up");
+    // The regeneration is not conditional on the resolve succeeding: the
+    // bootstrap setting the save changed is readable either way.
+    expect(sceneCalls).toBe(atStartup + 1);
+
+    handle.stop();
+    expect(await handle.done).toBe(0);
   });
 });
