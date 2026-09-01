@@ -134,6 +134,7 @@ describe("libraryIncludedEntries", () => {
 describe("isContainedResourcePath", () => {
   test("accepts a plain nested path and rejects each unsafe shape", () => {
     expect(isContainedResourcePath("druid/nested/deep.go")).toBe(true);
+    expect(isContainedResourcePath("..assets/main.collection")).toBe(true);
     expect(isContainedResourcePath("druid/../evil.collection")).toBe(false);
     expect(isContainedResourcePath("druid/./x.collection")).toBe(false);
     expect(isContainedResourcePath("druid\\..\\win.collection")).toBe(false);
