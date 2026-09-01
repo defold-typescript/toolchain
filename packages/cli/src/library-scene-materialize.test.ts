@@ -104,6 +104,35 @@ describe("materializeLibrarySceneSources", () => {
     expect(result.counts.get(EXTRA_URL)).toBe(0);
   });
 
+  test("a source path whose first segment merely begins with two dots materializes normally", () => {
+    const cwd = tmp();
+    const dotted = {
+      url: DRUID_URL,
+      sceneSources: [
+        { path: "..assets/main.collection", text: 'name: "dotted"\n' },
+        { path: "..assets/nested/deep.go", text: 'components {\n  id: "deep"\n}\n' },
+      ],
+    };
+
+    const result = materializeLibrarySceneSources({ cwd, bundles: [dotted] });
+
+    expect(result.materializedDir).toBe(".defold-types/dependencies");
+    const druidKey = extensionArchiveKey(DRUID_URL);
+    expect(
+      readFileSync(join(dependenciesDir(cwd), druidKey, "..assets", "main.collection"), "utf8"),
+    ).toBe('name: "dotted"\n');
+    expect(
+      readFileSync(join(dependenciesDir(cwd), druidKey, "..assets", "nested", "deep.go"), "utf8"),
+    ).toBe('components {\n  id: "deep"\n}\n');
+    expect(readManifest(cwd).dependencies).toEqual([{ key: druidKey, url: DRUID_URL }]);
+    expect(readdirSync(dependenciesDir(cwd)).sort()).toEqual(
+      ["dependencies.json", druidKey].sort(),
+    );
+    expect(readdirSync(join(dependenciesDir(cwd), druidKey))).toEqual(["..assets"]);
+    expect(existsSync(join(cwd, "..assets"))).toBe(false);
+    expect(result.counts.get(DRUID_URL)).toBe(2);
+  });
+
   test("a source path escaping its key directory is refused before anything is written", () => {
     const cwd = tmp();
     const seeded = join(cwd, "main.collection");

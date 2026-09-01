@@ -68,12 +68,19 @@ export function materializeLibrarySceneSources(
   // paths, so one reaching here means the two rules disagree — a defect to
   // surface rather than a data condition to absorb. Checking every source of
   // every bundle first is what keeps a violation from leaving the surface
-  // half-reconciled.
+  // half-reconciled. The traversal test is segment-shaped, not a string prefix:
+  // a leading `..` only leaves the key directory when a separator follows it,
+  // so `..assets` is an ordinary directory name to both rules.
   for (const { key, url, sources } of resolved) {
     const keyDir = path.join(absDir, key);
     for (const { path: rel } of sources) {
       const relative = path.relative(keyDir, path.join(keyDir, ...rel.split("/")));
-      if (!isContainedResourcePath(rel) || path.isAbsolute(relative) || relative.startsWith("..")) {
+      if (
+        !isContainedResourcePath(rel) ||
+        path.isAbsolute(relative) ||
+        relative === ".." ||
+        relative.startsWith(`..${path.sep}`)
+      ) {
         throw new Error(`refusing unsafe scene path from ${url}: ${rel}`);
       }
     }
