@@ -7,6 +7,7 @@ import {
   readSceneDocuments,
   type SceneReadHost,
 } from "./scene-documents";
+import { buildSceneObjectPathIndex } from "./scene-object-path-index";
 
 const PROJECT_ROOT = "/project";
 
@@ -34,7 +35,15 @@ function fsHost(root: string): SceneReadHost {
     });
   return {
     readDirectory: () => walk(root),
-    readFile: (path) => readFileSync(path, "utf8"),
+    // `SceneReadHost.readFile` answers `undefined` for a file that is not there
+    // — the editor's own host does, and the walk probes for optional files.
+    readFile: (path) => {
+      try {
+        return readFileSync(path, "utf8");
+      } catch {
+        return undefined;
+      }
+    },
   };
 }
 
@@ -94,10 +103,12 @@ describe("readSceneDocuments", () => {
   test("feeds a whole component-id universe from the committed example project", () => {
     const root = join(import.meta.dir, "../../../docs/examples/tetris-tutorial");
     const { documents, unreadable } = readSceneDocuments(fsHost(root), root);
-    expect(unreadable).toEqual([]);
-    const index = buildSceneComponentIndex(documents);
-    expect(index.incomplete).toEqual([]);
-    expect([...index.ids].sort()).toEqual(["board", "hud"]);
+    // The example declares a dependency and is never resolved in the tree, so
+    // the one hole is that dependency — nothing about its own scenes.
+    expect(unreadable).toEqual([
+      "https://github.com/defold-typescript/toolchain/releases/download/lldebugger-v1/lldebugger.zip: is declared by game.project but .defold-types/dependencies/dependencies.json is absent",
+    ]);
+    expect([...buildSceneComponentIndex(documents).ids].sort()).toEqual(["board", "hud"]);
   });
 
   test("an explicit extension set walks only those files", () => {
@@ -182,7 +193,7 @@ describe("readSceneDocuments", () => {
     };
     const { documents } = readSceneDocuments(host, PROJECT_ROOT);
     expect([...documents.keys()]).toEqual(["main/board.go"]);
-    expect(read).toEqual([`${PROJECT_ROOT}/main/board.go`]);
+    expect(read).toEqual([`${PROJECT_ROOT}/main/board.go`, `${PROJECT_ROOT}/game.project`]);
   });
 
   test("a host that cannot enumerate files yields no documents and a reason", () => {
@@ -272,5 +283,230 @@ describe("listProjectResourcePaths", () => {
 
   test("a host that cannot enumerate files yields nothing", () => {
     expect(listProjectResourcePaths({ readFile: () => "" }, PROJECT_ROOT, [".atlas"]).size).toBe(0);
+  });
+});
+
+const DRUID_URL = "https://github.com/Insality/druid/archive/refs/tags/16.zip";
+const OTHER_URL = "https://github.com/britzl/defold-input/archive/refs/tags/5.zip";
+
+const GAME_PROJECT = `[project]
+title = demo
+dependencies#0 = ${DRUID_URL}
+`;
+
+const MAIN_COLLECTION = `name: "main"
+collection_instances {
+  id: "ui"
+  collection: "/druid/druid.collection"
+}
+`;
+
+const DRUID_COLLECTION = `name: "druid"
+instances {
+  id: "root"
+}
+`;
+
+const MANIFEST = JSON.stringify({ dependencies: [{ key: "druid-16", url: DRUID_URL }] });
+
+const DEPENDENCY_ROOT = `${PROJECT_ROOT}/.defold-types/dependencies`;
+const MANIFEST_PATH = `${DEPENDENCY_ROOT}/dependencies.json`;
+const DRUID_HOST_PATH = `${DEPENDENCY_ROOT}/druid-16/druid/druid.collection`;
+
+// A host that honors the directory it is handed, the way the editor's own
+// `readDirectory` does: the composed walk asks it twice — once for the project
+// root and once for the dependency root — and a fake that ignored the argument
+// could not tell the two universes apart.
+function treeHost(files: Record<string, string | undefined>): SceneReadHost {
+  return {
+    readDirectory: (directory, extensions) =>
+      Object.keys(files).filter(
+        (candidate) =>
+          candidate.startsWith(`${directory}/`) &&
+          (extensions === undefined || extensions.some((ext) => candidate.endsWith(ext))),
+      ),
+    readFile: (path) => files[path],
+  };
+}
+
+describe("readSceneDocuments over resolved library dependencies", () => {
+  test("a resolved dependency's scenes join the universe at their merged path", () => {
+    const host = treeHost({
+      [`${PROJECT_ROOT}/game.project`]: GAME_PROJECT,
+      [`${PROJECT_ROOT}/main/main.collection`]: MAIN_COLLECTION,
+      [MANIFEST_PATH]: MANIFEST,
+      [DRUID_HOST_PATH]: DRUID_COLLECTION,
+    });
+
+    const { documents, origins, unreadable, paths } = readSceneDocuments(host, PROJECT_ROOT);
+
+    expect([...documents.keys()].sort()).toEqual([
+      "druid/druid.collection",
+      "main/main.collection",
+    ]);
+    expect(documents.get("druid/druid.collection")).toBe(DRUID_COLLECTION);
+    expect([...origins]).toEqual([["druid/druid.collection", DRUID_URL]]);
+    expect(unreadable).toEqual([]);
+    // The watcher is registered on host paths, so the dependency file has to be
+    // named as the host holds it, not as the universe keys it.
+    expect(paths).toContain(DRUID_HOST_PATH);
+
+    // The keying rule is the index's, not the walk's: an origin-namespaced key
+    // would leave this instance unresolvable.
+    const index = buildSceneObjectPathIndex(documents);
+    expect(index.incomplete).toEqual([]);
+    expect([...index.paths]).toContain("/ui/root");
+  });
+
+  test("the project's own file wins a merged-path collision", () => {
+    const host = treeHost({
+      [`${PROJECT_ROOT}/game.project`]: GAME_PROJECT,
+      [`${PROJECT_ROOT}/druid/druid.collection`]: 'name: "project-owned"\n',
+      [MANIFEST_PATH]: MANIFEST,
+      [DRUID_HOST_PATH]: DRUID_COLLECTION,
+    });
+
+    const { documents, origins, unreadable } = readSceneDocuments(host, PROJECT_ROOT);
+
+    expect(documents.get("druid/druid.collection")).toBe('name: "project-owned"\n');
+    expect(origins.has("druid/druid.collection")).toBe(false);
+    expect(unreadable).toEqual([
+      `druid/druid.collection: also declared by ${DRUID_URL}; the project's own file is used`,
+    ]);
+  });
+
+  test("a declared dependency the last resolve did not materialize is named", () => {
+    const host = treeHost({
+      [`${PROJECT_ROOT}/game.project`]: `${GAME_PROJECT}dependencies#1 = ${OTHER_URL}\n`,
+      [`${PROJECT_ROOT}/main/main.collection`]: MAIN_COLLECTION,
+      [MANIFEST_PATH]: MANIFEST,
+      [DRUID_HOST_PATH]: DRUID_COLLECTION,
+    });
+
+    const { documents, unreadable } = readSceneDocuments(host, PROJECT_ROOT);
+
+    expect([...documents.keys()].sort()).toEqual([
+      "druid/druid.collection",
+      "main/main.collection",
+    ]);
+    expect(unreadable).toEqual([
+      `${OTHER_URL}: is declared by game.project but was not materialized by the last resolve`,
+    ]);
+  });
+
+  test("an absent manifest names the declared dependency and leaves the project intact", () => {
+    const host = treeHost({
+      [`${PROJECT_ROOT}/game.project`]: GAME_PROJECT,
+      [`${PROJECT_ROOT}/main/main.collection`]: MAIN_COLLECTION,
+    });
+
+    const { documents, unreadable } = readSceneDocuments(host, PROJECT_ROOT);
+
+    expect([...documents.keys()]).toEqual(["main/main.collection"]);
+    expect(unreadable).toEqual([
+      `${DRUID_URL}: is declared by game.project but .defold-types/dependencies/dependencies.json is absent`,
+    ]);
+  });
+
+  test("a manifest that is not JSON names the declared dependency", () => {
+    const host = treeHost({
+      [`${PROJECT_ROOT}/game.project`]: GAME_PROJECT,
+      [`${PROJECT_ROOT}/main/main.collection`]: MAIN_COLLECTION,
+      [MANIFEST_PATH]: "not json at all",
+      [DRUID_HOST_PATH]: DRUID_COLLECTION,
+    });
+
+    const { documents, unreadable } = readSceneDocuments(host, PROJECT_ROOT);
+
+    expect([...documents.keys()]).toEqual(["main/main.collection"]);
+    expect(unreadable).toEqual([
+      `${DRUID_URL}: is declared by game.project but .defold-types/dependencies/dependencies.json is not a readable dependency manifest`,
+    ]);
+  });
+
+  test("a manifest whose shape says nothing about dependencies is named the same way", () => {
+    const host = treeHost({
+      [`${PROJECT_ROOT}/game.project`]: GAME_PROJECT,
+      [`${PROJECT_ROOT}/main/main.collection`]: MAIN_COLLECTION,
+      [MANIFEST_PATH]: JSON.stringify({ dependencies: "druid-16" }),
+      [DRUID_HOST_PATH]: DRUID_COLLECTION,
+    });
+
+    const { documents, unreadable } = readSceneDocuments(host, PROJECT_ROOT);
+
+    expect([...documents.keys()]).toEqual(["main/main.collection"]);
+    expect(unreadable).toEqual([
+      `${DRUID_URL}: is declared by game.project but .defold-types/dependencies/dependencies.json is not a readable dependency manifest`,
+    ]);
+  });
+
+  test("a materialized directory game.project no longer declares is named", () => {
+    const host = treeHost({
+      [`${PROJECT_ROOT}/game.project`]: GAME_PROJECT,
+      [`${PROJECT_ROOT}/main/main.collection`]: MAIN_COLLECTION,
+      [MANIFEST_PATH]: MANIFEST,
+      [DRUID_HOST_PATH]: DRUID_COLLECTION,
+      [`${DEPENDENCY_ROOT}/dropped-5/input/input.collection`]: 'name: "dropped"\n',
+    });
+
+    const { documents, unreadable } = readSceneDocuments(host, PROJECT_ROOT);
+
+    expect([...documents.keys()].sort()).toEqual([
+      "druid/druid.collection",
+      "main/main.collection",
+    ]);
+    expect(unreadable).toEqual([
+      ".defold-types/dependencies/dropped-5: is materialized but no longer declared by game.project, so its scenes are left out",
+    ]);
+  });
+
+  test("the earlier-declared dependency wins a collision between two libraries", () => {
+    const host = treeHost({
+      [`${PROJECT_ROOT}/game.project`]: `${GAME_PROJECT}dependencies#1 = ${OTHER_URL}\n`,
+      [`${PROJECT_ROOT}/main/main.collection`]: MAIN_COLLECTION,
+      [MANIFEST_PATH]: JSON.stringify({
+        dependencies: [
+          { key: "input-5", url: OTHER_URL },
+          { key: "druid-16", url: DRUID_URL },
+        ],
+      }),
+      [DRUID_HOST_PATH]: DRUID_COLLECTION,
+      [`${DEPENDENCY_ROOT}/input-5/druid/druid.collection`]: 'name: "input-owned"\n',
+    });
+
+    const { documents, origins, unreadable } = readSceneDocuments(host, PROJECT_ROOT);
+
+    expect(documents.get("druid/druid.collection")).toBe(DRUID_COLLECTION);
+    expect(origins.get("druid/druid.collection")).toBe(DRUID_URL);
+    expect(unreadable).toEqual([
+      `druid/druid.collection: also declared by ${OTHER_URL}; ${DRUID_URL}'s file is used`,
+    ]);
+  });
+
+  test("a dependency file that will not read is named against its origin", () => {
+    const host = treeHost({
+      [`${PROJECT_ROOT}/game.project`]: GAME_PROJECT,
+      [`${PROJECT_ROOT}/main/main.collection`]: MAIN_COLLECTION,
+      [MANIFEST_PATH]: MANIFEST,
+      [DRUID_HOST_PATH]: undefined,
+    });
+
+    const { documents, unreadable } = readSceneDocuments(host, PROJECT_ROOT);
+
+    expect([...documents.keys()]).toEqual(["main/main.collection"]);
+    expect(unreadable).toEqual([`druid/druid.collection: could not be read from ${DRUID_URL}`]);
+  });
+
+  test("a project that declares no dependency reads exactly as before", () => {
+    const host = treeHost({
+      [`${PROJECT_ROOT}/game.project`]: "[project]\ntitle = demo\n",
+      [`${PROJECT_ROOT}/main/main.collection`]: MAIN_COLLECTION,
+    });
+
+    const { documents, origins, unreadable } = readSceneDocuments(host, PROJECT_ROOT);
+
+    expect([...documents.keys()]).toEqual(["main/main.collection"]);
+    expect(origins.size).toBe(0);
+    expect(unreadable).toEqual([]);
   });
 });

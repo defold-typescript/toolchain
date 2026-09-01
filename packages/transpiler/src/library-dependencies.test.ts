@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import {
   archiveWrapperOf,
-  LIBRARY_SCENE_EXTENSIONS,
   libraryIncludedEntries,
   readGameProjectDependencies,
 } from "./library-dependencies";
+import { LIBRARY_SCENE_EXTENSIONS } from "./scene-documents";
 
 describe("readGameProjectDependencies", () => {
   test("returns every dependencies#N under [project] in file order, URLs verbatim", () => {

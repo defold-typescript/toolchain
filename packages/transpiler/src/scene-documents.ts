@@ -1,3 +1,4 @@
+import { readLibrarySceneDocuments } from "./library-dependencies";
 import { isDefignoredPath } from "./project-resources";
 
 // The narrow slice of `ts.server.ServerHost` this needs: the real host
@@ -28,6 +29,21 @@ export const ANIMATION_ASSET_EXTENSIONS = [
   ".sprite",
   ".model",
   ".animationset",
+];
+
+// The file kinds a library shares into the address universe. `.input_binding`
+// and `.project` are deliberately absent: `game.project` names exactly one
+// active binding file, and a vendored `*.project` declares keys this project's
+// readers cannot resolve — the rule `PROJECT_EXTENSIONS` states below.
+//
+// It lives here rather than beside its reader for the reason the sets above do,
+// plus one more: `library-dependencies.ts` and this file import each other, and
+// a constant built from these arrays at that module's top level would read them
+// before this one had run.
+export const LIBRARY_SCENE_EXTENSIONS = [
+  ...SCENE_EXTENSIONS,
+  ...GUI_EXTENSIONS,
+  ...ANIMATION_ASSET_EXTENSIONS,
 ];
 
 // The walk returns every `.project` the project holds, so the lookup is by
@@ -78,18 +94,32 @@ export function isExcludedProjectPath(displayPath: string): boolean {
 // silent hole cannot be reasoned about. `paths` names the host paths actually
 // read — what a watcher must be registered on, which cannot be reconstructed
 // from a display path for a file outside the project root.
+//
+// The universe is the project plus whatever `resolve` last materialized from its
+// library dependencies: a library document joins it under the merged Defold
+// resource path it is addressed by, with its origin recorded in `origins` rather
+// than folded into the key, and the project's own file wins a collision. Which
+// makes the universe only as current as the last `resolve` — so a dependency
+// that is declared but unresolved, unreadable or shadowed is a named
+// `unreadable` line, never a silent omission.
 export function readSceneDocuments(
   host: SceneReadHost,
   projectRoot: string,
   extensions: readonly string[] = SCENE_EXTENSIONS,
-): { documents: Map<string, string>; unreadable: string[]; paths: string[] } {
+): {
+  documents: Map<string, string>;
+  origins: Map<string, string>;
+  unreadable: string[];
+  paths: string[];
+} {
   const documents = new Map<string, string>();
+  const origins = new Map<string, string>();
   const unreadable: string[] = [];
   const paths: string[] = [];
 
   if (!host.readDirectory) {
     unreadable.push("the editor host cannot enumerate project files, so no scene source was read");
-    return { documents, unreadable, paths };
+    return { documents, origins, unreadable, paths };
   }
 
   for (const filePath of host.readDirectory(projectRoot, extensions)) {
@@ -104,7 +134,19 @@ export function readSceneDocuments(
     paths.push(filePath);
   }
 
-  return { documents, unreadable, paths };
+  const library = readLibrarySceneDocuments(host, projectRoot, extensions);
+  unreadable.push(...library.unreadable);
+  for (const { displayPath, hostPath, url, text } of library.documents) {
+    if (documents.has(displayPath)) {
+      unreadable.push(`${displayPath}: also declared by ${url}; the project's own file is used`);
+      continue;
+    }
+    documents.set(displayPath, text);
+    origins.set(displayPath, url);
+    paths.push(hostPath);
+  }
+
+  return { documents, origins, unreadable, paths };
 }
 
 // The project's own files of the given kinds, as the `/`-prefixed

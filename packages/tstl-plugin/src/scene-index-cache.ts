@@ -1,6 +1,7 @@
 import {
   displayPathOf,
   isExcludedProjectPath,
+  LIBRARY_DEPENDENCY_ROOT,
   listProjectResourcePaths,
   readSceneDocuments,
   SCENE_EXTENSIONS,
@@ -81,6 +82,11 @@ export function createSceneIndexCache(host: SceneWatchHost, projectRoot: string)
 
   function affectsCache(hostPath: string): boolean {
     const displayPath = displayPathOf(projectRoot, hostPath);
+    // `resolve` rewrites this surface wholesale, and `.defold-types/` is
+    // `.defignore`d — so the exclusion test below would throw the event away and
+    // leave the editor offering ids from a dependency the author just removed.
+    // The manifest counts too: it alone changes when a dependency is dropped.
+    if (displayPath.startsWith(`${LIBRARY_DEPENDENCY_ROOT}/`)) return true;
     if (isExcludedProjectPath(displayPath)) return false;
     for (const extension of servedExtensions) {
       if (displayPath.endsWith(extension)) return true;

@@ -3327,6 +3327,32 @@ files say which ids exist, not which object each address is reachable from, so
 this is the address the generator can prove; a cross-object `"/player#sprite"`
 still type-checks, it is simply not offered as a completion.
 
+#### Your library dependencies count too
+
+The universe is your project's own scenes **plus** whatever
+[`resolve`](./resolve.md) last unpacked from your library dependencies. A
+library shares the collections, game objects and gui scenes under the
+`[library] include_dirs` its own `game.project` declares, and Defold merges
+those into your project's namespace — so a collection a library holds at
+`druid/druid.collection` is `/druid/druid.collection` to you, and instancing it
+in one of your own collections contributes its objects' addresses exactly as a
+local collection would.
+
+Two consequences worth knowing:
+
+- **It is only as current as your last `resolve`.** Adding a dependency to
+  `game.project` does not by itself put its scenes in the universe; run
+  `resolve` and they appear.
+- **An unresolved dependency is reported, never skipped.** A dependency you
+  declared but have not resolved is named as a reason the universe is
+  incomplete, which is what stops the
+  [unreachable-`#fragment` report](./transpile-diagnostics.md) from claiming an
+  address is unreachable when the answer might live in a library you have not
+  fetched. Running `resolve` clears it.
+
+Your own file always wins if a project scene and a library scene land on the
+same path, and the shadowing is reported the same way.
+
 #### Nothing is ever rejected
 
 `SceneGameObjectAddress` and `SceneComponentAddress` stay widened with
@@ -3376,7 +3402,9 @@ rename, so the editor never reads a half-written declaration.
 Build output is skipped: `bob` writes `_generated_*.go` copies of your scenes
 under `build/`, and reading those would report every id twice. So are the paths
 the scaffolded `.defignore` names — `node_modules/`, `.defold-types/`,
-`.vscode/`.
+`.vscode/`. The one exception is `.defold-types/dependencies/`, which is not
+your project's own source at all: it is the library surface `resolve` writes,
+read under the merged paths described above.
 
 #### Machine-readable output
 
