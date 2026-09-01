@@ -78,6 +78,11 @@ Two consequences worth knowing:
 Your own file always wins if a project scene and a library scene land on the
 same path, and the shadowing is reported the same way.
 
+The same universe is what [`build`](./build.md) checks address literals against:
+a `#fragment` naming a component no scene declares becomes a build warning, and a
+hole here — an unresolved dependency included — suppresses that check rather than
+reporting the fragment.
+
 ## Nothing is ever rejected
 
 `SceneGameObjectAddress` and `SceneComponentAddress` stay widened with

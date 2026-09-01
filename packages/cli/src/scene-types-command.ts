@@ -2,9 +2,11 @@ import { mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync
 import * as path from "node:path";
 import {
   buildSceneAddressDeclaration,
+  buildSceneComponentIndex,
   displayPathOf,
   isExcludedProjectPath,
   readSceneDocuments,
+  type SceneComponentIndex,
   type SceneReadHost,
 } from "@defold-typescript/transpiler";
 import { MATERIALIZED_ROOT } from "./materialize";
@@ -26,6 +28,15 @@ export interface SceneTypesResult {
    * decided.
    */
   readonly incomplete: readonly string[];
+  /**
+   * The component-id universe the same walk read, for a consumer that has to
+   * decide whether an address can resolve. Its own `incomplete` records only
+   * what the *parse* could not read; a caller wanting the whole hole composes
+   * it with `incomplete` above, which records what the *walk* could not reach.
+   */
+  readonly index: SceneComponentIndex;
+  /** Whether the walk read any `.go`/`.collection` at all. */
+  readonly hasScenes: boolean;
 }
 
 /**
@@ -118,5 +129,36 @@ export function runSceneTypes(opts: { cwd: string }): SceneTypesResult {
     path.join(opts.cwd, SCENE_ADDRESSES_DECLARATION),
     buildSceneAddressDeclaration(documents),
   );
-  return { declaration: SCENE_ADDRESSES_DECLARATION, wrote, incomplete: unreadable };
+  return {
+    declaration: SCENE_ADDRESSES_DECLARATION,
+    wrote,
+    incomplete: unreadable,
+    index: buildSceneComponentIndex(documents),
+    hasScenes: documents.size > 0,
+  };
+}
+
+/**
+ * The index `build` checks `#fragment` addresses against, or `undefined` when
+ * there is nothing to check.
+ *
+ * Two decisions live here rather than at the call sites, so both build branches
+ * and `watch` cannot drift apart:
+ *
+ * - the whole hole is one index — what the parse could not read plus what the
+ *   walk could not reach — so a fragment declared only by an unresolved library
+ *   reports the check as suppressed rather than the fragment as unreachable,
+ *   reusing the check's own suppression rule instead of adding a second one;
+ * - a project with no scene sources at all is not reported as suppressed. It
+ *   has no address universe to speak of, so there is nothing a reader could act
+ *   on, and saying so on every build would be noise — the same posture
+ *   `runSceneTypes` already takes by writing an empty declaration instead of
+ *   failing.
+ */
+export function sceneIndexForBuild(result: SceneTypesResult): SceneComponentIndex | undefined {
+  if (!result.hasScenes) return undefined;
+  return {
+    ids: result.index.ids,
+    incomplete: [...result.index.incomplete, ...result.incomplete],
+  };
 }
