@@ -39,29 +39,33 @@ export function materializeLibrarySceneSources(
   const { cwd, bundles } = opts;
 
   const counts = new Map<string, number>();
-  const sharing: {
+  // Every resolved dependency is listed, sharing or not. The scene walk that
+  // reads this manifest has no other way to tell a dependency that shares no
+  // scenes from one the last resolve never reached, and reporting the first as
+  // an unresolved hole would mark the address universe incomplete — which
+  // suppresses the reachability report — for every project whose only
+  // dependencies are native extensions.
+  const resolved: {
     key: string;
     url: string;
     sources: readonly { path: string; text: string }[];
   }[] = [];
   for (const bundle of bundles) {
     counts.set(bundle.url, bundle.sceneSources.length);
-    if (bundle.sceneSources.length > 0) {
-      sharing.push({
-        key: extensionArchiveKey(bundle.url),
-        url: bundle.url,
-        sources: bundle.sceneSources,
-      });
-    }
+    resolved.push({
+      key: extensionArchiveKey(bundle.url),
+      url: bundle.url,
+      sources: bundle.sceneSources,
+    });
   }
-  sharing.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+  resolved.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
 
   const relDir = path.posix.join(MATERIALIZED_ROOT, DEPENDENCIES_DIR);
   const absDir = path.join(cwd, MATERIALIZED_ROOT, DEPENDENCIES_DIR);
 
-  // A dependency set that shares nothing reconciles the surface to zero rather
-  // than leaving a stale library declaring ids for good.
-  if (sharing.length === 0) {
+  // An empty dependency set reconciles the surface to zero rather than leaving a
+  // stale library declaring ids for good.
+  if (resolved.length === 0) {
     if (existsSync(absDir)) {
       rmSync(absDir, { recursive: true, force: true });
     }
@@ -70,14 +74,17 @@ export function materializeLibrarySceneSources(
 
   mkdirSync(absDir, { recursive: true });
 
-  const wanted = new Set(sharing.map((entry) => entry.key));
+  const wanted = new Set(
+    resolved.filter((entry) => entry.sources.length > 0).map((entry) => entry.key),
+  );
   for (const existing of readdirSync(absDir)) {
     if (existing !== MANIFEST_FILE && !wanted.has(existing)) {
       rmSync(path.join(absDir, existing), { recursive: true, force: true });
     }
   }
 
-  for (const { key, sources } of sharing) {
+  for (const { key, sources } of resolved) {
+    if (sources.length === 0) continue;
     const keyDir = path.join(absDir, key);
     rmSync(keyDir, { recursive: true, force: true });
     for (const { path: rel, text } of sources) {
@@ -90,7 +97,7 @@ export function materializeLibrarySceneSources(
   writeFileSync(
     path.join(absDir, MANIFEST_FILE),
     `${formatJsonLikeBiome({
-      dependencies: sharing.map(({ key, url }) => ({ key, url })),
+      dependencies: resolved.map(({ key, url }) => ({ key, url })),
     })}\n`,
   );
 

@@ -84,7 +84,7 @@ describe("materializeLibrarySceneSources", () => {
     expect(existsSync(dependenciesDir(cwd))).toBe(false);
   });
 
-  test("a dependency that shares nothing gets no directory and no manifest row", () => {
+  test("a dependency that shares nothing gets no directory but is still listed", () => {
     const cwd = tmp();
     const result = materializeLibrarySceneSources({
       cwd,
@@ -92,9 +92,32 @@ describe("materializeLibrarySceneSources", () => {
     });
 
     expect(existsSync(join(dependenciesDir(cwd), extensionArchiveKey(EXTRA_URL)))).toBe(false);
-    expect(readManifest(cwd).dependencies).toEqual([
-      { key: extensionArchiveKey(DRUID_URL), url: DRUID_URL },
-    ]);
+    // Listed anyway: the scene walk reads the manifest to tell a dependency that
+    // shares no scenes from one this resolve never reached, and only the second
+    // is a hole in the address universe.
+    expect(readManifest(cwd).dependencies).toEqual(
+      [
+        { key: extensionArchiveKey(DRUID_URL), url: DRUID_URL },
+        { key: extensionArchiveKey(EXTRA_URL), url: EXTRA_URL },
+      ].sort((a, b) => (a.key < b.key ? -1 : 1)),
+    );
     expect(result.counts.get(EXTRA_URL)).toBe(0);
+  });
+
+  test("a dependency that stops sharing keeps its manifest row and loses its directory", () => {
+    const cwd = tmp();
+    materializeLibrarySceneSources({ cwd, bundles: [DRUID_BUNDLE, EXTRA_BUNDLE] });
+
+    materializeLibrarySceneSources({
+      cwd,
+      bundles: [DRUID_BUNDLE, { url: EXTRA_URL, sceneSources: [] }],
+    });
+
+    expect(existsSync(join(dependenciesDir(cwd), extensionArchiveKey(EXTRA_URL)))).toBe(false);
+    expect(
+      readManifest(cwd)
+        .dependencies.map((entry) => entry.url)
+        .sort(),
+    ).toEqual([DRUID_URL, EXTRA_URL].sort());
   });
 });

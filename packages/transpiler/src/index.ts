@@ -12,13 +12,16 @@ export { buildInputActionIndex } from "./input-action-index";
 export type {
   ExtensionDependency,
   LibraryIncludedEntries,
+  LibrarySceneDocument,
+  LibrarySceneDocuments,
   LibrarySharedEntry,
 } from "./library-dependencies";
 export {
   archiveWrapperOf,
-  LIBRARY_SCENE_EXTENSIONS,
+  LIBRARY_DEPENDENCY_ROOT,
   libraryIncludedEntries,
   readGameProjectDependencies,
+  readLibrarySceneDocuments,
 } from "./library-dependencies";
 export { findMainEntryFactoryImports } from "./main-entry-factory-imports";
 export type { BuildConfig, ScriptKind, SourceOutputKind } from "./output-paths";
@@ -42,6 +45,7 @@ export {
   GUI_EXTENSIONS,
   INPUT_BINDING_EXTENSIONS,
   isExcludedProjectPath,
+  LIBRARY_SCENE_EXTENSIONS,
   listProjectResourcePaths,
   PROJECT_EXTENSIONS,
   readSceneDocuments,

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { readCliVersion } from "./cli-version";
@@ -106,7 +106,7 @@ describe("runResolve", () => {
     ]);
   });
 
-  test("an asset-only dependency writes nothing and reports assetOnly", async () => {
+  test("an asset-only dependency writes no type surface and reports assetOnly", async () => {
     const cwd = tmp();
     const url = "https://example.com/asset.zip";
     writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
@@ -123,7 +123,10 @@ describe("runResolve", () => {
 
     expect(result.ok).toBe(true);
     expect(result.materializedSurface).toBeNull();
-    expect(existsSync(join(cwd, ".defold-types"))).toBe(false);
+    // The dependency manifest is the one thing written: it records that this run
+    // reached the dependency, which is what keeps the scene walk from reporting
+    // it as an unresolved hole.
+    expect(readdirSync(join(cwd, ".defold-types"))).toEqual(["dependencies"]);
     expect(result.extensions).toEqual([
       {
         url,
@@ -1065,7 +1068,10 @@ describe("runResolve dependency scene sources", () => {
     expect(result.ok).toBe(true);
     expect(result.extensions[0]?.assetOnly).toBe(true);
     expect(result.extensions[0]?.sceneSources).toBe(0);
-    expect(existsSync(join(cwd, ".defold-types", "dependencies"))).toBe(false);
+    // No directory of its own, but the manifest still records that this run
+    // reached it — otherwise the scene walk would report it as an unresolved
+    // hole for good.
+    expect(readdirSync(join(cwd, ".defold-types", "dependencies"))).toEqual(["dependencies.json"]);
     expect(warnings.join("\n")).toContain(url);
     expect(warnings.join("\n")).toContain("game.project");
   });
