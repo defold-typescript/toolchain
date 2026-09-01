@@ -1,4 +1,5 @@
 import type { InitOperation } from "./init";
+import type { UnreachableAddressEntry } from "./url-reachability-scan";
 
 export type CliCommand =
   | "init"
@@ -70,6 +71,11 @@ export interface RenderResultInput {
   readonly extensions?: readonly ResolvedExtensionReportJson[];
   readonly libraries?: readonly ResolvedLibraryReportJson[];
   readonly warnings?: readonly string[];
+  // The structured half of the unreachable-address findings `warnings` states in
+  // prose. Absent — never an empty array — when the check was suppressed, which
+  // `warnings` is where a consumer learns; absent also means nothing to report
+  // only when no suppression line is present.
+  readonly unreachableAddresses?: readonly UnreachableAddressEntry[];
   readonly pinMismatch?: { readonly installed: string; readonly pinned: string };
   // Stated outright so a consumer reads "no surface" from a present field
   // rather than inferring it from an absent or null `materializedSurface`.
@@ -152,8 +158,14 @@ export function renderResult(input: RenderResultInput): string {
     "libraries" in input ? { ...withExtensions, libraries: input.libraries } : withExtensions;
   const withWarnings =
     "warnings" in input ? { ...withLibraries, warnings: input.warnings } : withLibraries;
+  const withUnreachable =
+    "unreachableAddresses" in input
+      ? { ...withWarnings, unreachableAddresses: input.unreachableAddresses }
+      : withWarnings;
   const withPinMismatch =
-    "pinMismatch" in input ? { ...withWarnings, pinMismatch: input.pinMismatch } : withWarnings;
+    "pinMismatch" in input
+      ? { ...withUnreachable, pinMismatch: input.pinMismatch }
+      : withUnreachable;
   const withUnresolvable =
     "unresolvableTarget" in input
       ? { ...withPinMismatch, unresolvableTarget: input.unresolvableTarget }
@@ -206,6 +218,7 @@ export interface RenderWatchEventInput {
   readonly changed?: readonly string[];
   readonly removed?: readonly string[];
   readonly warnings?: readonly string[];
+  readonly unreachableAddresses?: readonly UnreachableAddressEntry[];
   readonly pinMismatch?: { readonly installed: string; readonly pinned: string };
   readonly error?: string;
   readonly errors?: readonly WatchErrorEntry[];
@@ -222,7 +235,13 @@ export function renderWatchEvent(input: RenderWatchEventInput): string {
   const withRemoved = "removed" in input ? { ...withChanged, removed: input.removed } : withChanged;
   const withWarnings =
     "warnings" in input ? { ...withRemoved, warnings: input.warnings } : withRemoved;
+  const withUnreachable =
+    "unreachableAddresses" in input
+      ? { ...withWarnings, unreachableAddresses: input.unreachableAddresses }
+      : withWarnings;
   const withPinMismatch =
-    "pinMismatch" in input ? { ...withWarnings, pinMismatch: input.pinMismatch } : withWarnings;
+    "pinMismatch" in input
+      ? { ...withUnreachable, pinMismatch: input.pinMismatch }
+      : withUnreachable;
   return `${JSON.stringify(withPinMismatch)}\n`;
 }

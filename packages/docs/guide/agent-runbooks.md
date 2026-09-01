@@ -48,9 +48,30 @@ bunx @defold-typescript/cli build --json
 
 A failure flips `ok` to `false` and carries an `error` string instead of
 `written`. On [`build`](./build.md), `warnings` carries the sourceless-orphan
-lines and scene-resource-mismatch lines (empty when there are none). Optional fields (`defoldVersion`,
-`defoldChannel`, `apiSurface`, `materializedSurface`, …) appear only when they
-apply.
+lines, the scene-resource-mismatch lines and the unreachable-address lines (empty
+when there are none). Optional fields (`defoldVersion`,
+`defoldChannel`, `apiSurface`, `materializedSurface`, `unreachableAddresses`, …)
+appear only when they apply.
+
+`unreachableAddresses` is the structured half of the unreachable-address
+findings, so you never parse the English `warnings` line to learn which file and
+which fragment:
+
+```sh
+bunx @defold-typescript/cli build --json
+# {"command":"build","ok":true,"written":[...],
+#  "warnings":["src/main.ts: no `.go` or `.collection` in this project declares a component with the id \"nobody\", …"],
+#  "unreachableAddresses":[{"file":"src/main.ts","fragment":"nobody","message":"no `.go` or `.collection` in this project declares …"}]}
+```
+
+**Read the absent field together with `warnings`, never on its own.** The field
+is omitted — not emitted as `[]` — both when the project has no unreachable
+addresses *and* when the check could not run at all. Only `warnings` separates
+the two: a suppressed check contributes a line beginning `unreachable-address
+check did not run:`, naming the holes in the component-id universe (an
+unparseable scene, or a dependency [`resolve`](./resolve.md) has not
+materialized). Treating an absent `unreachableAddresses` as "no unreachable
+addresses" is wrong whenever that line is present.
 
 `watch` is long-running, so `--json` streams **newline-delimited JSON (NDJSON)** —
 one object per line, one line per event. The full lifecycle reads
@@ -60,11 +81,17 @@ one object per line, one line per event. The full lifecycle reads
 bunx @defold-typescript/cli watch --json
 # {"command":"watch","event":"start","ok":true,"written":[]}
 # {"command":"watch","event":"build","ok":true,"written":[...],"warnings":[]}
-# {"command":"watch","event":"rebuild","ok":true,"written":[...],"changed":["src/main.ts"],"removed":[]}
+# {"command":"watch","event":"rebuild","ok":true,"written":[...],"changed":["src/main.ts"],"removed":[],"warnings":[]}
 # {"command":"watch","event":"rebuild","ok":false,"error":"..."}
 # {"command":"watch","event":"resolve","ok":true,"written":[]}
 # {"command":"watch","event":"stop","ok":true,"written":[]}
 ```
+
+`build` and `rebuild` events carry `warnings` and the same optional
+`unreachableAddresses` array, under the identical absent-versus-empty rule, so a
+watching agent sees an address break on the edit that broke it. The first
+`build` event of a session is the exception: it runs before the scene walk, so
+the check starts from the first `rebuild`.
 
 A `resolve` event is emitted whenever a `game.project` save re-resolves the
 extension surface (re-materializing `.defold-types/extensions/` from the declared
@@ -328,8 +355,8 @@ Once converted, prove it compiles before handing it back: write the snippet, run
 rebuild. This is the same loop as [Fix the Lua output](#fix-the-lua-output); the
 [script lifecycle](./script-lifecycle.md) page covers which hooks and which
 `self` typing each script kind exposes. On `ok: true` the build envelope adds a
-`warnings` array. It lists two kinds of issue, empty when clean, and the build
-never fixes either for you:
+`warnings` array. It lists three kinds of issue, empty when clean, and the build
+never fixes any of them for you:
 
 - **Sourceless outputs** — a generated `.lua`/`.ts.*` left without a TypeScript
   source (a deleted or renamed source), each naming the stale file and the
@@ -340,6 +367,9 @@ never fixes either for you:
   the CLI surfaces at build time what only the editor would otherwise catch.
   Wrap the mesh in a `.model` (with a `materials` block) and point the component
   at the `.model`.
+- **Unreachable addresses** — an address literal whose `#fragment` names a
+  component no `.go`/`.collection` declares, repeated as structured entries in
+  `unreachableAddresses`. Either declare the component or fix the address.
 
 ## Scaffold a project
 
