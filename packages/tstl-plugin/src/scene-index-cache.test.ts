@@ -103,6 +103,8 @@ describe("createSceneIndexCache walk reuse", () => {
     expect(host.fileReads).toEqual([
       `${PROJECT_ROOT}/main/board.go`,
       `${PROJECT_ROOT}/main/main.collection`,
+      // The walk reads `game.project` for the declared dependency set.
+      `${PROJECT_ROOT}/game.project`,
     ]);
     expect([...second.documents]).toEqual([...first.documents]);
     expect([...first.documents.keys()]).toEqual(["main/board.go", "main/main.collection"]);
@@ -224,6 +226,23 @@ describe("createSceneIndexCache invalidation filtering", () => {
   test("an extension the cache was never asked to serve leaves it intact", () => {
     expect(untouched(`${PROJECT_ROOT}/main/hud.gui`)).toHaveLength(1);
     expect(untouched(`${PROJECT_ROOT}/main.ts`)).toHaveLength(1);
+  });
+
+  test("a resolve that rewrites the dependency surface invalidates the cache", () => {
+    // `.defold-types/` is `.defignore`d, so the exclusion test would throw this
+    // event away and leave the editor offering ids from a dependency the author
+    // just removed.
+    expect(
+      untouched(`${PROJECT_ROOT}/.defold-types/dependencies/druid-16/druid/druid.collection`),
+    ).toHaveLength(2);
+    expect(untouched(`${PROJECT_ROOT}/.defold-types/dependencies/dependencies.json`)).toHaveLength(
+      2,
+    );
+  });
+
+  test("another materialized surface under `.defold-types/` still leaves the cache intact", () => {
+    expect(untouched(`${PROJECT_ROOT}/.defold-types/scene-addresses.d.ts`)).toHaveLength(1);
+    expect(untouched(`${PROJECT_ROOT}/.defold-types/defold/index.d.ts`)).toHaveLength(1);
   });
 
   test("an extension becomes served once a walk has asked for it", () => {
