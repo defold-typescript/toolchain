@@ -7,6 +7,7 @@ import { type ExtensionZip, extensionArchiveKey } from "./extension-archive";
 import { buildLualsRegistryEntries } from "./library-match";
 import { librariesDirName } from "./library-materialize";
 import { runResolve } from "./resolve";
+import { runSceneTypes, SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 
 // The materialized library surface carries the generating toolchain version;
 // these tests defend other behavior, so they derive the name from production.
@@ -968,6 +969,31 @@ describe("runResolve a multi-module same-repo LuaLS library", () => {
 describe("runResolve dependency scene sources", () => {
   const DRUID_GAME_PROJECT = `[project]\ntitle = Druid\n\n[library]\ninclude_dirs = druid\n`;
   const DRUID_COLLECTION = 'name: "druid"\n';
+  // A window the library opens as its own world, and a bean it spawns copies of:
+  // between them the two reference kinds that say which world a collection is.
+  const WINDOW_GO = `components {
+  id: "proxy"
+  component: "/druid/window.collectionproxy"
+}
+components {
+  id: "spawner"
+  component: "/druid/spawner.collectionfactory"
+}
+`;
+  const WINDOW_PROXY = 'collection: "/druid/window.collection"\nexclude: false\n';
+  const WINDOW_COLLECTION = `name: "window"
+instances {
+  id: "hud"
+  prototype: "/druid/window.go"
+}
+`;
+  const SPAWNER_FACTORY = 'prototype: "/druid/bean.collection"\nload_dynamically: false\n';
+  const BEAN_COLLECTION = `name: "bean"
+instances {
+  id: "bean"
+  prototype: "/druid/window.go"
+}
+`;
 
   function druidArchive(url: string): Record<string, FakeArchive> {
     return {
@@ -976,11 +1002,21 @@ describe("runResolve dependency scene sources", () => {
           "druid-1.2.3/game.project",
           "druid-1.2.3/druid/druid.collection",
           "druid-1.2.3/druid/druid.lua",
+          "druid-1.2.3/druid/window.go",
+          "druid-1.2.3/druid/window.collectionproxy",
+          "druid-1.2.3/druid/window.collection",
+          "druid-1.2.3/druid/spawner.collectionfactory",
+          "druid-1.2.3/druid/bean.collection",
           "druid-1.2.3/example/demo.collection",
         ],
         contents: {
           "druid-1.2.3/game.project": DRUID_GAME_PROJECT,
           "druid-1.2.3/druid/druid.collection": DRUID_COLLECTION,
+          "druid-1.2.3/druid/window.go": WINDOW_GO,
+          "druid-1.2.3/druid/window.collectionproxy": WINDOW_PROXY,
+          "druid-1.2.3/druid/window.collection": WINDOW_COLLECTION,
+          "druid-1.2.3/druid/spawner.collectionfactory": SPAWNER_FACTORY,
+          "druid-1.2.3/druid/bean.collection": BEAN_COLLECTION,
         },
       },
     };
@@ -1006,12 +1042,52 @@ describe("runResolve dependency scene sources", () => {
     expect(readFileSync(join(root, key, "druid", "druid.collection"), "utf8")).toBe(
       DRUID_COLLECTION,
     );
+    // The components that name a collection without instancing it travel with
+    // the collections they classify.
+    expect(readFileSync(join(root, key, "druid", "window.collectionproxy"), "utf8")).toBe(
+      WINDOW_PROXY,
+    );
+    expect(readFileSync(join(root, key, "druid", "spawner.collectionfactory"), "utf8")).toBe(
+      SPAWNER_FACTORY,
+    );
     expect(existsSync(join(root, key, "example", "demo.collection"))).toBe(false);
     expect(existsSync(join(root, key, "druid", "druid.lua"))).toBe(false);
     expect(JSON.parse(readFileSync(join(root, "dependencies.json"), "utf8"))).toEqual({
       dependencies: [{ key, url }],
     });
-    expect(result.extensions[0]?.sceneSources).toBe(1);
+    expect(result.extensions[0]?.sceneSources).toBe(6);
+  });
+
+  test("a proxied library collection reaches the declaration under its own socket", async () => {
+    const cwd = tmp();
+    const url = "https://github.com/Insality/druid/archive/1.2.3.zip";
+    writeProject(cwd, `[project]\ntitle = Test\ndependencies#0 = ${url}\n`);
+
+    const resolved = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(druidArchive(url)),
+      libraryRegistry: [],
+      libraryGeneratedDir: null,
+    });
+    expect(resolved.ok).toBe(true);
+
+    const scenes = runSceneTypes({ cwd });
+    const declaration = readFileSync(join(cwd, SCENE_ADDRESSES_DECLARATION), "utf8");
+
+    // The proxy opens `window.collection` as its own world, so its objects are
+    // addressed under that collection's `name:` and never bare.
+    expect(declaration).toContain('"window:/hud": true;');
+    expect(declaration).not.toContain('"/hud": true;');
+    // A collection factory's prototype has no static address at all.
+    expect(declaration).not.toContain("/bean");
+
+    const unclassified = scenes.incomplete.join("\n");
+    expect(unclassified).not.toContain("druid/window.collectionproxy");
+    expect(unclassified).not.toContain("druid/spawner.collectionfactory");
+    expect(unclassified).not.toContain("druid/window.collection:");
+    expect(unclassified).not.toContain("druid/bean.collection:");
   });
 
   test("removing every dependency removes the materialized dependency surface", async () => {
