@@ -47,7 +47,7 @@ import {
 import { renderResult } from "./json-output";
 import type { VendoredLibrary } from "./library-match";
 import type { RefDocResolveOptions } from "./materialize";
-import { runSceneTypes } from "./scene-types-command";
+import { createIncompleteReporter, runSceneTypes } from "./scene-types-command";
 import { runSetTarget } from "./set-target";
 import { runSetupDebug } from "./setup-debug";
 import { runUpgrade, type UpgradeIo } from "./upgrade";
@@ -650,14 +650,26 @@ function dispatchCommand(
 
     if (command === "scene-types") {
       try {
-        const { declaration, wrote } = runSceneTypes({ cwd });
+        const { declaration, wrote, incomplete } = runSceneTypes({ cwd });
         const written = wrote ? [declaration] : [];
         if (json) {
-          io.stdout.write(renderResult({ command: "scene-types", declaration, written }));
-        } else if (wrote) {
-          io.stdout.write(`defold-typescript scene-types: wrote ${declaration}\n`);
+          io.stdout.write(
+            renderResult({ command: "scene-types", declaration, written, warnings: incomplete }),
+          );
         } else {
-          io.stdout.write(`defold-typescript scene-types: ${declaration} is already up to date.\n`);
+          // A hole in the address universe is a warning, never a failure: the
+          // declaration is still written from whatever did resolve, and the
+          // exit code stays 0.
+          for (const reason of incomplete) {
+            io.stderr.write(`defold-typescript scene-types: ${reason}\n`);
+          }
+          if (wrote) {
+            io.stdout.write(`defold-typescript scene-types: wrote ${declaration}\n`);
+          } else {
+            io.stdout.write(
+              `defold-typescript scene-types: ${declaration} is already up to date.\n`,
+            );
+          }
         }
         return 0;
       } catch (err) {
@@ -834,7 +846,7 @@ function dispatchCommand(
         if (isRefDocSurface) {
           const surfaceId = surface.surfaceId as string;
           try {
-            runSceneTypes({ cwd });
+            const { incomplete } = runSceneTypes({ cwd });
             const { written, warnings } = runBuild({ cwd });
             const { materializedDir } = await materializeRefDocSurface({
               cwd,
@@ -847,7 +859,7 @@ function dispatchCommand(
                 `defold-typescript build: could not materialize ${surfaceId}; the default surface stays active\n`,
               );
             }
-            return reportBuild(written, warnings, materializedDir);
+            return reportBuild(written, [...incomplete, ...warnings], materializedDir);
           } catch (err) {
             return reportError(err);
           }
@@ -857,14 +869,16 @@ function dispatchCommand(
           // Ahead of the transpile, not after it: the declaration is inside
           // `include`, so a build that regenerated afterwards would type-check
           // against the previous run's address universe.
-          runSceneTypes({ cwd });
+          // A hole in the address universe is reported ahead of the build's own
+          // warnings, because it explains findings that follow it.
+          const { incomplete } = runSceneTypes({ cwd });
           const { written, warnings } = runBuild({ cwd });
           const { materializedDir } = materializeApiSurface({
             cwd,
             surface,
             sourceGeneratedDir,
           });
-          return reportBuild(written, warnings, materializedDir);
+          return reportBuild(written, [...incomplete, ...warnings], materializedDir);
         } catch (err) {
           return reportError(err);
         }
@@ -910,18 +924,26 @@ function dispatchCommand(
         // The reporting `scene-types` does, minus the up-to-date line: a watch
         // regenerates on every scene save, and most of them write nothing.
         // `watch.ts` emits the `sceneTypes` watch event around this closure.
+        const reportIncomplete = createIncompleteReporter();
         const sceneTypesSurface = (): void => {
-          const { declaration, wrote } = runSceneTypes({ cwd });
+          const { declaration, wrote, incomplete } = runSceneTypes({ cwd });
+          const fresh = reportIncomplete(incomplete);
           if (json) {
             io.stdout.write(
               renderResult({
                 command: "scene-types",
                 declaration,
                 written: wrote ? [declaration] : [],
+                warnings: fresh,
               }),
             );
-          } else if (wrote) {
-            io.stdout.write(`defold-typescript scene-types: wrote ${declaration}\n`);
+          } else {
+            for (const reason of fresh) {
+              io.stderr.write(`defold-typescript scene-types: ${reason}\n`);
+            }
+            if (wrote) {
+              io.stdout.write(`defold-typescript scene-types: wrote ${declaration}\n`);
+            }
           }
         };
 

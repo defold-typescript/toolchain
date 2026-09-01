@@ -86,7 +86,15 @@ export function createSceneIndexCache(host: SceneWatchHost, projectRoot: string)
     // `.defignore`d — so the exclusion test below would throw the event away and
     // leave the editor offering ids from a dependency the author just removed.
     // The manifest counts too: it alone changes when a dependency is dropped.
-    if (displayPath.startsWith(`${LIBRARY_DEPENDENCY_ROOT}/`)) return true;
+    // The root itself, not only its descendants: removing the last dependency
+    // deletes the whole directory and writes nothing inside it, so that event is
+    // the only one a watcher reports.
+    if (
+      displayPath === LIBRARY_DEPENDENCY_ROOT ||
+      displayPath.startsWith(`${LIBRARY_DEPENDENCY_ROOT}/`)
+    ) {
+      return true;
+    }
     if (isExcludedProjectPath(displayPath)) return false;
     for (const extension of servedExtensions) {
       if (displayPath.endsWith(extension)) return true;
