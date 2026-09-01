@@ -205,6 +205,34 @@ describe("scene-types verb", () => {
     ).toEqual([]);
   });
 
+  test("a resolved dependency's scenes reach the declaration at their merged path", async () => {
+    const url = "https://github.com/Insality/druid/archive/refs/tags/16.zip";
+    scaffoldProject();
+    write("game.project", `[project]\ntitle = demo\ndependencies#0 = ${url}\n`);
+    write(
+      "game/game.collection",
+      'collection_instances {\n  id: "player"\n  collection: "/game/player.collection"\n}\n' +
+        'collection_instances {\n  id: "ui"\n  collection: "/druid/druid.collection"\n}\n',
+    );
+    write(
+      `${MATERIALIZED_ROOT}/dependencies/dependencies.json`,
+      JSON.stringify({ dependencies: [{ key: "druid-16", url }] }),
+    );
+    write(
+      `${MATERIALIZED_ROOT}/dependencies/druid-16/druid/druid.collection`,
+      'instances {\n  id: "root"\n  prototype: "/druid/druid.go"\n}\n',
+    );
+
+    const { code } = await run("scene-types");
+
+    expect(code).toBe(0);
+    expect(
+      probeDiagnostics(
+        'const object: keyof SceneGameObjectAddresses = "/ui/root";\nexport { object };\n',
+      ).map((d) => ts.flattenDiagnosticMessageText(d.messageText, " ")),
+    ).toEqual([]);
+  });
+
   test("the build output bob writes is not read back as project scenes", async () => {
     scaffoldProject();
     write(
