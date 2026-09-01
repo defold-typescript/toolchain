@@ -157,6 +157,9 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     for (const reason of bundle.sceneReasons) {
       console.warn(`no scene source from ${bundle.url}: ${reason}`);
     }
+    for (const entry of bundle.sceneRefused) {
+      console.warn(`refusing unsafe scene path from ${bundle.url}: ${entry}`);
+    }
   }
 
   // Match each asset-only dependency (no `.script_api`, so it contributes no

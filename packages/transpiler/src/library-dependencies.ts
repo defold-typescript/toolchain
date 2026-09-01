@@ -96,6 +96,24 @@ export interface LibrarySharedEntry {
 export interface LibraryIncludedEntries {
   readonly shared: LibrarySharedEntry[];
   readonly reasons: string[];
+  // The entries that named an include dir and a scene kind but whose merged
+  // resource path would not stay inside it.
+  readonly refused: string[];
+}
+
+// The one containment rule both halves of the dependency surface read: the
+// reader refuses to share a path this rejects, and the CLI writer re-asserts it
+// before touching disk. A path only ever addresses something below its own root
+// when it is relative, canonical, and uses the single separator Defold does —
+// `path.join` normalizes `..` away rather than refusing it, and treats `\` as a
+// separator on Windows only, so neither can be left to it.
+export function isContainedResourcePath(path: string): boolean {
+  if (path.length === 0 || path.includes("\\")) {
+    return false;
+  }
+  return path
+    .split("/")
+    .every((segment) => segment.length > 0 && segment !== "." && segment !== "..");
 }
 
 // The scene sources a library actually shares: the entries under the directories
@@ -110,16 +128,22 @@ export function libraryIncludedEntries(
     return {
       shared: [],
       reasons: ["ships no game.project, so it declares no [library] include_dirs"],
+      refused: [],
     };
   }
 
   const includeDirs = new Set(readLibraryIncludeDirs(gameProjectText));
   if (includeDirs.size === 0) {
-    return { shared: [], reasons: ["its game.project declares no [library] include_dirs"] };
+    return {
+      shared: [],
+      reasons: ["its game.project declares no [library] include_dirs"],
+      refused: [],
+    };
   }
 
   const wrapper = archiveWrapperOf(entries);
   const shared: LibrarySharedEntry[] = [];
+  const refused: string[] = [];
   for (const entry of entries) {
     const path = wrapper === undefined ? entry : entry.slice(wrapper.length + 1);
     const [head] = path.split("/");
@@ -130,10 +154,16 @@ export function libraryIncludedEntries(
     if (dot === -1 || !LIBRARY_SCENE_EXTENSIONS.includes(path.slice(dot).toLowerCase())) {
       continue;
     }
+    // Applied last so `refused` names only what was otherwise going to be
+    // shared: `../evil.collection` never named an include dir to begin with.
+    if (!isContainedResourcePath(path)) {
+      refused.push(entry);
+      continue;
+    }
     shared.push({ entry, path });
   }
   shared.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
-  return { shared, reasons: [] };
+  return { shared, reasons: [], refused };
 }
 
 // The gitignored surface `resolve` unpacks each dependency's shared scene
