@@ -533,7 +533,9 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     if (isScenePath(e.path)) {
       sceneBusy = true;
       if (sceneScheduled) clearTimeout(sceneScheduled);
-      sceneScheduled = setTimeout(runSceneTypesSurface, debounceMs);
+      // Wrapped rather than passed by reference: `setTimeout` supplies no
+      // argument, and the scene-event route is the one that reports.
+      sceneScheduled = setTimeout(() => void runSceneTypesSurface(true), debounceMs);
       return;
     }
     if (!isComponentPath(e.path)) return;
@@ -571,12 +573,33 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     notifyIdle();
   }
 
-  async function runSceneTypesSurface(): Promise<void> {
+  async function runSceneTypesSurface(reportReachability: boolean): Promise<void> {
     sceneScheduled = null;
     try {
       await opts.sceneTypesSurface?.();
-      if (!stopped && opts.json) {
-        stdout.write(renderWatchEvent({ event: "sceneTypes" }));
+      if (!stopped) {
+        // Advisory only: the universe moved but no program did, so nothing is
+        // compiled, emitted, reloaded, or sentinel-wrapped here.
+        const findings = reportReachability ? session.rescanReachability() : null;
+        if (opts.json) {
+          stdout.write(
+            renderWatchEvent({
+              event: "sceneTypes",
+              ...(findings
+                ? {
+                    warnings: findings.warnings,
+                    ...(findings.unreachableAddresses.length > 0
+                      ? { unreachableAddresses: findings.unreachableAddresses }
+                      : {}),
+                  }
+                : {}),
+            }),
+          );
+        } else if (findings) {
+          for (const warning of findings.warnings) {
+            stderr.write(`defold-typescript watch: ${warning}\n`);
+          }
+        }
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -650,7 +673,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   // it checked against.
   if (opts.sceneTypesSurface) {
     sceneBusy = true;
-    void runSceneTypesSurface();
+    void runSceneTypesSurface(false);
   }
 
   scheduleAttach();

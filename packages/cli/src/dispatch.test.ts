@@ -6305,15 +6305,21 @@ describe("watch scene-address surface wiring", () => {
     main: WatcherFactory;
     component: WatcherFactory;
     triggerMain: () => void;
+    triggerScene: () => void;
   } {
     let onMain: ((kind: "change" | "rename", rel: string) => void) | undefined;
+    let onComponent: ((kind: "change" | "rename", rel: string) => void) | undefined;
     return {
       main: (_dir, onEvent): Watcher => {
         onMain = (kind, rel) => onEvent({ kind, path: rel });
         return { close() {} };
       },
-      component: (_dir, _onEvent): Watcher => ({ close() {} }),
+      component: (_dir, onEvent): Watcher => {
+        onComponent = (kind, rel) => onEvent({ kind, path: rel });
+        return { close() {} };
+      },
       triggerMain: () => onMain?.("change", "src/main.ts"),
+      triggerScene: () => onComponent?.("change", "game/player.go"),
     };
   }
 
@@ -6404,5 +6410,203 @@ describe("watch scene-address surface wiring", () => {
         message: expect.stringContaining("nobody") as unknown as string,
       },
     ]);
+  });
+
+  const PLAYER_GO = (id: string): string =>
+    `embedded_components {\n  id: "${id}"\n  type: "sprite"\n}\n`;
+
+  type SceneTypesEvent = {
+    command: string;
+    event?: string;
+    ok?: boolean;
+    warnings?: readonly string[];
+    unreachableAddresses?: readonly { file: string; fragment: string; message: string }[];
+  };
+
+  function sceneTypesEvents(text: string): SceneTypesEvent[] {
+    return text
+      .split("\n")
+      .filter((line) => line !== "")
+      .map((line) => JSON.parse(line) as SceneTypesEvent)
+      .filter((line) => line.command === "watch" && line.event === "sceneTypes");
+  }
+
+  function watchWarningLines(text: string): string[] {
+    return text.split("\n").filter((line) => line.startsWith("defold-typescript watch: "));
+  }
+
+  test("watch reports a fragment a scene save made unreachable, with no source event", async () => {
+    scaffoldReachableWatchProject();
+    const { io, err } = captureStreams();
+    const { main, component, triggerScene } = reachabilityWatcherPair();
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      detectEditorVersion: () => null,
+      onWatchStart,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+    expect(watchWarningLines(err()).some((line) => line.includes("sprite"))).toBe(false);
+
+    write("game/player.go", PLAYER_GO("body"));
+    triggerScene();
+    await handle.waitForIdle();
+
+    handle.stop();
+    expect(await result).toBe(0);
+
+    const reported = watchWarningLines(err()).filter((line) => line.includes("sprite"));
+    expect(reported.length).toBeGreaterThan(0);
+    expect(reported.some((line) => line.includes("src/main.ts"))).toBe(true);
+  });
+
+  test("a scene save reports without rebuilding", async () => {
+    scaffoldReachableWatchProject();
+    const { io, out, err } = captureStreams();
+    const { main, component, triggerScene } = reachabilityWatcherPair();
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      detectEditorVersion: () => null,
+      onWatchStart,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+    const afterStartup = out().length;
+
+    write("game/player.go", PLAYER_GO("body"));
+    triggerScene();
+    await handle.waitForIdle();
+
+    handle.stop();
+    expect(await result).toBe(0);
+
+    expect(watchWarningLines(err()).some((line) => line.includes("sprite"))).toBe(true);
+    const added = out().slice(afterStartup);
+    expect(added).not.toContain("defold-typescript build: wrote");
+    expect(added).not.toContain("defold-typescript watch: build started");
+    expect(added).not.toContain("defold-typescript watch: build finished");
+  });
+
+  test("declaring the component again clears the finding", async () => {
+    scaffoldReachableWatchProject();
+    const { io, err } = captureStreams();
+    const { main, component, triggerScene } = reachabilityWatcherPair();
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      detectEditorVersion: () => null,
+      onWatchStart,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+
+    write("game/player.go", PLAYER_GO("body"));
+    triggerScene();
+    await handle.waitForIdle();
+    expect(watchWarningLines(err()).some((line) => line.includes("sprite"))).toBe(true);
+    const afterBreak = err().length;
+
+    write("game/player.go", PLAYER_GO("sprite"));
+    triggerScene();
+    await handle.waitForIdle();
+
+    handle.stop();
+    expect(await result).toBe(0);
+
+    expect(watchWarningLines(err().slice(afterBreak)).some((line) => line.includes("sprite"))).toBe(
+      false,
+    );
+  });
+
+  test("watch --json carries the finding on the sceneTypes event", async () => {
+    scaffoldReachableWatchProject();
+    const { io, out } = captureStreams();
+    const { main, component, triggerScene } = reachabilityWatcherPair();
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd, "--json"], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      detectEditorVersion: () => null,
+      onWatchStart,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+
+    write("game/player.go", PLAYER_GO("body"));
+    triggerScene();
+    await handle.waitForIdle();
+
+    handle.stop();
+    expect(await result).toBe(0);
+
+    const events = sceneTypesEvents(out());
+    const last = events.at(-1);
+    expect(last?.ok).toBe(true);
+    expect(last?.warnings?.some((w) => w.includes("sprite"))).toBe(true);
+    expect(last?.unreachableAddresses).toEqual([
+      {
+        file: "src/main.ts",
+        fragment: "sprite",
+        message: expect.stringContaining("sprite") as unknown as string,
+      },
+    ]);
+    expect(
+      out()
+        .split("\n")
+        .filter((line) => line !== "")
+        .map((line) => JSON.parse(line) as { command: string; event?: string })
+        .some((line) => line.command === "watch" && line.event === "rebuild"),
+    ).toBe(false);
+  });
+
+  test("a clean scene save emits no entries", async () => {
+    scaffoldReachableWatchProject();
+    const { io, out } = captureStreams();
+    const { main, component, triggerScene } = reachabilityWatcherPair();
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd, "--json"], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      detectEditorVersion: () => null,
+      onWatchStart,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+
+    write("game/player.go", PLAYER_GO("sprite"));
+    triggerScene();
+    await handle.waitForIdle();
+
+    handle.stop();
+    expect(await result).toBe(0);
+
+    const events = sceneTypesEvents(out());
+    expect(events.length).toBeGreaterThan(1);
+    // The startup regeneration deliberately reports nothing, so it carries no
+    // `warnings` key at all — the scene-save event carries an empty one.
+    expect(Object.hasOwn(events[0] as object, "warnings")).toBe(false);
+    const last = events.at(-1);
+    expect(last?.warnings).toEqual([]);
+    expect(Object.hasOwn(last as object, "unreachableAddresses")).toBe(false);
   });
 });
