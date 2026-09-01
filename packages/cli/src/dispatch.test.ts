@@ -21,6 +21,7 @@ import {
 import { loadApiTargetsRegistry } from "./api-registry";
 import { CURRENT_STABLE_SURFACE_ID } from "./api-surface";
 import type { DefoldIo } from "./bob-command";
+import { GENERATED_BANNER } from "./build-output";
 import { readCliVersion } from "./cli-version";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import { dispatch } from "./dispatch";
@@ -36,6 +37,10 @@ import {
 } from "./ref-doc-test-fixture";
 import { runResolve } from "./resolve";
 import { SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
+import {
+  scaffoldUnresolvedDependency,
+  UNRESOLVED_DEPENDENCY_URL,
+} from "./unresolved-dependency-fixture";
 import { defaultUpgradeIo } from "./upgrade";
 import type {
   EditorReloadCommand,
@@ -714,6 +719,68 @@ describe("dispatch", () => {
     const parsed = JSON.parse(out()) as { warnings: string[] };
     expect(parsed.warnings.some((w) => w.includes("defold-typescript"))).toBe(false);
     expect(err()).toBe("");
+  });
+
+  // A hole in the address universe explains the findings that follow it, so
+  // both build branches print it ahead of the build's own warnings. The orphan
+  // is a real `scanOrphanOutputs` finding over on-disk state, not a string the
+  // test hands to production.
+  function scaffoldUnresolvedDependencyBuild(pkg?: Record<string, unknown>): void {
+    scaffoldBuildProject(pkg);
+    scaffoldUnresolvedDependency(cwd);
+    writeFileSync(path.join(cwd, "src", "stale.lua"), `return 1\n${GENERATED_BANNER}\n`);
+  }
+
+  function expectHoleBeforeOrphan(warnings: readonly string[]): void {
+    const hole = warnings.findIndex((w) => w.includes(UNRESOLVED_DEPENDENCY_URL));
+    const orphan = warnings.findIndex((w) => w.includes("stale.lua"));
+    expect(hole).toBeGreaterThanOrEqual(0);
+    expect(orphan).toBeGreaterThanOrEqual(0);
+    expect(hole).toBeLessThan(orphan);
+  }
+
+  test("build reports an unresolved dependency ahead of its own warnings", async () => {
+    scaffoldUnresolvedDependencyBuild();
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--json"], io, { detectEditorVersion: () => null });
+
+    expect(code).toBe(0);
+    expectHoleBeforeOrphan((JSON.parse(out()) as { warnings: string[] }).warnings);
+
+    const plain = captureStreams();
+    const plainCode = await dispatch(["build", cwd], plain.io, {
+      detectEditorVersion: () => null,
+    });
+
+    expect(plainCode).toBe(0);
+    const lines = plain
+      .err()
+      .split("\n")
+      .filter((line) => line !== "");
+    const holeAt = lines.findIndex((line) => line.includes(UNRESOLVED_DEPENDENCY_URL));
+    const orphanAt = lines.findIndex((line) => line.includes("stale.lua"));
+    expect(holeAt).toBeGreaterThanOrEqual(0);
+    expect(orphanAt).toBeGreaterThanOrEqual(0);
+    expect(holeAt).toBeLessThan(orphanAt);
+    expect(lines[holeAt]?.startsWith("defold-typescript build: ")).toBe(true);
+    expect(lines[orphanAt]?.startsWith("defold-typescript build: ")).toBe(true);
+  });
+
+  test("a ref-doc-surface build keeps the same order", async () => {
+    scaffoldUnresolvedDependencyBuild({ "defold-typescript": { "defold-target": "1.9.8" } });
+    const resolveOpts = labelRefDocResolveOpts();
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--json"], io, {
+      resolveOpts,
+      detectEditorVersion: () => null,
+    });
+
+    expect(code).toBe(0);
+    expectHoleBeforeOrphan((JSON.parse(out()) as { warnings: string[] }).warnings);
+
+    rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
   });
 
   test("build --defold-target overrides the pin", async () => {
@@ -5922,5 +5989,145 @@ describe("watch scene-address surface wiring", () => {
     expect(await result).toBe(0);
 
     rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
+  });
+
+  // The address universe a watch reports on is the project's plus its
+  // libraries'; a declared-but-unmaterialized dependency is a hole in it, and
+  // the reporter names each hole once per appearance.
+  function unresolvedReasonCount(stderrText: string): number {
+    return stderrText
+      .split("\n")
+      .filter((line) => SCENE_TYPES_WARNING.test(line) && line.includes(UNRESOLVED_DEPENDENCY_URL))
+      .length;
+  }
+
+  function scaffoldWatchableProject(): string {
+    write(
+      "tsconfig.json",
+      JSON.stringify({ compilerOptions: { strict: true }, include: ["src/**/*.ts"] }, null, 2),
+    );
+    write("src/main.ts", "export const a = 1;\n");
+    scaffoldUnresolvedDependency(cwd);
+    const sourceGeneratedDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-src-"));
+    writeFileSync(path.join(sourceGeneratedDir, "label.d.ts"), "declare const __label: unknown;\n");
+    return sourceGeneratedDir;
+  }
+
+  function sceneWatcherPair(): {
+    main: WatcherFactory;
+    component: WatcherFactory;
+    trigger: () => void;
+  } {
+    let onComponent: ((kind: "change" | "rename", rel: string) => void) | undefined;
+    return {
+      main: (_dir, _onEvent): Watcher => ({ close() {} }),
+      component: (_dir, onEvent): Watcher => {
+        onComponent = (kind, rel) => onEvent({ kind, path: rel });
+        return { close() {} };
+      },
+      trigger: () => onComponent?.("change", "game/player.collection"),
+    };
+  }
+
+  const RESOLVED_GAME_PROJECT = "[project]\ntitle = demo\n";
+
+  test("watch names an unresolved dependency once, and again after it comes back", async () => {
+    const sourceGeneratedDir = scaffoldWatchableProject();
+    const { io, err } = captureStreams();
+    const { main, component, trigger } = sceneWatcherPair();
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      sourceGeneratedDir,
+      detectEditorVersion: () => null,
+      onWatchStart,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+
+    expect(unresolvedReasonCount(err())).toBe(1);
+
+    trigger();
+    await handle.waitForIdle();
+
+    expect(unresolvedReasonCount(err())).toBe(1);
+
+    write("game.project", RESOLVED_GAME_PROJECT);
+    trigger();
+    await handle.waitForIdle();
+
+    expect(unresolvedReasonCount(err())).toBe(1);
+
+    scaffoldUnresolvedDependency(cwd);
+    trigger();
+    await handle.waitForIdle();
+
+    expect(unresolvedReasonCount(err())).toBe(2);
+
+    handle.stop();
+    expect(await result).toBe(0);
+
+    rmSync(sourceGeneratedDir, { recursive: true, force: true });
+  });
+
+  test("watch --json carries the same reason on the scene-types warnings channel", async () => {
+    const sourceGeneratedDir = scaffoldWatchableProject();
+    const { io, out } = captureStreams();
+    const { main, component, trigger } = sceneWatcherPair();
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd, "--json"], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      sourceGeneratedDir,
+      detectEditorVersion: () => null,
+      onWatchStart,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+
+    trigger();
+    await handle.waitForIdle();
+
+    write("game.project", RESOLVED_GAME_PROJECT);
+    trigger();
+    await handle.waitForIdle();
+
+    scaffoldUnresolvedDependency(cwd);
+    trigger();
+    await handle.waitForIdle();
+
+    handle.stop();
+    expect(await result).toBe(0);
+
+    const lines = out()
+      .split("\n")
+      .filter((line) => line !== "")
+      .map(
+        (line) =>
+          JSON.parse(line) as {
+            command: string;
+            event?: string;
+            warnings?: readonly string[];
+          },
+      );
+    const surfaced = lines.filter((line) => line.command === "scene-types");
+
+    expect(surfaced.length).toBe(4);
+    expect(surfaced[0]?.warnings?.some((w) => w.includes(UNRESOLVED_DEPENDENCY_URL))).toBe(true);
+    expect(surfaced[1]?.warnings).toEqual([]);
+    expect(surfaced[2]?.warnings).toEqual([]);
+    expect(surfaced[3]?.warnings?.some((w) => w.includes(UNRESOLVED_DEPENDENCY_URL))).toBe(true);
+    expect(
+      lines.filter((line) => line.command === "watch" && line.event === "sceneTypes").length,
+    ).toBe(4);
+
+    rmSync(sourceGeneratedDir, { recursive: true, force: true });
   });
 });
