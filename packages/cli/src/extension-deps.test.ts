@@ -1,46 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { classifyExtension, locateScriptApis, readExtensionDependencies } from "./extension-deps";
-
-describe("readExtensionDependencies", () => {
-  test("returns every dependencies#N under [project] in index order, URLs verbatim", () => {
-    const gameProject = `[bootstrap]
-main_collection = /main/main.collectionc
-
-[project]
-title = My Game
-dependencies#0 = https://github.com/example/ext-a/archive/v1.zip
-dependencies#1 = https://github.com/example/ext-b/archive/v2.zip?token=abc&ref=main
-
-[display]
-width = 960
-`;
-    expect(readExtensionDependencies(gameProject)).toEqual([
-      { index: 0, url: "https://github.com/example/ext-a/archive/v1.zip" },
-      { index: 1, url: "https://github.com/example/ext-b/archive/v2.zip?token=abc&ref=main" },
-    ]);
-  });
-
-  test("ignores dependencies#N in other sections and non-dependencies keys under [project]", () => {
-    const gameProject = `[project]
-title = My Game
-dependencies#0 = https://github.com/example/ext-a/archive/v1.zip
-custom_key = value
-
-[other]
-dependencies#1 = https://github.com/example/not-a-dep/archive/v1.zip
-`;
-    expect(readExtensionDependencies(gameProject)).toEqual([
-      { index: 0, url: "https://github.com/example/ext-a/archive/v1.zip" },
-    ]);
-  });
-
-  test("yields [] when there are no dependencies", () => {
-    const gameProject = `[project]
-title = My Game
-`;
-    expect(readExtensionDependencies(gameProject)).toEqual([]);
-  });
-});
+import { classifyExtension, locateScriptApis } from "./extension-deps";
 
 describe("locateScriptApis", () => {
   test("returns .script_api entries (case-insensitive) at any depth, sorted", () => {

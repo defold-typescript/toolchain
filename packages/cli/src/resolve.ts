@@ -27,6 +27,7 @@ import { formatJsonLikeBiome } from "./format-json";
 import { matchVendoredLibrary, type VendoredLibrary } from "./library-match";
 import { ensureLibraryTypesReference, materializeVendoredLibraries } from "./library-materialize";
 import { loadVendoredLibraryRegistry } from "./library-registry";
+import { materializeLibrarySceneSources } from "./library-scene-materialize";
 
 export interface ResolvedExtensionReport {
   readonly url: string;
@@ -37,6 +38,8 @@ export interface ResolvedExtensionReport {
   readonly resolvedVersion: string;
   readonly pinnedVersion?: string;
   readonly pinStatus: "unpinned" | "match" | "drift";
+  // How many scene sources this dependency shares into the address universe.
+  readonly sceneSources: number;
 }
 
 export interface ResolvedLibraryReport {
@@ -134,6 +137,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       generatedDir: null,
     });
     ensureLibraryTypesReference(cwd, librariesDir);
+    materializeLibrarySceneSources({ cwd, bundles: [] });
     return { ok: true, materializedSurface: null, extensions: [], libraries: [] };
   }
 
@@ -145,6 +149,15 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
 
   const { materializedDir } = materializeExtensionDeclarations({ cwd, bundles });
   ensureExtensionTypesReference(cwd, materializedDir);
+
+  // The dependency scene surface the editor plugin, `scene-types` and `build`
+  // all read: unpacked here because the archive seam cannot run inside tsserver.
+  const { counts: sceneSourceCounts } = materializeLibrarySceneSources({ cwd, bundles });
+  for (const bundle of bundles) {
+    for (const reason of bundle.sceneReasons) {
+      console.warn(`no scene source from ${bundle.url}: ${reason}`);
+    }
+  }
 
   // Match each asset-only dependency (no `.script_api`, so it contributes no
   // extension namespace) against the vendored pure-Lua corpus and materialize the
@@ -228,6 +241,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       resolvedVersion: string;
       pinnedVersion?: string;
       pinStatus: "unpinned" | "match" | "drift";
+      sceneSources: number;
     } = {
       url: bundle.url,
       provenance: bundle.provenance,
@@ -236,6 +250,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       assetOnly: bundle.assetOnly,
       resolvedVersion: bundle.resolvedVersion,
       pinStatus,
+      sceneSources: sceneSourceCounts.get(bundle.url) ?? 0,
     };
     if (pin !== undefined) {
       report.pinnedVersion = pin;

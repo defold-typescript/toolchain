@@ -80,9 +80,10 @@ stderr.
 [`resolve --json`](./resolve.md) reports `materializedSurface` (the written
 directory, or `null` when nothing was materialized) and, per extension, the `url`,
 generated `namespaces`, `scriptApiCount`, `provenance` (`cache` or `download`),
-whether it was `assetOnly`, the `resolvedVersion` (sha256 digest of the resolved
-archive bytes), — when the project pins that url — the `pinnedVersion`, and the
-`pinStatus` (`unpinned` / `match` / `drift`). A separate `libraries` array reports
+whether it was `assetOnly`, `sceneSources` (how many [shared scene
+files](./resolve.md#dependency-scene-sources) it unpacked), the `resolvedVersion`
+(sha256 digest of the resolved archive bytes), — when the project pins that url —
+the `pinnedVersion`, and the `pinStatus` (`unpinned` / `match` / `drift`). A separate `libraries` array reports
 each asset-only dependency that matched a [vendored
 library](./resolve.md#vendored-library-types) — its `url`, `source` (the vendored
 source identity), materialized `modules`, `provenance` (`vendored`), and `verified`.
@@ -102,6 +103,7 @@ downloaded archive did not confirm; it is reported but never materialized:
       "scriptApiCount": 1,
       "provenance": "download",
       "assetOnly": false,
+      "sceneSources": 0,
       "resolvedVersion": "sha256:ab12…",
       "pinnedVersion": "sha256:ab12…",
       "pinStatus": "match"
@@ -535,6 +537,7 @@ and `package.json` to exactly the declared set.
       "namespaces": ["<namespace>"],
       "scriptApiCount": 1,
       "assetOnly": false,
+      "sceneSources": 0,
       "resolvedVersion": "<version>",
       "pinStatus": "<unpinned | match | drift>"
     }
@@ -552,8 +555,9 @@ On failure:
 `materializedSurface` is the regenerated surface directory
 (`.defold-types/extensions`), and `extensions` records where each dependency
 came from (`provenance`), how many `.script_api` files it contributed
-(`scriptApiCount`; an `assetOnly` dependency contributes no types), and its pin
-state (`resolvedVersion`/`pinStatus`). The `written` array is always empty for
+(`scriptApiCount`; an `assetOnly` dependency contributes no types), how many
+scene sources it shared (`sceneSources`), and its pin state
+(`resolvedVersion`/`pinStatus`). The `written` array is always empty for
 `resolve`. If `ok` is `false`, surface `error`; the existing surface is left
 untouched.
 
