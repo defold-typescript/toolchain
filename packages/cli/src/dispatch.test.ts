@@ -82,11 +82,15 @@ function captureStreams(): {
 // running with no editor. Strip it so an assertion aimed at command failures
 // still fails on any real failure line.
 const EDITOR_STATUS = /^defold-typescript watch: (attached to Defold editor|no Defold editor)/;
+// A hole in the scene address universe rides stderr as a non-fatal warning, so
+// a fixture that declares a dependency it never resolves reports one without
+// having failed at anything.
+const SCENE_TYPES_WARNING = /^defold-typescript scene-types: /;
 
 function failureOutput(stderrText: string): string {
   return stderrText
     .split("\n")
-    .filter((line) => line !== "" && !EDITOR_STATUS.test(line))
+    .filter((line) => line !== "" && !EDITOR_STATUS.test(line) && !SCENE_TYPES_WARNING.test(line))
     .join("\n");
 }
 
