@@ -160,9 +160,11 @@ function guiAnimationProvenance(input: {
 // component the slot's sibling literal addresses on the one game object owning
 // this script, resolved through the same helper so the two cannot disagree
 // about which component is addressed. The declaring document — an atlas for a
-// sprite, an animation set for a model — is reported only for an id it really
-// declares: a panel naming a file that does not carry the name is the
-// fabricated answer this surface exists to avoid.
+// sprite, and for a model the animation set that lists the entry producing the
+// id — is reported only for an id it really declares: the per-id map's key set
+// *is* the component's id set, so a miss there already means this component
+// does not carry the name, and a panel naming a file that does not carry it is
+// the fabricated answer this surface exists to avoid.
 function animationProvenance(input: {
   slot: ClassifiedSlot;
   cache: SceneIndexCache;
@@ -183,9 +185,8 @@ function animationProvenance(input: {
   );
   const config = readBuildConfigFromHost(cache.host, cache.projectRoot);
   const resource = computeOutputRel(displayPathOf(cache.projectRoot, fileName), config, "script");
-  const source = index.sourceByScriptResource.get(resource)?.get(component);
-  if (source === undefined) return [];
-  return index.byScriptResource.get(resource)?.get(component)?.has(entryName) ? [source] : [];
+  const source = index.sourceByScriptResource.get(resource)?.get(component)?.get(entryName);
+  return source === undefined ? [] : [source];
 }
 
 // A config key is declared by the one file that answers a reader at runtime, and
