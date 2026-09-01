@@ -3761,6 +3761,7 @@ describe("dispatch resolve", () => {
         url: string;
         namespaces: string[];
         scriptApiCount: number;
+        sceneSources: number;
         resolvedVersion?: string;
         pinnedVersion?: string;
         pinStatus?: "unpinned" | "match" | "drift";
@@ -3774,6 +3775,7 @@ describe("dispatch resolve", () => {
         provenance: "download",
         namespaces: ["alpha"],
         scriptApiCount: 1,
+        sceneSources: 0,
         assetOnly: false,
         resolvedVersion: expect.stringMatching(/^sha256:[0-9a-f]{64}$/) as unknown as string,
         pinStatus: "unpinned",
@@ -3855,7 +3857,10 @@ describe("dispatch resolve", () => {
           if (path.basename(path.dirname(zipPath)) !== key) {
             throw new Error(`no fake archive for ${zipPath}`);
           }
-          return { entries: () => ["mylib-main/mylib/core.lua", "asset/foo.png"], read: () => "" };
+          return {
+            entries: () => ["mylib-main/mylib/core.lua", "mylib-main/asset/foo.png"],
+            read: () => "",
+          };
         },
       },
     };

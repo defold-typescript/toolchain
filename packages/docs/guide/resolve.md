@@ -80,6 +80,32 @@ materialized, so a collision cannot inject the wrong types. A declared library
 whose vendored `.d.ts` is missing from the shipped corpus is likewise warned and
 skipped rather than failing the run.
 
+## Dependency scene sources
+
+A Defold library also shares **scenes** — the `.collection`, `.go`, `.gui` and
+animation-asset files under the directories its own `game.project` lists in
+`[library] include_dirs`. Those files declare real addresses your code can post
+to, so `resolve` unpacks each dependency's shared set into
+
+```
+.defold-types/dependencies/<archive key>/<the path Defold addresses it by>
+```
+
+alongside a `dependencies.json` naming each key's URL. A library's
+`druid/druid.gui` therefore lands at its merged resource path, `druid/druid.gui`,
+exactly as a depending project addresses it.
+
+`resolve` does the unpacking (rather than the editor plugin reading archives
+itself) because opening a zip needs a subprocess, which cannot run inside the
+editor's synchronous TypeScript server. `/.defold-types` is listed in the
+scaffolded `.defignore`, so bob never sees these copies and cannot double-load a
+library scene.
+
+The surface reconciles like every other: removing a dependency deletes its
+directory, and removing the last one deletes `dependencies/` entirely. A
+dependency that shares nothing — no `game.project` in the archive, or one with no
+`[library] include_dirs` — is named on `stderr` and never fails the run.
+
 ## Keeping types in sync with `watch`
 
 > [!TIP] A running [`watch`](./watch.md) re-resolves on every `game.project`
@@ -95,7 +121,7 @@ skipped rather than failing the run.
 - `--json` — emit one machine-readable object per run. See
   [Agent runbooks](./agent-runbooks.md#machine-readable-output) for the shape
   (`materializedSurface`; per extension `namespaces`, `provenance`,
-  `resolvedVersion`, `pinnedVersion`, `pinStatus`; and a `libraries` array with
+  `resolvedVersion`, `pinnedVersion`, `pinStatus`, `sceneSources`; and a `libraries` array with
   each match's `source`, `modules`, `provenance`, and `verified`).
 
 ## Pinning extension versions
