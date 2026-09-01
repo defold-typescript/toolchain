@@ -47,7 +47,7 @@ import {
 import { renderResult } from "./json-output";
 import type { VendoredLibrary } from "./library-match";
 import type { RefDocResolveOptions } from "./materialize";
-import { createIncompleteReporter, runSceneTypes } from "./scene-types-command";
+import { createIncompleteReporter, runSceneTypes, sceneIndexForBuild } from "./scene-types-command";
 import { runSetTarget } from "./set-target";
 import { runSetupDebug } from "./setup-debug";
 import { runUpgrade, type UpgradeIo } from "./upgrade";
@@ -846,8 +846,13 @@ function dispatchCommand(
         if (isRefDocSurface) {
           const surfaceId = surface.surfaceId as string;
           try {
-            const { incomplete } = runSceneTypes({ cwd });
-            const { written, warnings } = runBuild({ cwd });
+            const sceneTypes = runSceneTypes({ cwd });
+            const { incomplete } = sceneTypes;
+            const sceneIndex = sceneIndexForBuild(sceneTypes);
+            const { written, warnings } = runBuild({
+              cwd,
+              ...(sceneIndex !== undefined ? { sceneIndex } : {}),
+            });
             const { materializedDir } = await materializeRefDocSurface({
               cwd,
               surfaceId,
@@ -871,8 +876,13 @@ function dispatchCommand(
           // against the previous run's address universe.
           // A hole in the address universe is reported ahead of the build's own
           // warnings, because it explains findings that follow it.
-          const { incomplete } = runSceneTypes({ cwd });
-          const { written, warnings } = runBuild({ cwd });
+          const sceneTypes = runSceneTypes({ cwd });
+          const { incomplete } = sceneTypes;
+          const sceneIndex = sceneIndexForBuild(sceneTypes);
+          const { written, warnings } = runBuild({
+            cwd,
+            ...(sceneIndex !== undefined ? { sceneIndex } : {}),
+          });
           const { materializedDir } = materializeApiSurface({
             cwd,
             surface,
