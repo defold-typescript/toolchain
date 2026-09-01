@@ -144,19 +144,36 @@ function escapePayload(payload: string): string {
   return payload.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n");
 }
 
+// A game object naming `main.ts`'s generated script and carrying the given
+// animation-declaring components. The two kinds differ only in which field
+// names the document their ids come from: a sprite's `tile_set`, a model's
+// `animations`.
+function objectOwning(
+  script: string,
+  ...components: (readonly [string, "sprite" | "model", string])[]
+): string {
+  return (
+    `components {\n  id: "self"\n  component: "${script}"\n}\n` +
+    components
+      .map(([id, type, resource]) => {
+        const field = type === "sprite" ? "tile_set" : "animations";
+        return (
+          `embedded_components {\n  id: "${id}"\n  type: "${type}"\n` +
+          `  data: "${escapePayload(`${field}: "${resource}"\n`)}"\n}\n`
+        );
+      })
+      .join("")
+  );
+}
+
 // The platformer's shape at one remove: a collection whose embedded game object
 // names `main.ts`'s generated script and carries the given sprites, plus the
 // atlases their `tile_set`s name.
 function collectionOwning(script: string, ...sprites: (readonly [string, string])[]): string {
-  const object =
-    `components {\n  id: "self"\n  component: "${script}"\n}\n` +
-    sprites
-      .map(
-        ([component, tileSet]) =>
-          `embedded_components {\n  id: "${component}"\n  type: "sprite"\n` +
-          `  data: "${escapePayload(`tile_set: "${tileSet}"\n`)}"\n}\n`,
-      )
-      .join("");
+  const object = objectOwning(
+    script,
+    ...sprites.map(([component, tileSet]) => [component, "sprite", tileSet] as const),
+  );
   return `embedded_instances {\n  id: "player"\n  data: "${escapePayload(object)}"\n}\n`;
 }
 
@@ -184,6 +201,36 @@ const SIBLING_SPRITE_DOCUMENTS: Record<string, string> = {
   ),
   "assets/player.atlas": atlasDocument("walk", "jump"),
   "assets/cape.atlas": atlasDocument("flap", "furl"),
+};
+
+// A `.animationset`: its entries name *files*, and the id each contributes is
+// the file's basename. Nothing inside the named container is ever read.
+function animationSetDocument(...entries: string[]): string {
+  return entries.map((entry) => `animations {\n  animation: "${entry}"\n}\n`).join("");
+}
+
+// A model slot scoped the way a sprite's is — through the sibling address
+// literal — plus the playback argument the signature requires.
+const MODEL_ANIMATION_SOURCE = 'model.play_anim("#model", "", go.PLAYBACK_ONCE_FORWARD);\n';
+const MODEL_ANIMATION_POSITION = MODEL_ANIMATION_SOURCE.indexOf('""') + 1;
+
+// The same slot addressing the model whose `animations:` names a mesh source
+// directly — the form no reading of the editor and the build pipeline settles.
+const RAW_MODEL_SOURCE = 'model.play_anim("#raw", "", go.PLAYBACK_ONCE_FORWARD);\n';
+const RAW_MODEL_POSITION = RAW_MODEL_SOURCE.indexOf('""') + 1;
+
+// One object owning all three: a model on an animation set, a sprite on an
+// atlas, and a model on a mesh source. A completion scoped to the object rather
+// than the component would be visible in every direction.
+const MODEL_ANIMATION_DOCUMENTS: Record<string, string> = {
+  "game/hero.go": objectOwning(
+    "/main.ts.script",
+    ["model", "model", "/anims/hero.animationset"],
+    ["sprite", "sprite", "/assets/hero.atlas"],
+    ["raw", "model", "/meshes/hero.gltf"],
+  ),
+  "anims/hero.animationset": animationSetDocument("/anims/idle.gltf", "/anims/run.glb"),
+  "assets/hero.atlas": atlasDocument("blink"),
 };
 
 // A gui flipbook slot, scoped by the `.gui` scene that names this file's
@@ -542,6 +589,39 @@ describe("tstl-plugin", () => {
       serverHost: false,
     });
     expect(service.getCompletionsAtPosition("main.ts", ANIMATION_POSITION, undefined)).toBe(base);
+  });
+
+  test("a model animation slot offers the addressed component's animations", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const service = completionProxy({
+      source: MODEL_ANIMATION_SOURCE,
+      base,
+      documents: MODEL_ANIMATION_DOCUMENTS,
+    });
+    const result = service.getCompletionsAtPosition("main.ts", MODEL_ANIMATION_POSITION, undefined);
+    expect(result?.entries[0]).toBe(base.entries[0] as ts.CompletionEntry);
+    expect(result?.entries.map((e) => e.name)).toEqual(["zzz", "idle", "run"]);
+  });
+
+  test("a sprite and a model on one object do not share animations", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const service = completionProxy({
+      source: ANIMATION_SOURCE,
+      base,
+      documents: MODEL_ANIMATION_DOCUMENTS,
+    });
+    const result = service.getCompletionsAtPosition("main.ts", ANIMATION_POSITION, undefined);
+    expect(result?.entries.map((e) => e.name)).toEqual(["zzz", "blink"]);
+  });
+
+  test("a model naming a mesh source directly offers nothing", () => {
+    const base = completionInfo([completionEntry("zzz", LOCATION_PRIORITY)]);
+    const service = completionProxy({
+      source: RAW_MODEL_SOURCE,
+      base,
+      documents: MODEL_ANIMATION_DOCUMENTS,
+    });
+    expect(service.getCompletionsAtPosition("main.ts", RAW_MODEL_POSITION, undefined)).toBe(base);
   });
 
   test("a gui flipbook slot offers its own scene's animations", () => {

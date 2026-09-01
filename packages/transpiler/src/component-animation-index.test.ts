@@ -2,9 +2,9 @@ import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
-  buildSpriteAnimationIndex,
+  buildComponentAnimationIndex,
   componentIdOfSameObjectAddress,
-} from "./sprite-animation-index";
+} from "./component-animation-index";
 
 // A standalone `images` block is a bare image the atlas exposes without
 // declaring an animation for it. It is deliberately present in every fixture:
@@ -22,7 +22,7 @@ function atlas(...ids: string[]): string {
 }
 
 function indexOf(scenes: Record<string, string>, assets: Record<string, string> = {}) {
-  return buildSpriteAnimationIndex({
+  return buildComponentAnimationIndex({
     scenes: new Map(Object.entries(scenes)),
     assets: new Map(Object.entries(assets)),
   });
@@ -37,12 +37,12 @@ function animationsFor(
   return found === undefined ? undefined : [...found].sort();
 }
 
-function tileSetFor(
+function sourceFor(
   index: ReturnType<typeof indexOf>,
   resource: string,
   component: string,
 ): string | undefined {
-  return index.tileSetByScriptResource.get(resource)?.get(component);
+  return index.sourceByScriptResource.get(resource)?.get(component);
 }
 
 // A `.go` document: its root message is the game object itself.
@@ -50,7 +50,7 @@ function gameObject(script: string, ...components: string[]): string {
   return `components {\n  id: "self"\n  component: "${script}"\n}\n${components.join("")}`;
 }
 
-function spriteComponent(id: string, resource: string): string {
+function referencedComponent(id: string, resource: string): string {
   return `components {\n  id: "${id}"\n  component: "${resource}"\n}\n`;
 }
 
@@ -63,6 +63,34 @@ function embeddedSprite(id: string, tileSet: string): string {
   return (
     `embedded_components {\n  id: "${id}"\n  type: "sprite"\n` +
     `  data: "${escapePayload(`tile_set: "${tileSet}"\ndefault_animation: "idle"\n`)}"\n}\n`
+  );
+}
+
+// A `.animationset` document: repeated `animations { animation: … }` entries
+// naming *files*, never ids. The id an entry contributes is its basename, so a
+// fixture that spelled ids here would not exercise the rule at all.
+function animationSet(...entries: string[]): string {
+  const listed = entries.map((entry) => `animations {\n  animation: "${entry}"\n}\n`).join("");
+  return `${listed}skeleton: ""\n`;
+}
+
+// A `.model` document. Every sibling field is present because only
+// `animations:` may decide the ids: a reader that reached for `mesh` would find
+// a plausible glTF here and quietly pass the cases that matter.
+function model(animations: string): string {
+  return (
+    'mesh: "/meshes/hero.gltf"\n' +
+    'material: "/builtins/materials/model.material"\n' +
+    `animations: "${animations}"\n` +
+    'default_animation: ""\n' +
+    'name: "unnamed"\n'
+  );
+}
+
+function embeddedModel(id: string, animations: string): string {
+  return (
+    `embedded_components {\n  id: "${id}"\n  type: "model"\n` +
+    `  data: "${escapePayload(model(animations))}"\n}\n`
   );
 }
 
@@ -99,7 +127,7 @@ function rekey(documents: ReadonlyMap<string, string>, separator: string): Map<s
   return new Map([...documents].map(([path, text]) => [path.split(/[/\\]/).join(separator), text]));
 }
 
-describe("buildSpriteAnimationIndex", () => {
+describe("buildComponentAnimationIndex", () => {
   test("scopes a script's animations to the sprite components of the object that owns it", () => {
     const index = indexOf(
       {
@@ -119,7 +147,7 @@ describe("buildSpriteAnimationIndex", () => {
       {
         "main/hero.go": gameObject(
           "/src/hero.ts.script",
-          spriteComponent("body", "/assets/a.sprite"),
+          referencedComponent("body", "/assets/a.sprite"),
         ),
       },
       {
@@ -138,7 +166,7 @@ describe("buildSpriteAnimationIndex", () => {
       {
         "main/hero.go": gameObject(
           "/src/hero.ts.script",
-          spriteComponent("body", "/assets/a.sprite"),
+          referencedComponent("body", "/assets/a.sprite"),
         ),
       },
       {
@@ -176,7 +204,7 @@ describe("buildSpriteAnimationIndex", () => {
         "main/hero.go": gameObject(
           "/src/hero.ts.script",
           embeddedSprite("body", "/assets/body.atlas"),
-          spriteComponent("cape", "/assets/cape.sprite"),
+          referencedComponent("cape", "/assets/cape.sprite"),
         ),
       },
       {
@@ -290,7 +318,7 @@ describe("buildSpriteAnimationIndex", () => {
 
   test("a scene naming no script owns nothing", () => {
     const index = indexOf(
-      { "main/hero.go": spriteComponent("body", "/assets/a.sprite") },
+      { "main/hero.go": referencedComponent("body", "/assets/a.sprite") },
       { "assets/a.sprite": 'tile_set: "/assets/a.atlas"\n', "assets/a.atlas": atlas("idle") },
     );
     expect([...index.byScriptResource.keys()]).toEqual([]);
@@ -298,7 +326,7 @@ describe("buildSpriteAnimationIndex", () => {
   });
 
   test("indexes the committed example project's own scenes and atlases", () => {
-    const index = buildSpriteAnimationIndex(exampleProjectDocuments());
+    const index = buildComponentAnimationIndex(exampleProjectDocuments());
     expect(index.unresolved).toEqual([]);
     expect([...index.byScriptResource.keys()]).toEqual(["src/player.ts.script"]);
     // The object's `collisionobject` and `camera` components are not sprites,
@@ -319,17 +347,17 @@ describe("buildSpriteAnimationIndex", () => {
 
   test("keys separated the Windows way index identically to POSIX ones", () => {
     const documents = exampleProjectDocuments();
-    const posix = buildSpriteAnimationIndex({
+    const posix = buildComponentAnimationIndex({
       scenes: rekey(documents.scenes, "/"),
       assets: rekey(documents.assets, "/"),
     });
-    const windows = buildSpriteAnimationIndex({
+    const windows = buildComponentAnimationIndex({
       scenes: rekey(documents.scenes, "\\"),
       assets: rekey(documents.assets, "\\"),
     });
     expect(windows.unresolved).toEqual([]);
     expect(windows.byScriptResource).toEqual(posix.byScriptResource);
-    expect(windows.tileSetByScriptResource).toEqual(posix.tileSetByScriptResource);
+    expect(windows.sourceByScriptResource).toEqual(posix.sourceByScriptResource);
   });
 
   test("a key mixing separators normalizes per segment, not by whole-string match", () => {
@@ -342,7 +370,7 @@ describe("buildSpriteAnimationIndex", () => {
       { "assets\\sub/player.atlas": atlas("walk") },
     );
     expect(index.unresolved).toEqual([]);
-    expect(tileSetFor(index, "src/player.ts.script", "sprite")).toBe("assets/sub/player.atlas");
+    expect(sourceFor(index, "src/player.ts.script", "sprite")).toBe("assets/sub/player.atlas");
   });
 
   test("an unresolved reason names the scene by its POSIX display path", () => {
@@ -366,7 +394,7 @@ describe("buildSpriteAnimationIndex", () => {
       },
       { "assets/player.atlas": atlas("walk", "jump") },
     );
-    expect(tileSetFor(index, "src/player.ts.script", "sprite")).toBe("assets/player.atlas");
+    expect(sourceFor(index, "src/player.ts.script", "sprite")).toBe("assets/player.atlas");
   });
 
   test("the tile source is the one the `.sprite` hop lands on, not the `.sprite` itself", () => {
@@ -374,7 +402,7 @@ describe("buildSpriteAnimationIndex", () => {
       {
         "main/hero.go": gameObject(
           "/src/hero.ts.script",
-          spriteComponent("body", "/assets/a.sprite"),
+          referencedComponent("body", "/assets/a.sprite"),
         ),
       },
       {
@@ -382,7 +410,7 @@ describe("buildSpriteAnimationIndex", () => {
         "assets/level.tilesource": 'image: "/assets/images/sheet.png"\n',
       },
     );
-    expect(tileSetFor(index, "src/hero.ts.script", "body")).toBe("assets/level.tilesource");
+    expect(sourceFor(index, "src/hero.ts.script", "body")).toBe("assets/level.tilesource");
   });
 
   test("two sprite components on one object each report their own tile source", () => {
@@ -391,7 +419,7 @@ describe("buildSpriteAnimationIndex", () => {
         "main/hero.go": gameObject(
           "/src/hero.ts.script",
           embeddedSprite("body", "/assets/body.atlas"),
-          spriteComponent("cape", "/assets/cape.sprite"),
+          referencedComponent("cape", "/assets/cape.sprite"),
         ),
       },
       {
@@ -400,8 +428,8 @@ describe("buildSpriteAnimationIndex", () => {
         "assets/cape.atlas": atlas("flap", "furl"),
       },
     );
-    expect(tileSetFor(index, "src/hero.ts.script", "body")).toBe("assets/body.atlas");
-    expect(tileSetFor(index, "src/hero.ts.script", "cape")).toBe("assets/cape.atlas");
+    expect(sourceFor(index, "src/hero.ts.script", "body")).toBe("assets/body.atlas");
+    expect(sourceFor(index, "src/hero.ts.script", "cape")).toBe("assets/cape.atlas");
   });
 
   test("a sprite naming a tile source no asset document holds reports none", () => {
@@ -415,8 +443,8 @@ describe("buildSpriteAnimationIndex", () => {
       },
       { "assets/a.atlas": atlas("idle") },
     );
-    expect(tileSetFor(index, "src/hero.ts.script", "missing")).toBeUndefined();
-    expect(tileSetFor(index, "src/hero.ts.script", "body")).toBe("assets/a.atlas");
+    expect(sourceFor(index, "src/hero.ts.script", "missing")).toBeUndefined();
+    expect(sourceFor(index, "src/hero.ts.script", "body")).toBe("assets/a.atlas");
     expect(index.unresolved).toHaveLength(1);
     expect(index.unresolved[0]).toContain("/assets/gone.atlas");
   });
@@ -430,7 +458,121 @@ describe("buildSpriteAnimationIndex", () => {
       { "assets/a.atlas": atlas("idle") },
     );
     expect(index.byScriptResource.has("src/hero.ts.script")).toBe(false);
-    expect(index.tileSetByScriptResource.has("src/hero.ts.script")).toBe(false);
+    expect(index.sourceByScriptResource.has("src/hero.ts.script")).toBe(false);
+  });
+
+  test("a model component's animations are the basenames its animation set lists", () => {
+    const index = indexOf(
+      {
+        "main/hero.go": gameObject(
+          "/src/hero.ts.script",
+          embeddedModel("hero", "/anims/hero.animationset"),
+        ),
+      },
+      { "anims/hero.animationset": animationSet("/anims/idle.gltf", "/anims/run.glb") },
+    );
+    expect(animationsFor(index, "src/hero.ts.script", "hero")).toEqual(["idle", "run"]);
+    expect(sourceFor(index, "src/hero.ts.script", "hero")).toBe("anims/hero.animationset");
+    expect(index.unresolved).toEqual([]);
+  });
+
+  test("a nested animation set prefixes its entries with its own basename", () => {
+    const index = indexOf(
+      {
+        "main/hero.go": gameObject(
+          "/src/hero.ts.script",
+          embeddedModel("hero", "/anims/hero.animationset"),
+        ),
+      },
+      {
+        "anims/hero.animationset": animationSet("/anims/idle.gltf", "/anims/combat.animationset"),
+        "anims/combat.animationset": animationSet("/anims/slash.gltf"),
+      },
+    );
+    expect(animationsFor(index, "src/hero.ts.script", "hero")).toEqual(["combat/slash", "idle"]);
+    expect(index.unresolved).toEqual([]);
+  });
+
+  test("a model naming a mesh source directly contributes nothing and is recorded", () => {
+    const index = indexOf({
+      "main/hero.go": gameObject("/src/hero.ts.script", embeddedModel("hero", "/meshes/hero.gltf")),
+    });
+    expect(animationsFor(index, "src/hero.ts.script", "hero")).toBeUndefined();
+    expect(index.unresolved).toEqual([
+      'main/hero.go: the model component "hero" names /meshes/hero.gltf rather than an animation set, so none of its animation ids are established',
+    ]);
+  });
+
+  test("an entry in an unsupported format contributes nothing and is recorded", () => {
+    const index = indexOf(
+      {
+        "main/hero.go": gameObject(
+          "/src/hero.ts.script",
+          embeddedModel("hero", "/anims/hero.animationset"),
+        ),
+      },
+      { "anims/hero.animationset": animationSet("/anims/idle.gltf", "/anims/legacy.dae") },
+    );
+    expect(animationsFor(index, "src/hero.ts.script", "hero")).toEqual(["idle"]);
+    expect(index.unresolved).toEqual([
+      "anims/hero.animationset: the entry /anims/legacy.dae is not a .gltf, .glb or .animationset, so it declares no animation id",
+    ]);
+  });
+
+  test("two model components on disjoint animation sets stay disjoint", () => {
+    const index = indexOf(
+      {
+        "main/hero.go": gameObject(
+          "/src/hero.ts.script",
+          embeddedModel("hero", "/anims/hero.animationset"),
+          referencedComponent("prop", "/models/prop.model"),
+        ),
+      },
+      {
+        "anims/hero.animationset": animationSet("/anims/idle.gltf", "/anims/run.glb"),
+        "models/prop.model": model("/anims/prop.animationset"),
+        "anims/prop.animationset": animationSet("/anims/spin.gltf"),
+      },
+    );
+    expect(animationsFor(index, "src/hero.ts.script", "hero")).toEqual(["idle", "run"]);
+    expect(animationsFor(index, "src/hero.ts.script", "prop")).toEqual(["spin"]);
+    expect(sourceFor(index, "src/hero.ts.script", "prop")).toBe("anims/prop.animationset");
+    expect(index.unresolved).toEqual([]);
+  });
+
+  test("a sprite and a model on one object keep their own ids", () => {
+    const index = indexOf(
+      {
+        "main/hero.go": gameObject(
+          "/src/hero.ts.script",
+          embeddedSprite("sprite", "/assets/hero.atlas"),
+          embeddedModel("model", "/anims/hero.animationset"),
+        ),
+      },
+      {
+        "assets/hero.atlas": atlas("blink"),
+        "anims/hero.animationset": animationSet("/anims/idle.gltf"),
+      },
+    );
+    expect(animationsFor(index, "src/hero.ts.script", "sprite")).toEqual(["blink"]);
+    expect(animationsFor(index, "src/hero.ts.script", "model")).toEqual(["idle"]);
+    expect(index.unresolved).toEqual([]);
+  });
+
+  test("an animation set that references itself is recorded, not looped", () => {
+    const index = indexOf(
+      {
+        "main/hero.go": gameObject(
+          "/src/hero.ts.script",
+          embeddedModel("hero", "/anims/loop.animationset"),
+        ),
+      },
+      { "anims/loop.animationset": animationSet("/anims/loop.animationset") },
+    );
+    expect(animationsFor(index, "src/hero.ts.script", "hero")).toBeUndefined();
+    expect(index.unresolved).toEqual([
+      "anims/loop.animationset: the entry /anims/loop.animationset re-enters an animation set already being read, so the chain is cyclic",
+    ]);
   });
 });
 
