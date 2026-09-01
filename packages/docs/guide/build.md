@@ -82,9 +82,10 @@ break is reported on the edit that broke it rather than at the next restart. The
 whole project is re-checked each time, not just the file you saved: a fragment
 can go bad because a scene changed, and one that is still broken keeps being
 reported until you fix it or declare the component. Saving a `.go`/`.collection`
-refreshes the address universe the next rebuild checks against. The very first
-build of a watch session is the exception — it runs before the scene walk, so
-the check starts from the first rebuild.
+re-checks the whole project on the spot — no rebuild needed, so a component you
+remove is reported on that save. The very first build of a watch session is the
+exception — it runs before the scene walk, so the check starts from the first
+rebuild or scene save.
 
 `build` never narrows the API surface — it builds against whatever entrypoint your
 `tsconfig` names, the full `@defold-typescript/types` by default. Opt into

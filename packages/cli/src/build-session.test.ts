@@ -325,4 +325,69 @@ describe("createBuildSession", () => {
 
     expect(rebuilt.warnings).toEqual([]);
   });
+
+  test("rescanReachability reports a fragment the index stopped declaring", () => {
+    writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
+    writeIn(cwd, "src/main.ts", POST_TO("sprite"));
+
+    let ids = new Set<string>(["sprite"]);
+    const session = createBuildSession({
+      cwd,
+      sceneIndex: () => ({ ids, incomplete: [] }),
+    });
+    expect(session.buildAll().warnings).toEqual([]);
+
+    ids = new Set<string>();
+    const rescanned = session.rescanReachability();
+
+    expect(rescanned.warnings.some((w) => w.includes("sprite"))).toBe(true);
+    expect(rescanned.warnings.some((w) => w.includes("src/main.ts"))).toBe(true);
+    expect(rescanned.unreachableAddresses).toEqual([
+      {
+        file: "src/main.ts",
+        fragment: "sprite",
+        message: expect.stringContaining("sprite") as unknown as string,
+      },
+    ]);
+  });
+
+  test("rescanReachability clears a finding once the index declares the component again", () => {
+    writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
+    writeIn(cwd, "src/main.ts", POST_TO("sprite"));
+
+    let ids = new Set<string>();
+    const session = createBuildSession({
+      cwd,
+      sceneIndex: () => ({ ids, incomplete: [] }),
+    });
+    session.buildAll();
+    expect(session.rescanReachability().warnings.some((w) => w.includes("sprite"))).toBe(true);
+
+    ids = new Set<string>(["sprite"]);
+    const cleared = session.rescanReachability();
+
+    expect(cleared.warnings).toEqual([]);
+    expect(cleared.unreachableAddresses).toEqual([]);
+  });
+
+  test("rescanReachability writes no outputs", () => {
+    writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
+    writeIn(cwd, "src/main.ts", POST_TO("sprite"));
+
+    let ids = new Set<string>(["sprite"]);
+    const session = createBuildSession({
+      cwd,
+      sceneIndex: () => ({ ids, incomplete: [] }),
+    });
+    const built = session.buildAll();
+    const mainOutput = built.written.find((rel) => rel.includes("main")) as string;
+    expect(mainOutput).toBeDefined();
+
+    rmSync(path.join(cwd, mainOutput));
+    ids = new Set<string>();
+    const rescanned = session.rescanReachability();
+
+    expect(rescanned.warnings.some((w) => w.includes("sprite"))).toBe(true);
+    expect(existsSync(path.join(cwd, mainOutput))).toBe(false);
+  });
 });

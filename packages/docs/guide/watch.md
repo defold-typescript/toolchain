@@ -45,6 +45,10 @@ edits.
 initial build, and again on every `.go` or `.collection` save. Unlike the
 extension surface this needs no bootstrap run — that startup pass writes it.
 
+Each of those saves also re-checks the project's `#fragment` addresses against
+the refreshed universe, so a component you remove is reported before you touch
+any TypeScript. The startup regeneration is the exception and reports nothing.
+
 ## Runtime errors in the terminal
 
 While a Defold editor is open on this project, `watch` reads its console and
