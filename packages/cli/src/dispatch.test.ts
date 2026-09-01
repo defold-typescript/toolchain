@@ -39,6 +39,7 @@ import { runResolve } from "./resolve";
 import { SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 import {
   scaffoldUnresolvedDependency,
+  scaffoldUnresolvedDependencyManifest,
   UNRESOLVED_DEPENDENCY_URL,
 } from "./unresolved-dependency-fixture";
 import { defaultUpgradeIo } from "./upgrade";
@@ -847,6 +848,41 @@ describe("dispatch", () => {
       path.join(cwd, "package.json"),
       `${JSON.stringify({ "defold-typescript": { "defold-target": "1.9.8" } }, null, 2)}\n`,
     );
+    const resolveOpts = labelRefDocResolveOpts();
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd], io, {
+      resolveOpts,
+      detectEditorVersion: () => null,
+    });
+
+    expect(code).toBe(0);
+    expect(err()).toContain("did not run");
+    expect(err()).not.toContain("nobody");
+
+    rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
+  });
+
+  // A project whose scenes are missing *because* its dependency is missing has
+  // no scene sources at all, so the suppression the two cases above prove never
+  // reaches it: `hasScenes` is false there and true here.
+  test("a scene-less project with an unresolved dependency suppresses the check on the ordinary branch", async () => {
+    scaffoldBuildProject();
+    scaffoldUnresolvedDependencyManifest(cwd);
+    writeFileSync(path.join(cwd, "src", "main.ts"), 'msg.post("#nobody", "hello");\n');
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd], io, { detectEditorVersion: () => null });
+
+    expect(code).toBe(0);
+    expect(err()).toContain("did not run");
+    expect(err()).not.toContain("nobody");
+  });
+
+  test("a scene-less project with an unresolved dependency suppresses the check on the ref-doc branch", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.9.8" } });
+    scaffoldUnresolvedDependencyManifest(cwd);
+    writeFileSync(path.join(cwd, "src", "main.ts"), 'msg.post("#nobody", "hello");\n');
     const resolveOpts = labelRefDocResolveOpts();
     const { io, err } = captureStreams();
 
