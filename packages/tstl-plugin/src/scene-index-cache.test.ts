@@ -240,6 +240,14 @@ describe("createSceneIndexCache invalidation filtering", () => {
     );
   });
 
+  test("an event on the dependency root itself invalidates the cache", () => {
+    // Removing the last dependency `rmSync`s the whole root and writes nothing
+    // inside it, so the only event a watcher reports is at this exact path — a
+    // descendant-only prefix test drops it and the editor keeps offering the
+    // removed library's ids until `tsserver` restarts.
+    expect(untouched(`${PROJECT_ROOT}/.defold-types/dependencies`)).toHaveLength(2);
+  });
+
   test("another materialized surface under `.defold-types/` still leaves the cache intact", () => {
     expect(untouched(`${PROJECT_ROOT}/.defold-types/scene-addresses.d.ts`)).toHaveLength(1);
     expect(untouched(`${PROJECT_ROOT}/.defold-types/defold/index.d.ts`)).toHaveLength(1);

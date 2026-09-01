@@ -14,7 +14,7 @@ import { Writable } from "node:stream";
 import * as ts from "typescript";
 import { dispatch } from "./dispatch";
 import { MATERIALIZED_ROOT } from "./materialize";
-import { SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
+import { createIncompleteReporter, SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 
 // The value production reports, not a re-derivation of it: `path.join` here
 // would yield a backslash on Windows and disagree with the POSIX path the
@@ -37,11 +37,13 @@ function write(rel: string, contents: string): void {
   writeFileSync(target, contents);
 }
 
-function captureStdout(): {
+function captureStreams(): {
   io: { stdout: NodeJS.WritableStream; stderr: NodeJS.WritableStream };
   out: () => string;
+  err: () => string;
 } {
   const chunks: Buffer[] = [];
+  const errChunks: Buffer[] = [];
   const sink = (collect: Buffer[]): NodeJS.WritableStream =>
     new Writable({
       write(chunk, _enc, cb) {
@@ -49,17 +51,29 @@ function captureStdout(): {
         cb();
       },
     });
-  const discarded: Buffer[] = [];
   return {
-    io: { stdout: sink(chunks), stderr: sink(discarded) },
+    io: { stdout: sink(chunks), stderr: sink(errChunks) },
     out: () => Buffer.concat(chunks).toString("utf8"),
+    err: () => Buffer.concat(errChunks).toString("utf8"),
   };
 }
 
-async function run(...args: string[]): Promise<{ code: number; json: () => unknown }> {
-  const { io, out } = captureStdout();
+async function run(
+  ...args: string[]
+): Promise<{ code: number; out: string; err: string; json: () => unknown }> {
+  const { io, out, err } = captureStreams();
   const code = await dispatch([...args, cwd], io);
-  return { code, json: () => JSON.parse(out().trim()) };
+  return { code, out: out(), err: err(), json: () => JSON.parse(out().trim()) };
+}
+
+const DEPENDENCY_URL = "https://github.com/Insality/druid/archive/refs/tags/16.zip";
+
+// A project that declares a dependency the last `resolve` never materialized:
+// `game.project` names the URL and nothing under the dependency root answers for
+// it. This is the hole `readSceneDocuments` names and the CLI has to report.
+function scaffoldUnresolvedDependency(): void {
+  scaffoldProject();
+  write("game.project", `[project]\ntitle = demo\ndependencies#0 = ${DEPENDENCY_URL}\n`);
 }
 
 function scaffoldProject(): void {
@@ -223,14 +237,57 @@ describe("scene-types verb", () => {
       'instances {\n  id: "root"\n  prototype: "/druid/druid.go"\n}\n',
     );
 
-    const { code } = await run("scene-types");
+    const { code, err } = await run("scene-types");
 
     expect(code).toBe(0);
+    // A whole universe reports nothing: the warning has to fire on a real hole
+    // rather than on every project that declares a dependency at all.
+    expect(err).toBe("");
     expect(
       probeDiagnostics(
         'const object: keyof SceneGameObjectAddresses = "/ui/root";\nexport { object };\n',
       ).map((d) => ts.flattenDiagnosticMessageText(d.messageText, " ")),
     ).toEqual([]);
+  });
+
+  test("an unresolved dependency is named on stderr, and the declaration is still written", async () => {
+    scaffoldUnresolvedDependency();
+
+    const { code, err } = await run("scene-types");
+
+    expect(code).toBe(0);
+    expect(err).toContain("defold-typescript scene-types:");
+    expect(err).toContain(DEPENDENCY_URL);
+    // The project's own scenes still reach the declaration: a partial universe
+    // is a warning, never a refusal to write.
+    expect(readFileSync(path.join(cwd, DECLARATION_REL), "utf8")).toContain('"/player/player"');
+  });
+
+  test("--json carries the same reasons on the warnings channel", async () => {
+    scaffoldUnresolvedDependency();
+
+    const { code, json, err } = await run("scene-types", "--json");
+
+    expect(code).toBe(0);
+    expect(err).toBe("");
+    const parsed = json() as { ok: boolean; warnings?: readonly string[] };
+    expect(parsed.ok).toBe(true);
+    expect(parsed.warnings?.some((warning) => warning.includes(DEPENDENCY_URL))).toBe(true);
+  });
+
+  test("build reports the holes beside its own warnings", async () => {
+    scaffoldUnresolvedDependency();
+    write(
+      "tsconfig.json",
+      JSON.stringify({ compilerOptions: { strict: true }, include: ["src/**/*.ts"] }, null, 2),
+    );
+    write("src/main.ts", "export const a = 1;\n");
+
+    const { code, err } = await run("build");
+
+    expect(code).toBe(0);
+    expect(err).toContain("defold-typescript build:");
+    expect(err).toContain(DEPENDENCY_URL);
   });
 
   test("the build output bob writes is not read back as project scenes", async () => {
@@ -243,5 +300,32 @@ describe("scene-types verb", () => {
     await run("scene-types");
 
     expect(readFileSync(path.join(cwd, DECLARATION_REL), "utf8")).not.toContain('"#ghost"');
+  });
+});
+
+// `watch` regenerates on every scene save, so a project that never resolves its
+// dependencies would otherwise repeat the same reason on every keystroke.
+describe("createIncompleteReporter", () => {
+  test("reports a reason once and stays quiet while it persists", () => {
+    const report = createIncompleteReporter();
+    const reasons = ["druid.zip: is declared by game.project but was not materialized"];
+
+    expect(report(reasons)).toEqual(reasons);
+    expect(report(reasons)).toEqual([]);
+  });
+
+  test("a newly-appearing reason is reported beside the ones already seen", () => {
+    const report = createIncompleteReporter();
+    report(["first"]);
+
+    expect(report(["first", "second"])).toEqual(["second"]);
+  });
+
+  test("a reason that goes away and comes back is reported again", () => {
+    const report = createIncompleteReporter();
+    report(["first"]);
+    report([]);
+
+    expect(report(["first"])).toEqual(["first"]);
   });
 });

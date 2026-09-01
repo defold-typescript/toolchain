@@ -19,6 +19,28 @@ export interface SceneTypesResult {
   /** The declaration's project-relative path, whether or not this run wrote it. */
   readonly declaration: string;
   readonly wrote: boolean;
+  /**
+   * Every hole the walk found in the address universe, verbatim from
+   * `readSceneDocuments`. The strings are already phrased for a reader, so a
+   * second wording layer here would be a duplicate model of what the walk
+   * decided.
+   */
+  readonly incomplete: readonly string[];
+}
+
+/**
+ * A reporter that names each hole once. `watch` regenerates the declaration on
+ * every scene save, and a project that never resolves its dependencies would
+ * otherwise repeat the same reason on every keystroke; a reason that goes away
+ * and comes back is genuinely new information, so it is reported again.
+ */
+export function createIncompleteReporter(): (incomplete: readonly string[]) => string[] {
+  let seen: ReadonlySet<string> = new Set();
+  return (incomplete: readonly string[]): string[] => {
+    const fresh = incomplete.filter((reason) => !seen.has(reason));
+    seen = new Set(incomplete);
+    return fresh;
+  };
 }
 
 // The same `SceneReadHost` the editor plugin satisfies, backed by the real
@@ -91,10 +113,10 @@ function writeIfChanged(target: string, contents: string): boolean {
  * in `@defold-typescript/types` stay widened.
  */
 export function runSceneTypes(opts: { cwd: string }): SceneTypesResult {
-  const { documents } = readSceneDocuments(fsSceneReadHost(), opts.cwd);
+  const { documents, unreadable } = readSceneDocuments(fsSceneReadHost(), opts.cwd);
   const wrote = writeIfChanged(
     path.join(opts.cwd, SCENE_ADDRESSES_DECLARATION),
     buildSceneAddressDeclaration(documents),
   );
-  return { declaration: SCENE_ADDRESSES_DECLARATION, wrote };
+  return { declaration: SCENE_ADDRESSES_DECLARATION, wrote, incomplete: unreadable };
 }
