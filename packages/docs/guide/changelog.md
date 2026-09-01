@@ -28,7 +28,7 @@ changes are called out first because the toolchain is pre-1.0.
 
 ### Fixed
 
-- **[`resolve`](./resolve.md) can no longer be made to write outside `.defold-types/dependencies/`.** A dependency archive whose scene entry carried a `..` path could overwrite a file in your own project; such an entry is now refused and named on `stderr`, and the rest of that archive still unpacks.
+- **[`resolve`](./resolve.md) can no longer be made to write outside `.defold-types/dependencies/`.** A dependency archive whose scene entry traverses out with a `..` path segment could overwrite a file in your own project; such an entry is now refused and named on `stderr`, and the rest of that archive still unpacks. A directory whose name merely starts with dots — `..assets/main.collection` — is an ordinary path and unpacks normally.
 - **[`run`](./run.md) no longer launches a cached stock engine and a build that record different Defold versions.** Bumping your [pin](./pinning-defold-target.md) and rebuilding left the old engine behind, and launching that pair made Defold report `FORMAT_ERROR`; [`bob build`](./bob.md) and `bob run` now record the head each half was produced at, and `run` reports the two versions instead of launching. An engine cached before this release records no version and keeps launching until one `bob run` replaces it, and a native-extension engine is exempt because the same build produces it and its data.
 
 ## v0.30.0
