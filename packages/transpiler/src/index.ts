@@ -18,6 +18,7 @@ export type {
 } from "./library-dependencies";
 export {
   archiveWrapperOf,
+  isContainedResourcePath,
   LIBRARY_DEPENDENCY_ROOT,
   libraryIncludedEntries,
   readGameProjectDependencies,

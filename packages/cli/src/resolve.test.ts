@@ -1075,4 +1075,53 @@ describe("runResolve dependency scene sources", () => {
     expect(warnings.join("\n")).toContain(url);
     expect(warnings.join("\n")).toContain("game.project");
   });
+
+  test("a refused archive entry reaches the warning channel", async () => {
+    const cwd = tmp();
+    const url = "https://github.com/Insality/druid/archive/1.2.3.zip";
+    writeProject(cwd, `[project]\ntitle = Test\ndependencies#0 = ${url}\n`);
+    const escaping = "druid-1.2.3/druid/../../../../main.collection";
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(url)]: {
+        entries: ["druid-1.2.3/game.project", "druid-1.2.3/druid/druid.collection", escaping],
+        contents: {
+          "druid-1.2.3/game.project": DRUID_GAME_PROJECT,
+          "druid-1.2.3/druid/druid.collection": DRUID_COLLECTION,
+          [escaping]: 'name: "owned"\n',
+        },
+      },
+    };
+
+    const warnings: string[] = [];
+    const originalWarn = console.warn;
+    console.warn = (...args: unknown[]) => {
+      warnings.push(args.map(String).join(" "));
+    };
+    let result: Awaited<ReturnType<typeof runResolve>>;
+    try {
+      result = await runResolve({
+        cwd,
+        cacheDir: tmp(),
+        download: someBytes,
+        readZip: makeReadZip(byKey),
+        libraryRegistry: [],
+        libraryGeneratedDir: null,
+      });
+    } finally {
+      console.warn = originalWarn;
+    }
+
+    expect(result.ok).toBe(true);
+    const key = extensionArchiveKey(url);
+    const root = join(cwd, ".defold-types", "dependencies");
+    expect(readFileSync(join(root, key, "druid", "druid.collection"), "utf8")).toBe(
+      DRUID_COLLECTION,
+    );
+    expect(existsSync(join(cwd, "main.collection"))).toBe(false);
+    // Counted as what was written, not as what the archive offered.
+    expect(result.extensions[0]?.sceneSources).toBe(1);
+    expect(warnings.filter((line) => line.includes(escaping))).toEqual([
+      `refusing unsafe scene path from ${url}: ${escaping}`,
+    ]);
+  });
 });

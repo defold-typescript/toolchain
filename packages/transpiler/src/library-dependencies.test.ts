@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   archiveWrapperOf,
+  isContainedResourcePath,
   libraryIncludedEntries,
   readGameProjectDependencies,
 } from "./library-dependencies";
@@ -39,6 +40,17 @@ const LIBRARY_ENTRIES = [
   "lib-1.2.3/extra/x.gui",
   "lib-1.2.3/example/demo.collection",
 ];
+
+// Entries that clear the include-dir and extension tests but whose merged
+// resource path would leave the include dir once joined onto a key directory.
+const UNSAFE_LIBRARY_ENTRIES = [
+  "lib-1.2.3/druid/../../../../main.collection",
+  "lib-1.2.3/druid/..\\..\\..\\..\\win.collection",
+  "lib-1.2.3/druid/./x.collection",
+  "lib-1.2.3/druid//y.collection",
+];
+
+const LIBRARY_ENTRIES_WITH_UNSAFE = [...LIBRARY_ENTRIES, ...UNSAFE_LIBRARY_ENTRIES];
 
 const LIBRARY_GAME_PROJECT = `[project]
 title = Druid
@@ -92,6 +104,22 @@ describe("libraryIncludedEntries", () => {
     expect(reasons[0]).toContain("include_dirs");
   });
 
+  test("an entry whose merged path escapes its include dir is refused, not shared", () => {
+    const { shared } = libraryIncludedEntries(LIBRARY_ENTRIES_WITH_UNSAFE, LIBRARY_GAME_PROJECT);
+    expect(shared).toEqual([
+      { entry: "lib-1.2.3/druid/druid.collection", path: "druid/druid.collection" },
+      { entry: "lib-1.2.3/druid/nested/deep.go", path: "druid/nested/deep.go" },
+      { entry: "lib-1.2.3/extra/x.gui", path: "extra/x.gui" },
+    ]);
+  });
+
+  test("each refused entry is named", () => {
+    expect(
+      libraryIncludedEntries(LIBRARY_ENTRIES_WITH_UNSAFE, LIBRARY_GAME_PROJECT).refused,
+    ).toEqual(UNSAFE_LIBRARY_ENTRIES);
+    expect(libraryIncludedEntries(LIBRARY_ENTRIES, LIBRARY_GAME_PROJECT).refused).toEqual([]);
+  });
+
   test("names the archive that ships no game.project, distinctly", () => {
     const { shared, reasons } = libraryIncludedEntries(LIBRARY_ENTRIES, undefined);
     expect(shared).toEqual([]);
@@ -100,5 +128,17 @@ describe("libraryIncludedEntries", () => {
     expect(reasons[0]).not.toEqual(
       libraryIncludedEntries(LIBRARY_ENTRIES, "[project]\ntitle = Druid\n").reasons[0],
     );
+  });
+});
+
+describe("isContainedResourcePath", () => {
+  test("accepts a plain nested path and rejects each unsafe shape", () => {
+    expect(isContainedResourcePath("druid/nested/deep.go")).toBe(true);
+    expect(isContainedResourcePath("druid/../evil.collection")).toBe(false);
+    expect(isContainedResourcePath("druid/./x.collection")).toBe(false);
+    expect(isContainedResourcePath("druid\\..\\win.collection")).toBe(false);
+    expect(isContainedResourcePath("/druid/x.collection")).toBe(false);
+    expect(isContainedResourcePath("druid//y.collection")).toBe(false);
+    expect(isContainedResourcePath("")).toBe(false);
   });
 });

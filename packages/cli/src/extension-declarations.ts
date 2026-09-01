@@ -35,6 +35,10 @@ export interface ExtensionDeclarations {
   // Why an archive shares nothing, when it shares nothing. A silent empty result
   // is exactly the hole this surface exists to close.
   readonly sceneReasons: string[];
+  // The entries the reader dropped because their merged path would not stay
+  // inside the dependency's own directory. Distinct from `sceneReasons`: the
+  // archive shares something, just not this.
+  readonly sceneRefused: string[];
 }
 
 // The archive's own `game.project`, read through the wrapper strip so a library
@@ -54,11 +58,16 @@ function archiveGameProject(zip: ExtensionZip): string | undefined {
 function archiveSceneSources(zip: ExtensionZip): {
   sceneSources: { path: string; text: string }[];
   sceneReasons: string[];
+  sceneRefused: string[];
 } {
-  const { shared, reasons } = libraryIncludedEntries(zip.entries(), archiveGameProject(zip));
+  const { shared, reasons, refused } = libraryIncludedEntries(
+    zip.entries(),
+    archiveGameProject(zip),
+  );
   return {
     sceneSources: shared.map(({ entry, path }) => ({ path, text: zip.read(entry) })),
     sceneReasons: reasons,
+    sceneRefused: refused,
   };
 }
 
@@ -94,7 +103,7 @@ export async function resolveExtensionDeclarations(
   for (const archive of resolved) {
     const zip = await open(archive.archivePath);
     const luaModules = archiveLuaModules(zip.entries());
-    const { sceneSources, sceneReasons } = archiveSceneSources(zip);
+    const { sceneSources, sceneReasons, sceneRefused } = archiveSceneSources(zip);
     if (archive.assetOnly) {
       bundles.push({
         url: archive.url,
@@ -105,6 +114,7 @@ export async function resolveExtensionDeclarations(
         luaModules,
         sceneSources,
         sceneReasons,
+        sceneRefused,
       });
       continue;
     }
@@ -121,6 +131,7 @@ export async function resolveExtensionDeclarations(
       luaModules,
       sceneSources,
       sceneReasons,
+      sceneRefused,
     });
   }
   return bundles;
