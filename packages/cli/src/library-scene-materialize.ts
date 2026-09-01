@@ -11,6 +11,7 @@
 
 import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
+import { isContainedResourcePath } from "@defold-typescript/transpiler";
 import { extensionArchiveKey } from "./extension-archive";
 import { formatJsonLikeBiome } from "./format-json";
 import { MATERIALIZED_ROOT } from "./materialize";
@@ -62,6 +63,21 @@ export function materializeLibrarySceneSources(
 
   const relDir = path.posix.join(MATERIALIZED_ROOT, DEPENDENCIES_DIR);
   const absDir = path.join(cwd, MATERIALIZED_ROOT, DEPENDENCIES_DIR);
+
+  // Up front, before the first mkdir or rm: the reader already refuses these
+  // paths, so one reaching here means the two rules disagree — a defect to
+  // surface rather than a data condition to absorb. Checking every source of
+  // every bundle first is what keeps a violation from leaving the surface
+  // half-reconciled.
+  for (const { key, url, sources } of resolved) {
+    const keyDir = path.join(absDir, key);
+    for (const { path: rel } of sources) {
+      const relative = path.relative(keyDir, path.join(keyDir, ...rel.split("/")));
+      if (!isContainedResourcePath(rel) || path.isAbsolute(relative) || relative.startsWith("..")) {
+        throw new Error(`refusing unsafe scene path from ${url}: ${rel}`);
+      }
+    }
+  }
 
   // An empty dependency set reconciles the surface to zero rather than leaving a
   // stale library declaring ids for good.

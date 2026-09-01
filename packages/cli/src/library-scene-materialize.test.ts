@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { extensionArchiveKey } from "./extension-archive";
@@ -102,6 +102,49 @@ describe("materializeLibrarySceneSources", () => {
       ].sort((a, b) => (a.key < b.key ? -1 : 1)),
     );
     expect(result.counts.get(EXTRA_URL)).toBe(0);
+  });
+
+  test("a source path escaping its key directory is refused before anything is written", () => {
+    const cwd = tmp();
+    const seeded = join(cwd, "main.collection");
+    writeFileSync(seeded, 'name: "project-main"\n');
+
+    materializeLibrarySceneSources({ cwd, bundles: [EXTRA_BUNDLE] });
+    const before = readdirSync(dependenciesDir(cwd)).sort();
+    const manifestBefore = readFileSync(join(dependenciesDir(cwd), "dependencies.json"), "utf8");
+
+    expect(() =>
+      materializeLibrarySceneSources({
+        cwd,
+        bundles: [
+          {
+            url: DRUID_URL,
+            sceneSources: [
+              { path: "druid/druid.collection", text: 'name: "druid"\n' },
+              { path: "druid/../../../../main.collection", text: "owned\n" },
+            ],
+          },
+        ],
+      }),
+    ).toThrow(/druid\/\.\.\/\.\.\/\.\.\/\.\.\/main\.collection/);
+
+    expect(readFileSync(seeded, "utf8")).toBe('name: "project-main"\n');
+    expect(readdirSync(dependenciesDir(cwd)).sort()).toEqual(before);
+    expect(readFileSync(join(dependenciesDir(cwd), "dependencies.json"), "utf8")).toBe(
+      manifestBefore,
+    );
+    expect(existsSync(join(dependenciesDir(cwd), extensionArchiveKey(DRUID_URL)))).toBe(false);
+  });
+
+  test("the refusal names the bundle it came from", () => {
+    const cwd = tmp();
+    expect(() =>
+      materializeLibrarySceneSources({
+        cwd,
+        bundles: [{ url: DRUID_URL, sceneSources: [{ path: "druid/./x.collection", text: "" }] }],
+      }),
+    ).toThrow(new RegExp(DRUID_URL.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    expect(existsSync(dependenciesDir(cwd))).toBe(false);
   });
 
   test("a dependency that stops sharing keeps its manifest row and loses its directory", () => {

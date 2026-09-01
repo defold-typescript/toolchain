@@ -33,6 +33,7 @@ function bundle(declarations: EmittedExtension[]): ExtensionDeclarations {
     luaModules: [],
     sceneSources: [],
     sceneReasons: [],
+    sceneRefused: [],
   };
 }
 
