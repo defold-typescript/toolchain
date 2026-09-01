@@ -4,8 +4,9 @@
 //
 // Deliberately a line reader rather than a parse of the scene text format:
 // `game.project` is a flat INI the editor writes, the same shape
-// `readExtensionDependencies` already walks. A key may carry a `#`
-// (`dependencies#0`), which is part of its name here and never a fragment.
+// `readGameProjectDependencies` (library-dependencies.ts) already walks. A key
+// may carry a `#` (`dependencies#0`), which is part of its name here and never a
+// fragment.
 
 function sectionNameOf(line: string): string | undefined {
   const match = line.trim().match(/^\[(.+)\]$/);

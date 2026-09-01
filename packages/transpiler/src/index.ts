@@ -9,6 +9,17 @@ export { buildGuiFlipbookIndex } from "./gui-flipbook-index";
 export type { GuiNodeIndex } from "./gui-node-index";
 export { buildGuiNodeIndex } from "./gui-node-index";
 export { buildInputActionIndex } from "./input-action-index";
+export type {
+  ExtensionDependency,
+  LibraryIncludedEntries,
+  LibrarySharedEntry,
+} from "./library-dependencies";
+export {
+  archiveWrapperOf,
+  LIBRARY_SCENE_EXTENSIONS,
+  libraryIncludedEntries,
+  readGameProjectDependencies,
+} from "./library-dependencies";
 export { findMainEntryFactoryImports } from "./main-entry-factory-imports";
 export type { BuildConfig, ScriptKind, SourceOutputKind } from "./output-paths";
 export {
