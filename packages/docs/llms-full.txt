@@ -3215,7 +3215,10 @@ library scene.
 The surface reconciles like every other: removing a dependency deletes its
 directory, and removing the last one deletes `dependencies/` entirely. A
 dependency that shares nothing — no `game.project` in the archive, or one with no
-`[library] include_dirs` — is named on `stderr` and never fails the run.
+`[library] include_dirs` — is named on `stderr` and never fails the run. An entry
+whose path would leave its own dependency directory is refused, named on
+`stderr`, and left out of the surface, while the rest of that archive unpacks
+normally.
 
 #### Keeping types in sync with `watch`
 
