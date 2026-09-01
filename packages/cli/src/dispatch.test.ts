@@ -6025,7 +6025,7 @@ describe("watch scene-address surface wiring", () => {
       JSON.stringify({ compilerOptions: { strict: true }, include: ["src/**/*.ts"] }, null, 2),
     );
     write("src/main.ts", "export const a = 1;\n");
-    write("game.project", "[project]\n");
+    write("game.project", "[bootstrap]\nmain_collection = /game/player.collectionc\n\n[project]\n");
     write("game/player.collection", PLAYER_ONLY);
     write("game/player.go", 'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n');
 
@@ -6073,7 +6073,7 @@ describe("watch scene-address surface wiring", () => {
       "package.json",
       `${JSON.stringify({ "defold-typescript": { "defold-target": "1.9.8" } }, null, 2)}\n`,
     );
-    write("game.project", "[project]\n");
+    write("game.project", "[bootstrap]\nmain_collection = /game/player.collectionc\n\n[project]\n");
     write("main.script", "");
     write("game/player.collection", PLAYER_ONLY);
     write("game/player.go", 'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n');
@@ -6183,7 +6183,8 @@ describe("watch scene-address surface wiring", () => {
     };
   }
 
-  const RESOLVED_GAME_PROJECT = "[project]\ntitle = demo\n";
+  const RESOLVED_GAME_PROJECT =
+    "[bootstrap]\nmain_collection = /game/game.collectionc\n\n[project]\ntitle = demo\n";
 
   test("watch names an unresolved dependency once, and again after it comes back", async () => {
     const sourceGeneratedDir = scaffoldWatchableProject();
@@ -6296,7 +6297,7 @@ describe("watch scene-address surface wiring", () => {
       "tsconfig.json",
       JSON.stringify({ compilerOptions: { strict: true }, include: ["src/**/*.ts"] }, null, 2),
     );
-    write("game.project", "[project]\n");
+    write("game.project", "[bootstrap]\nmain_collection = /game/player.collectionc\n\n[project]\n");
     write("game/player.go", 'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n');
     write("src/main.ts", POST_TO("sprite"));
   }

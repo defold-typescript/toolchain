@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { buildConfigKeyIndex } from "./config-key-index";
+import { buildConfigKeyIndex, readGameProjectSetting } from "./config-key-index";
 
 function ids(text: string): string[] {
   return [...buildConfigKeyIndex(text)];
@@ -44,5 +44,75 @@ describe("buildConfigKeyIndex", () => {
 
   test("a key declared twice under the same section is reported once", () => {
     expect(ids("[display]\nwidth = 960\nwidth = 1280\n")).toEqual(["display.width"]);
+  });
+});
+
+describe("readGameProjectSetting", () => {
+  test("returns the value declared under the named section", () => {
+    expect(
+      readGameProjectSetting(
+        "[display]\nwidth = 960\n\n[bootstrap]\nmain_collection = /main/main.collection\n",
+        "bootstrap",
+        "main_collection",
+      ),
+    ).toBe("/main/main.collection");
+  });
+
+  test("a key the file never declares is undefined", () => {
+    expect(
+      readGameProjectSetting(
+        "[bootstrap]\nmain_collection = /a.collection\n",
+        "bootstrap",
+        "render",
+      ),
+    ).toBeUndefined();
+  });
+
+  test("a section the file never declares is undefined", () => {
+    expect(
+      readGameProjectSetting("[display]\nwidth = 960\n", "bootstrap", "main_collection"),
+    ).toBeUndefined();
+  });
+
+  test("the same key under another section is not the answer", () => {
+    expect(
+      readGameProjectSetting(
+        "[other]\nmain_collection = /wrong.collection\n\n[bootstrap]\nmain_collection = /right.collection\n",
+        "bootstrap",
+        "main_collection",
+      ),
+    ).toBe("/right.collection");
+  });
+
+  test("a key the asked-for one is a prefix of is not the answer", () => {
+    expect(
+      readGameProjectSetting(
+        "[bootstrap]\nmain_collection_backup = /backup.collection\n",
+        "bootstrap",
+        "main_collection",
+      ),
+    ).toBeUndefined();
+  });
+
+  test("the value is trimmed and keeps an equals sign of its own", () => {
+    expect(
+      readGameProjectSetting("[project]\n  title   =   My = Game  \n", "project", "title"),
+    ).toBe("My = Game");
+  });
+
+  test("a line before the first section header belongs to no section", () => {
+    expect(
+      readGameProjectSetting(
+        "main_collection = /orphan.collection\n",
+        "bootstrap",
+        "main_collection",
+      ),
+    ).toBeUndefined();
+  });
+
+  test("an empty value is undefined rather than an empty answer", () => {
+    expect(
+      readGameProjectSetting("[bootstrap]\nmain_collection =\n", "bootstrap", "main_collection"),
+    ).toBeUndefined();
   });
 });

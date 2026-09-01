@@ -63,7 +63,10 @@ describe("runBuild (a scene-address declaration inside include)", () => {
   // generator, so the entry under test is the one `init` emits and the file it
   // names is the one `scene-types` writes.
   function scaffoldWithDeclaration(): void {
-    writeFile("game.project", "[project]\n");
+    writeFile(
+      "game.project",
+      "[bootstrap]\nmain_collection = /game/player.collectionc\n\n[project]\n",
+    );
     writeFile(
       "game/player.collection",
       'instances {\n  id: "player"\n  prototype: "/game/player.go"\n}\n',
@@ -750,7 +753,10 @@ describe("build regenerates the scene-address declaration", () => {
   // declaration's absence is the starting state one of these tests asserts, and
   // the others reach a stale state by editing scenes after a generation.
   function scaffoldScenes(): void {
-    writeFile("game.project", "[project]\n");
+    writeFile(
+      "game.project",
+      "[bootstrap]\nmain_collection = /game/player.collectionc\n\n[project]\n",
+    );
     writeFile(
       "game/player.collection",
       'instances {\n  id: "player"\n  prototype: "/game/player.go"\n}\n',
