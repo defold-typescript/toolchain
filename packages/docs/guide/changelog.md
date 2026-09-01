@@ -16,10 +16,6 @@ changes are called out first because the toolchain is pre-1.0.
 
 ## v0.31.0
 
-### Breaking
-
-- **`buildSpriteAnimationIndex` is now `buildComponentAnimationIndex`.** The `@defold-typescript/transpiler` export that resolves which animation ids a script may play now covers model components beside sprites, so its `SpriteAnimationIndex` type is renamed `ComponentAnimationIndex` and that index's `tileSetByScriptResource` field is renamed `sourceByScriptResource` — which now keys each animation id, not just each component, to the document that declares it.
-
 ### Improved
 
 - **[`scene-types`](./scene-types.md) and the editor now offer the addresses your library dependencies declare.** [`resolve`](./resolve.md) unpacks each dependency's `[library] include_dirs` scenes, and the component ids, object paths and animation ids in them join your project's own under the merged path Defold addresses them by, your own file winning a collision. A dependency you declared but have not resolved is now named on the warning channel of `scene-types`, [`build`](./build.md) and [`watch`](./watch.md) — and in `--json` — rather than silently skipped.
