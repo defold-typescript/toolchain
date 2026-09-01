@@ -18,9 +18,17 @@ export const SCENE_EXTENSIONS = [".go", ".collection"];
 export const GUI_EXTENSIONS = [".gui"];
 export const INPUT_BINDING_EXTENSIONS = [".input_binding"];
 
-// The documents an animation id is declared by: an atlas or tile source names
-// the ids, and a `.sprite` is the hop a referenced component takes to reach one.
-export const ANIMATION_ASSET_EXTENSIONS = [".atlas", ".tilesource", ".sprite"];
+// The documents an animation id is declared by, plus every hop taken to reach
+// one: an atlas or tile source names a sprite's ids outright, a `.animationset`
+// names the files whose basenames are a model's ids, and a `.sprite` or
+// `.model` is the hop a referenced component takes to reach either.
+export const ANIMATION_ASSET_EXTENSIONS = [
+  ".atlas",
+  ".tilesource",
+  ".sprite",
+  ".model",
+  ".animationset",
+];
 
 // The walk returns every `.project` the project holds, so the lookup is by
 // display path — a vendored `*.project` declares keys this project's readers

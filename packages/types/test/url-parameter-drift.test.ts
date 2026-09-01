@@ -81,13 +81,18 @@ describe("url-parameters.json generated entries", () => {
     expect(slots.get("gui.get_node#id")?.types).toEqual(["string", "hash"]);
   });
 
-  test("the animation-id class is recorded against the two slots that carry it", () => {
+  test("the animation-id class is recorded against the three slots that carry it", () => {
     const animations = table
       .filter((entry) => entry.class === "animation")
       .map((entry) => `${entry.fqn}#${entry.parameter}`);
-    expect(animations).toEqual(["sprite.play_flipbook#id", "gui.play_flipbook#animation"]);
+    expect(animations).toEqual([
+      "sprite.play_flipbook#id",
+      "gui.play_flipbook#animation",
+      "model.play_anim#anim_id",
+    ]);
     expect(slots.get("sprite.play_flipbook#id")?.types).toEqual(["string", "hash"]);
     expect(slots.get("gui.play_flipbook#animation")?.types).toEqual(["string", "hash"]);
+    expect(slots.get("model.play_anim#anim_id")?.types).toEqual(["string", "hash"]);
   });
 
   test("every animation entry names exactly one live scope companion", () => {

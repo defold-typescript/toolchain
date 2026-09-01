@@ -208,6 +208,14 @@
     "evidence": "animation id"
   },
   {
+    "fqn": "model.play_anim",
+    "parameter": "anim_id",
+    "class": "animation",
+    "addressParameter": "url",
+    "source": "generated",
+    "evidence": "id of the animation to play"
+  },
+  {
     "fqn": "resource.atlas",
     "parameter": "path",
     "class": "resource-path",

@@ -3410,7 +3410,7 @@ Put the caret inside [`gui.get_node`](/api/gui)'s argument and the plugin offers
 
 Scoping is deliberately strict: a scene owns a script by naming it, so the ids come from the **one** `.gui` whose `script` field names the `.gui_script` your file generates — resolved through the same `outDir` and `include` rules the build uses, so a project with a separate output tree completes too. A script no scene names, or one that two scenes both name, offers nothing — an id `gui.get_node` could not resolve at runtime is worse than no suggestion. Only the scene's top-level nodes are offered; nodes that exist solely as a layout override or inside a template are not.
 
-#### Animation id completions inside the `play_flipbook` calls
+#### Animation id completions inside the animation calls
 
 Put the caret inside [`sprite.play_flipbook`](/api/sprite)'s `id` argument and the plugin offers the animation names declared by the atlas or tile source that sprite uses. Like a node id, an animation name is not an address, so the whole quoted name is completed at once and a `#` inside one is never reported as an unreachable component.
 
@@ -3418,7 +3418,11 @@ This slot is the first one scoped by a *sibling* argument, so it asks for more: 
 
 [`gui.play_flipbook`](/api/gui)'s `animation` argument is scoped a second way, because its companion is a node rather than an address: the candidates are the animations declared by every texture the **one** `.gui` scene naming your file's generated `.gui_script` lists in its `textures` blocks. The node the call animates deliberately does not narrow it — `gui.set_texture` retargets a node at runtime, so the scene's own texture list is the honest universe. A gui script no scene names, or one that two scenes both name, offers nothing, and a texture the project does not declare simply contributes nothing rather than blocking the rest.
 
-Only blocks declared as `animations { id: … }` are offered, in both slots. A bare image in an atlas is not, and neither is [`model.play_anim`](/api/model), whose names come from an animation set rather than an atlas.
+[`model.play_anim`](/api/model)'s `anim_id` argument is scoped the same way `sprite.play_flipbook` is — by the sibling `url` address — but its chain ends somewhere else: from the addressed model component to its `animations` resource, which must be a `.animationset`, to that set's entries. **The ids are filenames**, not names read out of the mesh: an entry `/anims/idle.gltf` offers `idle`, and a nested `.animationset` prefixes everything it lists with its own basename, so `combat.animationset` listing `/anims/slash.gltf` offers `combat/slash`. Only `.gltf` and `.glb` entries count; anything else contributes nothing and is skipped.
+
+A `.model` whose `animations` names a mesh source directly rather than a `.animationset` offers **nothing at all**. Defold's editor and its build pipeline derive different ids for that form, and a wrong name in an animation slot crashes at runtime rather than doing nothing, so the plugin stays silent instead of guessing. A set that references itself, or one the project does not hold, is treated the same way.
+
+Only blocks declared as `animations { id: … }` are offered for the two atlas-backed slots, and a bare image in an atlas is not.
 
 #### Resource path completions inside the `go.property` resource constructors
 
@@ -3454,7 +3458,7 @@ Candidates are the union of **every** `.input_binding` in the project, whatever 
 
 #### Where a suggestion came from
 
-Highlight one of the plugin's own suggestions in the completion list and the detail panel names the project files that declare it — `main/board.go` for a component id, the owning `.gui` for a node id, `game.project` for a config key, and every `.input_binding` that declares an action when more than one does. Every kind the plugin suggests is covered, including the two composed across documents: a game-object path names the collection declaring its **leaf** segment — the file you would open to rename that object, not the one that prefixed it — and an animation id names the `.atlas` or `.tilesource` that really declares it — the one the addressed sprite reads from, or the named gui texture carrying the name.
+Highlight one of the plugin's own suggestions in the completion list and the detail panel names the project files that declare it — `main/board.go` for a component id, the owning `.gui` for a node id, `game.project` for a config key, and every `.input_binding` that declares an action when more than one does. Every kind the plugin suggests is covered, including the two composed across documents: a game-object path names the collection declaring its **leaf** segment — the file you would open to rename that object, not the one that prefixed it — and an animation id names the document that really declares it — the `.atlas` or `.tilesource` the addressed sprite reads from, the named gui texture carrying the name, or the `.animationset` the addressed model reads from.
 
 The panel is shown only for suggestions the plugin contributed, only when the declaring file can be named exactly, and — inside an address argument — only for the half the caret is standing in, the same split the list itself uses. Everything else falls through to whatever your editor would have shown: the editor's own entries, another extension's, and any id the project cannot attribute exactly — a scene that failed to parse, a script two game objects both claim, a path composed only inside a collection that is itself instanced. Those still complete as before; they just get the editor's default panel rather than a guessed one.
 
