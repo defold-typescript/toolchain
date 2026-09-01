@@ -1,12 +1,12 @@
 import {
   ANIMATION_ASSET_EXTENSIONS,
+  buildComponentAnimationIndex,
   buildConfigKeyIndex,
   buildGuiFlipbookIndex,
   buildGuiNodeIndex,
   buildInputActionIndex,
   buildSceneComponentIndex,
   buildSceneObjectPathIndex,
-  buildSpriteAnimationIndex,
   type ClassifiedSlot,
   componentIdOfSameObjectAddress,
   computeOutputRel,
@@ -28,7 +28,7 @@ const COMPONENT_PROVENANCE = "provenance:component-ids";
 const ACTION_PROVENANCE = "provenance:input-actions";
 const GUI_PROVENANCE = "provenance:gui-nodes";
 const PATH_PROVENANCE = "provenance:object-paths";
-const ANIMATION_PROVENANCE = "provenance:sprite-animations";
+const ANIMATION_PROVENANCE = "provenance:component-animations";
 const GUI_ANIMATION_PROVENANCE = "provenance:gui-flipbook";
 
 type Provenance = ReadonlyMap<string, readonly string[]>;
@@ -156,11 +156,12 @@ function guiAnimationProvenance(input: {
   return declarers === undefined ? [] : [...declarers].sort();
 }
 
-// Scoped exactly the way the animation completion is: to the sprite component
-// the slot's sibling literal addresses on the one game object owning this
-// script, resolved through the same helper so the two cannot disagree about
-// which sprite is addressed. The tile set is reported only for an id it really
-// declares — a panel naming a file that does not carry the name is the
+// Scoped exactly the way the animation completion is: to the sprite or model
+// component the slot's sibling literal addresses on the one game object owning
+// this script, resolved through the same helper so the two cannot disagree
+// about which component is addressed. The declaring document — an atlas for a
+// sprite, an animation set for a model — is reported only for an id it really
+// declares: a panel naming a file that does not carry the name is the
 // fabricated answer this surface exists to avoid.
 function animationProvenance(input: {
   slot: ClassifiedSlot;
@@ -175,16 +176,16 @@ function animationProvenance(input: {
   const component = componentIdOfSameObjectAddress(slot.addressText ?? "");
   if (component === undefined) return [];
   const index = cache.derived(ANIMATION_PROVENANCE, () =>
-    buildSpriteAnimationIndex({
+    buildComponentAnimationIndex({
       scenes: cache.documents().documents,
       assets: cache.documents(ANIMATION_ASSET_EXTENSIONS).documents,
     }),
   );
   const config = readBuildConfigFromHost(cache.host, cache.projectRoot);
   const resource = computeOutputRel(displayPathOf(cache.projectRoot, fileName), config, "script");
-  const tileSet = index.tileSetByScriptResource.get(resource)?.get(component);
-  if (tileSet === undefined) return [];
-  return index.byScriptResource.get(resource)?.get(component)?.has(entryName) ? [tileSet] : [];
+  const source = index.sourceByScriptResource.get(resource)?.get(component);
+  if (source === undefined) return [];
+  return index.byScriptResource.get(resource)?.get(component)?.has(entryName) ? [source] : [];
 }
 
 // A config key is declared by the one file that answers a reader at runtime, and

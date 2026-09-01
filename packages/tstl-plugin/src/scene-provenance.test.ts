@@ -159,12 +159,30 @@ const ANIMATION_DOCUMENTS: Record<string, string> = {
 };
 
 // The same shape with a second object claiming the same script, which is the
-// ambiguity `buildSpriteAnimationIndex` deletes rather than picks a winner for.
+// ambiguity `buildComponentAnimationIndex` deletes rather than picks a winner for.
 const CONTESTED_ANIMATION_DOCUMENTS: Record<string, string> = {
   ...ANIMATION_DOCUMENTS,
   "main/twin.go":
     'components {\n  id: "self"\n  component: "/main.ts.script"\n}\n' +
     'components {\n  id: "sprite"\n  component: "/assets/hero.sprite"\n}\n',
+};
+
+const MODEL_ANIMATION_SOURCE = 'model.play_anim("#model", "idle", go.PLAYBACK_ONCE_FORWARD);\n';
+
+// One object owning a model on an animation set beside a sprite on an atlas, so
+// a panel crediting the object rather than the declaring document would be
+// visible, as would one crediting the `.model` instead of the set it names.
+const MODEL_ANIMATION_DOCUMENTS: Record<string, string> = {
+  "main/hero.go":
+    'components {\n  id: "self"\n  component: "/main.ts.script"\n}\n' +
+    'components {\n  id: "model"\n  component: "/models/hero.model"\n}\n' +
+    'components {\n  id: "sprite"\n  component: "/assets/hero.sprite"\n}\n',
+  "models/hero.model": 'mesh: "/meshes/hero.gltf"\nanimations: "/anims/hero.animationset"\n',
+  "anims/hero.animationset":
+    'animations {\n  animation: "/anims/idle.gltf"\n}\n' +
+    'animations {\n  animation: "/anims/run.glb"\n}\n',
+  "assets/hero.sprite": 'tile_set: "/assets/hero.atlas"\n',
+  "assets/hero.atlas": 'animations {\n  id: "walk"\n}\n',
 };
 
 const GUI_FLIPBOOK_SOURCE = 'gui.play_flipbook(gui.get_node("box"), "blink");\n';
@@ -415,6 +433,22 @@ describe("resolveEntryProvenance", () => {
     ).toEqual([]);
     expect(
       resolveEntryProvenance({ slot, position, cache, fileName: "unowned.ts", entryName: "blink" }),
+    ).toEqual([]);
+  });
+
+  test("a model animation entry is credited to the animation set that declares it", () => {
+    const { cache } = cacheOver(MODEL_ANIMATION_DOCUMENTS);
+    const { slot, position } = slotIn(MODEL_ANIMATION_SOURCE, '"idle"');
+    expect(slot.class).toBe("animation");
+    expect(
+      resolveEntryProvenance({ slot, position, cache, fileName: "main.ts", entryName: "idle" }),
+    ).toEqual(["anims/hero.animationset"]);
+    expect(
+      resolveEntryProvenance({ slot, position, cache, fileName: "main.ts", entryName: "run" }),
+    ).toEqual(["anims/hero.animationset"]);
+    // Declared by the sibling sprite's atlas, and by no set this model names.
+    expect(
+      resolveEntryProvenance({ slot, position, cache, fileName: "main.ts", entryName: "walk" }),
     ).toEqual([]);
   });
 

@@ -16,8 +16,13 @@ changes are called out first because the toolchain is pre-1.0.
 
 ## v0.31.0
 
+### Breaking
+
+- **`buildSpriteAnimationIndex` is now `buildComponentAnimationIndex`.** The `@defold-typescript/transpiler` export that resolves which animation ids a script may play now covers model components beside sprites, so its `SpriteAnimationIndex` type is renamed `ComponentAnimationIndex` and that index's `tileSetByScriptResource` field is renamed `sourceByScriptResource`.
+
 ### Improved
 
+- **[`model.play_anim`](/api/model) now completes its animation name.** Put the caret in the `anim_id` argument and the plugin offers the entries of the `.animationset` the model your sibling `url` addresses reads from — the ids are filenames, so an entry `/anims/idle.gltf` offers `idle` and a nested set prefixes everything it lists with its own basename. A `.model` naming a mesh source directly offers nothing rather than a guess, and the [provenance panel](./transpile-diagnostics.md) credits the set that really declares each name.
 - **[`gui.play_flipbook`](/api/gui) now completes its animation name.** Put the caret in the `animation` argument and the plugin offers the animations declared by the textures the one `.gui` scene owning your gui script names — never a project-wide union — and the [provenance panel](./transpile-diagnostics.md) credits the atlas that really declares each one.
 
 ### Fixed
