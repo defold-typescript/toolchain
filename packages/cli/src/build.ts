@@ -18,7 +18,7 @@ import { scanOrphanOutputs } from "./orphan-scan";
 import { scanFilesSync } from "./scan";
 import { scanSceneResourceRefs } from "./scene-resource-scan";
 import { loadUrlParameterTable } from "./url-parameter-table";
-import { scanUrlFragmentReachability } from "./url-reachability-scan";
+import { scanUrlFragmentReachability, type UnreachableAddressEntry } from "./url-reachability-scan";
 import { findWallImportViolations } from "./wall-import-guardrail";
 
 function throwOnWallImportViolations(cwd: string, files: Record<string, string>): void {
@@ -51,6 +51,8 @@ export interface RunBuildOptions {
 export interface RunBuildResult {
   readonly written: string[];
   readonly warnings: string[];
+  /** The unreachable addresses `warnings` also names in prose. */
+  readonly unreachableAddresses: UnreachableAddressEntry[];
 }
 
 export function runBuild(opts: RunBuildOptions): RunBuildResult {
@@ -66,7 +68,7 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
   const sources = [...seen].sort();
 
   if (sources.length === 0) {
-    return { written: [], warnings: [] };
+    return { written: [], warnings: [], unreachableAddresses: [] };
   }
 
   const files: Record<string, string> = {};
@@ -118,12 +120,14 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
 
   throwIfFailures(failures);
   const program = session.getProgram();
+  const reachability =
+    sceneIndex && program
+      ? scanUrlFragmentReachability({ program, index: sceneIndex, table: loadUrlParameterTable() })
+      : { warnings: [], entries: [] };
   const warnings = [
     ...scanOrphanOutputs(cwd, sources, config),
     ...scanSceneResourceRefs(cwd),
-    ...(sceneIndex && program
-      ? scanUrlFragmentReachability({ program, index: sceneIndex, table: loadUrlParameterTable() })
-      : []),
+    ...reachability.warnings,
   ];
-  return { written: written.sort(), warnings };
+  return { written: written.sort(), warnings, unreachableAddresses: reachability.entries };
 }

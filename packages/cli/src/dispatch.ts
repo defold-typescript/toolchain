@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import * as path from "node:path";
+import type { SceneComponentIndex } from "@defold-typescript/transpiler";
 import { type RegistryTarget, resolvableTargetVersions } from "./api-registry";
 import { CURRENT_STABLE_SURFACE_ID, selectApiSurface } from "./api-surface";
 import {
@@ -51,6 +52,7 @@ import { createIncompleteReporter, runSceneTypes, sceneIndexForBuild } from "./s
 import { runSetTarget } from "./set-target";
 import { runSetupDebug } from "./setup-debug";
 import { runUpgrade, type UpgradeIo } from "./upgrade";
+import type { UnreachableAddressEntry } from "./url-reachability-scan";
 import type { CheckboxPrompt } from "./wall-interactive";
 import type { RunWatchHandle, RunWatchOptions, WatchEditorClient, WatcherFactory } from "./watch";
 
@@ -795,6 +797,7 @@ function dispatchCommand(
           written: readonly string[],
           warnings: readonly string[],
           materializedDir: string | null,
+          unreachableAddresses: readonly UnreachableAddressEntry[] = [],
         ): number => {
           ensureMaterializedReference(cwd, materializedDir);
           // walls are opt-in via the wall command
@@ -804,6 +807,10 @@ function dispatchCommand(
                 command: "build",
                 written,
                 warnings: [...pinNotices, ...targetDiagnostics, ...warnings],
+                // Absent rather than empty when there is nothing to report: a
+                // suppressed check has no entries either, and only `warnings`
+                // separates the two.
+                ...(unreachableAddresses.length > 0 ? { unreachableAddresses } : {}),
                 defoldVersion: head.version,
                 defoldVersionSource: targetSource,
                 defoldChannel: head.channel,
@@ -849,7 +856,7 @@ function dispatchCommand(
             const sceneTypes = runSceneTypes({ cwd });
             const { incomplete } = sceneTypes;
             const sceneIndex = sceneIndexForBuild(sceneTypes);
-            const { written, warnings } = runBuild({
+            const { written, warnings, unreachableAddresses } = runBuild({
               cwd,
               ...(sceneIndex !== undefined ? { sceneIndex } : {}),
             });
@@ -864,7 +871,12 @@ function dispatchCommand(
                 `defold-typescript build: could not materialize ${surfaceId}; the default surface stays active\n`,
               );
             }
-            return reportBuild(written, [...incomplete, ...warnings], materializedDir);
+            return reportBuild(
+              written,
+              [...incomplete, ...warnings],
+              materializedDir,
+              unreachableAddresses,
+            );
           } catch (err) {
             return reportError(err);
           }
@@ -879,7 +891,7 @@ function dispatchCommand(
           const sceneTypes = runSceneTypes({ cwd });
           const { incomplete } = sceneTypes;
           const sceneIndex = sceneIndexForBuild(sceneTypes);
-          const { written, warnings } = runBuild({
+          const { written, warnings, unreachableAddresses } = runBuild({
             cwd,
             ...(sceneIndex !== undefined ? { sceneIndex } : {}),
           });
@@ -888,7 +900,12 @@ function dispatchCommand(
             surface,
             sourceGeneratedDir,
           });
-          return reportBuild(written, [...incomplete, ...warnings], materializedDir);
+          return reportBuild(
+            written,
+            [...incomplete, ...warnings],
+            materializedDir,
+            unreachableAddresses,
+          );
         } catch (err) {
           return reportError(err);
         }
@@ -935,8 +952,16 @@ function dispatchCommand(
         // regenerates on every scene save, and most of them write nothing.
         // `watch.ts` emits the `sceneTypes` watch event around this closure.
         const reportIncomplete = createIncompleteReporter();
+        // The address universe this watch's builds check `#fragment` addresses
+        // against. `runWatch` runs the scene surface once at startup and again
+        // on every scene save, so the value is behind only for the very first
+        // build — the same build whose declaration `runWatch` deliberately
+        // regenerates afterwards rather than before.
+        let sceneIndex: SceneComponentIndex | undefined;
         const sceneTypesSurface = (): void => {
-          const { declaration, wrote, incomplete } = runSceneTypes({ cwd });
+          const result = runSceneTypes({ cwd });
+          const { declaration, wrote, incomplete } = result;
+          sceneIndex = sceneIndexForBuild(result);
           const fresh = reportIncomplete(incomplete);
           if (json) {
             io.stdout.write(
@@ -1025,6 +1050,7 @@ function dispatchCommand(
             ...(componentWatcherFactory ? { componentWatcherFactory } : {}),
             ...(resolveSurface ? { resolveSurface } : {}),
             sceneTypesSurface,
+            sceneIndex: () => sceneIndex,
             ...(json ? { json: true } : {}),
             ...(pinDiagnostics.length > 0 ? { pinDiagnostics } : {}),
             ...(pinMismatch ? { pinMismatch } : {}),
