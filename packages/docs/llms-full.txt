@@ -2393,6 +2393,10 @@ edits.
 initial build, and again on every `.go` or `.collection` save. Unlike the
 extension surface this needs no bootstrap run — that startup pass writes it.
 
+Each of those saves also re-checks the project's `#fragment` addresses against
+the refreshed universe, so a component you remove is reported before you touch
+any TypeScript. The startup regeneration is the exception and reports nothing.
+
 #### Runtime errors in the terminal
 
 While a Defold editor is open on this project, `watch` reads its console and
@@ -2667,9 +2671,10 @@ break is reported on the edit that broke it rather than at the next restart. The
 whole project is re-checked each time, not just the file you saved: a fragment
 can go bad because a scene changed, and one that is still broken keeps being
 reported until you fix it or declare the component. Saving a `.go`/`.collection`
-refreshes the address universe the next rebuild checks against. The very first
-build of a watch session is the exception — it runs before the scene walk, so
-the check starts from the first rebuild.
+re-checks the whole project on the spot — no rebuild needed, so a component you
+remove is reported on that save. The very first build of a watch session is the
+exception — it runs before the scene walk, so the check starts from the first
+rebuild or scene save.
 
 `build` never narrows the API surface — it builds against whatever entrypoint your
 `tsconfig` names, the full `@defold-typescript/types` by default. Opt into
@@ -3748,7 +3753,7 @@ addresses" is wrong whenever that line is present.
 
 `watch` is long-running, so `--json` streams **newline-delimited JSON (NDJSON)** —
 one object per line, one line per event. The full lifecycle reads
-`start` → `build` → `rebuild`* → `resolve`* → `stop`:
+`start` → `build` → `rebuild`* → `sceneTypes`* → `resolve`* → `stop`:
 
 ```sh
 bunx @defold-typescript/cli watch --json
@@ -3756,15 +3761,19 @@ bunx @defold-typescript/cli watch --json
 # {"command":"watch","event":"build","ok":true,"written":[...],"warnings":[]}
 # {"command":"watch","event":"rebuild","ok":true,"written":[...],"changed":["src/main.ts"],"removed":[],"warnings":[]}
 # {"command":"watch","event":"rebuild","ok":false,"error":"..."}
+# {"command":"watch","event":"sceneTypes","ok":true,"written":[],"warnings":[]}
 # {"command":"watch","event":"resolve","ok":true,"written":[]}
 # {"command":"watch","event":"stop","ok":true,"written":[]}
 ```
 
-`build` and `rebuild` events carry `warnings` and the same optional
-`unreachableAddresses` array, under the identical absent-versus-empty rule, so a
-watching agent sees an address break on the edit that broke it. The first
-`build` event of a session is the exception: it runs before the scene walk, so
-the check starts from the first `rebuild`.
+`build`, `rebuild`, and `sceneTypes` events carry `warnings` and the same
+optional `unreachableAddresses` array, under the identical absent-versus-empty
+rule, so a watching agent sees an address break on the edit that broke it —
+including a `.go`/`.collection` save that broke it, which emits `sceneTypes`
+alone and no `rebuild`. The first `build` event of a session is the exception,
+and so is the `sceneTypes` event that follows it: both run before or as part of
+the scene walk, so the check starts from the first `rebuild` or the first
+`sceneTypes` a scene save produces.
 
 A `resolve` event is emitted whenever a `game.project` save re-resolves the
 extension surface (re-materializing `.defold-types/extensions/` from the declared

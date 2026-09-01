@@ -50,6 +50,12 @@ export interface BuildResult {
 export interface BuildSession {
   buildAll(): BuildResult;
   applyEvents(changed: string[], removed: string[]): BuildResult;
+  /**
+   * Re-check the standing program's addresses against the current universe
+   * without building: a scene save changes the universe but advances no
+   * program, so there is nothing to compile and nothing to emit.
+   */
+  rescanReachability(): Pick<BuildResult, "warnings" | "unreachableAddresses">;
 }
 
 export function createBuildSession(opts: CreateBuildSessionOptions): BuildSession {
@@ -177,5 +183,10 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     };
   }
 
-  return { buildAll, applyEvents };
+  function rescanReachability(): Pick<BuildResult, "warnings" | "unreachableAddresses"> {
+    const reachability = scanReachability();
+    return { warnings: reachability.warnings, unreachableAddresses: reachability.entries };
+  }
+
+  return { buildAll, applyEvents, rescanReachability };
 }

@@ -75,7 +75,7 @@ addresses" is wrong whenever that line is present.
 
 `watch` is long-running, so `--json` streams **newline-delimited JSON (NDJSON)** —
 one object per line, one line per event. The full lifecycle reads
-`start` → `build` → `rebuild`* → `resolve`* → `stop`:
+`start` → `build` → `rebuild`* → `sceneTypes`* → `resolve`* → `stop`:
 
 ```sh
 bunx @defold-typescript/cli watch --json
@@ -83,15 +83,19 @@ bunx @defold-typescript/cli watch --json
 # {"command":"watch","event":"build","ok":true,"written":[...],"warnings":[]}
 # {"command":"watch","event":"rebuild","ok":true,"written":[...],"changed":["src/main.ts"],"removed":[],"warnings":[]}
 # {"command":"watch","event":"rebuild","ok":false,"error":"..."}
+# {"command":"watch","event":"sceneTypes","ok":true,"written":[],"warnings":[]}
 # {"command":"watch","event":"resolve","ok":true,"written":[]}
 # {"command":"watch","event":"stop","ok":true,"written":[]}
 ```
 
-`build` and `rebuild` events carry `warnings` and the same optional
-`unreachableAddresses` array, under the identical absent-versus-empty rule, so a
-watching agent sees an address break on the edit that broke it. The first
-`build` event of a session is the exception: it runs before the scene walk, so
-the check starts from the first `rebuild`.
+`build`, `rebuild`, and `sceneTypes` events carry `warnings` and the same
+optional `unreachableAddresses` array, under the identical absent-versus-empty
+rule, so a watching agent sees an address break on the edit that broke it —
+including a `.go`/`.collection` save that broke it, which emits `sceneTypes`
+alone and no `rebuild`. The first `build` event of a session is the exception,
+and so is the `sceneTypes` event that follows it: both run before or as part of
+the scene walk, so the check starts from the first `rebuild` or the first
+`sceneTypes` a scene save produces.
 
 A `resolve` event is emitted whenever a `game.project` save re-resolves the
 extension surface (re-materializing `.defold-types/extensions/` from the declared
