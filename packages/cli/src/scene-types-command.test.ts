@@ -77,6 +77,12 @@ async function run(
 }
 
 function scaffoldProject(): void {
+  // A real `game.project` names the *compiled* boot collection, which is what
+  // decides whose paths are offered bare.
+  write(
+    "game.project",
+    "[project]\ntitle = demo\n\n[bootstrap]\nmain_collection = /game/game.collectionc\n",
+  );
   write(
     "game/game.collection",
     'collection_instances {\n  id: "player"\n  collection: "/game/player.collection"\n}\n',
@@ -222,7 +228,10 @@ describe("scene-types verb", () => {
   test("a resolved dependency's scenes reach the declaration at their merged path", async () => {
     const url = "https://github.com/Insality/druid/archive/refs/tags/16.zip";
     scaffoldProject();
-    write("game.project", `[project]\ntitle = demo\ndependencies#0 = ${url}\n`);
+    write(
+      "game.project",
+      `[project]\ntitle = demo\ndependencies#0 = ${url}\n\n[bootstrap]\nmain_collection = /game/game.collectionc\n`,
+    );
     write(
       "game/game.collection",
       'collection_instances {\n  id: "player"\n  collection: "/game/player.collection"\n}\n' +
@@ -302,6 +311,68 @@ describe("scene-types verb", () => {
     await run("scene-types");
 
     expect(readFileSync(path.join(cwd, DECLARATION_REL), "utf8")).not.toContain('"#ghost"');
+  });
+
+  test("a proxied collection's objects are offered under its socket, never bare", async () => {
+    scaffoldProject();
+    write(
+      "game/loader.go",
+      'embedded_components {\n  id: "loader"\n  type: "collectionproxy"\n' +
+        '  data: "collection: \\"/levels/level1.collection\\"\\n"\n}\n',
+    );
+    write(
+      "game/game.collection",
+      'collection_instances {\n  id: "player"\n  collection: "/game/player.collection"\n}\n' +
+        'instances {\n  id: "loader"\n  prototype: "/game/loader.go"\n}\n',
+    );
+    write(
+      "levels/level1.collection",
+      'name: "mylevel"\ninstances {\n  id: "enemy"\n  prototype: "/game/player.go"\n}\n',
+    );
+
+    const { code } = await run("scene-types");
+
+    expect(code).toBe(0);
+    const declaration = readFileSync(path.join(cwd, DECLARATION_REL), "utf8");
+    expect(declaration).toContain('"mylevel:/enemy"');
+    expect(declaration).not.toContain('"/enemy"');
+    expect(
+      probeDiagnostics(
+        'const qualified: keyof SceneGameObjectAddresses = "mylevel:/enemy";\nexport { qualified };\n',
+      ).map((d) => ts.flattenDiagnosticMessageText(d.messageText, " ")),
+    ).toEqual([]);
+  });
+
+  test("a standalone .collectionproxy is read as its own document", async () => {
+    scaffoldProject();
+    write(
+      "game/loader.go",
+      'components {\n  id: "loader"\n  component: "/levels/level1.collectionproxy"\n}\n',
+    );
+    write(
+      "game/game.collection",
+      'collection_instances {\n  id: "player"\n  collection: "/game/player.collection"\n}\n' +
+        'instances {\n  id: "loader"\n  prototype: "/game/loader.go"\n}\n',
+    );
+    write("levels/level1.collectionproxy", 'collection: "/levels/level1.collection"\n');
+    write(
+      "levels/level1.collection",
+      'name: "mylevel"\ninstances {\n  id: "enemy"\n  prototype: "/game/player.go"\n}\n',
+    );
+
+    await run("scene-types");
+
+    expect(readFileSync(path.join(cwd, DECLARATION_REL), "utf8")).toContain('"mylevel:/enemy"');
+  });
+
+  test("a project with no game.project offers no bare address and names the hole", async () => {
+    scaffoldProject();
+    rmSync(path.join(cwd, "game.project"));
+
+    const { err } = await run("scene-types");
+
+    expect(readFileSync(path.join(cwd, DECLARATION_REL), "utf8")).not.toContain('"/player/player"');
+    expect(err).toContain("game.project");
   });
 });
 

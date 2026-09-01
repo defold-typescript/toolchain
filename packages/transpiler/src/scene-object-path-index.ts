@@ -1,3 +1,4 @@
+import type { SceneCollectionRoles } from "./scene-collection-roles";
 import { parseSceneTextFormat, type SceneMessage, SceneTextFormatError } from "./scene-text-format";
 
 // Every game-object path the project declares, `/`-prefixed and composed the way
@@ -5,6 +6,10 @@ import { parseSceneTextFormat, type SceneMessage, SceneTextFormatError } from ".
 // settle. Shaped like `SceneComponentIndex`: a non-empty `incomplete` means the
 // universe is not provably whole, so no consumer may conclude a path is absent.
 export interface SceneObjectPathIndex {
+  // Two axes, in one key: which world, then which path inside it. A bare
+  // `/enemy` is the bootstrap world; `mylevel:/enemy` is the proxy world the
+  // proxied collection's `name:` opened. A collection factory's prototype has
+  // no static address at all, so it contributes neither form.
   readonly paths: ReadonlySet<string>;
   // The documents declaring each path's *leaf* segment, sorted — the files an
   // author would open to rename that object. A composed address is attributed to
@@ -36,17 +41,24 @@ function childrenOf(message: SceneMessage, name: string): readonly SceneMessage[
 // display paths, values are file text. Pure the same way `buildSceneComponentIndex`
 // is — the filesystem walk belongs to the caller.
 //
+// `roles` says which world each collection is, and is required rather than
+// defaulted: an optional parameter falling back to today's every-collection-is-a-
+// root behaviour would keep the wrong-world suggestion reachable from any call
+// site that forgot to pass it.
+//
 // A `children:` edge is deliberately not a path segment. Defold ids are unique
 // inside one collection and a child object is still addressed `/child`, so
 // parenting is a transform relation; nesting comes from a collection instanced
 // inside another.
 export function buildSceneObjectPathIndex(
   documents: ReadonlyMap<string, string>,
+  roles: SceneCollectionRoles,
 ): SceneObjectPathIndex {
   const incomplete: string[] = [];
 
   if (documents.size === 0) {
     incomplete.push("no scene sources were read, so no game-object path can be proven absent");
+    incomplete.push(...roles.incomplete);
     return { paths: new Set(), declaredIn: new Map(), incomplete };
   }
 
@@ -57,17 +69,6 @@ export function buildSceneObjectPathIndex(
     } catch (error) {
       if (!(error instanceof SceneTextFormatError)) throw error;
       incomplete.push(`${displayPath}: could not be parsed (${error.message})`);
-    }
-  }
-
-  // A collection another document instances is not a world of its own: at
-  // runtime its objects only exist under that instance's id, so contributing its
-  // own unprefixed paths as well would offer addresses that resolve to nothing.
-  const instanced = new Set<string>();
-  for (const document of parsed.values()) {
-    for (const block of childrenOf(document, "collection_instances")) {
-      const collection = firstField(block, "collection");
-      if (collection !== undefined) instanced.add(resourceKey(collection));
     }
   }
 
@@ -122,27 +123,39 @@ export function buildSceneObjectPathIndex(
     return paths;
   }
 
-  // Composed for every document, contributed from the un-instanced ones alone: a
-  // cycle or a dangling reference reached only from inside an instanced
-  // collection is still a gap the caller has to hear about.
+  // Composed for every document, contributed from the worlds alone: a cycle or a
+  // dangling reference reached only from a collection no world opens is still a
+  // gap the caller has to hear about.
+  for (const displayPath of parsed.keys()) pathsOf(displayPath);
+
+  // The bootstrap world's addresses are bare; every proxy world's are prefixed
+  // by the socket its collection's `name:` declares. A collection with neither
+  // role contributes nothing — including a factory prototype, whose objects only
+  // ever exist under a runtime-generated prefix.
+  const worlds: [string, string][] = [];
+  if (roles.bootstrap !== undefined) worlds.push(["", roles.bootstrap]);
+  for (const [displayPath, socket] of roles.sockets) worlds.push([`${socket}:`, displayPath]);
+
   const paths = new Set<string>();
   const declaredIn = new Map<string, string[]>();
-  for (const displayPath of parsed.keys()) {
-    const own = pathsOf(displayPath);
-    if (instanced.has(displayPath)) continue;
-    for (const [path, declarer] of own) {
-      paths.add(path);
-      const declarers = declaredIn.get(path);
+  for (const [prefix, displayPath] of worlds) {
+    for (const [path, declarer] of pathsOf(displayPath)) {
+      const key = `${prefix}${path}`;
+      paths.add(key);
+      const declarers = declaredIn.get(key);
       if (declarers === undefined) {
-        declaredIn.set(path, [declarer]);
+        declaredIn.set(key, [declarer]);
       } else if (!declarers.includes(declarer)) {
-        // Two roots instancing one collection under the same id compose the same
-        // address from the same leaf, which is one declaring file and not two.
+        // Two worlds sharing one socket compose the same address from two
+        // different leaves, which the roles already name as a hole — both
+        // declaring files still answer for it.
         declarers.push(declarer);
       }
     }
   }
   for (const declarers of declaredIn.values()) declarers.sort();
+
+  incomplete.push(...roles.incomplete);
 
   return { paths, declaredIn, incomplete };
 }

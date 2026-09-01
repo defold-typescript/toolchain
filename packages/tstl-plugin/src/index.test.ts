@@ -71,9 +71,26 @@ const SPRITE_POSITION = PATH_FRAGMENT_SOURCE.indexOf("#sprite") + 1;
 // the one collection that gives the path half something to offer.
 const PATH_DOCUMENTS: Record<string, string> = {
   ...SCENE_DOCUMENTS,
+  // Which collection boots decides whose paths are offered bare, so a project
+  // fixture without a `game.project` has no bare address at all.
+  "game.project": "[bootstrap]\nmain_collection = /main/main.collectionc\n",
   "main/main.collection":
     'instances {\n  id: "hero"\n  prototype: "/main/board.go"\n  children: "cape"\n}\n' +
     'instances {\n  id: "cape"\n  prototype: "/main/hud.go"\n}\n',
+};
+
+// The same project, plus a proxy world: `level1.collection` is never instanced,
+// so its objects are addressed only through the socket its `name:` declares.
+const PROXY_PATH_DOCUMENTS: Record<string, string> = {
+  ...PATH_DOCUMENTS,
+  "main/main.collection":
+    'instances {\n  id: "hero"\n  prototype: "/main/board.go"\n}\n' +
+    'instances {\n  id: "loader"\n  prototype: "/main/loader.go"\n}\n',
+  "main/loader.go":
+    'embedded_components {\n  id: "loader"\n  type: "collectionproxy"\n' +
+    '  data: "collection: \\"/levels/level1.collection\\"\\n"\n}\n',
+  "levels/level1.collection":
+    'name: "mylevel"\ninstances {\n  id: "enemy"\n  prototype: "/main/hud.go"\n}\n',
 };
 
 // An empty node-id literal: the caret sits between the quotes, which is both the
@@ -402,6 +419,17 @@ describe("tstl-plugin", () => {
     expect(atFragment?.entries.map((e) => e.name)).toEqual(["board", "hud"]);
     const inFragment = service.getCompletionsAtPosition("main.ts", SPRITE_POSITION + 3, undefined);
     expect(inFragment?.entries.map((e) => e.name)).toEqual(["board", "hud"]);
+  });
+
+  test("a proxy world's objects are offered under its socket, and never bare", () => {
+    const source = 'go.get("", "position");\n';
+    const service = completionProxy({
+      source,
+      base: undefined,
+      documents: PROXY_PATH_DOCUMENTS,
+    });
+    const result = service.getCompletionsAtPosition("main.ts", source.indexOf('""') + 1, undefined);
+    expect(result?.entries.map((e) => e.name)).toEqual(["/hero", "/loader", "mylevel:/enemy"]);
   });
 
   test("an address carrying no fragment offers paths for its whole text", () => {

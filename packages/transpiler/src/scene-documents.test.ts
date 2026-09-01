@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { buildSceneCollectionRoles } from "./scene-collection-roles";
 import { buildSceneComponentIndex } from "./scene-component-index";
 import {
   listProjectResourcePaths,
@@ -289,7 +290,10 @@ describe("listProjectResourcePaths", () => {
 const DRUID_URL = "https://github.com/Insality/druid/archive/refs/tags/16.zip";
 const OTHER_URL = "https://github.com/britzl/defold-input/archive/refs/tags/5.zip";
 
-const GAME_PROJECT = `[project]
+const GAME_PROJECT = `[bootstrap]
+main_collection = /main/main.collectionc
+
+[project]
 title = demo
 dependencies#0 = ${DRUID_URL}
 `;
@@ -353,7 +357,10 @@ describe("readSceneDocuments over resolved library dependencies", () => {
 
     // The keying rule is the index's, not the walk's: an origin-namespaced key
     // would leave this instance unresolvable.
-    const index = buildSceneObjectPathIndex(documents);
+    const index = buildSceneObjectPathIndex(
+      documents,
+      buildSceneCollectionRoles({ documents, references: new Map(), gameProject: GAME_PROJECT }),
+    );
     expect(index.incomplete).toEqual([]);
     expect([...index.paths]).toContain("/ui/root");
   });
