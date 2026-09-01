@@ -84,8 +84,10 @@ skipped rather than failing the run.
 
 A Defold library also shares **scenes** — the `.collection`, `.go`, `.gui` and
 animation-asset files under the directories its own `game.project` lists in
-`[library] include_dirs`. Those files declare real addresses your code can post
-to, so `resolve` unpacks each dependency's shared set into
+`[library] include_dirs`, plus the `.collectionproxy` and `.collectionfactory`
+components beside them, which say whether a collection is its own world or a
+factory prototype. Those files declare real addresses your code can post to, so
+`resolve` unpacks each dependency's shared set into
 
 ```
 .defold-types/dependencies/<archive key>/<the path Defold addresses it by>
