@@ -149,14 +149,16 @@ export function runSceneTypes(opts: { cwd: string }): SceneTypesResult {
  *   walk could not reach — so a fragment declared only by an unresolved library
  *   reports the check as suppressed rather than the fragment as unreachable,
  *   reusing the check's own suppression rule instead of adding a second one;
- * - a project with no scene sources at all is not reported as suppressed. It
- *   has no address universe to speak of, so there is nothing a reader could act
- *   on, and saying so on every build would be noise — the same posture
- *   `runSceneTypes` already takes by writing an empty declaration instead of
- *   failing.
+ * - a project with no scene sources at all *and no walk failure* is not reported
+ *   as suppressed. It has no address universe to speak of, so there is nothing a
+ *   reader could act on, and saying so on every build would be noise — the same
+ *   posture `runSceneTypes` already takes by writing an empty declaration
+ *   instead of failing. A project whose scenes are missing *because* its
+ *   dependency is missing does have something to act on, so it reports the check
+ *   as suppressed like any other hole.
  */
 export function sceneIndexForBuild(result: SceneTypesResult): SceneComponentIndex | undefined {
-  if (!result.hasScenes) return undefined;
+  if (!result.hasScenes && result.incomplete.length === 0) return undefined;
   return {
     ids: result.index.ids,
     incomplete: [...result.index.incomplete, ...result.incomplete],
