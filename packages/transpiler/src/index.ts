@@ -39,7 +39,7 @@ export { buildSceneAddressDeclaration } from "./scene-address-declaration";
 export type { SceneCollectionRoles, SceneCollectionRolesInput } from "./scene-collection-roles";
 export { buildSceneCollectionRoles } from "./scene-collection-roles";
 export type { SceneComponentIndex } from "./scene-component-index";
-export { buildSceneComponentIndex } from "./scene-component-index";
+export { buildSceneComponentIndex, collectComponentIds } from "./scene-component-index";
 export type { SceneReadHost } from "./scene-documents";
 export {
   ANIMATION_ASSET_EXTENSIONS,

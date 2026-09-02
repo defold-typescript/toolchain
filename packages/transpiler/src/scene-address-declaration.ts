@@ -1,6 +1,6 @@
 import type { SceneCollectionRoles } from "./scene-collection-roles";
 import { buildSceneComponentIndex } from "./scene-component-index";
-import { buildSceneObjectPathIndex } from "./scene-object-path-index";
+import { buildSceneObjectPathIndex, type SceneObjectPathIndex } from "./scene-object-path-index";
 
 const BANNER = `// Generated from this project's scenes by \`defold-typescript scene-types\`.
 // Do not edit: every run rewrites it from the .go/.collection sources.
@@ -10,12 +10,22 @@ const BANNER = `// Generated from this project's scenes by \`defold-typescript s
 // only add completions — an address composed at runtime is never rejected.
 `;
 
-// `buildSceneComponentIndex` reports bare component ids with no owning object,
-// so the same-object form `#id` is the whole address the index can prove. A
-// `/path#id` key would be a cross product of two universes that were never
-// joined: it would claim every object owns every component.
-function componentAddressesOf(documents: ReadonlyMap<string, string>): string[] {
-  return [...buildSceneComponentIndex(documents).ids].map((id) => `#${id}`);
+// Two forms, from two universes that *are* joined now. `buildSceneComponentIndex`
+// reports bare component ids with no owning object, so the same-object form
+// `#id` stays the whole address it can prove on its own — a `/path#id` key built
+// from it alone would be a cross product claiming every object owns every
+// component. The object-qualified form comes instead from the path walk's
+// `componentsOf`, which attributes each id to the one object whose prototype
+// declared it, and so carries the same world axis a path key does.
+function componentAddressesOf(
+  documents: ReadonlyMap<string, string>,
+  paths: SceneObjectPathIndex,
+): string[] {
+  const keys = [...buildSceneComponentIndex(documents).ids].map((id) => `#${id}`);
+  for (const [path, ids] of paths.componentsOf) {
+    for (const id of ids) keys.push(`${path}#${id}`);
+  }
+  return keys;
 }
 
 // An interface with no members closes on the same line: an empty body written
@@ -47,12 +57,14 @@ export function buildSceneAddressDeclaration(
   documents: ReadonlyMap<string, string>,
   roles: SceneCollectionRoles,
 ): string {
-  const paths = [...buildSceneObjectPathIndex(documents, roles).paths];
-  const components = componentAddressesOf(documents);
+  // One walk for both key sets: the qualified component addresses are the path
+  // universe joined to its own prototypes, not a second index over the same files.
+  const index = buildSceneObjectPathIndex(documents, roles);
+  const components = componentAddressesOf(documents, index);
 
   return `${BANNER}
 declare global {
-  interface SceneGameObjectAddresses ${bodyOf(paths)}
+  interface SceneGameObjectAddresses ${bodyOf([...index.paths])}
 
   interface SceneComponentAddresses ${bodyOf(components)}
 }
