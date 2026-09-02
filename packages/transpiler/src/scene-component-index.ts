@@ -52,6 +52,28 @@ function collect(
   }
 }
 
+/**
+ * Every component id one already-parsed scene message declares, following the
+ * two `data:` payloads Defold embeds a whole document in. Exported because the
+ * game-object path walk attributes components to the object that owns them and
+ * must read the same rule this index reads — a second collector is exactly how
+ * the two universes drift apart.
+ *
+ * `blockName` names the block `message` was taken from, because the `data:`
+ * re-parse is keyed off it: a whole document is `""`, while a single
+ * `embedded_instances` block has to say so or its payload is never opened.
+ */
+export function collectComponentIds(
+  message: SceneMessage,
+  displayPath: string,
+  incomplete: string[],
+  blockName = "",
+): Set<string> {
+  const ids = new Set<string>();
+  collect(message, blockName, 0, displayPath, ids, incomplete);
+  return ids;
+}
+
 // Build the component-id universe from already-read scene sources: keys are
 // display paths, values are file text. Pure — the filesystem walk belongs to the
 // caller, so a test can drive this from inline strings and a build can drive it
@@ -69,7 +91,9 @@ export function buildSceneComponentIndex(
 
   for (const [displayPath, text] of documents) {
     try {
-      collect(parseSceneTextFormat(text), "", 0, displayPath, ids, incomplete);
+      for (const id of collectComponentIds(parseSceneTextFormat(text), displayPath, incomplete)) {
+        ids.add(id);
+      }
     } catch (error) {
       if (!(error instanceof SceneTextFormatError)) throw error;
       incomplete.push(`${displayPath}: could not be parsed (${error.message})`);

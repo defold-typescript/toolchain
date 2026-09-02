@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { buildSceneComponentIndex } from "./scene-component-index";
+import { buildSceneComponentIndex, collectComponentIds } from "./scene-component-index";
+import { parseSceneTextFormat, type SceneMessage } from "./scene-text-format";
 
 const EXAMPLES_DIR = join(import.meta.dir, "../../../docs/examples");
 
@@ -103,5 +104,73 @@ describe("buildSceneComponentIndex", () => {
     const index = buildSceneComponentIndex(new Map());
     expect([...index.ids]).toEqual([]);
     expect(index.incomplete).toHaveLength(1);
+  });
+});
+
+// The collector is handed one block, not a whole document, so the fixture has to
+// unwrap it — and say so loudly if the fixture stopped holding one.
+function embeddedInstancesBlock(source: string): SceneMessage {
+  const block = parseSceneTextFormat(source).messages.get("embedded_instances")?.[0];
+  if (block === undefined) throw new Error("fixture declares no embedded_instances block");
+  return block;
+}
+
+describe("collectComponentIds", () => {
+  test("reads a .go prototype's own component ids and nothing from a sibling", () => {
+    const incomplete: string[] = [];
+    const ids = collectComponentIds(
+      parseSceneTextFormat(
+        'components {\n  id: "sprite"\n  component: "/main/hero.sprite"\n}\n' +
+          'embedded_components {\n  id: "shape"\n  type: "collisionobject"\n}\n',
+      ),
+      "main/hero.go",
+      incomplete,
+    );
+    expect([...ids].sort()).toEqual(["shape", "sprite"]);
+    expect(incomplete).toEqual([]);
+
+    const sibling = collectComponentIds(
+      parseSceneTextFormat('components {\n  id: "other"\n  component: "/main/other.script"\n}\n'),
+      "main/other.go",
+      incomplete,
+    );
+    expect([...sibling]).toEqual(["other"]);
+  });
+
+  test("reads an embedded_instances block's escaped payload when named as one", () => {
+    const block = embeddedInstancesBlock(
+      'embedded_instances {\n  id: "level"\n  data: "components {\\n"\n  "  id: \\"tilemap\\"\\n"\n  "}\\n"\n  ""\n}\n',
+    );
+    const incomplete: string[] = [];
+    const ids = collectComponentIds(
+      block,
+      "game/game.collection",
+      incomplete,
+      "embedded_instances",
+    );
+    expect([...ids]).toEqual(["tilemap"]);
+    expect(incomplete).toEqual([]);
+  });
+
+  test("names the file when an embedded payload cannot be parsed", () => {
+    const block = embeddedInstancesBlock(
+      'embedded_instances {\n  id: "level"\n  data: "components {\\n"\n  ""\n}\n',
+    );
+    const incomplete: string[] = [];
+    expect([
+      ...collectComponentIds(block, "game/game.collection", incomplete, "embedded_instances"),
+    ]).toEqual([]);
+    expect(incomplete).toHaveLength(1);
+    expect(incomplete[0]).toContain("game/game.collection");
+  });
+
+  test("buildSceneComponentIndex reads through the same collector", () => {
+    const source =
+      'components {\n  id: "sprite"\n  component: "/main/hero.sprite"\n}\n' +
+      'embedded_components {\n  id: "shape"\n  type: "collisionobject"\n}\n';
+    const incomplete: string[] = [];
+    expect([...buildSceneComponentIndex(new Map([["main/hero.go", source]])).ids].sort()).toEqual(
+      [...collectComponentIds(parseSceneTextFormat(source), "main/hero.go", incomplete)].sort(),
+    );
   });
 });

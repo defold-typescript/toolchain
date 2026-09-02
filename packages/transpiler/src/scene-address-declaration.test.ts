@@ -13,6 +13,25 @@ const SCENE_ADDRESSES = readFileSync(
   "utf8",
 );
 
+const EXAMPLES_DIR = join(import.meta.dir, "../../../docs/examples");
+
+function committedText(project: string, ...segments: string[]): string {
+  return readFileSync(join(EXAMPLES_DIR, project, segments.join("/")), "utf8");
+}
+
+// Keyed by the path *inside* the example project, because that is what a
+// `prototype:` resource resolves to.
+function committed(project: string, ...segments: string[]): [string, string] {
+  const rel = segments.join("/");
+  return [rel, committedText(project, rel)];
+}
+
+const TETRIS = new Map([
+  committed("tetris-tutorial", "main", "main.collection"),
+  committed("tetris-tutorial", "main", "board.go"),
+  committed("tetris-tutorial", "main", "hud.go"),
+]);
+
 const DECLARATION_FILE = "scene-addresses.generated.d.ts";
 const PROBE_FILE = "probe.ts";
 
@@ -140,9 +159,11 @@ describe("scene address declaration", () => {
   test("the emission does not depend on the order the documents were read in", () => {
     const entries = [...NESTED_COLLECTION];
     const reversed = new Map([...entries].reverse());
-    expect(declarationFor(reversed, NESTED_GAME_PROJECT)).toBe(
-      declarationFor(NESTED_COLLECTION, NESTED_GAME_PROJECT),
-    );
+    const declaration = declarationFor(NESTED_COLLECTION, NESTED_GAME_PROJECT);
+    // Named here so the stability claim provably covers the object-qualified
+    // keys and not just the bare ones this test predates.
+    expect(declaration).toContain('"/player/player#sprite": true;');
+    expect(declarationFor(reversed, NESTED_GAME_PROJECT)).toBe(declaration);
   });
 
   test("an empty project emits a declaration that compiles and leaves both keyof never", () => {
@@ -213,6 +234,101 @@ describe("scene address declaration", () => {
       probeDiagnostics(
         declaration,
         'const absent: keyof SceneGameObjectAddresses = "/enemy";\nexport { absent };\n',
+      ).map((d) => [d.file?.fileName, d.code]),
+    ).toEqual([[PROBE_FILE, 2322]]);
+  });
+
+  test("SceneComponentAddresses carries the qualified key beside the bare one", () => {
+    const declaration = declarationFor(TETRIS, committedText("tetris-tutorial", "game.project"));
+    expect(
+      messagesOf(
+        probeDiagnostics(
+          declaration,
+          'const qualified: keyof SceneComponentAddresses = "/board#board";\n' +
+            'const bare: keyof SceneComponentAddresses = "#board";\nexport { qualified, bare };\n',
+        ),
+      ),
+    ).toEqual([]);
+    expect(
+      probeDiagnostics(
+        declaration,
+        'const foreign: keyof SceneComponentAddresses = "/hud#board";\nexport { foreign };\n',
+      ).map((d) => [d.file?.fileName, d.code]),
+    ).toEqual([[PROBE_FILE, 2322]]);
+  });
+
+  test("a qualified key carries the world axis a path key does", () => {
+    const declaration = declarationFor(
+      new Map([
+        [
+          "main/main.collection",
+          'instances {\n  id: "loader"\n  prototype: "/main/loader.go"\n}\n',
+        ],
+        [
+          "main/loader.go",
+          'embedded_components {\n  id: "loader"\n  type: "collectionproxy"\n' +
+            '  data: "collection: \\"/levels/level1.collection\\"\\n"\n}\n',
+        ],
+        [
+          "levels/level1.collection",
+          'name: "mylevel"\ninstances {\n  id: "enemy"\n  prototype: "/levels/enemy.go"\n}\n',
+        ],
+        ["levels/enemy.go", 'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n'],
+      ]),
+      "[bootstrap]\nmain_collection = /main/main.collection\n",
+    );
+
+    expect(
+      messagesOf(
+        probeDiagnostics(
+          declaration,
+          'const qualified: keyof SceneComponentAddresses = "mylevel:/enemy#sprite";\nexport { qualified };\n',
+        ),
+      ),
+    ).toEqual([]);
+    expect(
+      probeDiagnostics(
+        declaration,
+        'const unworlded: keyof SceneComponentAddresses = "/enemy#sprite";\nexport { unworlded };\n',
+      ).map((d) => [d.file?.fileName, d.code]),
+    ).toEqual([[PROBE_FILE, 2322]]);
+  });
+
+  test("a factory prototype contributes no qualified key", () => {
+    const declaration = declarationFor(
+      new Map([
+        [
+          "main/main.collection",
+          'instances {\n  id: "spawner"\n  prototype: "/main/spawner.go"\n}\n',
+        ],
+        [
+          "main/spawner.go",
+          'embedded_components {\n  id: "spawner"\n  type: "collectionfactory"\n' +
+            '  data: "prototype: \\"/spawn/pack.collection\\"\\n"\n}\n',
+        ],
+        [
+          "spawn/pack.collection",
+          'name: "pack"\ninstances {\n  id: "enemy"\n  prototype: "/spawn/enemy.go"\n}\n',
+        ],
+        ["spawn/enemy.go", 'components {\n  id: "brain"\n  component: "/spawn/enemy.script"\n}\n'],
+      ]),
+      "[bootstrap]\nmain_collection = /main/main.collection\n",
+    );
+
+    // The bare id is still offered — the flat component universe reads every
+    // document — but the object it hangs on has no static address to qualify it.
+    expect(
+      messagesOf(
+        probeDiagnostics(
+          declaration,
+          'const bare: keyof SceneComponentAddresses = "#brain";\nexport { bare };\n',
+        ),
+      ),
+    ).toEqual([]);
+    expect(
+      probeDiagnostics(
+        declaration,
+        'const qualified: keyof SceneComponentAddresses = "/enemy#brain";\nexport { qualified };\n',
       ).map((d) => [d.file?.fileName, d.code]),
     ).toEqual([[PROBE_FILE, 2322]]);
   });
