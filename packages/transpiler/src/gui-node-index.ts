@@ -1,4 +1,4 @@
-import { parseSceneTextFormat, SceneTextFormatError } from "./scene-text-format";
+import { parseSceneTextFormat, type SceneMessage, SceneTextFormatError } from "./scene-text-format";
 
 // The node ids each script may address, keyed by the project-relative resource
 // path of the `.gui_script` that owns them, plus an honest record of every scene
@@ -25,6 +25,19 @@ function scriptKeyOf(script: string): string | undefined {
   return key === SCRIPT_SUFFIX ? undefined : key;
 }
 
+/**
+ * The gui-script resource one already-parsed `.gui` names, keyed the way this
+ * index keys it. Exported so the naming-context resolver reaches a gui script
+ * through the same rule rather than a second reader — the aggregation on top
+ * differs on purpose (this index refuses a resource two scenes claim, while two
+ * scenes driving one gui script really is two naming contexts), but the key
+ * shape has one owner.
+ */
+export function guiScriptResourceOf(document: SceneMessage): string | undefined {
+  const [script] = document.fields.get("script") ?? [];
+  return script === undefined ? undefined : scriptKeyOf(script);
+}
+
 export function buildGuiNodeIndex(documents: ReadonlyMap<string, string>): GuiNodeIndex {
   const byScriptResource = new Map<string, ReadonlySet<string>>();
   const claimedBy = new Map<string, string>();
@@ -40,9 +53,7 @@ export function buildGuiNodeIndex(documents: ReadonlyMap<string, string>): GuiNo
       continue;
     }
 
-    const [script] = document.fields.get("script") ?? [];
-    if (script === undefined) continue;
-    const key = scriptKeyOf(script);
+    const key = guiScriptResourceOf(document);
     if (key === undefined) continue;
 
     const owner = claimedBy.get(key);

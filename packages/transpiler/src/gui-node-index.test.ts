@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { buildGuiNodeIndex } from "./gui-node-index";
+import { buildGuiNodeIndex, guiScriptResourceOf } from "./gui-node-index";
+import { parseSceneTextFormat } from "./scene-text-format";
 
 function node(id: string): string {
   return `nodes {\n  type: TYPE_TEXT\n  id: "${id}"\n}\n`;
@@ -122,5 +123,27 @@ describe("buildGuiNodeIndex", () => {
       "score",
     ]);
     expect([...(index.byScriptResource.get("src/board.ts.gui_script") ?? [])]).toEqual([]);
+  });
+});
+
+describe("guiScriptResourceOf", () => {
+  test("keys the script a .gui names, with the leading slash gone", () => {
+    expect(guiScriptResourceOf(parseSceneTextFormat(gui("/src/hud.ts.gui_script", "score")))).toBe(
+      "src/hud.ts.gui_script",
+    );
+  });
+
+  test("a .gui naming no script, or one that is not a .gui_script, keys nothing", () => {
+    expect(guiScriptResourceOf(parseSceneTextFormat(gui(undefined, "score")))).toBeUndefined();
+    expect(guiScriptResourceOf(parseSceneTextFormat(gui("/src/hud.ts.script")))).toBeUndefined();
+    expect(guiScriptResourceOf(parseSceneTextFormat(gui("/.gui_script")))).toBeUndefined();
+  });
+
+  test("buildGuiNodeIndex keys its scenes through this same rule", () => {
+    const source = gui("/src/board.ts.gui_script", "grid");
+    const index = indexOf({ "main/board.gui": source });
+    expect([...index.byScriptResource.keys()]).toEqual([
+      guiScriptResourceOf(parseSceneTextFormat(source)) ?? "",
+    ]);
   });
 });

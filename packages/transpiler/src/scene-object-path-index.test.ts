@@ -58,6 +58,16 @@ function componentsOfOver(universe: Universe): Record<string, readonly string[]>
   return Object.fromEntries([...index.componentsOf].sort(([a], [b]) => a.localeCompare(b)));
 }
 
+function componentResourcesOfOver(universe: Universe): Record<string, Record<string, string>> {
+  const { index, roles } = indexOver(universe);
+  expect(index.incomplete).toEqual([...roles.incomplete]);
+  return Object.fromEntries(
+    [...index.componentResourcesOf]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, resources]) => [key, Object.fromEntries(resources)]),
+  );
+}
+
 function declaredInOf(universe: Universe): Record<string, readonly string[]> {
   const { index, roles } = indexOver(universe);
   expect(index.incomplete).toEqual([...roles.incomplete]);
@@ -632,5 +642,128 @@ describe("buildSceneObjectPathIndex componentsOf", () => {
       expect(attributed.length).toBeGreaterThan(0);
       expect(attributed.filter((id) => !flat.has(id))).toEqual([]);
     }
+  });
+});
+
+describe("buildSceneObjectPathIndex componentResourcesOf", () => {
+  test("an instances prototype contributes its component resources to the composed path", () => {
+    expect(
+      componentResourcesOfOver({
+        gameProject: committedText("tetris-tutorial", "game.project"),
+        documents: [
+          committed("tetris-tutorial", "main", "main.collection"),
+          committed("tetris-tutorial", "main", "board.go"),
+          committed("tetris-tutorial", "main", "hud.go"),
+        ],
+      }),
+    ).toEqual({
+      "/board": { board: "main/board.gui" },
+      "/hud": { hud: "main/hud.gui" },
+    });
+  });
+
+  test("an embedded_instances payload contributes its component resources to the composed path", () => {
+    const resources = componentResourcesOfOver({
+      gameProject: committedText("platformer", "game.project"),
+      documents: [
+        committed("platformer", "game", "game.collection"),
+        committed("platformer", "game", "player.collection"),
+      ],
+    });
+    // The three embedded components the object also owns name no resource, so
+    // they are absent by construction rather than withheld.
+    expect(resources["/player/player"]).toEqual({ player: "src/player.ts.script" });
+    expect(resources["/level"]).toEqual({ level: "game/level.tilemap" });
+  });
+
+  test("a proxy world's paths carry their component resources under the socket-qualified key", () => {
+    expect(
+      componentResourcesOfOver({
+        bootstrap: "/main/main.collection",
+        documents: [
+          [
+            "main/main.collection",
+            'instances {\n  id: "loader"\n  prototype: "/main/loader.go"\n}\n',
+          ],
+          ["main/loader.go", proxyObject("/levels/level1.collection")],
+          [
+            "levels/level1.collection",
+            'name: "mylevel"\ninstances {\n  id: "enemy"\n  prototype: "/levels/enemy.go"\n}\n',
+          ],
+          [
+            "levels/enemy.go",
+            'components {\n  id: "brain"\n  component: "/levels/enemy.script"\n}\n' +
+              'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n',
+          ],
+        ],
+      }),
+    ).toEqual({
+      "/loader": {},
+      "mylevel:/enemy": { brain: "levels/enemy.script" },
+    });
+  });
+
+  test("an unreadable prototype has no componentResourcesOf entry and is a named incomplete entry", () => {
+    const { index } = indexOver({
+      bootstrap: "/main.collection",
+      documents: [
+        [
+          "main.collection",
+          'instances {\n  id: "hero"\n  prototype: "/hero.go"\n}\n' +
+            'instances {\n  id: "hud"\n  prototype: "/hud.go"\n}\n',
+        ],
+        ["hud.go", 'components {\n  id: "label"\n  component: "/hud.label"\n}\n'],
+      ],
+    });
+    expect(index.componentResourcesOf.has("/hero")).toBe(false);
+    expect(Object.fromEntries(index.componentResourcesOf.get("/hud") ?? [])).toEqual({
+      label: "hud.label",
+    });
+    expect(index.incomplete).toHaveLength(1);
+    expect(index.incomplete[0]).toContain("/hero.go");
+  });
+
+  test("the key set of componentResourcesOf is exactly componentsOf's", () => {
+    for (const universe of [
+      {
+        gameProject: committedText("tetris-tutorial", "game.project"),
+        documents: [
+          committed("tetris-tutorial", "main", "main.collection"),
+          committed("tetris-tutorial", "main", "board.go"),
+          committed("tetris-tutorial", "main", "hud.go"),
+        ],
+      },
+      {
+        gameProject: committedText("platformer", "game.project"),
+        documents: [
+          committed("platformer", "game", "game.collection"),
+          committed("platformer", "game", "player.collection"),
+        ],
+      },
+    ] satisfies Universe[]) {
+      const { index } = indexOver(universe);
+      expect([...index.componentResourcesOf.keys()].sort()).toEqual(
+        [...index.componentsOf.keys()].sort(),
+      );
+      expect(index.componentsOf.size).toBeGreaterThan(0);
+    }
+  });
+
+  test("a withheld path is withheld from both maps together", () => {
+    const { index } = indexOver({
+      bootstrap: "/main.collection",
+      documents: [
+        [
+          "main.collection",
+          'instances {\n  id: "hero"\n  prototype: "/hero.go"\n}\n' +
+            'instances {\n  id: "hud"\n  prototype: "/hud.go"\n}\n',
+        ],
+        ["hud.go", 'components {\n  id: "label"\n  component: "/hud.label"\n}\n'],
+      ],
+    });
+    expect([...index.componentResourcesOf.keys()].sort()).toEqual(
+      [...index.componentsOf.keys()].sort(),
+    );
+    expect([...index.componentsOf.keys()]).toEqual(["/hud"]);
   });
 });

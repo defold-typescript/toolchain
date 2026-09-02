@@ -7,7 +7,7 @@ export { buildConfigKeyIndex, readGameProjectSetting } from "./config-key-index"
 export type { GuiFlipbookIndex } from "./gui-flipbook-index";
 export { buildGuiFlipbookIndex } from "./gui-flipbook-index";
 export type { GuiNodeIndex } from "./gui-node-index";
-export { buildGuiNodeIndex } from "./gui-node-index";
+export { buildGuiNodeIndex, guiScriptResourceOf } from "./gui-node-index";
 export { buildInputActionIndex } from "./input-action-index";
 export type {
   ExtensionDependency,
@@ -38,8 +38,12 @@ export { isDefignoredPath, SCAFFOLDED_DEFIGNORE_LINES } from "./project-resource
 export { buildSceneAddressDeclaration } from "./scene-address-declaration";
 export type { SceneCollectionRoles, SceneCollectionRolesInput } from "./scene-collection-roles";
 export { buildSceneCollectionRoles } from "./scene-collection-roles";
-export type { SceneComponentIndex } from "./scene-component-index";
-export { buildSceneComponentIndex, collectComponentIds } from "./scene-component-index";
+export type { ComponentDeclarations, SceneComponentIndex } from "./scene-component-index";
+export {
+  buildSceneComponentIndex,
+  collectComponentDeclarations,
+  collectComponentIds,
+} from "./scene-component-index";
 export type { SceneReadHost } from "./scene-documents";
 export {
   ANIMATION_ASSET_EXTENSIONS,
@@ -55,6 +59,8 @@ export {
   readSceneDocuments,
   SCENE_EXTENSIONS,
 } from "./scene-documents";
+export type { NamingContext } from "./scene-naming-context";
+export { buildScriptNamingContexts, relativeAddressesFrom } from "./scene-naming-context";
 export type { SceneObjectPathIndex } from "./scene-object-path-index";
 export { buildSceneObjectPathIndex } from "./scene-object-path-index";
 export type { SceneMessage } from "./scene-text-format";
