@@ -2692,6 +2692,18 @@ remove is reported on that save. The very first build of a watch session is the
 exception — it runs before the scene walk, so the check starts from the first
 rebuild or scene save.
 
+A full build also warns when an address names another **world**. Only
+`msg.post` and `msg.url` cross a collection proxy; every `go.*` call that
+resolves an instance or component handle stays in the world its own script runs
+in, so `go.get_position("mylevel:/enemy")` written from a script outside
+`mylevel` can never resolve. The warning names the socket the address claimed
+and the world the script actually runs in. It warns and moves on like the scans
+above, and stays silent wherever it cannot be sure: on the two cross-world
+slots, on a bare or relative address, and on any script whose world the scene
+walk could not resolve. [`watch`](./watch.md) reports it on every rebuild and on
+every `.go`/`.collection` save, exactly as it does the `#fragment` check. See
+[which world an address resolves in](./scene-types.md#which-world-an-address-resolves-in).
+
 `build` never narrows the API surface — it builds against whatever entrypoint your
 `tsconfig` names, the full `@defold-typescript/types` by default. Opt into
 per-directory narrowing with [`wall`](./wall.md).
@@ -2704,8 +2716,9 @@ version locked alongside your `@defold-typescript/types`. Reserve `@latest` for
 #### Flags
 
 - `--json` — emit the build result as a single JSON object (including the
-  `warnings` array and, when the reachability check found any, a structured
-  `unreachableAddresses` array) for agents and scripts. See
+  `warnings` array and, when either address check found any, a structured
+  `unreachableAddresses` and `crossWorldAddresses` array) for agents and
+  scripts. See
   [Agent runbooks](./agent-runbooks.md#machine-readable-output).
 
 #### Headless builds (no editor)
@@ -3413,6 +3426,24 @@ two different objects — so the generator says which one each key means.
   generator offers nothing for them rather than an address that could never
   resolve.
 
+A world-qualified address only works where the engine crosses worlds for you.
+`msg.post` and `msg.url` go through the message bus and accept
+`mylevel:/enemy`; every `go.*` call that resolves an instance or component
+handle — `go.get_position`, `go.set_parent`, `go.animate`, `go.get`/`go.set` —
+resolves inside the world its own script runs in, so a socket-qualified literal
+there names an object it can never reach. [`build`](./build.md) and
+[`watch`](./watch.md) report exactly that case: an address naming a foreign
+socket at a slot that stays in the caller's world, with the socket it named and
+the world the script actually runs in.
+
+The boundary is drawn on the side of silence. Nothing is reported for a
+`msg.post`/`msg.url` slot, for a bare or relative address (which continues the
+caller's world by construction), for a socket that matches a world the script
+runs in, or for a script whose world could not be resolved at all — a `.ts` no
+scene hosts, or one whose scenes the walk could not read. A script a scene
+instances in two worlds is reported only when the address disagrees with every
+one of them.
+
 If your `game.project` cannot be read, or declares no `[bootstrap]
 main_collection`, no key is offered bare and the reason is named on the warning
 channel — the generator says what it could not settle instead of guessing that
@@ -3790,10 +3821,10 @@ bunx @defold-typescript/cli build --json
 
 A failure flips `ok` to `false` and carries an `error` string instead of
 `written`. On [`build`](./build.md), `warnings` carries the sourceless-orphan
-lines, the scene-resource-mismatch lines and the unreachable-address lines (empty
-when there are none). Optional fields (`defoldVersion`,
-`defoldChannel`, `apiSurface`, `materializedSurface`, `unreachableAddresses`, …)
-appear only when they apply.
+lines, the scene-resource-mismatch lines, the unreachable-address lines and the
+cross-world-address lines (empty when there are none). Optional fields
+(`defoldVersion`, `defoldChannel`, `apiSurface`, `materializedSurface`,
+`unreachableAddresses`, `crossWorldAddresses`, …) appear only when they apply.
 
 `unreachableAddresses` is the structured half of the unreachable-address
 findings, so you never parse the English `warnings` line to learn which file and
@@ -3815,6 +3846,23 @@ unparseable scene, or a dependency [`resolve`](./resolve.md) has not
 materialized). Treating an absent `unreachableAddresses` as "no unreachable
 addresses" is wrong whenever that line is present.
 
+`crossWorldAddresses` is the same for the cross-world-address findings — an
+address naming a proxy world at a slot that resolves in the caller's own world
+(see [build](./build.md)):
+
+```sh
+bunx @defold-typescript/cli build --json
+# {"command":"build","ok":true,"written":[...],
+#  "warnings":["src/main.ts: this address names the world \"mylevel\", but `go.get_position` resolves it in …"],
+#  "crossWorldAddresses":[{"file":"src/main.ts","address":"mylevel:/enemy","socket":"mylevel","message":"this address names the world \"mylevel\", …"}]}
+```
+
+It follows the identical absent-versus-empty contract: the field is omitted —
+never `[]` — both when nothing was found and when the check had nothing to run
+against, because the project's scenes host no script the walk could resolve.
+There is no suppression line for this check; its silence *is* per file, so an
+absent field means only that no finding survived that per-file honesty rule.
+
 `watch` is long-running, so `--json` streams **newline-delimited JSON (NDJSON)** —
 one object per line, one line per event. The full lifecycle reads
 `start` → `build` → `rebuild`* → `sceneTypes`* → `resolve`* → `stop`:
@@ -3831,8 +3879,9 @@ bunx @defold-typescript/cli watch --json
 ```
 
 `build`, `rebuild`, and `sceneTypes` events carry `warnings` and the same
-optional `unreachableAddresses` array, under the identical absent-versus-empty
-rule, so a watching agent sees an address break on the edit that broke it —
+optional `unreachableAddresses` and `crossWorldAddresses` arrays, under the
+identical absent-versus-empty rule, so a watching agent sees an address break on
+the edit that broke it —
 including a `.go`/`.collection` save that broke it, which emits `sceneTypes`
 alone and no `rebuild`. The first `build` event of a session is the exception,
 and so is the `sceneTypes` event that follows it: both run before or as part of
@@ -4101,7 +4150,7 @@ Once converted, prove it compiles before handing it back: write the snippet, run
 rebuild. This is the same loop as [Fix the Lua output](#fix-the-lua-output); the
 [script lifecycle](./script-lifecycle.md) page covers which hooks and which
 `self` typing each script kind exposes. On `ok: true` the build envelope adds a
-`warnings` array. It lists three kinds of issue, empty when clean, and the build
+`warnings` array. It lists four kinds of issue, empty when clean, and the build
 never fixes any of them for you:
 
 - **Sourceless outputs** — a generated `.lua`/`.ts.*` left without a TypeScript
@@ -4116,6 +4165,10 @@ never fixes any of them for you:
 - **Unreachable addresses** — an address literal whose `#fragment` names a
   component no `.go`/`.collection` declares, repeated as structured entries in
   `unreachableAddresses`. Either declare the component or fix the address.
+- **Cross-world addresses** — an address naming a proxy world at a slot that
+  resolves in the caller's own world (every handle-resolving `go.*` call),
+  repeated as structured entries in `crossWorldAddresses`. Either address it
+  through `msg.post`/`msg.url` or drop the socket.
 
 #### Scaffold a project
 

@@ -18,7 +18,12 @@ import { scanOrphanOutputs } from "./orphan-scan";
 import { scanFilesSync } from "./scan";
 import { scanSceneResourceRefs } from "./scene-resource-scan";
 import { loadUrlParameterTable } from "./url-parameter-table";
-import { scanUrlFragmentReachability, type UnreachableAddressEntry } from "./url-reachability-scan";
+import {
+  type CrossWorldAddressEntry,
+  scanCrossWorldAddresses,
+  scanUrlFragmentReachability,
+  type UnreachableAddressEntry,
+} from "./url-reachability-scan";
 import { findWallImportViolations } from "./wall-import-guardrail";
 
 function throwOnWallImportViolations(cwd: string, files: Record<string, string>): void {
@@ -46,6 +51,12 @@ export interface RunBuildOptions {
    * always got, with no reachability warnings either way.
    */
   readonly sceneIndex?: SceneComponentIndex;
+  /**
+   * Which worlds each source file's script runs in. Optional for the same
+   * reason `sceneIndex` is: a caller that has not read the project's scenes
+   * cannot say where a script runs, and gets no cross-world warnings either way.
+   */
+  readonly scriptWorlds?: (fileName: string) => readonly (string | undefined)[];
 }
 
 export interface RunBuildResult {
@@ -53,10 +64,12 @@ export interface RunBuildResult {
   readonly warnings: string[];
   /** The unreachable addresses `warnings` also names in prose. */
   readonly unreachableAddresses: UnreachableAddressEntry[];
+  /** The foreign-world addresses `warnings` also names in prose. */
+  readonly crossWorldAddresses: CrossWorldAddressEntry[];
 }
 
 export function runBuild(opts: RunBuildOptions): RunBuildResult {
-  const { cwd, sceneIndex } = opts;
+  const { cwd, sceneIndex, scriptWorlds } = opts;
   const config = readBuildConfig(cwd);
 
   const seen = new Set<string>();
@@ -68,7 +81,7 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
   const sources = [...seen].sort();
 
   if (sources.length === 0) {
-    return { written: [], warnings: [], unreachableAddresses: [] };
+    return { written: [], warnings: [], unreachableAddresses: [], crossWorldAddresses: [] };
   }
 
   const files: Record<string, string> = {};
@@ -124,10 +137,20 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
     sceneIndex && program
       ? scanUrlFragmentReachability({ program, index: sceneIndex, table: loadUrlParameterTable() })
       : { warnings: [], entries: [] };
+  const crossWorld =
+    scriptWorlds && program
+      ? scanCrossWorldAddresses({ program, worldsOf: scriptWorlds, table: loadUrlParameterTable() })
+      : { warnings: [], entries: [] };
   const warnings = [
     ...scanOrphanOutputs(cwd, sources, config),
     ...scanSceneResourceRefs(cwd),
     ...reachability.warnings,
+    ...crossWorld.warnings,
   ];
-  return { written: written.sort(), warnings, unreachableAddresses: reachability.entries };
+  return {
+    written: written.sort(),
+    warnings,
+    unreachableAddresses: reachability.entries,
+    crossWorldAddresses: crossWorld.entries,
+  };
 }

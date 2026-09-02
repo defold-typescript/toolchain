@@ -4,15 +4,22 @@ import {
   buildSceneAddressDeclaration,
   buildSceneCollectionRoles,
   buildSceneComponentIndex,
+  buildSceneObjectPathIndex,
+  buildScriptNamingContexts,
   COLLECTION_REFERENCE_EXTENSIONS,
+  computeOutputRel,
   displayPathOf,
   GAME_PROJECT_DOCUMENT,
+  GUI_EXTENSIONS,
+  guiScriptResourcesOf,
   isExcludedProjectPath,
+  type NamingContext,
   PROJECT_EXTENSIONS,
   readSceneDocuments,
   type SceneComponentIndex,
   type SceneReadHost,
 } from "@defold-typescript/transpiler";
+import { readBuildConfig } from "./build-output";
 import { MATERIALIZED_ROOT } from "./materialize";
 
 /** Where the declaration lands, project-relative — beside the materialized surfaces. */
@@ -49,6 +56,12 @@ export interface SceneTypesResult {
   readonly index: SceneComponentIndex;
   /** Whether the walk read any `.go`/`.collection` at all. */
   readonly hasScenes: boolean;
+  /**
+   * Every naming context each script resource runs in, keyed by the resource a
+   * scene names — the world-qualified object path a relative address continues,
+   * and the proxy socket that object lives behind.
+   */
+  readonly scriptNamingContexts: ReadonlyMap<string, readonly NamingContext[]>;
 }
 
 /**
@@ -154,6 +167,15 @@ export function runSceneTypes(opts: { cwd: string }): SceneTypesResult {
       GAME_PROJECT_DOCUMENT,
     ),
   });
+  // A `.gui` is the only way a gui script reaches an object, and it declares no
+  // component ids, so it is its own walk for the reason the reference walk is:
+  // folding it into `SCENE_EXTENSIONS` would feed gui text to
+  // `buildSceneComponentIndex`. Its dependency-level reasons repeat the first
+  // walk's, so only a reason this walk alone found is new.
+  const gui = readSceneDocuments(host, opts.cwd, GUI_EXTENSIONS);
+  for (const reason of gui.unreadable) {
+    if (!unreadable.includes(reason)) unreadable.push(reason);
+  }
   const wrote = writeIfChanged(
     path.join(opts.cwd, SCENE_ADDRESSES_DECLARATION),
     buildSceneAddressDeclaration(documents, roles),
@@ -165,6 +187,10 @@ export function runSceneTypes(opts: { cwd: string }): SceneTypesResult {
     unread: unreadable,
     index: buildSceneComponentIndex(documents),
     hasScenes: documents.size > 0,
+    scriptNamingContexts: buildScriptNamingContexts(
+      buildSceneObjectPathIndex(documents, roles),
+      guiScriptResourcesOf(gui.documents),
+    ),
   };
 }
 
@@ -196,5 +222,39 @@ export function sceneIndexForBuild(result: SceneTypesResult): SceneComponentInde
   return {
     ids: result.index.ids,
     incomplete: [...result.index.incomplete, ...result.unread],
+  };
+}
+
+/**
+ * Which worlds each program file's script runs in, or `undefined` when the walk
+ * found no script hosted anywhere — the same posture `sceneIndexForBuild` takes,
+ * so a caller that read no scenes gets the build it always got.
+ *
+ * The file is mapped *forward* to the script resource a scene would name, the
+ * direction the editor plugin's relative universe takes: an output path cannot
+ * say which include base produced it, so a reverse guess would miss every
+ * project with an `outDir`. Both script kinds are resolved and their sockets
+ * unioned, because a `.ts` is named as a `.script` by a game object and as a
+ * `.gui_script` by a `.gui`, and nothing in the file itself says which.
+ *
+ * An empty answer is the honest unknown: a script no scene hosts runs in no
+ * world this project can prove, and the cross-world check reports nothing for it.
+ */
+export function scriptWorldsForBuild(
+  result: SceneTypesResult,
+  cwd: string,
+): ((fileName: string) => readonly (string | undefined)[]) | undefined {
+  if (result.scriptNamingContexts.size === 0) return undefined;
+  const config = readBuildConfig(cwd);
+  return (fileName: string): readonly (string | undefined)[] => {
+    const rel = displayPathOf(cwd, fileName);
+    const sockets = new Set<string | undefined>();
+    for (const kind of ["script", "gui-script"] as const) {
+      for (const context of result.scriptNamingContexts.get(computeOutputRel(rel, config, kind)) ??
+        []) {
+        sockets.add(context.socket);
+      }
+    }
+    return [...sockets];
   };
 }
