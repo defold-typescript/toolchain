@@ -1,7 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { buildSceneComponentIndex, collectComponentIds } from "./scene-component-index";
+import {
+  buildSceneComponentIndex,
+  collectComponentDeclarations,
+  collectComponentIds,
+} from "./scene-component-index";
 import { parseSceneTextFormat, type SceneMessage } from "./scene-text-format";
 
 const EXAMPLES_DIR = join(import.meta.dir, "../../../docs/examples");
@@ -172,5 +176,72 @@ describe("collectComponentIds", () => {
     expect([...buildSceneComponentIndex(new Map([["main/hero.go", source]])).ids].sort()).toEqual(
       [...collectComponentIds(parseSceneTextFormat(source), "main/hero.go", incomplete)].sort(),
     );
+  });
+});
+
+describe("collectComponentDeclarations", () => {
+  test("reads a referenced component's resource beside its id", () => {
+    const incomplete: string[] = [];
+    const declarations = collectComponentDeclarations(
+      parseSceneTextFormat(
+        'components {\n  id: "player"\n  component: "/src/player.ts.script"\n}\n' +
+          'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n',
+      ),
+      "game/player.go",
+      incomplete,
+    );
+    expect([...declarations.ids].sort()).toEqual(["player", "sprite"]);
+    expect(Object.fromEntries(declarations.resources)).toEqual({
+      player: "src/player.ts.script",
+    });
+    expect(incomplete).toEqual([]);
+  });
+
+  test("collectComponentIds still reports exactly what the widened collector gathers", () => {
+    const source =
+      'components {\n  id: "board"\n  component: "/main/board.gui"\n}\n' +
+      'embedded_components {\n  id: "shape"\n  type: "collisionobject"\n}\n';
+    const incomplete: string[] = [];
+    expect(
+      [...collectComponentIds(parseSceneTextFormat(source), "main/board.go", incomplete)].sort(),
+    ).toEqual(["board", "shape"]);
+    expect(
+      [
+        ...collectComponentDeclarations(parseSceneTextFormat(source), "main/board.go", incomplete)
+          .ids,
+      ].sort(),
+    ).toEqual(["board", "shape"]);
+    expect(incomplete).toEqual([]);
+  });
+
+  test("reads resources out of an embedded_instances payload when named as one", () => {
+    const block = embeddedInstancesBlock(
+      'embedded_instances {\n  id: "level"\n  data: "components {\\n"\n  "  id: \\"tilemap\\"\\n"\n  "  component: \\"/game/level.tilemap\\"\\n"\n  "}\\n"\n  ""\n}\n',
+    );
+    const incomplete: string[] = [];
+    const declarations = collectComponentDeclarations(
+      block,
+      "game/game.collection",
+      incomplete,
+      "embedded_instances",
+    );
+    expect([...declarations.ids]).toEqual(["tilemap"]);
+    expect(Object.fromEntries(declarations.resources)).toEqual({
+      tilemap: "game/level.tilemap",
+    });
+    expect(incomplete).toEqual([]);
+  });
+
+  test("an embedded component names no resource, so it is credited with none", () => {
+    const incomplete: string[] = [];
+    const declarations = collectComponentDeclarations(
+      parseSceneTextFormat(
+        'embedded_components {\n  id: "collisionobject"\n  type: "collisionobject"\n  component: "/never.script"\n}\n',
+      ),
+      "game/player.go",
+      incomplete,
+    );
+    expect([...declarations.ids]).toEqual(["collisionobject"]);
+    expect([...declarations.resources]).toEqual([]);
   });
 });
