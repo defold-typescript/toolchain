@@ -1,4 +1,5 @@
 import type { SceneCollectionRoles } from "./scene-collection-roles";
+import { collectComponentIds } from "./scene-component-index";
 import { parseSceneTextFormat, type SceneMessage, SceneTextFormatError } from "./scene-text-format";
 
 // Every game-object path the project declares, `/`-prefixed and composed the way
@@ -15,7 +16,20 @@ export interface SceneObjectPathIndex {
   // author would open to rename that object. A composed address is attributed to
   // the collection that names the object, never to the ones that prefixed it.
   readonly declaredIn: ReadonlyMap<string, readonly string[]>;
+  // The component ids the object *at* each path owns, sorted — the join that
+  // turns two id universes into one address. A path whose prototype could not be
+  // read carries no entry at all rather than an empty one: an empty array is
+  // indistinguishable from an object that genuinely owns no component, and the
+  // reason is named in `incomplete` instead.
+  readonly componentsOf: ReadonlyMap<string, readonly string[]>;
   readonly incomplete: readonly string[];
+}
+
+// One composed path's leaf: the document that declared it, and the components
+// its prototype owns — `undefined` where that prototype could not be read.
+interface PathLeaf {
+  readonly declarer: string;
+  readonly components: readonly string[] | undefined;
 }
 
 // The two blocks whose `id` is a leaf segment. `collection_instances` is handled
@@ -59,7 +73,7 @@ export function buildSceneObjectPathIndex(
   if (documents.size === 0) {
     incomplete.push("no scene sources were read, so no game-object path can be proven absent");
     incomplete.push(...roles.incomplete);
-    return { paths: new Set(), declaredIn: new Map(), incomplete };
+    return { paths: new Set(), declaredIn: new Map(), componentsOf: new Map(), incomplete };
   }
 
   const parsed = new Map<string, SceneMessage>();
@@ -77,10 +91,26 @@ export function buildSceneObjectPathIndex(
   // each other would recur until the stack ran out. Each entry maps a composed
   // path to the document that declared its leaf, so the attribution is carried
   // by the same walk that builds the path rather than recovered afterwards.
-  const composed = new Map<string, ReadonlyMap<string, string>>();
+  const composed = new Map<string, ReadonlyMap<string, PathLeaf>>();
   const inProgress = new Set<string>();
 
-  function pathsOf(displayPath: string): ReadonlyMap<string, string> {
+  // A `.go` instanced twenty times is read once: the components it declares are
+  // a property of the prototype, not of the instance that named it.
+  const prototypeComponents = new Map<string, readonly string[] | undefined>();
+
+  function componentsOfPrototype(key: string): readonly string[] | undefined {
+    const done = prototypeComponents.get(key);
+    if (done !== undefined || prototypeComponents.has(key)) return done;
+    const document = parsed.get(key);
+    const components =
+      document === undefined
+        ? undefined
+        : [...collectComponentIds(document, key, incomplete)].sort();
+    prototypeComponents.set(key, components);
+    return components;
+  }
+
+  function pathsOf(displayPath: string): ReadonlyMap<string, PathLeaf> {
     const done = composed.get(displayPath);
     if (done !== undefined) return done;
     if (inProgress.has(displayPath)) {
@@ -93,12 +123,37 @@ export function buildSceneObjectPathIndex(
     if (document === undefined) return new Map();
 
     inProgress.add(displayPath);
-    const paths = new Map<string, string>();
+    const paths = new Map<string, PathLeaf>();
 
     for (const blockName of LEAF_BLOCKS) {
       for (const block of childrenOf(document, blockName)) {
         const id = firstField(block, "id");
-        if (id !== undefined && id !== "") paths.set(`/${id}`, displayPath);
+        if (id === undefined || id === "") continue;
+        let components: readonly string[] | undefined;
+        if (blockName === "embedded_instances") {
+          // The payload declares the object outright, so the same collector the
+          // flat index uses reads it — and names the document itself when the
+          // escaped text will not parse.
+          const before = incomplete.length;
+          const ids = collectComponentIds(block, displayPath, incomplete, blockName);
+          components = incomplete.length === before ? [...ids].sort() : undefined;
+        } else {
+          const prototype = firstField(block, "prototype");
+          if (prototype === undefined) {
+            // Distinct from an unresolvable resource: nothing was named, so
+            // there is no document to go looking for.
+            incomplete.push(
+              `${displayPath}: the instance "${id}" declares no prototype, so the components it owns cannot be read`,
+            );
+          } else if (parsed.has(resourceKey(prototype))) {
+            components = componentsOfPrototype(resourceKey(prototype));
+          } else {
+            incomplete.push(
+              `${displayPath}: the instance "${id}" names ${prototype}, which is not among the project's readable scene documents`,
+            );
+          }
+        }
+        paths.set(`/${id}`, { declarer: displayPath, components });
       }
     }
 
@@ -113,8 +168,8 @@ export function buildSceneObjectPathIndex(
         );
         continue;
       }
-      for (const [nested, declarer] of pathsOf(key)) {
-        paths.set(`/${id}${nested}`, declarer);
+      for (const [nested, leaf] of pathsOf(key)) {
+        paths.set(`/${id}${nested}`, leaf);
       }
     }
 
@@ -138,24 +193,45 @@ export function buildSceneObjectPathIndex(
 
   const paths = new Set<string>();
   const declaredIn = new Map<string, string[]>();
+  const componentsOf = new Map<string, string[]>();
+  // An address two leaves compose is only as provable as its weakest leaf: one
+  // unread prototype withholds the claim for the whole key rather than letting
+  // the readable half stand in for both.
+  const withheld = new Set<string>();
   for (const [prefix, displayPath] of worlds) {
-    for (const [path, declarer] of pathsOf(displayPath)) {
+    for (const [path, leaf] of pathsOf(displayPath)) {
       const key = `${prefix}${path}`;
       paths.add(key);
       const declarers = declaredIn.get(key);
       if (declarers === undefined) {
-        declaredIn.set(key, [declarer]);
-      } else if (!declarers.includes(declarer)) {
+        declaredIn.set(key, [leaf.declarer]);
+      } else if (!declarers.includes(leaf.declarer)) {
         // Two worlds sharing one socket compose the same address from two
         // different leaves, which the roles already name as a hole — both
         // declaring files still answer for it.
-        declarers.push(declarer);
+        declarers.push(leaf.declarer);
+      }
+      if (leaf.components === undefined) {
+        withheld.add(key);
+        continue;
+      }
+      const owned = componentsOf.get(key);
+      if (owned === undefined) {
+        componentsOf.set(key, [...leaf.components]);
+      } else {
+        for (const id of leaf.components) if (!owned.includes(id)) owned.push(id);
       }
     }
   }
   for (const declarers of declaredIn.values()) declarers.sort();
+  for (const key of withheld) componentsOf.delete(key);
+  for (const owned of componentsOf.values()) owned.sort();
 
   incomplete.push(...roles.incomplete);
 
-  return { paths, declaredIn, incomplete };
+  // The roles walk opens the same escaped payloads this one does, so an
+  // unparseable `data:` reaches the list twice by two honest routes. Identical
+  // strings carry identical information, and a reader shown the same reason
+  // twice learns nothing the second time.
+  return { paths, declaredIn, componentsOf, incomplete: [...new Set(incomplete)] };
 }

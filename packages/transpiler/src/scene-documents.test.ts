@@ -308,6 +308,13 @@ collection_instances {
 const DRUID_COLLECTION = `name: "druid"
 instances {
   id: "root"
+  prototype: "/druid/root.go"
+}
+`;
+
+const DRUID_PROTOTYPE = `components {
+  id: "druid"
+  component: "/druid/druid.script"
 }
 `;
 
@@ -316,6 +323,7 @@ const MANIFEST = JSON.stringify({ dependencies: [{ key: "druid-16", url: DRUID_U
 const DEPENDENCY_ROOT = `${PROJECT_ROOT}/.defold-types/dependencies`;
 const MANIFEST_PATH = `${DEPENDENCY_ROOT}/dependencies.json`;
 const DRUID_HOST_PATH = `${DEPENDENCY_ROOT}/druid-16/druid/druid.collection`;
+const DRUID_PROTOTYPE_HOST_PATH = `${DEPENDENCY_ROOT}/druid-16/druid/root.go`;
 
 // A host that honors the directory it is handed, the way the editor's own
 // `readDirectory` does: the composed walk asks it twice — once for the project
@@ -340,16 +348,21 @@ describe("readSceneDocuments over resolved library dependencies", () => {
       [`${PROJECT_ROOT}/main/main.collection`]: MAIN_COLLECTION,
       [MANIFEST_PATH]: MANIFEST,
       [DRUID_HOST_PATH]: DRUID_COLLECTION,
+      [DRUID_PROTOTYPE_HOST_PATH]: DRUID_PROTOTYPE,
     });
 
     const { documents, origins, unreadable, paths } = readSceneDocuments(host, PROJECT_ROOT);
 
     expect([...documents.keys()].sort()).toEqual([
       "druid/druid.collection",
+      "druid/root.go",
       "main/main.collection",
     ]);
     expect(documents.get("druid/druid.collection")).toBe(DRUID_COLLECTION);
-    expect([...origins]).toEqual([["druid/druid.collection", DRUID_URL]]);
+    expect([...origins].sort()).toEqual([
+      ["druid/druid.collection", DRUID_URL],
+      ["druid/root.go", DRUID_URL],
+    ]);
     expect(unreadable).toEqual([]);
     // The watcher is registered on host paths, so the dependency file has to be
     // named as the host holds it, not as the universe keys it.
