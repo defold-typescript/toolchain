@@ -397,7 +397,9 @@ describe("tstl-plugin", () => {
     });
     const result = service.getCompletionsAtPosition("main.ts", PATH_POSITION, undefined);
     expect(result?.entries[0]).toBe(base.entries[0] as ts.CompletionEntry);
-    expect(result?.entries.map((e) => e.name)).toEqual(["zzz", "/cape", "/hero"]);
+    // `main.ts` is the gui script `main/hud.gui` names, hosted on `/cape`, so the
+    // relative forms valid from that object are offered beside the absolute ones.
+    expect(result?.entries.map((e) => e.name)).toEqual(["zzz", "/cape", "/hero", "cape", "hero"]);
     for (const built of result?.entries.slice(1) ?? []) {
       expect(built.replacementSpan).toEqual({
         start: PATH_FRAGMENT_SOURCE.indexOf("/enemy"),
@@ -414,7 +416,7 @@ describe("tstl-plugin", () => {
       documents: PATH_DOCUMENTS,
     });
     const inPath = service.getCompletionsAtPosition("main.ts", SPRITE_POSITION - 1, undefined);
-    expect(inPath?.entries.map((e) => e.name)).toEqual(["/cape", "/hero"]);
+    expect(inPath?.entries.map((e) => e.name)).toEqual(["/cape", "/hero", "cape", "hero"]);
     const atFragment = service.getCompletionsAtPosition("main.ts", SPRITE_POSITION, undefined);
     expect(atFragment?.entries.map((e) => e.name)).toEqual(["board", "hud"]);
     const inFragment = service.getCompletionsAtPosition("main.ts", SPRITE_POSITION + 3, undefined);
@@ -423,12 +425,20 @@ describe("tstl-plugin", () => {
 
   test("a proxy world's objects are offered under its socket, and never bare", () => {
     const source = 'go.get("", "position");\n';
+    // `other.ts` is named by no scene, so no naming context scopes the caller to
+    // one world and every key the index holds is offered — which is what leaves
+    // this case about the shape of a proxy world's own keys.
     const service = completionProxy({
       source,
       base: undefined,
       documents: PROXY_PATH_DOCUMENTS,
+      fileName: "other.ts",
     });
-    const result = service.getCompletionsAtPosition("main.ts", source.indexOf('""') + 1, undefined);
+    const result = service.getCompletionsAtPosition(
+      "other.ts",
+      source.indexOf('""') + 1,
+      undefined,
+    );
     expect(result?.entries.map((e) => e.name)).toEqual(["/hero", "/loader", "mylevel:/enemy"]);
   });
 
@@ -444,7 +454,14 @@ describe("tstl-plugin", () => {
       source.indexOf("/ene") + 2,
       undefined,
     );
-    expect(result?.entries.map((e) => e.name)).toEqual(["/cape", "/hero"]);
+    expect(result?.entries.map((e) => e.name)).toEqual([
+      "/cape",
+      "/hero",
+      "cape",
+      "hero",
+      "cape#hud",
+      "hero#board",
+    ]);
     for (const built of result?.entries ?? []) {
       expect(built.replacementSpan).toEqual({
         start: source.indexOf("/ene"),
@@ -1000,6 +1017,220 @@ describe("tstl-plugin", () => {
   });
 });
 
+// A whole-literal address caret: no `#`, so the path half is the entire text and
+// a relative `#fragment` join can replace all of it.
+const WHOLE_ADDRESS_SOURCE = 'go.get("", "position");\n';
+const WHOLE_ADDRESS_POSITION = WHOLE_ADDRESS_SOURCE.indexOf('""') + 1;
+
+// The same slot with both halves populated, so a caret can stand in the path
+// while a fragment survives to its right.
+const SPLIT_ADDRESS_SOURCE = 'go.get("pla#sprite", "position");\n';
+const SPLIT_PATH_POSITION = SPLIT_ADDRESS_SOURCE.indexOf("pla") + 2;
+const SPLIT_FRAGMENT_POSITION = SPLIT_ADDRESS_SOURCE.indexOf("#sprite") + 1;
+
+// The committed platformer's shape: a `level` object beside a collection
+// instanced as `player`, whose own object hosts `main.ts`. The relative universe
+// is therefore `/player/`'s, and `/level` is reachable only absolutely.
+const RELATIVE_DOCUMENTS: Record<string, string> = {
+  "game.project": "[bootstrap]\nmain_collection = /main.collectionc\n",
+  "main.collection":
+    'instances {\n  id: "level"\n  prototype: "/level.go"\n}\n' +
+    'collection_instances {\n  id: "player"\n  collection: "/player.collection"\n}\n',
+  "level.go": 'components {\n  id: "tilemap"\n  component: "/level.tilemap"\n}\n',
+  "player.collection": 'instances {\n  id: "player"\n  prototype: "/player.go"\n}\n',
+  "player.go":
+    'components {\n  id: "player"\n  component: "/main.ts.script"\n}\n' +
+    'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n',
+};
+
+// Two worlds over one project, with a script hosted in each and one hosted in
+// both — the three ways a caller's world decides whether a bare path resolves.
+const WORLD_SCOPE_DOCUMENTS: Record<string, string> = {
+  "game.project": "[bootstrap]\nmain_collection = /main.collectionc\n",
+  "main.collection":
+    'instances {\n  id: "level"\n  prototype: "/level.go"\n}\n' +
+    'instances {\n  id: "loader"\n  prototype: "/loader.go"\n}\n' +
+    'instances {\n  id: "both"\n  prototype: "/both.go"\n}\n',
+  "level.go": 'components {\n  id: "brain"\n  component: "/home.ts.script"\n}\n',
+  "loader.go":
+    'embedded_components {\n  id: "loader"\n  type: "collectionproxy"\n' +
+    '  data: "collection: \\"/mylevel.collection\\"\\n"\n}\n',
+  "both.go": 'components {\n  id: "brain"\n  component: "/both.ts.script"\n}\n',
+  "mylevel.collection":
+    'name: "mylevel"\n' +
+    'instances {\n  id: "enemy"\n  prototype: "/enemy.go"\n}\n' +
+    'instances {\n  id: "both"\n  prototype: "/both.go"\n}\n',
+  "enemy.go": 'components {\n  id: "brain"\n  component: "/away.ts.script"\n}\n',
+};
+
+function namesAt(options: {
+  source: string;
+  position: number;
+  documents: Record<string, string>;
+  fileName?: string;
+  base?: ts.WithMetadata<ts.CompletionInfo>;
+}): string[] {
+  const fileName = options.fileName ?? "main.ts";
+  const service = completionProxy({
+    source: options.source,
+    base: options.base,
+    documents: options.documents,
+    fileName,
+  });
+  const result = service.getCompletionsAtPosition(fileName, options.position, undefined);
+  return (result?.entries ?? []).map((entry) => entry.name);
+}
+
+describe("tstl-plugin relative address completions", () => {
+  test("a path caret offers the relative paths beside the absolute ones", () => {
+    expect(
+      namesAt({
+        source: WHOLE_ADDRESS_SOURCE,
+        position: WHOLE_ADDRESS_POSITION,
+        documents: RELATIVE_DOCUMENTS,
+      }),
+    ).toEqual(["/level", "/player/player", "player", "player#player", "player#sprite"]);
+  });
+
+  test("a literal with no # also offers the relative fragment joins", () => {
+    const service = completionProxy({
+      source: WHOLE_ADDRESS_SOURCE,
+      base: undefined,
+      documents: RELATIVE_DOCUMENTS,
+    });
+    const result = service.getCompletionsAtPosition("main.ts", WHOLE_ADDRESS_POSITION, undefined);
+    const join = result?.entries.find((entry) => entry.name === "player#sprite");
+    expect(join?.replacementSpan).toEqual({
+      start: WHOLE_ADDRESS_SOURCE.indexOf('""') + 1,
+      length: 0,
+    });
+  });
+
+  test("a literal already carrying a # offers relative paths only", () => {
+    const service = completionProxy({
+      source: SPLIT_ADDRESS_SOURCE,
+      base: undefined,
+      documents: RELATIVE_DOCUMENTS,
+    });
+    const result = service.getCompletionsAtPosition("main.ts", SPLIT_PATH_POSITION, undefined);
+    expect(result?.entries.map((entry) => entry.name)).toEqual([
+      "/level",
+      "/player/player",
+      "player",
+    ]);
+    // Accepting one may not produce `player#sprite#sprite`: the span edits the
+    // path half alone and leaves the fragment the author is holding.
+    for (const entry of result?.entries ?? []) {
+      expect(entry.replacementSpan).toEqual({
+        start: SPLIT_ADDRESS_SOURCE.indexOf("pla"),
+        length: "pla".length,
+      });
+    }
+  });
+
+  test("a fragment caret offers no relative entry", () => {
+    expect(
+      namesAt({
+        source: SPLIT_ADDRESS_SOURCE,
+        position: SPLIT_FRAGMENT_POSITION,
+        documents: RELATIVE_DOCUMENTS,
+      }),
+    ).toEqual(["player", "sprite", "tilemap"]);
+  });
+
+  test("a script with no naming context adds no relative entry", () => {
+    expect(
+      namesAt({
+        source: WHOLE_ADDRESS_SOURCE,
+        position: WHOLE_ADDRESS_POSITION,
+        documents: RELATIVE_DOCUMENTS,
+        fileName: "orphan.ts",
+      }),
+    ).toEqual(["/level", "/player/player"]);
+  });
+
+  test("a relative entry the editor already offers is not repeated", () => {
+    const names = namesAt({
+      source: WHOLE_ADDRESS_SOURCE,
+      position: WHOLE_ADDRESS_POSITION,
+      documents: RELATIVE_DOCUMENTS,
+      base: completionInfo([completionEntry("player", LOCATION_PRIORITY)]),
+    });
+    expect(names.filter((name) => name === "player")).toHaveLength(1);
+    expect(names).toEqual(["player", "/level", "/player/player", "player#player", "player#sprite"]);
+  });
+
+  test("a script in the bootstrap world keeps both bare and socket-qualified paths", () => {
+    expect(
+      namesAt({
+        source: WHOLE_ADDRESS_SOURCE,
+        position: WHOLE_ADDRESS_POSITION,
+        documents: WORLD_SCOPE_DOCUMENTS,
+        fileName: "home.ts",
+      }),
+    ).toEqual([
+      "/both",
+      "/level",
+      "/loader",
+      "both",
+      "level",
+      "loader",
+      "mylevel:/both",
+      "mylevel:/enemy",
+      "both#brain",
+      "level#brain",
+      "loader#loader",
+    ]);
+  });
+
+  test("a script inside a proxy world is offered no bare path", () => {
+    expect(
+      namesAt({
+        source: WHOLE_ADDRESS_SOURCE,
+        position: WHOLE_ADDRESS_POSITION,
+        documents: WORLD_SCOPE_DOCUMENTS,
+        fileName: "away.ts",
+      }),
+    ).toEqual(["both", "enemy", "mylevel:/both", "mylevel:/enemy", "both#brain", "enemy#brain"]);
+  });
+
+  test("a script hosted in both worlds keeps the bare paths", () => {
+    expect(
+      namesAt({
+        source: WHOLE_ADDRESS_SOURCE,
+        position: WHOLE_ADDRESS_POSITION,
+        documents: WORLD_SCOPE_DOCUMENTS,
+        fileName: "both.ts",
+      }),
+    ).toEqual([
+      "/both",
+      "/level",
+      "/loader",
+      "both",
+      "enemy",
+      "level",
+      "loader",
+      "mylevel:/both",
+      "mylevel:/enemy",
+      "both#brain",
+      "enemy#brain",
+      "level#brain",
+      "loader#loader",
+    ]);
+  });
+
+  test("a script with no naming context is scoped exactly as today", () => {
+    expect(
+      namesAt({
+        source: WHOLE_ADDRESS_SOURCE,
+        position: WHOLE_ADDRESS_POSITION,
+        documents: WORLD_SCOPE_DOCUMENTS,
+        fileName: "none.ts",
+      }),
+    ).toEqual(["/both", "/level", "/loader", "mylevel:/both", "mylevel:/enemy"]);
+  });
+});
+
 // The entry the details request is really issued for: taken from what the
 // completion path returned, so a discriminator the proxy cannot recognize is a
 // failure here rather than an assumption baked into a hand-built entry.
@@ -1284,6 +1515,66 @@ describe("tstl-plugin completion entry details", () => {
       "main.ts",
       NON_ADDRESS_POSITION,
       "board",
+      undefined,
+      DEFOLD_COMPLETION_SOURCE,
+      undefined,
+      undefined,
+    );
+    expect(details).toBe(BASE_DETAILS);
+    expect(setup.detailsCalls()).toHaveLength(1);
+  });
+
+  test("a relative entry's panel names the context it resolves from", () => {
+    const setup = completionSetup({
+      source: WHOLE_ADDRESS_SOURCE,
+      base: undefined,
+      documents: RELATIVE_DOCUMENTS,
+    });
+    const entry = contributedEntry(setup, WHOLE_ADDRESS_POSITION, "player");
+    const details = setup.service.getCompletionEntryDetails(
+      "main.ts",
+      WHOLE_ADDRESS_POSITION,
+      entry.name,
+      undefined,
+      entry.source,
+      undefined,
+      undefined,
+    );
+    expect(documentationOf(details)).toBe("Relative to /player/player");
+    expect(setup.detailsCalls()).toHaveLength(0);
+  });
+
+  test("an absolute path entry keeps its declaring-file panel", () => {
+    const setup = completionSetup({
+      source: WHOLE_ADDRESS_SOURCE,
+      base: undefined,
+      documents: RELATIVE_DOCUMENTS,
+    });
+    const entry = contributedEntry(setup, WHOLE_ADDRESS_POSITION, "/player/player");
+    const details = setup.service.getCompletionEntryDetails(
+      "main.ts",
+      WHOLE_ADDRESS_POSITION,
+      entry.name,
+      undefined,
+      entry.source,
+      undefined,
+      undefined,
+    );
+    expect(documentationOf(details)).toBe("Declared in player.collection");
+    expect(setup.detailsCalls()).toHaveLength(0);
+  });
+
+  test("a name in neither universe forwards to the editor's own panel", () => {
+    const setup = completionSetup({
+      source: WHOLE_ADDRESS_SOURCE,
+      base: undefined,
+      documents: RELATIVE_DOCUMENTS,
+      baseDetails: BASE_DETAILS,
+    });
+    const details = setup.service.getCompletionEntryDetails(
+      "main.ts",
+      WHOLE_ADDRESS_POSITION,
+      "no-context-offers-this",
       undefined,
       DEFOLD_COMPLETION_SOURCE,
       undefined,

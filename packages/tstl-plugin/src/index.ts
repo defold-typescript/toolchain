@@ -38,7 +38,8 @@ import {
   type SceneWatchHost,
   sceneCollectionRolesOf,
 } from "./scene-index-cache";
-import { resolveEntryProvenance } from "./scene-provenance";
+import { resolveEntryProvenance, resolveRelativeEntryProvenance } from "./scene-provenance";
+import { offersBareWorld, relativeUniverseFor } from "./scene-relative-addresses";
 
 const requireFromHere = createRequire(import.meta.url);
 
@@ -87,27 +88,44 @@ function componentEntries(
 }
 
 // The exact complement of `componentEntries`' guard, so precisely one of the two
-// universes answers any caret in an address. Project-wide like the component
-// universe, and for the same reason: what a path resolves to at runtime depends
-// on the collection that was loaded, which the file being edited does not say.
+// universes answers any caret in an address. The absolute half is project-wide
+// like the component universe, and for the same reason: what a path resolves to
+// at runtime depends on the collection that was loaded, which the file being
+// edited does not say. The relative half cannot be — a relative address
+// continues the collection path of the object hosting *this* script — so it is
+// read per file and merged in, and the caller's own world decides whether a bare
+// absolute path can resolve at all.
 function objectPathEntries(
   slot: ClassifiedSlot,
   position: number,
   cache: SceneIndexCache,
+  fileName: string,
   baseEntries: readonly ts.CompletionEntry[],
 ): ts.CompletionEntry[] {
   if (isFragmentCaret(slot, position)) {
     return [];
   }
-  return buildAddressPathCompletionEntries({
-    slot,
-    paths: cache.derived(
-      "object-paths",
-      () =>
-        buildSceneObjectPathIndex(cache.documents().documents, sceneCollectionRolesOf(cache)).paths,
-    ),
-    baseEntries,
-  });
+  const universe = relativeUniverseFor(cache, fileName);
+  const bare = offersBareWorld(universe);
+  const absolute = cache.derived(
+    "object-paths",
+    () =>
+      buildSceneObjectPathIndex(cache.documents().documents, sceneCollectionRolesOf(cache)).paths,
+  );
+  const paths = new Set<string>();
+  for (const key of absolute) {
+    if (bare || !key.startsWith("/")) paths.add(key);
+  }
+  for (const key of universe.paths) paths.add(key);
+  const entries = buildAddressPathCompletionEntries({ slot, paths, baseEntries });
+  // A join is the whole literal, so accepting one where the author already typed
+  // a `#` would silently rewrite the fragment they are holding.
+  if (slot.fragmentStart === -1) {
+    entries.push(
+      ...buildWholeLiteralCompletionEntries({ slot, ids: universe.addresses, baseEntries }),
+    );
+  }
+  return entries;
 }
 
 // No caret guard: the span is the whole literal, so an entry is well-formed
@@ -235,23 +253,17 @@ function actionIdEntries(
 }
 
 // The panel a claimed request is answered with. `documentation` rather than
-// `displayParts` carries the paths because a host renders the former as the
-// body of the panel, which is where a list of files reads as one.
-function provenancePanel(
-  entryName: string,
-  declaredIn: readonly string[],
-): ts.CompletionEntryDetails {
+// `displayParts` carries the sentence because a host renders the former as the
+// body of the panel, which is where a list of files — or of objects — reads as
+// one. The sentence is the caller's, since an absolute entry is answered with
+// the files declaring it and a relative one with the objects it resolves from.
+function provenancePanel(entryName: string, documentation: string): ts.CompletionEntryDetails {
   return {
     name: entryName,
     kind: CONTRIBUTED_ENTRY_KIND,
     kindModifiers: "",
     displayParts: [{ kind: "stringLiteral", text: JSON.stringify(entryName) }],
-    documentation: [
-      {
-        kind: "text",
-        text: `Declared in ${declaredIn.join(", ")}`,
-      },
-    ],
+    documentation: [{ kind: "text", text: documentation }],
     source: [{ kind: "text", text: DEFOLD_COMPLETION_SOURCE }],
   };
 }
@@ -329,8 +341,23 @@ export default function init(modules: { typescript: typeof import("typescript") 
       if (!slot) {
         return forward();
       }
+      // Tried first because the two universes are disjoint by construction and
+      // only this one knows which object an entry is relative to; a name it does
+      // not carry falls straight through to the declaring-file answer.
+      const relative = resolveRelativeEntryProvenance({
+        slot,
+        position,
+        cache,
+        fileName,
+        entryName,
+      });
+      if (relative !== undefined) {
+        return provenancePanel(entryName, relative);
+      }
       const declaredIn = resolveEntryProvenance({ slot, position, cache, fileName, entryName });
-      return declaredIn.length === 0 ? forward() : provenancePanel(entryName, declaredIn);
+      return declaredIn.length === 0
+        ? forward()
+        : provenancePanel(entryName, `Declared in ${declaredIn.join(", ")}`);
     };
 
     proxy.getSemanticDiagnostics = (fileName: string): ts.Diagnostic[] => {
@@ -379,7 +406,7 @@ export default function init(modules: { typescript: typeof import("typescript") 
       const entries = isAddressClass(slot.class)
         ? [
             ...componentEntries(slot, position, cache, baseEntries),
-            ...objectPathEntries(slot, position, cache, baseEntries),
+            ...objectPathEntries(slot, position, cache, fileName, baseEntries),
           ]
         : slot.class === "gui-node"
           ? nodeEntries(slot, cache, fileName, baseEntries)
