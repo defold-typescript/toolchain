@@ -20,6 +20,7 @@ import {
   runSceneTypes,
   SCENE_ADDRESSES_DECLARATION,
   sceneIndexForBuild,
+  scriptWorldsForBuild,
 } from "./scene-types-command";
 import type { WatchEditorClient } from "./watch";
 
@@ -921,5 +922,93 @@ describe("runBuild reports unreachable component addresses", () => {
 
     expect(result.warnings.some((w) => w.includes("did not run"))).toBe(false);
     expect(result.warnings.some((w) => w.includes("nobody"))).toBe(false);
+  });
+});
+
+describe("runBuild reports addresses naming a foreign world", () => {
+  // A bootstrap world whose object hosts the built script, and a proxy world
+  // named `mylevel` beside it — the worlds are read off these files by
+  // `runSceneTypes`, never handed to production by the test.
+  function scaffoldWorldProject(): void {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("game.project", "[bootstrap]\nmain_collection = /game/main.collectionc\n");
+    writeFile(
+      "game/main.collection",
+      'instances {\n  id: "loader"\n  prototype: "/game/loader.go"\n}\n' +
+        'instances {\n  id: "home"\n  prototype: "/game/home.go"\n}\n',
+    );
+    writeFile(
+      "game/loader.go",
+      'embedded_components {\n  id: "loader"\n  type: "collectionproxy"\n' +
+        '  data: "collection: \\"/game/level1.collection\\"\\n"\n}\n',
+    );
+    writeFile(
+      "game/home.go",
+      'components {\n  id: "brain"\n  component: "/src/main.ts.script"\n}\n',
+    );
+    writeFile(
+      "game/level1.collection",
+      'name: "mylevel"\ninstances {\n  id: "enemy"\n  prototype: "/game/enemy.go"\n}\n',
+    );
+    writeFile("game/enemy.go", 'embedded_components {\n  id: "body"\n  type: "sprite"\n}\n');
+  }
+
+  function getPosition(address: string): string {
+    return (
+      'import { defineScript } from "@defold-typescript/types";\n' +
+      `export default defineScript({ init() { go.get_position("${address}"); } });\n`
+    );
+  }
+
+  // The same conditional spread the dispatch build branches use.
+  function buildWith(cross: boolean): RunBuildResult {
+    const sceneTypes = runSceneTypes({ cwd });
+    const sceneIndex = sceneIndexForBuild(sceneTypes);
+    const scriptWorlds = cross ? scriptWorldsForBuild(sceneTypes, cwd) : undefined;
+    return runBuild({
+      cwd,
+      ...(sceneIndex !== undefined ? { sceneIndex } : {}),
+      ...(scriptWorlds !== undefined ? { scriptWorlds } : {}),
+    });
+  }
+
+  test("an address naming another world becomes a warning and a structured entry", () => {
+    scaffoldWorldProject();
+    writeFile("src/main.ts", getPosition("mylevel:/enemy"));
+
+    const result = buildWith(true);
+
+    expect(result.crossWorldAddresses).toEqual([
+      {
+        file: "src/main.ts",
+        address: "mylevel:/enemy",
+        socket: "mylevel",
+        message: expect.stringContaining("mylevel") as unknown as string,
+      },
+    ]);
+    expect(
+      result.warnings.some((w) => w.includes(result.crossWorldAddresses[0]?.message ?? "")),
+    ).toBe(true);
+    expect(result.written).toContain("src/main.ts.script");
+  });
+
+  test("the same slot addressing the caller's own world is not reported", () => {
+    scaffoldWorldProject();
+    writeFile("src/main.ts", getPosition("/enemy"));
+
+    const result = buildWith(true);
+
+    expect(result.crossWorldAddresses).toEqual([]);
+    expect(result.warnings.some((w) => w.includes("mylevel"))).toBe(false);
+  });
+
+  test("a caller passing no resolver gets no cross-world warning at all", () => {
+    scaffoldWorldProject();
+    writeFile("src/main.ts", getPosition("mylevel:/enemy"));
+
+    const result = buildWith(false);
+
+    expect(result.crossWorldAddresses).toEqual([]);
+    expect(result.warnings.some((w) => w.includes("mylevel"))).toBe(false);
   });
 });

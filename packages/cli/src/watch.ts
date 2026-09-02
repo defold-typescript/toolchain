@@ -100,6 +100,11 @@ export interface RunWatchOptions {
    * `sceneTypesSurface` performs is visible to the next rebuild.
    */
   readonly sceneIndex?: () => SceneComponentIndex | undefined;
+  /**
+   * Which worlds each source file's script runs in, re-read on every use so a
+   * scene save that moves a script between worlds is picked up.
+   */
+  readonly scriptWorlds?: () => ((fileName: string) => readonly (string | undefined)[]) | undefined;
   readonly json?: boolean;
   readonly pinDiagnostics?: readonly string[];
   readonly pinMismatch?: { readonly installed: string; readonly pinned: string };
@@ -207,11 +212,12 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     session = createBuildSession({
       cwd,
       ...(opts.sceneIndex ? { sceneIndex: opts.sceneIndex } : {}),
+      ...(opts.scriptWorlds ? { scriptWorlds: opts.scriptWorlds } : {}),
     });
     config = readBuildConfig(cwd);
     if (!opts.json) stdout.write(BUILD_STARTED_LINE);
     try {
-      const { written, warnings, unreachableAddresses } = session.buildAll();
+      const { written, warnings, unreachableAddresses, crossWorldAddresses } = session.buildAll();
       if (opts.json) {
         stdout.write(
           renderWatchEvent({
@@ -219,6 +225,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
             written,
             warnings,
             ...(unreachableAddresses.length > 0 ? { unreachableAddresses } : {}),
+            ...(crossWorldAddresses.length > 0 ? { crossWorldAddresses } : {}),
           }),
         );
       } else {
@@ -460,7 +467,10 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     }
     if (!opts.json) stdout.write(BUILD_STARTED_LINE);
     try {
-      const { written, warnings, unreachableAddresses } = session.applyEvents(changed, removed);
+      const { written, warnings, unreachableAddresses, crossWorldAddresses } = session.applyEvents(
+        changed,
+        removed,
+      );
       if (opts.json) {
         stdout.write(
           renderWatchEvent({
@@ -470,6 +480,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
             removed,
             warnings,
             ...(unreachableAddresses.length > 0 ? { unreachableAddresses } : {}),
+            ...(crossWorldAddresses.length > 0 ? { crossWorldAddresses } : {}),
           }),
         );
       } else {
@@ -610,6 +621,9 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
                     warnings: findings.warnings,
                     ...(findings.unreachableAddresses.length > 0
                       ? { unreachableAddresses: findings.unreachableAddresses }
+                      : {}),
+                    ...(findings.crossWorldAddresses.length > 0
+                      ? { crossWorldAddresses: findings.crossWorldAddresses }
                       : {}),
                   }
                 : {}),

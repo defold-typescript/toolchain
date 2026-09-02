@@ -1,5 +1,5 @@
 import type { InitOperation } from "./init";
-import type { UnreachableAddressEntry } from "./url-reachability-scan";
+import type { CrossWorldAddressEntry, UnreachableAddressEntry } from "./url-reachability-scan";
 
 export type CliCommand =
   | "init"
@@ -76,6 +76,9 @@ export interface RenderResultInput {
   // `warnings` is where a consumer learns; absent also means nothing to report
   // only when no suppression line is present.
   readonly unreachableAddresses?: readonly UnreachableAddressEntry[];
+  // The structured half of the cross-world address findings, under the identical
+  // absent-versus-empty contract as `unreachableAddresses` above.
+  readonly crossWorldAddresses?: readonly CrossWorldAddressEntry[];
   readonly pinMismatch?: { readonly installed: string; readonly pinned: string };
   // Stated outright so a consumer reads "no surface" from a present field
   // rather than inferring it from an absent or null `materializedSurface`.
@@ -162,10 +165,12 @@ export function renderResult(input: RenderResultInput): string {
     "unreachableAddresses" in input
       ? { ...withWarnings, unreachableAddresses: input.unreachableAddresses }
       : withWarnings;
-  const withPinMismatch =
-    "pinMismatch" in input
-      ? { ...withUnreachable, pinMismatch: input.pinMismatch }
+  const withCrossWorld =
+    "crossWorldAddresses" in input
+      ? { ...withUnreachable, crossWorldAddresses: input.crossWorldAddresses }
       : withUnreachable;
+  const withPinMismatch =
+    "pinMismatch" in input ? { ...withCrossWorld, pinMismatch: input.pinMismatch } : withCrossWorld;
   const withUnresolvable =
     "unresolvableTarget" in input
       ? { ...withPinMismatch, unresolvableTarget: input.unresolvableTarget }
@@ -219,6 +224,7 @@ export interface RenderWatchEventInput {
   readonly removed?: readonly string[];
   readonly warnings?: readonly string[];
   readonly unreachableAddresses?: readonly UnreachableAddressEntry[];
+  readonly crossWorldAddresses?: readonly CrossWorldAddressEntry[];
   readonly pinMismatch?: { readonly installed: string; readonly pinned: string };
   readonly error?: string;
   readonly errors?: readonly WatchErrorEntry[];
@@ -239,9 +245,11 @@ export function renderWatchEvent(input: RenderWatchEventInput): string {
     "unreachableAddresses" in input
       ? { ...withWarnings, unreachableAddresses: input.unreachableAddresses }
       : withWarnings;
-  const withPinMismatch =
-    "pinMismatch" in input
-      ? { ...withUnreachable, pinMismatch: input.pinMismatch }
+  const withCrossWorld =
+    "crossWorldAddresses" in input
+      ? { ...withUnreachable, crossWorldAddresses: input.crossWorldAddresses }
       : withUnreachable;
+  const withPinMismatch =
+    "pinMismatch" in input ? { ...withCrossWorld, pinMismatch: input.pinMismatch } : withCrossWorld;
   return `${JSON.stringify(withPinMismatch)}\n`;
 }

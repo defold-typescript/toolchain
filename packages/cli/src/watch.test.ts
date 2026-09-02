@@ -25,7 +25,11 @@ import type {
   WatchEditorClient as PublicWatchEditorClient,
 } from "./index";
 import { surfaceDirName } from "./materialize";
-import { runSceneTypes, SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
+import {
+  runSceneTypes,
+  SCENE_ADDRESSES_DECLARATION,
+  scriptWorldsForBuild,
+} from "./scene-types-command";
 import {
   createWatchEditorClient,
   type EditorReloadCommand,
@@ -3176,5 +3180,81 @@ describe("runWatch game.project scene regeneration", () => {
 
     handle.stop();
     expect(await handle.done).toBe(0);
+  });
+});
+
+describe("runWatch cross-world address reporting", () => {
+  function writeLevel(socket: string): void {
+    writeProjectFile(
+      "game/level1.collection",
+      `name: "${socket}"\n` +
+        'instances {\n  id: "home"\n  prototype: "/game/home.go"\n}\n' +
+        'instances {\n  id: "enemy"\n  prototype: "/game/enemy.go"\n}\n',
+    );
+  }
+
+  // The script runs inside the proxy world it addresses, so the startup build is
+  // clean and only the scene save below can make the literal foreign.
+  function scaffold(): void {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile(
+      "src/main.ts",
+      'import { defineScript } from "@defold-typescript/types";\n' +
+        'export default defineScript({ init() { go.get_position("mylevel:/enemy"); } });\n',
+    );
+    writeProjectFile(
+      "game.project",
+      "[bootstrap]\nmain_collection = /game/main.collectionc\n\n[project]\n",
+    );
+    writeProjectFile(
+      "game/main.collection",
+      'instances {\n  id: "loader"\n  prototype: "/game/loader.go"\n}\n',
+    );
+    writeProjectFile(
+      "game/loader.go",
+      'embedded_components {\n  id: "loader"\n  type: "collectionproxy"\n' +
+        '  data: "collection: \\"/game/level1.collection\\"\\n"\n}\n',
+    );
+    writeLevel("mylevel");
+    writeProjectFile(
+      "game/home.go",
+      'components {\n  id: "brain"\n  component: "/src/main.ts.script"\n}\n',
+    );
+    writeProjectFile("game/enemy.go", 'embedded_components {\n  id: "body"\n  type: "sprite"\n}\n');
+  }
+
+  test("a scene save refreshes the resolver, so the rescan reports the moved world", async () => {
+    scaffold();
+    const { stdout, stderr, err } = captureStreams();
+    const main = makeFactory();
+    const component = makeFactory();
+    // The closure `dispatch` builds, reduced to the part this test owns: the
+    // resolver is re-read after every regeneration, never snapshotted.
+    let scriptWorlds = scriptWorldsForBuild(runSceneTypes({ cwd }), cwd);
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      debounceMs: 5,
+      watcherFactory: main.factory,
+      componentWatcherFactory: component.factory,
+      sceneTypesSurface: () => {
+        scriptWorlds = scriptWorldsForBuild(runSceneTypes({ cwd }), cwd);
+      },
+      scriptWorlds: () => scriptWorlds,
+    });
+    await handle.waitForIdle();
+    expect(err()).not.toContain('the world "mylevel"');
+
+    writeLevel("otherlevel");
+    component.trigger("change", "game/level1.collection");
+    await handle.waitForIdle();
+
+    handle.stop();
+    expect(await handle.done).toBe(0);
+
+    expect(err()).toContain('the world "mylevel"');
+    expect(err()).toContain("src/main.ts");
   });
 });

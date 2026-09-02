@@ -82,6 +82,24 @@ two different objects — so the generator says which one each key means.
   generator offers nothing for them rather than an address that could never
   resolve.
 
+A world-qualified address only works where the engine crosses worlds for you.
+`msg.post` and `msg.url` go through the message bus and accept
+`mylevel:/enemy`; every `go.*` call that resolves an instance or component
+handle — `go.get_position`, `go.set_parent`, `go.animate`, `go.get`/`go.set` —
+resolves inside the world its own script runs in, so a socket-qualified literal
+there names an object it can never reach. [`build`](./build.md) and
+[`watch`](./watch.md) report exactly that case: an address naming a foreign
+socket at a slot that stays in the caller's world, with the socket it named and
+the world the script actually runs in.
+
+The boundary is drawn on the side of silence. Nothing is reported for a
+`msg.post`/`msg.url` slot, for a bare or relative address (which continues the
+caller's world by construction), for a socket that matches a world the script
+runs in, or for a script whose world could not be resolved at all — a `.ts` no
+scene hosts, or one whose scenes the walk could not read. A script a scene
+instances in two worlds is reported only when the address disagrees with every
+one of them.
+
 If your `game.project` cannot be read, or declares no `[bootstrap]
 main_collection`, no key is offered bare and the reason is named on the warning
 channel — the generator says what it could not settle instead of guessing that

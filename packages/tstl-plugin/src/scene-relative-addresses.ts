@@ -4,12 +4,10 @@ import {
   computeOutputRel,
   displayPathOf,
   GUI_EXTENSIONS,
-  guiScriptResourceOf,
+  guiScriptResourcesOf,
   type NamingContext,
-  parseSceneTextFormat,
   relativeAddressesFrom,
   type SceneObjectPathIndex,
-  SceneTextFormatError,
 } from "@defold-typescript/transpiler";
 import { readBuildConfigFromHost } from "./build-config";
 import { type SceneIndexCache, sceneCollectionRolesOf } from "./scene-index-cache";
@@ -37,31 +35,17 @@ interface ProjectContexts {
   readonly byScriptResource: ReadonlyMap<string, readonly NamingContext[]>;
 }
 
-// A `.gui` names the gui script it drives, and that indirection is the only way
-// a gui script reaches an object: the walk reads the edge through the same
-// production rule the node-id index keys on rather than a second reader.
-function guiScriptsOf(cache: SceneIndexCache): ReadonlyMap<string, string> {
-  const scripts = new Map<string, string>();
-  for (const [displayPath, text] of cache.documents(GUI_EXTENSIONS).documents) {
-    let resource: string | undefined;
-    try {
-      resource = guiScriptResourceOf(parseSceneTextFormat(text));
-    } catch (error) {
-      if (!(error instanceof SceneTextFormatError)) throw error;
-      continue;
-    }
-    if (resource !== undefined) scripts.set(displayPath, resource);
-  }
-  return scripts;
-}
-
 function projectContexts(cache: SceneIndexCache): ProjectContexts {
   return cache.derived(CONTEXTS, () => {
     const index = buildSceneObjectPathIndex(
       cache.documents().documents,
       sceneCollectionRolesOf(cache),
     );
-    return { index, byScriptResource: buildScriptNamingContexts(index, guiScriptsOf(cache)) };
+    // A `.gui` names the gui script it drives, and that indirection is the only
+    // way a gui script reaches an object: the edge is read through the same
+    // shared builder the CLI's walk uses rather than a second reader.
+    const guiScripts = guiScriptResourcesOf(cache.documents(GUI_EXTENSIONS).documents);
+    return { index, byScriptResource: buildScriptNamingContexts(index, guiScripts) };
   });
 }
 

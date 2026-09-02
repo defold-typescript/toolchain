@@ -196,6 +196,20 @@ function slotThroughHashedCall(
   return ascended?.entry.fqn === "hash" ? undefined : ascended;
 }
 
+// The table entry governing the argument slot this expression occupies, but only
+// when that slot names something in the scene graph by address — `undefined`
+// otherwise. Filtering the entry through the same `isAddressClass` the class
+// accessor is judged by is what stops a caller from reading a slot's
+// `socketScope` off an entry whose class was never an address.
+export function addressEntryOfArgument(
+  checker: ts.TypeChecker,
+  table: UrlParameterTable,
+  argument: ts.Expression,
+): UrlParameterEntry | undefined {
+  const entry = classifiedEntryOfArgument(checker, table, argument)?.entry;
+  return entry !== undefined && isAddressClass(entry.class) ? entry : undefined;
+}
+
 // How the committed table classifies the argument slot this expression occupies
 // — `"none"` when nothing resolves, which is also the answer for any node that
 // is not a call argument at all.
