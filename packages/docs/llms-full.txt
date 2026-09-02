@@ -2696,11 +2696,14 @@ A full build also warns when an address names another **world**. Only
 `msg.post` and `msg.url` cross a collection proxy; every `go.*` call that
 resolves an instance or component handle stays in the world its own script runs
 in, so `go.get_position("mylevel:/enemy")` written from a script outside
-`mylevel` can never resolve. The warning names the socket the address claimed
-and the world the script actually runs in. It warns and moves on like the scans
-above, and stays silent wherever it cannot be sure: on the two cross-world
-slots, on a bare or relative address, and on any script whose world the scene
-walk could not resolve. [`watch`](./watch.md) reports it on every rebuild and on
+`mylevel` can never resolve. A socket counts however the rest of the address is
+written — `mylevel:enemy`, `mylevel:` and `mylevel:#body` are checked just like
+`mylevel:/enemy`. The warning names the socket the address claimed and the world
+the script actually runs in. It warns and moves on like the scans above, and
+stays silent wherever it cannot be sure: on the two cross-world slots, on an
+address that names no socket at all — a bare `/path`, a relative `id` or
+`sub/id`, a lone `#fragment` — and on any script whose world the scene walk
+could not resolve. [`watch`](./watch.md) reports it on every rebuild and on
 every `.go`/`.collection` save, exactly as it does the `#fragment` check. See
 [which world an address resolves in](./scene-types.md#which-world-an-address-resolves-in).
 
@@ -3436,11 +3439,18 @@ there names an object it can never reach. [`build`](./build.md) and
 socket at a slot that stays in the caller's world, with the socket it named and
 the world the script actually runs in.
 
+An address is socket-qualified by its `:`, not by the path after it: the
+grammar is `[socket:][path][#fragment]` with both halves optional, so
+`mylevel:enemy`, `mylevel:` and `mylevel:#body` are checked exactly like
+`mylevel:/enemy`. A `:` inside a path segment is not a socket — `/level:1/enemy`
+is a bare path, because the leading `/` closes the address's head first.
+
 The boundary is drawn on the side of silence. Nothing is reported for a
-`msg.post`/`msg.url` slot, for a bare or relative address (which continues the
-caller's world by construction), for a socket that matches a world the script
-runs in, or for a script whose world could not be resolved at all — a `.ts` no
-scene hosts, or one whose scenes the walk could not read. A script a scene
+`msg.post`/`msg.url` slot, for an address that names no socket at all — a bare
+`/path`, a relative `id` or `sub/id`, a lone `#fragment`, each of which
+continues the caller's world by construction — for a socket that matches a world
+the script runs in, or for a script whose world could not be resolved at all — a
+`.ts` no scene hosts, or one whose scenes the walk could not read. A script a scene
 instances in two worlds is reported only when the address disagrees with every
 one of them.
 

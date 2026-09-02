@@ -91,11 +91,14 @@ A full build also warns when an address names another **world**. Only
 `msg.post` and `msg.url` cross a collection proxy; every `go.*` call that
 resolves an instance or component handle stays in the world its own script runs
 in, so `go.get_position("mylevel:/enemy")` written from a script outside
-`mylevel` can never resolve. The warning names the socket the address claimed
-and the world the script actually runs in. It warns and moves on like the scans
-above, and stays silent wherever it cannot be sure: on the two cross-world
-slots, on a bare or relative address, and on any script whose world the scene
-walk could not resolve. [`watch`](./watch.md) reports it on every rebuild and on
+`mylevel` can never resolve. A socket counts however the rest of the address is
+written — `mylevel:enemy`, `mylevel:` and `mylevel:#body` are checked just like
+`mylevel:/enemy`. The warning names the socket the address claimed and the world
+the script actually runs in. It warns and moves on like the scans above, and
+stays silent wherever it cannot be sure: on the two cross-world slots, on an
+address that names no socket at all — a bare `/path`, a relative `id` or
+`sub/id`, a lone `#fragment` — and on any script whose world the scene walk
+could not resolve. [`watch`](./watch.md) reports it on every rebuild and on
 every `.go`/`.collection` save, exactly as it does the `#fragment` check. See
 [which world an address resolves in](./scene-types.md#which-world-an-address-resolves-in).
 

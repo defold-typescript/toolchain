@@ -156,6 +156,22 @@ describe("buildScriptNamingContexts", () => {
     ]);
   });
 
+  test("a bootstrap-world object whose id carries a colon keeps its bootstrap context", () => {
+    expect(
+      contextsOver({
+        bootstrap: "/main.collection",
+        documents: [
+          [
+            "main.collection",
+            'collection_instances {\n  id: "a:b"\n  collection: "/sub.collection"\n}\n',
+          ],
+          ["sub.collection", 'instances {\n  id: "obj"\n  prototype: "/obj.go"\n}\n'],
+          ["obj.go", scriptObject("brain", "/src/hero.script")],
+        ],
+      }).get("src/hero.script"),
+    ).toEqual([{ object: "/a:b/obj", socket: undefined, prefix: "/a:b/" }]);
+  });
+
   test("a script hosted by two objects resolves to both contexts, sorted", () => {
     expect(
       contextsOver({
