@@ -13,7 +13,7 @@ import {
   type SceneIndexCache,
   type SceneWatchHost,
 } from "./scene-index-cache";
-import { resolveEntryProvenance } from "./scene-provenance";
+import { resolveEntryProvenance, resolveRelativeEntryProvenance } from "./scene-provenance";
 
 const PROJECT_ROOT = "/project";
 
@@ -557,5 +557,92 @@ describe("resolveEntryProvenance memoization", () => {
     // provenance map stored under it would hand that path a map where it
     // expects a set.
     expect(computations).not.toContain("component-ids");
+  });
+});
+
+// The committed platformer's shape: `main.ts` is hosted on `/player/player`, so
+// `player` is a relative form of the same object `/player/player` names
+// absolutely — the two universes a panel must not confuse.
+const RELATIVE_DOCUMENTS: Record<string, string> = {
+  "game.project": "[bootstrap]\nmain_collection = /main.collectionc\n",
+  "main.collection":
+    'instances {\n  id: "level"\n  prototype: "/level.go"\n}\n' +
+    'collection_instances {\n  id: "player"\n  collection: "/player.collection"\n}\n',
+  "level.go": 'components {\n  id: "tilemap"\n  component: "/level.tilemap"\n}\n',
+  "player.collection": 'instances {\n  id: "player"\n  prototype: "/player.go"\n}\n',
+  "player.go":
+    'components {\n  id: "player"\n  component: "/main.ts.script"\n}\n' +
+    'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n',
+};
+
+// One `.go` instanced under two collection ids, one of whose collections holds a
+// second object: `obj` resolves from both contexts and `extra` from only one, so
+// a panel that named every context regardless of the entry would be visible.
+const PARTIAL_CONTEXT_DOCUMENTS: Record<string, string> = {
+  "game.project": "[bootstrap]\nmain_collection = /main.collectionc\n",
+  "main.collection":
+    'collection_instances {\n  id: "a"\n  collection: "/wide.collection"\n}\n' +
+    'collection_instances {\n  id: "b"\n  collection: "/narrow.collection"\n}\n',
+  "wide.collection":
+    'instances {\n  id: "obj"\n  prototype: "/obj.go"\n}\n' +
+    'instances {\n  id: "extra"\n  prototype: "/extra.go"\n}\n',
+  "narrow.collection": 'instances {\n  id: "obj"\n  prototype: "/obj.go"\n}\n',
+  "obj.go": 'components {\n  id: "brain"\n  component: "/main.ts.script"\n}\n',
+  "extra.go": 'components {\n  id: "tag"\n  component: "/tag.script"\n}\n',
+};
+
+describe("resolveRelativeEntryProvenance", () => {
+  function panelFor(
+    documents: Record<string, string>,
+    entryName: string,
+    caret?: { source: string; literal: string; position?: number },
+  ): string | undefined {
+    const { cache } = cacheOver(documents);
+    const source = caret?.source ?? NO_FRAGMENT_SOURCE;
+    const literal = caret?.literal ?? '"/hero"';
+    const { slot, position } = slotIn(source, literal);
+    return resolveRelativeEntryProvenance({
+      slot,
+      position: caret?.position ?? position,
+      cache,
+      fileName: "main.ts",
+      entryName,
+    });
+  }
+
+  test("a relative entry's panel names the context it resolves from", () => {
+    expect(panelFor(RELATIVE_DOCUMENTS, "player")).toBe("Relative to /player/player");
+    expect(panelFor(RELATIVE_DOCUMENTS, "player#sprite")).toBe("Relative to /player/player");
+  });
+
+  test("an entry valid from only some contexts names the ones it is not valid from", () => {
+    expect(panelFor(PARTIAL_CONTEXT_DOCUMENTS, "obj")).toBe("Relative to /a/obj, /b/obj");
+    expect(panelFor(PARTIAL_CONTEXT_DOCUMENTS, "extra")).toBe(
+      "Relative to /a/obj; not from /b/obj",
+    );
+  });
+
+  test("an absolute path is not a relative entry, and neither is an unknown name", () => {
+    expect(panelFor(RELATIVE_DOCUMENTS, "/player/player")).toBeUndefined();
+    expect(panelFor(RELATIVE_DOCUMENTS, "nothing-declares-this")).toBeUndefined();
+  });
+
+  test("a fragment caret is answered by the component universe alone", () => {
+    expect(
+      panelFor(RELATIVE_DOCUMENTS, "player", {
+        source: PATH_SOURCE,
+        literal: PATH_LITERAL,
+        position: IN_FRAGMENT,
+      }),
+    ).toBeUndefined();
+  });
+
+  test("a slot that names no address carries no relative universe", () => {
+    expect(
+      panelFor(RELATIVE_DOCUMENTS, "player", {
+        source: CONFIG_SOURCE,
+        literal: '"project.title"',
+      }),
+    ).toBeUndefined();
   });
 });
