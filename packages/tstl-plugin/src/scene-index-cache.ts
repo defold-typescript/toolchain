@@ -1,5 +1,6 @@
 import {
   buildSceneCollectionRoles,
+  buildSceneComponentIndex,
   COLLECTION_REFERENCE_EXTENSIONS,
   displayPathOf,
   GAME_PROJECT_DOCUMENT,
@@ -10,6 +11,7 @@ import {
   readSceneDocuments,
   SCENE_EXTENSIONS,
   type SceneCollectionRoles,
+  type SceneComponentIndex,
   type SceneReadHost,
 } from "@defold-typescript/transpiler";
 import type * as ts from "typescript";
@@ -184,6 +186,17 @@ export function createSceneIndexCache(host: SceneWatchHost, projectRoot: string)
       derivedCache.clear();
     },
   };
+}
+
+// The component-id universe, whole — ids *and* the walk's own record of what it
+// could not prove — read through the cache so one walk serves both readers. The
+// two disagree about what to do with the hole rather than about how to build it:
+// a completion suggests from a partial universe, a finding must not, so the
+// index is shared here and each caller applies its own rule.
+export function sceneComponentIndexOf(cache: SceneIndexCache): SceneComponentIndex {
+  return cache.derived("component-index", () =>
+    buildSceneComponentIndex(cache.documents().documents),
+  );
 }
 
 // The world each collection is, read through the cache so the completion path

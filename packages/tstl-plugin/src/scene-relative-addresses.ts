@@ -50,6 +50,18 @@ function projectContexts(cache: SceneIndexCache): ProjectContexts {
 }
 
 /**
+ * Every game-object path the project declares and the components each owns —
+ * the index a check scopes an absolute `#fragment` address against.
+ *
+ * Read off the walk `projectContexts` already caches rather than built again:
+ * the naming contexts are derived *from* this index, so the reachability path
+ * costs no second `.go`/`.collection` parse.
+ */
+export function projectObjectIndex(cache: SceneIndexCache): SceneObjectPathIndex {
+  return projectContexts(cache).index;
+}
+
+/**
  * The relative universe the file at `fileName` may write from, keyed per file
  * under the same cache the absolute indexes live in.
  *
@@ -91,6 +103,28 @@ export function relativeUniverseFor(cache: SceneIndexCache, fileName: string): R
 
     return { contexts, paths, addresses, contextsByEntry };
   });
+}
+
+/**
+ * The worlds the file's script runs in, as `checkCrossWorldAddresses` asks for
+ * them: the de-duplicated sockets of every naming context hosting it, with the
+ * bootstrap world carried as `undefined`.
+ *
+ * The same answer `scriptWorldsForBuild` gives the CLI, reached through the
+ * chain that resolver was modelled on — so an address the build calls foreign is
+ * foreign in the editor too. An empty answer is the honest unknown: a script no
+ * scene hosts runs in no world this project can prove, and the check reports
+ * nothing for it.
+ */
+export function worldsFor(
+  cache: SceneIndexCache,
+  fileName: string,
+): readonly (string | undefined)[] {
+  const sockets = new Set<string | undefined>();
+  for (const context of relativeUniverseFor(cache, fileName).contexts) {
+    sockets.add(context.socket);
+  }
+  return [...sockets];
 }
 
 /**
