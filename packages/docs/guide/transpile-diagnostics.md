@@ -22,6 +22,21 @@ Your editor loads the plugin through its own bundled Node runtime, which has to 
 
 The plugin runs the **same TypeScript-to-Lua diagnostic pass the `build` command uses** against the program your editor already has open, and reports anything the transpiler cannot lower — directly on the offending source span. You see the squiggle in the editor as you type, instead of discovering the failure when you run `build`. Because editor and build share one diagnostic source, they cannot disagree about what is unsupported.
 
+## Address findings — unreachable fragments and foreign worlds
+
+The plugin reports the same two address findings a [`build`](./build.md) does, on the file you are editing, as you type.
+
+An address whose `#fragment` names a component no `.go` or `.collection` in your project declares is flagged where you wrote it. Where the object the address names is provable, the message names that object and the components it really declares (`the game object "/hero" declares no component with the id "nobody"`); otherwise it says no scene in the project declares that id at all.
+
+An address naming another **world** is flagged the same way. Only `msg.post` and `msg.url` cross a collection proxy, so `go.get_position("mylevel:/enemy")` written from a script outside `mylevel` can never resolve; the message names the socket the address claimed and the world your script actually runs in. See [which world an address resolves in](./scene-types.md#which-world-an-address-resolves-in).
+
+Both stay silent rather than guess, and the two boundaries are separate:
+
+- If the component-id universe has a **hole** — a scene that would not parse, a file that could not be read, a dependency [`resolve`](./resolve.md) has not materialized — the fragment check reports nothing at all rather than reporting every address as unreachable. A check that could not run has no honest span to sit on in an editor, so the build is where you see it named as suppressed.
+- A script **no scene hosts** has no world this project can prove, so it is never reported as naming a foreign one. This is per file, and independent of the hole above: a suppressed fragment check does not silence the world check.
+
+Both are suggestions, never errors — see [it is advisory, not blocking](#it-is-advisory-not-blocking).
+
 ## Address completions — game-object paths and component ids
 
 Type `#` inside an address argument — [`msg.post`](/api/msg)'s `receiver`, [`go.get`](/api/go)'s `url`, any of the slots the reference types as an address — and the plugin offers the component ids your project declares. The list is read from the project's own `.go` and `.collection` files; Defold's `build/` output is skipped, since those are generated copies of the same scenes. Suggestions come from an index the plugin keeps across requests and refreshes whenever a scene file changes, so typing on in the same slot costs no repeat walk of your project, and a component you added a moment ago is offered without restarting the editor.
