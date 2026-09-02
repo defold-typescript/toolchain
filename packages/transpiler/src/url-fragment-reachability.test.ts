@@ -4,8 +4,9 @@ import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import type { UrlParameterTable } from "@defold-typescript/types";
 import * as ts from "typescript";
-import type { SceneComponentIndex } from "./scene-component-index";
-import type { SceneObjectPathIndex } from "./scene-object-path-index";
+import { buildSceneCollectionRoles } from "./scene-collection-roles";
+import { buildSceneComponentIndex, type SceneComponentIndex } from "./scene-component-index";
+import { buildSceneObjectPathIndex, type SceneObjectPathIndex } from "./scene-object-path-index";
 import { createTranspileSession } from "./session";
 import { AMBIENT_FILES } from "./transpile";
 import { checkUrlFragmentReachability } from "./url-fragment-reachability";
@@ -97,7 +98,7 @@ function universe(...ids: string[]): SceneComponentIndex {
   return { ids: new Set(ids), incomplete: [] };
 }
 
-type ObjectIndex = Pick<SceneObjectPathIndex, "paths" | "componentsOf">;
+type ObjectIndex = Pick<SceneObjectPathIndex, "paths" | "componentsOf" | "incomplete">;
 
 // `withheld` names paths the walk proved exist but whose components it could not
 // read, exactly as `buildSceneObjectPathIndex` drops such a key from
@@ -109,6 +110,29 @@ function objects(
   return {
     paths: new Set([...Object.keys(entries), ...withheld]),
     componentsOf: new Map(Object.entries(entries)),
+    incomplete: [],
+  };
+}
+
+// The `{ index, objects }` pair a real build passes, composed by the three
+// production builders over one set of scene texts. A hole in the object
+// universe is then the role walk's own verdict on the fixture rather than a
+// field the test set, which is what makes the negative cases below fail if the
+// fixture ever stops reproducing the hole.
+function builtFrom(
+  documents: Record<string, string>,
+  gameProject: string | undefined,
+  references: Record<string, string> = {},
+) {
+  const scenes = new Map(Object.entries(documents));
+  const roles = buildSceneCollectionRoles({
+    documents: scenes,
+    references: new Map(Object.entries(references)),
+    gameProject,
+  });
+  return {
+    index: buildSceneComponentIndex(scenes),
+    objects: buildSceneObjectPathIndex(scenes, roles),
   };
 }
 
@@ -554,5 +578,91 @@ describe("checkUrlFragmentReachability", () => {
       incomplete: reasons,
     });
     expect(report).toEqual({ kind: "suppressed", reasons });
+  });
+  const BOOTSTRAP_MAIN = "[bootstrap]\nmain_collection = /game/main.collection\n";
+
+  function goOwning(...ids: string[]): string {
+    return ids
+      .map((id) => `components {\n  id: "${id}"\n  component: "/${id}.script"\n}\n`)
+      .join("");
+  }
+
+  function instancing(id: string, prototype: string): string {
+    return `instances {\n  id: "${id}"\n  prototype: "${prototype}"\n}\n`;
+  }
+
+  // A bootstrap world owning "sprite", plus a collection nothing reaches whose
+  // own `/player` owns "sprit". Both ids are project-wide, so only the scoping
+  // can tell the address apart -- and the orphan is exactly the world the role
+  // walk cannot place.
+  const ORPHANED_WORLD = {
+    "game/main.collection": instancing("player", "/game/player.go"),
+    "game/player.go": goOwning("sprite"),
+    "game/orphan.collection": instancing("player", "/game/orphan-player.go"),
+    "game/orphan-player.go": goOwning("sprit"),
+  };
+
+  test("an unclassified collection withdraws the scoped test", () => {
+    const { index, objects } = builtFrom(ORPHANED_WORLD, BOOTSTRAP_MAIN);
+    expect(findingsOf('msg.post("/player#sprit", "hello");\n', index, objects)).toEqual([]);
+  });
+
+  test("the fixture is the hazard", () => {
+    const { index, objects } = builtFrom(ORPHANED_WORLD, BOOTSTRAP_MAIN);
+    expect(objects.incomplete.length).toBeGreaterThan(0);
+    expect(objects.componentsOf.get("/player")).toEqual(["sprite"]);
+    expect(index.ids.has("sprit")).toBe(true);
+    expect(index.incomplete).toEqual([]);
+  });
+
+  test("an incomplete universe withdraws a socket-qualified scoped test too", () => {
+    const { index, objects } = builtFrom(
+      {
+        "game/main.collection": instancing("loader", "/game/loader.go"),
+        "game/loader.go":
+          'components {\n  id: "opena"\n  component: "/game/a.collectionproxy"\n}\n' +
+          'components {\n  id: "openb"\n  component: "/game/b.collectionproxy"\n}\n',
+        "game/a.collection": `name: "mylevel"\n${instancing("player", "/game/a-player.go")}`,
+        "game/a-player.go": goOwning("sprite"),
+        "game/b.collection": `name: "mylevel"\n${instancing("player", "/game/b-player.go")}`,
+        "game/b-player.go": goOwning("sprit"),
+      },
+      BOOTSTRAP_MAIN,
+      { "game/a.collectionproxy": 'collection: "/game/a.collection"\n' },
+    );
+    expect(objects.incomplete.length).toBeGreaterThan(0);
+    expect(objects.componentsOf.get("mylevel:/player")).toEqual(["sprite"]);
+    expect(index.ids.has("sprit")).toBe(true);
+    expect(findingsOf('msg.post("mylevel:/player#sprit", "hello");\n', index, objects)).toEqual([]);
+  });
+
+  // The same two worlds, but the second reached by a `collection_instances`
+  // edge, so every collection has a role and the universe is provably whole.
+  const WHOLE_WORLD = {
+    "game/main.collection":
+      instancing("player", "/game/player.go") +
+      'collection_instances {\n  id: "level"\n  collection: "/game/level.collection"\n}\n',
+    "game/player.go": goOwning("sprite"),
+    "game/level.collection": instancing("player", "/game/level-player.go"),
+    "game/level-player.go": goOwning("sprit"),
+  };
+
+  test("a whole universe still reports an object-local collision", () => {
+    const { index, objects } = builtFrom(WHOLE_WORLD, BOOTSTRAP_MAIN);
+    expect(objects.incomplete).toEqual([]);
+    const findings = findingsOf('msg.post("/player#sprit", "hello");\n', index, objects);
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.message).toContain('the game object "/player"');
+    expect(findings[0]?.message).toContain('"sprite"');
+    expect(findingsOf('msg.post("/level/player#sprit", "hello");\n', index, objects)).toEqual([]);
+  });
+
+  test("a whole universe still falls back where it always did", () => {
+    const { index, objects } = builtFrom(WHOLE_WORLD, BOOTSTRAP_MAIN);
+    for (const address of ["#ghost", "/nobody#ghost"]) {
+      const findings = findingsOf(`msg.post("${address}", "hello");\n`, index, objects);
+      expect(findings).toHaveLength(1);
+      expect(findings[0]?.message).toContain("no `.go` or `.collection` in this project declares");
+    }
   });
 });

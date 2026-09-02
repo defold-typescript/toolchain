@@ -27,10 +27,11 @@ function universe(...ids: string[]): SceneComponentIndex {
 
 function objects(
   entries: Record<string, readonly string[]>,
-): Pick<SceneObjectPathIndex, "paths" | "componentsOf"> {
+): Pick<SceneObjectPathIndex, "paths" | "componentsOf" | "incomplete"> {
   return {
     paths: new Set(Object.keys(entries)),
     componentsOf: new Map(Object.entries(entries)),
+    incomplete: [],
   };
 }
 

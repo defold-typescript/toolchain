@@ -19,8 +19,14 @@ export interface UrlFragmentFinding {
   readonly message: string;
 }
 
-/** The half of the joined index this check reads: which objects exist, and what each owns. */
-export type SceneObjectComponents = Pick<SceneObjectPathIndex, "paths" | "componentsOf">;
+// The half of the joined index this check reads: which objects exist, what each
+// owns, and — the precondition rather than decoration — whether the walk placed
+// every world it found. `incomplete` is carried because a world it could not
+// place contributes no key at all, so nothing downstream can notice its absence.
+export type SceneObjectComponents = Pick<
+  SceneObjectPathIndex,
+  "paths" | "componentsOf" | "incomplete"
+>;
 
 // The path portion of an index key, with any proxy socket stripped: `/enemy` for
 // both the bootstrap `/enemy` and the proxied `mylevel:/enemy`.
@@ -39,6 +45,14 @@ function declaredComponentsOf(
   path: string,
 ): readonly string[] | undefined {
   if (objects === undefined || path === "") return undefined;
+
+  // A world `buildSceneCollectionRoles` could not place composes no key, so it
+  // is invisible to the withheld-`componentsOf` rule below: that rule defends a
+  // key that is in `paths`, and this one never got there. Every address form
+  // withdraws together, because `incomplete` carries free prose and there is no
+  // structured way to ask whether a given hole could own a given path. The
+  // project-wide test still runs — this is a fallback, never a suppression.
+  if (objects.incomplete.length > 0) return undefined;
 
   if (socketOfAddress(path) !== undefined) {
     return objects.paths.has(path) ? objects.componentsOf.get(path) : undefined;
