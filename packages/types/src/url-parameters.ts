@@ -30,6 +30,13 @@ export type UrlParameterClass =
   | "config-key"
   | "action-id";
 
+// Whether an address slot resolves its literal through the message bus, which
+// crosses collection-proxy worlds, or through an instance/component handle,
+// which does not. `msg.post("mylevel:/hero#script", ...)` is the documented
+// proxy idiom; `go.get_position("mylevel:/hero")` fails in the engine's
+// instance resolution.
+export type SocketScope = "same-world" | "cross-world";
+
 export interface UrlParameterEntry {
   fqn: string;
   parameter: string;
@@ -59,6 +66,14 @@ export interface UrlParameterEntry {
   // is. Unlike `addressParameter` this names a parameter of the surrounding
   // *hook*, not of the classified function.
   comparedParameter?: string;
+  // Whether this slot accepts a socket-qualified address naming another world.
+  // Required for `game-object`, `component` and `either` and absent otherwise —
+  // enforced by the drift guard rather than the type, for the same reason
+  // `addressParameter` is. Never defaulted: a slot whose behaviour cannot be
+  // established from the engine is `cross-world`, because a wrong `same-world`
+  // is a false warning about correct code while a wrong `cross-world` only
+  // loses a finding.
+  socketScope?: SocketScope;
   // `"generated"` for a slot the emitter derives from the ref-doc, otherwise a
   // package-relative path to the hand-authored `.d.ts` that declares it,
   // resolved against the `packages/types` package root. Not repo-relative: the
@@ -179,4 +194,20 @@ export function classifyUrlParameter(
     if (entry.fqn === fqn && entry.parameter === parameter) return entry.class;
   }
   return "none";
+}
+
+// Whether a socket-qualified address naming a foreign world is legal in this
+// slot. Fails open — an unclassified slot, and a classified one carrying no
+// judgment, both accept — so nothing is reported on a slot nobody judged.
+export function slotAcceptsForeignSocket(
+  table: UrlParameterTable,
+  fqn: string,
+  parameter: string,
+): boolean {
+  for (const entry of table) {
+    if (entry.fqn === fqn && entry.parameter === parameter) {
+      return entry.socketScope !== "same-world";
+    }
+  }
+  return true;
 }
