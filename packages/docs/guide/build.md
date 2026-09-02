@@ -75,7 +75,11 @@ bound it:
   `"#sprite"`, a relative or runtime-composed address, or a path the walk does
   not know is checked against the whole project instead: any component id
   declared anywhere satisfies it. An object whose prototype the walk could not
-  read falls back the same way rather than reporting every fragment on it.
+  read falls back the same way rather than reporting every fragment on it. So
+  does every address in a project whose *worlds* the walk could not classify — a
+  collection nothing reaches, a `.collectionproxy` it could not read, a
+  `game.project` naming no bootstrap: a world it never placed can own the
+  component the placed ones do not.
 - It never rejects a build or changes the exit code. Like the other two scans it
   warns and moves on.
 - It reports itself as *suppressed* whenever the component-id universe has a

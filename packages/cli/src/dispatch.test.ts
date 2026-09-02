@@ -918,6 +918,96 @@ describe("dispatch", () => {
     expect(parsed.unreachableAddresses?.[0]?.message).toContain("nobody");
   });
 
+  // A whole object universe whose two objects own *different* ids, both of them
+  // in the project-wide set. Only a check scoped to the addressed object can
+  // report `/player#sprit`, so each assertion below fails the moment its branch
+  // stops forwarding `sceneObjects` and the project-wide test answers instead.
+  function scaffoldScopedReachabilityBuild(pkg?: Record<string, unknown>): void {
+    scaffoldBuildProject(pkg);
+    writeFileSync(
+      path.join(cwd, "game.project"),
+      "[bootstrap]\nmain_collection = /game/main.collectionc\n\n[project]\n",
+    );
+    mkdirSync(path.join(cwd, "game"), { recursive: true });
+    writeFileSync(
+      path.join(cwd, "game", "main.collection"),
+      'instances {\n  id: "player"\n  prototype: "/game/player.go"\n}\n' +
+        'instances {\n  id: "hud"\n  prototype: "/game/hud.go"\n}\n',
+    );
+    writeFileSync(
+      path.join(cwd, "game", "player.go"),
+      'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n',
+    );
+    writeFileSync(
+      path.join(cwd, "game", "hud.go"),
+      'embedded_components {\n  id: "sprit"\n  type: "sprite"\n}\n',
+    );
+    writeFileSync(path.join(cwd, "src", "main.ts"), 'msg.post("/player#sprit", "hello");\n');
+  }
+
+  test("the ordinary build branch reports a scoped finding", async () => {
+    scaffoldScopedReachabilityBuild();
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd], io, { detectEditorVersion: () => null });
+
+    expect(code).toBe(0);
+    expect(err()).toContain("src/main.ts");
+    expect(err()).toContain('the game object "/player"');
+    expect(err()).toContain('"sprite"');
+  });
+
+  test("the ref-doc-surface branch reports the same scoped finding", async () => {
+    scaffoldScopedReachabilityBuild({ "defold-typescript": { "defold-target": "1.9.8" } });
+    const resolveOpts = labelRefDocResolveOpts();
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd], io, {
+      resolveOpts,
+      detectEditorVersion: () => null,
+    });
+
+    expect(code).toBe(0);
+    expect(err()).toContain("src/main.ts");
+    expect(err()).toContain('the game object "/player"');
+    expect(err()).toContain('"sprite"');
+
+    rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
+  });
+
+  test("build --json carries the scoped message as an entry", async () => {
+    scaffoldScopedReachabilityBuild();
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--json"], io, { detectEditorVersion: () => null });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as {
+      unreachableAddresses?: readonly { file: string; fragment: string; message: string }[];
+    };
+    expect(parsed.unreachableAddresses).toHaveLength(1);
+    expect(parsed.unreachableAddresses?.[0]?.fragment).toBe("sprit");
+    expect(parsed.unreachableAddresses?.[0]?.message).toContain('the game object "/player"');
+  });
+
+  test("a project whose object universe has a hole keeps the project-wide result", async () => {
+    scaffoldScopedReachabilityBuild();
+    // Reached by no bootstrap, proxy, instance or factory edge, so the role walk
+    // cannot say which world its objects live in — and a world it never placed
+    // could be the one `/player` names.
+    writeFileSync(
+      path.join(cwd, "game", "orphan.collection"),
+      'instances {\n  id: "player"\n  prototype: "/game/hud.go"\n}\n',
+    );
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd], io, { detectEditorVersion: () => null });
+
+    expect(code).toBe(0);
+    expect(err()).not.toContain('the game object "/player"');
+    expect(err()).not.toContain("sprit");
+  });
+
   // The one failure a `--json` consumer could not recover from: a check that
   // could not run rendering as a check that found nothing.
   test("build --json emits no entries for a suppressed check and says so in warnings", async () => {
@@ -6651,6 +6741,107 @@ describe("watch scene-address surface wiring", () => {
     expect(watchWarningLines(err().slice(afterBreak)).some((line) => line.includes("sprite"))).toBe(
       false,
     );
+  });
+
+  const POST_TO_ADDRESS = (address: string): string =>
+    `import { defineScript } from "@defold-typescript/types";\nexport default defineScript({ init() { msg.post("${address}", "hello"); } });\n`;
+
+  // `/player` owns "sprite" and `/hud` owns "sprit", so both ids are in the
+  // project-wide set and only a check scoped to the addressed object can report
+  // `/player#sprit`. The source starts reachable because `sceneObjects` is
+  // deliberately behind for watch's very first build (`dispatch.ts`), so the
+  // scoped answer is one a rebuild gives, never the startup build.
+  function scaffoldScopedWatchProject(): void {
+    write(
+      "tsconfig.json",
+      JSON.stringify({ compilerOptions: { strict: true }, include: ["src/**/*.ts"] }, null, 2),
+    );
+    write("game.project", "[bootstrap]\nmain_collection = /game/main.collectionc\n\n[project]\n");
+    write(
+      "game/main.collection",
+      'instances {\n  id: "player"\n  prototype: "/game/player.go"\n}\n' +
+        'instances {\n  id: "hud"\n  prototype: "/game/hud.go"\n}\n',
+    );
+    write("game/player.go", PLAYER_GO("sprite"));
+    write("game/hud.go", PLAYER_GO("sprit"));
+    write("src/main.ts", POST_TO_ADDRESS("/player#sprite"));
+  }
+
+  function scopedFindingLines(text: string): string[] {
+    return watchWarningLines(text).filter((line) => line.includes('the game object "/player"'));
+  }
+
+  test("watch reports the scoped finding on a rebuild", async () => {
+    scaffoldScopedWatchProject();
+    const { io, err } = captureStreams();
+    const { main, component, triggerMain } = reachabilityWatcherPair();
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      detectEditorVersion: () => null,
+      onWatchStart,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+    expect(scopedFindingLines(err())).toEqual([]);
+
+    write("src/main.ts", POST_TO_ADDRESS("/player#sprit"));
+    triggerMain();
+    await handle.waitForIdle();
+
+    handle.stop();
+    expect(await result).toBe(0);
+
+    const reported = scopedFindingLines(err());
+    expect(reported.length).toBeGreaterThan(0);
+    expect(reported.some((line) => line.includes("src/main.ts"))).toBe(true);
+    expect(reported.some((line) => line.includes('"sprite"'))).toBe(true);
+  });
+
+  test("a scene save re-reads which object owns what", async () => {
+    scaffoldScopedWatchProject();
+    const { io, err } = captureStreams();
+    const { main, component, triggerMain, triggerScene } = reachabilityWatcherPair();
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      detectEditorVersion: () => null,
+      onWatchStart,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+
+    write("src/main.ts", POST_TO_ADDRESS("/player#sprit"));
+    triggerMain();
+    await handle.waitForIdle();
+    expect(scopedFindingLines(err()).length).toBeGreaterThan(0);
+    const afterBreak = err().length;
+
+    // No source edit: the object the address names now owns the id it names.
+    write("game/player.go", PLAYER_GO("sprit"));
+    triggerScene();
+    await handle.waitForIdle();
+    expect(scopedFindingLines(err().slice(afterBreak))).toEqual([]);
+    const afterFix = err().length;
+
+    // And back: a finding that reappears can only have come from a re-read
+    // index, which a cleared finding alone would not prove.
+    write("game/player.go", PLAYER_GO("sprite"));
+    triggerScene();
+    await handle.waitForIdle();
+
+    handle.stop();
+    expect(await result).toBe(0);
+
+    expect(scopedFindingLines(err().slice(afterFix)).length).toBeGreaterThan(0);
   });
 
   test("watch --json carries the finding on the sceneTypes event", async () => {
