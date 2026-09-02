@@ -92,5 +92,9 @@ export {
 } from "./url-address-slots";
 export type { CrossWorldAddressFinding } from "./url-cross-world-address";
 export { checkCrossWorldAddresses, slotRejectsForeignSocket } from "./url-cross-world-address";
-export type { UrlFragmentFinding, UrlFragmentReport } from "./url-fragment-reachability";
+export type {
+  SceneObjectComponents,
+  UrlFragmentFinding,
+  UrlFragmentReport,
+} from "./url-fragment-reachability";
 export { checkUrlFragmentReachability } from "./url-fragment-reachability";
