@@ -3367,6 +3367,8 @@ declare global {
   interface SceneComponentAddresses {
     "#controller": true;
     "#sprite": true;
+    "/player/player#controller": true;
+    "/player/player#sprite": true;
   }
 }
 ```
@@ -3377,10 +3379,21 @@ object it holds, nested as deeply as your collections nest. A `children:` edge i
 a transform relation, not a path segment, so a child object keeps its own
 one-segment address.
 
-Component ids are written in their same-object form, `#id`. The project's scene
-files say which ids exist, not which object each address is reachable from, so
-this is the address the generator can prove; a cross-object `"/player#sprite"`
-still type-checks, it is simply not offered as a completion.
+Component ids are written in **both** forms. The same-object `#id` is offered for
+every id the project declares. The object-qualified `/path#id` is offered wherever
+the generator can name the object that owns the component: it reads each composed
+path's own prototype — the `.go` its `instances` block names, or the payload its
+`embedded_instances` block embeds — so `/player/player#sprite` is offered while
+`/level#sprite` is not. A qualified key carries the same world axis a path key
+does, so a component in a proxy world is offered as `mylevel:/enemy#sprite` and
+never bare.
+
+An object whose prototype the walk could not read is offered no qualified key at
+all, and the reason is recorded alongside the other gaps the path walk found —
+withheld rather than guessed, because an empty component set would be
+indistinguishable from an object that genuinely owns none. Nothing here is a
+rejection: an address composed at runtime still type-checks, it is simply not
+offered as a completion.
 
 #### Which world an address resolves in
 

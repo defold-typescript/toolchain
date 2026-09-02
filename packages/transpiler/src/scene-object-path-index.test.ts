@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { buildSceneCollectionRoles } from "./scene-collection-roles";
+import { buildSceneComponentIndex } from "./scene-component-index";
 import { buildSceneObjectPathIndex } from "./scene-object-path-index";
 
 const EXAMPLES_DIR = join(import.meta.dir, "../../../docs/examples");
@@ -51,6 +52,12 @@ function pathsOf(universe: Universe): string[] {
   return [...index.paths].sort();
 }
 
+function componentsOfOver(universe: Universe): Record<string, readonly string[]> {
+  const { index, roles } = indexOver(universe);
+  expect(index.incomplete).toEqual([...roles.incomplete]);
+  return Object.fromEntries([...index.componentsOf].sort(([a], [b]) => a.localeCompare(b)));
+}
+
 function declaredInOf(universe: Universe): Record<string, readonly string[]> {
   const { index, roles } = indexOver(universe);
   expect(index.incomplete).toEqual([...roles.incomplete]);
@@ -63,6 +70,13 @@ function proxyObject(collection: string): string {
     'embedded_components {\n  id: "loader"\n  type: "collectionproxy"\n' +
     `  data: "collection: \\"${collection}\\"\\n"\n}\n`
   );
+}
+
+// The `.go` an `instances` block names. The walk reads it to attribute the
+// object's components, so a fixture that leaves a named prototype out of the
+// document map is declaring a gap rather than describing a project.
+function prototypeObject(...ids: string[]): string {
+  return ids.map((id) => `components {\n  id: "${id}"\n  component: "/${id}.script"\n}\n`).join("");
 }
 
 function factoryObject(collection: string): string {
@@ -118,6 +132,7 @@ describe("buildSceneObjectPathIndex", () => {
             'collection_instances {\n  id: "player"\n  collection: "/player.collection"\n}\n',
           ],
           ["player.collection", 'instances {\n  id: "body"\n  prototype: "/body.go"\n}\n'],
+          ["body.go", prototypeObject("body")],
         ],
       }),
     ).toEqual(["/arena/player/body"]);
@@ -133,6 +148,8 @@ describe("buildSceneObjectPathIndex", () => {
             'instances {\n  id: "hero"\n  prototype: "/hero.go"\n  children: "sword"\n}\n' +
               'instances {\n  id: "sword"\n  prototype: "/sword.go"\n}\n',
           ],
+          ["hero.go", prototypeObject("hero")],
+          ["sword.go", prototypeObject("sword")],
         ],
       }),
     ).toEqual(["/hero", "/sword"]);
@@ -149,6 +166,7 @@ describe("buildSceneObjectPathIndex", () => {
               'components {\n  id: "script"\n  component: "/main.script"\n}\n' +
               'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n',
           ],
+          ["hero.go", prototypeObject("hero")],
         ],
       }),
     ).toEqual(["/hero"]);
@@ -176,6 +194,8 @@ describe("buildSceneObjectPathIndex", () => {
             "main/menu.collection",
             'name: "menu"\ninstances {\n  id: "title"\n  prototype: "/main/title.go"\n}\n',
           ],
+          ["main/hero.go", prototypeObject("hero")],
+          ["main/title.go", prototypeObject("title")],
         ],
       }),
     ).toEqual(["/hero"]);
@@ -200,6 +220,7 @@ describe("buildSceneObjectPathIndex", () => {
             "levels/pack.collection",
             'instances {\n  id: "enemy"\n  prototype: "/levels/enemy.go"\n}\n',
           ],
+          ["levels/enemy.go", prototypeObject("enemy")],
         ],
       }),
     ).toEqual(["/loader", "mylevel:/enemy", "mylevel:/pack/enemy"]);
@@ -219,6 +240,7 @@ describe("buildSceneObjectPathIndex", () => {
             "spawn/pack.collection",
             'name: "pack"\ninstances {\n  id: "enemy"\n  prototype: "/spawn/enemy.go"\n}\n',
           ],
+          ["spawn/enemy.go", prototypeObject("enemy")],
         ],
       }),
     ).toEqual(["/spawner"]);
@@ -239,6 +261,7 @@ describe("buildSceneObjectPathIndex", () => {
             "levels/level1.collection",
             'name: "mylevel"\ninstances {\n  id: "enemy"\n  prototype: "/levels/enemy.go"\n}\n',
           ],
+          ["levels/enemy.go", prototypeObject("enemy")],
         ],
       }),
     ).toEqual(["/loader", "/preview/enemy", "mylevel:/enemy"]);
@@ -248,6 +271,7 @@ describe("buildSceneObjectPathIndex", () => {
     const { index } = indexOver({
       documents: [
         ["main/main.collection", 'instances {\n  id: "hero"\n  prototype: "/main/hero.go"\n}\n'],
+        ["main/hero.go", prototypeObject("hero")],
       ],
     });
     expect([...index.paths]).toEqual([]);
@@ -263,6 +287,8 @@ describe("buildSceneObjectPathIndex", () => {
           "main/orphan.collection",
           'instances {\n  id: "ghost"\n  prototype: "/main/ghost.go"\n}\n',
         ],
+        ["main/hero.go", prototypeObject("hero")],
+        ["main/ghost.go", prototypeObject("ghost")],
       ],
     });
     expect(roles.incomplete).toHaveLength(1);
@@ -279,6 +305,7 @@ describe("buildSceneObjectPathIndex", () => {
           'instances {\n  id: "hero"\n  prototype: "/hero.go"\n}\n' +
             'collection_instances {\n  id: "enemies"\n  collection: "/spawn/wave.collection"\n}\n',
         ],
+        ["hero.go", prototypeObject("hero")],
       ],
     });
     expect([...index.paths].sort()).toEqual(["/hero"]);
@@ -293,6 +320,7 @@ describe("buildSceneObjectPathIndex", () => {
       documents: [
         ["broken.collection", 'instances {\n  id: "hero"\n'],
         ["fine.collection", 'instances {\n  id: "hud"\n  prototype: "/hud.go"\n}\n'],
+        ["hud.go", prototypeObject("hud")],
       ],
     });
     expect([...index.paths].sort()).toEqual(["/hud"]);
@@ -306,6 +334,7 @@ describe("buildSceneObjectPathIndex", () => {
         ["a.collection", 'collection_instances {\n  id: "b"\n  collection: "/b.collection"\n}\n'],
         ["b.collection", 'collection_instances {\n  id: "a"\n  collection: "/a.collection"\n}\n'],
         ["fine.collection", 'instances {\n  id: "hud"\n  prototype: "/hud.go"\n}\n'],
+        ["hud.go", prototypeObject("hud")],
       ],
     });
     expect([...index.paths].sort()).toEqual(["/hud"]);
@@ -363,6 +392,7 @@ describe("buildSceneObjectPathIndex", () => {
             'collection_instances {\n  id: "player"\n  collection: "/player.collection"\n}\n',
           ],
           ["player.collection", 'instances {\n  id: "body"\n  prototype: "/body.go"\n}\n'],
+          ["body.go", prototypeObject("body")],
         ],
       }),
     ).toEqual({ "/arena/player/body": ["player.collection"] });
@@ -386,6 +416,7 @@ describe("buildSceneObjectPathIndex", () => {
             "levels/pack.collection",
             'instances {\n  id: "enemy"\n  prototype: "/levels/enemy.go"\n}\n',
           ],
+          ["levels/enemy.go", prototypeObject("enemy")],
         ],
       }),
     ).toEqual({
@@ -413,6 +444,7 @@ describe("buildSceneObjectPathIndex", () => {
           "levels/second.collection",
           'name: "mylevel"\ninstances {\n  id: "hud"\n  prototype: "/hud.go"\n}\n',
         ],
+        ["hud.go", prototypeObject("hud")],
       ],
     });
     expect(index.declaredIn.get("mylevel:/hud")).toEqual([
@@ -432,6 +464,7 @@ describe("buildSceneObjectPathIndex", () => {
               'collection_instances {\n  id: "q"\n  collection: "/p.collection"\n}\n',
           ],
           ["p.collection", 'instances {\n  id: "body"\n  prototype: "/body.go"\n}\n'],
+          ["body.go", prototypeObject("body")],
         ],
       }),
     ).toEqual({ "/p/body": ["p.collection"], "/q/body": ["p.collection"] });
@@ -450,5 +483,154 @@ describe("buildSceneObjectPathIndex", () => {
       "/level": ["game/game.collection"],
       "/player/player": ["game/player.collection"],
     });
+  });
+});
+
+describe("buildSceneObjectPathIndex componentsOf", () => {
+  test("an instances prototype contributes its components to the composed path", () => {
+    expect(
+      componentsOfOver({
+        gameProject: committedText("tetris-tutorial", "game.project"),
+        documents: [
+          committed("tetris-tutorial", "main", "main.collection"),
+          committed("tetris-tutorial", "main", "board.go"),
+          committed("tetris-tutorial", "main", "hud.go"),
+        ],
+      }),
+    ).toEqual({ "/board": ["board"], "/hud": ["hud"] });
+  });
+
+  test("an embedded_instances payload contributes its components to the composed path", () => {
+    expect(
+      componentsOfOver({
+        gameProject: committedText("platformer", "game.project"),
+        documents: [
+          committed("platformer", "game", "game.collection"),
+          committed("platformer", "game", "player.collection"),
+        ],
+      })["/level"],
+    ).toEqual(["collisionobject", "level"]);
+  });
+
+  test("a component set composes through a collection_instances prefix", () => {
+    expect(
+      componentsOfOver({
+        gameProject: committedText("platformer", "game.project"),
+        documents: [
+          committed("platformer", "game", "game.collection"),
+          committed("platformer", "game", "player.collection"),
+        ],
+      })["/player/player"],
+    ).toEqual(["camera", "collisionobject", "player", "sprite"]);
+  });
+
+  test("a proxy world's paths carry their components under the socket-qualified key", () => {
+    expect(
+      componentsOfOver({
+        bootstrap: "/main/main.collection",
+        documents: [
+          [
+            "main/main.collection",
+            'instances {\n  id: "loader"\n  prototype: "/main/loader.go"\n}\n',
+          ],
+          ["main/loader.go", proxyObject("/levels/level1.collection")],
+          [
+            "levels/level1.collection",
+            'name: "mylevel"\ninstances {\n  id: "enemy"\n  prototype: "/levels/enemy.go"\n}\n',
+          ],
+          [
+            "levels/enemy.go",
+            'components {\n  id: "brain"\n  component: "/levels/enemy.script"\n}\n' +
+              'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n',
+          ],
+        ],
+      }),
+    ).toEqual({ "/loader": ["loader"], "mylevel:/enemy": ["brain", "sprite"] });
+  });
+
+  test("a factory prototype's objects have no componentsOf entry", () => {
+    expect(
+      componentsOfOver({
+        bootstrap: "/main/main.collection",
+        documents: [
+          [
+            "main/main.collection",
+            'instances {\n  id: "spawner"\n  prototype: "/main/spawner.go"\n}\n',
+          ],
+          ["main/spawner.go", factoryObject("/spawn/pack.collection")],
+          [
+            "spawn/pack.collection",
+            'name: "pack"\ninstances {\n  id: "enemy"\n  prototype: "/spawn/enemy.go"\n}\n',
+          ],
+          [
+            "spawn/enemy.go",
+            'components {\n  id: "brain"\n  component: "/spawn/enemy.script"\n}\n',
+          ],
+        ],
+      }),
+    ).toEqual({ "/spawner": ["spawner"] });
+  });
+
+  test("an unreadable prototype is a named incomplete entry and no componentsOf entry", () => {
+    const { index } = indexOver({
+      bootstrap: "/main.collection",
+      documents: [
+        [
+          "main.collection",
+          'instances {\n  id: "hero"\n  prototype: "/hero.go"\n}\n' +
+            'instances {\n  id: "hud"\n  prototype: "/hud.go"\n}\n',
+        ],
+        ["hud.go", 'components {\n  id: "label"\n  component: "/hud.label"\n}\n'],
+      ],
+    });
+    expect([...index.paths].sort()).toEqual(["/hero", "/hud"]);
+    expect(index.componentsOf.has("/hero")).toBe(false);
+    expect(index.componentsOf.get("/hud")).toEqual(["label"]);
+    expect(index.incomplete).toHaveLength(1);
+    expect(index.incomplete[0]).toContain("main.collection");
+    expect(index.incomplete[0]).toContain("/hero.go");
+  });
+
+  test("an unparseable embedded_instances payload is a named incomplete entry and no componentsOf entry", () => {
+    const { index } = indexOver({
+      bootstrap: "/main.collection",
+      documents: [
+        [
+          "main.collection",
+          'embedded_instances {\n  id: "level"\n  data: "components {\\n"\n  ""\n}\n',
+        ],
+      ],
+    });
+    expect([...index.paths]).toEqual(["/level"]);
+    expect(index.componentsOf.has("/level")).toBe(false);
+    expect(index.incomplete).toHaveLength(1);
+    expect(index.incomplete[0]).toContain("main.collection");
+  });
+
+  test("every id the join attributes to a path is an id the flat index also read", () => {
+    for (const universe of [
+      {
+        gameProject: committedText("tetris-tutorial", "game.project"),
+        documents: [
+          committed("tetris-tutorial", "main", "main.collection"),
+          committed("tetris-tutorial", "main", "board.go"),
+          committed("tetris-tutorial", "main", "hud.go"),
+        ],
+      },
+      {
+        gameProject: committedText("platformer", "game.project"),
+        documents: [
+          committed("platformer", "game", "game.collection"),
+          committed("platformer", "game", "player.collection"),
+        ],
+      },
+    ] satisfies Universe[]) {
+      const documents = new Map(universe.documents);
+      const { index } = indexOver(universe);
+      const flat = buildSceneComponentIndex(documents).ids;
+      const attributed = [...new Set([...index.componentsOf.values()].flat())].sort();
+      expect(attributed.length).toBeGreaterThan(0);
+      expect(attributed.filter((id) => !flat.has(id))).toEqual([]);
+    }
   });
 });
