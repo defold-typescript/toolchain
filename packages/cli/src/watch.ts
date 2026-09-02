@@ -1,6 +1,10 @@
 import { existsSync, watch as fsWatch } from "node:fs";
 import * as path from "node:path";
-import { SCRIPT_SUFFIX_BY_KIND, type SceneComponentIndex } from "@defold-typescript/transpiler";
+import {
+  SCRIPT_SUFFIX_BY_KIND,
+  type SceneComponentIndex,
+  type SceneObjectComponents,
+} from "@defold-typescript/transpiler";
 import {
   BuildFailureError,
   isFileIncluded,
@@ -105,6 +109,11 @@ export interface RunWatchOptions {
    * scene save that moves a script between worlds is picked up.
    */
   readonly scriptWorlds?: () => ((fileName: string) => readonly (string | undefined)[]) | undefined;
+  /**
+   * Which objects exist in which world and what each declares, re-read on every
+   * use so a `.go` save that adds a component is picked up.
+   */
+  readonly sceneObjects?: () => SceneObjectComponents | undefined;
   readonly json?: boolean;
   readonly pinDiagnostics?: readonly string[];
   readonly pinMismatch?: { readonly installed: string; readonly pinned: string };
@@ -213,6 +222,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       cwd,
       ...(opts.sceneIndex ? { sceneIndex: opts.sceneIndex } : {}),
       ...(opts.scriptWorlds ? { scriptWorlds: opts.scriptWorlds } : {}),
+      ...(opts.sceneObjects ? { sceneObjects: opts.sceneObjects } : {}),
     });
     config = readBuildConfig(cwd);
     if (!opts.json) stdout.write(BUILD_STARTED_LINE);

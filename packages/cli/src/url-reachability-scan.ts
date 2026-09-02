@@ -2,6 +2,7 @@ import {
   checkCrossWorldAddresses,
   checkUrlFragmentReachability,
   type SceneComponentIndex,
+  type SceneObjectComponents,
 } from "@defold-typescript/transpiler";
 import type { UrlParameterTable } from "@defold-typescript/types";
 import type * as ts from "typescript";
@@ -29,8 +30,15 @@ export function scanUrlFragmentReachability(input: {
   program: ts.Program;
   index: SceneComponentIndex;
   table: UrlParameterTable;
+  /** Optional at every hop, so a caller that read no scenes gets the scan it always got. */
+  sceneObjects?: SceneObjectComponents;
 }): UrlReachabilityScan {
-  const report = checkUrlFragmentReachability(input);
+  const report = checkUrlFragmentReachability({
+    program: input.program,
+    index: input.index,
+    table: input.table,
+    ...(input.sceneObjects !== undefined ? { objects: input.sceneObjects } : {}),
+  });
   if (report.kind === "suppressed") {
     // One line, never zero: a check that could not run must not read as one
     // that found nothing. No entries either, for the same reason — a consumer

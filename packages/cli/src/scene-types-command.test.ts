@@ -19,6 +19,7 @@ import {
   runSceneTypes,
   SCENE_ADDRESSES_DECLARATION,
   sceneIndexForBuild,
+  sceneObjectsForBuild,
   scriptWorldsForBuild,
 } from "./scene-types-command";
 import {
@@ -387,6 +388,62 @@ describe("sceneIndexForBuild", () => {
     expect(index?.incomplete.some((reason) => reason.includes(UNRESOLVED_DEPENDENCY_URL))).toBe(
       true,
     );
+  });
+});
+
+describe("sceneObjectsForBuild", () => {
+  test("a scene-less project whose walk failed still yields an object index", () => {
+    scaffoldUnresolvedDependencyManifest(cwd);
+
+    const result = runSceneTypes({ cwd });
+
+    // The same no-scenes-and-no-hole condition governs both, so the two cannot
+    // disagree about whether there is anything to check.
+    expect(sceneObjectsForBuild(result)).toBeDefined();
+    expect(sceneIndexForBuild(result)).toBeDefined();
+  });
+
+  test("a project with no scenes and no hole offers neither index", () => {
+    write("game.project", "[bootstrap]\nmain_collection = /main/main.collectionc\n");
+
+    const result = runSceneTypes({ cwd });
+
+    expect(sceneObjectsForBuild(result)).toBeUndefined();
+    expect(sceneIndexForBuild(result)).toBeUndefined();
+  });
+
+  test("the index is keyed the way `buildSceneObjectPathIndex` keys it", () => {
+    write("game.project", "[bootstrap]\nmain_collection = /main/main.collectionc\n");
+    write(
+      "main/main.collection",
+      'instances {\n  id: "home"\n  prototype: "/main/home.go"\n}\n' +
+        'instances {\n  id: "loader"\n  prototype: "/main/loader.go"\n}\n' +
+        'collection_instances {\n  id: "world"\n  collection: "/levels/inner.collection"\n}\n',
+    );
+    write("main/home.go", 'embedded_components {\n  id: "brain"\n  type: "script"\n}\n');
+    write(
+      "main/loader.go",
+      'embedded_components {\n  id: "proxy"\n  type: "collectionproxy"\n' +
+        '  data: "collection: \\"/levels/level1.collection\\"\\n"\n}\n',
+    );
+    write(
+      "levels/level1.collection",
+      'name: "mylevel"\ninstances {\n  id: "enemy"\n  prototype: "/levels/enemy.go"\n}\n',
+    );
+    write("levels/enemy.go", 'embedded_components {\n  id: "body"\n  type: "sprite"\n}\n');
+    write(
+      "levels/inner.collection",
+      'instances {\n  id: "gadget"\n  prototype: "/levels/gadget.go"\n}\n',
+    );
+    write("levels/gadget.go", 'embedded_components {\n  id: "cog"\n  type: "sprite"\n}\n');
+
+    const objects = sceneObjectsForBuild(runSceneTypes({ cwd }));
+
+    // A bootstrap object bare, a proxied object socket-qualified, an instanced
+    // collection's object composed under the id that instanced it.
+    expect(objects?.componentsOf.get("/home")).toEqual(["brain"]);
+    expect(objects?.componentsOf.get("mylevel:/enemy")).toEqual(["body"]);
+    expect(objects?.componentsOf.get("/world/gadget")).toEqual(["cog"]);
   });
 });
 

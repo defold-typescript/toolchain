@@ -17,6 +17,8 @@ import {
   PROJECT_EXTENSIONS,
   readSceneDocuments,
   type SceneComponentIndex,
+  type SceneObjectComponents,
+  type SceneObjectPathIndex,
   type SceneReadHost,
 } from "@defold-typescript/transpiler";
 import { readBuildConfig } from "./build-output";
@@ -62,6 +64,13 @@ export interface SceneTypesResult {
    * and the proxy socket that object lives behind.
    */
   readonly scriptNamingContexts: ReadonlyMap<string, readonly NamingContext[]>;
+  /**
+   * The game-object path universe the same walk composed — which objects exist
+   * in which world, and which components each owns. Exposed rather than dropped
+   * after `scriptNamingContexts` is built, so the build's `#fragment` check can
+   * scope an absolute address to the object it names instead of to the project.
+   */
+  readonly sceneObjects: SceneObjectPathIndex;
 }
 
 /**
@@ -176,6 +185,7 @@ export function runSceneTypes(opts: { cwd: string }): SceneTypesResult {
   for (const reason of gui.unreadable) {
     if (!unreadable.includes(reason)) unreadable.push(reason);
   }
+  const sceneObjects = buildSceneObjectPathIndex(documents, roles);
   const wrote = writeIfChanged(
     path.join(opts.cwd, SCENE_ADDRESSES_DECLARATION),
     buildSceneAddressDeclaration(documents, roles),
@@ -188,9 +198,10 @@ export function runSceneTypes(opts: { cwd: string }): SceneTypesResult {
     index: buildSceneComponentIndex(documents),
     hasScenes: documents.size > 0,
     scriptNamingContexts: buildScriptNamingContexts(
-      buildSceneObjectPathIndex(documents, roles),
+      sceneObjects,
       guiScriptResourcesOf(gui.documents),
     ),
+    sceneObjects,
   };
 }
 
@@ -223,6 +234,21 @@ export function sceneIndexForBuild(result: SceneTypesResult): SceneComponentInde
     ids: result.index.ids,
     incomplete: [...result.index.incomplete, ...result.unread],
   };
+}
+
+/**
+ * The object index `build` scopes an absolute `#fragment` address against, or
+ * `undefined` when there is nothing to check.
+ *
+ * Gated on the same no-scenes-and-no-hole condition as `sceneIndexForBuild`,
+ * read from the same fields rather than restated, so the two cannot disagree
+ * about whether the project has an address universe at all. Unlike that one it
+ * composes no hole of its own: the check's suppression is decided by the
+ * component index, and this index only ever *narrows* what that check reports.
+ */
+export function sceneObjectsForBuild(result: SceneTypesResult): SceneObjectComponents | undefined {
+  if (!result.hasScenes && result.unread.length === 0) return undefined;
+  return result.sceneObjects;
 }
 
 /**
