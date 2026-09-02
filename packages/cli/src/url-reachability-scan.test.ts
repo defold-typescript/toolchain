@@ -3,7 +3,7 @@ import { createTranspileSession, type SceneComponentIndex } from "@defold-typesc
 import type { UrlParameterTable } from "@defold-typescript/types";
 import type * as ts from "typescript";
 import { loadUrlParameterTable } from "./url-parameter-table";
-import { scanUrlFragmentReachability } from "./url-reachability-scan";
+import { scanCrossWorldAddresses, scanUrlFragmentReachability } from "./url-reachability-scan";
 
 const TABLE: UrlParameterTable = loadUrlParameterTable();
 
@@ -100,5 +100,52 @@ describe("scanUrlFragmentReachability", () => {
     ]);
     // The two renderings come from one scan, so they can never disagree.
     expect(warnings[0]).toContain(entries[0]?.message as string);
+  });
+});
+
+describe("scanCrossWorldAddresses", () => {
+  test("the scan renders each finding once as prose and once structured", () => {
+    const { warnings, entries } = scanCrossWorldAddresses({
+      program: programFor("src/main.ts", 'go.get_position("mylevel:/enemy");\n'),
+      table: TABLE,
+      worldsOf: () => [undefined],
+    });
+
+    expect(entries).toEqual([
+      {
+        file: "src/main.ts",
+        address: "mylevel:/enemy",
+        socket: "mylevel",
+        message: expect.stringContaining("mylevel") as unknown as string,
+      },
+    ]);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain("src/main.ts");
+    // The two renderings come from one scan, so they can never disagree.
+    expect(warnings[0]).toContain(entries[0]?.message as string);
+  });
+
+  test("a file whose world resolves to the literal's warns nothing", () => {
+    expect(
+      scanCrossWorldAddresses({
+        program: programFor("src/main.ts", 'go.get_position("mylevel:/enemy");\n'),
+        table: TABLE,
+        worldsOf: () => ["mylevel"],
+      }),
+    ).toEqual({ warnings: [], entries: [] });
+  });
+
+  test("a suppressed fragment check does not silence the cross-world scan", () => {
+    const program = programFor("src/main.ts", 'go.get_position("mylevel:/enemy");\n');
+    const fragment = scanUrlFragmentReachability({
+      program,
+      index: { ids: new Set<string>(), incomplete: ["game/a.go: could not be read"] },
+      table: TABLE,
+    });
+    const cross = scanCrossWorldAddresses({ program, table: TABLE, worldsOf: () => [undefined] });
+
+    expect(fragment.entries).toEqual([]);
+    expect(fragment.warnings[0]).toContain("did not run");
+    expect(cross.entries).toHaveLength(1);
   });
 });

@@ -48,11 +48,16 @@ import {
 import { renderResult } from "./json-output";
 import type { VendoredLibrary } from "./library-match";
 import type { RefDocResolveOptions } from "./materialize";
-import { createIncompleteReporter, runSceneTypes, sceneIndexForBuild } from "./scene-types-command";
+import {
+  createIncompleteReporter,
+  runSceneTypes,
+  sceneIndexForBuild,
+  scriptWorldsForBuild,
+} from "./scene-types-command";
 import { runSetTarget } from "./set-target";
 import { runSetupDebug } from "./setup-debug";
 import { runUpgrade, type UpgradeIo } from "./upgrade";
-import type { UnreachableAddressEntry } from "./url-reachability-scan";
+import type { CrossWorldAddressEntry, UnreachableAddressEntry } from "./url-reachability-scan";
 import type { CheckboxPrompt } from "./wall-interactive";
 import type { RunWatchHandle, RunWatchOptions, WatchEditorClient, WatcherFactory } from "./watch";
 
@@ -798,6 +803,7 @@ function dispatchCommand(
           warnings: readonly string[],
           materializedDir: string | null,
           unreachableAddresses: readonly UnreachableAddressEntry[] = [],
+          crossWorldAddresses: readonly CrossWorldAddressEntry[] = [],
         ): number => {
           ensureMaterializedReference(cwd, materializedDir);
           // walls are opt-in via the wall command
@@ -811,6 +817,7 @@ function dispatchCommand(
                 // suppressed check has no entries either, and only `warnings`
                 // separates the two.
                 ...(unreachableAddresses.length > 0 ? { unreachableAddresses } : {}),
+                ...(crossWorldAddresses.length > 0 ? { crossWorldAddresses } : {}),
                 defoldVersion: head.version,
                 defoldVersionSource: targetSource,
                 defoldChannel: head.channel,
@@ -856,9 +863,11 @@ function dispatchCommand(
             const sceneTypes = runSceneTypes({ cwd });
             const { incomplete } = sceneTypes;
             const sceneIndex = sceneIndexForBuild(sceneTypes);
-            const { written, warnings, unreachableAddresses } = runBuild({
+            const scriptWorlds = scriptWorldsForBuild(sceneTypes, cwd);
+            const { written, warnings, unreachableAddresses, crossWorldAddresses } = runBuild({
               cwd,
               ...(sceneIndex !== undefined ? { sceneIndex } : {}),
+              ...(scriptWorlds !== undefined ? { scriptWorlds } : {}),
             });
             const { materializedDir } = await materializeRefDocSurface({
               cwd,
@@ -876,6 +885,7 @@ function dispatchCommand(
               [...incomplete, ...warnings],
               materializedDir,
               unreachableAddresses,
+              crossWorldAddresses,
             );
           } catch (err) {
             return reportError(err);
@@ -891,9 +901,11 @@ function dispatchCommand(
           const sceneTypes = runSceneTypes({ cwd });
           const { incomplete } = sceneTypes;
           const sceneIndex = sceneIndexForBuild(sceneTypes);
-          const { written, warnings, unreachableAddresses } = runBuild({
+          const scriptWorlds = scriptWorldsForBuild(sceneTypes, cwd);
+          const { written, warnings, unreachableAddresses, crossWorldAddresses } = runBuild({
             cwd,
             ...(sceneIndex !== undefined ? { sceneIndex } : {}),
+            ...(scriptWorlds !== undefined ? { scriptWorlds } : {}),
           });
           const { materializedDir } = materializeApiSurface({
             cwd,
@@ -905,6 +917,7 @@ function dispatchCommand(
             [...incomplete, ...warnings],
             materializedDir,
             unreachableAddresses,
+            crossWorldAddresses,
           );
         } catch (err) {
           return reportError(err);
@@ -958,10 +971,14 @@ function dispatchCommand(
         // build — the same build whose declaration `runWatch` deliberately
         // regenerates afterwards rather than before.
         let sceneIndex: SceneComponentIndex | undefined;
+        // The worlds each script runs in, refreshed beside the index for the
+        // same reason: a `.collection` save can move a script between worlds.
+        let scriptWorlds: ((fileName: string) => readonly (string | undefined)[]) | undefined;
         const sceneTypesSurface = (): void => {
           const result = runSceneTypes({ cwd });
           const { declaration, wrote, incomplete } = result;
           sceneIndex = sceneIndexForBuild(result);
+          scriptWorlds = scriptWorldsForBuild(result, cwd);
           const fresh = reportIncomplete(incomplete);
           if (json) {
             io.stdout.write(
@@ -1051,6 +1068,7 @@ function dispatchCommand(
             ...(resolveSurface ? { resolveSurface } : {}),
             sceneTypesSurface,
             sceneIndex: () => sceneIndex,
+            scriptWorlds: () => scriptWorlds,
             ...(json ? { json: true } : {}),
             ...(pinDiagnostics.length > 0 ? { pinDiagnostics } : {}),
             ...(pinMismatch ? { pinMismatch } : {}),

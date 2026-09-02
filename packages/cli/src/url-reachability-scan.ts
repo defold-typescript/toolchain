@@ -1,4 +1,5 @@
 import {
+  checkCrossWorldAddresses,
   checkUrlFragmentReachability,
   type SceneComponentIndex,
 } from "@defold-typescript/transpiler";
@@ -47,6 +48,41 @@ export function scanUrlFragmentReachability(input: {
     entries: report.findings.map((finding) => ({
       file: finding.fileName,
       fragment: finding.fragment,
+      message: finding.message,
+    })),
+  };
+}
+
+/** One address naming a foreign world, for a consumer that would otherwise parse the prose. */
+export interface CrossWorldAddressEntry {
+  readonly file: string;
+  readonly address: string;
+  readonly socket: string;
+  readonly message: string;
+}
+
+export interface CrossWorldAddressScan {
+  readonly warnings: string[];
+  readonly entries: CrossWorldAddressEntry[];
+}
+
+// Render the cross-world address check the way `scanUrlFragmentReachability`
+// renders its own, carrying the check's `message` verbatim into both halves for
+// the same reason. Its own scan rather than a branch of that one: the fragment
+// check suppresses index-wide on an incomplete component universe, and a shared
+// early return would silence this one on a hole it does not depend on.
+export function scanCrossWorldAddresses(input: {
+  program: ts.Program;
+  table: UrlParameterTable;
+  worldsOf: (fileName: string) => readonly (string | undefined)[];
+}): CrossWorldAddressScan {
+  const findings = checkCrossWorldAddresses(input);
+  return {
+    warnings: findings.map((finding) => `${finding.fileName}: ${finding.message}`),
+    entries: findings.map((finding) => ({
+      file: finding.fileName,
+      address: finding.address,
+      socket: finding.socket,
       message: finding.message,
     })),
   };

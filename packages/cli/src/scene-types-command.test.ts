@@ -19,6 +19,7 @@ import {
   runSceneTypes,
   SCENE_ADDRESSES_DECLARATION,
   sceneIndexForBuild,
+  scriptWorldsForBuild,
 } from "./scene-types-command";
 import {
   scaffoldUnresolvedDependency,
@@ -386,6 +387,90 @@ describe("sceneIndexForBuild", () => {
     expect(index?.incomplete.some((reason) => reason.includes(UNRESOLVED_DEPENDENCY_URL))).toBe(
       true,
     );
+  });
+});
+
+describe("scriptWorldsForBuild", () => {
+  // One bootstrap world opening a proxy world named `mylevel`: a script hosted
+  // in each, plus a gui script the proxy world reaches only through the `.gui`
+  // that names it.
+  function scaffoldWorlds(outDir?: string): void {
+    const prefix = outDir === undefined ? "src" : outDir;
+    write(
+      "tsconfig.json",
+      JSON.stringify({
+        compilerOptions: outDir === undefined ? {} : { outDir },
+        include: ["src/**/*.ts"],
+      }),
+    );
+    write("game.project", "[bootstrap]\nmain_collection = /main/main.collectionc\n");
+    write(
+      "main/main.collection",
+      'instances {\n  id: "loader"\n  prototype: "/main/loader.go"\n}\n' +
+        'instances {\n  id: "home"\n  prototype: "/main/home.go"\n}\n',
+    );
+    write(
+      "main/loader.go",
+      'embedded_components {\n  id: "loader"\n  type: "collectionproxy"\n' +
+        '  data: "collection: \\"/levels/level1.collection\\"\\n"\n}\n',
+    );
+    write(
+      "main/home.go",
+      `components {\n  id: "brain"\n  component: "/${prefix}/home.ts.script"\n}\n`,
+    );
+    write(
+      "levels/level1.collection",
+      'name: "mylevel"\ninstances {\n  id: "enemy"\n  prototype: "/levels/enemy.go"\n}\n' +
+        'instances {\n  id: "hud"\n  prototype: "/levels/hud.go"\n}\n',
+    );
+    write(
+      "levels/enemy.go",
+      `components {\n  id: "brain"\n  component: "/${prefix}/enemy.ts.script"\n}\n`,
+    );
+    write("levels/hud.go", 'components {\n  id: "face"\n  component: "/levels/hud.gui"\n}\n');
+    write("levels/hud.gui", `script: "/${prefix}/hud.ts.gui_script"\nnodes {\n  id: "score"\n}\n`);
+  }
+
+  function worldsOf(rel: string, outDir?: string): readonly (string | undefined)[] | undefined {
+    scaffoldWorlds(outDir);
+    return scriptWorldsForBuild(runSceneTypes({ cwd }), cwd)?.(rel);
+  }
+
+  test("a script hosted behind a proxy resolves to that world", () => {
+    expect(worldsOf("src/enemy.ts")).toEqual(["mylevel"]);
+    expect(worldsOf("src/home.ts")).toEqual([undefined]);
+  });
+
+  test("a gui script reaches its world through the .gui that names it", () => {
+    expect(worldsOf("src/hud.ts")).toEqual(["mylevel"]);
+  });
+
+  test("a script hosted by nothing resolves to no world", () => {
+    expect(worldsOf("src/unused.ts")).toEqual([]);
+  });
+
+  test("a file is resolved through the same forward mapping the plugin uses", () => {
+    // The scenes name `/out/enemy.ts.script`; only mapping the source forward
+    // through `outDir` reaches it, and a reverse guess off the output path would
+    // look for `out/enemy.ts` and find nothing.
+    expect(worldsOf("src/enemy.ts", "out")).toEqual(["mylevel"]);
+    expect(worldsOf("src/hud.ts", "out")).toEqual(["mylevel"]);
+  });
+
+  test("a project whose scenes host no script at all has no resolver", () => {
+    scaffoldProject();
+    write("tsconfig.json", JSON.stringify({ include: ["src/**/*.ts"] }));
+    rmSync(path.join(cwd, "game/player.go"));
+    write("game/player.go", 'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n');
+
+    expect(scriptWorldsForBuild(runSceneTypes({ cwd }), cwd)).toBeUndefined();
+  });
+
+  test("an absolute program path resolves exactly as its project-relative name", () => {
+    scaffoldWorlds();
+    const resolver = scriptWorldsForBuild(runSceneTypes({ cwd }), cwd);
+
+    expect(resolver?.(path.join(cwd, "src/enemy.ts"))).toEqual(["mylevel"]);
   });
 });
 

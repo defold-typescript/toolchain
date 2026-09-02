@@ -7,7 +7,11 @@ export { buildConfigKeyIndex, readGameProjectSetting } from "./config-key-index"
 export type { GuiFlipbookIndex } from "./gui-flipbook-index";
 export { buildGuiFlipbookIndex } from "./gui-flipbook-index";
 export type { GuiNodeIndex } from "./gui-node-index";
-export { buildGuiNodeIndex, guiScriptResourceOf } from "./gui-node-index";
+export {
+  buildGuiNodeIndex,
+  guiScriptResourceOf,
+  guiScriptResourcesOf,
+} from "./gui-node-index";
 export { buildInputActionIndex } from "./input-action-index";
 export type {
   ExtensionDependency,
@@ -60,7 +64,11 @@ export {
   SCENE_EXTENSIONS,
 } from "./scene-documents";
 export type { NamingContext } from "./scene-naming-context";
-export { buildScriptNamingContexts, relativeAddressesFrom } from "./scene-naming-context";
+export {
+  buildScriptNamingContexts,
+  relativeAddressesFrom,
+  socketOfAddress,
+} from "./scene-naming-context";
 export type { SceneObjectPathIndex } from "./scene-object-path-index";
 export { buildSceneObjectPathIndex } from "./scene-object-path-index";
 export type { SceneMessage } from "./scene-text-format";
@@ -77,9 +85,12 @@ export { transpile, transpileProject } from "./transpile";
 export type { ClassifiedSlot } from "./url-address-slots";
 export {
   addressClassOfArgument,
+  addressEntryOfArgument,
   isAddressClass,
   isFragmentCaret,
   resolveClassifiedSlotAtPosition,
 } from "./url-address-slots";
+export type { CrossWorldAddressFinding } from "./url-cross-world-address";
+export { checkCrossWorldAddresses, slotRejectsForeignSocket } from "./url-cross-world-address";
 export type { UrlFragmentFinding, UrlFragmentReport } from "./url-fragment-reachability";
 export { checkUrlFragmentReachability } from "./url-fragment-reachability";

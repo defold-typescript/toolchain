@@ -48,10 +48,10 @@ bunx @defold-typescript/cli build --json
 
 A failure flips `ok` to `false` and carries an `error` string instead of
 `written`. On [`build`](./build.md), `warnings` carries the sourceless-orphan
-lines, the scene-resource-mismatch lines and the unreachable-address lines (empty
-when there are none). Optional fields (`defoldVersion`,
-`defoldChannel`, `apiSurface`, `materializedSurface`, `unreachableAddresses`, …)
-appear only when they apply.
+lines, the scene-resource-mismatch lines, the unreachable-address lines and the
+cross-world-address lines (empty when there are none). Optional fields
+(`defoldVersion`, `defoldChannel`, `apiSurface`, `materializedSurface`,
+`unreachableAddresses`, `crossWorldAddresses`, …) appear only when they apply.
 
 `unreachableAddresses` is the structured half of the unreachable-address
 findings, so you never parse the English `warnings` line to learn which file and
@@ -73,6 +73,23 @@ unparseable scene, or a dependency [`resolve`](./resolve.md) has not
 materialized). Treating an absent `unreachableAddresses` as "no unreachable
 addresses" is wrong whenever that line is present.
 
+`crossWorldAddresses` is the same for the cross-world-address findings — an
+address naming a proxy world at a slot that resolves in the caller's own world
+(see [build](./build.md)):
+
+```sh
+bunx @defold-typescript/cli build --json
+# {"command":"build","ok":true,"written":[...],
+#  "warnings":["src/main.ts: this address names the world \"mylevel\", but `go.get_position` resolves it in …"],
+#  "crossWorldAddresses":[{"file":"src/main.ts","address":"mylevel:/enemy","socket":"mylevel","message":"this address names the world \"mylevel\", …"}]}
+```
+
+It follows the identical absent-versus-empty contract: the field is omitted —
+never `[]` — both when nothing was found and when the check had nothing to run
+against, because the project's scenes host no script the walk could resolve.
+There is no suppression line for this check; its silence *is* per file, so an
+absent field means only that no finding survived that per-file honesty rule.
+
 `watch` is long-running, so `--json` streams **newline-delimited JSON (NDJSON)** —
 one object per line, one line per event. The full lifecycle reads
 `start` → `build` → `rebuild`* → `sceneTypes`* → `resolve`* → `stop`:
@@ -89,8 +106,9 @@ bunx @defold-typescript/cli watch --json
 ```
 
 `build`, `rebuild`, and `sceneTypes` events carry `warnings` and the same
-optional `unreachableAddresses` array, under the identical absent-versus-empty
-rule, so a watching agent sees an address break on the edit that broke it —
+optional `unreachableAddresses` and `crossWorldAddresses` arrays, under the
+identical absent-versus-empty rule, so a watching agent sees an address break on
+the edit that broke it —
 including a `.go`/`.collection` save that broke it, which emits `sceneTypes`
 alone and no `rebuild`. The first `build` event of a session is the exception,
 and so is the `sceneTypes` event that follows it: both run before or as part of
@@ -359,7 +377,7 @@ Once converted, prove it compiles before handing it back: write the snippet, run
 rebuild. This is the same loop as [Fix the Lua output](#fix-the-lua-output); the
 [script lifecycle](./script-lifecycle.md) page covers which hooks and which
 `self` typing each script kind exposes. On `ok: true` the build envelope adds a
-`warnings` array. It lists three kinds of issue, empty when clean, and the build
+`warnings` array. It lists four kinds of issue, empty when clean, and the build
 never fixes any of them for you:
 
 - **Sourceless outputs** — a generated `.lua`/`.ts.*` left without a TypeScript
@@ -374,6 +392,10 @@ never fixes any of them for you:
 - **Unreachable addresses** — an address literal whose `#fragment` names a
   component no `.go`/`.collection` declares, repeated as structured entries in
   `unreachableAddresses`. Either declare the component or fix the address.
+- **Cross-world addresses** — an address naming a proxy world at a slot that
+  resolves in the caller's own world (every handle-resolving `go.*` call),
+  repeated as structured entries in `crossWorldAddresses`. Either address it
+  through `msg.post`/`msg.url` or drop the socket.
 
 ## Scaffold a project
 

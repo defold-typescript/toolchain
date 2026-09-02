@@ -25,7 +25,12 @@ import { scanOrphanOutputs } from "./orphan-scan";
 import { scanFilesSync } from "./scan";
 import { scanSceneResourceRefs } from "./scene-resource-scan";
 import { loadUrlParameterTable } from "./url-parameter-table";
-import { scanUrlFragmentReachability, type UnreachableAddressEntry } from "./url-reachability-scan";
+import {
+  type CrossWorldAddressEntry,
+  scanCrossWorldAddresses,
+  scanUrlFragmentReachability,
+  type UnreachableAddressEntry,
+} from "./url-reachability-scan";
 
 export interface CreateBuildSessionOptions {
   readonly cwd: string;
@@ -38,6 +43,15 @@ export interface CreateBuildSessionOptions {
    * created would keep reporting a fragment the author has since declared.
    */
   readonly sceneIndex?: () => SceneComponentIndex | undefined;
+  /**
+   * Which worlds each source file's script runs in, or `undefined` when the
+   * caller has read no scenes.
+   *
+   * A getter for the same reason `sceneIndex` is: a `.collection` save can move
+   * the world a script runs in, and a snapshot taken when the session was
+   * created would keep reporting an address the author has since made correct.
+   */
+  readonly scriptWorlds?: () => ((fileName: string) => readonly (string | undefined)[]) | undefined;
 }
 
 export interface BuildResult {
@@ -45,6 +59,8 @@ export interface BuildResult {
   readonly warnings: string[];
   /** The unreachable addresses `warnings` also names in prose. */
   readonly unreachableAddresses: UnreachableAddressEntry[];
+  /** The foreign-world addresses `warnings` also names in prose. */
+  readonly crossWorldAddresses: CrossWorldAddressEntry[];
 }
 
 export interface BuildSession {
@@ -55,7 +71,10 @@ export interface BuildSession {
    * without building: a scene save changes the universe but advances no
    * program, so there is nothing to compile and nothing to emit.
    */
-  rescanReachability(): Pick<BuildResult, "warnings" | "unreachableAddresses">;
+  rescanReachability(): Pick<
+    BuildResult,
+    "warnings" | "unreachableAddresses" | "crossWorldAddresses"
+  >;
 }
 
 export function createBuildSession(opts: CreateBuildSessionOptions): BuildSession {
@@ -74,6 +93,18 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
       return { warnings: [], entries: [] };
     }
     return scanUrlFragmentReachability({ program, index, table: loadUrlParameterTable() });
+  }
+
+  // Its own scan, walked over the whole program for the reason above: the
+  // fragment check suppresses on an incomplete component universe, and a shared
+  // early return would silence this one on a hole it does not depend on.
+  function scanCrossWorld(): { warnings: string[]; entries: CrossWorldAddressEntry[] } {
+    const worldsOf = opts.scriptWorlds?.();
+    const program = session.getProgram();
+    if (!worldsOf || !program) {
+      return { warnings: [], entries: [] };
+    }
+    return scanCrossWorldAddresses({ program, worldsOf, table: loadUrlParameterTable() });
   }
 
   function pruneOutputs(rel: string, keepRel?: string): void {
@@ -119,7 +150,12 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
       written.push(runtimeRel);
     }
     throwIfFailures(failures);
-    return { written: written.sort(), warnings: [], unreachableAddresses: [] };
+    return {
+      written: written.sort(),
+      warnings: [],
+      unreachableAddresses: [],
+      crossWorldAddresses: [],
+    };
   }
 
   function buildAll(): BuildResult {
@@ -131,7 +167,7 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     }
     const sources = [...seen].sort();
     if (sources.length === 0) {
-      return { written: [], warnings: [], unreachableAddresses: [] };
+      return { written: [], warnings: [], unreachableAddresses: [], crossWorldAddresses: [] };
     }
 
     const files: Record<string, string> = {};
@@ -142,14 +178,17 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     const result = session.update(files);
     const built = writeOutputs(result, sources, files, true);
     const reachability = scanReachability();
+    const crossWorld = scanCrossWorld();
     return {
       written: built.written,
       warnings: [
         ...scanOrphanOutputs(cwd, sources, config),
         ...scanSceneResourceRefs(cwd),
         ...reachability.warnings,
+        ...crossWorld.warnings,
       ],
       unreachableAddresses: reachability.entries,
+      crossWorldAddresses: crossWorld.entries,
     };
   }
 
@@ -176,16 +215,26 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     }
     const built = writeOutputs(result, sourceChanged, changedSources, true);
     const reachability = scanReachability();
+    const crossWorld = scanCrossWorld();
     return {
       written: built.written,
-      warnings: reachability.warnings,
+      warnings: [...reachability.warnings, ...crossWorld.warnings],
       unreachableAddresses: reachability.entries,
+      crossWorldAddresses: crossWorld.entries,
     };
   }
 
-  function rescanReachability(): Pick<BuildResult, "warnings" | "unreachableAddresses"> {
+  function rescanReachability(): Pick<
+    BuildResult,
+    "warnings" | "unreachableAddresses" | "crossWorldAddresses"
+  > {
     const reachability = scanReachability();
-    return { warnings: reachability.warnings, unreachableAddresses: reachability.entries };
+    const crossWorld = scanCrossWorld();
+    return {
+      warnings: [...reachability.warnings, ...crossWorld.warnings],
+      unreachableAddresses: reachability.entries,
+      crossWorldAddresses: crossWorld.entries,
+    };
   }
 
   return { buildAll, applyEvents, rescanReachability };
