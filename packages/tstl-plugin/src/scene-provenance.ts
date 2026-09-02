@@ -20,6 +20,7 @@ import {
 } from "@defold-typescript/transpiler";
 import { readBuildConfigFromHost } from "./build-config";
 import { type SceneIndexCache, sceneCollectionRolesOf } from "./scene-index-cache";
+import { relativeUniverseFor } from "./scene-relative-addresses";
 
 // Keys of their own under the same cache the completion indexes use, so a
 // provenance map is thrown away with every index it was derived beside — and
@@ -209,6 +210,37 @@ function constantProvenance(
   const extensions = slot.resourceExtensions;
   if (extensions === undefined || extensions.length === 0) return [];
   return cache.resourcePaths(extensions).has(entryName) ? [entryName.replace(/^\//, "")] : [];
+}
+
+/**
+ * The sentence a relative entry's panel carries, or `undefined` where the entry
+ * is not one — a fragment caret, a slot that names no address, or a name this
+ * file's relative universe does not offer.
+ *
+ * A relative address is valid from the object hosting the script and nowhere
+ * else, so the objects it resolves from *are* its provenance: naming a declaring
+ * file instead would answer a question the author is not asking. Where the entry
+ * resolves from only some of the contexts this script runs in, the others are
+ * named too — a sometimes-valid entry that read as an always-valid one is the
+ * wrong-suggestion class this panel exists to close.
+ */
+export function resolveRelativeEntryProvenance(input: {
+  slot: ClassifiedSlot;
+  position: number;
+  cache: SceneIndexCache;
+  fileName: string;
+  entryName: string;
+}): string | undefined {
+  const { slot, position, cache, fileName, entryName } = input;
+  if (!isAddressClass(slot.class) || isFragmentCaret(slot, position)) return undefined;
+  const universe = relativeUniverseFor(cache, fileName);
+  const resolvesFrom = universe.contextsByEntry.get(entryName);
+  if (resolvesFrom === undefined) return undefined;
+  const others = universe.contexts
+    .map((context) => context.object)
+    .filter((object) => !resolvesFrom.includes(object));
+  const relative = `Relative to ${resolvesFrom.join(", ")}`;
+  return others.length === 0 ? relative : `${relative}; not from ${others.join(", ")}`;
 }
 
 // The display paths of the project files that declare `entryName` in the
