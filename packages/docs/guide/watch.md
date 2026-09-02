@@ -43,16 +43,20 @@ edits.
 ## Keeping the scene addresses current
 
 `watch` regenerates the [scene-address declaration](./scene-types.md) after its
-initial build, and again on every save that can move an address: a `.go` or
-`.collection`, a standalone `.collectionproxy` or `.collectionfactory`, and
-`game.project`. Unlike the extension surface this needs no bootstrap run — that
-startup pass writes it.
+initial build, and again on every save to an input that regeneration re-reads: a
+`.go` or `.collection`, a standalone `.collectionproxy` or `.collectionfactory`,
+and `game.project`. Unlike the extension surface this needs no bootstrap run —
+that startup pass writes it.
 
 The reference documents are there because they are what says *which world* a
-collection is — a `.collectionproxy` opens one as its own socket, a
-`.collectionfactory` marks one as a prototype with no static path — so retargeting
-one moves the addresses the declaration offers. `game.project` is there for
-`[bootstrap] main_collection`, which decides whose paths are bare. A
+collection is, and the two say different things. A `.collectionproxy` opens a
+collection as its own socket, so retargeting one moves the addresses the
+declaration offers — the old socket's keys go, the new socket's arrive. A
+`.collectionfactory` marks a collection as a prototype with no static path of
+its own, so pointing one at a collection **neither adds nor removes a key**: it
+closes that collection's *reached by no bootstrap, proxy, instance or factory
+reference* warning, and removing the reference reopens it. `game.project` is
+there for `[bootstrap] main_collection`, which decides whose paths are bare. A
 `game.project` save runs one regeneration, after the [`resolve`](./resolve.md)
 above has settled, so the walk reads the dependencies that resolve just
 materialized.
