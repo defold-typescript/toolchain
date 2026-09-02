@@ -6,6 +6,7 @@ import {
   collectParameterSlots,
   collectUrlParameterSlots,
   parameterTypesSatisfyClass,
+  slotAcceptsForeignSocket,
   type UrlParameterSource,
   type UrlParameterTable,
 } from "./url-parameters";
@@ -212,5 +213,53 @@ describe("classifyUrlParameter", () => {
     expect(classifyUrlParameter(table, "model.get_mesh_enabled", "mesh_id")).toBe("none");
     expect(classifyUrlParameter(table, "go.get_position", "unknown")).toBe("none");
     expect(classifyUrlParameter([], "go.get_position", "id")).toBe("none");
+  });
+});
+
+describe("slotAcceptsForeignSocket", () => {
+  const table: UrlParameterTable = [
+    {
+      fqn: "msg.post",
+      parameter: "receiver",
+      class: "either",
+      socketScope: "cross-world",
+      source: "generated",
+      evidence: "The receiver must be a string in URL-format",
+    },
+    {
+      fqn: "go.get_position",
+      parameter: "id",
+      class: "game-object",
+      socketScope: "same-world",
+      source: "generated",
+      evidence: "id of the game object instance",
+    },
+  ];
+
+  test("a slot recorded cross-world accepts a foreign socket", () => {
+    expect(slotAcceptsForeignSocket(table, "msg.post", "receiver")).toBe(true);
+  });
+
+  test("a slot recorded same-world does not", () => {
+    expect(slotAcceptsForeignSocket(table, "go.get_position", "id")).toBe(false);
+  });
+
+  test("a slot the table does not name accepts a foreign socket", () => {
+    expect(slotAcceptsForeignSocket(table, "go.get_rotation", "id")).toBe(true);
+    expect(slotAcceptsForeignSocket(table, "go.get_position", "unknown")).toBe(true);
+    expect(slotAcceptsForeignSocket([], "go.get_position", "id")).toBe(true);
+  });
+
+  test("an address entry carrying no socketScope accepts a foreign socket", () => {
+    const unjudged: UrlParameterTable = [
+      {
+        fqn: "go.delete",
+        parameter: "id",
+        class: "game-object",
+        source: "generated",
+        evidence: "optional id of the instance to delete",
+      },
+    ];
+    expect(slotAcceptsForeignSocket(unjudged, "go.delete", "id")).toBe(true);
   });
 });

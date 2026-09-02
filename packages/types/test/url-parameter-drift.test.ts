@@ -6,6 +6,7 @@ import { parseDefoldApiDoc } from "../src/api-doc";
 import {
   collectParameterSlots,
   parameterTypesSatisfyClass,
+  type UrlParameterEntry,
   type UrlParameterSlot,
   type UrlParameterSource,
   type UrlParameterTable,
@@ -48,6 +49,8 @@ const configReaderSlots = [...slots.values()]
   .filter((slot) => CONFIG_READER_FQN.test(slot.fqn) && slot.parameter === "key")
   .map((slot) => `${slot.fqn}#${slot.parameter}`)
   .sort();
+
+const ADDRESS_CLASSES = new Set<UrlParameterEntry["class"]>(["game-object", "component", "either"]);
 
 const generated = table.filter((entry) => entry.source === "generated");
 const authored = table.filter((entry) => entry.source !== "generated");
@@ -281,6 +284,36 @@ describe("url-parameters.json generated entries", () => {
       }
     }
     expect(stale).toEqual([]);
+  });
+
+  test("every address-class entry records a socket scope", () => {
+    // Presence only. That a slot's recorded scope matches what the engine does
+    // is a prose judgment argued in the PRD; nothing here verifies runtime
+    // behaviour.
+    expect(
+      table
+        .filter((entry) => ADDRESS_CLASSES.has(entry.class) && entry.socketScope === undefined)
+        .map((entry) => `${entry.fqn}#${entry.parameter}`),
+    ).toEqual([]);
+  });
+
+  test("no other class records a socket scope", () => {
+    expect(
+      table
+        .filter((entry) => !ADDRESS_CLASSES.has(entry.class) && entry.socketScope !== undefined)
+        .map((entry) => `${entry.fqn}#${entry.parameter}`),
+    ).toEqual([]);
+  });
+
+  test("the message-passing slot is the recorded cross-world one", () => {
+    // The polarity anchor: every assertion above derives both sides from the
+    // table's own `class` field, so a wholesale inversion of the populated
+    // values would pass them all unchanged.
+    const crossWorld = table
+      .filter((entry) => entry.socketScope === "cross-world")
+      .map((entry) => `${entry.fqn}#${entry.parameter}`);
+    expect(crossWorld).toContain("msg.post#receiver");
+    expect(crossWorld).not.toContain("go.get_position#id");
   });
 
   test("no entry names a function the target hands to the authored overloads", () => {
