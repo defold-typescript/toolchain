@@ -6738,6 +6738,11 @@ describe("watch scene-address surface wiring", () => {
     const handle = await ready;
     await handle.waitForIdle();
 
+    const declarationPath = path.join(cwd, SCENE_ADDRESSES_DECLARATION);
+    const factoryDeclarationAtStartup = readFileSync(declarationPath, "utf8");
+    expect(factoryDeclarationAtStartup).toContain('"/spawner"');
+    expect(factoryDeclarationAtStartup).not.toContain('"/enemy"');
+
     // No reference document yet: the prototype collection is reached by nothing.
     expect(unclassifiedReasonCount(err())).toBe(1);
 
@@ -6748,12 +6753,14 @@ describe("watch scene-address surface wiring", () => {
     // The reporter only repeats a reason that went away and came back, so the
     // count holding at one is what says the hole closed.
     expect(unclassifiedReasonCount(err())).toBe(1);
+    expect(readFileSync(declarationPath, "utf8")).toBe(factoryDeclarationAtStartup);
 
     rmSync(path.join(cwd, "game/enemy.collectionfactory"));
     triggerComponent?.("rename", "game/enemy.collectionfactory");
     await handle.waitForIdle();
 
     expect(unclassifiedReasonCount(err())).toBe(2);
+    expect(readFileSync(declarationPath, "utf8")).toBe(factoryDeclarationAtStartup);
 
     handle.stop();
     expect(await result).toBe(0);
