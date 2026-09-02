@@ -1,5 +1,5 @@
 import type { SceneCollectionRoles } from "./scene-collection-roles";
-import { collectComponentIds } from "./scene-component-index";
+import { collectComponentDeclarations } from "./scene-component-index";
 import { parseSceneTextFormat, type SceneMessage, SceneTextFormatError } from "./scene-text-format";
 
 // Every game-object path the project declares, `/`-prefixed and composed the way
@@ -22,6 +22,12 @@ export interface SceneObjectPathIndex {
   // indistinguishable from an object that genuinely owns no component, and the
   // reason is named in `incomplete` instead.
   readonly componentsOf: ReadonlyMap<string, readonly string[]>;
+  // For each object, the resource each of its *referenced* components names —
+  // the `component: "/src/player.ts.script"` edge that says this object hosts
+  // that script. An *embedded* component is absent by construction rather than
+  // withheld: its payload is the component, so it names no resource. Withheld
+  // for exactly the keys `componentsOf` withholds, on the same rule.
+  readonly componentResourcesOf: ReadonlyMap<string, ReadonlyMap<string, string>>;
   readonly incomplete: readonly string[];
 }
 
@@ -30,6 +36,7 @@ export interface SceneObjectPathIndex {
 interface PathLeaf {
   readonly declarer: string;
   readonly components: readonly string[] | undefined;
+  readonly resources: ReadonlyMap<string, string> | undefined;
 }
 
 // The two blocks whose `id` is a leaf segment. `collection_instances` is handled
@@ -73,7 +80,13 @@ export function buildSceneObjectPathIndex(
   if (documents.size === 0) {
     incomplete.push("no scene sources were read, so no game-object path can be proven absent");
     incomplete.push(...roles.incomplete);
-    return { paths: new Set(), declaredIn: new Map(), componentsOf: new Map(), incomplete };
+    return {
+      paths: new Set(),
+      declaredIn: new Map(),
+      componentsOf: new Map(),
+      componentResourcesOf: new Map(),
+      incomplete,
+    };
   }
 
   const parsed = new Map<string, SceneMessage>();
@@ -96,18 +109,23 @@ export function buildSceneObjectPathIndex(
 
   // A `.go` instanced twenty times is read once: the components it declares are
   // a property of the prototype, not of the instance that named it.
-  const prototypeComponents = new Map<string, readonly string[] | undefined>();
+  interface PrototypeDeclarations {
+    readonly components: readonly string[];
+    readonly resources: ReadonlyMap<string, string>;
+  }
+  const prototypeDeclarations = new Map<string, PrototypeDeclarations | undefined>();
 
-  function componentsOfPrototype(key: string): readonly string[] | undefined {
-    const done = prototypeComponents.get(key);
-    if (done !== undefined || prototypeComponents.has(key)) return done;
+  function declarationsOfPrototype(key: string): PrototypeDeclarations | undefined {
+    const done = prototypeDeclarations.get(key);
+    if (done !== undefined || prototypeDeclarations.has(key)) return done;
     const document = parsed.get(key);
-    const components =
-      document === undefined
-        ? undefined
-        : [...collectComponentIds(document, key, incomplete)].sort();
-    prototypeComponents.set(key, components);
-    return components;
+    let declarations: PrototypeDeclarations | undefined;
+    if (document !== undefined) {
+      const collected = collectComponentDeclarations(document, key, incomplete);
+      declarations = { components: [...collected.ids].sort(), resources: collected.resources };
+    }
+    prototypeDeclarations.set(key, declarations);
+    return declarations;
   }
 
   function pathsOf(displayPath: string): ReadonlyMap<string, PathLeaf> {
@@ -130,13 +148,22 @@ export function buildSceneObjectPathIndex(
         const id = firstField(block, "id");
         if (id === undefined || id === "") continue;
         let components: readonly string[] | undefined;
+        let resources: ReadonlyMap<string, string> | undefined;
         if (blockName === "embedded_instances") {
           // The payload declares the object outright, so the same collector the
           // flat index uses reads it — and names the document itself when the
           // escaped text will not parse.
           const before = incomplete.length;
-          const ids = collectComponentIds(block, displayPath, incomplete, blockName);
-          components = incomplete.length === before ? [...ids].sort() : undefined;
+          const declarations = collectComponentDeclarations(
+            block,
+            displayPath,
+            incomplete,
+            blockName,
+          );
+          if (incomplete.length === before) {
+            components = [...declarations.ids].sort();
+            resources = declarations.resources;
+          }
         } else {
           const prototype = firstField(block, "prototype");
           if (prototype === undefined) {
@@ -146,14 +173,16 @@ export function buildSceneObjectPathIndex(
               `${displayPath}: the instance "${id}" declares no prototype, so the components it owns cannot be read`,
             );
           } else if (parsed.has(resourceKey(prototype))) {
-            components = componentsOfPrototype(resourceKey(prototype));
+            const declarations = declarationsOfPrototype(resourceKey(prototype));
+            components = declarations?.components;
+            resources = declarations?.resources;
           } else {
             incomplete.push(
               `${displayPath}: the instance "${id}" names ${prototype}, which is not among the project's readable scene documents`,
             );
           }
         }
-        paths.set(`/${id}`, { declarer: displayPath, components });
+        paths.set(`/${id}`, { declarer: displayPath, components, resources });
       }
     }
 
@@ -194,6 +223,7 @@ export function buildSceneObjectPathIndex(
   const paths = new Set<string>();
   const declaredIn = new Map<string, string[]>();
   const componentsOf = new Map<string, string[]>();
+  const componentResourcesOf = new Map<string, Map<string, string>>();
   // An address two leaves compose is only as provable as its weakest leaf: one
   // unread prototype withholds the claim for the whole key rather than letting
   // the readable half stand in for both.
@@ -211,7 +241,7 @@ export function buildSceneObjectPathIndex(
         // declaring files still answer for it.
         declarers.push(leaf.declarer);
       }
-      if (leaf.components === undefined) {
+      if (leaf.components === undefined || leaf.resources === undefined) {
         withheld.add(key);
         continue;
       }
@@ -221,10 +251,24 @@ export function buildSceneObjectPathIndex(
       } else {
         for (const id of leaf.components) if (!owned.includes(id)) owned.push(id);
       }
+      const referenced = componentResourcesOf.get(key);
+      if (referenced === undefined) {
+        componentResourcesOf.set(key, new Map(leaf.resources));
+      } else {
+        // Same union rule as the ids above: the first leaf to name a component's
+        // resource answers for it, so two worlds sharing one socket — already a
+        // hole the roles name — cannot silently overwrite each other.
+        for (const [id, resource] of leaf.resources) {
+          if (!referenced.has(id)) referenced.set(id, resource);
+        }
+      }
     }
   }
   for (const declarers of declaredIn.values()) declarers.sort();
-  for (const key of withheld) componentsOf.delete(key);
+  for (const key of withheld) {
+    componentsOf.delete(key);
+    componentResourcesOf.delete(key);
+  }
   for (const owned of componentsOf.values()) owned.sort();
 
   incomplete.push(...roles.incomplete);
@@ -233,5 +277,11 @@ export function buildSceneObjectPathIndex(
   // unparseable `data:` reaches the list twice by two honest routes. Identical
   // strings carry identical information, and a reader shown the same reason
   // twice learns nothing the second time.
-  return { paths, declaredIn, componentsOf, incomplete: [...new Set(incomplete)] };
+  return {
+    paths,
+    declaredIn,
+    componentsOf,
+    componentResourcesOf,
+    incomplete: [...new Set(incomplete)],
+  };
 }
