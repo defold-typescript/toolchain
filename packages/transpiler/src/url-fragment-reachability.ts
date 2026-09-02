@@ -6,6 +6,8 @@
 import type { UrlParameterTable } from "@defold-typescript/types";
 import * as ts from "typescript";
 import type { SceneComponentIndex } from "./scene-component-index";
+import { socketOfAddress } from "./scene-naming-context";
+import type { SceneObjectPathIndex } from "./scene-object-path-index";
 import { canonicalHashSymbols, isAmbient, staticAddressTextOf } from "./url-address-literals";
 import { addressClassOfArgument, isAddressClass } from "./url-address-slots";
 
@@ -15,6 +17,54 @@ export interface UrlFragmentFinding {
   readonly length: number;
   readonly fragment: string;
   readonly message: string;
+}
+
+/** The half of the joined index this check reads: which objects exist, and what each owns. */
+export type SceneObjectComponents = Pick<SceneObjectPathIndex, "paths" | "componentsOf">;
+
+// The path portion of an index key, with any proxy socket stripped: `/enemy` for
+// both the bootstrap `/enemy` and the proxied `mylevel:/enemy`.
+function pathOfKey(key: string): string {
+  const socket = socketOfAddress(key);
+  return socket === undefined ? key : key.slice(socket.length + 1);
+}
+
+// The components the object an address names declares, or `undefined` wherever
+// the answer is not provable — no object index, a fragment with no path, a
+// relative path, a path no world declares, or a path some world declares but
+// whose prototype could not be read. Every one of those falls back to the
+// project-wide id set, because withholding a finding is the only safe direction.
+function declaredComponentsOf(
+  objects: SceneObjectComponents | undefined,
+  path: string,
+): readonly string[] | undefined {
+  if (objects === undefined || path === "") return undefined;
+
+  if (socketOfAddress(path) !== undefined) {
+    return objects.paths.has(path) ? objects.componentsOf.get(path) : undefined;
+  }
+  if (!path.startsWith("/")) return undefined;
+
+  // A bare absolute path names one object per world, and the script writing it
+  // could be running in any of them, so the union is the only claim that holds
+  // whichever world it is. One withheld key withholds the whole union: a
+  // readable sibling must not stand in for a prototype nobody could read.
+  const declared = new Set<string>();
+  let known = false;
+  for (const key of objects.paths) {
+    if (pathOfKey(key) !== path) continue;
+    const owned = objects.componentsOf.get(key);
+    if (owned === undefined) return undefined;
+    known = true;
+    for (const id of owned) declared.add(id);
+  }
+  return known ? [...declared].sort() : undefined;
+}
+
+function declaredPhrase(ids: readonly string[]): string {
+  return ids.length === 0
+    ? "it declares no components at all"
+    : `it declares ${ids.map((id) => `"${id}"`).join(", ")}`;
 }
 
 export type UrlFragmentReport =
@@ -34,9 +84,10 @@ export function checkUrlFragmentReachability(input: {
   program: ts.Program;
   table: UrlParameterTable;
   index: SceneComponentIndex;
+  objects?: SceneObjectComponents;
   sourceFiles?: readonly ts.SourceFile[];
 }): UrlFragmentReport {
-  const { program, table, index, sourceFiles } = input;
+  const { program, table, index, objects, sourceFiles } = input;
   if (index.incomplete.length > 0) {
     return { kind: "suppressed", reasons: index.incomplete };
   }
@@ -59,15 +110,23 @@ export function checkUrlFragmentReachability(input: {
         if (text !== undefined) {
           const hash = text.indexOf("#");
           const fragment = hash === -1 ? "" : text.slice(hash + 1);
-          if (fragment !== "" && !index.ids.has(fragment)) {
+          const declared =
+            fragment === "" ? undefined : declaredComponentsOf(objects, text.slice(0, hash));
+          const reachable =
+            declared === undefined ? index.ids.has(fragment) : declared.includes(fragment);
+          if (fragment !== "" && !reachable) {
+            const path = text.slice(0, hash);
             findings.push({
               fileName: sourceFile.fileName,
               start: node.getStart(sourceFile),
               length: node.getWidth(sourceFile),
               fragment,
               message:
-                `no \`.go\` or \`.collection\` in this project declares a component with the id ` +
-                `"${fragment}", so this address cannot resolve at runtime`,
+                declared === undefined
+                  ? `no \`.go\` or \`.collection\` in this project declares a component with the id ` +
+                    `"${fragment}", so this address cannot resolve at runtime`
+                  : `the game object "${path}" declares no component with the id "${fragment}" ` +
+                    `(${declaredPhrase(declared)}), so this address cannot resolve at runtime`,
             });
           }
         }
