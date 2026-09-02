@@ -100,6 +100,8 @@ export {
   collectUrlParameterSlots,
   parameterTypesSatisfyClass,
   REQUIRED_TYPES,
+  type SocketScope,
+  slotAcceptsForeignSocket,
   type UrlParameterClass,
   type UrlParameterEntry,
   type UrlParameterSlot,
