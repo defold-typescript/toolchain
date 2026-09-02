@@ -3,6 +3,7 @@ import * as path from "node:path";
 import {
   createTranspileSession,
   type SceneComponentIndex,
+  type SceneObjectComponents,
   type TranspileProjectResult,
   type TranspileSession,
 } from "@defold-typescript/transpiler";
@@ -52,6 +53,15 @@ export interface CreateBuildSessionOptions {
    * created would keep reporting an address the author has since made correct.
    */
   readonly scriptWorlds?: () => ((fileName: string) => readonly (string | undefined)[]) | undefined;
+  /**
+   * Which objects exist in which world and what each declares, so an absolute
+   * `#fragment` is checked against the object it names.
+   *
+   * A getter for the same reason `sceneIndex` is: a `.go` save changes which
+   * components an object owns, and a snapshot would keep reporting a component
+   * the author has since added.
+   */
+  readonly sceneObjects?: () => SceneObjectComponents | undefined;
 }
 
 export interface BuildResult {
@@ -92,7 +102,13 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     if (!index || !program) {
       return { warnings: [], entries: [] };
     }
-    return scanUrlFragmentReachability({ program, index, table: loadUrlParameterTable() });
+    const sceneObjects = opts.sceneObjects?.();
+    return scanUrlFragmentReachability({
+      program,
+      index,
+      table: loadUrlParameterTable(),
+      ...(sceneObjects !== undefined ? { sceneObjects } : {}),
+    });
   }
 
   // Its own scan, walked over the whole program for the reason above: the

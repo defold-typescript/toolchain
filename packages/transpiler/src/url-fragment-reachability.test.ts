@@ -5,6 +5,7 @@ import { dirname, join, resolve } from "node:path";
 import type { UrlParameterTable } from "@defold-typescript/types";
 import * as ts from "typescript";
 import type { SceneComponentIndex } from "./scene-component-index";
+import type { SceneObjectPathIndex } from "./scene-object-path-index";
 import { createTranspileSession } from "./session";
 import { AMBIENT_FILES } from "./transpile";
 import { checkUrlFragmentReachability } from "./url-fragment-reachability";
@@ -96,12 +97,32 @@ function universe(...ids: string[]): SceneComponentIndex {
   return { ids: new Set(ids), incomplete: [] };
 }
 
-function check(source: string, index: SceneComponentIndex) {
-  return checkUrlFragmentReachability({ program: programFor(source), table: TABLE, index });
+type ObjectIndex = Pick<SceneObjectPathIndex, "paths" | "componentsOf">;
+
+// `withheld` names paths the walk proved exist but whose components it could not
+// read, exactly as `buildSceneObjectPathIndex` drops such a key from
+// `componentsOf` while keeping it in `paths`.
+function objects(
+  entries: Record<string, readonly string[]>,
+  withheld: readonly string[] = [],
+): ObjectIndex {
+  return {
+    paths: new Set([...Object.keys(entries), ...withheld]),
+    componentsOf: new Map(Object.entries(entries)),
+  };
 }
 
-function findingsOf(source: string, index: SceneComponentIndex) {
-  const report = check(source, index);
+function check(source: string, index: SceneComponentIndex, objectIndex?: ObjectIndex) {
+  return checkUrlFragmentReachability({
+    program: programFor(source),
+    table: TABLE,
+    index,
+    ...(objectIndex !== undefined ? { objects: objectIndex } : {}),
+  });
+}
+
+function findingsOf(source: string, index: SceneComponentIndex, objectIndex?: ObjectIndex) {
+  const report = check(source, index, objectIndex);
   if (report.kind !== "checked") {
     throw new Error(`expected a checked report, got ${report.kind}`);
   }
@@ -386,6 +407,144 @@ describe("checkUrlFragmentReachability", () => {
     expect(finding?.fragment).toBe("sprit");
     expect(finding?.start).toBe(source.indexOf("SPRITE", source.indexOf("msg.post")));
     expect(finding?.length).toBe("SPRITE".length);
+  });
+
+  // A joined index: `/player` owns "sprite", `/hud` owns "sprit". The two ids
+  // are both in the project-wide universe, so only the scoping can tell the
+  // colliding address apart from a reachable one.
+  const JOINED = { "/player": ["sprite"], "/hud": ["sprit"] };
+
+  test("scopes an absolute address's fragment to the components that object declares", () => {
+    const source = 'go.get("/player#sprit", "position");\n';
+    const findings = findingsOf(source, universe("sprite", "sprit"), objects(JOINED));
+    expect(findings).toHaveLength(1);
+    const [finding] = findings;
+    expect(finding?.fragment).toBe("sprit");
+    expect(finding?.start).toBe(source.indexOf('"/player#sprit"'));
+    expect(finding?.length).toBe('"/player#sprit"'.length);
+  });
+
+  test("stays silent when the addressed object itself declares the fragment", () => {
+    expect(
+      findingsOf(
+        'go.get("/player#sprite", "position");\n',
+        universe("sprite", "sprit"),
+        objects(JOINED),
+      ),
+    ).toEqual([]);
+  });
+
+  test("a bare fragment falls back to the project-wide id set", () => {
+    expect(
+      findingsOf('msg.post("#sprit", "hello");\n', universe("sprite", "sprit"), objects(JOINED)),
+    ).toEqual([]);
+    expect(
+      findingsOf('msg.post("#sprit", "hello");\n', universe("sprite"), objects(JOINED)).map(
+        (f) => f.fragment,
+      ),
+    ).toEqual(["sprit"]);
+  });
+
+  test("a path the joined index does not know falls back to the project-wide id set", () => {
+    expect(
+      findingsOf(
+        'go.get("/unknown#sprite", "position");\n',
+        universe("sprite", "sprit"),
+        objects(JOINED),
+      ),
+    ).toEqual([]);
+  });
+
+  test("a withheld `componentsOf` entry falls back rather than reporting every fragment", () => {
+    // `/player` is a path the walk proved exists, with its components unread —
+    // which is not the same claim as an object owning nothing.
+    expect(
+      findingsOf(
+        'go.get("/player#sprite", "position");\n',
+        universe("sprite"),
+        objects({ "/hud": ["sprit"] }, ["/player"]),
+      ),
+    ).toEqual([]);
+  });
+
+  test("one withheld world withholds the whole union for a bare absolute path", () => {
+    // The bootstrap `/player` exists with its prototype unread while the proxied
+    // one is readable: a bare address could be written from either world, so the
+    // readable half must not answer for the pair.
+    expect(
+      findingsOf(
+        'go.get("/player#sprite", "position");\n',
+        universe("sprite", "sprit"),
+        objects({ "mylevel:/player": ["sprit"] }, ["/player"]),
+      ),
+    ).toEqual([]);
+  });
+
+  test("a socket-qualified address resolves against that world's object", () => {
+    const source = 'go.get("mylevel:/player#sprit", "position");\n';
+    const findings = findingsOf(
+      source,
+      universe("sprite", "sprit"),
+      objects({ "/player": ["sprit"], "mylevel:/player": ["sprite"] }),
+    );
+    expect(findings.map((f) => f.fragment)).toEqual(["sprit"]);
+    expect(findings[0]?.start).toBe(source.indexOf('"mylevel:/player#sprit"'));
+  });
+
+  test("a bare absolute path unions every world that declares it", () => {
+    const index = objects({ "/player": ["sprite"], "mylevel:/player": ["sprit"] });
+    expect(
+      findingsOf('go.get("/player#sprit", "position");\n', universe("sprite", "sprit"), index),
+    ).toEqual([]);
+    expect(
+      findingsOf(
+        'go.get("/player#nope", "position");\n',
+        universe("sprite", "sprit", "nope"),
+        index,
+      ).map((f) => f.fragment),
+    ).toEqual(["nope"]);
+  });
+
+  test("the scoped message names the object and the ids it declares", () => {
+    const findings = findingsOf(
+      'go.get("/player#sprit", "position");\n',
+      universe("sprite", "sprit"),
+      objects(JOINED),
+    );
+    expect(findings).toHaveLength(1);
+    const message = findings[0]?.message ?? "";
+    expect(message).toContain('"/player"');
+    expect(message).toContain('"sprit"');
+    expect(message).toContain('"sprite"');
+  });
+
+  test("an object declaring nothing says so instead of printing an empty list", () => {
+    const findings = findingsOf(
+      'go.get("/empty#sprit", "position");\n',
+      universe("sprite", "sprit"),
+      objects({ "/empty": [] }),
+    );
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.message).toContain("declares no components at all");
+  });
+
+  test("an unscoped finding keeps today's project-wide wording", () => {
+    const source = 'msg.post("#sprit", "hello");\n';
+    const scoped = findingsOf(source, universe("sprite"), objects(JOINED));
+    const unscoped = findingsOf(source, universe("sprite"));
+    expect(scoped).toEqual(unscoped);
+    expect(unscoped[0]?.message).toBe(
+      'no `.go` or `.collection` in this project declares a component with the id "sprit", ' +
+        "so this address cannot resolve at runtime",
+    );
+  });
+
+  test("a path is never reported on its own, scoped or not", () => {
+    for (const objectIndex of [undefined, objects(JOINED)]) {
+      for (const call of ['go.get("/unknown", "position");', 'go.get("/player", "position");']) {
+        expect(findingsOf(`${call}\n`, universe("sprite"), objectIndex)).toEqual([]);
+      }
+    }
   });
 
   test("withholds every finding while the universe has gaps", () => {

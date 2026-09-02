@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import * as path from "node:path";
-import type { SceneComponentIndex } from "@defold-typescript/transpiler";
+import type { SceneComponentIndex, SceneObjectComponents } from "@defold-typescript/transpiler";
 import { type RegistryTarget, resolvableTargetVersions } from "./api-registry";
 import { CURRENT_STABLE_SURFACE_ID, selectApiSurface } from "./api-surface";
 import {
@@ -52,6 +52,7 @@ import {
   createIncompleteReporter,
   runSceneTypes,
   sceneIndexForBuild,
+  sceneObjectsForBuild,
   scriptWorldsForBuild,
 } from "./scene-types-command";
 import { runSetTarget } from "./set-target";
@@ -863,10 +864,12 @@ function dispatchCommand(
             const sceneTypes = runSceneTypes({ cwd });
             const { incomplete } = sceneTypes;
             const sceneIndex = sceneIndexForBuild(sceneTypes);
+            const sceneObjects = sceneObjectsForBuild(sceneTypes);
             const scriptWorlds = scriptWorldsForBuild(sceneTypes, cwd);
             const { written, warnings, unreachableAddresses, crossWorldAddresses } = runBuild({
               cwd,
               ...(sceneIndex !== undefined ? { sceneIndex } : {}),
+              ...(sceneObjects !== undefined ? { sceneObjects } : {}),
               ...(scriptWorlds !== undefined ? { scriptWorlds } : {}),
             });
             const { materializedDir } = await materializeRefDocSurface({
@@ -901,10 +904,12 @@ function dispatchCommand(
           const sceneTypes = runSceneTypes({ cwd });
           const { incomplete } = sceneTypes;
           const sceneIndex = sceneIndexForBuild(sceneTypes);
+          const sceneObjects = sceneObjectsForBuild(sceneTypes);
           const scriptWorlds = scriptWorldsForBuild(sceneTypes, cwd);
           const { written, warnings, unreachableAddresses, crossWorldAddresses } = runBuild({
             cwd,
             ...(sceneIndex !== undefined ? { sceneIndex } : {}),
+            ...(sceneObjects !== undefined ? { sceneObjects } : {}),
             ...(scriptWorlds !== undefined ? { scriptWorlds } : {}),
           });
           const { materializedDir } = materializeApiSurface({
@@ -974,10 +979,14 @@ function dispatchCommand(
         // The worlds each script runs in, refreshed beside the index for the
         // same reason: a `.collection` save can move a script between worlds.
         let scriptWorlds: ((fileName: string) => readonly (string | undefined)[]) | undefined;
+        // Which objects own which components, refreshed beside the two above: a
+        // `.go` save adds or removes the very components a fragment is scoped to.
+        let sceneObjects: SceneObjectComponents | undefined;
         const sceneTypesSurface = (): void => {
           const result = runSceneTypes({ cwd });
           const { declaration, wrote, incomplete } = result;
           sceneIndex = sceneIndexForBuild(result);
+          sceneObjects = sceneObjectsForBuild(result);
           scriptWorlds = scriptWorldsForBuild(result, cwd);
           const fresh = reportIncomplete(incomplete);
           if (json) {
@@ -1068,6 +1077,7 @@ function dispatchCommand(
             ...(resolveSurface ? { resolveSurface } : {}),
             sceneTypesSurface,
             sceneIndex: () => sceneIndex,
+            sceneObjects: () => sceneObjects,
             scriptWorlds: () => scriptWorlds,
             ...(json ? { json: true } : {}),
             ...(pinDiagnostics.length > 0 ? { pinDiagnostics } : {}),

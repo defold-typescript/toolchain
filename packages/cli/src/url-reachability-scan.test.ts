@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { createTranspileSession, type SceneComponentIndex } from "@defold-typescript/transpiler";
+import {
+  createTranspileSession,
+  type SceneComponentIndex,
+  type SceneObjectPathIndex,
+} from "@defold-typescript/transpiler";
 import type { UrlParameterTable } from "@defold-typescript/types";
 import type * as ts from "typescript";
 import { loadUrlParameterTable } from "./url-parameter-table";
@@ -19,6 +23,15 @@ function programFor(rel: string, source: string): ts.Program {
 
 function universe(...ids: string[]): SceneComponentIndex {
   return { ids: new Set(ids), incomplete: [] };
+}
+
+function objects(
+  entries: Record<string, readonly string[]>,
+): Pick<SceneObjectPathIndex, "paths" | "componentsOf"> {
+  return {
+    paths: new Set(Object.keys(entries)),
+    componentsOf: new Map(Object.entries(entries)),
+  };
 }
 
 describe("scanUrlFragmentReachability", () => {
@@ -60,6 +73,60 @@ describe("scanUrlFragmentReachability", () => {
     expect(warnings).toHaveLength(2);
     expect(warnings.find((w) => w.includes("src/a.ts"))).toContain("nobody");
     expect(warnings.find((w) => w.includes("src/b.ts"))).toContain("nowhere");
+  });
+
+  test("the object index reaches the check, so a colliding fragment becomes a warning", () => {
+    // `hud` declares "sprit", so the project-wide universe accepts it; only the
+    // object index can tell that `/player` does not.
+    const { warnings, entries } = scanUrlFragmentReachability({
+      program: programFor("src/main.ts", 'go.get("/player#sprit", "position");\n'),
+      index: universe("sprite", "sprit"),
+      table: TABLE,
+      sceneObjects: objects({ "/player": ["sprite"], "/hud": ["sprit"] }),
+    });
+
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain("src/main.ts");
+    expect(warnings[0]).toContain('"/player"');
+    expect(entries).toEqual([
+      {
+        file: "src/main.ts",
+        fragment: "sprit",
+        message: expect.stringContaining('the game object "/player"'),
+      },
+    ]);
+  });
+
+  test("without the object index the project-wide warnings are unchanged", () => {
+    const source = 'go.get("/player#sprit", "position");\n';
+    expect(
+      scanUrlFragmentReachability({
+        program: programFor("src/main.ts", source),
+        index: universe("sprite", "sprit"),
+        table: TABLE,
+      }),
+    ).toEqual({ warnings: [], entries: [] });
+
+    const { warnings } = scanUrlFragmentReachability({
+      program: programFor("src/main.ts", source),
+      index: universe("sprite"),
+      table: TABLE,
+    });
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain("no `.go` or `.collection` in this project declares");
+  });
+
+  test("the suppressed branch is unchanged while the object index is present", () => {
+    const { warnings, entries } = scanUrlFragmentReachability({
+      program: programFor("src/main.ts", 'go.get("/player#sprit", "position");\n'),
+      index: { ids: new Set(["sprite"]), incomplete: ["game/a.go: could not be read"] },
+      table: TABLE,
+      sceneObjects: objects({ "/player": ["sprite"] }),
+    });
+
+    expect(entries).toEqual([]);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain("unreachable-address check did not run");
   });
 
   test("a suppressed report becomes one line carrying every reason", () => {

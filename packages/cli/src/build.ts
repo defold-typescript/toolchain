@@ -1,6 +1,10 @@
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
-import { createTranspileSession, type SceneComponentIndex } from "@defold-typescript/transpiler";
+import {
+  createTranspileSession,
+  type SceneComponentIndex,
+  type SceneObjectComponents,
+} from "@defold-typescript/transpiler";
 import {
   collectFailures,
   computeOutputRel,
@@ -57,6 +61,12 @@ export interface RunBuildOptions {
    * cannot say where a script runs, and gets no cross-world warnings either way.
    */
   readonly scriptWorlds?: (fileName: string) => readonly (string | undefined)[];
+  /**
+   * Which objects exist in which world and what each declares, so an absolute
+   * `#fragment` address is checked against the object it names. Optional for the
+   * same reason `sceneIndex` is.
+   */
+  readonly sceneObjects?: SceneObjectComponents;
 }
 
 export interface RunBuildResult {
@@ -69,7 +79,7 @@ export interface RunBuildResult {
 }
 
 export function runBuild(opts: RunBuildOptions): RunBuildResult {
-  const { cwd, sceneIndex, scriptWorlds } = opts;
+  const { cwd, sceneIndex, sceneObjects, scriptWorlds } = opts;
   const config = readBuildConfig(cwd);
 
   const seen = new Set<string>();
@@ -135,7 +145,12 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
   const program = session.getProgram();
   const reachability =
     sceneIndex && program
-      ? scanUrlFragmentReachability({ program, index: sceneIndex, table: loadUrlParameterTable() })
+      ? scanUrlFragmentReachability({
+          program,
+          index: sceneIndex,
+          table: loadUrlParameterTable(),
+          ...(sceneObjects !== undefined ? { sceneObjects } : {}),
+        })
       : { warnings: [], entries: [] };
   const crossWorld =
     scriptWorlds && program

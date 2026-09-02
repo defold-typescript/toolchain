@@ -61,12 +61,21 @@ warning names the scene file and the offending path; wrap the mesh in a `.model`
 A full build also checks every address literal your code posts to — `msg.post`,
 `go.get`, `go.animate` and every other slot the toolchain classifies as an
 address — against the component ids your scenes declare, and warns when the
-`#fragment` names a component no `.go` or `.collection` in the project has. Three
-things bound it:
+`#fragment` names a component the addressed object does not have. Four things
+bound it:
 
 - It reports only the `#fragment`, never the path before it. A path is
   undecidable: `factory.create` can invent a game object at any path at runtime,
   but it can never invent a component.
+- **What the fragment is checked against depends on the path in front of it.**
+  An absolute path the scene walk knows — `"/player#sprite"`, or the
+  world-qualified `"mylevel:/player#sprite"` — is checked against *that object's*
+  components, so a fragment that names a component some other object has is still
+  reported, and the warning says which ids the object does declare. A bare
+  `"#sprite"`, a relative or runtime-composed address, or a path the walk does
+  not know is checked against the whole project instead: any component id
+  declared anywhere satisfies it. An object whose prototype the walk could not
+  read falls back the same way rather than reporting every fragment on it.
 - It never rejects a build or changes the exit code. Like the other two scans it
   warns and moves on.
 - It reports itself as *suppressed* whenever the component-id universe has a
