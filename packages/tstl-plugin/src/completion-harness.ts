@@ -20,11 +20,48 @@ export const SCENE_DOCUMENTS: Record<string, string> = {
     'script: "/main.ts.gui_script"\nnodes {\n  id: "score"\n}\nnodes {\n  id: "level"\n}\n',
 };
 
+export const BOOTSTRAP_MAIN = "[bootstrap]\nmain_collection = /main.collectionc\n";
+
+export function scriptObject(id: string, resource: string): string {
+  return `components {\n  id: "${id}"\n  component: "${resource}"\n}\n`;
+}
+
+// A `.go` opening a proxy on the collection it names, in the embedded form the
+// editor writes.
+export function proxyObject(collection: string): string {
+  return (
+    'embedded_components {\n  id: "loader"\n  type: "collectionproxy"\n' +
+    `  data: "collection: \\"${collection}\\"\\n"\n}\n`
+  );
+}
+
+// Two worlds over one project: the bootstrap collection, and the collection a
+// proxy opens under the socket its own `name:` declares. `both.go` is instanced
+// in each, so one script genuinely runs in both worlds — and `home.ts` runs only
+// in the bootstrap one, which is what makes `mylevel:` foreign to it.
+export const TWO_WORLD_DOCUMENTS: Record<string, string> = {
+  "game.project": BOOTSTRAP_MAIN,
+  "main.collection":
+    'instances {\n  id: "level"\n  prototype: "/level.go"\n}\n' +
+    'instances {\n  id: "loader"\n  prototype: "/loader.go"\n}\n' +
+    'instances {\n  id: "both"\n  prototype: "/both.go"\n}\n',
+  "level.go": scriptObject("brain", "/home.ts.script"),
+  "loader.go": proxyObject("/mylevel.collection"),
+  "both.go": scriptObject("brain", "/both.ts.script"),
+  "mylevel.collection":
+    'name: "mylevel"\n' +
+    'instances {\n  id: "enemy"\n  prototype: "/enemy.go"\n}\n' +
+    'instances {\n  id: "both"\n  prototype: "/both.go"\n}\n',
+  "enemy.go": scriptObject("brain", "/away.ts.script"),
+};
+
 // The host handle a test needs to see the plugin's filesystem work and the
 // watchers it registered: `documents` is mutable so a scene can change under a
 // live proxy, and `fireDirectory` stands in for the editor reporting it.
 export interface ProxyHost {
   documents: Record<string, string>;
+  /** Listed by `readDirectory`, but answered `undefined` by `readFile`. */
+  unreadable: Set<string>;
   directoryReads: string[][];
   openWatchers: number;
   fireDirectory(hostPath: string): void;
@@ -40,7 +77,12 @@ export interface CompletionSetup {
 export function completionSetup(options: {
   source: string;
   base: ts.WithMetadata<ts.CompletionInfo> | undefined;
+  /** Further program files beside the edited one, so a check can be scoped to it. */
+  sources?: Record<string, string>;
   documents?: Record<string, string>;
+  /** Scene sources the host lists but cannot read, so a walk composes a real hole. */
+  unreadable?: readonly string[];
+  baseDiagnostics?: ts.Diagnostic[];
   serverHost?: boolean;
   watch?: boolean;
   baseDispose?: boolean;
@@ -50,7 +92,7 @@ export function completionSetup(options: {
 }): CompletionSetup {
   const fileName = options.fileName ?? "main.ts";
   const session = createTranspileSession();
-  session.update({ [fileName]: options.source });
+  session.update({ ...options.sources, [fileName]: options.source });
   const program = session.getProgram();
   if (!program) {
     throw new Error("session produced no program");
@@ -59,7 +101,7 @@ export function completionSetup(options: {
   const detailsCalls: unknown[][] = [];
   const languageService = {
     getProgram: () => program,
-    getSemanticDiagnostics: () => [],
+    getSemanticDiagnostics: () => options.baseDiagnostics ?? [],
     getCompletionsAtPosition: () => options.base,
     getCompletionEntryDetails: (...args: unknown[]) => {
       detailsCalls.push(args);
@@ -77,6 +119,7 @@ export function completionSetup(options: {
   let directoryCallback: ((hostPath: string) => void) | undefined;
   const host: ProxyHost = {
     documents: { ...(options.documents ?? SCENE_DOCUMENTS) },
+    unreadable: new Set(options.unreadable ?? []),
     directoryReads: [],
     openWatchers: 0,
     fireDirectory: (hostPath) => directoryCallback?.(hostPath),
@@ -99,7 +142,10 @@ export function completionSetup(options: {
         .filter((path) => extensions === undefined || extensions.some((ext) => path.endsWith(ext)))
         .map((path) => `/project/${path}`);
     },
-    readFile: (path: string) => host.documents[path.replace("/project/", "")],
+    readFile: (path: string) => {
+      const displayPath = path.replace("/project/", "");
+      return host.unreadable.has(displayPath) ? undefined : host.documents[displayPath];
+    },
     ...(options.watch === false
       ? {}
       : {

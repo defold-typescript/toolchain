@@ -1,28 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import type * as ts from "typescript";
+import { BOOTSTRAP_MAIN, scriptObject, TWO_WORLD_DOCUMENTS } from "./completion-harness";
 import {
   createSceneIndexCache,
   type SceneIndexCache,
   type SceneWatchHost,
 } from "./scene-index-cache";
-import { offersBareWorld, relativeUniverseFor } from "./scene-relative-addresses";
+import { offersBareWorld, relativeUniverseFor, worldsFor } from "./scene-relative-addresses";
 
 const PROJECT_ROOT = "/project";
-
-const BOOTSTRAP_MAIN = "[bootstrap]\nmain_collection = /main.collectionc\n";
-
-function scriptObject(id: string, resource: string): string {
-  return `components {\n  id: "${id}"\n  component: "${resource}"\n}\n`;
-}
-
-// A `.go` opening a proxy on the collection it names, in the embedded form the
-// editor writes.
-function proxyObject(collection: string): string {
-  return (
-    'embedded_components {\n  id: "loader"\n  type: "collectionproxy"\n' +
-    `  data: "collection: \\"${collection}\\"\\n"\n}\n`
-  );
-}
 
 // The committed platformer's shape: a `level` object beside a collection
 // instanced as `player`, whose own object hosts the file being edited.
@@ -60,25 +46,6 @@ const TWO_CONTEXT_DOCUMENTS: Record<string, string> = {
   "narrow.collection": 'instances {\n  id: "obj"\n  prototype: "/obj.go"\n}\n',
   "obj.go": scriptObject("brain", "/main.ts.script"),
   "extra.go": scriptObject("tag", "/tag.script"),
-};
-
-// Two worlds over one project: the bootstrap collection, and the collection a
-// proxy opens under the socket its own `name:` declares. `both.go` is instanced
-// in each, so one script genuinely runs in both worlds.
-const TWO_WORLD_DOCUMENTS: Record<string, string> = {
-  "game.project": BOOTSTRAP_MAIN,
-  "main.collection":
-    'instances {\n  id: "level"\n  prototype: "/level.go"\n}\n' +
-    'instances {\n  id: "loader"\n  prototype: "/loader.go"\n}\n' +
-    'instances {\n  id: "both"\n  prototype: "/both.go"\n}\n',
-  "level.go": scriptObject("brain", "/home.ts.script"),
-  "loader.go": proxyObject("/mylevel.collection"),
-  "both.go": scriptObject("brain", "/both.ts.script"),
-  "mylevel.collection":
-    'name: "mylevel"\n' +
-    'instances {\n  id: "enemy"\n  prototype: "/enemy.go"\n}\n' +
-    'instances {\n  id: "both"\n  prototype: "/both.go"\n}\n',
-  "enemy.go": scriptObject("brain", "/away.ts.script"),
 };
 
 interface FakeHost extends SceneWatchHost {
@@ -181,5 +148,27 @@ describe("offersBareWorld", () => {
 
   test("a script with no naming context does", () => {
     expect(offersBareWorld(universeOver(TWO_WORLD_DOCUMENTS, "none.ts"))).toBe(true);
+  });
+});
+
+describe("worldsFor", () => {
+  function worldsOver(fileName: string): readonly (string | undefined)[] {
+    return worldsFor(cacheOver(TWO_WORLD_DOCUMENTS).cache, `${PROJECT_ROOT}/${fileName}`);
+  }
+
+  test("a script inside a proxy world answers with that world's socket", () => {
+    expect(worldsOver("away.ts")).toEqual(["mylevel"]);
+  });
+
+  test("a script hosted in both worlds answers with both", () => {
+    expect(worldsOver("both.ts")).toEqual([undefined, "mylevel"]);
+  });
+
+  test("a script hosted only by the bootstrap collection answers with its absent socket", () => {
+    expect(worldsOver("home.ts")).toEqual([undefined]);
+  });
+
+  test("a script no scene hosts answers with nothing", () => {
+    expect(worldsOver("none.ts")).toEqual([]);
   });
 });

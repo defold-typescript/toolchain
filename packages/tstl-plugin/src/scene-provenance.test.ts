@@ -553,10 +553,10 @@ describe("resolveEntryProvenance memoization", () => {
     const { cache, computations } = countingCache(real);
     const { slot, position } = slotIn(ADDRESS_SOURCE, '"#board"');
     resolveEntryProvenance({ slot, position, cache, fileName: "main.ts", entryName: "board" });
-    // `component-ids` is the id *universe* the completion path derives; a
+    // `component-index` is the id *universe* the completion path derives; a
     // provenance map stored under it would hand that path a map where it
     // expects a set.
-    expect(computations).not.toContain("component-ids");
+    expect(computations).not.toContain("component-index");
   });
 });
 
