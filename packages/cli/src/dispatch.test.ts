@@ -937,6 +937,123 @@ describe("dispatch", () => {
     expect(parsed.warnings.some((w) => w.includes("nobody"))).toBe(false);
   });
 
+  // A bootstrap world hosting the built script beside a proxy world named
+  // `mylevel`, so the socket a literal names is decided by these files.
+  function scaffoldCrossWorldBuild(address: string): void {
+    scaffoldBuildProject();
+    writeFileSync(
+      path.join(cwd, "game.project"),
+      "[bootstrap]\nmain_collection = /game/main.collectionc\n\n[project]\n",
+    );
+    mkdirSync(path.join(cwd, "game"), { recursive: true });
+    writeFileSync(
+      path.join(cwd, "game", "main.collection"),
+      'instances {\n  id: "loader"\n  prototype: "/game/loader.go"\n}\n' +
+        'instances {\n  id: "home"\n  prototype: "/game/home.go"\n}\n',
+    );
+    writeFileSync(
+      path.join(cwd, "game", "loader.go"),
+      'embedded_components {\n  id: "loader"\n  type: "collectionproxy"\n' +
+        '  data: "collection: \\"/game/level1.collection\\"\\n"\n}\n',
+    );
+    writeFileSync(
+      path.join(cwd, "game", "home.go"),
+      'components {\n  id: "brain"\n  component: "/src/main.ts.script"\n}\n',
+    );
+    writeFileSync(
+      path.join(cwd, "game", "level1.collection"),
+      'name: "mylevel"\ninstances {\n  id: "enemy"\n  prototype: "/game/enemy.go"\n}\n',
+    );
+    writeFileSync(
+      path.join(cwd, "game", "enemy.go"),
+      'embedded_components {\n  id: "body"\n  type: "sprite"\n}\n',
+    );
+    writeFileSync(path.join(cwd, "src", "main.ts"), `go.get_position("${address}");\n`);
+  }
+
+  type CrossWorldJson = {
+    ok?: boolean;
+    warnings?: readonly string[];
+    crossWorldAddresses?: readonly {
+      file: string;
+      address: string;
+      socket: string;
+      message: string;
+    }[];
+  };
+
+  test("a cross-world address reaches stderr from the ordinary build branch", async () => {
+    scaffoldCrossWorldBuild("mylevel:/enemy");
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd], io, { detectEditorVersion: () => null });
+
+    expect(code).toBe(0);
+    expect(err()).toContain("mylevel");
+    expect(err()).toContain("src/main.ts");
+  });
+
+  test("build --json reports a cross-world address as prose and as an entry", async () => {
+    scaffoldCrossWorldBuild("mylevel:/enemy");
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--json"], io, { detectEditorVersion: () => null });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as CrossWorldJson;
+    expect(parsed.ok).toBe(true);
+    expect(parsed.crossWorldAddresses).toHaveLength(1);
+    expect(parsed.crossWorldAddresses?.[0]?.file).toBe("src/main.ts");
+    expect(parsed.crossWorldAddresses?.[0]?.address).toBe("mylevel:/enemy");
+    expect(parsed.crossWorldAddresses?.[0]?.socket).toBe("mylevel");
+    const message = parsed.crossWorldAddresses?.[0]?.message ?? "";
+    expect(parsed.warnings?.some((w) => w.includes(message))).toBe(true);
+  });
+
+  test("build --json omits crossWorldAddresses entirely when nothing is found", async () => {
+    scaffoldCrossWorldBuild("/enemy");
+    const { io, out } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--json"], io, { detectEditorVersion: () => null });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as CrossWorldJson;
+    expect(Object.hasOwn(parsed as object, "crossWorldAddresses")).toBe(false);
+  });
+
+  test("a project the caller read no scenes for reports nothing and carries no field", async () => {
+    scaffoldBuildProject();
+    writeFileSync(path.join(cwd, "src", "main.ts"), 'go.get_position("mylevel:/enemy");\n');
+    const { io, out, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd, "--json"], io, { detectEditorVersion: () => null });
+
+    expect(code).toBe(0);
+    expect(Object.hasOwn(JSON.parse(out()) as object, "crossWorldAddresses")).toBe(false);
+    expect(err()).not.toContain("mylevel");
+  });
+
+  test("a cross-world address reaches stderr from the ref-doc-surface branch", async () => {
+    scaffoldCrossWorldBuild("mylevel:/enemy");
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      `${JSON.stringify({ "defold-typescript": { "defold-target": "1.9.8" } }, null, 2)}\n`,
+    );
+    const resolveOpts = labelRefDocResolveOpts();
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["build", cwd], io, {
+      resolveOpts,
+      detectEditorVersion: () => null,
+    });
+
+    expect(code).toBe(0);
+    expect(err()).toContain("mylevel");
+    expect(err()).toContain("src/main.ts");
+
+    rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
+  });
+
   test("build --defold-target overrides the pin", async () => {
     scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.9.8" } });
     const { io, out } = captureStreams();
@@ -6286,6 +6403,9 @@ describe("watch scene-address surface wiring", () => {
     rmSync(sourceGeneratedDir, { recursive: true, force: true });
   });
 
+  const GET_POSITION = (address: string): string =>
+    `import { defineScript } from "@defold-typescript/types";\nexport default defineScript({ init() { go.get_position("${address}"); } });\n`;
+
   const POST_TO = (fragment: string): string =>
     `import { defineScript } from "@defold-typescript/types";\nexport default defineScript({ init() { msg.post("#${fragment}", "hello"); } });\n`;
 
@@ -6609,6 +6729,193 @@ describe("watch scene-address surface wiring", () => {
     const last = events.at(-1);
     expect(last?.warnings).toEqual([]);
     expect(Object.hasOwn(last as object, "unreachableAddresses")).toBe(false);
+  });
+
+  // The built script runs *inside* the proxy world, so the address it writes is
+  // correct at startup: only a later edit — to the source, or to the scene that
+  // decides which world it runs in — can make it foreign.
+  function scaffoldCrossWorldWatchProject(address = "mylevel:/enemy"): void {
+    write(
+      "tsconfig.json",
+      JSON.stringify({ compilerOptions: { strict: true }, include: ["src/**/*.ts"] }, null, 2),
+    );
+    write("game.project", "[bootstrap]\nmain_collection = /game/main.collectionc\n\n[project]\n");
+    write(
+      "game/main.collection",
+      'instances {\n  id: "loader"\n  prototype: "/game/loader.go"\n}\n',
+    );
+    write(
+      "game/loader.go",
+      'embedded_components {\n  id: "loader"\n  type: "collectionproxy"\n' +
+        '  data: "collection: \\"/game/level1.collection\\"\\n"\n}\n',
+    );
+    writeLevel("mylevel");
+    write("game/home.go", 'components {\n  id: "brain"\n  component: "/src/main.ts.script"\n}\n');
+    write("game/enemy.go", 'embedded_components {\n  id: "body"\n  type: "sprite"\n}\n');
+    write("src/main.ts", GET_POSITION(address));
+  }
+
+  function writeLevel(socket: string): void {
+    write(
+      "game/level1.collection",
+      `name: "${socket}"\n` +
+        'instances {\n  id: "home"\n  prototype: "/game/home.go"\n}\n' +
+        'instances {\n  id: "enemy"\n  prototype: "/game/enemy.go"\n}\n',
+    );
+  }
+
+  function crossWorldWatcherPair(): {
+    main: WatcherFactory;
+    component: WatcherFactory;
+    triggerMain: () => void;
+    triggerScene: () => void;
+  } {
+    let onMain: ((kind: "change" | "rename", rel: string) => void) | undefined;
+    let onComponent: ((kind: "change" | "rename", rel: string) => void) | undefined;
+    return {
+      main: (_dir, onEvent): Watcher => {
+        onMain = (kind, rel) => onEvent({ kind, path: rel });
+        return { close() {} };
+      },
+      component: (_dir, onEvent): Watcher => {
+        onComponent = (kind, rel) => onEvent({ kind, path: rel });
+        return { close() {} };
+      },
+      triggerMain: () => onMain?.("change", "src/main.ts"),
+      triggerScene: () => onComponent?.("change", "game/level1.collection"),
+    };
+  }
+
+  type CrossWorldEvent = {
+    command: string;
+    event?: string;
+    ok?: boolean;
+    warnings?: readonly string[];
+    crossWorldAddresses?: readonly {
+      file: string;
+      address: string;
+      socket: string;
+      message: string;
+    }[];
+  };
+
+  function watchEvents(text: string): CrossWorldEvent[] {
+    return text
+      .split("\n")
+      .filter((line) => line !== "")
+      .map((line) => JSON.parse(line) as CrossWorldEvent)
+      .filter((line) => line.command === "watch");
+  }
+
+  test("watch --json carries a rebuild's cross-world address as prose and as an entry", async () => {
+    scaffoldCrossWorldWatchProject();
+    const { io, out } = captureStreams();
+    const { main, component, triggerMain } = crossWorldWatcherPair();
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd, "--json"], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      detectEditorVersion: () => null,
+      onWatchStart,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+    const startup = watchEvents(out()).find((e) => e.event === "build");
+    expect(Object.hasOwn(startup as object, "crossWorldAddresses")).toBe(false);
+
+    write("src/main.ts", GET_POSITION("other:/enemy"));
+    triggerMain();
+    await handle.waitForIdle();
+
+    handle.stop();
+    expect(await result).toBe(0);
+
+    const rebuild = watchEvents(out()).find((e) => e.event === "rebuild");
+    expect(rebuild?.ok).toBe(true);
+    expect(rebuild?.crossWorldAddresses).toEqual([
+      {
+        file: "src/main.ts",
+        address: "other:/enemy",
+        socket: "other",
+        message: expect.stringContaining("other") as unknown as string,
+      },
+    ]);
+    expect(
+      rebuild?.warnings?.some((w) => w.includes(rebuild?.crossWorldAddresses?.[0]?.message ?? "")),
+    ).toBe(true);
+  });
+
+  test("a scene save that moves the script's world reports without rebuilding", async () => {
+    scaffoldCrossWorldWatchProject();
+    const { io, out } = captureStreams();
+    const { main, component, triggerScene } = crossWorldWatcherPair();
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd, "--json"], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      detectEditorVersion: () => null,
+      onWatchStart,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+
+    writeLevel("otherlevel");
+    triggerScene();
+    await handle.waitForIdle();
+
+    handle.stop();
+    expect(await result).toBe(0);
+
+    const events = watchEvents(out());
+    const last = events.filter((e) => e.event === "sceneTypes").at(-1);
+    expect(last?.crossWorldAddresses).toEqual([
+      {
+        file: "src/main.ts",
+        address: "mylevel:/enemy",
+        socket: "mylevel",
+        message: expect.stringContaining("mylevel") as unknown as string,
+      },
+    ]);
+    expect(events.some((e) => e.event === "rebuild")).toBe(false);
+  });
+
+  test("watch prints a rebuild's cross-world address on stderr", async () => {
+    scaffoldCrossWorldWatchProject();
+    const { io, err } = captureStreams();
+    const { main, component, triggerMain } = crossWorldWatcherPair();
+
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd], io, {
+      debounceMs: 5,
+      watcherFactory: main,
+      componentWatcherFactory: component,
+      detectEditorVersion: () => null,
+      onWatchStart,
+    });
+
+    const handle = await ready;
+    await handle.waitForIdle();
+    expect(err()).not.toContain("other:/enemy");
+
+    write("src/main.ts", GET_POSITION("other:/enemy"));
+    triggerMain();
+    await handle.waitForIdle();
+
+    handle.stop();
+    expect(await result).toBe(0);
+
+    const reported = err()
+      .split("\n")
+      .filter((line) => line.includes('the world "other"'));
+    expect(reported.length).toBeGreaterThan(0);
+    expect(reported.every((line) => line.startsWith("defold-typescript watch: "))).toBe(true);
+    expect(reported.some((line) => line.includes("src/main.ts"))).toBe(true);
   });
 
   // A bootstrap world holding the object that opens a proxy world, so the

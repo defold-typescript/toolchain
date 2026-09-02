@@ -87,6 +87,18 @@ remove is reported on that save. The very first build of a watch session is the
 exception — it runs before the scene walk, so the check starts from the first
 rebuild or scene save.
 
+A full build also warns when an address names another **world**. Only
+`msg.post` and `msg.url` cross a collection proxy; every `go.*` call that
+resolves an instance or component handle stays in the world its own script runs
+in, so `go.get_position("mylevel:/enemy")` written from a script outside
+`mylevel` can never resolve. The warning names the socket the address claimed
+and the world the script actually runs in. It warns and moves on like the scans
+above, and stays silent wherever it cannot be sure: on the two cross-world
+slots, on a bare or relative address, and on any script whose world the scene
+walk could not resolve. [`watch`](./watch.md) reports it on every rebuild and on
+every `.go`/`.collection` save, exactly as it does the `#fragment` check. See
+[which world an address resolves in](./scene-types.md#which-world-an-address-resolves-in).
+
 `build` never narrows the API surface — it builds against whatever entrypoint your
 `tsconfig` names, the full `@defold-typescript/types` by default. Opt into
 per-directory narrowing with [`wall`](./wall.md).
@@ -99,8 +111,9 @@ version locked alongside your `@defold-typescript/types`. Reserve `@latest` for
 ## Flags
 
 - `--json` — emit the build result as a single JSON object (including the
-  `warnings` array and, when the reachability check found any, a structured
-  `unreachableAddresses` array) for agents and scripts. See
+  `warnings` array and, when either address check found any, a structured
+  `unreachableAddresses` and `crossWorldAddresses` array) for agents and
+  scripts. See
   [Agent runbooks](./agent-runbooks.md#machine-readable-output).
 
 ## Headless builds (no editor)

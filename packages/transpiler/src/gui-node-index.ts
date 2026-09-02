@@ -38,6 +38,33 @@ export function guiScriptResourceOf(document: SceneMessage): string | undefined 
   return script === undefined ? undefined : scriptKeyOf(script);
 }
 
+/**
+ * Every `.gui` document's display path mapped to the gui-script resource it
+ * names, skipping a `.gui` that names none and one this parser cannot read.
+ *
+ * The map `buildScriptNamingContexts` consumes, built once here so the editor
+ * plugin and the CLI reach a gui script through one reader. Unlike
+ * `buildGuiNodeIndex` it records no ambiguity: two `.gui` scenes driving one gui
+ * script really are two naming contexts, while they would make that script's
+ * node ids unanswerable.
+ */
+export function guiScriptResourcesOf(
+  documents: ReadonlyMap<string, string>,
+): ReadonlyMap<string, string> {
+  const scripts = new Map<string, string>();
+  for (const [displayPath, text] of documents) {
+    let resource: string | undefined;
+    try {
+      resource = guiScriptResourceOf(parseSceneTextFormat(text));
+    } catch (error) {
+      if (!(error instanceof SceneTextFormatError)) throw error;
+      continue;
+    }
+    if (resource !== undefined) scripts.set(displayPath, resource);
+  }
+  return scripts;
+}
+
 export function buildGuiNodeIndex(documents: ReadonlyMap<string, string>): GuiNodeIndex {
   const byScriptResource = new Map<string, ReadonlySet<string>>();
   const claimedBy = new Map<string, string>();

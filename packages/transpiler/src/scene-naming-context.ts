@@ -23,14 +23,31 @@ export interface NamingContext {
 const SCRIPT_SUFFIX = ".script";
 const GUI_SUFFIX = ".gui";
 
+/**
+ * The proxy socket a world-qualified address names, or `undefined` when it names
+ * none — a bootstrap-world path, a relative path, a bare `#fragment`.
+ *
+ * A world-qualified key is `socket:/path`; the socket is whatever precedes the
+ * first `/`, minus its `:`. The bootstrap world's keys start with `/`, so they
+ * yield no socket rather than an empty one.
+ *
+ * Exported because a written address literal and a composed object path are the
+ * same shape: the cross-world check reads a socket out of source text with this
+ * one rule rather than a second reader that could disagree with the contexts it
+ * compares against.
+ */
+export function socketOfAddress(address: string): string | undefined {
+  const worldEnd = address.indexOf("/");
+  const qualifier = worldEnd <= 0 ? "" : address.slice(0, worldEnd);
+  return qualifier.endsWith(":") ? qualifier.slice(0, -1) : undefined;
+}
+
 function contextOf(object: string): NamingContext {
-  // A world-qualified key is `socket:/path`; the socket is whatever precedes
-  // the first `/`, minus its `:`. The bootstrap world's keys start with `/`, so
-  // they yield no socket rather than an empty one.
-  const worldEnd = object.indexOf("/");
-  const qualifier = worldEnd <= 0 ? "" : object.slice(0, worldEnd);
-  const socket = qualifier.endsWith(":") ? qualifier.slice(0, -1) : undefined;
-  return { object, socket, prefix: object.slice(0, object.lastIndexOf("/") + 1) };
+  return {
+    object,
+    socket: socketOfAddress(object),
+    prefix: object.slice(0, object.lastIndexOf("/") + 1),
+  };
 }
 
 /**
