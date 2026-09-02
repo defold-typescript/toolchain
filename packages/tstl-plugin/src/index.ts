@@ -7,7 +7,6 @@ import {
   buildGuiFlipbookIndex,
   buildGuiNodeIndex,
   buildInputActionIndex,
-  buildSceneComponentIndex,
   buildSceneObjectPathIndex,
   type ClassifiedSlot,
   componentIdOfSameObjectAddress,
@@ -32,11 +31,13 @@ import {
   CONTRIBUTED_ENTRY_KIND,
   DEFOLD_COMPLETION_SOURCE,
 } from "./scene-completions";
+import { sceneReachabilityDiagnostics } from "./scene-diagnostics";
 import {
   createSceneIndexCache,
   type SceneIndexCache,
   type SceneWatchHost,
   sceneCollectionRolesOf,
+  sceneComponentIndexOf,
 } from "./scene-index-cache";
 import { resolveEntryProvenance, resolveRelativeEntryProvenance } from "./scene-provenance";
 import { offersBareWorld, relativeUniverseFor } from "./scene-relative-addresses";
@@ -79,10 +80,7 @@ function componentEntries(
   // suggestion claims nothing about what is absent.
   return buildSceneCompletionEntries({
     slot,
-    ids: cache.derived(
-      "component-ids",
-      () => buildSceneComponentIndex(cache.documents().documents).ids,
-    ),
+    ids: sceneComponentIndexOf(cache).ids,
     baseEntries,
   });
 }
@@ -371,7 +369,13 @@ export default function init(modules: { typescript: typeof import("typescript") 
       const transpiler = getProgramDiagnostics(program, program.getSourceFile(fileName)).map(
         (diagnostic) => ({ ...diagnostic, category: ts.DiagnosticCategory.Suggestion }),
       );
-      return [...prior, ...transpiler];
+      // The same advisory posture, and the same absent-cache early return the
+      // completion path takes: a host that cannot enumerate files has no scene
+      // universe, and an empty one would report every address as unreachable.
+      const table = loadUrlParameterTable();
+      const scene =
+        cache && table ? sceneReachabilityDiagnostics({ ts, program, table, cache, fileName }) : [];
+      return [...prior, ...transpiler, ...scene];
     };
 
     // Strictly additive: every path that cannot produce a suggestion returns the
