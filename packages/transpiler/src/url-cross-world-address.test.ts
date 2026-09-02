@@ -62,6 +62,52 @@ describe("checkCrossWorldAddresses", () => {
     }
   });
 
+  test("a foreign socket with a relative path is reported", () => {
+    const source = 'go.get_position("mylevel:enemy");\n';
+    const findings = findingsOf(source, worlds(undefined));
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.address).toBe("mylevel:enemy");
+    expect(findings[0]?.socket).toBe("mylevel");
+  });
+
+  test("a socket with no path at all is reported", () => {
+    const findings = findingsOf('go.get_position("mylevel:");\n', worlds(undefined));
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.address).toBe("mylevel:");
+    expect(findings[0]?.socket).toBe("mylevel");
+  });
+
+  test("a socket carrying only a fragment is reported", () => {
+    const findings = findingsOf('go.get_position("mylevel:#body");\n', worlds(undefined));
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.address).toBe("mylevel:#body");
+    expect(findings[0]?.socket).toBe("mylevel");
+  });
+
+  test("the no-slash forms are not reported at a cross-world slot", () => {
+    expect(findingsOf('msg.post("mylevel:enemy", "hello");\n', worlds(undefined))).toEqual([]);
+    expect(findingsOf('msg.url("mylevel:");\n', worlds(undefined))).toEqual([]);
+  });
+
+  test("a no-slash socket matching the caller's own world is not reported", () => {
+    expect(findingsOf('go.get_position("mylevel:enemy");\n', worlds("mylevel"))).toEqual([]);
+  });
+
+  test("a relative path whose segment carries a colon is not reported", () => {
+    expect(findingsOf('go.get_position("/level:1/enemy");\n', worlds(undefined))).toEqual([]);
+  });
+
+  test("a fragment carrying a colon is not read as a socket", () => {
+    expect(findingsOf('go.get_position("enemy#a:b");\n', worlds(undefined))).toEqual([]);
+  });
+
+  test("a hashed no-slash constant is reported like the written literal", () => {
+    const source = 'const e = hash("mylevel:enemy");\ngo.get_position(e);\n';
+    const findings = findingsOf(source, worlds(undefined));
+    expect(findings.map((finding) => finding.address)).toEqual(["mylevel:enemy"]);
+    expect(findings[0]?.socket).toBe("mylevel");
+  });
+
   test("a file with no naming context is not reported", () => {
     expect(findingsOf('go.get_position("mylevel:/enemy");\n', worlds())).toEqual([]);
   });

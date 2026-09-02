@@ -24,12 +24,17 @@ const SCRIPT_SUFFIX = ".script";
 const GUI_SUFFIX = ".gui";
 
 /**
- * The proxy socket a world-qualified address names, or `undefined` when it names
- * none — a bootstrap-world path, a relative path, a bare `#fragment`.
+ * The proxy socket an address names, or `undefined` when it names none — a
+ * bootstrap-world path, a relative path, a bare `#fragment`.
  *
- * A world-qualified key is `socket:/path`; the socket is whatever precedes the
- * first `/`, minus its `:`. The bootstrap world's keys start with `/`, so they
- * yield no socket rather than an empty one.
+ * Defold's address grammar is `[socket:][path][#fragment]` with both bracketed
+ * halves optional, so `mylevel:`, `mylevel:enemy` and `mylevel:#body` are as
+ * socket-qualified as `mylevel:/path`. The socket is therefore read from the
+ * `:` delimiter rather than from a following `/`: the head is the address up to
+ * the first `/` or `#` (the whole address when it carries neither), and the
+ * socket is the text before that head's first `:`. A `:` inside a path segment
+ * (`/level:1/enemy`) is not a socket, because the `/` closes the head first,
+ * and an empty socket (`:path`) is none.
  *
  * Exported because a written address literal and a composed object path are the
  * same shape: the cross-world check reads a socket out of source text with this
@@ -37,9 +42,12 @@ const GUI_SUFFIX = ".gui";
  * compares against.
  */
 export function socketOfAddress(address: string): string | undefined {
-  const worldEnd = address.indexOf("/");
-  const qualifier = worldEnd <= 0 ? "" : address.slice(0, worldEnd);
-  return qualifier.endsWith(":") ? qualifier.slice(0, -1) : undefined;
+  const pathStart = address.indexOf("/");
+  const fragmentStart = address.indexOf("#");
+  const ends = [pathStart, fragmentStart, address.length].filter((end) => end >= 0);
+  const headEnd = Math.min(...ends);
+  const delimiter = address.indexOf(":");
+  return delimiter > 0 && delimiter < headEnd ? address.slice(0, delimiter) : undefined;
 }
 
 function contextOf(object: string): NamingContext {
