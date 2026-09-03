@@ -12,7 +12,6 @@ import {
 import { EDITOR_PORT_FILE, EDITOR_TOKEN_FILE, type EditorTransport } from "./editor-attach";
 import {
   detectEditorBundledJava,
-  detectInstalledEditorVersion,
   EDITOR_VERSION_KEY,
   editorConfigCandidates,
   editorLaneFallback,
@@ -222,7 +221,7 @@ describe("probeInstalledEditor", () => {
   });
 });
 
-describe("detectInstalledEditorVersion", () => {
+describe("probeInstalledEditor version projection", () => {
   test("returns the version from the first candidate whose config has a version key", async () => {
     const readConfig = (p: string): string | null => {
       if (p === "/Applications/Defold.app/Contents/Resources/config") {
@@ -231,24 +230,28 @@ describe("detectInstalledEditorVersion", () => {
       return null;
     };
     expect(
-      await detectInstalledEditorVersion({
-        cwd: portlessProject(),
-        platform: "darwin",
-        home: () => "/home/u",
-        readConfig,
-      }),
+      (
+        await probeInstalledEditor({
+          cwd: portlessProject(),
+          platform: "darwin",
+          home: () => "/home/u",
+          readConfig,
+        })
+      ).version,
     ).toBe("1.12.4");
   });
 
   test("tolerates surrounding keys and whitespace around the version key", async () => {
     const body = "\n  other = 9 \nversion   =   1.10.0  \n[rest]\n";
     expect(
-      await detectInstalledEditorVersion({
-        cwd: portlessProject(),
-        platform: "darwin",
-        home: () => "/home/u",
-        readConfig: () => body,
-      }),
+      (
+        await probeInstalledEditor({
+          cwd: portlessProject(),
+          platform: "darwin",
+          home: () => "/home/u",
+          readConfig: () => body,
+        })
+      ).version,
     ).toBe("1.10.0");
   });
 
@@ -264,12 +267,14 @@ describe("detectInstalledEditorVersion", () => {
       }
       return null;
     };
-    const result = await detectInstalledEditorVersion({
-      cwd: portlessProject(),
-      platform: "darwin",
-      home: () => "/home/u",
-      readConfig,
-    });
+    const result = (
+      await probeInstalledEditor({
+        cwd: portlessProject(),
+        platform: "darwin",
+        home: () => "/home/u",
+        readConfig,
+      })
+    ).version;
     expect(result).toBe("1.12.4");
     // First candidate already has a version, so subsequent candidates must
     // not be probed — first-hit precedence is the contract.
@@ -278,65 +283,47 @@ describe("detectInstalledEditorVersion", () => {
 
   test("returns null when no candidate has a readable config", async () => {
     expect(
-      await detectInstalledEditorVersion({
-        cwd: portlessProject(),
-        platform: "darwin",
-        home: () => "/home/u",
-        readConfig: () => null,
-      }),
+      (
+        await probeInstalledEditor({
+          cwd: portlessProject(),
+          platform: "darwin",
+          home: () => "/home/u",
+          readConfig: () => null,
+        })
+      ).version,
     ).toBeNull();
   });
 
   test("returns null when a candidate body has no version key", async () => {
     expect(
-      await detectInstalledEditorVersion({
-        cwd: portlessProject(),
-        platform: "darwin",
-        home: () => "/home/u",
-        readConfig: () => "display_name = Defold\ntimestamp = 0\n",
-      }),
+      (
+        await probeInstalledEditor({
+          cwd: portlessProject(),
+          platform: "darwin",
+          home: () => "/home/u",
+          readConfig: () => "display_name = Defold\ntimestamp = 0\n",
+        })
+      ).version,
     ).toBeNull();
   });
 
   test("returns null on an unknown platform (no candidates to probe)", async () => {
     expect(
-      await detectInstalledEditorVersion({
-        cwd: portlessProject(),
-        platform: "freebsd",
-        home: () => "/home/u",
-        readConfig: () => "version = 1.12.4",
-      }),
+      (
+        await probeInstalledEditor({
+          cwd: portlessProject(),
+          platform: "freebsd",
+          home: () => "/home/u",
+          readConfig: () => "version = 1.12.4",
+        })
+      ).version,
     ).toBeNull();
-  });
-
-  test("is the probe's version for the same inputs (hit, miss, and no-version-key)", async () => {
-    const home = (): string => "/home/u";
-    const cases: ReadonlyArray<(p: string) => string | null> = [
-      // hit
-      (p) =>
-        p === "/Applications/Defold.app/Contents/Resources/config" ? "version = 1.12.4" : null,
-      // miss — nothing readable anywhere
-      () => null,
-      // readable, but no version key
-      () => "display_name = Defold\n",
-    ];
-    for (const readConfig of cases) {
-      const opts = {
-        cwd: portlessProject(),
-        platform: "darwin" as NodeJS.Platform,
-        home,
-        readConfig,
-      };
-      expect(await detectInstalledEditorVersion(opts)).toBe(
-        (await probeInstalledEditor(opts)).version,
-      );
-    }
   });
 
   test("uses process.platform / process.env / homedir when no opts are passed", async () => {
     // Default homedir() is real, but no candidate file exists in CI, so we
     // just verify the integration wires through without throwing.
-    const result = await detectInstalledEditorVersion({ cwd: portlessProject() });
+    const result = (await probeInstalledEditor({ cwd: portlessProject() })).version;
     expect(result === null || typeof result === "string").toBe(true);
     // Suppress unused-import lint for homedir in case the build tool runs strict.
     expect(typeof homedir()).toBe("string");
@@ -525,26 +512,6 @@ describe("probeInstalledEditor editor lane", () => {
 
     expect(result.probed[0]).toEqual({ path: join(cwd, EDITOR_PORT_FILE), reason: "no-answer" });
     expect(result.version).toBe("1.12.4");
-  });
-
-  test("the version projection agrees with the probe on every editor-lane arm", async () => {
-    const arms: ReadonlyArray<{ cwd: string; evalVersion: () => Promise<string | null> }> = [
-      { cwd: projectWithEditorOpen(), evalVersion: async () => "1.13.1" },
-      { cwd: portlessProject(), evalVersion: async () => "1.13.1" },
-      { cwd: projectWithEditorOpen(), evalVersion: async () => null },
-    ];
-    for (const arm of arms) {
-      const opts = {
-        cwd: arm.cwd,
-        platform: "darwin" as NodeJS.Platform,
-        home,
-        evalVersion: arm.evalVersion,
-        readConfig: () => "version = 1.12.4\n",
-      };
-      expect(await detectInstalledEditorVersion(opts)).toBe(
-        (await probeInstalledEditor(opts)).version,
-      );
-    }
   });
 });
 

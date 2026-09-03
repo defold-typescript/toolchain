@@ -197,12 +197,6 @@ export async function probeInstalledEditor(
   return editorLaneFallback("no-editor-open", opts);
 }
 
-export async function detectInstalledEditorVersion(
-  opts: DetectInstalledEditorVersionOpts = {},
-): Promise<string | null> {
-  return (await probeInstalledEditor(opts)).version;
-}
-
 const defaultListDir = (dir: string): string[] => {
   try {
     return readdirSync(dir);
