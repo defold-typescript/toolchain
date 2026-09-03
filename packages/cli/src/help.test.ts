@@ -206,3 +206,35 @@ describe("renderHelpJson", () => {
     expect(renderHelp("init")).toContain(force.desc);
   });
 });
+
+describe("--no-update-check help listing", () => {
+  const HONORING = ["build", "watch", "run", "bob", "upgrade"];
+  const NOT_HONORING = ["resolve", "set-target"];
+
+  test.each(
+    HONORING,
+  )("%s help lists --no-update-check with the upstream-release meaning", (cmd: string) => {
+    const text = renderHelp(cmd);
+
+    expect(text).toContain("--no-update-check");
+    expect(text).toContain("Defold release");
+  });
+
+  test.each(HONORING)("%s JSON flags carry --no-update-check", (cmd: string) => {
+    const parsed = JSON.parse(renderHelpJson(cmd));
+    const flag = parsed.flags.find((f: { flag: string }) => f.flag === "--no-update-check");
+
+    expect(flag).toBeDefined();
+    expect(flag.desc).toContain("Defold release");
+  });
+
+  test.each(NOT_HONORING)("%s never lists --no-update-check", (cmd: string) => {
+    expect(renderHelp(cmd)).not.toContain("--no-update-check");
+    const parsed = JSON.parse(renderHelpJson(cmd));
+    expect(parsed.flags.some((f: { flag: string }) => f.flag === "--no-update-check")).toBe(false);
+  });
+
+  test("--no-update-check is not a global flag", () => {
+    expect(renderHelp(null)).not.toContain("--no-update-check");
+  });
+});

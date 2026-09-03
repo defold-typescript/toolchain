@@ -5392,6 +5392,24 @@ needed because the cache missed, while `--fail-on-drift` fails when the
 *detected editor* has drifted from the version pin. Neither implies the other,
 and `--fail-on-drift` never appears on `resolve`.
 
+A third notice on that same loop points the other way: not "your editor drifted
+from the pin" but *"the world moved ahead of it"*. When the pin is a concrete
+version and a newer Defold release exists upstream, `build`, `watch`, `run`,
+`upgrade`, and `bob build`/`bundle`/`run` name both versions and point at
+`set-target <latest>` or `upgrade`. It is checked at most once a day: the answer
+is kept in a small per-user JSON file under the same cache root as the Bob jar
+(`DEFOLD_TYPESCRIPT_CACHE`, else `XDG_CACHE_HOME`, else `~/.cache`), so the
+steady-state cost is one read of a local file, and a run that is offline, slow,
+or rate-limited prints nothing and leaves the previous answer in place. A channel
+pin tracks its head and cannot lag, so it never triggers this.
+
+This notice is advisory in the strong sense: **`--fail-on-drift` does not
+escalate it**. Being behind upstream is news, not a broken build, and a CI job
+must not turn red the day Defold ships a release. Only editor drift and an
+unprovidable target escalate. To silence it, pass `--no-update-check` to any of
+those commands, or set `DEFOLD_TYPESCRIPT_NO_UPDATE_CHECK` to a non-empty value;
+either one skips the cache read and the refresh entirely.
+
 `set-target` is a **writer** scoped like `init`'s pin write: it reads
 `package.json`, sets `"defold-typescript"."defold-target"` to a validated value,
 preserves every other key, and reports the transition. Setting the value already
@@ -5505,6 +5523,13 @@ build`/`bundle`/`run` — adds a `pinMismatch: { installed, pinned }` object
 version under `installed`, and the pinned version. It is absent when the two
 match, when no editor is detected, and for a channel pin.
 
+A newer upstream release adds an `upstreamRelease: { current, latest }` object
+on those same commands — `current` is the pinned version, `latest` is what the
+cached check found — beside the notice in `warnings`. It is absent, not empty,
+whenever there is nothing to report: a pin level with or ahead of upstream, a
+channel pin, a cache that has not been filled yet, and any run passing
+`--no-update-check`.
+
 A target the toolchain cannot provide adds an `unresolvableTarget: { target,
 available }` object naming the pin (or the `--defold-target` value) and the
 versions that do resolve, so the no-surface outcome is a field you can read
@@ -5514,7 +5539,8 @@ whenever the target resolves.
 Adding `--fail-on-drift` does not change that payload at all — same `warnings`,
 same `pinMismatch`, no extra field. Only the process exit code differs, so a CI
 job can keep parsing the JSON exactly as before and simply stop ignoring the
-result.
+result. `upstreamRelease` is the one verdict it never escalates on: it can be
+present on a run that exits 0.
 
 #### Materializing the pinned surface
 

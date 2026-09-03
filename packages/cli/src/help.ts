@@ -45,6 +45,10 @@ const COMMANDS: readonly HelpCommand[] = [
         flag: "--fail-on-drift",
         desc: "exit non-zero when the detected Defold editor differs from the version pin",
       },
+      {
+        flag: "--no-update-check",
+        desc: "skip the once-a-day check for a newer Defold release",
+      },
     ],
   },
   {
@@ -71,6 +75,10 @@ const COMMANDS: readonly HelpCommand[] = [
         flag: "--fail-on-drift",
         desc: "exit non-zero when the detected Defold editor differs from the version pin",
       },
+      {
+        flag: "--no-update-check",
+        desc: "skip the once-a-day check for a newer Defold release",
+      },
     ],
   },
   {
@@ -89,6 +97,10 @@ const COMMANDS: readonly HelpCommand[] = [
       {
         flag: "--fail-on-drift",
         desc: "exit non-zero when the detected Defold editor differs from the version pin",
+      },
+      {
+        flag: "--no-update-check",
+        desc: "skip the once-a-day check for a newer Defold release",
       },
     ],
   },
@@ -157,6 +169,10 @@ const COMMANDS: readonly HelpCommand[] = [
         flag: "--fail-on-drift",
         desc: "exit non-zero when the detected Defold editor differs from the version pin",
       },
+      {
+        flag: "--no-update-check",
+        desc: "skip the once-a-day check for a newer Defold release",
+      },
     ],
   },
   {
@@ -168,6 +184,10 @@ const COMMANDS: readonly HelpCommand[] = [
       {
         flag: "--fail-on-drift",
         desc: "exit non-zero when the detected Defold editor differs from the version pin",
+      },
+      {
+        flag: "--no-update-check",
+        desc: "skip the once-a-day check for a newer Defold release",
       },
     ],
   },
