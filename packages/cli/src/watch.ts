@@ -117,6 +117,7 @@ export interface RunWatchOptions {
   readonly json?: boolean;
   readonly pinDiagnostics?: readonly string[];
   readonly pinMismatch?: { readonly installed: string; readonly pinned: string };
+  readonly upstreamRelease?: { readonly current: string; readonly latest: string };
   readonly hotReload?: boolean;
   readonly editorClient?: WatchEditorClient;
 }
@@ -213,6 +214,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
         event: "start",
         ...(opts.pinDiagnostics?.length ? { warnings: opts.pinDiagnostics } : {}),
         ...(opts.pinMismatch ? { pinMismatch: opts.pinMismatch } : {}),
+        ...(opts.upstreamRelease ? { upstreamRelease: opts.upstreamRelease } : {}),
       }),
     );
   }

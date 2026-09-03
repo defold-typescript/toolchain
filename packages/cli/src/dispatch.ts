@@ -17,6 +17,7 @@ import {
   type DefoldTargetSource,
   describeDetectedPinMismatch,
   describeTargetOverride,
+  describeUpstreamReleaseNotice,
   diagnoseDefoldNamespace,
   fetchChannelInfo,
   fetchVersionInfo,
@@ -58,6 +59,13 @@ import {
 import { runSetTarget } from "./set-target";
 import { runSetupDebug } from "./setup-debug";
 import { runUpgrade, type UpgradeIo } from "./upgrade";
+import {
+  readUpstreamCache,
+  refreshUpstreamCache,
+  upstreamNoticeCacheDir,
+  upstreamNoticeCachePath,
+  upstreamRefreshDue,
+} from "./upstream-notice";
 import type { CrossWorldAddressEntry, UnreachableAddressEntry } from "./url-reachability-scan";
 import type { CheckboxPrompt } from "./wall-interactive";
 import type { RunWatchHandle, RunWatchOptions, WatchEditorClient, WatcherFactory } from "./watch";
@@ -116,6 +124,11 @@ export interface DispatchInternals {
   // by tests so the bob artifact probe stays deterministic and offline. Channel
   // targets never call it.
   readonly fetchVersionInfo?: (version: string) => Promise<{ sha1: string }>;
+  // The upstream-release notice's cache file and clock. Tests point them at a
+  // temp path and a fixed `now` so the once-a-day throttle is exercised without
+  // touching the user's real cache or the wall clock.
+  readonly upstreamCachePath?: string;
+  readonly upstreamNow?: () => number;
   // Launch seams for the top-level `run` command: platform/arch/probe drive the
   // pure `resolveRunnable`, and spawn/copyAside/chmod drive `launchEngine`. Tests
   // inject a deterministic subset over `defaultRunEngine`, mirroring `defoldIo`.
@@ -218,17 +231,34 @@ export function dispatch(
   io: DispatchIo,
   internals?: DispatchInternals,
 ): number | Promise<number> {
-  const drift = { escalate: false };
+  const drift: DriftHolder = { escalate: false };
   const escalated = (code: number): number => (code === 0 && drift.escalate ? 1 : code);
   const result = dispatchCommand(argv, io, internals, drift);
-  return typeof result === "number" ? escalated(result) : result.then(escalated);
+  // `bin.ts` ends with `process.exit(code)`, which kills a pending fetch outright,
+  // so the cache refresh is awaited rather than voided -- a fire-and-forget one
+  // would never write the file and the notice would never appear. The throttle
+  // means a user pays this bound at most once per interval, after their real
+  // output is already written.
+  const settle = (code: number): number | Promise<number> =>
+    drift.refresh === undefined
+      ? escalated(code)
+      : drift.refresh.then(
+          () => escalated(code),
+          () => escalated(code),
+        );
+  return typeof result === "number" ? settle(result) : result.then(settle);
+}
+
+interface DriftHolder {
+  escalate: boolean;
+  refresh?: Promise<void>;
 }
 
 function dispatchCommand(
   argv: string[],
   io: DispatchIo,
   internals: DispatchInternals | undefined,
-  drift: { escalate: boolean },
+  drift: DriftHolder,
 ): number | Promise<number> {
   // end-of-options-delimiter: `--` closes the CLI's own flag preamble, so every
   // scan below reads `head` alone. Scanning the whole argv let a post-delimiter
@@ -270,6 +300,8 @@ function dispatchCommand(
   const wallList = head.includes("--list");
   const frozen = head.includes("--frozen");
   const failOnDrift = head.includes("--fail-on-drift");
+  const noUpdateCheck =
+    head.includes("--no-update-check") || Boolean(process.env.DEFOLD_TYPESCRIPT_NO_UPDATE_CHECK);
   const hotReload = head.includes("--hot-reload");
   const reloadExtensions = isReload && head.includes("--extensions");
   const { value: waitFlag, rest: afterWaitArgs } = isReload
@@ -298,6 +330,7 @@ function dispatchCommand(
       a !== "--list" &&
       a !== "--frozen" &&
       a !== "--fail-on-drift" &&
+      a !== "--no-update-check" &&
       a !== "--hot-reload" &&
       !(isReload && a === "--extensions") &&
       a !== "--detected" &&
@@ -552,9 +585,41 @@ function dispatchCommand(
     // escalation inherits that gate exactly rather than re-deriving it;
     // `unresolvableNotice` carries the same command gate.
     drift.escalate = failOnDrift && pinNotices.length > 0;
+    // Read strictly *after* `drift.escalate` is computed from `pinNotices` alone:
+    // being behind upstream is advisory and must never turn a `--fail-on-drift`
+    // run red. That split is why `notices` and `pinNotices` stay separate arrays.
+    const upstreamCacheFile =
+      internals?.upstreamCachePath ?? upstreamNoticeCachePath("stable", upstreamNoticeCacheDir());
+    const upstreamNow = internals?.upstreamNow ?? Date.now;
+    const upstreamCache =
+      !noUpdateCheck && pinnedVersion !== undefined
+        ? readUpstreamCache(upstreamCacheFile)
+        : undefined;
+    const upstreamNotice =
+      noUpdateCheck || pinnedVersion === undefined
+        ? []
+        : describeUpstreamReleaseNotice(pinnedVersion, upstreamCache?.latestVersion);
+    const upstreamRelease: { upstreamRelease?: { current: string; latest: string } } =
+      pinnedVersion !== undefined && upstreamCache !== undefined && upstreamNotice.length > 0
+        ? {
+            upstreamRelease: { current: pinnedVersion, latest: upstreamCache.latestVersion },
+          }
+        : {};
+    const notices = [...pinNotices, ...upstreamNotice];
     const channelFetch =
       internals?.fetchChannelInfo ?? internals?.resolveOpts?.fetchChannelInfo ?? fetchChannelInfo;
     const versionFetch = internals?.fetchVersionInfo ?? fetchVersionInfo;
+    if (!noUpdateCheck && pinnedVersion !== undefined) {
+      const now = upstreamNow();
+      if (upstreamRefreshDue(upstreamCache, now)) {
+        drift.refresh = refreshUpstreamCache({
+          channel: "stable",
+          path: upstreamCacheFile,
+          now,
+          fetchChannelInfo: channelFetch,
+        });
+      }
+    }
     // A version target's head is synchronous (no channel info.json probe); a
     // channel target resolves its head — `{version, sha}` — via the fetch above.
     const syncHead: ResolvedTargetHead | undefined =
@@ -813,7 +878,7 @@ function dispatchCommand(
               renderResult({
                 command: "build",
                 written,
-                warnings: [...pinNotices, ...targetDiagnostics, ...warnings],
+                warnings: [...notices, ...targetDiagnostics, ...warnings],
                 // Absent rather than empty when there is nothing to report: a
                 // suppressed check has no entries either, and only `warnings`
                 // separates the two.
@@ -826,6 +891,7 @@ function dispatchCommand(
                 apiSurface,
                 materializedSurface: materializedDir,
                 ...(pinMismatch ? { pinMismatch } : {}),
+                ...upstreamRelease,
                 ...unresolvableTargetField,
               }),
             );
@@ -833,7 +899,7 @@ function dispatchCommand(
             io.stdout.write(
               `defold-typescript build: wrote ${written.length} files: ${written.join(", ")}\n`,
             );
-            for (const notice of pinNotices) {
+            for (const notice of notices) {
               io.stderr.write(`defold-typescript build: ${notice}\n`);
             }
             for (const warning of warnings) {
@@ -1060,9 +1126,9 @@ function dispatchCommand(
           // so `--json` surfaces it there once. The non-JSON stderr line has no such
           // startup channel (watch.ts prints `pinDiagnostics` only in JSON mode), so
           // emit it here, once, before the watcher opens — never per rebuild.
-          const pinDiagnostics = [...pinNotices, ...targetDiagnostics];
+          const pinDiagnostics = [...notices, ...targetDiagnostics];
           if (!json) {
-            for (const notice of pinNotices) {
+            for (const notice of notices) {
               io.stderr.write(`defold-typescript watch: ${notice}\n`);
             }
           }
@@ -1082,6 +1148,7 @@ function dispatchCommand(
             ...(json ? { json: true } : {}),
             ...(pinDiagnostics.length > 0 ? { pinDiagnostics } : {}),
             ...(pinMismatch ? { pinMismatch } : {}),
+            ...upstreamRelease,
             ...(hotReload ? { hotReload: true } : {}),
             ...(internals?.editorClient ? { editorClient: internals.editorClient } : {}),
           };
@@ -1415,7 +1482,7 @@ function dispatchCommand(
             // This puts the pin verdict ahead of `runnable.warnings` on stderr,
             // which is the intended order — the verdict qualifies the run.
             if (!json) {
-              for (const notice of pinNotices) {
+              for (const notice of notices) {
                 io.stderr.write(`defold-typescript bob run: ${notice}\n`);
               }
             }
@@ -1443,8 +1510,9 @@ function dispatchCommand(
                     subcommand: "run",
                     build: { exitCode: prepared.buildExitCode },
                     error: prepared.error ?? `bob build exited with code ${prepared.buildExitCode}`,
-                    ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
+                    ...(notices.length > 0 ? { warnings: notices } : {}),
                     ...(pinMismatch ? { pinMismatch } : {}),
+                    ...upstreamRelease,
                     ...unresolvableTargetField,
                   }),
                 );
@@ -1475,8 +1543,9 @@ function dispatchCommand(
                   subcommand: "run",
                   build: { exitCode: prepared.buildExitCode },
                   launch: { enginePath: runnable.enginePath, exitCode },
-                  ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
+                  ...(notices.length > 0 ? { warnings: notices } : {}),
                   ...(pinMismatch ? { pinMismatch } : {}),
+                  ...upstreamRelease,
                   ...unresolvableTargetField,
                 }),
               );
@@ -1490,8 +1559,9 @@ function dispatchCommand(
                   command: "bob",
                   subcommand: "run",
                   error: message,
-                  ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
+                  ...(notices.length > 0 ? { warnings: notices } : {}),
                   ...(pinMismatch ? { pinMismatch } : {}),
+                  ...upstreamRelease,
                   ...unresolvableTargetField,
                 }),
               );
@@ -1513,7 +1583,7 @@ function dispatchCommand(
           // Emitted before the first network call, for the same reason as the
           // `bob run` branch above: the verdict is knowable without it.
           if (!json) {
-            for (const notice of pinNotices) {
+            for (const notice of notices) {
               io.stderr.write(`defold-typescript bob ${subcommand}: ${notice}\n`);
             }
           }
@@ -1535,8 +1605,9 @@ function dispatchCommand(
           if (json) {
             const withOutput = result.output !== undefined ? { output: result.output } : {};
             const driftFields = {
-              ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
+              ...(notices.length > 0 ? { warnings: notices } : {}),
               ...(pinMismatch ? { pinMismatch } : {}),
+              ...upstreamRelease,
               ...unresolvableTargetField,
             };
             const headFields = {
@@ -1581,8 +1652,9 @@ function dispatchCommand(
                 command: "bob",
                 subcommand,
                 error: message,
-                ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
+                ...(notices.length > 0 ? { warnings: notices } : {}),
                 ...(pinMismatch ? { pinMismatch } : {}),
+                ...upstreamRelease,
                 ...unresolvableTargetField,
               }),
             );
@@ -1623,7 +1695,7 @@ function dispatchCommand(
       // The drift notice is mutually exclusive with its JSON form: stderr here,
       // folded into `warnings`/`pinMismatch` below under `--json` (as `build` does).
       if (!json) {
-        for (const notice of pinNotices) {
+        for (const notice of notices) {
           io.stderr.write(`defold-typescript run: ${notice}\n`);
         }
       }
@@ -1642,8 +1714,9 @@ function dispatchCommand(
               enginePath: runnable.enginePath,
               projectc: runnable.projectcPath,
               exitCode,
-              ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
+              ...(notices.length > 0 ? { warnings: notices } : {}),
               ...(pinMismatch ? { pinMismatch } : {}),
+              ...upstreamRelease,
               ...unresolvableTargetField,
             }),
           );
@@ -1670,8 +1743,9 @@ function dispatchCommand(
                 from: outcome.from,
                 to: outcome.to,
                 handedOff: outcome.handedOff,
-                ...(pinNotices.length > 0 ? { warnings: pinNotices } : {}),
+                ...(notices.length > 0 ? { warnings: notices } : {}),
                 ...(pinMismatch ? { pinMismatch } : {}),
+                ...upstreamRelease,
                 ...unresolvableTargetField,
                 ...(outcome.error !== undefined ? { error: outcome.error } : {}),
                 ...(outcome.output !== undefined ? { output: outcome.output } : {}),
@@ -1680,7 +1754,7 @@ function dispatchCommand(
           } else if (outcome.error !== undefined) {
             io.stderr.write(`${outcome.error}\n`);
           } else {
-            for (const notice of pinNotices) {
+            for (const notice of notices) {
               io.stderr.write(`defold-typescript upgrade: ${notice}\n`);
             }
             io.stdout.write(
