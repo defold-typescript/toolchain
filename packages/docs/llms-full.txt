@@ -1479,14 +1479,30 @@ Passing the id as an already-hashed `Hash` also skips the check, since the hashe
 
 #### Receiving messages with type narrowing
 
-`on_message` delivers `message_id` as a `Hash` (Defold pre-hashes it) and `message` as an untyped record. Because the id arrives already hashed, the string literal a discriminated union would switch on is gone — TypeScript cannot automatically narrow `message` from a runtime `Hash` comparison. The `isMessage` type guard re-introduces the literal at the use site and narrows the payload to its `BuiltinMessages` shape:
+`on_message` delivers `message_id` as a `Hash` (Defold pre-hashes it) and `message` as an untyped record. Because the id arrives already hashed, the string literal a discriminated union would switch on is gone — TypeScript cannot automatically narrow `message` from a runtime `Hash` comparison.
+
+Two helpers close that gap. Both are ambient globals, so neither needs an import:
+
+- **`BuiltinMessages` — a helper *type*.** It maps each built-in message id to its payload shape, so `BuiltinMessages["contact_point_response"]` *is* that message's type. See [The message type surface](#the-message-type-surface).
+- **`isMessage` — a helper *function*.** It is a type guard: the return type `message is BuiltinMessages[K]` is what re-introduces the lost literal at the use site.
+
+```ts
+function isMessage<K extends BuiltinMessageId>(
+  message_id: Hash,
+  message: Record<string | number, unknown>,
+  expected: K,
+): message is BuiltinMessages[K];
+```
+
+Inside the guard, `message` is narrowed to the payload of the id you named — no cast:
 
 ```ts
 export default defineScript({
   on_message(self, message_id, message) {
     if (isMessage(message_id, message, "contact_point_response")) {
-      // message: { position: Vector3; normal: Vector3; distance: number;
-      //            other_group: Hash; own_group: Hash; ... } — no cast.
+      // message is now BuiltinMessages["contact_point_response"]:
+      //   { position: Vector3; normal: Vector3; distance: number;
+      //     other_group: Hash; own_group: Hash; ... }
       if (message.other_group == hash("ground")) {
         go.set_position(go.get_position().add(message.normal.mul(message.distance)));
       }
@@ -1495,9 +1511,11 @@ export default defineScript({
 });
 ```
 
-`isMessage` is the receive-side mirror of `msg.post`'s send-side narrowing: `msg.post(receiver, "contact_point_response", payload)` checks the payload against `BuiltinMessages["contact_point_response"]`, and `isMessage(message_id, message, "contact_point_response")` narrows a received `message` to the same shape. It is a global — no import — and an unknown message id (`isMessage(message_id, message, "not_a_message")`) is a compile error.
+Three things follow from that signature:
 
-The guard ships only as a type declaration; the transpiler lowers the call to its runtime form `message_id == hash("contact_point_response")`, so the types package emits no runtime Lua.
+- **It mirrors `msg.post`.** Sending checks your payload against `BuiltinMessages["contact_point_response"]`; receiving narrows `message` to that same type. One catalog, both directions.
+- **A typo cannot compile.** `expected` is constrained to `BuiltinMessageId`, so `isMessage(message_id, message, "not_a_message")` is a compile error.
+- **No runtime cost.** The guard ships only as a type declaration; the transpiler lowers the call to `message_id == hash("contact_point_response")`, so the types package emits no runtime Lua.
 
 #### Routing many messages with `onMessage`
 
