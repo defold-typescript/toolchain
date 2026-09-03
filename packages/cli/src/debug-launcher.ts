@@ -86,18 +86,6 @@ export function engineDownloadUrl(
   return `${ENGINE_ARCHIVE_BASE}/${sha1}/engine/${enginePlatform}/${executable}`;
 }
 
-// Pinned seam for a future auto-fetch slice covering any native extension's
-// runtime libraries. Unused by the launcher today: no native extension has a
-// durable archive source yet (OpenAL is blocked upstream at defold/defold#11860;
-// others are unknown), so the launcher only warns (see renderDebugLauncher).
-export function nativeExtensionRuntimeDownloadUrl(
-  sha1: string,
-  enginePlatform: string,
-  libName: string,
-): string {
-  return `${ENGINE_ARCHIVE_BASE}/${sha1}/engine/${enginePlatform}/${libName}`;
-}
-
 export interface NativeExtensionRuntimeWarningOptions {
   readonly target: EngineTarget;
   readonly buildFolder: string;
@@ -128,21 +116,6 @@ export function nativeExtensionRuntimeWarnings(
     warnings.push(warning);
   }
   return warnings;
-}
-
-export interface ResolveEngineOptions {
-  readonly cwd: string;
-  readonly target: EngineTarget;
-  readonly stockPath: string;
-  readonly probe: (candidate: string) => boolean;
-}
-
-// Prefer the native-extension build engine when it exists; the stock engine is
-// the fallback for projects without native extensions.
-export function resolveEnginePath(opts: ResolveEngineOptions): string {
-  const { cwd, target, stockPath, probe } = opts;
-  const buildEnginePath = path.join(cwd, "build", target.buildFolder, target.executable);
-  return probe(buildEnginePath) ? buildEnginePath : stockPath;
 }
 
 export function debugLaunchConfig() {
