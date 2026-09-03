@@ -371,7 +371,6 @@ header.topbar-critical .logo-mark {
   padding: 0.4em 1em;
   border-left: 3px solid var(--color-border-strong);
   color: var(--color-text-muted);
-  font-style: italic;
 }
 .prose hr {
   border: 0;
