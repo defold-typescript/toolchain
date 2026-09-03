@@ -80,6 +80,7 @@ export interface RenderResultInput {
   // absent-versus-empty contract as `unreachableAddresses` above.
   readonly crossWorldAddresses?: readonly CrossWorldAddressEntry[];
   readonly pinMismatch?: { readonly installed: string; readonly pinned: string };
+  readonly upstreamRelease?: { readonly current: string; readonly latest: string };
   // Stated outright so a consumer reads "no surface" from a present field
   // rather than inferring it from an absent or null `materializedSurface`.
   readonly unresolvableTarget?: {
@@ -171,10 +172,14 @@ export function renderResult(input: RenderResultInput): string {
       : withUnreachable;
   const withPinMismatch =
     "pinMismatch" in input ? { ...withCrossWorld, pinMismatch: input.pinMismatch } : withCrossWorld;
+  const withUpstream =
+    "upstreamRelease" in input
+      ? { ...withPinMismatch, upstreamRelease: input.upstreamRelease }
+      : withPinMismatch;
   const withUnresolvable =
     "unresolvableTarget" in input
-      ? { ...withPinMismatch, unresolvableTarget: input.unresolvableTarget }
-      : withPinMismatch;
+      ? { ...withUpstream, unresolvableTarget: input.unresolvableTarget }
+      : withUpstream;
   const withEnginePath =
     "enginePath" in input
       ? { ...withUnresolvable, enginePath: input.enginePath }
@@ -226,6 +231,7 @@ export interface RenderWatchEventInput {
   readonly unreachableAddresses?: readonly UnreachableAddressEntry[];
   readonly crossWorldAddresses?: readonly CrossWorldAddressEntry[];
   readonly pinMismatch?: { readonly installed: string; readonly pinned: string };
+  readonly upstreamRelease?: { readonly current: string; readonly latest: string };
   readonly error?: string;
   readonly errors?: readonly WatchErrorEntry[];
 }
@@ -251,5 +257,9 @@ export function renderWatchEvent(input: RenderWatchEventInput): string {
       : withUnreachable;
   const withPinMismatch =
     "pinMismatch" in input ? { ...withCrossWorld, pinMismatch: input.pinMismatch } : withCrossWorld;
-  return `${JSON.stringify(withPinMismatch)}\n`;
+  const withUpstream =
+    "upstreamRelease" in input
+      ? { ...withPinMismatch, upstreamRelease: input.upstreamRelease }
+      : withPinMismatch;
+  return `${JSON.stringify(withUpstream)}\n`;
 }

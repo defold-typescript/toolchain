@@ -3,6 +3,7 @@ import {
   classifyDefoldTarget,
   describeDetectedPinMismatch,
   describeTargetOverride,
+  describeUpstreamReleaseNotice,
   diagnoseDefoldNamespace,
   readDefoldTargetPin,
   resolveDefoldTarget,
@@ -194,6 +195,32 @@ describe("describeDetectedPinMismatch", () => {
     expect(describeDetectedPinMismatch(" 1.12.4 ", "1.12.4")).toEqual([]);
     expect(describeDetectedPinMismatch(undefined, "1.12.4")).toEqual([]);
     expect(describeDetectedPinMismatch("1.13.0", undefined)).toEqual([]);
+  });
+});
+
+describe("describeUpstreamReleaseNotice", () => {
+  test("a newer upstream release names both versions and points at set-target/upgrade", () => {
+    const notices = describeUpstreamReleaseNotice("1.12.4", "1.13.1");
+    expect(notices).toHaveLength(1);
+    expect(notices[0]).toContain("1.12.4");
+    expect(notices[0]).toContain("1.13.1");
+    expect(notices[0]).toContain("set-target 1.13.1");
+    expect(notices[0]).toContain("upgrade");
+    // Being behind upstream never escalates, so the notice must say so — the
+    // string is the user-facing half of the `--fail-on-drift` invariance.
+    expect(notices[0]).toContain("advisory");
+  });
+
+  test("equal versions, a target ahead of latest, or either side missing produce no notice", () => {
+    expect(describeUpstreamReleaseNotice("1.13.1", "1.13.1")).toEqual([]);
+    expect(describeUpstreamReleaseNotice("1.13.1", "1.13.0")).toEqual([]);
+    expect(describeUpstreamReleaseNotice("1.10.0", "1.9.0")).toEqual([]);
+    expect(describeUpstreamReleaseNotice(undefined, "1.13.1")).toEqual([]);
+    expect(describeUpstreamReleaseNotice("1.12.4", undefined)).toEqual([]);
+  });
+
+  test("compares numerically, so 1.9.0 is behind 1.10.0", () => {
+    expect(describeUpstreamReleaseNotice("1.9.0", "1.10.0")).toHaveLength(1);
   });
 });
 
