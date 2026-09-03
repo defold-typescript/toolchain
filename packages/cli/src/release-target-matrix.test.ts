@@ -3,6 +3,7 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   rmSync,
   symlinkSync,
@@ -22,7 +23,9 @@ import {
 import { type DispatchInternals, dispatch } from "./dispatch";
 import {
   ensureMaterializedReference,
+  MATERIALIZED_ROOT,
   materializeApiSurface,
+  namesSurfaceAxis,
   resolveRegisteredSurfaceGeneratedDir,
 } from "./materialize";
 import { RELEASE_TARGET_MATRIX, selectMatrixSurface } from "./release-target-matrix";
@@ -104,7 +107,7 @@ function scaffoldProject(dir: string, main = "export const answer = 1;\n"): void
   writeFileSync(path.join(src, "main.ts"), main);
 }
 
-function fakeContext(cwd: string, sha: string): MatrixCommandContext {
+function fakeContext(cwd: string): MatrixCommandContext {
   const io: Pick<DefoldIo, "spawn" | "download" | "probe" | "javaProbe"> = {
     // Fake jar/engine "already cached" so no network download is triggered.
     probe: () => true,
@@ -112,7 +115,7 @@ function fakeContext(cwd: string, sha: string): MatrixCommandContext {
     spawn: async () => ({ exitCode: 0, output: "" }),
     download: async () => {},
   };
-  return { cwd, sha, cacheDir: path.join(cwd, ".cache"), ...io };
+  return { cwd, cacheDir: path.join(cwd, ".cache"), ...io };
 }
 
 describe("RELEASE_TARGET_MATRIX", () => {
@@ -233,15 +236,21 @@ function isShaBearing(command: MatrixCommand): boolean {
 
 interface MatrixCommandRecord {
   readonly command: MatrixCommand;
-  readonly version: string;
+  // Null where the command's envelope carried no such field, never the input
+  // re-substituted: a command that stops reporting the target it resolved has
+  // to red, and a fallback to the flag is exactly what would hide that.
+  readonly version: string | null;
   readonly apiSurface: string | null;
   readonly sha: string | null;
   readonly ok: boolean;
+  // Watch's JSON events carry neither version nor surface, so what it observably
+  // did is the watcher it opened and closed and the surface it materialized.
+  readonly watcher?: { readonly opened: boolean; readonly closed: boolean };
+  readonly materializedSurfaces?: readonly string[];
 }
 
 interface MatrixCommandContext {
   readonly cwd: string;
-  readonly sha: string;
   readonly cacheDir: string;
   readonly spawn: DefoldIo["spawn"];
   readonly download: DefoldIo["download"];
@@ -272,7 +281,7 @@ function captureStreams(): Capture {
 
 function baseInternals(ctx: MatrixCommandContext): DispatchInternals {
   return {
-    fetchVersionInfo: async () => ({ sha1: ctx.sha }),
+    fetchVersionInfo: async (version) => ({ sha1: `sha-${version}` }),
     defoldIo: {
       cacheDir: ctx.cacheDir,
       probe: ctx.probe,
@@ -296,6 +305,18 @@ function lastJsonLine(out: string): Envelope {
   return JSON.parse(last) as Envelope;
 }
 
+// Which release surfaces production materialized into a project, recognized with
+// production's own `namesSurfaceAxis` rather than a second reader of the
+// `<surfaceId>@<cliVersion>` stamp separator, which `materialize.ts` keeps private.
+function readMaterializedSurfaces(cwd: string): readonly string[] {
+  const root = path.join(cwd, MATERIALIZED_ROOT);
+  if (!existsSync(root)) return [];
+  const entries = readdirSync(root);
+  return RELEASE_TARGET_MATRIX.filter((spec) =>
+    entries.some((entry) => namesSurfaceAxis(spec.surfaceId, entry)),
+  ).map((spec) => spec.surfaceId);
+}
+
 // Runs one CLI command against the given target with fully-injected archive and
 // process I/O and returns what the command reported (version, surface, SHA). The
 // bob subcommands drive real jar resolution and spawn capture; `watch` drives a
@@ -305,11 +326,18 @@ async function runMatrixCommand(
   version: string,
   ctx: MatrixCommandContext,
 ): Promise<MatrixCommandRecord> {
-  const surfaceId = selectMatrixSurface(version).surfaceId;
-
   if (command === "watch") {
     const capture = captureStreams();
-    const factory: WatcherFactory = (_root, _onEvent): Watcher => ({ close() {} });
+    let opened = false;
+    let closed = false;
+    const factory: WatcherFactory = (_root, _onEvent): Watcher => {
+      opened = true;
+      return {
+        close() {
+          closed = true;
+        },
+      };
+    };
     let resolveHandle: (h: RunWatchHandle) => void = () => {};
     const ready = new Promise<RunWatchHandle>((resolve) => {
       resolveHandle = resolve;
@@ -326,7 +354,15 @@ async function runMatrixCommand(
     await handle.waitForIdle();
     handle.stop();
     const code = await result;
-    return { command, version, apiSurface: surfaceId, sha: null, ok: code === 0 };
+    return {
+      command,
+      version: null,
+      apiSurface: null,
+      sha: null,
+      ok: code === 0,
+      watcher: { opened, closed },
+      materializedSurfaces: readMaterializedSurfaces(ctx.cwd),
+    };
   }
 
   const capture = captureStreams();
@@ -352,8 +388,8 @@ async function runMatrixCommand(
   const envelope = lastJsonLine(capture.out());
   return {
     command,
-    version: envelope.defoldVersion ?? version,
-    apiSurface: isShaBearing(command) ? surfaceId : (envelope.apiSurface ?? null),
+    version: envelope.defoldVersion ?? null,
+    apiSurface: envelope.apiSurface ?? null,
     sha: envelope.defoldSha ?? null,
     ok: code === 0 && envelope.ok !== false,
   };
@@ -365,12 +401,12 @@ describe("runMatrixCommand drives the CLI seams offline", () => {
   function withProject(version: string): { dir: string; ctx: MatrixCommandContext } {
     const dir = mkdtempSync(path.join(cwd, `${version}-`));
     scaffoldProject(dir);
-    return { dir, ctx: fakeContext(dir, `sha-${version}`) };
+    return { dir, ctx: fakeContext(dir) };
   }
 
   test.each([
     ...RELEASE_TARGET_MATRIX,
-  ])("every command reports and consumes the same target/version/SHA for %o", async (spec) => {
+  ])("each command consumes the target through its own observable surface for %o", async (spec) => {
     cwd = mkdtempSync(path.join(os.tmpdir(), "matrix-"));
     try {
       const records = [];
@@ -380,13 +416,24 @@ describe("runMatrixCommand drives the CLI seams offline", () => {
       }
       for (const r of records) {
         expect(r.ok).toBe(true);
+        if (r.command === "watch") {
+          // `opened` is not decoration: a factory that is never constructed
+          // reports the same `closed: false` as one that is never closed.
+          expect(r.watcher).toEqual({ opened: true, closed: true });
+          // Exactly the requested release's surface reached the project, and no
+          // other release's.
+          expect(r.materializedSurfaces).toEqual([spec.surfaceId]);
+          continue;
+        }
         expect(r.version).toBe(spec.version);
-        expect(r.apiSurface).toBe(spec.surfaceId);
+        // The bob subcommands report a resolved archive SHA where the other
+        // three report a surface; each is asserted only where it is emitted, so
+        // a command that drops its own field reds instead of being filled in.
+        expect(r.apiSurface).toBe(isShaBearing(r.command) ? null : spec.surfaceId);
+        // The injected fetch keys its answer off the version production passed
+        // it, so agreement proves the requested target reached the fetch.
+        expect(r.sha).toBe(isShaBearing(r.command) ? `sha-${spec.version}` : null);
       }
-      // The SHA is only fetched by the bob subcommands (version targets carry a
-      // null head SHA until an archive is needed); every bob command must agree.
-      const bobShas = records.filter((r) => r.command.startsWith("bob")).map((r) => r.sha);
-      expect(bobShas.every((s) => s === `sha-${spec.version}`)).toBe(true);
     } finally {
       rmSync(cwd, { recursive: true, force: true });
     }
