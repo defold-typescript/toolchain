@@ -7457,3 +7457,347 @@ describe("watch scene-address surface wiring", () => {
     rmSync(cacheDir, { recursive: true, force: true });
   });
 });
+
+describe("upstream release notice", () => {
+  // The preload defaults the suite offline; this block is the one that exercises
+  // the feature, so it opts back in and hands the check injected seams only.
+  beforeEach(() => {
+    delete process.env.DEFOLD_TYPESCRIPT_NO_UPDATE_CHECK;
+  });
+
+  afterEach(() => {
+    process.env.DEFOLD_TYPESCRIPT_NO_UPDATE_CHECK = "1";
+  });
+
+  const PIN = "1.12.4";
+  const NEWER = "1.13.1";
+  const NOW = 1_000_000_000;
+  const DAY = 24 * 60 * 60 * 1000;
+
+  function cachePath(): string {
+    return path.join(cwd, ".upstream-cache", "stable.json");
+  }
+
+  function seedCache(latestVersion: string, checkedAt = NOW): void {
+    const file = cachePath();
+    mkdirSync(path.dirname(file), { recursive: true });
+    writeFileSync(file, JSON.stringify({ checkedAt, channel: "stable", latestVersion }));
+  }
+
+  function scaffoldPinned(target: string = PIN): void {
+    const tsconfig = JSON.stringify(
+      { compilerOptions: { strict: true }, include: ["src/**/*.ts"] },
+      null,
+      2,
+    );
+    writeFileSync(path.join(cwd, "tsconfig.json"), tsconfig);
+    mkdirSync(path.join(cwd, "src"), { recursive: true });
+    writeFileSync(path.join(cwd, "src", "main.ts"), "export const a = 1;\n");
+    writeFileSync(
+      path.join(cwd, "package.json"),
+      `${JSON.stringify({ "defold-typescript": { "defold-target": target } }, null, 2)}\n`,
+    );
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+  }
+
+  function upstreamInternals(overrides: Record<string, unknown> = {}): {
+    internals: Record<string, unknown>;
+    channelCalls: string[];
+  } {
+    const channelCalls: string[] = [];
+    return {
+      channelCalls,
+      internals: {
+        detectEditorVersion: () => PIN,
+        upstreamCachePath: cachePath(),
+        upstreamNow: () => NOW,
+        fetchChannelInfo: async (channel: string) => {
+          channelCalls.push(channel);
+          return { version: NEWER, sha1: "abc123" };
+        },
+        ...overrides,
+      },
+    };
+  }
+
+  test("build on a version pin behind upstream writes the notice to stderr", async () => {
+    scaffoldPinned();
+    seedCache(NEWER);
+    const { io, err } = captureStreams();
+    const { internals } = upstreamInternals();
+
+    const code = await dispatch(["build", cwd], io, internals);
+
+    expect(code).toBe(0);
+    expect(err()).toContain(NEWER);
+    expect(err()).toContain(`set-target ${NEWER}`);
+    expect(err()).toContain("advisory");
+  });
+
+  test("a cache level with the pin produces no notice", async () => {
+    scaffoldPinned();
+    seedCache(PIN);
+    const { io, err } = captureStreams();
+    const { internals } = upstreamInternals();
+
+    const code = await dispatch(["build", cwd], io, internals);
+
+    expect(code).toBe(0);
+    expect(err()).not.toContain("available upstream");
+  });
+
+  test("an absent cache produces no notice on this run", async () => {
+    scaffoldPinned();
+    const { io, err } = captureStreams();
+    const { internals } = upstreamInternals();
+
+    const code = await dispatch(["build", cwd], io, internals);
+
+    expect(code).toBe(0);
+    expect(err()).not.toContain("available upstream");
+  });
+
+  test("--no-update-check suppresses the notice and never reads or refreshes the cache", async () => {
+    scaffoldPinned();
+    seedCache(NEWER, NOW - DAY * 2);
+    const { io, err } = captureStreams();
+    const { internals, channelCalls } = upstreamInternals();
+
+    const code = await dispatch(["build", cwd, "--no-update-check"], io, internals);
+
+    expect(code).toBe(0);
+    expect(err()).not.toContain("available upstream");
+    expect(channelCalls).toEqual([]);
+  });
+
+  test("DEFOLD_TYPESCRIPT_NO_UPDATE_CHECK suppresses it the same way", async () => {
+    scaffoldPinned();
+    seedCache(NEWER, NOW - DAY * 2);
+    process.env.DEFOLD_TYPESCRIPT_NO_UPDATE_CHECK = "1";
+    {
+      const { io, err } = captureStreams();
+      const { internals, channelCalls } = upstreamInternals();
+
+      const code = await dispatch(["build", cwd], io, internals);
+
+      expect(code).toBe(0);
+      expect(err()).not.toContain("available upstream");
+      expect(channelCalls).toEqual([]);
+    }
+  });
+
+  test("--no-update-check never reaches the spawned bob's argv", async () => {
+    scaffoldPinned();
+    seedCache(NEWER);
+    const spawned: string[][] = [];
+    const spawnCwds: string[] = [];
+    const { io } = captureStreams();
+    const { internals } = upstreamInternals({
+      fetchVersionInfo: async () => ({ sha1: "8fd9f9f5c6e1bd91b8c0f0a3a7d2e1c4b5a60798" }),
+      defoldIo: {
+        cacheDir: "/c",
+        probe: () => true,
+        javaProbe: () => true,
+        spawn: async (argv: string[], spawnCwd: string) => {
+          spawned.push(argv);
+          spawnCwds.push(spawnCwd);
+          return { exitCode: 0 };
+        },
+        download: async () => {},
+      },
+    });
+
+    // Placed *before* the path: bob reads its project dir from `rest[1]`, so an
+    // unfiltered flag is consumed as the directory rather than merely tagging along.
+    await dispatch(["bob", "build", "--no-update-check", cwd], io, internals);
+
+    expect(spawned).toHaveLength(1);
+    expect(spawned[0]).not.toContain("--no-update-check");
+    expect(spawnCwds[0]).toBe(cwd);
+  });
+
+  test("--no-update-check never reaches the engine args after --", async () => {
+    scaffoldPinned();
+    seedCache(NEWER);
+    const projectc = path.join(cwd, "build/default/game.projectc");
+    const engine = path.join(cwd, "build/arm64-macos/dmengine");
+    const spawned: string[][] = [];
+    const { io } = captureStreams();
+    const { internals } = upstreamInternals({
+      runInternals: {
+        platform: "darwin",
+        arch: "arm64",
+        probe: (p: string) => p === projectc || p === engine,
+        spawn: (argv: string[]) => {
+          spawned.push(argv);
+          return { kill: () => {}, exited: Promise.resolve(0) };
+        },
+        copyAside: (p: string) => p,
+        chmod: () => {},
+      },
+    });
+
+    // Before the path for the same reason as bob: `run` takes its project dir from
+    // the first positional ahead of `--`.
+    await dispatch(["run", "--no-update-check", cwd, "--", "--verbose"], io, internals);
+
+    expect(spawned[0]).toEqual([engine, projectc, "--verbose"]);
+  });
+
+  test("build --json carries upstreamRelease and no prose", async () => {
+    scaffoldPinned();
+    seedCache(NEWER);
+    const { io, out, err } = captureStreams();
+    const { internals } = upstreamInternals();
+
+    const code = await dispatch(["build", cwd, "--json"], io, internals);
+
+    expect(code).toBe(0);
+    expect(err()).not.toContain("available upstream");
+    const parsed = JSON.parse(out()) as {
+      warnings: readonly string[];
+      upstreamRelease?: { current: string; latest: string };
+    };
+    expect(parsed.upstreamRelease).toEqual({ current: PIN, latest: NEWER });
+    expect(parsed.warnings.some((w) => w.includes("available upstream"))).toBe(true);
+  });
+
+  test("build --json omits upstreamRelease entirely when there is nothing to report", async () => {
+    scaffoldPinned();
+    seedCache(PIN);
+    const { io, out } = captureStreams();
+    const { internals } = upstreamInternals();
+
+    const code = await dispatch(["build", cwd, "--json"], io, internals);
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as Record<string, unknown>;
+    expect("upstreamRelease" in parsed).toBe(false);
+  });
+
+  test("build --fail-on-drift with a matching editor and a behind-upstream cache exits 0", async () => {
+    scaffoldPinned();
+    seedCache(NEWER);
+    const { io, err } = captureStreams();
+    const { internals } = upstreamInternals({ detectEditorVersion: () => PIN });
+
+    const code = await dispatch(["build", cwd, "--fail-on-drift"], io, internals);
+
+    expect(err()).toContain("available upstream");
+    expect(code).toBe(0);
+  });
+
+  test("watch emits the notice on the same cache state", async () => {
+    scaffoldPinned();
+    seedCache(NEWER);
+    const { io, err } = captureStreams();
+    const factory: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+    const { internals } = upstreamInternals({
+      watcherFactory: factory,
+      onWatchStart: (h: RunWatchHandle) => h.stop(),
+    });
+
+    const code = await dispatch(["watch", cwd], io, internals);
+
+    expect(code).toBe(0);
+    expect(err()).toContain("available upstream");
+  });
+
+  test("run emits the notice on the same cache state", async () => {
+    scaffoldPinned();
+    seedCache(NEWER);
+    const { io, err } = captureStreams();
+    const { internals } = upstreamInternals({
+      runInternals: {
+        platform: "darwin",
+        arch: "arm64",
+        probe: () => true,
+        spawn: () => ({ kill: () => {}, exited: Promise.resolve(0) }),
+        copyAside: (p: string) => p,
+        chmod: () => {},
+      },
+    });
+
+    const code = await dispatch(["run", cwd], io, internals);
+
+    expect(code).toBe(0);
+    expect(err()).toContain("available upstream");
+  });
+
+  test("bob build emits it; bob status and resolve do not", async () => {
+    scaffoldPinned();
+    seedCache(NEWER);
+    const defoldIo = {
+      cacheDir: "/c",
+      probe: () => true,
+      javaProbe: () => true,
+      spawn: async () => ({ exitCode: 0 }),
+      download: async () => {},
+    };
+    const fetchVersionInfo = async () => ({
+      sha1: "8fd9f9f5c6e1bd91b8c0f0a3a7d2e1c4b5a60798",
+    });
+
+    const build = captureStreams();
+    await dispatch(
+      ["bob", "build", cwd],
+      build.io,
+      upstreamInternals({ defoldIo, fetchVersionInfo }).internals,
+    );
+    expect(build.err()).toContain("available upstream");
+
+    const status = captureStreams();
+    await dispatch(
+      ["bob", "status", cwd],
+      status.io,
+      upstreamInternals({ defoldIo, fetchVersionInfo }).internals,
+    );
+    expect(status.err()).not.toContain("available upstream");
+
+    const resolved = captureStreams();
+    await dispatch(["resolve", cwd], resolved.io, upstreamInternals().internals);
+    expect(resolved.err()).not.toContain("available upstream");
+  });
+
+  test("a channel-pinned project never gets the notice", async () => {
+    scaffoldPinned("stable");
+    seedCache(NEWER);
+    const { io, err } = captureStreams();
+    const { internals } = upstreamInternals();
+
+    const code = await dispatch(["build", cwd], io, internals);
+
+    expect(code).toBe(0);
+    expect(err()).not.toContain("available upstream");
+  });
+
+  test("a stale cache makes exactly one stable fetch and leaves the file refreshed", async () => {
+    scaffoldPinned();
+    seedCache("1.11.0", NOW - DAY * 2);
+    const { io } = captureStreams();
+    const { internals, channelCalls } = upstreamInternals();
+
+    const code = await dispatch(["build", cwd], io, internals);
+
+    expect(code).toBe(0);
+    expect(channelCalls).toEqual(["stable"]);
+    const state = JSON.parse(readFileSync(cachePath(), "utf8")) as {
+      checkedAt: number;
+      channel: string;
+      latestVersion: string;
+    };
+    expect(state).toEqual({ checkedAt: NOW, channel: "stable", latestVersion: NEWER });
+  });
+
+  test("a fresh cache makes no fetch at all", async () => {
+    scaffoldPinned();
+    seedCache(NEWER, NOW);
+    const { io } = captureStreams();
+    const { internals, channelCalls } = upstreamInternals();
+
+    const code = await dispatch(["build", cwd], io, internals);
+
+    expect(code).toBe(0);
+    expect(channelCalls).toEqual([]);
+  });
+});
