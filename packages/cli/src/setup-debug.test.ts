@@ -17,10 +17,10 @@ import {
   BLOCK_BEGIN,
   BLOCK_END,
   findEntryScriptCandidates,
-  injectDebugBootstrap,
   LEGACY_BOOTSTRAP_MARKER,
   LLDEBUGGER_URL,
   runSetupDebug,
+  upsertManagedBlock,
 } from "./setup-debug";
 
 function tempProject(): string {
@@ -85,9 +85,9 @@ describe("AMBIENT_DECLARATION", () => {
   });
 });
 
-describe("injectDebugBootstrap (managed BEGIN/END block)", () => {
+describe("upsertManagedBlock (managed BEGIN/END block)", () => {
   test("wraps the import and gated start in sentinels, no declare module", () => {
-    const out = injectDebugBootstrap(FACTORY_SCRIPT);
+    const out = upsertManagedBlock(FACTORY_SCRIPT).text;
     expect(out.startsWith(BLOCK_BEGIN)).toBe(true);
     expect(out).toContain(BLOCK_BEGIN);
     expect(out).toContain(BLOCK_END);
@@ -102,13 +102,13 @@ describe("injectDebugBootstrap (managed BEGIN/END block)", () => {
     // Biome's no-blank-line-before-statement rule flags an import that
     // immediately follows the END line comment; FACTORY_SCRIPT opens with an
     // import, so a fresh inject must leave a blank line between them.
-    const out = injectDebugBootstrap(FACTORY_SCRIPT);
+    const out = upsertManagedBlock(FACTORY_SCRIPT).text;
     expect(out).toContain(`${BLOCK_END}\n\nimport`);
   });
 
   test("no-op when the enclosed text is already canonical", () => {
-    const once = injectDebugBootstrap(FACTORY_SCRIPT);
-    expect(injectDebugBootstrap(once)).toBe(once);
+    const once = upsertManagedBlock(FACTORY_SCRIPT).text;
+    expect(upsertManagedBlock(once).text).toBe(once);
   });
 
   test("refreshes a drifted block, preserving lines outside the sentinels", () => {
@@ -118,7 +118,7 @@ import * as lldebugger from "lldebugger.debug";
 lldebugger.start();
 ${BLOCK_END}
 ${FACTORY_SCRIPT}`;
-    const out = injectDebugBootstrap(drifted);
+    const out = upsertManagedBlock(drifted).text;
     expect(out).not.toContain("hand-edited stale wording");
     expect(out).toContain("if (sys.get_engine_info().is_debug) {");
     expect(out).toContain(FACTORY_SCRIPT);
@@ -126,7 +126,7 @@ ${FACTORY_SCRIPT}`;
     expect(out.split(BLOCK_BEGIN).length - 1).toBe(1);
     expect(out.split(BLOCK_END).length - 1).toBe(1);
     // a second pass is now a no-op
-    expect(injectDebugBootstrap(out)).toBe(out);
+    expect(upsertManagedBlock(out).text).toBe(out);
   });
 
   test("upgrades a legacy single-marker block in place to exactly one managed block", () => {
@@ -143,33 +143,33 @@ if (sys.get_engine_info().is_debug) {
 }
 
 ${FACTORY_SCRIPT}`;
-    const out = injectDebugBootstrap(legacy);
+    const out = upsertManagedBlock(legacy).text;
     expect(out).not.toContain(LEGACY_BOOTSTRAP_MARKER);
     expect(out).not.toContain('declare module "lldebugger.debug"');
     expect(out.split(BLOCK_BEGIN).length - 1).toBe(1);
     expect(out.split(BLOCK_END).length - 1).toBe(1);
     expect(out).toContain(FACTORY_SCRIPT);
-    expect(injectDebugBootstrap(out)).toBe(out);
+    expect(upsertManagedBlock(out).text).toBe(out);
   });
 
   test("refuses a BEGIN with no END", () => {
     const broken = `${BLOCK_BEGIN}\nimport * as lldebugger from "lldebugger.debug";\n${FACTORY_SCRIPT}`;
-    expect(() => injectDebugBootstrap(broken)).toThrow(/malformed/i);
+    expect(() => upsertManagedBlock(broken).text).toThrow(/malformed/i);
   });
 
   test("refuses an END with no BEGIN", () => {
     const broken = `${BLOCK_END}\n${FACTORY_SCRIPT}`;
-    expect(() => injectDebugBootstrap(broken)).toThrow(/malformed/i);
+    expect(() => upsertManagedBlock(broken).text).toThrow(/malformed/i);
   });
 
   test("refuses out-of-order sentinels", () => {
     const broken = `${BLOCK_END}\nstuff\n${BLOCK_BEGIN}\n${FACTORY_SCRIPT}`;
-    expect(() => injectDebugBootstrap(broken)).toThrow(/malformed/i);
+    expect(() => upsertManagedBlock(broken).text).toThrow(/malformed/i);
   });
 
   test("refuses duplicate blocks", () => {
     const dup = `${BLOCK_BEGIN}\na\n${BLOCK_END}\n${BLOCK_BEGIN}\nb\n${BLOCK_END}\n`;
-    expect(() => injectDebugBootstrap(dup)).toThrow(/malformed/i);
+    expect(() => upsertManagedBlock(dup).text).toThrow(/malformed/i);
   });
 
   test("mirrors the bootstrap snippet in the debugging guide exactly", () => {
@@ -182,7 +182,7 @@ ${FACTORY_SCRIPT}`;
     // code under a numbered list, indenting each line.
     const emitted = [
       ...AMBIENT_DECLARATION.split("\n"),
-      ...injectDebugBootstrap("").split("\n"),
+      ...upsertManagedBlock("").text.split("\n"),
     ].filter((line) => line.trim() !== "");
     for (const line of emitted) {
       expect(guide).toContain(line.trim());
@@ -549,7 +549,7 @@ describe("runSetupDebug boot-path selection", () => {
     try {
       writeBootProject(cwd, [{ id: "player", src: "src/player.ts" }]);
       for (const rel of ["src/player.ts", "src/old1.ts", "src/old2.ts"]) {
-        writeFileSync(path.join(cwd, rel), injectDebugBootstrap(FACTORY_SCRIPT));
+        writeFileSync(path.join(cwd, rel), upsertManagedBlock(FACTORY_SCRIPT).text);
       }
       const result = await runSetupDebug({ cwd });
       expect(result.ok).toBe(true);

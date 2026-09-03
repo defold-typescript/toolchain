@@ -5,9 +5,7 @@ import {
   DEBUG_LAUNCHER_SOURCE,
   debugLaunchConfig,
   engineDownloadUrl,
-  nativeExtensionRuntimeDownloadUrl,
   nativeExtensionRuntimeWarnings,
-  resolveEnginePath,
   targetPlatform,
   VSCODE_LAUNCH_CONTENT,
 } from "./debug-launcher";
@@ -119,41 +117,6 @@ describe("nativeExtensionRuntimeWarnings", () => {
       [],
     );
     expect(nativeExtensionRuntimeWarnings({ target, buildFolder, exists: () => true })).toEqual([]);
-  });
-});
-
-describe("nativeExtensionRuntimeDownloadUrl", () => {
-  test("builds the archive URL with the same base and shape as engineDownloadUrl", () => {
-    expect(nativeExtensionRuntimeDownloadUrl("abc123", "x86_64-win32", "OpenAL32.dll")).toBe(
-      "https://d.defold.com/archive/stable/abc123/engine/x86_64-win32/OpenAL32.dll",
-    );
-  });
-});
-
-describe("resolveEnginePath", () => {
-  const cwd = "/proj";
-  const target = targetPlatform("darwin", "arm64");
-  const stockPath = "/proj/.vscode/dmengine";
-  const buildEnginePath = path.join(cwd, "build", target.buildFolder, target.executable);
-
-  test("returns the native-extension build engine when its probe hits", () => {
-    const resolved = resolveEnginePath({
-      cwd,
-      target,
-      stockPath,
-      probe: (candidate) => candidate === buildEnginePath,
-    });
-    expect(resolved).toBe(buildEnginePath);
-  });
-
-  test("falls back to the cached stock engine when the build engine is absent", () => {
-    const resolved = resolveEnginePath({
-      cwd,
-      target,
-      stockPath,
-      probe: () => false,
-    });
-    expect(resolved).toBe(stockPath);
   });
 });
 

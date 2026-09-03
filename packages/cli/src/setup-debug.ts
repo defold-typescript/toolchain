@@ -139,6 +139,8 @@ function occurrences(haystack: string, needle: string): number {
   return haystack.split(needle).length - 1;
 }
 
+// retired-orphan-audit: the injectDebugBootstrap wrapper was retired; this is
+// the live entry point every caller and test now reaches.
 // Locate the single managed BEGIN…END pair and act on its three states:
 // absent (inject or legacy-upgrade), canonical (no-op), drifted (splice-
 // replace). A malformed region (lone or duplicate / out-of-order sentinels)
@@ -175,10 +177,6 @@ export function upsertManagedBlock(source: string): UpsertResult {
   }
 
   return { text: `${MANAGED_BLOCK}\n\n${source}`, action: "injected" };
-}
-
-export function injectDebugBootstrap(source: string): string {
-  return upsertManagedBlock(source).text;
 }
 
 export interface StripResult {

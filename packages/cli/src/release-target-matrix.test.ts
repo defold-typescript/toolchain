@@ -10,27 +10,23 @@ import {
 } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { Writable } from "node:stream";
 import { selectApiSurface } from "./api-surface";
+import { bobCachePath, resolveBobJar } from "./bob";
 import type { DefoldIo } from "./bob-command";
 import {
   CURRENT_STABLE_DEFOLD_VERSION,
   DEFOLD_VERSIONS,
   PREVIOUS_STABLE_DEFOLD_VERSION,
 } from "./defold-version";
+import { type DispatchInternals, dispatch } from "./dispatch";
 import {
   ensureMaterializedReference,
   materializeApiSurface,
   resolveRegisteredSurfaceGeneratedDir,
 } from "./materialize";
-import {
-  bobArtifactIdentity,
-  isReusableBobArtifact,
-  MATRIX_COMMANDS,
-  type MatrixCommandContext,
-  RELEASE_TARGET_MATRIX,
-  runMatrixCommand,
-  selectMatrixSurface,
-} from "./release-target-matrix";
+import { RELEASE_TARGET_MATRIX, selectMatrixSurface } from "./release-target-matrix";
+import type { RunWatchHandle, Watcher, WatcherFactory } from "./watch";
 
 const REPO_ROOT = path.resolve(import.meta.dir, "..", "..", "..");
 const TYPES_PKG = path.join(REPO_ROOT, "packages", "types");
@@ -194,8 +190,8 @@ describe("selectMatrixSurface", () => {
 
 describe("bob artifact cache identity", () => {
   test("keys the cached jar by the resolved SHA, not the semantic version", () => {
-    const prePatch = bobArtifactIdentity("sha-pre", "/cache");
-    const patched = bobArtifactIdentity("sha-post", "/cache");
+    const prePatch = bobCachePath({ sha1: "sha-pre", cacheDir: "/cache" });
+    const patched = bobCachePath({ sha1: "sha-post", cacheDir: "/cache" });
     expect(prePatch).not.toBe(patched);
     expect(prePatch).toContain("sha-pre");
     expect(patched).toContain("sha-post");
@@ -204,11 +200,164 @@ describe("bob artifact cache identity", () => {
   test("a patched 1.13.0 cannot reuse a pre-patch cache entry for the same semantic version", () => {
     // The cache only holds the pre-patch artifact.
     const has = (candidate: string): boolean =>
-      candidate === bobArtifactIdentity("sha-pre", "/cache");
-    expect(isReusableBobArtifact("sha-pre", "/cache", has)).toBe(true);
-    expect(isReusableBobArtifact("sha-post", "/cache", has)).toBe(false);
+      candidate === bobCachePath({ sha1: "sha-pre", cacheDir: "/cache" });
+    expect(resolveBobJar({ sha1: "sha-pre", cacheDir: "/cache", probe: has }).cached).toBe(true);
+    expect(resolveBobJar({ sha1: "sha-post", cacheDir: "/cache", probe: has }).cached).toBe(false);
   });
 });
+
+const MATRIX_COMMANDS = [
+  "init",
+  "build",
+  "watch",
+  "resolve",
+  "bob status",
+  "bob resolve",
+  "bob build",
+  "bob bundle",
+] as const;
+type MatrixCommand = (typeof MATRIX_COMMANDS)[number];
+
+// The bob commands report a resolved archive SHA instead of an `apiSurface` (a
+// version target only fetches the SHA when an archive is actually needed).
+const SHA_BEARING: ReadonlySet<MatrixCommand> = new Set([
+  "bob status",
+  "bob resolve",
+  "bob build",
+  "bob bundle",
+]);
+
+function isShaBearing(command: MatrixCommand): boolean {
+  return SHA_BEARING.has(command);
+}
+
+interface MatrixCommandRecord {
+  readonly command: MatrixCommand;
+  readonly version: string;
+  readonly apiSurface: string | null;
+  readonly sha: string | null;
+  readonly ok: boolean;
+}
+
+interface MatrixCommandContext {
+  readonly cwd: string;
+  readonly sha: string;
+  readonly cacheDir: string;
+  readonly spawn: DefoldIo["spawn"];
+  readonly download: DefoldIo["download"];
+  readonly probe: DefoldIo["probe"];
+  readonly javaProbe?: DefoldIo["javaProbe"];
+}
+
+interface Capture {
+  readonly io: { stdout: NodeJS.WritableStream; stderr: NodeJS.WritableStream };
+  out(): string;
+}
+
+function captureStreams(): Capture {
+  const chunks: Buffer[] = [];
+  const stdout = new Writable({
+    write(chunk, _enc, cb) {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+      cb();
+    },
+  });
+  const stderr = new Writable({
+    write(_chunk, _enc, cb) {
+      cb();
+    },
+  });
+  return { io: { stdout, stderr }, out: () => Buffer.concat(chunks).toString("utf8") };
+}
+
+function baseInternals(ctx: MatrixCommandContext): DispatchInternals {
+  return {
+    fetchVersionInfo: async () => ({ sha1: ctx.sha }),
+    defoldIo: {
+      cacheDir: ctx.cacheDir,
+      probe: ctx.probe,
+      javaProbe: ctx.javaProbe ?? (() => true),
+      spawn: ctx.spawn,
+      download: ctx.download,
+    },
+  };
+}
+
+interface Envelope {
+  readonly ok?: boolean;
+  readonly defoldVersion?: string;
+  readonly apiSurface?: string | null;
+  readonly defoldSha?: string | null;
+}
+
+function lastJsonLine(out: string): Envelope {
+  const lines = out.trimEnd().split("\n").filter(Boolean);
+  const last = lines[lines.length - 1] ?? "{}";
+  return JSON.parse(last) as Envelope;
+}
+
+// Runs one CLI command against the given target with fully-injected archive and
+// process I/O and returns what the command reported (version, surface, SHA). The
+// bob subcommands drive real jar resolution and spawn capture; `watch` drives a
+// bounded synthetic watcher.
+async function runMatrixCommand(
+  command: MatrixCommand,
+  version: string,
+  ctx: MatrixCommandContext,
+): Promise<MatrixCommandRecord> {
+  const surfaceId = selectMatrixSurface(version).surfaceId;
+
+  if (command === "watch") {
+    const capture = captureStreams();
+    const factory: WatcherFactory = (_root, _onEvent): Watcher => ({ close() {} });
+    let resolveHandle: (h: RunWatchHandle) => void = () => {};
+    const ready = new Promise<RunWatchHandle>((resolve) => {
+      resolveHandle = resolve;
+    });
+    const internals: DispatchInternals = {
+      ...baseInternals(ctx),
+      watcherFactory: factory,
+      onWatchStart: (h) => resolveHandle(h),
+    };
+    const result = Promise.resolve(
+      dispatch(["watch", ctx.cwd, "--defold-target", version, "--json"], capture.io, internals),
+    );
+    const handle = await ready;
+    await handle.waitForIdle();
+    handle.stop();
+    const code = await result;
+    return { command, version, apiSurface: surfaceId, sha: null, ok: code === 0 };
+  }
+
+  const capture = captureStreams();
+  const internals = baseInternals(ctx);
+  const argv =
+    command === "init"
+      ? [
+          "init",
+          ctx.cwd,
+          "--defold-target",
+          version,
+          "--json",
+          "--force",
+          "--suppress-install-reminder",
+        ]
+      : command === "build"
+        ? ["build", ctx.cwd, "--defold-target", version, "--json"]
+        : command === "resolve"
+          ? ["resolve", ctx.cwd, "--defold-target", version, "--json"]
+          : ["bob", command.slice("bob ".length), ctx.cwd, "--defold-target", version, "--json"];
+
+  const code = await Promise.resolve(dispatch(argv, capture.io, internals));
+  const envelope = lastJsonLine(capture.out());
+  return {
+    command,
+    version: envelope.defoldVersion ?? version,
+    apiSurface: isShaBearing(command) ? surfaceId : (envelope.apiSurface ?? null),
+    sha: envelope.defoldSha ?? null,
+    ok: code === 0 && envelope.ok !== false,
+  };
+}
 
 describe("runMatrixCommand drives the CLI seams offline", () => {
   let cwd: string;

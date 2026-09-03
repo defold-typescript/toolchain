@@ -104,11 +104,6 @@ export function detectSourceOutputKind(source: string): SourceOutputKind {
   return "module";
 }
 
-export function detectSourceScriptKind(source: string): ScriptKind {
-  const kind = detectSourceOutputKind(source);
-  return kind === "module" ? "script" : kind;
-}
-
 // Defold resolves `require("lualib_bundle")` to `lualib_bundle.lua` at the
 // project/output root, so the synthesized bundle lands once there regardless of
 // which subfolder a script lives in.
@@ -129,14 +124,6 @@ export function timersModuleRel(config: BuildConfig): string {
     return "defold_typescript_timers.lua";
   }
   return path.posix.join(outDir, "defold_typescript_timers.lua");
-}
-
-export function computeScriptRel(
-  rel: string,
-  config: BuildConfig,
-  kind: ScriptKind = "script",
-): string {
-  return computeOutputRel(rel, config, kind);
 }
 
 export function outputRelsForSource(rel: string, config: BuildConfig): string[] {
