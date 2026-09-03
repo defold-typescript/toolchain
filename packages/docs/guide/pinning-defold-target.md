@@ -3,15 +3,17 @@ toc-title: Pinning the Defold target
 ---
 # Pinning the Defold API target
 
-`@defold-typescript/types` ships the **latest/current** Defold API surface and
-the complete 1.13.0 and 1.12.4 surfaces pre-baked; other older surfaces are
-generated on demand. The default import is always current. Selecting another
-target materializes its version-owned surface locally. Pinning a surface
+`@defold-typescript/types` ships the **latest/current** Defold API surface
+pre-baked, along with a small retained set of recent releases; every other
+registered surface is generated on demand. The retained set moves with each
+toolchain release, so the list that counts is the one in your installed
+package's `api-targets.json`. The default import is always current. Selecting
+another target materializes its version-owned surface locally. Pinning a surface
 makes the TypeScript compiler reject calls to engine functions that do not exist
 in the Defold version you target, instead of letting them through to fail at
 runtime.
 
-Moving a project from 1.12.4 to the current 1.13.1 surface removes some Lua APIs
+Moving a project from an older surface to the current one removes some Lua APIs
 and changes a few asset and platform defaults — see [Upgrading Defold
 versions](./upgrading-defold-versions.md) for the per-change migration steps.
 
@@ -72,10 +74,14 @@ generated API.
 
 ## Opting into a pinned surface
 
-You do not pin a surface through a package subpath export. The current 1.13.1
-surface and the historical 1.13.0 and 1.12.4 surfaces are shipped pre-baked in the
-npm package. Other registered non-current surfaces are generated on your
-machine from that version's Defold reference docs. Either form is
+You do not pin a surface through a package subpath export. The current surface
+and a small set of retained older ones ship pre-baked in the npm package; every
+other registered surface is generated on your machine from that version's Defold
+reference docs. A version bump keeps the current release plus the newest release
+of the preceding minor line and demotes the patches between them to on-demand
+generation, so the pre-baked set moves over time — a demoted version stays
+resolvable, it just costs one download on first use. The set your install
+actually carries is the one its `api-targets.json` lists. Either form is
 **materialized** into a project-local `.defold-types/<version>@<toolchain>/`
 faux `@types` package that your `tsconfig.json` references. The directory names
 both axes that decide its contents — the Defold target and the toolchain release
@@ -351,10 +357,10 @@ resolution, so the pin no longer binds that specifier.
 How the surface is produced depends on the resolved version:
 
 - **Current-stable** copies the pre-baked surface that ships in
-  `@defold-typescript/types` into `.defold-types/defold-1.13.1@<toolchain>/`. No
-  network access.
-- **The historical 1.13.0 and 1.12.4 versions** copy their complete committed
-  declaration snapshots and require no network access.
+  `@defold-typescript/types` into `.defold-types/defold-<current>@<toolchain>/`.
+  No network access.
+- **Any other pre-baked version** copies its complete committed declaration
+  snapshot and requires no network access.
 - **Another pinned non-current version** is generated **on the fly** from that
   version's Defold reference docs and written into
   `.defold-types/<version>@<toolchain>/` (for example
@@ -397,13 +403,13 @@ runtime kinds; the committed snapshots do not.
 Which kinds a surface writes follows both the target it was built from and how
 that surface was produced. A surface **generated on the fly** from reference docs
 carries the runtime trio (`script`, `gui-script`, `render-script`); a surface
-**copied from a committed snapshot** — the current default, 1.13.0 and 1.12.4 —
-carries no runtime kind at all, so its runtime walls always keep the installed subpath.
-Either surface carries `editor-script` only when the target it was built from
-ships an editor-scripting document of its own — today the current default target
-and 1.13.0, but not 1.12.4. A project pinned to a target without one falls back
-to the installed package's [editor-script surface](editor-scripts.md), which is
-the current default target's editor API: the pin does not narrow editor scripts
+**copied from a committed snapshot** — any pre-baked version — carries no runtime
+kind at all, so its runtime walls always keep the installed subpath. Either
+surface carries `editor-script` only when the target it was built from ships an
+editor-scripting document of its own: the current default target does, while a
+sufficiently old target does not. A project pinned to a target without one falls
+back to the installed package's [editor-script surface](editor-scripts.md), which
+is the current default target's editor API: the pin does not narrow editor scripts
 there. Where a wall does narrow, the narrowing covers the
 `@defold-typescript/types/<kind>` factory import as well as the ambient surface,
 so both come from the pinned release; see [walling a directory](./wall.md).

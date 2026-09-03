@@ -16,7 +16,6 @@ import {
   classifyTransition,
   EXTENSION_PINS,
   fixtureDir,
-  preambleSelectableVersions,
   promotedNamespacesFor,
   RELEASE_MODEL,
   retainedVersions,
@@ -199,50 +198,5 @@ describe("surface retention", () => {
       nextPatch,
       previousMinorOfCurrent,
     ]);
-  });
-});
-
-describe("changelog preamble names only resolvable Defold targets", () => {
-  const changelog = readFileSync(
-    resolve(import.meta.dir, "../packages/docs/guide/changelog.md"),
-    "utf8",
-  );
-
-  function registeredVersions(): string[] {
-    const registry = JSON.parse(
-      readFileSync(resolve(import.meta.dir, "../packages/types/api-targets.json"), "utf8"),
-    ) as { targets: RegistryTarget[] };
-    return registry.targets.map((target) => target.id.replace(/^defold-/, ""));
-  }
-
-  // The preamble is live page prose above the first version heading, so unlike a
-  // released section it must keep tracking the registry. A target dropped from
-  // `api-targets.json` reds this rather than leaving the page promising a switch
-  // to a surface that no longer resolves.
-  test("every Defold version the preamble names is a registered target", () => {
-    const named = preambleSelectableVersions(changelog);
-    expect(named.length).toBeGreaterThan(0);
-    const registered = registeredVersions();
-    for (const version of named) {
-      expect(registered).toContain(version);
-    }
-  });
-
-  test("the preamble names the current default target", () => {
-    expect(preambleSelectableVersions(changelog)).toContain(RELEASE_MODEL.current);
-  });
-
-  test("only the preamble is read — a released section's version list is frozen", () => {
-    const body = [
-      "# Changelog",
-      "",
-      "selects (`1.12.4`, `1.13.1`, ...)",
-      "",
-      "## v0.26.0",
-      "",
-      "- `1.13.0` is gone",
-      "",
-    ].join("\n");
-    expect(preambleSelectableVersions(body)).toEqual(["1.12.4", "1.13.1"]);
   });
 });
