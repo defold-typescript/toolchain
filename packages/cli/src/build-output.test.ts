@@ -7,9 +7,7 @@ import {
   BuildFailureError,
   collectFailures,
   computeOutputRel,
-  computeScriptRel,
   detectSourceOutputKind,
-  detectSourceScriptKind,
   GENERATED_BANNER,
   isFileIncluded,
   isTranspilerSource,
@@ -89,29 +87,29 @@ describe("isFileIncluded", () => {
   });
 });
 
-describe("computeScriptRel", () => {
+describe("computeOutputRel script paths", () => {
   test("no-outDir branch appends .ts.script next to the source", () => {
-    expect(computeScriptRel("src/player.ts", { outDir: undefined, include: ["src/**/*.ts"] })).toBe(
-      "src/player.ts.script",
-    );
+    expect(
+      computeOutputRel("src/player.ts", { outDir: undefined, include: ["src/**/*.ts"] }, "script"),
+    ).toBe("src/player.ts.script");
   });
 
   test("outDir branch strips the include base, then appends .ts.script", () => {
-    expect(computeScriptRel("src/player.ts", { outDir: "build", include: ["src/**/*.ts"] })).toBe(
-      "build/player.ts.script",
-    );
+    expect(
+      computeOutputRel("src/player.ts", { outDir: "build", include: ["src/**/*.ts"] }, "script"),
+    ).toBe("build/player.ts.script");
   });
 
   test("alongside mode yields the same posix output as a posix input", () => {
     const rel = toPosix("src\\game\\hero.ts", "\\");
-    expect(computeScriptRel(rel, { outDir: undefined, include: ["src/**/*.ts"] })).toBe(
+    expect(computeOutputRel(rel, { outDir: undefined, include: ["src/**/*.ts"] }, "script")).toBe(
       "src/game/hero.ts.script",
     );
   });
 
   test("outDir mode strips the includeBase only because normalization ran first", () => {
     const rel = toPosix("src\\game\\hero.ts", "\\");
-    expect(computeScriptRel(rel, { outDir: "build/lua", include: ["src/**/*.ts"] })).toBe(
+    expect(computeOutputRel(rel, { outDir: "build/lua", include: ["src/**/*.ts"] }, "script")).toBe(
       "build/lua/game/hero.ts.script",
     );
   });
@@ -183,47 +181,17 @@ describe("detectSourceOutputKind", () => {
   });
 });
 
-describe("detectSourceScriptKind", () => {
-  test("a defineGuiScript call is a gui-script", () => {
-    expect(detectSourceScriptKind("export default defineGuiScript({ init() {} });")).toBe(
-      "gui-script",
-    );
-  });
-
-  test("a defineRenderScript call is a render-script", () => {
-    expect(detectSourceScriptKind("export default defineRenderScript({});")).toBe("render-script");
-  });
-
-  test("a defineScript call is a script", () => {
-    expect(detectSourceScriptKind("export default defineScript({});")).toBe("script");
-  });
-
-  test("keys on the call, not the import: imports all but calls render", () => {
-    const source = [
-      'import { defineScript, defineGuiScript, defineRenderScript } from "@defold-typescript/types";',
-      "export default defineRenderScript({});",
-    ].join("\n");
-    expect(detectSourceScriptKind(source)).toBe("render-script");
-  });
-
-  test("a generic defineGuiScript call is a gui-script", () => {
-    expect(detectSourceScriptKind("export default defineGuiScript<MenuSelf>({ init() {} });")).toBe(
-      "gui-script",
-    );
-  });
-});
-
-describe("computeOutputRel and computeScriptRel kind suffix", () => {
+describe("computeOutputRel kind suffix", () => {
   const include = ["src/**/*.ts"];
 
   test("gui-script emits a .ts.gui_script suffix", () => {
-    expect(computeScriptRel("src/hud.ts", { outDir: undefined, include }, "gui-script")).toBe(
+    expect(computeOutputRel("src/hud.ts", { outDir: undefined, include }, "gui-script")).toBe(
       "src/hud.ts.gui_script",
     );
   });
 
   test("render-script emits a .ts.render_script suffix", () => {
-    expect(computeScriptRel("src/cam.ts", { outDir: undefined, include }, "render-script")).toBe(
+    expect(computeOutputRel("src/cam.ts", { outDir: undefined, include }, "render-script")).toBe(
       "src/cam.ts.render_script",
     );
   });
@@ -247,7 +215,7 @@ describe("computeOutputRel and computeScriptRel kind suffix", () => {
   });
 
   test("outDir mode re-roots and applies the kind suffix", () => {
-    expect(computeScriptRel("src/hud.ts", { outDir: "build", include }, "gui-script")).toBe(
+    expect(computeOutputRel("src/hud.ts", { outDir: "build", include }, "gui-script")).toBe(
       "build/hud.ts.gui_script",
     );
   });
