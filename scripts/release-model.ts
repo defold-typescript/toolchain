@@ -80,16 +80,6 @@ export function retainedVersions(all: readonly string[], to: string): string[] {
   return retained;
 }
 
-// The Defold versions the changelog's preamble presents as selectable. The
-// preamble is live page prose above the first `## vX.Y.Z` heading — unlike a
-// released section it is not frozen, so it has to keep tracking the target
-// registry, and `release-model.test.ts` guards it against `api-targets.json`.
-export function preambleSelectableVersions(changelog: string): string[] {
-  const firstRelease = changelog.search(/^## v\d/m);
-  const preamble = firstRelease === -1 ? changelog : changelog.slice(0, firstRelease);
-  return [...new Set([...preamble.matchAll(/`(\d+\.\d+\.\d+)`/g)].map((match) => match[1] ?? ""))];
-}
-
 // Namespaces promoted into the generated surface for the first time at a given
 // release. Seeded with the 1.13.0 set formerly held as
 // `DEFOLD_1_13_PROMOTED_NAMESPACES` in the release importer.

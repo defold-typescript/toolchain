@@ -4,15 +4,10 @@ llms-full: false
 ---
 # Changelog
 
-What changed in each published `defold-typescript` toolchain release. Sections
-are headed by the **toolchain** version (the `vX.Y.Z` git tag) — a different axis
-from the **Defold** engine version the API reference's version switcher selects
-(`1.13.1`, `1.13.0`, `1.12.4`). Upgrading the toolchain and upgrading your pinned
-Defold target are independent moves.
+What changed in each published `defold-typescript` toolchain release.
 
-Entries are curated by hand from the git history; the most recent releases are
-listed per-patch, older releases are rolled up per minor version. Breaking
-changes are called out first because the toolchain is pre-1.0.
+> [!TIP]
+> [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
 ## v0.31.0
 
