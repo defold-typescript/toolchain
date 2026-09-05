@@ -37,6 +37,8 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
       - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4"
       - run: bun install --frozen-lockfile
       - name: Build docs site for the project Pages subpath
         run: bun run --filter '@defold-typescript/docs-site' build
