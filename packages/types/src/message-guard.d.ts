@@ -27,9 +27,9 @@ declare global {
    * }
    * ```
    */
-  function isMessage<K extends BuiltinMessageId>(
+  function isMessage<K extends MessageId>(
     message_id: Hash,
     message: Record<string | number, unknown>,
     expected: K,
-  ): message is BuiltinMessages[K];
+  ): message is MessagePayload<K>;
 }

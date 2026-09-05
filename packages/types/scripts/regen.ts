@@ -546,6 +546,7 @@ export function kindStdlibReferences(entry: KindManifestEntry): string {
 
 const UNIVERSAL_EXTRA_IMPORTS: readonly string[] = [
   "../builtin-messages",
+  "../../src/custom-messages",
   "../../src/engine-globals",
   "../../src/msg-overloads",
   "../../src/message-guard",

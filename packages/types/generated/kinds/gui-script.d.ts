@@ -44,6 +44,7 @@ import "../vmath";
 import "../webview";
 import "../window";
 import "../zlib";
+import "../../src/custom-messages";
 import "../../src/engine-globals";
 import "../../src/go-overloads";
 import "../../src/message-guard";

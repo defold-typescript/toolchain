@@ -1,10 +1,6 @@
 /** @noSelfInFile */
 import type { Hash, Url } from "./core-types";
 
-type MsgPostPayload<K> = K extends BuiltinMessageId
-  ? BuiltinMessages[K]
-  : Record<string | number, unknown>;
-
 declare global {
   namespace msg {
     /**
@@ -33,7 +29,7 @@ declare global {
     function post<K extends string>(
       receiver: SceneAddress | Url | Hash,
       message_id: K,
-      message?: MsgPostPayload<K>,
+      message?: MessagePayload<K>,
     ): void;
     function post(
       receiver: SceneAddress | Url | Hash,
