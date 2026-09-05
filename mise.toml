@@ -1,5 +1,5 @@
 [tools]
-bun = "1.3"
+bun = "1.4"
 
 [tasks.verify-docs-drift]
 description = "Verify Defold docs drift: offline byte-drift of vendored fixtures vs the pinned ref-doc.zip (deterministic gate). Add --live for the advisory upstream ref-doc-delta canary (network-touching, not a CI gate)."
