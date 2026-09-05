@@ -1584,6 +1584,84 @@ Two rules are worth knowing:
 
 Nothing about the lowering changes. A custom id emits the same `message_id == hash("spawn_wave")` comparison a built-in one does, so the declaration costs no runtime.
 
+#### A message between two game objects
+
+A real project spreads this over three files: one declaration file, and two scripts that never import it. A spawner game object tells a wave-logic game object to spawn a wave; the logic object reports back when the wave is cleared.
+
+The declaration lives in a `.d.ts` your `tsconfig.json` already includes — `src/messages.d.ts`, say:
+
+```ts
+declare global {
+  interface CustomMessages {
+    spawn_wave: { count: number; boss?: boolean };
+    wave_cleared: { wave: number };
+  }
+}
+
+export {};
+```
+
+`declare global` merges program-wide, so `MessageId` gains both ids in *every* file of the program. That is why neither script below imports this file and why neither re-declares the ids — including it once is the entire wiring.
+
+The sender addresses the *other* object's component, and names the payload type itself so the shape is written once:
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+
+// Named once here, reused at the call site.
+function nextWave(sent: number): MessagePayload<"spawn_wave"> {
+  return { count: 3 + sent, boss: sent % 5 === 4 };
+}
+
+export default defineScript({
+  init() {
+    return { sent: 0 };
+  },
+  update(self) {
+    msg.post("/logic#wave", "spawn_wave", nextWave(self.sent));
+    self.sent += 1;
+
+    // @ts-expect-error spawn_wave declares `count`; this payload omits it
+    msg.post("/logic#wave", "spawn_wave", { boss: true });
+  },
+});
+```
+
+`"/logic#wave"` is a [`SceneAddress`](./scene-types.md) — a component on *another* game object, not the `"#..."` same-object shorthand the rest of this page uses. `MessagePayload<K>` is an ambient global you may name yourself, and it is the same resolver `msg.post` consumes internally, so a helper's return type cannot drift from what the call accepts.
+
+The receiver narrows that payload and threads its own state through the same handler:
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+
+type Self = { wave: number };
+
+function spawnEnemies(count: number, boss: boolean): void {
+  print(`wave of ${count}${boss ? " with a boss" : ""}`);
+}
+
+export default defineScript<Self>({
+  init() {
+    return { wave: 0 };
+  },
+  on_message: onMessage<Self>({
+    spawn_wave(self, message, sender) {
+      self.wave += 1;
+      spawnEnemies(message.count, message.boss ?? false);
+      msg.post(sender, "wave_cleared", { wave: self.wave });
+    },
+  }),
+});
+```
+
+The `onMessage<Self>` type argument is what puts the receiver's own `self` beside the narrowed `message` — see [Where script state lives](./script-state.md) for where that state comes from. `sender` is the URL Defold hands `on_message`, so the reply needs no address of its own.
+
+What the one declaration buys:
+
+- **Both ends resolve through the same `MessagePayload<K>`.** Rename `count` in the declaration and the sender's helper and the receiver's handler break together; there is no second place to update.
+- **Adoption is incremental.** An id neither catalog declares still compiles, with an unchecked payload — declaring it is what turns the check on.
+- **The lowering is unchanged.** Each id emits the same `hash("...")` comparison a built-in one does, so none of this costs runtime.
+
 #### See also
 
 - [Script lifecycle](./script-lifecycle.md) — the `on_message` lifecycle callback and the other typed script hooks.
