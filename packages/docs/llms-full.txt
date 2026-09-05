@@ -1550,7 +1550,11 @@ declare global {
     wave_cleared: { wave: number };
   }
 }
+
+export {};
 ```
+
+The trailing `export {};` is what makes the file a module, and `declare global` is only legal inside one — without it TypeScript rejects the block with TS2669. In a source file that already imports or exports something, the line is redundant and can go.
 
 `MessageId` is then the union of the built-in ids and yours, and `MessagePayload<"spawn_wave">` is the shape you declared. Sending checks it, and both receive-side helpers narrow to it:
 
