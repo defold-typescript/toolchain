@@ -14,11 +14,11 @@ What changed in each published `defold-typescript` toolchain release.
 ### Breaking
 
 - **The toolchain is now supported on Bun `>= 1.4`.** Every CI and release leg runs that minor and the [getting-started](./getting-started.md) floor names it; Bun 1.3 is no longer tested, so upgrade Bun before taking this release.
+- **[`go.get`](/api/go), [`go.set`](/api/go) and `go.property` no longer name a resource handle nothing hands out.** The [`Opaque`](/api/Opaque)`<"resource">` member is gone from `go.get`'s and `go.set`'s fallback value union, and `go.property`'s deprecated resource overload with it; since the shipped API never produced that handle, no value you can get out of these declarations loses a call site. A resource brand you declared or asserted by hand no longer satisfies `go.set` or `go.property` — pass the `Hash` the `resource.*` functions actually return.
 
 ### Improved
 
 - **Your project's own message ids can now carry a typed payload.** Declare them as string keys of the ambient `CustomMessages` interface — [messages](./messages.md) carries the copy-pasteable recipe — and [`msg.post`](/api/msg), `isMessage` and `onMessage` check and narrow them exactly like a built-in message, while the emitted Lua stays byte-for-byte what it was.
-- **[`go.get`](/api/go), [`go.set`](/api/go) and `go.property` no longer name a resource handle nothing hands out.** The [`Opaque`](/api/Opaque)`<"resource">` member is gone from `go.get`'s and `go.set`'s fallback value union, and `go.property`'s deprecated resource overload with it; no expression could ever produce that handle, so nothing you can write today stops compiling.
 
 ### Fixed
 

@@ -13,12 +13,17 @@ interface DeclarationFile {
 }
 
 // A brand is *referenced* wherever `Opaque<"name">` appears; it is *produced*
-// only where the surface can hand one back. Those two positions are scored
-// differently on purpose, and the asymmetry is the whole guard:
+// only where the surface can hand one back, which is to say only in an
+// *output* position. Those two positions are scored differently on purpose,
+// and the asymmetry is the whole guard:
 //
-//   - a machine-derived `generated/**` declaration is evidence, so any
-//     return-or-value position in it counts, however deeply the brand nests
-//     (a union member, a `LuaMultiReturn` tuple slot, an intersection);
+//   - a machine-derived `generated/**` declaration is evidence, so any output
+//     position in it counts, however deeply the brand nests (a union member, a
+//     `LuaMultiReturn` tuple slot, an intersection);
+//   - nothing under a parameter is an output position, however it nests. A
+//     `{ handle: Opaque<"ghost"> }` options bag and a `() => Opaque<"ghost">`
+//     callback are both things the *caller* must supply, so neither is
+//     evidence the engine hands the brand back;
 //   - a hand-written declaration counts only when its return type *is* the
 //     brand. A hand-written union return is a fallback *claim* about what the
 //     engine might yield, and a claim cannot be its own evidence — scoring it
@@ -47,10 +52,14 @@ function collectReferenced(file: DeclarationFile): Set<string> {
   return out;
 }
 
-/** Return-or-value type positions: what a caller can end up holding. */
+/**
+ * Output type positions: what a caller can end up holding. The walk stops at
+ * every parameter, so a brand reachable only through one is never collected.
+ */
 function valueTypeNodes(source: ts.SourceFile): ts.TypeNode[] {
   const out: ts.TypeNode[] = [];
   const visit = (node: ts.Node): void => {
+    if (ts.isParameter(node)) return;
     if (
       ts.isFunctionDeclaration(node) ||
       ts.isMethodSignature(node) ||
@@ -228,5 +237,41 @@ describe("opaque brand reachability — the walker", () => {
 `,
     );
     expect(scanBrandReachability([referencing], [producer]).offenders).toEqual([]);
+  });
+
+  test("a generated brand nested in a parameter's object type is not a producer", () => {
+    const inputOnly = synthetic(
+      "generated/ghost.d.ts",
+      `declare namespace ghost {
+  function use(options: { handle: Opaque<"ghost"> }): void;
+}
+`,
+    );
+    const referencing = synthetic(
+      "src/ghost-overloads.d.ts",
+      `declare namespace ghost {
+  function use(handle: Opaque<"ghost">): void;
+}
+`,
+    );
+    expect(scanBrandReachability([referencing], [inputOnly]).offenders).toEqual(["ghost"]);
+  });
+
+  test("a generated brand returned by a callback parameter is not a producer", () => {
+    const callbackReturn = synthetic(
+      "generated/ghost.d.ts",
+      `declare namespace ghost {
+  function on(cb: () => Opaque<"ghost">): void;
+}
+`,
+    );
+    const referencing = synthetic(
+      "src/ghost-overloads.d.ts",
+      `declare namespace ghost {
+  function use(handle: Opaque<"ghost">): void;
+}
+`,
+    );
+    expect(scanBrandReachability([referencing], [callbackReturn]).offenders).toEqual(["ghost"]);
   });
 });
