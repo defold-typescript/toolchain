@@ -13,7 +13,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Breaking
 
-- **The toolchain now needs Bun `>= 1.4`.** Every published package and the [getting-started](./getting-started.md) floor state the same minimum CI actually tests; on Bun 1.3 you will need to upgrade Bun before installing.
+- **The toolchain is now supported on Bun `>= 1.4`.** Every CI and release leg runs that minor and the [getting-started](./getting-started.md) floor names it; Bun 1.3 is no longer tested, so upgrade Bun before taking this release.
 
 ## v0.31.0
 
