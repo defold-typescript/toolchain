@@ -90,6 +90,12 @@ function collectProduced(file: DeclarationFile, trusted: boolean): Set<string> {
       continue;
     }
     const visit = (node: ts.Node): void => {
+      // Both walks enforce the same parameter exclusion, and this one needs its
+      // own copy: `valueTypeNodes` decides which types are outputs, and this
+      // walk re-descends each of those, so a parameter nested inside an output
+      // type (a returned callback, a returned object's method) is reachable
+      // only from here.
+      if (ts.isParameter(node)) return;
       const name = brandName(node);
       if (name !== undefined) out.add(name);
       ts.forEachChild(node, visit);
@@ -273,5 +279,52 @@ describe("opaque brand reachability — the walker", () => {
 `,
     );
     expect(scanBrandReachability([referencing], [callbackReturn]).offenders).toEqual(["ghost"]);
+  });
+
+  const referencingGhost = synthetic(
+    "src/ghost-overloads.d.ts",
+    `declare namespace ghost {
+  function use(handle: Opaque<"ghost">): void;
+}
+`,
+  );
+
+  test("a generated brand in a returned callback's parameter is not a producer", () => {
+    const returnedCallback = synthetic(
+      "generated/ghost.d.ts",
+      `declare namespace ghost {
+  function make(): (handle: Opaque<"ghost">) => void;
+}
+`,
+    );
+    expect(scanBrandReachability([referencingGhost], [returnedCallback]).offenders).toEqual([
+      "ghost",
+    ]);
+  });
+
+  test("a generated brand in a returned object method's parameter is not a producer", () => {
+    const returnedObjectMethod = synthetic(
+      "generated/ghost.d.ts",
+      `declare namespace ghost {
+  function make(): { use(handle: Opaque<"ghost">): void };
+}
+`,
+    );
+    expect(scanBrandReachability([referencingGhost], [returnedObjectMethod]).offenders).toEqual([
+      "ghost",
+    ]);
+  });
+
+  test("a generated brand in an exported callback's parameter is not a producer", () => {
+    const exportedCallback = synthetic(
+      "generated/ghost.d.ts",
+      `declare namespace ghost {
+  const on: (handle: Opaque<"ghost">) => void;
+}
+`,
+    );
+    expect(scanBrandReachability([referencingGhost], [exportedCallback]).offenders).toEqual([
+      "ghost",
+    ]);
   });
 });
