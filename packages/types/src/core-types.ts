@@ -152,8 +152,7 @@ declare const OpaqueBrand: unique symbol;
  * The handle kinds modeled today:
  * - GUI & rendering: `Opaque<"node">`, `Opaque<"texture">`,
  *   `Opaque<"render_target">`, `Opaque<"constant">`, `Opaque<"constant_buffer">`
- * - Resources & buffers: `Opaque<"resource">`, `Opaque<"buffer">`,
- *   `Opaque<"bufferstream">`
+ * - Buffers: `Opaque<"buffer">`, `Opaque<"bufferstream">`
  * - Sockets: `Opaque<"client">`, `Opaque<"server">`, `Opaque<"master">`,
  *   `Opaque<"connected">`, `Opaque<"unconnected">`
  * - Box2D physics: `Opaque<"b2Body">`, `Opaque<"b2World">`
@@ -218,6 +217,9 @@ export const DEFOLD_TYPE_MAP: Readonly<Record<string, string>> = {
   buffer: 'Opaque<"buffer">',
   bufferstream: 'Opaque<"bufferstream"> & { [index: number]: number }',
   userdata: 'Opaque<"userdata">',
+  // Vocabulary, not a shipped brand: no current ref-doc fixture types a slot
+  // `resource`, so nothing hand-written may name `Opaque<"resource">`. Kept so a
+  // future upstream slot carrying the token emits a handle rather than `unknown`.
   resource: 'Opaque<"resource">',
   b2World: 'Opaque<"b2World">',
   b2Body: 'Opaque<"b2Body">',
