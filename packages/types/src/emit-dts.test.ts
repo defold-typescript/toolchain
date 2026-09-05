@@ -1,12 +1,17 @@
 import { describe, expect, test } from "bun:test";
+import { readdirSync, readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
+import * as ts from "typescript";
 import bufferDoc from "../fixtures/buffer_doc.json" with { type: "json" };
 import collectionfactoryDoc from "../fixtures/collectionfactory_doc.json" with { type: "json" };
 import collectionproxyDoc from "../fixtures/collectionproxy_doc.json" with { type: "json" };
 import b2dWorldDoc from "../fixtures/defold-1.13.1/b2d_world_doc.json" with { type: "json" };
+import camera113Doc from "../fixtures/defold-1.13.1/camera_doc.json" with { type: "json" };
 import computeDoc from "../fixtures/defold-1.13.1/compute_doc.json" with { type: "json" };
 import graphicsDoc from "../fixtures/defold-1.13.1/graphics_doc.json" with { type: "json" };
 import materialDoc from "../fixtures/defold-1.13.1/material_doc.json" with { type: "json" };
 import model113Doc from "../fixtures/defold-1.13.1/model_doc.json" with { type: "json" };
+import sprite113Doc from "../fixtures/defold-1.13.1/sprite_doc.json" with { type: "json" };
 import goDoc from "../fixtures/go_doc.json" with { type: "json" };
 import guiDoc from "../fixtures/gui_doc.json" with { type: "json" };
 import httpDoc from "../fixtures/http_doc.json" with { type: "json" };
@@ -49,6 +54,49 @@ function requireFunction(module: ApiModule, name: string): ApiFunction {
   const fn = module.functions.find((candidate) => candidate.name === name);
   if (!fn) throw new Error(`missing function ${name}`);
   return fn;
+}
+
+const GENERATED_DIR = resolve(import.meta.dir, "..", "generated");
+
+interface PropertyMember {
+  readonly file: string;
+  readonly name: string;
+  readonly type: string;
+}
+
+// Reads the shipped `.d.ts` artifacts rather than re-running the emitter: the
+// catalogs consumers compile against are the surface an unmapped ref-doc token
+// actually reaches, and a token that fell through the fallback shows up there
+// as `unknown` whatever the emitter believed at the time.
+function generatedPropertyMembers(dir = GENERATED_DIR): PropertyMember[] {
+  const out: PropertyMember[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true }).sort((a, b) =>
+    a.name.localeCompare(b.name),
+  )) {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      out.push(...generatedPropertyMembers(path));
+      continue;
+    }
+    if (!entry.name.endsWith(".d.ts")) continue;
+    const text = readFileSync(path, "utf8");
+    const source = ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true);
+    const visit = (node: ts.Node): void => {
+      if (ts.isInterfaceDeclaration(node) && node.name.text === "properties") {
+        for (const member of node.members) {
+          if (!ts.isPropertySignature(member) || member.type === undefined) continue;
+          out.push({
+            file: entry.name,
+            name: member.name.getText(source),
+            type: member.type.getText(source),
+          });
+        }
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+  }
+  return out;
 }
 
 describe("emitDeclarations", () => {
@@ -3483,5 +3531,58 @@ describe("nested member signature parity", () => {
     expect(entry?.tsSignature).toBe("function _enum(): string;");
     expect(declarations).toContain("    function _enum(): string;");
     expect(declarations).not.toContain("function enum(");
+  });
+});
+
+describe("component property type fidelity", () => {
+  test("a property slot typed float emits number rather than unknown", () => {
+    const module = parseDefoldApiDoc(camera113Doc);
+    const out = emitDeclarations(module);
+    expect(out).toContain("  interface properties {");
+    expect(out).toContain("    fov: number;");
+    expect(out).toContain("    near_z: number;");
+    expect(out).toContain("    aspect_ratio: number;");
+  });
+
+  test("no member of any generated properties interface is unknown", () => {
+    const members = generatedPropertyMembers();
+    expect(members.length).toBeGreaterThan(0);
+    const unmapped = members.filter((member) => member.type === "unknown");
+    expect(unmapped.map((member) => `${member.file}: ${member.name}`)).toEqual([]);
+  });
+
+  test("a corrected property emits its corrected type while an uncorrected sibling is untouched", () => {
+    const module = parseDefoldApiDoc(sprite113Doc);
+    const out = emitDeclarations(module);
+    expect(out).toContain("    frame_count: number;");
+    expect(out).toContain("    animation: Hash;");
+    expect(out).toContain("    image: Hash;");
+  });
+
+  test("a correction reaches the signature ledger, not only the catalog", () => {
+    const module = parseDefoldApiDoc(camera113Doc);
+    const ledger = emitSymbolSignatures(module);
+    const view = ledger.find(
+      (entry) => entry.identity.kind === "PROPERTY" && entry.identity.name === "view",
+    );
+    const fov = ledger.find(
+      (entry) => entry.identity.kind === "PROPERTY" && entry.identity.name === "fov",
+    );
+    expect(view?.tsSignature).toBe("view: Matrix4;");
+    expect(fov?.tsSignature).toBe("fov: number;");
+  });
+
+  test("a correction is namespace-scoped, so a same-named property elsewhere is untouched", () => {
+    const module: ApiModule = {
+      namespace: "label",
+      brief: "",
+      description: "",
+      functions: [],
+      variables: [],
+      constants: [],
+      properties: [{ name: "frame_count", types: ["hash"], brief: "", description: "" }],
+      typedefs: [],
+    };
+    expect(emitDeclarations(module)).toContain("    frame_count: Hash;");
   });
 });

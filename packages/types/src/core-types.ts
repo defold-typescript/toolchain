@@ -192,6 +192,7 @@ export const DEFOLD_TYPE_MAP: Readonly<Record<string, string>> = {
   number: "number",
   int: "number",
   integer: "number",
+  float: "number",
   string: "string",
   boolean: "boolean",
   table: "Record<string | number, unknown>",
