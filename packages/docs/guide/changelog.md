@@ -20,6 +20,10 @@ What changed in each published `defold-typescript` toolchain release.
 - **Your project's own message ids can now carry a typed payload.** Declare them as string keys of the ambient `CustomMessages` interface — [messages](./messages.md) carries the copy-pasteable recipe — and [`msg.post`](/api/msg), `isMessage` and `onMessage` check and narrow them exactly like a built-in message, while the emitted Lua stays byte-for-byte what it was.
 - **[`go.get`](/api/go), [`go.set`](/api/go) and `go.property` no longer name a resource handle nothing hands out.** The [`Opaque`](/api/Opaque)`<"resource">` member is gone from `go.get`'s and `go.set`'s fallback value union, and `go.property`'s deprecated resource overload with it; no expression could ever produce that handle, so nothing you can write today stops compiling.
 
+### Fixed
+
+- **The [`camera`](/api/camera) and [`sprite`](/api/sprite) property catalogs now report the types the engine really uses.** All eight `camera.properties` members read as `unknown`, so every `go.get<camera.properties>()` needed a cast; they are now `number`, with `camera.projection` and `camera.view` typed `Matrix4` and `sprite.frame_count` typed `number` where the reference data says otherwise.
+
 ## v0.31.0
 
 ### Improved

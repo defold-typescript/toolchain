@@ -257,44 +257,44 @@ declare global {
        * projection of a perspective camera.
        * The type of the property is number.
        */
-      aspect_ratio: unknown;
+      aspect_ratio: number;
       /**
        * Camera frustum far plane.
        * The type of the property is float.
        */
-      far_z: unknown;
+      far_z: number;
       /**
        * Vertical field of view of the camera.
        * The type of the property is float.
        */
-      fov: unknown;
+      fov: number;
       /**
        * Camera frustum near plane.
        * The type of the property is float.
        */
-      near_z: unknown;
+      near_z: number;
       /**
        * READ ONLY The zoom calculated from the current window and project dimensions
        * in auto fit and auto cover modes. The value is 1.0 in fixed mode.
        * The type of the property is float.
        */
-      orthographic_auto_zoom: unknown;
+      orthographic_auto_zoom: number;
       /**
        * Positive zoom multiplier when using an orthographic projection. In auto fit and auto cover
        * modes, this value is multiplied with the calculated orthographic_auto_zoom value.
        * The type of the property is float.
        */
-      orthographic_zoom: unknown;
+      orthographic_zoom: number;
       /**
        * READ ONLY The calculated projection matrix of the camera.
        * The type of the property is matrix4.
        */
-      projection: unknown;
+      projection: Matrix4;
       /**
        * READ ONLY The calculated view matrix of the camera.
        * The type of the property is matrix4.
        */
-      view: unknown;
+      view: Matrix4;
     }
   }
 }

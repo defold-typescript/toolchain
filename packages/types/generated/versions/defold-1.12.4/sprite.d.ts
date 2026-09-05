@@ -106,7 +106,7 @@ declare global {
       /**
        * READ ONLY The frame count of the currently playing animation.
        */
-      frame_count: Hash;
+      frame_count: number;
       /**
        * The image used when rendering the sprite. The type of the property is hash.
        */
