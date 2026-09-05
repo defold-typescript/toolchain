@@ -72,6 +72,50 @@ describe("message dispatch lowering", () => {
     expect(result.lua).not.toContain("require(");
   });
 
+  test("lowers a built-in and a CustomMessages handler into one chain, in source order", () => {
+    const source = [
+      'import { defineScript } from "@defold-typescript/types";',
+      "",
+      "declare global {",
+      "  interface CustomMessages {",
+      "    spawn_wave: { count: number };",
+      "  }",
+      "}",
+      "",
+      "defineScript({",
+      "  on_message: onMessage({",
+      "    contact_point_response(self, message) {",
+      "      handle(message.distance);",
+      "    },",
+      "    spawn_wave(self, message) {",
+      "      handle(message.count);",
+      "    },",
+      "  }),",
+      "});",
+      "",
+      "declare function handle(n: number): void;",
+      "",
+    ].join("\n");
+    const result = transpile(source);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toMatchInlineSnapshot(`
+      "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+      local ____exports = {}
+      function on_message(self, message_id, message, sender)
+          if message_id == hash("contact_point_response") then
+              handle(message.distance)
+          elseif message_id == hash("spawn_wave") then
+              handle(message.count)
+          end
+      end
+      return ____exports
+      "
+    `);
+    expect(result.lua).not.toContain("onMessage");
+    expect(result.lua).not.toContain("CustomMessages");
+    expect(result.lua).not.toContain("require(");
+  });
+
   test("aliases a handler param named other than `message`", () => {
     const source = [
       'import { defineScript } from "@defold-typescript/types";',
