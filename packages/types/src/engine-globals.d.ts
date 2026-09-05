@@ -26,9 +26,9 @@ declare global {
    * that lives only in the type system and is erased at transpile; because the
    * symbol is not exported, consumer code cannot fabricate one. The kinds
    * modeled: `node`, `texture`, `render_target`, `constant`, `constant_buffer`,
-   * `resource`, `buffer`, `bufferstream`, `client`, `server`, `master`,
-   * `connected`, `unconnected`, `b2Body`, `b2World`, `userdata`. You obtain them
-   * from the engine, e.g. `gui.get_node("id")`, `render.render_target(...)`,
+   * `buffer`, `bufferstream`, `client`, `server`, `master`, `connected`,
+   * `unconnected`, `b2Body`, `b2World`, `userdata`. You obtain them from the
+   * engine, e.g. `gui.get_node("id")`, `render.render_target(...)`,
    * `render.constant_buffer()`, `resource.load_buffer(path)`, `b2d.get_world()`,
    * or `socket.tcp()`. See {@link Core.Opaque} for the full explanation, the per
    * -kind obtain examples, and the contrast with a `LuaTable` alias.
