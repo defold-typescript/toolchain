@@ -1,6 +1,7 @@
 /// <reference types="lua-types/5.1" />
 /// <reference types="lua-types/special/jit-only" />
 import "./generated/builtin-messages";
+import "./src/custom-messages";
 import "./src/msg-overloads";
 import "./src/message-guard";
 import "./src/window-event-guard";

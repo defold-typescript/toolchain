@@ -33,7 +33,7 @@ declare global {
    */
   function onMessage<TSelf = Record<never, never>>(
     handlers: Partial<{
-      [K in BuiltinMessageId]: (self: TSelf, message: BuiltinMessages[K], sender: Url) => void;
+      [K in MessageId]: (self: TSelf, message: MessagePayload<K>, sender: Url) => void;
     }>,
   ): (
     self: TSelf,

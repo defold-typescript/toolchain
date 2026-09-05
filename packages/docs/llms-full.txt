@@ -1469,10 +1469,10 @@ msg.post("#collisionobject", "apply_force", {
 });
 ```
 
-The narrowing keys on the literal id. An arbitrary (non-builtin) string id addresses a **custom** message, and its payload is unchecked — the escape hatch for your own message protocol:
+The narrowing keys on the literal id. An arbitrary (non-builtin) string id addresses a **custom** message, whose payload is unchecked until you declare it — so an undeclared id always compiles, and [declaring one](#declaring-your-own-messages) buys it the same checking a built-in id gets:
 
 ```ts
-msg.post("#logic", "spawn_wave", { count: 3, boss: true }); // custom id — payload unchecked
+msg.post("#logic", "spawn_wave", { count: 3, boss: true }); // undeclared id — payload unchecked
 ```
 
 Passing the id as an already-hashed `Hash` also skips the check, since the hashed form has lost the literal the narrowing needs.
@@ -1484,14 +1484,14 @@ Passing the id as an already-hashed `Hash` also skips the check, since the hashe
 Two helpers close that gap. Both are ambient globals, so neither needs an import:
 
 - **`BuiltinMessages` — a helper *type*.** It maps each built-in message id to its payload shape, so `BuiltinMessages["contact_point_response"]` *is* that message's type. See [The message type surface](#the-message-type-surface).
-- **`isMessage` — a helper *function*.** It is a type guard: the return type `message is BuiltinMessages[K]` is what re-introduces the lost literal at the use site.
+- **`isMessage` — a helper *function*.** It is a type guard: the return type `message is MessagePayload<K>` is what re-introduces the lost literal at the use site.
 
 ```ts
-function isMessage<K extends BuiltinMessageId>(
+function isMessage<K extends MessageId>(
   message_id: Hash,
   message: Record<string | number, unknown>,
   expected: K,
-): message is BuiltinMessages[K];
+): message is MessagePayload<K>;
 ```
 
 Inside the guard, `message` is narrowed to the payload of the id you named — no cast:
@@ -1514,7 +1514,7 @@ export default defineScript({
 Three things follow from that signature:
 
 - **It mirrors `msg.post`.** Sending checks your payload against `BuiltinMessages["contact_point_response"]`; receiving narrows `message` to that same type. One catalog, both directions.
-- **A typo cannot compile.** `expected` is constrained to `BuiltinMessageId`, so `isMessage(message_id, message, "not_a_message")` is a compile error.
+- **A typo cannot compile.** `expected` is constrained to `MessageId` — every built-in id plus the ones you [declare yourself](#declaring-your-own-messages) — so `isMessage(message_id, message, "not_a_message")` is a compile error.
 - **No runtime cost.** The guard ships only as a type declaration; the transpiler lowers the call to `message_id == hash("contact_point_response")`, so the types package emits no runtime Lua.
 
 #### Routing many messages with `onMessage`
@@ -1538,6 +1538,47 @@ export default defineScript<Self>({
 `self` threads via the explicit `onMessage<Self>` type argument, mirroring `defineScript<Self>`; a bare `onMessage({...})` defaults it to an empty record. An unknown key is a compile error, just like `isMessage`.
 
 Like `isMessage` and `defineScript`, the dispatcher is declaration-only — the transpiler lowers it to the flat `function on_message(self, message_id, message, sender)` chunk with a `message_id == hash("...")` if/elseif chain, so no `onMessage` symbol or runtime Lua reaches the output.
+
+#### Declaring your own messages
+
+Your project's own message ids live in `CustomMessages`, an ambient global interface that ships empty. Merge your ids into it once — anywhere in your sources, or in a `.d.ts` your `tsconfig.json` includes — and all three helpers accept them:
+
+```ts
+declare global {
+  interface CustomMessages {
+    spawn_wave: { count: number; boss?: boolean };
+    wave_cleared: { wave: number };
+  }
+}
+```
+
+`MessageId` is then the union of the built-in ids and yours, and `MessagePayload<"spawn_wave">` is the shape you declared. Sending checks it, and both receive-side helpers narrow to it:
+
+```ts
+msg.post("#logic", "spawn_wave", { count: 3 });
+
+// @ts-expect-error spawn_wave requires `count`
+msg.post("#logic", "spawn_wave", {});
+
+export default defineScript({
+  on_message: onMessage({
+    spawn_wave(self, message) {
+      // message: { count: number; boss?: boolean }
+      spawn(message.count);
+    },
+    contact_point_response(self, message) {
+      // built-in and custom ids route through the same dispatcher
+    },
+  }),
+});
+```
+
+Two rules are worth knowing:
+
+- **A built-in id wins a collision.** Declaring a key that is already a built-in message id — `set_parent`, say — leaves the built-in payload in force; your entry is inert rather than silently re-typing an engine message.
+- **Augment `CustomMessages`, not `BuiltinMessages`.** Merging your ids into `BuiltinMessages` happens to work today, and is not supported: it puts your ids inside a catalog regenerated from the Defold reference docs, and the day Defold ships a message of the same name your declaration becomes a duplicate-key error with nothing pointing at the cause.
+
+Nothing about the lowering changes. A custom id emits the same `message_id == hash("spawn_wave")` comparison a built-in one does, so the declaration costs no runtime.
 
 #### See also
 
@@ -8491,7 +8532,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### msg
 
-- msg.post<K extends string>(receiver: SceneAddress | Url | Hash, message_id: K, message?: MsgPostPayload<K>): void
+- msg.post<K extends string>(receiver: SceneAddress | Url | Hash, message_id: K, message?: MessagePayload<K>): void
 - msg.post(receiver: SceneAddress | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void
 - msg.url(): Url
 - msg.url(urlstring: SceneAddress): Url

@@ -1,7 +1,7 @@
 {
   "msg.post": {
     "signatures": [
-      "msg.post<K extends string>(receiver: SceneAddress | Url | Hash, message_id: K, message?: MsgPostPayload<K>): void",
+      "msg.post<K extends string>(receiver: SceneAddress | Url | Hash, message_id: K, message?: MessagePayload<K>): void",
       "msg.post(receiver: SceneAddress | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void"
     ],
     "docs": [

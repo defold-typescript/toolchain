@@ -118,6 +118,9 @@ function buildAmbientFiles(): Record<string, string> {
       readAmbient("src/engine-globals.d.ts"),
     "node_modules/@defold-typescript/types/src/go-overloads.d.ts":
       readAmbient("src/go-overloads.d.ts"),
+    "node_modules/@defold-typescript/types/src/custom-messages.d.ts": readAmbient(
+      "src/custom-messages.d.ts",
+    ),
     "node_modules/@defold-typescript/types/src/msg-overloads.d.ts":
       readAmbient("src/msg-overloads.d.ts"),
     "node_modules/@defold-typescript/types/src/message-guard.d.ts":
