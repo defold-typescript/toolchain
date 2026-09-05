@@ -62,6 +62,41 @@ interface PropertyMember {
   readonly file: string;
   readonly name: string;
   readonly type: string;
+  readonly node: ts.TypeNode;
+}
+
+function propertyMembersFromSource(text: string, file: string): PropertyMember[] {
+  const out: PropertyMember[] = [];
+  const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
+  const visit = (node: ts.Node): void => {
+    if (ts.isInterfaceDeclaration(node) && node.name.text === "properties") {
+      for (const member of node.members) {
+        if (!ts.isPropertySignature(member) || member.type === undefined) continue;
+        out.push({
+          file,
+          name: member.name.getText(source),
+          type: member.type.getText(source),
+          node: member.type,
+        });
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  return out;
+}
+
+// A slot is semantically `unknown` when TypeScript reduces it to `unknown` —
+// the bare keyword, or a union with an `unknown` arm (`number | unknown`), which
+// `unionFromTokens` can render because it has no absorption rule. Recursing only
+// through unions and parentheses is what keeps a nested `unknown` in scope of
+// its own constructor — `Record<string | number, unknown>`,
+// `(...args: unknown[]) => unknown` — out of the finding set with no allowlist.
+function isTopLevelUnknown(node: ts.TypeNode): boolean {
+  if (ts.isParenthesizedTypeNode(node)) return isTopLevelUnknown(node.type);
+  if (node.kind === ts.SyntaxKind.UnknownKeyword) return true;
+  if (ts.isUnionTypeNode(node)) return node.types.some(isTopLevelUnknown);
+  return false;
 }
 
 // Reads the shipped `.d.ts` artifacts rather than re-running the emitter: the
@@ -79,22 +114,7 @@ function generatedPropertyMembers(dir = GENERATED_DIR): PropertyMember[] {
       continue;
     }
     if (!entry.name.endsWith(".d.ts")) continue;
-    const text = readFileSync(path, "utf8");
-    const source = ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true);
-    const visit = (node: ts.Node): void => {
-      if (ts.isInterfaceDeclaration(node) && node.name.text === "properties") {
-        for (const member of node.members) {
-          if (!ts.isPropertySignature(member) || member.type === undefined) continue;
-          out.push({
-            file: entry.name,
-            name: member.name.getText(source),
-            type: member.type.getText(source),
-          });
-        }
-      }
-      ts.forEachChild(node, visit);
-    };
-    visit(source);
+    out.push(...propertyMembersFromSource(readFileSync(path, "utf8"), entry.name));
   }
   return out;
 }
@@ -3547,8 +3567,36 @@ describe("component property type fidelity", () => {
   test("no member of any generated properties interface is unknown", () => {
     const members = generatedPropertyMembers();
     expect(members.length).toBeGreaterThan(0);
-    const unmapped = members.filter((member) => member.type === "unknown");
+    const unmapped = members.filter((member) => isTopLevelUnknown(member.node));
     expect(unmapped.map((member) => `${member.file}: ${member.name}`)).toEqual([]);
+  });
+
+  test("a union arm typed unknown is a finding while nested unknown stays faithful", () => {
+    const module: ApiModule = {
+      namespace: "probe",
+      brief: "",
+      description: "",
+      functions: [],
+      variables: [],
+      constants: [],
+      properties: [
+        { name: "union_slot", types: ["float", "no_such_token"], brief: "", description: "" },
+        { name: "table_slot", types: ["table"], brief: "", description: "" },
+        { name: "function_slot", types: ["function"], brief: "", description: "" },
+      ],
+      typedefs: [],
+    };
+    const members = propertyMembersFromSource(emitDeclarations(module), "probe.d.ts");
+    // The premise the classifier is graded against is the emitter's real output,
+    // not an assumption about it: `unionFromTokens` has no `unknown`-absorption.
+    expect(Object.fromEntries(members.map((member) => [member.name, member.type]))).toEqual({
+      union_slot: "number | unknown",
+      table_slot: "Record<string | number, unknown>",
+      function_slot: "(...args: unknown[]) => unknown",
+    });
+    expect(
+      members.filter((member) => isTopLevelUnknown(member.node)).map((member) => member.name),
+    ).toEqual(["union_slot"]);
   });
 
   test("a corrected property emits its corrected type while an uncorrected sibling is untouched", () => {
