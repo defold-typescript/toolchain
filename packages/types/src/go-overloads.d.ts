@@ -1,6 +1,6 @@
 /** @noSelfInFile */
 
-import type { Hash, Opaque, Quaternion, Url, Vector3, Vector4 } from "./core-types";
+import type { Hash, Quaternion, Url, Vector3, Vector4 } from "./core-types";
 
 interface ScriptProperty<TValue> {
   readonly __defoldScriptProperty: TValue;
@@ -46,7 +46,7 @@ declare global {
       url: SceneAddress | Hash | Url,
       property: string | Hash,
       options?: GoPropertyOptions,
-    ): number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion | Opaque<"resource">;
+    ): number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion;
     /**
      * sets a named property of the specified game object or component, or a material constant
      *
@@ -80,7 +80,7 @@ declare global {
     function set(
       url: SceneAddress | Hash | Url,
       property: string | Hash,
-      value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion | Opaque<"resource">,
+      value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion,
       options?: GoPropertyOptions,
     ): void;
     /**
@@ -119,7 +119,5 @@ declare global {
     function property(name: string, value: Vector4): ScriptProperty<Vector4>;
     /** @deprecated Declare quaternions via the `defineScript({ properties })` field. */
     function property(name: string, value: Quaternion): ScriptProperty<Quaternion>;
-    /** @deprecated Declare resources via the `defineScript({ properties })` field. */
-    function property(name: string, value: Opaque<"resource">): ScriptProperty<Opaque<"resource">>;
   }
 }

@@ -3,7 +3,7 @@
     "signatures": [
       "go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]",
       "go.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions): go.properties[K]",
-      "go.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion | Opaque<\"resource\">"
+      "go.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion"
     ],
     "docs": ["gets a named property of the specified game object or component", null, null]
   },
@@ -11,7 +11,7 @@
     "signatures": [
       "go.set<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void",
       "go.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void",
-      "go.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion | Opaque<\"resource\">, options?: GoPropertyOptions): void"
+      "go.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion, options?: GoPropertyOptions): void"
     ],
     "docs": [
       "sets a named property of the specified game object or component, or a material constant",
@@ -27,12 +27,10 @@
       "go.property(name: string, value: Url): ScriptProperty<Url>",
       "go.property(name: string, value: Vector3): ScriptProperty<Vector3>",
       "go.property(name: string, value: Vector4): ScriptProperty<Vector4>",
-      "go.property(name: string, value: Quaternion): ScriptProperty<Quaternion>",
-      "go.property(name: string, value: Opaque<\"resource\">): ScriptProperty<Opaque<\"resource\">>"
+      "go.property(name: string, value: Quaternion): ScriptProperty<Quaternion>"
     ],
     "docs": [
       "Registers a Defold editor script property (deprecated escape hatch).",
-      null,
       null,
       null,
       null,

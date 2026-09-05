@@ -7974,7 +7974,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function exists(url: SceneGameObjectAddress | Hash | Url): boolean;
 - go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]
 - go.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions): go.properties[K]
-- go.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion | Opaque<"resource">
+- go.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion
 - function get_id(path?: string): Hash;
 - function get_parent(id?: SceneGameObjectAddress | Hash | Url): Hash | undefined;
 - function get_position(id?: SceneGameObjectAddress | Hash | Url): Vector3;
@@ -7993,10 +7993,9 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - go.property(name: string, value: Vector3): ScriptProperty<Vector3>
 - go.property(name: string, value: Vector4): ScriptProperty<Vector4>
 - go.property(name: string, value: Quaternion): ScriptProperty<Quaternion>
-- go.property(name: string, value: Opaque<"resource">): ScriptProperty<Opaque<"resource">>
 - go.set<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void
 - go.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void
-- go.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion | Opaque<"resource">, options?: GoPropertyOptions): void
+- go.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion, options?: GoPropertyOptions): void
 - function set_parent(id?: SceneGameObjectAddress | Hash | Url, parent_id?: SceneGameObjectAddress | Hash | Url, keep_world_transform?: boolean): void;
 - function set_position(position: Vector3, id?: SceneGameObjectAddress | Hash | Url): void;
 - function set_rotation(rotation: Quaternion, id?: SceneGameObjectAddress | Hash | Url): void;
