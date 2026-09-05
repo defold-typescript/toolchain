@@ -1,25 +1,15 @@
 import type { Hash, Url } from "../../src/core-types";
 import { defineScript } from "../../src/lifecycle";
 
-// A project's own message ids, declared the way a consumer declares them.
-// This augmentation is program-wide, which is why it lives in its own tsc
-// program: `test-d/custom-messages.ts` proves the unaugmented behaviour and
-// could not if this interface were merged into that program.
-declare global {
-  interface CustomMessages {
-    spawn_wave: { count: number; boss?: boolean };
-    // Shadows a built-in id on purpose — the built-in payload must win.
-    set_parent: { mine: string };
-  }
-}
-
 const _hash = null as unknown as Hash;
 const _url = null as unknown as Url;
 const _record = null as unknown as Record<string | number, unknown>;
 
 type Exact<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
 
-const _messageIdCoversBoth: Exact<MessageId, BuiltinMessageId | "spawn_wave"> = true;
+// The numeric key is absent from this union: `MessageId` intersects the custom
+// half with `string`, so a key the emitter cannot lower is never offered.
+const _messageIdCoversBoth: Exact<MessageId, BuiltinMessageId | "spawn_wave" | "7"> = true;
 void _messageIdCoversBoth;
 
 // Sending: the declared payload is checked, exactly like a built-in id.
@@ -34,6 +24,12 @@ msg.post(_url, "spawn_wave", { count: "3" });
 
 // @ts-expect-error spawn_wave declares no `wave` field
 msg.post(_url, "spawn_wave", { count: 3, wave: 1 });
+
+// A quoted numeric-looking id is an ordinary declared key on every side.
+msg.post(_url, "7", { tick: 1 });
+
+// @ts-expect-error "7" declares `tick`, not `count`
+msg.post(_url, "7", { count: 1 });
 
 // An id in neither catalog keeps the open payload even with the catalog filled.
 msg.post(_url, "totally_unknown", { anything: true });
@@ -62,6 +58,14 @@ defineScript({
       void message.wave;
     }
 
+    if (isMessage(message_id, message, "7")) {
+      const _tick: number = message.tick;
+      void _tick;
+
+      // @ts-expect-error "7" declares no `count` field
+      void message.count;
+    }
+
     if (isMessage(message_id, message, "set_parent")) {
       const _parentId: Hash | undefined = message.parent_id;
       void _parentId;
@@ -75,6 +79,9 @@ defineScript({
 // @ts-expect-error "not_a_message" is declared in neither catalog
 void isMessage(_hash, _record, "not_a_message");
 
+// @ts-expect-error a numeric id is not a MessageId — the guard would emit hash(42)
+void isMessage(_hash, _record, 42);
+
 // Routing: the dispatcher takes the custom key beside a built-in one.
 defineScript({
   on_message: onMessage({
@@ -84,6 +91,10 @@ defineScript({
 
       // @ts-expect-error spawn_wave declares no `wave` field
       void message.wave;
+    },
+    "7"(_self, message) {
+      const _tick: number = message.tick;
+      void _tick;
     },
     contact_point_response(_self, message) {
       const _distance: number = message.distance;
@@ -95,4 +106,9 @@ defineScript({
 onMessage({
   // @ts-expect-error "not_a_message" is declared in neither catalog
   not_a_message(_self, _message) {},
+});
+
+onMessage({
+  // @ts-expect-error a numeric id is not a MessageId — the handler would vanish
+  42(_self, _message) {},
 });
