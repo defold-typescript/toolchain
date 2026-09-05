@@ -15,6 +15,10 @@ What changed in each published `defold-typescript` toolchain release.
 
 - **The toolchain is now supported on Bun `>= 1.4`.** Every CI and release leg runs that minor and the [getting-started](./getting-started.md) floor names it; Bun 1.3 is no longer tested, so upgrade Bun before taking this release.
 
+### Improved
+
+- **Your project's own message ids can now carry a typed payload.** Declare them in the ambient `CustomMessages` interface and [`msg.post`](/api/msg), `isMessage` and `onMessage` check and narrow them exactly like a built-in message — see [messages](./messages.md) — while the emitted Lua stays byte-for-byte what it was.
+
 ## v0.31.0
 
 ### Improved

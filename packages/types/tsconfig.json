@@ -18,6 +18,7 @@
     "dist",
     "**/dist",
     "test-d/versions",
+    "test-d/custom-catalog",
     "test-d/kinds",
     "test/fixtures",
     "src/editor-vm-globals.d.ts"
