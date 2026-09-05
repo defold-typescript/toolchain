@@ -18,7 +18,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **Your project's own message ids can now carry a typed payload.** Declare them as string keys of the ambient `CustomMessages` interface — [messages](./messages.md) carries the copy-pasteable recipe — and [`msg.post`](/api/msg), `isMessage` and `onMessage` check and narrow them exactly like a built-in message, while the emitted Lua stays byte-for-byte what it was.
+- **Your project's own message ids can now carry a typed payload.** Declare them as string keys of the ambient `CustomMessages` interface and [`msg.post`](/api/msg), `isMessage` and `onMessage` check and narrow them exactly like a built-in message, while the emitted Lua stays byte-for-byte what it was; [messages](./messages.md) carries the recipe and a worked cross-object example — the shared declaration file plus the sending and receiving scripts.
 
 ### Fixed
 
