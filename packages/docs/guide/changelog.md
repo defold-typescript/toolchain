@@ -9,6 +9,12 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.32.0
+
+### Breaking
+
+- **The toolchain now needs Bun `>= 1.4`.** Every published package and the [getting-started](./getting-started.md) floor state the same minimum CI actually tests; on Bun 1.3 you will need to upgrade Bun before installing.
+
 ## v0.31.0
 
 ### Improved
