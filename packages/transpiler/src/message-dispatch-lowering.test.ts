@@ -116,6 +116,49 @@ describe("message dispatch lowering", () => {
     expect(result.lua).not.toContain("require(");
   });
 
+  test("lowers a quoted numeric-looking custom id beside a built-in one", () => {
+    const source = [
+      'import { defineScript } from "@defold-typescript/types";',
+      "",
+      "declare global {",
+      "  interface CustomMessages {",
+      '    "42": { count: number };',
+      "  }",
+      "}",
+      "",
+      "defineScript({",
+      "  on_message: onMessage({",
+      '    "42"(self, message) {',
+      "      handle(message.count);",
+      "    },",
+      "    set_parent(self, message) {",
+      "      handle(0);",
+      "    },",
+      "  }),",
+      "});",
+      "",
+      "declare function handle(n: number): void;",
+      "",
+    ].join("\n");
+    const result = transpile(source);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toMatchInlineSnapshot(`
+      "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+      local ____exports = {}
+      function on_message(self, message_id, message, sender)
+          if message_id == hash("42") then
+              handle(message.count)
+          elseif message_id == hash("set_parent") then
+              handle(0)
+          end
+      end
+      return ____exports
+      "
+    `);
+    expect(result.lua).not.toContain("onMessage");
+    expect(result.lua).not.toContain("require(");
+  });
+
   test("aliases a handler param named other than `message`", () => {
     const source = [
       'import { defineScript } from "@defold-typescript/types";',
