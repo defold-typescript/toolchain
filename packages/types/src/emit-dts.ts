@@ -240,6 +240,54 @@ export const RETURN_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
   ["editor.tx.add", 'Opaque<"transaction_step">'],
 ]);
 
+// A property whose upstream `<span class="type">` states a type the engine does
+// not use. Unlike every other override here, which fills a gap upstream left
+// empty, these contradict a token upstream explicitly declares — so each entry
+// records that token and `property-correction-provenance.test.ts` pins it
+// against every vendored ref-doc. The day upstream corrects a span the suite
+// reds and the entry is deleted rather than silently overriding a value that
+// had since become right.
+//
+// Demonstrated errors only. A property whose declared type is merely imprecise
+// — every `resource.*` path hash, say — is not a correction candidate.
+export interface PropertyTypeCorrection {
+  readonly ts: string;
+  readonly upstream: string;
+  readonly reason: string;
+}
+
+// Keyed `<namespace>.<property>`, so a same-named property in another catalog
+// is untouched.
+export const PROPERTY_TYPE_CORRECTIONS: ReadonlyMap<string, PropertyTypeCorrection> = new Map([
+  [
+    "sprite.frame_count",
+    {
+      ts: "number",
+      upstream: "hash",
+      reason:
+        "a count of animation frames, which the prose confirms; `hash` is a copy-paste of the sibling animation-id spans",
+    },
+  ],
+  [
+    "camera.projection",
+    {
+      ts: "Matrix4",
+      upstream: "float",
+      reason:
+        "the prose in the same element says matrix4; every camera property carries the same blanket `float` span",
+    },
+  ],
+  [
+    "camera.view",
+    {
+      ts: "Matrix4",
+      upstream: "float",
+      reason:
+        "the prose in the same element says matrix4; every camera property carries the same blanket `float` span",
+    },
+  ],
+]);
+
 // FQN-keyed allowlist of the `types.is_*` checks that genuinely narrow their
 // argument, mapped to the `DEFOLD_TYPE_MAP` token whose interface they prove.
 // Emitting these as user-defined type guards (`var_ is Vector3`) is the only way
@@ -1641,7 +1689,7 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
       for (const docLine of summaryDocLines(p.brief, p.description, `${INDENT}${INDENT}`)) {
         lines.push(docLine);
       }
-      lines.push(`${INDENT}${INDENT}${emitPropertyMember(p, mapType)}`);
+      lines.push(`${INDENT}${INDENT}${emitPropertyMember(p, mapType, module.namespace)}`);
     }
     lines.push(`${INDENT}}`);
   }
@@ -1759,7 +1807,7 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
   for (const p of module.properties) {
     out.push({
       identity: { namespace: module.namespace, kind: "PROPERTY", name: p.name, signature: "" },
-      tsSignature: emitPropertyMember(p, mapType),
+      tsSignature: emitPropertyMember(p, mapType, module.namespace),
     });
   }
 
@@ -2224,9 +2272,19 @@ function emitReturn(
   return { type: ts, trailing: "" };
 }
 
-function emitPropertyMember(p: ApiProperty, mapType: (t: string) => string): string {
+function emitPropertyMember(
+  p: ApiProperty,
+  mapType: (t: string) => string,
+  namespace: string,
+): string {
   const key = TS_IDENTIFIER.test(p.name) ? p.name : JSON.stringify(p.name);
-  const ts = p.types.length > 0 ? unionFromTokens(p.types, mapType) : "unknown";
+  const correction = PROPERTY_TYPE_CORRECTIONS.get(`${namespace}.${p.name}`);
+  const ts =
+    correction !== undefined
+      ? correction.ts
+      : p.types.length > 0
+        ? unionFromTokens(p.types, mapType)
+        : "unknown";
   return `${key}: ${ts};`;
 }
 
