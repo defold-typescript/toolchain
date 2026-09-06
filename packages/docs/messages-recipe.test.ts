@@ -8,6 +8,7 @@ const REPO_ROOT = resolve(PKG_DIR, "..", "..");
 const MESSAGES_GUIDE = join(PKG_DIR, "guide", "messages.md");
 const HEADING = "## Declaring your own messages";
 const CROSS_OBJECT_HEADING = "## A message between two game objects";
+const PLACEMENT_HEADING = "## Where the declaration can live";
 // Reached as a workspace sibling on disk, the same way `llms-links.test.ts` and
 // `guide-types-subpaths.test.ts` reach the types package.
 const TYPES_ENTRY = resolve(PKG_DIR, "..", "types", "index.d.ts");
@@ -198,5 +199,75 @@ describe("the guide's cross-object message recipe", () => {
     // `msg.post`'s open-record fallback, so the send side proves nothing about
     // the program-wide merge.
     expect(output).toContain("wave-logic.ts");
+  });
+});
+
+/**
+ * The three `ts` fenced blocks under `## Where the declaration can live`, in
+ * page order — the module-beside-your-type shape, the module that posts
+ * without importing it, the mapping-table `.d.ts`. Read from the guide's own
+ * bytes for the same reason as {@link crossObjectBlocks}.
+ */
+function placementBlocks(): [string, string, string] {
+  const body = readFileSync(MESSAGES_GUIDE, "utf8");
+  const headingAt = body.indexOf(PLACEMENT_HEADING);
+  if (headingAt < 0) {
+    throw new Error(
+      `messages.md has no "${PLACEMENT_HEADING}" heading — the declaration ` +
+        "placement shapes this test compiles cannot be located. Restore the " +
+        "heading, or point this test at the section's new home.",
+    );
+  }
+  const after = body.slice(headingAt + PLACEMENT_HEADING.length);
+  const nextHeadingAt = after.search(/^## /m);
+  const section = nextHeadingAt < 0 ? after : after.slice(0, nextHeadingAt);
+  const blocks = [...section.matchAll(/^```ts\n([\s\S]*?)^```$/gm)].map((match) => match[1] ?? "");
+  const [waves, hud, mappingTable] = blocks;
+  if (waves === undefined || hud === undefined || mappingTable === undefined) {
+    throw new Error(
+      `"${PLACEMENT_HEADING}" carries ${blocks.length} \`\`\`ts blocks, not the ` +
+        "three whole files the section is built from (the module that declares, " +
+        "the module that posts, the mapping-table .d.ts). A thinned section " +
+        "must red here rather than compile whatever is left.",
+    );
+  }
+  return [waves, hud, mappingTable];
+}
+
+describe("the guide's declaration-placement shapes", () => {
+  test("a `declare global` inside an ordinary module registers for a module that imports nothing from it", () => {
+    const [waves, hud] = placementBlocks();
+    const { exitCode, output } = typecheckProgram({
+      "waves.ts": waves,
+      "hud.ts": hud,
+    });
+    if (exitCode !== 0) {
+      throw new Error(
+        `the ${PLACEMENT_HEADING} recommended shape does not compile against ` +
+          `the shipped declarations:\n${output}`,
+      );
+    }
+    expect(exitCode).toBe(0);
+  });
+
+  test("the mapping-table .d.ts carries the registration on its own", () => {
+    const [waves, hud, mappingTable] = placementBlocks();
+    // Removing the only other registration is what makes the compile evidence
+    // about the `.d.ts` rather than about the module beside the payload type.
+    const stripped = waves.replace(/^declare global \{$[\s\S]*?^\}$\n?/m, "");
+    expect(stripped).not.toBe(waves);
+
+    const { exitCode, output } = typecheckProgram({
+      "waves.ts": stripped,
+      "hud.ts": hud,
+      "messages.d.ts": mappingTable,
+    });
+    if (exitCode !== 0) {
+      throw new Error(
+        `the ${PLACEMENT_HEADING} mapping-table shape does not register ` +
+          `\`spawn_wave\` once the module-form registration is removed:\n${output}`,
+      );
+    }
+    expect(exitCode).toBe(0);
   });
 });

@@ -1586,7 +1586,7 @@ Nothing about the lowering changes. A custom id emits the same `message_id == ha
 
 #### A message between two game objects
 
-A real project spreads this over three files: one declaration file, and two scripts that never import it. A spawner game object tells a wave-logic game object to spawn a wave; the logic object reports back when the wave is cleared.
+A real project spreads this over three files: one declaration file, and two scripts that never import it. A spawner game object tells a wave-logic game object to spawn a wave; the logic object acknowledges each wave it spawns.
 
 The declaration lives in a `.d.ts` your `tsconfig.json` already includes — `src/messages.d.ts`, say:
 
@@ -1594,7 +1594,7 @@ The declaration lives in a `.d.ts` your `tsconfig.json` already includes — `sr
 declare global {
   interface CustomMessages {
     spawn_wave: { count: number; boss?: boolean };
-    wave_cleared: { wave: number };
+    wave_spawned: { wave: number };
   }
 }
 
@@ -1648,7 +1648,7 @@ export default defineScript<Self>({
     spawn_wave(self, message, sender) {
       self.wave += 1;
       spawnEnemies(message.count, message.boss ?? false);
-      msg.post(sender, "wave_cleared", { wave: self.wave });
+      msg.post(sender, "wave_spawned", { wave: self.wave });
     },
   }),
 });
@@ -1661,6 +1661,62 @@ What the one declaration buys:
 - **Both ends resolve through the same `MessagePayload<K>`.** Rename `count` in the declaration and the sender's helper and the receiver's handler break together; there is no second place to update.
 - **Adoption is incremental.** An id neither catalog declares still compiles, with an unchecked payload — declaring it is what turns the check on.
 - **The lowering is unchanged.** Each id emits the same `hash("...")` comparison a built-in one does, so none of this costs runtime.
+
+#### Where the declaration can live
+
+Registration and definition are two different things, and only one of them has to be global. `msg.post("/logic#wave", "spawn_wave", ...)` hands the compiler a **string literal**, and `MessagePayload<K>` resolves `K` from that literal. An import brings a *type* into lexical scope, which cannot tell the compiler what a string denotes — so no import could ever wire an id up at a call site. The id-to-payload map has to be global. The payload types themselves are ordinary exports.
+
+The shape to reach for first keeps the registration beside the type it names, in the module that owns it — `src/waves.ts`:
+
+```ts
+export type SpawnWave = { count: number; boss?: boolean };
+
+declare global {
+  interface CustomMessages {
+    spawn_wave: SpawnWave;
+  }
+}
+
+export function nextWave(sent: number): SpawnWave {
+  return { count: 3 + sent, boss: sent % 5 === 4 };
+}
+```
+
+`declare global` is legal here *because* the file is already a module — that is the case the construct exists for, and no `export {};` is needed. The block is type-only, so it erases: the emitted Lua is whatever `nextWave` compiles to and nothing more. And `SpawnWave` stays an ordinary exported type that any module can import and reuse.
+
+Every other module now posts the id while importing nothing from `waves.ts` — `src/hud.ts`:
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+
+export default defineScript({
+  update() {
+    msg.post("/logic#wave", "spawn_wave", { count: 3, boss: false });
+
+    // @ts-expect-error spawn_wave declares `count`; this payload omits it
+    msg.post("/logic#wave", "spawn_wave", { boss: true });
+  },
+});
+```
+
+That is what program-wide registration buys: one `declare global` anywhere in the program, and every file is checked against it.
+
+To keep registration out of your logic files, collect the entries in a `.d.ts` instead — `src/messages.d.ts`:
+
+```ts
+interface CustomMessages {
+  spawn_wave: import("./waves").SpawnWave;
+}
+```
+
+A `.d.ts` with no top-level `import` or `export` is a *script*, not a module, so its declarations are already global: it needs neither `declare global` nor `export {};`. An inline `import("./waves")` **type** does not change that — it is a type-level expression, not a top-level import statement. Use this mapping table *instead of* the `declare global` in `waves.ts`, not beside it, so each id has one home.
+
+Two shapes look like they should work and quietly do not:
+
+- **`declare module "@defold-typescript/types"` does not merge.** `CustomMessages` is declared inside `declare global` rather than exported from the package, so a module augmentation creates a separate module-scoped interface of the same name and the global one stays empty. Nothing errors; your ids simply never appear.
+- **A bare `interface CustomMessages` in a regular `.ts` is a trap.** It does register while that file has no top-level `import` or `export` — but such a file compiles to a banner-only `.lua`, and the moment any import or export turns it into a module it loses the registration *asymmetrically*: the receive side reds with TS2353 on the `onMessage` key, while the send side goes silent, because `MessagePayload<K>` falls back to `Record<string | number, unknown>`.
+
+The `export {};` in [Declaring your own messages](#declaring-your-own-messages) is required for exactly one reason: that block is a `declare global` in a file that would otherwise be a script. This section is the rule behind it — `declare global` needs a module, and a `.d.ts` mapping table needs neither marker.
 
 #### See also
 
