@@ -28,6 +28,7 @@ import { type NamespaceBadgeCounts, reachableBadgeCounts } from "./combined-surf
 import type { SignatureSymbolTarget } from "./signature-brand-links";
 import { buildSymbolIndex } from "./symbol-index";
 import { linkifySymbolMentions } from "./symbol-linkify";
+import { symbolNote } from "./symbol-notes";
 import { resolveVersionWindow } from "./version-window";
 
 const KIND_SECTIONS: { kind: ApiSymbol["kind"]; label: string }[] = [
@@ -333,10 +334,13 @@ export function navLeafBadgeHtml(
 // (the availability block), description, example, Parameters, Returns: a symbol
 // that was removed or re-signatured says so before the prose describing it, so a
 // reader never acts on a description that no longer holds for their version.
-function symbolBlock(symbol: ApiSymbol, badges = "", dots = ""): string {
+function symbolBlock(symbol: ApiSymbol, badges = "", dots = "", note = ""): string {
   const heading = dots ? `### \`${symbol.signature}\` ${dots}` : `### \`${symbol.signature}\``;
   const body: string[] = [];
   if (badges) body.push(badges);
+  // Ahead of the prose: the note exists to qualify the upstream description and
+  // example that follow it, which a reader would otherwise take at face value.
+  if (note) body.push(note);
   if (symbol.docMarkdown) body.push(symbol.docMarkdown);
   if (symbol.exampleMarkdown) body.push(symbol.exampleMarkdown);
   if (symbol.parameters.length > 0) body.push(paramSection("Parameters", symbol.parameters));
@@ -515,6 +519,7 @@ export function apiPageMarkdown(
     doc: linkify(p.doc),
     ...(p.fields ? { fields: p.fields.map(linkifyParam) } : {}),
   });
+  const noted = new Set<string>();
   const emitSymbol = (symbol: ApiSymbol) => {
     const linkified: ApiSymbol = {
       ...symbol,
@@ -550,7 +555,11 @@ export function apiPageMarkdown(
             ),
           )
         : "");
-    lines.push(symbolBlock(linkified, badges, dots), "");
+    // Once per FQN: an overload set renders a row per authored signature, and a
+    // note repeated down every row reads as noise rather than emphasis.
+    const note = noted.has(symbol.name) ? "" : (symbolNote(symbol.name) ?? "");
+    if (note) noted.add(symbol.name);
+    lines.push(symbolBlock(linkified, badges, dots, note), "");
   };
   for (const { kind, label } of KIND_SECTIONS) {
     const group = symbols.filter((s) => s.kind === kind);

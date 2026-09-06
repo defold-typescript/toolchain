@@ -129,6 +129,24 @@ onMessage({
   not_a_message(_self, _message) {},
 });
 
+// packages/docs/guide/script-lifecycle.md "Why not call `go.property` yourself" —
+// a direct call registers at runtime but reaches neither `properties` nor init's
+// return, so the property never lands on `self`; the field form is what types it.
+go.property("health", 100);
+defineScript({
+  update(self) {
+    // @ts-expect-error a direct `go.property` call never reaches `self`'s type
+    print(self.health);
+  },
+});
+defineScript({
+  properties: { health: 100 },
+  update(self) {
+    const _fieldHealth: number = self.health;
+    void _fieldHealth;
+  },
+});
+
 void _v3add;
 void _v3mul2;
 void _v3unm;

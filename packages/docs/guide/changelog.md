@@ -9,6 +9,12 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.32.1
+
+### Fixed
+
+- **The [`go.property`](/api/go) reference no longer teaches the call this toolchain deprecates.** Its entry now leads with a warning naming the `defineScript({ properties })` field, and its TypeScript example declares the property there. [Script properties on `self`](./script-lifecycle.md#script-properties-on-self) explains what a direct call costs — the property registers at runtime but never reaches `self`'s type, so reading it is a compile error — and shows the before/after migration.
+
 ## v0.32.0
 
 ### Breaking
