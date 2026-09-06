@@ -89,7 +89,9 @@ declare global {
      * @deprecated Don't call `go.property` yourself. Declare the property in
      * `defineScript({ properties })` — that is the only form that types it onto
      * `self`; the transpiler emits the `go.property(...)` registration for you.
-     * A direct call still registers, but `self.<name>` stays untyped.
+     * A direct call still registers the property at runtime, but it reaches
+     * neither `properties` nor `init`'s return, so reading `self.<name>` in a
+     * hook is a compile error.
      *
      * @param name - editor property id to register.
      * @param value - default value for the registered property.

@@ -350,7 +350,7 @@
   "go.property": [
     {
       "sourceHash": "96e6079cda36fa54",
-      "ts": "// This example defines a property \"health\" in a script. The health is decreased\n// whenever someone sends a \"take_damage\" message to the script.\ngo.property(\"health\", 100);\n\nexport default defineScript({\n  init(self) {\n    // prints 100 to the output\n    print(self.health);\n  },\n\n  on_message(self, message_id, message) {\n    if (message_id === hash(\"take_damage\")) {\n      self.health = self.health - message.damage;\n      print(`Ouch! My health is now: ${self.health}`);\n    }\n  },\n});"
+      "ts": "// This example defines a property \"health\" in a script. The health is decreased\n// whenever someone sends a \"take_damage\" message to the script.\n\n// The payload of your own message id, declared once for the whole program\n// (usually in a .d.ts of its own).\ndeclare global {\n  interface CustomMessages {\n    take_damage: { damage: number };\n  }\n}\n\nexport default defineScript({\n  // Never call `go.property` yourself: the transpiler emits the chunk-scope\n  // `go.property(\"health\", 100)` registration from this field, and only this\n  // field types the property onto `self`.\n  properties: { health: 100 },\n\n  init(self) {\n    // prints 100 to the output\n    print(self.health);\n  },\n\n  on_message(self, message_id, message) {\n    if (isMessage(message_id, message, \"take_damage\")) {\n      self.health = self.health - message.damage;\n      print(`Ouch! My health is now: ${self.health}`);\n    }\n  },\n});"
     }
   ],
   "go.set": [
