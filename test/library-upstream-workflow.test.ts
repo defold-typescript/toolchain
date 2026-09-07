@@ -11,7 +11,13 @@ const workflowPath = join(
   "library-upstream-check.yml",
 );
 
-type Step = { name?: string; uses?: string; run?: string };
+type Step = {
+  name?: string;
+  uses?: string;
+  run?: string;
+  if?: string;
+  "continue-on-error"?: boolean;
+};
 type Workflow = {
   on?: Record<string, unknown>;
   permissions?: Record<string, string>;
@@ -77,5 +83,26 @@ describe("library upstream check workflow", () => {
     const body = script ?? "";
     expect(body).toContain("gh issue list");
     expect(body.indexOf("gh issue list")).toBeLessThan(body.indexOf("gh issue create"));
+  });
+
+  test("opens issues for the reports that were readable even when a scan step failed", () => {
+    const issueStep = steps().find((step) => (step.run ?? "").includes("gh issue create"));
+    expect(issueStep).toBeDefined();
+    // A step defaults to `if: success()`, so one unreadable upstream out of 35
+    // would withhold every other group's issue. The condition has to be one that
+    // still holds after a failed predecessor; `success()` or a missing key reds.
+    const condition = (issueStep?.if ?? "").replace(/\s|\$\{\{|\}\}/g, "");
+    expect(condition).toMatch(/^(!cancelled\(\)|always\(\))$/);
+  });
+
+  test("keeps the scan step failing the job, so an unreadable upstream is never a quiet green", () => {
+    const scanStep = steps().find((step) =>
+      (step.run ?? "").includes("bun scripts/library-upstream-check.ts"),
+    );
+    expect(scanStep).toBeDefined();
+    // The tempting wrong fix for the same bug: `continue-on-error` on the scan
+    // would isolate the failure by discarding it, turning a renamed or deleted
+    // repo into a green week.
+    expect(scanStep?.["continue-on-error"]).toBeUndefined();
   });
 });

@@ -111,12 +111,21 @@ skip it.
 The corpus pin and a *consumer's* declared dependency are different things, and
 conflating them is the first mistake a repo-wide find-and-replace makes.
 
-Several CLI tests hardcode archive URLs such as
-`https://github.com/Insality/druid/archive/1.2.3.zip` — deliberately a *different*
-version from the corpus pin, because a consumer pinned older than the corpus is
-the realistic case they model. `normalizeSourceId`
-(`packages/cli/src/library-match.ts`) strips `/archive/<ref>.zip` and matches on
-the repo name alone, so those fixtures are version-independent by construction.
+Several CLI tests hardcode archive URLs and extracted-entry paths, and some of
+them pin *exactly* the corpus string. `packages/cli/src/library-match.test.ts`,
+`packages/cli/src/resolve.test.ts` and `packages/cli/src/druid-resolve-e2e.test.ts`
+all carry druid's `1.2.5` — the same literal the registry entry holds. That
+collision is the reason a repo-wide find-and-replace is unsafe: one `1.2.5` must
+move with the bump (the registry entry, and the docs-site provenance assertions
+named above), and another must not.
+
+`normalizeSourceId` (`packages/cli/src/library-match.ts`) strips
+`/archive/<ref>.zip` and matches on the repo name alone, so a consumer fixture is
+version-independent either way — which cuts both ways. Rewriting its version
+leaves the suite green, so a green `bun test` is not evidence the rewrite was
+correct. The `1.2.3` fixtures in `packages/cli/src/library-scene-materialize.test.ts`
+and the later `resolve.test.ts` cases are consumer fixtures on the same footing
+and equally out of scope.
 
 **Leave them alone.** A corpus bump changes `packages/library-types/`, the floors,
 the emitted artifacts and the docs indexes. It does not change what a test project
