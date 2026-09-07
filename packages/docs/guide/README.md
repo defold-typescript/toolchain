@@ -84,6 +84,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - [Native extensions](./extensions.md) — declare an extension in `game.project` `[dependencies]`, then run [`resolve`](./resolve.md) to generate an ambient namespace per `.script_api` into a gitignored `.defold-types/extensions/` surface, and consume it with no import.
 - [Authoring LuaLS library types](./authoring-luals-library-types.md) — add a pure-Lua library whose types are generated from its inline LuaLS (`---@`) annotations: the `luals-targets.json` entry, the fetch/fidelity/emit/api-doc commands, and how the committed `.d.ts` reaches a consumer via [`resolve`](./resolve.md).
 - [Authoring forked library types](./authoring-forked-library-types.md) — add a library with no structured upstream source by vendoring a forked or hand-authored `.d.ts`: the fork/hand-author/keep cost model, the `authored-targets.json` entry, the emit/api-doc commands, and why a fork's emission fidelity is by construction while its accuracy against upstream is not.
+- [Refreshing library pins](./refreshing-library-pins.md) — move a library already in the corpus to a newer upstream `ref`: how `upstream:library-check` and its weekly workflow surface a stale pin, the per-lane regeneration commands (and why the authored lane has no `--fetch`), the floor, provenance and generated-artifact couplings that move with the pin, and the consumer-side fixtures a bump must leave alone.
 
 ### Migration
 

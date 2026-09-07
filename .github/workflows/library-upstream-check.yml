@@ -1,0 +1,64 @@
+# Checks every library-types lane registry for an upstream that has moved past
+# the pin.
+#
+# `defold-upstream-check.yml` does this for the engine; the library corpus — 35
+# upstream repos across the authored, LuaLS, markdown, OpenAPI and script_api
+# lanes — had no equivalent, so a stale pin was only ever noticed by hand.
+#
+# Two GitHub scheduling facts this depends on: a `schedule:` trigger only ever
+# runs on the default branch (so edits must land on main to take effect), and it
+# is auto-disabled after 60 days without repository activity — `workflow_dispatch`
+# is kept so a maintainer can always run it by hand.
+
+name: Library upstream pin check
+
+on:
+  schedule:
+    # Weekly, Monday 07:00 UTC — an hour after the engine check, so the two jobs
+    # do not contend for the same API rate-limit window.
+    - cron: "0 7 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4"
+      - run: bun install --frozen-lockfile
+
+      # Invoked as a file rather than through `bun run` so nothing but the report
+      # can reach stdout. Exit 1 here means an upstream could not be read, which
+      # is a real failure; drift itself exits 0 and is read out of the JSON below.
+      - name: Scan every lane registry for a moved upstream
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bun scripts/library-upstream-check.ts --json > upstream.json
+
+      - name: Open one issue per stale repo
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          jq -r '"\(.reports | length) pin(s), \([.reports[] | select(.actionable)] | length) actionable"' upstream.json
+          jq -c '.reports[] | select(.actionable)' upstream.json > actionable.jsonl
+          while read -r report; do
+            title=$(printf '%s' "$report" | jq -r '.issueTitle')
+            # The title is keyed on the repo slug and the upstream version alone,
+            # so this finds the issue a previous run opened and stays a no-op
+            # until the bump lands.
+            existing=$(gh issue list --state open --limit 100 --json number,title \
+              --jq "[.[] | select(.title == \"$title\") | .number] | first // empty")
+            if [ -n "$existing" ]; then
+              echo "already tracked as #$existing: $title"
+              continue
+            fi
+            printf '%s' "$report" | jq -r '.issueBody' > issue-body.md
+            gh issue create --title "$title" --body-file issue-body.md
+          done < actionable.jsonl
