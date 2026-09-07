@@ -9,6 +9,12 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.32.2
+
+### Improved
+
+- **[Refreshing library pins](./refreshing-library-pins.md) is a new guide page for moving a bundled library to a newer upstream release.** It gives the regeneration commands per lane — including why the hand-vendored authored lane has no fetch step — and names what a bump moves with it: the committed fidelity floor, the snapshot digest, the docs-site provenance assertions, and the generated docs artifacts.
+
 ## v0.32.1
 
 ### Fixed
