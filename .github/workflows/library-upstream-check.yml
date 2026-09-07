@@ -41,11 +41,23 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: bun scripts/library-upstream-check.ts --json > upstream.json
 
+      # The scan exits 1 when any one of the 35 groups is unreadable, and a step
+      # defaults to `if: success()` — so without this the whole corpus's findings
+      # would be withheld over a single renamed repo. `!cancelled()` rather than
+      # `always()`: a cancelled run should not open issues on its way out.
       - name: Open one issue per stale repo
+        if: ${{ !cancelled() }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          # Running after a failed predecessor means the report may never have
+          # been written; consuming it with jq would stack a parse error on top
+          # of the real failure.
+          if [ ! -s upstream.json ]; then
+            echo "no upstream report to consume"
+            exit 0
+          fi
           jq -r '"\(.reports | length) pin(s), \([.reports[] | select(.actionable)] | length) actionable"' upstream.json
           jq -c '.reports[] | select(.actionable)' upstream.json > actionable.jsonl
           while read -r report; do
