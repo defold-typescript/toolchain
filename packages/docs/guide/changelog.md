@@ -13,7 +13,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **[Refreshing library pins](./refreshing-library-pins.md) is a new guide page for moving a bundled library to a newer upstream release.** It gives the regeneration commands per lane — including why the hand-vendored authored lane has no fetch step — and names what a bump moves with it: the committed fidelity floor, the snapshot digest, the docs-site provenance assertions, and the generated docs artifacts.
+- **[Refreshing library pins](./refreshing-library-pins.md) is a new guide page for moving a bundled library to a newer upstream release.** It gives the regeneration commands per lane — including why the hand-vendored authored lane has no fetch step — and names both what a bump moves with it (the committed fidelity floor, the snapshot digest, the docs-site provenance assertions, the generated docs artifacts) and what it must leave alone, including the consumer test fixtures that pin the very same version string, which is why a repo-wide find-and-replace is unsafe and a green suite is no proof it was done right.
 
 ## v0.32.1
 
