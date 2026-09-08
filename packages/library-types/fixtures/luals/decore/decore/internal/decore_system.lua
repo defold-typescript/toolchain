@@ -1,5 +1,6 @@
 local events = require("event.events")
 local decore_data = require("decore.internal.decore_data")
+local decore_utils = require("decore.internal.decore_utils")
 
 local ecs = require("decore.internal.ecs")
 
@@ -85,12 +86,14 @@ end
 
 ---@param world world
 function M:onAddToWorld(world)
+	world.id_to_entity = self.id_to_entity
 	events.subscribe("decore.create_entity", world.addEntity, world)
 end
 
 
 ---@param world world
 function M:onRemoveFromWorld(world)
+	world.id_to_entity = nil
 	events.unsubscribe("decore.create_entity", world.addEntity, world)
 end
 
@@ -98,6 +101,7 @@ end
 ---@param entity entity
 function M:onAdd(entity)
 	self.id_to_entity[entity.id] = entity
+	self:register_with_parent(entity)
 	self:spawn_children(entity)
 end
 
@@ -110,14 +114,40 @@ function M:onRemove(entity)
 end
 
 
+--- If entity.parent_id is set, register on parent.children_ids for cascade remove.
+---@param entity entity
+function M:register_with_parent(entity)
+	local parent = self.id_to_entity[entity.parent_id]
+	if not parent then
+		return
+	end
+
+	local children_ids = parent.children_ids
+	if not children_ids then
+		parent.children_ids = { entity.id }
+		return
+	end
+
+	for index = 1, #children_ids do
+		if children_ids[index] == entity.id then
+			return
+		end
+	end
+
+	table.insert(children_ids, entity.id)
+end
+
+
 ---@param entity entity
 function M:spawn_children(entity)
-	-- Create real chilnd entities from prefab data
+	-- Create real child entities from prefab data
 	local child_entities = entity.child_instancies
 	if child_entities then
-		entity.children_ids = {}
+		entity.children_ids = entity.children_ids or {}
 		for index = 1, #child_entities do
-			local child_entity = child_entities[index]
+			-- The descriptor is prefab data shared with the template, so it has to be
+			-- instantiated: passing it as is would hand the same objects to every child
+			local child_entity = decore_utils.instantiate_template(child_entities[index])
 			local child = self.decore.create_prefab(child_entity.prefab_id, child_entity.pack_id, child_entity)
 			self.decore.apply_component(child, "transform")
 

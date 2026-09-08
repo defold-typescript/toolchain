@@ -525,8 +525,8 @@
     {
       "type": "FUNCTION",
       "name": "apply_component",
-      "brief": "Add component to entity.\nIf component not exists, it will be created with default values\nIf component already exists, it will be merged with the new data\nTo refresh system filters, call world:addEntity(entity) after this function",
-      "description": "Add component to entity.\nIf component not exists, it will be created with default values\nIf component already exists, it will be merged with the new data\nTo refresh system filters, call world:addEntity(entity) after this function",
+      "brief": "Add component to entity.\nIf component not exists, it will be created with default values\nIf component already exists, plain table data is merged into it\nAn object (table with a metatable, like event or promise) replaces the component as a whole\nTo refresh system filters, call world:addEntity(entity) after this function\nWhen a new component key is introduced, the entity shape token is derived so the\nsystem-membership cache stays valid. Prefer this over direct assignment for filter-relevant keys.",
+      "description": "Add component to entity.\nIf component not exists, it will be created with default values\nIf component already exists, plain table data is merged into it\nAn object (table with a metatable, like event or promise) replaces the component as a whole\nTo refresh system filters, call world:addEntity(entity) after this function\nWhen a new component key is introduced, the entity shape token is derived so the\nsystem-membership cache stays valid. Prefer this over direct assignment for filter-relevant keys.",
       "parameters": [
         {
           "name": "entity",
@@ -603,6 +603,41 @@
     },
     {
       "type": "FUNCTION",
+      "name": "remove_component",
+      "brief": "Remove a component key from entity and clear its shape cache token.\nTo refresh system filters, call world:addEntity(entity) after this function.",
+      "description": "Remove a component key from entity and clear its shape cache token.\nTo refresh system filters, call world:addEntity(entity) after this function.",
+      "parameters": [
+        {
+          "name": "entity",
+          "doc": "",
+          "types": [
+            "entity"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "component_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "entity"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
       "name": "get_entity_by_id",
       "brief": "",
       "description": "",
@@ -639,8 +674,8 @@
     {
       "type": "FUNCTION",
       "name": "find_entities",
-      "brief": "Return all entities with component_id equal to component_value or all entities with component_id if component_value is nil.\nIt looks for component_id in entity and entityToChange tables",
-      "description": "Return all entities with component_id equal to component_value or all entities with component_id if component_value is nil.\nIt looks for component_id in entity and entityToChange tables",
+      "brief": "Return all entities with component_id equal to component_value or all entities with component_id if component_value is nil.",
+      "description": "Return all entities with component_id equal to component_value or all entities with component_id if component_value is nil.",
       "parameters": [
         {
           "name": "world",
@@ -665,6 +700,15 @@
           "doc": "if nil, return all entities with component_id",
           "types": [
             "unknown | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        },
+        {
+          "name": "out",
+          "doc": "optional out table to avoid allocation",
+          "types": [
+            "entity[] | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -764,9 +808,17 @@
       "name": "world",
       "properties": [
         {
-          "name": "event_bus",
+          "name": "event",
           "brief": "",
           "description": "",
+          "types": [
+            "decore_event_bus"
+          ]
+        },
+        {
+          "name": "event_bus",
+          "brief": "Deprecated alias of `event`",
+          "description": "Deprecated alias of `event`",
           "types": [
             "decore_event_bus"
           ]
@@ -788,11 +840,83 @@
           ]
         },
         {
+          "name": "systemsUpdate",
+          "brief": "",
+          "description": "",
+          "types": [
+            "system[]"
+          ]
+        },
+        {
+          "name": "systemsPreWrap",
+          "brief": "",
+          "description": "",
+          "types": [
+            "system[]"
+          ]
+        },
+        {
+          "name": "systemsPostWrap",
+          "brief": "",
+          "description": "",
+          "types": [
+            "system[]"
+          ]
+        },
+        {
+          "name": "systemsLateUpdate",
+          "brief": "",
+          "description": "",
+          "types": [
+            "system[]"
+          ]
+        },
+        {
+          "name": "systemsFixedUpdate",
+          "brief": "",
+          "description": "",
+          "types": [
+            "system[]"
+          ]
+        },
+        {
+          "name": "systemsOnModify",
+          "brief": "",
+          "description": "",
+          "types": [
+            "system[]"
+          ]
+        },
+        {
+          "name": "shapeSystems",
+          "brief": "Shape token -> matched systems",
+          "description": "Shape token -> matched systems",
+          "types": [
+            "LuaTable<AnyNotNil, system[]>"
+          ]
+        },
+        {
+          "name": "shapeGeneration",
+          "brief": "Generation of shapeSystems (vs ecs shape cache bump)",
+          "description": "Generation of shapeSystems (vs ecs shape cache bump)",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
           "name": "speed",
           "brief": "Koef for delta time",
           "description": "Koef for delta time",
           "types": [
             "number | undefined"
+          ]
+        },
+        {
+          "name": "id_to_entity",
+          "brief": "Entity id -> entity (set by decore system)",
+          "description": "Entity id -> entity (set by decore system)",
+          "types": [
+            "LuaTable<number, entity> | undefined"
           ]
         },
         {
@@ -960,7 +1084,7 @@
           "brief": "",
           "description": "",
           "types": [
-            "(world: world, component_id: string, component_value: unknown | undefined) => entity[]"
+            "(world: world, component_id: string, component_value: unknown | undefined, out: entity[] | undefined) => entity[]"
           ]
         },
         {
@@ -1104,6 +1228,14 @@
           "types": [
             "number[] | undefined"
           ]
+        },
+        {
+          "name": "__shape",
+          "brief": "Shape token for system-membership cache (set by decore)",
+          "description": "Shape token for system-membership cache (set by decore)",
+          "types": [
+            "unknown | undefined"
+          ]
         }
       ]
     },
@@ -1170,6 +1302,24 @@
           "name": "onRemove",
           "brief": "",
           "description": "",
+          "parameters": [
+            {
+              "name": "entity",
+              "doc": "",
+              "types": [
+                "entity"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "register_with_parent",
+          "brief": "If entity.parent_id is set, register on parent.children_ids for cascade remove.",
+          "description": "If entity.parent_id is set, register on parent.children_ids for cascade remove.",
           "parameters": [
             {
               "name": "entity",
@@ -1310,14 +1460,6 @@
           ]
         },
         {
-          "name": "nocache",
-          "brief": "",
-          "description": "",
-          "types": [
-            "boolean"
-          ]
-        },
-        {
           "name": "index",
           "brief": "",
           "description": "",
@@ -1331,6 +1473,14 @@
           "description": "",
           "types": [
             "boolean"
+          ]
+        },
+        {
+          "name": "hasOnModify",
+          "brief": "True when system has onModify; set by world",
+          "description": "True when system has onModify; set by world",
+          "types": [
+            "boolean | undefined"
           ]
         },
         {
@@ -1650,6 +1800,22 @@
           "types": [
             "(world: world, system: system, index: number) => number"
           ]
+        },
+        {
+          "name": "setShapeValidation",
+          "brief": "Enable/disable shape-cache validation (debug)",
+          "description": "Enable/disable shape-cache validation (debug)",
+          "types": [
+            "(enabled: boolean) => void"
+          ]
+        },
+        {
+          "name": "bumpShapeCache",
+          "brief": "Invalidate world shapeSystems (call when packs change)",
+          "description": "Invalidate world shapeSystems (call when packs change)",
+          "types": [
+            "() => void"
+          ]
         }
       ]
     },
@@ -1660,12 +1826,12 @@
         {
           "type": "FUNCTION",
           "name": "trigger",
-          "brief": "Pushes an event onto the queue, triggering it and processing the queue of callbacks.",
-          "description": "Pushes an event onto the queue, triggering it and processing the queue of callbacks.",
+          "brief": "Queue an event. Entity and data are optional.",
+          "description": "Queue an event. Entity and data are optional.",
           "parameters": [
             {
               "name": "event_name",
-              "doc": "The name of the event to push onto the queue.",
+              "doc": "",
               "types": [
                 "string | Hash"
               ],
@@ -1673,12 +1839,21 @@
               "is_vararg": "False"
             },
             {
-              "name": "data",
-              "doc": "The data to pass to the event and its associated callbacks.",
+              "name": "entity",
+              "doc": "",
               "types": [
-                "unknown"
+                "entity | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
+              "is_vararg": "False"
+            },
+            {
+              "name": "data",
+              "doc": "",
+              "types": [
+                "unknown | undefined"
+              ],
+              "is_optional": "True",
               "is_vararg": "False"
             }
           ],
@@ -1687,12 +1862,12 @@
         {
           "type": "FUNCTION",
           "name": "process",
-          "brief": "Processes a specified event, returning the list of events and optionally calling callback with the full list.",
-          "description": "Processes a specified event, returning the list of events and optionally calling callback with the full list.",
+          "brief": "Invoke callback once per event: callback(entity, data) or callback(context, entity, data).",
+          "description": "Invoke callback once per event: callback(entity, data) or callback(context, entity, data).",
           "parameters": [
             {
               "name": "event_name",
-              "doc": "The name of the event to process.",
+              "doc": "",
               "types": [
                 "Hash | string"
               ],
@@ -1701,16 +1876,16 @@
             },
             {
               "name": "callback",
-              "doc": "Optional callback function to execute with the full list of events.",
+              "doc": "",
               "types": [
-                "((events: unknown[]) => void) | ((context: unknown, events: unknown[]) => void) | undefined"
+                "((entity: entity | undefined, data: unknown) => void) | ((context: unknown, entity: entity | undefined, data: unknown) => void) | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
             },
             {
               "name": "context",
-              "doc": "Optional context to pass as first argument to callback.",
+              "doc": "",
               "types": [
                 "unknown | undefined"
               ],
@@ -1721,7 +1896,14 @@
           "returnvalues": [
             {
               "name": "",
-              "doc": "The list of events, or nil if no events found.",
+              "doc": "",
+              "types": [
+                "unknown[] | undefined"
+              ]
+            },
+            {
+              "name": "",
+              "doc": "",
               "types": [
                 "unknown[] | undefined"
               ]
@@ -1730,32 +1912,24 @@
         },
         {
           "type": "FUNCTION",
-          "name": "process_all",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
           "name": "set_merge_policy",
-          "brief": "You can set the merge policy for an event. This is useful when you want to merge events of the same type.",
-          "description": "You can set the merge policy for an event. This is useful when you want to merge events of the same type.",
+          "brief": "Merge policy: return true if the new event was merged into an existing one.\n`entity_map[entity]` (or entity_map[\"system\"]) is the list of payloads for that entity.",
+          "description": "Merge policy: return true if the new event was merged into an existing one.\n`entity_map[entity]` (or entity_map[\"system\"]) is the list of payloads for that entity.",
           "parameters": [
             {
               "name": "event_name",
-              "doc": "The name of the event to set the merge policy for.",
+              "doc": "",
               "types": [
-                "string"
+                "string | Hash"
               ],
               "is_optional": "False",
               "is_vararg": "False"
             },
             {
               "name": "merge_callback",
-              "doc": "The callback function to merge the events. Return true if the events were merged, false otherwise.",
+              "doc": "",
               "types": [
-                "((new_event: unknown, events: unknown[], entity_map: LuaTable<entity, unknown[]>) => boolean) | undefined"
+                "((entity: entity | undefined, data: unknown, datas: unknown[], entity_map: LuaTable) => boolean) | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -1784,8 +1958,52 @@
           "name": "get_events",
           "brief": "",
           "description": "",
-          "parameters": [],
-          "returnvalues": []
+          "parameters": [
+            {
+              "name": "event_name",
+              "doc": "",
+              "types": [
+                "Hash | string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown[] | undefined"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_event_entities",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "event_name",
+              "doc": "",
+              "types": [
+                "Hash | string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown[] | undefined"
+              ]
+            }
+          ]
         },
         {
           "type": "FUNCTION",
@@ -1808,7 +2026,33 @@
               "name": "",
               "doc": "",
               "types": [
-                "LuaTable[] | undefined"
+                "unknown[] | undefined"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_stash_entities",
+          "brief": "",
+          "description": "",
+          "parameters": [
+            {
+              "name": "event_name",
+              "doc": "",
+              "types": [
+                "Hash | string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "unknown[] | undefined"
               ]
             }
           ]
@@ -1817,42 +2061,58 @@
       "properties": [
         {
           "name": "events",
-          "brief": "The list of events group by event name. Array part of entities map is the order of entities event's triggers",
-          "description": "The list of events group by event name. Array part of entities map is the order of entities event's triggers",
+          "brief": "Ordered payloads for the current frame",
+          "description": "Ordered payloads for the current frame",
           "types": [
-            "LuaTable<string, unknown[]>"
+            "LuaTable<string | Hash, unknown[]>"
+          ]
+        },
+        {
+          "name": "event_entities",
+          "brief": "Parallel entity list (NO_ENTITY = no entity)",
+          "description": "Parallel entity list (NO_ENTITY = no entity)",
+          "types": [
+            "LuaTable<string | Hash, unknown[]>"
           ]
         },
         {
           "name": "events_by_entity",
-          "brief": "Maps event_name -> entity -> array of events for fast lookup",
-          "description": "Maps event_name -> entity -> array of events for fast lookup",
+          "brief": "event_id -> entity -> payloads",
+          "description": "event_id -> entity -> payloads",
           "types": [
-            "LuaTable<string, LuaTable<entity, unknown[]>>"
+            "LuaTable<string | Hash, LuaTable<entity | string, unknown[]>>"
           ]
         },
         {
           "name": "stash",
-          "brief": "Events to be processed in PostWrap",
-          "description": "Events to be processed in PostWrap",
+          "brief": "",
+          "description": "",
           "types": [
-            "LuaTable<string, unknown[]>"
+            "LuaTable<string | Hash, unknown[]>"
+          ]
+        },
+        {
+          "name": "stash_entities",
+          "brief": "",
+          "description": "",
+          "types": [
+            "LuaTable<string | Hash, unknown[]>"
           ]
         },
         {
           "name": "stash_by_entity",
-          "brief": "Maps event_name -> entity -> array of events for stash (fast lookup)",
-          "description": "Maps event_name -> entity -> array of events for stash (fast lookup)",
+          "brief": "",
+          "description": "",
           "types": [
-            "LuaTable<string, LuaTable<entity, unknown[]>>"
+            "LuaTable<string | Hash, LuaTable<entity | string, unknown[]>>"
           ]
         },
         {
           "name": "merge_callbacks",
-          "brief": "The merge policy for events. If the merge policy returns true, the events are merged and not will be added as new event",
-          "description": "The merge policy for events. If the merge policy returns true, the events are merged and not will be added as new event",
+          "brief": "",
+          "description": "",
           "types": [
-            "LuaTable<string, (new_event: unknown, events: unknown[], entity_map: LuaTable<entity, unknown[]>) => boolean>"
+            "LuaTable<string | Hash, (entity: entity | undefined, data: unknown, datas: unknown[], entity_map: LuaTable) => boolean>"
           ]
         }
       ]

@@ -54,7 +54,7 @@
     },
     {
       "repo": "https://github.com/Insality/decore",
-      "ref": "4",
+      "ref": "6",
       "license": "MIT",
       "sourceGlobs": ["decore/**/*.lua"],
       "moduleId": "decore.decore",

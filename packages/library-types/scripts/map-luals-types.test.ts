@@ -94,6 +94,20 @@ describe("mapLualsType table", () => {
       "LuaTable<number, LuaTable<string, number>>",
     );
   });
+
+  test("an `any` key becomes AnyNotNil, which the value position keeps as unknown", () => {
+    expect(ts("table<any, integer>")).toBe("LuaTable<AnyNotNil, number>");
+    expect(ts("table<string, any>")).toBe("LuaTable<string, unknown>");
+  });
+
+  test("a nil arm is dropped from a key union but kept in the value", () => {
+    expect(ts("table<string | nil, integer>")).toBe("LuaTable<string, number>");
+    expect(ts("table<string, integer | nil>")).toBe("LuaTable<string, number | undefined>");
+  });
+
+  test("a key union that is entirely nil falls back to AnyNotNil", () => {
+    expect(ts("table<nil, integer>")).toBe("LuaTable<AnyNotNil, number>");
+  });
 });
 
 describe("mapLualsType inline object", () => {
