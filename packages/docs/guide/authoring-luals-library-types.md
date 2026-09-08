@@ -124,6 +124,16 @@ type-check, drop the restatement with an `annotationOverrides` field override â€
 every override, a `drop` naming an absent field throws rather than passing
 silently.
 
+The second drop shape is a class-level `@overload`. The emitter lowers one onto the
+interface as a call signature, which is right whenever the class really is callable â€”
+`event`'s `EVENT_METATABLE` and `PROMISE_METATABLE` each carry a real `__call`. It is
+wrong where the `@overload` describes the *module table* while the interface types the
+*instance*: `log` reuses one table as both, but only the module table gets `__call`, and
+`get_logger` returns an instance built on `{ __index = M }`, which Lua never treats as
+callable. Drop that signature with
+`"callSignature": { "drop": true }` on the interface. Same loud failure as the others: an
+override naming an interface that has no call signature throws.
+
 ## 2. Generate the artifacts
 
 Run the four commands from `packages/library-types`, in order. Each iterates every
