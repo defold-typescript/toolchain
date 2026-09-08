@@ -101,7 +101,7 @@ declare module 'event.event' {
 	interface promise {
 		state: promise_state;
 		value: unknown;
-		cancellation: promise_cancelled_context;
+		on_cancel: event;
 		/**
 		 * Attach resolve and reject handlers to the promise.
 		 * Returns a new promise that will be resolved or rejected based on the handlers' return values.
@@ -152,7 +152,11 @@ declare module 'event.event' {
 		 */
 		reject(reason: unknown): void;
 		/**
-		 * Cancel the promise chain. Triggers cleanup and rejects if still pending.
+		 * Cancel in-progress work in this promise chain.
+		 * A pending promise is rejected with the cancelled reason and `on_cancel` runs.
+		 * A settled promise is left as-is; pending descendants linked via `next` / `append` / adopt
+		 * are still rejected, and they trigger the shared `on_cancel`.
+		 * If nothing is still pending, this is a no-op.
 		 * my_promise:cancel()
 		 */
 		cancel(): void;

@@ -618,8 +618,8 @@
         {
           "type": "FUNCTION",
           "name": "cancel",
-          "brief": "Cancel the promise chain. Triggers cleanup and rejects if still pending.\nmy_promise:cancel()",
-          "description": "Cancel the promise chain. Triggers cleanup and rejects if still pending.\nmy_promise:cancel()",
+          "brief": "Cancel in-progress work in this promise chain.\nA pending promise is rejected with the cancelled reason and `on_cancel` runs.\nA settled promise is left as-is; pending descendants linked via `next` / `append` / adopt\nare still rejected, and they trigger the shared `on_cancel`.\nIf nothing is still pending, this is a no-op.\nmy_promise:cancel()",
+          "description": "Cancel in-progress work in this promise chain.\nA pending promise is rejected with the cancelled reason and `on_cancel` runs.\nA settled promise is left as-is; pending descendants linked via `next` / `append` / adopt\nare still rejected, and they trigger the shared `on_cancel`.\nIf nothing is still pending, this is a no-op.\nmy_promise:cancel()",
           "parameters": [],
           "returnvalues": []
         },
@@ -708,11 +708,11 @@
           ]
         },
         {
-          "name": "cancellation",
-          "brief": "Shared cancelled context for a promise chain",
-          "description": "Shared cancelled context for a promise chain",
+          "name": "on_cancel",
+          "brief": "Event for cancellation cleanup subscriptions (shared across the promise chain)",
+          "description": "Event for cancellation cleanup subscriptions (shared across the promise chain)",
           "types": [
-            "promise_cancelled_context"
+            "event"
           ]
         }
       ]
