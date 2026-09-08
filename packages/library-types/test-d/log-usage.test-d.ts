@@ -33,6 +33,12 @@ void logger.format;
 // @ts-expect-error log is @local, absent from the public surface
 void logger.log;
 
+// Upstream's class-level @overload describes the module table, which is the only
+// value carrying __call; get_logger hands back an instance built on
+// `{ __index = M }`, so a logger is not callable and the signature is dropped.
+// @ts-expect-error a logger instance has no call signature
+void logger("child", undefined);
+
 // The per-logger file sink, and the module-wide file API that arrived with it.
 const nearby: string | undefined = logger.set_file_nearby();
 const setFile: string | undefined = log.set_file("/logs/game.log");

@@ -2,14 +2,17 @@
  * Per-target corrections applied to a parsed `LibraryModel` after the merge, for the
  * cases where upstream LuaLS annotations diverge from the library's runtime and the
  * fixtures freeze the annotation verbatim (so it is not hand-patchable in the fixture
- * or the emitted `.d.ts`). The five shapes covered are a module function whose trailing
+ * or the emitted `.d.ts`). The six shapes covered are a module function whose trailing
  * parameter is runtime-optional despite a non-`|nil` `@param`, an interface method
  * whose `@return` omits an alternative arm, an interface field whose type token is
  * wrong or underspecified (a stray character, or an untyped `fun(...)` callback), an
- * interface method parameter with the same underspecification, and an interface field
+ * interface method parameter with the same underspecification, an interface field
  * that only restates a member inherited from a parent, incompatibly enough that the
- * emitted redeclaration would not type-check (`drop`). Every named target
- * must exist — a missing function, param, interface, field, or method throws naming the
+ * emitted redeclaration would not type-check (`drop`), and a class-level `@overload`
+ * that describes the module table rather than the instance the emitted call signature
+ * lands on (`callSignature`). Every named target
+ * must exist — a missing function, param, interface, field, method, or call signature
+ * throws naming the
  * absent key, mirroring `buildTargetModel`'s loud-fail on an absent `ownFile`, so a
  * stale override never degrades into a silent no-op.
  */
@@ -21,6 +24,7 @@ export interface AnnotationOverrides {
   interfaces?: Record<
     string,
     {
+      callSignature?: { drop?: boolean };
       fields?: Record<string, { type?: string; drop?: boolean }>;
       methods?: Record<string, { return?: string; params?: Record<string, { type?: string }> }>;
     }
@@ -54,6 +58,14 @@ export function applyAnnotationOverrides(
       throw new Error(
         `applyAnnotationOverrides: interface "${ifaceName}" is absent from the model.`,
       );
+    }
+    if (ifaceOverride.callSignature !== undefined) {
+      if (!iface.overloads || iface.overloads.length === 0) {
+        throw new Error(
+          `applyAnnotationOverrides: the call signature of interface "${ifaceName}" is absent from the model.`,
+        );
+      }
+      if (ifaceOverride.callSignature.drop) delete iface.overloads;
     }
     for (const [fieldName, fieldOverride] of Object.entries(ifaceOverride.fields ?? {})) {
       const field = iface.fields.find((f) => f.name === fieldName);

@@ -104,6 +104,9 @@
       "moduleId": "log.log",
       "namespace": "log",
       "typeRenames": { "debuginfo": "debug.FunctionInfo" },
+      "annotationOverrides": {
+        "interfaces": { "log": { "callSignature": { "drop": true } } }
+      },
       "ignore": ["**/test/**", "**/example/**", "**/example_*/**"]
     },
     {

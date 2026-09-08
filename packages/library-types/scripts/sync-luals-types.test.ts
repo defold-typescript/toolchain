@@ -779,3 +779,34 @@ describe("panthera ingestion spans the subtree and hides its private module func
     expect(pantheraTarget().externalTypes).toBeUndefined();
   });
 });
+
+describe("log's dropped call signature matches the runtime's non-callable logger", () => {
+  function logTarget(): LualsTarget {
+    const log = readLualsTargets(PACKAGE_ROOT).find((t) => t.namespace === "log");
+    if (!log) throw new Error("log target missing from luals-targets.json");
+    return log;
+  }
+
+  test("the override is configured to drop the emitted call signature", () => {
+    expect(logTarget().annotationOverrides?.interfaces?.log?.callSignature?.drop).toBe(true);
+  });
+
+  test("the metatable get_logger stamps on every logger declares no __call", () => {
+    const fixture = readFileSync(join(PACKAGE_ROOT, "fixtures/luals/log/log/log.lua"), "utf8");
+
+    const metatable = /^local METATABLE = (\{[^}]*\})/m.exec(fixture);
+    if (!metatable?.[1]) {
+      throw new Error("the METATABLE literal moved out of log.lua — recheck the drop's premise");
+    }
+    expect(metatable[1]).not.toContain("__call");
+
+    const built =
+      /function M\.get_logger\([^)]*\)[\s\S]*?\n\s*return setmetatable\(instance, (\w+)\)/.exec(
+        fixture,
+      );
+    if (!built?.[1]) {
+      throw new Error("get_logger no longer returns setmetatable(instance, …) — recheck the drop");
+    }
+    expect(built[1]).toBe("METATABLE");
+  });
+});
