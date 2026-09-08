@@ -7498,14 +7498,19 @@ skip it.
   example `meta.commit` is `1.2.5` and `meta.sourceUrl` is
   `https://github.com/Insality/druid/tree/1.2.5`. A bump moves both, and they are
   in a different package from the registry you edited.
-- **The OpenAPI refresh record.** `packages/library-types/openapi-pin-refresh.json` states which
-  operations a bump added and removed, and
-  `packages/library-types/scripts/openapi-pin-refresh.test.ts` checks every name it states against the
-  surface `parseOpenApi` yields for the committed fixtures. Regenerating the
-  OpenAPI fixtures without updating the record reds `ci`, so derive the new
-  entry by diffing the old and new element names rather than from upstream
-  release notes. It deliberately does not check that the record is *complete*,
-  nor its `changedOperations` and `notes`, which are prose.
+- **The pin-refresh record.** `packages/library-types/pin-refresh.json` states which
+  members a bump added and removed, one entry per refresh, each tagged with the
+  `lane` it belongs to (`luals`, `script-api`, or `openapi`).
+  `packages/library-types/scripts/pin-refresh.test.ts` checks every name it states
+  against the surface that lane's own parser yields for the committed fixtures —
+  `buildTargetModel`, `committedScriptApiDoc`, or `parseOpenApi`. Regenerating the
+  fixtures without updating the record reds `ci`, so derive the new
+  entry by diffing the old and new member names rather than from upstream
+  release notes. A second key, `deliberatelyUnmoved`, records a pin you examined
+  and chose to leave alone, and is guarded on its `ref` alone — so a note left
+  standing after that pin later moves also reds. The guard deliberately does not
+  check that the record is *complete*, nor its `changedMembers` and `notes`,
+  which are prose.
 - **The generated docs artifacts.** `packages/docs/llms.txt`,
   `packages/docs/llms-full.txt`, and the docs-site search and symbol indexes are
   committed, not built on demand. Regenerate them with

@@ -1,0 +1,34 @@
+{
+  "refreshes": [
+    {
+      "lane": "openapi",
+      "moduleId": "nakama.nakama",
+      "fromRef": "v3.21.1",
+      "toRef": "v3.40.0",
+      "addedMembers": [
+        "create_api_friends_of_friends_list",
+        "create_api_matchmaker_completion_stats",
+        "create_api_matchmaker_stats",
+        "create_api_party",
+        "create_api_party_list",
+        "create_friends_of_friends_list_friend_of_friend",
+        "create_party_update_message",
+        "get_matchmaker_stats",
+        "list_friends_of_friends",
+        "list_parties"
+      ],
+      "removedMembers": [],
+      "changedMembers": [
+        "add_friends",
+        "create_api_friend",
+        "create_api_tournament",
+        "create_envelope_message",
+        "create_party_create_message",
+        "create_party_message"
+      ],
+      "staged": false,
+      "notes": "Nineteen minors, purely additive: 200 members -> 210, nothing withdrawn. The six changed operations all gained parameters — `metadata` on add_friends and create_api_friend, `joinRequired` on create_api_tournament, `party_update` on create_envelope_message, all optional; create_party_create_message and create_party_message gained `label`/`hidden` as required. The go/no-go verdict is unmoved: decision stays no-go and the missing-member set (12 API* enum constants plus six client-lifecycle names) is byte-identical to the v3.21.1 measurement, so the additions expand the emitted surface without covering anything the authored fork owns. Fidelity coverage stays 1 (830 type tokens, 0 unknown), so fidelity-floor.json is unchanged. The fragile `proto` source path into upstream's Go vendor/ tree survived the bump and was re-verified at v3.40.0 before fetching. staged=false: the fixtures are snapshots rather than a replayable history and nothing is committed between checkpoints, so 19 intermediate fetches would multiply the work without adding an isolation point. changedMembers and these notes are unchecked prose — the committed guard reads addedMembers and removedMembers only."
+    }
+  ],
+  "deliberatelyUnmoved": []
+}
