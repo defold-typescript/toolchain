@@ -190,6 +190,33 @@ declare module 'bridge.bridge' {
        */
       function type(): string;
     }
+    namespace notifications {
+      /**
+       * Cancel a previously scheduled notification with the given id.
+       *
+       * @param on_success - function(_)
+       * @param on_failure - function(_, error)
+       */
+      function cancel(id: string, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
+      /**
+       * Cancel every notification scheduled by the game.
+       *
+       * @param on_success - function(_)
+       * @param on_failure - function(_, error)
+       */
+      function cancel_all(on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
+      /**
+       * Check if scheduling notifications is supported on the current platform.
+       */
+      function is_supported(): boolean;
+      /**
+       * Schedule a notification. The notification table has the shape { id, title, description, delaySeconds, image, callToAction, payload }, where id is mapped to the platform value in the config file. The payload of the notification the game was launched from is available via bridge.platform.payload().
+       *
+       * @param on_success - function(_)
+       * @param on_failure - function(_, error)
+       */
+      function schedule(notification: Record<string | number, unknown>, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
+    }
     namespace payments {
       /**
        * Consume purchased items, such as in-game currency, once they are used, to manage inventory and player progression.

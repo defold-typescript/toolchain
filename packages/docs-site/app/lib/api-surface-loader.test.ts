@@ -255,9 +255,9 @@ describe("loadLibraryProvenance — script_api-sourced libraries", () => {
     // names for the single-segment `namespace` — `bridge`, like the LuaLS libraries.
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("bridge");
     expect(meta.authoredHere).toBe(true);
-    expect(meta.commit).toBe("v2.0.0");
+    expect(meta.commit).toBe("v2.1.0");
     expect(meta.authorUrl).toBe("https://github.com/Playgama/bridge-defold");
-    expect(meta.sourceUrl).toBe("https://github.com/Playgama/bridge-defold/tree/v2.0.0");
+    expect(meta.sourceUrl).toBe("https://github.com/Playgama/bridge-defold/tree/v2.1.0");
     expect(meta.license).toBe("MIT");
     expect(meta.sourceUrl).not.toContain("ts-defold/library");
   });

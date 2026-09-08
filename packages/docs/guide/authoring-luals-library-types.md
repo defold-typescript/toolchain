@@ -288,7 +288,7 @@ bun scripts/sync-script-api-types.ts --api-doc     # lower the pinned api-doc/<.
 bun scripts/sync-script-api-types.ts --fidelity    # build the pinned fidelity/<...>.json
 ```
 
-The first migrated target is **`Playgama/bridge-defold`** (pinned `v2.0.0`),
+The first migrated target is **`Playgama/bridge-defold`** (pinned `v2.1.0`),
 maintained entirely from its `.script_api` — its former ts-defold binding is
 gone. Two things are specific to a script_api target and worth knowing:
 
