@@ -13,7 +13,7 @@
       "parameters": [
         {
           "name": "logger_name",
-          "doc": "",
+          "doc": "Default is the file name of the current script",
           "types": [
             "string | undefined"
           ],
@@ -22,7 +22,7 @@
         },
         {
           "name": "force_logger_level_in_debug",
-          "doc": "Default is DEBUG, values: FATAL, ERROR, WARN, INFO, DEBUG, TRACE",
+          "doc": "Debug builds only, values: FATAL, ERROR, WARN, INFO, DEBUG, TRACE",
           "types": [
             "string | undefined"
           ],
@@ -42,17 +42,61 @@
     },
     {
       "type": "FUNCTION",
-      "name": "get_default_logger_name",
-      "brief": "Return the basename of the current file",
-      "description": "Return the basename of the current file",
+      "name": "add_callback",
+      "brief": "Add a custom handler for log messages",
+      "description": "Add a custom handler for log messages",
       "parameters": [
         {
-          "name": "debuginfo",
+          "name": "callback",
           "doc": "",
           "types": [
-            "debug.FunctionInfo"
+            "(logger: logger, level: string, message: string, context: unknown, log_message: string) => void"
           ],
           "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "remove_callback",
+      "brief": "Remove a previously added handler",
+      "description": "Remove a previously added handler",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "The callback function to remove",
+          "types": [
+            "(...args: any[]) => unknown"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "clear_callbacks",
+      "brief": "Remove all custom handlers. The file writing is not affected",
+      "description": "Remove all custom handlers. The file writing is not affected",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_file",
+      "brief": "Set the log file for all loggers, in addition to the console and the personal logger files.\nThe path is always relative (`/logs/game.log`): project folder in the editor, save folder on a device.\nPass nil to disable",
+      "description": "Set the log file for all loggers, in addition to the console and the personal logger files.\nThe path is always relative (`/logs/game.log`): project folder in the editor, save folder on a device.\nPass nil to disable",
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "",
+          "types": [
+            "string | undefined"
+          ],
+          "is_optional": "True",
           "is_vararg": "False"
         }
       ],
@@ -61,10 +105,42 @@
           "name": "",
           "doc": "",
           "types": [
-            "string"
+            "string | undefined"
           ]
         }
       ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_file",
+      "brief": "Get the current log file path for all loggers, or nil if disabled",
+      "description": "Get the current log file path for all loggers, or nil if disabled",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "string | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "clear_log_files",
+      "brief": "Delete all known logger .log files from the disk",
+      "description": "Delete all known logger .log files from the disk",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "final",
+      "brief": "Flush, close and disable all log files.\nCall it once on the application shutdown, e.g. from the `final` of your bootstrap script.\nFurther log messages will not reopen the files until `set_file` / `set_file_nearby` is called again",
+      "description": "Flush, close and disable all log files.\nCall it once on the application shutdown, e.g. from the `final` of your bootstrap script.\nFurther log messages will not reopen the files until `set_file` / `set_file_nearby` is called again",
+      "parameters": [],
+      "returnvalues": []
     },
     {
       "type": "TYPEDEF",
@@ -78,16 +154,16 @@
           "parameters": [
             {
               "name": "message",
-              "doc": "Message to log",
+              "doc": "Message to log. Nil only refreshes the memory/time tracking",
               "types": [
-                "string"
+                "string | undefined"
               ],
               "is_optional": "False",
               "is_vararg": "False"
             },
             {
               "name": "data",
-              "doc": "",
+              "doc": "Additional context data",
               "types": [
                 "unknown"
               ],
@@ -105,16 +181,16 @@
           "parameters": [
             {
               "name": "message",
-              "doc": "Message to log",
+              "doc": "Message to log. Nil only refreshes the memory/time tracking",
               "types": [
-                "string"
+                "string | undefined"
               ],
               "is_optional": "False",
               "is_vararg": "False"
             },
             {
               "name": "data",
-              "doc": "",
+              "doc": "Additional context data",
               "types": [
                 "unknown"
               ],
@@ -132,16 +208,16 @@
           "parameters": [
             {
               "name": "message",
-              "doc": "",
+              "doc": "Message to log. Nil only refreshes the memory/time tracking",
               "types": [
-                "string"
+                "string | undefined"
               ],
               "is_optional": "False",
               "is_vararg": "False"
             },
             {
               "name": "data",
-              "doc": "",
+              "doc": "Additional context data",
               "types": [
                 "unknown"
               ],
@@ -159,16 +235,16 @@
           "parameters": [
             {
               "name": "message",
-              "doc": "",
+              "doc": "Message to log. Nil only refreshes the memory/time tracking",
               "types": [
-                "string"
+                "string | undefined"
               ],
               "is_optional": "False",
               "is_vararg": "False"
             },
             {
               "name": "data",
-              "doc": "",
+              "doc": "Additional context data",
               "types": [
                 "unknown"
               ],
@@ -186,16 +262,16 @@
           "parameters": [
             {
               "name": "message",
-              "doc": "",
+              "doc": "Message to log. Nil only refreshes the memory/time tracking",
               "types": [
-                "string"
+                "string | undefined"
               ],
               "is_optional": "False",
               "is_vararg": "False"
             },
             {
               "name": "data",
-              "doc": "",
+              "doc": "Additional context data",
               "types": [
                 "unknown"
               ],
@@ -204,6 +280,22 @@
             }
           ],
           "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_file_nearby",
+          "brief": "Write this logger messages to a `<logger_name>.log` file next to the calling script.\nEditor and desktop builds only, since it requires the project folder",
+          "description": "Write this logger messages to a `<logger_name>.log` file next to the calling script.\nEditor and desktop builds only, since it requires the project folder",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "string | undefined"
+              ]
+            }
+          ]
         }
       ],
       "properties": [
@@ -221,6 +313,22 @@
           "description": "",
           "types": [
             "string"
+          ]
+        },
+        {
+          "name": "_last_gc_memory",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "_last_message_time",
+          "brief": "",
+          "description": "",
+          "types": [
+            "number | undefined"
           ]
         }
       ]
