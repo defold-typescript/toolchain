@@ -184,8 +184,8 @@
     {
       "type": "FUNCTION",
       "name": "play",
-      "brief": "Play an animation with specified ID and options.",
-      "description": "Play an animation with specified ID and options.",
+      "brief": "Play an animation with specified ID and options.\nOne timer drives the whole tree, each tick finishes the running clips before starting new ones.",
+      "description": "Play an animation with specified ID and options.\nOne timer drives the whole tree, each tick finishes the running clips before starting new ones.",
       "parameters": [
         {
           "name": "animation_state",
@@ -526,6 +526,267 @@
       "returnvalues": []
     },
     {
+      "type": "FUNCTION",
+      "name": "_local_speed",
+      "brief": "Speed without `M.SPEED`, the tick applies it once",
+      "description": "Speed without `M.SPEED`, the tick applies it once",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "panthera_options"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "animation_state",
+          "doc": "",
+          "types": [
+            "panthera_animation"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "_playback_speed",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "panthera_options"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "animation_state",
+          "doc": "",
+          "types": [
+            "panthera_animation"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "_find_animation",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "animation_state",
+          "doc": "",
+          "types": [
+            "panthera_animation"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "animation_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "panthera_animation_data_animation | undefined"
+          ]
+        },
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "panthera_animation_data | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "_animation_log_data",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "animation_state",
+          "doc": "",
+          "types": [
+            "panthera_animation"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "animation_data",
+          "doc": "",
+          "types": [
+            "panthera_animation_data | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "animation_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "LuaTable"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "_log_missing_animation",
+      "brief": "",
+      "description": "",
+      "parameters": [
+        {
+          "name": "animation_state",
+          "doc": "",
+          "types": [
+            "panthera_animation"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "animation_data",
+          "doc": "",
+          "types": [
+            "panthera_animation_data | undefined"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "animation_id",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        },
+        {
+          "name": "message",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "panthera_collect_context",
+      "properties": [
+        {
+          "name": "values",
+          "brief": "Collected values",
+          "description": "Collected values",
+          "types": [
+            "panthera_animation_state_value[]"
+          ]
+        },
+        {
+          "name": "pool",
+          "brief": "Released value objects",
+          "description": "Released value objects",
+          "types": [
+            "panthera_animation_state_value[]"
+          ]
+        },
+        {
+          "name": "event_callback",
+          "brief": "",
+          "description": "",
+          "types": [
+            "((event_id: string, node: Opaque<\"node\"> | undefined, data: unknown, end_value: number) => void) | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "panthera_collect_buffer",
+      "properties": [
+        {
+          "name": "pool",
+          "brief": "Released value objects",
+          "description": "Released value objects",
+          "types": [
+            "panthera_animation_state_value[]"
+          ]
+        },
+        {
+          "name": "context",
+          "brief": "Context of a non nested sample",
+          "description": "Context of a non nested sample",
+          "types": [
+            "panthera_collect_context"
+          ]
+        },
+        {
+          "name": "depth",
+          "brief": "Sample nesting depth",
+          "description": "Sample nesting depth",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
       "type": "TYPEDEF",
       "name": "panthera_animation",
       "properties": [
@@ -563,8 +824,16 @@
         },
         {
           "name": "childs",
-          "brief": "List of active child animations",
-          "description": "List of active child animations",
+          "brief": "Detached child animations, each with its own timer",
+          "description": "Detached child animations, each with its own timer",
+          "types": [
+            "panthera_animation[] | undefined"
+          ]
+        },
+        {
+          "name": "clips",
+          "brief": "Running animation key clips, driven by this state",
+          "description": "Running animation key clips, driven by this state",
           "types": [
             "panthera_animation[] | undefined"
           ]
@@ -618,9 +887,49 @@
           ]
         },
         {
+          "name": "template_states",
+          "brief": "Cached animation states of the template nodes",
+          "description": "Cached animation states of the template nodes",
+          "types": [
+            "LuaTable<string, panthera_animation> | undefined"
+          ]
+        },
+        {
+          "name": "collect_buffer",
+          "brief": "Reused collect buffers of this state",
+          "description": "Reused collect buffers of this state",
+          "types": [
+            "panthera_collect_buffer | undefined"
+          ]
+        },
+        {
           "name": "timer_id",
-          "brief": "Timer ID for animation",
-          "description": "Timer ID for animation",
+          "brief": "Timer ID for animation, a clip has none",
+          "description": "Timer ID for animation, a clip has none",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "play_animation",
+          "brief": "Current playback animation",
+          "description": "Current playback animation",
+          "types": [
+            "panthera_animation_data_animation | undefined"
+          ]
+        },
+        {
+          "name": "play_options",
+          "brief": "Current playback options",
+          "description": "Current playback options",
+          "types": [
+            "panthera_options | undefined"
+          ]
+        },
+        {
+          "name": "play_sample_depth",
+          "brief": "Current playback sample depth",
+          "description": "Current playback sample depth",
           "types": [
             "number | undefined"
           ]
@@ -1022,6 +1331,14 @@
           ]
         },
         {
+          "name": "group_animation_order",
+          "brief": "group_animation_order[animation_id]: key groups sorted like the timeline. Value filled at loading animation data",
+          "description": "group_animation_order[animation_id]: key groups sorted like the timeline. Value filled at loading animation data",
+          "types": [
+            "LuaTable<string, panthera_animation_data_animation_key[][]>"
+          ]
+        },
+        {
           "name": "animations_dict",
           "brief": "animations_dict[animation_id]: animation. Value filled at loading animation data",
           "description": "animations_dict[animation_id]: animation. Value filled at loading animation data",
@@ -1175,6 +1492,60 @@
           "description": "",
           "types": [
             "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "panthera_animation_state_value",
+      "properties": [
+        {
+          "name": "node",
+          "brief": "",
+          "description": "",
+          "types": [
+            "Opaque<\"node\">"
+          ]
+        },
+        {
+          "name": "property_id",
+          "brief": "",
+          "description": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value",
+          "brief": "",
+          "description": "",
+          "types": [
+            "unknown"
+          ]
+        },
+        {
+          "name": "root_start",
+          "brief": "Root time of the key that set this value",
+          "description": "Root time of the key that set this value",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "source",
+          "brief": "`SOURCE_REST_POSE` or `SOURCE_KEY`",
+          "description": "`SOURCE_REST_POSE` or `SOURCE_KEY`",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "order",
+          "brief": "Collect order, groups are collected in timeline order",
+          "description": "Collect order, groups are collected in timeline order",
+          "types": [
+            "number"
           ]
         }
       ]
