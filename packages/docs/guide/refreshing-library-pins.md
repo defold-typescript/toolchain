@@ -65,6 +65,17 @@ Four lanes fetch and regenerate. Run their commands from
 `--fetch` is the only step that touches the network; everything after it reads
 the committed fixtures, so a regeneration is reproducible offline.
 
+Set `GITHUB_TOKEN` before fetching. The fetchers read it (`sync-luals-types.ts`
+and `sync-library-types.ts` both send it as a bearer token) and GitHub degrades
+unauthenticated API traffic — the `git/trees` calls behind `--fetch` and
+`upstream:library-check` can return `504 Gateway Timeout` on every attempt while
+the rate-limit budget still shows requests remaining, so a 504 here is not
+evidence that the pin or the repo is wrong.
+
+```sh
+GITHUB_TOKEN="$(gh auth token)" bun run luals:fetch
+```
+
 **The authored lane is the exception, and it is the one that surprises people.**
 `authored-targets.json` has **no `--fetch`** and no fidelity pass. Its
 `fixtures/upstream-lua/` snapshots are vendored by hand and its `.d.ts` is
@@ -113,6 +124,15 @@ skip it.
   standing after that pin later moves also reds. The guard deliberately does not
   check that the record is *complete*, nor its `changedMembers` and `notes`,
   which are prose.
+- **The compile-only surface proofs.** The `.test-d.ts` files under
+  `packages/library-types/test-d` assert the emitted `.d.ts` by assigning from it, and pin the *absence* of
+  non-public members with `@ts-expect-error`. A bump breaks them in both
+  directions: a member that left the public surface fails the assignment, and a
+  member upstream stopped marking `@field private` or `@local` makes its
+  expect-error directive unused (TS2578). The second is the easy one to
+  misread — check the old and new fixture annotations before assuming the
+  emitter regressed, because dropping a `private` marker upstream is a real
+  surface change and the declaration is then correct to emit.
 - **The generated docs artifacts.** `packages/docs/llms.txt`,
   `packages/docs/llms-full.txt`, and the docs-site search and symbol indexes are
   committed, not built on demand. Regenerate them with
