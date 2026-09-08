@@ -1558,6 +1558,101 @@
         }
       ],
       "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.notifications.is_supported",
+      "description": "Check if scheduling notifications is supported on the current platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.notifications.schedule",
+      "description": "Schedule a notification. The notification table has the shape { id, title, description, delaySeconds, image, callToAction, payload }, where id is mapped to the platform value in the config file. The payload of the notification the game was launched from is available via bridge.platform.payload().",
+      "parameters": [
+        {
+          "name": "notification",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.notifications.cancel",
+      "description": "Cancel a previously scheduled notification with the given id.",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "on_success",
+          "doc": "function(_)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.notifications.cancel_all",
+      "description": "Cancel every notification scheduled by the game.",
+      "parameters": [
+        {
+          "name": "on_success",
+          "doc": "function(_)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
     }
   ]
 }
