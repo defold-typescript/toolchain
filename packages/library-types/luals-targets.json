@@ -78,7 +78,7 @@
     },
     {
       "repo": "https://github.com/Insality/defold-event",
-      "ref": "19",
+      "ref": "21",
       "license": "MIT",
       "sourceGlobs": ["event/**/*.lua"],
       "moduleId": "event.event",
