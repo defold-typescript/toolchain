@@ -3,19 +3,35 @@ local adapter_go = require("panthera.adapters.adapter_go")
 local adapter_gui = require("panthera.adapters.adapter_gui")
 local panthera_internal = require("panthera.panthera_internal")
 
+---@class panthera.collect_context
+---@field values panthera.animation.state_value[] Collected values
+---@field pool panthera.animation.state_value[] Released value objects
+---@field event_callback (fun(event_id: string, node: node?, data: any, end_value: number))?
+
+---@class panthera.collect_buffer
+---@field pool panthera.animation.state_value[] Released value objects
+---@field context panthera.collect_context Context of a non nested sample
+---@field depth number Sample nesting depth
+
 ---@class panthera.animation
 ---@field adapter panthera.adapter Adapter to use for animation
 ---@field speed number Animation speed multiplier
 ---@field current_time number Current animation time
 ---@field nodes table Animation nodes used in animation
----@field childs panthera.animation[]? List of active child animations
+---@field childs panthera.animation[]? Detached child animations, each with its own timer
+---@field clips panthera.animation[]? Running animation key clips, driven by this state
 ---@field get_node fun(node_id: string): node Function to get node by node_id
 ---@field animation_id string? Current animation ID
 ---@field previous_animation_id string? Previous animation ID
 ---@field animation_path string Animation path to JSON file
 ---@field animation_keys_index number Animation keys index
 ---@field events table? List of events triggered in this animation loop
----@field timer_id number? Timer ID for animation
+---@field template_states table<string, panthera.animation>? Cached animation states of the template nodes
+---@field collect_buffer panthera.collect_buffer? Reused collect buffers of this state
+---@field timer_id number? Timer ID for animation, a clip has none
+---@field play_animation panthera.animation.data.animation? Current playback animation
+---@field play_options panthera.options? Current playback options
+---@field play_sample_depth number? Current playback sample depth
 
 ---@class panthera.options
 ---@field is_loop boolean? Loop the animation. Triggers the callback at each loop end if set to `true`
@@ -42,7 +58,8 @@ local M = {
 	SPEED = 1
 }
 
-local TIMER_DELAY = 1/60
+-- 0 = every frame. 1/60 skips frames and makes the playback stutter
+local TIMER_DELAY = 0
 local EMPTY_OPTIONS = {}
 
 -- Set of predefined options
@@ -103,6 +120,7 @@ end
 
 
 ---Play an animation with specified ID and options.
+---One timer drives the whole tree, each tick finishes the running clips before starting new ones.
 ---@param animation_state panthera.animation The animation state object returned by `create_go` or `create_gui`
 ---@param animation_id string The ID of the animation to play
 ---@param options panthera.options? Options for the animation playback
@@ -110,64 +128,30 @@ function M.play(animation_state, animation_id, options)
 	assert(animation_state, "Can't play animation, animation_state is nil")
 	options = options or EMPTY_OPTIONS
 
-	local animation_data = panthera_internal.get_animation_data(animation_state)
-	local animation = panthera_internal.get_animation_by_animation_id(animation_data, animation_id)
+	local animation, animation_data = M._find_animation(animation_state, animation_id)
 	if not animation then
-		panthera_internal.logger:error("Animation is not found", {
-			animation_path = animation_state.animation_path,
-			binded_to = animation_data.metadata and animation_data.metadata.gui_path,
-			animation_id = animation_id,
-		})
+		panthera_internal.logger:error("Animation is not found", M._animation_log_data(animation_state, animation_data, animation_id))
 		return nil
 	end
 
 	if options.easing and options.easing ~= "linear" then
 		local tweener_options = options --[[@as panthera.options_tweener]]
-
 		M.play_tweener(animation_state, animation_id, tweener_options)
 		return nil
 	end
 
-	if animation_state.animation_id then
-		M.stop(animation_state)
-	end
-
-	animation_state.animation_id = animation.animation_id
-	animation_state.animation_keys_index = 1
-	animation_state.events = nil
-
-	if not options.is_skip_init then
-		-- Reset all previuosly animated nodes to initial state
-		if animation_state.previous_animation_id then
-			panthera_internal.reset_animation_state(animation_state, animation_state.previous_animation_id)
-			animation_state.previous_animation_id = nil
-		end
-
-		-- If we have initial animation, we should set up it here?
-		if animation.initial_state then
-			local initial_animation = panthera_internal.get_animation_by_animation_id(animation_data, animation.initial_state)
-			if initial_animation then
-				panthera_internal.set_animation_state_at_time(animation_state, initial_animation.animation_id, initial_animation.duration)
-			end
-		end
-
-		panthera_internal.set_animation_state_at_time(animation_state, animation.animation_id, 0)
+	local is_playing = M._start_playback(animation_state, animation, options, panthera_internal.SAMPLE_DEPTH_ROOT)
+	if not is_playing then
+		return nil
 	end
 
 	animation_state.timer_id = timer.delay(TIMER_DELAY, true, function(_, _, time_elapsed)
-		local dt = time_elapsed
-
-		-- Weird thing, but when app lose focus for small time, we got a lot of callbacks
-		if dt < 0.001 then
+		if time_elapsed < 0.001 then
 			return
 		end
 
-		local speed = (options.speed or 1) * animation_state.speed * M.SPEED
-
-		animation_state.current_time = animation_state.current_time + dt * speed
-		M.update_animation(animation, animation_state, options)
+		M.update_animation(animation_state, time_elapsed)
 	end)
-	timer.trigger(animation_state.timer_id)
 end
 
 
@@ -183,27 +167,18 @@ function M.play_tweener(animation_state, animation_id, options)
 		return nil
 	end
 
-	local animation_data = panthera_internal.get_animation_data(animation_state)
+	local animation, animation_data = M._find_animation(animation_state, animation_id)
 	if not animation_data then
-		panthera_internal.logger:warn("Can't play animation, animation_data is nil", {
-			animation_path = animation_state.animation_path,
-			animation_id = animation_id,
-		})
+		M._log_missing_animation(animation_state, animation_data, animation_id, "Can't play animation, animation_data is nil")
 		return nil
 	end
-
-	local animation = panthera_internal.get_animation_by_animation_id(animation_data, animation_id)
 	if not animation then
-		panthera_internal.logger:warn("Animation is not found", {
-			animation_path = animation_state.animation_path,
-			animation_meta = animation_data.metadata and animation_data.metadata.gui_path,
-			animation_id = animation_id,
-		})
+		M._log_missing_animation(animation_state, animation_data, animation_id, "Animation is not found")
 		return nil
 	end
 
 	local easing = options.easing or tweener.linear
-	animation_state.events = nil
+	panthera_internal.reset_animation_events(animation_state)
 
 	local total_duration = animation.duration / (options.speed or 1)
 	local from = options.from or 0
@@ -215,35 +190,16 @@ function M.play_tweener(animation_state, animation_id, options)
 	end
 
 	animation_state.timer_id = tweener.tween(easing, from, to, total_duration, function(time, is_final_call)
-		-- Off cause it stops current animation state
-		--M.set_time(animation_state, animation_id, time, options.callback_event)
+		panthera_internal.apply_sample(animation_state, animation.animation_id, time, options.callback_event)
 
-		do -- TODO: it's a copy paste from `M:play`, make better this little piece
-			if animation_state.previous_animation_id then
-				panthera_internal.reset_animation_state(animation_state, animation_state.previous_animation_id)
-				animation_state.previous_animation_id = nil
-			end
-
-			if animation_state.current_time > time then
-				-- We count this as a new animation loop, we want to update animation state data
-				animation_state.events = nil
-			end
-
-			animation_state.current_time = time
-			animation_state.animation_id = animation.animation_id
-			animation_state.animation_keys_index = 1
-
-			panthera_internal.set_animation_state_at_time(animation_state, animation.animation_id, time, options.callback_event)
+		if not is_final_call then
+			return
 		end
-
-		if is_final_call then
-			if options.callback then
-				options.callback(animation_id)
-			end
-
-			if options.is_loop then
-				M.play_tweener(animation_state, animation_id, options)
-			end
+		if options.callback then
+			options.callback(animation_id)
+		end
+		if options.is_loop then
+			M.play_tweener(animation_state, animation_id, options)
 		end
 	end).timer_id
 
@@ -251,117 +207,132 @@ function M.play_tweener(animation_state, animation_id, options)
 end
 
 
+---Advance a playing state by one frame
 ---@private
----@param animation panthera.animation.data.animation
 ---@param animation_state panthera.animation
----@param options panthera.options
-function M.update_animation(animation, animation_state, options)
-	if not animation then
+---@param time_elapsed number Real seconds since the last frame
+function M.update_animation(animation_state, time_elapsed)
+	local animation = animation_state.play_animation
+	if not animation or not animation_state.animation_id then
 		return
 	end
 
+	local options = animation_state.play_options or EMPTY_OPTIONS
+	local speed = M._playback_speed(options, animation_state)
+	animation_state.current_time = animation_state.current_time + time_elapsed * speed
+
+	-- Update inner clips
+	M._update_clips(animation_state, time_elapsed)
+
+	-- Start keys
 	local keys = animation.animation_keys
-	-- Process from the last processed key until the current time
 	for index = animation_state.animation_keys_index, #keys do
 		local key = keys[index]
-
-		if key.start_time <= animation_state.current_time then
-			animation_state.animation_keys_index = index + 1
-
-			if key.key_type ~= panthera_internal.KEY_TYPE.ANIMATION then
-				local speed = (options.speed or 1) * animation_state.speed * M.SPEED
-				panthera_internal.run_timeline_key(animation_state, key, options, speed)
-			else
-				-- check if "" while only animation keys are working now
-				if key.node_id == "" then
-					local child_state = M.clone_state(animation_state)
-					-- Time Overflow
-					local time_overflow = math.max(0, animation_state.current_time - key.start_time)
-					child_state.current_time = time_overflow
-
-					animation_state.childs = animation_state.childs or {}
-					table.insert(animation_state.childs, child_state)
-					local animation_duration = M.get_duration(child_state, key.property_id)
-
-					local key_duration = (key.duration - time_overflow)
-					-- TODO: Do we need set time if key_duration is <= 0?
-					if animation_duration > 0 and key_duration > 0 then
-						local speed = (options.speed or 1) * animation_state.speed * M.SPEED
-						local play_speed = (animation_duration / key_duration) * speed
-
-						M.play(child_state, key.property_id, {
-							easing = key.easing,
-							is_skip_init = false, -- Editor works in "false" mode always, so until editor support this, we should use false
-							speed = play_speed,
-							callback = function()
-								panthera_internal.remove_child_animation(animation_state, child_state)
-							end
-						})
-					end
-				end
-
-				-- This is tempalte animations, the node_id is a template to run the new animations
-				if key.node_id ~= "" then
-					local animation_data = panthera_internal.get_animation_data(animation_state)
-					local paths = animation_data and animation_data.metadata.template_animation_paths
-					if not paths then
-						break
-					end
-					local template_animation_path = paths[key.node_id]
-
-					local get_node = function(node_id)
-						return animation_state.get_node(key.node_id .. "/" .. node_id)
-					end
-					local template_state = panthera_internal.create_animation_state(template_animation_path, animation_state.adapter, get_node)
-
-					local time_overflow = math.max(0, animation_state.current_time - key.start_time)
-					template_state.current_time = time_overflow
-
-					animation_state.childs = animation_state.childs or {}
-					table.insert(animation_state.childs, template_state)
-					local animation_duration = M.get_duration(template_state, key.property_id)
-
-					if animation_duration > 0 and key.duration > 0 then
-						local speed = (options.speed or 1) * animation_state.speed * M.SPEED
-						local key_duration = (key.duration - time_overflow)
-						local play_speed = (animation_duration / key_duration) * speed
-
-						M.play(template_state, key.property_id, {
-							-- TODO: is any cases when we want to use false here? Editor works like it false now
-							-- Real case: looped animation should be reset to correct visuals
-							is_skip_init = false, -- Editor works in "false" mode always, so until editor support this, we should use false
-							easing = key.easing,
-							speed = play_speed,
-							callback = function()
-								panthera_internal.remove_child_animation(animation_state, template_state)
-							end,
-							callback_event = options.callback_event
-						})
-					end
-				end
-			end
-		else
+		if not panthera_internal.is_key_started(key, animation_state.current_time) then
 			break
+		end
+
+		animation_state.animation_keys_index = index + 1
+		if key.key_type == panthera_internal.KEY_TYPE.ANIMATION then
+			M.start_animation_key(animation_state, key, options)
+		else
+			panthera_internal.run_timeline_key(animation_state, key, options, speed)
 		end
 	end
 
-	-- If current time >= animation duration - stop animation
+	-- End of an animation
 	if animation_state.current_time >= animation.duration then
 		local time_overflow = animation_state.current_time - animation.duration
-
-		panthera_internal.set_animation_state_at_time(animation_state, animation.animation_id, animation.duration)
+		panthera_internal.set_animation_state_at_time(animation_state, animation.animation_id, animation.duration, nil, animation_state.play_sample_depth)
 		M.stop(animation_state)
 
 		if options.callback then
 			options.callback(animation.animation_id)
 		end
-
 		if options.is_loop then
-			-- Compensate the time overflow
 			animation_state.current_time = time_overflow
 			M.play(animation_state, animation.animation_id, options)
 		end
 	end
+end
+
+
+---Advance the running clips, drop the finished ones
+---@private
+---@param animation_state panthera.animation
+---@param time_elapsed number
+function M._update_clips(animation_state, time_elapsed)
+	local clips = animation_state.clips
+	if not clips then
+		return
+	end
+
+	-- Compact in place, a callback can drop the list under us
+	local write_index = 1
+	for index = 1, #clips do
+		local clip_state = clips[index]
+		if not clip_state then
+			break
+		end
+
+		M.update_animation(clip_state, time_elapsed)
+		clips[index] = nil
+		if clip_state.animation_id then
+			clips[write_index] = clip_state
+			write_index = write_index + 1
+		end
+	end
+end
+
+
+---Start a nested (`node_id == ""`) or template animation key
+---@private
+---@param animation_state panthera.animation
+---@param key panthera.animation.data.animation_key
+---@param options panthera.options
+function M.start_animation_key(animation_state, key, options)
+	local clip_state = M._create_clip_state(animation_state, key)
+	if not clip_state then
+		return
+	end
+
+	local clip_animation, clip_data = M._find_animation(clip_state, key.property_id)
+	if not clip_animation then
+		M._log_missing_animation(clip_state, clip_data, key.property_id, "Animation of the animation key is not found")
+		return
+	end
+	if clip_animation.duration <= 0 then
+		return
+	end
+
+	local time_overflow = math.max(0, animation_state.current_time - key.start_time)
+	local key_duration = key.duration - time_overflow
+	if key_duration <= 0 then
+		-- Key already over: set final state
+		panthera_internal.set_animation_state_at_time(clip_state, key.property_id, clip_animation.duration,
+			options.callback_event, panthera_internal.SAMPLE_DEPTH_CLIP)
+		return
+	end
+
+	local clip_options = {
+		easing = key.easing,
+		callback_event = options.callback_event,
+		-- Fit the animation into the key duration, `M.SPEED` is applied by the clip tick
+		speed = (clip_animation.duration / key_duration) * M._local_speed(options, animation_state),
+	}
+
+	local is_playing = M._start_playback(clip_state, clip_animation, clip_options,
+		panthera_internal.SAMPLE_DEPTH_CLIP, time_overflow)
+	if not is_playing then
+		return
+	end
+
+	local clips = animation_state.clips
+	if not clips then
+		clips = {}
+		animation_state.clips = clips
+	end
+	clips[#clips + 1] = clip_state
 end
 
 
@@ -404,21 +375,13 @@ end
 ---@param event_callback fun(event_id: string, node: node|nil, string_value: string, number_value: number)|nil
 ---@return boolean result True if animation state was set successfully, false if animation can't be set
 function M.set_time(animation_state, animation_id, time, event_callback)
-	local animation_data = panthera_internal.get_animation_data(animation_state)
+	local animation, animation_data = M._find_animation(animation_state, animation_id)
 	if not animation_data then
-		panthera_internal.logger:warn("Can't set time, animation_data is nil", {
-			animation_path = animation_state.animation_path,
-			animation_id = animation_id
-		})
+		M._log_missing_animation(animation_state, animation_data, animation_id, "Can't set time, animation_data is nil")
 		return false
 	end
-
-	local animation = panthera_internal.get_animation_by_animation_id(animation_data, animation_id)
 	if not animation then
-		panthera_internal.logger:warn("Animation is not found", {
-			animation_path = animation_state.animation_path,
-			animation_id = animation_id
-		})
+		M._log_missing_animation(animation_state, animation_data, animation_id, "Animation is not found")
 		return false
 	end
 
@@ -427,22 +390,7 @@ function M.set_time(animation_state, animation_id, time, event_callback)
 		M.stop(animation_state)
 	end
 
-	if animation_state.previous_animation_id then
-		panthera_internal.reset_animation_state(animation_state, animation_state.previous_animation_id)
-		animation_state.previous_animation_id = nil
-	end
-
-	if animation_state.current_time > time then
-		-- We count this as a new animation loop, we want to update animation state data
-		animation_state.events = nil
-	end
-
-	animation_state.current_time = time
-	animation_state.animation_id = animation.animation_id
-	animation_state.animation_keys_index = 1
-
-	panthera_internal.set_animation_state_at_time(animation_state, animation.animation_id, time, event_callback)
-
+	panthera_internal.apply_sample(animation_state, animation.animation_id, time, event_callback)
 	return true
 end
 
@@ -481,6 +429,14 @@ function M.stop(animation_state)
 	animation_state.current_time = 0
 	animation_state.animation_keys_index = 1
 
+	local clips = animation_state.clips
+	if clips then
+		for index = #clips, 1, -1 do
+			M.stop(clips[index])
+			clips[index] = nil
+		end
+	end
+
 	if animation_state.childs then
 		for index = 1, #animation_state.childs do
 			M.stop(animation_state.childs[index])
@@ -496,12 +452,9 @@ end
 ---@param animation_id string The ID of the animation whose duration you want to retrieve
 ---@return number seconds The total duration of the animation in seconds
 function M.get_duration(animation_state, animation_id)
-	local animation_data = panthera_internal.get_animation_data(animation_state)
+	local animation, animation_data = M._find_animation(animation_state, animation_id)
 	assert(animation_data, "Animation data is not loaded")
-
-	local animation = panthera_internal.get_animation_by_animation_id(animation_data, animation_id)
 	assert(animation, "Animation is not found: " .. animation_id)
-
 	return animation.duration
 end
 
@@ -550,10 +503,124 @@ function M.reload_animation(animation_path)
 	if animation_path then
 		panthera_internal.load(animation_path, true)
 	else
+		-- Collect paths first, reloading replaces the keys in the table we would iterate over
+		local paths = {}
 		for path in pairs(panthera_internal.LOADED_ANIMATIONS) do
-			panthera_internal.load(path, true)
+			table.insert(paths, path)
+		end
+
+		for index = 1, #paths do
+			panthera_internal.load(paths[index], true)
 		end
 	end
+end
+
+
+---Speed without `M.SPEED`, the tick applies it once
+---@param options panthera.options
+---@param animation_state panthera.animation
+---@return number
+function M._local_speed(options, animation_state)
+	return (options.speed or 1) * animation_state.speed
+end
+
+
+---@param options panthera.options
+---@param animation_state panthera.animation
+---@return number
+function M._playback_speed(options, animation_state)
+	return M._local_speed(options, animation_state) * M.SPEED
+end
+
+
+---Set the state up and run its first frame. No timer here, a clip is driven by its parent
+---@private
+---@param animation_state panthera.animation
+---@param animation panthera.animation.data.animation
+---@param options panthera.options
+---@param sample_depth number
+---@param start_time number? Time to start from, the time left in the state by default
+---@return boolean is_playing False if the animation is over already
+function M._start_playback(animation_state, animation, options, sample_depth, start_time)
+	if animation_state.animation_id then
+		M.stop(animation_state)
+	end
+
+	-- `stop` and the init sample reset the time, keep the overflow aside
+	start_time = start_time or animation_state.current_time
+
+	animation_state.play_animation = animation
+	animation_state.play_options = options
+	animation_state.play_sample_depth = sample_depth
+	animation_state.animation_id = animation.animation_id
+	animation_state.animation_keys_index = 1
+	panthera_internal.reset_animation_events(animation_state)
+
+	if not options.is_skip_init then
+		panthera_internal.apply_sample(animation_state, animation.animation_id, 0, nil, sample_depth)
+	end
+	animation_state.current_time = start_time
+
+	-- Run the first frame now, so clips don't wait for the next tick
+	M.update_animation(animation_state, 0)
+
+	return animation_state.animation_id ~= nil
+end
+
+
+---@param animation_state panthera.animation
+---@param animation_id string
+---@return panthera.animation.data.animation|nil
+---@return panthera.animation.data|nil
+function M._find_animation(animation_state, animation_id)
+	local animation_data = panthera_internal.get_animation_data(animation_state)
+	local animation = animation_data and panthera_internal.get_animation_by_animation_id(animation_data, animation_id)
+	return animation, animation_data
+end
+
+
+---@param animation_state panthera.animation
+---@param animation_data panthera.animation.data|nil
+---@param animation_id string
+---@return table
+function M._animation_log_data(animation_state, animation_data, animation_id)
+	return {
+		animation_path = animation_state.animation_path,
+		binded_to = animation_data and animation_data.metadata and animation_data.metadata.gui_path,
+		animation_id = animation_id,
+	}
+end
+
+
+---@param animation_state panthera.animation
+---@param animation_data panthera.animation.data|nil
+---@param animation_id string
+---@param message string
+function M._log_missing_animation(animation_state, animation_data, animation_id, message)
+	panthera_internal.logger:warn(message, M._animation_log_data(animation_state, animation_data, animation_id))
+end
+
+
+---Clip state for an animation key: a clone for nested, a template state otherwise
+---@private
+---@param animation_state panthera.animation
+---@param key panthera.animation.data.animation_key
+---@return panthera.animation|nil
+function M._create_clip_state(animation_state, key)
+	if key.node_id == "" then
+		return M.clone_state(animation_state)
+	end
+
+	local animation_data = panthera_internal.get_animation_data(animation_state)
+	local template_path = animation_data and panthera_internal.get_template_animation_path(animation_data, key.node_id)
+	if not template_path then
+		return nil
+	end
+
+	local get_node = function(node_id)
+		return animation_state.get_node(key.node_id .. "/" .. node_id)
+	end
+	return panthera_internal.create_animation_state(template_path, animation_state.adapter, get_node)
 end
 
 
