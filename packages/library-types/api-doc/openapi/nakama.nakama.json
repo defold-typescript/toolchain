@@ -1047,6 +1047,14 @@
             "table"
           ],
           "is_optional": "True"
+        },
+        {
+          "name": "metadata",
+          "doc": "Optional metadata to add to friends.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [
@@ -1108,6 +1116,38 @@
           "doc": "Reset the current user's friends list.",
           "types": [
             "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.list_friends_of_friends",
+      "description": "List friends of friends for the current user.",
+      "parameters": [
+        {
+          "name": "limit",
+          "doc": "Max number of records to return. Between 1 and 100.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cursor",
+          "doc": "An optional next page cursor.",
+          "types": [
+            "string"
           ],
           "is_optional": "True"
         }
@@ -1836,7 +1876,7 @@
     {
       "type": "FUNCTION",
       "name": "nakama.list_leaderboard_records_around_owner",
-      "description": "List leaderboard records that belong to a user.",
+      "description": "List leaderboard records around the target ownerId.",
       "parameters": [
         {
           "name": "leaderboardId",
@@ -1890,7 +1930,7 @@
     {
       "type": "FUNCTION",
       "name": "nakama.list_matches",
-      "description": "Fetch list of running matches.",
+      "description": "List running matches and optionally filter by matching criteria.",
       "parameters": [
         {
           "name": "limit",
@@ -1953,6 +1993,21 @@
     },
     {
       "type": "FUNCTION",
+      "name": "nakama.get_matchmaker_stats",
+      "description": "Get matchmaker stats.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
       "name": "nakama.list_notifications",
       "description": "Fetch list of notifications.",
       "parameters": [
@@ -1993,6 +2048,54 @@
           "doc": "The id of notifications.",
           "types": [
             "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.list_parties",
+      "description": "List parties and optionally filter by matching criteria.",
+      "parameters": [
+        {
+          "name": "limit",
+          "doc": "Limit the number of returned parties.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "open",
+          "doc": "Optionally filter by open/closed parties.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "query",
+          "doc": "Arbitrary label query.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cursor",
+          "doc": "Cursor for the next page of results, if any.",
+          "types": [
+            "string"
           ],
           "is_optional": "True"
         }
@@ -2621,6 +2724,38 @@
           "doc": "An optional next page cursor.",
           "types": [
             "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_friends_of_friends_list_friend_of_friend",
+      "description": "A friend of a friend.",
+      "parameters": [
+        {
+          "name": "referrer",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "user",
+          "doc": "",
+          "types": [
+            "table"
           ],
           "is_optional": "True"
         }
@@ -3575,6 +3710,14 @@
             "string"
           ],
           "is_optional": "True"
+        },
+        {
+          "name": "metadata",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [
@@ -3594,6 +3737,38 @@
       "parameters": [
         {
           "name": "friends",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cursor",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_friends_of_friends_list",
+      "description": "",
+      "parameters": [
+        {
+          "name": "friendsOfFriends",
           "doc": "",
           "types": [
             "table"
@@ -4117,6 +4292,78 @@
     },
     {
       "type": "FUNCTION",
+      "name": "nakama.create_api_matchmaker_completion_stats",
+      "description": "",
+      "parameters": [
+        {
+          "name": "createTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "completeTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_matchmaker_stats",
+      "description": "",
+      "parameters": [
+        {
+          "name": "ticketCount",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "oldestTicketCreateTime",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "completions",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
       "name": "nakama.create_api_notification",
       "description": "A notification in the server.",
       "parameters": [
@@ -4202,6 +4449,94 @@
         },
         {
           "name": "cacheableCursor",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_party",
+      "description": "Incoming information about a party.",
+      "parameters": [
+        {
+          "name": "partyId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "open",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "hidden",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "maxSize",
+          "doc": "",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_party_list",
+      "description": "A list of realtime matches.",
+      "parameters": [
+        {
+          "name": "parties",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "cursor",
           "doc": "",
           "types": [
             "string"
@@ -4858,6 +5193,14 @@
         },
         {
           "name": "authoritative",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "joinRequired",
           "doc": "",
           "types": [
             "boolean"
@@ -6270,6 +6613,14 @@
             "table"
           ],
           "is_optional": "True"
+        },
+        {
+          "name": "party_update",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -7012,6 +7363,13 @@
           ]
         },
         {
+          "name": "hidden",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
           "name": "max_size",
           "doc": "",
           "types": [
@@ -7038,6 +7396,13 @@
           "types": [
             "table"
           ]
+        },
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ]
         }
       ],
       "returnvalues": []
@@ -7059,6 +7424,56 @@
           "doc": "",
           "types": [
             "number"
+          ]
+        },
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "hidden",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_party_update_message",
+      "description": "",
+      "parameters": [
+        {
+          "name": "party_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "open",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "hidden",
+          "doc": "",
+          "types": [
+            "boolean"
           ]
         }
       ],
