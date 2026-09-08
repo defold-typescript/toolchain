@@ -39,7 +39,7 @@ exports[`apiPageMarkdown library provenance block the druid page renders its com
 Entry point for Druid UI Framework.
 Create a new Druid instance and adjust the Druid settings here.
 
-- GitHub: [Insality/druid](https://github.com/Insality/druid) — pinned to [\`1.2.5\`](https://github.com/Insality/druid/tree/1.2.5)
+- GitHub: [Insality/druid](https://github.com/Insality/druid) — pinned to [\`1.3.1\`](https://github.com/Insality/druid/tree/1.3.1)
   1. Pick a release from [Insality/druid releases](https://github.com/Insality/druid/releases) and add its **Source code (zip)** URL (or a packaged \`.zip\` asset, if the library ships one) to \`game.project\` under \`[project]\` \`dependencies\`, then **Fetch Libraries** in the Defold editor.
   2. Run \`bunx @defold-typescript/cli resolve\` to materialize its types.
   3. Import it under a namespace alias of your choice:
@@ -59,7 +59,8 @@ Create a new Druid instance and adjust the Druid settings here.
 - [\`init_window_listener()\`](#init_window_listener)
 - [\`on_window_callback(window_event: Opaque<"constant">)\`](#on_window_callbackwindow_event-opaqueconstant)
 - [\`on_language_change()\`](#on_language_change)
-- [\`get_widget<T extends druid_widget>(widget_class: T, gui_url: Url | string, params?: unknown | undefined): T\`](#get_widgett-extends-druid_widgetwidget_class-t-gui_url-url--string-params-unknown--undefined-t)
+- [\`get_druid(gui_url?: Url | string | undefined): druid_instance | undefined\`](#get_druidgui_url-url--string--undefined-druid_instance--undefined)
+- [\`get_widget<T extends druid_widget>(widget_class: T, gui_url: Url | string, params?: unknown | undefined, template?: string | undefined): T\`](#get_widgett-extends-druid_widgetwidget_class-t-gui_url-url--string-params-unknown--undefined-template-string--undefined-t)
 - [\`register_druid_as_widget(druid: druid_instance)\`](#register_druid_as_widgetdruid-druid_instance)
 - [\`unregister_druid_as_widget()\`](#unregister_druid_as_widget)
 - [\`set_logger(logger_instance?: druid_logger | LuaTable | undefined)\`](#set_loggerlogger_instance-druid_logger--luatable--undefined)
@@ -167,7 +168,27 @@ It will notify all Druid instances to update the lang text components.
 
 </div>
 
-### \`get_widget<T extends druid_widget>(widget_class: T, gui_url: Url | string, params?: unknown | undefined): T\`
+### \`get_druid(gui_url?: Url | string | undefined): druid_instance | undefined\`
+
+<div class="api-symbol-body">
+
+Get the Druid instance bound to the GUI by \`druid.register_druid_as_widget()\`.
+Unlike \`druid.get_widget()\`, the instance is returned as is, without cross-context events wrapping,
+so from a game object script you should only use its plain functions, not the GUI related ones.
+local instance = <a href="/api/druid#get_druidgui_url-url--string--undefined-druid_instance--undefined" class="symbol-xref">druid.get_druid</a>("gui_widget")
+instance:set_style(my_style) -- Should be set before creating widgets
+
+**Parameters**
+
+- \`gui_url\`?: \`Url | string | undefined\` — GUI url or string of component name near current script
+
+**Returns**
+
+- \`druid_instance | undefined\` — The registered Druid instance or nil if not registered
+
+</div>
+
+### \`get_widget<T extends druid_widget>(widget_class: T, gui_url: Url | string, params?: unknown | undefined, template?: string | undefined): T\`
 
 <div class="api-symbol-body">
 
@@ -183,6 +204,7 @@ Widget class here is your lua file for the GUI scene (widgets in Druid)
 - \`widget_class\`: \`T\` — The class of the widget to return
 - \`gui_url\`: \`Url | string\` — GUI url or string of component name near current script
 - \`params\`?: \`unknown | undefined\` — Additional parameters to pass to the widget's init function
+- \`template\`?: \`string | undefined\` — The GUI template name used by the widget nodes
 
 **Returns**
 
@@ -344,6 +366,70 @@ Time between double taps. Default: 0.4
 
 </div>
 
+### \`druid_button_style.HOVER_SCALE: Vector3 | undefined\`
+
+<div class="api-symbol-body">
+
+Scale added on touch hover (default style). Default: <a href="/api/defold-1.13.1/vmath#vmathvector3x-number-y-number-z-number-vector3" class="symbol-xref">vmath.vector3</a>(0.08, 0.08, 1)
+
+</div>
+
+### \`druid_button_style.HOVER_MOUSE_SCALE: Vector3 | undefined\`
+
+<div class="api-symbol-body">
+
+Scale added on mouse hover (default style). Default: <a href="/api/defold-1.13.1/vmath#vmathvector3x-number-y-number-z-number-vector3" class="symbol-xref">vmath.vector3</a>(0.04, 0.04, 1)
+
+</div>
+
+### \`druid_button_style.HOVER_TIME: number | undefined\`
+
+<div class="api-symbol-body">
+
+Hover scale animation time. Default: 0.05
+
+</div>
+
+### \`druid_button_style.SCALE_CHANGE: Vector3 | undefined\`
+
+<div class="api-symbol-body">
+
+Scale punch on click (default style). Default: <a href="/api/defold-1.13.1/vmath#vmathvector3x-number-y-number-z-number-vector3" class="symbol-xref">vmath.vector3</a>(0.12, 0.12, 1)
+
+</div>
+
+### \`druid_button_style.BTN_SOUND: string | undefined\`
+
+<div class="api-symbol-body">
+
+Sound id played on click. Default: "click"
+
+</div>
+
+### \`druid_button_style.BTN_SOUND_DISABLED: string | undefined\`
+
+<div class="api-symbol-body">
+
+Sound id played on disabled click. Default: "click"
+
+</div>
+
+### \`druid_button_style.DISABLED_COLOR: Vector4 | undefined\`
+
+<div class="api-symbol-body">
+
+Color applied when disabled via style. Default: <a href="/api/defold-1.13.1/vmath#vmathvector4x-number-y-number-z-number-w-number-vector4" class="symbol-xref">vmath.vector4</a>(0, 0, 0, 1)
+
+</div>
+
+### \`druid_button_style.ENABLED_COLOR: Vector4 | undefined\`
+
+<div class="api-symbol-body">
+
+Color applied when enabled via style. Default: <a href="/api/defold-1.13.1/vmath#vmathvector4x-number-y-number-z-number-w-number-vector4" class="symbol-xref">vmath.vector4</a>(1)
+
+</div>
+
 ### \`druid_button_style.on_init: ((self: druid_button) => void) | undefined\`
 
 ### \`druid_button_style.on_click: ((self: druid_button, node: Opaque<"node">) => void) | undefined\`
@@ -358,7 +444,7 @@ Time between double taps. Default: 0.4
 
 ## druid_button
 
-### \`druid_button.init(node_or_node_id: Opaque<"node"> | string, callback?: (() => void) | undefined, custom_args?: unknown | undefined, anim_node?: Opaque<"node"> | string | undefined)\`
+### \`druid_button.init(node_or_node_id: Opaque<"node"> | string, callback?: ((self: unknown, custom_args: unknown, button_instance: druid_button) => void) | undefined, custom_args?: unknown | undefined, anim_node?: Opaque<"node"> | string | undefined)\`
 
 <div class="api-symbol-body">
 
@@ -367,7 +453,7 @@ The constructor for the button component
 **Parameters**
 
 - \`node_or_node_id\`: \`Opaque<"node"> | string\` — Node name or GUI Node itself
-- \`callback\`?: \`(() => void) | undefined\` — Callback on button click
+- \`callback\`?: \`((self: unknown, custom_args: unknown, button_instance: druid_button) => void) | undefined\` — Callback on button click
 - \`custom_args\`?: \`unknown | undefined\` — Custom args for any Button event, will be passed to callbacks
 - \`anim_node\`?: \`Opaque<"node"> | string | undefined\` — Node to animate instead of trigger node, useful for animating small icons on big panels
 
@@ -588,7 +674,7 @@ Call button hold callback
 
 <div class="api-symbol-body">
 
-fun(self, custom_args, button_instance)
+fun(self: druid.button, custom_args: any, button_instance: druid.button)
 
 </div>
 
@@ -596,7 +682,7 @@ fun(self, custom_args, button_instance)
 
 <div class="api-symbol-body">
 
-fun(self, custom_args, button_instance)
+fun(self: druid.button, custom_args: any, button_instance: druid.button)
 
 </div>
 
@@ -604,7 +690,7 @@ fun(self, custom_args, button_instance)
 
 <div class="api-symbol-body">
 
-fun(self, custom_args, button_instance, click_count) Repeated click callback, while holding the button
+fun(self: druid.button, custom_args: any, button_instance: druid.button, click_count: number) Repeated click callback, while holding the button
 
 </div>
 
@@ -612,7 +698,7 @@ fun(self, custom_args, button_instance, click_count) Repeated click callback, wh
 
 <div class="api-symbol-body">
 
-fun(self, custom_args, button_instance, hold_time) Callback on long button tap
+fun(self: druid.button, custom_args: any, button_instance: druid.button, hold_time: number) Callback on long button tap
 
 </div>
 
@@ -620,7 +706,7 @@ fun(self, custom_args, button_instance, hold_time) Callback on long button tap
 
 <div class="api-symbol-body">
 
-fun(self, custom_args, button_instance, click_amount) Different callback, if tap button 2+ in row
+fun(self: druid.button, custom_args: any, button_instance: druid.button, click_amount: number) Different callback, if tap button 2+ in row
 
 </div>
 
@@ -628,7 +714,7 @@ fun(self, custom_args, button_instance, click_amount) Different callback, if tap
 
 <div class="api-symbol-body">
 
-fun(self, custom_args, button_instance, press_time) Hold callback, before long_click trigger
+fun(self: druid.button, custom_args: any, button_instance: druid.button, press_time: number) Hold callback, before long_click trigger
 
 </div>
 
@@ -636,7 +722,7 @@ fun(self, custom_args, button_instance, press_time) Hold callback, before long_c
 
 <div class="api-symbol-body">
 
-fun(self, custom_args, button_instance)
+fun(self: druid.button, custom_args: any, button_instance: druid.button)
 
 </div>
 
@@ -720,7 +806,7 @@ Key trigger for this button
 
 </div>
 
-### \`druid_button.style: LuaTable\`
+### \`druid_button.style: druid_button_style\`
 
 <div class="api-symbol-body">
 
@@ -765,11 +851,11 @@ The constructor for Drag component
 
 <div class="api-symbol-body">
 
-Set Drag component enabled state.
+Enable or disable drag cursor styles. No-op without defos. Hover is created on first enable.
 
 **Parameters**
 
-- \`is_enabled\`: \`boolean\` — True if Drag component is enabled
+- \`is_enabled\`: \`boolean\` — True if Drag cursors are enabled
 
 </div>
 
@@ -817,6 +903,41 @@ Check if Drag component is capture input
 
 </div>
 
+### \`druid_drag.add_drag_action(action_id: Hash): druid_drag\`
+
+<div class="api-symbol-body">
+
+Add an additional input action that can start a drag.
+By default only touch and multitouch actions are allowed.
+Useful to drag with the middle or right mouse button on desktop.
+The action should provide the pointer position, key actions are ignored.
+
+**Parameters**
+
+- \`action_id\`: \`Hash\` — The action id to allow for dragging
+
+**Returns**
+
+- \`druid_drag\` — Current instance
+
+</div>
+
+### \`druid_drag.remove_drag_action(action_id: Hash): druid_drag\`
+
+<div class="api-symbol-body">
+
+Remove an additional input action from the allowed drag actions
+
+**Parameters**
+
+- \`action_id\`: \`Hash\` — The action id to disallow for dragging
+
+**Returns**
+
+- \`druid_drag\` — Current instance
+
+</div>
+
 ### \`druid_drag._start_touch()\`
 
 ### \`druid_drag._end_touch(touch?: touch | undefined)\`
@@ -858,7 +979,7 @@ If touch_id stored - return exact this touch action
 
 </div>
 
-### \`druid_drag._on_touch_release(action_id: Hash, action: LuaTable, touch: LuaTable)\`
+### \`druid_drag._on_touch_release(action: LuaTable, touch: LuaTable)\`
 
 <div class="api-symbol-body">
 
@@ -867,7 +988,6 @@ touches exists to switch to another touch.
 
 **Parameters**
 
-- \`action_id\`: \`Hash\` — Action id from on_input
 - \`action\`: \`LuaTable\` — Action from on_input
 - \`touch\`: \`LuaTable\` — Touch action
 
@@ -1030,6 +1150,14 @@ The current screen y position
 <div class="api-symbol-body">
 
 The touch start position
+
+</div>
+
+### \`druid_drag.hover: druid_hover | undefined\`
+
+<div class="api-symbol-body">
+
+Hover for drag cursors. nil without defos
 
 </div>
 
@@ -1601,8 +1729,6 @@ Strict drag scroll area. Useful for
 ### \`druid_scroll._update_size()\`
 
 ### \`druid_scroll._process_scroll_wheel()\`
-
-### \`druid_scroll._on_mouse_hover()\`
 
 ### \`druid_scroll._inverse_lerp()\`
 
@@ -2339,13 +2465,29 @@ Get chars count by width
 
 </div>
 
+### \`druid_text.set_text(new_text: string): druid_text\`
+
+<div class="api-symbol-body">
+
+Set text to text field
+
+**Parameters**
+
+- \`new_text\`: \`string\` — Text for node
+
+**Returns**
+
+- \`druid_text\` — Current text instance
+
+</div>
+
 ### \`druid_text.set_to(set_to: string): druid_text\`
 
 <div class="api-symbol-body">
 
 <div class="api-availability" aria-label="Availability">
 
-- Deprecated
+- Deprecated — Use set_text instead
 
 </div>
 
@@ -2360,8 +2502,6 @@ Set text to text field
 - \`druid_text\` — Current text instance
 
 </div>
-
-### \`druid_text.set_text()\`
 
 ### \`druid_text.get_text()\`
 
@@ -2585,6 +2725,14 @@ The current scale of the text
 ### \`druid_component_meta.parent: druid_component | undefined\`
 
 ### \`druid_component_meta.instance_class: LuaTable\`
+
+### \`druid_component_meta.input_filter: druid_instance_input_filter | undefined\`
+
+<div class="api-symbol-body">
+
+Input filter for the component subtree, set by \`druid:set_whitelist\` / \`druid:set_blacklist\`
+
+</div>
 
 ## druid_component_component
 
@@ -2954,6 +3102,8 @@ The position of the cursor
 
 ### \`druid_rich_text_settings.height: number\`
 
+### \`druid_rich_text_settings.is_justify: boolean\`
+
 ## druid_rich_text_word
 
 ### \`druid_rich_text_word.node: Opaque<"node">\`
@@ -3179,6 +3329,23 @@ Get the current line metrics
 
 </div>
 
+### \`druid_rich_text.set_justify(is_justify: boolean): druid_rich_text\`
+
+<div class="api-symbol-body">
+
+Spread words on each line to the root width, same idea as layout:set_justify.
+A line with one word is left as-is. Extra gap is inserted between words.
+
+**Parameters**
+
+- \`is_justify\`: \`boolean\`
+
+**Returns**
+
+- \`druid_rich_text\`
+
+</div>
+
 ### \`druid_rich_text.set_width(width: number): druid_rich_text\`
 
 <div class="api-symbol-body">
@@ -3224,6 +3391,14 @@ The root text node of the rich text
 <div class="api-symbol-body">
 
 The text prefab node
+
+</div>
+
+### \`druid_rich_text.is_justify: boolean\`
+
+<div class="api-symbol-body">
+
+True if words on a line should be spread to the root width
 
 </div>
 
@@ -3814,6 +3989,20 @@ Instant scroll to element with passed index
 
 </div>
 
+### \`druid_data_list.refresh(): druid_data_list\`
+
+<div class="api-symbol-body">
+
+Rebuild the scroll content size and refresh the visible elements.
+The DataList refreshes itself on the data change, so this is only needed when
+something outside of the data changed, like the grid item size at runtime
+
+**Returns**
+
+- \`druid_data_list\` — Current DataList instance
+
+</div>
+
 ### \`druid_data_list.scroll: druid_scroll\`
 
 <div class="api-symbol-body">
@@ -3826,7 +4015,7 @@ The scroll instance for Data List component
 
 <div class="api-symbol-body">
 
-The StaticGrid or DynamicGrid instance for Data List component
+The Static Grid instance for Data List component
 
 </div>
 
@@ -4105,6 +4294,19 @@ Remove selection from input. It will hide the keyboard and trigger on_unselect e
 
 </div>
 
+### \`druid_input.get_text_visual(): string\`
+
+<div class="api-symbol-body">
+
+Return the text currently displayed on the text node.
+Can differ from \`get_text\` if the text adjust mode trims the value.
+
+**Returns**
+
+- \`string\` — The visible input field text
+
+</div>
+
 ### \`druid_input.get_text(): string\`
 
 <div class="api-symbol-body">
@@ -4222,7 +4424,7 @@ fun(self: druid.input, text: string, input: druid.input) The event triggered whe
 
 <div class="api-symbol-body">
 
-fun(self: druid.input) The event triggered when the input field is changed
+fun(self: druid.input, text: string) The event triggered when the input field text changes
 
 </div>
 
@@ -4230,7 +4432,7 @@ fun(self: druid.input) The event triggered when the input field is changed
 
 <div class="api-symbol-body">
 
-fun(self: druid.input) The event triggered when the input field is empty
+fun(self: druid.input, text: string) The event triggered when the input field becomes empty
 
 </div>
 
@@ -4238,7 +4440,7 @@ fun(self: druid.input) The event triggered when the input field is empty
 
 <div class="api-symbol-body">
 
-fun(self: druid.input) The event triggered when the input field is full
+fun(self: druid.input, text: string) The event triggered when the input field reaches max length
 
 </div>
 
@@ -4246,7 +4448,7 @@ fun(self: druid.input) The event triggered when the input field is full
 
 <div class="api-symbol-body">
 
-fun(self: druid.input) The event triggered when the input field is wrong
+fun(self: druid.input, character: string) The event triggered when a not allowed character is typed
 
 </div>
 
@@ -4280,7 +4482,7 @@ The style of the input component
 
 </div>
 
-### \`druid_lang_text.set_to(text: string): druid_lang_text\`
+### \`druid_lang_text.set_text(text: string): druid_lang_text\`
 
 <div class="api-symbol-body">
 
@@ -4296,9 +4498,15 @@ Setup raw text to lang_text component. This will clear any locale settings.
 
 </div>
 
-### \`druid_lang_text.set_text(text: string): druid_lang_text\`
+### \`druid_lang_text.set_to(text: string): druid_lang_text\`
 
 <div class="api-symbol-body">
+
+<div class="api-availability" aria-label="Availability">
+
+- Deprecated — Use set_text instead
+
+</div>
 
 Setup raw text to lang_text component. This will clear any locale settings.
 
@@ -4806,7 +5014,7 @@ Empty the progress bar
 
 </div>
 
-### \`druid_progress.set_to(to: number): druid_progress\`
+### \`druid_progress.set_value(to: number): druid_progress\`
 
 <div class="api-symbol-body">
 
@@ -4822,7 +5030,41 @@ Instant fill progress bar to value
 
 </div>
 
+### \`druid_progress.set_to(to: number): druid_progress\`
+
+<div class="api-symbol-body">
+
+<div class="api-availability" aria-label="Availability">
+
+- Deprecated — Use set_value instead
+
+</div>
+
+Instant fill progress bar to value
+
+**Parameters**
+
+- \`to\`: \`number\` — Progress bar value, from 0 to 1
+
+**Returns**
+
+- \`druid_progress\` — Current progress instance
+
+</div>
+
 ### \`druid_progress.get(): number\`
+
+<div class="api-symbol-body">
+
+Return the current value of the progress bar
+
+**Returns**
+
+- \`number\` — The current value of the progress bar
+
+</div>
+
+### \`druid_progress.get_value(): number\`
 
 <div class="api-symbol-body">
 
@@ -5112,6 +5354,34 @@ Set the click zone for the swipe, useful for restricting events outside stencil 
 
 </div>
 
+### \`druid_swipe.set_enabled(is_enabled: boolean): druid_swipe\`
+
+<div class="api-symbol-body">
+
+Set swipe enabled state
+
+**Parameters**
+
+- \`is_enabled\`: \`boolean\`
+
+**Returns**
+
+- \`druid_swipe\`
+
+</div>
+
+### \`druid_swipe.is_enabled(): boolean\`
+
+<div class="api-symbol-body">
+
+Return current swipe enabled state
+
+**Returns**
+
+- \`boolean\`
+
+</div>
+
 ### \`druid_swipe._start_swipe(action: action)\`
 
 <div class="api-symbol-body">
@@ -5192,9 +5462,31 @@ The click zone of the swipe
 
 </div>
 
+### \`druid_timer.set_value(value: number): druid_timer\`
+
+<div class="api-symbol-body">
+
+Set the timer to a specific value
+
+**Parameters**
+
+- \`value\`: \`number\` — Value in seconds
+
+**Returns**
+
+- \`druid_timer\` — Current timer instance
+
+</div>
+
 ### \`druid_timer.set_to(set_to: number): druid_timer\`
 
 <div class="api-symbol-body">
+
+<div class="api-availability" aria-label="Availability">
+
+- Deprecated — Use set_value instead
+
+</div>
 
 Set the timer to a specific value
 
@@ -5635,13 +5927,31 @@ Accelerometer z value (if present).
 
 </div>
 
+## druid_instance_input_filter
+
+### \`druid_instance_input_filter.whitelist: LuaTable<druid_component, boolean> | undefined\`
+
+<div class="api-symbol-body">
+
+Allow-list: nil means all, empty table means none
+
+</div>
+
+### \`druid_instance_input_filter.blacklist: LuaTable<druid_component, boolean> | undefined\`
+
+<div class="api-symbol-body">
+
+Deny-list: nil and empty table both deny nobody
+
+</div>
+
 ## druid_instance
 
 ### \`druid_instance._can_use_input_component(component: druid_component): boolean\`
 
 <div class="api-symbol-body">
 
-Check whitelists and blacklists for input components
+Check the input filters for the component: the instance one and the ones from its parents
 
 **Parameters**
 
@@ -5693,6 +6003,23 @@ Component \`on_remove\` function will be invoked, if exist.
 **Returns**
 
 - \`boolean\` — True if component was removed
+
+</div>
+
+### \`druid_instance.set_style(style?: LuaTable | undefined): druid_instance\`
+
+<div class="api-symbol-body">
+
+Set a style of Druid instance. Pass nil to reset to the default style.
+The style is applied to the components created after this call, already created components keep their style.
+
+**Parameters**
+
+- \`style\`?: \`LuaTable | undefined\` — The Druid style table
+
+**Returns**
+
+- \`druid_instance\` — The Druid instance itself for chaining
 
 </div>
 
@@ -5751,17 +6078,23 @@ Called when the window event occurs
 
 </div>
 
-### \`druid_instance.set_whitelist(whitelist_components: LuaTable | druid_component[]): druid_instance\`
+### \`druid_instance.set_whitelist(whitelist_components?: LuaTable | druid_component[] | undefined): druid_instance\`
 
 <div class="api-symbol-body">
 
 Set whitelist components for input processing.
-If whitelist is not empty and component not contains in this list,
-component will be not processed on the input step
+If whitelist is set, only the listed components and their descendants receive input.
+An empty list allows none. Pass nil to clear the whitelist (all components receive input).
+Descendants created later still match, no need to call this again.
+
+The filter is scoped to the caller: on the \`druid\` instance it affects all components,
+on the \`self.druid\` inside a component it affects this component subtree only.
+The filter owner is not affected by its own filter, so a widget can restrict its children
+and keep its own \`on_input\` working.
 
 **Parameters**
 
-- \`whitelist_components\`: \`LuaTable | druid_component[]\` — The array of component to whitelist
+- \`whitelist_components\`?: \`LuaTable | druid_component[] | undefined\` — The array of component to whitelist, nil to clear it
 
 **Returns**
 
@@ -5769,17 +6102,23 @@ component will be not processed on the input step
 
 </div>
 
-### \`druid_instance.set_blacklist(blacklist_components: LuaTable | druid_component[]): druid_instance\`
+### \`druid_instance.set_blacklist(blacklist_components?: LuaTable | druid_component[] | undefined): druid_instance\`
 
 <div class="api-symbol-body">
 
 Set blacklist components for input processing.
-If blacklist is not empty and component is contained in this list,
-component will be not processed on the input step DruidInstance
+If blacklist is set, the listed components and their descendants are skipped
+on the input step. An empty list and nil both deny nobody.
+Descendants created later still match.
+
+The filter is scoped to the caller: on the \`druid\` instance it affects all components,
+on the \`self.druid\` inside a component it affects this component subtree only.
+The filter owner is not affected by its own filter, to filter a widget itself
+set the filter from the outside: the gui script or the parent widget.
 
 **Parameters**
 
-- \`blacklist_components\`: \`LuaTable | druid_component[]\` — The array of component to blacklist
+- \`blacklist_components\`?: \`LuaTable | druid_component[] | undefined\` — The array of component to blacklist, nil to clear it
 
 **Returns**
 

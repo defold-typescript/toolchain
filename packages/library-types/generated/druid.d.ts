@@ -57,6 +57,14 @@ declare module 'druid.druid' {
 		LONGTAP_TIME?: number | undefined;
 		AUTOHOLD_TRIGGER?: number | undefined;
 		DOUBLETAP_TIME?: number | undefined;
+		HOVER_SCALE?: Vector3 | undefined;
+		HOVER_MOUSE_SCALE?: Vector3 | undefined;
+		HOVER_TIME?: number | undefined;
+		SCALE_CHANGE?: Vector3 | undefined;
+		BTN_SOUND?: string | undefined;
+		BTN_SOUND_DISABLED?: string | undefined;
+		DISABLED_COLOR?: Vector4 | undefined;
+		ENABLED_COLOR?: Vector4 | undefined;
 		on_init?: ((self: druid_button) => void) | undefined;
 		on_click?: ((self: druid_button, node: Opaque<"node">) => void) | undefined;
 		on_click_disabled?: ((self: druid_button, node: Opaque<"node">) => void) | undefined;
@@ -77,7 +85,7 @@ declare module 'druid.druid' {
 	 * -   - **params** - Additional params, specified on button creating
 	 * -   - **button_instance** - button itself
 	 * - You can set _params_ on button callback on button creating: `druid:new_button("node_name", callback, params)`.
-	 * - Button have several events like on_click, on_repeated_click, on_long_click, on_hold_click, on_double_click
+	 * - Button have several events like on_click, on_repeated_click, on_long_click, on_hold_callback, on_double_click
 	 * - Click event will not trigger if between pressed and released state cursor was outside of node zone
 	 * - Button can have key trigger to use them by key: `button:set_key_trigger`
 	 * -
@@ -100,11 +108,11 @@ declare module 'druid.druid' {
 		start_pos: Vector3;
 		disabled: boolean;
 		key_trigger: Hash;
-		style: LuaTable;
+		style: druid_button_style;
 		/**
 		 * The constructor for the button component
 		 */
-		init(node_or_node_id: Opaque<"node"> | string, callback?: (() => void) | undefined, custom_args?: unknown | undefined, anim_node?: Opaque<"node"> | string | undefined): void;
+		init(node_or_node_id: Opaque<"node"> | string, callback?: ((self: unknown, custom_args: unknown, button_instance: druid_button) => void) | undefined, custom_args?: unknown | undefined, anim_node?: Opaque<"node"> | string | undefined): void;
 		/**
 		 * Remove default button style animations
 		 */
@@ -206,12 +214,13 @@ declare module 'druid.druid' {
 		screen_x: number;
 		screen_y: number;
 		touch_start_pos: Vector3;
+		hover?: druid_hover | undefined;
 		/**
 		 * The constructor for Drag component
 		 */
 		init(node_or_node_id: Opaque<"node"> | string, on_drag_callback: (self: unknown, dx: number, dy: number, x: number, y: number, touch: touch) => void): void;
 		/**
-		 * Set Drag component enabled state.
+		 * Enable or disable drag cursor styles. No-op without defos. Hover is created on first enable.
 		 */
 		set_drag_cursors(is_enabled: boolean): void;
 		/**
@@ -226,6 +235,17 @@ declare module 'druid.druid' {
 		 * Check if Drag component is capture input
 		 */
 		is_enabled(): boolean;
+		/**
+		 * Add an additional input action that can start a drag.
+		 * By default only touch and multitouch actions are allowed.
+		 * Useful to drag with the middle or right mouse button on desktop.
+		 * The action should provide the pointer position, key actions are ignored.
+		 */
+		add_drag_action(action_id: Hash): druid_drag;
+		/**
+		 * Remove an additional input action from the allowed drag actions
+		 */
+		remove_drag_action(action_id: Hash): druid_drag;
 		_start_touch(): void;
 		_end_touch(touch?: touch | undefined): void;
 		_process_touch(touch: touch): void;
@@ -238,7 +258,7 @@ declare module 'druid.druid' {
 		 * Process on touch release. We should to find, if any other
 		 * touches exists to switch to another touch.
 		 */
-		_on_touch_release(action_id: Hash, action: LuaTable, touch: LuaTable): void;
+		_on_touch_release(action: LuaTable, touch: LuaTable): void;
 	}
 	interface druid_hover_style {
 		ON_HOVER_CURSOR?: string | number | undefined;
@@ -433,7 +453,6 @@ declare module 'druid.druid' {
 		_on_touch_end(): void;
 		_update_size(): void;
 		_process_scroll_wheel(): void;
-		_on_mouse_hover(): void;
 		_inverse_lerp(): void;
 		/**
 		 * Update vector with next conditions:
@@ -451,7 +470,8 @@ declare module 'druid.druid' {
 		IS_ALIGN_LAST_ROW?: boolean | undefined;
 	}
 	/**
-	 * The component for manage the nodes position in the grid with various options
+	 * The component to manage the nodes position in the grid with various options.
+	 * Created via `druid:new_grid()` (Static Grid). Prefer Layout for variable-size arrangements.
 	 */
 	interface druid_grid extends druid_component {
 		on_add_item: event;
@@ -608,11 +628,14 @@ declare module 'druid.druid' {
 		get_text_index_by_width(width: number): number;
 		/**
 		 * Set text to text field
+		 */
+		set_text(new_text: string): druid_text;
+		/**
+		 * Set text to text field
 		 *
-		 * @deprecated
+		 * @deprecated Use set_text instead
 		 */
 		set_to(set_to: string): druid_text;
-		set_text(): void;
 		get_text(): void;
 		/**
 		 * Set text area size
@@ -667,6 +690,7 @@ declare module 'druid.druid' {
 		children: LuaTable;
 		parent?: druid_component | undefined;
 		instance_class: LuaTable;
+		input_filter?: druid_instance_input_filter | undefined;
 	}
 	interface druid_component_component {
 		name: string;
@@ -787,6 +811,7 @@ declare module 'druid.druid' {
 		font: Hash;
 		width: number;
 		height: number;
+		is_justify: boolean;
 	}
 	interface druid_rich_text_word {
 		node: Opaque<"node">;
@@ -837,6 +862,7 @@ declare module 'druid.druid' {
 	interface druid_rich_text extends druid_component {
 		root: Opaque<"node">;
 		text_prefab: Opaque<"node">;
+		is_justify: boolean;
 		init(text_node: Opaque<"node"> | string, value?: string | undefined): void;
 		/**
 		 * Set text for Rich Text
@@ -897,6 +923,11 @@ declare module 'druid.druid' {
 		 * Get the current line metrics
 		 */
 		get_line_metric(): druid_rich_text_lines_metrics;
+		/**
+		 * Spread words on each line to the root width, same idea as layout:set_justify.
+		 * A line with one word is left as-is. Extra gap is inserted between words.
+		 */
+		set_justify(is_justify: boolean): druid_rich_text;
 		/**
 		 * Set the width of the rich text, not affects the size of current spawned words
 		 */
@@ -1020,7 +1051,7 @@ declare module 'druid.druid' {
 	 * Create data list component with druid: `data_list = druid:new_data_list(scroll, grid, create_function)`
 	 *
 	 * ### Notes
-	 * - Data List uses a scroll component for scrolling and a grid component for layout
+	 * - Data List uses a scroll component for scrolling and a Static Grid component for layout
 	 * - Data List only renders visible elements for better performance
 	 * - Data List supports caching of elements for better performance
 	 * - Data List supports adding, removing and updating elements
@@ -1084,6 +1115,12 @@ declare module 'druid.druid' {
 		 * Instant scroll to element with passed index
 		 */
 		scroll_to_index(index: number): void;
+		/**
+		 * Rebuild the scroll content size and refresh the visible elements.
+		 * The DataList refreshes itself on the data change, so this is only needed when
+		 * something outside of the data changed, like the grid item size at runtime
+		 */
+		refresh(): druid_data_list;
 	}
 	interface druid_hotkey_style {
 		MODIFICATORS: string[] | Hash[];
@@ -1176,6 +1213,11 @@ declare module 'druid.druid' {
 		 */
 		unselect(): void;
 		/**
+		 * Return the text currently displayed on the text node.
+		 * Can differ from `get_text` if the text adjust mode trims the value.
+		 */
+		get_text_visual(): string;
+		/**
 		 * Return current input field text
 		 */
 		get_text(): string;
@@ -1225,11 +1267,13 @@ declare module 'druid.druid' {
 		/**
 		 * Setup raw text to lang_text component. This will clear any locale settings.
 		 */
-		set_to(text: string): druid_lang_text;
+		set_text(text: string): druid_lang_text;
 		/**
 		 * Setup raw text to lang_text component. This will clear any locale settings.
+		 *
+		 * @deprecated Use set_text instead
 		 */
-		set_text(text: string): druid_lang_text;
+		set_to(text: string): druid_lang_text;
 		/**
 		 * Translate the text by locale_id. The text will be automatically updated when locale changes.
 		 */
@@ -1349,11 +1393,21 @@ declare module 'druid.druid' {
 		/**
 		 * Instant fill progress bar to value
 		 */
+		set_value(to: number): druid_progress;
+		/**
+		 * Instant fill progress bar to value
+		 *
+		 * @deprecated Use set_value instead
+		 */
 		set_to(to: number): druid_progress;
 		/**
 		 * Return the current value of the progress bar
 		 */
 		get(): number;
+		/**
+		 * Return the current value of the progress bar
+		 */
+		get_value(): number;
 		/**
 		 * Set points on progress bar to fire the callback
 		 */
@@ -1436,6 +1490,14 @@ declare module 'druid.druid' {
 		 */
 		set_click_zone(zone?: Opaque<"node"> | string | undefined): void;
 		/**
+		 * Set swipe enabled state
+		 */
+		set_enabled(is_enabled: boolean): druid_swipe;
+		/**
+		 * Return current swipe enabled state
+		 */
+		is_enabled(): boolean;
+		/**
 		 * Start swipe event
 		 */
 		_start_swipe(action: action): void;
@@ -1471,6 +1533,12 @@ declare module 'druid.druid' {
 		init(node: Opaque<"node">, seconds_from?: number | undefined, seconds_to?: number | undefined, callback?: ((...args: any[]) => unknown) | undefined): void;
 		/**
 		 * Set the timer to a specific value
+		 */
+		set_value(value: number): druid_timer;
+		/**
+		 * Set the timer to a specific value
+		 *
+		 * @deprecated Use set_value instead
 		 */
 		set_to(set_to: number): druid_timer;
 		/**
@@ -1563,11 +1631,19 @@ declare module 'druid.druid' {
 		acc_z?: number | undefined;
 	}
 	/**
+	 * The input filter, applied to the Druid instance components or to the component subtree.
+	 * Membership is the listed component plus any descendant, including ones created later.
+	 */
+	interface druid_instance_input_filter {
+		whitelist?: LuaTable<druid_component, boolean> | undefined;
+		blacklist?: LuaTable<druid_component, boolean> | undefined;
+	}
+	/**
 	 * The Druid Factory used to create components
 	 */
 	interface druid_instance {
 		/**
-		 * Check whitelists and blacklists for input components
+		 * Check the input filters for the component: the instance one and the ones from its parents
 		 */
 		_can_use_input_component(component: druid_component): boolean;
 		/**
@@ -1584,6 +1660,11 @@ declare module 'druid.druid' {
 		 * Component `on_remove` function will be invoked, if exist.
 		 */
 		remove<T extends druid_component>(component: T): boolean;
+		/**
+		 * Set a style of Druid instance. Pass nil to reset to the default style.
+		 * The style is applied to the components created after this call, already created components keep their style.
+		 */
+		set_style(style?: LuaTable | undefined): druid_instance;
 		/**
 		 * Call this in gui_script update function.
 		 */
@@ -1602,16 +1683,28 @@ declare module 'druid.druid' {
 		on_window_event(window_event: number): void;
 		/**
 		 * Set whitelist components for input processing.
-		 * If whitelist is not empty and component not contains in this list,
-		 * component will be not processed on the input step
+		 * If whitelist is set, only the listed components and their descendants receive input.
+		 * An empty list allows none. Pass nil to clear the whitelist (all components receive input).
+		 * Descendants created later still match, no need to call this again.
+		 *
+		 * The filter is scoped to the caller: on the `druid` instance it affects all components,
+		 * on the `self.druid` inside a component it affects this component subtree only.
+		 * The filter owner is not affected by its own filter, so a widget can restrict its children
+		 * and keep its own `on_input` working.
 		 */
-		set_whitelist(whitelist_components: LuaTable | druid_component[]): druid_instance;
+		set_whitelist(whitelist_components?: LuaTable | druid_component[] | undefined): druid_instance;
 		/**
 		 * Set blacklist components for input processing.
-		 * If blacklist is not empty and component is contained in this list,
-		 * component will be not processed on the input step DruidInstance
+		 * If blacklist is set, the listed components and their descendants are skipped
+		 * on the input step. An empty list and nil both deny nobody.
+		 * Descendants created later still match.
+		 *
+		 * The filter is scoped to the caller: on the `druid` instance it affects all components,
+		 * on the `self.druid` inside a component it affects this component subtree only.
+		 * The filter owner is not affected by its own filter, to filter a widget itself
+		 * set the filter from the outside: the gui script or the parent widget.
 		 */
-		set_blacklist(blacklist_components: LuaTable | druid_component[]): druid_instance;
+		set_blacklist(blacklist_components?: LuaTable | druid_component[] | undefined): druid_instance;
 		/**
 		 * Create new Druid widget instance
 		 */
@@ -1740,6 +1833,14 @@ declare module 'druid.druid' {
 	 */
 	export function on_language_change(this: void): void;
 	/**
+	 * Get the Druid instance bound to the GUI by `druid.register_druid_as_widget()`.
+	 * Unlike `druid.get_widget()`, the instance is returned as is, without cross-context events wrapping,
+	 * so from a game object script you should only use its plain functions, not the GUI related ones.
+	 * local instance = druid.get_druid("gui_widget")
+	 * instance:set_style(my_style) -- Should be set before creating widgets
+	 */
+	export function get_druid(this: void, gui_url?: Url | string | undefined): druid_instance | undefined;
+	/**
 	 * Create a widget from the bound Druid GUI instance.
 	 * The widget will be created and all widget functions can be called from Game Object contexts.
 	 * This allows using only `druid_widget.gui_script` for GUI files and call this widget functions from Game Object script file.
@@ -1747,7 +1848,7 @@ declare module 'druid.druid' {
 	 * msg.url(nil, nil, "gui_widget") -- current game object
 	 * msg.url(nil, object_url, "gui_widget") -- other game object
 	 */
-	export function get_widget<T extends druid_widget>(this: void, widget_class: T, gui_url: Url | string, params?: unknown | undefined): T;
+	export function get_widget<T extends druid_widget>(this: void, widget_class: T, gui_url: Url | string, params?: unknown | undefined, template?: string | undefined): T;
 	/**
 	 * Bind a Druid GUI instance to the current game object.
 	 * This instance now can produce widgets from `druid.get_widget()` function.

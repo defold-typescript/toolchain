@@ -157,6 +157,32 @@
     },
     {
       "type": "FUNCTION",
+      "name": "get_druid",
+      "brief": "Get the Druid instance bound to the GUI by `druid.register_druid_as_widget()`.\nUnlike `druid.get_widget()`, the instance is returned as is, without cross-context events wrapping,\nso from a game object script you should only use its plain functions, not the GUI related ones.\nlocal instance = druid.get_druid(\"gui_widget\")\ninstance:set_style(my_style) -- Should be set before creating widgets",
+      "description": "Get the Druid instance bound to the GUI by `druid.register_druid_as_widget()`.\nUnlike `druid.get_widget()`, the instance is returned as is, without cross-context events wrapping,\nso from a game object script you should only use its plain functions, not the GUI related ones.\nlocal instance = druid.get_druid(\"gui_widget\")\ninstance:set_style(my_style) -- Should be set before creating widgets",
+      "parameters": [
+        {
+          "name": "gui_url",
+          "doc": "GUI url or string of component name near current script",
+          "types": [
+            "Url | string | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The registered Druid instance or nil if not registered",
+          "types": [
+            "druid_instance | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
       "name": "get_widget",
       "brief": "Create a widget from the bound Druid GUI instance.\nThe widget will be created and all widget functions can be called from Game Object contexts.\nThis allows using only `druid_widget.gui_script` for GUI files and call this widget functions from Game Object script file.\nWidget class here is your lua file for the GUI scene (widgets in Druid)\nmsg.url(nil, nil, \"gui_widget\") -- current game object\nmsg.url(nil, object_url, \"gui_widget\") -- other game object",
       "description": "Create a widget from the bound Druid GUI instance.\nThe widget will be created and all widget functions can be called from Game Object contexts.\nThis allows using only `druid_widget.gui_script` for GUI files and call this widget functions from Game Object script file.\nWidget class here is your lua file for the GUI scene (widgets in Druid)\nmsg.url(nil, nil, \"gui_widget\") -- current game object\nmsg.url(nil, object_url, \"gui_widget\") -- other game object",
@@ -185,6 +211,15 @@
           "doc": "Additional parameters to pass to the widget's init function",
           "types": [
             "unknown | undefined"
+          ],
+          "is_optional": "True",
+          "is_vararg": "False"
+        },
+        {
+          "name": "template",
+          "doc": "The GUI template name used by the widget nodes",
+          "types": [
+            "string | undefined"
           ],
           "is_optional": "True",
           "is_vararg": "False"
@@ -435,6 +470,70 @@
           ]
         },
         {
+          "name": "HOVER_SCALE",
+          "brief": "Scale added on touch hover (default style). Default: vmath.vector3(0.08, 0.08, 1)",
+          "description": "Scale added on touch hover (default style). Default: vmath.vector3(0.08, 0.08, 1)",
+          "types": [
+            "Vector3 | undefined"
+          ]
+        },
+        {
+          "name": "HOVER_MOUSE_SCALE",
+          "brief": "Scale added on mouse hover (default style). Default: vmath.vector3(0.04, 0.04, 1)",
+          "description": "Scale added on mouse hover (default style). Default: vmath.vector3(0.04, 0.04, 1)",
+          "types": [
+            "Vector3 | undefined"
+          ]
+        },
+        {
+          "name": "HOVER_TIME",
+          "brief": "Hover scale animation time. Default: 0.05",
+          "description": "Hover scale animation time. Default: 0.05",
+          "types": [
+            "number | undefined"
+          ]
+        },
+        {
+          "name": "SCALE_CHANGE",
+          "brief": "Scale punch on click (default style). Default: vmath.vector3(0.12, 0.12, 1)",
+          "description": "Scale punch on click (default style). Default: vmath.vector3(0.12, 0.12, 1)",
+          "types": [
+            "Vector3 | undefined"
+          ]
+        },
+        {
+          "name": "BTN_SOUND",
+          "brief": "Sound id played on click. Default: \"click\"",
+          "description": "Sound id played on click. Default: \"click\"",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "BTN_SOUND_DISABLED",
+          "brief": "Sound id played on disabled click. Default: \"click\"",
+          "description": "Sound id played on disabled click. Default: \"click\"",
+          "types": [
+            "string | undefined"
+          ]
+        },
+        {
+          "name": "DISABLED_COLOR",
+          "brief": "Color applied when disabled via style. Default: vmath.vector4(0, 0, 0, 1)",
+          "description": "Color applied when disabled via style. Default: vmath.vector4(0, 0, 0, 1)",
+          "types": [
+            "Vector4 | undefined"
+          ]
+        },
+        {
+          "name": "ENABLED_COLOR",
+          "brief": "Color applied when enabled via style. Default: vmath.vector4(1)",
+          "description": "Color applied when enabled via style. Default: vmath.vector4(1)",
+          "types": [
+            "Vector4 | undefined"
+          ]
+        },
+        {
           "name": "on_init",
           "brief": "",
           "description": "",
@@ -507,7 +606,7 @@
               "name": "callback",
               "doc": "Callback on button click",
               "types": [
-                "(() => void) | undefined"
+                "((self: unknown, custom_args: unknown, button_instance: druid_button) => void) | undefined"
               ],
               "is_optional": "True",
               "is_vararg": "False"
@@ -844,56 +943,56 @@
       "properties": [
         {
           "name": "on_click",
-          "brief": "fun(self, custom_args, button_instance)",
-          "description": "fun(self, custom_args, button_instance)",
+          "brief": "fun(self: druid.button, custom_args: any, button_instance: druid.button)",
+          "description": "fun(self: druid.button, custom_args: any, button_instance: druid.button)",
           "types": [
             "event"
           ]
         },
         {
           "name": "on_pressed",
-          "brief": "fun(self, custom_args, button_instance)",
-          "description": "fun(self, custom_args, button_instance)",
+          "brief": "fun(self: druid.button, custom_args: any, button_instance: druid.button)",
+          "description": "fun(self: druid.button, custom_args: any, button_instance: druid.button)",
           "types": [
             "event"
           ]
         },
         {
           "name": "on_repeated_click",
-          "brief": "fun(self, custom_args, button_instance, click_count) Repeated click callback, while holding the button",
-          "description": "fun(self, custom_args, button_instance, click_count) Repeated click callback, while holding the button",
+          "brief": "fun(self: druid.button, custom_args: any, button_instance: druid.button, click_count: number) Repeated click callback, while holding the button",
+          "description": "fun(self: druid.button, custom_args: any, button_instance: druid.button, click_count: number) Repeated click callback, while holding the button",
           "types": [
             "event"
           ]
         },
         {
           "name": "on_long_click",
-          "brief": "fun(self, custom_args, button_instance, hold_time) Callback on long button tap",
-          "description": "fun(self, custom_args, button_instance, hold_time) Callback on long button tap",
+          "brief": "fun(self: druid.button, custom_args: any, button_instance: druid.button, hold_time: number) Callback on long button tap",
+          "description": "fun(self: druid.button, custom_args: any, button_instance: druid.button, hold_time: number) Callback on long button tap",
           "types": [
             "event"
           ]
         },
         {
           "name": "on_double_click",
-          "brief": "fun(self, custom_args, button_instance, click_amount) Different callback, if tap button 2+ in row",
-          "description": "fun(self, custom_args, button_instance, click_amount) Different callback, if tap button 2+ in row",
+          "brief": "fun(self: druid.button, custom_args: any, button_instance: druid.button, click_amount: number) Different callback, if tap button 2+ in row",
+          "description": "fun(self: druid.button, custom_args: any, button_instance: druid.button, click_amount: number) Different callback, if tap button 2+ in row",
           "types": [
             "event"
           ]
         },
         {
           "name": "on_hold_callback",
-          "brief": "fun(self, custom_args, button_instance, press_time) Hold callback, before long_click trigger",
-          "description": "fun(self, custom_args, button_instance, press_time) Hold callback, before long_click trigger",
+          "brief": "fun(self: druid.button, custom_args: any, button_instance: druid.button, press_time: number) Hold callback, before long_click trigger",
+          "description": "fun(self: druid.button, custom_args: any, button_instance: druid.button, press_time: number) Hold callback, before long_click trigger",
           "types": [
             "event"
           ]
         },
         {
           "name": "on_click_outside",
-          "brief": "fun(self, custom_args, button_instance)",
-          "description": "fun(self, custom_args, button_instance)",
+          "brief": "fun(self: druid.button, custom_args: any, button_instance: druid.button)",
+          "description": "fun(self: druid.button, custom_args: any, button_instance: druid.button)",
           "types": [
             "event"
           ]
@@ -983,7 +1082,7 @@
           "brief": "Style for this button",
           "description": "Style for this button",
           "types": [
-            "LuaTable"
+            "druid_button_style"
           ]
         }
       ]
@@ -1044,12 +1143,12 @@
         {
           "type": "FUNCTION",
           "name": "set_drag_cursors",
-          "brief": "Set Drag component enabled state.",
-          "description": "Set Drag component enabled state.",
+          "brief": "Enable or disable drag cursor styles. No-op without defos. Hover is created on first enable.",
+          "description": "Enable or disable drag cursor styles. No-op without defos. Hover is created on first enable.",
           "parameters": [
             {
               "name": "is_enabled",
-              "doc": "True if Drag component is enabled",
+              "doc": "True if Drag cursors are enabled",
               "types": [
                 "boolean"
               ],
@@ -1123,6 +1222,58 @@
               "doc": "True if Drag component is enabled",
               "types": [
                 "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "add_drag_action",
+          "brief": "Add an additional input action that can start a drag.\nBy default only touch and multitouch actions are allowed.\nUseful to drag with the middle or right mouse button on desktop.\nThe action should provide the pointer position, key actions are ignored.",
+          "description": "Add an additional input action that can start a drag.\nBy default only touch and multitouch actions are allowed.\nUseful to drag with the middle or right mouse button on desktop.\nThe action should provide the pointer position, key actions are ignored.",
+          "parameters": [
+            {
+              "name": "action_id",
+              "doc": "The action id to allow for dragging",
+              "types": [
+                "Hash"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "Current instance",
+              "types": [
+                "druid_drag"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "remove_drag_action",
+          "brief": "Remove an additional input action from the allowed drag actions",
+          "description": "Remove an additional input action from the allowed drag actions",
+          "parameters": [
+            {
+              "name": "action_id",
+              "doc": "The action id to disallow for dragging",
+              "types": [
+                "Hash"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "Current instance",
+              "types": [
+                "druid_drag"
               ]
             }
           ]
@@ -1221,15 +1372,6 @@
           "brief": "Process on touch release. We should to find, if any other\ntouches exists to switch to another touch.",
           "description": "Process on touch release. We should to find, if any other\ntouches exists to switch to another touch.",
           "parameters": [
-            {
-              "name": "action_id",
-              "doc": "Action id from on_input",
-              "types": [
-                "Hash"
-              ],
-              "is_optional": "False",
-              "is_vararg": "False"
-            },
             {
               "name": "action",
               "doc": "Action from on_input",
@@ -1411,6 +1553,14 @@
           "description": "The touch start position",
           "types": [
             "Vector3"
+          ]
+        },
+        {
+          "name": "hover",
+          "brief": "Hover for drag cursors. nil without defos",
+          "description": "Hover for drag cursors. nil without defos",
+          "types": [
+            "druid_hover | undefined"
           ]
         }
       ]
@@ -2325,14 +2475,6 @@
         {
           "type": "FUNCTION",
           "name": "_process_scroll_wheel",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
-        },
-        {
-          "type": "FUNCTION",
-          "name": "_on_mouse_hover",
           "brief": "",
           "description": "",
           "parameters": [],
@@ -3457,6 +3599,32 @@
         },
         {
           "type": "FUNCTION",
+          "name": "set_text",
+          "brief": "Set text to text field",
+          "description": "Set text to text field",
+          "parameters": [
+            {
+              "name": "new_text",
+              "doc": "Text for node",
+              "types": [
+                "string"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "Current text instance",
+              "types": [
+                "druid_text"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
           "name": "set_to",
           "brief": "Set text to text field",
           "description": "Set text to text field",
@@ -3480,15 +3648,7 @@
               ]
             }
           ],
-          "deprecated": ""
-        },
-        {
-          "type": "FUNCTION",
-          "name": "set_text",
-          "brief": "",
-          "description": "",
-          "parameters": [],
-          "returnvalues": []
+          "deprecated": "Use set_text instead"
         },
         {
           "type": "FUNCTION",
@@ -3867,6 +4027,14 @@
           "description": "",
           "types": [
             "LuaTable"
+          ]
+        },
+        {
+          "name": "input_filter",
+          "brief": "Input filter for the component subtree, set by `druid:set_whitelist` / `druid:set_blacklist`",
+          "description": "Input filter for the component subtree, set by `druid:set_whitelist` / `druid:set_blacklist`",
+          "types": [
+            "druid_instance_input_filter | undefined"
           ]
         }
       ]
@@ -4574,6 +4742,14 @@
           "types": [
             "number"
           ]
+        },
+        {
+          "name": "is_justify",
+          "brief": "",
+          "description": "",
+          "types": [
+            "boolean"
+          ]
         }
       ]
     },
@@ -5071,6 +5247,32 @@
         },
         {
           "type": "FUNCTION",
+          "name": "set_justify",
+          "brief": "Spread words on each line to the root width, same idea as layout:set_justify.\nA line with one word is left as-is. Extra gap is inserted between words.",
+          "description": "Spread words on each line to the root width, same idea as layout:set_justify.\nA line with one word is left as-is. Extra gap is inserted between words.",
+          "parameters": [
+            {
+              "name": "is_justify",
+              "doc": "",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "druid_rich_text"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
           "name": "set_width",
           "brief": "Set the width of the rich text, not affects the size of current spawned words",
           "description": "Set the width of the rich text, not affects the size of current spawned words",
@@ -5137,6 +5339,14 @@
           "description": "The text prefab node",
           "types": [
             "Opaque<\"node\">"
+          ]
+        },
+        {
+          "name": "is_justify",
+          "brief": "True if words on a line should be spread to the root width",
+          "description": "True if words on a line should be spread to the root width",
+          "types": [
+            "boolean"
           ]
         }
       ]
@@ -6093,6 +6303,22 @@
             }
           ],
           "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "refresh",
+          "brief": "Rebuild the scroll content size and refresh the visible elements.\nThe DataList refreshes itself on the data change, so this is only needed when\nsomething outside of the data changed, like the grid item size at runtime",
+          "description": "Rebuild the scroll content size and refresh the visible elements.\nThe DataList refreshes itself on the data change, so this is only needed when\nsomething outside of the data changed, like the grid item size at runtime",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "Current DataList instance",
+              "types": [
+                "druid_data_list"
+              ]
+            }
+          ]
         }
       ],
       "properties": [
@@ -6106,8 +6332,8 @@
         },
         {
           "name": "grid",
-          "brief": "The StaticGrid or DynamicGrid instance for Data List component",
-          "description": "The StaticGrid or DynamicGrid instance for Data List component",
+          "brief": "The Static Grid instance for Data List component",
+          "description": "The Static Grid instance for Data List component",
           "types": [
             "druid_grid"
           ]
@@ -6519,6 +6745,22 @@
         },
         {
           "type": "FUNCTION",
+          "name": "get_text_visual",
+          "brief": "Return the text currently displayed on the text node.\nCan differ from `get_text` if the text adjust mode trims the value.",
+          "description": "Return the text currently displayed on the text node.\nCan differ from `get_text` if the text adjust mode trims the value.",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "The visible input field text",
+              "types": [
+                "string"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
           "name": "get_text",
           "brief": "Return current input field text",
           "description": "Return current input field text",
@@ -6709,32 +6951,32 @@
         },
         {
           "name": "on_input_text",
-          "brief": "fun(self: druid.input) The event triggered when the input field is changed",
-          "description": "fun(self: druid.input) The event triggered when the input field is changed",
+          "brief": "fun(self: druid.input, text: string) The event triggered when the input field text changes",
+          "description": "fun(self: druid.input, text: string) The event triggered when the input field text changes",
           "types": [
             "event"
           ]
         },
         {
           "name": "on_input_empty",
-          "brief": "fun(self: druid.input) The event triggered when the input field is empty",
-          "description": "fun(self: druid.input) The event triggered when the input field is empty",
+          "brief": "fun(self: druid.input, text: string) The event triggered when the input field becomes empty",
+          "description": "fun(self: druid.input, text: string) The event triggered when the input field becomes empty",
           "types": [
             "event"
           ]
         },
         {
           "name": "on_input_full",
-          "brief": "fun(self: druid.input) The event triggered when the input field is full",
-          "description": "fun(self: druid.input) The event triggered when the input field is full",
+          "brief": "fun(self: druid.input, text: string) The event triggered when the input field reaches max length",
+          "description": "fun(self: druid.input, text: string) The event triggered when the input field reaches max length",
           "types": [
             "event"
           ]
         },
         {
           "name": "on_input_wrong",
-          "brief": "fun(self: druid.input) The event triggered when the input field is wrong",
-          "description": "fun(self: druid.input) The event triggered when the input field is wrong",
+          "brief": "fun(self: druid.input, character: string) The event triggered when a not allowed character is typed",
+          "description": "fun(self: druid.input, character: string) The event triggered when a not allowed character is typed",
           "types": [
             "event"
           ]
@@ -6799,7 +7041,7 @@
         },
         {
           "type": "FUNCTION",
-          "name": "set_to",
+          "name": "set_text",
           "brief": "Setup raw text to lang_text component. This will clear any locale settings.",
           "description": "Setup raw text to lang_text component. This will clear any locale settings.",
           "parameters": [
@@ -6825,7 +7067,7 @@
         },
         {
           "type": "FUNCTION",
-          "name": "set_text",
+          "name": "set_to",
           "brief": "Setup raw text to lang_text component. This will clear any locale settings.",
           "description": "Setup raw text to lang_text component. This will clear any locale settings.",
           "parameters": [
@@ -6847,7 +7089,8 @@
                 "druid_lang_text"
               ]
             }
-          ]
+          ],
+          "deprecated": "Use set_text instead"
         },
         {
           "type": "FUNCTION",
@@ -7765,7 +8008,7 @@
         },
         {
           "type": "FUNCTION",
-          "name": "set_to",
+          "name": "set_value",
           "brief": "Instant fill progress bar to value",
           "description": "Instant fill progress bar to value",
           "parameters": [
@@ -7791,7 +8034,50 @@
         },
         {
           "type": "FUNCTION",
+          "name": "set_to",
+          "brief": "Instant fill progress bar to value",
+          "description": "Instant fill progress bar to value",
+          "parameters": [
+            {
+              "name": "to",
+              "doc": "Progress bar value, from 0 to 1",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "Current progress instance",
+              "types": [
+                "druid_progress"
+              ]
+            }
+          ],
+          "deprecated": "Use set_value instead"
+        },
+        {
+          "type": "FUNCTION",
           "name": "get",
+          "brief": "Return the current value of the progress bar",
+          "description": "Return the current value of the progress bar",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "The current value of the progress bar",
+              "types": [
+                "number"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "get_value",
           "brief": "Return the current value of the progress bar",
           "description": "Return the current value of the progress bar",
           "parameters": [],
@@ -8249,6 +8535,48 @@
         },
         {
           "type": "FUNCTION",
+          "name": "set_enabled",
+          "brief": "Set swipe enabled state",
+          "description": "Set swipe enabled state",
+          "parameters": [
+            {
+              "name": "is_enabled",
+              "doc": "",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "druid_swipe"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "is_enabled",
+          "brief": "Return current swipe enabled state",
+          "description": "Return current swipe enabled state",
+          "parameters": [],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
           "name": "_start_swipe",
           "brief": "Start swipe event",
           "description": "Start swipe event",
@@ -8387,6 +8715,32 @@
         },
         {
           "type": "FUNCTION",
+          "name": "set_value",
+          "brief": "Set the timer to a specific value",
+          "description": "Set the timer to a specific value",
+          "parameters": [
+            {
+              "name": "value",
+              "doc": "Value in seconds",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "Current timer instance",
+              "types": [
+                "druid_timer"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
           "name": "set_to",
           "brief": "Set the timer to a specific value",
           "description": "Set the timer to a specific value",
@@ -8409,7 +8763,8 @@
                 "druid_timer"
               ]
             }
-          ]
+          ],
+          "deprecated": "Use set_value instead"
         },
         {
           "type": "FUNCTION",
@@ -9066,13 +9421,35 @@
     },
     {
       "type": "TYPEDEF",
+      "name": "druid_instance_input_filter",
+      "properties": [
+        {
+          "name": "whitelist",
+          "brief": "Allow-list: nil means all, empty table means none",
+          "description": "Allow-list: nil means all, empty table means none",
+          "types": [
+            "LuaTable<druid_component, boolean> | undefined"
+          ]
+        },
+        {
+          "name": "blacklist",
+          "brief": "Deny-list: nil and empty table both deny nobody",
+          "description": "Deny-list: nil and empty table both deny nobody",
+          "types": [
+            "LuaTable<druid_component, boolean> | undefined"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
       "name": "druid_instance",
       "functions": [
         {
           "type": "FUNCTION",
           "name": "_can_use_input_component",
-          "brief": "Check whitelists and blacklists for input components",
-          "description": "Check whitelists and blacklists for input components",
+          "brief": "Check the input filters for the component: the instance one and the ones from its parents",
+          "description": "Check the input filters for the component: the instance one and the ones from its parents",
           "parameters": [
             {
               "name": "component",
@@ -9161,6 +9538,32 @@
               "doc": "True if component was removed",
               "types": [
                 "boolean"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "FUNCTION",
+          "name": "set_style",
+          "brief": "Set a style of Druid instance. Pass nil to reset to the default style.\nThe style is applied to the components created after this call, already created components keep their style.",
+          "description": "Set a style of Druid instance. Pass nil to reset to the default style.\nThe style is applied to the components created after this call, already created components keep their style.",
+          "parameters": [
+            {
+              "name": "style",
+              "doc": "The Druid style table",
+              "types": [
+                "LuaTable | undefined"
+              ],
+              "is_optional": "True",
+              "is_vararg": "False"
+            }
+          ],
+          "returnvalues": [
+            {
+              "name": "",
+              "doc": "The Druid instance itself for chaining",
+              "types": [
+                "druid_instance"
               ]
             }
           ]
@@ -9275,16 +9678,16 @@
         {
           "type": "FUNCTION",
           "name": "set_whitelist",
-          "brief": "Set whitelist components for input processing.\nIf whitelist is not empty and component not contains in this list,\ncomponent will be not processed on the input step",
-          "description": "Set whitelist components for input processing.\nIf whitelist is not empty and component not contains in this list,\ncomponent will be not processed on the input step",
+          "brief": "Set whitelist components for input processing.\nIf whitelist is set, only the listed components and their descendants receive input.\nAn empty list allows none. Pass nil to clear the whitelist (all components receive input).\nDescendants created later still match, no need to call this again.\n\nThe filter is scoped to the caller: on the `druid` instance it affects all components,\non the `self.druid` inside a component it affects this component subtree only.\nThe filter owner is not affected by its own filter, so a widget can restrict its children\nand keep its own `on_input` working.",
+          "description": "Set whitelist components for input processing.\nIf whitelist is set, only the listed components and their descendants receive input.\nAn empty list allows none. Pass nil to clear the whitelist (all components receive input).\nDescendants created later still match, no need to call this again.\n\nThe filter is scoped to the caller: on the `druid` instance it affects all components,\non the `self.druid` inside a component it affects this component subtree only.\nThe filter owner is not affected by its own filter, so a widget can restrict its children\nand keep its own `on_input` working.",
           "parameters": [
             {
               "name": "whitelist_components",
-              "doc": "The array of component to whitelist",
+              "doc": "The array of component to whitelist, nil to clear it",
               "types": [
-                "LuaTable | druid_component[]"
+                "LuaTable | druid_component[] | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
               "is_vararg": "False"
             }
           ],
@@ -9301,16 +9704,16 @@
         {
           "type": "FUNCTION",
           "name": "set_blacklist",
-          "brief": "Set blacklist components for input processing.\nIf blacklist is not empty and component is contained in this list,\ncomponent will be not processed on the input step DruidInstance",
-          "description": "Set blacklist components for input processing.\nIf blacklist is not empty and component is contained in this list,\ncomponent will be not processed on the input step DruidInstance",
+          "brief": "Set blacklist components for input processing.\nIf blacklist is set, the listed components and their descendants are skipped\non the input step. An empty list and nil both deny nobody.\nDescendants created later still match.\n\nThe filter is scoped to the caller: on the `druid` instance it affects all components,\non the `self.druid` inside a component it affects this component subtree only.\nThe filter owner is not affected by its own filter, to filter a widget itself\nset the filter from the outside: the gui script or the parent widget.",
+          "description": "Set blacklist components for input processing.\nIf blacklist is set, the listed components and their descendants are skipped\non the input step. An empty list and nil both deny nobody.\nDescendants created later still match.\n\nThe filter is scoped to the caller: on the `druid` instance it affects all components,\non the `self.druid` inside a component it affects this component subtree only.\nThe filter owner is not affected by its own filter, to filter a widget itself\nset the filter from the outside: the gui script or the parent widget.",
           "parameters": [
             {
               "name": "blacklist_components",
-              "doc": "The array of component to blacklist",
+              "doc": "The array of component to blacklist, nil to clear it",
               "types": [
-                "LuaTable | druid_component[]"
+                "LuaTable | druid_component[] | undefined"
               ],
-              "is_optional": "False",
+              "is_optional": "True",
               "is_vararg": "False"
             }
           ],
