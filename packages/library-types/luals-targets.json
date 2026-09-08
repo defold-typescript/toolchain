@@ -98,7 +98,7 @@
     },
     {
       "repo": "https://github.com/Insality/defold-log",
-      "ref": "6",
+      "ref": "7",
       "license": "MIT",
       "sourceGlobs": ["log/**/*.lua"],
       "moduleId": "log.log",
