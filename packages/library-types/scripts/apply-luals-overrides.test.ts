@@ -81,6 +81,31 @@ function classShapeModel(): LibraryModel {
   };
 }
 
+function overloadModel(): LibraryModel {
+  return {
+    interfaces: [
+      {
+        name: "I",
+        generics: [],
+        brief: "",
+        fields: [{ name: "count", types: ["number"], doc: "", isOptional: false }],
+        methods: [{ name: "init", brief: "", generics: [], params: [], returns: [] }],
+        overloads: [{ type: "fun(name: string?): I", doc: "" }],
+      },
+      {
+        name: "J",
+        generics: [],
+        brief: "",
+        fields: [],
+        methods: [],
+        overloads: [{ type: "fun(): J", doc: "" }],
+      },
+    ],
+    aliases: [],
+    moduleFunctions: [],
+  };
+}
+
 describe("applyAnnotationOverrides", () => {
   test("marks a named module-function param optional and leaves siblings unchanged", () => {
     const model = moduleFnModel();
@@ -234,6 +259,41 @@ describe("applyAnnotationOverrides", () => {
     });
     expect(retyped.interfaces[0]?.fields.map((f) => f.name)).toEqual(["cb", "count"]);
     expect(retyped.interfaces[0]?.fields.find((f) => f.name === "cb")?.types).toEqual(["number"]);
+  });
+
+  test("a dropped call signature leaves no overloads key, sparing members and siblings", () => {
+    const result = applyAnnotationOverrides(overloadModel(), {
+      interfaces: { I: { callSignature: { drop: true } } },
+    });
+    const iface = result.interfaces.find((i) => i.name === "I");
+    // `delete`, not `= []`: parse-luals keeps the key absent when unused.
+    expect(iface?.overloads).toBeUndefined();
+    expect(iface?.fields.map((f) => f.name)).toEqual(["count"]);
+    expect(iface?.methods.map((m) => m.name)).toEqual(["init"]);
+    expect(result.interfaces.find((i) => i.name === "J")?.overloads).toEqual([
+      { type: "fun(): J", doc: "" },
+    ]);
+  });
+
+  test("throws naming the interface and its call signature when the model has none", () => {
+    expect(() =>
+      applyAnnotationOverrides(classShapeModel(), {
+        interfaces: { I: { callSignature: { drop: true } } },
+      }),
+    ).toThrow(/"I"/);
+    expect(() =>
+      applyAnnotationOverrides(classShapeModel(), {
+        interfaces: { I: { callSignature: { drop: true } } },
+      }),
+    ).toThrow(/call signature/);
+  });
+
+  test("the absent-target throw fires on the callSignature key, not on drop: true", () => {
+    expect(() =>
+      applyAnnotationOverrides(classShapeModel(), {
+        interfaces: { I: { callSignature: {} } },
+      }),
+    ).toThrow(/call signature/);
   });
 
   test("an empty override object is a no-op returning the same model", () => {

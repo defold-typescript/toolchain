@@ -31,7 +31,6 @@ declare module 'log.log' {
 		 * Editor and desktop builds only, since it requires the project folder
 		 */
 		set_file_nearby(): string | undefined;
-		(name: string | undefined, force_logger_level_in_debug: string | undefined): logger;
 	}
 	/**
 	 * Return the new logger instance
