@@ -146,6 +146,21 @@ function needsArrayParens(tsExpr: string): boolean {
 }
 
 /**
+ * `LuaTable<K, V>` constrains `K` to `AnyNotNil`, so a mapped key that admits nil is
+ * not a compilable key however faithfully it renders the annotation. LuaLS `any` maps
+ * to `unknown` everywhere else, and `nil` to `undefined`; in key position both fail the
+ * constraint and `tsc` rejects the emitted declaration. `AnyNotNil` is the faithful
+ * target — "any non-nil Lua value" is exactly what a table key may be — so drop a nil
+ * arm from a key union and fall back to `AnyNotNil` when nothing survives.
+ */
+function luaTableKey(mapped: string): string {
+  const arms = splitTopLevel(mapped, "|")
+    .map((arm) => arm.trim())
+    .filter((arm) => arm !== "undefined" && arm !== "unknown");
+  return arms.length === 0 ? "AnyNotNil" : arms.join(" | ");
+}
+
+/**
  * The mapped `(params)` list and `ret` type of a `fun(...)` token, shared by the
  * arrow-form `mapFunction` and the colon-return `mapLualsCallSignature`. The only
  * difference between the two consumers is the separator (`=>` vs `:`), so both the
@@ -276,6 +291,7 @@ function mapToken(raw: string, ctx: MapContext, unknowns: string[]): string {
     const args = splitTopLevel(token.slice(6, -1), ",").map((a) =>
       mapToken(a.trim(), ctx, unknowns),
     );
+    if (args.length > 0) args[0] = luaTableKey(args[0] as string);
     return `LuaTable<${args.join(", ")}>`;
   }
 

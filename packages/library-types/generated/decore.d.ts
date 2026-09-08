@@ -1,10 +1,20 @@
 /** @noResolution */
 declare module 'decore.decore' {
 	interface world {
+		event: decore_event_bus;
 		event_bus: decore_event_bus;
 		entities: entity[];
 		systems: system[];
+		systemsUpdate: system[];
+		systemsPreWrap: system[];
+		systemsPostWrap: system[];
+		systemsLateUpdate: system[];
+		systemsFixedUpdate: system[];
+		systemsOnModify: system[];
+		shapeSystems: LuaTable<AnyNotNil, system[]>;
+		shapeGeneration?: number | undefined;
 		speed?: number | undefined;
+		id_to_entity?: LuaTable<number, entity> | undefined;
 		add?(...args: any[]): unknown;
 		addEntity?(...args: any[]): entity;
 		addSystem?(...args: any[]): system;
@@ -25,7 +35,7 @@ declare module 'decore.decore' {
 		systemsToChange: system[];
 		systemsToAdd: system[];
 		systemsToRemove: system[];
-		findEntities: (world: world, component_id: string, component_value: unknown | undefined) => entity[];
+		findEntities: (world: world, component_id: string, component_value: unknown | undefined, out: entity[] | undefined) => entity[];
 		findEntity: (world: world, component_id: string, component_value: unknown | undefined) => entity | undefined;
 	}
 	interface decore {
@@ -49,6 +59,7 @@ declare module 'decore.decore' {
 		child_instancies?: entity | undefined;
 		parent_id?: number | undefined;
 		children_ids?: number[] | undefined;
+		__shape?: unknown | undefined;
 	}
 	/**
 	 * System Decore class to manage child-parent relationships and default components
@@ -60,6 +71,10 @@ declare module 'decore.decore' {
 		onRemoveFromWorld(world: world): void;
 		onAdd(entity: entity): void;
 		onRemove(entity: entity): void;
+		/**
+		 * If entity.parent_id is set, register on parent.children_ids for cascade remove.
+		 */
+		register_with_parent(entity: entity): void;
 		spawn_children(entity: entity): void;
 		remove_children(entity: entity): void;
 		remove_from_parent(entity: entity): void;
@@ -71,9 +86,9 @@ declare module 'decore.decore' {
 		active: boolean;
 		world: world;
 		entities: entity[];
-		nocache: boolean;
 		index: number;
 		modified: boolean;
+		hasOnModify?: boolean | undefined;
 		interval?: number | undefined;
 		bufferedTime?: number | undefined;
 		onAdd?(...args: any[]): void;
@@ -115,30 +130,36 @@ declare module 'decore.decore' {
 		getEntityCount: (world: world) => number;
 		getSystemCount: (world: world) => number;
 		setSystemIndex: (world: world, system: system, index: number) => number;
+		setShapeValidation: (enabled: boolean) => void;
+		bumpShapeCache: () => void;
 	}
 	interface decore_event_bus {
-		events: LuaTable<string, unknown[]>;
-		events_by_entity: LuaTable<string, LuaTable<entity, unknown[]>>;
-		stash: LuaTable<string, unknown[]>;
-		stash_by_entity: LuaTable<string, LuaTable<entity, unknown[]>>;
-		merge_callbacks: LuaTable<string, (new_event: unknown, events: unknown[], entity_map: LuaTable<entity, unknown[]>) => boolean>;
+		events: LuaTable<string | Hash, unknown[]>;
+		event_entities: LuaTable<string | Hash, unknown[]>;
+		events_by_entity: LuaTable<string | Hash, LuaTable<entity | string, unknown[]>>;
+		stash: LuaTable<string | Hash, unknown[]>;
+		stash_entities: LuaTable<string | Hash, unknown[]>;
+		stash_by_entity: LuaTable<string | Hash, LuaTable<entity | string, unknown[]>>;
+		merge_callbacks: LuaTable<string | Hash, (entity: entity | undefined, data: unknown, datas: unknown[], entity_map: LuaTable) => boolean>;
 		/**
-		 * Pushes an event onto the queue, triggering it and processing the queue of callbacks.
+		 * Queue an event. Entity and data are optional.
 		 */
-		trigger(event_name: string | Hash, data: unknown): void;
+		trigger(event_name: string | Hash, entity?: entity | undefined, data?: unknown | undefined): void;
 		/**
-		 * Processes a specified event, returning the list of events and optionally calling callback with the full list.
+		 * Invoke callback once per event: callback(entity, data) or callback(context, entity, data).
 		 */
-		process(event_name: Hash | string, callback?: ((events: unknown[]) => void) | ((context: unknown, events: unknown[]) => void) | undefined, context?: unknown | undefined): unknown[] | undefined;
-		process_all(): void;
+		process(event_name: Hash | string, callback?: ((entity: entity | undefined, data: unknown) => void) | ((context: unknown, entity: entity | undefined, data: unknown) => void) | undefined, context?: unknown | undefined): LuaMultiReturn<[unknown[] | undefined, unknown[] | undefined]>;
 		/**
-		 * You can set the merge policy for an event. This is useful when you want to merge events of the same type.
+		 * Merge policy: return true if the new event was merged into an existing one.
+		 * `entity_map[entity]` (or entity_map["system"]) is the list of payloads for that entity.
 		 */
-		set_merge_policy(event_name: string, merge_callback?: ((new_event: unknown, events: unknown[], entity_map: LuaTable<entity, unknown[]>) => boolean) | undefined): void;
+		set_merge_policy(event_name: string | Hash, merge_callback?: ((entity: entity | undefined, data: unknown, datas: unknown[], entity_map: LuaTable) => boolean) | undefined): void;
 		clear_events(): void;
 		stash_to_events(): void;
-		get_events(): void;
-		get_stash(event_name: Hash | string): LuaTable[] | undefined;
+		get_events(event_name: Hash | string): unknown[] | undefined;
+		get_event_entities(event_name: Hash | string): unknown[] | undefined;
+		get_stash(event_name: Hash | string): unknown[] | undefined;
+		get_stash_entities(event_name: Hash | string): unknown[] | undefined;
 	}
 	/**
 	 * System to manage event bus inside the world
@@ -200,8 +221,11 @@ declare module 'decore.decore' {
 	/**
 	 * Add component to entity.
 	 * If component not exists, it will be created with default values
-	 * If component already exists, it will be merged with the new data
+	 * If component already exists, plain table data is merged into it
+	 * An object (table with a metatable, like event or promise) replaces the component as a whole
 	 * To refresh system filters, call world:addEntity(entity) after this function
+	 * When a new component key is introduced, the entity shape token is derived so the
+	 * system-membership cache stays valid. Prefer this over direct assignment for filter-relevant keys.
 	 */
 	export function apply_component(this: void, entity: entity, component_id: string, component_data?: unknown | undefined): entity;
 	/**
@@ -209,12 +233,16 @@ declare module 'decore.decore' {
 	 * To refresh system filters, call world:addEntity(entity) after this function
 	 */
 	export function apply_components(this: void, entity: entity, components?: LuaTable<string, unknown> | undefined): entity;
+	/**
+	 * Remove a component key from entity and clear its shape cache token.
+	 * To refresh system filters, call world:addEntity(entity) after this function.
+	 */
+	export function remove_component(this: void, entity: entity, component_id: string): entity;
 	export function get_entity_by_id(this: void, world: world, id: number): entity | undefined;
 	/**
 	 * Return all entities with component_id equal to component_value or all entities with component_id if component_value is nil.
-	 * It looks for component_id in entity and entityToChange tables
 	 */
-	export function find_entities(this: void, world: world, component_id: string, component_value?: unknown | undefined): entity[];
+	export function find_entities(this: void, world: world, component_id: string, component_value?: unknown | undefined, out?: entity[] | undefined): entity[];
 	/**
 	 * Log all loaded packs for entities, components and worlds
 	 */
