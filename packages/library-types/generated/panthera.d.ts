@@ -1,18 +1,34 @@
 /** @noResolution */
 declare module 'panthera.panthera' {
+	interface panthera_collect_context {
+		values: panthera_animation_state_value[];
+		pool: panthera_animation_state_value[];
+		event_callback?: ((event_id: string, node: Opaque<"node"> | undefined, data: unknown, end_value: number) => void) | undefined;
+	}
+	interface panthera_collect_buffer {
+		pool: panthera_animation_state_value[];
+		context: panthera_collect_context;
+		depth: number;
+	}
 	interface panthera_animation {
 		adapter: panthera_adapter;
 		speed: number;
 		current_time: number;
 		nodes: LuaTable;
 		childs?: panthera_animation[] | undefined;
+		clips?: panthera_animation[] | undefined;
 		get_node: (node_id: string) => Opaque<"node">;
 		animation_id?: string | undefined;
 		previous_animation_id?: string | undefined;
 		animation_path: string;
 		animation_keys_index: number;
 		events?: LuaTable | undefined;
+		template_states?: LuaTable<string, panthera_animation> | undefined;
+		collect_buffer?: panthera_collect_buffer | undefined;
 		timer_id?: number | undefined;
+		play_animation?: panthera_animation_data_animation | undefined;
+		play_options?: panthera_options | undefined;
+		play_sample_depth?: number | undefined;
 	}
 	interface panthera_options {
 		is_loop?: boolean | undefined;
@@ -74,6 +90,7 @@ declare module 'panthera.panthera' {
 		animations: panthera_animation_data_animation[];
 		metadata: panthera_animation_data_metadata;
 		group_animation_keys: LuaTable<string, LuaTable<string, LuaTable<string, panthera_animation_data_animation_key[]>>>;
+		group_animation_order: LuaTable<string, panthera_animation_data_animation_key[][]>;
 		animations_dict: LuaTable<string, panthera_animation_data_animation>;
 	}
 	interface panthera_animation_project_file {
@@ -97,6 +114,14 @@ declare module 'panthera.panthera' {
 		event_id: string;
 		is_editor_only: boolean;
 	}
+	interface panthera_animation_state_value {
+		node: Opaque<"node">;
+		property_id: string;
+		value: unknown;
+		root_start: number;
+		source: number;
+		order: number;
+	}
 	/**
 	 * Customize the logging mechanism used by Panthera Runtime. You can use Defold Log library or provide a custom logger.
 	 */
@@ -119,6 +144,7 @@ declare module 'panthera.panthera' {
 	export function clone_state(this: void, animation_state: panthera_animation): panthera_animation;
 	/**
 	 * Play an animation with specified ID and options.
+	 * One timer drives the whole tree, each tick finishes the running clips before starting new ones.
 	 */
 	export function play(this: void, animation_state: panthera_animation, animation_id: string, options?: panthera_options | undefined): void;
 	/**
@@ -167,4 +193,12 @@ declare module 'panthera.panthera' {
 	 * Animation will be reloaded only at desktop.
 	 */
 	export function reload_animation(this: void, animation_path?: string | undefined): void;
+	/**
+	 * Speed without `M.SPEED`, the tick applies it once
+	 */
+	export function _local_speed(this: void, options: panthera_options, animation_state: panthera_animation): number;
+	export function _playback_speed(this: void, options: panthera_options, animation_state: panthera_animation): number;
+	export function _find_animation(this: void, animation_state: panthera_animation, animation_id: string): LuaMultiReturn<[panthera_animation_data_animation | undefined, panthera_animation_data | undefined]>;
+	export function _animation_log_data(this: void, animation_state: panthera_animation, animation_data: panthera_animation_data | undefined, animation_id: string): LuaTable;
+	export function _log_missing_animation(this: void, animation_state: panthera_animation, animation_data: panthera_animation_data | undefined, animation_id: string, message: string): void;
 }
