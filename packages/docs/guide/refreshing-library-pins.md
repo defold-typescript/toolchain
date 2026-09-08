@@ -100,6 +100,14 @@ skip it.
   example `meta.commit` is `1.2.5` and `meta.sourceUrl` is
   `https://github.com/Insality/druid/tree/1.2.5`. A bump moves both, and they are
   in a different package from the registry you edited.
+- **The OpenAPI refresh record.** `packages/library-types/openapi-pin-refresh.json` states which
+  operations a bump added and removed, and
+  `packages/library-types/scripts/openapi-pin-refresh.test.ts` checks every name it states against the
+  surface `parseOpenApi` yields for the committed fixtures. Regenerating the
+  OpenAPI fixtures without updating the record reds `ci`, so derive the new
+  entry by diffing the old and new element names rather than from upstream
+  release notes. It deliberately does not check that the record is *complete*,
+  nor its `changedOperations` and `notes`, which are prose.
 - **The generated docs artifacts.** `packages/docs/llms.txt`,
   `packages/docs/llms-full.txt`, and the docs-site search and symbol indexes are
   committed, not built on demand. Regenerate them with
