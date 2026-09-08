@@ -9,10 +9,12 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
-## v0.32.2
+## v0.33.0
 
 ### Improved
 
+- **The bundled library pins are being refreshed against their current upstream releases.**
+  - **[druid](/api/druid)** moves from `1.2.5` to `1.3.1`, adding `get_value`/`set_value` on progress, `is_enabled`/`set_enabled` on swipe, `set_value` on timer, `set_justify`/`is_justify` on rich text, `add_drag_action`/`remove_drag_action` on drag, `refresh` on data list and `get_text_visual` on input. `get_widget` takes a new optional `template` argument, and the internal `_on_mouse_hover` callback on scroll is gone.
 - **[Refreshing library pins](./refreshing-library-pins.md) is a new guide page for moving a bundled library to a newer upstream release.** It gives the regeneration commands per lane — including why the hand-vendored authored lane has no fetch step — and names both what a bump moves with it (the committed fidelity floor, the snapshot digest, the docs-site provenance assertions, the generated docs artifacts) and what it must leave alone, including the consumer test fixtures that pin the very same version string, which is why a repo-wide find-and-replace is unsafe and a green suite is no proof it was done right.
 
 ## v0.32.1
