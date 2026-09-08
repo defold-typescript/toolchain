@@ -164,9 +164,9 @@ describe("loadApiSurface library displayName", () => {
 describe("loadLibraryProvenance — LuaLS-sourced libraries", () => {
   test("attributes druid to Insality/druid at the luals-targets ref, not the ts-defold/library pin", () => {
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("druid");
-    expect(meta.commit).toBe("1.2.5");
+    expect(meta.commit).toBe("1.3.1");
     expect(meta.authorUrl).toBe("https://github.com/Insality/druid");
-    expect(meta.sourceUrl).toBe("https://github.com/Insality/druid/tree/1.2.5");
+    expect(meta.sourceUrl).toBe("https://github.com/Insality/druid/tree/1.3.1");
     expect(meta.importString).toBe('import * as druid from "druid"');
     expect(meta.license).toBe("MIT");
     expect(meta.sourceUrl).not.toContain("ts-defold/library");
@@ -465,7 +465,7 @@ describe("loadApiSurface — druid library page", () => {
       "new(context: LuaTable, style?: LuaTable | undefined): druid_instance",
     );
     expect(byName.get("get_widget")).toBe(
-      "get_widget<T extends druid_widget>(widget_class: T, gui_url: Url | string, params?: unknown | undefined): T",
+      "get_widget<T extends druid_widget>(widget_class: T, gui_url: Url | string, params?: unknown | undefined, template?: string | undefined): T",
     );
     expect(byName.get("druid_button.set_enabled")).toBe(
       "druid_button.set_enabled(state?: boolean | undefined): druid_button",

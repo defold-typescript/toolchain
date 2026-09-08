@@ -299,11 +299,75 @@ You can override this component styles params in Druid styles table or create yo
           ],
         },
         {
+          "doc": "Scale added on touch hover (default style). Default: vmath.vector3(0.08, 0.08, 1)",
+          "isOptional": true,
+          "name": "HOVER_SCALE",
+          "types": [
+            "vector3|nil",
+          ],
+        },
+        {
+          "doc": "Scale added on mouse hover (default style). Default: vmath.vector3(0.04, 0.04, 1)",
+          "isOptional": true,
+          "name": "HOVER_MOUSE_SCALE",
+          "types": [
+            "vector3|nil",
+          ],
+        },
+        {
+          "doc": "Hover scale animation time. Default: 0.05",
+          "isOptional": true,
+          "name": "HOVER_TIME",
+          "types": [
+            "number|nil",
+          ],
+        },
+        {
+          "doc": "Scale punch on click (default style). Default: vmath.vector3(0.12, 0.12, 1)",
+          "isOptional": true,
+          "name": "SCALE_CHANGE",
+          "types": [
+            "vector3|nil",
+          ],
+        },
+        {
+          "doc": "Sound id played on click. Default: "click"",
+          "isOptional": true,
+          "name": "BTN_SOUND",
+          "types": [
+            "string|nil",
+          ],
+        },
+        {
+          "doc": "Sound id played on disabled click. Default: "click"",
+          "isOptional": true,
+          "name": "BTN_SOUND_DISABLED",
+          "types": [
+            "string|nil",
+          ],
+        },
+        {
+          "doc": "Color applied when disabled via style. Default: vmath.vector4(0, 0, 0, 1)",
+          "isOptional": true,
+          "name": "DISABLED_COLOR",
+          "types": [
+            "vector4|nil",
+          ],
+        },
+        {
+          "doc": "Color applied when enabled via style. Default: vmath.vector4(1)",
+          "isOptional": true,
+          "name": "ENABLED_COLOR",
+          "types": [
+            "vector4|nil",
+          ],
+        },
+        {
           "doc": "",
           "isOptional": true,
           "name": "on_init",
           "types": [
-            "fun(self)|nil",
+            "fun(self: druid.button)|nil",
           ],
         },
         {
@@ -311,7 +375,7 @@ You can override this component styles params in Druid styles table or create yo
           "isOptional": true,
           "name": "on_click",
           "types": [
-            "fun(self, node)|nil",
+            "fun(self: druid.button, node: node)|nil",
           ],
         },
         {
@@ -319,7 +383,7 @@ You can override this component styles params in Druid styles table or create yo
           "isOptional": true,
           "name": "on_click_disabled",
           "types": [
-            "fun(self, node)|nil",
+            "fun(self: druid.button, node: node)|nil",
           ],
         },
         {
@@ -327,7 +391,7 @@ You can override this component styles params in Druid styles table or create yo
           "isOptional": true,
           "name": "on_hover",
           "types": [
-            "fun(self, node, hover_state)|nil",
+            "fun(self: druid.button, node: node, hover_state: boolean)|nil",
           ],
         },
         {
@@ -335,7 +399,7 @@ You can override this component styles params in Druid styles table or create yo
           "isOptional": true,
           "name": "on_mouse_hover",
           "types": [
-            "fun(self, node, hover_state)|nil",
+            "fun(self: druid.button, node: node, hover_state: boolean)|nil",
           ],
         },
         {
@@ -343,7 +407,7 @@ You can override this component styles params in Druid styles table or create yo
           "isOptional": true,
           "name": "on_set_enabled",
           "types": [
-            "fun(self, node, enabled_state)|nil",
+            "fun(self: druid.button, node: node, enabled_state: boolean)|nil",
           ],
         },
       ],
@@ -365,7 +429,7 @@ Where node_name is name of node from GUI scene. You can use \`node_name\` as inp
 -   - **params** - Additional params, specified on button creating
 -   - **button_instance** - button itself
 - You can set _params_ on button callback on button creating: \`druid:new_button("node_name", callback, params)\`.
-- Button have several events like on_click, on_repeated_click, on_long_click, on_hold_click, on_double_click
+- Button have several events like on_click, on_repeated_click, on_long_click, on_hold_callback, on_double_click
 - Click event will not trigger if between pressed and released state cursor was outside of node zone
 - Button can have key trigger to use them by key: \`button:set_key_trigger\`
 -"
@@ -373,7 +437,7 @@ Where node_name is name of node from GUI scene. You can use \`node_name\` as inp
       "extends": "druid.component",
       "fields": [
         {
-          "doc": "fun(self, custom_args, button_instance)",
+          "doc": "fun(self: druid.button, custom_args: any, button_instance: druid.button)",
           "isOptional": false,
           "name": "on_click",
           "types": [
@@ -381,7 +445,7 @@ Where node_name is name of node from GUI scene. You can use \`node_name\` as inp
           ],
         },
         {
-          "doc": "fun(self, custom_args, button_instance)",
+          "doc": "fun(self: druid.button, custom_args: any, button_instance: druid.button)",
           "isOptional": false,
           "name": "on_pressed",
           "types": [
@@ -389,7 +453,7 @@ Where node_name is name of node from GUI scene. You can use \`node_name\` as inp
           ],
         },
         {
-          "doc": "fun(self, custom_args, button_instance, click_count) Repeated click callback, while holding the button",
+          "doc": "fun(self: druid.button, custom_args: any, button_instance: druid.button, click_count: number) Repeated click callback, while holding the button",
           "isOptional": false,
           "name": "on_repeated_click",
           "types": [
@@ -397,7 +461,7 @@ Where node_name is name of node from GUI scene. You can use \`node_name\` as inp
           ],
         },
         {
-          "doc": "fun(self, custom_args, button_instance, hold_time) Callback on long button tap",
+          "doc": "fun(self: druid.button, custom_args: any, button_instance: druid.button, hold_time: number) Callback on long button tap",
           "isOptional": false,
           "name": "on_long_click",
           "types": [
@@ -405,7 +469,7 @@ Where node_name is name of node from GUI scene. You can use \`node_name\` as inp
           ],
         },
         {
-          "doc": "fun(self, custom_args, button_instance, click_amount) Different callback, if tap button 2+ in row",
+          "doc": "fun(self: druid.button, custom_args: any, button_instance: druid.button, click_amount: number) Different callback, if tap button 2+ in row",
           "isOptional": false,
           "name": "on_double_click",
           "types": [
@@ -413,7 +477,7 @@ Where node_name is name of node from GUI scene. You can use \`node_name\` as inp
           ],
         },
         {
-          "doc": "fun(self, custom_args, button_instance, press_time) Hold callback, before long_click trigger",
+          "doc": "fun(self: druid.button, custom_args: any, button_instance: druid.button, press_time: number) Hold callback, before long_click trigger",
           "isOptional": false,
           "name": "on_hold_callback",
           "types": [
@@ -421,7 +485,7 @@ Where node_name is name of node from GUI scene. You can use \`node_name\` as inp
           ],
         },
         {
-          "doc": "fun(self, custom_args, button_instance)",
+          "doc": "fun(self: druid.button, custom_args: any, button_instance: druid.button)",
           "isOptional": false,
           "name": "on_click_outside",
           "types": [
@@ -513,7 +577,7 @@ Where node_name is name of node from GUI scene. You can use \`node_name\` as inp
           "isOptional": false,
           "name": "style",
           "types": [
-            "table",
+            "druid.button.style",
           ],
         },
       ],
@@ -540,7 +604,7 @@ Where node_name is name of node from GUI scene. You can use \`node_name\` as inp
               "isVararg": false,
               "name": "callback",
               "types": [
-                "fun()|nil",
+                "fun(self: any, custom_args: any, button_instance: druid.button)|nil",
               ],
             },
             {
@@ -1186,6 +1250,14 @@ If the game is not HTML, html mode will be not enabled"
           ],
           "visibility": "private",
         },
+        {
+          "doc": "Hover for drag cursors. nil without defos",
+          "isOptional": true,
+          "name": "hover",
+          "types": [
+            "druid.hover|nil",
+          ],
+        },
       ],
       "generics": [],
       "methods": [
@@ -1234,12 +1306,12 @@ If the game is not HTML, html mode will be not enabled"
           "visibility": "private",
         },
         {
-          "brief": "Set Drag component enabled state.",
+          "brief": "Enable or disable drag cursor styles. No-op without defos. Hover is created on first enable.",
           "generics": [],
           "name": "set_drag_cursors",
           "params": [
             {
-              "doc": "True if Drag component is enabled",
+              "doc": "True if Drag cursors are enabled",
               "isOptional": false,
               "isVararg": false,
               "name": "is_enabled",
@@ -1384,6 +1456,65 @@ If the game is not HTML, html mode will be not enabled"
           ],
         },
         {
+          "brief": 
+"Add an additional input action that can start a drag.
+By default only touch and multitouch actions are allowed.
+Useful to drag with the middle or right mouse button on desktop.
+The action should provide the pointer position, key actions are ignored."
+,
+          "generics": [],
+          "name": "add_drag_action",
+          "params": [
+            {
+              "doc": "The action id to allow for dragging",
+              "isOptional": false,
+              "isVararg": false,
+              "name": "action_id",
+              "types": [
+                "hash",
+              ],
+            },
+          ],
+          "returns": [
+            {
+              "doc": "Current instance",
+              "isOptional": false,
+              "isVararg": false,
+              "name": "self",
+              "types": [
+                "druid.drag",
+              ],
+            },
+          ],
+        },
+        {
+          "brief": "Remove an additional input action from the allowed drag actions",
+          "generics": [],
+          "name": "remove_drag_action",
+          "params": [
+            {
+              "doc": "The action id to disallow for dragging",
+              "isOptional": false,
+              "isVararg": false,
+              "name": "action_id",
+              "types": [
+                "hash",
+              ],
+            },
+          ],
+          "returns": [
+            {
+              "doc": "Current instance",
+              "isOptional": false,
+              "isVararg": false,
+              "name": "self",
+              "types": [
+                "druid.drag",
+              ],
+            },
+          ],
+        },
+        {
           "brief": "",
           "generics": [],
           "name": "_start_touch",
@@ -1481,15 +1612,6 @@ touches exists to switch to another touch."
           "generics": [],
           "name": "_on_touch_release",
           "params": [
-            {
-              "doc": "Action id from on_input",
-              "isOptional": false,
-              "isVararg": false,
-              "name": "action_id",
-              "types": [
-                "hash",
-              ],
-            },
             {
               "doc": "Action from on_input",
               "isOptional": false,
@@ -2868,13 +2990,6 @@ Create scroll component with druid: \`druid:new_scroll(view_node, content_node)\
         {
           "brief": "",
           "generics": [],
-          "name": "_on_mouse_hover",
-          "params": [],
-          "returns": [],
-        },
-        {
-          "brief": "",
-          "generics": [],
           "name": "_inverse_lerp",
           "params": [],
           "returns": [],
@@ -2974,7 +3089,10 @@ Field y have to <= field w"
       "name": "druid.grid.style",
     },
     {
-      "brief": "The component for manage the nodes position in the grid with various options",
+      "brief": 
+"The component to manage the nodes position in the grid with various options.
+Created via \`druid:new_grid()\` (Static Grid). Prefer Layout for variable-size arrangements."
+,
       "extends": "druid.component",
       "fields": [
         {
@@ -4140,7 +4258,34 @@ Create text node with druid: \`text = druid:new_text(node_name, [initial_value],
         },
         {
           "brief": "Set text to text field",
-          "deprecated": "",
+          "generics": [],
+          "name": "set_text",
+          "params": [
+            {
+              "doc": "Text for node",
+              "isOptional": false,
+              "isVararg": false,
+              "name": "new_text",
+              "types": [
+                "string",
+              ],
+            },
+          ],
+          "returns": [
+            {
+              "doc": "Current text instance",
+              "isOptional": false,
+              "isVararg": false,
+              "name": "self",
+              "types": [
+                "druid.text",
+              ],
+            },
+          ],
+        },
+        {
+          "brief": "Set text to text field",
+          "deprecated": "Use set_text instead",
           "generics": [],
           "name": "set_to",
           "params": [
@@ -4165,13 +4310,6 @@ Create text node with druid: \`text = druid:new_text(node_name, [initial_value],
               ],
             },
           ],
-        },
-        {
-          "brief": "",
-          "generics": [],
-          "name": "set_text",
-          "params": [],
-          "returns": [],
         },
         {
           "brief": "",
@@ -4604,6 +4742,14 @@ Supports palette management, hex conversion, RGB/HSB conversion, and color inter
           "name": "instance_class",
           "types": [
             "table",
+          ],
+        },
+        {
+          "doc": "Input filter for the component subtree, set by \`druid:set_whitelist\` / \`druid:set_blacklist\`",
+          "isOptional": true,
+          "name": "input_filter",
+          "types": [
+            "druid.instance.input_filter|nil",
           ],
         },
       ],
@@ -5804,6 +5950,14 @@ Recursive for all children components."
             "number",
           ],
         },
+        {
+          "doc": "",
+          "isOptional": false,
+          "name": "is_justify",
+          "types": [
+            "boolean",
+          ],
+        },
       ],
       "generics": [],
       "methods": [],
@@ -6161,6 +6315,14 @@ Recursive for all children components."
           "visibility": "private",
         },
         {
+          "doc": "True if words on a line should be spread to the root width",
+          "isOptional": false,
+          "name": "is_justify",
+          "types": [
+            "boolean",
+          ],
+        },
+        {
           "doc": "Anchor position when pivot is set (keeps content in place on resize)",
           "isOptional": true,
           "name": "_anchor",
@@ -6455,6 +6617,36 @@ rich_text:set_text("＜img=texture:image,width,height＞Display image with width
             },
           ],
           "visibility": "private",
+        },
+        {
+          "brief": 
+"Spread words on each line to the root width, same idea as layout:set_justify.
+A line with one word is left as-is. Extra gap is inserted between words."
+,
+          "generics": [],
+          "name": "set_justify",
+          "params": [
+            {
+              "doc": "",
+              "isOptional": false,
+              "isVararg": false,
+              "name": "is_justify",
+              "types": [
+                "boolean",
+              ],
+            },
+          ],
+          "returns": [
+            {
+              "doc": "",
+              "isOptional": false,
+              "isVararg": false,
+              "name": "self",
+              "types": [
+                "druid.rich_text",
+              ],
+            },
+          ],
         },
         {
           "brief": "Set the width of the rich text, not affects the size of current spawned words",
@@ -7249,7 +7441,7 @@ Create container component with druid: \`container = druid:new_container(node, m
 Create data list component with druid: \`data_list = druid:new_data_list(scroll, grid, create_function)\`
 
 ### Notes
-- Data List uses a scroll component for scrolling and a grid component for layout
+- Data List uses a scroll component for scrolling and a Static Grid component for layout
 - Data List only renders visible elements for better performance
 - Data List supports caching of elements for better performance
 - Data List supports adding, removing and updating elements
@@ -7267,7 +7459,7 @@ Create data list component with druid: \`data_list = druid:new_data_list(scroll,
           ],
         },
         {
-          "doc": "The StaticGrid or DynamicGrid instance for Data List component",
+          "doc": "The Static Grid instance for Data List component",
           "isOptional": false,
           "name": "grid",
           "types": [
@@ -7364,6 +7556,15 @@ Create data list component with druid: \`data_list = druid:new_data_list(scroll,
           "name": "_data_visual",
           "types": [
             "table",
+          ],
+          "visibility": "private",
+        },
+        {
+          "doc": "Last known data length used to gate scroll size updates",
+          "isOptional": false,
+          "name": "_data_count",
+          "types": [
+            "number",
           ],
           "visibility": "private",
         },
@@ -7692,6 +7893,27 @@ Create data list component with druid: \`data_list = druid:new_data_list(scroll,
           "returns": [],
         },
         {
+          "brief": 
+"Rebuild the scroll content size and refresh the visible elements.
+The DataList refreshes itself on the data change, so this is only needed when
+something outside of the data changed, like the grid item size at runtime"
+,
+          "generics": [],
+          "name": "refresh",
+          "params": [],
+          "returns": [
+            {
+              "doc": "Current DataList instance",
+              "isOptional": false,
+              "isVararg": false,
+              "name": "self",
+              "types": [
+                "druid.data_list",
+              ],
+            },
+          ],
+        },
+        {
           "brief": "Add element at passed index using cache or create new",
           "generics": [],
           "name": "_add_at",
@@ -7776,10 +7998,74 @@ clamped to the grid coordinate range so get_index_xy produces valid results."
           "visibility": "private",
         },
         {
+          "brief": "Sync scroll_progress from the current scroll percent and fire the event if changed",
+          "generics": [],
+          "name": "_update_scroll_progress",
+          "params": [],
+          "returns": [],
+          "visibility": "private",
+        },
+        {
+          "brief": "Scroll position changed: refresh only visible range (no scroll size rebuild)",
+          "generics": [],
+          "name": "_on_scroll",
+          "params": [],
+          "returns": [],
+          "visibility": "private",
+        },
+        {
+          "brief": "Check that every element in the range is rendered from the current data",
+          "generics": [],
+          "name": "_is_visual_in_sync",
+          "params": [
+            {
+              "doc": "The first index of the visible range",
+              "isOptional": false,
+              "isVararg": false,
+              "name": "start_index",
+              "types": [
+                "number",
+              ],
+            },
+            {
+              "doc": "The last index of the visible range",
+              "isOptional": false,
+              "isVararg": false,
+              "name": "end_index",
+              "types": [
+                "number",
+              ],
+            },
+          ],
+          "returns": [
+            {
+              "doc": "True if the rendered elements already match the data",
+              "isOptional": false,
+              "isVararg": false,
+              "name": "is_in_sync",
+              "types": [
+                "boolean",
+              ],
+            },
+          ],
+          "visibility": "private",
+        },
+        {
           "brief": "Refresh all elements in DataList",
           "generics": [],
           "name": "_refresh",
-          "params": [],
+          "params": [
+            {
+              "doc": "If true, rebuild scroll content size from data length",
+              "isNilable": true,
+              "isOptional": false,
+              "isVararg": false,
+              "name": "update_scroll_size",
+              "types": [
+                "boolean|nil",
+              ],
+            },
+          ],
           "returns": [],
           "visibility": "private",
         },
@@ -8227,7 +8513,7 @@ Create input component with druid: \`input = druid:new_input(button_node_name, t
           ],
         },
         {
-          "doc": "fun(self: druid.input) The event triggered when the input field is changed",
+          "doc": "fun(self: druid.input, text: string) The event triggered when the input field text changes",
           "isOptional": false,
           "name": "on_input_text",
           "types": [
@@ -8235,7 +8521,7 @@ Create input component with druid: \`input = druid:new_input(button_node_name, t
           ],
         },
         {
-          "doc": "fun(self: druid.input) The event triggered when the input field is empty",
+          "doc": "fun(self: druid.input, text: string) The event triggered when the input field becomes empty",
           "isOptional": false,
           "name": "on_input_empty",
           "types": [
@@ -8243,7 +8529,7 @@ Create input component with druid: \`input = druid:new_input(button_node_name, t
           ],
         },
         {
-          "doc": "fun(self: druid.input) The event triggered when the input field is full",
+          "doc": "fun(self: druid.input, text: string) The event triggered when the input field reaches max length",
           "isOptional": false,
           "name": "on_input_full",
           "types": [
@@ -8251,7 +8537,7 @@ Create input component with druid: \`input = druid:new_input(button_node_name, t
           ],
         },
         {
-          "doc": "fun(self: druid.input) The event triggered when the input field is wrong",
+          "doc": "fun(self: druid.input, character: string) The event triggered when a not allowed character is typed",
           "isOptional": false,
           "name": "on_input_wrong",
           "types": [
@@ -8442,6 +8728,26 @@ Create input component with druid: \`input = druid:new_input(button_node_name, t
           "name": "unselect",
           "params": [],
           "returns": [],
+        },
+        {
+          "brief": 
+"Return the text currently displayed on the text node.
+Can differ from \`get_text\` if the text adjust mode trims the value."
+,
+          "generics": [],
+          "name": "get_text_visual",
+          "params": [],
+          "returns": [
+            {
+              "doc": "The visible input field text",
+              "isOptional": false,
+              "isVararg": false,
+              "name": "text",
+              "types": [
+                "string",
+              ],
+            },
+          ],
         },
         {
           "brief": "Return current input field text",
@@ -8744,7 +9050,7 @@ Create lang text component with druid: \`text = druid:new_lang_text(node_name, l
         {
           "brief": "Setup raw text to lang_text component. This will clear any locale settings.",
           "generics": [],
-          "name": "set_to",
+          "name": "set_text",
           "params": [
             {
               "doc": "Text for text node",
@@ -8770,8 +9076,9 @@ Create lang text component with druid: \`text = druid:new_lang_text(node_name, l
         },
         {
           "brief": "Setup raw text to lang_text component. This will clear any locale settings.",
+          "deprecated": "Use set_text instead",
           "generics": [],
-          "name": "set_text",
+          "name": "set_to",
           "params": [
             {
               "doc": "Text for text node",
@@ -9857,6 +10164,34 @@ Create progress bar component with druid: \`progress = druid:new_progress(node_n
         {
           "brief": "Instant fill progress bar to value",
           "generics": [],
+          "name": "set_value",
+          "params": [
+            {
+              "doc": "Progress bar value, from 0 to 1",
+              "isOptional": false,
+              "isVararg": false,
+              "name": "to",
+              "types": [
+                "number",
+              ],
+            },
+          ],
+          "returns": [
+            {
+              "doc": "Current progress instance",
+              "isOptional": false,
+              "isVararg": false,
+              "name": "self",
+              "types": [
+                "druid.progress",
+              ],
+            },
+          ],
+        },
+        {
+          "brief": "Instant fill progress bar to value",
+          "deprecated": "Use set_value instead",
+          "generics": [],
           "name": "set_to",
           "params": [
             {
@@ -9885,6 +10220,23 @@ Create progress bar component with druid: \`progress = druid:new_progress(node_n
           "brief": "Return the current value of the progress bar",
           "generics": [],
           "name": "get",
+          "params": [],
+          "returns": [
+            {
+              "doc": "The current value of the progress bar",
+              "isOptional": false,
+              "isVararg": false,
+              "name": "value",
+              "types": [
+                "number",
+              ],
+            },
+          ],
+        },
+        {
+          "brief": "Return the current value of the progress bar",
+          "generics": [],
+          "name": "get_value",
           "params": [],
           "returns": [
             {
@@ -10708,6 +11060,50 @@ This function require the Defold version 1.3.0+"
           "returns": [],
         },
         {
+          "brief": "Set swipe enabled state",
+          "generics": [],
+          "name": "set_enabled",
+          "params": [
+            {
+              "doc": "",
+              "isOptional": false,
+              "isVararg": false,
+              "name": "is_enabled",
+              "types": [
+                "boolean",
+              ],
+            },
+          ],
+          "returns": [
+            {
+              "doc": "",
+              "isOptional": false,
+              "isVararg": false,
+              "name": "self",
+              "types": [
+                "druid.swipe",
+              ],
+            },
+          ],
+        },
+        {
+          "brief": "Return current swipe enabled state",
+          "generics": [],
+          "name": "is_enabled",
+          "params": [],
+          "returns": [
+            {
+              "doc": "",
+              "isOptional": false,
+              "isVararg": false,
+              "name": "",
+              "types": [
+                "boolean",
+              ],
+            },
+          ],
+        },
+        {
           "brief": "Start swipe event",
           "generics": [],
           "name": "_start_swipe",
@@ -10906,6 +11302,34 @@ Create timer component with druid: \`timer = druid:new_timer(text_node, from_sec
         },
         {
           "brief": "Set the timer to a specific value",
+          "generics": [],
+          "name": "set_value",
+          "params": [
+            {
+              "doc": "Value in seconds",
+              "isOptional": false,
+              "isVararg": false,
+              "name": "value",
+              "types": [
+                "number",
+              ],
+            },
+          ],
+          "returns": [
+            {
+              "doc": "Current timer instance",
+              "isOptional": false,
+              "isVararg": false,
+              "name": "self",
+              "types": [
+                "druid.timer",
+              ],
+            },
+          ],
+        },
+        {
+          "brief": "Set the timer to a specific value",
+          "deprecated": "Use set_value instead",
           "generics": [],
           "name": "set_to",
           "params": [
@@ -11583,6 +12007,33 @@ You can use these functions in your projects as well."
       "name": "touch",
     },
     {
+      "brief": 
+"The input filter, applied to the Druid instance components or to the component subtree.
+Membership is the listed component plus any descendant, including ones created later."
+,
+      "fields": [
+        {
+          "doc": "Allow-list: nil means all, empty table means none",
+          "isOptional": true,
+          "name": "whitelist",
+          "types": [
+            "table<druid.component, boolean>|nil",
+          ],
+        },
+        {
+          "doc": "Deny-list: nil and empty table both deny nobody",
+          "isOptional": true,
+          "name": "blacklist",
+          "types": [
+            "table<druid.component, boolean>|nil",
+          ],
+        },
+      ],
+      "generics": [],
+      "methods": [],
+      "name": "druid.instance.input_filter",
+    },
+    {
       "brief": "The Druid Factory used to create components",
       "fields": [
         {
@@ -11658,20 +12109,29 @@ You can use these functions in your projects as well."
           "visibility": "package",
         },
         {
-          "doc": "Components that should not receive input",
+          "doc": "Input filter for all the instance components",
           "isOptional": true,
-          "name": "_input_blacklist",
+          "name": "_input_filter",
           "types": [
-            "druid.component[]|nil",
+            "druid.instance.input_filter|nil",
           ],
           "visibility": "package",
         },
         {
-          "doc": "Components that should receive input",
-          "isOptional": true,
-          "name": "_input_whitelist",
+          "doc": "The root Druid instance, the inner ones are the proxies over it",
+          "isOptional": false,
+          "name": "_root",
           "types": [
-            "druid.component[]|nil",
+            "druid.instance",
+          ],
+          "visibility": "package",
+        },
+        {
+          "doc": "True if any filter was set on the instance or on its components",
+          "isOptional": false,
+          "name": "_has_input_filters",
+          "types": [
+            "boolean",
           ],
           "visibility": "package",
         },
@@ -11679,7 +12139,7 @@ You can use these functions in your projects as well."
       "generics": [],
       "methods": [
         {
-          "brief": "Check whitelists and blacklists for input components",
+          "brief": "Check the input filters for the component: the instance one and the ones from its parents",
           "generics": [],
           "name": "_can_use_input_component",
           "params": [
@@ -11827,6 +12287,37 @@ Component \`on_remove\` function will be invoked, if exist."
         },
         {
           "brief": 
+"Set a style of Druid instance. Pass nil to reset to the default style.
+The style is applied to the components created after this call, already created components keep their style."
+,
+          "generics": [],
+          "name": "set_style",
+          "params": [
+            {
+              "doc": "The Druid style table",
+              "isNilable": true,
+              "isOptional": false,
+              "isVararg": false,
+              "name": "style",
+              "types": [
+                "table|nil",
+              ],
+            },
+          ],
+          "returns": [
+            {
+              "doc": "The Druid instance itself for chaining",
+              "isOptional": false,
+              "isVararg": false,
+              "name": "self",
+              "types": [
+                "druid.instance",
+              ],
+            },
+          ],
+        },
+        {
+          "brief": 
 "Druid late update function called after initialization and before the regular update step.
 This function is used to check the GUI state and perform actions after all components and nodes have been created.
 An example use case is performing an auto stencil check in the GUI hierarchy for input components."
@@ -11956,19 +12447,26 @@ This one called by global druid.on_language_change, but can be called manually t
         {
           "brief": 
 "Set whitelist components for input processing.
-If whitelist is not empty and component not contains in this list,
-component will be not processed on the input step"
+If whitelist is set, only the listed components and their descendants receive input.
+An empty list allows none. Pass nil to clear the whitelist (all components receive input).
+Descendants created later still match, no need to call this again.
+
+The filter is scoped to the caller: on the \`druid\` instance it affects all components,
+on the \`self.druid\` inside a component it affects this component subtree only.
+The filter owner is not affected by its own filter, so a widget can restrict its children
+and keep its own \`on_input\` working."
 ,
           "generics": [],
           "name": "set_whitelist",
           "params": [
             {
-              "doc": "The array of component to whitelist",
+              "doc": "The array of component to whitelist, nil to clear it",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "whitelist_components",
               "types": [
-                "table|druid.component[]",
+                "table|druid.component[]|nil",
               ],
             },
           ],
@@ -11987,19 +12485,26 @@ component will be not processed on the input step"
         {
           "brief": 
 "Set blacklist components for input processing.
-If blacklist is not empty and component is contained in this list,
-component will be not processed on the input step DruidInstance"
+If blacklist is set, the listed components and their descendants are skipped
+on the input step. An empty list and nil both deny nobody.
+Descendants created later still match.
+
+The filter is scoped to the caller: on the \`druid\` instance it affects all components,
+on the \`self.druid\` inside a component it affects this component subtree only.
+The filter owner is not affected by its own filter, to filter a widget itself
+set the filter from the outside: the gui script or the parent widget."
 ,
           "generics": [],
           "name": "set_blacklist",
           "params": [
             {
-              "doc": "The array of component to blacklist",
+              "doc": "The array of component to blacklist, nil to clear it",
+              "isNilable": true,
               "isOptional": false,
               "isVararg": false,
               "name": "blacklist_components",
               "types": [
-                "table|druid.component[]",
+                "table|druid.component[]|nil",
               ],
             },
           ],
@@ -12969,7 +13474,7 @@ As a template please check rich_input.gui layout."
       "name": "_apply_cursor_stack",
       "params": [],
       "returns": [],
-      "visibility": "local",
+      "visibility": "private",
     },
     {
       "brief": 
@@ -14192,6 +14697,40 @@ It will notify all Druid instances to update the lang text components."
     },
     {
       "brief": 
+"Get the Druid instance bound to the GUI by \`druid.register_druid_as_widget()\`.
+Unlike \`druid.get_widget()\`, the instance is returned as is, without cross-context events wrapping,
+so from a game object script you should only use its plain functions, not the GUI related ones.
+local instance = druid.get_druid("gui_widget")
+instance:set_style(my_style) -- Should be set before creating widgets"
+,
+      "generics": [],
+      "name": "get_druid",
+      "params": [
+        {
+          "doc": "GUI url or string of component name near current script",
+          "isNilable": true,
+          "isOptional": false,
+          "isVararg": false,
+          "name": "gui_url",
+          "types": [
+            "url|string|nil",
+          ],
+        },
+      ],
+      "returns": [
+        {
+          "doc": "The registered Druid instance or nil if not registered",
+          "isOptional": false,
+          "isVararg": false,
+          "name": "instance",
+          "types": [
+            "druid.instance|nil",
+          ],
+        },
+      ],
+    },
+    {
+      "brief": 
 "Create a widget from the bound Druid GUI instance.
 The widget will be created and all widget functions can be called from Game Object contexts.
 This allows using only \`druid_widget.gui_script\` for GUI files and call this widget functions from Game Object script file.
@@ -14233,6 +14772,16 @@ msg.url(nil, object_url, "gui_widget") -- other game object"
           "name": "params",
           "types": [
             "any|nil",
+          ],
+        },
+        {
+          "doc": "The GUI template name used by the widget nodes",
+          "isNilable": true,
+          "isOptional": false,
+          "isVararg": false,
+          "name": "template",
+          "types": [
+            "string|nil",
           ],
         },
       ],

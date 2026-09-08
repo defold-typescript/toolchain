@@ -28,7 +28,63 @@
       ],
       "staged": false,
       "notes": "Nineteen minors, purely additive: 200 members -> 210, nothing withdrawn. The six changed operations all gained parameters — `metadata` on add_friends and create_api_friend, `joinRequired` on create_api_tournament, `party_update` on create_envelope_message, all optional; create_party_create_message and create_party_message gained `label`/`hidden` as required. The go/no-go verdict is unmoved: decision stays no-go and the missing-member set (12 API* enum constants plus six client-lifecycle names) is byte-identical to the v3.21.1 measurement, so the additions expand the emitted surface without covering anything the authored fork owns. Fidelity coverage stays 1 (830 type tokens, 0 unknown), so fidelity-floor.json is unchanged. The fragile `proto` source path into upstream's Go vendor/ tree survived the bump and was re-verified at v3.40.0 before fetching. staged=false: the fixtures are snapshots rather than a replayable history and nothing is committed between checkpoints, so 19 intermediate fetches would multiply the work without adding an isolation point. changedMembers and these notes are unchecked prose — the committed guard reads addedMembers and removedMembers only."
+    },
+    {
+      "lane": "luals",
+      "moduleId": "druid.druid",
+      "fromRef": "1.2.5",
+      "toRef": "1.3.1",
+      "addedMembers": [
+        "druid.button.style.BTN_SOUND",
+        "druid.button.style.BTN_SOUND_DISABLED",
+        "druid.button.style.DISABLED_COLOR",
+        "druid.button.style.ENABLED_COLOR",
+        "druid.button.style.HOVER_MOUSE_SCALE",
+        "druid.button.style.HOVER_SCALE",
+        "druid.button.style.HOVER_TIME",
+        "druid.button.style.SCALE_CHANGE",
+        "druid.component.meta.input_filter",
+        "druid.data_list._data_count",
+        "druid.data_list._is_visual_in_sync",
+        "druid.data_list._on_scroll",
+        "druid.data_list._update_scroll_progress",
+        "druid.data_list.refresh",
+        "druid.drag.add_drag_action",
+        "druid.drag.hover",
+        "druid.drag.remove_drag_action",
+        "druid.input.get_text_visual",
+        "druid.instance._has_input_filters",
+        "druid.instance._input_filter",
+        "druid.instance._root",
+        "druid.instance.input_filter.blacklist",
+        "druid.instance.input_filter.whitelist",
+        "druid.instance.set_style",
+        "druid.progress.get_value",
+        "druid.progress.set_value",
+        "druid.rich_text.is_justify",
+        "druid.rich_text.set_justify",
+        "druid.rich_text.settings.is_justify",
+        "druid.swipe.is_enabled",
+        "druid.swipe.set_enabled",
+        "druid.timer.set_value",
+        "get_druid"
+      ],
+      "removedMembers": [
+        "druid.instance._input_blacklist",
+        "druid.instance._input_whitelist",
+        "druid.scroll._on_mouse_hover"
+      ],
+      "changedMembers": ["get_widget"],
+      "staged": false,
+      "notes": "Two minors plus a patch (1.2.5 -> 1.3.1), net additive: 809 members -> 839, three withdrawn. The removals are one rework, not a deprecation: druid.instance._input_blacklist and _input_whitelist collapse into the single _input_filter field plus the new input_filter.blacklist/whitelist pair, and druid.scroll._on_mouse_hover went away with it. New public API arrives on progress (get_value/set_value), swipe (is_enabled/set_enabled), timer (set_value), rich_text (set_justify/is_justify), drag (add_drag_action/remove_drag_action/hover), data_list (refresh), input (get_text_visual) and the module function get_druid; the druid.button.style constants are now surfaced as fields. get_widget is the one changed signature - it gained a trailing optional template parameter, which moved the docs-site emitter-equivalence assertion with it. Fidelity coverage stays 1 (0 unknown), so fidelity-floor.json is unchanged, and every annotationOverrides key still resolved against the new fixtures (applyAnnotationOverrides throws on an absent key, so the emit pass proves it). staged=false: the fixtures are snapshots rather than a replayable history, so intermediate fetches would add work without an isolation point. Pinned at tag 1.3.1 rather than the 1.3.0 release because upstream:library-check ranks tags by commit date and 1.3.1 is the newest. What this guard can witness is directional: a removedMembers name still emitted, or an addedMembers name not emitted at all. A member present at BOTH refs but listed under addedMembers would pass, because the 1.2.5 fixture bytes do not survive this commit. changedMembers and these notes are unchecked prose - the committed guard reads addedMembers and removedMembers only."
     }
   ],
-  "deliberatelyUnmoved": []
+  "deliberatelyUnmoved": [
+    {
+      "lane": "authored",
+      "moduleId": "rendy.rendy",
+      "ref": "b72ee2419f2cd5e1a2281e1eed5cc4081b5cbcc3",
+      "reason": "Examined during this refresh and deliberately left alone. The upstream default branch is one commit ahead of the pinned SHA and that commit touches README.md only, which no target consumes - so the pin is already correct and moving it would be churn on the most expensive lane. Re-verified at refresh time via the compare API."
+    }
+  ]
 }

@@ -754,7 +754,7 @@ test("the committed druid golden marks druid_text's set_to deprecated, leaving i
   const text = elementsOf(golden).find((e) => e.name === "druid_text");
   const functions = text?.functions as Record<string, unknown>[];
 
-  expect(functions.find((f) => f.name === "set_to")?.deprecated).toBe("");
+  expect(functions.find((f) => f.name === "set_to")?.deprecated).toBe("Use set_text instead");
   const setText = functions.find((f) => f.name === "set_text");
   expect(setText && Object.keys(setText)).not.toContain("deprecated");
 });
