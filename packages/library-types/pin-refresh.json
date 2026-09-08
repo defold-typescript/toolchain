@@ -77,6 +77,51 @@
       "changedMembers": ["get_widget"],
       "staged": false,
       "notes": "Two minors plus a patch (1.2.5 -> 1.3.1), net additive: 809 members -> 839, three withdrawn. The removals are one rework, not a deprecation: druid.instance._input_blacklist and _input_whitelist collapse into the single _input_filter field plus the new input_filter.blacklist/whitelist pair, and druid.scroll._on_mouse_hover went away with it. New public API arrives on progress (get_value/set_value), swipe (is_enabled/set_enabled), timer (set_value), rich_text (set_justify/is_justify), drag (add_drag_action/remove_drag_action/hover), data_list (refresh), input (get_text_visual) and the module function get_druid; the druid.button.style constants are now surfaced as fields. get_widget is the one changed signature - it gained a trailing optional template parameter, which moved the docs-site emitter-equivalence assertion with it. Fidelity coverage stays 1 (0 unknown), so fidelity-floor.json is unchanged, and every annotationOverrides key still resolved against the new fixtures (applyAnnotationOverrides throws on an absent key, so the emit pass proves it). staged=false: the fixtures are snapshots rather than a replayable history, so intermediate fetches would add work without an isolation point. Pinned at tag 1.3.1 rather than the 1.3.0 release because upstream:library-check ranks tags by commit date and 1.3.1 is the newest. What this guard can witness is directional: a removedMembers name still emitted, or an addedMembers name not emitted at all. A member present at BOTH refs but listed under addedMembers would pass, because the 1.2.5 fixture bytes do not survive this commit. changedMembers and these notes are unchecked prose - the committed guard reads addedMembers and removedMembers only."
+    },
+    {
+      "lane": "luals",
+      "moduleId": "decore.decore",
+      "fromRef": "4",
+      "toRef": "6",
+      "addedMembers": [
+        "decore.event_bus.event_entities",
+        "decore.event_bus.get_event_entities",
+        "decore.event_bus.get_stash_entities",
+        "decore.event_bus.stash_entities",
+        "entity.__shape",
+        "remove_component",
+        "system.decore.register_with_parent",
+        "system.hasOnModify",
+        "tiny_ecs.bumpShapeCache",
+        "tiny_ecs.setShapeValidation",
+        "world.event",
+        "world.id_to_entity",
+        "world.shapeGeneration",
+        "world.shapeSystems",
+        "world.systemsFixedUpdate",
+        "world.systemsLateUpdate",
+        "world.systemsOnModify",
+        "world.systemsPostWrap",
+        "world.systemsPreWrap",
+        "world.systemsUpdate"
+      ],
+      "removedMembers": ["decore.event_bus.process_all", "system.nocache"],
+      "changedMembers": [
+        "decore.event_bus.events",
+        "decore.event_bus.events_by_entity",
+        "decore.event_bus.get_events",
+        "decore.event_bus.get_stash",
+        "decore.event_bus.merge_callbacks",
+        "decore.event_bus.process",
+        "decore.event_bus.set_merge_policy",
+        "decore.event_bus.stash",
+        "decore.event_bus.stash_by_entity",
+        "decore.event_bus.trigger",
+        "find_entities",
+        "tiny_ecs.findEntities"
+      ],
+      "staged": false,
+      "notes": "Two majors (4 -> 6), the largest jump in this backlog: 135 members -> 153, two withdrawn, and both withdrawals were emitted in the shipped .d.ts at 4, so both break a consumer call site. `decore.event_bus.process_all` is gone because upstream folded it into `process`, which now takes an entity-aware callback and returns LuaMultiReturn<[events, entities]> instead of one list; `system.nocache` is gone with the tiny-ecs rework that replaced the no-cache opt-out with a shape cache (tiny_ecs.setShapeValidation, tiny_ecs.bumpShapeCache, world.shapeGeneration, world.shapeSystems, entity.__shape, system.hasOnModify are its new surface). The event bus gained entity-parallel storage (event_entities, stash_entities, get_event_entities, get_stash_entities) and widened its keys from `string` to `string | Hash`; `get_events` also changed from a nullary `(): void` to `(event_name): unknown[] | undefined`, so the old declaration was wrong about its own arity. Elsewhere: a new `remove_component` module function, a trailing optional `out` buffer on find_entities and tiny_ecs.findEntities, per-phase system lists on `world` (systemsUpdate, systemsPreWrap, systemsPostWrap, systemsLateUpdate, systemsFixedUpdate, systemsOnModify) plus world.event and world.id_to_entity, and system.decore.register_with_parent. Fidelity coverage stays 1 (0 unknown, 204 type tokens), so fidelity-floor.json is unchanged. `--fetch` has no per-target filter and re-downloaded all 13 LuaLS targets; only fixtures/luals/decore/ moved, which confirms the other twelve tag pins are byte-stable. staged=false: the fixtures are snapshots rather than a replayable history, so an intermediate fetch at 5 would add work without an isolation point. What this guard can witness is directional: a removedMembers name still emitted, or an addedMembers name not emitted at all. changedMembers and these notes are unchecked prose - the committed guard reads addedMembers and removedMembers only."
     }
   ],
   "deliberatelyUnmoved": [
