@@ -11,8 +11,9 @@ declare module 'nakama.nakama' {
      *
      * @param ids - The account id of a user.
      * @param usernames - The account username of a user.
+     * @param metadata - Optional metadata to add to friends.
      */
-    function add_friends(ids?: Record<string | number, unknown>, usernames?: Record<string | number, unknown>): Record<string | number, unknown>;
+    function add_friends(ids?: Record<string | number, unknown>, usernames?: Record<string | number, unknown>, metadata?: string): Record<string | number, unknown>;
     /**
      * Add users to a group.
      *
@@ -177,11 +178,12 @@ declare module 'nakama.nakama' {
     /**
      * A friend of a user.
      */
-    function create_api_friend(user?: Record<string | number, unknown>, state?: number, updateTime?: string): Record<string | number, unknown>;
+    function create_api_friend(user?: Record<string | number, unknown>, state?: number, updateTime?: string, metadata?: string): Record<string | number, unknown>;
     /**
      * A collection of zero or more friends of the user.
      */
     function create_api_friend_list(friends?: Record<string | number, unknown>, cursor?: string): Record<string | number, unknown>;
+    function create_api_friends_of_friends_list(friendsOfFriends?: Record<string | number, unknown>, cursor?: string): Record<string | number, unknown>;
     /**
      * A group in the server.
      */
@@ -218,6 +220,8 @@ declare module 'nakama.nakama' {
      * A list of realtime matches.
      */
     function create_api_match_list(matches?: Record<string | number, unknown>): Record<string | number, unknown>;
+    function create_api_matchmaker_completion_stats(createTime?: string, completeTime?: string): Record<string | number, unknown>;
+    function create_api_matchmaker_stats(ticketCount?: number, oldestTicketCreateTime?: string, completions?: Record<string | number, unknown>): Record<string | number, unknown>;
     /**
      * A notification in the server.
      */
@@ -226,6 +230,14 @@ declare module 'nakama.nakama' {
      * A collection of zero or more notifications.
      */
     function create_api_notification_list(notifications?: Record<string | number, unknown>, cacheableCursor?: string): Record<string | number, unknown>;
+    /**
+     * Incoming information about a party.
+     */
+    function create_api_party(partyId?: string, open?: boolean, hidden?: boolean, maxSize?: number, label?: string): Record<string | number, unknown>;
+    /**
+     * A list of realtime matches.
+     */
+    function create_api_party_list(parties?: Record<string | number, unknown>, cursor?: string): Record<string | number, unknown>;
     /**
      * Storage objects to get.
      */
@@ -277,7 +289,7 @@ declare module 'nakama.nakama' {
     /**
      * A tournament on the server.
      */
-    function create_api_tournament(id?: string, title?: string, description?: string, category?: number, sortOrder?: number, size?: number, maxSize?: number, maxNumScore?: number, canEnter?: boolean, endActive?: number, nextReset?: number, metadata?: string, createTime?: string, startTime?: string, endTime?: string, duration?: number, startActive?: number, prevReset?: number, operator?: Record<string | number, unknown>, authoritative?: boolean): Record<string | number, unknown>;
+    function create_api_tournament(id?: string, title?: string, description?: string, category?: number, sortOrder?: number, size?: number, maxSize?: number, maxNumScore?: number, canEnter?: boolean, endActive?: number, nextReset?: number, metadata?: string, createTime?: string, startTime?: string, endTime?: string, duration?: number, startActive?: number, prevReset?: number, operator?: Record<string | number, unknown>, authoritative?: boolean, joinRequired?: boolean): Record<string | number, unknown>;
     /**
      * A list of tournaments.
      */
@@ -337,8 +349,12 @@ declare module 'nakama.nakama' {
     function create_channel_message_send_message(channel_id: string, content: string): void;
     function create_channel_message_update_message(channel_id: string, message_id: string, content: string): void;
     function create_channel_presence_event_message(channel_id: string, joins: Record<string | number, unknown>, leaves: Record<string | number, unknown>, room_name: string, group_id: string, user_id_one: string, user_id_two: string): void;
-    function create_envelope_message(cid: string, channel?: Record<string | number, unknown>, channel_join?: Record<string | number, unknown>, channel_leave?: Record<string | number, unknown>, channel_message?: Record<string | number, unknown>, channel_message_ack?: Record<string | number, unknown>, channel_message_send?: Record<string | number, unknown>, channel_message_update?: Record<string | number, unknown>, channel_message_remove?: Record<string | number, unknown>, channel_presence_event?: Record<string | number, unknown>, error?: Record<string | number, unknown>, match?: Record<string | number, unknown>, match_create?: Record<string | number, unknown>, match_data?: Record<string | number, unknown>, match_data_send?: Record<string | number, unknown>, match_join?: Record<string | number, unknown>, match_leave?: Record<string | number, unknown>, match_presence_event?: Record<string | number, unknown>, matchmaker_add?: Record<string | number, unknown>, matchmaker_matched?: Record<string | number, unknown>, matchmaker_remove?: Record<string | number, unknown>, matchmaker_ticket?: Record<string | number, unknown>, notifications?: Record<string | number, unknown>, rpc?: Record<string | number, unknown>, status?: Record<string | number, unknown>, status_follow?: Record<string | number, unknown>, status_presence_event?: Record<string | number, unknown>, status_unfollow?: Record<string | number, unknown>, status_update?: Record<string | number, unknown>, stream_data?: Record<string | number, unknown>, stream_presence_event?: Record<string | number, unknown>, ping?: Record<string | number, unknown>, pong?: Record<string | number, unknown>, party?: Record<string | number, unknown>, party_create?: Record<string | number, unknown>, party_join?: Record<string | number, unknown>, party_leave?: Record<string | number, unknown>, party_promote?: Record<string | number, unknown>, party_leader?: Record<string | number, unknown>, party_accept?: Record<string | number, unknown>, party_remove?: Record<string | number, unknown>, party_close?: Record<string | number, unknown>, party_join_request_list?: Record<string | number, unknown>, party_join_request?: Record<string | number, unknown>, party_matchmaker_add?: Record<string | number, unknown>, party_matchmaker_remove?: Record<string | number, unknown>, party_matchmaker_ticket?: Record<string | number, unknown>, party_data?: Record<string | number, unknown>, party_data_send?: Record<string | number, unknown>, party_presence_event?: Record<string | number, unknown>): void;
+    function create_envelope_message(cid: string, channel?: Record<string | number, unknown>, channel_join?: Record<string | number, unknown>, channel_leave?: Record<string | number, unknown>, channel_message?: Record<string | number, unknown>, channel_message_ack?: Record<string | number, unknown>, channel_message_send?: Record<string | number, unknown>, channel_message_update?: Record<string | number, unknown>, channel_message_remove?: Record<string | number, unknown>, channel_presence_event?: Record<string | number, unknown>, error?: Record<string | number, unknown>, match?: Record<string | number, unknown>, match_create?: Record<string | number, unknown>, match_data?: Record<string | number, unknown>, match_data_send?: Record<string | number, unknown>, match_join?: Record<string | number, unknown>, match_leave?: Record<string | number, unknown>, match_presence_event?: Record<string | number, unknown>, matchmaker_add?: Record<string | number, unknown>, matchmaker_matched?: Record<string | number, unknown>, matchmaker_remove?: Record<string | number, unknown>, matchmaker_ticket?: Record<string | number, unknown>, notifications?: Record<string | number, unknown>, rpc?: Record<string | number, unknown>, status?: Record<string | number, unknown>, status_follow?: Record<string | number, unknown>, status_presence_event?: Record<string | number, unknown>, status_unfollow?: Record<string | number, unknown>, status_update?: Record<string | number, unknown>, stream_data?: Record<string | number, unknown>, stream_presence_event?: Record<string | number, unknown>, ping?: Record<string | number, unknown>, pong?: Record<string | number, unknown>, party?: Record<string | number, unknown>, party_create?: Record<string | number, unknown>, party_join?: Record<string | number, unknown>, party_leave?: Record<string | number, unknown>, party_promote?: Record<string | number, unknown>, party_leader?: Record<string | number, unknown>, party_accept?: Record<string | number, unknown>, party_remove?: Record<string | number, unknown>, party_close?: Record<string | number, unknown>, party_join_request_list?: Record<string | number, unknown>, party_join_request?: Record<string | number, unknown>, party_matchmaker_add?: Record<string | number, unknown>, party_matchmaker_remove?: Record<string | number, unknown>, party_matchmaker_ticket?: Record<string | number, unknown>, party_data?: Record<string | number, unknown>, party_data_send?: Record<string | number, unknown>, party_presence_event?: Record<string | number, unknown>, party_update?: Record<string | number, unknown>): void;
     function create_error_message(code: number, message: string, context: Record<string | number, unknown>): void;
+    /**
+     * A friend of a friend.
+     */
+    function create_friends_of_friends_list_friend_of_friend(referrer?: string, user?: Record<string | number, unknown>): Record<string | number, unknown>;
     /**
      * Create a new group with the current user as the owner.
      *
@@ -363,7 +379,7 @@ declare module 'nakama.nakama' {
     function create_notifications_message(notifications: Record<string | number, unknown>): void;
     function create_party_accept_message(party_id: string, presence: Record<string | number, unknown>): void;
     function create_party_close_message(party_id: string): void;
-    function create_party_create_message(open: boolean, max_size: number): void;
+    function create_party_create_message(open: boolean, max_size: number, label: string, hidden: boolean): void;
     function create_party_data_message(party_id: string, presence: Record<string | number, unknown>, op_code: number, data: string): void;
     function create_party_data_send_message(party_id: string, op_code: number, data: string): void;
     function create_party_join_message(party_id: string): void;
@@ -374,10 +390,11 @@ declare module 'nakama.nakama' {
     function create_party_matchmaker_add_message(party_id: string, min_count: number, max_count: number, query: string, string_properties: Record<string | number, unknown>, numeric_properties: Record<string | number, unknown>, count_multiple: Record<string | number, unknown>): void;
     function create_party_matchmaker_remove_message(party_id: string, ticket: string): void;
     function create_party_matchmaker_ticket_message(party_id: string, ticket: string): void;
-    function create_party_message(party_id: string, open: boolean, max_size: number, self: Record<string | number, unknown>, leader: Record<string | number, unknown>, presences: Record<string | number, unknown>): void;
+    function create_party_message(party_id: string, open: boolean, hidden: boolean, max_size: number, self: Record<string | number, unknown>, leader: Record<string | number, unknown>, presences: Record<string | number, unknown>, label: string): void;
     function create_party_presence_event_message(party_id: string, joins: Record<string | number, unknown>, leaves: Record<string | number, unknown>): void;
     function create_party_promote_message(party_id: string, presence: Record<string | number, unknown>): void;
     function create_party_remove_message(party_id: string, presence: Record<string | number, unknown>): void;
+    function create_party_update_message(party_id: string, label: string, open: boolean, hidden: boolean): void;
     function create_ping_message(): void;
     function create_pong_message(): void;
     function create_protobuf_any(arg0?: string): Record<string | number, unknown>;
@@ -461,6 +478,10 @@ declare module 'nakama.nakama' {
      * Fetch the current user's account.
      */
     function get_account(): Record<string | number, unknown>;
+    /**
+     * Get matchmaker stats.
+     */
+    function get_matchmaker_stats(): Record<string | number, unknown>;
     /**
      * Get subscription by product id.
      *
@@ -593,6 +614,13 @@ declare module 'nakama.nakama' {
      */
     function list_friends(limit?: number, state?: number, cursor?: string): Record<string | number, unknown>;
     /**
+     * List friends of friends for the current user.
+     *
+     * @param limit - Max number of records to return. Between 1 and 100.
+     * @param cursor - An optional next page cursor.
+     */
+    function list_friends_of_friends(limit?: number, cursor?: string): Record<string | number, unknown>;
+    /**
      * List all users that are part of a group.
      *
      * @param groupId - The group ID to list from.
@@ -623,7 +651,7 @@ declare module 'nakama.nakama' {
      */
     function list_leaderboard_records(leaderboardId: string, ownerIds?: Record<string | number, unknown>, limit?: number, cursor?: string, expiry?: string): Record<string | number, unknown>;
     /**
-     * List leaderboard records that belong to a user.
+     * List leaderboard records around the target ownerId.
      *
      * @param leaderboardId - The ID of the tournament to list for.
      * @param ownerId - The owner to retrieve records around.
@@ -633,7 +661,7 @@ declare module 'nakama.nakama' {
      */
     function list_leaderboard_records_around_owner(leaderboardId: string, ownerId: string, limit?: number, expiry?: string, cursor?: string): Record<string | number, unknown>;
     /**
-     * Fetch list of running matches.
+     * List running matches and optionally filter by matching criteria.
      *
      * @param limit - Limit the number of returned matches.
      * @param authoritative - Authoritative or relayed matches.
@@ -652,6 +680,15 @@ declare module 'nakama.nakama' {
      * value from NotificationList.cacheable_cursor.
      */
     function list_notifications(limit?: number, cacheableCursor?: string): Record<string | number, unknown>;
+    /**
+     * List parties and optionally filter by matching criteria.
+     *
+     * @param limit - Limit the number of returned parties.
+     * @param open - Optionally filter by open/closed parties.
+     * @param query - Arbitrary label query.
+     * @param cursor - Cursor for the next page of results, if any.
+     */
+    function list_parties(limit?: number, open?: boolean, query?: string, cursor?: string): Record<string | number, unknown>;
     /**
      * List publicly readable storage objects in a given collection.
      *
