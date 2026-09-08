@@ -215,6 +215,7 @@ describe("buildTargetModel module ownership", () => {
     "on_window_callback",
     "on_language_change",
     "get_widget",
+    "get_druid",
     "register_druid_as_widget",
     "unregister_druid_as_widget",
     "set_logger",
