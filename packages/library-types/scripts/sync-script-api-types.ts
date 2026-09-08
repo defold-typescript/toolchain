@@ -221,6 +221,19 @@ function parseFixtureDoc(
 }
 
 /**
+ * The parsed doc for a target's committed fixture — the same parse
+ * `emitScriptApiDeclaration` runs, exposed so a guard can read the script_api
+ * surface without duplicating the `scriptApiToFixtureJson` wiring.
+ */
+export async function committedScriptApiDoc(
+  packageRoot: string,
+  target: ScriptApiTarget,
+): Promise<ScriptApiDoc> {
+  const { scriptApiToFixtureJson } = await loadTypesModules(packageRoot);
+  return parseFixtureDoc(packageRoot, target, scriptApiToFixtureJson);
+}
+
+/**
  * `.script_api` -> `scriptApiToFixtureJson` -> `generateModuleDeclaration`. Returns
  * an importable module keyed by `moduleId` (`declare module '<moduleId>'`), with
  * one-level nested sub-namespaces intact per the nested-namespace parser slice.
