@@ -26,7 +26,7 @@ cheat-sheet depth and links down.
 | String join            | `"a" .. b`               | `"a" + b`, or a template literal `` `a${b}` ``                                                                                                                        |
 | Length                 | `#t`                     | `t.length`                                                                                                                                                            |
 | Block delimiters       | `then … end`, `do … end` | `{ … }`                                                                                                                                                               |
-| Absence                | `nil`                    | `null` and `undefined` (both lower to `nil` — see the gotchas page)                                                                                                   |
+| Absence                | `nil`                    | `undefined` — write it, never `null` (both lower to `nil`; see [passing absence](./typescript-gotchas.md#passing-absence-write-undefined-never-null))                                                                                                   |
 | Index base             | 1-based: `t[1]`          | 0-based: `arr[0]`                                                                                                                                                     |
 
 Two things to internalise before the rest of the page:

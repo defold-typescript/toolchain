@@ -258,6 +258,57 @@ if (parent !== undefined) {
 
 **How we pin this in the type tests.** `packages/transpiler/src/narrowing-transpile.test.ts` snapshots `x === null` and `x === undefined` side by side and asserts both committed lines are `x == nil`, and pins the `!== undefined` guard beside them so the committed snapshot shows it lowering to `x ~= nil`. The collapse and its not-equal counterpart are visible in the snapshot; if [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) ever distinguished the equal checks or emitted the wrong operator for the not-equal one, the gate would fail.
 
+### Passing absence: write `undefined`, never `null`
+
+Does that mean you can always pass `null` where an API declares `arg?: string | Hash`? No — there the expectation is `undefined`.
+
+The collapse is about absence you *test* and absence the engine *returns*. It does not run backwards. An optional parameter is declared `T | undefined`, and `null` is not a member of that union, so passing it is a compile error — even though both spellings would have arrived in Lua as the same `nil`.
+
+**`arg?: T` means omit it or pass `undefined`.** The URL builder is the case the [API reference](/api/msg) itself documents: leaving the socket out addresses the current game world.
+
+```ts
+// An absent socket means the current game world.
+const door = msg.url(undefined, hash("/door"), "door.ts");
+```
+
+Slots that take a `url` read the same way — absent means "the thing this script is on".
+
+```ts
+// An absent camera url means the camera on this game object.
+camera.set_fov(undefined, 0.7);
+```
+
+```ts
+// An absent url means the current game object.
+go.set_parent(undefined, go.get_id("rig"));
+```
+
+**A later argument forces a placeholder.** Lua lets a call stop early; TypeScript has no way to skip a slot in the middle, so reaching a later parameter means spelling `undefined` for the ones you are not using.
+
+```ts
+// Skip `position` and `rotation` to reach `properties`.
+factory.create("#enemyfactory", undefined, undefined, { health: 100 });
+```
+
+```ts
+// No options bag, but the callback after it is wanted.
+collectionproxy.load("#proxy", undefined, () => {});
+```
+
+**Normalize at the boundary.** A `T | null` that comes from outside the Defold surface — decoded JSON is the realistic source — takes `?? undefined` at the point it enters your code, so the `null` never reaches an engine slot.
+
+```ts
+// `?? undefined` where the value enters, not a cast at the call site.
+const decoded = json.decode('{"socket":null}') as { socket: string | null };
+const hero = msg.url(decoded.socket ?? undefined, hash("/hero"), "hero.ts");
+```
+
+The asymmetry is the point, not an aside: `x == null` stays a blessed way to *test* absence — it narrows both spellings, which is why this repo keeps that one loose form exempt — while `null` is never legal to *pass*.
+
+Why `undefined` and not `null`? Lua's `nil` behaves like `undefined`, not like `null`. A missing table key reads as `nil`, `t.x = nil` deletes the key, and an omitted argument arrives as `nil` — all of which mean "not there", `undefined`'s semantics, rather than `null`'s "present but empty". TypeScript also only ever produces `undefined` on its own, so it is the spelling the language hands you.
+
+**How we pin this.** `packages/transpiler/src/gotchas-argument-sentinel.test.ts` reads every `ts` block above out of this page's own bytes, transpiles it against the shipped declarations, and asserts the omitted argument lowers to Lua `nil`. It then respells each `undefined` as `null` and asserts the compile fails — so a declaration that widened one of these slots to accept `null`, or narrowed one so `undefined` stops compiling, reds the gate instead of leaving this passage wrong.
+
 ## `===` and `==` compile to the same Lua — strictness is a convention, not a runtime guard
 
 **Symptom.** Coming from JavaScript you might assume `==` performs loose equality — coercing its operands before comparing — and reach for `===` to avoid it. In this toolchain the two operators are indistinguishable in the output, so the coercion `===` guards against never happens.
