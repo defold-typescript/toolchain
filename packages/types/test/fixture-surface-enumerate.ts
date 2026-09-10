@@ -156,6 +156,8 @@ export interface DeclaredParameterSlot {
   readonly optional: boolean;
   /** The slot's emitted type annotation, without the `?`. */
   readonly typeText: string;
+  /** The sorted, deduplicated file names of the declaration copies that make the slot required. */
+  readonly requiredIn: readonly string[];
 }
 
 /**
@@ -168,7 +170,8 @@ export interface DeclaredParameterSlot {
  *
  * Overloads merge conservatively: a slot counts omissible only when *every*
  * signature that names it makes it so, so one widened overload cannot vouch for
- * a sibling that stayed required. A reserved-name recovery
+ * a sibling that stayed required. The same rule merges declaration copies across
+ * files in {@link mergeDeclaredParameterSlots}. A reserved-name recovery
  * (`function _new(); export { _new as new }`) is recorded under both the
  * emitted and the aliased name.
  */
@@ -217,11 +220,13 @@ export function enumerateDeclaredParameterSlots(
         const optional =
           parameter.questionToken !== undefined ||
           (parameter.type !== undefined && annotationAdmitsUndefined(parameter.type));
+        const slot: DeclaredParameterSlot = {
+          optional,
+          typeText,
+          requiredIn: optional ? [] : [fileName],
+        };
         const previous = slots.get(parameter.name.text);
-        slots.set(parameter.name.text, {
-          optional: previous ? previous.optional && optional : optional,
-          typeText: previous ? `${previous.typeText} | ${typeText}` : typeText,
-        });
+        slots.set(parameter.name.text, previous ? mergeParameterSlot(previous, slot) : slot);
       }
       out.set(key, slots);
       return;
@@ -239,6 +244,45 @@ export function enumerateDeclaredParameterSlots(
   }
 
   return out;
+}
+
+/**
+ * Folds the slot maps of several declaration copies into one, keyed by fqn and
+ * parameter name, under the rule {@link enumerateDeclaredParameterSlots} applies
+ * to overloads: a slot counts omissible only when every copy that names it does,
+ * whatever order the copies arrive in. A name only one copy declares is kept.
+ * The inputs are never mutated, because the alias pass shares one slot map
+ * between two fqns.
+ */
+export function mergeDeclaredParameterSlots(
+  surfaces: Iterable<Map<string, Map<string, DeclaredParameterSlot>>>,
+): Map<string, Map<string, DeclaredParameterSlot>> {
+  const out = new Map<string, Map<string, DeclaredParameterSlot>>();
+  for (const surface of surfaces) {
+    for (const [fqn, slots] of surface) {
+      const merged = out.get(fqn) ?? new Map<string, DeclaredParameterSlot>();
+      for (const [name, slot] of slots) {
+        const previous = merged.get(name);
+        merged.set(name, previous ? mergeParameterSlot(previous, slot) : slot);
+      }
+      out.set(fqn, merged);
+    }
+  }
+  return out;
+}
+
+function mergeParameterSlot(
+  previous: DeclaredParameterSlot,
+  next: DeclaredParameterSlot,
+): DeclaredParameterSlot {
+  return {
+    optional: previous.optional && next.optional,
+    typeText:
+      previous.typeText === next.typeText
+        ? previous.typeText
+        : `${previous.typeText} | ${next.typeText}`,
+    requiredIn: [...new Set([...previous.requiredIn, ...next.requiredIn])].sort(),
+  };
 }
 
 // A top-level `undefined` member of the annotation. Nested inside a table type
