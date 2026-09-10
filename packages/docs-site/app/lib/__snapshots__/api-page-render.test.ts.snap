@@ -196,8 +196,8 @@ Create a widget from the bound Druid GUI instance.
 The widget will be created and all widget functions can be called from Game Object contexts.
 This allows using only \`druid_widget.gui_script\` for GUI files and call this widget functions from Game Object script file.
 Widget class here is your lua file for the GUI scene (widgets in Druid)
-<a href="/api/defold-1.13.1/msg#msgurlsocket-string--hash-path-string--hash-fragment-string--hash-url" class="symbol-xref">msg.url</a>(nil, nil, "gui_widget") -- current game object
-<a href="/api/defold-1.13.1/msg#msgurlsocket-string--hash-path-string--hash-fragment-string--hash-url" class="symbol-xref">msg.url</a>(nil, object_url, "gui_widget") -- other game object
+<a href="/api/defold-1.13.1/msg#msgurlsocket-string--hash--undefined-path-string--hash-fragment-string--hash-url" class="symbol-xref">msg.url</a>(nil, nil, "gui_widget") -- current game object
+<a href="/api/defold-1.13.1/msg#msgurlsocket-string--hash--undefined-path-string--hash-fragment-string--hash-url" class="symbol-xref">msg.url</a>(nil, object_url, "gui_widget") -- other game object
 
 **Parameters**
 

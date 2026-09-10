@@ -48,6 +48,9 @@ declare global {
      *
      * The two-arg form `msg.url(socket, path)` is a runtime error.
      *
+     * `socket` may be `undefined` (Lua `nil`), which addresses the current
+     * game world, exactly as the runtime's own examples do.
+     *
      * In the same world, address a sibling **relatively** — by bare id
      * (`msg.url("camera")`), absolute path (`msg.url("/camera")`), or
      * component (`msg.url("#main")`). The `socket:` prefix only crosses
@@ -69,10 +72,17 @@ declare global {
      *
      * // Crossing into a proxy-loaded world — `socket` is the world name.
      * const proxied: Url = msg.url(hash("level1"), hash("/door"), hash("script"));
+     *
+     * // An `undefined` socket addresses the current game world.
+     * const currentWorld: Url = msg.url(undefined, hash("/door"), hash("script"));
      * ```
      */
     function url(): Url;
     function url(urlstring: SceneAddress): Url;
-    function url(socket: string | Hash, path: string | Hash, fragment: string | Hash): Url;
+    function url(
+      socket: string | Hash | undefined,
+      path: string | Hash,
+      fragment: string | Hash,
+    ): Url;
   }
 }
