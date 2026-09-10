@@ -20,6 +20,10 @@ const url0: Url = msg.url();
 // Form 2: one-arg string.
 const url1: Url = msg.url("main:/manager#controller");
 
+// Form 2 with an absent argument — the ref-doc calls `msg.url(nil)` equivalent
+// to the no-arg form, so `undefined` addresses the current script.
+const url1Undefined: Url = msg.url(undefined);
+
 // Form 3: three-arg, all required.
 const url3: Url = msg.url(hash("main"), hash("/manager"), hash("controller"));
 
@@ -29,6 +33,7 @@ const urlNilSocket: Url = msg.url(undefined, hash("/door"), "door.ts");
 
 void url0;
 void url1;
+void url1Undefined;
 void url3;
 void urlNilSocket;
 

@@ -607,7 +607,7 @@ declare global {
      * sys.set_engine_throttle(true, 1.5);
      * ```
      */
-    function set_engine_throttle(enable: boolean, cooldown: number): void;
+    function set_engine_throttle(enable: boolean, cooldown?: number): void;
     /**
      * Set the Lua error handler function.
      * The error handler is a function which is called whenever a lua runtime error occurs.

@@ -17,7 +17,8 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Fixed
 
-- **[`msg.url`](/api/msg)'s socket now accepts `undefined` for the current game world**, so the current-world form the API reference itself documents compiles; the two-argument call stays rejected.
+- **21 engine parameters the reference itself shows being omitted are now optional.** The [`resource`](/api/resource) texture-creation buffers and the async callback, the [`gui`](/api/gui) texture `flip`, [`sys.set_engine_throttle`](/api/sys)'s cooldown, the [`b2d`](/api/b2d) shape/fixture/joint slots and [`iap.buy`](/api/iap)'s options all rejected the calls their own docs teach, so `sys.set_engine_throttle(false)` and `iap.buy("sword")` now compile.
+- **[`msg.url`](/api/msg) now accepts `undefined` wherever the engine accepts `nil`** — as the socket of the three-argument form, addressing the current game world, and as the single argument, addressing the current script. The two-argument call stays rejected.
 
 ## v0.33.0
 
