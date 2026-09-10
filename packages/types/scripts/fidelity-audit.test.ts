@@ -1,11 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import { resolve } from "node:path";
 import socketDoc from "../fixtures/socket_doc.json" with { type: "json" };
-import { ARBITRARY_TABLE_SLOT_KEYS } from "../src/emit-dts";
+import { ARBITRARY_TABLE_SLOT_KEYS, OPTIONAL_SLOT_CORRECTIONS } from "../src/emit-dts";
 import {
   buildFidelityReport,
   countDroppedHandleMethods,
+  evidencedOptionalSlots,
   type FidelityEntry,
+  OPTIONALITY_EVIDENCE_EXEMPTIONS,
+  unmarkedOptionalSlots,
 } from "./fidelity-audit";
 import baseline from "./fidelity-baseline.json" with { type: "json" };
 import type { ModuleManifestEntry } from "./regen";
@@ -79,7 +82,7 @@ describe("buildFidelityReport — per-category counting", () => {
     expect(entry.droppedMembers).toBe(0);
     // test.opt's interior optional `o` (a required param follows) is now emitted
     // as `o: number | undefined` rather than dropped to required, so it is no
-    // longer a loss; optionalAsRequired stays in the report shape reading 0.
+    // longer a loss, and nothing here evidences an unmarked optional slot.
     expect(entry.optionalAsRequired).toBe(0);
   });
 
@@ -217,6 +220,155 @@ describe("buildFidelityReport — per-category counting", () => {
     // loss; trailing optionals were always recovered via `?`.
     const entry = requireEntry(buildFidelityReport(manifestOf(doc)), "test");
     expect(entry.optionalAsRequired).toBe(0);
+  });
+});
+
+describe("optionality evidence — slots upstream leaves unmarked", () => {
+  const fn = (name: string, parameters: readonly Record<string, unknown>[], examples = "") => ({
+    type: "FUNCTION",
+    name,
+    parameters,
+    returnvalues: [],
+    examples,
+  });
+
+  function optionalAsRequiredOf(...elements: readonly unknown[]): number {
+    const doc = { info: { namespace: "test" }, elements };
+    return requireEntry(buildFidelityReport(manifestOf(doc)), "test").optionalAsRequired;
+  }
+
+  const required = (name: string, doc = "", types: readonly string[] = ["number"]) => ({
+    name,
+    doc,
+    types,
+    is_optional: "False",
+  });
+
+  test("prose: a parameter documented as optional but not marked counts", () => {
+    const optional = { name: "o", doc: "optional offset into the buffer", types: ["number"] };
+    expect(optionalAsRequiredOf(fn("test.fn", [required("a"), optional]))).toBe(1);
+    const defaulted = required("o", "the offset, defaults to 0");
+    expect(optionalAsRequiredOf(fn("test.fn", [required("a"), defaulted]))).toBe(1);
+  });
+
+  test("prose: an optional field inside a table's field list says nothing about the argument", () => {
+    const fieldList = required(
+      "settings",
+      'A table of settings:<dl><dt><code>speed</code></dt><dd><span class="type">number</span> optional speed, defaults to 1</dd></dl>',
+      ["table"],
+    );
+    const inlineFields = required(
+      "definition",
+      "fixture definition table with shape = shape table and optional filter table",
+      ["table"],
+    );
+    expect(optionalAsRequiredOf(fn("test.fn", [fieldList, inlineFields]))).toBe(0);
+  });
+
+  test("example arity: a call site passing fewer arguments than declared counts", () => {
+    expect(optionalAsRequiredOf(fn("test.fn", [required("a"), required("b")], "test.fn(1)"))).toBe(
+      1,
+    );
+  });
+
+  test("example nil: a call site passing a bare nil counts that slot", () => {
+    expect(
+      optionalAsRequiredOf(fn("test.fn", [required("a"), required("b")], "test.fn(nil, 2)")),
+    ).toBe(1);
+  });
+
+  test("a call site passing every argument counts nothing", () => {
+    const examples = 'test.fn({ x = 1, y = 2 }, "a, b")';
+    expect(optionalAsRequiredOf(fn("test.fn", [required("a"), required("b")], examples))).toBe(0);
+  });
+
+  test("the example axes read upstream's syntax-highlighted HTML", () => {
+    // How the ref-doc really ships examples: every token wrapped in a span and
+    // quotes as entities. The comma inside the string literal and the one inside
+    // the table are not argument separators.
+    const highlighted =
+      '<div class="codehilite"><pre><span></span><code>' +
+      '<span class="n">test</span><span class="p">.</span><span class="n">fn</span>' +
+      '<span class="p">(</span><span class="s2">&quot;a, b&quot;</span><span class="p">)</span>\n' +
+      '<span class="n">test</span><span class="p">.</span><span class="n">fn</span>' +
+      '<span class="p">({</span><span class="n">x</span><span class="o">=</span><span class="mi">1</span>' +
+      '<span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="mi">2</span>' +
+      '<span class="p">},</span> <span class="kc">nil</span><span class="p">)</span>' +
+      "</code></pre></div>";
+    const params = [required("a"), required("b"), required("c")];
+    // The first call omits b and c; the second passes a bare nil for b.
+    expect(optionalAsRequiredOf(fn("test.fn", params, highlighted))).toBe(2);
+  });
+
+  test("inline code in example prose names the function without calling it", () => {
+    const examples =
+      "Note that <code>test.fn()</code> is enough here.\n" +
+      '<div class="codehilite"><pre><span></span><code><span class="n">test</span><span class="p">.</span>' +
+      '<span class="n">fn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> ' +
+      '<span class="mi">2</span><span class="p">)</span></code></pre></div>';
+    expect(optionalAsRequiredOf(fn("test.fn", [required("a"), required("b")], examples))).toBe(0);
+  });
+
+  test("a same-named overload that marks the slot optional closes the loss", () => {
+    const strict = fn("test.cast", [
+      required("world"),
+      required("filter", "optional query filter"),
+    ]);
+    const marked = fn("test.cast", [
+      required("world"),
+      { name: "filter", doc: "optional query filter", types: ["number"], is_optional: "True" },
+    ]);
+    expect(optionalAsRequiredOf(strict, marked)).toBe(0);
+    expect(optionalAsRequiredOf(strict)).toBe(1);
+  });
+
+  test("an example call a same-named overload accepts is not an omission", () => {
+    const splat = fn("test.vec", [required("n")]);
+    const full = fn("test.vec", [required("x"), required("y"), required("z")], "test.vec(2.0)");
+    expect(optionalAsRequiredOf(splat, full)).toBe(0);
+    expect(optionalAsRequiredOf(full)).toBe(2);
+  });
+
+  test("an OPTIONAL_SLOT_CORRECTIONS entry closes the loss it corrects", () => {
+    const params = [required("enable", "", ["boolean"]), required("cooldown")];
+    expect(OPTIONAL_SLOT_CORRECTIONS.has("sys.set_engine_throttle:param:cooldown")).toBe(true);
+    expect(
+      optionalAsRequiredOf(fn("sys.set_engine_throttle", params, "sys.set_engine_throttle(false)")),
+    ).toBe(0);
+    expect(
+      optionalAsRequiredOf(
+        fn("test.set_engine_throttle", params, "test.set_engine_throttle(false)"),
+      ),
+    ).toBe(1);
+  });
+
+  test("an exempted slot counts nothing, and every exemption states its reason", () => {
+    const params = [required("x", "", ["number", "vector3"]), required("y"), required("z")];
+    expect(OPTIONALITY_EVIDENCE_EXEMPTIONS.has("vmath.euler_to_quat:param:y")).toBe(true);
+    expect(optionalAsRequiredOf(fn("vmath.euler_to_quat", params, "vmath.euler_to_quat(v)"))).toBe(
+      0,
+    );
+    expect(optionalAsRequiredOf(fn("test.euler_to_quat", params, "test.euler_to_quat(v)"))).toBe(2);
+    const unexplained = [...OPTIONALITY_EVIDENCE_EXEMPTIONS]
+      .filter(([, reason]) => reason.trim().length === 0)
+      .map(([key]) => key);
+    expect(unexplained).toEqual([]);
+  });
+
+  test("every exemption names a slot the evidence flags in the audited surface", () => {
+    const flagged = new Set(MODULE_MANIFEST.flatMap((entry) => unmarkedOptionalSlots(entry)));
+    const dead = [...OPTIONALITY_EVIDENCE_EXEMPTIONS.keys()].filter((key) => !flagged.has(key));
+    expect(dead).toEqual([]);
+  });
+
+  test("the evidence finds every slot OPTIONAL_SLOT_CORRECTIONS closes", () => {
+    // Dropping a correction therefore moves optionalAsRequired and reds the
+    // drift gate, instead of silently re-requiring the slot.
+    const evidenced = new Set(
+      MODULE_MANIFEST.flatMap((entry) => evidencedOptionalSlots(entry).map((slot) => slot.key)),
+    );
+    const unevidenced = [...OPTIONAL_SLOT_CORRECTIONS.keys()].filter((key) => !evidenced.has(key));
+    expect(unevidenced).toEqual([]);
   });
 });
 
