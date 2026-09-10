@@ -3,7 +3,11 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { loadApiTargets } from "../scripts/regen";
 import { DEFOLD_VERSION } from "../scripts/sync-api-docs";
-import { enumerateDeclaredSymbols } from "./fixture-surface-enumerate";
+import {
+  enumerateDeclaredParameterSlots,
+  enumerateDeclaredSymbols,
+  mergeDeclaredParameterSlots,
+} from "./fixture-surface-enumerate";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 
@@ -77,5 +81,76 @@ describe("enumerateDeclaredSymbols — AST presence enumeration", () => {
       `declare namespace go { function get(id: string): unknown; function get(id: string, prop: string): unknown; }`,
     );
     expect(out.get("go.get")).toEqual({ kind: "function" });
+  });
+});
+
+describe("mergeDeclaredParameterSlots — cross-surface merge", () => {
+  const surface = (fileName: string, source: string) =>
+    enumerateDeclaredParameterSlots(source, fileName);
+
+  test("a required copy wins whichever order the copies arrive in", () => {
+    const a = surface("a.d.ts", "declare namespace m { function f(a: number, b?: number): void; }");
+    const b = surface("b.d.ts", "declare namespace m { function f(a: number, b: number): void; }");
+    for (const order of [
+      [a, b],
+      [b, a],
+    ]) {
+      const slot = mergeDeclaredParameterSlots(order).get("m.f")?.get("b");
+      expect(slot?.optional).toBe(false);
+      expect(slot?.requiredIn).toEqual(["b.d.ts"]);
+    }
+    expect(a.get("m.f")?.get("b")?.optional).toBe(true);
+    expect(a.get("m.f")?.get("b")?.requiredIn).toEqual([]);
+  });
+
+  test("a slot omissible in every copy stays omissible", () => {
+    const merged = mergeDeclaredParameterSlots([
+      surface("a.d.ts", "declare namespace m { function f(b?: number): void; }"),
+      surface(
+        "b.d.ts",
+        "declare namespace m { function f(b: number | undefined, c: number): void; }",
+      ),
+    ]);
+    expect(merged.get("m.f")?.get("b")).toMatchObject({ optional: true, requiredIn: [] });
+  });
+
+  test("a required overload inside one copy still makes the slot required", () => {
+    const merged = mergeDeclaredParameterSlots([
+      surface(
+        "a.d.ts",
+        "declare namespace m { function f(b?: number): void; function f(b: number, c: number): void; }",
+      ),
+      surface("b.d.ts", "declare namespace m { function f(b?: number): void; }"),
+    ]);
+    expect(merged.get("m.f")?.get("b")).toMatchObject({ optional: false, requiredIn: ["a.d.ts"] });
+  });
+
+  test("a reserved-name alias merges through the same rule", () => {
+    const merged = mergeDeclaredParameterSlots([
+      surface(
+        "a.d.ts",
+        "declare namespace m { function _new(b?: number): void; export { _new as new }; }",
+      ),
+      surface(
+        "b.d.ts",
+        "declare namespace m { function _new(b: number): void; export { _new as new }; }",
+      ),
+    ]);
+    expect(merged.get("m.new")?.get("b")).toMatchObject({
+      optional: false,
+      requiredIn: ["b.d.ts"],
+    });
+  });
+
+  test("a namespace split across copies keeps every name", () => {
+    const merged = mergeDeclaredParameterSlots([
+      surface("a.d.ts", "declare namespace m { function f(a: number): void; }"),
+      surface(
+        "b.d.ts",
+        "declare namespace m { function f(z?: number): void; function g(x: number): void; }",
+      ),
+    ]);
+    expect([...(merged.get("m.f")?.keys() ?? [])].sort()).toEqual(["a", "z"]);
+    expect(merged.get("m.g")?.get("x")).toMatchObject({ optional: false, requiredIn: ["b.d.ts"] });
   });
 });
