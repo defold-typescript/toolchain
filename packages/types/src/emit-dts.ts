@@ -2190,13 +2190,17 @@ export function summaryFor(brief: string, description: string): string {
 // The one optionality predicate. Both emitted shapes read it — the trailing `?`
 // through `trailingOptionalCutoff` and the interior `| undefined` through
 // `emitParameter` — so a correction threaded in here reaches both without a
-// second copy of the rule.
-function isDocOptional(p: ApiParameter, elementName: string): boolean {
+// second copy of the rule. The fidelity audit reads it too, to tell which slots
+// the emitted surface still makes required.
+export function isDocOptional(p: ApiParameter, elementName: string): boolean {
   if (p.isOptional || p.types.includes("nil")) return true;
   return OPTIONAL_SLOT_CORRECTIONS.has(tableSlotKey(elementName, "param", p.name));
 }
 
-function trailingOptionalCutoff(params: readonly ApiParameter[], elementName: string): number {
+export function trailingOptionalCutoff(
+  params: readonly ApiParameter[],
+  elementName: string,
+): number {
   let cutoff = params.length;
   for (let i = params.length - 1; i >= 0; i -= 1) {
     const p = params[i];
