@@ -1092,9 +1092,9 @@ msg.post("/enemy#ai", "alert");                 // robust: absolute path inside 
 msg.post("#health", "damage", { amount: 10 }); // sibling component on the same game object
 ```
 
-**Why.** A Defold URL is `[socket:][path][#fragment]` — three parts, the first optional. The `path` is the target object's id, the `#fragment` is the component on it, and an address that **starts with `/` is resolved from the root of the current game world** (the bootstrap collection loaded at game start). The `socket:` segment names *which game world* the target lives in, and it earns its keep only with collection proxies: a world's socket name is the **`Name` property of its collection file** — "The new world gets its name from the *Name* property in the collection file." The bootstrap collection is named the same way (it too is given a unique name from *its* `Name` property), so there is no special socket you address it through — inside that one world you never write the `socket:` segment at all. The trap is that a collection's `Name` is a property distinct from its folder: the editor's `main/main.collection` is a *file path*, while the `Name` you address the world by is a separate field (commonly the project default `default`, not `main`). So a literal `"main:…"` borrowed from a manual example breaks the moment your bootstrap collection is named anything other than `main`. The two-arg form `msg.url(socket, path, fragment)` is a separate runtime trap — only the no-arg, one-string, and three-arg forms are runtime-supported, so `msg.url("main", "camera")` is a runtime error. The tightened `msg.url` overloads in `packages/types/src/msg-overloads.d.ts` reject that two-arg call at compile time, so the typings are the warning.
+**Why.** A Defold URL is `[socket:][path][#fragment]` — three parts, the first optional. The `path` is the target object's id, the `#fragment` is the component on it, and an address that **starts with `/` is resolved from the root of the current game world** (the bootstrap collection loaded at game start). The `socket:` segment names *which game world* the target lives in, and it earns its keep only with collection proxies: a world's socket name is the **`Name` property of its collection file** — "The new world gets its name from the *Name* property in the collection file." The bootstrap collection is named the same way (it too is given a unique name from *its* `Name` property), so there is no special socket you address it through — inside that one world you never write the `socket:` segment at all. The trap is that a collection's `Name` is a property distinct from its folder: the editor's `main/main.collection` is a *file path*, while the `Name` you address the world by is a separate field (commonly the project default `default`, not `main`). So a literal `"main:…"` borrowed from a manual example breaks the moment your bootstrap collection is named anything other than `main`. The two-arg form `msg.url(socket, path)` is a separate runtime trap — only the no-arg, one-string, and three-arg forms are runtime-supported, so `msg.url("main", "camera")` is a runtime error. All three positions of the three-arg form are required, but `socket` may be `undefined` (Lua `nil`) to address the current game world. The tightened `msg.url` overloads in `packages/types/src/msg-overloads.d.ts` reject that two-arg call at compile time, so the typings are the warning.
 
-**Typed alternative.** For anything in the **same world** (everything in your bootstrap collection) address it without a socket: `"camera"` (a sibling instance by id, relative to the current component), `"/camera"` (the same instance by id, absolute from the world root), or `"#health"` (a sibling component on the same game object). Reserve `socket:` for reaching into a **collection-proxy-loaded** world, and pass the *target* collection's `Name` — the collection-proxy manual's own cross-world example is `msg.post("mylevel:/myobject", "hello")`, where `mylevel` is the loaded collection's `Name`, not the proxy component's id. For `msg.url`, use one of the three typed overloads — `msg.url()` (the current message's url), `msg.url("main:/manager#controller")` (one string), or the all-required `msg.url(hash("level1"), hash("/door"), hash("script"))` — never the two-arg form.
+**Typed alternative.** For anything in the **same world** (everything in your bootstrap collection) address it without a socket: `"camera"` (a sibling instance by id, relative to the current component), `"/camera"` (the same instance by id, absolute from the world root), or `"#health"` (a sibling component on the same game object). Reserve `socket:` for reaching into a **collection-proxy-loaded** world, and pass the *target* collection's `Name` — the collection-proxy manual's own cross-world example is `msg.post("mylevel:/myobject", "hello")`, where `mylevel` is the loaded collection's `Name`, not the proxy component's id. For `msg.url`, use one of the three typed overloads — `msg.url()` (the current message's url), `msg.url("main:/manager#controller")` (one string), or the three-position `msg.url(hash("level1"), hash("/door"), hash("script"))`, whose `socket` may be `undefined` for the current world — never the two-arg form.
 
 **How we pin this in the type tests.** `packages/types/test-d/msg-url-arity.ts` asserts the tightened `msg.url` overloads — `msg.url()` and `msg.url("main:/manager#controller")` type-check, while the two-arg `msg.url("main", "camera")` carries `@ts-expect-error` — so the runtime-invalid arity is rejected at compile time; widen the overloads to accept it and the expected error vanishes, failing the typecheck gate.
 
@@ -5202,10 +5202,11 @@ collection's `Name`, not the proxy component's id — and a collection's `Name` 
 a field distinct from its folder, so a bare `"main:…"` copied from a Lua example
 is fragile (it assumes your bootstrap collection happens to be named `main`).
 
-The two-arg `msg.url(socket, path, fragment)` call is a runtime error — only
-`msg.url()`, `msg.url(urlstring)`, and the all-required three-arg form are
-supported. The tightened overloads in `msg-overloads.d.ts` reject the two-arg
-form at compile time, so the typings are the warning.
+The two-arg `msg.url(socket, path)` call is a runtime error — only `msg.url()`,
+`msg.url(urlstring)`, and the three-arg form are supported. All three positions
+of that form are required, but `socket` may be `undefined` (Lua `nil`) for the
+current game world. The tightened overloads in `msg-overloads.d.ts` reject the
+two-arg form at compile time, so the typings are the warning.
 
 Confirm every address resolves and the snippet builds — see
 [Verify against the real API surface](#verify-against-the-real-api-surface). For
@@ -8894,7 +8895,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - msg.post(receiver: SceneAddress | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void
 - msg.url(): Url
 - msg.url(urlstring: SceneAddress): Url
-- msg.url(socket: string | Hash, path: string | Hash, fragment: string | Hash): Url
+- msg.url(socket: string | Hash | undefined, path: string | Hash, fragment: string | Hash): Url
 
 ### particlefx
 

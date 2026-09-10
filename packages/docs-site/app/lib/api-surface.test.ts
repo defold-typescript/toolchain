@@ -2051,7 +2051,7 @@ describe("apiModuleSymbols", () => {
     expect(outerCallArity("msg.url(): Url")).toBe(0);
     expect(
       outerCallArity(
-        "msg.url(socket: string | Hash, path: string | Hash, fragment: string | Hash): Url",
+        "msg.url(socket: string | Hash | undefined, path: string | Hash, fragment: string | Hash): Url",
       ),
     ).toBe(3);
   });

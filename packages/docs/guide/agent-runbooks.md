@@ -1157,10 +1157,11 @@ collection's `Name`, not the proxy component's id — and a collection's `Name` 
 a field distinct from its folder, so a bare `"main:…"` copied from a Lua example
 is fragile (it assumes your bootstrap collection happens to be named `main`).
 
-The two-arg `msg.url(socket, path, fragment)` call is a runtime error — only
-`msg.url()`, `msg.url(urlstring)`, and the all-required three-arg form are
-supported. The tightened overloads in `msg-overloads.d.ts` reject the two-arg
-form at compile time, so the typings are the warning.
+The two-arg `msg.url(socket, path)` call is a runtime error — only `msg.url()`,
+`msg.url(urlstring)`, and the three-arg form are supported. All three positions
+of that form are required, but `socket` may be `undefined` (Lua `nil`) for the
+current game world. The tightened overloads in `msg-overloads.d.ts` reject the
+two-arg form at compile time, so the typings are the warning.
 
 Confirm every address resolves and the snippet builds — see
 [Verify against the real API surface](#verify-against-the-real-api-surface). For

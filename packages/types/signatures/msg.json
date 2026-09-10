@@ -13,7 +13,7 @@
     "signatures": [
       "msg.url(): Url",
       "msg.url(urlstring: SceneAddress): Url",
-      "msg.url(socket: string | Hash, path: string | Hash, fragment: string | Hash): Url"
+      "msg.url(socket: string | Hash | undefined, path: string | Hash, fragment: string | Hash): Url"
     ],
     "docs": ["Construct a URL. A URL is `[socket:][path][#fragment]`.", null, null]
   }
