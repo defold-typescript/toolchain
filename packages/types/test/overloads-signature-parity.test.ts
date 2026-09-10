@@ -80,8 +80,8 @@ const NAMESPACES: readonly OverloadNamespace[] = [
     },
     driftSignature: {
       fqn: "msg.url",
-      from: "function url(urlstring: SceneAddress): Url;",
-      to: "function url(urlstring: SceneAddress | Hash): Url;",
+      from: "function url(urlstring: SceneAddress | undefined): Url;",
+      to: "function url(urlstring: SceneAddress): Url;",
     },
     driftDoc: {
       fqn: "msg.url",

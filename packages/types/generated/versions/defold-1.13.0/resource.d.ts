@@ -526,7 +526,7 @@ declare global {
      * });
      * ```
      */
-    function create_texture(path: string, table: { type?: number; width?: number; height?: number; depth?: number; format?: number; flags?: number; max_mipmaps?: number; compression_type?: number }, buffer: Opaque<"buffer">): Hash;
+    function create_texture(path: string, table: { type?: number; width?: number; height?: number; depth?: number; format?: number; flags?: number; max_mipmaps?: number; compression_type?: number }, buffer?: Opaque<"buffer">): Hash;
     /**
      * Creates a new texture resource that can be used in the same way as any texture created during build time.
      * The path used for creating the texture must be unique, trying to create a resource at a path that is already
@@ -715,7 +715,7 @@ declare global {
      * });
      * ```
      */
-    function create_texture_async(path: string | Hash, table: { type?: number; width?: number; height?: number; depth?: number; format?: number; flags?: number; max_mipmaps?: number; compression_type?: number }, buffer: Opaque<"buffer">, callback: (...args: unknown[]) => unknown): LuaMultiReturn<[Hash, number]>;
+    function create_texture_async(path: string | Hash, table: { type?: number; width?: number; height?: number; depth?: number; format?: number; flags?: number; max_mipmaps?: number; compression_type?: number }, buffer?: Opaque<"buffer">, callback?: (...args: unknown[]) => unknown): LuaMultiReturn<[Hash, number]>;
     /**
      * Constructor-like function with two purposes:
      *
