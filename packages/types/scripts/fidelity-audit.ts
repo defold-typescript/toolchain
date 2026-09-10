@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import { type ApiFunction, parseDefoldApiDoc } from "../src/api-doc";
 import { DEFOLD_TYPE_MAP } from "../src/core-types";
 import {
   ARBITRARY_TABLE_SLOT_KEYS,
@@ -8,6 +9,7 @@ import {
   buildTableDocResolver,
   HANDLE_METHOD_LOCAL,
   HOMOGENEOUS_ARRAY_SLOTS,
+  isDocOptional,
   isRecordsCollectionSlot,
   isSlotLevelList,
   MAPPING_TABLE_SLOTS,
@@ -18,6 +20,7 @@ import {
   TABLE_SLOT_CURATIONS,
   type TableSlotCuration,
   TS_IDENTIFIER,
+  trailingOptionalCutoff,
 } from "../src/emit-dts";
 import { parseMessagesDoc } from "../src/emit-messages";
 import {
@@ -87,6 +90,207 @@ export function countDroppedHandleMethods(doc: unknown, namespace: string, emit 
   return dropped;
 }
 
+// Upstream ships `examples`, `description` and `brief` as syntax-highlighted HTML
+// — every token in its own span, quotes as entities — so a call site is invisible
+// to any parser until the markup is gone. `&amp;` decodes last so an escaped
+// entity stays literal.
+function plainText(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, "")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&");
+}
+
+// The arguments of the call whose `(` ends just before `start`, split on
+// top-level commas only: a comma inside a nested call, table, index or string
+// literal belongs to that argument. Null when the text ends before the call does.
+function splitArguments(text: string, start: number): string[] | null {
+  const args: string[] = [];
+  let current = "";
+  let depth = 0;
+  let quote: string | null = null;
+  for (let i = start; i < text.length; i += 1) {
+    const ch = text[i] as string;
+    if (quote !== null) {
+      current += ch;
+      if (ch === "\\") {
+        current += text[i + 1] ?? "";
+        i += 1;
+      } else if (ch === quote) {
+        quote = null;
+      }
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+    } else if (ch === "(" || ch === "{" || ch === "[") {
+      depth += 1;
+    } else if (ch === ")" || ch === "}" || ch === "]") {
+      if (depth === 0) {
+        if (ch !== ")") return null;
+        const last = current.trim();
+        if (last !== "" || args.length > 0) args.push(last);
+        return args;
+      }
+      depth -= 1;
+    } else if (ch === "," && depth === 0) {
+      args.push(current.trim());
+      current = "";
+      continue;
+    }
+    current += ch;
+  }
+  return null;
+}
+
+// Inline `<code>` in example prose names a function rather than calling it
+// (`<code>gui.set_texture()</code> is sufficient`). A highlighted block's `<code>`
+// always wraps token spans, so only the prose kind is bare text.
+const INLINE_CODE = /<code>[^<]*<\/code>/g;
+
+const exampleCallCache = new WeakMap<ApiFunction, readonly (readonly string[])[]>();
+
+// Every `<fqn>(…)` call in the function's upstream examples, as argument lists.
+function exampleCalls(fn: ApiFunction): readonly (readonly string[])[] {
+  const cached = exampleCallCache.get(fn);
+  if (cached !== undefined) return cached;
+  const text = plainText((fn.examples ?? "").replace(INLINE_CODE, ""));
+  const escaped = fn.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const calls: string[][] = [];
+  for (const match of text.matchAll(new RegExp(`(?<![\\w.:])${escaped}\\s*\\(`, "g"))) {
+    const args = splitArguments(text, match.index + match[0].length);
+    if (args !== null) calls.push(args);
+  }
+  exampleCallCache.set(fn, calls);
+  return calls;
+}
+
+// Whether a call passing `count` arguments fits this declaration's arity, with
+// the emitter's own trailing-optional cutoff as the floor.
+function acceptsArgumentCount(fn: ApiFunction, count: number): boolean {
+  const params = fn.parameters;
+  if (count < trailingOptionalCutoff(params, fn.name)) return false;
+  return count <= params.length || params.some((p) => p.isVararg === true);
+}
+
+// The ref-doc documents an overload as a separate element sharing the name, and
+// an element's examples often call a sibling (`vmath.vector3(2.0)` beside the
+// `x, y, z` form). A call another same-named declaration accepts is that
+// declaration's call, not an omission from this one.
+function ownExampleCalls(
+  fn: ApiFunction,
+  overloads: readonly ApiFunction[],
+): readonly (readonly string[])[] {
+  return exampleCalls(fn).filter(
+    (args) => !overloads.some((other) => other !== fn && acceptsArgumentCount(other, args.length)),
+  );
+}
+
+// A table parameter's `<dl>`/`<ul>` describes its fields, so an optional field
+// there says nothing about whether the argument itself may be omitted.
+const FIELD_LIST = /<(dl|ul|ol|table)\b[\s\S]*?<\/\1>/g;
+const OPENS_OPTIONAL = /^\s*optional\b/i;
+const OMISSION_PHRASE = /\bdefaults? to\b|\b(?:if|when|can be|may be) omitted\b/i;
+
+type OptionalityAxis = (
+  fn: ApiFunction,
+  index: number,
+  overloads: readonly ApiFunction[],
+) => boolean;
+
+// The three ways a ref-doc evidences that a parameter may be omitted, each read
+// from one function element and its same-named overloads. `is_optional` is not
+// among them: a slot upstream marks optional is already emitted omissible, so
+// only the unmarked ones can be lost.
+export const OPTIONALITY_EVIDENCE: Readonly<
+  Record<"prose" | "exampleArity" | "exampleNil", OptionalityAxis>
+> = {
+  // The parameter's own prose opens with "optional", or names a default or an
+  // omission outside any field list.
+  prose: (fn, index) => {
+    const doc = fn.parameters[index]?.doc ?? "";
+    return (
+      OPENS_OPTIONAL.test(plainText(doc)) ||
+      OMISSION_PHRASE.test(plainText(doc.replace(FIELD_LIST, " ")))
+    );
+  },
+  // An upstream example stops before this parameter. A trailing `...` forwards
+  // an unknown number of values, so it proves nothing about arity.
+  exampleArity: (fn, index, overloads) =>
+    ownExampleCalls(fn, overloads).some((args) => args.length <= index && args.at(-1) !== "..."),
+  // An upstream example passes a bare `nil` in this position.
+  exampleNil: (fn, index, overloads) =>
+    ownExampleCalls(fn, overloads).some((args) => args[index] === "nil"),
+};
+
+const ARITY_OVERLOAD_REASON =
+  "the example `vmath.euler_to_quat(v)` passes one vector3 for all three angles: " +
+  "y and z are required in the three-number form, and the one-argument call needs " +
+  "an overload the declaration lacks, not an omissible slot";
+
+// Slots the evidence flags that are genuinely required, keyed like
+// `OPTIONAL_SLOT_CORRECTIONS`. Each value is the recorded reason, so an
+// exemption is a decision someone can re-check rather than a silent skip.
+export const OPTIONALITY_EVIDENCE_EXEMPTIONS: ReadonlyMap<string, string> = new Map([
+  [
+    "render.render_target:param:parameters",
+    "both upstream examples pass the parameters table first, in place of `name`: an " +
+      "argument shifted into another slot rather than this one omitted, which an " +
+      "overload the declaration lacks would express",
+  ],
+  ["vmath.euler_to_quat:param:y", ARITY_OVERLOAD_REASON],
+  ["vmath.euler_to_quat:param:z", ARITY_OVERLOAD_REASON],
+]);
+
+export interface EvidencedSlot {
+  readonly key: string;
+  readonly emittedRequired: boolean;
+}
+
+// Every `<element>:param:<slot>` the ref-doc evidences as omissible, and whether
+// the emitted surface still requires it. A slot is emitted omissible when any
+// same-named declaration makes that position omissible under `isDocOptional`,
+// the emitter's own predicate, corrections included. Skipped functions are
+// hand-authored, so their slots are not the generator's to lose.
+export function evidencedOptionalSlots(
+  entry: Pick<ModuleManifestEntry, "doc" | "skipFunctions">,
+): EvidencedSlot[] {
+  const skipFunctions = new Set(entry.skipFunctions ?? []);
+  const functions = parseDefoldApiDoc(entry.doc).functions;
+  const overloadsByName = new Map<string, ApiFunction[]>();
+  for (const fn of functions) {
+    overloadsByName.set(fn.name, [...(overloadsByName.get(fn.name) ?? []), fn]);
+  }
+  const emittedRequired = new Map<string, boolean>();
+  for (const fn of functions) {
+    if (skipFunctions.has(stripNamespace(fn.name))) continue;
+    const overloads = overloadsByName.get(fn.name) ?? [fn];
+    fn.parameters.forEach((param, index) => {
+      if (param.isVararg === true) return;
+      if (!Object.values(OPTIONALITY_EVIDENCE).some((axis) => axis(fn, index, overloads))) return;
+      const omissible = overloads.some((other) => {
+        const slot = other.parameters[index];
+        return slot?.name === param.name && isDocOptional(slot, other.name);
+      });
+      const key = tableSlotKey(fn.name, "param", param.name);
+      emittedRequired.set(key, (emittedRequired.get(key) ?? false) || !omissible);
+    });
+  }
+  return [...emittedRequired].map(([key, required]) => ({ key, emittedRequired: required }));
+}
+
+// The evidenced slots the emitted declaration still requires, before exemptions.
+export function unmarkedOptionalSlots(
+  entry: Pick<ModuleManifestEntry, "doc" | "skipFunctions">,
+): string[] {
+  return evidencedOptionalSlots(entry)
+    .filter((slot) => slot.emittedRequired)
+    .map((slot) => slot.key);
+}
+
 function auditEntry(
   entry: ModuleManifestEntry,
   knownConstantFqns: ReadonlySet<string>,
@@ -99,9 +303,13 @@ function auditEntry(
   // multiReturn is fully recovered: emitReturn emits LuaMultiReturn<[...]> for
   // every >1-return function, so no documented multi-return is a loss anymore.
   const multiReturn = 0;
-  // optionalAsRequired is fully recovered: emitParameter expresses an interior
-  // doc-optional param as `| undefined`, so no doc-optional param is a loss.
-  const optionalAsRequired = 0;
+  // Every param upstream marks optional is recovered: emitParameter expresses an
+  // interior one as `| undefined` and a trailing one as `?`. What stays lost is a
+  // slot the ref-doc evidences as omissible without marking it, which neither an
+  // OPTIONAL_SLOT_CORRECTIONS entry nor a stated exemption accounts for.
+  const optionalAsRequired = unmarkedOptionalSlots(entry).filter(
+    (key) => !OPTIONALITY_EVIDENCE_EXEMPTIONS.has(key),
+  ).length;
   const unknown = new Set<string>();
 
   const constantFqns = new Set<string>();
@@ -394,7 +602,8 @@ function auditEntry(
       );
       // Interior doc-optional params (a required param follows) are no longer a
       // loss: emitParameter expresses them as `| undefined`, mirroring the
-      // emitted surface. optionalAsRequired stays in the report shape reading 0.
+      // emitted surface. optionalAsRequired counts the unmarked ones instead,
+      // through unmarkedOptionalSlots above.
     });
     for (const ret of returns) {
       const tableSlotCuration =
