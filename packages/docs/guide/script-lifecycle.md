@@ -125,7 +125,7 @@ At runtime Defold owns `self` (a userdata-backed table) and a script can populat
 
 `defineScript` and `defineGuiScript` both type `on_input` as `(self, action_id, action) => boolean | void`.
 
-- `action_id` is `Hash | undefined`; Defold uses `nil` for pointer movement.
+- `action_id` is `Hash | undefined`; Defold uses `nil` for pointer movement. The `== null` the examples above test it with is the loose form that narrows both spellings — and `undefined`, not `null`, is what you pass back into an engine slot ([passing absence](./typescript-gotchas.md#passing-absence-write-undefined-never-null)).
 - `action` is `InputAction` with optional fields such as `value`, `pressed`, `released`, `x`, `y`, `text`, `marked_text`, and `touch`.
 - `action.touch` entries are `InputTouch` values with fields such as `id`, `pressed`, `tap_count`, `x`, and `acc_x`.
 
