@@ -2187,13 +2187,20 @@ export function summaryFor(brief: string, description: string): string {
   return description.trim() !== "" ? description : brief;
 }
 
-// The one optionality predicate. Both emitted shapes read it — the trailing `?`
+export function isMarkedOptional(p: ApiParameter): boolean {
+  return p.isOptional || p.types.includes("nil");
+}
+
+// The one optionality predicate, in two halves: the ref-doc's own marking
+// (`isMarkedOptional`, which the correction provenance guards read alone to
+// tell which targets still need a correction) and the OPTIONAL_SLOT_CORRECTIONS
+// entries that override it. Both emitted shapes read it — the trailing `?`
 // through `trailingOptionalCutoff` and the interior `| undefined` through
 // `emitParameter` — so a correction threaded in here reaches both without a
 // second copy of the rule. The fidelity audit reads it too, to tell which slots
 // the emitted surface still makes required.
 export function isDocOptional(p: ApiParameter, elementName: string): boolean {
-  if (p.isOptional || p.types.includes("nil")) return true;
+  if (isMarkedOptional(p)) return true;
   return OPTIONAL_SLOT_CORRECTIONS.has(tableSlotKey(elementName, "param", p.name));
 }
 

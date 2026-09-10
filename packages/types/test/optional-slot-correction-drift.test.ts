@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
-import { loadApiTargets, loadTargetModules } from "../scripts/regen";
-import { type ApiParameter, parseDefoldApiDoc } from "../src/api-doc";
+import { loadApiTargets, MODULE_MANIFEST, VERSIONED_MODULE_MANIFEST } from "../scripts/regen";
 import { OPTIONAL_SLOT_CORRECTIONS } from "../src/emit-dts";
+import { correctionProvenance, retainedSurfaces } from "../src/optional-correction-provenance";
 import {
   enumerateDeclaredParameterSlots,
   mergeDeclaredParameterSlots,
@@ -33,12 +33,12 @@ const declaredSlots = mergeDeclaredParameterSlots(
 const target = loadApiTargets().find((candidate) => candidate.default === true);
 if (!target) throw new Error("api-targets.json: no default target");
 
-const upstreamParameters = new Map<string, readonly ApiParameter[]>();
-for (const entry of loadTargetModules(target)) {
-  for (const fn of parseDefoldApiDoc(entry.doc).functions) {
-    upstreamParameters.set(fn.name, fn.parameters);
-  }
-}
+const provenance = new Map(
+  correctionProvenance(
+    [...OPTIONAL_SLOT_CORRECTIONS.keys()],
+    retainedSurfaces(target.id, MODULE_MANIFEST, VERSIONED_MODULE_MANIFEST),
+  ).map((entry) => [entry.key, entry]),
+);
 
 interface CorrectionKey {
   readonly key: string;
@@ -84,31 +84,28 @@ describe("OPTIONAL_SLOT_CORRECTIONS reaches the shipped declarations", () => {
     expect(unreached).toEqual([]);
   });
 
-  test("every corrected slot still names a live upstream parameter", () => {
-    const dead: string[] = [];
-    for (const { key, element, slot } of corrections) {
-      const parameters = upstreamParameters.get(element);
-      if (!parameters) {
-        dead.push(`${key}: the ref-doc declares no ${element}`);
-        continue;
-      }
-      if (!parameters.some((parameter) => parameter.name === slot)) {
-        dead.push(`${key}: ${element}(${parameters.map((p) => p.name).join(", ")})`);
-      }
-    }
+  test("every corrected slot names a parameter in some retained target", () => {
+    const dead = corrections
+      .filter(({ key }) => (provenance.get(key)?.sightedIn.length ?? 0) === 0)
+      .map(
+        ({ key, element, slot }) =>
+          `${key}: no retained target declares ${element} with a ${slot} parameter`,
+      );
     expect(dead).toEqual([]);
   });
 
-  test("every corrected slot is one upstream still documents as required", () => {
-    // A correction is a disagreement with the ref-doc metadata. Once upstream
-    // marks the slot optional the entry steers nothing and must be deleted, not
-    // re-pinned — the same rule PROPERTY_TYPE_CORRECTIONS lives under.
+  test("every corrected slot is one some retained target still documents as required", () => {
+    // A correction is a disagreement with the ref-doc metadata. Once no retained
+    // target leaves the slot unmarked the entry steers nothing and must be
+    // deleted, not re-pinned — the same rule PROPERTY_TYPE_CORRECTIONS lives under.
     const redundant: string[] = [];
-    for (const { key, element, slot } of corrections) {
-      const parameter = upstreamParameters.get(element)?.find((p) => p.name === slot);
-      if (!parameter) continue;
-      if (parameter.isOptional || parameter.types.includes("nil")) {
-        redundant.push(`${key}: upstream already documents it as optional`);
+    for (const { key } of corrections) {
+      const entry = provenance.get(key);
+      if (!entry || entry.sightedIn.length === 0) continue;
+      if (entry.neededBy.length === 0) {
+        redundant.push(
+          `${key}: every retained target (${entry.markedIn.join(", ")}) already documents it as optional`,
+        );
       }
     }
     expect(redundant).toEqual([]);
