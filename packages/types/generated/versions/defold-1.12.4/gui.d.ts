@@ -1366,7 +1366,7 @@ declare global {
      * gui.set_texture(n, path);
      * ```
      */
-    function new_texture(texture_id: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string, flip: boolean): LuaMultiReturn<[boolean, number]>;
+    function new_texture(texture_id: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string, flip?: boolean): LuaMultiReturn<[boolean, number]>;
     /**
      * This is a callback-function, which is called by the engine when user input is sent to the instance of the gui component.
      * It can be used to take action on the input, e.g. modify the gui according to the input.
@@ -2229,7 +2229,7 @@ declare global {
      * });
      * ```
      */
-    function set_texture_data(texture: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string, flip: boolean): boolean;
+    function set_texture_data(texture: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string, flip?: boolean): boolean;
     /**
      * Sets the tracking value of a text node. This value is used to
      * adjust the vertical spacing of characters in the text.

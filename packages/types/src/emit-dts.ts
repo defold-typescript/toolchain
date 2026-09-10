@@ -288,6 +288,69 @@ export const PROPERTY_TYPE_CORRECTIONS: ReadonlyMap<string, PropertyTypeCorrecti
   ],
 ]);
 
+// A parameter the ref-doc metadata marks required while the same element's prose
+// or examples show it being omitted. `is_optional` is the only optionality
+// signal the emitter has, and upstream leaves it `False` on slots its own
+// examples skip — so the emitted declaration rejects the call the docs teach.
+//
+// Keyed `<element>:param:<slot>`, the shape `tableSlotKey` builds, so a
+// same-named slot on another element is untouched. The value is the upstream
+// evidence for that one entry: the example call that omits it, or the doc phrase
+// that names it optional. Both emitted shapes follow from one predicate — a
+// trailing slot becomes `slot?:`, an interior one `slot: T | undefined`.
+//
+// Demonstrated omissions only. `resource.set_texture`'s buffer and
+// `sys.load_buffer_async`'s status_callback read as optional but every upstream
+// example passes them, so neither is a correction candidate.
+export const OPTIONAL_SLOT_CORRECTIONS: ReadonlyMap<string, string> = new Map([
+  [
+    "resource.create_texture:param:buffer",
+    'example `resource.create_texture("/my_custom_texture.texturec", tparams)`; "optional buffer of precreated pixel data"',
+  ],
+  ["resource.create_texture_async:param:buffer", '"optional buffer of precreated pixel data"'],
+  [
+    "resource.create_texture_async:param:callback",
+    'example `resource.create_texture_async("/my_texture.texturec", tparams, tbuffer)`',
+  ],
+  [
+    "gui.new_texture:param:flip",
+    'example `gui.new_texture("orange_tx", w, h, "rgb", string.rep(orange, w * h))`',
+  ],
+  [
+    "gui.set_texture_data:param:flip",
+    'example `gui.set_texture_data("dynamic_tx", w, h, "rgb", string.rep(orange, w * h))`',
+  ],
+  ["sys.set_engine_throttle:param:cooldown", "example `sys.set_engine_throttle(false)`"],
+  [
+    "b2d.fixture.set_shape:param:update_mass",
+    '2 of 3 examples omit it; "The body mass is not updated unless update_mass is true"',
+  ],
+  [
+    "b2d.shape.ray_cast:param:max_fraction",
+    '"optional maximum translation fraction, defaults to 1"',
+  ],
+  ["iap.buy:param:options", '"optional parameters as properties"'],
+  ...(
+    [
+      "create_distance",
+      "create_mouse",
+      "create_prismatic",
+      "create_revolute",
+      "create_weld",
+      "create_wheel",
+      "create_friction",
+      "create_rope",
+      "create_pulley",
+      "create_gear",
+      "create_motor",
+      "create_filter",
+    ] as const
+  ).map(
+    (name) =>
+      [`b2d.joint.${name}:param:definition`, '"optional definition"'] as readonly [string, string],
+  ),
+]);
+
 // FQN-keyed allowlist of the `types.is_*` checks that genuinely narrow their
 // argument, mapped to the `DEFOLD_TYPE_MAP` token whose interface they prove.
 // Emitting these as user-defined type guards (`var_ is Vector3`) is the only way
@@ -2013,7 +2076,7 @@ function memberSignature(
 ): string {
   const original = prepared.original.parameters;
   const elementName = prepared.original.name;
-  const cutoff = trailingOptionalCutoff(original);
+  const cutoff = trailingOptionalCutoff(original, elementName);
   const varargIndex = original.findIndex(isVarargParameter);
   const positional = (varargIndex === -1 ? original : original.slice(0, varargIndex)).map((p, i) =>
     emitParameter(p, i, i >= cutoff, mapType, resolver, elementName, urlParameters),
@@ -2124,15 +2187,20 @@ export function summaryFor(brief: string, description: string): string {
   return description.trim() !== "" ? description : brief;
 }
 
-function isDocOptional(p: ApiParameter): boolean {
-  return p.isOptional || p.types.includes("nil");
+// The one optionality predicate. Both emitted shapes read it — the trailing `?`
+// through `trailingOptionalCutoff` and the interior `| undefined` through
+// `emitParameter` — so a correction threaded in here reaches both without a
+// second copy of the rule.
+function isDocOptional(p: ApiParameter, elementName: string): boolean {
+  if (p.isOptional || p.types.includes("nil")) return true;
+  return OPTIONAL_SLOT_CORRECTIONS.has(tableSlotKey(elementName, "param", p.name));
 }
 
-function trailingOptionalCutoff(params: readonly ApiParameter[]): number {
+function trailingOptionalCutoff(params: readonly ApiParameter[], elementName: string): number {
   let cutoff = params.length;
   for (let i = params.length - 1; i >= 0; i -= 1) {
     const p = params[i];
-    if (p && isDocOptional(p)) cutoff = i;
+    if (p && isDocOptional(p, elementName)) cutoff = i;
     else break;
   }
   return cutoff;
@@ -2230,7 +2298,7 @@ function emitParameter(
   // projection cannot mark it) keeps its optionality as `| undefined` — TSTL
   // lowers `undefined` to `nil`, the faithful call. Trailing optionals keep the
   // `?` form; required params are untouched.
-  const interiorOptional = !optional && isDocOptional(p) ? " | undefined" : "";
+  const interiorOptional = !optional && isDocOptional(p, elementName) ? " | undefined" : "";
   return `${name}${optional ? "?" : ""}: ${ts}${interiorOptional}`;
 }
 

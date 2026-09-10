@@ -51,6 +51,10 @@ declare global {
      * `socket` may be `undefined` (Lua `nil`), which addresses the current
      * game world, exactly as the runtime's own examples do.
      *
+     * The one-argument form's `urlstring` may likewise be `undefined` (Lua
+     * `nil`), which the ref-doc calls equivalent to `msg.url()` — the URL of the
+     * current script.
+     *
      * In the same world, address a sibling **relatively** — by bare id
      * (`msg.url("camera")`), absolute path (`msg.url("/camera")`), or
      * component (`msg.url("#main")`). The `socket:` prefix only crosses
@@ -60,6 +64,9 @@ declare global {
      * ```ts
      * // No-arg, then take the current game object's URL.
      * const self: Url = msg.url();
+     *
+     * // An `undefined` argument is the no-arg form spelled out.
+     * const alsoSelf: Url = msg.url(undefined);
      *
      * // A sibling in the same world — bare id, no socket prefix.
      * const sibling: Url = msg.url("camera");
@@ -78,7 +85,7 @@ declare global {
      * ```
      */
     function url(): Url;
-    function url(urlstring: SceneAddress): Url;
+    function url(urlstring: SceneAddress | undefined): Url;
     function url(
       socket: string | Hash | undefined,
       path: string | Hash,

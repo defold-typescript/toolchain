@@ -100,6 +100,15 @@ describe("transpile", () => {
     expect(result.lua).toMatch(/msg\.url\(\s*nil\s*,/);
   });
 
+  test("a single undefined msg.url argument type-checks and lowers to Lua nil", () => {
+    const source = ["export function here(): Url {", "  return msg.url(undefined);", "}", ""].join(
+      "\n",
+    );
+    const result = transpile(source);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toMatch(/msg\.url\(\s*nil\s*\)/);
+  });
+
   test("snapshots a Defold-shaped module using vmath and msg", () => {
     const source = [
       "export function move(): void {",

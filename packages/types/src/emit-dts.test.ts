@@ -30,7 +30,7 @@ import tilemapDoc from "../fixtures/tilemap_doc.json" with { type: "json" };
 import typesDoc from "../fixtures/types_doc.json" with { type: "json" };
 import vmathDoc from "../fixtures/vmath_doc.json" with { type: "json" };
 import urlParameterTable from "../url-parameters.json" with { type: "json" };
-import { type ApiFunction, type ApiModule, parseDefoldApiDoc } from "./api-doc";
+import { type ApiFunction, type ApiModule, type ApiParameter, parseDefoldApiDoc } from "./api-doc";
 import {
   ARBITRARY_TABLE_SLOTS,
   applyNestedFieldCurations,
@@ -42,6 +42,7 @@ import {
   inlineTableType,
   MAPPING_TABLE_SLOTS,
   NESTED_FIELD_CURATIONS,
+  OPTIONAL_SLOT_CORRECTIONS,
   OVERLOAD_COVERED_SKIPS,
   parseTableFields,
   recoverCallbackSignature,
@@ -621,6 +622,79 @@ describe("emitDeclarations", () => {
     expect(emitDeclarations(module)).toContain(
       "function fn(a: number | undefined, b: string): void;",
     );
+  });
+
+  describe("a slot OPTIONAL_SLOT_CORRECTIONS names", () => {
+    // Driven off the production table rather than a restated key, so an entry
+    // that is renamed or dropped moves these cases with it.
+    const correctedKey = [...OPTIONAL_SLOT_CORRECTIONS.keys()][0];
+    if (correctedKey === undefined) throw new Error("OPTIONAL_SLOT_CORRECTIONS is empty");
+    const [elementName, slotKind, slotName] = correctedKey.split(":");
+    if (elementName === undefined || slotName === undefined || slotKind !== "param") {
+      throw new Error(`OPTIONAL_SLOT_CORRECTIONS: malformed key ${correctedKey}`);
+    }
+    const namespace = elementName.slice(0, elementName.lastIndexOf("."));
+    const localName = elementName.slice(elementName.lastIndexOf(".") + 1);
+
+    const moduleWith = (parameters: ApiParameter[]): ApiModule => ({
+      namespace,
+      brief: "",
+      description: "",
+      functions: [{ name: elementName, brief: "", description: "", parameters, returnValues: [] }],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    });
+
+    const required = (name: string): ApiParameter => ({
+      name,
+      doc: "",
+      types: ["number"],
+      isOptional: false,
+    });
+
+    test("emits ? when it is trailing", () => {
+      const out = emitDeclarations(moduleWith([required("lead"), required(slotName)]));
+      expect(out).toContain(`function ${localName}(lead: number, ${slotName}?: number): void;`);
+    });
+
+    test("emits | undefined when a required slot follows it", () => {
+      // The interior projection lives in `emitParameter`, not in
+      // `trailingOptionalCutoff`. A correction wired to only the trailing
+      // cutoff would leave this arm consulting the undecorated ref-doc flag.
+      const out = emitDeclarations(moduleWith([required(slotName), required("tail")]));
+      expect(out).toContain(
+        `function ${localName}(${slotName}: number | undefined, tail: number): void;`,
+      );
+    });
+
+    test("leaves a slot the table does not name required", () => {
+      const out = emitDeclarations(moduleWith([required(`not_${slotName}`), required("tail")]));
+      expect(out).toContain(`function ${localName}(not_${slotName}: number, tail: number): void;`);
+    });
+
+    test("does not promote the same slot name on another element", () => {
+      const out = emitDeclarations({
+        namespace,
+        brief: "",
+        description: "",
+        functions: [
+          {
+            name: `${namespace}.not_${localName}`,
+            brief: "",
+            description: "",
+            parameters: [required("lead"), required(slotName)],
+            returnValues: [],
+          },
+        ],
+        variables: [],
+        constants: [],
+        properties: [],
+        typedefs: [],
+      });
+      expect(out).toContain(`function not_${localName}(lead: number, ${slotName}: number): void;`);
+    });
   });
 
   test("consecutive trailing optionals all emit ?", () => {
@@ -2393,7 +2467,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
     expect(out).toContain(`function finish(transaction: ${transaction}): void;`);
     expect(out).toContain(`function acknowledge(transaction: ${transaction}): void;`);
     expect(out).toContain(
-      "function buy(id: string, options: { request_id?: string; token?: string }): void;",
+      "function buy(id: string, options?: { request_id?: string; token?: string }): void;",
     );
   });
 

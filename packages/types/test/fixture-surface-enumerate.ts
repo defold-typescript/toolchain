@@ -150,3 +150,103 @@ export function enumerateDeclaredParameters(
   visit(sourceFile);
   return out;
 }
+
+export interface DeclaredParameterSlot {
+  /** The slot is omissible at every declaration that names it. */
+  readonly optional: boolean;
+  /** The slot's emitted type annotation, without the `?`. */
+  readonly typeText: string;
+}
+
+/**
+ * Every declared function parameter with the emitted optionality a caller sees,
+ * keyed by full dotted namespace path. Where
+ * {@link enumerateDeclaredParameters} answers only whether a slot is declared,
+ * this answers whether it can be omitted — the `?` form and an `| undefined`
+ * member of the annotation are both omissible, and they are the two shapes the
+ * emitter writes.
+ *
+ * Overloads merge conservatively: a slot counts omissible only when *every*
+ * signature that names it makes it so, so one widened overload cannot vouch for
+ * a sibling that stayed required. A reserved-name recovery
+ * (`function _new(); export { _new as new }`) is recorded under both the
+ * emitted and the aliased name.
+ */
+export function enumerateDeclaredParameterSlots(
+  source: string,
+  fileName = "surface.d.ts",
+): Map<string, Map<string, DeclaredParameterSlot>> {
+  const out = new Map<string, Map<string, DeclaredParameterSlot>>();
+  const sourceFile = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true);
+
+  const stack: string[] = [];
+  const aliases: { readonly prefix: string; readonly from: string; readonly to: string }[] = [];
+
+  const visit = (node: ts.Node): void => {
+    if (ts.isModuleDeclaration(node)) {
+      const isGlobalAugmentation = (node.flags & ts.NodeFlags.GlobalAugmentation) !== 0;
+      const named = ts.isIdentifier(node.name) && !isGlobalAugmentation;
+      if (named) stack.push(node.name.text);
+      if (node.body) visit(node.body);
+      if (named) stack.pop();
+      return;
+    }
+    if (ts.isModuleBlock(node)) {
+      for (const stmt of node.statements) visit(stmt);
+      return;
+    }
+    if (ts.isExportDeclaration(node) && node.exportClause && ts.isNamedExports(node.exportClause)) {
+      for (const element of node.exportClause.elements) {
+        if (element.propertyName) {
+          aliases.push({
+            prefix: stack.join("."),
+            from: element.propertyName.text,
+            to: element.name.text,
+          });
+        }
+      }
+      return;
+    }
+    if (ts.isFunctionDeclaration(node)) {
+      if (!node.name) return;
+      const key = [...stack, node.name.text].join(".");
+      const slots = out.get(key) ?? new Map<string, DeclaredParameterSlot>();
+      for (const parameter of node.parameters) {
+        if (!ts.isIdentifier(parameter.name)) continue;
+        const typeText = parameter.type ? parameter.type.getText() : "any";
+        const optional =
+          parameter.questionToken !== undefined ||
+          (parameter.type !== undefined && annotationAdmitsUndefined(parameter.type));
+        const previous = slots.get(parameter.name.text);
+        slots.set(parameter.name.text, {
+          optional: previous ? previous.optional && optional : optional,
+          typeText: previous ? `${previous.typeText} | ${typeText}` : typeText,
+        });
+      }
+      out.set(key, slots);
+      return;
+    }
+    ts.forEachChild(node, visit);
+  };
+
+  visit(sourceFile);
+
+  for (const alias of aliases) {
+    const from = alias.prefix ? `${alias.prefix}.${alias.from}` : alias.from;
+    const to = alias.prefix ? `${alias.prefix}.${alias.to}` : alias.to;
+    const slots = out.get(from);
+    if (slots && !out.has(to)) out.set(to, slots);
+  }
+
+  return out;
+}
+
+// A top-level `undefined` member of the annotation. Nested inside a table type
+// or a generic argument it says nothing about the slot itself, so only union
+// members at depth zero count.
+function annotationAdmitsUndefined(type: ts.TypeNode): boolean {
+  if (type.kind === ts.SyntaxKind.UndefinedKeyword) return true;
+  if (ts.isUnionTypeNode(type)) return type.types.some(annotationAdmitsUndefined);
+  if (ts.isParenthesizedTypeNode(type)) return annotationAdmitsUndefined(type.type);
+  return false;
+}

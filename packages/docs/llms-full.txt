@@ -8037,23 +8037,23 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_friction(body: Opaque<"b2Body">, fixture_index: number, friction: number): void; [since 1.13.0]
 - function set_restitution(body: Opaque<"b2Body">, fixture_index: number, restitution: number): void; [since 1.13.0]
 - function set_sensor(body: Opaque<"b2Body">, fixture_index: number, enabled: boolean): void; [since 1.13.0]
-- function set_shape(body: Opaque<"b2Body">, fixture_index: number, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, update_mass: boolean): void; [since 1.13.0]
+- function set_shape(body: Opaque<"b2Body">, fixture_index: number, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, update_mass?: boolean): void; [since 1.13.0]
 - function test_point(body: Opaque<"b2Body">, fixture_index: number, point: Vector3): boolean; [since 1.13.0]
 
 ### b2d.joint
 
-- function create_distance(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; length?: number; frequency?: number; damping_ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
-- function create_filter(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: Record<string | number, unknown>): Opaque<"b2Joint">; [since 1.13.0]
-- function create_friction(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; max_force?: number; max_torque?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
-- function create_gear(joint1: Opaque<"b2Joint">, joint2: Opaque<"b2Joint">, definition: { ratio?: number }): Opaque<"b2Joint">; [since 1.13.0]
-- function create_motor(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { linear_offset?: Vector3; angular_offset?: number; max_force?: number; max_torque?: number; correction_factor?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
-- function create_mouse(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { target?: Vector3; max_force?: number; frequency?: number; damping_ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
-- function create_prismatic(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; local_axis_a?: Vector3; reference_angle?: number; enable_limit?: boolean; lower_translation?: number; upper_translation?: number; enable_motor?: boolean; max_motor_force?: number; motor_speed?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
-- function create_pulley(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { ground_anchor_a?: Vector3; ground_anchor_b?: Vector3; local_anchor_a?: Vector3; local_anchor_b?: Vector3; length_a?: number; length_b?: number; ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
-- function create_revolute(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; reference_angle?: number; enable_limit?: boolean; lower_angle?: number; upper_angle?: number; enable_motor?: boolean; max_motor_torque?: number; motor_speed?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
-- function create_rope(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; max_length?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
-- function create_weld(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; reference_angle?: number; frequency?: number; damping_ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
-- function create_wheel(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; local_axis_a?: Vector3; enable_motor?: boolean; max_motor_torque?: number; motor_speed?: number; frequency?: number; damping_ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
+- function create_distance(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; length?: number; frequency?: number; damping_ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
+- function create_filter(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: Record<string | number, unknown>): Opaque<"b2Joint">; [since 1.13.0]
+- function create_friction(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; max_force?: number; max_torque?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
+- function create_gear(joint1: Opaque<"b2Joint">, joint2: Opaque<"b2Joint">, definition?: { ratio?: number }): Opaque<"b2Joint">; [since 1.13.0]
+- function create_motor(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: { linear_offset?: Vector3; angular_offset?: number; max_force?: number; max_torque?: number; correction_factor?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
+- function create_mouse(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: { target?: Vector3; max_force?: number; frequency?: number; damping_ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
+- function create_prismatic(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; local_axis_a?: Vector3; reference_angle?: number; enable_limit?: boolean; lower_translation?: number; upper_translation?: number; enable_motor?: boolean; max_motor_force?: number; motor_speed?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
+- function create_pulley(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: { ground_anchor_a?: Vector3; ground_anchor_b?: Vector3; local_anchor_a?: Vector3; local_anchor_b?: Vector3; length_a?: number; length_b?: number; ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
+- function create_revolute(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; reference_angle?: number; enable_limit?: boolean; lower_angle?: number; upper_angle?: number; enable_motor?: boolean; max_motor_torque?: number; motor_speed?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
+- function create_rope(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; max_length?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
+- function create_weld(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; reference_angle?: number; frequency?: number; damping_ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
+- function create_wheel(body_a: Opaque<"b2Body">, body_b: Opaque<"b2Body">, definition?: { local_anchor_a?: Vector3; local_anchor_b?: Vector3; local_axis_a?: Vector3; enable_motor?: boolean; max_motor_torque?: number; motor_speed?: number; frequency?: number; damping_ratio?: number; collide_connected?: boolean }): Opaque<"b2Joint">; [since 1.13.0]
 - function destroy(joint: Opaque<"b2Joint">): void; [since 1.13.0]
 - function enable_limit(joint: Opaque<"b2Joint">, enable: boolean): void; [since 1.13.0]
 - function enable_motor(joint: Opaque<"b2Joint">, enable: boolean): void; [since 1.13.0]
@@ -8184,7 +8184,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_shape(shape_id: Opaque<"b2Shape">): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; [since 1.13.0]
 - function get_world(shape_id: Opaque<"b2Shape">): Opaque<"b2World">; [since 1.13.0]
 - function is_valid(shape_id: Opaque<"b2Shape">): boolean; [since 1.13.0]
-- function ray_cast(shape_id: Opaque<"b2Shape">, origin: Vector3, translation: Vector3, max_fraction: number): { point: Vector3; normal: Vector3; fraction: number; iterations: number }; [since 1.13.0]
+- function ray_cast(shape_id: Opaque<"b2Shape">, origin: Vector3, translation: Vector3, max_fraction?: number): { point: Vector3; normal: Vector3; fraction: number; iterations: number }; [since 1.13.0]
 - function set_material(shape_id: Opaque<"b2Shape">, material: number): void; [since 1.13.0]
 - function set_shape(shape_id: Opaque<"b2Shape">, definition: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, update_mass: boolean): void; [since 1.13.0]
 - b2d.shape.SHAPE_TYPE_BOX: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_BOX" } [since 1.13.0]
@@ -8665,7 +8665,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function new_particlefx_node(pos: Vector3 | Vector4, particlefx: Hash | string): Opaque<"node">;
 - function new_pie_node(pos: Vector3 | Vector4, size: Vector3): Opaque<"node">;
 - function new_text_node(pos: Vector3 | Vector4, text: string): Opaque<"node">;
-- function new_texture(texture_id: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string, flip: boolean): LuaMultiReturn<[boolean, number]>;
+- function new_texture(texture_id: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string, flip?: boolean): LuaMultiReturn<[boolean, number]>;
 - function pick_node(node: Opaque<"node">, x: number, y: number): boolean;
 - function play_flipbook(node: Opaque<"node">, animation: string | Hash, complete_function?: (self: unknown, node: unknown) => void, play_properties?: { offset?: number; playback_rate?: number }): void;
 - function play_particlefx(node: Opaque<"node">, emitter_state_function?: (self: unknown, node: unknown, emitter: unknown, state: unknown) => void): void;
@@ -8714,7 +8714,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_slice9(node: Opaque<"node">, values: Vector4): void;
 - function set_text(node: Opaque<"node">, text: string | number): void;
 - function set_texture(node: Opaque<"node">, texture: string | Hash): void;
-- function set_texture_data(texture: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string, flip: boolean): boolean;
+- function set_texture_data(texture: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string, flip?: boolean): boolean;
 - function set_tracking(node: Opaque<"node">, tracking: number): void;
 - function set_visible(node: Opaque<"node">, visible: boolean): void;
 - function set_xanchor(node: Opaque<"node">, anchor: Opaque<"constant">): void;
@@ -8851,7 +8851,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### iap
 
 - function acknowledge(transaction: { ident?: string; state?: number; trans_ident?: string; date?: string; original_trans?: string; receipt?: string; signature?: string; user_id?: string }): void;
-- function buy(id: string, options: { request_id?: string; token?: string }): void;
+- function buy(id: string, options?: { request_id?: string; token?: string }): void;
 - function finish(transaction: { ident?: string; state?: number; trans_ident?: string; date?: string; original_trans?: string; receipt?: string; signature?: string; user_id?: string }): void;
 - function get_provider_id(): Opaque<"constant">;
 - function list(ids: string[], callback: (...args: unknown[]) => unknown): void;
@@ -8945,7 +8945,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - msg.post<K extends string>(receiver: SceneAddress | Url | Hash, message_id: K, message?: MessagePayload<K>): void
 - msg.post(receiver: SceneAddress | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void
 - msg.url(): Url
-- msg.url(urlstring: SceneAddress): Url
+- msg.url(urlstring: SceneAddress | undefined): Url
 - msg.url(socket: string | Hash | undefined, path: string | Hash, fragment: string | Hash): Url
 
 ### particlefx
@@ -9092,8 +9092,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function create_atlas(path: string, table: { texture?: string | Hash; animations?: { id?: string; width?: number; height?: number; frame_start?: number; frame_end?: number; playback?: Opaque<"constant">; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean }[]; geometries?: { id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean }[]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;
 - function create_buffer(path: string, table?: { buffer?: Opaque<"buffer">; transfer_ownership?: boolean }): Hash;
 - function create_sound_data(path: string, options?: { data?: string; filesize?: number; partial?: boolean }): Hash;
-- function create_texture(path: string, table: { type?: number; width?: number; height?: number; depth?: number; format?: number; flags?: number; max_mipmaps?: number; compression_type?: number }, buffer: Opaque<"buffer">): Hash;
-- function create_texture_async(path: string | Hash, table: { type?: number; width?: number; height?: number; depth?: number; format?: number; flags?: number; max_mipmaps?: number; compression_type?: number }, buffer: Opaque<"buffer">, callback: (...args: unknown[]) => unknown): LuaMultiReturn<[Hash, number]>;
+- function create_texture(path: string, table: { type?: number; width?: number; height?: number; depth?: number; format?: number; flags?: number; max_mipmaps?: number; compression_type?: number }, buffer?: Opaque<"buffer">): Hash;
+- function create_texture_async(path: string | Hash, table: { type?: number; width?: number; height?: number; depth?: number; format?: number; flags?: number; max_mipmaps?: number; compression_type?: number }, buffer?: Opaque<"buffer">, callback?: (...args: unknown[]) => unknown): LuaMultiReturn<[Hash, number]>;
 - function font(path?: string): Hash;
 - function get_atlas(path: Hash | string): { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: Opaque<"constant">; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] };
 - function get_buffer(path: Hash | string): Opaque<"buffer">;
@@ -9250,7 +9250,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function save(filename: string, table: Record<string | number, unknown>): void;
 - function serialize(table: Record<string | number, unknown>): string;
 - function set_connectivity_host(host: string): void;
-- function set_engine_throttle(enable: boolean, cooldown: number): void;
+- function set_engine_throttle(enable: boolean, cooldown?: number): void;
 - function set_error_handler(error_handler: (source: unknown, message: unknown, traceback: unknown) => void): void;
 - function set_render_enable(enable: boolean): void;
 - function set_update_frequency(frequency: number): void;
