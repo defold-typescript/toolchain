@@ -1,10 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join, relative, resolve } from "node:path";
 import { loadApiTargets, loadTargetModules } from "../scripts/regen";
 import { type ApiParameter, parseDefoldApiDoc } from "../src/api-doc";
 import { OPTIONAL_SLOT_CORRECTIONS } from "../src/emit-dts";
-import { enumerateDeclaredParameterSlots } from "./fixture-surface-enumerate";
+import {
+  enumerateDeclaredParameterSlots,
+  mergeDeclaredParameterSlots,
+} from "./fixture-surface-enumerate";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const GENERATED_DIR = resolve(PACKAGE_ROOT, "generated");
@@ -17,20 +20,15 @@ function declarationFiles(dir: string): string[] {
   });
 }
 
-// One slot map across every committed declaration the emitter writes. A later
-// file never overwrites an earlier one's entry for the same fqn, so a namespace
-// split across files still resolves.
-const declaredSlots = new Map<string, Map<string, { optional: boolean; typeText: string }>>();
-for (const path of declarationFiles(GENERATED_DIR)) {
-  for (const [fqn, slots] of enumerateDeclaredParameterSlots(readFileSync(path, "utf8"), path)) {
-    const existing = declaredSlots.get(fqn);
-    if (!existing) {
-      declaredSlots.set(fqn, slots);
-      continue;
-    }
-    for (const [name, slot] of slots) if (!existing.has(name)) existing.set(name, slot);
-  }
-}
+// One slot map across every committed declaration the emitter writes. A slot
+// counts omissible only when every copy that names it does, so a required
+// versioned copy reds whatever order the walk yields, and a namespace split
+// across files still resolves.
+const declaredSlots = mergeDeclaredParameterSlots(
+  declarationFiles(GENERATED_DIR).map((path) =>
+    enumerateDeclaredParameterSlots(readFileSync(path, "utf8"), relative(GENERATED_DIR, path)),
+  ),
+);
 
 const target = loadApiTargets().find((candidate) => candidate.default === true);
 if (!target) throw new Error("api-targets.json: no default target");
@@ -77,7 +75,11 @@ describe("OPTIONAL_SLOT_CORRECTIONS reaches the shipped declarations", () => {
         unreached.push(`${key}: ${element} declares no ${slot} parameter`);
         continue;
       }
-      if (!declared.optional) unreached.push(`${key}: emitted as ${slot}: ${declared.typeText}`);
+      if (!declared.optional) {
+        unreached.push(
+          `${key}: required in ${declared.requiredIn.join(", ")} as ${slot}: ${declared.typeText}`,
+        );
+      }
     }
     expect(unreached).toEqual([]);
   });
