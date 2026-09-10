@@ -183,7 +183,7 @@ declare global {
      * @param max_fraction - optional maximum translation fraction, defaults to 1
      * @returns hit table with `point`, `normal`, `fraction`, and `iterations`, or nil
      */
-    function ray_cast(shape_id: Opaque<"b2Shape">, origin: Vector3, translation: Vector3, max_fraction: number): { point: Vector3; normal: Vector3; fraction: number; iterations: number };
+    function ray_cast(shape_id: Opaque<"b2Shape">, origin: Vector3, translation: Vector3, max_fraction?: number): { point: Vector3; normal: Vector3; fraction: number; iterations: number };
     /**
      * Set shape material id.
      *
