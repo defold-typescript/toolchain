@@ -11,6 +11,10 @@ What changed in each published `defold-typescript` toolchain release.
 
 ## v0.33.1
 
+### Improved
+
+- **The gotchas page now says which absence spelling an engine slot accepts.** [typescript-gotchas](./typescript-gotchas.md) gains a worked passage on passing `undefined` — never `null` — to an optional argument, and the Lua-comparison and lifecycle pages point at it rather than leaving the `nil` collapse to read as permission to pass `null`.
+
 ### Fixed
 
 - **[`msg.url`](/api/msg)'s socket now accepts `undefined` for the current game world**, so the current-world form the API reference itself documents compiles; the two-argument call stays rejected.
