@@ -9,6 +9,12 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.33.1
+
+### Fixed
+
+- **[`msg.url`](/api/msg)'s socket now accepts `undefined` for the current game world**, so the current-world form the API reference itself documents compiles; the two-argument call stays rejected.
+
 ## v0.33.0
 
 ### Breaking

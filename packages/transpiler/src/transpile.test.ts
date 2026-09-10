@@ -86,6 +86,20 @@ describe("transpile", () => {
     expect(lua).not.toContain("go:set_position(");
   });
 
+  test("an undefined msg.url socket type-checks and lowers to Lua nil", () => {
+    const source = [
+      "export function door(): Url {",
+      "  return msg.url(undefined, hash('/door'), 'door.ts');",
+      "}",
+      "",
+    ].join("\n");
+    const result = transpile(source);
+    expect(result.diagnostics).toEqual([]);
+    // TSTL wraps a three-argument call, so match the `nil` first argument
+    // across whatever whitespace it inserts.
+    expect(result.lua).toMatch(/msg\.url\(\s*nil\s*,/);
+  });
+
   test("snapshots a Defold-shaped module using vmath and msg", () => {
     const source = [
       "export function move(): void {",
