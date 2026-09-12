@@ -60,5 +60,30 @@ iap.set_listener((self, transaction, error) => {
 `tsc` picks the surface up through the `"extensions"` entry in
 `compilerOptions.types`.
 
+## Extensions that extend an engine namespace
+
+An extension's docs are not limited to a namespace of its own. A `.script_api`
+whose top-level `name` is an engine namespace adds its members **to** that
+namespace rather than replacing it, so the engine's members and the extension's
+sit side by side on the same object.
+
+[extension-spine](https://github.com/defold/extension-spine) is the worked
+example: it ships three docs, giving one new `spine` namespace plus additions on
+the engine-owned `gui` and `resource`.
+
+```ts
+const node = gui.get_node("spineboy");
+
+// From the extension's spine_gui.script_api.
+gui.set_spine_skin(node, "default");
+
+// From the engine — same namespace, same node handle.
+gui.set_position(node, vmath.vector3(0, 0, 0));
+```
+
+The handle types line up because the materialized surface imports its branded
+engine types from the published `@defold-typescript/types/core-types` entry, so
+an extension's `Opaque<"node">` is the very same type `gui.get_node` returns.
+
 For the command itself — `--frozen`, version pinning, drift detection, and the
 cache location — see [Resolve](./resolve.md).

@@ -350,7 +350,11 @@ function mergePinnedRootPaths(
 // landed: `./core-types` at the root, `../core-types` one level down. Without
 // that re-export in the surface at all, the published subpath is the only target
 // that resolves.
-function retargetCoreTypes(contents: string, depth: number, surfaceHasCoreTypes: boolean): string {
+export function retargetCoreTypes(
+  contents: string,
+  depth: number,
+  surfaceHasCoreTypes: boolean,
+): string {
   const target = surfaceHasCoreTypes
     ? `${depth === 0 ? "./" : "../".repeat(depth)}core-types`
     : "@defold-typescript/types/core-types";

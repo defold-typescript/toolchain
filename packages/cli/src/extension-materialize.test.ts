@@ -40,6 +40,62 @@ function bundle(declarations: EmittedExtension[]): ExtensionDeclarations {
 const extensionsDir = (): string => path.join(cwd, ".defold-types", "extensions");
 
 describe("materializeExtensionDeclarations", () => {
+  // The emitter spells the brand import relative to `packages/types/generated/`,
+  // where the committed built-ins live. From `.defold-types/extensions/` that
+  // specifier names nothing, and under the scaffold's `skipLibCheck` the brand
+  // silently becomes `any` instead of erroring — so the surface has to name the
+  // published subpath instead.
+  test("retargets a declaration's core-type import to the published subpath", () => {
+    const contents = [
+      'import type { Opaque } from "../src/core-types";',
+      "declare global {",
+      "  namespace ext {",
+      '    function get(): Opaque<"node">;',
+      "  }",
+      "}",
+      "",
+    ].join("\n");
+
+    materializeExtensionDeclarations({ cwd, bundles: [bundle([decl("ext", contents)])] });
+
+    const written = readFileSync(path.join(extensionsDir(), "ext.d.ts"), "utf8");
+    expect(written).toContain('from "@defold-typescript/types/core-types"');
+    expect(written).not.toContain("/src/core-types");
+    expect(written).toBe(
+      contents.replace('"../src/core-types"', '"@defold-typescript/types/core-types"'),
+    );
+  });
+
+  test("writes everything but the core-type specifier byte-for-byte", () => {
+    const header = [
+      "/** @noSelfInFile */",
+      'import type { Opaque } from "../src/core-types";',
+      "",
+      "declare global {",
+      "  namespace ext {",
+      "    /** Doc comment with a ../src/core-types mention in prose. */",
+      '    function get(): Opaque<"node">;',
+      "  }",
+      "}",
+      "",
+    ].join("\n");
+    const plain = "declare global {\n  namespace bare {\n    function go(): void;\n  }\n}\n";
+
+    materializeExtensionDeclarations({
+      cwd,
+      bundles: [bundle([decl("ext", header), decl("bare", plain)])],
+    });
+
+    const dir = extensionsDir();
+    expect(readFileSync(path.join(dir, "ext.d.ts"), "utf8")).toBe(
+      header.replace('from "../src/core-types"', 'from "@defold-typescript/types/core-types"'),
+    );
+    expect(readFileSync(path.join(dir, "bare.d.ts"), "utf8")).toBe(plain);
+    expect(readFileSync(path.join(dir, "index.d.ts"), "utf8")).toBe(
+      'import "./bare";\nimport "./ext";\n\nexport {};\n',
+    );
+  });
+
   test("writes each namespace verbatim, a sorted barrel, and a faux package.json", () => {
     const bundles = [
       bundle([decl("zeta", "declare namespace zeta {}\n")]),

@@ -9,6 +9,12 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.33.2
+
+### Fixed
+
+- **A native extension's branded engine types now type as brands instead of silently becoming `any`.** The materialized extension surface named a brand import that resolved nowhere from where it was written, so under the scaffold's `skipLibCheck` every [`Hash`](/api/Hash), [`Url`](/api/Url), [`Vector3`](/api/Vector3) and node handle in an extension's signatures widened to `any` and stopped catching wrong arguments — worst on extensions like Spine, whose signatures are branded almost throughout. [Extensions](./extensions.md) also gains a section on extensions that add members to an engine-owned namespace.
+
 ## v0.33.1
 
 ### Improved
