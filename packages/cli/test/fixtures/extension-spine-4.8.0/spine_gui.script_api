@@ -1,0 +1,506 @@
+- name: gui
+  type: table
+  desc: Functions and constants for interacting with Spine models in GUI
+
+  members:
+    - name: new_spine_node
+      type: function
+      desc: Dynamically create a new spine node.
+      parameters:
+        - name: pos
+          type: vector3|vector4
+          desc: node position
+        - name: spine_scene
+          type: string|hash
+          desc: spine scene id
+      return:
+        - name: node
+          type: node
+          desc: new spine node
+
+
+    - name: play_spine_anim
+      type: function
+      desc: Starts a spine animation.
+      parameters:
+        - name: node
+          type: node
+          desc: spine node that should play the animation
+        - name: animation_id
+          type: string|hash
+          desc: id of the animation to play
+        - name: playback
+          type: constant
+          desc: playback mode
+                - `gui.PLAYBACK_ONCE_FORWARD`
+                - `gui.PLAYBACK_ONCE_BACKWARD`
+                - `gui.PLAYBACK_ONCE_PINGPONG`
+                - `gui.PLAYBACK_LOOP_FORWARD`
+                - `gui.PLAYBACK_LOOP_BACKWARD`
+                - `gui.PLAYBACK_LOOP_PINGPONG`
+        - name: play_properties
+          type: table
+          desc: optional table with properties
+          parameters:
+                - name: blend_duration
+                  type: number
+                  desc: The duration of a linear blend between the current and new animation
+
+                - name: offset
+                  type: number
+                  desc: The normalized initial value of the animation cursor when the animation starts playing
+
+                - name: playback_rate
+                  type: number
+                  desc: The rate with which the animation will be played. Must be positive
+
+                - name: track
+                  type: number
+                  desc: The track number for the animation (1-based). Defaults to track 1. Multiple tracks allow for layered animations.
+
+        - name: callback_function
+          type: function(self, node, message_id, message)
+          desc: function to call when the animation has completed or when spine events occur
+          parameters:
+            - name: self
+              type: object
+              desc: The context of the calling script
+
+            - name: node
+              type: node
+              desc: The spine node that completed the animation or triggered the event
+
+            - name: message_id
+              type: hash
+              desc: The name of the message ("spine_animation_done" or "spine_event")
+
+            - name: message
+              type: table
+              desc: A table that contains the response
+              parameters:
+                - name: animation_id
+                  type: hash
+                  desc: The animation that was completed or triggered the event
+
+                - name: track
+                  type: number
+                  desc: The track index of the animation
+
+                - name: playback
+                  type: constant
+                  desc: (spine_animation_done only!) The playback mode for the animation
+
+                - name: event_id
+                  type: hash
+                  desc: (spine_event only!) the event that was triggered.
+
+                - name: blend_weight
+                  type: float
+                  desc: (spine_event only!) Deprecated. Always 0.
+
+                - name: t
+                  type: float
+                  desc: (spine_event only!) the time at which the event occurred (seconds)
+
+                - name: integer
+                  type: int
+                  desc: (spine_event only!) a custom integer associated with the event (0 by default).
+
+                - name: float
+                  type: float
+                  desc: (spine_event only!) a custom float associated with the event (0 by default)
+
+                - name: string
+                  type: hash
+                  desc: (spine_event only!) a custom string associated with the event (hash("") by default)
+
+
+    - name: cancel_spine
+      type: function
+      desc: cancel a spine animation
+      parameters:
+        - name: node
+          type: node
+          desc: spine node that should cancel its animation
+        - name: options
+          type: table
+          desc: optional table with properties
+          parameters:
+                - name: track
+                  type: number
+                  desc: The track number to cancel (1-based). If not specified, cancels all tracks.
+
+
+    - name: get_spine_bone
+      type: function
+      desc: The returned node can be used for parenting and transform queries.
+            This function has complexity O(n), where n is the number of bones in the spine model skeleton.
+      parameters:
+        - name: node
+          type: node
+          desc: spine node to query for bone node
+        - name: bone_id
+          type: string|hash
+          desc: id of the corresponding bone
+      return:
+        - name: bone
+          type: node
+          desc: node corresponding to the spine bone
+
+
+    - name: set_spine_scene
+      type: function
+      desc: Set the spine scene on a spine node. The spine scene must be mapped to the gui scene in the gui editor.
+      parameters:
+        - name: node
+          type: node
+          desc: node to set spine scene for
+        - name: spine_scene
+          type: string|hash
+          desc: spine scene id
+
+
+    - name: get_spine_scene
+      type: function
+      desc: Returns the spine scene id of the supplied node.
+            This is currently only useful for spine nodes.
+            The returned spine scene must be mapped to the gui scene in the gui editor.
+      parameters:
+        - name: node
+          type: node
+          desc: node to get texture from
+      return:
+        - name: spine_scene
+          type: hash
+          desc: spine scene id
+
+
+    - name: set_spine_skin
+      type: function
+      desc: Sets the spine skin on a spine node.
+      parameters:
+        - name: node
+          type: node
+          desc: node to set the spine skin on
+        - name: spine_skin
+          type: string|hash
+          desc: spine skin id
+      examples:
+       - desc: |-
+            Change skin of a Spine node
+           
+            ```lua
+            function init(self)
+              gui.set_spine_skin(gui.get_node("spine_node"), "monster")
+            end
+            ```
+
+
+    - name: add_spine_skin
+      type: function
+      desc: Add a spine skin on a spine node to another skin on the same node.
+      parameters:
+        - name: node
+          type: node
+          desc: node having both skins
+        - name: spine_skin_a
+          type: string|hash
+          desc: spine skin id that recieves other skin
+        - name: spine_skin_b
+          type: string|hash
+          desc: spine skin id that will be added
+      examples:
+       - desc: |-
+            Add skin of a Spine node to another skin
+
+            ```lua
+            function init(self)
+              gui.add_spine_skin(gui.get_node("spine_node"), "monster_head", "monster_body")
+            end
+            ```
+
+
+    - name: copy_spine_skin
+      type: function
+      desc: Copy a spine skin on a spine node to another skin on the same node.
+      parameters:
+        - name: node
+          type: node
+          desc: node having both skins
+        - name: spine_skin_a
+          type: string|hash
+          desc: spine skin id that copies other skin
+        - name: spine_skin_b
+          type: string|hash
+          desc: spine skin id that will be copied
+      examples:
+       - desc: |-
+            Copy skin of a Spine node to another skin
+
+            ```lua
+            function init(self)
+              gui.copy_spine_skin(gui.get_node("spine_node"), "monster_head", "monster_body")
+            end
+            ```
+
+
+    - name: clear_spine_skin
+      type: function
+      desc: Clear a spine skin on a spine node of all attachments and constraints
+      parameters:
+        - name: node
+          type: node
+          desc: node having both skins
+        - name: spine_skin
+          type: string|hash
+          desc: spine skin id
+      examples:
+       - desc: |-
+            Clear skin of a Spine node
+
+            ```lua
+            function init(self)
+              gui.clear_spine_skin(gui.get_node("spine_node"), "monster")
+            end
+            ```
+
+
+    - name: get_spine_skin
+      type: function
+      desc: Gets the spine skin of a spine node
+      parameters:
+        - name: node
+          type: node
+          desc: node to get spine skin from
+      return:
+        - name: id
+          type: hash
+          desc: spine skin id, 0 if no explicit skin is set
+
+
+    - name: get_spine_animation
+      type: function
+      desc: Gets the playing animation on a spine node
+      parameters:
+        - name: node
+          type: node
+          desc: node to get spine animation from
+        - name: options
+          type: table
+          desc: optional table with properties
+          parameters:
+                - name: track
+                  type: number
+                  desc: The track number to get animation from (1-based). Defaults to track 1.
+      return:
+        - name: id
+          type: hash
+          desc: spine animation id, 0 if no animation is playing
+
+
+    - name: set_spine_cursor
+      type: function
+      desc: This is only useful for spine nodes. The cursor is normalized.
+      parameters:
+        - name: node
+          type: node
+          desc: spine node to set the cursor for
+        - name: cursor
+          type: number
+          desc: cursor value
+        - name: options
+          type: table
+          desc: optional table with properties
+          parameters:
+                - name: track
+                  type: number
+                  desc: The track number to set cursor for (1-based). Defaults to track 1.
+
+
+    - name: get_spine_cursor
+      type: function
+      desc: This is only useful for spine nodes. Gets the normalized cursor of the animation on a spine node.
+      parameters:
+        - name: node
+          type: node
+          desc: spine node to get the cursor for
+        - name: options
+          type: table
+          desc: optional table with properties
+          parameters:
+                - name: track
+                  type: number
+                  desc: The track number to get cursor from (1-based). Defaults to track 1.
+      return:
+        - name: cursor_value
+          type: number
+          desc: cursor value
+
+
+    - name: set_spine_playback_rate
+      type: function
+      desc: This is only useful for spine nodes. Sets the playback rate of the animation on a spine node. Must be positive.
+      parameters:
+        - name: node
+          type: node
+          desc: spine node to set the playback rate for
+        - name: playback_rate
+          type: number
+          desc: playback rate
+        - name: options
+          type: table
+          desc: optional table with properties
+          parameters:
+                - name: track
+                  type: number
+                  desc: The track number to set playback rate for (1-based). Defaults to track 1.
+
+
+    - name: get_spine_playback_rate
+      type: function
+      desc: This is only useful for spine nodes. Gets the playback rate of the animation on a spine node.
+      parameters:
+        - name: node
+          type: node
+          desc: spine node to get the playback rate for
+        - name: options
+          type: table
+          desc: optional table with properties
+          parameters:
+                - name: track
+                  type: number
+                  desc: The track number to get playback rate from (1-based). Defaults to track 1.
+      return:
+        - name: rate
+          type: number
+          desc: playback rate
+
+
+    - name: set_spine_attachment
+      type: function
+      desc: This is only useful for spine nodes. Sets an attachment to a slot on a spine node.
+      parameters:
+        - name: node
+          type: node
+          desc: spine node to set the slot for
+        - name: slot
+          type: string|hash
+          desc: slot name
+        - name: attachment
+          type: string|hash
+          desc: attachment name. May be nil.
+     
+
+    - name: set_spine_slot_color
+      type: function
+      desc: This is only useful for spine nodes. Sets a tint for all attachments on a slot
+      parameters:
+        - name: node
+          type: node
+          desc: spine node to set the slot for
+        - name: slot
+          type: string|hash
+          desc: slot name
+        - name: color
+          type: vector4
+          desc: target color.
+
+    - name: spine_physics_translate
+      type: function
+      desc: Apply a physics-based translation to the Spine GUI node.
+      parameters:
+        - name: node
+          type: node
+          desc: The Spine GUI node to translate.
+        - name: translation
+          type: vector3
+          desc: The translation vector to apply to the Spine GUI node.
+
+    - name: spine_physics_rotate
+      type: function
+      desc: Apply a physics-based rotation to the Spine GUI node.
+      parameters:
+        - name: node
+          type: node
+          desc: The Spine GUI node to rotate.
+        - name: center
+          type: vector3
+          desc: The center point around which to rotate.
+        - name: degrees
+          type: number
+          desc: The rotation angle in degrees.
+
+    - name: set_spine_ik_target_position
+      type: function
+      desc: Sets a static (vector3) target position of an inverse kinematic (IK) object.
+      parameters:
+        - name: node
+          type: node
+          desc: the Spine GUI node containing the object
+        - name: ik_constraint_id
+          type: string|hash
+          desc: id of the corresponding IK constraint object
+        - name: position
+          type: vector3
+          desc: target position
+      examples:
+       - desc: |-
+            The following example assumes that the Spine GUI node has id "spine_node".
+            
+            How to set the target IK position of the right_hand_constraint constraint object of the player object
+            
+            ```lua
+            function init(self)
+              local pos = vmath.vector3(1, 2, 0)
+              gui.set_spine_ik_target_position(gui.get_node("spine_node"), "right_hand_constraint", pos)
+            end
+            ```
+
+    - name: set_spine_ik_target
+      type: function
+      desc: Sets a GUI node as target position of an inverse kinematic (IK) object. As the target GUI node's position is updated, the constraint object is updated with the new position.
+      parameters:
+        - name: node
+          type: node
+          desc: the Spine GUI node containing the object
+        - name: ik_constraint_id
+          type: string|hash
+          desc: id of the corresponding IK constraint object
+        - name: target_node
+          type: node
+          desc: target GUI node
+      examples:
+       - desc: |-
+            The following example assumes that the Spine GUI node has id "spine_node".
+            
+            How to set the target IK position of the right_hand_constraint constraint object to follow the position of GUI node with id "target_node"
+            
+            ```lua
+            function init(self)
+              local spine_node = gui.get_node("spine_node")
+              local target_node = gui.get_node("target_node")
+              gui.set_spine_ik_target(spine_node, "right_hand_constraint", target_node)
+            end
+            ```
+
+    - name: reset_spine_ik_target
+      type: function
+      desc: Resets any previously set IK target of a Spine GUI node, the position will be reset to the original position from the spine scene.
+      parameters:
+        - name: node
+          type: node
+          desc: the Spine GUI node containing the object
+        - name: ik_constraint_id
+          type: string|hash
+          desc: id of the corresponding IK constraint object
+      examples:
+       - desc: |-
+            The following example assumes that the Spine GUI node has id "spine_node".
+            
+            A player no longer has an item in hand, that previously was controlled through IK, let's reset the IK of the right hand.
+            
+            ```lua
+            function player_lost_item(self)
+              gui.reset_spine_ik_target(gui.get_node("spine_node"), "right_hand_constraint")
+            end
+            ```
