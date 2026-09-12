@@ -149,12 +149,16 @@ function buildAmbientFiles(): Record<string, string> {
       'export type { Hash, Matrix4, Quaternion, Url, Vector, Vector3, Vector4 } from "./src/core-types";',
       "",
     ].join("\n"),
-    // Per-kind subpath entrypoints exist as package exports for the editor.
-    // Their namespaces are already seeded ambiently below; mirror slice A's
-    // generated `generateKindIndex` output by re-exporting only the matching
-    // factory, so a walled source's subpath import resolves to it and the
-    // call-site erasure fires (otherwise the import lowers to a broken
-    // `require("@defold-typescript/types/gui-script")`).
+    // Published subpath entrypoints that exist as package exports. The per-kind
+    // ones mirror slice A's generated `generateKindIndex` output by re-exporting
+    // only the matching factory, so a walled source's subpath import resolves to
+    // it and the call-site erasure fires (otherwise the import lowers to a broken
+    // `require("@defold-typescript/types/gui-script")`); their namespaces are
+    // already seeded ambiently below. The `core-types` entry mirrors the
+    // package's `exports` map so a materialized surface's published-subpath brand
+    // import resolves in-process. It re-exports rather than copies: a second copy
+    // would mint `unique symbol` brands that never unify with the package index's.
+    "node_modules/@defold-typescript/types/core-types.d.ts": 'export * from "./src/core-types";\n',
     "node_modules/@defold-typescript/types/script.d.ts":
       'export { defineScript } from "./src/lifecycle.js";\nexport type { ScriptProperties, ScriptProperty } from "./src/lifecycle.js";\n',
     "node_modules/@defold-typescript/types/gui-script.d.ts":
