@@ -1,7 +1,10 @@
 // The materialization slice of the `[dependencies]`-driven extension typing
 // pipeline: it takes the `resolveExtensionDeclarations` output (one
 // `ExtensionDeclarations` bundle per declared dependency) and writes each emitted
-// namespace into the gitignored sibling surface `.defold-types/extensions/`, then
+// namespace into the gitignored sibling surface `.defold-types/extensions/` —
+// verbatim apart from the core-type retarget, because the emitter spells that
+// import relative to `packages/types/generated/` rather than to the materialized
+// surface, where it would dangle. It then
 // additively points `tsconfig` at it. The extensions package is a sibling of the
 // engine `<surfaceId>/` surface so an engine re-materialization (which prunes
 // non-wanted `.d.ts` in its own dir) never clobbers it, and the two coexist under
@@ -12,7 +15,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync
 import * as path from "node:path";
 import type { ExtensionDeclarations } from "./extension-declarations";
 import { formatJsonLikeBiome } from "./format-json";
-import { ensureGitignoreLine, MATERIALIZED_ROOT } from "./materialize";
+import { ensureGitignoreLine, MATERIALIZED_ROOT, retargetCoreTypes } from "./materialize";
 
 const EXTENSIONS_DIR = "extensions";
 
@@ -31,11 +34,14 @@ export function materializeExtensionDeclarations(
 ): MaterializeExtensionDeclarationsResult {
   const { cwd, bundles } = opts;
 
-  // Flatten every bundle's declarations and dedup by namespace, last wins.
+  // Flatten every bundle's declarations and dedup by namespace, last wins. The
+  // retarget rides in here so the barrel, prune and dedup paths stay untouched;
+  // `surfaceHasCoreTypes: false` is the published-subpath arm, correct because
+  // the extensions dir mints no `core-types.d.ts` of its own.
   const byNamespace = new Map<string, string>();
   for (const bundle of bundles) {
     for (const { namespace, contents } of bundle.declarations) {
-      byNamespace.set(namespace, contents);
+      byNamespace.set(namespace, retargetCoreTypes(contents, 0, false));
     }
   }
 

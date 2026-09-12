@@ -64,4 +64,34 @@ describe("ambient surface smoke", () => {
     );
     expect(missing).toEqual([]);
   });
+
+  // The materialized extension surface imports brands by the *published*
+  // `@defold-typescript/types/core-types` subpath, so the virtual program has to
+  // resolve that specifier the way an installed package does. The assignability
+  // case is the one that reds on a seeded *copy*: copied `unique symbol` brands
+  // never unify with the package index's.
+  test("the published core-types subpath resolves for a user file", () => {
+    const source = [
+      'import type { Hash } from "@defold-typescript/types/core-types";',
+      "export function id(h: Hash): Hash {",
+      "  return h;",
+      "}",
+      "",
+    ].join("\n");
+    const result = transpile(source);
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  test("the core-types subpath and the package index name one brand", () => {
+    const source = [
+      'import type { Hash as SubpathHash } from "@defold-typescript/types/core-types";',
+      'import type { Hash as IndexHash } from "@defold-typescript/types";',
+      "export function widen(h: IndexHash): SubpathHash {",
+      "  return h;",
+      "}",
+      "",
+    ].join("\n");
+    const result = transpile(source);
+    expect(result.diagnostics).toEqual([]);
+  });
 });
