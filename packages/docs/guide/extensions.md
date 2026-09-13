@@ -85,5 +85,14 @@ The handle types line up because the materialized surface imports its branded
 engine types from the published `@defold-typescript/types/core-types` entry, so
 an extension's `Opaque<"node">` is the very same type `gui.get_node` returns.
 
+## Browsing Defold's own extensions
+
+The extensions Defold publishes on GitHub have reference pages under
+[Libraries](/libraries) › defold, one per `.script_api` doc, such as
+[iap](/api/iap) and [spine.gui](/api/spine.gui). Each page shows the release it
+was read from. That release only fixes what the page shows: which version your
+project depends on is still your choice in `game.project`, and `resolve` types
+whichever one you pick.
+
 For the command itself — `--frozen`, version pinning, drift detection, and the
 cache location — see [Resolve](./resolve.md).

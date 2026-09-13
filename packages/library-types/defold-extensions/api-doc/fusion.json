@@ -1,0 +1,1067 @@
+{
+  "info": {
+    "namespace": "fusion",
+    "brief": "Functions and constants for interacting with Photon Fusion",
+    "description": "Functions and constants for interacting with Photon Fusion"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "fusion.init",
+      "description": "Initialize Fusion.\n",
+      "parameters": [
+        {
+          "name": "app_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "app_version",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "protocol",
+          "doc": "One of wss, ws, tcp or udp\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.init_from_settings",
+      "description": "Initialize Fusion from game.project settings.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.connect",
+      "description": "Connect Fusion.\n",
+      "parameters": [
+        {
+          "name": "user",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.disconnect",
+      "description": "Disonnect Fusion.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.reconnect",
+      "description": "Reconnect Fusion.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.start",
+      "description": "Start Fusion sync.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.stop",
+      "description": "Stop Fusion sync.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.get_state",
+      "description": "Get connection state.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "state",
+          "doc": "The connection state\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.get_disconnect_cause",
+      "description": "Get disconnect cause.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "cause",
+          "doc": "The disconnect cause\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.join_or_create_room_random",
+      "description": "Join or create random room.\n",
+      "parameters": [
+        {
+          "name": "create_room_options",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "matchmaking_options",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.join_room_random",
+      "description": "Join random room.\n",
+      "parameters": [
+        {
+          "name": "matchmaking_options",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.join_room",
+      "description": "Join room.\n",
+      "parameters": [
+        {
+          "name": "room_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "join_room_options",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.join_or_create_room",
+      "description": "Join or create room.\n",
+      "parameters": [
+        {
+          "name": "room_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "create_room_options",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "join_room_options",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.create_room",
+      "description": "Create room.\n",
+      "parameters": [
+        {
+          "name": "room_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "create_room_options",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.leave_room",
+      "description": "Leave room.\n",
+      "parameters": [
+        {
+          "name": "will_come_back",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "send_auth_cookie",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.is_connected",
+      "description": "Check if Fusion is connected.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "connected",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.is_running",
+      "description": "Check if Fusion has config and is connected.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "running",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.is_started",
+      "description": "Check if Fusion is started. Fusion is considered started after a call to.\n`fusion.start()` has received a `EventOnFusionStart` event.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "started",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.is_in_room",
+      "description": "Check if Fusion is in a room.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "in_room",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.enable_debug",
+      "description": "Enable/disable debugging.\n",
+      "parameters": [
+        {
+          "name": "enable",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.create_map_object",
+      "description": "Create a map object.\n",
+      "parameters": [
+        {
+          "name": "map",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "owner_mode",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "Table with `properties` and `replication_mode` fields. The\nproperties field should be a id,property map with script ids and properties to\nsync. Replication mode should be one of the established `REPLICATION_MODE`\nconstants.\n",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.spawn",
+      "description": "Create a networked game object. This will spawn a game object in the same.\nWay as when calling factory.create(). The function will also register the spawned object with Fusion as if manually calling register_object()\n",
+      "parameters": [
+        {
+          "name": "factory_url",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "position",
+          "doc": "Initial position of created game object\n",
+          "types": [
+            "vector3"
+          ]
+        },
+        {
+          "name": "rotation",
+          "doc": "Initial rotation of created game object\n",
+          "types": [
+            "quat"
+          ]
+        },
+        {
+          "name": "map",
+          "doc": "The map to which this object belongs\n",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "owner_mode",
+          "doc": "Owner mode of spawned object\n",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "Table with `properties` and `replication_mode` fields. The\nproperties field should be a id,property map with script ids and properties to\nsync. Replication mode should be one of the established `REPLICATION_MODE`\nconstants.\n",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "id",
+          "doc": "Id of the spawned game object\n",
+          "types": [
+            "hash"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.despawn",
+      "description": "Destroy a networked object.\n",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.create_object",
+      "description": "Create an object.\n",
+      "parameters": [
+        {
+          "name": "factory_url",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "map",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "owner_mode",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.destroy_object",
+      "description": "Destroy a previously created object.\n",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.map_add",
+      "description": "Add map.\n",
+      "parameters": [
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "id",
+          "doc": "Map id\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.map_change",
+      "description": "Change map.\n",
+      "parameters": [
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "id",
+          "doc": "Map id\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.map_remove",
+      "description": "Remove map.\n",
+      "parameters": [
+        {
+          "name": "map",
+          "doc": "Map id\n",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.map_is_valid",
+      "description": "Check if map is valid.\n",
+      "parameters": [
+        {
+          "name": "map",
+          "doc": "Map id\n",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "valid",
+          "doc": "True if valid\n",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.send_rpc",
+      "description": "Send an RPC event. Events can be sent to a specific player or all players, and.\nTo a specific object or to all subscribers.\n",
+      "parameters": [
+        {
+          "name": "target_player",
+          "doc": "0 = all, specific PlayerId = targeted\n",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "target_object",
+          "doc": "Id of game object, nil for broadcast\n",
+          "types": [
+            "hash"
+          ]
+        },
+        {
+          "name": "event",
+          "doc": "",
+          "types": [
+            "hash"
+          ]
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "ok",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.subscribe_rpc",
+      "description": "Subscribe to RPC broadcast event. The events will be delivered as messages.\n",
+      "parameters": [
+        {
+          "name": "rpc_event",
+          "doc": "Event to subscribe to\n",
+          "types": [
+            "hash"
+          ]
+        },
+        {
+          "name": "id",
+          "doc": "Subscriber id\n",
+          "types": [
+            "hash"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.unsubscribe_rpc",
+      "description": "Unsubscribe from a subscribed RPC event.\n",
+      "parameters": [
+        {
+          "name": "rpc_event",
+          "doc": "Event to unsubscribe to\n",
+          "types": [
+            "hash"
+          ]
+        },
+        {
+          "name": "id",
+          "doc": "Which object should unsubscribe\n",
+          "types": [
+            "hash"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.on_event",
+      "description": "Set event listener.\n",
+      "parameters": [
+        {
+          "name": "listener",
+          "doc": "",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.get_local_player_id",
+      "description": "Get the player id of the local client\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "id",
+          "doc": "The player id of the local client\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.get_owner_id",
+      "description": "Get the player id of the current owner of an object\n",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Id of the object to get the owner for\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "owner_id",
+          "doc": "The player id of the object's owner\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.has_authority",
+      "description": "Check if this client has authority over a game object. Use this to decide if user input should be handled or not.\n",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "authority",
+          "doc": "Returns true if the client has authority\n",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.has_owner",
+      "description": "Check if an object has an owner\n",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Id of the object\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "has_owner",
+          "doc": "True if the object has an owner\n",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.want_authority",
+      "description": "Signal desire for the local client to own an object\n",
+      "parameters": [
+        {
+          "name": "claim_ownership",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "id",
+          "doc": "Id of the object to own\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.clear_owner_cooldown",
+      "description": "Explicitly clear the ownership cooldown\n",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Id of the object to clear cooldown for\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.respond_to_ownership_request",
+      "description": "Respond to a received ownership request\n",
+      "parameters": [
+        {
+          "name": "object",
+          "doc": "Id of the object\n",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "requester",
+          "doc": "Requesting player id\n",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "granted",
+          "doc": "True if the request is granted\n",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.set_room_send_rate",
+      "description": "Set the send rate of an object. This decided how much bandwidth to allocate\n",
+      "parameters": [
+        {
+          "name": "send_rate",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "id",
+          "doc": "Id of the object to send rate for\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.set_local_send_rate",
+      "description": "Set the local send rate divisor for an object. A value of `1` means the object sends every tick (highest rate). A value of `16` means it sends every 16th tick (lowest rate). This is a client-side optimization -- the object still exists on all clients but consumes less bandwidth when you are not the active authority.\n",
+      "parameters": [
+        {
+          "name": "send_rate",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "id",
+          "doc": "Id of the object to send rate for\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.reset_room_send_rate",
+      "description": "Reset the send rate of an object.\n",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Id of the object to reset send rate for\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.player_count",
+      "description": "Get player count\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "count",
+          "doc": "Number of players\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.is_master_client",
+      "description": "Get if this client is the room's master\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "master",
+          "doc": "True if this client is the room's master\n",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.get_rtt",
+      "description": "Get round trip time\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "rtt",
+          "doc": "Round trip time in seconds\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.get_network_time",
+      "description": "Get the network time\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "time",
+          "doc": "Network time\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.network_time_diff",
+      "description": "Get raw offset between server time and local time. A positive value means the server clock is ahead of the local clock.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "diff",
+          "doc": "Time diff\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.set_global_interest_key",
+      "description": "Set global visibility key for an object\n",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Object to set global visibility key for\n",
+          "types": [
+            "hash"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.set_area_interest_key",
+      "description": "Set area visibility key for an object\n",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "Area key\n",
+          "types": [
+            "hash"
+          ]
+        },
+        {
+          "name": "id",
+          "doc": "Object to set area visibility key for\n",
+          "types": [
+            "hash"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.set_user_interest_key",
+      "description": "Set user visibility key for an object\n",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "User key\n",
+          "types": [
+            "hash"
+          ]
+        },
+        {
+          "name": "id",
+          "doc": "Object to set user visibility key for\n",
+          "types": [
+            "hash"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.set_area_keys",
+      "description": "Set area visibility keys\n",
+      "parameters": [
+        {
+          "name": "keys",
+          "doc": "Area keys to set. Stored as a table of key value pairs (area_key->send_rate)\n",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.add_user_key",
+      "description": "Add a user visibility key to the set of local interest keys.\n",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "User key to add\n",
+          "types": [
+            "hash"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "fusion.remove_user_key",
+      "description": "Remove a user visibility key from the set of local interest keys.\n",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "User key to remove\n",
+          "types": [
+            "hash"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

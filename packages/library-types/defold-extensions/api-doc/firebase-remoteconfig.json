@@ -1,0 +1,178 @@
+{
+  "info": {
+    "namespace": "firebase",
+    "brief": "Functions and constants for interacting with Firebase",
+    "description": "Functions and constants for interacting with Firebase"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "firebase.remoteconfig.initialize",
+      "description": "Initializes Firebase Remote Config. Generates MSG_INITIALIZED or MSG_ERROR",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.remoteconfig.set_callback",
+      "description": "Sets a callback function for receiving events from the SDK. Call `firebase.remoteconfig.set_callback(nil)` to remove callback",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Callback function that is executed on any event in the SDK.",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.remoteconfig.fetch",
+      "description": "Fetches config data from the server. Generates MSG_FETCHED or MSG_ERROR",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.remoteconfig.activate",
+      "description": "Asynchronously activates the most recently fetched configs, so that the fetched key value pairs take effect. Generates MSG_ACTIVATED or MSG_ERROR",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.remoteconfig.fetch_and_activate",
+      "description": "Asynchronously fetches and then activates the fetched configs. Generates MSG_FETCHED and MSG_ACTIVATED or MSG_ERROR",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.remoteconfig.add_update_listener",
+      "description": "Starts listening for real-time config updates from Remote Config. Generates MSG_CONFIG_UPDATED or MSG_ERROR. Real-time updates automatically fetch new values but do not activate them; call `activate()` when the updated values should take effect.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.remoteconfig.remove_update_listener",
+      "description": "Stops the active real-time config update listener.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.remoteconfig.get_boolean",
+      "description": "Returns the value associated with a key, converted to a bool.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "Key of the value to be retrieved",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.remoteconfig.get_data",
+      "description": "Returns the value associated with a key, as a vector of raw byte-data.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "Key of the value to be retrieved",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.remoteconfig.get_number",
+      "description": "Returns the value associated with a key, converted to a double.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "Key of the value to be retrieved",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.remoteconfig.get_string",
+      "description": "Returns the value associated with a key, converted to a string.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "Key of the value to be retrieved",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.remoteconfig.get_keys",
+      "description": "Gets the set of all keys.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.remoteconfig.set_defaults",
+      "description": "Sets the default values. Generates MSG_DEFAULTS_SET or MSG_ERROR",
+      "parameters": [
+        {
+          "name": "defaults",
+          "doc": "Key-value pairs representing the default values",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.remoteconfig.set_minimum_fetch_interval",
+      "description": "Sets the minimum fetch interval. Generates MSG_SETTINGS_UPDATED or MSG_ERROR",
+      "parameters": [
+        {
+          "name": "minimum_fetch_interval",
+          "doc": "The minimum interval in seconds between successive fetch calls",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.remoteconfig.set_timeout",
+      "description": "Sets the timeout that specifies how long the client should wait for a connection to the Firebase Remote Config servers. Generates MSG_SETTINGS_UPDATED or MSG_ERROR",
+      "parameters": [
+        {
+          "name": "timeout",
+          "doc": "The timeout interval in seconds",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

@@ -259,9 +259,23 @@ export interface LibraryMeta {
   /**
    * `true` for a library this repo maintains via `luals-targets.json` (LuaLS
    * lane) or `script-api-targets.json` (script_api lane, e.g. bridge)
-   * (namespace absent from `moduleDir`); `false` for a vendored library.
+   * (namespace absent from `moduleDir`), or a Defold extension page read from
+   * its own `.script_api`; `false` for a vendored library.
    */
   authoredHere: boolean;
+  /**
+   * `import` for a Lua module a project requires; `ambient` for a Defold native
+   * extension, whose namespace is a global the engine registers, so the page
+   * tells the reader to call it with no import.
+   */
+  usage: "import" | "ambient";
+  /** The global an ambient extension is called through: its doc's declared namespace. */
+  globalNamespace?: string;
+  /**
+   * The engine namespace an ambient extension doc adds members to when it
+   * declares one (`extension-spine`'s `spine.gui` page declares `gui`).
+   */
+  extendsNamespace?: string;
 }
 
 export interface ApiPage {

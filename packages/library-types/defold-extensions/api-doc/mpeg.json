@@ -1,0 +1,189 @@
+{
+  "info": {
+    "namespace": "mpeg",
+    "brief": "Functions to play MPEG1 videos",
+    "description": "Functions to play MPEG1 videos"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "mpeg.open",
+      "description": "Open a video for decoding.",
+      "parameters": [
+        {
+          "name": "video",
+          "doc": "The video data as a buffer or string. Ownership of the buffer is not transferred.",
+          "types": [
+            "buffer",
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mpeg.close",
+      "description": "Close an opened video. This will release an memory allocated by the videoplayer.",
+      "parameters": [
+        {
+          "name": "handle",
+          "doc": "The video handle to close.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mpeg.decode",
+      "description": "Advance the internal timer by seconds and decode video/audio up to this time.",
+      "parameters": [
+        {
+          "name": "handle",
+          "doc": "The video handle to decode.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "seconds",
+          "doc": "Number of seconds to advance.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mpeg.write",
+      "description": "Write data to the internal stream buffer of a video started with stream(). Use the `streaming_buffer_bytes_remaining` and `streaming_buffer_capacity` to determine how much data to write to the buffer.",
+      "parameters": [
+        {
+          "name": "handle",
+          "doc": "The video handle to write to.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "data",
+          "doc": "Bytes with stream data.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "bytes_written",
+          "doc": "The number of written bytes or nil if writing failed.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "error",
+          "doc": "Error message if writing failed for some reason.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mpeg.seek",
+      "description": "Seek to the specified time. Will seek to the last intra frame just before the desired time.",
+      "parameters": [
+        {
+          "name": "handle",
+          "doc": "The video handle to seek on.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "time",
+          "doc": "Time to seek to.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "seek_exact",
+          "doc": "If value is true the function will seek to the exact time, otherwise it will seek to the last intra frame just before the desired time. Exact seeking can be slow, because all frames up to the seeked one have to be decoded on top of the previous intra frame. Defaults to false.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mpeg.rewind",
+      "description": "Rewind video to the beginning.",
+      "parameters": [
+        {
+          "name": "handle",
+          "doc": "The video handle to rewind.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mpeg.get_frame",
+      "description": "Get the video frame buffer. The video frame buffer will be updated when decode() is called and enough data has been decoded to produce a frame.",
+      "parameters": [
+        {
+          "name": "handle",
+          "doc": "The video handle to get frame buffer for.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "frame",
+          "doc": "The decoded video frame buffer or nil if no video frame buffer is available. The ownership of the buffer is not transferred to the caller.",
+          "types": [
+            "buffer"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "mpeg.get_info",
+      "description": "Get information about an opened video.",
+      "parameters": [
+        {
+          "name": "handle",
+          "doc": "The video to get info for.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "info",
+          "doc": "Video information",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    }
+  ]
+}

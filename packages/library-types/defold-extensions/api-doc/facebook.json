@@ -1,0 +1,269 @@
+{
+  "info": {
+    "namespace": "facebook",
+    "brief": "Functions and constants for interacting with Facebook APIs",
+    "description": "Functions and constants for interacting with Facebook APIs"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "facebook.login_with_permissions",
+      "description": "Login to Facebook and request a set of publish permissions.\nThe user is prompted to authorize the application using the login dialog of the specific platform. Even if the user is already logged in to Facebook this function can still be used to request additional publish permissions.\nA comprehensive list of permissions can be found in the [Facebook permissions](https://developers.facebook.com/docs/facebook-login/permissions) documentation, as well as in their [guide to best practices for login management](https://developers.facebook.com/docs/facebook-login/best-practices).",
+      "parameters": [
+        {
+          "name": "permissions",
+          "doc": "table with the requested publish permission strings.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "audience",
+          "doc": "The audience that should be able to see the publications. Can be any of\n- `facebook.AUDIENCE_NONE`\n- `facebook.AUDIENCE_ONLYME`\n- `facebook.AUDIENCE_FRIENDS`\n- `facebook.AUDIENCE_EVERYONE`",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "Callback function that is executed when the permission request dialog is closed.",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "facebook.login_with_tracking_preference",
+      "description": "iOS ONLY. Login to Facebook and request a set of permissions. Allows developers to signal that a login is limited in terms of tracking users.\nThe user is prompted to authorize the application using the login dialog of the specific platform. Even if the user is already logged in to Facebook this function can still be used to request additional publish permissions.\nA comprehensive list of permissions can be found in the [Facebook permissions](https://developers.facebook.com/docs/facebook-login/permissions) documentation, as well as in their [guide to best practices for login management](https://developers.facebook.com/docs/facebook-login/best-practices). For Limited Login the list of permissions can be found in the [Permissions in Limited Login](https://developers.facebook.com/docs/facebook-login/limited-login/permissions) documentation.",
+      "parameters": [
+        {
+          "name": "login_tracking",
+          "doc": "The tracking type for the login. Can be any of\n- `facebook.LOGIN_TRACKING_LIMITED`\n- `facebook.LOGIN_TRACKING_ENABLED`",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "permissions",
+          "doc": "table with the requested publish permission strings.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "crypto_nonce",
+          "doc": "Nonce that the configuration was created with. A unique nonce will be used if none is provided to the factory method.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "Callback function that is executed when the permission request dialog is closed.",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "facebook.logout",
+      "description": "Logout from Facebook",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "facebook.set_default_audience",
+      "description": "iOS ONLY. The audience that should be able to see the publications. Should be called before `facebook.login_with_tracking_preference()`; Can be any of\n- `facebook.AUDIENCE_NONE`\n- `facebook.AUDIENCE_ONLYME`\n- `facebook.AUDIENCE_FRIENDS`\n- `facebook.AUDIENCE_EVERYONE`",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "facebook.get_current_authentication_token",
+      "description": "iOS ONLY. Get the current AuthenticationToken.\nThis function returns the currently stored authentication token after a previous successful login. If it returns nil no access token exists and you need to perform a login to get the wanted permissions.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "authentication_token",
+          "doc": "the authentication token or nil if the user is not logged in",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "facebook.get_current_profile",
+      "description": "iOS ONLY. Get the users [FBSDKProfile.currentProfile](https://developers.facebook.com/docs/facebook-login/limited-login/ios/). [Reading From Profile Helper Class](https://developers.facebook.com/docs/facebook-login/limited-login/permissions/profile-helper)",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "current_profile",
+          "doc": "After your application receives the logged-in user’s authentication token, you can use this function to read information that user has granted to your application.",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "facebook.init",
+      "description": "Initialize Facebook SDK (if facebook.autoinit is 0 in game.project)",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "facebook.access_token",
+      "description": "Get the current Facebook access token.\nThis function returns the currently stored access token after a previous successful login. If it returns nil no access token exists and you need to perform a login to get the wanted permissions.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "token",
+          "doc": "the access token or nil if the user is not logged in",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "facebook.permissions",
+      "description": "Get the currently granted permissions.\nThis function returns a table with all the currently granted permission strings.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "permissions",
+          "doc": "The permissions",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "facebook.post_event",
+      "description": "Post an event to Facebook Analytics\nThis function will post an event to Facebook Analytics where it can be used in the Facebook Insights system.",
+      "parameters": [
+        {
+          "name": "event",
+          "doc": "An event can either be one of the predefined constants below or a text string which can be used to define a custom event that is registered with Facebook Analytics.\n- `facebook.EVENT_ACHIEVED_LEVEL` - `facebook.EVENT_ADDED_PAYMENT_INFO` - `facebook.EVENT_ADDED_TO_CART` - `facebook.EVENT_ADDED_TO_WISHLIST` - `facebook.EVENT_COMPLETED_REGISTRATION` - `facebook.EVENT_COMPLETED_TUTORIAL` - `facebook.EVENT_INITIATED_CHECKOUT` - `facebook.EVENT_PURCHASED` - `facebook.EVENT_RATED` - `facebook.EVENT_SEARCHED` - `facebook.EVENT_SPENT_CREDITS` - `facebook.EVENT_TIME_BETWEEN_SESSIONS` - `facebook.EVENT_UNLOCKED_ACHIEVEMENT` - `facebook.EVENT_VIEWED_CONTENT`",
+          "types": []
+        },
+        {
+          "name": "value",
+          "doc": "A numeric value for the event. This should represent the value of the event, such as the level achieved, price for an item or number of orcs killed.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "params",
+          "doc": "Optional table with parameters and their values. A key in the table can either be one of the predefined constants below or a text which can be used to define a custom parameter.\n- `facebook.PARAM_CONTENT_ID` - `facebook.PARAM_CONTENT_TYPE` - `facebook.PARAM_CURRENCY` - `facebook.PARAM_DESCRIPTION` - `facebook.PARAM_LEVEL` - `facebook.PARAM_MAX_RATING_VALUE` - `facebook.PARAM_NUM_ITEMS` - `facebook.PARAM_PAYMENT_INFO_AVAILABLE` - `facebook.PARAM_REGISTRATION_METHOD` - `facebook.PARAM_SEARCH_STRING` - `facebook.PARAM_SOURCE_APPLICATION` - `facebook.PARAM_SUCCESS`",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "facebook.enable_event_usage",
+      "description": "Enable event usage with Facebook Analytics This function will enable event usage for Facebook Analytics which means that Facebook will be able to use event data for ad-tracking.\n[icon:attention] Event usage cannot be controlled and is always enabled for the Facebook Canvas platform, therefore this function has no effect on Facebook Canvas.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "facebook.disable_event_usage",
+      "description": "Disable event usage with Facebook Analytics This function will disable event usage for Facebook Analytics which means that Facebook won't be able to use event data for ad-tracking. Events will still be sent to Facebook for insights.\n[icon:attention] Event usage cannot be controlled and is always enabled for the Facebook Canvas platform, therefore this function has no effect on Facebook Canvas.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "facebook.enable_advertiser_tracking",
+      "description": "Enable advertiser tracking This function will set AdvertiserTrackingEnabled (the 'ATE' flag) to true on iOS, to inform Audience Network to use the data to deliver personalized ads for users on iOS 14 and above.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "facebook.disable_advertiser_tracking",
+      "description": "Disable advertiser tracking This function will set AdvertiserTrackingEnabled (the 'ATE' flag) to false on iOS, to inform Audience Network not to use the data to deliver personalized ads for users on iOS 14 and above.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "facebook.show_dialog",
+      "description": "Show facebook web dialog\nDisplay a Facebook web dialog of the type specified in the `dialog` parameter.\n\nThe `param` table should be set up according to the requirements of each dialog type. Note that some parameters are mandatory. Below is the list of available dialogs and where to find Facebook's developer documentation on parameters and response data.\n\n`\"apprequests\"`\nShows a Game Request dialog. Game Requests allows players to invite their friends to play a game. Available parameters\n- [type:string] `title`\n- [type:string] `message`\n- [type:number] `action_type`\n- [type:number] `filters`\n- [type:string] `data`\n- [type:string] `object_id`\n- [type:table] `suggestions`\n- [type:table] `recipients`\n- [type:string] `to`\n\n\nOn success, the \"result\" table parameter passed to the callback function will include the following fields\n- [type:string] `request_id`\n- [type:table] `to`\n\n[Details for each parameter](https://developers.facebook.com/docs/games/services/gamerequests/v2.6#dialogparameters)\n\n`\"feed\"`\nThe Feed Dialog allows people to publish individual stories to their timeline.\n\n- [type:string] `caption`\n- [type:string] `description`\n- [type:string] `picture`\n- [type:string] `link`\n- [type:table] `people_ids`\n- [type:string] `place_id`\n- [type:string] `ref`\n\n\nOn success, the \"result\" table parameter passed to the callback function will include the following fields\n- [type:string] `post_id`\n\n[Details for each parameter](https://developers.facebook.com/docs/sharing/reference/feed-dialog/v2.6#params)\n\n`\"appinvite\"`\nThe App Invite dialog is available only on iOS and Android. Note that the `url` parameter corresponds to the appLinkURL (iOS) and setAppLinkUrl (Android) properties.\n- [type:string] `url`\n- [type:string] `preview_image`\n[Details for each parameter](https://developers.facebook.com/docs/reference/ios/current/class/FBSDKAppInviteContent)",
+      "parameters": [
+        {
+          "name": "dialog",
+          "doc": "Dialog to show\n- `\"apprequests\"`\n- `\"feed\"`\n- `\"appinvite\"`",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "param",
+          "doc": "table with dialog parameters",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "Callback function that is called when the dialog is closed.",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "facebook.get_version",
+      "description": "Get the version of the Facebook SDK used by the extension.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "version",
+          "doc": "The Facebook SDK version",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "facebook.deferred_deep_link",
+      "description": "Allows receiving deferred deep link URL and parameters.\n[More info about Referred Deep Links](https://developers.facebook.com/docs/app-ads/deep-linking/)",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Callback function that is called when information is ready.",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

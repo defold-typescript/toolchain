@@ -1,0 +1,237 @@
+{
+  "info": {
+    "namespace": "pad",
+    "brief": "Functionality to work with Play Asset Delivery and the AssetPackManager",
+    "description": "Functionality to work with Play Asset Delivery and the AssetPackManager"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "pad.cancel",
+      "description": "Requests to cancel the download of the specified asset packs.",
+      "parameters": [
+        {
+          "name": "pack_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pad.fetch",
+      "description": "Requests to download the specified asset pack.",
+      "parameters": [
+        {
+          "name": "pack_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pad.remove_pack",
+      "description": "Deletes the specified asset pack from the internal storage of the app.",
+      "parameters": [
+        {
+          "name": "pack_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pad.get_pack_state",
+      "description": "Requests download state and details for the specified asset pack. This is an asynchronous function and will send a `PACK_STATE_UPDATED` event once the new state is available.",
+      "parameters": [
+        {
+          "name": "pack_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pad.get_pack_location",
+      "description": "Returns the location of the specified asset pack on the device or an empty string if this pack is not downloaded.",
+      "parameters": [
+        {
+          "name": "pack_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "g",
+          "doc": "",
+          "types": [
+            "strin"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pad.get_pack_bytes_downloaded",
+      "description": "Returns the total number of bytes already downloaded for the pack. Note that you must have called the `get_pack_state()` function first and wait for a `PACK_STATE_UPDATED` event before calling this function.",
+      "parameters": [
+        {
+          "name": "pack_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "d",
+          "doc": "",
+          "types": [
+            "bytes_downloade"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pad.get_pack_error_code",
+      "description": "Returns the error code for the pack, if Play has failed to download the pack. Note that you must have called the `get_pack_state()` function first and wait for a `PACK_STATE_UPDATED` event before calling this function.",
+      "parameters": [
+        {
+          "name": "pack_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "e",
+          "doc": "",
+          "types": [
+            "error_cod"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pad.get_pack_status",
+      "description": "Returns the download status of the pack. Note that you must have called the `get_pack_state()` function first and wait for a `PACK_STATE_UPDATED` event before calling this function.",
+      "parameters": [
+        {
+          "name": "pack_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "s",
+          "doc": "",
+          "types": [
+            "statu"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pad.get_pack_total_bytes_to_download",
+      "description": "Returns the total size of the pack in bytes. Note that you must have called the `get_pack_state()` function first and wait for a `PACK_STATE_UPDATED` event before calling this function.",
+      "parameters": [
+        {
+          "name": "pack_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "d",
+          "doc": "",
+          "types": [
+            "bytes_to_downloa"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pad.get_pack_transfer_progress_percentage",
+      "description": "Returns the percentage of the asset pack already transferred to the app. Note that you must have called the `get_pack_state()` function first and wait for a `PACK_STATE_UPDATED` event before calling this function.",
+      "parameters": [
+        {
+          "name": "pack_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "r",
+          "doc": "",
+          "types": [
+            "numbe"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pad.show_confirmation_dialog",
+      "description": "Shows a dialog that asks the user for consent to download packs Shows a dialog that asks the user for consent to download packs that are currently in either the AssetPackStatus.REQUIRES_USER_CONFIRMATION state or the AssetPackStatus.WAITING_FOR_WIFI state. Will return result in event listener.",
+      "parameters": [
+        {
+          "name": "pack_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "pad.set_listener",
+      "description": "Set listener to receive events",
+      "parameters": [
+        {
+          "name": "listener",
+          "doc": "The function to call (self, event)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

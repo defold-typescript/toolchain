@@ -389,14 +389,28 @@ function libraryMetaBlock(meta: LibraryMeta, hasGlobals: boolean): string[] {
   const step1 = releasesUrl
     ? `Pick a release from [${repo} releases](${releasesUrl}) and add its **Source code (zip)** URL (or a packaged \`.zip\` asset, if the library ships one) to \`game.project\` under \`[project]\` \`dependencies\``
     : "Pick a release from the library's GitHub repository and add its **Source code (zip)** URL (or a packaged `.zip` asset, if the library ships one) to `game.project` under `[project]` `dependencies`";
+  // A native extension registers its namespace as a Lua global, so step 3 names
+  // that global instead of an import a user could not write.
+  const step3 =
+    meta.usage === "ambient"
+      ? [
+          `  3. Call it through the global \`${meta.globalNamespace}\` — no import.${
+            meta.extendsNamespace
+              ? ` It adds members to the engine \`${meta.extendsNamespace}\` namespace.`
+              : ""
+          }`,
+        ]
+      : [
+          "  3. Import it under a namespace alias of your choice:",
+          "     ```ts",
+          `     ${meta.importString}`,
+          "     ```",
+        ];
   return [
     head,
     `  1. ${step1}, then **Fetch Libraries** in the Defold editor.`,
     "  2. Run `bunx @defold-typescript/cli resolve` to materialize its types.",
-    "  3. Import it under a namespace alias of your choice:",
-    "     ```ts",
-    `     ${meta.importString}`,
-    "     ```",
+    ...step3,
     // A fork like `boom` or `deftest` publishes most of its surface outside the
     // `declare module` block, so the import above reaches only the symbols that
     // carry no marker; without this the page reads as if it reached them all.

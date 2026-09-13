@@ -1,0 +1,54 @@
+{
+  "info": {
+    "namespace": "safearea",
+    "brief": "Defold native extension that will change the view/render of a game to fit into the safe area on iPhones and Android(API 28+) with notch.",
+    "description": "Defold native extension that will change the view/render of a game to fit into the safe area on iPhones and Android(API 28+) with notch."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "safearea.set_background_color",
+      "description": "set background color in runtime",
+      "parameters": [
+        {
+          "name": "color",
+          "doc": "Color will be used as background color.",
+          "types": [
+            "vector4"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "safearea.get_insets",
+      "description": "returns table with top, left, right, bottom values of insets and status",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "insets",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "safearea.get_corners_radius",
+      "description": "returns a table with `top_left`, `top_right`, `bottom_left`, and `bottom_right` values of rounded corners and status.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "corners",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    }
+  ]
+}

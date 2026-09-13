@@ -1,0 +1,236 @@
+{
+  "info": {
+    "namespace": "firebase",
+    "brief": "Functions and constants for interacting with Firebase",
+    "description": "Functions and constants for interacting with Firebase"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "firebase.analytics.initialize",
+      "description": "Initialise analytics",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.analytics.set_callback",
+      "description": "Sets a callback function for receiving events from the SDK. Call `firebase.analytics.set_callback(nil)` to remove callback",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Callback function that is executed on any event in the SDK.",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.analytics.log",
+      "description": "Log an event without parameters.",
+      "parameters": [
+        {
+          "name": "event_name",
+          "doc": "Event name",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.analytics.log_string",
+      "description": "Log an event with one string parameter.",
+      "parameters": [
+        {
+          "name": "event_name",
+          "doc": "Event name",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "param_name",
+          "doc": "Parameter name",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "param",
+          "doc": "Parameter value",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.analytics.log_int",
+      "description": "Log an event with one integer parameter.",
+      "parameters": [
+        {
+          "name": "event_name",
+          "doc": "Event name",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "param_name",
+          "doc": "Parameter name",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "param",
+          "doc": "Parameter value",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.analytics.log_number",
+      "description": "Log an event with one float parameter.",
+      "parameters": [
+        {
+          "name": "event_name",
+          "doc": "Event name",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "param_name",
+          "doc": "Parameter name",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "param",
+          "doc": "Parameter value",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.analytics.log_table",
+      "description": "Log an event with table parameters.",
+      "parameters": [
+        {
+          "name": "event_name",
+          "doc": "Event name",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "parameters",
+          "doc": "Table with parameters (key-value pairs)",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.analytics.set_default_event_parameters",
+      "description": "Set default parameters that will be included with future events.",
+      "parameters": [
+        {
+          "name": "parameters",
+          "doc": "Table with default parameters (key-value pairs)",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.analytics.set_user_id",
+      "description": "Sets the user ID property.",
+      "parameters": [
+        {
+          "name": "user_id",
+          "doc": "User ID property",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.analytics.set_user_property",
+      "description": "Set a user property to the given value.",
+      "parameters": [
+        {
+          "name": "name",
+          "doc": "User property name",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "property",
+          "doc": "User property value",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.analytics.reset",
+      "description": "Clears all data for this app from the device and resets the app instance id.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.analytics.get_id",
+      "description": "Get the instance ID from the service. Returned in callback with MSG_INSTANCE_ID message_id.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.analytics.set_enabled",
+      "description": "Sets whether analytics collection is enabled for this app on this device.",
+      "parameters": [
+        {
+          "name": "enabled",
+          "doc": "The value",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}
