@@ -89,10 +89,10 @@ an extension's `Opaque<"node">` is the very same type `gui.get_node` returns.
 
 The extensions Defold publishes on GitHub have reference pages under
 [Libraries](/libraries) › defold, one per `.script_api` doc, such as
-[iap](/api/iap) and [spine.gui](/api/spine.gui). Each page shows the release it
-was read from. That release only fixes what the page shows: which version your
-project depends on is still your choice in `game.project`, and `resolve` types
-whichever one you pick.
+[iap](/api/iap) and [spine.gui](/api/spine.gui). Each page shows the pin it was
+read from — the latest release, else the newest tag, else a commit. That pin
+only fixes what the page shows: which version your project depends on is still
+your choice in `game.project`, and `resolve` types whichever one you pick.
 
 For the command itself — `--frozen`, version pinning, drift detection, and the
 cache location — see [Resolve](./resolve.md).
