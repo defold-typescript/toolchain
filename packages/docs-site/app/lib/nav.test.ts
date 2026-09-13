@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
+import { apiPages, libraryOrigins } from "./api-content";
 import type { GuidePage } from "./guide";
 import { listGuidePages } from "./guide-loader";
 import {
@@ -12,6 +13,8 @@ import {
 } from "./nav";
 
 const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");
+const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
+const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
 
 function realPages(): GuidePage[] {
   return listGuidePages(GUIDE_DIR);
@@ -647,6 +650,70 @@ describe("libraryOwnerGroups", () => {
       { label: "saver.saver", route: "/api/saver.saver" },
       { label: "saver.storage", route: "/api/saver.storage" },
     ]);
+  });
+
+  test("an owner named defold with no official origin sorts alphabetically and carries no flag", () => {
+    const groups = libraryOwnerGroups(
+      [
+        { namespace: "squid.squid", route: "/api/squid.squid" },
+        { namespace: "fake.fake", route: "/api/fake.fake" },
+        { namespace: "monarch.monarch", route: "/api/monarch.monarch" },
+      ],
+      new Map<string, LibraryOrigin>([
+        ["squid.squid", { owner: "paweljarosz", repo: "squid" }],
+        ["fake.fake", { owner: "defold", repo: "fake" }],
+        ["monarch.monarch", { owner: "britzl", repo: "monarch" }],
+      ]),
+    );
+    expect(groups.map((group) => group.owner)).toEqual(["britzl", "defold", "paweljarosz"]);
+    for (const group of groups) expect("official" in group).toBe(false);
+  });
+});
+
+// The owner group built from Defold's own extension manifest is the official one:
+// it leads the Libraries tab, and only its presentation carries the note.
+describe("libraryOwnerGroups over the committed library manifests", () => {
+  const pages = apiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR)
+    .filter((page) => page.category === "library")
+    .map((page) => ({ namespace: page.namespace, route: page.route }));
+  const origins = libraryOrigins(REAL_LIBRARY_TYPES_DIR);
+  const groups = libraryOwnerGroups(pages, origins);
+
+  test("puts the official defold group first and orders the rest alphabetically", () => {
+    expect(groups[0]?.owner).toBe("defold");
+    expect(groups[0]?.official).toBe(true);
+    const rest = groups.slice(1);
+    expect(rest.length).toBeGreaterThan(0);
+    for (const group of rest) expect("official" in group).toBe(false);
+    const owners = rest.map((group) => group.owner);
+    expect(owners).toEqual(
+      [...owners].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })),
+    );
+  });
+
+  test("the sidebar dims an (official) note beside the defold label without renaming it", () => {
+    const libraries = buildNav([], {
+      globals: [],
+      globalTypes: [],
+      luaStdlib: [],
+      engine: [],
+      libraries: groups,
+    }).find((category) => category.id === "libraries");
+    const [first, ...others] = libraries?.links ?? [];
+    expect(first?.label).toBe("defold");
+    expect(first?.labelHtml).toBe(
+      'defold <span class="text-text-faint font-normal">(official)</span>',
+    );
+    for (const other of others) expect(other.labelHtml).not.toContain("(official)");
+
+    const tooltips: string[] = [];
+    const collect = (link: NavLink) => {
+      if (link.tooltip) tooltips.push(link.tooltip);
+      for (const child of link.children ?? []) collect(child);
+    };
+    for (const child of first?.children ?? []) collect(child);
+    expect(tooltips.length).toBeGreaterThan(0);
+    for (const tooltip of tooltips) expect(tooltip.startsWith("defold/")).toBe(true);
   });
 });
 
