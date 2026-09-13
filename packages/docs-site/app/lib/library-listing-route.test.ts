@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { Hono } from "hono";
 import { createLibraryListingRoute } from "../routes/libraries/[owner]/[repo]";
 import { canonicalNamespaces, defoldListings } from "./api-content";
+import { dependencyStep } from "./api-page-render";
 import { renderMarkdown } from "./markdown";
 import { LIBRARY_API_KIND_SENTENCE, NO_TYPED_API_ICON } from "./no-typed-api-icon";
 import { ssgRoutePaths } from "./ssg-routes";
@@ -70,7 +71,20 @@ describe("/libraries/:owner/:repo listing pages", () => {
 
       const githubItem = html.match(/<li>GitHub:(.*?)<\/li>\s*<\/ul>/s)?.[1] ?? "";
       const nested = githubItem.match(/<ol>(.*)<\/ol>/s)?.[1] ?? "";
-      expect(nested.match(/<li>/g)?.length).toBe(listing.steps.length + 1);
+      const items = [...nested.matchAll(/<li>(.*?)<\/li>/gs)].map((m) => textOf(m[1] ?? ""));
+      const dependency = textOf(
+        await renderMarkdown(
+          dependencyStep(listing.url, listing.pinKind, listing.ref).replace(/^ {2}1\. /, ""),
+        ),
+      );
+      if (listing.adoption === "standard") {
+        expect(items).toHaveLength(listing.steps.length + 1);
+        expect(items[0]?.startsWith(dependency)).toBe(true);
+      } else {
+        expect(items).toHaveLength(listing.steps.length);
+        expect(text).not.toContain(dependency);
+        expect(items[0]).toBe(firstStep);
+      }
 
       expect(html).toContain(`href="${listing.url}"`);
       expect(html).toContain(`href="${listing.url}/tree/${listing.ref}"`);

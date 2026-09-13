@@ -321,9 +321,12 @@ function parseListingSummary(
 // Defold's libraries that ship no `.script_api` (`docs: []`). Each gets a
 // `/libraries/<owner>/<repo>` page from an authored summary in
 // `defold-extensions/summaries/<repo>.md`, whose frontmatter records whether the
-// library registers anything a script calls. A listing without a summary, or a
+// library registers anything a script calls (`api`) and how a reader adopts it
+// (`adoption`, `standard` when absent). A listing without a summary, or a
 // summary naming no untyped entry, throws: either would ship a page that says
-// nothing, or a description that silently reaches no page.
+// nothing, or a description that silently reaches no page. An `unavailable`
+// summary that claims an `untyped` api throws too, since a repository with
+// nothing to adopt cannot register functions.
 export function defoldListingsFromManifest(libraryTypesDir: string): LibraryListing[] {
   const summariesDir = join(libraryTypesDir, "defold-extensions", "summaries");
   const untyped = loadDefoldExtensions(libraryTypesDir).filter((entry) => entry.docs.length === 0);
@@ -355,6 +358,17 @@ export function defoldListingsFromManifest(libraryTypesDir: string): LibraryList
           `defold-extensions/summaries/${repo}.md: frontmatter api must be "none" or "untyped", got ${JSON.stringify(data.api)}`,
         );
       }
+      const adoption = data.adoption ?? "standard";
+      if (adoption !== "standard" && adoption !== "fork" && adoption !== "unavailable") {
+        throw new Error(
+          `defold-extensions/summaries/${repo}.md: frontmatter adoption must be "standard", "fork" or "unavailable", got ${JSON.stringify(data.adoption)}`,
+        );
+      }
+      if (adoption === "unavailable" && data.api !== "none") {
+        throw new Error(
+          `defold-extensions/summaries/${repo}.md: frontmatter adoption "unavailable" requires api "none", got ${JSON.stringify(data.api)}`,
+        );
+      }
       const { ships, steps, engineApis } = parseListingSummary(body, `${repo}.md`);
       return {
         owner,
@@ -366,6 +380,7 @@ export function defoldListingsFromManifest(libraryTypesDir: string): LibraryList
         official: true as const,
         route: `/libraries/${owner}/${repo}`,
         api: data.api,
+        adoption,
         ships,
         steps,
         ...(engineApis === undefined ? {} : { engineApis }),

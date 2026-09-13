@@ -1,5 +1,6 @@
 ---
 api: none
+adoption: unavailable
 ---
 
 ## What it ships
