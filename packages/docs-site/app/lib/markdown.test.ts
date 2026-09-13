@@ -1,4 +1,7 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { type MiniElement, parseHtml } from "./__fixtures__/mini-dom";
 import { pageHeadings } from "./headings";
 import { renderMarkdown } from "./markdown";
 
@@ -89,7 +92,7 @@ describe("renderMarkdown", () => {
 
   test("a meta range coexists with a title= caption", async () => {
     const html = await renderMarkdown('```ts title="x.ts" {1}\nconst a = 1;\n```\n');
-    expect(html).toContain('<figcaption class="code-title">x.ts</figcaption>');
+    expect(html).toMatch(/<figcaption class="code-title">.*x\.ts<\/figcaption>/);
     const lines = html.match(/<span class="line[^"]*">/g) ?? [];
     expect(lines[0]).toContain("highlighted");
   });
@@ -184,18 +187,18 @@ describe("renderMarkdown", () => {
   test("captions a fenced block from a title= info string", async () => {
     const html = await renderMarkdown('```ts title="src/board.ts"\nconst x = 1;\n```\n');
     expect(html).toContain('<figure class="code-block">');
-    expect(html).toContain('<figcaption class="code-title">src/board.ts</figcaption>');
+    expect(html).toMatch(/<figcaption class="code-title">.*src\/board\.ts<\/figcaption>/);
     expect(html).toContain("<pre");
   });
 
   test("escapes the code title and keeps highlighting the language", async () => {
     const html = await renderMarkdown("```ts title='a & b'\nconst x = 1;\n```\n");
-    expect(html).toContain('<figcaption class="code-title">a &amp; b</figcaption>');
+    expect(html).toMatch(/<figcaption class="code-title">.*a &amp; b<\/figcaption>/);
     expect(html).toContain('class="shiki');
   });
 
-  test("leaves an untitled fence unwrapped", async () => {
-    const html = await renderMarkdown("```ts\nconst x = 1;\n```\n");
+  test("leaves an untitled fence in an unlabelled language unwrapped", async () => {
+    const html = await renderMarkdown("```sh\nbun test\n```\n");
     expect(html).not.toContain("code-block");
     expect(html).not.toContain("code-title");
   });
@@ -502,5 +505,92 @@ describe("renderMarkdown", () => {
     expect(html).toContain("footnotes");
     expect(html).toContain("<code>tsconfig.json</code>");
     expect(html).not.toContain("[^src-root]");
+  });
+});
+
+const nodeRequire = createRequire(import.meta.url);
+
+// The first path of a Phosphor duotone asset, read from the package the renderer
+// inlines, so the assertion identifies the glyph without restating its markup.
+function phosphorPath(name: string): string {
+  const svg = readFileSync(
+    nodeRequire.resolve(`@phosphor-icons/core/duotone/${name}-duotone.svg`),
+    "utf8",
+  );
+  const d = svg.match(/ d="([^"]+)"/)?.[1];
+  if (!d) throw new Error(`no path in ${name}`);
+  return d;
+}
+
+function languageBadge(el: MiniElement | undefined): { label: string; paths: string[] } {
+  expect(el?.getAttribute("data-slot")).toBe("badge");
+  const paths = (el?.querySelectorAll("path") ?? []).map((p) => p.getAttribute("d") ?? "");
+  return { label: el?.textContent.trim() ?? "", paths };
+}
+
+describe("renderMarkdown fence language badges", () => {
+  test("an untitled lua fence overlaps a Lua badge on a badged figure, outside the <pre>", async () => {
+    const source = "local speed = 10\nprint(speed)";
+    const html = await renderMarkdown(`\`\`\`lua\n${source}\n\`\`\`\n`);
+    const root = parseHtml(html);
+    const figures = root.querySelectorAll("figure");
+    expect(figures).toHaveLength(1);
+    const figure = figures[0];
+    expect(figure?.className).toBe("code-block code-block--badged");
+    expect(figure?.children.map((c) => c.tagName)).toEqual(["SPAN", "PRE"]);
+    const badge = languageBadge(figure?.children[0]);
+    expect(badge.label).toBe("Lua");
+    expect(badge.paths).toContain(phosphorPath("moon"));
+    const pre = figure?.children[1];
+    expect(pre?.querySelector('[data-slot="badge"]')).toBeNull();
+    // mini-dom concatenates an element's own text ahead of its children, which
+    // scrambles Shiki's per-line markup, so read the <pre> text from the HTML.
+    const preHtml = html.match(/<pre[\s\S]*<\/pre>/)?.[0] ?? "";
+    expect(preHtml.replace(/<[^>]+>/g, "")).toBe(source);
+  });
+
+  test("a titled ts fence puts the TypeScript badge first in the caption, before the path", async () => {
+    const html = await renderMarkdown('```ts title="src/a<b>.ts"\nconst x = 1;\n```\n');
+    const root = parseHtml(html);
+    const figure = root.querySelector("figure");
+    expect(figure?.className).toBe("code-block");
+    const caption = figure?.children[0];
+    expect(caption?.tagName).toBe("FIGCAPTION");
+    expect(caption?.className).toBe("code-title");
+    const badge = languageBadge(caption?.children[0]);
+    expect(badge.label).toBe("TypeScript");
+    expect(badge.paths).toContain(phosphorPath("file-ts"));
+    expect(figure?.children[1]?.tagName).toBe("PRE");
+    expect(figure?.querySelectorAll('[data-slot="badge"]')).toHaveLength(1);
+    expect(html).toMatch(
+      /<figcaption class="code-title"><span data-slot="badge".*<\/span>src\/a&lt;b&gt;\.ts<\/figcaption>/,
+    );
+  });
+
+  test("typescript and tsx fences get the TypeScript badge", async () => {
+    for (const lang of ["typescript", "tsx"]) {
+      const root = parseHtml(await renderMarkdown(`\`\`\`${lang}\nconst x = 1;\n\`\`\`\n`));
+      const figure = root.querySelector("figure.code-block--badged");
+      expect(languageBadge(figure?.children[0]).label).toBe("TypeScript");
+    }
+  });
+
+  test("sh, json and info-less fences carry no badge and no wrapper", async () => {
+    for (const fence of [
+      "```sh\nbun test\n```\n",
+      '```json\n{"a": 1}\n```\n',
+      "```\nplain\n```\n",
+    ]) {
+      const html = await renderMarkdown(fence);
+      const root = parseHtml(html);
+      expect(root.children.map((c) => c.tagName)).toEqual(["PRE"]);
+      expect(html).not.toContain('data-slot="badge"');
+      expect(html).not.toContain("code-block");
+    }
+  });
+
+  test("a titled fence in an unlabelled language keeps a badge-free caption", async () => {
+    const html = await renderMarkdown('```json title="tsconfig.json"\n{}\n```\n');
+    expect(html).toContain('<figcaption class="code-title">tsconfig.json</figcaption>');
   });
 });
