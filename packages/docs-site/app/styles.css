@@ -68,6 +68,10 @@
   --color-badge-global: #6639ba;
   --color-badge-upstream: #0969da;
 
+  /* Caution tone shared by the `> [!WARNING]` callout and the attention marker
+   * badge (`bg-warning/15`), so the two read as the same signal. */
+  --color-warning: #9a6700;
+
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
@@ -93,6 +97,8 @@
   --color-badge-deprecated: #f85149;
   --color-badge-global: #a371f7;
   --color-badge-upstream: #58a6ff;
+
+  --color-warning: #d29922;
 }
 
 @layer base {
@@ -638,7 +644,7 @@
   }
 
   .prose .admonition-warning {
-    --admonition-color: #9a6700;
+    --admonition-color: var(--color-warning);
   }
 
   .prose .admonition-caution {
@@ -666,10 +672,6 @@
 
   [data-theme="dark"] .prose .admonition-important {
     --admonition-color: #a371f7;
-  }
-
-  [data-theme="dark"] .prose .admonition-warning {
-    --admonition-color: #d29922;
   }
 
   [data-theme="dark"] .prose .admonition-caution {

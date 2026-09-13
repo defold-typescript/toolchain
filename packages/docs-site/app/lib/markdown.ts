@@ -168,7 +168,7 @@ function platformBadge(name: string): string | undefined {
         content: platform.label,
         class: "platform-badge",
         children: Badge({
-          variant: "outline",
+          variant: platform.tone ?? "outline",
           class: "platform-badge-icon",
           icon: glyphSvg(platform.glyph, "platform-badge-glyph"),
           role: "img",
