@@ -100,6 +100,31 @@ describe("LibraryIndex — listing-only libraries", () => {
   });
 });
 
+describe("LibraryIndex — official owner note", () => {
+  const html = String(
+    LibraryIndex({
+      pages: [
+        libraryPage("monarch.monarch", "/api/monarch.monarch", false),
+        libraryPage("iap", "/api/iap", false),
+      ],
+      origins: new Map<string, LibraryOrigin>([
+        ["monarch.monarch", { owner: "britzl", repo: "monarch" }],
+        ["iap", { owner: "defold", repo: "extension-iap", official: true }],
+      ]),
+    }),
+  );
+  const headings = [...html.matchAll(/<h2>(.*?)<\/h2>/gs)].map((match) => match[1] ?? "");
+
+  test("heads the first section defold with a dimmed (official) note", () => {
+    expect(headings[0]).toBe('defold <span class="text-text-faint font-normal">(official)</span>');
+  });
+
+  test("marks no other section official", () => {
+    expect(headings.slice(1)).toEqual(["britzl"]);
+    expect(count(html, "(official)")).toBe(1);
+  });
+});
+
 // A dot between letters and a path slash are both non-breaking under UAX #14, so
 // without explicit break hints a long namespace overflows its heading and widens
 // the page horizontally.

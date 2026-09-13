@@ -7,7 +7,13 @@ import type { NamespaceBadgeCounts } from "../lib/combined-surface";
 import { getStartedPages } from "../lib/get-started";
 import type { GuidePage } from "../lib/guide";
 import { groupGuidePages } from "../lib/guide-groups";
-import { humanize, type LibraryListing, type LibraryOrigin, libraryPathSegments } from "../lib/nav";
+import {
+  humanize,
+  type LibraryListing,
+  type LibraryOrigin,
+  libraryPathSegments,
+  OFFICIAL_NOTE,
+} from "../lib/nav";
 import {
   apiCardBadgeHtml,
   apiPageCardDescription,
@@ -386,7 +392,10 @@ export function LibraryIndex({
       {groups.map((group) => (
         // One section per owner (like the API index's topic sections); the owner
         // heads the block, so each card shows only `repo/namespace`.
-        <LandingSection heading={group.label}>
+        <LandingSection
+          heading={group.label}
+          {...(group.official ? { headingNote: OFFICIAL_NOTE } : {})}
+        >
           <LandingCardGrid>
             {group.libraries.flatMap((lib) =>
               lib.listingOnly ? (

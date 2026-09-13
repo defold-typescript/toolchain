@@ -263,7 +263,7 @@ export function libraryOriginByNamespace(libraryTypesDir: string): Map<string, L
   for (const [page, { entry }] of defoldExtensionDocs(libraryTypesDir)) {
     const owner = githubOwner(entry.repo);
     const repo = githubRepo(entry.repo);
-    if (owner && repo) origins.set(page, { owner, repo });
+    if (owner && repo) origins.set(page, { owner, repo, official: true });
   }
   return origins;
 }
@@ -278,6 +278,7 @@ export function defoldListingsFromManifest(libraryTypesDir: string): LibraryList
       repo: githubRepo(entry.repo),
       url: entry.repo,
       description: entry.description,
+      official: true as const,
     }))
     .filter((listing) => listing.owner !== "" && listing.repo !== "");
 }

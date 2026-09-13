@@ -183,6 +183,22 @@ describe("groupLibraryIndexByOwner with listing-only Defold libraries", () => {
     expect(iap?.pages.map((p) => p.route)).toEqual(["/api/iap"]);
   });
 
+  test("keeps the official defold group first after listings merge", () => {
+    expect(groups[0]?.owner).toBe("defold");
+    expect(groups[0]?.official).toBe(true);
+    for (const group of groups.slice(1)) expect("official" in group).toBe(false);
+  });
+
+  test("a listing whose owner has no typed page starts an official group that still leads", () => {
+    const listingOnlyGroups = groupLibraryIndexByOwner(
+      [page("monarch.monarch", "library", "/api/monarch.monarch")],
+      new Map<string, LibraryOrigin>([["monarch.monarch", { owner: "britzl", repo: "monarch" }]]),
+      listings,
+    );
+    expect(listingOnlyGroups.map((group) => group.owner)).toEqual(["defold", "britzl"]);
+    expect(listingOnlyGroups[0]?.official).toBe(true);
+  });
+
   test("sorts listing-only libraries among the typed ones by repo", () => {
     const repos = (defold?.libraries ?? []).map((library) => library.repo);
     expect(repos).toEqual([...repos].sort((a, b) => a.localeCompare(b)));
