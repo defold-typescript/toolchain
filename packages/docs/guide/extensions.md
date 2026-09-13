@@ -102,7 +102,12 @@ Defold libraries that ship no `.script_api` have pages there too, such as
 marked with a no-typed-API icon. Each page describes what the library ships and
 whether it registers a Lua API that is simply not typed, then shows the same
 GitHub pin and numbered setup steps as a typed library page: add the dependency
-at that pin, then the library's own steps. `resolve` still reports each one as
+at that pin, then the library's own steps. Two kinds of repo depart from that.
+A placeholder repo with nothing in it yet, such as
+[extension-playintegrity](/libraries/defold/extension-playintegrity), has no
+install step. A repo upstream asks you to fork, such as
+[extension-prometheus](/libraries/defold/extension-prometheus), starts with
+forking it and depending on your fork. `resolve` still reports each one as
 `asset-only, skipped`.
 
 For the command itself — `--frozen`, version pinning, drift detection, and the

@@ -693,6 +693,7 @@ describe("libraryOwnerGroups with untyped library listings", () => {
     official: true,
     route: `/libraries/defold/${repo}`,
     api,
+    adoption: "standard",
     ships: "Ships content.",
     steps: ["Use the content."],
   });

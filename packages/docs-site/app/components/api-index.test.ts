@@ -90,6 +90,7 @@ describe("LibraryIndex — untyped library listings", () => {
     official: true,
     route,
     api: "untyped",
+    adoption: "standard",
     ships,
     steps: ["Call `adpf.start` from a script."],
   });

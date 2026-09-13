@@ -1,5 +1,6 @@
 ---
 api: none
+adoption: fork
 ---
 
 ## What it ships
@@ -11,7 +12,8 @@ project replace the default key or the algorithm itself.
 
 ## Using it
 
-1. Fork the repository and depend on your fork's archive URL instead.
+1. Fork the repository, add your fork's archive URL to `game.project` under
+   `[project]` `dependencies`, then **Fetch Libraries** in the Defold editor.
 2. Change the key in both the Java plugin and `src/plugin.cpp`.
 3. Rebuild the plugin jar with `build_plugin.sh` after changing the build-time
    part.
