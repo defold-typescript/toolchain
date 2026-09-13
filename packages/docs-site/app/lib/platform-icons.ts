@@ -13,6 +13,7 @@ export type Glyph = { set: "phosphor"; name: string } | { set: "devicon"; file: 
  */
 export const PLATFORM_ICONS: Record<string, { label: string; glyph: Glyph }> = {
   ios: { label: "iOS", glyph: { set: "devicon", file: "apple/apple-original" } },
+  apple: { label: "Apple", glyph: { set: "devicon", file: "apple/apple-original" } },
   android: { label: "Android", glyph: { set: "devicon", file: "android/android-plain" } },
   html5: { label: "HTML5", glyph: { set: "devicon", file: "html5/html5-plain" } },
   windows: { label: "Windows", glyph: { set: "devicon", file: "windows11/windows11-original" } },

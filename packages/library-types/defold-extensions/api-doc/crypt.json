@@ -18,7 +18,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "output",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -33,7 +41,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "output",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -48,7 +64,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "output",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -63,7 +87,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "output",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -78,7 +110,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "output",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -93,7 +133,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "output",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -115,7 +163,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "output",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -137,7 +193,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "output",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
     }
   ]
 }

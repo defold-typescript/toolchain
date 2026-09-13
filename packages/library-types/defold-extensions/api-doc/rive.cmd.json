@@ -25,7 +25,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "artboard_handle",
+          "doc": "Artboard handle created for the named artboard.",
+          "types": [
+            "ArtboardHandle"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -40,7 +48,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "artboard_handle",
+          "doc": "Default artboard handle for the file.",
+          "types": [
+            "ArtboardHandle"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -77,7 +93,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "state_machine_handle",
+          "doc": "Handle referencing the created state machine.",
+          "types": [
+            "StateMachineHandle"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -92,7 +116,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "state_machine_handle",
+          "doc": "Handle referencing the created state machine.",
+          "types": [
+            "StateMachineHandle"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -174,7 +206,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "view_model_instance_handle",
+          "doc": "Blank view model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -197,7 +237,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "view_model_instance_handle",
+          "doc": "Default view model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -227,7 +275,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "view_model_instance_handle",
+          "doc": "Named view model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -249,7 +305,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "view_model_handle",
+          "doc": "Handle to the nested view model.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -278,7 +342,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "view_model_handle",
+          "doc": "Handle to the referenced list entry.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -728,7 +800,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "Cached value. Raises error if unavailable.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -750,7 +830,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "Cached value. Raises error if unavailable.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -772,7 +860,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "Cached color. Raises error if unavailable.",
+          "types": [
+            "vector4"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -794,7 +890,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "Cached enum name. Raises error if unavailable.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -816,7 +920,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "Cached value. Raises error if unavailable.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -838,7 +950,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "Cached list size. Raises error if unavailable.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -911,7 +1031,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "file_handle",
+          "doc": "Loaded Rive file handle.",
+          "types": [
+            "FileHandle"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -941,7 +1069,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "render_image_handle",
+          "doc": "Decoded render image handle.",
+          "types": [
+            "RenderImageHandle"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -971,7 +1107,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "audio_handle",
+          "doc": "Decoded audio source handle.",
+          "types": [
+            "AudioSourceHandle"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -1001,7 +1145,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "font_handle",
+          "doc": "Decoded font handle.",
+          "types": [
+            "FontHandle"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",

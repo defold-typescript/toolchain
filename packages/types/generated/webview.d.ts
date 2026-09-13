@@ -9,8 +9,9 @@ declare global {
      * On iOS, the callback will never get a `webview.CALLBACK_RESULT_EVAL_ERROR`, due to the iOS SDK implementation."
      *
      * @param callback - A callback which receives info about finished requests taking the following parameters:
+     * @returns The id number of the webview
      */
-    function create(callback: (...args: unknown[]) => unknown): void;
+    function create(callback: (...args: unknown[]) => unknown): number;
     /**
      * Destroys an instance of a webview.
      *
@@ -22,14 +23,16 @@ declare global {
      *
      * @param webview_id - The webview id
      * @param code - The JavaScript code to evaluate
+     * @returns The id number of the request
      */
-    function eval(webview_id: number, code: string): void;
+    function eval(webview_id: number, code: string): number;
     /**
      * Returns the visibility state of the webview.
      *
      * @param webview_id - The webview id
+     * @returns Returns `0` if not visible, `1` if it is visible
      */
-    function is_visible(webview_id: number): void;
+    function is_visible(webview_id: number): number;
     /**
      * Opens a web page in the webview, using HTML data. Once the request is done, the callback (registered in `webview.create()`) is invoked.
      *
