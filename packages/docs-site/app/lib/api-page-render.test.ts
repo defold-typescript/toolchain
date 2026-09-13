@@ -2016,6 +2016,60 @@ describe("Defold extension pages", () => {
     );
     expect(md).not.toContain("import * as");
     expect(md).toContain("  3. Call it through the global `iap` — no import.");
+    expect(md).not.toContain("/archive/");
+  });
+
+  const manifest = JSON.parse(
+    readFileSync(join(REAL_LIBRARY_TYPES_DIR, "defold-extensions.json"), "utf8"),
+  ) as {
+    libraries: {
+      repo: string;
+      ref: string;
+      refKind: string;
+      docs: { namespace: string; page: string }[];
+    }[];
+  };
+  const firstPinnedWithDocs = (refKind: string) => {
+    const entry = manifest.libraries.find((e) => e.refKind === refKind && e.docs.length > 0);
+    if (!entry) {
+      throw new Error(
+        `defold-extensions.json has no ${refKind}-pinned entry with docs; pick another subject`,
+      );
+    }
+    const doc = entry.docs[0];
+    const md = render(`/api/${doc.page}`);
+    return { entry, doc, md, step1: stepOne(md) };
+  };
+  const stepOne = (md: string) => {
+    const line = md.split("\n").find((l) => l.startsWith("  1. "));
+    if (!line) throw new Error("no adopt step 1");
+    return line;
+  };
+  const expectSharedSteps = (md: string, namespace: string) => {
+    expect(md).toContain(
+      "  2. Run `bunx @defold-typescript/cli resolve` to materialize its types.",
+    );
+    expect(md).toContain(`  3. Call it through the global \`${namespace}\` — no import.`);
+    expect(md).not.toContain("import * as");
+  };
+
+  test("a tag-pinned extension page names its tag archive instead of picking a release", () => {
+    const { entry, doc, md, step1 } = firstPinnedWithDocs("tag");
+    expect(step1).toContain(`${entry.repo}/archive/refs/tags/${entry.ref}.zip`);
+    expect(step1).toContain(`](${entry.repo}/tags)`);
+    expect(md).not.toContain("Pick a release");
+    expect(md).not.toContain("/releases");
+    expectSharedSteps(md, doc.namespace);
+  });
+
+  test("a commit-pinned extension page names its commit archive and no releases or tags", () => {
+    const { entry, doc, md, step1 } = firstPinnedWithDocs("commit");
+    expect(entry.ref).toMatch(/^[0-9a-f]{40}$/);
+    expect(step1).toContain(`${entry.repo}/archive/${entry.ref}.zip`);
+    expect(md).not.toContain("Pick a release");
+    expect(md).not.toContain("/releases");
+    expect(md).not.toContain("/tags)");
+    expectSharedSteps(md, doc.namespace);
   });
 
   test("an extension doc that declares an engine namespace says it adds members to it", () => {

@@ -379,16 +379,25 @@ function libraryMetaBlock(meta: LibraryMeta, hasGlobals: boolean): string[] {
   // link) so the reader copies a release's Source-code ZIP or a packaged `.zip`
   // asset — Defold and `resolve` extract zip, never the tar.gz GitHub also
   // offers. With no NOTICE credit there is no repo to link, so it is named only.
+  // A Defold extension pinned to a tag or commit has no release to pick, so its
+  // step 1 names the pin's own archive instead: a tag or commit archive is
+  // immutable, so this still mints no moving archive URL, and the tag case
+  // links the repo's tags so version choice stays the user's.
   // Step 3's import stays a fenced block at the ordered-item content column
   // (5 spaces) so it renders a copyable <pre>.
   const head = meta.authorUrl
     ? `- GitHub: [${repo || meta.authorUrl}](${meta.authorUrl}) — pinned to ${pin}`
     : `- Commit pin: ${pin}`;
   const isGithub = /^https?:\/\/github\.com\//i.test(meta.authorUrl);
-  const releasesUrl = isGithub ? `${meta.authorUrl.replace(/\/$/, "")}/releases` : "";
-  const step1 = releasesUrl
-    ? `Pick a release from [${repo} releases](${releasesUrl}) and add its **Source code (zip)** URL (or a packaged \`.zip\` asset, if the library ships one) to \`game.project\` under \`[project]\` \`dependencies\``
-    : "Pick a release from the library's GitHub repository and add its **Source code (zip)** URL (or a packaged `.zip` asset, if the library ships one) to `game.project` under `[project]` `dependencies`";
+  const repoUrl = meta.authorUrl.replace(/\/$/, "");
+  const dependencies = "to `game.project` under `[project]` `dependencies`";
+  const step1 = !isGithub
+    ? `Pick a release from the library's GitHub repository and add its **Source code (zip)** URL (or a packaged \`.zip\` asset, if the library ships one) ${dependencies}`
+    : meta.pinKind === "tag"
+      ? `This repo publishes no releases. Pick a tag from [${repo} tags](${repoUrl}/tags) and add its **Source code (zip)** URL — for the pinned tag, \`${repoUrl}/archive/refs/tags/${meta.commit}.zip\` — ${dependencies}`
+      : meta.pinKind === "commit"
+        ? `This repo publishes no releases or tags. Add a commit archive URL — for the pinned commit, \`${repoUrl}/archive/${meta.commit}.zip\` — ${dependencies}`
+        : `Pick a release from [${repo} releases](${repoUrl}/releases) and add its **Source code (zip)** URL (or a packaged \`.zip\` asset, if the library ships one) ${dependencies}`;
   // A native extension registers its namespace as a Lua global, so step 3 names
   // that global instead of an import a user could not write.
   const step3 =
