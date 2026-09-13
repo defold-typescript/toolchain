@@ -11,7 +11,7 @@ latest counters.
 
 ## Using it
 
-The repository is an example project: its `main.script` calls
-`profile.get_properties()` each `update` and prints the result. Upstream notes
-that using the extension removes the regular profiler normally included in
-Defold.
+1. Call `profile.get_properties()` each `update` and print the result, as the
+   example project's `main.script` does.
+2. Expect the regular profiler normally included in Defold to be removed, as
+   upstream notes.

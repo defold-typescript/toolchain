@@ -10,6 +10,6 @@ macOS and iOS. It adds no functions for scripts to call.
 
 ## Using it
 
-Add the zip URL of a specific release to the `game.project` dependencies and
-enable `shader.output_spirv`, or builds fail to compile. To build with Vulkan
-only, exclude the OpenGL adapter through an application manifest.
+1. Enable `shader.output_spirv`, or builds fail to compile.
+2. To build with Vulkan only, exclude the OpenGL adapter through an
+   application manifest.

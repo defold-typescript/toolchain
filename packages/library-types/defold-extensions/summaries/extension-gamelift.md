@@ -12,7 +12,6 @@ repository also contains an example client project.
 
 ## Using it
 
-Add the repository's master zip or a specific release zip to the
-`game.project` dependencies. The server calls `gamelift.init` with a port
-and listener functions for session start, process termination and health
-checks, then reports readiness with `gamelift.process_ready`.
+1. On the server, call `gamelift.init` with a port and listener functions for
+   session start, process termination and health checks.
+2. Report readiness with `gamelift.process_ready`.

@@ -11,6 +11,5 @@ platforms get a null extension with no module.
 
 ## Using it
 
-Add a zip URL of the repository to the `game.project` dependencies. The
-example script guards the call with `if onetrust then onetrust.init() end`,
-since the module exists only on Android.
+1. Guard the call with `if onetrust then onetrust.init() end`, as the example
+   script does, since the module exists only on Android.

@@ -11,9 +11,9 @@ animations, but its images come from the exported `.tpinfo` file.
 
 ## Using it
 
-Add a release zip URL from the repository's releases to the `game.project`
-dependencies. Install the exporter in TexturePacker, export a `.tpinfo` file,
-then create a Texture Packer Atlas in the editor and point it at that file.
+1. Install the exporter in TexturePacker.
+2. Export a `.tpinfo` file.
+3. Create a Texture Packer Atlas in the editor and point it at that file.
 
 ## Engine APIs
 

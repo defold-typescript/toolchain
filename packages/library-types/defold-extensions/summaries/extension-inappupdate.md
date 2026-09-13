@@ -11,6 +11,7 @@ function, `myextension.reverse`, reverses a string.
 
 ## Using it
 
-The upstream README describes the Play Core feature but gives no
-installation steps, and no in-app update calls exist yet. The example
-script calls `myextension.reverse` and prints the result.
+1. Expect no in-app update calls yet: the upstream README describes the Play
+   Core feature but gives no installation steps.
+2. See the example script, which calls `myextension.reverse` and prints the
+   result.

@@ -6,15 +6,11 @@ import { ssgParams } from "hono/ssg";
 import { createRoute } from "honox/factory";
 import { LibraryPath } from "../../../components/api-index";
 import { defoldListings } from "../../../lib/api-content";
+import { listingPageMarkdown } from "../../../lib/api-page-render";
 import { pageHeadings } from "../../../lib/headings";
 import { renderMarkdown } from "../../../lib/markdown";
-import { LIBRARY_API_KIND_SENTENCE, NO_TYPED_API_ICON } from "../../../lib/no-typed-api-icon";
+import { NO_TYPED_API_ICON } from "../../../lib/no-typed-api-icon";
 import type { ApiSurfaceDirs } from "../../api/[namespace]";
-
-// A 40-hex commit pin reads as its short sha; a tag or release pin reads verbatim.
-function pinLabel(ref: string): string {
-  return /^[0-9a-f]{40}$/.test(ref) ? ref.slice(0, 7) : ref;
-}
 
 // The page for a Defold library that ships no `.script_api`: its authored
 // summary of what it ships and how a project uses it, in place of an API reference.
@@ -31,25 +27,16 @@ export function createLibraryListingRoute(dirs: ApiSurfaceDirs = {}) {
       );
       if (!listing) return c.notFound();
 
-      const kind = await renderMarkdown(LIBRARY_API_KIND_SENTENCE[listing.api]);
-      const summary = await renderMarkdown(listing.summary);
+      const body = await renderMarkdown(listingPageMarkdown(listing));
       return c.render(
         <article class="prose">
           <h1>
             <LibraryPath owner={listing.owner} repo={listing.repo} namespace="" />{" "}
             <span dangerouslySetInnerHTML={{ __html: NO_TYPED_API_ICON }} />
           </h1>
-          <div dangerouslySetInnerHTML={{ __html: kind }} />
-          <div dangerouslySetInnerHTML={{ __html: summary }} />
-          <p>
-            GitHub:{" "}
-            <a href={`${listing.url}/tree/${listing.ref}`}>
-              {listing.owner}/{listing.repo}
-            </a>{" "}
-            — pinned to <code>{pinLabel(listing.ref)}</code>
-          </p>
+          <div dangerouslySetInnerHTML={{ __html: body }} />
         </article>,
-        { title: `${listing.owner}/${listing.repo}`, headings: pageHeadings(summary) },
+        { title: `${listing.owner}/${listing.repo}`, headings: pageHeadings(body) },
       );
     },
   );

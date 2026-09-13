@@ -10,9 +10,9 @@ collection for local testing.
 
 ## Using it
 
-Add the repository zip archive to the `[project]` dependencies in
-`game.project`. A game script requires `defwarez-shared/defwarez` and reports
-progress with functions such as `add_score`, `set_score` and `player_done`.
+1. Require `defwarez-shared/defwarez` from a game script.
+2. Report progress with functions such as `add_score`, `set_score` and
+   `player_done`.
 
 ## Engine APIs
 
