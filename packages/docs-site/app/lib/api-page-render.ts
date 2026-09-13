@@ -380,18 +380,22 @@ function pinLabel(ref: string): string {
 
 // An untyped library's `/libraries/<owner>/<repo>` page body in the typed library
 // page's order: the authored lead, the api-kind sentence, the linked GitHub pin
-// with the dependency step and the authored steps nested under it, then the
-// optional `Engine APIs` section.
+// with the setup steps nested under it, then the optional `Engine APIs` section.
+// Only a `standard` adoption opens the steps with the shared dependency step; a
+// `fork` listing's authored steps already start from the fork, and an
+// `unavailable` one has nothing to install, so theirs number from 1.
 export function listingPageMarkdown(listing: LibraryListing): string {
   const repo = `${listing.owner}/${listing.repo}`;
+  const standard = listing.adoption === "standard";
+  const firstNumber = standard ? 2 : 1;
   const lines = [
     listing.ships,
     "",
     LIBRARY_API_KIND_SENTENCE[listing.api],
     "",
     `- GitHub: [${repo}](${listing.url}) — pinned to [\`${pinLabel(listing.ref)}\`](${listing.url}/tree/${listing.ref})`,
-    dependencyStep(listing.url, listing.pinKind, listing.ref),
-    ...listing.steps.map((step, index) => `  ${index + 2}. ${step}`),
+    ...(standard ? [dependencyStep(listing.url, listing.pinKind, listing.ref)] : []),
+    ...listing.steps.map((step, index) => `  ${index + firstNumber}. ${step}`),
   ];
   if (listing.engineApis) lines.push("", "## Engine APIs", "", listing.engineApis);
   return lines.join("\n");
