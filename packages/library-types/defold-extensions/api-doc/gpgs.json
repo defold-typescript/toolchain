@@ -1,0 +1,618 @@
+{
+  "info": {
+    "namespace": "gpgs",
+    "brief": "Functions and constants for interacting with Google Play Games Services (GPGS) APIs",
+    "description": "Functions and constants for interacting with Google Play Games Services (GPGS) APIs"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.is_supported",
+      "description": "Check if Google Play Services are available & ready on the device.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "is_supported",
+          "doc": "Status of Google Play Services on the device.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.login",
+      "description": "Login to GPGS using a button.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.silent_login",
+      "description": "Silent login to GPGS.\nThis function is trying to retrieve the currently signed-in player’s account.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.get_display_name",
+      "description": "Get the current GPGS player display name.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "name",
+          "doc": "The player's display name.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.get_id",
+      "description": "Get the current GPGS player id.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "id",
+          "doc": "The player ID.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.get_server_auth_code",
+      "description": "Returns a one-time server auth code to send to your web server which can be exchanged for access token\nA code can be retrieved only if `gpgs.request_server_auth_code` is set to 1 and `gpgs.client_id` is set.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "server_auth_code",
+          "doc": "The server auth code for logged in account. Can be nil if operation is not completed yet.\nThe auth code is available after receiving a message with id `gpgs.MSG_GET_SERVER_AUTH_CODE` in callback set via `gpgs.set_callback`.",
+          "types": [
+            "string",
+            "nil"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.is_logged_in",
+      "description": "Check if a user is logged in currently.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "is_loggedin",
+          "doc": "Current login state.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.set_callback",
+      "description": "Set callback for receiving messages from GPGS.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "A callback taking the following parameters",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.snapshot_display_saves",
+      "description": "Provides a default saved games selection user interface.",
+      "parameters": [
+        {
+          "name": "popupTitle",
+          "doc": "The title to display in the action bar. By default \"Game Saves\".",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "allowAddButton",
+          "doc": "Whether or not to display a \"create new snapshot\" option in the selection UI. By default `true`.",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "allowDelete",
+          "doc": "Whether or not to provide a delete overflow menu option for each snapshot in the selection UI. By default `true`.",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "maxNumberOfSavedGamesToShow",
+          "doc": "The maximum number of snapshots to display in the UI. By default 5.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.snapshot_open",
+      "description": "Opens a snapshot with the given `saveName`. If `createIfNotFound` is set to `true`, the specified snapshot will be created if it does not already exist.",
+      "parameters": [
+        {
+          "name": "saveName",
+          "doc": "The name of the snapshot file to open. Must be between 1 and 100 non-URL-reserved characters (a-z, A-Z, 0-9, or the symbols \"-\", \".\", \"_\", or \"~\").",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "createIfNotFound",
+          "doc": "If `true`, the snapshot will be created if one cannot be found.",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "conflictPolicy",
+          "doc": "The conflict resolution policy to use for this snapshot that can be one of the predefined constants below\n- `gpgs.RESOLUTION_POLICY_MANUAL`\n- `gpgs.RESOLUTION_POLICY_LONGEST_PLAYTIME`\n- `gpgs.RESOLUTION_POLICY_LAST_KNOWN_GOOD`\n- `gpgs.RESOLUTION_POLICY_MOST_RECENTLY_MODIFIED`\n- `gpgs.RESOLUTION_POLICY_HIGHEST_PROGRESS`\n\nDefault value is `gpgs.RESOLUTION_POLICY_LAST_KNOWN_GOOD`",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.snapshot_commit_and_close",
+      "description": "Save the currently opened save on the server and close it.",
+      "parameters": [
+        {
+          "name": "metadata",
+          "doc": "A table with metadata for a save. It contains the fields below",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.snapshot_get_data",
+      "description": "Returns the currently opened snapshot data.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "bytes",
+          "doc": "The byte array data of the currently opened snapshot. `nil` if something goes wrong.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "error_message",
+          "doc": "An error message if something goes wrong.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.snapshot_set_data",
+      "description": "Sets the data for the currently opened snapshot.",
+      "parameters": [
+        {
+          "name": "data",
+          "doc": "The data to set.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "success",
+          "doc": "True if data was set for the currently opened snapshot.",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "error_message",
+          "doc": "An error message if something goes wrong.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.snapshot_is_opened",
+      "description": "Check if a snapshot was opened.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "is_opened",
+          "doc": "A current snapshot state.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.snapshot_get_max_image_size",
+      "description": "Returns the maximum data size per snapshot cover image in bytes.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "image_size",
+          "doc": "The maximum data size per snapshot cover image in bytes.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.snapshot_get_max_save_size",
+      "description": "Returns the maximum data size per snapshot in bytes.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "data_size",
+          "doc": "The maximum data size per snapshot in bytes.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.snapshot_get_conflicting_data",
+      "description": "Returns the conflicting snapshot data.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "bytes",
+          "doc": "The byte array data of the conflicting snapshot. `nil` if something goes wrong.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "error_message",
+          "doc": "An error message if something goes wrong.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.snapshot_resolve_conflict",
+      "description": "Resolves a conflict using the data from the provided snapshot.",
+      "parameters": [
+        {
+          "name": "conflictId",
+          "doc": "The conflict id that you want to resolve. Provided in `message` table with `STATUS_CONFLICT` message type.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "snapshotId",
+          "doc": "Type of the snapshot you want to use for conflict solving that can be one of the predefined constants below\n- `gpgs.SNAPSHOT_CURRENT`\n- `gpgs.SNAPSHOT_CONFLICTING`",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.leaderboard_submit_score",
+      "description": "Submit a score to a leaderboard for the currently signed-in player.",
+      "parameters": [
+        {
+          "name": "leaderboardId",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "score",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.leaderboard_get_top_scores",
+      "description": "Asynchronously gets the top page of scores for a leaderboard. The callback receives an array of JSON strings with score data; decode each string with `json.decode()`.",
+      "parameters": [
+        {
+          "name": "leaderboardId",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "time_span",
+          "doc": "One of the gpgs.TIME_SPAN_ constants",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "collection",
+          "doc": "One of the gpgs.COLLECTION_ constants",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "max_results",
+          "doc": "Between 1-25",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.leaderboard_get_player_centered_scores",
+      "description": "Asynchronously gets a player-centered page of scores for a leaderboard. The callback receives an array of JSON strings with score data; decode each string with `json.decode()`.",
+      "parameters": [
+        {
+          "name": "leaderboardId",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "time_span",
+          "doc": "One of the gpgs.TIME_SPAN_ constants",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "collection",
+          "doc": "One of the gpgs.COLLECTION_ constants",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "max_results",
+          "doc": "Between 1-25",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "force_reload",
+          "doc": "If true, this call will clear any locally cached data and attempt to fetch the latest data from the server",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.leaderboard_show",
+      "description": "Show a leaderboard for a game specified by a leaderboardId.",
+      "parameters": [
+        {
+          "name": "leaderboardId",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "time_span",
+          "doc": "One of the gpgs.TIME_SPAN_ constants",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "collection",
+          "doc": "One of the gpgs.COLLECTION_ constants",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.leaderboard_list",
+      "description": "Show the list of leaderboards.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.leaderboard_get_player_score",
+      "description": "Asynchronously gets the current player's score for a leaderboard. The callback receives the score fields directly in the message table.",
+      "parameters": [
+        {
+          "name": "leaderboardId",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "time_span",
+          "doc": "One of the gpgs.TIME_SPAN_ constants",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "collection",
+          "doc": "One of the gpgs.COLLECTION_ constants",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.achievement_reveal",
+      "description": "Reveals a hidden achievement to the current player.",
+      "parameters": [
+        {
+          "name": "achievementId",
+          "doc": "Achievement id (from GP console)",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.achievement_unlock",
+      "description": "Unlocks an achievement for the current player.",
+      "parameters": [
+        {
+          "name": "achievementId",
+          "doc": "Achievement id (from GP console)",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.achievement_set",
+      "description": "Sets an achievement to have at least the given number of steps completed.",
+      "parameters": [
+        {
+          "name": "achievementId",
+          "doc": "Achievement id (from GP console)",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "steps",
+          "doc": "The number of steps to set the achievement to. Must be greater than 0.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.achievement_increment",
+      "description": "Increments an achievement by the given number of steps.",
+      "parameters": [
+        {
+          "name": "achievementId",
+          "doc": "Achievement id (from GP console)",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "steps",
+          "doc": "The number of steps to increment by. Must be greater than 0.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.achievement_show",
+      "description": "Show achivements",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.achievement_get",
+      "description": "Get information about all achievement's state asynchronously. Result return to callback previously set by `gpgs.set_callback` with `message_id == gpgs.MSG_GET_ACHIEVEMENTS`. Result is an array of JSON strings. Decode each string with `json.decode()` to get a table containing the following fields\n- `id` - achievement id (from GP console)\n- `name` - achievement name\n- `description` - achievement description\n- `xp` - how much experience points will be added when achievement will be unlocked\n- `steps` - current step of incremental achievement\n- `total_steps` - total amount of steps of incremental achievement\n- `unlocked` - set to `true` if achievement is unlocked. Otherwise field is missed.\n- `hidden` - set to `true if achievement is hidden. Otherwise field is missed.\n- `revealed` - set to `true` if achievement is revealed. Otherwise field is missed.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.event_increment",
+      "description": "Increments an event specified by `eventId` by the given number of steps",
+      "parameters": [
+        {
+          "name": "eventId",
+          "doc": "Event id (from GP console)",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "amount",
+          "doc": "The amount increment by. Must be greater than or equal to 0",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "gpgs.event_get",
+      "description": "Get information about all events asynchronously. Result returns to callback previously set by `gpgs.set_callback` with `message_id == gpgs.MSG_GET_EVENTS`. Result is an array of JSON strings. Decode each string with `json.decode()` to get a table containing the following fields\n- `id` - event id\n- `formatted_value` - sum of all increments have been made to this event\n- `value` - the number of increments this user has made to this event\n- `description` - event's description\n- `image` - URI that can be used to load the event's image icon\n- `name` - event's name\n- `visible` - whether the event should be displayed to the user in any event related UIs",
+      "parameters": [],
+      "returnvalues": []
+    }
+  ]
+}

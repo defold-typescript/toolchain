@@ -1,0 +1,121 @@
+{
+  "info": {
+    "namespace": "odin",
+    "brief": "Functions and constants for interacting with ODIN Voice",
+    "description": "Functions and constants for interacting with ODIN Voice"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "odin.init",
+      "description": "Initialize ODIN Voice",
+      "parameters": [
+        {
+          "name": "listener",
+          "doc": "",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "success",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "odin.create_room",
+      "description": "Create or join a room.",
+      "parameters": [
+        {
+          "name": "room_id",
+          "doc": "Id of the room to join",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "user_id",
+          "doc": "Id of the user",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "access_key",
+          "doc": "The access key used when generating a token for room access. Will use odin.access_key if none is provided.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "success",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "odin.close_room",
+      "description": "Close/leave a previously created/joined room.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "success",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "odin.send",
+      "description": "Send a message to the current room.",
+      "parameters": [
+        {
+          "name": "data",
+          "doc": "Data to send.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "target_peer_ids",
+          "doc": "Optional table with peers to send message to. Nil to send to all.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "msgid",
+          "doc": "Optional message id to identify message by. The id will be used in the response.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "success",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    }
+  ]
+}

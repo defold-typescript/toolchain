@@ -1,0 +1,301 @@
+{
+  "info": {
+    "namespace": "realtime",
+    "brief": "Functions and constants for interacting with Photon Realtime",
+    "description": "Functions and constants for interacting with Photon Realtime"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "realtime.init",
+      "description": "Initialize Realtime by creating a load balanced client",
+      "parameters": [
+        {
+          "name": "app_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "realtime.connect",
+      "description": "Connect to the server. - username - use_datagram_encryption - server_type See SERVER_TYPE_* enums - server_address The IP address or domain name and optionally the port number to connect to. IP addresses can be in IPv4 or IPv6 format - auth_data Sets the HTTP POST data, that will be forwarded to the authentication service, to the provided data. - auth_parameters The HTTP GET parameters that will be forwarded to the authentication service to the provided parameters. - auth_type The type of the &quot;Custom Authentication&quot; service that will be used. See AUTH_* enums",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "Table with connection options",
+          "types": [
+            "None"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "None"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "realtime.update",
+      "description": "Update Realtime. Call this from a script component.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "realtime.disconnect",
+      "description": "Disconnect from server.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "realtime.join_lobby",
+      "description": "Join lobby.",
+      "parameters": [
+        {
+          "name": "lobby_name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "lobby_type",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "realtime.leave_lobby",
+      "description": "Leave lobby.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "realtime.create_room",
+      "description": "Create room. Local game_id = &quot;1234&quot; local room_options = { is_visible = false, is_open = false, supress_room_events = false, max_players = 4, player_ttl = 0, empty_room_ttl = 0, lobby_type = realtime.LOBBYTYPE_DEFAULT, lobby_name = &quot;&quot;, publish_user_id = &quot;&quot;, direct_mode = realtime.DIRECTMODE_NONE, props_listed_in_lobby = {}, custom_room_properties = {}, } local expected_users = {} realtime.create_room(game_id, room_options, expected_users)",
+      "parameters": [
+        {
+          "name": "game_id",
+          "doc": "The name to create a room with. Must be unique and not in use or the room can&#x27;t be created. If this is an empty string, then the server will assign a GUID as name.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "room_options",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "expected_users",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "realtime.join_room",
+      "description": "Join room. Local game_id = &quot;1234&quot; local join_options = { rejoin = false, cache_slice_index = 0, expected_users = {}, } realtime.join_room(game_id, join_options)",
+      "parameters": [
+        {
+          "name": "game_id",
+          "doc": "The name to create a room with. Must be unique and not in use or the room can&#x27;t be created. If this is an empty string, then the server will assign a GUID as name.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "join_options",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "realtime.join_or_create_room",
+      "description": "Join or create room. Local game_id = &quot;1234&quot; local room_options = { is_visible = false, is_open = false, supress_room_events = false, max_players = 4, player_ttl = 0, empty_room_ttl = 0, lobby_type = realtime.LOBBYTYPE_DEFAULT, lobby_name = &quot;&quot;, publish_user_id = &quot;&quot;, direct_mode = realtime.DIRECTMODE_NONE, props_listed_in_lobby = {}, custom_room_properties = {}, } local join_options = { custom_room_properties = {}, max_players = 0, matchmaking_mode = realtime.MATCHMAKINGMODE_FILL_ROOM, lobby_name = &quot;&quot;, lobby_type = realtime.LOBBYTYPE_DEFAULT, sql_lobby_filter = &quot;&quot;, expected_users = {}, }",
+      "parameters": [
+        {
+          "name": "game_id",
+          "doc": "The name to create a room with. Must be unique and not in use or the room can&#x27;t be created. If this is an empty string, then the server will assign a GUID as name.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "room_options",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "join_options",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "realtime.join_or_create_random_room",
+      "description": "Join or create random room. Local game_id = &quot;1234&quot; local room_options = { is_visible = false, is_open = false, supress_room_events = false, max_players = 4, player_ttl = 0, empty_room_ttl = 0, lobby_type = realtime.LOBBYTYPE_DEFAULT, lobby_name = &quot;&quot;, publish_user_id = &quot;&quot;, direct_mode = realtime.DIRECTMODE_NONE, props_listed_in_lobby = {}, custom_room_properties = {}, } local join_options = { custom_room_properties = {}, max_players = 0, matchmaking_mode = realtime.MATCHMAKINGMODE_FILL_ROOM, lobby_name = &quot;&quot;, lobby_type = realtime.LOBBYTYPE_DEFAULT, sql_lobby_filter = &quot;&quot;, expected_users = {}, } realtime.join_or_create_random_room(game_id, room_options, join_options)",
+      "parameters": [
+        {
+          "name": "game_id",
+          "doc": "The name to create a room with. Must be unique and not in use or the room can&#x27;t be created. If this is an empty string, then the server will assign a GUID as name.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "room_options",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "join_options",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "realtime.int JoinRandomRoom",
+      "description": "Join random room. Local join_options = { custom_room_properties = {}, max_players = 0, matchmaking_mode = realtime.MATCHMAKINGMODE_FILL_ROOM, lobby_name = &quot;&quot;, lobby_type = realtime.LOBBYTYPE_DEFAULT, sql_lobby_filter = &quot;&quot;, expected_users = {}, } realtime.join_random_room(join_options)",
+      "parameters": [
+        {
+          "name": "join_options",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "realtime.leave_room",
+      "description": "Leave room.",
+      "parameters": [
+        {
+          "name": "will_come_back",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "send_auth_cookie",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "realtime.get_room_list",
+      "description": "Get room list.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "realtime.raise_event",
+      "description": "Sends in-game data to other players in the game.",
+      "parameters": [
+        {
+          "name": "reliable",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "parameter",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "event_code",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "(channel_id, event_caching, receiver_group, interest_group, cache_slice_index, target_players, web_flags, encrypt)",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "n",
+          "doc": "",
+          "types": [
+            "boolea"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "realtime.set_auto_join_lobby",
+      "description": "Set the auto join lobby flag. The value of the autoJoinLobby flag determines if the client will automatically join the default lobby whenever it has successfully connected and whenever it leaves a game room.",
+      "parameters": [
+        {
+          "name": "auto_join",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

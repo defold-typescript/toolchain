@@ -1,0 +1,143 @@
+{
+  "info": {
+    "namespace": "crypt",
+    "brief": "Functions and constants for interacting with various hash and encode/decode algorithms",
+    "description": "Functions and constants for interacting with various hash and encode/decode algorithms"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "crypt.hash_sha1",
+      "description": "",
+      "parameters": [
+        {
+          "name": "buffer",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crypt.hash_sha256",
+      "description": "",
+      "parameters": [
+        {
+          "name": "buffer",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crypt.hash_sha512",
+      "description": "",
+      "parameters": [
+        {
+          "name": "buffer",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crypt.hash_md5",
+      "description": "",
+      "parameters": [
+        {
+          "name": "buffer",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crypt.encode_base64",
+      "description": "",
+      "parameters": [
+        {
+          "name": "input",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crypt.decode_base64",
+      "description": "",
+      "parameters": [
+        {
+          "name": "input",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crypt.encrypt_xtea",
+      "description": "",
+      "parameters": [
+        {
+          "name": "source",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "key",
+          "doc": "key should be <=16",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crypt.decrypt_xtea",
+      "description": "",
+      "parameters": [
+        {
+          "name": "source",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "key",
+          "doc": "key should be <=16",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

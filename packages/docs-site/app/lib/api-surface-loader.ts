@@ -91,6 +91,62 @@ interface LibraryTargets {
   targets: { module: string; path: string }[];
 }
 
+interface DefoldExtensionEntry {
+  repo: string;
+  ref: string;
+  license: string;
+  description: string;
+  docs: { path: string; namespace: string; page: string }[];
+}
+
+// Defold's own libraries, surveyed from the `defold` GitHub org by
+// `library-types/scripts/sync-defold-extensions.ts`. Each `.script_api` doc is a
+// Libraries page keyed by its manifest `page`, never its declared namespace:
+// four repos declare `firebase`, and `extension-camera` declares the engine
+// `camera`. An absent manifest degrades to no Defold pages.
+function loadDefoldExtensions(libraryTypesDir: string): DefoldExtensionEntry[] {
+  const path = join(libraryTypesDir, "defold-extensions.json");
+  if (!existsSync(path)) return [];
+  const { libraries } = JSON.parse(readFileSync(path, "utf8")) as {
+    libraries: DefoldExtensionEntry[];
+  };
+  return libraries;
+}
+
+function defoldExtensionDocs(
+  libraryTypesDir: string,
+): Map<string, { entry: DefoldExtensionEntry; doc: DefoldExtensionEntry["docs"][number] }> {
+  const docs = new Map<
+    string,
+    { entry: DefoldExtensionEntry; doc: DefoldExtensionEntry["docs"][number] }
+  >();
+  for (const entry of loadDefoldExtensions(libraryTypesDir)) {
+    for (const doc of entry.docs) {
+      const previous = docs.get(doc.page);
+      if (previous) {
+        throw new Error(
+          `defold-extensions.json: page "${doc.page}" is claimed by both ${previous.entry.repo} and ${entry.repo}`,
+        );
+      }
+      docs.set(doc.page, { entry, doc });
+    }
+  }
+  return docs;
+}
+
+// The engine loaders take only the types dir; the Defold manifest lives in the
+// sibling `library-types` package, so the engine filter reads it from there and
+// a fixture types dir with no such sibling filters nothing.
+function siblingLibraryTypesDir(typesDir: string): string {
+  return join(typesDir, "..", "library-types");
+}
+
+function engineNamespacesBesideLibraryTypes(libraryTypesDir: string): Set<string> {
+  const typesDir = join(libraryTypesDir, "..", "types");
+  if (!existsSync(join(typesDir, "api-targets.json"))) return new Set();
+  return new Set(readTargets(typesDir).flatMap((t) => t.modules.map((m) => m.namespace)));
+}
+
 // The `/api/<slug>` route for a dotted library module. honox SSG emits a clean
 // static file for a literal dot (`…/monarch.monarch/index.html`), so the slug
 // keeps the dotted module name verbatim — namespace, card label, and route stay
@@ -202,6 +258,11 @@ export function libraryOriginByNamespace(libraryTypesDir: string): Map<string, L
     const owner = githubOwner(provenance.repo);
     const repo = githubRepo(provenance.repo);
     if (owner && repo) origins.set(namespace, { owner, repo });
+  }
+  for (const [page, { entry }] of defoldExtensionDocs(libraryTypesDir)) {
+    const owner = githubOwner(entry.repo);
+    const repo = githubRepo(entry.repo);
+    if (owner && repo) origins.set(page, { owner, repo });
   }
   return origins;
 }
@@ -331,8 +392,28 @@ export function loadLibraryProvenance(libraryTypesDir: string): (namespace: stri
     ...loadAuthoredProvenance(libraryTypesDir),
   ]);
 
+  const defoldDocs = defoldExtensionDocs(libraryTypesDir);
+  const engineNamespaces = engineNamespacesBesideLibraryTypes(libraryTypesDir);
+
   const { repo, commit, license } = classification.source;
   return (namespace: string): LibraryMeta => {
+    const defold = defoldDocs.get(namespace);
+    if (defold) {
+      const { entry, doc } = defold;
+      const extendsEngine = doc.namespace !== doc.page && engineNamespaces.has(doc.namespace);
+      return {
+        author: "",
+        authorUrl: entry.repo,
+        commit: entry.ref,
+        sourceUrl: `${entry.repo}/blob/${entry.ref}/${doc.path}`,
+        importString: "",
+        license: entry.license,
+        authoredHere: true,
+        usage: "ambient",
+        globalNamespace: doc.namespace,
+        ...(extendsEngine ? { extendsNamespace: doc.namespace } : {}),
+      };
+    }
     const authoredEntry = moduleDir.has(namespace) ? undefined : maintainedHere.get(namespace);
     if (authoredEntry) {
       return {
@@ -343,6 +424,7 @@ export function loadLibraryProvenance(libraryTypesDir: string): (namespace: stri
         importString: libraryImportString(namespace, authoredEntry.moduleId ?? namespace),
         license: authoredEntry.license,
         authoredHere: true,
+        usage: "import",
       };
     }
     const dir = moduleDir.get(namespace);
@@ -359,6 +441,7 @@ export function loadLibraryProvenance(libraryTypesDir: string): (namespace: stri
       importString: libraryImportString(namespace),
       license,
       authoredHere: false,
+      usage: "import",
     };
   };
 }
@@ -404,6 +487,20 @@ function loadLibraryPages(libraryTypesDir: string): ApiPage[] {
     .filter((namespace) => existsSync(join(libraryTypesDir, "generated", `${namespace}.d.ts`)))
     .filter((namespace) => !markdownDeferred.has(namespace));
 
+  // Defold pages share the one `/api/<page>` route space with the vendored
+  // libraries, so a key that lands on a vendored namespace would shadow a page.
+  const defoldDocs = defoldExtensionDocs(libraryTypesDir);
+  const vendored = new Set(namespaces);
+  for (const [page, { entry }] of defoldDocs) {
+    if (vendored.has(page)) {
+      throw new Error(
+        `defold-extensions.json: page "${page}" from ${entry.repo} collides with a vendored library namespace`,
+      );
+    }
+    namespaces.push(page);
+  }
+  const defoldApiDocDir = join(libraryTypesDir, "defold-extensions", "api-doc");
+
   // Modules-per-repo count drives whether the display label keeps its `· <leaf>`
   // distinguisher; a single-module repo drops it. It is the same count the
   // Libraries tree collapses a one-module repo on, resolved from the same
@@ -417,11 +514,16 @@ function loadLibraryPages(libraryTypesDir: string): ApiPage[] {
 
   const pages: ApiPage[] = [];
   for (const namespace of namespaces) {
+    const defold = defoldDocs.get(namespace);
     const module = parseDefoldApiDoc(
-      JSON.parse(readFileSync(join(apiDocDir, `${namespace}.json`), "utf8")),
+      JSON.parse(
+        readFileSync(join(defold ? defoldApiDocDir : apiDocDir, `${namespace}.json`), "utf8"),
+      ),
     );
     const dir = moduleDir.get(namespace);
-    if (!module.description) {
+    if (!module.description && defold?.entry.description) {
+      module.description = defold.entry.description;
+    } else if (!module.description) {
       // ts-defold libraries key the description on their upstream dir; a LuaLS
       // library has no classification dir, so it keys on its namespace directly
       // (druid documents its own `---@class` and never reaches this fallback).
@@ -512,8 +614,12 @@ function sortApiPages(pages: ApiPage[]): ApiPage[] {
 function loadEnginePages(typesDir: string, target: ApiTarget, routePrefix: string): ApiPage[] {
   const translations = loadTranslationStore(typesDir);
   const signatures = loadSignatureStore(typesDir);
+  // A namespace a Defold extension page now owns (`iap`) leaves every engine
+  // surface, so its only page is the one under Libraries.
+  const defoldPages = defoldExtensionDocs(siblingLibraryTypesDir(typesDir));
 
-  const pages = target.modules.map((mod): ApiPage => {
+  const modules = target.modules.filter((mod) => !defoldPages.has(mod.namespace));
+  const pages = modules.map((mod): ApiPage => {
     const raw = JSON.parse(readFileSync(join(typesDir, target.fixturesDir, mod.fixture), "utf8"));
     const module = parseDefoldApiDoc(raw);
     return {

@@ -6499,6 +6499,15 @@ The handle types line up because the materialized surface imports its branded
 engine types from the published `@defold-typescript/types/core-types` entry, so
 an extension's `Opaque<"node">` is the very same type `gui.get_node` returns.
 
+#### Browsing Defold's own extensions
+
+The extensions Defold publishes on GitHub have reference pages under
+[Libraries](/libraries) › defold, one per `.script_api` doc, such as
+[iap](/api/iap) and [spine.gui](/api/spine.gui). Each page shows the release it
+was read from. That release only fixes what the page shows: which version your
+project depends on is still your choice in `game.project`, and `resolve` types
+whichever one you pick.
+
 For the command itself — `--frozen`, version pinning, drift detection, and the
 cache location — see [Resolve](./resolve.md).
 
@@ -8869,20 +8878,6 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 - function request(url: string, method: string, callback: (self: unknown, id: unknown, response: unknown) => void, headers?: LuaMap<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean }): void;
 
-### iac
-
-- function set_listener(payload: Record<string | number, unknown>, type: number): void;
-
-### iap
-
-- function acknowledge(transaction: { ident?: string; state?: number; trans_ident?: string; date?: string; original_trans?: string; receipt?: string; signature?: string; user_id?: string }): void;
-- function buy(id: string, options?: { request_id?: string; token?: string }): void;
-- function finish(transaction: { ident?: string; state?: number; trans_ident?: string; date?: string; original_trans?: string; receipt?: string; signature?: string; user_id?: string }): void;
-- function get_provider_id(): Opaque<"constant">;
-- function list(ids: string[], callback: (...args: unknown[]) => unknown): void;
-- function restore(): boolean;
-- function set_listener(listener: (...args: unknown[]) => unknown): void;
-
 ### image
 
 - function get_astc_header(buffer: string): { width: number; height: number; depth: number; block_size_x: number; block_size_y: number; block_size_z: number } | undefined;
@@ -9047,17 +9042,6 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - profiler.MODE_SHOW_PEAK_FRAME: number & { readonly __brand: "profiler.MODE_SHOW_PEAK_FRAME" }
 - profiler.VIEW_MODE_FULL: number & { readonly __brand: "profiler.VIEW_MODE_FULL" }
 - profiler.VIEW_MODE_MINIMIZED: number & { readonly __brand: "profiler.VIEW_MODE_MINIMIZED" }
-
-### push
-
-- function cancel(id: number): void;
-- function cancel_all_issued(): void;
-- function get_all_scheduled(): Record<string | number, unknown>;
-- function get_scheduled(id: number): Record<string | number, unknown>;
-- function register(notifications: number[], callback: (...args: unknown[]) => unknown): void;
-- function schedule(time: number, title: string, alert: string, payload: string, notification_settings: { action?: string; badge_count?: number; priority?: number }): LuaMultiReturn<[number, string]>;
-- function set_badge_count(count: number): void;
-- function set_listener(listener: (...args: unknown[]) => unknown): void;
 
 ### render
 
@@ -9378,17 +9362,6 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function vector4(x: number, y: number, z: number, w: number): Vector4;
 - function vector4(n: number): Vector4;
 - function vector4(v1: Vector4): Vector4;
-
-### webview
-
-- function create(callback: (...args: unknown[]) => unknown): void;
-- function destroy(webview_id: number): void;
-- function eval(webview_id: number, code: string): void;
-- function is_visible(webview_id: number): void;
-- function open_raw(webview_id: number, html: string, options: Record<string | number, unknown>): void;
-- function set_position(webview_id: number, x: number, y: number, width: number, height: number): void;
-- function set_transparent(webview_id: number, transparent: boolean): void;
-- function set_visible(webview_id: number, visible: number): void;
 
 ### window
 

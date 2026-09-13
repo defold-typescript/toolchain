@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { cpSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { apiModuleSymbols } from "./api-surface";
 import {
@@ -8,8 +10,10 @@ import {
   libraryOriginByNamespace,
   loadApiSurface,
   loadApiSurfaceForVersion,
+  loadCombinedSurface,
   loadLibraryProvenance,
   loadVersionIndependentPages,
+  versionsWithDiskFixtures,
 } from "./api-surface-loader";
 import { libraryOwnerGroups } from "./nav";
 
@@ -551,5 +555,79 @@ describe("loadApiSurface — multi-module same-repo library grouping (real corpu
     expect(pages.find((p) => p.namespace === "nakama")?.displayName).toBe(
       "heroiclabs / nakama-defold · nakama",
     );
+  });
+});
+
+describe("Defold extensions under Libraries", () => {
+  const MOVED = ["iac", "iap", "push", "webview"];
+
+  test("each Defold doc is a library page owned by defold", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    for (const route of ["/api/iap", "/api/spine.gui"]) {
+      const page = pages.find((p) => p.route === route);
+      expect(page?.category).toBe("library");
+    }
+    const origins = libraryOriginByNamespace(REAL_LIBRARY_TYPES_DIR);
+    expect(origins.get("iap")).toEqual({ owner: "defold", repo: "extension-iap" });
+    expect(origins.get("spine.gui")).toEqual({ owner: "defold", repo: "extension-spine" });
+  });
+
+  test("the four extension namespaces leave every engine surface", () => {
+    for (const { id } of versionsWithDiskFixtures(REAL_TYPES_DIR)) {
+      const engine = loadApiSurfaceForVersion(REAL_TYPES_DIR, id).map((p) => p.namespace);
+      for (const namespace of MOVED) expect(engine).not.toContain(namespace);
+    }
+    const combined = loadCombinedSurface(REAL_TYPES_DIR).namespaces.map((ns) => ns.namespace);
+    for (const namespace of MOVED) expect(combined).not.toContain(namespace);
+  });
+
+  test("the engine camera page survives beside the extension-camera library page", () => {
+    const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const defaultEngine = pages.filter((p) => p.category === "engine").map((p) => p.namespace);
+    expect(defaultEngine).toContain("camera");
+    const combined = loadCombinedSurface(REAL_TYPES_DIR).namespaces.map((ns) => ns.namespace);
+    expect(combined).toContain("camera");
+    expect(pages.find((p) => p.route === "/api/extension-camera")?.category).toBe("library");
+  });
+
+  function libraryTypesWithDefoldPages(pages: string[]): string {
+    const dir = mkdtempSync(join(tmpdir(), "defold-extensions-loader-"));
+    cpSync(LIBRARY_FIXTURE_DIR, dir, { recursive: true });
+    mkdirSync(join(dir, "defold-extensions", "api-doc"), { recursive: true });
+    for (const page of pages) {
+      writeFileSync(
+        join(dir, "defold-extensions", "api-doc", `${page}.json`),
+        JSON.stringify({ info: { namespace: page, brief: "", description: "" }, elements: [] }),
+      );
+    }
+    writeFileSync(
+      join(dir, "defold-extensions.json"),
+      JSON.stringify({
+        libraries: pages.map((page, index) => ({
+          repo: `https://github.com/defold/extension-${index}`,
+          ref: "1.0.0",
+          refKind: "release",
+          license: "MIT",
+          description: "",
+          docs: [{ path: `api/${page}.script_api`, namespace: page, page }],
+        })),
+      }),
+    );
+    return dir;
+  }
+
+  test("a Defold page key equal to a vendored library namespace or another Defold key throws", () => {
+    expect(() =>
+      loadVersionIndependentPages(ENGINE_FIXTURE_DIR, libraryTypesWithDefoldPages(["fresh"])),
+    ).not.toThrow();
+    expect(() =>
+      loadVersionIndependentPages(ENGINE_FIXTURE_DIR, libraryTypesWithDefoldPages(["demo.one"])),
+    ).toThrow(/demo\.one/);
+    expect(() =>
+      loadVersionIndependentPages(
+        ENGINE_FIXTURE_DIR,
+        libraryTypesWithDefoldPages(["twice", "twice"]),
+      ),
+    ).toThrow(/twice/);
   });
 });

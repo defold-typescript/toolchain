@@ -1,0 +1,4026 @@
+{
+  "info": {
+    "namespace": "imgui",
+    "brief": "Functions and constants for interacting with Dear ImGUI",
+    "description": "Functions and constants for interacting with Dear ImGUI"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "IMAGES.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "PRIMITIVES.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "FRAMES.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "INPUT.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "KEY MODIFIERS.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "TEXT INPUT.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "TEXT INPUT.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "TREE.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "PUSH/POP ID.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "WINDOW.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "CHILD WINDOW.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "POPUP FLAGS.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "DRAG AND DROP.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "COMBO.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "TABLE.\n-\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "TOOLTIP.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "TAB BAR.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "WIDGETS.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "LAYOUT.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "IMGUI PLOT.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "IMGUI DEMO.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "STYLE.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "ITEM WIDTH.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "NAVIGATION.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "FONT.\n-\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "DRAW.\n-\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "INPUT CAPTURE.\n-\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.None",
+      "description": "CONFIG.\n-\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.image_b64_decode",
+      "description": "ImageB64Decode.\n",
+      "parameters": [
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "length",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "decoded",
+          "doc": "Data\n",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.image_load_data",
+      "description": "ImageLoadData.\n",
+      "parameters": [
+        {
+          "name": "filename",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "data_length",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "texture_id",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "width",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.image_load",
+      "description": "ImageLoad.\n",
+      "parameters": [
+        {
+          "name": "filename",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "texture_id",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "width",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.image_get",
+      "description": "ImageGet.\n",
+      "parameters": [
+        {
+          "name": "texture_id",
+          "doc": "Texture id\n",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "texture_id",
+          "doc": "Texture id\n",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "width",
+          "doc": "Image width\n",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "Image",
+          "doc": "Height\n",
+          "types": [
+            "height"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.image_add",
+      "description": "ImageAdd.\n",
+      "parameters": [
+        {
+          "name": "texture_id",
+          "doc": "Texture id\n",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "width",
+          "doc": "Image width\n",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "doc": "Image height\n",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "uv0x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "uv0y",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "uv1x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "uv2x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.add_line",
+      "description": "DrawListAddLine.\n",
+      "parameters": [
+        {
+          "name": "x1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "x2",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y2",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "r",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "g",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "b",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "a",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "thickness",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.add_rect",
+      "description": "DrawListAddRect.\n",
+      "parameters": [
+        {
+          "name": "x1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "x2",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y2",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "r",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "g",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "b",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "a",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "thickness",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.set_display_size",
+      "description": "SetDisplaySize.\n",
+      "parameters": [
+        {
+          "name": "w",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "h",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.set_mouse_input",
+      "description": "SetMouseInput.\n",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "down1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "down2",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "down3",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "wheel",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.set_mouse_pos",
+      "description": "SetMousePos.\n",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.set_mouse_button",
+      "description": "SetMouseButton.\n",
+      "parameters": [
+        {
+          "name": "index",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "down",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.set_mouse_wheel",
+      "description": "SetMouseWheel.\n",
+      "parameters": [
+        {
+          "name": "wheel",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.set_key_down",
+      "description": "SetKeyDown.\n",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "down",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.set_key_modifier_ctrl",
+      "description": "SetKeyModifierCtrl.\n",
+      "parameters": [
+        {
+          "name": "down",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.set_key_modifier_shift",
+      "description": "SetKeyModifierShift.\n",
+      "parameters": [
+        {
+          "name": "down",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.set_key_modifier_alt",
+      "description": "SetKeyModifierAlt.\n",
+      "parameters": [
+        {
+          "name": "down",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.set_key_modifier_super",
+      "description": "SetKeyModifierSuper.\n",
+      "parameters": [
+        {
+          "name": "down",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.add_input_character",
+      "description": "AddInputCharacter.\n",
+      "parameters": [
+        {
+          "name": "character",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.add_input_characters",
+      "description": "AddInputCharacters.\n",
+      "parameters": [
+        {
+          "name": "characters",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.tree_node",
+      "description": "TreeNode.\n",
+      "parameters": [
+        {
+          "name": "text",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "flags",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.tree_pop",
+      "description": "TreePop.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.collapsing_header",
+      "description": "CollapsingHeader.\n",
+      "parameters": [
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "visible",
+          "doc": "Optional; if omitted or nil, no close button is shown.\n",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "flags",
+          "doc": "Optional.\n",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "open",
+          "doc": "",
+          "types": [
+            "bool"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.push_id",
+      "description": "PushId.\n",
+      "parameters": [
+        {
+          "name": "text",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.pop_id",
+      "description": "PopId.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.begin_window",
+      "description": "Begin.\n",
+      "parameters": [
+        {
+          "name": "title",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "is_open",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "flags",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "bool"
+          ]
+        },
+        {
+          "name": "is_open",
+          "doc": "",
+          "types": [
+            "bool"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.end_window",
+      "description": "End.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.set_next_window_size",
+      "description": "SetNextWindowSize.\n",
+      "parameters": [
+        {
+          "name": "width",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "cond",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.set_next_window_pos",
+      "description": "SetNextWindowPos.\n",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "cond",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "pivot_x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "pivot_y",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.set_next_window_collapsed",
+      "description": "SetNextWindowCollapsed.\n",
+      "parameters": [
+        {
+          "name": "collapsed",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "cond",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.get_window_size",
+      "description": "GetWindowSize.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "width",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.get_window_pos",
+      "description": "GetWindowPos.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.is_window_focused",
+      "description": "IsWindowFocused.\n",
+      "parameters": [
+        {
+          "name": "flags",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "focused",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.is_window_hovered",
+      "description": "IsWindowHovered.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "bool"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.is_window_appearing",
+      "description": "IsWindowAppearing.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "bool"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.get_content_region_avail",
+      "description": "GetContentRegionAvail.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.get_window_content_region_max",
+      "description": "GetWindowContentRegionMax.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.begin_child",
+      "description": "BeginChild.\n",
+      "parameters": [
+        {
+          "name": "title",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "width",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "border",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "flags",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "bool"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.end_child",
+      "description": "EndChild.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.begin_popup_context_item",
+      "description": "BeginPopupContextItem.\nIf id is omitted, uses the last item ID (same as ImGui helper behavior). Lua - call with no arguments to use the last item; passing nil is not accepted.\n",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Optional; if omitted, uses the last item ID.\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.begin_popup",
+      "description": "BeginPopup.\n",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "flags",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.begin_popup_modal",
+      "description": "BeginPopupModal.\n",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "flags",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.open_popup",
+      "description": "OpenPopup.\n",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "flags",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.close_current_popup",
+      "description": "CloseCurrentPopup.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.end_popup",
+      "description": "EndPopup.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.begin_drag_drop_source",
+      "description": "BeginDragDropSource.\n",
+      "parameters": [
+        {
+          "name": "flags",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.end_drag_drop_source",
+      "description": "EndDragDropSource.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.begin_drag_drop_target",
+      "description": "BeginDragDropTarget.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.end_drag_drop_target",
+      "description": "EndDragDropTarget.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.set_drag_drop_payload",
+      "description": "SetDragDropPayload.\n",
+      "parameters": [
+        {
+          "name": "type",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "payload",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.accept_drag_drop_payload",
+      "description": "AcceptDragDropPayload.\n",
+      "parameters": [
+        {
+          "name": "type",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "flags",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "payload",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.begin_combo",
+      "description": "BeginCombo.\n",
+      "parameters": [
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "preview",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.end_combo",
+      "description": "EndCombo.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.combo",
+      "description": "Combo.\n",
+      "parameters": [
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "current",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "items",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "current",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.begin_table",
+      "description": "BeginTable.\n",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "column",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "flags",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.end_table",
+      "description": "EndTable.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.table_headers_row",
+      "description": "TableHeadersRow.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.table_setup_column",
+      "description": "TableSetupColumn.\n",
+      "parameters": [
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "flags",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "weight",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.table_set_column_index",
+      "description": "TableSetColumnIndex.\n",
+      "parameters": [
+        {
+          "name": "column_index",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.table_next_column",
+      "description": "TableNextColumn.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.table_next_row",
+      "description": "TableNextRow.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.table_setup_scroll_freeze",
+      "description": "TableSetupScrollFreeze.\n",
+      "parameters": [
+        {
+          "name": "freeze_cols",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "freeze_rows",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.begin_tooltip",
+      "description": "BeginTooltip.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.end_tooltip",
+      "description": "EndTooltip.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.begin_tab_bar",
+      "description": "BeginTabBar.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.end_tab_bar",
+      "description": "EndTabBar.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.begin_tab_item",
+      "description": "BeginTabItem.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.end_tab_item",
+      "description": "EndTabItem.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.text",
+      "description": "Text.\n",
+      "parameters": [
+        {
+          "name": "text",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "wrapped",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.text_get_size",
+      "description": "TextGetSize.\n",
+      "parameters": [
+        {
+          "name": "text",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "font_size",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "fontid",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "width",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.text_colored",
+      "description": "TextColored.\n",
+      "parameters": [
+        {
+          "name": "text",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "r",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "g",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "b",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "a",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.input_text",
+      "description": "InputText.\n",
+      "parameters": [
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "text",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "flags",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "changed",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "text",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.input_int",
+      "description": "InputInt.\n",
+      "parameters": [
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "flags",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "changed",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.input_float",
+      "description": "InputFloat.\n",
+      "parameters": [
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "step",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "step_fast",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "precision_count",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "flags",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "changed",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.input_double",
+      "description": "InputDouble.\n",
+      "parameters": [
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "step",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "step_fast",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "precision_count",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "flags",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "changed",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.input_int4",
+      "description": "InputInt4.\n",
+      "parameters": [
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "v1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "v2",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "v3",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "v4",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "v1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "v2",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "v3",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "v4",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.input_int2",
+      "description": "InputInt2.\n",
+      "parameters": [
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "v1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "v2",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "v1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "v2",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.input_float3",
+      "description": "InputFloat3.\n",
+      "parameters": [
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "v1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "v2",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "v3",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "v1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "v2",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "v3",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.input_float4",
+      "description": "InputFloat4.\n",
+      "parameters": [
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "v1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "v2",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "v3",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "v4",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "v1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "v2",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "v3",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "v4",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.drag_float",
+      "description": "DragFloat.\n",
+      "parameters": [
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "speed",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "min",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "max",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "precision",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.slider_float",
+      "description": "SliderFloat.\n",
+      "parameters": [
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "min",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "max",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "precision",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.slider_float3",
+      "description": "SliderFloat3.\n",
+      "parameters": [
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "value2",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "value3",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "min",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "max",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "precision",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "value2",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "value3",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.slider_float4",
+      "description": "SliderFloat4.\n",
+      "parameters": [
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "value2",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "value3",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "value4",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "min",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "max",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "precision",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "value2",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "value3",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "value4",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.color_edit4",
+      "description": "ColorEdit4.\n",
+      "parameters": [
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "color",
+          "doc": "",
+          "types": [
+            "vec4"
+          ]
+        },
+        {
+          "name": "flags",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.selectable",
+      "description": "Selectable.\n",
+      "parameters": [
+        {
+          "name": "text",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "selected",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "flags",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "selected",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "pushed",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.button",
+      "description": "Button.\n",
+      "parameters": [
+        {
+          "name": "text",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "width",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "pushed",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.small_button",
+      "description": "SmallButton.\n",
+      "parameters": [
+        {
+          "name": "text",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "pushed",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.button_image",
+      "description": "ButtonImage.\n",
+      "parameters": [
+        {
+          "name": "texture_id",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "width",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "pushed",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.button_arrow",
+      "description": "ButtonArrow.\n",
+      "parameters": [
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "direction",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "pushed",
+          "doc": "",
+          "types": [
+            "bool"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.checkbox",
+      "description": "Checkbox.\n",
+      "parameters": [
+        {
+          "name": "text",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "checked",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "changed",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "checked",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.radio_button",
+      "description": "RadioButton.\n",
+      "parameters": [
+        {
+          "name": "text",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "checked",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "changed",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "clicked",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.begin_menu_bar",
+      "description": "BeginMenuBar.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.end_menu_bar",
+      "description": "EndMenuBar.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.begin_main_menu_bar",
+      "description": "BeginMainMenuBar.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.end_main_menu_bar",
+      "description": "EndMainMenuBar.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.begin_menu",
+      "description": "BeginMenu.\n",
+      "parameters": [
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "enabled",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.end_menu",
+      "description": "EndMenu.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.menu_item",
+      "description": "MenuItem.\n",
+      "parameters": [
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "shortcut",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "selected",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "enabled",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "selected",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.same_line",
+      "description": "SameLine.\n",
+      "parameters": [
+        {
+          "name": "offset",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.new_line",
+      "description": "NewLine.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.bullet",
+      "description": "Bullet.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.indent",
+      "description": "Indent.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.unindent",
+      "description": "Unindent.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.spacing",
+      "description": "Spacing.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.separator",
+      "description": "Separator.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.get_cursor_screen_pos",
+      "description": "GetCursorScreenPos.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "x",
+          "doc": "Cursor screen x position\n",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "Cursor screen y position\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.get_cursor_pos",
+      "description": "GetCursorPos.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "x",
+          "doc": "Cursor x position\n",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "Cursor y position\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.plot_lines",
+      "description": "PlotLines.\n",
+      "parameters": [
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "offset",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "width",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "values",
+          "doc": "",
+          "types": [
+            "number[]"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.plot_histogram",
+      "description": "PlotHistogram.\n",
+      "parameters": [
+        {
+          "name": "label",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "offset",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "width",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "values",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.demo",
+      "description": "Demo.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.is_mouse_double_clicked",
+      "description": "IsMouseDoubleClicked.\n",
+      "parameters": [
+        {
+          "name": "button",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "double_clicked",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.is_mouse_clicked",
+      "description": "IsMouseClicked.\n",
+      "parameters": [
+        {
+          "name": "button",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "clicked",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.is_item_active",
+      "description": "IsItemActive.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "active",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.is_item_focused",
+      "description": "IsItemFocused.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "focused",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.is_item_clicked",
+      "description": "IsItemClicked.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "clicked",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.is_item_double_clicked",
+      "description": "IsItemDoubleClicked.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "double_clicked",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.is_item_hovered",
+      "description": "IsItemHovered.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "hovered",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.get_item_rect_max",
+      "description": "GetItemRectMax.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.set_keyboard_focus_here",
+      "description": "SetKeyboardFocusHere.\n",
+      "parameters": [
+        {
+          "name": "offset",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.get_style",
+      "description": "GetStyle.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "style",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.set_style",
+      "description": "SetStyle.\n",
+      "parameters": [
+        {
+          "name": "style",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.set_style_color",
+      "description": "SetStyleColor.\n",
+      "parameters": [
+        {
+          "name": "color_index",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "r",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "g",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "b",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "a",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.push_style_color",
+      "description": "PushStyleColor.\n",
+      "parameters": [
+        {
+          "name": "color_index",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "r",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "g",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "b",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "a",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.pop_style_color",
+      "description": "PopStyleColor.\n",
+      "parameters": [
+        {
+          "name": "count",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.push_style_var",
+      "description": "PushStyleVar.\n",
+      "parameters": [
+        {
+          "name": "style_var",
+          "doc": "Enum for the style to be pushed\n",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "value",
+          "doc": "Number or vmath.vector3 specifying the value of the style var\n",
+          "types": [
+            "None"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.pop_style_var",
+      "description": "PopStyleVar.\n",
+      "parameters": [
+        {
+          "name": "count",
+          "doc": "Number of style vars to pop; optional, defaults to 1\n",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.set_window_font_scale",
+      "description": "SetWindowFontScale.\n",
+      "parameters": [
+        {
+          "name": "scale",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.set_global_font_scale",
+      "description": "SetGlobalFontScale.\n",
+      "parameters": [
+        {
+          "name": "scale",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.scale_all_sizes",
+      "description": "ScaleAllSizes.\n",
+      "parameters": [
+        {
+          "name": "scale",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.set_cursor_pos",
+      "description": "SetCursorPos.\n",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.push_item_width",
+      "description": "PushItemWidth.\n",
+      "parameters": [
+        {
+          "name": "width",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.pop_item_width",
+      "description": "PopItemWidth.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.set_next_item_width",
+      "description": "SetNextItemWidth.\n",
+      "parameters": [
+        {
+          "name": "width",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.calc_item_width",
+      "description": "CalcItemWidth.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "width",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.set_item_default_focus",
+      "description": "SetItemDefaultFocus.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.set_scroll_here_y",
+      "description": "SetScrollHereY.\n",
+      "parameters": [
+        {
+          "name": "center_y_ratio",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.font_add_ttf_file",
+      "description": "FontAddTTFFile.\n",
+      "parameters": [
+        {
+          "name": "filename",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "font_size",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "glyph_ranges",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "font_index",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.font_add_ttf_data",
+      "description": "FontAddTTFData.\n",
+      "parameters": [
+        {
+          "name": "ttf_data",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "font_size",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "font_pixels",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "glyph_ranges",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "font_index",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.font_push",
+      "description": "FontPush.\n",
+      "parameters": [
+        {
+          "name": "font_index",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.font_pop",
+      "description": "FontPop.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.font_scale",
+      "description": "FontScale.\n",
+      "parameters": [
+        {
+          "name": "font_id",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "font_scale",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "old_scale",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.get_font_size",
+      "description": "GetFontSize.\n",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "font_size",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.get_frame_height",
+      "description": "GetFrameHeight.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.draw_line",
+      "description": "DrawLine.\n",
+      "parameters": [
+        {
+          "name": "x1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y1",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "x2",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y2",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "color",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.draw_rect",
+      "description": "DrawRect.\n",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "width",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "color",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.draw_rect_filled",
+      "description": "DrawRectFilled.\n",
+      "parameters": [
+        {
+          "name": "x",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "width",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "color",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.draw_progress_bar",
+      "description": "DrawProgressBar.\n",
+      "parameters": [
+        {
+          "name": "progress",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "xsize",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "ysize",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.set_rendering_enabled",
+      "description": "SetRenderingEnabled.\n",
+      "parameters": [
+        {
+          "name": "enabled",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.want_capture_mouse",
+      "description": "WantCaptureMouse.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.want_capture_keyboard",
+      "description": "WantCaptureKeyboard.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.want_capture_text",
+      "description": "WantCaptureText.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.set_defaults",
+      "description": "SetDefaults.\n",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "imgui.set_ini_filename",
+      "description": "SetIniFilename.\n",
+      "parameters": [
+        {
+          "name": "filename",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "info": {
+    "namespace": "camera",
+    "brief": "Provides functionality to capture images using the camera. Supported on macOS, iOS and Android. [icon:ios] [icon:android]",
+    "description": "Provides functionality to capture images using the camera. Supported on macOS, iOS and Android. [icon:ios] [icon:android]"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "camera.start_capture",
+      "description": "Start camera capture using the specified camera (front/back) and capture quality. This may trigger a camera usage permission popup. When the popup has been dismissed the callback will be invoked with camera start status.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.stop_capture",
+      "description": "Stops a previously started capture session.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.get_info",
+      "description": "Gets the info from the current capture session.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "camera.get_frame",
+      "description": "Get captured frame.",
+      "parameters": [],
+      "returnvalues": []
+    }
+  ]
+}

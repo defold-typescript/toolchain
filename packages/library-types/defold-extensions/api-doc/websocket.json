@@ -1,0 +1,90 @@
+{
+  "info": {
+    "namespace": "websocket",
+    "brief": "Functions and constants for using websockets. Supported on all platforms.",
+    "description": "Functions and constants for using websockets. Supported on all platforms."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "websocket.connect",
+      "description": "Connects to a remote address",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "url of the remote connection",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "params",
+          "doc": "optional parameters as properties. The following parameters can be set",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "callback that receives all messages from the connection",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "connection",
+          "doc": "the connection",
+          "types": [
+            "object"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "websocket.disconnect",
+      "description": "Explicitly close a websocket",
+      "parameters": [
+        {
+          "name": "connection",
+          "doc": "the websocket connection",
+          "types": [
+            "object"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "websocket.send",
+      "description": "Send data on a websocket",
+      "parameters": [
+        {
+          "name": "connection",
+          "doc": "the websocket connection",
+          "types": [
+            "object"
+          ]
+        },
+        {
+          "name": "message",
+          "doc": "the message to send",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "options for this particular message. May be `nil`",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}
