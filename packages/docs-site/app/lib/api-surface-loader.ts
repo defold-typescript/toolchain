@@ -15,7 +15,7 @@ import {
   type SignaturesArtifact,
 } from "./combined-surface";
 import { parseGlobalTypes } from "./global-types";
-import { type LibraryOrigin, libraryLineage } from "./nav";
+import { type LibraryListing, type LibraryOrigin, libraryLineage } from "./nav";
 
 interface ApiTarget {
   id: string;
@@ -266,6 +266,20 @@ export function libraryOriginByNamespace(libraryTypesDir: string): Map<string, L
     if (owner && repo) origins.set(page, { owner, repo });
   }
   return origins;
+}
+
+// Defold's libraries that ship no `.script_api` (`docs: []`), so the Libraries
+// index can list them beside the typed ones instead of silently omitting them.
+export function defoldListingsFromManifest(libraryTypesDir: string): LibraryListing[] {
+  return loadDefoldExtensions(libraryTypesDir)
+    .filter((entry) => entry.docs.length === 0)
+    .map((entry) => ({
+      owner: githubOwner(entry.repo),
+      repo: githubRepo(entry.repo),
+      url: entry.repo,
+      description: entry.description,
+    }))
+    .filter((listing) => listing.owner !== "" && listing.repo !== "");
 }
 
 // A LuaLS-sourced library's own pin, read from `luals-targets.json`. Unlike the
