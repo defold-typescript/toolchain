@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { tooltipPosition } from "./tooltip-position";
+import { labelTooltipPosition, tooltipPosition } from "./tooltip-position";
 
 describe("tooltipPosition", () => {
   test("anchors below the symbol and caps maxHeight when there is ample room", () => {
@@ -64,5 +64,39 @@ describe("tooltipPosition", () => {
       innerHeight: 1000,
     });
     expect(flush.left).toBe(8);
+  });
+});
+
+describe("labelTooltipPosition", () => {
+  const anchor = {
+    rectLeft: 500,
+    rectTop: 300,
+    rectBottom: 320,
+    rectWidth: 20,
+    innerWidth: 1280,
+    tipWidth: 60,
+    tipHeight: 28,
+  };
+
+  test("centres the tip above the anchor when there is room", () => {
+    // left = 500 + 20 / 2 - 60 / 2 = 480; top = rectTop - GAP - tipHeight = 300 - 6 - 28 = 266.
+    expect(labelTooltipPosition(anchor)).toEqual({ top: 266, left: 480, placement: "top" });
+  });
+
+  test("clamps the tip inside the viewport margin at both edges", () => {
+    expect(labelTooltipPosition({ ...anchor, rectLeft: 0 }).left).toBe(8);
+    // innerWidth - tipWidth - MARGIN = 1280 - 60 - 8 = 1212.
+    expect(labelTooltipPosition({ ...anchor, rectLeft: 1270 }).left).toBe(1212);
+  });
+
+  test("flips below the anchor when the space above is smaller than the tip", () => {
+    // Space above = rectTop - GAP - MARGIN = 40 - 6 - 8 = 26 < 28, so top = rectBottom + GAP = 66.
+    expect(labelTooltipPosition({ ...anchor, rectTop: 40, rectBottom: 60 })).toEqual({
+      top: 66,
+      left: 480,
+      placement: "bottom",
+    });
+    // Exactly enough room (42 - 6 - 8 = 28) stays above.
+    expect(labelTooltipPosition({ ...anchor, rectTop: 42, rectBottom: 62 }).placement).toBe("top");
   });
 });

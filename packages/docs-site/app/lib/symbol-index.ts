@@ -2,6 +2,7 @@ import { htmlToDocText } from "@defold-typescript/types";
 import { type ApiPage, apiModuleSymbols } from "./api-surface";
 import { type CombinedSurface, combinedApiPages } from "./combined-surface";
 import { slugify } from "./headings";
+import { stripPlatformMarkers } from "./platform-icons";
 
 export interface SymbolEntry {
   /** Plain-text brief for the tooltip body. */
@@ -35,11 +36,17 @@ export function buildSymbolIndex(pages: ApiPage[]): Record<string, SymbolEntry> 
   const index: Record<string, SymbolEntry> = {};
   for (const page of pages) {
     const { namespace, route, module } = page;
-    index[namespace] = { brief: htmlToDocText(module.description || module.brief), route };
+    index[namespace] = {
+      brief: stripPlatformMarkers(htmlToDocText(module.description || module.brief)),
+      route,
+    };
     for (const symbol of apiModuleSymbols(page, page.translations, page.signatures)) {
       const key = qualify(namespace, symbol.name);
       const anchor = slugify(symbol.signature);
-      index[key] = { brief: symbol.docMarkdown, route: `${route}#${anchor}` };
+      index[key] = {
+        brief: stripPlatformMarkers(symbol.docMarkdown),
+        route: `${route}#${anchor}`,
+      };
     }
   }
   return index;

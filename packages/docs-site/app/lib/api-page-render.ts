@@ -1,8 +1,4 @@
-import {
-  type ApiAvailability,
-  type ApiSymbolIdentity,
-  htmlToDocText,
-} from "@defold-typescript/types";
+import type { ApiAvailability, ApiSymbolIdentity } from "@defold-typescript/types";
 import { apiVersionAxis, windowedApiPages } from "./api-content";
 import {
   type ApiPage,
@@ -25,6 +21,7 @@ import {
 import { type ApiVersion, versionsWithDiskFixtures } from "./api-surface-loader";
 import type { BadgeCountTable } from "./api-surface-pref";
 import { type NamespaceBadgeCounts, reachableBadgeCounts } from "./combined-surface";
+import { platformDocText } from "./platform-icons";
 import type { SignatureSymbolTarget } from "./signature-brand-links";
 import { buildSymbolIndex } from "./symbol-index";
 import { linkifySymbolMentions } from "./symbol-linkify";
@@ -441,7 +438,8 @@ function libraryMetaBlock(meta: LibraryMeta, hasGlobals: boolean): string[] {
 // global-type pages carry a Markdown description (derived from the canonical
 // JSDoc); it goes straight to the shared `markdown-it` pipeline so fenced
 // examples and bullet lists render verbatim. ref-doc descriptions are HTML and
-// still flow through `htmlToDocText` first.
+// still flow through `platformDocText` (`htmlToDocText` keeping platform icon
+// markers) first.
 export function apiPageMarkdown(
   page: Pick<
     ApiPage,
@@ -526,7 +524,7 @@ export function apiPageMarkdown(
     lines.push(titleBadges, "");
   }
   const raw = m.description || m.brief;
-  const intro = page.category === "global-type" ? raw : htmlToDocText(raw);
+  const intro = page.category === "global-type" ? raw : platformDocText(raw);
   if (intro) lines.push(linkify(intro), "");
   if (page.category === "library" && page.libraryMeta) {
     lines.push(
