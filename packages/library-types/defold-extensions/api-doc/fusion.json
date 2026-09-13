@@ -1062,6 +1062,354 @@
         }
       ],
       "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.OWNERMODE_TRANSACTION",
+      "brief": "OWNERMODE_TRANSACTION\n",
+      "description": "OWNERMODE_TRANSACTION\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.OWNERMODE_PLAYERATTACHED",
+      "brief": "OWNERMODE_PLAYERATTACHED\n",
+      "description": "OWNERMODE_PLAYERATTACHED\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.OWNERMODE_DYNAMIC",
+      "brief": "OWNERMODE_DYNAMIC\n",
+      "description": "OWNERMODE_DYNAMIC\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.OWNERMODE_MASTERCLIENT",
+      "brief": "OWNERMODE_MASTERCLIENT\n",
+      "description": "OWNERMODE_MASTERCLIENT\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.OWNERMODE_GAMEGLOBAL",
+      "brief": "OWNERMODE_GAMEGLOBAL\n",
+      "description": "OWNERMODE_GAMEGLOBAL\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.STATE_DISCONNECTED",
+      "brief": "STATE_DISCONNECTED\n",
+      "description": "STATE_DISCONNECTED\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.STATE_CONNECTING",
+      "brief": "STATE_CONNECTING\n",
+      "description": "STATE_CONNECTING\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.STATE_CONNECTED",
+      "brief": "STATE_CONNECTED\n",
+      "description": "STATE_CONNECTED\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.STATE_JOININGROOM",
+      "brief": "STATE_JOININGROOM\n",
+      "description": "STATE_JOININGROOM\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.STATE_INROOM",
+      "brief": "STATE_INROOM\n",
+      "description": "STATE_INROOM\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.STATE_LEAVINGROOM",
+      "brief": "STATE_LEAVINGROOM\n",
+      "description": "STATE_LEAVINGROOM\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.STATE_DISCONNECTING",
+      "brief": "STATE_DISCONNECTING\n",
+      "description": "STATE_DISCONNECTING\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.DISCONNECT_CAUSE_NONE",
+      "brief": "DISCONNECT_CAUSE_NONE\n",
+      "description": "DISCONNECT_CAUSE_NONE\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.DISCONNECT_CAUSE_DISCONNECTBYSERVERUSERLIMIT",
+      "brief": "DISCONNECT_CAUSE_DISCONNECTBYSERVERUSERLIMIT\n",
+      "description": "DISCONNECT_CAUSE_DISCONNECTBYSERVERUSERLIMIT\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.DISCONNECT_CAUSE_EXCEPTIONONCONNECT",
+      "brief": "DISCONNECT_CAUSE_EXCEPTIONONCONNECT\n",
+      "description": "DISCONNECT_CAUSE_EXCEPTIONONCONNECT\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.DISCONNECT_CAUSE_DISCONNECTBYSERVER",
+      "brief": "DISCONNECT_CAUSE_DISCONNECTBYSERVER\n",
+      "description": "DISCONNECT_CAUSE_DISCONNECTBYSERVER\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.DISCONNECT_CAUSE_DISCONNECTBYSERVERLOGIC",
+      "brief": "DISCONNECT_CAUSE_DISCONNECTBYSERVERLOGIC\n",
+      "description": "DISCONNECT_CAUSE_DISCONNECTBYSERVERLOGIC\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.DISCONNECT_CAUSE_TIMEOUTDISCONNECT",
+      "brief": "DISCONNECT_CAUSE_TIMEOUTDISCONNECT\n",
+      "description": "DISCONNECT_CAUSE_TIMEOUTDISCONNECT\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.DISCONNECT_CAUSE_EXCEPTION",
+      "brief": "DISCONNECT_CAUSE_EXCEPTION\n",
+      "description": "DISCONNECT_CAUSE_EXCEPTION\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.DISCONNECT_CAUSE_INVALIDAUTHENTICATION",
+      "brief": "DISCONNECT_CAUSE_INVALIDAUTHENTICATION\n",
+      "description": "DISCONNECT_CAUSE_INVALIDAUTHENTICATION\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.DISCONNECT_CAUSE_MAXCCUREACHED",
+      "brief": "DISCONNECT_CAUSE_MAXCCUREACHED\n",
+      "description": "DISCONNECT_CAUSE_MAXCCUREACHED\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.DISCONNECT_CAUSE_INVALIDREGION",
+      "brief": "DISCONNECT_CAUSE_INVALIDREGION\n",
+      "description": "DISCONNECT_CAUSE_INVALIDREGION\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.DISCONNECT_CAUSE_OPERATIONNOTALLOWEDINCURRENTSTATE",
+      "brief": "DISCONNECT_CAUSE_OPERATIONNOTALLOWEDINCURRENTSTATE\n",
+      "description": "DISCONNECT_CAUSE_OPERATIONNOTALLOWEDINCURRENTSTATE\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.DISCONNECT_CAUSE_CUSTOMAUTHENTICATIONFAILED",
+      "brief": "DISCONNECT_CAUSE_CUSTOMAUTHENTICATIONFAILED\n",
+      "description": "DISCONNECT_CAUSE_CUSTOMAUTHENTICATIONFAILED\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.DISCONNECT_CAUSE_CLIENTVERSIONTOOOLD",
+      "brief": "DISCONNECT_CAUSE_CLIENTVERSIONTOOOLD\n",
+      "description": "DISCONNECT_CAUSE_CLIENTVERSIONTOOOLD\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.DISCONNECT_CAUSE_CLIENTVERSIONINVALID",
+      "brief": "DISCONNECT_CAUSE_CLIENTVERSIONINVALID\n",
+      "description": "DISCONNECT_CAUSE_CLIENTVERSIONINVALID\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.DISCONNECT_CAUSE_DASHBOARDVERSIONINVALID",
+      "brief": "DISCONNECT_CAUSE_DASHBOARDVERSIONINVALID\n",
+      "description": "DISCONNECT_CAUSE_DASHBOARDVERSIONINVALID\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.DISCONNECT_CAUSE_AUTHENTICATIONTICKETEXPIRED",
+      "brief": "DISCONNECT_CAUSE_AUTHENTICATIONTICKETEXPIRED\n",
+      "description": "DISCONNECT_CAUSE_AUTHENTICATIONTICKETEXPIRED\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.DISCONNECT_CAUSE_DISCONNECTBYOPERATIONLIMIT",
+      "brief": "DISCONNECT_CAUSE_DISCONNECTBYOPERATIONLIMIT\n",
+      "description": "DISCONNECT_CAUSE_DISCONNECTBYOPERATIONLIMIT\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.MASTER_CLIENT_PLAYER_ID",
+      "brief": "MASTER_CLIENT_PLAYER_ID\n",
+      "description": "MASTER_CLIENT_PLAYER_ID\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.PLUGIN_PLAYER_ID",
+      "brief": "PLUGIN_PLAYER_ID\n",
+      "description": "PLUGIN_PLAYER_ID\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.OBJECT_OWNER_PLAYER_ID",
+      "brief": "OBJECT_OWNER_PLAYER_ID\n",
+      "description": "OBJECT_OWNER_PLAYER_ID\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.REPLICATION_MODE_NONE",
+      "brief": "REPLICATION_MODE_NONE\n",
+      "description": "REPLICATION_MODE_NONE\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.REPLICATION_MODE_AUTO",
+      "brief": "REPLICATION_MODE_AUTO\n",
+      "description": "REPLICATION_MODE_AUTO\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.FORCED_DISCONNECT_REASON_GENERIC",
+      "brief": "FORCED_DISCONNECT_REASON_GENERIC\n",
+      "description": "FORCED_DISCONNECT_REASON_GENERIC\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.FORCED_DISCONNECT_REASON_PROTOCOLINCOMPATIBLE",
+      "brief": "FORCED_DISCONNECT_REASON_PROTOCOLINCOMPATIBLE\n",
+      "description": "FORCED_DISCONNECT_REASON_PROTOCOLINCOMPATIBLE\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.FORCED_DISCONNECT_REASON_ROOMVERSIONMISMATCH",
+      "brief": "FORCED_DISCONNECT_REASON_ROOMVERSIONMISMATCH\n",
+      "description": "FORCED_DISCONNECT_REASON_ROOMVERSIONMISMATCH\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.EVENT_OBJECT_READY",
+      "brief": "EVENT_OBJECT_READY\n",
+      "description": "EVENT_OBJECT_READY\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.EVENT_SUB_OBJECT_CREATED",
+      "brief": "EVENT_SUB_OBJECT_CREATED\n",
+      "description": "EVENT_SUB_OBJECT_CREATED\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.EVENT_OBJECT_DESTROYED",
+      "brief": "EVENT_OBJECT_DESTROYED\n",
+      "description": "EVENT_OBJECT_DESTROYED\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.EVENT_SUB_OBJECT_DESTROYED",
+      "brief": "EVENT_SUB_OBJECT_DESTROYED\n",
+      "description": "EVENT_SUB_OBJECT_DESTROYED\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.EVENT_OBJECT_FORCE_ALIVE",
+      "brief": "EVENT_OBJECT_FORCE_ALIVE\n",
+      "description": "EVENT_OBJECT_FORCE_ALIVE\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.EVENT_SUB_OBJECT_FORCE_ALIVE",
+      "brief": "EVENT_SUB_OBJECT_FORCE_ALIVE\n",
+      "description": "EVENT_SUB_OBJECT_FORCE_ALIVE\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.EVENT_OBJECT_OWNER_CHANGED",
+      "brief": "EVENT_OBJECT_OWNER_CHANGED\n",
+      "description": "EVENT_OBJECT_OWNER_CHANGED\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.EVENT_PREDICTION_OVERRIDE",
+      "brief": "EVENT_PREDICTION_OVERRIDE\n",
+      "description": "EVENT_PREDICTION_OVERRIDE\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.EVENT_LOBBY_STATS",
+      "brief": "EVENT_LOBBY_STATS\n",
+      "description": "EVENT_LOBBY_STATS\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.EVENT_ROOM_JOINED",
+      "brief": "EVENT_ROOM_JOINED\n",
+      "description": "EVENT_ROOM_JOINED\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.EVENT_ROOM_LEFT",
+      "brief": "EVENT_ROOM_LEFT\n",
+      "description": "EVENT_ROOM_LEFT\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.EVENT_RPC",
+      "brief": "EVENT_RPC\n",
+      "description": "EVENT_RPC\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.EVENT_MAP_CHANGE",
+      "brief": "EVENT_MAP_CHANGE\n",
+      "description": "EVENT_MAP_CHANGE\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.EVENT_DESTROYED_MAP_ACTOR",
+      "brief": "EVENT_DESTROYED_MAP_ACTOR\n",
+      "description": "EVENT_DESTROYED_MAP_ACTOR\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.EVENT_INTEREST_ENTER",
+      "brief": "EVENT_INTEREST_ENTER\n",
+      "description": "EVENT_INTEREST_ENTER\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.EVENT_INTEREST_EXIT",
+      "brief": "EVENT_INTEREST_EXIT\n",
+      "description": "EVENT_INTEREST_EXIT\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.EVENT_FORCED_DISCONNECT",
+      "brief": "EVENT_FORCED_DISCONNECT\n",
+      "description": "EVENT_FORCED_DISCONNECT\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.EVENT_FUSION_START",
+      "brief": "EVENT_FUSION_START\n",
+      "description": "EVENT_FUSION_START\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.EVENT_CONNECTED",
+      "brief": "EVENT_CONNECTED\n",
+      "description": "EVENT_CONNECTED\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.EVENT_DISCONNECTED",
+      "brief": "EVENT_DISCONNECTED\n",
+      "description": "EVENT_DISCONNECTED\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "fusion.EVENT_DEFOLD_LOG_EVENT",
+      "brief": "EVENT_DEFOLD_LOG_EVENT\n",
+      "description": "EVENT_DEFOLD_LOG_EVENT\n"
     }
   ]
 }

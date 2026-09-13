@@ -57,6 +57,600 @@
       "returnvalues": []
     },
     {
+      "type": "CONSTANT",
+      "name": "steam.EFloatingGamepadTextInputModeModeSingleLine",
+      "brief": "Enter dismisses the keyboard",
+      "description": "Enter dismisses the keyboard"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EFloatingGamepadTextInputModeModeMultipleLines",
+      "brief": "User needs to explicitly dismiss the keyboard",
+      "description": "User needs to explicitly dismiss the keyboard"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EFloatingGamepadTextInputModeModeEmail",
+      "brief": "Keyboard is displayed in a special mode that makes it easier to enter emails",
+      "description": "Keyboard is displayed in a special mode that makes it easier to enter emails"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EFloatingGamepadTextInputModeModeNumeric",
+      "brief": "Numeric keypad is shown",
+      "description": "Numeric keypad is shown"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EGamepadTextInputModeNormal",
+      "brief": "Normal text input",
+      "description": "Normal text input"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EGamepadTextInputModePassword",
+      "brief": "Password text input",
+      "description": "Password text input"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EGamepadTextInputLineModeSingleLine",
+      "brief": "Single line text",
+      "description": "Single line text"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EGamepadTextInputLineModeMultipleLines",
+      "brief": "Multi line text",
+      "description": "Multi line text"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ELeaderboardDataRequestGlobal",
+      "brief": "Requests rows in the leaderboard from the full table.",
+      "description": "Requests rows in the leaderboard from the full table."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ELeaderboardDataRequestGlobalAroundUser",
+      "brief": "Requests rows in the leaderboard from rows around the user.",
+      "description": "Requests rows in the leaderboard from rows around the user."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ELeaderboardDataRequestFriends",
+      "brief": "Requests all the rows for friends of the current user.",
+      "description": "Requests all the rows for friends of the current user."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ELeaderboardSortMethodNone",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ELeaderboardSortMethodAscending",
+      "brief": "Top-score is lowest number.",
+      "description": "Top-score is lowest number."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ELeaderboardSortMethodDescending",
+      "brief": "Top-score is highest number.",
+      "description": "Top-score is highest number."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ELeaderboardUploadScoreMethodNone",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ELeaderboardUploadScoreMethodKeepBest",
+      "brief": "Leaderboard will keep user&#x27;s best score.",
+      "description": "Leaderboard will keep user&#x27;s best score."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ELeaderboardUploadScoreMethodForceUpdate",
+      "brief": "Leaderboard will always replace score with specified.",
+      "description": "Leaderboard will always replace score with specified."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ELeaderboardDisplayTypeNone",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ELeaderboardDisplayTypeNumeric",
+      "brief": "Simple numerical score.",
+      "description": "Simple numerical score."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ELeaderboardDisplayTypeTimeSeconds",
+      "brief": "The score represents a time, in seconds.",
+      "description": "The score represents a time, in seconds."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ELeaderboardDisplayTypeTimeMilliSeconds",
+      "brief": "The score represents a time, in milliseconds.",
+      "description": "The score represents a time, in milliseconds."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EOverlayToStoreFlag_None",
+      "brief": "Passed as parameter to the store.",
+      "description": "Passed as parameter to the store."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EOverlayToStoreFlag_AddToCart",
+      "brief": "Passed as parameter to the store.",
+      "description": "Passed as parameter to the store."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EOverlayToStoreFlag_AddToCartAndShow",
+      "brief": "Passed as parameter to the store.",
+      "description": "Passed as parameter to the store."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EActivateGameOverlayToWebPageMode_Default",
+      "brief": "Passed as parameter to ActivateGameOverlayToWebPage.",
+      "description": "Passed as parameter to ActivateGameOverlayToWebPage."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EActivateGameOverlayToWebPageMode_Modal",
+      "brief": "Passed as parameter to ActivateGameOverlayToWebPage.",
+      "description": "Passed as parameter to ActivateGameOverlayToWebPage."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EPersonaStateOffline",
+      "brief": "Friend is not currently logged on.",
+      "description": "Friend is not currently logged on."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EPersonaStateOnline",
+      "brief": "Friend is logged on.",
+      "description": "Friend is logged on."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EPersonaStateBusy",
+      "brief": "User is on, but busy.",
+      "description": "User is on, but busy."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EPersonaStateAway",
+      "brief": "Auto-away feature.",
+      "description": "Auto-away feature."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EPersonaStateSnooze",
+      "brief": "Auto-away for a long time.",
+      "description": "Auto-away for a long time."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EPersonaStateLookingToTrade",
+      "brief": "Online, trading.",
+      "description": "Online, trading."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EPersonaStateLookingToPlay",
+      "brief": "Online, wanting to play.",
+      "description": "Online, wanting to play."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EPersonaStateInvisible",
+      "brief": "Online, but appears offline to friends.  This status is never published to clients.",
+      "description": "Online, but appears offline to friends.  This status is never published to clients."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EFriendFlagNone",
+      "brief": "EFriendFlagNone",
+      "description": "EFriendFlagNone"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EFriendFlagBlocked",
+      "brief": "EFriendFlagBlocked",
+      "description": "EFriendFlagBlocked"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EFriendFlagFriendshipRequested",
+      "brief": "EFriendFlagFriendshipRequested",
+      "description": "EFriendFlagFriendshipRequested"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EFriendFlagImmediate",
+      "brief": "EFriendFlagImmediate",
+      "description": "EFriendFlagImmediate"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EFriendFlagClanMember",
+      "brief": "EFriendFlagClanMember",
+      "description": "EFriendFlagClanMember"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EFriendFlagOnGameServer",
+      "brief": "EFriendFlagOnGameServer",
+      "description": "EFriendFlagOnGameServer"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EFriendFlagRequestingFriendship",
+      "brief": "EFriendFlagRequestingFriendship",
+      "description": "EFriendFlagRequestingFriendship"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EFriendFlagRequestingInfo",
+      "brief": "EFriendFlagRequestingInfo",
+      "description": "EFriendFlagRequestingInfo"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EFriendFlagIgnored",
+      "brief": "EFriendFlagIgnored",
+      "description": "EFriendFlagIgnored"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EFriendFlagIgnoredFriend",
+      "brief": "EFriendFlagIgnoredFriend",
+      "description": "EFriendFlagIgnoredFriend"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EFriendFlagChatMember",
+      "brief": "EFriendFlagChatMember",
+      "description": "EFriendFlagChatMember"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EFriendFlagAll",
+      "brief": "EFriendFlagAll",
+      "description": "EFriendFlagAll"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.SteamNetworkingSend_Unreliable",
+      "brief": "SteamNetworkingSend_Unreliable",
+      "description": "SteamNetworkingSend_Unreliable"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.SteamNetworkingSend_NoNagle",
+      "brief": "SteamNetworkingSend_NoNagle",
+      "description": "SteamNetworkingSend_NoNagle"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.SteamNetworkingSend_UnreliableNoNagle",
+      "brief": "SteamNetworkingSend_UnreliableNoNagle",
+      "description": "SteamNetworkingSend_UnreliableNoNagle"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.SteamNetworkingSend_NoDelay",
+      "brief": "SteamNetworkingSend_NoDelay",
+      "description": "SteamNetworkingSend_NoDelay"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.SteamNetworkingSend_UnreliableNoDelay",
+      "brief": "SteamNetworkingSend_UnreliableNoDelay",
+      "description": "SteamNetworkingSend_UnreliableNoDelay"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.SteamNetworkingSend_Reliable",
+      "brief": "SteamNetworkingSend_Reliable",
+      "description": "SteamNetworkingSend_Reliable"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.SteamNetworkingSend_ReliableNoNagle",
+      "brief": "SteamNetworkingSend_ReliableNoNagle",
+      "description": "SteamNetworkingSend_ReliableNoNagle"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.SteamNetworkingSend_UseCurrentThread",
+      "brief": "SteamNetworkingSend_UseCurrentThread",
+      "description": "SteamNetworkingSend_UseCurrentThread"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.SteamNetworkingSend_AutoRestartBrokenSession",
+      "brief": "SteamNetworkingSend_AutoRestartBrokenSession",
+      "description": "SteamNetworkingSend_AutoRestartBrokenSession"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetConnectionEnd_Invalid",
+      "brief": "ESteamNetConnectionEnd_Invalid",
+      "description": "ESteamNetConnectionEnd_Invalid"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetConnectionEnd_App_Generic",
+      "brief": "ESteamNetConnectionEnd_App_Generic",
+      "description": "ESteamNetConnectionEnd_App_Generic"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetConnectionEnd_AppException_Generic",
+      "brief": "ESteamNetConnectionEnd_AppException_Generic",
+      "description": "ESteamNetConnectionEnd_AppException_Generic"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetConnectionEnd_Local_OfflineMode",
+      "brief": "ESteamNetConnectionEnd_Local_OfflineMode",
+      "description": "ESteamNetConnectionEnd_Local_OfflineMode"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetConnectionEnd_Local_ManyRelayConnectivity",
+      "brief": "ESteamNetConnectionEnd_Local_ManyRelayConnectivity",
+      "description": "ESteamNetConnectionEnd_Local_ManyRelayConnectivity"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetConnectionEnd_Local_HostedServerPrimaryRelay",
+      "brief": "ESteamNetConnectionEnd_Local_HostedServerPrimaryRelay",
+      "description": "ESteamNetConnectionEnd_Local_HostedServerPrimaryRelay"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetConnectionEnd_Local_NetworkConfig",
+      "brief": "ESteamNetConnectionEnd_Local_NetworkConfig",
+      "description": "ESteamNetConnectionEnd_Local_NetworkConfig"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetConnectionEnd_Local_Rights",
+      "brief": "ESteamNetConnectionEnd_Local_Rights",
+      "description": "ESteamNetConnectionEnd_Local_Rights"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetConnectionEnd_Local_P2P_ICE_NoPublicAddresses",
+      "brief": "ESteamNetConnectionEnd_Local_P2P_ICE_NoPublicAddresses",
+      "description": "ESteamNetConnectionEnd_Local_P2P_ICE_NoPublicAddresses"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetConnectionEnd_Remote_Timeout",
+      "brief": "ESteamNetConnectionEnd_Remote_Timeout",
+      "description": "ESteamNetConnectionEnd_Remote_Timeout"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetConnectionEnd_Remote_BadCrypt",
+      "brief": "ESteamNetConnectionEnd_Remote_BadCrypt",
+      "description": "ESteamNetConnectionEnd_Remote_BadCrypt"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetConnectionEnd_Remote_BadCert",
+      "brief": "ESteamNetConnectionEnd_Remote_BadCert",
+      "description": "ESteamNetConnectionEnd_Remote_BadCert"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetConnectionEnd_Remote_BadProtocolVersion",
+      "brief": "ESteamNetConnectionEnd_Remote_BadProtocolVersion",
+      "description": "ESteamNetConnectionEnd_Remote_BadProtocolVersion"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetConnectionEnd_Remote_P2P_ICE_NoPublicAddresses",
+      "brief": "ESteamNetConnectionEnd_Remote_P2P_ICE_NoPublicAddresses",
+      "description": "ESteamNetConnectionEnd_Remote_P2P_ICE_NoPublicAddresses"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetConnectionEnd_Misc_Generic",
+      "brief": "ESteamNetConnectionEnd_Misc_Generic",
+      "description": "ESteamNetConnectionEnd_Misc_Generic"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetConnectionEnd_Misc_InternalError",
+      "brief": "ESteamNetConnectionEnd_Misc_InternalError",
+      "description": "ESteamNetConnectionEnd_Misc_InternalError"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetConnectionEnd_Misc_Timeout",
+      "brief": "ESteamNetConnectionEnd_Misc_Timeout",
+      "description": "ESteamNetConnectionEnd_Misc_Timeout"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetConnectionEnd_Misc_SteamConnectivity",
+      "brief": "ESteamNetConnectionEnd_Misc_SteamConnectivity",
+      "description": "ESteamNetConnectionEnd_Misc_SteamConnectivity"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetConnectionEnd_Misc_NoRelaySessionsToClient",
+      "brief": "ESteamNetConnectionEnd_Misc_NoRelaySessionsToClient",
+      "description": "ESteamNetConnectionEnd_Misc_NoRelaySessionsToClient"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetConnectionEnd_Misc_P2P_Rendezvous",
+      "brief": "ESteamNetConnectionEnd_Misc_P2P_Rendezvous",
+      "description": "ESteamNetConnectionEnd_Misc_P2P_Rendezvous"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetConnectionEnd_Misc_P2P_NAT_Firewall",
+      "brief": "ESteamNetConnectionEnd_Misc_P2P_NAT_Firewall",
+      "description": "ESteamNetConnectionEnd_Misc_P2P_NAT_Firewall"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetConnectionEnd_Misc_PeerSentNoConnection",
+      "brief": "ESteamNetConnectionEnd_Misc_PeerSentNoConnection",
+      "description": "ESteamNetConnectionEnd_Misc_PeerSentNoConnection"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetworkingConnectionState_None",
+      "brief": "ESteamNetworkingConnectionState_None",
+      "description": "ESteamNetworkingConnectionState_None"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetworkingConnectionState_Connecting",
+      "brief": "ESteamNetworkingConnectionState_Connecting",
+      "description": "ESteamNetworkingConnectionState_Connecting"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetworkingConnectionState_FindingRoute",
+      "brief": "ESteamNetworkingConnectionState_FindingRoute",
+      "description": "ESteamNetworkingConnectionState_FindingRoute"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetworkingConnectionState_Connected",
+      "brief": "ESteamNetworkingConnectionState_Connected",
+      "description": "ESteamNetworkingConnectionState_Connected"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetworkingConnectionState_ClosedByPeer",
+      "brief": "ESteamNetworkingConnectionState_ClosedByPeer",
+      "description": "ESteamNetworkingConnectionState_ClosedByPeer"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ESteamNetworkingConnectionState_ProblemDetectedLocally",
+      "brief": "ESteamNetworkingConnectionState_ProblemDetectedLocally",
+      "description": "ESteamNetworkingConnectionState_ProblemDetectedLocally"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ELobbyTypePrivate",
+      "brief": "ELobbyTypePrivate only way to join the lobby is to invite to someone else",
+      "description": "ELobbyTypePrivate only way to join the lobby is to invite to someone else"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ELobbyTypeFriendsOnly",
+      "brief": "ELobbyTypeFriendsOnly shows for friends or invitees, but not in lobby list",
+      "description": "ELobbyTypeFriendsOnly shows for friends or invitees, but not in lobby list"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ELobbyTypePublic",
+      "brief": "ELobbyTypePublic visible for friends and in lobby list",
+      "description": "ELobbyTypePublic visible for friends and in lobby list"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ELobbyTypeInvisible",
+      "brief": "ELobbyTypeInvisible returned by search, but not visible to other friends",
+      "description": "ELobbyTypeInvisible returned by search, but not visible to other friends"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.ELobbyTypePrivateUnique",
+      "brief": "ELobbyTypePrivateUnique private, unique and does not delete when empty",
+      "description": "ELobbyTypePrivateUnique private, unique and does not delete when empty"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EAuthSessionResponseOK",
+      "brief": "EAuthSessionResponseOK Steam has verified the user is online, the ticket is valid and ticket has not been reused.",
+      "description": "EAuthSessionResponseOK Steam has verified the user is online, the ticket is valid and ticket has not been reused."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EAuthSessionResponseUserNotConnectedToSteam",
+      "brief": "EAuthSessionResponseUserNotConnectedToSteam The user in question is not connected to steam.",
+      "description": "EAuthSessionResponseUserNotConnectedToSteam The user in question is not connected to steam."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EAuthSessionResponseNoLicenseOrExpired",
+      "brief": "EAuthSessionResponseNoLicenseOrExpired The user doesn't have a license for this App ID or the ticket has expired.",
+      "description": "EAuthSessionResponseNoLicenseOrExpired The user doesn't have a license for this App ID or the ticket has expired."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EAuthSessionResponseVACBanned",
+      "brief": "EAuthSessionResponseVACBanned The user is VAC banned for this game.",
+      "description": "EAuthSessionResponseVACBanned The user is VAC banned for this game."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EAuthSessionResponseLoggedInElseWhere",
+      "brief": "EAuthSessionResponseLoggedInElseWhere The user account has logged in elsewhere and the session containing the game instance has been disconnected.",
+      "description": "EAuthSessionResponseLoggedInElseWhere The user account has logged in elsewhere and the session containing the game instance has been disconnected."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EAuthSessionResponseVACCheckTimedOut",
+      "brief": "EAuthSessionResponseVACCheckTimedOut VAC has been unable to perform anti-cheat checks on this user.",
+      "description": "EAuthSessionResponseVACCheckTimedOut VAC has been unable to perform anti-cheat checks on this user."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EAuthSessionResponseAuthTicketCanceled",
+      "brief": "EAuthSessionResponseAuthTicketCanceled The ticket has been canceled by the issuer.",
+      "description": "EAuthSessionResponseAuthTicketCanceled The ticket has been canceled by the issuer."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EAuthSessionResponseAuthTicketInvalidAlreadyUsed",
+      "brief": "EAuthSessionResponseAuthTicketInvalidAlreadyUsed This ticket has already been used, it is not valid.",
+      "description": "EAuthSessionResponseAuthTicketInvalidAlreadyUsed This ticket has already been used, it is not valid."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EAuthSessionResponseAuthTicketInvalid",
+      "brief": "EAuthSessionResponseAuthTicketInvalid This ticket is not from a user instance currently connected to steam.",
+      "description": "EAuthSessionResponseAuthTicketInvalid This ticket is not from a user instance currently connected to steam."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EAuthSessionResponsePublisherIssuedBan",
+      "brief": "EAuthSessionResponsePublisherIssuedBan The user is banned for this game. The ban came via the web api and not VAC.",
+      "description": "EAuthSessionResponsePublisherIssuedBan The user is banned for this game. The ban came via the web api and not VAC."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "steam.EAuthSessionResponseAuthTicketNetworkIdentityFailure",
+      "brief": "EAuthSessionResponseAuthTicketNetworkIdentityFailure The network identity in the ticket does not match the server authenticating the ticket.",
+      "description": "EAuthSessionResponseAuthTicketNetworkIdentityFailure The network identity in the ticket does not match the server authenticating the ticket."
+    },
+    {
       "type": "FUNCTION",
       "name": "steam.apps_is_dlc_installed",
       "description": "Takes AppID of DLC and checks if the user owns the DLC &amp; if the DLC is installed.",

@@ -291,6 +291,270 @@
       "description": "Hides and unloads Banner Ad (needs to call `admob.load_banner()` later to show Banner Ad) Original docs [Android](https://developers.google.com/admob/android/next-gen/banner), [iOS](https://developers.google.com/admob/ios/banner)",
       "parameters": [],
       "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.MSG_INITIALIZATION",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.MSG_INTERSTITIAL",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.MSG_REWARDED",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.MSG_BANNER",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.MSG_IDFA",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.MSG_REWARDED_INTERSTITIAL",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.MSG_APPOPEN",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.EVENT_CLOSED",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.EVENT_FAILED_TO_SHOW",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.EVENT_OPENING",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.EVENT_FAILED_TO_LOAD",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.EVENT_LOADED",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.EVENT_NOT_LOADED",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.EVENT_EARNED_REWARD",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.EVENT_COMPLETE",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.EVENT_CLICKED",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.EVENT_DESTROYED",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.EVENT_JSON_ERROR",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.EVENT_IMPRESSION_RECORDED",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.EVENT_STATUS_AUTHORIZED",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.EVENT_STATUS_DENIED",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.EVENT_STATUS_NOT_DETERMINED",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.EVENT_STATUS_RESTRICTED",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.EVENT_NOT_SUPPORTED",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.SIZE_ADAPTIVE_BANNER",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.SIZE_LARGE_ADAPTIVE_BANNER",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.SIZE_BANNER",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.SIZE_FLUID",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.SIZE_FULL_BANNER",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.SIZE_LARGE_BANNER",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.SIZE_LEADEARBOARD",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.SIZE_MEDIUM_RECTANGLE",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.POS_NONE",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.POS_TOP_LEFT",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.POS_TOP_CENTER",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.POS_TOP_RIGHT",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.POS_BOTTOM_LEFT",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.POS_BOTTOM_CENTER",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.POS_BOTTOM_RIGHT",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.POS_CENTER",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.MAX_AD_CONTENT_RATING_G",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.MAX_AD_CONTENT_RATING_PG",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.MAX_AD_CONTENT_RATING_T",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "admob.MAX_AD_CONTENT_RATING_MA",
+      "brief": "",
+      "description": ""
     }
   ]
 }

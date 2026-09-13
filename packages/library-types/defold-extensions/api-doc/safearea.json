@@ -49,6 +49,24 @@
           ]
         }
       ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "safearea.STATUS_OK",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "safearea.STATUS_NOT_AVAILABLE",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "safearea.STATUS_NOT_READY_YET",
+      "brief": "",
+      "description": ""
     }
   ]
 }

@@ -173,6 +173,48 @@
         }
       ],
       "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.remoteconfig.MSG_INITIALIZED",
+      "brief": "Event generated when remote config has been initialized and is ready for use",
+      "description": "Event generated when remote config has been initialized and is ready for use"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.remoteconfig.MSG_ERROR",
+      "brief": "Event generated when an error occurred.",
+      "description": "Event generated when an error occurred."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.remoteconfig.MSG_DEFAULTS_SET",
+      "brief": "Event generated when the default values have been set",
+      "description": "Event generated when the default values have been set"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.remoteconfig.MSG_FETCHED",
+      "brief": "Event generated when the remote config has been fetched",
+      "description": "Event generated when the remote config has been fetched"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.remoteconfig.MSG_ACTIVATED",
+      "brief": "Event generated when the remote config has been activated",
+      "description": "Event generated when the remote config has been activated"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.remoteconfig.MSG_SETTINGS_UPDATED",
+      "brief": "Event generated when remote config settings have been updated",
+      "description": "Event generated when remote config settings have been updated"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.remoteconfig.MSG_CONFIG_UPDATED",
+      "brief": "Event generated when real-time Remote Config has automatically fetched updated values. The message table contains `updated_keys`.",
+      "description": "Event generated when real-time Remote Config has automatically fetched updated values. The message table contains `updated_keys`."
     }
   ]
 }

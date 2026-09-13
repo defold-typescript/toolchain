@@ -48,6 +48,30 @@
       "description": "Get the Firebase Installation id",
       "parameters": [],
       "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.MSG_ERROR",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.MSG_INITIALIZED",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.MSG_INSTALLATION_AUTH_TOKEN",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "firebase.MSG_INSTALLATION_ID",
+      "brief": "",
+      "description": ""
     }
   ]
 }
