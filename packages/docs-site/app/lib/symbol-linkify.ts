@@ -36,17 +36,35 @@ function sortKeys(links: Map<string, string>): string[] {
     .sort((a, b) => b.length - a.length || a.localeCompare(b));
 }
 
+// The sorted keys bucketed by first character, each bucket keeping the sorted
+// order. A key can only claim a position whose character it starts with, so
+// scanning one bucket is equivalent to scanning every key — and keeps a page
+// render from testing the whole symbol index at every character.
+function keysByFirstChar(links: Map<string, string>): Map<string, string[]> {
+  const buckets = new Map<string, string[]>();
+  for (const key of sortKeys(links)) {
+    const bucket = buckets.get(key.charAt(0));
+    if (bucket) bucket.push(key);
+    else buckets.set(key.charAt(0), [key]);
+  }
+  return buckets;
+}
+
 // Walk a non-code region position by position. At each position, try each
 // registered key in length-desc order. A key "claims" the position when the
 // text at that position starts with the key; if the boundary check fails for
 // the longest claiming key, the position is rejected and the walker advances
 // by one character (so a shorter key can't sneak in via the same prefix).
-function linkifyRegion(region: string, sortedKeys: string[], links: Map<string, string>): string {
+function linkifyRegion(
+  region: string,
+  keyBuckets: Map<string, string[]>,
+  links: Map<string, string>,
+): string {
   let result = "";
   let i = 0;
   while (i < region.length) {
     let handled = false;
-    for (const key of sortedKeys) {
+    for (const key of keyBuckets.get(region.charAt(i)) ?? []) {
       if (!region.startsWith(key, i)) continue;
       const before = i > 0 ? region[i - 1] : undefined;
       const after = i + key.length < region.length ? region[i + key.length] : undefined;
@@ -74,10 +92,22 @@ function linkifyRegion(region: string, sortedKeys: string[], links: Map<string, 
 }
 
 export function linkifySymbolMentions(text: string, links: Map<string, string>): string {
-  if (links.size === 0) return text;
+  return symbolLinkifier(links)(text);
+}
 
-  const sortedKeys = sortKeys(links);
+// Prepares `links` once for many texts, such as every doc comment on a page. The
+// map must not change after this call.
+export function symbolLinkifier(links: Map<string, string>): (text: string) => string {
+  if (links.size === 0) return (text) => text;
+  const keyBuckets = keysByFirstChar(links);
+  return (text) => linkifyText(text, keyBuckets, links);
+}
 
+function linkifyText(
+  text: string,
+  keyBuckets: Map<string, string[]>,
+  links: Map<string, string>,
+): string {
   let result = "";
   let i = 0;
   while (i < text.length) {
@@ -94,7 +124,7 @@ export function linkifySymbolMentions(text: string, links: Map<string, string>):
     }
     const next = text.indexOf("`", i);
     const end = next === -1 ? text.length : next;
-    result += linkifyRegion(text.slice(i, end), sortedKeys, links);
+    result += linkifyRegion(text.slice(i, end), keyBuckets, links);
     i = end;
   }
   return result;
