@@ -13,7 +13,7 @@ import { TooltipTrigger } from "../components/ui/tooltip";
 import { withBase } from "./base";
 import { slugify } from "./headings";
 import { phosphorDuotone } from "./phosphor";
-import { PLATFORM_ICONS, PLATFORM_MARKER } from "./platform-icons";
+import { PLATFORM_MARKER, platformIcon } from "./platform-icons";
 import { type SignatureSymbolTarget, splitSignatureBrandLinks } from "./signature-brand-links";
 
 /**
@@ -155,7 +155,7 @@ const platformBadges = new Map<string, string>();
 // A known `[icon:X]` marker as an icon-only badge inside a tooltip trigger that
 // names the platform; unknown names return undefined and stay literal text.
 function platformBadge(name: string): string | undefined {
-  const platform = PLATFORM_ICONS[name];
+  const platform = platformIcon(name);
   if (!platform) return undefined;
   let badge = platformBadges.get(name);
   if (badge === undefined) {
