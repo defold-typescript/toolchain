@@ -17,6 +17,7 @@ import {
   apiReplacementResolver,
   apiSignatureSymbolLinks,
   isKnownVersionId,
+  listingPageMarkdown,
   namespaceCountBadges,
   navLeafBadgeHtml,
   navNamespaceBadges,
@@ -36,6 +37,8 @@ import {
 } from "./combined-surface";
 import { slugify } from "./headings";
 import { renderMarkdown } from "./markdown";
+import type { LibraryListing } from "./nav";
+import { LIBRARY_API_KIND_SENTENCE } from "./no-typed-api-icon";
 import { buildSymbolIndex } from "./symbol-index";
 import type { VersionWindow } from "./version-window";
 
@@ -2101,4 +2104,93 @@ describe("Defold extension pages", () => {
       "  3. Call it through the global `gui` — no import. It adds members to the engine `gui` namespace.",
     );
   });
+});
+
+describe("listingPageMarkdown", () => {
+  const listing = (overrides: Partial<LibraryListing> = {}): LibraryListing => ({
+    owner: "defold",
+    repo: "extension-x",
+    url: "https://github.com/defold/extension-x",
+    ref: "1.2.0",
+    pinKind: "release",
+    description: "",
+    official: true,
+    route: "/libraries/defold/extension-x",
+    api: "untyped",
+    ships: "A module that tunes performance.",
+    steps: ["Require `x` from a script.", "Call `x.start` in `init`."],
+    engineApis: "Reads [`sys`](/api/sys) settings.",
+    ...overrides,
+  });
+  const indexOfLine = (lines: string[], predicate: (line: string) => boolean) => {
+    const index = lines.findIndex(predicate);
+    if (index === -1) throw new Error("line not found");
+    return index;
+  };
+
+  test("lays out lead, kind sentence, linked GitHub pin, nested steps and engine APIs in order", () => {
+    const subject = listing();
+    const lines = listingPageMarkdown(subject).split("\n");
+    const order = [
+      indexOfLine(lines, (line) => line === subject.ships),
+      indexOfLine(lines, (line) => line === LIBRARY_API_KIND_SENTENCE.untyped),
+      indexOfLine(
+        lines,
+        (line) =>
+          line ===
+          "- GitHub: [defold/extension-x](https://github.com/defold/extension-x) — pinned to [`1.2.0`](https://github.com/defold/extension-x/tree/1.2.0)",
+      ),
+      indexOfLine(lines, (line) =>
+        line.startsWith(
+          "  1. Pick a release from [defold/extension-x releases](https://github.com/defold/extension-x/releases)",
+        ),
+      ),
+      indexOfLine(lines, (line) => line === `  2. ${subject.steps[0]}`),
+      indexOfLine(lines, (line) => line === `  3. ${subject.steps[1]}`),
+      indexOfLine(lines, (line) => line === "## Engine APIs"),
+    ];
+    expect(order).toEqual([...order].sort((a, b) => a - b));
+    expect(new Set(order).size).toBe(order.length);
+    expect(lines[order[3] ?? -1]).toEndWith(", then **Fetch Libraries** in the Defold editor.");
+    expect(lines[(order[5] ?? -2) + 1]).not.toMatch(/^ {2}\d+\. /);
+    expect(lines).toContain(subject.engineApis ?? "");
+  });
+
+  test("a commit pin reads as its short sha linking the full sha, and no engine APIs means no section", () => {
+    const sha = "0123456789abcdef0123456789abcdef01234567";
+    const { engineApis, ...withoutEngineApis } = listing({ ref: sha, pinKind: "commit" });
+    expect(engineApis).toBeString();
+    const md = listingPageMarkdown(withoutEngineApis);
+    expect(md).toContain(
+      `— pinned to [\`0123456\`](https://github.com/defold/extension-x/tree/${sha})`,
+    );
+    expect(md).not.toContain("## Engine APIs");
+  });
+
+  for (const pinKind of ["release", "tag", "commit"] as const) {
+    test(`a ${pinKind}-pinned listing gives the same step 1 as a typed library page with that pin`, () => {
+      const ref = pinKind === "commit" ? "0123456789abcdef0123456789abcdef01234567" : "v1.2.0";
+      const stepOne = (md: string) => md.split("\n").find((line) => line.startsWith("  1. "));
+      const typed = apiPageMarkdown(
+        libraryPageWithMeta({
+          libraryMeta: {
+            author: "Defold",
+            authorUrl: "https://github.com/defold/extension-x",
+            commit: ref,
+            sourceUrl: `https://github.com/defold/extension-x/tree/${ref}`,
+            importString: "",
+            license: "MIT",
+            authoredHere: true,
+            usage: "ambient",
+            globalNamespace: "x",
+            pinKind,
+          },
+        }),
+        (text) => text,
+      );
+      const listed = listingPageMarkdown(listing({ ref, pinKind }));
+      expect(stepOne(typed)).toBeString();
+      expect(stepOne(listed)).toBe(stepOne(typed));
+    });
+  }
 });

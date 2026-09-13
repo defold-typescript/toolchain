@@ -688,11 +688,13 @@ describe("libraryOwnerGroups with untyped library listings", () => {
     repo,
     url: `https://github.com/defold/${repo}`,
     ref: "1.0.0",
+    pinKind: "release",
     description: "",
     official: true,
     route: `/libraries/defold/${repo}`,
     api,
-    summary: "Ships content.",
+    ships: "Ships content.",
+    steps: ["Use the content."],
   });
   const groups = libraryOwnerGroups(
     [

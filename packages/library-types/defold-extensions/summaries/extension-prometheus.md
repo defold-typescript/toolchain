@@ -10,7 +10,9 @@ are built; the extension adds no Lua module for game scripts to call.
 
 ## Using it
 
-Upstream asks you to fork the repository and add your fork's archive URL to
-the `game.project` dependencies. Put a Prometheus configuration file named
-`prometheus.lua` in the project root, and set `disabled = 1` under a
-`[prometheus]` section in `game.project` to turn obfuscation off.
+1. Fork the repository and depend on your fork's archive URL instead, as
+   upstream asks.
+2. Put a Prometheus configuration file named `prometheus.lua` in the project
+   root.
+3. Set `disabled = 1` under a `[prometheus]` section in `game.project` to turn
+   obfuscation off.

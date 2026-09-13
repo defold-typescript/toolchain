@@ -80,25 +80,27 @@ describe("LibraryIndex — card titles", () => {
 describe("LibraryIndex — untyped library listings", () => {
   const url = "https://github.com/defold/extension-adpf";
   const route = "/libraries/defold/extension-adpf";
-  const listing = (description: string, summary: string): LibraryListing => ({
+  const listing = (description: string, ships: string): LibraryListing => ({
     owner: "defold",
     repo: "extension-adpf",
     url,
     ref: "1.0.0",
+    pinKind: "release",
     description,
     official: true,
     route,
     api: "untyped",
-    summary,
+    ships,
+    steps: ["Call `adpf.start` from a script."],
   });
-  const render = (description: string, summary = "## What it ships\n\nTunes performance.") =>
+  const render = (description: string, ships = "Tunes performance.") =>
     String(
       LibraryIndex({
         pages: [libraryPage("iap", "/api/iap", false)],
         origins: new Map<string, LibraryOrigin>([
           ["iap", { owner: "defold", repo: "extension-iap", official: true }],
         ]),
-        listings: [listing(description, summary)],
+        listings: [listing(description, ships)],
       }),
     );
 
@@ -112,14 +114,10 @@ describe("LibraryIndex — untyped library listings", () => {
     expect(inner).toContain(LIBRARY_API_KIND_SENTENCE.untyped.replace(/`/g, ""));
   });
 
-  test("falls back to the summary's first sentence when the manifest description is empty", () => {
-    const inner = cardInner(
-      render("", "## What it ships\n\nTunes thermal headroom. Also reports status."),
-      route,
-    );
+  test("falls back to the lead's first sentence when the manifest description is empty", () => {
+    const inner = cardInner(render("", "Tunes thermal headroom. Also reports status."), route);
     expect(inner).toContain("Tunes thermal headroom.");
     expect(inner).not.toContain("Also reports status.");
-    expect(inner).not.toContain("What it ships");
   });
 
   test("keeps the namespace count to documented pages", () => {

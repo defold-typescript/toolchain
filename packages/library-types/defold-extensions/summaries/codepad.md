@@ -11,12 +11,11 @@ files, and the `codepad.codepad` Lua module.
 
 ## Using it
 
-Add the repository zip archive to the `[project]` dependencies in
-`game.project`, set `codepad/template.html` as the HTML5 template, and add
-`/codepad/bundle_resources/` to Bundle Resources. A script requires
-`codepad.codepad` and forwards `codepad.init(self, scenes)`,
-`codepad.update(self, dt)` and `codepad.on_message(...)` from its lifecycle
-functions.
+1. Set `codepad/template.html` as the HTML5 template.
+2. Add `/codepad/bundle_resources/` to Bundle Resources.
+3. Require `codepad.codepad` from a script.
+4. Forward `codepad.init(self, scenes)`, `codepad.update(self, dt)` and
+   `codepad.on_message(...)` from the script's lifecycle functions.
 
 ## Engine APIs
 

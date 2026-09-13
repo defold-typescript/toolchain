@@ -11,7 +11,6 @@ registers a `webmonetization` Lua module with `is_monetized`,
 
 ## Using it
 
-Add the repository's archive zip URL to the `game.project` dependencies and
-set `payment_pointer` in a `[webmonetization]` section. Call
-`webmonetization.is_monetized()` or register a listener with
-`webmonetization.set_listener` to react to payment events.
+1. Set `payment_pointer` in a `[webmonetization]` section of `game.project`.
+2. Call `webmonetization.is_monetized()` or register a listener with
+   `webmonetization.set_listener` to react to payment events.

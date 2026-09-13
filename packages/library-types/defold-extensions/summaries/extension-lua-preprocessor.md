@@ -11,7 +11,6 @@ Defold build tool. It strips or keeps code at build time based on
 
 ## Using it
 
-Add a release zip URL from the repository's releases to the `game.project`
-dependencies; it requires Defold 1.4.2 or higher. Wrap code in the
-conditional comment blocks, or write `--DEBUG_ASSERT(...)` to include an
-assert only in debug builds.
+1. Use Defold 1.4.2 or higher.
+2. Wrap code in the conditional comment blocks.
+3. Write `--DEBUG_ASSERT(...)` to include an assert only in debug builds.

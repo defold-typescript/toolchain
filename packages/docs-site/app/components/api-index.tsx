@@ -358,11 +358,12 @@ export function LibraryPath({
   );
 }
 
-// The first sentence of an authored summary's first paragraph, as plain text: the
-// card's stand-in for a manifest entry whose upstream description is empty.
-function summaryFirstSentence(summary: string): string {
+// The first sentence of an authored summary's lead (`What it ships`) paragraph, as
+// plain text: the card's stand-in for a manifest entry whose upstream description
+// is empty. The lead may still hold a `###` subheading, so headings are skipped.
+function summaryFirstSentence(ships: string): string {
   const paragraph =
-    summary
+    ships
       .split(/\n\s*\n/)
       .map((block) => block.trim())
       .find((block) => block !== "" && !block.startsWith("#")) ?? "";
@@ -375,7 +376,7 @@ function summaryFirstSentence(summary: string): string {
 
 function listingCardDescription(listing: LibraryListing): string {
   return [
-    listing.description || summaryFirstSentence(listing.summary),
+    listing.description || summaryFirstSentence(listing.ships),
     LIBRARY_API_KIND_SENTENCE[listing.api].replace(/`/g, ""),
   ]
     .filter((part) => part !== "")
