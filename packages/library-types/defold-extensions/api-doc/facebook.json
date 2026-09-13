@@ -336,6 +336,29 @@
               "doc": "table with a deferred deep link information",
               "types": [
                 "table"
+              ],
+              "fields": [
+                {
+                  "name": "ref",
+                  "doc": "ref for this App Link.",
+                  "types": [
+                    "string"
+                  ]
+                },
+                {
+                  "name": "extras",
+                  "doc": "the full set of arguments for this app link. Properties like target uri & ref are typically picked out of this set of arguments.",
+                  "types": [
+                    "table"
+                  ]
+                },
+                {
+                  "name": "target_url",
+                  "doc": "target uri for this App Link.",
+                  "types": [
+                    "string"
+                  ]
+                }
               ]
             },
             {

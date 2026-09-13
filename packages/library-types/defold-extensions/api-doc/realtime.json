@@ -196,21 +196,6 @@
     },
     {
       "type": "FUNCTION",
-      "name": "realtime.int JoinRandomRoom",
-      "description": "Join random room. Local join_options = { custom_room_properties = {}, max_players = 0, matchmaking_mode = realtime.MATCHMAKINGMODE_FILL_ROOM, lobby_name = &quot;&quot;, lobby_type = realtime.LOBBYTYPE_DEFAULT, sql_lobby_filter = &quot;&quot;, expected_users = {}, } realtime.join_random_room(join_options)",
-      "parameters": [
-        {
-          "name": "join_options",
-          "doc": "",
-          "types": [
-            "table"
-          ]
-        }
-      ],
-      "returnvalues": []
-    },
-    {
-      "type": "FUNCTION",
       "name": "realtime.leave_room",
       "description": "Leave room.",
       "parameters": [

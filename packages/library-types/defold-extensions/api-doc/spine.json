@@ -246,7 +246,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "id",
+          "doc": "Id of the game object",
+          "types": [
+            "hash"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",

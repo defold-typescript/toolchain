@@ -58,30 +58,48 @@ function splitTypeTokens(type: unknown): string[] {
     .filter((token) => token.length > 0);
 }
 
+// Upstream writes a slot list either as a YAML list or, for a lone slot, as a
+// single mapping (`return: {type: number}`); both mean the same slots.
+function slotList(value: unknown): Record<string, unknown>[] {
+  if (Array.isArray(value)) return value.filter(isRecord);
+  return isRecord(value) ? [value] : [];
+}
+
+// Some generators mark a required slot by suffixing its name (`project_id (REQUIRED)`);
+// every slot is already required unless flagged optional, so the suffix is noise.
+const REQUIRED_SUFFIX = /\s*\(required\)$/i;
+
+// Generators emit placeholder or C-signature names (`None`, `int JoinRandomRoom`)
+// that cannot form a Lua member access, so no page or declaration can carry them.
+const FUNCTION_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+function isFunctionName(name: string): boolean {
+  return name !== "None" && FUNCTION_NAME.test(name);
+}
+
 function mapSlot(item: Record<string, unknown>, complete: boolean): RefDocParameter {
   const slot: RefDocParameter = {
-    name: stringOr(item.name, ""),
+    name: stringOr(item.name, "").replace(REQUIRED_SUFFIX, ""),
     doc: stringOr(item.desc, ""),
     types: splitTypeTokens(item.type),
   };
   if (!complete) return slot;
   // A callback lists its arguments under `parameters:` and a table its keys under
-  // `fields:`; the ref-doc format carries both as `fields`. A callback's own
-  // `self` is kept, since the engine really passes it to the callback.
+  // `fields:` or `members:`; the ref-doc format carries all as `fields`. A
+  // callback's own `self` is kept, since the engine really passes it to the callback.
   const nested = [
-    ...(Array.isArray(item.parameters) ? item.parameters : []),
-    ...(Array.isArray(item.fields) ? item.fields : []),
-  ].filter(isRecord);
+    ...slotList(item.parameters),
+    ...slotList(item.fields),
+    ...slotList(item.members),
+  ];
   if (nested.length > 0) slot.fields = nested.map((child) => mapSlot(child, complete));
   if (item.optional === true) slot.is_optional = "True";
   return slot;
 }
 
 function mapParameters(raw: unknown, complete: boolean): RefDocParameter[] {
-  if (!Array.isArray(raw)) return [];
   const out: RefDocParameter[] = [];
-  for (const item of raw) {
-    if (!isRecord(item)) continue;
+  for (const item of slotList(raw)) {
     // The script_api lists the implicit `self` the engine passes; the emitter
     // stamps @noSelfInFile, so generated signatures must not declare it.
     if (stringOr(item.name, "") === "self") continue;
@@ -141,6 +159,12 @@ function isScalar(member: Record<string, unknown>): boolean {
  * `examples:` becomes `codehilite` examples HTML that keeps each fence's
  * language, and each slot's nested `parameters:`/`fields:` and `optional: true`
  * become ref-doc `fields` and `is_optional`, for the docs pages.
+ *
+ * Upstream dialects are normalized in both modes: a function's slots are read
+ * from the first present of `parameters:`, `params:` or `members:` and its
+ * returns from `returns:` or `return:`, any slot list may be a single mapping,
+ * a table slot's `members:` nest like `fields:`, a `(REQUIRED)` name suffix is
+ * dropped, and a function named `None` or not a Lua identifier is skipped.
  */
 export function scriptApiToRefDoc(parsed: unknown, options: ScriptApiOptions = {}): RefDoc {
   if (!Array.isArray(parsed)) {
@@ -167,8 +191,11 @@ export function scriptApiToRefDoc(parsed: unknown, options: ScriptApiOptions = {
       type: "FUNCTION",
       name,
       description: stringOr(member.desc, ""),
-      parameters: mapParameters(member.parameters, options.complete === true),
-      returnvalues: mapParameters(member.returns, options.complete === true),
+      parameters: mapParameters(
+        member.parameters ?? member.params ?? member.members,
+        options.complete === true,
+      ),
+      returnvalues: mapParameters(member.returns ?? member.return, options.complete === true),
     };
     const examples = options.complete ? examplesHtml(member.examples) : "";
     if (examples !== "") element.examples = examples;
@@ -186,6 +213,7 @@ export function scriptApiToRefDoc(parsed: unknown, options: ScriptApiOptions = {
   for (const member of members) {
     if (!isRecord(member)) continue;
     if (member.type === "function") {
+      if (!isFunctionName(stringOr(member.name, ""))) continue;
       elements.push(fnElement(`${namespace}.${stringOr(member.name, "")}`, member));
       continue;
     }
@@ -203,8 +231,10 @@ export function scriptApiToRefDoc(parsed: unknown, options: ScriptApiOptions = {
         // whose functions the emitter's one-dot pass would silently drop.
         if (!isRecord(subMember)) continue;
         const name = `${namespace}.${sub}.${stringOr(subMember.name, "")}`;
-        if (subMember.type === "function") elements.push(fnElement(name, subMember));
-        else if (options.complete && isScalar(subMember)) {
+        if (subMember.type === "function") {
+          if (isFunctionName(stringOr(subMember.name, "")))
+            elements.push(fnElement(name, subMember));
+        } else if (options.complete && isScalar(subMember)) {
           elements.push(constantElement(name, subMember));
         }
       }

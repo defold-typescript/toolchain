@@ -158,7 +158,15 @@
       "name": "rive.get_projection_matrix",
       "description": "Returns the projection matrix in render coordinates.",
       "parameters": [],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "matrix",
+          "doc": "Current projection matrix for the window.",
+          "types": [
+            "vmath.matrix4"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -277,7 +285,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "file_handle",
+          "doc": "Handle identifying the loaded Rive file.",
+          "types": [
+            "FileHandle"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -300,7 +316,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "artboard",
+          "doc": "Old artboard handle",
+          "types": [
+            "ArtboardHandle"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -315,7 +339,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "artboard",
+          "doc": "Active artboard handle.",
+          "types": [
+            "ArtboardHandle"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -338,7 +370,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "state_machine",
+          "doc": "Old state machine handle",
+          "types": [
+            "StateMachineHandle"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -353,7 +393,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "state_machine",
+          "doc": "Current state machine handle.",
+          "types": [
+            "StateMachineHandle"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -375,7 +423,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "view_model_instance_handle",
+          "doc": "Handle to the old view model instance.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -390,7 +446,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "view_model_instance_handle",
+          "doc": "Handle for the active view model instance.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        }
+      ]
     }
   ]
 }

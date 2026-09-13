@@ -71,7 +71,15 @@
           ]
         }
       ],
-      "returnvalues": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The id number of the webview",
+          "types": [
+            "number"
+          ]
+        }
+      ],
       "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">local function webview_callback(self, webview_id, request_id, type, data)\n    if type == webview.CALLBACK_RESULT_URL_OK then\n        -- the page is now loaded, let's show it\n        webview.set_visible(webview_id, 1)\n    elseif type == webview.CALLBACK_RESULT_URL_ERROR then\n        print(\"Failed to load url: \" .. data[\"url\"])\n        print(\"Error: \" .. data[\"error\"])\n    elseif type == webview.CALLBACK_RESULT_URL_LOADING then\n        -- a page is loading\n        -- return false to prevent it from loading\n        -- return true or nil to continue loading the page\n        if data.url ~= \"https://www.defold.com/\" then\n            return false\n        end\n    elseif type == webview.CALLBACK_RESULT_EVAL_OK then\n        print(\"Eval ok. Result: \" .. data['result'])\n    elseif type == webview.CALLBACK_RESULT_EVAL_ERROR then\n        print(\"Eval not ok. Request # \" .. request_id)\n    end\nend\nlocal webview_id = webview.create(webview_callback)</code></pre></div>"
     },
     {
@@ -192,7 +200,15 @@
           ]
         }
       ],
-      "returnvalues": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The id number of the request",
+          "types": [
+            "number"
+          ]
+        }
+      ],
       "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">local request_id = webview.eval(webview_id, \"GetMyFormData()\")</code></pre></div>"
     },
     {
@@ -252,7 +268,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Returns `0` if not visible, `1` if it is visible",
+          "types": [
+            "number"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",

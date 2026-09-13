@@ -525,7 +525,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "blend",
+          "doc": "Id of the blend mode.",
+          "types": [
+            "integer"
+          ]
+        }
+      ]
     }
   ]
 }

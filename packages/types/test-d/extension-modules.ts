@@ -16,7 +16,9 @@ const [_scheduleId, _scheduleErr] = push.schedule(10, "title", "alert", "payload
 void _scheduleId;
 void _scheduleErr;
 
-webview.create(() => {});
+const webviewId: number = webview.create(() => {});
+const visible: number = webview.is_visible(webviewId);
+void visible;
 
 // @ts-expect-error iap.buy product id is a string, not a number
 iap.buy(123, {});
