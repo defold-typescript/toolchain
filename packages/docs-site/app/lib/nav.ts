@@ -1,6 +1,7 @@
 import { GET_STARTED_SLUGS } from "./get-started";
 import type { GuidePage } from "./guide";
 import { GUIDE_GROUPS } from "./guide-groups";
+import { NO_TYPED_API_ICON } from "./no-typed-api-icon";
 
 export interface NavLink {
   label: string;
@@ -50,11 +51,19 @@ export interface LibraryOrigin {
   official?: true;
 }
 
-// A library listed on the Libraries index with no typed API: it ships no
-// `.script_api`, so it has no page or route and appears only as a repo card.
+// Whether an untyped library registers nothing a script calls (`none`) or
+// registers Lua functions upstream never describes in a `.script_api` (`untyped`).
+export type LibraryApiKind = "none" | "untyped";
+
+// A library with no typed API: it ships no `.script_api`, so instead of an `/api/`
+// page it gets a `/libraries/<owner>/<repo>` page built from an authored summary.
 export interface LibraryListing extends LibraryOrigin {
   url: string;
+  ref: string;
   description: string;
+  route: string;
+  api: LibraryApiKind;
+  summary: string;
 }
 
 /** One upstream repo: its `modules` render as namespace leaves under a route-less repo header. */
@@ -62,6 +71,8 @@ export interface LibraryGroup {
   repo: string;
   label: string;
   modules: Namespace[];
+  // Set only for an untyped library, which has no modules and links its own page.
+  listing?: { route: string; api: LibraryApiKind };
 }
 
 export interface LibraryOwnerGroup {
@@ -230,6 +241,10 @@ export function buildNav(
           // takes the repo's own label, so the tree never renders a one-child
           // expander. The label names what the row points at either way — a repo
           // when the row groups, a repo-titled page when it links.
+          if (lib.listing) {
+            const link = moduleLink(lib.label, "", lib.listing.route);
+            return { ...link, labelHtml: `${link.labelHtml} ${NO_TYPED_API_ICON}` };
+          }
           const only = lib.modules.length === 1 ? lib.modules[0] : undefined;
           if (only) return moduleLink(lib.label, only.label, only.route);
           return toNavGroup(
@@ -298,20 +313,38 @@ export function libraryPathSegments(owner: string, repo: string, namespace: stri
 
 // Group library pages by GitHub owner, then repo, then namespace for the
 // Libraries tab. Labels stay slash-free: owner handle, repo name, and namespace.
+// Untyped listings join their owner as module-less repos, sorted among the typed
+// ones; the sidebar and the Libraries index both read this one grouping.
 export function libraryOwnerGroups(
   pages: LibraryNavPage[],
   origins: Map<string, LibraryOrigin>,
+  listings: LibraryListing[] = [],
 ): LibraryOwnerGroup[] {
   const byOwner = new Map<string, Map<string, Namespace[]>>();
+  const listingByRepo = new Map<string, LibraryGroup["listing"]>();
   const officialOwners = new Set<string>();
+  const libraryRepos = (owner: string): Map<string, Namespace[]> => {
+    const libraries = byOwner.get(owner) ?? new Map<string, Namespace[]>();
+    byOwner.set(owner, libraries);
+    return libraries;
+  };
   for (const page of pages) {
     const { owner, repo, official } = libraryLineage(page.namespace, origins);
-    const libraries = byOwner.get(owner) ?? new Map<string, Namespace[]>();
+    const libraries = libraryRepos(owner);
     const modules = libraries.get(repo) ?? [];
     modules.push({ label: page.namespace, route: page.route });
     libraries.set(repo, modules);
-    byOwner.set(owner, libraries);
     if (official) officialOwners.add(owner);
+  }
+  for (const listing of listings) {
+    const libraries = libraryRepos(listing.owner);
+    if (listing.official) officialOwners.add(listing.owner);
+    if (libraries.has(listing.repo)) continue;
+    libraries.set(listing.repo, []);
+    listingByRepo.set(`${listing.owner}/${listing.repo}`, {
+      route: listing.route,
+      api: listing.api,
+    });
   }
 
   return [...byOwner.entries()]
@@ -322,11 +355,15 @@ export function libraryOwnerGroups(
         ...(officialOwners.has(owner) ? { official: true as const } : {}),
         libraries: [...libraries.entries()]
           .sort(([a], [b]) => a.localeCompare(b))
-          .map(([repo, modules]) => ({
-            repo,
-            label: repo,
-            modules: modules.sort((a, b) => a.label.localeCompare(b.label)),
-          })),
+          .map(([repo, modules]): LibraryGroup => {
+            const listing = listingByRepo.get(`${owner}/${repo}`);
+            return {
+              repo,
+              label: repo,
+              modules: modules.sort((a, b) => a.label.localeCompare(b.label)),
+              ...(listing ? { listing } : {}),
+            };
+          }),
       }),
     )
     .sort(compareLibraryOwners);
