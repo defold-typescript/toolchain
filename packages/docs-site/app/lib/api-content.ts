@@ -23,8 +23,11 @@ import { resolveVersionWindow, type VersionWindow, windowCombinedSurface } from 
 export const TYPES_DIR = join(process.cwd(), "../types");
 export const LIBRARY_TYPES_DIR = join(process.cwd(), "../library-types");
 
-export function apiPages(): ApiPage[] {
-  return loadApiSurface(TYPES_DIR, LIBRARY_TYPES_DIR);
+export function apiPages(
+  typesDir: string = TYPES_DIR,
+  libraryTypesDir: string = LIBRARY_TYPES_DIR,
+): ApiPage[] {
+  return loadApiSurface(typesDir, libraryTypesDir);
 }
 
 // Enumeration for routing and version chrome: a non-default target with no
