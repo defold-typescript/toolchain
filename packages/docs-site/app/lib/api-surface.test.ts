@@ -2403,6 +2403,35 @@ describe("exampleMarkdownFor", () => {
   });
 });
 
+describe("Defold library page examples", () => {
+  const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+  const functionsOf = (namespace: string) =>
+    pages.find((p) => p.category === "library" && p.namespace === namespace)?.module.functions ??
+    [];
+
+  test("adinfo.get renders its upstream Lua example", () => {
+    const fn = functionsOf("adinfo").find((f) => f.name === "adinfo.get");
+    expect(fn).toBeDefined();
+    const md = fn ? exampleMarkdownFor(fn) : undefined;
+    expect(md).toStartWith("```lua\nfunction init(self)");
+  });
+
+  test("every admob function with an upstream example (admob 4.2.2) renders one", () => {
+    const withExamples = functionsOf("admob")
+      .filter((f) => exampleMarkdownFor(f) !== undefined)
+      .map((f) => f.name);
+    expect(withExamples.sort()).toEqual([
+      "admob.set_callback",
+      "admob.set_max_ad_content_rating",
+      "admob.show_appopen",
+      "admob.show_banner",
+      "admob.show_interstitial",
+      "admob.show_rewarded",
+      "admob.show_rewarded_interstitial",
+    ]);
+  });
+});
+
 describe("loadApiSurface translations and /api rendering", () => {
   const pages = loadApiSurface(REAL_TYPES_DIR);
   const goPage = pages.find((p) => p.namespace === "go");

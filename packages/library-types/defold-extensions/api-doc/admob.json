@@ -25,7 +25,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">local function admob_callback(self, message_id, message)\n    pprint(message_id, message)\n    if message_id == admob.MSG_INITIALIZATION then\n       if message.event == admob.EVENT_COMPLETE then\n           print(\"EVENT_COMPLETE: Initialization complete\")\n       elseif message.event == admob.EVENT_JSON_ERROR then\n           print(\"EVENT_JSON_ERROR: Internal NE json error \"..message.error)\n       end\n   elseif message_id == admob.MSG_IDFA then\n       if message.event == admob.EVENT_STATUS_AUTHORIZED then\n           print(\"EVENT_STATUS_AUTHORIZED: ATTrackingManagerAuthorizationStatusAuthorized\")\n       elseif message.event == admob.EVENT_STATUS_DENIED then\n           print(\"EVENT_STATUS_DENIED: ATTrackingManagerAuthorizationStatusDenied\")\n       elseif message.event == admob.EVENT_STATUS_NOT_DETERMINED then\n           print(\"EVENT_STATUS_NOT_DETERMINED: ATTrackingManagerAuthorizationStatusNotDetermined\")\n       elseif message.event == admob.EVENT_STATUS_RESTRICTED then\n           print(\"EVENT_STATUS_RESTRICTED: ATTrackingManagerAuthorizationStatusRestricted\")\n       elseif message.event == admob.EVENT_NOT_SUPPORTED then\n           print(\"EVENT_NOT_SUPPORTED: IDFA request not supported on this platform or OS version\")\n       end\n   elseif message_id == admob.MSG_INTERSTITIAL then\n       if message.event == admob.EVENT_CLOSED then\n           print(\"EVENT_CLOSED: Interstitial AD closed\")\n       elseif message.event == admob.EVENT_FAILED_TO_SHOW then\n           print(\"EVENT_FAILED_TO_SHOW: Interstitial AD failed to show\\nCode: \"..message.code..\"\\nError: \"..message.error)\n       elseif message.event == admob.EVENT_OPENING then\n           print(\"EVENT_OPENING: Interstitial AD is opening\")\n       elseif message.event == admob.EVENT_FAILED_TO_LOAD then\n           print(\"EVENT_FAILED_TO_LOAD: Interstitial AD failed to load\\nCode: \"..message.code..\"\\nError: \"..message.error)\n       elseif message.event == admob.EVENT_LOADED then\n           print(\"EVENT_LOADED: Interstitial AD loaded\")\n       elseif message.event == admob.EVENT_NOT_LOADED then\n           print(\"EVENT_NOT_LOADED: can't call show_interstitial() before EVENT_LOADED\\nError: \"..message.error)\n       elseif message.event == admob.EVENT_IMPRESSION_RECORDED then\n           print(\"EVENT_IMPRESSION_RECORDED: Interstitial did record impression\")\n       elseif message.event == admob.EVENT_JSON_ERROR then\n           print(\"EVENT_JSON_ERROR: Internal NE json error: \"..message.error)\n       end\n   elseif message_id == admob.MSG_REWARDED then\n       if message.event == admob.EVENT_CLOSED then\n           print(\"EVENT_CLOSED: Rewarded AD closed\")\n       elseif message.event == admob.EVENT_FAILED_TO_SHOW then\n           print(\"EVENT_FAILED_TO_SHOW: Rewarded AD failed to show\\nCode: \"..message.code..\"\\nError: \"..message.error)\n       elseif message.event == admob.EVENT_OPENING then\n           print(\"EVENT_OPENING: Rewarded AD is opening\")\n       elseif message.event == admob.EVENT_FAILED_TO_LOAD then\n           print(\"EVENT_FAILED_TO_LOAD: Rewarded AD failed to load\\nCode: \"..message.code..\"\\nError: \"..message.error)\n       elseif message.event == admob.EVENT_LOADED then\n           print(\"EVENT_LOADED: Rewarded AD loaded\")\n       elseif message.event == admob.EVENT_NOT_LOADED then\n           print(\"EVENT_NOT_LOADED: can't call show_rewarded() before EVENT_LOADED\\nError: \"..message.error)\n       elseif message.event == admob.EVENT_EARNED_REWARD then\n           print(\"EVENT_EARNED_REWARD: Reward: \" .. tostring(message.amount) .. \" \" .. tostring(message.type))\n       elseif message.event == admob.EVENT_IMPRESSION_RECORDED then\n           print(\"EVENT_IMPRESSION_RECORDED: Rewarded did record impression\")\n       elseif message.event == admob.EVENT_JSON_ERROR then\n           print(\"EVENT_JSON_ERROR: Internal NE json error: \"..message.error)\n       end\n   elseif message_id == admob.MSG_BANNER then\n       if message.event == admob.EVENT_LOADED then\n           print(\"EVENT_LOADED: Banner AD loaded. Height: \"..message.height..\"px Width: \"..message.width..\"px\")\n       elseif message.event == admob.EVENT_OPENING then\n           print(\"EVENT_OPENING: Banner AD is opening\")\n       elseif message.event == admob.EVENT_FAILED_TO_LOAD then\n           print(\"EVENT_FAILED_TO_LOAD: Banner AD failed to load\\nCode: \"..message.code..\"\\nError: \"..message.error)\n       elseif message.event == admob.EVENT_CLICKED then\n           print(\"EVENT_CLICKED: Banner AD loaded\")\n       elseif message.event == admob.EVENT_CLOSED then\n           print(\"EVENT_CLOSED: Banner AD closed\")\n       elseif message.event == admob.EVENT_DESTROYED then\n           print(\"EVENT_DESTROYED: Banner AD destroyed\")\n       elseif message.event == admob.EVENT_IMPRESSION_RECORDED then\n           print(\"EVENT_IMPRESSION_RECORDED: Banner did record impression\")\n       elseif message.event == admob.EVENT_JSON_ERROR then\n           print(\"EVENT_JSON_ERROR: Internal NE json error: \"..message.error)\n       end\n   end\nend\n\nfunction init(self)\n    if admob then\n        admob.set_callback(admob_callback)\n        admob.initialize()\n    end\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -76,7 +77,8 @@
       "name": "admob.show_appopen",
       "description": "Shows loaded App Open Ad, can only be called after `admob.EVENT_LOADED` Original docs [Android](https://developers.google.com/admob/android/next-gen/app-open), [iOS](https://developers.google.com/admob/ios/app-open)",
       "parameters": [],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">if admob and admob.is_appopen_loaded() then\n    admob.show_appopen()\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -113,7 +115,8 @@
       "name": "admob.show_interstitial",
       "description": "Shows loaded Interstitial Ad, can only be called after `admob.EVENT_LOADED` Original docs [Android](https://developers.google.com/admob/android/next-gen/interstitial), [iOS](https://developers.google.com/admob/ios/interstitial)",
       "parameters": [],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">if admob and admob.is_interstitial_loaded() then\n    admob.show_interstitial()\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -157,7 +160,8 @@
       "name": "admob.show_rewarded",
       "description": "Shows loaded Rewarded Ad, can only be called after `admob.EVENT_LOADED` Original docs [Android](https://developers.google.com/admob/android/next-gen/rewarded), [iOS](https://developers.google.com/admob/ios/rewarded-ads)",
       "parameters": [],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">if admob and admob.is_rewarded_loaded() then\n    admob.show_rewarded()\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -194,7 +198,8 @@
       "name": "admob.show_rewarded_interstitial",
       "description": "Shows loaded Rewarded Interstitial Ad, can only be called after `admob.EVENT_LOADED` Original docs [Android](https://developers.google.com/admob/android/next-gen/rewarded-interstitial#show_the_ad), [iOS](https://developers.google.com/admob/ios/rewarded-interstitial#display_the_ad_and_handle_the_reward_event)",
       "parameters": [],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">if admob and admob.is_rewarded_interstitial_loaded() then\n    admob.show_rewarded_interstitial()\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -246,7 +251,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">if admob and admob.is_banner_loaded() then\n    admob.show_banner(admob.POS_TOP_CENTER)\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -261,7 +267,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">  admob.set_max_ad_content_rating(admob.MAX_AD_CONTENT_RATING_PG)</code></pre></div>"
     },
     {
       "type": "FUNCTION",
