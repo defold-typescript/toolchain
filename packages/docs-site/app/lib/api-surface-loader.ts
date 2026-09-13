@@ -94,6 +94,7 @@ interface LibraryTargets {
 interface DefoldExtensionEntry {
   repo: string;
   ref: string;
+  refKind: "release" | "tag" | "commit";
   license: string;
   description: string;
   docs: { path: string; namespace: string; page: string }[];
@@ -411,6 +412,7 @@ export function loadLibraryProvenance(libraryTypesDir: string): (namespace: stri
         authoredHere: true,
         usage: "ambient",
         globalNamespace: doc.namespace,
+        pinKind: entry.refKind,
         ...(extendsEngine ? { extendsNamespace: doc.namespace } : {}),
       };
     }

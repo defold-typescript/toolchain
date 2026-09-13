@@ -276,6 +276,14 @@ export interface LibraryMeta {
    * declares one (`extension-spine`'s `spine.gui` page declares `gui`).
    */
   extendsNamespace?: string;
+  /**
+   * How a Defold extension page's upstream pin was chosen — its latest release,
+   * else its newest tag, else a commit — so the adopt steps name a dependency
+   * URL that exists at that pin. Set only for Defold extension pages; absent
+   * keeps release selection, because a vendored or authored pin is our
+   * generation source, not the user's dependency.
+   */
+  pinKind?: "release" | "tag" | "commit";
 }
 
 export interface ApiPage {
