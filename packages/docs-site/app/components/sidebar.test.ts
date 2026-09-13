@@ -25,6 +25,7 @@ function librariesCategoryHtml(): string {
       { namespace: "monarch.monarch", route: "/api/monarch.monarch" },
     ],
     origins,
+    [],
   );
   const nav = buildNav(realPages(), {
     globals: [],
