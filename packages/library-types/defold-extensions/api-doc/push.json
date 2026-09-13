@@ -150,6 +150,29 @@
           "doc": "Table with notification and platform specific fields",
           "types": [
             "table"
+          ],
+          "fields": [
+            {
+              "name": "action",
+              "doc": "The alert action string to be used as the title of the right button of the alert or the value of the unlock slider, where the value replaces \"unlock\" in \"slide to unlock\" text. [icon:ios]",
+              "types": [
+                "string"
+              ]
+            },
+            {
+              "name": "badge_count",
+              "doc": "The numeric value of the icon badge. [icon:ios]",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "priority",
+              "doc": "The priority is a hint to the device UI about how the notification should be displayed. There are five priority levels, from -2 to 2 where -1 is the lowest priority and 2 the highest. Unless specified, a default priority level of 2 is used. [icon:android]",
+              "types": [
+                "number"
+              ]
+            }
           ]
         }
       ],

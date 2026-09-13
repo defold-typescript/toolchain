@@ -144,7 +144,7 @@
       "description": "Get list of bundles",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
@@ -229,14 +229,14 @@
       "description": "Get specified bundle",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "sku (REQUIRED)",
+          "name": "sku",
           "doc": "Bundle SKU.",
           "types": [
             "string"
@@ -286,14 +286,14 @@
       "description": "Get list of bundles by specified group",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "external_id (REQUIRED)",
+          "name": "external_id",
           "doc": "Group external ID.",
           "types": [
             "string"
@@ -378,14 +378,14 @@
       "description": "Get cart by cart ID",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "cart_id (REQUIRED)",
+          "name": "cart_id",
           "doc": "Cart ID.",
           "types": [
             "string"
@@ -435,7 +435,7 @@
       "description": "Get current user&#x27;s cart",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
@@ -485,14 +485,14 @@
       "description": "Delete all cart items by cart ID",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "cart_id (REQUIRED)",
+          "name": "cart_id",
           "doc": "Cart ID.",
           "types": [
             "string"
@@ -528,7 +528,7 @@
       "description": "Delete all cart items from current cart",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
@@ -564,7 +564,7 @@
       "description": "Fill cart with items",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
@@ -608,14 +608,14 @@
       "description": "Fill specific cart with items",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "cart_id (REQUIRED)",
+          "name": "cart_id",
           "doc": "Cart ID.",
           "types": [
             "string"
@@ -659,21 +659,21 @@
       "description": "Update cart item by cart ID",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "cart_id (REQUIRED)",
+          "name": "cart_id",
           "doc": "Cart ID.",
           "types": [
             "string"
           ]
         },
         {
-          "name": "item_sku (REQUIRED)",
+          "name": "item_sku",
           "doc": "Item SKU.",
           "types": [
             "string"
@@ -717,21 +717,21 @@
       "description": "Delete cart item by cart ID",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "cart_id (REQUIRED)",
+          "name": "cart_id",
           "doc": "Cart ID.",
           "types": [
             "string"
           ]
         },
         {
-          "name": "item_sku (REQUIRED)",
+          "name": "item_sku",
           "doc": "Item SKU.",
           "types": [
             "string"
@@ -767,14 +767,14 @@
       "description": "Update cart item from current cart",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "item_sku (REQUIRED)",
+          "name": "item_sku",
           "doc": "Item SKU.",
           "types": [
             "string"
@@ -818,14 +818,14 @@
       "description": "Delete cart item from current cart",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "item_sku (REQUIRED)",
+          "name": "item_sku",
           "doc": "Item SKU.",
           "types": [
             "string"
@@ -861,14 +861,14 @@
       "description": "Create order with all items from particular cart",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "cart_id (REQUIRED)",
+          "name": "cart_id",
           "doc": "Cart ID.",
           "types": [
             "string"
@@ -912,7 +912,7 @@
       "description": "Create order with all items from current cart",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
@@ -956,14 +956,14 @@
       "description": "Create order with specified item",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "item_sku (REQUIRED)",
+          "name": "item_sku",
           "doc": "Item SKU.",
           "types": [
             "string"
@@ -1007,7 +1007,7 @@
       "description": "Create order with free cart",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
@@ -1051,14 +1051,14 @@
       "description": "Create order with particular free cart",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "cart_id (REQUIRED)",
+          "name": "cart_id",
           "doc": "Cart ID.",
           "types": [
             "string"
@@ -1102,14 +1102,14 @@
       "description": "Create order with specified free item",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "item_sku (REQUIRED)",
+          "name": "item_sku",
           "doc": "Item SKU.",
           "types": [
             "string"
@@ -1153,14 +1153,14 @@
       "description": "Get order",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "order_id (REQUIRED)",
+          "name": "order_id",
           "doc": "Order ID.",
           "types": [
             "string"
@@ -1196,7 +1196,7 @@
       "description": "Get list of upsell items in project",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
@@ -1232,7 +1232,7 @@
       "description": "Get games list",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
@@ -1317,14 +1317,14 @@
       "description": "Get games list by specified group",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "external_id (REQUIRED)",
+          "name": "external_id",
           "doc": "Group external ID.",
           "types": [
             "string"
@@ -1409,14 +1409,14 @@
       "description": "Get game for catalog",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "item_sku (REQUIRED)",
+          "name": "item_sku",
           "doc": "Item SKU.",
           "types": [
             "string"
@@ -1487,14 +1487,14 @@
       "description": "Get game key for catalog",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "item_sku (REQUIRED)",
+          "name": "item_sku",
           "doc": "Item SKU.",
           "types": [
             "string"
@@ -1565,14 +1565,14 @@
       "description": "Get game keys list by specified group",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "external_id (REQUIRED)",
+          "name": "external_id",
           "doc": "Group external ID.",
           "types": [
             "string"
@@ -1657,7 +1657,7 @@
       "description": "Get DRM list",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
@@ -1693,7 +1693,7 @@
       "description": "Get list of games owned by user",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
@@ -1757,7 +1757,7 @@
       "description": "Redeem game code by client",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
@@ -1801,7 +1801,7 @@
       "description": "Redeem coupon code",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
@@ -1845,14 +1845,14 @@
       "description": "Get coupon rewards",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "coupon_code (REQUIRED)",
+          "name": "coupon_code",
           "doc": "Unique case sensitive code. Contains letters and numbers.",
           "types": [
             "string"
@@ -1888,7 +1888,7 @@
       "description": "Redeem promo code",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
@@ -1932,7 +1932,7 @@
       "description": "Remove promo code from cart",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
@@ -1976,14 +1976,14 @@
       "description": "Get promo code rewards",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "promocode_code (REQUIRED)",
+          "name": "promocode_code",
           "doc": "Unique case sensitive code. Contains letters and numbers.",
           "types": [
             "string"
@@ -2019,14 +2019,14 @@
       "description": "Verify promotion code",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "code (REQUIRED)",
+          "name": "code",
           "doc": "Unique case-sensitive code. Contains letters and numbers.",
           "types": [
             "string"
@@ -2062,7 +2062,7 @@
       "description": "Get virtual items list",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
@@ -2147,14 +2147,14 @@
       "description": "Get virtual item by SKU",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "item_sku (REQUIRED)",
+          "name": "item_sku",
           "doc": "Item SKU.",
           "types": [
             "string"
@@ -2211,7 +2211,7 @@
       "description": "Get all virtual items list",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
@@ -2261,7 +2261,7 @@
       "description": "Get virtual currency list",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
@@ -2346,14 +2346,14 @@
       "description": "Get virtual currency by SKU",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "virtual_currency_sku (REQUIRED)",
+          "name": "virtual_currency_sku",
           "doc": "Virtual currency SKU.",
           "types": [
             "string"
@@ -2410,7 +2410,7 @@
       "description": "Get virtual currency package list",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
@@ -2495,14 +2495,14 @@
       "description": "Get virtual currency package by SKU",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "virtual_currency_package_sku (REQUIRED)",
+          "name": "virtual_currency_package_sku",
           "doc": "Virtual currency package SKU.",
           "types": [
             "string"
@@ -2559,14 +2559,14 @@
       "description": "Get items list by specified group",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "external_id (REQUIRED)",
+          "name": "external_id",
           "doc": "Group external ID.",
           "types": [
             "string"
@@ -2651,7 +2651,7 @@
       "description": "Get item group list",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
@@ -2694,21 +2694,21 @@
       "description": "Create order with specified item purchased by virtual currency",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "item_sku (REQUIRED)",
+          "name": "item_sku",
           "doc": "Item SKU.",
           "types": [
             "string"
           ]
         },
         {
-          "name": "virtual_currency_sku (REQUIRED)",
+          "name": "virtual_currency_sku",
           "doc": "Virtual currency SKU.",
           "types": [
             "string"
@@ -2759,7 +2759,7 @@
       "description": "Get sellable items list",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
@@ -2844,14 +2844,14 @@
       "description": "Get sellable item by ID",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "item_id (REQUIRED)",
+          "name": "item_id",
           "doc": "Item ID.",
           "types": [
             "string"
@@ -2901,14 +2901,14 @@
       "description": "Get sellable item by SKU",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "sku (REQUIRED)",
+          "name": "sku",
           "doc": "Item SKU.",
           "types": [
             "string"
@@ -2958,14 +2958,14 @@
       "description": "Get sellable items list by specified group",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "external_id (REQUIRED)",
+          "name": "external_id",
           "doc": "Group external ID.",
           "types": [
             "string"
@@ -3050,7 +3050,7 @@
       "description": "Get current user&#x27;s reward chains",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
@@ -3100,14 +3100,14 @@
       "description": "Get current user&#x27;s value point balance",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "reward_chain_id (REQUIRED)",
+          "name": "reward_chain_id",
           "doc": "Reward chain ID.",
           "types": [
             "integer"
@@ -3143,21 +3143,21 @@
       "description": "Claim step reward",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID. You can find this parameter in your [Publisher Account](https://publisher.xsolla.com/) next to the name of the project.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "reward_chain_id (REQUIRED)",
+          "name": "reward_chain_id",
           "doc": "Reward chain ID.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "step_id (REQUIRED)",
+          "name": "step_id",
           "doc": "Reward chain step ID.",
           "types": [
             "integer"
@@ -3193,14 +3193,14 @@
       "description": "Get top 10 contributors to reward chain under clan",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID.",
           "types": [
             "integer"
           ]
         },
         {
-          "name": "reward_chain_id (REQUIRED)",
+          "name": "reward_chain_id",
           "doc": "Reward chain ID.",
           "types": [
             "integer"
@@ -3236,7 +3236,7 @@
       "description": "Update current user&#x27;s clan",
       "parameters": [
         {
-          "name": "project_id (REQUIRED)",
+          "name": "project_id",
           "doc": "Project ID.",
           "types": [
             "integer"
