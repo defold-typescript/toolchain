@@ -25,6 +25,7 @@
     "@shikijs/markdown-it": "^4.4.2",
     "@shikijs/transformers": "^4.4.2",
     "comment-parser": "^1.4.8",
+    "devicon": "^2.17.0",
     "hono": "^4.13.1",
     "honox": "^0.1.60",
     "markdown-it": "^14.3.0",

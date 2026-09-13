@@ -11,9 +11,10 @@ import { type BundledLanguage, createHighlighter, type Highlighter } from "shiki
 import { Badge } from "../components/ui/badge";
 import { TooltipTrigger } from "../components/ui/tooltip";
 import { withBase } from "./base";
+import { glyphSvg } from "./glyph";
 import { slugify } from "./headings";
 import { phosphorDuotone } from "./phosphor";
-import { PLATFORM_MARKER, platformIcon } from "./platform-icons";
+import { type Glyph, PLATFORM_MARKER, platformIcon } from "./platform-icons";
 import { type SignatureSymbolTarget, splitSignatureBrandLinks } from "./signature-brand-links";
 
 /**
@@ -122,11 +123,14 @@ function codeTitleFromInfo(info: string): string | undefined {
 
 // Fence languages labelled with a language badge, keyed by the info string's
 // first token. Every other language renders exactly as Shiki emits it.
-const FENCE_LANGUAGES: Record<string, { label: string; icon: string }> = {
-  lua: { label: "Lua", icon: "moon" },
-  ts: { label: "TypeScript", icon: "file-ts" },
-  typescript: { label: "TypeScript", icon: "file-ts" },
-  tsx: { label: "TypeScript", icon: "file-ts" },
+export const FENCE_LANGUAGES: Record<string, { label: string; glyph: Glyph }> = {
+  lua: { label: "Lua", glyph: { set: "devicon", file: "lua/lua-plain" } },
+  ts: { label: "TypeScript", glyph: { set: "devicon", file: "typescript/typescript-plain" } },
+  typescript: {
+    label: "TypeScript",
+    glyph: { set: "devicon", file: "typescript/typescript-plain" },
+  },
+  tsx: { label: "TypeScript", glyph: { set: "devicon", file: "typescript/typescript-plain" } },
 };
 
 const languageBadges = new Map<string, string>();
@@ -141,7 +145,7 @@ function fenceLanguageBadge(info: string): string | undefined {
       Badge({
         variant: "outline",
         class: "code-badge",
-        icon: phosphorDuotone(language.icon, "code-badge-icon"),
+        icon: glyphSvg(language.glyph, "code-badge-icon"),
         children: language.label,
       }),
     );
@@ -166,7 +170,7 @@ function platformBadge(name: string): string | undefined {
         children: Badge({
           variant: "outline",
           class: "platform-badge-icon",
-          icon: phosphorDuotone(platform.icon, "platform-badge-glyph"),
+          icon: glyphSvg(platform.glyph, "platform-badge-glyph"),
           role: "img",
           "aria-label": platform.label,
         }),
