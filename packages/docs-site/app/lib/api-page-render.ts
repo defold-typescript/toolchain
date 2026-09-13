@@ -26,7 +26,7 @@ import { LIBRARY_API_KIND_SENTENCE } from "./no-typed-api-icon";
 import { platformDocText } from "./platform-icons";
 import type { SignatureSymbolTarget } from "./signature-brand-links";
 import { buildSymbolIndex } from "./symbol-index";
-import { linkifySymbolMentions } from "./symbol-linkify";
+import { symbolLinkifier } from "./symbol-linkify";
 import { symbolNote } from "./symbol-notes";
 import { resolveVersionWindow } from "./version-window";
 
@@ -658,13 +658,13 @@ export function apiPageMarkdown(
 // A prose linkifier over a single surface's pages. `buildSymbolIndex` keys every
 // member to its page route — which already carries the loader's version prefix
 // (`/api/<version>/<namespace>`) for a non-default surface — so cross-links are
-// version-correct without any per-call prefixing. `linkifySymbolMentions` itself
+// version-correct without any per-call prefixing. `symbolLinkifier` itself
 // drops bare-namespace keys, leaving only qualified member mentions linked.
 export function apiLinkify(pages: ApiPage[]): (text: string) => string {
   const registry = new Map(
     Object.entries(buildSymbolIndex(pages)).map(([k, v]) => [k, v.route] as const),
   );
-  return (text: string) => linkifySymbolMentions(text, registry);
+  return symbolLinkifier(registry);
 }
 
 // The `name → route` map that `renderMarkdown`'s `signatureSymbolLinks` uses to
