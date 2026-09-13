@@ -25,7 +25,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<p>Register for push notifications on iOS. Note that the token needs to be converted on this platform.</p><div class=\"codehilite\"><pre><code class=\"language-lua\">local function push_listener(self, payload, origin)\n     -- The payload arrives here.\nend\n\nfunction init(self)\n     local alerts = {push.NOTIFICATION_BADGE, push.NOTIFICATION_SOUND, push.NOTIFICATION_ALERT}\n     push.register(alerts, function (self, token, error)\n     if token then\n          -- NOTE: %02x to pad byte with leading zero\n          local token_string = \"\"\n          for i = 1,#token do\n              token_string = token_string .. string.format(\"%02x\", string.byte(token, i))\n          end\n          print(token_string)\n          push.set_listener(push_listener)\n     else\n          -- Push registration failed.\n          print(error.error)\n     end\nend</code></pre></div><p>Register for push notifications on Android.</p><div class=\"codehilite\"><pre><code class=\"language-lua\">local function push_listener(self, payload, origin)\n     -- The payload arrives here.\nend\n\nfunction init(self)\n     push.register({}, function (self, installation_id, error)\n         if installation_id then\n              print(installation_id)\n              push.set_listener(push_listener)\n         else\n              -- Push registration failed.\n              print(error.error)\n         end\n    end)\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -40,7 +41,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<p>Set the push notification listener.</p><div class=\"codehilite\"><pre><code class=\"language-lua\">local function push_listener(self, payload, origin, activated)\n     -- The payload arrives here.\n     pprint(payload)\n     if origin == push.ORIGIN_LOCAL then\n         -- This was a local push\n         ...\n     end\n\n     if origin == push.ORIGIN_REMOTE then\n         -- This was a remote push\n         ...\n     end\nend\n\nlocal init(self)\n     ...\n     -- Assuming that push.register() has been successfully called earlier\n     push.set_listener(push_listener)\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -113,7 +115,8 @@
             "string"
           ]
         }
-      ]
+      ],
+      "examples": "<p>This example demonstrates how to schedule a local notification:</p><div class=\"codehilite\"><pre><code class=\"language-lua\">-- Schedule a local push in 3 seconds\nlocal payload = '{ \"data\" : { \"field\" : \"Some value\", \"field2\" : \"Other value\" } }'\nid, err = push.schedule(3, \"Update!\", \"There are new stuff in the app\", payload, { action = \"check it out\" })\nif err then\n     -- Something went wrong\n     ...\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",

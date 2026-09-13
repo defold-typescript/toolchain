@@ -32,7 +32,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">siwa.get_credential_state(id, function(self, data)\n\tif data.credential_state == siwa.STATE_AUTHORIZED then\n\t\tprint(\"User has still authorized the application\", data.user_id)\n\telseif data.credential_state == siwa.STATE_REVOKED then\n\t\tprint(\"User has revoked authorization for the application\", data.user_id)\n\tend\nend)</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -47,7 +48,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">siwa.authenticate(function(self, data)\n\tprint(data.identity_token)\n\tprint(data.user_id)\n\tprint(data.first_name, data.family_name)\n\tprint(data.email)\n\tif data.user_status == siwa.STATUS_LIKELY_REAL then\n\t\tprint(\"Likely a real person\")\n\tend\nend)</code></pre></div>"
     },
     {
       "type": "CONSTANT",

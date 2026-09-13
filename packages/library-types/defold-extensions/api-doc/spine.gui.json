@@ -177,7 +177,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<p>Change skin of a Spine node</p><div class=\"codehilite\"><pre><code class=\"language-lua\">function init(self)\n  gui.set_spine_skin(gui.get_node(\"spine_node\"), \"monster\")\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -208,7 +209,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<p>Add skin of a Spine node to another skin</p><div class=\"codehilite\"><pre><code class=\"language-lua\">function init(self)\n  gui.add_spine_skin(gui.get_node(\"spine_node\"), \"monster_head\", \"monster_body\")\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -239,7 +241,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<p>Copy skin of a Spine node to another skin</p><div class=\"codehilite\"><pre><code class=\"language-lua\">function init(self)\n  gui.copy_spine_skin(gui.get_node(\"spine_node\"), \"monster_head\", \"monster_body\")\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -262,7 +265,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<p>Clear skin of a Spine node</p><div class=\"codehilite\"><pre><code class=\"language-lua\">function init(self)\n  gui.clear_spine_skin(gui.get_node(\"spine_node\"), \"monster\")\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -543,7 +547,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<p>The following example assumes that the Spine GUI node has id \"spine_node\".\n\nHow to set the target IK position of the right_hand_constraint constraint object of the player object</p><div class=\"codehilite\"><pre><code class=\"language-lua\">function init(self)\n  local pos = vmath.vector3(1, 2, 0)\n  gui.set_spine_ik_target_position(gui.get_node(\"spine_node\"), \"right_hand_constraint\", pos)\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -573,7 +578,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<p>The following example assumes that the Spine GUI node has id \"spine_node\".\n\nHow to set the target IK position of the right_hand_constraint constraint object to follow the position of GUI node with id \"target_node\"</p><div class=\"codehilite\"><pre><code class=\"language-lua\">function init(self)\n  local spine_node = gui.get_node(\"spine_node\")\n  local target_node = gui.get_node(\"target_node\")\n  gui.set_spine_ik_target(spine_node, \"right_hand_constraint\", target_node)\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -596,7 +602,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<p>The following example assumes that the Spine GUI node has id \"spine_node\".\n\nA player no longer has an item in hand, that previously was controlled through IK, let's reset the IK of the right hand.</p><div class=\"codehilite\"><pre><code class=\"language-lua\">function player_lost_item(self)\n  gui.reset_spine_ik_target(gui.get_node(\"spine_node\"), \"right_hand_constraint\")\nend</code></pre></div>"
     }
   ]
 }

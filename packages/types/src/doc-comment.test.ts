@@ -129,6 +129,12 @@ describe("examplesHtmlToMarkdown", () => {
     expect(out).toBe('```lua\ngo.get("x")\n```');
   });
 
+  test("a language-X code class sets the fence language; a classless block stays lua", () => {
+    const json = `<div class="codehilite"><pre><code class="language-json">{ &quot;a&quot;: 1 }</code></pre></div>`;
+    const html = `${json}${block('<span class="n">b</span>')}`;
+    expect(examplesHtmlToMarkdown(html)).toBe('```json\n{ "a": 1 }\n```\n\n```lua\nb\n```');
+  });
+
   test("empty / whitespace-only input returns empty string", () => {
     expect(examplesHtmlToMarkdown("")).toBe("");
     expect(examplesHtmlToMarkdown("   \n\t ")).toBe("");
