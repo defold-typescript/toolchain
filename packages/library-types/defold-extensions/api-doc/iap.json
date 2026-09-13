@@ -25,7 +25,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">  local function iap_listener(self, transaction, error)\n    if error == nil then\n      -- purchase is successful.\n      print(transaction.date)\n      -- required if auto finish transactions is disabled in project settings\n      if (transaction.state == iap.TRANS_STATE_PURCHASED) then\n        -- do server-side verification of purchase here..\n        iap.finish(transaction)\n      end\n    else\n      print(error.error, error.reason)\n    end\n  end\n\n  function init(self)\n      iap.set_listener(iap_listener)\n      iap.buy(\"my_iap\")\n  end</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -92,7 +93,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">  local function iap_callback(self, products, error)\n    if error == nil then\n      for k,p in pairs(products) do\n        -- present the product\n        print(p.title)\n        print(p.description)\n      end\n    else\n      print(error.error)\n    end\n  end\n\n  function init(self)\n      iap.list({\"my_iap\"}, iap_callback)\n  end</code></pre></div>"
     },
     {
       "type": "FUNCTION",

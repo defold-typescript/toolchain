@@ -3,6 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { parse } from "yaml";
 import { parseDefoldApiDoc } from "./api-doc";
+import { examplesHtmlToMarkdown } from "./doc-comment";
 import { emitDeclarations } from "./emit-dts";
 import {
   parseScriptApi,
@@ -271,6 +272,77 @@ describe("scriptApiToRefDoc complete mode", () => {
       "demo.LABEL",
     ]);
     expect(module.functions.map((f) => f.name)).toEqual(["demo.greet", "demo.sub.run"]);
+  });
+});
+
+const LUA_SAMPLE = `function init(self)
+    if a < b and c then
+        ex.run("x & y")
+    end
+end`;
+
+const EXAMPLES = `
+- name: ex
+  type: table
+  desc: The ex namespace.
+  members:
+  - name: run
+    type: function
+    desc: Run it.
+    examples:
+    - desc: |-
+        Call it from \`init\` when a < b & c.
+
+        \`\`\`lua
+${LUA_SAMPLE.split("\n")
+  .map((line) => `        ${line}`)
+  .join("\n")}
+        \`\`\`
+    - desc: |-
+        \`\`\`
+        local t = { 1, 2 }
+        \`\`\`
+  - name: configure
+    type: function
+    desc: Configure it.
+    examples:
+    - desc: |-
+        \`\`\`json
+        { "enabled": true }
+        \`\`\`
+  - name: bare
+    type: function
+    desc: No examples.
+`;
+
+function exampleOf(doc: RefDoc, name: string): string | undefined {
+  return functionElements(doc).find((e) => e.name === name)?.examples;
+}
+
+describe("scriptApiToRefDoc examples", () => {
+  it("round-trips prose and fenced blocks through examplesHtmlToMarkdown in complete mode", () => {
+    const html = exampleOf(scriptApiToRefDoc(parse(EXAMPLES), { complete: true }), "ex.run");
+    expect(html).toBeDefined();
+    expect(examplesHtmlToMarkdown(html ?? "")).toBe(
+      [
+        "Call it from `init` when a < b & c.",
+        `\`\`\`lua\n${LUA_SAMPLE}\n\`\`\``,
+        "```lua\nlocal t = { 1, 2 }\n```",
+      ].join("\n\n"),
+    );
+  });
+
+  it("keeps a fence's own language", () => {
+    const html = exampleOf(scriptApiToRefDoc(parse(EXAMPLES), { complete: true }), "ex.configure");
+    expect(examplesHtmlToMarkdown(html ?? "")).toBe('```json\n{ "enabled": true }\n```');
+  });
+
+  it("omits the examples key when a function has none, and in default mode", () => {
+    const complete = functionElements(scriptApiToRefDoc(parse(EXAMPLES), { complete: true }));
+    expect(complete.find((e) => e.name === "ex.bare")).not.toHaveProperty("examples");
+    for (const element of functionElements(scriptApiToRefDoc(parse(EXAMPLES)))) {
+      expect(element).not.toHaveProperty("examples");
+    }
   });
 });
 

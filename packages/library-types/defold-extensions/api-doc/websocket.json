@@ -40,7 +40,8 @@
             "object"
           ]
         }
-      ]
+      ],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">  local function websocket_callback(self, conn, data)\n    if data.event == websocket.EVENT_DISCONNECTED then\n      log(\"Disconnected: \" .. tostring(conn))\n      self.connection = nil\n      update_gui(self)\n    elseif data.event == websocket.EVENT_CONNECTED then\n      update_gui(self)\n      log(\"Connected: \" .. tostring(conn))\n    elseif data.event == websocket.EVENT_ERROR then\n      log(\"Error: '\" .. data.message .. \"'\")\n    elseif data.event == websocket.EVENT_MESSAGE then\n      log(\"Receiving: '\" .. tostring(data.message) .. \"'\")\n    end\n  end\n\n  function init(self)\n    self.url = \"ws://echo.websocket.events\"\n    local params = {\n      timeout = 3000,\n      headers = \"Sec-WebSocket-Protocol: chat\\r\\nOrigin: mydomain.com\\r\\n\"\n    }\n    self.connection = websocket.connect(self.url, params, websocket_callback)\n  end\n\n  function finalize(self)\n      if self.connection ~= nil then\n        websocket.disconnect(self.connection)\n      end\n  end</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -84,7 +85,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">  local function websocket_callback(self, conn, data)\n    if data.event == websocket.EVENT_CONNECTED then\n      websocket.send(conn, \"Hello from the other side\")\n    end\n  end\n\n  function init(self)\n    self.url = \"ws://echo.websocket.org\"\n    local params = {}\n    self.connection = websocket.connect(self.url, params, websocket_callback)\n  end</code></pre></div>"
     },
     {
       "type": "CONSTANT",

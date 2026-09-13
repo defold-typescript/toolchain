@@ -10,7 +10,8 @@
       "name": "adinfo.get",
       "description": "Get a table with advertising information. [icon:attention] function returns nil if values do not ready",
       "parameters": [],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">function init(self)\n    adinfo.get(function(self, info)\n      print(info.ad_ident, info.ad_tracking_enabled)\n    end)\nend</code></pre></div>"
     }
   ]
 }
