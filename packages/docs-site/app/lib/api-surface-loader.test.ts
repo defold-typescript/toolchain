@@ -640,7 +640,13 @@ describe("Defold extensions under Libraries", () => {
       expect(listing.ships).not.toContain("api:");
       expect(listing.steps.length).toBeGreaterThan(0);
       expect(listing.pinKind).toBe(entry?.refKind as LibraryListing["pinKind"]);
+      expect(["standard", "fork", "unavailable"]).toContain(listing.adoption);
     }
+    expect([...new Set(listings.map((listing) => listing.adoption))].sort()).toEqual([
+      "fork",
+      "standard",
+      "unavailable",
+    ]);
   });
 
   const structuredSummary = [
@@ -706,6 +712,53 @@ describe("Defold extensions under Libraries", () => {
       "extension-described": structuredSummary.replace("api: untyped", "api: typed"),
     });
     expect(() => defoldListingsFromManifest(dir)).toThrow(/extension-described\.md/);
+  });
+
+  test("a summary's adoption frontmatter becomes the listing's adoption mode, standard when absent", () => {
+    const dir = libraryTypesWithListings(
+      ["extension-plain", "extension-forked", "extension-empty"],
+      {
+        "extension-plain": structuredSummary,
+        "extension-forked": structuredSummary.replace(
+          "api: untyped",
+          "api: untyped\nadoption: fork",
+        ),
+        "extension-empty": structuredSummary.replace(
+          "api: untyped",
+          "api: none\nadoption: unavailable",
+        ),
+      },
+    );
+    const adoption = Object.fromEntries(
+      defoldListingsFromManifest(dir).map((listing) => [listing.repo, listing.adoption]),
+    );
+    expect(adoption).toEqual({
+      "extension-plain": "standard",
+      "extension-forked": "fork",
+      "extension-empty": "unavailable",
+    });
+  });
+
+  test("an adoption mode outside standard, fork and unavailable throws naming the file and the key", () => {
+    const dir = libraryTypesWithListings(["extension-described"], {
+      "extension-described": structuredSummary.replace(
+        "api: untyped",
+        "api: untyped\nadoption: official",
+      ),
+    });
+    expect(() => defoldListingsFromManifest(dir)).toThrow(
+      /summaries\/extension-described\.md.*adoption/,
+    );
+  });
+
+  test("an unavailable listing that claims an untyped api throws naming the file", () => {
+    const dir = libraryTypesWithListings(["extension-described"], {
+      "extension-described": structuredSummary.replace(
+        "api: untyped",
+        "api: untyped\nadoption: unavailable",
+      ),
+    });
+    expect(() => defoldListingsFromManifest(dir)).toThrow(/summaries\/extension-described\.md/);
   });
 
   test("a summary's sections become the listing's lead, numbered steps and engine APIs", () => {

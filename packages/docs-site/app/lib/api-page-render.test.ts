@@ -16,6 +16,7 @@ import {
   apiPageMarkdown,
   apiReplacementResolver,
   apiSignatureSymbolLinks,
+  dependencyStep,
   isKnownVersionId,
   listingPageMarkdown,
   namespaceCountBadges,
@@ -2117,6 +2118,7 @@ describe("listingPageMarkdown", () => {
     official: true,
     route: "/libraries/defold/extension-x",
     api: "untyped",
+    adoption: "standard",
     ships: "A module that tunes performance.",
     steps: ["Require `x` from a script.", "Call `x.start` in `init`."],
     engineApis: "Reads [`sys`](/api/sys) settings.",
@@ -2155,6 +2157,26 @@ describe("listingPageMarkdown", () => {
     expect(lines[(order[5] ?? -2) + 1]).not.toMatch(/^ {2}\d+\. /);
     expect(lines).toContain(subject.engineApis ?? "");
   });
+
+  for (const adoption of ["fork", "unavailable"] as const) {
+    test(`a listing adopted as ${adoption} has no dependency step and numbers its own steps from 1 under the GitHub pin`, () => {
+      const subject = listing({ adoption });
+      const lines = listingPageMarkdown(subject).split("\n");
+      expect(lines).not.toContain(dependencyStep(subject.url, subject.pinKind, subject.ref));
+      const githubAt = indexOfLine(lines, (line) => line.startsWith("- GitHub: "));
+      expect(lines.slice(githubAt + 1, githubAt + 3)).toEqual([
+        `  1. ${subject.steps[0]}`,
+        `  2. ${subject.steps[1]}`,
+      ]);
+      const order = [
+        indexOfLine(lines, (line) => line === subject.ships),
+        indexOfLine(lines, (line) => line === LIBRARY_API_KIND_SENTENCE.untyped),
+        githubAt,
+        indexOfLine(lines, (line) => line === "## Engine APIs"),
+      ];
+      expect(order).toEqual([...order].sort((a, b) => a - b));
+    });
+  }
 
   test("a commit pin reads as its short sha linking the full sha, and no engine APIs means no section", () => {
     const sha = "0123456789abcdef0123456789abcdef01234567";

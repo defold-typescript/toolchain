@@ -55,10 +55,16 @@ export interface LibraryOrigin {
 // registers Lua functions upstream never describes in a `.script_api` (`untyped`).
 export type LibraryApiKind = "none" | "untyped";
 
+// How a reader adopts an untyped library: add its archive as a dependency
+// (`standard`), fork it first because upstream asks for a fork (`fork`), or not at
+// all because the repository holds nothing to use yet (`unavailable`).
+export type LibraryAdoption = "standard" | "fork" | "unavailable";
+
 // A library with no typed API: it ships no `.script_api`, so instead of an `/api/`
 // page it gets a `/libraries/<owner>/<repo>` page built from an authored summary.
 // The summary's sections arrive split: `ships` leads the page, `steps` follow the
-// rendered add-the-dependency step, and `engineApis` closes it when authored.
+// rendered add-the-dependency step (or stand alone when `adoption` is not
+// `standard`), and `engineApis` closes it when authored.
 export interface LibraryListing extends LibraryOrigin {
   url: string;
   ref: string;
@@ -66,6 +72,7 @@ export interface LibraryListing extends LibraryOrigin {
   description: string;
   route: string;
   api: LibraryApiKind;
+  adoption: LibraryAdoption;
   ships: string;
   steps: string[];
   engineApis?: string;
