@@ -32,7 +32,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<p>Log in to Facebook with a set of publish permissions</p><div class=\"codehilite\"><pre><code class=\"language-lua\">local permissions = {\"publish_actions\"}\nfacebook.login_with_permissions(permissions, facebook.AUDIENCE_FRIENDS, function(self, data)\n    if (data.status == facebook.STATE_OPEN and data.error == nil) then\n        print(\"Successfully logged into Facebook\")\n        pprint(facebook.permissions())\n    else\n        print(\"Failed to get permissions (\" .. data.status .. \")\")\n        pprint(data)\n    end\nend)</code></pre></div><p>Log in to Facebook with a set of read permissions</p><div class=\"codehilite\"><pre><code class=\"language-lua\">local permissions = {\"public_profile\", \"email\", \"user_friends\"}\nfacebook.login_with_read_permissions(permissions, facebook.AUDIENCE_EVERYONE, function(self, data)\n    if (data.status == facebook.STATE_OPEN and data.error == nil) then\n        print(\"Successfully logged into Facebook\")\n        pprint(facebook.permissions())\n    else\n        print(\"Failed to get permissions (\" .. data.status .. \")\")\n        pprint(data)\n    end\nend)</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -68,7 +69,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<p>Log in to Facebook with a set of publish permissions</p><div class=\"codehilite\"><pre><code class=\"language-lua\">local permissions = {\"publish_actions\"}\nfacebook.login_with_permissions(permissions, facebook.AUDIENCE_FRIENDS, function(self, data)\n    if (data.status == facebook.STATE_OPEN and data.error == nil) then\n        print(\"Successfully logged into Facebook\")\n        pprint(facebook.permissions())\n    else\n        print(\"Failed to get permissions (\" .. data.status .. \")\")\n        pprint(data)\n    end\nend)</code></pre></div><p>Log in to Facebook with a set of read permissions</p><div class=\"codehilite\"><pre><code class=\"language-lua\">local permissions = {\"public_profile\", \"email\", \"user_friends\"}\nfacebook.login_with_tracking_preference(facebook.LOGIN_TRACKING_LIMITED, permissions, \"customcryptononce\", function(self, data)\n    if (data.status == facebook.STATE_OPEN and data.error == nil) then\n        print(\"Successfully logged into Facebook\")\n        pprint(facebook.permissions())\n    else\n        print(\"Failed to get permissions (\" .. data.status .. \")\")\n        pprint(data)\n    end\nend)</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -134,7 +136,8 @@
             "string"
           ]
         }
-      ]
+      ],
+      "examples": "<p>Get the current access token, then use it to perform a graph API request.</p><div class=\"codehilite\"><pre><code class=\"language-lua\">local function get_name_callback(self, id, response)\n    -- do something with the response\nend\nfunction init(self)\n    -- assuming we are already logged in.\n    local token = facebook.access_token()\n    if token then\n        local url = \"https://graph.facebook.com/me/?access_token=\".. token\n        http.request(url, \"GET\", get_name_callback)\n    end\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -149,7 +152,8 @@
             "table"
           ]
         }
-      ]
+      ],
+      "examples": "<p>Check the currently granted permissions for a particular permission</p><div class=\"codehilite\"><pre><code class=\"language-lua\">for _,permission in ipairs(facebook.permissions()) do\n    if permission == \"user_likes\" then\n        -- \"user_likes\" granted...\n        break\n    end\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -176,7 +180,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<p>Post a spent credits event to Facebook Analytics</p><div class=\"codehilite\"><pre><code class=\"language-lua\">params = {[facebook.PARAM_LEVEL] = 30, [facebook.PARAM_NUM_ITEMS] = 2}\nfacebook.post_event(facebook.EVENT_SPENT_CREDITS, 25, params)</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -233,7 +238,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<p>Show a dialog allowing the user to share a post to their timeline</p><div class=\"codehilite\"><pre><code class=\"language-lua\">local function fb_share(self, result, error)\n    if error then\n        -- something did not go right...\n    else\n        -- do something sensible\n    end\nend\nfunction init(self)\n    -- assuming we have logged in with publish permissions\n    local param = { link = \"http://www.mygame.com\",picture=\"http://www.mygame.com/image.jpg\" }\n    facebook.show_dialog(\"feed\", param, fb_share)\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -263,7 +269,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<p>Show a dialog allowing the user to share a post to their timeline</p><div class=\"codehilite\"><pre><code class=\"language-lua\">local function deferred_deep_link_callback(self, result, error)\n  if error then\n    print(error.error)\n  else\n    pprint(result)\n  end\nend\n\nfunction init(self)\n  facebook.deferred_deep_link(deferred_deep_link_callback)\nend</code></pre></div>"
     },
     {
       "type": "CONSTANT",

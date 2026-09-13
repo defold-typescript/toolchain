@@ -12,6 +12,7 @@ export interface RefDocFunctionElement {
   description: string;
   parameters: RefDocParameter[];
   returnvalues: RefDocParameter[];
+  examples?: string;
 }
 
 export interface RefDocConstantElement {
@@ -24,8 +25,9 @@ export interface RefDocConstantElement {
 export type RefDocElement = RefDocFunctionElement | RefDocConstantElement;
 
 export interface ScriptApiOptions {
-  // Also carry scalar members as CONSTANT elements. Off for the typing lanes,
-  // whose emitter and frozen goldens only ever see functions.
+  // Also carry scalar members as CONSTANT elements and function `examples:` as
+  // ref-doc examples HTML. Off for the typing lanes, whose emitter and frozen
+  // goldens only ever see functions without examples.
   complete?: boolean;
 }
 
@@ -71,6 +73,43 @@ function mapParameters(raw: unknown): RefDocParameter[] {
   return out;
 }
 
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function proseHtml(markdown: string): string {
+  const prose = markdown.trim();
+  return prose === "" ? "" : `<p>${escapeHtml(prose)}</p>`;
+}
+
+function codeBlockHtml(lang: string, body: string): string {
+  const langClass = lang === "" ? "" : ` class="language-${lang}"`;
+  return `<div class="codehilite"><pre><code${langClass}>${escapeHtml(body)}</code></pre></div>`;
+}
+
+const FENCED_BLOCK = /^```([\w+#.-]*)[^\n]*\n([\s\S]*?)^```[ \t]*$/gm;
+
+// Renders an example's markdown `desc` as the ref-doc `examples` HTML the engine
+// pages carry, so `examplesHtmlToMarkdown` reads both through one path.
+function exampleHtml(markdown: string): string {
+  const parts: string[] = [];
+  let lastIndex = 0;
+  for (const match of markdown.matchAll(FENCED_BLOCK)) {
+    parts.push(proseHtml(markdown.slice(lastIndex, match.index)));
+    parts.push(codeBlockHtml(match[1] ?? "", (match[2] ?? "").replace(/\n$/, "")));
+    lastIndex = match.index + match[0].length;
+  }
+  parts.push(proseHtml(markdown.slice(lastIndex)));
+  return parts.join("");
+}
+
+function examplesHtml(raw: unknown): string {
+  if (!Array.isArray(raw)) return "";
+  return raw
+    .map((entry) => (isRecord(entry) ? exampleHtml(stringOr(entry.desc, "")) : ""))
+    .join("");
+}
+
 function isScalar(member: Record<string, unknown>): boolean {
   return member.type !== "function" && member.type !== "table";
 }
@@ -81,7 +120,9 @@ function isScalar(member: Record<string, unknown>): boolean {
  * `type: function` members are carried; scalar members (constants) are
  * dropped, matching the core ref-doc pipeline where non-function elements
  * never reach the emitter. With `complete`, scalar members at the top level and
- * one table deep are also carried as CONSTANT elements, for the docs pages.
+ * one table deep are also carried as CONSTANT elements, and each function's
+ * `examples:` becomes `codehilite` examples HTML that keeps each fence's
+ * language, for the docs pages.
  */
 export function scriptApiToRefDoc(parsed: unknown, options: ScriptApiOptions = {}): RefDoc {
   if (!Array.isArray(parsed)) {
@@ -103,13 +144,18 @@ export function scriptApiToRefDoc(parsed: unknown, options: ScriptApiOptions = {
   }
   const members = Array.isArray(table.members) ? table.members : [];
   const elements: RefDocElement[] = [];
-  const fnElement = (name: string, member: Record<string, unknown>): RefDocFunctionElement => ({
-    type: "FUNCTION",
-    name,
-    description: stringOr(member.desc, ""),
-    parameters: mapParameters(member.parameters),
-    returnvalues: mapParameters(member.returns),
-  });
+  const fnElement = (name: string, member: Record<string, unknown>): RefDocFunctionElement => {
+    const element: RefDocFunctionElement = {
+      type: "FUNCTION",
+      name,
+      description: stringOr(member.desc, ""),
+      parameters: mapParameters(member.parameters),
+      returnvalues: mapParameters(member.returns),
+    };
+    const examples = options.complete ? examplesHtml(member.examples) : "";
+    if (examples !== "") element.examples = examples;
+    return element;
+  };
   const constantElement = (
     name: string,
     member: Record<string, unknown>,

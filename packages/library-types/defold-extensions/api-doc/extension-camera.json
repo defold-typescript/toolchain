@@ -10,28 +10,32 @@
       "name": "camera.start_capture",
       "description": "Start camera capture using the specified camera (front/back) and capture quality. This may trigger a camera usage permission popup. When the popup has been dismissed the callback will be invoked with camera start status.",
       "parameters": [],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">camera.start_capture(camera.CAMERA_TYPE_BACK, camera.CAPTURE_QUALITY_HIGH, function(self, message)\n    if message == camera.CAMERA_STARTED then\n        -- do stuff\n    end\nend)</code></pre></div>"
     },
     {
       "type": "FUNCTION",
       "name": "camera.stop_capture",
       "description": "Stops a previously started capture session.",
       "parameters": [],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">camera.stop_capture()</code></pre></div>"
     },
     {
       "type": "FUNCTION",
       "name": "camera.get_info",
       "description": "Gets the info from the current capture session.",
       "parameters": [],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">local info = camera.get_info()\nprint(\"width\", info.width)\nprint(\"height\", info.height)</code></pre></div>"
     },
     {
       "type": "FUNCTION",
       "name": "camera.get_frame",
       "description": "Get captured frame.",
       "parameters": [],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">self.cameraframe = camera.get_frame()</code></pre></div>"
     },
     {
       "type": "CONSTANT",

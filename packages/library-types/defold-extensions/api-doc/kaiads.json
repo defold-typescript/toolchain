@@ -18,7 +18,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">kaiads.init(\"2b30c65e-efde-4930-990e-ded207899766\")</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -33,7 +34,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">local function = on_kaiads_event(self, event, code)\n    if event == kaiads.PRELOAD_OK then\n        print(\"KaiAds has successfully preloaded an ad\")\n    elseif event == kaiads.AD_DISPLAY then\n        print(\"KaiAds is showing an ad\")\n    elseif event == kaiads.AD_CLOSE then\n        print(\"The user closed the ad!\")\n    elseif event == kaiads.AD_CLICK then\n        print(\"The user clicked on the ad!\")\n    else\n        print(\"Something went wrong\", code)\n    end\nend\nkaiads.set_listener(on_kaiads_event)</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -48,14 +50,16 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">local banner_config = {\n\tapp = \"mygame\",\n\tslot = \"menu\",\n\ttest = 0,\n\ttimeout = 5 * 1000,\n\th = 264,\n\tw = 240,\n\tcontainer = \"ad-container\"\n}\nkaiads.preload(json.encode(banner_config))\n\nlocal fullscreen_config = {\n\tapp = \"mygame\",\n\tslot = \"gameover\",\n}\nkaiads.preload(json.encode(fullscreen_config))</code></pre></div>"
     },
     {
       "type": "FUNCTION",
       "name": "kaiads.show",
       "description": "Show an ad. You must have called preload() and received a callback that the ad was preloaded before attempting to show an ad.",
       "parameters": [],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">kaiads.set_listener(function(self, event, code)\n    if event == kaiads.PRELOAD_OK then\n        kaiads.show()\n    end\nend)\nkaiads.preload(config)</code></pre></div>"
     },
     {
       "type": "CONSTANT",

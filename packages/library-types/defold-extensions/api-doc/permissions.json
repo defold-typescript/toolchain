@@ -26,7 +26,8 @@
             "number"
           ]
         }
-      ]
+      ],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">local result = permissions.check(\"android.permission.ACCESS_NETWORK_STATE\")\nif result == permissions.PERMISSION_DENIED then\n    -- You can directly ask for the permission.\nelseif result == permissions.PERMISSION_GRANTED then\n    -- You can use the API that requires the permission.\nelseif result == permissions.PERMISSION_SHOW_RATIONALE then\n    -- In an educational UI, explain to the user why your app requires this\n    -- permission for a specific feature to behave as expected, and what\n    -- features are disabled if it's declined. In this UI, include a\n    -- \"cancel\" or \"no thanks\" button that lets the user continue\n    -- using your app without granting the permission.\nend\n</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -48,7 +49,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">local permissions_table = {\"android.permission.WRITE_EXTERNAL_STORAGE\", \"android.permission.READ_CONTACTS\"}\npermissions.request(permissions_table,\n    function(self, result)\n        for permission, result in pairs(result) do\n          if result == permissions.PERMISSION_DENIED then\n              -- You can directly ask for the permission.\n          elseif result == permissions.PERMISSION_GRANTED then\n              -- You can use the API that requires the permission.\n          elseif result == permissions.PERMISSION_SHOW_RATIONALE then\n              -- In an educational UI, explain to the user why your app requires this\n              -- permission for a specific feature to behave as expected, and what\n              -- features are disabled if it's declined. In this UI, include a\n              -- \"cancel\" or \"no thanks\" button that lets the user continue\n              -- using your app without granting the permission.\n          end\n        end\n    end)</code></pre></div>"
     },
     {
       "type": "CONSTANT",

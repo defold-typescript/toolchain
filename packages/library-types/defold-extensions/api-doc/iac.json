@@ -25,7 +25,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">  local function iac_listener(self, payload, type)\n       if type == iac.TYPE_INVOCATION then\n           -- This was an invocation\n           print(payload.origin) -- origin may be empty string if it could not be resolved\n           print(payload.url)\n       end\n  end\n\n  function init(self)\n       iac.set_listener(iac_listener)\n  end</code></pre></div>"
     },
     {
       "type": "CONSTANT",

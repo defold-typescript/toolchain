@@ -18,21 +18,24 @@
             "boolean"
           ]
         }
-      ]
+      ],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">if gpgs then\n  local is_supported = gpgs.is_supported()\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
       "name": "gpgs.login",
       "description": "Login to GPGS using a button.",
       "parameters": [],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<p>Log in to GPGS using a button:</p><div class=\"codehilite\"><pre><code class=\"language-lua\">if gpgs then\n  gpgs.login()\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
       "name": "gpgs.silent_login",
       "description": "Silent login to GPGS.\nThis function is trying to retrieve the currently signed-in player’s account.",
       "parameters": [],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">function init(self)\n  if gpgs then\n    gpgs.silent_login()\n  end\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -47,7 +50,8 @@
             "string"
           ]
         }
-      ]
+      ],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">if gpgs then\n  local name = gpgs.get_display_name()\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -62,7 +66,8 @@
             "string"
           ]
         }
-      ]
+      ],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">if gpgs then\n  local id = gpgs.get_id()\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -78,7 +83,8 @@
             "nil"
           ]
         }
-      ]
+      ],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">if gpgs then\n  local server_auth_code = gpgs.get_server_auth_code()\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -93,7 +99,8 @@
             "boolean"
           ]
         }
-      ]
+      ],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">if gpgs then\n  local is_loggedin = gpgs.is_logged_in()\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -108,7 +115,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">function callback(self, message_id, message)\n  if message_id == gpgs.MSG_SIGN_IN or message_id == gpgs.MSG_SILENT_SIGN_IN then\n    if message.status == gpgs.STATUS_SUCCESS then\n    -- do something after login\n    end\n  elseif message_id == gpgs.MSG_LOAD_SNAPSHOT then\n  -- do something when a save was loaded\n  end\nend\n\nfunction init(self)\n  gpgs.set_callback(callback)\nend\n\nfunction init(self)\n  gpgs.set_callback(nil) -- remove callback\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -144,7 +152,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">if gpgs then\n  gpgs.snapshot_display_saves(\"Choose the save of the game\", false, true, 10)\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -173,7 +182,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">if gpgs then\n  gpgs.snapshot_open(\"my_save_1\", true, gpgs.RESOLUTION_POLICY_LONGEST_PLAYTIME)\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -188,7 +198,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">if gpgs then\n  local png_img, w, h = screenshot.png()\n  gpgs.snapshot_commit_and_close({\n      coverImage = png_img,\n      description = \"LEVEL 31, CAVE\",\n      playedTime = 12345667,\n      progressValue = 657\n  })\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -210,7 +221,8 @@
             "string"
           ]
         }
-      ]
+      ],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">if gpgs then\n  local bytes, error_message = gpgs.snapshot_get_data()\n  if not bytes then\n      print(\"snapshot_get_data ERROR:\", error_message)\n  else\n      print(\"snapshot_get_data\",bytes)\n      -- Do something with your data\n  end\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -240,7 +252,8 @@
             "string"
           ]
         }
-      ]
+      ],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">  if gpgs then\n    local success, error_message = gpgs.snapshot_set_data(my_data)\n    if not success then\n        print(\"snapshot_set_data ERROR:\", error_message)\n    end\n  end</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -255,7 +268,8 @@
             "boolean"
           ]
         }
-      ]
+      ],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">if gpgs then\n  local is_opened = gpgs.snapshot_is_opened()\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -270,7 +284,8 @@
             "number"
           ]
         }
-      ]
+      ],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">if gpgs then\n  local image_size = gpgs.snapshot_get_max_image_size()\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -285,7 +300,8 @@
             "number"
           ]
         }
-      ]
+      ],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">if gpgs then\n  local data_size = gpgs.snapshot_get_max_save_size()\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -307,7 +323,8 @@
             "boolean"
           ]
         }
-      ]
+      ],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">if gpgs then\n  local bytes, error_message = gpgs.snapshot_get_conflicting_data()\n  if not bytes then\n      print(\"snapshot_get_conflicting_data ERROR:\", error_message)\n  else\n      print(\"snapshot_get_conflicting_data:\",bytes)\n      -- Do something with conflicting data data\n  end\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",
@@ -329,7 +346,8 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [],
+      "examples": "<div class=\"codehilite\"><pre><code class=\"language-lua\">if gpgs then\n  gpgs.snapshot_resolve_conflict(self.conflictId, gpgs.SNAPSHOT_CONFLICTING)\nend</code></pre></div>"
     },
     {
       "type": "FUNCTION",

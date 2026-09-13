@@ -73,10 +73,12 @@ export function htmlToCodeText(html: string): string {
 /**
  * Convert a ref-doc `examples` HTML fragment — prose interleaved with one or
  * more `<div class="codehilite">…</div>` syntax-highlight blocks — into Markdown:
- * prose runs become `htmlToDocText`, each highlight block becomes a ` ```lua `
- * fence via `htmlToCodeText`. A fragment with no `codehilite` block is wrapped
- * whole as a single ` ```lua ` fence (back-compat for plain-code examples).
- * Returns `""` for empty / whitespace-only input.
+ * prose runs become `htmlToDocText`, each highlight block becomes a fence via
+ * `htmlToCodeText`. The fence language comes from a `class="language-X"` on the
+ * block's `<code>` (as converted extension `.script_api` examples carry), else
+ * `lua`, since engine ref-doc blocks carry no language class. A fragment with no
+ * `codehilite` block is wrapped whole as a single ` ```lua ` fence (back-compat
+ * for plain-code examples). Returns `""` for empty / whitespace-only input.
  */
 export function examplesHtmlToMarkdown(html: string): string {
   if (html.trim() === "") return "";
@@ -89,8 +91,10 @@ export function examplesHtmlToMarkdown(html: string): string {
     matched = true;
     const prose = htmlToDocText(html.slice(lastIndex, match.index));
     if (prose !== "") parts.push(prose);
-    const code = htmlToCodeText(match[1] ?? "");
-    if (code !== "") parts.push(`\`\`\`lua\n${code}\n\`\`\``);
+    const inner = match[1] ?? "";
+    const lang = /<code\b[^>]*\bclass="language-([^"\s]+)"/i.exec(inner)?.[1] ?? "lua";
+    const code = htmlToCodeText(inner);
+    if (code !== "") parts.push(`\`\`\`${lang}\n${code}\n\`\`\``);
     lastIndex = match.index + match[0].length;
   }
 
