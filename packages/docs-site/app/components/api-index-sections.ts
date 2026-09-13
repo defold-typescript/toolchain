@@ -1,7 +1,12 @@
 import { namespaceCountBadges } from "../lib/api-page-render";
 import type { ApiPage } from "../lib/api-surface";
 import type { NamespaceBadgeCounts } from "../lib/combined-surface";
-import { type LibraryListing, type LibraryOrigin, libraryOwnerGroups } from "../lib/nav";
+import {
+  compareLibraryOwners,
+  type LibraryListing,
+  type LibraryOrigin,
+  libraryOwnerGroups,
+} from "../lib/nav";
 
 // The `/api` index renders one card grid per page category. Membership lives
 // here (a JSX-free module) so the grouping is unit-testable under root
@@ -25,6 +30,7 @@ export interface LibraryIndexGroup {
 export interface LibraryOwnerIndexGroup {
   owner: string;
   label: string;
+  official?: true;
   libraries: LibraryIndexGroup[];
 }
 
@@ -74,6 +80,7 @@ export function groupLibraryIndexByOwner(
   ).map((owner) => ({
     owner: owner.owner,
     label: owner.label,
+    ...(owner.official ? { official: true as const } : {}),
     libraries: owner.libraries.map((lib) => ({
       repo: lib.repo,
       label: lib.label,
@@ -90,6 +97,7 @@ export function groupLibraryIndexByOwner(
       group = { owner: listing.owner, label: listing.owner, libraries: [] };
       groups.push(group);
     }
+    if (listing.official) group.official = true;
     if (group.libraries.some((library) => library.repo === listing.repo)) continue;
     group.libraries.push({
       repo: listing.repo,
@@ -99,5 +107,5 @@ export function groupLibraryIndexByOwner(
     });
   }
   for (const group of groups) group.libraries.sort((a, b) => a.repo.localeCompare(b.repo));
-  return groups.sort((a, b) => a.owner.localeCompare(b.owner, undefined, { sensitivity: "base" }));
+  return groups.sort(compareLibraryOwners);
 }
