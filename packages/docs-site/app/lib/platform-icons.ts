@@ -22,6 +22,11 @@ export const PLATFORM_ICONS: Record<string, { label: string; icon: string }> = {
   alert: { label: "Attention", icon: "warning" },
 };
 
+/** The table entry for a marker name, ignoring inherited `Object` members. */
+export function platformIcon(name: string): { label: string; icon: string } | undefined {
+  return Object.hasOwn(PLATFORM_ICONS, name) ? PLATFORM_ICONS[name] : undefined;
+}
+
 export const PLATFORM_MARKER = /\[icon:([\w-]+)\]/g;
 
 const ICON_SPAN = /<span\s+class=["']icon-([\w-]+)["']\s*>\s*<\/span>/gi;
