@@ -613,6 +613,204 @@
       "description": "Get information about all events asynchronously. Result returns to callback previously set by `gpgs.set_callback` with `message_id == gpgs.MSG_GET_EVENTS`. Result is an array of JSON strings. Decode each string with `json.decode()` to get a table containing the following fields\n- `id` - event id\n- `formatted_value` - sum of all increments have been made to this event\n- `value` - the number of increments this user has made to this event\n- `description` - event's description\n- `image` - URI that can be used to load the event's image icon\n- `name` - event's name\n- `visible` - whether the event should be displayed to the user in any event related UIs",
       "parameters": [],
       "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.RESOLUTION_POLICY_MANUAL",
+      "brief": "Official [GPGS documentation](https://developers.google.com/android/reference/com/google/android/gms/games/SnapshotsClient.html#RESOLUTION_POLICY_MANUAL) for this constant",
+      "description": "Official [GPGS documentation](https://developers.google.com/android/reference/com/google/android/gms/games/SnapshotsClient.html#RESOLUTION_POLICY_MANUAL) for this constant"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.RESOLUTION_POLICY_LONGEST_PLAYTIME",
+      "brief": "Official [GPGS documentation](https://developers.google.com/android/reference/com/google/android/gms/games/SnapshotsClient.html#RESOLUTION_POLICY_LONGEST_PLAYTIME) for this constant",
+      "description": "Official [GPGS documentation](https://developers.google.com/android/reference/com/google/android/gms/games/SnapshotsClient.html#RESOLUTION_POLICY_LONGEST_PLAYTIME) for this constant"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.RESOLUTION_POLICY_LAST_KNOWN_GOOD",
+      "brief": "Official [GPGS documentation](https://developers.google.com/android/reference/com/google/android/gms/games/SnapshotsClient.html#RESOLUTION_POLICY_LAST_KNOWN_GOOD) for this constant",
+      "description": "Official [GPGS documentation](https://developers.google.com/android/reference/com/google/android/gms/games/SnapshotsClient.html#RESOLUTION_POLICY_LAST_KNOWN_GOOD) for this constant"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.RESOLUTION_POLICY_MOST_RECENTLY_MODIFIED",
+      "brief": "Official [GPGS documentation](https://developers.google.com/android/reference/com/google/android/gms/games/SnapshotsClient.html#RESOLUTION_POLICY_MOST_RECENTLY_MODIFIED) for this constant",
+      "description": "Official [GPGS documentation](https://developers.google.com/android/reference/com/google/android/gms/games/SnapshotsClient.html#RESOLUTION_POLICY_MOST_RECENTLY_MODIFIED) for this constant"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.RESOLUTION_POLICY_HIGHEST_PROGRESS",
+      "brief": "Official [GPGS documentation](https://developers.google.com/android/reference/com/google/android/gms/games/SnapshotsClient.html#RESOLUTION_POLICY_HIGHEST_PROGRESS) for this constant",
+      "description": "Official [GPGS documentation](https://developers.google.com/android/reference/com/google/android/gms/games/SnapshotsClient.html#RESOLUTION_POLICY_HIGHEST_PROGRESS) for this constant"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.TIME_SPAN_DAILY",
+      "brief": "Select leaderboard scores from the current day.",
+      "description": "Select leaderboard scores from the current day."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.TIME_SPAN_WEEKLY",
+      "brief": "Select leaderboard scores from the current week.",
+      "description": "Select leaderboard scores from the current week."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.TIME_SPAN_ALL_TIME",
+      "brief": "Select leaderboard scores from all time.",
+      "description": "Select leaderboard scores from all time."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.COLLECTION_PUBLIC",
+      "brief": "Select scores from players who share their gameplay activity publicly.",
+      "description": "Select scores from players who share their gameplay activity publicly."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.COLLECTION_FRIENDS",
+      "brief": "Select scores from players in the current player's friends list. A score query may show a Google Play consent dialog the first time this collection is used.",
+      "description": "Select scores from players in the current player's friends list. A score query may show a Google Play consent dialog the first time this collection is used."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.MSG_SIGN_IN",
+      "brief": "The message type that GPGS sends when finishing the asynchronous operation after calling `gpgs.login()`",
+      "description": "The message type that GPGS sends when finishing the asynchronous operation after calling `gpgs.login()`"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.MSG_SILENT_SIGN_IN",
+      "brief": "The message type that GPGS sends when finishing the asynchronous operation after calling `gpgs.silent_login()`",
+      "description": "The message type that GPGS sends when finishing the asynchronous operation after calling `gpgs.silent_login()`"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.MSG_SHOW_SNAPSHOTS",
+      "brief": "The message type that GPGS sends when finishing the asynchronous operation after calling `gpgs.snapshot_display_saves()`",
+      "description": "The message type that GPGS sends when finishing the asynchronous operation after calling `gpgs.snapshot_display_saves()`"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.MSG_LOAD_SNAPSHOT",
+      "brief": "The message type that GPGS sends when finishing the asynchronous operation after calling `gpgs.snapshot_open()`",
+      "description": "The message type that GPGS sends when finishing the asynchronous operation after calling `gpgs.snapshot_open()`"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.MSG_SAVE_SNAPSHOT",
+      "brief": "The message type that GPGS sends when finishing the asynchronous operation after calling `gpgs.snapshot_commit_and_close()`",
+      "description": "The message type that GPGS sends when finishing the asynchronous operation after calling `gpgs.snapshot_commit_and_close()`"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.MSG_GET_ACHIEVEMENTS",
+      "brief": "The message type that GPGS sends when finishing the asynchronous operation after calling `gpgs.achievement_get()`",
+      "description": "The message type that GPGS sends when finishing the asynchronous operation after calling `gpgs.achievement_get()`"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.MSG_GET_TOP_SCORES",
+      "brief": "The message type that GPGS sends when finishing the asynchronous operation after calling `gpgs.leaderboard_get_top_scores()`",
+      "description": "The message type that GPGS sends when finishing the asynchronous operation after calling `gpgs.leaderboard_get_top_scores()`"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.MSG_GET_PLAYER_CENTERED_SCORES",
+      "brief": "The message type that GPGS sends when finishing the asynchronous operation after calling `gpgs.leaderboard_get_player_centered_scores()`",
+      "description": "The message type that GPGS sends when finishing the asynchronous operation after calling `gpgs.leaderboard_get_player_centered_scores()`"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.MSG_GET_PLAYER_SCORE",
+      "brief": "The message type that GPGS sends when finishing the asynchronous operation after calling `gpgs.leaderboard_get_player_score()`",
+      "description": "The message type that GPGS sends when finishing the asynchronous operation after calling `gpgs.leaderboard_get_player_score()`"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.MSG_GET_EVENTS",
+      "brief": "The message type that GPGS sends when finishing the asynchronous operation after calling `gpgs.event_get()`",
+      "description": "The message type that GPGS sends when finishing the asynchronous operation after calling `gpgs.event_get()`"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.MSG_GET_SERVER_AUTH_CODE",
+      "brief": "The message type that GPGS sends when finishing the asynchronous operation of server auth code retrieval",
+      "description": "The message type that GPGS sends when finishing the asynchronous operation of server auth code retrieval"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.STATUS_SUCCESS",
+      "brief": "An operation success.",
+      "description": "An operation success."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.STATUS_FAILED",
+      "brief": "An operation failed. Check the error field in the massage table.",
+      "description": "An operation failed. Check the error field in the massage table."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.STATUS_CREATE_NEW_SAVE",
+      "brief": "A user wants to create new save as a result of `gpgs.snapshot_display_saves()` method. Turn off this button in `gpgs.snapshot_display_saves()` if you don't want to have this functionality.",
+      "description": "A user wants to create new save as a result of `gpgs.snapshot_display_saves()` method. Turn off this button in `gpgs.snapshot_display_saves()` if you don't want to have this functionality."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.STATUS_CONFLICT",
+      "brief": "The result of the calling `gpgs.snapshot_open()` or 'gpgs.snapshot_resolve_conflict()' is a conflict. You need to make decision on how to solve this conflict using 'gpgs.snapshot_resolve_conflict()'.",
+      "description": "The result of the calling `gpgs.snapshot_open()` or 'gpgs.snapshot_resolve_conflict()' is a conflict. You need to make decision on how to solve this conflict using 'gpgs.snapshot_resolve_conflict()'."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.SNAPSHOT_CURRENT",
+      "brief": "The second parameter for 'gpgs.snapshot_resolve_conflict()' method, which means that you want to choose the current snapshot as a snapshot for conflict solving.",
+      "description": "The second parameter for 'gpgs.snapshot_resolve_conflict()' method, which means that you want to choose the current snapshot as a snapshot for conflict solving."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.SNAPSHOT_CONFLICTING",
+      "brief": "The second parameter for 'gpgs.snapshot_resolve_conflict()' method, which means that you want to choose the conflicting snapshot as a snapshot for conflict solving.",
+      "description": "The second parameter for 'gpgs.snapshot_resolve_conflict()' method, which means that you want to choose the conflicting snapshot as a snapshot for conflict solving."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.ERROR_STATUS_SNAPSHOT_NOT_FOUND",
+      "brief": "This constant is used in `message.error_status` table when `MSG_LOAD_SNAPSHOT` is `STATUS_FAILED`. [Official GPGS documentation](https://developers.google.com/android/reference/com/google/android/gms/games/GamesStatusCodes.html#STATUS_SNAPSHOT_NOT_FOUND) for this constant",
+      "description": "This constant is used in `message.error_status` table when `MSG_LOAD_SNAPSHOT` is `STATUS_FAILED`. [Official GPGS documentation](https://developers.google.com/android/reference/com/google/android/gms/games/GamesStatusCodes.html#STATUS_SNAPSHOT_NOT_FOUND) for this constant"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.ERROR_STATUS_SNAPSHOT_CREATION_FAILED",
+      "brief": "This constant is used in `message.error_status` table when `MSG_LOAD_SNAPSHOT` is `STATUS_FAILED`. [Official GPGS documentation](https://developers.google.com/android/reference/com/google/android/gms/games/GamesStatusCodes.html#STATUS_SNAPSHOT_CREATION_FAILED) for this constant",
+      "description": "This constant is used in `message.error_status` table when `MSG_LOAD_SNAPSHOT` is `STATUS_FAILED`. [Official GPGS documentation](https://developers.google.com/android/reference/com/google/android/gms/games/GamesStatusCodes.html#STATUS_SNAPSHOT_CREATION_FAILED) for this constant"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.ERROR_STATUS_SNAPSHOT_CONTENTS_UNAVAILABLE",
+      "brief": "This constant is used in `message.error_status` table when `MSG_LOAD_SNAPSHOT` is `STATUS_FAILED`. [Official GPGS documentation](https://developers.google.com/android/reference/com/google/android/gms/games/GamesStatusCodes.html#STATUS_SNAPSHOT_CONTENTS_UNAVAILABLE) for this constant",
+      "description": "This constant is used in `message.error_status` table when `MSG_LOAD_SNAPSHOT` is `STATUS_FAILED`. [Official GPGS documentation](https://developers.google.com/android/reference/com/google/android/gms/games/GamesStatusCodes.html#STATUS_SNAPSHOT_CONTENTS_UNAVAILABLE) for this constant"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.ERROR_STATUS_SNAPSHOT_COMMIT_FAILED",
+      "brief": "This constant is used in `message.error_status` table when `MSG_LOAD_SNAPSHOT` is `STATUS_FAILED`. [Official GPGS documentation](https://developers.google.com/android/reference/com/google/android/gms/games/GamesStatusCodes.html#STATUS_SNAPSHOT_COMMIT_FAILED) for this constant",
+      "description": "This constant is used in `message.error_status` table when `MSG_LOAD_SNAPSHOT` is `STATUS_FAILED`. [Official GPGS documentation](https://developers.google.com/android/reference/com/google/android/gms/games/GamesStatusCodes.html#STATUS_SNAPSHOT_COMMIT_FAILED) for this constant"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.ERROR_STATUS_SNAPSHOT_FOLDER_UNAVAILABLE",
+      "brief": "This constant is used in `message.error_status` table when `MSG_LOAD_SNAPSHOT` is `STATUS_FAILED`. [Official GPGS documentation](https://developers.google.com/android/reference/com/google/android/gms/games/GamesStatusCodes.html#STATUS_SNAPSHOT_FOLDER_UNAVAILABLE) for this constant",
+      "description": "This constant is used in `message.error_status` table when `MSG_LOAD_SNAPSHOT` is `STATUS_FAILED`. [Official GPGS documentation](https://developers.google.com/android/reference/com/google/android/gms/games/GamesStatusCodes.html#STATUS_SNAPSHOT_FOLDER_UNAVAILABLE) for this constant"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "gpgs.ERROR_STATUS_SNAPSHOT_CONFLICT_MISSING",
+      "brief": "This constant is used in `message.error_status` table when `MSG_LOAD_SNAPSHOT` is `STATUS_FAILED`. [Official GPGS documentation](https://developers.google.com/android/reference/com/google/android/gms/games/GamesStatusCodes.html#STATUS_SNAPSHOT_CONFLICT_MISSING) for this constant",
+      "description": "This constant is used in `message.error_status` table when `MSG_LOAD_SNAPSHOT` is `STATUS_FAILED`. [Official GPGS documentation](https://developers.google.com/android/reference/com/google/android/gms/games/GamesStatusCodes.html#STATUS_SNAPSHOT_CONFLICT_MISSING) for this constant"
     }
   ]
 }

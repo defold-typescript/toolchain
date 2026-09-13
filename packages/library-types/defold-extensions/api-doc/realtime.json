@@ -296,6 +296,366 @@
         }
       ],
       "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_CONNECTIONERRORRETURN",
+      "brief": "EVENT_CONNECTIONERRORRETURN",
+      "description": "EVENT_CONNECTIONERRORRETURN"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_CLIENTERRORRETURN",
+      "brief": "EVENT_CLIENTERRORRETURN",
+      "description": "EVENT_CLIENTERRORRETURN"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_WARNINGRETURN",
+      "brief": "EVENT_WARNINGRETURN",
+      "description": "EVENT_WARNINGRETURN"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_SERVERERRORRETURN",
+      "brief": "EVENT_SERVERERRORRETURN",
+      "description": "EVENT_SERVERERRORRETURN"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_JOINROOMEVENTACTION",
+      "brief": "EVENT_JOINROOMEVENTACTION",
+      "description": "EVENT_JOINROOMEVENTACTION"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_LEAVEROOMEVENTACTION",
+      "brief": "EVENT_LEAVEROOMEVENTACTION",
+      "description": "EVENT_LEAVEROOMEVENTACTION"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_CUSTOMEVENTACTION",
+      "brief": "EVENT_CUSTOMEVENTACTION",
+      "description": "EVENT_CUSTOMEVENTACTION"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_CONNECTRETURN",
+      "brief": "EVENT_CONNECTRETURN",
+      "description": "EVENT_CONNECTRETURN"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_DISCONNECTRETURN",
+      "brief": "EVENT_DISCONNECTRETURN",
+      "description": "EVENT_DISCONNECTRETURN"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_CREATEROOMRETURN",
+      "brief": "EVENT_CREATEROOMRETURN",
+      "description": "EVENT_CREATEROOMRETURN"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_JOINORCREATEROOMRETURN",
+      "brief": "EVENT_JOINORCREATEROOMRETURN",
+      "description": "EVENT_JOINORCREATEROOMRETURN"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_JOINRANDOMORCREATEROOMRETURN",
+      "brief": "EVENT_JOINRANDOMORCREATEROOMRETURN",
+      "description": "EVENT_JOINRANDOMORCREATEROOMRETURN"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_JOINROOMRETURN",
+      "brief": "EVENT_JOINROOMRETURN",
+      "description": "EVENT_JOINROOMRETURN"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_JOINRANDOMROOMRETURN",
+      "brief": "EVENT_JOINRANDOMROOMRETURN",
+      "description": "EVENT_JOINRANDOMROOMRETURN"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_LEAVEROOMRETURN",
+      "brief": "EVENT_LEAVEROOMRETURN",
+      "description": "EVENT_LEAVEROOMRETURN"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_JOINLOBBYRETURN",
+      "brief": "EVENT_JOINLOBBYRETURN",
+      "description": "EVENT_JOINLOBBYRETURN"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_LEAVELOBBYRETURN",
+      "brief": "EVENT_LEAVELOBBYRETURN",
+      "description": "EVENT_LEAVELOBBYRETURN"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_ONFINDFRIENDSRESPONSE",
+      "brief": "EVENT_ONFINDFRIENDSRESPONSE",
+      "description": "EVENT_ONFINDFRIENDSRESPONSE"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_ONLOBBYSTATSRESPONSE",
+      "brief": "EVENT_ONLOBBYSTATSRESPONSE",
+      "description": "EVENT_ONLOBBYSTATSRESPONSE"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_WEBRPCRETURN",
+      "brief": "EVENT_WEBRPCRETURN",
+      "description": "EVENT_WEBRPCRETURN"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_ONROOMLISTUPDATE",
+      "brief": "EVENT_ONROOMLISTUPDATE",
+      "description": "EVENT_ONROOMLISTUPDATE"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_ONROOMPROPERTIESCHANGE",
+      "brief": "EVENT_ONROOMPROPERTIESCHANGE",
+      "description": "EVENT_ONROOMPROPERTIESCHANGE"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_ONPLAYERPROPERTIESCHANGE",
+      "brief": "EVENT_ONPLAYERPROPERTIESCHANGE",
+      "description": "EVENT_ONPLAYERPROPERTIESCHANGE"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_ONAPPSTATSUPDATE",
+      "brief": "EVENT_ONAPPSTATSUPDATE",
+      "description": "EVENT_ONAPPSTATSUPDATE"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_ONLOBBYSTATSUPDATE",
+      "brief": "EVENT_ONLOBBYSTATSUPDATE",
+      "description": "EVENT_ONLOBBYSTATSUPDATE"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_ONCACHESLICECHANGED",
+      "brief": "EVENT_ONCACHESLICECHANGED",
+      "description": "EVENT_ONCACHESLICECHANGED"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_ONMASTERCLIENTCHANGED",
+      "brief": "EVENT_ONMASTERCLIENTCHANGED",
+      "description": "EVENT_ONMASTERCLIENTCHANGED"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_ONCUSTOMAUTHENTICATIONINTERMEDIATESTEP",
+      "brief": "EVENT_ONCUSTOMAUTHENTICATIONINTERMEDIATESTEP",
+      "description": "EVENT_ONCUSTOMAUTHENTICATIONINTERMEDIATESTEP"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_ONAVAILABLEREGIONS",
+      "brief": "EVENT_ONAVAILABLEREGIONS",
+      "description": "EVENT_ONAVAILABLEREGIONS"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_ONSECRETRECEIVAL",
+      "brief": "EVENT_ONSECRETRECEIVAL",
+      "description": "EVENT_ONSECRETRECEIVAL"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_ONDIRECTCONNECTIONESTABLISHED",
+      "brief": "EVENT_ONDIRECTCONNECTIONESTABLISHED",
+      "description": "EVENT_ONDIRECTCONNECTIONESTABLISHED"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_ONDIRECTCONNECTIONFAILEDTOESTABLISH",
+      "brief": "EVENT_ONDIRECTCONNECTIONFAILEDTOESTABLISH",
+      "description": "EVENT_ONDIRECTCONNECTIONFAILEDTOESTABLISH"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_ONDIRECTMESSAGE",
+      "brief": "EVENT_ONDIRECTMESSAGE",
+      "description": "EVENT_ONDIRECTMESSAGE"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_ONCUSTOMOPERATIONRESPONSE",
+      "brief": "EVENT_ONCUSTOMOPERATIONRESPONSE",
+      "description": "EVENT_ONCUSTOMOPERATIONRESPONSE"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.EVENT_ONGETROOMLISTRESPONSE",
+      "brief": "EVENT_ONGETROOMLISTRESPONSE",
+      "description": "EVENT_ONGETROOMLISTRESPONSE"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.AUTH_CUSTOM",
+      "brief": "Use a custom authentication service.",
+      "description": "Use a custom authentication service."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.AUTH_STEAM",
+      "brief": "Authenticates users by their Steam Account. Pass L&quot;ticket=[ticket]&quot; to setParameters().",
+      "description": "Authenticates users by their Steam Account. Pass L&quot;ticket=[ticket]&quot; to setParameters()."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.AUTH_FACEBOOK",
+      "brief": "Authenticates users by their Facebook Account. Pass L&quot;token=[token]&quot; to setParameters().",
+      "description": "Authenticates users by their Facebook Account. Pass L&quot;token=[token]&quot; to setParameters()."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.AUTH_OCULUS",
+      "brief": "Authenticates users by their Oculus Account. Pass L&quot;userid=[userid]&amp;nonce=[nonce]&quot; to setParameters().",
+      "description": "Authenticates users by their Oculus Account. Pass L&quot;userid=[userid]&amp;nonce=[nonce]&quot; to setParameters()."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.AUTH_PLAYSTATION_4",
+      "brief": "Authenticates users by their PSN Account. Pass L&quot;token=[token]&amp;env=[env]&amp;userName=[userName]&quot; to setParameters().",
+      "description": "Authenticates users by their PSN Account. Pass L&quot;token=[token]&amp;env=[env]&amp;userName=[userName]&quot; to setParameters()."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.AUTH_XBOX",
+      "brief": "Authenticates users by their XBox Network Account. Pass the XSTS token to setData().",
+      "description": "Authenticates users by their XBox Network Account. Pass the XSTS token to setData()."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.AUTH_VIVEPORT",
+      "brief": "Authenticates users by their HTC Viveport Account and user token. Pass L&quot;userToken=[userToken]&quot; to setParameters().",
+      "description": "Authenticates users by their HTC Viveport Account and user token. Pass L&quot;userToken=[userToken]&quot; to setParameters()."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.AUTH_NINTENDO_SWITCH",
+      "brief": "Authenticates users by their Nintendo Account. Pass L&quot;token=[token]&amp;appversion=[appversion]&quot; to setParameters(). The appversion is optional.",
+      "description": "Authenticates users by their Nintendo Account. Pass L&quot;token=[token]&amp;appversion=[appversion]&quot; to setParameters(). The appversion is optional."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.AUTH_PLAYSTATION_5",
+      "brief": "Authenticates users by their PSN Account. Pass L&quot;token=[token]&amp;env=[env]&amp;userName=[userName]&quot; to setParameters().",
+      "description": "Authenticates users by their PSN Account. Pass L&quot;token=[token]&amp;env=[env]&amp;userName=[userName]&quot; to setParameters()."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.AUTH_EPIC",
+      "brief": "Authenticates users by their Epic Online Services (EOS) Account. Pass L&quot;token=[token]&amp;ownershipToken=[ownershipToken]&quot; to setParameters(). The ownershipToken is optional.",
+      "description": "Authenticates users by their Epic Online Services (EOS) Account. Pass L&quot;token=[token]&amp;ownershipToken=[ownershipToken]&quot; to setParameters(). The ownershipToken is optional."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.AUTH_FACEBOOK_GAMING",
+      "brief": "Authenticates users by their Facebook Account. Pass L&quot;token=[token]&quot; to setParameters().",
+      "description": "Authenticates users by their Facebook Account. Pass L&quot;token=[token]&quot; to setParameters()."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.AUTH_NONE",
+      "brief": "Disables custom authentication.",
+      "description": "Disables custom authentication."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.SERVER_TYPE_NAME_SERVER",
+      "brief": "Photon Cloud and for self-hosted Photon 5 or higher Server instances",
+      "description": "Photon Cloud and for self-hosted Photon 5 or higher Server instances"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.SERVER_TYPE_MASTER_SERVER",
+      "brief": "Self-hosted Photon 4 Server instances",
+      "description": "Self-hosted Photon 4 Server instances"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.MATCHMAKINGMODE_FILL_ROOM",
+      "brief": "Fills up rooms (oldest first) to get players together as fast as possible. Default. Makes most sense with MaxPlayers &gt; 0 and games that can only start with more players.",
+      "description": "Fills up rooms (oldest first) to get players together as fast as possible. Default. Makes most sense with MaxPlayers &gt; 0 and games that can only start with more players."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.MATCHMAKINGMODE_SERIAL_MATCHING",
+      "brief": "Distributes players across available rooms sequentially but takes filters into account. Without filters, rooms get players evenly distributed.",
+      "description": "Distributes players across available rooms sequentially but takes filters into account. Without filters, rooms get players evenly distributed."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.MATCHMAKINGMODE_RANDOM_MATCHING",
+      "brief": "Joins a (fully) random room. Expected properties must match, but aside from this, any available room might be selected.",
+      "description": "Joins a (fully) random room. Expected properties must match, but aside from this, any available room might be selected."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.LOBBYTYPE_DEFAULT",
+      "brief": "This lobby type is used unless another lobby type is specified. Room lists will be sent and Client::opJoinRandomRoom() can filter by matching properties.",
+      "description": "This lobby type is used unless another lobby type is specified. Room lists will be sent and Client::opJoinRandomRoom() can filter by matching properties."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.LOBBYTYPE_SQL_LOBBY",
+      "brief": "This lobby type lists rooms like type DEFAULT but  SQL-like &quot;where&quot; clauses for filtering can be used with Client::opJoinRandomRoom(). This allows &#x27;bigger&#x27;, &#x27;less&#x27;, &#x27;or&#x27; and &#x27;and&#x27; combinations.",
+      "description": "This lobby type lists rooms like type DEFAULT but  SQL-like &quot;where&quot; clauses for filtering can be used with Client::opJoinRandomRoom(). This allows &#x27;bigger&#x27;, &#x27;less&#x27;, &#x27;or&#x27; and &#x27;and&#x27; combinations."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.LOBBYTYPE_ASYNC_RANDOM_LOBBY",
+      "brief": "This lobby does not send room lists. It is only used for Client::opJoinRandomRoom(). It keeps rooms available for matchmaking for a while even when there are only inactive users left.",
+      "description": "This lobby does not send room lists. It is only used for Client::opJoinRandomRoom(). It keeps rooms available for matchmaking for a while even when there are only inactive users left."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.DIRECTMODE_NONE",
+      "brief": "Do not create any 2p2 connections between the clients. This is the default.",
+      "description": "Do not create any 2p2 connections between the clients. This is the default."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.DIRECTMODE_ALL_TO_OTHERS",
+      "brief": "Each client establishes a direct connection with every other client inside the room.",
+      "description": "Each client establishes a direct connection with every other client inside the room."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.DIRECTMODE_MASTER_TO_OTHERS",
+      "brief": "The master client establishes a direct connection with every other client inside the room. All other clients only establish a direct connection with the master client but not with each other.",
+      "description": "The master client establishes a direct connection with every other client inside the room. All other clients only establish a direct connection with the master client but not with each other."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.DIRECTMODE_ALL_TO_ALL",
+      "brief": "Each client establishes a direct connection with every client inside the room, including itself.",
+      "description": "Each client establishes a direct connection with every client inside the room, including itself."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "realtime.DIRECTMODE_MASTER_TO_ALL",
+      "brief": "The master client establishes a direct connection with every client inside the room, including itself. All other clients only establish a direct connection with the master client but not with each other.",
+      "description": "The master client establishes a direct connection with every client inside the room, including itself. All other clients only establish a direct connection with the master client but not with each other."
     }
   ]
 }

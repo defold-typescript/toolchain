@@ -6,12 +6,27 @@ export interface RefDocParameter {
   types: string[];
 }
 
-export interface RefDocElement {
+export interface RefDocFunctionElement {
   type: "FUNCTION";
   name: string;
   description: string;
   parameters: RefDocParameter[];
   returnvalues: RefDocParameter[];
+}
+
+export interface RefDocConstantElement {
+  type: "CONSTANT";
+  name: string;
+  brief: string;
+  description: string;
+}
+
+export type RefDocElement = RefDocFunctionElement | RefDocConstantElement;
+
+export interface ScriptApiOptions {
+  // Also carry scalar members as CONSTANT elements. Off for the typing lanes,
+  // whose emitter and frozen goldens only ever see functions.
+  complete?: boolean;
 }
 
 export interface RefDoc {
@@ -56,14 +71,19 @@ function mapParameters(raw: unknown): RefDocParameter[] {
   return out;
 }
 
+function isScalar(member: Record<string, unknown>): boolean {
+  return member.type !== "function" && member.type !== "table";
+}
+
 /**
  * Convert a parsed Defold extension `.script_api` document into the core
- * ref-doc JSON object shape that `parseDefoldApiDoc` consumes. Only
+ * ref-doc JSON object shape that `parseDefoldApiDoc` consumes. By default only
  * `type: function` members are carried; scalar members (constants) are
  * dropped, matching the core ref-doc pipeline where non-function elements
- * never reach the emitter.
+ * never reach the emitter. With `complete`, scalar members at the top level and
+ * one table deep are also carried as CONSTANT elements, for the docs pages.
  */
-export function scriptApiToRefDoc(parsed: unknown): RefDoc {
+export function scriptApiToRefDoc(parsed: unknown, options: ScriptApiOptions = {}): RefDoc {
   if (!Array.isArray(parsed)) {
     throw new Error("scriptApiToRefDoc: expected a top-level YAML list");
   }
@@ -83,17 +103,30 @@ export function scriptApiToRefDoc(parsed: unknown): RefDoc {
   }
   const members = Array.isArray(table.members) ? table.members : [];
   const elements: RefDocElement[] = [];
-  const fnElement = (name: string, member: Record<string, unknown>): RefDocElement => ({
+  const fnElement = (name: string, member: Record<string, unknown>): RefDocFunctionElement => ({
     type: "FUNCTION",
     name,
     description: stringOr(member.desc, ""),
     parameters: mapParameters(member.parameters),
     returnvalues: mapParameters(member.returns),
   });
+  const constantElement = (
+    name: string,
+    member: Record<string, unknown>,
+  ): RefDocConstantElement => ({
+    type: "CONSTANT",
+    name,
+    brief: stringOr(member.desc, ""),
+    description: stringOr(member.desc, ""),
+  });
   for (const member of members) {
     if (!isRecord(member)) continue;
     if (member.type === "function") {
       elements.push(fnElement(`${namespace}.${stringOr(member.name, "")}`, member));
+      continue;
+    }
+    if (options.complete && isScalar(member)) {
+      elements.push(constantElement(`${namespace}.${stringOr(member.name, "")}`, member));
       continue;
     }
     if (member.type === "table") {
@@ -104,8 +137,12 @@ export function scriptApiToRefDoc(parsed: unknown): RefDoc {
       for (const subMember of subMembers) {
         // Recurse exactly one level: a `type: table` nested here is 2nd-level,
         // whose functions the emitter's one-dot pass would silently drop.
-        if (!isRecord(subMember) || subMember.type !== "function") continue;
-        elements.push(fnElement(`${namespace}.${sub}.${stringOr(subMember.name, "")}`, subMember));
+        if (!isRecord(subMember)) continue;
+        const name = `${namespace}.${sub}.${stringOr(subMember.name, "")}`;
+        if (subMember.type === "function") elements.push(fnElement(name, subMember));
+        else if (options.complete && isScalar(subMember)) {
+          elements.push(constantElement(name, subMember));
+        }
       }
     }
   }
@@ -116,6 +153,6 @@ export function scriptApiToRefDoc(parsed: unknown): RefDoc {
   return doc;
 }
 
-export function parseScriptApi(yamlText: string): RefDoc {
-  return scriptApiToRefDoc(parse(yamlText));
+export function parseScriptApi(yamlText: string, options: ScriptApiOptions = {}): RefDoc {
+  return scriptApiToRefDoc(parse(yamlText), options);
 }

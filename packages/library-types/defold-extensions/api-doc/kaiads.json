@@ -56,6 +56,42 @@
       "description": "Show an ad. You must have called preload() and received a callback that the ad was preloaded before attempting to show an ad.",
       "parameters": [],
       "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "kaiads.PRELOAD_ERROR",
+      "brief": "Event sent when an error occurred while trying to preload an ad",
+      "description": "Event sent when an error occurred while trying to preload an ad"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "kaiads.PRELOAD_OK",
+      "brief": "Event sent when an ad was successfully preloaded",
+      "description": "Event sent when an ad was successfully preloaded"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "kaiads.SHOW_ERROR",
+      "brief": "Event sent when an error occurred while trying to show an ad",
+      "description": "Event sent when an error occurred while trying to show an ad"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "kaiads.AD_DISPLAY",
+      "brief": "Event sent when an ad is displayed",
+      "description": "Event sent when an ad is displayed"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "kaiads.AD_CLICK",
+      "brief": "Event sent when an ad is clicked",
+      "description": "Event sent when an ad is clicked"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "kaiads.AD_CLOSE",
+      "brief": "Event sent when an ad is closed",
+      "description": "Event sent when an ad is closed"
     }
   ]
 }

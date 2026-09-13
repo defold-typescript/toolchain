@@ -26,6 +26,12 @@
         }
       ],
       "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iac.TYPE_INVOCATION",
+      "brief": "iac type",
+      "description": "iac type"
     }
   ]
 }
