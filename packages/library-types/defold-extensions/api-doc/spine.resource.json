@@ -22,6 +22,22 @@
           "doc": "Table with fields",
           "types": [
             "table"
+          ],
+          "fields": [
+            {
+              "name": "spine_data",
+              "doc": "JSON bytes of the Spine skeleton",
+              "types": [
+                "string"
+              ]
+            },
+            {
+              "name": "atlas_path",
+              "doc": "Path to the compiled atlas resource (.texturesetc)",
+              "types": [
+                "string"
+              ]
+            }
           ]
         }
       ],

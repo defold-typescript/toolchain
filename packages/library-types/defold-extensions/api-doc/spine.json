@@ -40,6 +40,50 @@
           "types": [
             "table",
             "nil"
+          ],
+          "fields": [
+            {
+              "name": "blend_duration",
+              "doc": "Duration of a linear blend between the current and new animation.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "offset",
+              "doc": "The normalized initial value of the animation cursor when the animation starts playing.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "playback_rate",
+              "doc": "The rate with which the animation will be played. Must be positive.",
+              "types": [
+                "constant"
+              ]
+            },
+            {
+              "name": "track",
+              "doc": "The track index of the animation. Defaults to 1. Animations on different tracks play in parallel.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "mix_blend",
+              "doc": "The mix blend mode for the animation (from spine.MIX_BLEND_*). Defaults to `spine.MIX_BLEND_REPLACE`. Ignored for animations on the first track.",
+              "types": [
+                "constant"
+              ]
+            },
+            {
+              "name": "alpha",
+              "doc": "0 applies the current or setup value (depending on mix_blend). 1 applies the timeline value. Between 0 and 1 applies a value between the current or setup value and the timeline value. Defaults to 1.",
+              "types": [
+                "number"
+              ]
+            }
           ]
         },
         {
@@ -47,6 +91,101 @@
           "doc": "function to call when the animation has completed or a Spine event occurred",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The context of the calling script",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "message_id",
+              "doc": "The name of the message (\"spine_animation_done\" or \"spine_event\")",
+              "types": [
+                "hash"
+              ]
+            },
+            {
+              "name": "message",
+              "doc": "A table that contains the response",
+              "types": [
+                "table"
+              ],
+              "fields": [
+                {
+                  "name": "animation_id",
+                  "doc": "The animation that was completed",
+                  "types": [
+                    "hash"
+                  ]
+                },
+                {
+                  "name": "track",
+                  "doc": "The track index of the animation",
+                  "types": [
+                    "number"
+                  ]
+                },
+                {
+                  "name": "playback",
+                  "doc": "(spine_animation_done only!) The playback mode for the animation",
+                  "types": [
+                    "constant"
+                  ]
+                },
+                {
+                  "name": "event_id",
+                  "doc": "(spine_event only!) the event that was triggered.",
+                  "types": [
+                    "hash"
+                  ]
+                },
+                {
+                  "name": "blend_weight",
+                  "doc": "(spine_event only!) Deprecated. Always 0.",
+                  "types": [
+                    "float"
+                  ]
+                },
+                {
+                  "name": "t",
+                  "doc": "(spine_event only!) the time at which the event occurred (seconds)",
+                  "types": [
+                    "float"
+                  ]
+                },
+                {
+                  "name": "integer",
+                  "doc": "(spine_event only!) a custom integer associated with the event (0 by default).",
+                  "types": [
+                    "int"
+                  ]
+                },
+                {
+                  "name": "float",
+                  "doc": "(spine_event only!) a custom float associated with the event (0 by default)",
+                  "types": [
+                    "float"
+                  ]
+                },
+                {
+                  "name": "string",
+                  "doc": "(spine_event only!) a custom string associated with the event (hash(\"\") by default)",
+                  "types": [
+                    "hash"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "sender",
+              "doc": "The invoker of the callback - the Spine model component",
+              "types": [
+                "url"
+              ]
+            }
           ]
         }
       ],
@@ -71,6 +210,15 @@
           "doc": "Cancel options",
           "types": [
             "table"
+          ],
+          "fields": [
+            {
+              "name": "track",
+              "doc": "The index of the track which to cancel the animation on. Defaults to all animations on all tracks.",
+              "types": [
+                "number"
+              ]
+            }
           ]
         }
       ],

@@ -22,6 +22,47 @@
           "doc": "Callback function that is executed on any event in the SDK.",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script instance",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "message_id",
+              "doc": "One of message types: `firebase.remoteconfig.MSG_ERROR` `firebase.remoteconfig.MSG_INITIALIZED` `firebase.remoteconfig.MSG_DEFAULTS_SET` `firebase.remoteconfig.MSG_SETTINGS_UPDATED` `firebase.remoteconfig.MSG_FETCHED` `firebase.remoteconfig.MSG_ACTIVATED` `firebase.remoteconfig.MSG_CONFIG_UPDATED`",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "message",
+              "doc": "A table holding the data",
+              "types": [
+                "table"
+              ],
+              "fields": [
+                {
+                  "name": "error",
+                  "doc": "The error message (if an error occurred or `nil` otherwise)",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "updated_keys",
+                  "doc": "An array of strings representing the updated parameter keys for `MSG_CONFIG_UPDATED`",
+                  "types": [
+                    "table"
+                  ],
+                  "is_optional": "True"
+                }
+              ]
+            }
           ]
         }
       ],

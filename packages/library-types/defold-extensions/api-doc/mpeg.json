@@ -181,6 +181,78 @@
           "doc": "Video information",
           "types": [
             "table"
+          ],
+          "fields": [
+            {
+              "name": "width",
+              "doc": "Video width.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "height",
+              "doc": "Video height.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "bytes_per_pixel",
+              "doc": "The number of bytes per pixel.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "framerate",
+              "doc": "The frame rate (frames per second) of the video stream.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "samplerate",
+              "doc": "The sample rate (samples per second) of the audio stream.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "is_looping",
+              "doc": "If the video is looping or not.",
+              "types": [
+                "boolean"
+              ]
+            },
+            {
+              "name": "is_streaming",
+              "doc": "If the video is opened in streaming mode.",
+              "types": [
+                "boolean"
+              ]
+            },
+            {
+              "name": "eos",
+              "doc": "If the video has reached the end of stream.",
+              "types": [
+                "boolean"
+              ]
+            },
+            {
+              "name": "streaming_buffer_bytes_remaining",
+              "doc": "The number of unread bytes remaining in the stream buffer when streaming.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "streaming_buffer_capacity",
+              "doc": "The capacity of the stream buffer in bytes.",
+              "types": [
+                "number"
+              ]
+            }
           ]
         }
       ]

@@ -22,6 +22,47 @@
           "doc": "Callback function that is executed on any event in the SDK.",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script instance",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "message_id",
+              "doc": "One of message types: `firebase.analytics.MSG_ERROR` `firebase.analytics.MSG_INSTANCE_ID`",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "message",
+              "doc": "A table holding the data",
+              "types": [
+                "table"
+              ],
+              "fields": [
+                {
+                  "name": "error",
+                  "doc": "The error message (if an error occurred or `nil` otherwise)",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "instance_id",
+                  "doc": "For message_id MSG_INSTANCE_ID or `nil` otherwise.",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                }
+              ]
+            }
           ]
         }
       ],

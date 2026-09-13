@@ -29,6 +29,22 @@
           "doc": "Options for generating the glyphs",
           "types": [
             "table"
+          ],
+          "fields": [
+            {
+              "name": "sdf_padding",
+              "doc": "The number of padding pixels [0-255]",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "sdf_edge",
+              "doc": "Where the edge is decided to be [0-255]",
+              "types": [
+                "number"
+              ]
+            }
           ]
         },
         {
@@ -36,6 +52,22 @@
           "doc": "function to call when the animation has completed",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The context of the calling script",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "fontc_hash",
+              "doc": "The path hash of the .fontc resource",
+              "types": [
+                "hash"
+              ]
+            }
           ]
         }
       ],
@@ -80,6 +112,36 @@
           "doc": "Function to be called after the last glyph was processed. May be nil.",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The script instance that called `add_glyphs`",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "request",
+              "doc": "The request id returned by `add_glyphs`",
+              "types": [
+                "int"
+              ]
+            },
+            {
+              "name": "result",
+              "doc": "True if all glyphs were added successfully",
+              "types": [
+                "bool"
+              ]
+            },
+            {
+              "name": "errmsg",
+              "doc": "Error string if a glyph wasn't generated or added successfully",
+              "types": [
+                "string"
+              ]
+            }
           ]
         }
       ],

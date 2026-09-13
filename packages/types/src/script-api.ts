@@ -4,6 +4,8 @@ export interface RefDocParameter {
   name: string;
   doc: string;
   types: string[];
+  fields?: RefDocParameter[];
+  is_optional?: "True";
 }
 
 export interface RefDocFunctionElement {
@@ -26,8 +28,9 @@ export type RefDocElement = RefDocFunctionElement | RefDocConstantElement;
 
 export interface ScriptApiOptions {
   // Also carry scalar members as CONSTANT elements and function `examples:` as
-  // ref-doc examples HTML. Off for the typing lanes, whose emitter and frozen
-  // goldens only ever see functions without examples.
+  // ref-doc examples HTML, and nested callback arguments, table fields and
+  // optional flags on each slot. Off for the typing lanes, whose emitter and
+  // frozen goldens only ever see flat functions without examples.
   complete?: boolean;
 }
 
@@ -55,20 +58,34 @@ function splitTypeTokens(type: unknown): string[] {
     .filter((token) => token.length > 0);
 }
 
-function mapParameters(raw: unknown): RefDocParameter[] {
+function mapSlot(item: Record<string, unknown>, complete: boolean): RefDocParameter {
+  const slot: RefDocParameter = {
+    name: stringOr(item.name, ""),
+    doc: stringOr(item.desc, ""),
+    types: splitTypeTokens(item.type),
+  };
+  if (!complete) return slot;
+  // A callback lists its arguments under `parameters:` and a table its keys under
+  // `fields:`; the ref-doc format carries both as `fields`. A callback's own
+  // `self` is kept, since the engine really passes it to the callback.
+  const nested = [
+    ...(Array.isArray(item.parameters) ? item.parameters : []),
+    ...(Array.isArray(item.fields) ? item.fields : []),
+  ].filter(isRecord);
+  if (nested.length > 0) slot.fields = nested.map((child) => mapSlot(child, complete));
+  if (item.optional === true) slot.is_optional = "True";
+  return slot;
+}
+
+function mapParameters(raw: unknown, complete: boolean): RefDocParameter[] {
   if (!Array.isArray(raw)) return [];
   const out: RefDocParameter[] = [];
   for (const item of raw) {
     if (!isRecord(item)) continue;
-    const name = stringOr(item.name, "");
     // The script_api lists the implicit `self` the engine passes; the emitter
     // stamps @noSelfInFile, so generated signatures must not declare it.
-    if (name === "self") continue;
-    out.push({
-      name,
-      doc: stringOr(item.desc, ""),
-      types: splitTypeTokens(item.type),
-    });
+    if (stringOr(item.name, "") === "self") continue;
+    out.push(mapSlot(item, complete));
   }
   return out;
 }
@@ -122,7 +139,8 @@ function isScalar(member: Record<string, unknown>): boolean {
  * never reach the emitter. With `complete`, scalar members at the top level and
  * one table deep are also carried as CONSTANT elements, and each function's
  * `examples:` becomes `codehilite` examples HTML that keeps each fence's
- * language, for the docs pages.
+ * language, and each slot's nested `parameters:`/`fields:` and `optional: true`
+ * become ref-doc `fields` and `is_optional`, for the docs pages.
  */
 export function scriptApiToRefDoc(parsed: unknown, options: ScriptApiOptions = {}): RefDoc {
   if (!Array.isArray(parsed)) {
@@ -149,8 +167,8 @@ export function scriptApiToRefDoc(parsed: unknown, options: ScriptApiOptions = {
       type: "FUNCTION",
       name,
       description: stringOr(member.desc, ""),
-      parameters: mapParameters(member.parameters),
-      returnvalues: mapParameters(member.returns),
+      parameters: mapParameters(member.parameters, options.complete === true),
+      returnvalues: mapParameters(member.returns, options.complete === true),
     };
     const examples = options.complete ? examplesHtml(member.examples) : "";
     if (examples !== "") element.examples = examples;
