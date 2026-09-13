@@ -17,7 +17,12 @@ import {
   combinedNamespaceToApiPage,
   type SignaturesArtifact,
 } from "./combined-surface";
-import type { LibraryListing, LibraryOrigin } from "./nav";
+import {
+  type LibraryListing,
+  type LibraryOrigin,
+  type LibraryOwnerGroup,
+  libraryOwnerGroups,
+} from "./nav";
 import { resolveVersionWindow, type VersionWindow, windowCombinedSurface } from "./version-window";
 
 export const TYPES_DIR = join(process.cwd(), "../types");
@@ -281,4 +286,20 @@ export function libraryOrigins(
 // Defold libraries with no typed API, listed on the Libraries index as repo cards.
 export function defoldListings(libraryTypesDir: string = LIBRARY_TYPES_DIR): LibraryListing[] {
   return defoldListingsFromManifest(libraryTypesDir);
+}
+
+// The Libraries tab's owner groups: typed library pages grouped by their GitHub
+// origin, with the untyped listings among them. The sidebar renders exactly this,
+// so a test over it covers what the renderer ships.
+export function libraryNavGroups(
+  pages: ApiPage[],
+  libraryTypesDir: string = LIBRARY_TYPES_DIR,
+): LibraryOwnerGroup[] {
+  return libraryOwnerGroups(
+    pages
+      .filter((page) => page.category === "library")
+      .map((page) => ({ namespace: page.namespace, route: page.route })),
+    libraryOrigins(libraryTypesDir),
+    defoldListings(libraryTypesDir),
+  );
 }

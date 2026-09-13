@@ -117,6 +117,7 @@ describe("groupLibraryIndexByOwner", () => {
         .filter((apiPage) => apiPage.category === "library")
         .map((apiPage) => ({ namespace: apiPage.namespace, route: apiPage.route })),
       origins,
+      [],
     );
 
     expect(

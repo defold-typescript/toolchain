@@ -318,7 +318,7 @@ export function libraryPathSegments(owner: string, repo: string, namespace: stri
 export function libraryOwnerGroups(
   pages: LibraryNavPage[],
   origins: Map<string, LibraryOrigin>,
-  listings: LibraryListing[] = [],
+  listings: LibraryListing[],
 ): LibraryOwnerGroup[] {
   const byOwner = new Map<string, Map<string, Namespace[]>>();
   const listingByRepo = new Map<string, LibraryGroup["listing"]>();

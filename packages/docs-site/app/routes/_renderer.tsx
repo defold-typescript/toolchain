@@ -16,8 +16,7 @@ import {
   apiVersions,
   canonicalApiPages,
   combinedSurface,
-  defoldListings,
-  libraryOrigins,
+  libraryNavGroups,
   versionNamespaceAtom,
 } from "../lib/api-content";
 import { navLeafBadgeHtml } from "../lib/api-page-render";
@@ -37,13 +36,7 @@ import { buildBadgeCountTable } from "../lib/combined-surface";
 import { guidePages } from "../lib/content";
 import { faviconLinks } from "../lib/favicon";
 import type { Heading } from "../lib/headings";
-import {
-  activeCategoryId,
-  buildNav,
-  libraryOwnerGroups,
-  type NavCategory,
-  type NavLink,
-} from "../lib/nav";
+import { activeCategoryId, buildNav, type NavCategory, type NavLink } from "../lib/nav";
 import { buildPager, type Pager as PagerData, type PagerLink } from "../lib/pager";
 import { applySinceFilter } from "../lib/since-filter";
 import { buildRangeSelector } from "../lib/version-switch";
@@ -282,14 +275,9 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
 
   // Library pages grouped by GitHub owner and repo for the Libraries tab;
   // namespace leaves keep the dotted route slug, and untyped listings sit among
-  // them as single leaves routed to their own `/libraries/` pages.
-  const libraries = libraryOwnerGroups(
-    allApiPages
-      .filter((p) => p.category === "library")
-      .map((p) => ({ namespace: p.namespace, route: p.route })),
-    libraryOrigins(),
-    defoldListings(),
-  );
+  // them as single leaves routed to their own `/libraries/` pages. The grouping
+  // is `libraryNavGroups`, the one composition the sidebar tests exercise.
+  const libraries = libraryNavGroups(allApiPages);
 
   const nav = buildNav(guidePages(), {
     globals: allApiPages.filter((p) => p.namespace === "globals").map(toNamespace),

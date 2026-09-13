@@ -5,6 +5,7 @@ import { createLibraryListingRoute } from "../routes/libraries/[owner]/[repo]";
 import { canonicalNamespaces, defoldListings } from "./api-content";
 import { renderMarkdown } from "./markdown";
 import { LIBRARY_API_KIND_SENTENCE, NO_TYPED_API_ICON } from "./no-typed-api-icon";
+import { ssgRoutePaths } from "./ssg-routes";
 
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
 const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
@@ -35,6 +36,11 @@ describe("/libraries/:owner/:repo listing pages", () => {
 
   test("the committed manifest carries untyped listings to render", () => {
     expect(listings.length).toBeGreaterThan(0);
+  });
+
+  test("the static build emits exactly one page per manifest listing", async () => {
+    const expected = listings.map((listing) => listing.route).sort();
+    expect(await ssgRoutePaths(app)).toEqual(expected);
   });
 
   for (const listing of listings) {
