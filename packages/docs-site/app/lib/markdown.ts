@@ -10,6 +10,7 @@ import {
 import MarkdownIt from "markdown-it";
 import footnotePlugin from "markdown-it-footnote";
 import { type BundledLanguage, createHighlighter, type Highlighter } from "shiki";
+import { Badge } from "../components/ui/badge";
 import { withBase } from "./base";
 import { slugify } from "./headings";
 import { type SignatureSymbolTarget, splitSignatureBrandLinks } from "./signature-brand-links";
@@ -133,6 +134,36 @@ function codeTitleFromInfo(info: string): string | undefined {
   if (!match) return undefined;
   const title = match[1] ?? match[2] ?? "";
   return title.length > 0 ? title : undefined;
+}
+
+// Fence languages labelled with a language badge, keyed by the info string's
+// first token. Every other language renders exactly as Shiki emits it.
+const FENCE_LANGUAGES: Record<string, { label: string; icon: string }> = {
+  lua: { label: "Lua", icon: "moon" },
+  ts: { label: "TypeScript", icon: "file-ts" },
+  typescript: { label: "TypeScript", icon: "file-ts" },
+  tsx: { label: "TypeScript", icon: "file-ts" },
+};
+
+const languageBadges = new Map<string, string>();
+
+function fenceLanguageBadge(info: string): string | undefined {
+  const lang = info.trim().split(/\s+/)[0]?.toLowerCase() ?? "";
+  const language = FENCE_LANGUAGES[lang];
+  if (!language) return undefined;
+  let badge = languageBadges.get(lang);
+  if (badge === undefined) {
+    badge = String(
+      Badge({
+        variant: "outline",
+        class: "code-badge",
+        icon: phosphorDuotone(language.icon, "code-badge-icon"),
+        children: language.label,
+      }),
+    );
+    languageBadges.set(lang, badge);
+  }
+  return badge;
 }
 
 // GitHub's five alert kinds. A `> [!NOTE]` blockquote (case-insensitive marker)
@@ -487,16 +518,24 @@ export async function renderMarkdown(
     }),
   );
   // Wrap Shiki's `<pre>` in a `<figure>` with a filename caption when the fence
-  // info string carries `title="…"`. Runs after Shiki claims the fence rule so
-  // the highlighted markup is captured intact.
+  // info string carries `title="…"`, and label Lua and TypeScript fences with a
+  // language badge: first in the caption when there is one, otherwise overlapping
+  // the block's top edge. The badge sits outside the `<pre>`, so copying the code
+  // never picks it up. Runs after Shiki claims the fence rule so the highlighted
+  // markup is captured intact.
   const renderFence = md.renderer.rules.fence;
   if (renderFence) {
     md.renderer.rules.fence = (tokens, idx, options, env, self) => {
       const rendered = renderFence(tokens, idx, options, env, self);
-      const title = codeTitleFromInfo(tokens[idx]?.info ?? "");
-      if (!title) return rendered;
-      const caption = `<figcaption class="code-title">${md.utils.escapeHtml(title)}</figcaption>`;
-      return `<figure class="code-block">${caption}${rendered}</figure>\n`;
+      const info = tokens[idx]?.info ?? "";
+      const title = codeTitleFromInfo(info);
+      const badge = fenceLanguageBadge(info);
+      if (title) {
+        const caption = `<figcaption class="code-title">${badge ?? ""}${md.utils.escapeHtml(title)}</figcaption>`;
+        return `<figure class="code-block">${caption}${rendered}</figure>\n`;
+      }
+      if (!badge) return rendered;
+      return `<figure class="code-block code-block--badged">${badge}${rendered}</figure>\n`;
     };
   }
   // Wrap every Markdown table in a `.table-scroll` container so a table wider
