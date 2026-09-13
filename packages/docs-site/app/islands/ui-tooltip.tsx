@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "hono/jsx";
 import { TOOLTIP_TRIGGER_SLOT } from "../components/ui/tooltip";
+import { watchTapFocus } from "../lib/tap-focus";
 import { labelTooltipPosition } from "../lib/tooltip-position";
 
 type ActiveTip = {
@@ -18,8 +19,9 @@ const TRIGGER_SELECTOR = `[data-slot="${TOOLTIP_TRIGGER_SLOT}"]`;
  * `document` rather than binding each one, and so covers triggers anywhere on
  * the page without a rescan.
  *
- * Touch handling follows `sidebar-tooltip.tsx`: mouse pointers only, a focus
- * raised by a tap is ignored, and any `pointerdown` or scroll dismisses the tip.
+ * Touch handling: hover shows tips for mouse pointers only, a focus raised by a
+ * tap is ignored until the next keyboard input ends that suppression, and any
+ * `pointerdown` or scroll dismisses the tip.
  *
  * The tip is measured after it renders with its text, then placed with
  * `labelTooltipPosition`; it stays invisible until that second pass.
@@ -30,7 +32,7 @@ export default function UiTooltip() {
 
   useEffect(() => {
     let active: HTMLElement | null = null;
-    let lastWasTouch = false;
+    const tapFocus = watchTapFocus(document);
 
     const hide = () => {
       if (!active) return;
@@ -65,17 +67,14 @@ export default function UiTooltip() {
       hide();
     };
     const onFocusIn = (event: FocusEvent) => {
-      if (lastWasTouch) return;
+      if (tapFocus.focusFromTap()) return;
       const trigger = triggerOf(event.target);
       if (trigger) show(trigger);
     };
     const onFocusOut = (event: FocusEvent) => {
       if (triggerOf(event.target) === active) hide();
     };
-    const onPointerDown = (event: PointerEvent) => {
-      lastWasTouch = event.pointerType !== "mouse";
-      hide();
-    };
+    const onPointerDown = () => hide();
 
     document.addEventListener("pointerover", onPointerOver);
     document.addEventListener("pointerout", onPointerOut);
@@ -84,6 +83,7 @@ export default function UiTooltip() {
     document.addEventListener("pointerdown", onPointerDown, true);
     window.addEventListener("scroll", hide, true);
     return () => {
+      tapFocus.dispose();
       document.removeEventListener("pointerover", onPointerOver);
       document.removeEventListener("pointerout", onPointerOut);
       document.removeEventListener("focusin", onFocusIn);
