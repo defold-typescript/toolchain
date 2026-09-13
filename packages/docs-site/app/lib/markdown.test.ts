@@ -625,4 +625,15 @@ describe("renderMarkdown platform markers", () => {
     expect(html).toContain("[icon:unknown]");
     expect(html).not.toContain("tooltip-trigger");
   });
+
+  test.each([
+    ["[icon:constructor]", "[icon:constructor]"],
+    ["[icon:toString]", "[icon:toString]"],
+    ["[icon:hasOwnProperty]", "[icon:hasOwnProperty]"],
+    ["[icon:\\_\\_proto\\_\\_]", "[icon:__proto__]"],
+  ])("an inherited Object member name %s stays literal text", async (source, literal) => {
+    const html = await renderMarkdown(`Maybe ${source} later.\n`);
+    expect(html).toContain(literal);
+    expect(html).not.toContain("tooltip-trigger");
+  });
 });
