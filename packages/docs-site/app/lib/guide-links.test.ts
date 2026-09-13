@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { canonicalNamespaces } from "./api-content";
+import { canonicalNamespaces, defoldListings } from "./api-content";
 import { versionedApiParams } from "./api-page-render";
 import { combinedRedirect } from "./api-redirect";
 import { versionsWithDiskFixtures } from "./api-surface-loader";
@@ -90,9 +90,15 @@ export function emittedApiRoutes(typesDir: string, libraryTypesDir: string): Set
 // is the page at its own name, `index` is `/`, a leading `_` is a layout rather
 // than a page, and a bracketed name is a catch-all whose paths come from the
 // enumerator it hands `ssgParams` — for `[slug].tsx` that is `listGuidePages`,
-// read here rather than recomputed. `api.tsx` lands in this set too, but no
-// `/api…` target is ever looked up in it: those dispatch to `emittedApiRoutes`.
-export function staticRoutes(routesDir: string, guideDir: string): Set<string> {
+// read here rather than recomputed, and for `libraries/[owner]/[repo].tsx` it is
+// `defoldListings`, when a library-types dir is given. `api.tsx` lands in this set
+// too, but no `/api…` target is ever looked up in it: those dispatch to
+// `emittedApiRoutes`.
+export function staticRoutes(
+  routesDir: string,
+  guideDir: string,
+  libraryTypesDir?: string,
+): Set<string> {
   const routes = new Set<string>();
   for (const file of readdirSync(routesDir)) {
     if (!file.endsWith(".tsx")) continue;
@@ -101,6 +107,9 @@ export function staticRoutes(routesDir: string, guideDir: string): Set<string> {
     routes.add(name === "index" ? "/" : `/${name}`);
   }
   for (const page of listGuidePages(guideDir)) routes.add(page.route);
+  if (libraryTypesDir) {
+    for (const listing of defoldListings(libraryTypesDir)) routes.add(listing.route);
+  }
   return routes;
 }
 
@@ -217,7 +226,7 @@ function format(broken: Broken[]): string {
 // The production path highlights every fence on every guide page; several tests
 // read the same report, so it is rendered once.
 const API_ROUTES = emittedApiRoutes(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-const STATIC_ROUTES = staticRoutes(REAL_ROUTES_DIR, GUIDE_DIR);
+const STATIC_ROUTES = staticRoutes(REAL_ROUTES_DIR, GUIDE_DIR, REAL_LIBRARY_TYPES_DIR);
 const TRACKED_VERSION_IDS = new Set(versionsWithDiskFixtures(REAL_TYPES_DIR).map((v) => v.id));
 const siteReport = checkCorpus(GUIDE_DIR, siteRenderer(GUIDE_DIR), {
   api: API_ROUTES,
@@ -307,6 +316,10 @@ describe("docs/guide link and anchor resolution", () => {
     expect(STATIC_ROUTES.has("/search")).toBe(true);
     expect(STATIC_ROUTES.has("/")).toBe(true);
     expect(STATIC_ROUTES.has("/resolve")).toBe(true);
+    for (const listing of defoldListings(REAL_LIBRARY_TYPES_DIR)) {
+      expect(STATIC_ROUTES.has(listing.route)).toBe(true);
+    }
+    expect(STATIC_ROUTES.has("/libraries/defold/not-a-repo")).toBe(false);
     // The catch-all and the renderer are not paths anyone can navigate to.
     expect(STATIC_ROUTES.has("/_renderer")).toBe(false);
     expect([...STATIC_ROUTES].some((r) => r.includes("["))).toBe(false);

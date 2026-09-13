@@ -14,6 +14,7 @@ import {
   type CombinedSurface,
   type SignaturesArtifact,
 } from "./combined-surface";
+import { parseFrontmatter } from "./frontmatter";
 import { parseGlobalTypes } from "./global-types";
 import { type LibraryListing, type LibraryOrigin, libraryLineage } from "./nav";
 
@@ -268,18 +269,59 @@ export function libraryOriginByNamespace(libraryTypesDir: string): Map<string, L
   return origins;
 }
 
-// Defold's libraries that ship no `.script_api` (`docs: []`), so the Libraries
-// index can list them beside the typed ones instead of silently omitting them.
+// Defold's libraries that ship no `.script_api` (`docs: []`). Each gets a
+// `/libraries/<owner>/<repo>` page from an authored summary in
+// `defold-extensions/summaries/<repo>.md`, whose frontmatter records whether the
+// library registers anything a script calls. A listing without a summary, or a
+// summary naming no untyped entry, throws: either would ship a page that says
+// nothing, or a description that silently reaches no page.
 export function defoldListingsFromManifest(libraryTypesDir: string): LibraryListing[] {
-  return loadDefoldExtensions(libraryTypesDir)
-    .filter((entry) => entry.docs.length === 0)
-    .map((entry) => ({
-      owner: githubOwner(entry.repo),
-      repo: githubRepo(entry.repo),
-      url: entry.repo,
-      description: entry.description,
-      official: true as const,
-    }))
+  const summariesDir = join(libraryTypesDir, "defold-extensions", "summaries");
+  const untyped = loadDefoldExtensions(libraryTypesDir).filter((entry) => entry.docs.length === 0);
+  const untypedRepos = new Set(untyped.map((entry) => githubRepo(entry.repo)));
+  if (existsSync(summariesDir)) {
+    for (const file of readdirSync(summariesDir)) {
+      if (!file.endsWith(".md")) continue;
+      const repo = file.slice(0, -".md".length);
+      if (!untypedRepos.has(repo)) {
+        throw new Error(
+          `defold-extensions/summaries/${file}: no defold-extensions.json entry without docs is named ${repo}`,
+        );
+      }
+    }
+  }
+  return untyped
+    .map((entry): LibraryListing => {
+      const owner = githubOwner(entry.repo);
+      const repo = githubRepo(entry.repo);
+      const path = join(summariesDir, `${repo}.md`);
+      if (!existsSync(path)) {
+        throw new Error(
+          `defold-extensions.json: ${entry.repo} ships no .script_api and has no summary at defold-extensions/summaries/${repo}.md`,
+        );
+      }
+      const { data, body } = parseFrontmatter(readFileSync(path, "utf8"));
+      if (data.api !== "none" && data.api !== "untyped") {
+        throw new Error(
+          `defold-extensions/summaries/${repo}.md: frontmatter api must be "none" or "untyped", got ${JSON.stringify(data.api)}`,
+        );
+      }
+      const summary = body.trim();
+      if (summary === "") {
+        throw new Error(`defold-extensions/summaries/${repo}.md: summary body is empty`);
+      }
+      return {
+        owner,
+        repo,
+        url: entry.repo,
+        ref: entry.ref,
+        description: entry.description,
+        official: true as const,
+        route: `/libraries/${owner}/${repo}`,
+        api: data.api,
+        summary,
+      };
+    })
     .filter((listing) => listing.owner !== "" && listing.repo !== "");
 }
 

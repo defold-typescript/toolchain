@@ -6,11 +6,13 @@ import { listGuidePages } from "./guide-loader";
 import {
   activeCategoryId,
   buildNav,
+  type LibraryListing,
   type LibraryOrigin,
   libraryLineage,
   libraryOwnerGroups,
   type NavLink,
 } from "./nav";
+import { NO_TYPED_API_ICON } from "./no-typed-api-icon";
 
 const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
@@ -667,6 +669,79 @@ describe("libraryOwnerGroups", () => {
     );
     expect(groups.map((group) => group.owner)).toEqual(["britzl", "defold", "paweljarosz"]);
     for (const group of groups) expect("official" in group).toBe(false);
+  });
+});
+
+describe("libraryOwnerGroups with untyped library listings", () => {
+  const origins = new Map<string, LibraryOrigin>([
+    ["iap", { owner: "defold", repo: "extension-iap", official: true }],
+    ["webview", { owner: "defold", repo: "extension-webview", official: true }],
+    ["monarch.monarch", { owner: "britzl", repo: "monarch" }],
+  ]);
+  const listing = (repo: string, api: "none" | "untyped"): LibraryListing => ({
+    owner: "defold",
+    repo,
+    url: `https://github.com/defold/${repo}`,
+    ref: "1.0.0",
+    description: "",
+    official: true,
+    route: `/libraries/defold/${repo}`,
+    api,
+    summary: "Ships content.",
+  });
+  const groups = libraryOwnerGroups(
+    [
+      { namespace: "webview", route: "/api/webview" },
+      { namespace: "monarch.monarch", route: "/api/monarch.monarch" },
+      { namespace: "iap", route: "/api/iap" },
+    ],
+    origins,
+    [listing("extension-qrcode", "untyped"), listing("asset-pbr", "none")],
+  );
+  const defold = groups.find((group) => group.owner === "defold");
+
+  test("puts each listing in its owner group as a module-less repo sorted among typed repos", () => {
+    expect(defold?.libraries.map((lib) => lib.repo)).toEqual([
+      "asset-pbr",
+      "extension-iap",
+      "extension-qrcode",
+      "extension-webview",
+    ]);
+    const qrcode = defold?.libraries.find((lib) => lib.repo === "extension-qrcode");
+    expect(qrcode?.modules).toEqual([]);
+    expect(qrcode?.listing).toEqual({
+      route: "/libraries/defold/extension-qrcode",
+      api: "untyped",
+    });
+    const iap = defold?.libraries.find((lib) => lib.repo === "extension-iap");
+    expect(iap?.listing).toBeUndefined();
+  });
+
+  test("a listing whose owner has no typed page starts its official group", () => {
+    const [only] = libraryOwnerGroups([], new Map(), [listing("asset-pbr", "none")]);
+    expect(only?.owner).toBe("defold");
+    expect(only?.official).toBe(true);
+    expect(only?.libraries.map((lib) => lib.repo)).toEqual(["asset-pbr"]);
+  });
+
+  test("buildNav renders a listing as one accent leaf routed to its page and marked with the icon", () => {
+    const libraries = buildNav([], {
+      globals: [],
+      globalTypes: [],
+      luaStdlib: [],
+      engine: [],
+      libraries: groups,
+    }).find((category) => category.id === "libraries");
+    const defoldLink = libraries?.links.find((link) => link.label === "defold");
+    const leaf = defoldLink?.children?.find((link) => link.label === "extension-qrcode");
+    expect(leaf?.route).toBe("/libraries/defold/extension-qrcode");
+    expect(leaf?.children).toBeUndefined();
+    expect(leaf?.accent).toBe(true);
+    expect(leaf?.tooltip).toBe("defold/extension-qrcode");
+    expect(leaf?.labelHtml).toContain("extension-qrcode");
+    expect(leaf?.labelHtml).toContain(NO_TYPED_API_ICON);
+    const typed = defoldLink?.children?.find((link) => link.label === "extension-iap");
+    expect(typed?.labelHtml).not.toContain(NO_TYPED_API_ICON);
   });
 });
 

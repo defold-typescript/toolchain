@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { cpSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { apiModuleSymbols } from "./api-surface";
 import {
+  defoldListingsFromManifest,
   githubOwner,
   libraryDisplayName,
   libraryModuleDirs,
@@ -619,6 +620,69 @@ describe("Defold extensions under Libraries", () => {
     );
     return dir;
   }
+
+  test("every untyped Defold library yields a listing with its page route, api kind and summary", () => {
+    const manifest = JSON.parse(
+      readFileSync(join(REAL_LIBRARY_TYPES_DIR, "defold-extensions.json"), "utf8"),
+    ) as { libraries: { repo: string; docs: unknown[] }[] };
+    const untyped = manifest.libraries.filter((entry) => entry.docs.length === 0);
+    const listings = defoldListingsFromManifest(REAL_LIBRARY_TYPES_DIR);
+    expect(untyped.length).toBeGreaterThan(0);
+    expect(listings.map((listing) => listing.url).sort()).toEqual(
+      untyped.map((entry) => entry.repo).sort(),
+    );
+    for (const listing of listings) {
+      const repo = listing.url.split("/").pop() ?? "";
+      expect(listing.route).toBe(`/libraries/defold/${repo}`);
+      expect(["none", "untyped"]).toContain(listing.api);
+      expect(listing.summary.trim()).not.toBe("");
+      expect(listing.summary).not.toContain("api:");
+    }
+  });
+
+  function libraryTypesWithListings(repos: string[], summaries: Record<string, string>): string {
+    const dir = mkdtempSync(join(tmpdir(), "defold-listings-loader-"));
+    mkdirSync(join(dir, "defold-extensions", "summaries"), { recursive: true });
+    writeFileSync(
+      join(dir, "defold-extensions.json"),
+      JSON.stringify({
+        libraries: repos.map((repo) => ({
+          repo: `https://github.com/defold/${repo}`,
+          ref: "1.0.0",
+          refKind: "release",
+          license: "MIT",
+          description: "",
+          docs: [],
+        })),
+      }),
+    );
+    for (const [repo, body] of Object.entries(summaries)) {
+      writeFileSync(join(dir, "defold-extensions", "summaries", `${repo}.md`), body);
+    }
+    return dir;
+  }
+
+  test("a listing with no summary file throws naming the repo", () => {
+    const dir = libraryTypesWithListings(["extension-described", "extension-bare"], {
+      "extension-described": "---\napi: none\n---\n\nShips content.\n",
+    });
+    expect(() => defoldListingsFromManifest(dir)).toThrow(/extension-bare/);
+  });
+
+  test("a summary file for a repo that is not an untyped entry throws naming the file", () => {
+    const dir = libraryTypesWithListings(["extension-described"], {
+      "extension-described": "---\napi: none\n---\n\nShips content.\n",
+      "extension-orphan": "---\napi: untyped\n---\n\nRegisters a module.\n",
+    });
+    expect(() => defoldListingsFromManifest(dir)).toThrow(/extension-orphan\.md/);
+  });
+
+  test("a summary whose api kind is neither none nor untyped throws naming the file", () => {
+    const dir = libraryTypesWithListings(["extension-described"], {
+      "extension-described": "---\napi: typed\n---\n\nShips content.\n",
+    });
+    expect(() => defoldListingsFromManifest(dir)).toThrow(/extension-described\.md/);
+  });
 
   test("a Defold page key equal to a vendored library namespace or another Defold key throws", () => {
     expect(() =>

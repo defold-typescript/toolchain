@@ -16,6 +16,7 @@ import {
   apiVersions,
   canonicalApiPages,
   combinedSurface,
+  defoldListings,
   libraryOrigins,
   versionNamespaceAtom,
 } from "../lib/api-content";
@@ -280,12 +281,14 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
   };
 
   // Library pages grouped by GitHub owner and repo for the Libraries tab;
-  // namespace leaves keep the dotted route slug.
+  // namespace leaves keep the dotted route slug, and untyped listings sit among
+  // them as single leaves routed to their own `/libraries/` pages.
   const libraries = libraryOwnerGroups(
     allApiPages
       .filter((p) => p.category === "library")
       .map((p) => ({ namespace: p.namespace, route: p.route })),
     libraryOrigins(),
+    defoldListings(),
   );
 
   const nav = buildNav(guidePages(), {
