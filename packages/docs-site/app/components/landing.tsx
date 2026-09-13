@@ -68,21 +68,30 @@ export function LandingCardGrid({ children }: { children: Child }) {
   );
 }
 
-/** A titled section: an `h2`/`h3` heading, an optional lead, then its content. */
+/** A titled section: an `h2`/`h3` heading with an optional dimmed note, an optional lead, then its content. */
 export function LandingSection({
   heading,
+  headingNote,
   level = 2,
   subtitle,
   children,
 }: {
   heading: string;
+  headingNote?: string;
   level?: 2 | 3;
   subtitle?: Child;
   children: Child;
 }) {
+  const content = headingNote ? (
+    <>
+      {heading} <span class="text-text-faint font-normal">{headingNote}</span>
+    </>
+  ) : (
+    heading
+  );
   return (
     <section>
-      {level === 3 ? <h3>{heading}</h3> : <h2>{heading}</h2>}
+      {level === 3 ? <h3>{content}</h3> : <h2>{content}</h2>}
       {subtitle ? <p>{subtitle}</p> : null}
       {children}
     </section>

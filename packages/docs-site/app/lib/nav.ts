@@ -45,6 +45,9 @@ export interface Namespace {
 export interface LibraryOrigin {
   owner: string;
   repo: string;
+  // Set only for a library read from Defold's own extension manifest, never from
+  // the owner's name, so a third party publishing as `defold` stays unmarked.
+  official?: true;
 }
 
 // A library listed on the Libraries index with no typed API: it ships no
@@ -64,7 +67,22 @@ export interface LibraryGroup {
 export interface LibraryOwnerGroup {
   owner: string;
   label: string;
+  official?: true;
   libraries: LibraryGroup[];
+}
+
+/** The dimmed marker rendered beside an official owner's label; never part of the label itself. */
+export const OFFICIAL_NOTE = "(official)";
+const OFFICIAL_NOTE_CLASS = "text-text-faint font-normal";
+
+// Official owners lead, then owners read alphabetically. The sidebar and the
+// Libraries index both sort with this, so the two lists cannot disagree.
+export function compareLibraryOwners(
+  a: { owner: string; official?: true },
+  b: { owner: string; official?: true },
+): number {
+  if (a.official !== b.official) return a.official ? -1 : 1;
+  return a.owner.localeCompare(b.owner, undefined, { sensitivity: "base" });
 }
 
 export interface ReferenceGroups {
@@ -193,8 +211,8 @@ export function buildNav(
   // Third-party libraries live in their own top-level tab after API, so engine
   // reference and community libraries read as distinct sections.
   if (reference.libraries.length > 0) {
-    const libraryLinks = reference.libraries.map((owner) =>
-      toNavGroup(
+    const libraryLinks = reference.libraries.map((owner) => {
+      const group = toNavGroup(
         owner.label,
         owner.libraries.map((lib) => {
           // A row that reaches a module page takes the accent, matching the
@@ -219,8 +237,13 @@ export function buildNav(
             lib.modules.map(({ label, route }) => moduleLink(label, label, route)),
           );
         }),
-      ),
-    );
+      );
+      if (!owner.official) return group;
+      return {
+        ...group,
+        labelHtml: `${group.labelHtml} <span class="${OFFICIAL_NOTE_CLASS}">${OFFICIAL_NOTE}</span>`,
+      };
+    });
     categories.push({
       id: "libraries",
       label: "Libraries",
@@ -280,28 +303,33 @@ export function libraryOwnerGroups(
   origins: Map<string, LibraryOrigin>,
 ): LibraryOwnerGroup[] {
   const byOwner = new Map<string, Map<string, Namespace[]>>();
+  const officialOwners = new Set<string>();
   for (const page of pages) {
-    const { owner, repo } = libraryLineage(page.namespace, origins);
+    const { owner, repo, official } = libraryLineage(page.namespace, origins);
     const libraries = byOwner.get(owner) ?? new Map<string, Namespace[]>();
     const modules = libraries.get(repo) ?? [];
     modules.push({ label: page.namespace, route: page.route });
     libraries.set(repo, modules);
     byOwner.set(owner, libraries);
+    if (official) officialOwners.add(owner);
   }
 
   return [...byOwner.entries()]
-    .sort(([a], [b]) => a.localeCompare(b, undefined, { sensitivity: "base" }))
-    .map(([owner, libraries]) => ({
-      owner,
-      label: owner,
-      libraries: [...libraries.entries()]
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([repo, modules]) => ({
-          repo,
-          label: repo,
-          modules: modules.sort((a, b) => a.label.localeCompare(b.label)),
-        })),
-    }));
+    .map(
+      ([owner, libraries]): LibraryOwnerGroup => ({
+        owner,
+        label: owner,
+        ...(officialOwners.has(owner) ? { official: true as const } : {}),
+        libraries: [...libraries.entries()]
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([repo, modules]) => ({
+            repo,
+            label: repo,
+            modules: modules.sort((a, b) => a.label.localeCompare(b.label)),
+          })),
+      }),
+    )
+    .sort(compareLibraryOwners);
 }
 
 export function activeCategoryId(route: string, nav: NavCategory[]): string | undefined {

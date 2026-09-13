@@ -568,8 +568,12 @@ describe("Defold extensions under Libraries", () => {
       expect(page?.category).toBe("library");
     }
     const origins = libraryOriginByNamespace(REAL_LIBRARY_TYPES_DIR);
-    expect(origins.get("iap")).toEqual({ owner: "defold", repo: "extension-iap" });
-    expect(origins.get("spine.gui")).toEqual({ owner: "defold", repo: "extension-spine" });
+    expect(origins.get("iap")).toEqual({ owner: "defold", repo: "extension-iap", official: true });
+    expect(origins.get("spine.gui")).toEqual({
+      owner: "defold",
+      repo: "extension-spine",
+      official: true,
+    });
   });
 
   test("the four extension namespaces leave every engine surface", () => {
