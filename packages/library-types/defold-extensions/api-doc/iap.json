@@ -90,6 +90,29 @@
           "doc": "result callback taking the following parameters",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The current object.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "products",
+              "doc": "a table describing the available iap products.",
+              "types": [
+                "table"
+              ]
+            },
+            {
+              "name": "error",
+              "doc": "a table containing error information. `nil` if there is no error. - `error` (the error message)",
+              "types": [
+                "table"
+              ]
+            }
           ]
         }
       ],
@@ -121,6 +144,29 @@
           "doc": "listener callback function. Pass an empty function if you no longer wish to receive callbacks.",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The current object.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "transaction",
+              "doc": "a table describing the transaction.",
+              "types": [
+                "table"
+              ]
+            },
+            {
+              "name": "error",
+              "doc": "a table containing error information. `nil` if there is no error. `error` - the error message. `reason` - the reason for the error, value can be one of the following constants\n- `iap.REASON_UNSPECIFIED`\n- `iap.REASON_USER_CANCELED`\n- `iap.REASON_ITEM_ALREADY_OWNED`",
+              "types": [
+                "table"
+              ]
+            }
           ]
         }
       ],

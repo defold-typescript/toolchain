@@ -439,3 +439,112 @@ describe("scriptApiToRefDoc pipe-separated types", () => {
     expect(offenders).toEqual([]);
   });
 });
+
+const NESTED = `
+- name: ads
+  type: table
+  desc: The ads namespace.
+  members:
+  - name: set_callback
+    type: function
+    desc: Set the callback.
+    parameters:
+    - name: self
+      type: object
+      desc: the script self
+    - name: callback
+      type: function
+      desc: the callback
+      parameters:
+      - name: self
+        type: object
+        desc: the calling script
+      - name: message_id
+        type: number
+        desc: the message id
+      - name: message
+        type: table
+        desc: the message payload
+        fields:
+        - name: event
+          type: number
+          desc: the event kind
+        - name: code
+          type: number
+          desc: the error code
+          optional: true
+    - name: tag
+      type: string
+      desc: an optional tag
+      optional: true
+    returns:
+    - name: result
+      type: table
+      desc: the result
+      fields:
+      - name: ok
+        type: boolean
+        desc: whether it worked
+      - name: note
+        type: string
+        desc: a note
+        optional: true
+`;
+
+function setCallback(options: { complete?: boolean } = {}): RefDocFunctionElement | undefined {
+  return functionElements(scriptApiToRefDoc(parse(NESTED), options)).find(
+    (e) => e.name === "ads.set_callback",
+  );
+}
+
+describe("scriptApiToRefDoc nested slots", () => {
+  it("maps a callback's parameters to fields in order, keeping its self", () => {
+    const callback = setCallback({ complete: true })?.parameters.find((p) => p.name === "callback");
+    expect(callback?.fields?.map((f) => f.name)).toEqual(["self", "message_id", "message"]);
+    expect(callback?.fields?.[1]).toEqual({
+      name: "message_id",
+      doc: "the message id",
+      types: ["number"],
+    });
+  });
+
+  it("nests a table's fields two levels deep and maps returns the same way", () => {
+    const element = setCallback({ complete: true });
+    const message = element?.parameters
+      .find((p) => p.name === "callback")
+      ?.fields?.find((f) => f.name === "message");
+    expect(message?.fields?.map((f) => f.name)).toEqual(["event", "code"]);
+    expect(element?.returnvalues[0]?.fields?.map((f) => f.name)).toEqual(["ok", "note"]);
+  });
+
+  it("marks optional top-level and nested slots, and parseDefoldApiDoc reads both", () => {
+    const element = setCallback({ complete: true });
+    expect(element?.parameters.find((p) => p.name === "tag")?.is_optional).toBe("True");
+    const fn = parseDefoldApiDoc(parseScriptApi(NESTED, { complete: true })).functions[0];
+    const [callback, tag] = fn?.parameters ?? [];
+    expect(tag).toMatchObject({ name: "tag", isOptional: true });
+    expect(callback?.isOptional).toBe(false);
+    const message = callback?.fields?.[2];
+    expect(message?.name).toBe("message");
+    expect(message?.fields?.map((f) => [f.name, f.isOptional])).toEqual([
+      ["event", false],
+      ["code", true],
+    ]);
+    expect(fn?.returnValues[0]?.fields?.map((f) => [f.name, f.isOptional])).toEqual([
+      ["ok", false],
+      ["note", true],
+    ]);
+  });
+
+  it("still drops a top-level self in complete mode, and default mode emits no nesting", () => {
+    expect(setCallback({ complete: true })?.parameters.map((p) => p.name)).toEqual([
+      "callback",
+      "tag",
+    ]);
+    const plain = setCallback();
+    for (const slot of [...(plain?.parameters ?? []), ...(plain?.returnvalues ?? [])]) {
+      expect(slot).not.toHaveProperty("fields");
+      expect(slot).not.toHaveProperty("is_optional");
+    }
+  });
+});

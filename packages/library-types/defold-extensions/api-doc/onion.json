@@ -39,6 +39,15 @@
           "doc": "Playback options.",
           "types": [
             "table"
+          ],
+          "fields": [
+            {
+              "name": "offset",
+              "doc": "The normalized initial value of the animation cursor when the animation starts playing.",
+              "types": [
+                "number"
+              ]
+            }
           ]
         },
         {
@@ -46,6 +55,66 @@
           "doc": "function to call when the animation has completed or a Onion event occured.",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The context of the calling script.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "message_id",
+              "doc": "The name of the message (\"onion_animation_done\" or \"onion_event\").",
+              "types": [
+                "hash"
+              ]
+            },
+            {
+              "name": "message",
+              "doc": "A table that contains the response.",
+              "types": [
+                "table"
+              ],
+              "fields": [
+                {
+                  "name": "animation_id",
+                  "doc": "The animation that was completed.",
+                  "types": [
+                    "hash"
+                  ]
+                },
+                {
+                  "name": "entity_id",
+                  "doc": "The entity that was completed.",
+                  "types": [
+                    "hash"
+                  ]
+                },
+                {
+                  "name": "event_id",
+                  "doc": "(onion_event only!) the event that was triggered.",
+                  "types": [
+                    "hash"
+                  ]
+                },
+                {
+                  "name": "time",
+                  "doc": "(onion_event only!) the time at which the event occurred (seconds).",
+                  "types": [
+                    "float"
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "sender",
+              "doc": "The invoker of the callback - the Onion model component.",
+              "types": [
+                "url"
+              ]
+            }
           ]
         }
       ],

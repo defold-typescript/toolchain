@@ -29,6 +29,22 @@
           "doc": "Credential state callback function.",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The current object.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "state",
+              "doc": "The credential state (user_id, credential_state)",
+              "types": [
+                "table"
+              ]
+            }
           ]
         }
       ],
@@ -45,6 +61,22 @@
           "doc": "Authentication callback function.",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The current object.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "state",
+              "doc": "The authentication result data (user_id, identity_token, email, first_name, family_name, status, result)",
+              "types": [
+                "table"
+              ]
+            }
           ]
         }
       ],
