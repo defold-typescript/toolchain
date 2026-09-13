@@ -157,29 +157,48 @@ describe("groupLibraryIndexByOwner with listing-only Defold libraries", () => {
 
   test("lists every manifest entry without docs exactly once under defold, with no pages", () => {
     expect(untypedRepos.length).toBeGreaterThan(0);
-    const listed = (defold?.libraries ?? []).filter((library) => library.listingOnly);
-    expect(listed.map((library) => library.listingOnly?.url).sort()).toEqual(
-      [...untypedRepos].sort(),
-    );
+    const listed = (defold?.libraries ?? []).filter((library) => library.listing);
+    expect(listed.map((library) => library.listing?.url).sort()).toEqual([...untypedRepos].sort());
     for (const library of listed) {
-      const entry = manifest.libraries.find((e) => e.repo === library.listingOnly?.url);
+      const entry = manifest.libraries.find((e) => e.repo === library.listing?.url);
       expect(library.pages).toEqual([]);
-      expect(library.repo).toBe(library.listingOnly?.url.split("/").pop() ?? "");
-      expect(library.listingOnly?.description).toBe(entry?.description ?? "");
+      expect(library.repo).toBe(library.listing?.url.split("/").pop() ?? "");
+      expect(library.listing?.description).toBe(entry?.description ?? "");
+      expect(library.listing?.route).toBe(`/libraries/defold/${library.repo}`);
+      expect(["none", "untyped"]).toContain(library.listing?.api ?? "");
+    }
+  });
+
+  test("derives listings from the sidebar grouping, so both name the same repos in one order", () => {
+    const navGroups = libraryOwnerGroups(
+      pages
+        .filter((apiPage) => apiPage.category === "library")
+        .map((apiPage) => ({ namespace: apiPage.namespace, route: apiPage.route })),
+      origins,
+      listings,
+    );
+    const shape = (all: { owner: string; libraries: { repo: string; route?: string }[] }[]) =>
+      all.map((group) => ({ owner: group.owner, repos: group.libraries.map((lib) => lib.repo) }));
+    expect(shape(groups)).toEqual(shape(navGroups));
+    for (const [index, group] of groups.entries()) {
+      for (const [libIndex, library] of group.libraries.entries()) {
+        const navListing = navGroups[index]?.libraries[libIndex]?.listing;
+        expect(
+          library.listing ? { route: library.listing.route, api: library.listing.api } : undefined,
+        ).toEqual(navListing);
+      }
     }
   });
 
   test("never lists a typed library as listing-only, and extension-iap keeps its page", () => {
     const listedUrls = new Set(
       groups.flatMap((group) =>
-        group.libraries.flatMap((library) =>
-          library.listingOnly ? [library.listingOnly.url] : [],
-        ),
+        group.libraries.flatMap((library) => (library.listing ? [library.listing.url] : [])),
       ),
     );
     for (const repo of typedRepos) expect(listedUrls.has(repo)).toBe(false);
     const iap = defold?.libraries.find((library) => library.repo === "extension-iap");
-    expect(iap?.listingOnly).toBeUndefined();
+    expect(iap?.listing).toBeUndefined();
     expect(iap?.pages.map((p) => p.route)).toEqual(["/api/iap"]);
   });
 
@@ -213,7 +232,7 @@ describe("groupLibraryIndexByOwner with listing-only Defold libraries", () => {
           owner: group.owner,
           libraries: group.libraries.map((library) => ({
             repo: library.repo,
-            listingOnly: library.listingOnly,
+            listing: library.listing,
             pages: library.pages.map((p) => p.route),
           })),
         }));

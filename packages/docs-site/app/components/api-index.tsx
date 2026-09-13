@@ -14,6 +14,7 @@ import {
   libraryPathSegments,
   OFFICIAL_NOTE,
 } from "../lib/nav";
+import { LIBRARY_API_KIND_SENTENCE, NO_TYPED_API_ICON } from "../lib/no-typed-api-icon";
 import { stripPlatformMarkers } from "../lib/platform-icons";
 import {
   apiCardBadgeHtml,
@@ -357,6 +358,30 @@ export function LibraryPath({
   );
 }
 
+// The first sentence of an authored summary's first paragraph, as plain text: the
+// card's stand-in for a manifest entry whose upstream description is empty.
+function summaryFirstSentence(summary: string): string {
+  const paragraph =
+    summary
+      .split(/\n\s*\n/)
+      .map((block) => block.trim())
+      .find((block) => block !== "" && !block.startsWith("#")) ?? "";
+  const text = paragraph
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/`/g, "")
+    .replace(/\s+/g, " ");
+  return text.match(/^.*?[.!?](?=\s|$)/)?.[0] ?? text;
+}
+
+function listingCardDescription(listing: LibraryListing): string {
+  return [
+    listing.description || summaryFirstSentence(listing.summary),
+    LIBRARY_API_KIND_SENTENCE[listing.api].replace(/`/g, ""),
+  ]
+    .filter((part) => part !== "")
+    .join(" ");
+}
+
 export function LibraryIndex({
   pages,
   origins,
@@ -367,6 +392,7 @@ export function LibraryIndex({
   listings?: LibraryListing[];
 }) {
   const groups = groupLibraryIndexByOwner(pages, origins, listings);
+  const listingsByRoute = new Map(listings.map((listing) => [listing.route, listing]));
   const total = groups.reduce(
     (sum, group) => sum + group.libraries.reduce((acc, lib) => acc + lib.pages.length, 0),
     0,
@@ -381,8 +407,8 @@ export function LibraryIndex({
           The TypeScript definitions behind each API block are maintained in this repo — generated
           from the upstream sources that ship machine-readable types, and hand-forked where upstream
           ships none — and pinned to an upstream commit or tag.
-          <br />A card marked "No typed API" links to the library's GitHub repository instead of a
-          page here.
+          <br />A card marked with the no-typed-API icon links to a page describing what the library
+          ships and how to use it, but it has no typed API.
           <br />
           <span class="mt-1 block text-sm text-text-faint">
             {total} namespace{total === 1 ? "" : "s"} documented.
@@ -398,27 +424,32 @@ export function LibraryIndex({
           {...(group.official ? { headingNote: OFFICIAL_NOTE } : {})}
         >
           <LandingCardGrid>
-            {group.libraries.flatMap((lib) =>
-              lib.listingOnly ? (
-                <LandingCard
-                  mono
-                  href={lib.listingOnly.url}
-                  title={<LibraryPath owner="" repo={lib.label} namespace="" />}
-                  description={[lib.listingOnly.description, "No typed API — ships no .script_api."]
-                    .filter((part) => part !== "")
-                    .join(" ")}
-                />
-              ) : (
-                lib.pages.map((page) => (
+            {group.libraries.flatMap((lib) => {
+              const listing = lib.listing && listingsByRoute.get(lib.listing.route);
+              if (listing) {
+                return (
                   <LandingCard
                     mono
-                    href={page.route}
-                    title={<LibraryPath owner="" repo={lib.label} namespace={page.namespace} />}
-                    description={stripPlatformMarkers(apiPageCardDescription(page)) || null}
+                    href={listing.route}
+                    title={
+                      <>
+                        <LibraryPath owner="" repo={lib.label} namespace="" />{" "}
+                        <span dangerouslySetInnerHTML={{ __html: NO_TYPED_API_ICON }} />
+                      </>
+                    }
+                    description={listingCardDescription(listing)}
                   />
-                ))
-              ),
-            )}
+                );
+              }
+              return lib.pages.map((page) => (
+                <LandingCard
+                  mono
+                  href={page.route}
+                  title={<LibraryPath owner="" repo={lib.label} namespace={page.namespace} />}
+                  description={stripPlatformMarkers(apiPageCardDescription(page)) || null}
+                />
+              ));
+            })}
           </LandingCardGrid>
         </LandingSection>
       ))}

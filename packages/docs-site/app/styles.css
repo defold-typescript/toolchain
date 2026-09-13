@@ -916,6 +916,17 @@
     opacity: 0.7;
   }
 
+  /* No-typed-API mark (Phosphor duotone), inlined by no-typed-api-icon.ts after an
+     untyped library's name in the sidebar leaf, its index card title and its page
+     heading. Preflight makes `svg` a block, so flow it inline at the text size. */
+  .no-api-icon {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.125em;
+    color: var(--color-text-faint);
+  }
+
   /* LuaLS-authored library pin (Phosphor duotone), appended by authoredLibraryPin
      beside authored library names in the sidebar tree and the /api heading. The
      span wrapper positions the pin against the label baseline; the nested glyph
