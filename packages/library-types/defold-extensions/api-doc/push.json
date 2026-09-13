@@ -22,6 +22,29 @@
           "doc": "Register callback function.",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The current object.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "token",
+              "doc": "The APNs device token on iOS or Firebase Installation ID (FID) on Android if registration is successful.",
+              "types": [
+                "string"
+              ]
+            },
+            {
+              "name": "error",
+              "doc": "A table containing eventual error information.",
+              "types": [
+                "table"
+              ]
+            }
           ]
         }
       ],
@@ -38,6 +61,36 @@
           "doc": "Listener callback function.",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The current object.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "payload",
+              "doc": "The push payload",
+              "types": [
+                "table"
+              ]
+            },
+            {
+              "name": "origin",
+              "doc": "Origin of the push that can be one of the predefined constants below\n- `push.ORIGIN_LOCAL`\n- `push.ORIGIN_REMOTE`",
+              "types": [
+                "constant"
+              ]
+            },
+            {
+              "name": "activated",
+              "doc": "If the application was activated via the notification.",
+              "types": [
+                "boolean"
+              ]
+            }
           ]
         }
       ],

@@ -22,6 +22,54 @@
           "doc": "Callback function that is executed on any event in the SDK.",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script instance",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "message_id",
+              "doc": "One of message types: `admob.MSG_INITIALIZATION` initialization, `admob.MSG_INTERSTITIAL` message from Interstitial ad unit, `admob.MSG_REWARDED` message from Rewarded ad unit, `admob.MSG_BANNER` message from Banner ad unit",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "message",
+              "doc": "A table holding the data",
+              "types": [
+                "table"
+              ],
+              "fields": [
+                {
+                  "name": "event",
+                  "doc": "One of event types: `admob.EVENT_CLOSED`, `admob.EVENT_FAILED_TO_SHOW`, `admob.EVENT_OPENING`, `admob.EVENT_FAILED_TO_LOAD`, `admob.EVENT_LOADED`, `admob.EVENT_NOT_LOADED`, `admob.EVENT_EARNED_REWARD`, `admob.EVENT_COMPLETE`, `admob.EVENT_CLICKED`, `admob.EVENT_DESTROYED`, `admob.EVENT_IMPRESSION_RECORDED`, `admob.EVENT_JSON_ERROR`",
+                  "types": [
+                    "number"
+                  ]
+                },
+                {
+                  "name": "code",
+                  "doc": "The error code (if an error occurred or `nil` otherwise)",
+                  "types": [
+                    "number"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "message",
+                  "doc": "The error message (if an error occurred or `nil` otherwise)",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                }
+              ]
+            }
           ]
         }
       ],
@@ -150,7 +198,26 @@
           "doc": "ServerSideVerificationOptions [Android](https://developers.google.com/admob/android/next-gen/ssv), [iOS](https://developers.google.com/admob/ios/rewarded#validate-ssv)",
           "types": [
             "table"
-          ]
+          ],
+          "fields": [
+            {
+              "name": "user_id",
+              "doc": "A unique identifier assigned to each user.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "custom_data",
+              "doc": "Custom Data attached to server-side reward callbacks.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -233,7 +300,8 @@
           "doc": "Requested Banner Ad size, possible values: `admob.SIZE_ADAPTIVE_BANNER` (default), `admob.SIZE_BANNER`, `admob.SIZE_FLUID`, `admob.SIZE_FULL_BANNER`, `admob.SIZE_LARGE_BANNER`, `admob.SIZE_LEADEARBOARD`, `admob.SIZE_MEDIUM_RECTANGLE`, `admob.SIZE_LARGE_ADAPTIVE_BANNER` Original docs [Android](https://developers.google.com/admob/android/next-gen/banner#banner_sizes), [iOS](https://developers.google.com/admob/ios/banner#banner_sizes)",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -248,7 +316,8 @@
           "doc": "Banner Ad position, possible values: `admob.POS_NONE` (default), `admob.POS_TOP_LEFT`, `admob.POS_TOP_CENTER`, `admob.POS_TOP_RIGHT`, `admob.POS_BOTTOM_LEFT`, `admob.POS_BOTTOM_CENTER`, `admob.POS_BOTTOM_RIGHT`, `admob.POS_CENTER`",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [],

@@ -29,6 +29,29 @@
           "doc": "callback that receives all messages from the connection",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The script instance that was used to register the callback",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "connection",
+              "doc": "the connection",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "data",
+              "doc": "the event payload",
+              "types": [
+                "table"
+              ]
+            }
           ]
         }
       ],

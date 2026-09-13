@@ -171,6 +171,94 @@
           "types": [
             "function(self, event, data)",
             "nil"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script instance.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "event",
+              "doc": "One of onFileLoaded, onFileDeleted, onFileError, onArtboardInstantiated, onArtboardsListed, onViewModelsListed, onViewModelInstanceInstantiated, onViewModelInstanceNamesListed, onViewModelPropertiesListed, onViewModelEnumsListed",
+              "types": [
+                "string"
+              ]
+            },
+            {
+              "name": "data",
+              "doc": "Additional fields vary by event. Common keys include",
+              "types": [
+                "table"
+              ],
+              "fields": [
+                {
+                  "name": "file",
+                  "doc": "File handle involved in the event.",
+                  "types": [
+                    "FileHandle"
+                  ]
+                },
+                {
+                  "name": "artboard",
+                  "doc": "Instantiated artboard handle, when applicable.",
+                  "types": [
+                    "ArtboardHandle"
+                  ]
+                },
+                {
+                  "name": "viewModel",
+                  "doc": "Instantiated view model instance handle, when applicable.",
+                  "types": [
+                    "ViewModelInstanceHandle"
+                  ]
+                },
+                {
+                  "name": "viewModelName",
+                  "doc": "View model name for the request, when applicable.",
+                  "types": [
+                    "string"
+                  ]
+                },
+                {
+                  "name": "instanceNames",
+                  "doc": "Array of instance name strings.",
+                  "types": [
+                    "table"
+                  ]
+                },
+                {
+                  "name": "artboardNames",
+                  "doc": "Array of artboard name strings.",
+                  "types": [
+                    "table"
+                  ]
+                },
+                {
+                  "name": "properties",
+                  "doc": "Array of property metadata tables.",
+                  "types": [
+                    "table"
+                  ]
+                },
+                {
+                  "name": "enums",
+                  "doc": "Array of enum definitions.",
+                  "types": [
+                    "table"
+                  ]
+                },
+                {
+                  "name": "error",
+                  "doc": "Error message when a failure occurs.",
+                  "types": [
+                    "string"
+                  ]
+                }
+              ]
+            }
           ]
         }
       ],

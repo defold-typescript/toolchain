@@ -386,6 +386,29 @@ describe("apiPageMarkdown field tree", () => {
   });
 });
 
+describe("Defold library page callback arguments", () => {
+  const admob = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR).find(
+    (p) => p.category === "library" && p.namespace === "admob",
+  );
+  const fieldNames = (params: { name: string }[] | undefined) => params?.map((p) => p.name);
+
+  test("admob.set_callback carries the callback's arguments and the message table's fields", () => {
+    expect(admob).toBeDefined();
+    const setCallback = apiModuleSymbols(admob as ApiPage).find(
+      (s) => s.name === "admob.set_callback",
+    );
+    const callback = setCallback?.parameters.find((p) => p.name === "callback");
+    expect(fieldNames(callback?.fields)).toEqual(["self", "message_id", "message"]);
+    const message = callback?.fields?.find((f) => f.name === "message");
+    expect(fieldNames(message?.fields)).toEqual(["event", "code", "message"]);
+  });
+
+  test("apiPageMarkdown renders message_id as a bullet indented under callback", () => {
+    const md = apiPageMarkdown(admob as ApiPage, (t) => t);
+    expect(md).toMatch(/^- `callback`.*\n(?: {2}- .*\n)* {2}- `message_id`/m);
+  });
+});
+
 describe("apiPageMarkdown library provenance block", () => {
   test("emits a single GitHub provenance bullet (no Author/License) with the numbered steps nested directly under it", () => {
     const md = apiPageMarkdown(libraryPageWithMeta(), (t) => t);

@@ -112,6 +112,29 @@
           "doc": "A callback taking the following parameters",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "message_id",
+              "doc": "An message_id can be one of the predefined constants below\n- `gpgs.MSG_SIGN_IN`\n- `gpgs.MSG_SILENT_SIGN_IN`\n- `gpgs.MSG_SHOW_SNAPSHOTS`\n- `gpgs.MSG_LOAD_SNAPSHOT`\n- `gpgs.MSG_SAVE_SNAPSHOT`\n- `gpgs.MSG_GET_ACHIEVEMENTS`\n- `gpgs.MSG_GET_TOP_SCORES`\n- `gpgs.MSG_GET_PLAYER_CENTERED_SCORES`\n- `gpgs.MSG_GET_PLAYER_SCORE`\n- `gpgs.MSG_GET_EVENTS`\n- `gpgs.MSG_GET_SERVER_AUTH_CODE`",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "message",
+              "doc": "Contains information that depends on message_id. Successful achievement, event, top-score, and player-centered-score queries return arrays of JSON strings. Decode each string with `json.decode()`. A successful player-score query returns the score fields directly. Other operations include `status`.",
+              "types": [
+                "table"
+              ]
+            }
           ]
         }
       ],
@@ -128,28 +151,32 @@
           "doc": "The title to display in the action bar. By default \"Game Saves\".",
           "types": [
             "string"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "allowAddButton",
           "doc": "Whether or not to display a \"create new snapshot\" option in the selection UI. By default `true`.",
           "types": [
             "boolean"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "allowDelete",
           "doc": "Whether or not to provide a delete overflow menu option for each snapshot in the selection UI. By default `true`.",
           "types": [
             "boolean"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "maxNumberOfSavedGamesToShow",
           "doc": "The maximum number of snapshots to display in the UI. By default 5.",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [],
@@ -172,14 +199,16 @@
           "doc": "If `true`, the snapshot will be created if one cannot be found.",
           "types": [
             "boolean"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "conflictPolicy",
           "doc": "The conflict resolution policy to use for this snapshot that can be one of the predefined constants below\n- `gpgs.RESOLUTION_POLICY_MANUAL`\n- `gpgs.RESOLUTION_POLICY_LONGEST_PLAYTIME`\n- `gpgs.RESOLUTION_POLICY_LAST_KNOWN_GOOD`\n- `gpgs.RESOLUTION_POLICY_MOST_RECENTLY_MODIFIED`\n- `gpgs.RESOLUTION_POLICY_HIGHEST_PROGRESS`\n\nDefault value is `gpgs.RESOLUTION_POLICY_LAST_KNOWN_GOOD`",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [],
@@ -195,7 +224,8 @@
           "doc": "A table with metadata for a save. It contains the fields below",
           "types": [
             "table"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [],

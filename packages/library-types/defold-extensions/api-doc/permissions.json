@@ -46,6 +46,22 @@
           "doc": "A callback taking the following parameters",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "result",
+              "doc": "A table where key is permission string and key is one of the following constants\n- `permissions.PERMISSION_GRANTED`\n- `permissions.PERMISSION_DENIED`",
+              "types": [
+                "table"
+              ]
+            }
           ]
         }
       ],

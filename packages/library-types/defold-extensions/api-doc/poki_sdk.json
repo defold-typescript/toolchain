@@ -29,6 +29,22 @@
           "doc": "",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script instance",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "status",
+              "doc": "One of the statuses: `poki_sdk.COMMERCIAL_BREAK_START`, `poki_sdk.COMMERCIAL_BREAK_SUCCESS`",
+              "types": [
+                "number"
+              ]
+            }
           ]
         }
       ],
@@ -44,13 +60,30 @@
           "doc": "Optional reward size. Accepted values are small, medium, and large. Defaults to small.",
           "types": [
             "string"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "callback",
           "doc": "",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script instance",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "status",
+              "doc": "One of the statuses: `poki_sdk.REWARDED_BREAK_ERROR`, `poki_sdk.REWARDED_BREAK_START`, `poki_sdk.REWARDED_BREAK_SUCCESS`",
+              "types": [
+                "number"
+              ]
+            }
           ]
         }
       ],
@@ -118,6 +151,22 @@
           "doc": "",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script instance",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "url",
+              "doc": "The generated shareable URL.",
+              "types": [
+                "string"
+              ]
+            }
           ]
         }
       ],
@@ -159,12 +208,14 @@
         {
           "name": "what",
           "doc": "Optional event subject. Defaults to an empty string when omitted.",
-          "types": []
+          "types": [],
+          "is_optional": "True"
         },
         {
           "name": "action",
           "doc": "Optional event action. Defaults to an empty string when omitted.",
-          "types": []
+          "types": [],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -208,6 +259,25 @@
           "doc": "",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script instance",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "user",
+              "doc": "A table with username and avatar_url, or nil if no user is logged in.",
+              "types": []
+            },
+            {
+              "name": "error",
+              "doc": "The rejection message, or nil if the request completed normally.",
+              "types": []
+            }
           ]
         }
       ],
@@ -223,6 +293,25 @@
           "doc": "",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script instance",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "token",
+              "doc": "The short-lived Poki auth token, or nil if no user is logged in.",
+              "types": []
+            },
+            {
+              "name": "error",
+              "doc": "The rejection message, or nil if the request completed normally.",
+              "types": []
+            }
           ]
         }
       ],
@@ -238,6 +327,27 @@
           "doc": "",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script instance",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "success",
+              "doc": "`true` if the login promise resolved, otherwise `false`.",
+              "types": [
+                "boolean"
+              ]
+            },
+            {
+              "name": "error",
+              "doc": "The rejection message on failure, or nil on success.",
+              "types": []
+            }
           ]
         }
       ],

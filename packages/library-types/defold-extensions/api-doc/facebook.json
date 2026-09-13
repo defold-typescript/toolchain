@@ -29,6 +29,22 @@
           "doc": "Callback function that is executed when the permission request dialog is closed.",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The context of the calling script",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "data",
+              "doc": "A table that contains the response",
+              "types": [
+                "table"
+              ]
+            }
           ]
         }
       ],
@@ -66,6 +82,22 @@
           "doc": "Callback function that is executed when the permission request dialog is closed.",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The context of the calling script",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "data",
+              "doc": "A table that contains the response",
+              "types": [
+                "table"
+              ]
+            }
           ]
         }
       ],
@@ -177,7 +209,8 @@
           "doc": "Optional table with parameters and their values. A key in the table can either be one of the predefined constants below or a text which can be used to define a custom parameter.\n- `facebook.PARAM_CONTENT_ID` - `facebook.PARAM_CONTENT_TYPE` - `facebook.PARAM_CURRENCY` - `facebook.PARAM_DESCRIPTION` - `facebook.PARAM_LEVEL` - `facebook.PARAM_MAX_RATING_VALUE` - `facebook.PARAM_NUM_ITEMS` - `facebook.PARAM_PAYMENT_INFO_AVAILABLE` - `facebook.PARAM_REGISTRATION_METHOD` - `facebook.PARAM_SEARCH_STRING` - `facebook.PARAM_SOURCE_APPLICATION` - `facebook.PARAM_SUCCESS`",
           "types": [
             "table"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [],
@@ -235,6 +268,29 @@
           "doc": "Callback function that is called when the dialog is closed.",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The context of the calling script",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "result",
+              "doc": "table with dialog specific results. See above.",
+              "types": [
+                "table"
+              ]
+            },
+            {
+              "name": "error",
+              "doc": "Error message. If there is no error, `error` is `nil`.",
+              "types": [
+                "table"
+              ]
+            }
           ]
         }
       ],
@@ -266,6 +322,29 @@
           "doc": "Callback function that is called when information is ready.",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The context of the calling script",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "result",
+              "doc": "table with a deferred deep link information",
+              "types": [
+                "table"
+              ]
+            },
+            {
+              "name": "error",
+              "doc": "Error message. If there is no error, `error` is `nil`.",
+              "types": [
+                "table"
+              ]
+            }
           ]
         }
       ],
