@@ -14,6 +14,7 @@ import {
   libraryPathSegments,
   OFFICIAL_NOTE,
 } from "../lib/nav";
+import { stripPlatformMarkers } from "../lib/platform-icons";
 import {
   apiCardBadgeHtml,
   apiPageCardDescription,
@@ -45,7 +46,7 @@ function ApiCards({
             mono
             href={page.route}
             title={label(page)}
-            description={description ? htmlToDocText(description) : null}
+            description={description ? stripPlatformMarkers(htmlToDocText(description)) : null}
             badgeHtml={badgeHtml?.(page) || null}
           />
         );
@@ -413,7 +414,7 @@ export function LibraryIndex({
                     mono
                     href={page.route}
                     title={<LibraryPath owner="" repo={lib.label} namespace={page.namespace} />}
-                    description={apiPageCardDescription(page) || null}
+                    description={stripPlatformMarkers(apiPageCardDescription(page)) || null}
                   />
                 ))
               ),

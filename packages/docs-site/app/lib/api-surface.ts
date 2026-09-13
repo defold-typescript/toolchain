@@ -22,6 +22,7 @@ import {
   varargElementType,
 } from "@defold-typescript/types";
 import { slugify } from "./headings";
+import { platformDocText } from "./platform-icons";
 
 /**
  * Per-surface availability index, keyed by {@link symbolIdentityKey} so a symbol
@@ -514,7 +515,7 @@ function typeList(types: string[], mapType: MapType = mapDocType): string {
 function projectParams(list: ApiParameter[], mapType: MapType = mapDocType): ApiSymbolParam[] {
   return list.map((p) => ({
     name: p.name,
-    doc: htmlToDocText(p.doc),
+    doc: platformDocText(p.doc),
     types: normalizeTypes(p.types).map(mapType),
     isOptional: p.isOptional,
     ...(p.fields ? { fields: projectParams(p.fields, mapType) } : {}),
@@ -884,12 +885,12 @@ export function apiModuleSymbols(
     // per-overload description: each override row keeps its own `docs[i]` prose,
     // falling back to its paired ref-doc entry's description — or, unpaired, to
     // the shared entry-0 one — when absent/`null`.
-    const fixtureDoc = htmlToDocText(fn.description || fn.brief);
+    const fixtureDoc = platformDocText(fn.description || fn.brief);
     const overloadDoc = (i: number): string => {
       const authored = ov?.docs?.[i];
-      if (authored != null) return htmlToDocText(authored);
+      if (authored != null) return platformDocText(authored);
       const entry = paired?.[i];
-      return entry ? htmlToDocText(entry.description || entry.brief) : fixtureDoc;
+      return entry ? platformDocText(entry.description || entry.brief) : fixtureDoc;
     };
     const primaryEntry = rowEntry(0);
     const symbol: ApiSymbol = {
@@ -955,7 +956,7 @@ export function apiModuleSymbols(
       signature:
         authoritativeSignatureFor(authoritative, m.namespace, "VARIABLE", v.name, "") ??
         variableSignature(v, mapType),
-      docMarkdown: htmlToDocText(v.description || v.brief),
+      docMarkdown: platformDocText(v.description || v.brief),
       parameters: [],
       returnValues: [],
     };
@@ -974,7 +975,7 @@ export function apiModuleSymbols(
       signature:
         authoritativeSignatureFor(authoritative, m.namespace, "CONSTANT", cst.name, "") ??
         constantSignature(cst),
-      docMarkdown: htmlToDocText(cst.description || cst.brief),
+      docMarkdown: platformDocText(cst.description || cst.brief),
       parameters: [],
       returnValues: [],
     };
@@ -991,7 +992,7 @@ export function apiModuleSymbols(
       signature:
         authoritativeSignatureFor(authoritative, m.namespace, "PROPERTY", prop.name, "") ??
         propertySignature(prop, mapType),
-      docMarkdown: htmlToDocText(prop.description || prop.brief),
+      docMarkdown: platformDocText(prop.description || prop.brief),
       parameters: [],
       returnValues: [],
     };
@@ -1006,7 +1007,7 @@ export function apiModuleSymbols(
         kind: "type",
         name: typeMemberName(td.name, fn.name),
         signature: typeMemberFunctionSignature(td.name, fn, mapType, isLibrary),
-        docMarkdown: htmlToDocText(fn.description || fn.brief),
+        docMarkdown: platformDocText(fn.description || fn.brief),
         parameters: projectParams(fn.parameters, mapType),
         returnValues: projectParams(fn.returnValues, mapType),
       };
@@ -1021,7 +1022,7 @@ export function apiModuleSymbols(
         kind: "type",
         name: typeMemberName(td.name, prop.name),
         signature: typeMemberPropertySignature(td.name, prop, mapType),
-        docMarkdown: htmlToDocText(prop.description || prop.brief),
+        docMarkdown: platformDocText(prop.description || prop.brief),
         parameters: [],
         returnValues: [],
         ...(prop.deprecated !== undefined ? { deprecated: prop.deprecated } : {}),

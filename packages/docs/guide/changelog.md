@@ -16,6 +16,7 @@ What changed in each published `defold-typescript` toolchain release.
 - **Every Defold library is now listed under [Libraries](/libraries) › defold, which leads the sidebar and the Libraries page marked `(official)`.** Each `.script_api` a `defold` GitHub org repo ships gets a page at its pin, with setup steps matching that release, tag or commit, while repos with no typed API appear as cards linking to GitHub; [`iac`](/api/iac), [`iap`](/api/iap), [`push`](/api/push) and [`webview`](/api/webview) moved there from the engine reference, and their `/api/` links still work.
 - **Defold library pages now show each extension's constants, code examples, callback arguments and optional parameters.** Pages such as [`admob`](/api/admob) and [`iap`](/api/iap) gain a Constants section and the upstream usage examples, list a callback's arguments and a table's fields nested under their parameter, and mark optional parameters with `?` — all of which the pages previously left out.
 - **Lua and TypeScript code samples in the guide and API reference are labelled with their language.** A small badge names the language beside a sample's file name, or on the block's top edge when it has none, and copying a sample never includes it.
+- **Platform and caution markers in the API reference now show as icons with a hover label.** Notes such as "iOS only" or "attention" on engine and library pages like [`sys`](/api/sys) and [`adinfo`](/api/adinfo) used to vanish or read as `[icon:ios]` bracket text; library cards and symbol tooltips now drop the brackets.
 
 ### Fixed
 
