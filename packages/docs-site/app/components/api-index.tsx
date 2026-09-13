@@ -369,11 +369,13 @@ export function LibraryIndex({
       title="Libraries"
       lead={
         <p>
-          Third-party library API blocks.
+          Library API blocks, and Defold libraries that have no typed API.
           <br />
-          Their TypeScript definitions are maintained in this repo — generated from the upstream
-          sources that ship machine-readable types, and hand-forked where upstream ships none — each
-          pinned to an upstream commit or tag.
+          The TypeScript definitions behind each API block are maintained in this repo — generated
+          from the upstream sources that ship machine-readable types, and hand-forked where upstream
+          ships none — and pinned to an upstream commit or tag.
+          <br />A card marked "No typed API" links to the library's GitHub repository instead of a
+          page here.
           <br />
           <span class="mt-1 block text-sm text-text-faint">
             {total} namespace{total === 1 ? "" : "s"} documented.
