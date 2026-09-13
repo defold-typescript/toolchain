@@ -123,6 +123,78 @@
         }
       ],
       "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iap.PROVIDER_ID_AMAZON",
+      "brief": "provider id for Amazon",
+      "description": "provider id for Amazon"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iap.PROVIDER_ID_APPLE",
+      "brief": "provider id for Apple",
+      "description": "provider id for Apple"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iap.PROVIDER_ID_FACEBOOK",
+      "brief": "provider id for Facebook",
+      "description": "provider id for Facebook"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iap.PROVIDER_ID_GOOGLE",
+      "brief": "iap provider id for Google",
+      "description": "iap provider id for Google"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iap.REASON_UNSPECIFIED",
+      "brief": "unspecified error reason",
+      "description": "unspecified error reason"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iap.REASON_USER_CANCELED",
+      "brief": "user canceled reason",
+      "description": "user canceled reason"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iap.REASON_ITEM_ALREADY_OWNED",
+      "brief": "the item is already owned by the user",
+      "description": "the item is already owned by the user"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iap.TRANS_STATE_FAILED",
+      "brief": "transaction failed state",
+      "description": "transaction failed state"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iap.TRANS_STATE_PURCHASED",
+      "brief": "transaction purchased state",
+      "description": "transaction purchased state"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iap.TRANS_STATE_PURCHASING",
+      "brief": "transaction purchasing state This is an intermediate mode followed by TRANS_STATE_PURCHASED. Store provider support dependent.",
+      "description": "transaction purchasing state This is an intermediate mode followed by TRANS_STATE_PURCHASED. Store provider support dependent."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iap.TRANS_STATE_RESTORED",
+      "brief": "transaction restored state This is only available on store providers supporting restoring purchases.",
+      "description": "transaction restored state This is only available on store providers supporting restoring purchases."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "iap.TRANS_STATE_UNVERIFIED",
+      "brief": "transaction unverified state, requires verification of purchase",
+      "description": "transaction unverified state, requires verification of purchase"
     }
   ]
 }

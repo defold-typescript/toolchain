@@ -188,7 +188,7 @@ export function assignPageKeys(
 }
 
 interface SyncApiDocsModule {
-  scriptApiToFixtureJson: (text: string) => string;
+  scriptApiToDocsJson: (text: string) => string;
   EXTENSION_MANIFEST: readonly { namespace: string }[];
 }
 
@@ -240,6 +240,36 @@ function rawUrl(name: string, ref: string, path: string): string {
   return `https://raw.githubusercontent.com/${ORG}/${name}/${ref}/${path}`;
 }
 
+interface ApiDocJson {
+  info: { namespace: string };
+}
+
+// Lower every top-level table in one fetched `.script_api` to docs JSON,
+// skipping chunks that declare no table and naming the URL on any other error.
+function convertChunks(
+  text: string,
+  url: string,
+  toDocsJson: SyncApiDocsModule["scriptApiToDocsJson"],
+): ApiDocJson[] {
+  const docs: ApiDocJson[] = [];
+  for (const chunk of splitTopLevelEntries(text)) {
+    try {
+      docs.push(JSON.parse(toDocsJson(chunk)));
+    } catch (error) {
+      if (/no top-level `type: table`/.test((error as Error).message)) continue;
+      throw new Error(`defold-extensions: ${url}: ${(error as Error).message}`);
+    }
+  }
+  return docs;
+}
+
+function writeApiDoc(packageRoot: string, page: string, doc: unknown): void {
+  writeFileSync(
+    join(packageRoot, "defold-extensions", "api-doc", `${page}.json`),
+    `${JSON.stringify(doc, null, 2)}\n`,
+  );
+}
+
 /**
  * Survey the org through `github`, then write `defold-extensions.json` (sorted by
  * repo) and `defold-extensions/api-doc/<page>.json` under `packageRoot`. A
@@ -250,7 +280,7 @@ export async function syncDefoldExtensions(
   github: DefoldGitHub,
   reserved: ReservedNamespaces,
 ): Promise<DefoldExtensionsManifest> {
-  const { scriptApiToFixtureJson } = await loadSyncApiDocs(join(import.meta.dir, ".."));
+  const { scriptApiToDocsJson } = await loadSyncApiDocs(join(import.meta.dir, ".."));
 
   const surveyed: (Omit<DefoldExtensionEntry, "docs"> & {
     docs: { path: string; namespace: string }[];
@@ -277,14 +307,7 @@ export async function syncDefoldExtensions(
     for (const path of paths.sort()) {
       const url = rawUrl(repo.name, pin.ref, path);
       const text = await github.fetchText(url);
-      for (const chunk of splitTopLevelEntries(text)) {
-        let doc: { info: { namespace: string } };
-        try {
-          doc = JSON.parse(scriptApiToFixtureJson(chunk));
-        } catch (error) {
-          if (/no top-level `type: table`/.test((error as Error).message)) continue;
-          throw new Error(`defold-extensions: ${url}: ${(error as Error).message}`);
-        }
+      for (const doc of convertChunks(text, url, scriptApiToDocsJson)) {
         docs.push({ path, namespace: doc.info.namespace });
         docJson.set(docKey(repoUrl, path, doc.info.namespace), doc);
       }
@@ -311,8 +334,7 @@ export async function syncDefoldExtensions(
   mkdirSync(apiDocDir, { recursive: true });
   for (const entry of libraries) {
     for (const doc of entry.docs) {
-      const json = docJson.get(docKey(entry.repo, doc.path, doc.namespace));
-      writeFileSync(join(apiDocDir, `${doc.page}.json`), `${JSON.stringify(json, null, 2)}\n`);
+      writeApiDoc(packageRoot, doc.page, docJson.get(docKey(entry.repo, doc.path, doc.namespace)));
     }
   }
 
@@ -322,6 +344,44 @@ export async function syncDefoldExtensions(
     `${JSON.stringify(manifest, null, 2)}\n`,
   );
   return manifest;
+}
+
+/**
+ * Regenerate `defold-extensions/api-doc/<page>.json` from the committed manifest
+ * without resurveying: each doc is fetched at its recorded pin, so converter
+ * changes reach the pages while every pin and the manifest stay as they are.
+ */
+export async function reconvertDefoldExtensions(
+  packageRoot: string,
+  fetchText: (url: string) => Promise<string>,
+): Promise<number> {
+  const { scriptApiToDocsJson } = await loadSyncApiDocs(join(import.meta.dir, ".."));
+  const { libraries } = JSON.parse(
+    readFileSync(join(packageRoot, "defold-extensions.json"), "utf8"),
+  ) as DefoldExtensionsManifest;
+
+  let written = 0;
+  for (const entry of libraries) {
+    const name = repoName(entry.repo);
+    const converted = new Map<string, ApiDocJson[]>();
+    for (const doc of entry.docs) {
+      let chunks = converted.get(doc.path);
+      if (!chunks) {
+        const url = rawUrl(name, entry.ref, doc.path);
+        chunks = convertChunks(await fetchText(url), url, scriptApiToDocsJson);
+        converted.set(doc.path, chunks);
+      }
+      const json = chunks.find((chunk) => chunk.info.namespace === doc.namespace);
+      if (!json) {
+        throw new Error(
+          `defold-extensions: ${name}@${entry.ref} ${doc.path} no longer declares namespace "${doc.namespace}".`,
+        );
+      }
+      writeApiDoc(packageRoot, doc.page, json);
+      written++;
+    }
+  }
+  return written;
 }
 
 function gitHubToken(): string | undefined {
@@ -394,5 +454,8 @@ if (import.meta.main) {
     );
     const docs = manifest.libraries.reduce((sum, entry) => sum + entry.docs.length, 0);
     console.log(`surveyed ${manifest.libraries.length} Defold libraries, ${docs} docs`);
+  } else if (process.argv.includes("--reconvert")) {
+    const written = await reconvertDefoldExtensions(root, liveGitHub.fetchText);
+    console.log(`reconverted ${written} Defold library docs at their pinned refs`);
   }
 }

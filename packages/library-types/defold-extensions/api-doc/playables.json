@@ -247,6 +247,18 @@
       "description": "Reports a warning occurrence to YouTube. Takes no arguments and returns no value. Reporting is best-effort and rate-limited, so delivery is not guaranteed.",
       "parameters": [],
       "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "playables.CONTENT_TYPE_VIDEO",
+      "brief": "Opens a YouTube video.",
+      "description": "Opens a YouTube video."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "playables.CONTENT_TYPE_PLAYABLE",
+      "brief": "Opens another YouTube Playable.",
+      "description": "Opens another YouTube Playable."
     }
   ]
 }

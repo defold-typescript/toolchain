@@ -174,6 +174,66 @@
           ]
         }
       ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "push.NOTIFICATION_BADGE",
+      "brief": "Badge notification type.",
+      "description": "Badge notification type."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "push.NOTIFICATION_SOUND",
+      "brief": "Sound notification type.",
+      "description": "Sound notification type."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "push.NOTIFICATION_ALERT",
+      "brief": "Alert notification type.",
+      "description": "Alert notification type."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "push.ORIGIN_LOCAL",
+      "brief": "Local push origin.",
+      "description": "Local push origin."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "push.ORIGIN_REMOTE",
+      "brief": "Remote push origin.",
+      "description": "Remote push origin."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "push.PRIORITY_MIN",
+      "brief": "This priority is for items might not be shown to the user except under special circumstances, such as detailed notification logs. Only available on Android. [icon:android]",
+      "description": "This priority is for items might not be shown to the user except under special circumstances, such as detailed notification logs. Only available on Android. [icon:android]"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "push.PRIORITY_LOW",
+      "brief": "Priority for items that are less important. Only available on Android. [icon:android]",
+      "description": "Priority for items that are less important. Only available on Android. [icon:android]"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "push.PRIORITY_DEFAULT",
+      "brief": "The default notification priority. Only available on Android. [icon:android]",
+      "description": "The default notification priority. Only available on Android. [icon:android]"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "push.PRIORITY_HIGH",
+      "brief": "Priority for more important notifications or alerts. Only available on Android. [icon:android]",
+      "description": "Priority for more important notifications or alerts. Only available on Android. [icon:android]"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "push.PRIORITY_MAX",
+      "brief": "Set this priority for your application's most important items that require the user's prompt attention or input. Only available on Android. [icon:android]",
+      "description": "Set this priority for your application's most important items that require the user's prompt attention or input. Only available on Android. [icon:android]"
     }
   ]
 }

@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, test } from "bun:test";
-import { mkdtempSync, readFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import {
@@ -9,6 +9,7 @@ import {
   isDefoldLibrary,
   loadReservedNamespaces,
   type ReservedNamespaces,
+  reconvertDefoldExtensions,
   selectPin,
   syncDefoldExtensions,
 } from "./sync-defold-extensions";
@@ -165,6 +166,9 @@ describe("assignPageKeys", () => {
 const SCRIPT_API = (namespace: string) =>
   `- name: ${namespace}\n  type: table\n  desc: ${namespace} functions\n  members:\n  - name: init\n    type: function\n    desc: Initialize.\n`;
 
+const WITH_CONSTANT = (namespace: string) =>
+  `${SCRIPT_API(namespace)}  - name: PROVIDER_ID\n    type: number\n`;
+
 function fakeGitHub(): { github: DefoldGitHub; fetched: string[] } {
   const fetched: string[] = [];
   const repos: GitHubRepo[] = [
@@ -192,6 +196,7 @@ function fakeGitHub(): { github: DefoldGitHub; fetched: string[] } {
       fetched.push(url);
       const namespace = url.split("/").at(-1)?.replace(".script_api", "") ?? "";
       if (namespace === "rive") return `${SCRIPT_API("rive")}\n#****\n\n${SCRIPT_API("rive.cmd")}`;
+      if (namespace === "iap") return WITH_CONSTANT("iap");
       return SCRIPT_API(namespace);
     },
   };
@@ -258,9 +263,109 @@ describe("syncDefoldExtensions", () => {
     );
     expect(iapDoc.info.namespace).toBe("iap");
     expect(iapDoc.elements.map((e: { name: string }) => e.name)).toContain("iap.init");
+    expect(iapDoc.elements).toContainEqual({
+      type: "CONSTANT",
+      name: "iap.PROVIDER_ID",
+      brief: "",
+      description: "",
+    });
     const riveCmd = JSON.parse(
       readFileSync(join(out, "defold-extensions", "api-doc", "rive.cmd.json"), "utf8"),
     );
     expect(riveCmd.elements.map((e: { name: string }) => e.name)).toEqual(["rive.cmd.init"]);
+  });
+});
+
+function readApiDoc(
+  root: string,
+  page: string,
+): { info: { namespace: string }; elements: unknown[] } {
+  return JSON.parse(
+    readFileSync(join(root, "defold-extensions", "api-doc", `${page}.json`), "utf8"),
+  );
+}
+
+function stagePackageRoot(): string {
+  const root = mkdtempSync(join(tmpdir(), "defold-extensions-reconvert-"));
+  const manifest = {
+    libraries: [
+      {
+        repo: "https://github.com/defold/extension-proto",
+        ref: "deadbeef",
+        refKind: "commit",
+        license: "",
+        description: "",
+        docs: [{ path: "proto/api/proto.script_api", namespace: "proto", page: "extension-proto" }],
+      },
+      {
+        repo: "https://github.com/defold/extension-rive",
+        ref: "13.1.0",
+        refKind: "tag",
+        license: "MIT",
+        description: "extension-rive description",
+        docs: [
+          { path: "defold-rive/api/rive.script_api", namespace: "rive", page: "rive" },
+          { path: "defold-rive/api/rive.script_api", namespace: "rive.cmd", page: "rive.cmd" },
+        ],
+      },
+    ],
+  };
+  // Deliberately not the sync's own formatting, so a rewrite is observable.
+  writeFileSync(join(root, "defold-extensions.json"), JSON.stringify(manifest));
+  const apiDocDir = join(root, "defold-extensions", "api-doc");
+  mkdirSync(apiDocDir, { recursive: true });
+  for (const page of ["extension-proto", "rive", "rive.cmd"]) {
+    writeFileSync(
+      join(apiDocDir, `${page}.json`),
+      '{"info":{"namespace":"stale"},"elements":[]}\n',
+    );
+  }
+  return root;
+}
+
+describe("reconvertDefoldExtensions", () => {
+  test("rewrites every api-doc page at the manifest pins and leaves the manifest untouched", async () => {
+    const root = stagePackageRoot();
+    const manifestBefore = readFileSync(join(root, "defold-extensions.json"), "utf8");
+    const fetched: string[] = [];
+    await reconvertDefoldExtensions(root, async (url) => {
+      fetched.push(url);
+      if (url.endsWith("rive.script_api")) {
+        return `${SCRIPT_API("rive")}\n#****\n\n${WITH_CONSTANT("rive.cmd")}`;
+      }
+      return WITH_CONSTANT("proto");
+    });
+
+    expect([...new Set(fetched)].sort()).toEqual([
+      "https://raw.githubusercontent.com/defold/extension-proto/deadbeef/proto/api/proto.script_api",
+      "https://raw.githubusercontent.com/defold/extension-rive/13.1.0/defold-rive/api/rive.script_api",
+    ]);
+    expect(readFileSync(join(root, "defold-extensions.json"), "utf8")).toBe(manifestBefore);
+
+    const proto = readApiDoc(root, "extension-proto");
+    expect(proto.info.namespace).toBe("proto");
+    expect(proto.elements.map((e) => (e as { name: string }).name)).toEqual([
+      "proto.init",
+      "proto.PROVIDER_ID",
+    ]);
+    const rive = readApiDoc(root, "rive");
+    expect(rive.info.namespace).toBe("rive");
+    expect(rive.elements.map((e) => (e as { name: string }).name)).toEqual(["rive.init"]);
+    const riveCmd = readApiDoc(root, "rive.cmd");
+    expect(riveCmd.info.namespace).toBe("rive.cmd");
+    expect(riveCmd.elements).toContainEqual({
+      type: "CONSTANT",
+      name: "rive.cmd.PROVIDER_ID",
+      brief: "",
+      description: "",
+    });
+  });
+
+  test("throws naming the repo, ref and namespace when a pinned doc no longer declares it", async () => {
+    const root = stagePackageRoot();
+    const reconvert = reconvertDefoldExtensions(root, async (url) =>
+      url.endsWith("rive.script_api") ? SCRIPT_API("rive") : SCRIPT_API("proto"),
+    );
+    await expect(reconvert).rejects.toThrow(/extension-rive.*13\.1\.0.*rive\.cmd/);
   });
 });

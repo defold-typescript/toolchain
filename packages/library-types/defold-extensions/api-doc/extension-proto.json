@@ -924,6 +924,42 @@
           ]
         }
       ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "proto.TESTP3__LANGUAGE_LANGUAGE_LUA",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "proto.TESTP3__LANGUAGE_LANGUAGE_CPP",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "proto.TESTP3__LANGUAGE_LANGUAGE_JAVA",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "proto.TESTP2__LANGUAGE_LANGUAGE_LUA",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "proto.TESTP2__LANGUAGE_LANGUAGE_CPP",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "proto.TESTP2__LANGUAGE_LANGUAGE_JAVA",
+      "brief": "",
+      "description": ""
     }
   ]
 }

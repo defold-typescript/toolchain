@@ -123,6 +123,24 @@
         }
       ],
       "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "videoplayer.VIDEO_EVENT_READY",
+      "brief": "Video is prepared; data contains width/height.",
+      "description": "Video is prepared; data contains width/height."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "videoplayer.VIDEO_EVENT_FINISHED",
+      "brief": "Playback finished.",
+      "description": "Playback finished."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "videoplayer.VIDEO_EVENT_FAILED",
+      "brief": "Prepare/playback failed.",
+      "description": "Prepare/playback failed."
     }
   ]
 }

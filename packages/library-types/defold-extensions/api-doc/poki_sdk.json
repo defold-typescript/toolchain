@@ -257,6 +257,36 @@
         }
       ],
       "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "poki_sdk.COMMERCIAL_BREAK_SUCCESS",
+      "brief": "A commercial break finished or did not display.",
+      "description": "A commercial break finished or did not display."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "poki_sdk.COMMERCIAL_BREAK_START",
+      "brief": "A commercial break started.",
+      "description": "A commercial break started."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "poki_sdk.REWARDED_BREAK_ERROR",
+      "brief": "A rewarded break failed or the reward should not be granted.",
+      "description": "A rewarded break failed or the reward should not be granted."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "poki_sdk.REWARDED_BREAK_SUCCESS",
+      "brief": "A rewarded break completed and the reward may be granted.",
+      "description": "A rewarded break completed and the reward may be granted."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "poki_sdk.REWARDED_BREAK_START",
+      "brief": "A rewarded break started.",
+      "description": "A rewarded break started."
     }
   ]
 }

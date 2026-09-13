@@ -4021,6 +4021,1830 @@
         }
       ],
       "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.MOUSEBUTTON_LEFT",
+      "brief": "MOUSEBUTTON_LEFT\n",
+      "description": "MOUSEBUTTON_LEFT\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.MOUSEBUTTON_RIGHT",
+      "brief": "MOUSEBUTTON_RIGHT\n",
+      "description": "MOUSEBUTTON_RIGHT\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.MOUSEBUTTON_MIDDLE",
+      "brief": "MOUSEBUTTON_MIDDLE\n",
+      "description": "MOUSEBUTTON_MIDDLE\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.SELECTABLE_DONT_CLOSE_POPUPS",
+      "brief": "SELECTABLE_DONT_CLOSE_POPUPS\n",
+      "description": "SELECTABLE_DONT_CLOSE_POPUPS\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.SELECTABLE_SPAN_ALL_COLUMNS",
+      "brief": "SELECTABLE_SPAN_ALL_COLUMNS\n",
+      "description": "SELECTABLE_SPAN_ALL_COLUMNS\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.SELECTABLE_ALLOW_DOUBLE_CLICK",
+      "brief": "SELECTABLE_ALLOW_DOUBLE_CLICK\n",
+      "description": "SELECTABLE_ALLOW_DOUBLE_CLICK\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.SELECTABLE_DISABLED",
+      "brief": "SELECTABLE_DISABLED\n",
+      "description": "SELECTABLE_DISABLED\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.SELECTABLE_ALLOW_ITEM_OVERLAP",
+      "brief": "SELECTABLE_ALLOW_ITEM_OVERLAP\n",
+      "description": "SELECTABLE_ALLOW_ITEM_OVERLAP\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABITEM_UNSAVED_DOCUMENT",
+      "brief": "TABITEM_UNSAVED_DOCUMENT\n",
+      "description": "TABITEM_UNSAVED_DOCUMENT\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABITEM_SET_SELECTED",
+      "brief": "TABITEM_SET_SELECTED\n",
+      "description": "TABITEM_SET_SELECTED\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABITEM_NO_CLOSE_WITH_MIDDLE_MOUSE_BUTTON",
+      "brief": "TABITEM_NO_CLOSE_WITH_MIDDLE_MOUSE_BUTTON\n",
+      "description": "TABITEM_NO_CLOSE_WITH_MIDDLE_MOUSE_BUTTON\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABITEM_NO_PUSH_ID",
+      "brief": "TABITEM_NO_PUSH_ID\n",
+      "description": "TABITEM_NO_PUSH_ID\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABITEM_NO_TOOLTIP",
+      "brief": "TABITEM_NO_TOOLTIP\n",
+      "description": "TABITEM_NO_TOOLTIP\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABITEM_NO_REORDER",
+      "brief": "TABITEM_NO_REORDER\n",
+      "description": "TABITEM_NO_REORDER\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABITEM_LEADING",
+      "brief": "TABITEM_LEADING\n",
+      "description": "TABITEM_LEADING\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABITEM_TRAILING",
+      "brief": "TABITEM_TRAILING\n",
+      "description": "TABITEM_TRAILING\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.FOCUSED_CHILD_WINDOWS",
+      "brief": "FOCUSED_CHILD_WINDOWS\n",
+      "description": "FOCUSED_CHILD_WINDOWS\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.FOCUSED_ROOT_WINDOW",
+      "brief": "FOCUSED_ROOT_WINDOW\n",
+      "description": "FOCUSED_ROOT_WINDOW\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.FOCUSED_ANY_WINDOW",
+      "brief": "FOCUSED_ANY_WINDOW\n",
+      "description": "FOCUSED_ANY_WINDOW\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.FOCUSED_ROOT_AND_CHILD_WINDOWS",
+      "brief": "FOCUSED_ROOT_AND_CHILD_WINDOWS\n",
+      "description": "FOCUSED_ROOT_AND_CHILD_WINDOWS\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TREENODE_SELECTED",
+      "brief": "TREENODE_SELECTED\n",
+      "description": "TREENODE_SELECTED\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TREENODE_FRAMED",
+      "brief": "TREENODE_FRAMED\n",
+      "description": "TREENODE_FRAMED\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TREENODE_ALLOW_ITEM_OVERLAP",
+      "brief": "TREENODE_ALLOW_ITEM_OVERLAP\n",
+      "description": "TREENODE_ALLOW_ITEM_OVERLAP\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TREENODE_NO_TREE_PUSH_ON_OPEN",
+      "brief": "TREENODE_NO_TREE_PUSH_ON_OPEN\n",
+      "description": "TREENODE_NO_TREE_PUSH_ON_OPEN\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TREENODE_NO_AUTO_OPEN_ON_LOG",
+      "brief": "TREENODE_NO_AUTO_OPEN_ON_LOG\n",
+      "description": "TREENODE_NO_AUTO_OPEN_ON_LOG\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TREENODE_DEFAULT_OPEN",
+      "brief": "TREENODE_DEFAULT_OPEN\n",
+      "description": "TREENODE_DEFAULT_OPEN\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TREENODE_OPEN_ON_DOUBLE_CLICK",
+      "brief": "TREENODE_OPEN_ON_DOUBLE_CLICK\n",
+      "description": "TREENODE_OPEN_ON_DOUBLE_CLICK\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TREENODE_OPEN_ON_ARROW",
+      "brief": "TREENODE_OPEN_ON_ARROW\n",
+      "description": "TREENODE_OPEN_ON_ARROW\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TREENODE_LEAF",
+      "brief": "TREENODE_LEAF\n",
+      "description": "TREENODE_LEAF\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TREENODE_BULLET",
+      "brief": "TREENODE_BULLET\n",
+      "description": "TREENODE_BULLET\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TREENODE_FRAME_PADDING",
+      "brief": "TREENODE_FRAME_PADDING\n",
+      "description": "TREENODE_FRAME_PADDING\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TREENODE_SPAN_AVAILABLE_WIDTH",
+      "brief": "TREENODE_SPAN_AVAILABLE_WIDTH\n",
+      "description": "TREENODE_SPAN_AVAILABLE_WIDTH\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TREENODE_SPAN_FULL_WIDTH",
+      "brief": "TREENODE_SPAN_FULL_WIDTH\n",
+      "description": "TREENODE_SPAN_FULL_WIDTH\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TREENODE_NAV_LEFT_JUMPS_BACK_HERE",
+      "brief": "TREENODE_NAV_LEFT_JUMPS_BACK_HERE\n",
+      "description": "TREENODE_NAV_LEFT_JUMPS_BACK_HERE\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.KEY_TAB",
+      "brief": "KEY_TAB\n",
+      "description": "KEY_TAB\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.KEY_LEFTARROW",
+      "brief": "KEY_LEFTARROW\n",
+      "description": "KEY_LEFTARROW\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.KEY_RIGHTARROW",
+      "brief": "KEY_RIGHTARROW\n",
+      "description": "KEY_RIGHTARROW\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.KEY_UPARROW",
+      "brief": "KEY_UPARROW\n",
+      "description": "KEY_UPARROW\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.KEY_DOWNARROW",
+      "brief": "KEY_DOWNARROW\n",
+      "description": "KEY_DOWNARROW\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.KEY_PAGEUP",
+      "brief": "KEY_PAGEUP\n",
+      "description": "KEY_PAGEUP\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.KEY_PAGEDOWN",
+      "brief": "KEY_PAGEDOWN\n",
+      "description": "KEY_PAGEDOWN\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.KEY_HOME",
+      "brief": "KEY_HOME\n",
+      "description": "KEY_HOME\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.KEY_END",
+      "brief": "KEY_END\n",
+      "description": "KEY_END\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.KEY_INSERT",
+      "brief": "KEY_INSERT\n",
+      "description": "KEY_INSERT\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.KEY_DELETE",
+      "brief": "KEY_DELETE\n",
+      "description": "KEY_DELETE\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.KEY_BACKSPACE",
+      "brief": "KEY_BACKSPACE\n",
+      "description": "KEY_BACKSPACE\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.KEY_SPACE",
+      "brief": "KEY_SPACE\n",
+      "description": "KEY_SPACE\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.KEY_ENTER",
+      "brief": "KEY_ENTER\n",
+      "description": "KEY_ENTER\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.KEY_ESCAPE",
+      "brief": "KEY_ESCAPE\n",
+      "description": "KEY_ESCAPE\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.KEY_KEYPADENTER",
+      "brief": "KEY_KEYPADENTER\n",
+      "description": "KEY_KEYPADENTER\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.KEY_A",
+      "brief": "KEY_A\n",
+      "description": "KEY_A\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.KEY_C",
+      "brief": "KEY_C\n",
+      "description": "KEY_C\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.KEY_V",
+      "brief": "KEY_V\n",
+      "description": "KEY_V\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.KEY_X",
+      "brief": "KEY_X\n",
+      "description": "KEY_X\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.KEY_Y",
+      "brief": "KEY_Y\n",
+      "description": "KEY_Y\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.KEY_Z",
+      "brief": "KEY_Z\n",
+      "description": "KEY_Z\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_Text",
+      "brief": "ImGuiCol_Text\n",
+      "description": "ImGuiCol_Text\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_TextDisabled",
+      "brief": "ImGuiCol_TextDisabled\n",
+      "description": "ImGuiCol_TextDisabled\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_WindowBg",
+      "brief": "ImGuiCol_WindowBg\n",
+      "description": "ImGuiCol_WindowBg\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_ChildBg",
+      "brief": "ImGuiCol_ChildBg\n",
+      "description": "ImGuiCol_ChildBg\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_PopupBg",
+      "brief": "ImGuiCol_PopupBg\n",
+      "description": "ImGuiCol_PopupBg\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_Border",
+      "brief": "ImGuiCol_Border\n",
+      "description": "ImGuiCol_Border\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_BorderShadow",
+      "brief": "ImGuiCol_BorderShadow\n",
+      "description": "ImGuiCol_BorderShadow\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_FrameBg",
+      "brief": "ImGuiCol_FrameBg\n",
+      "description": "ImGuiCol_FrameBg\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_FrameBgHovered",
+      "brief": "ImGuiCol_FrameBgHovered\n",
+      "description": "ImGuiCol_FrameBgHovered\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_FrameBgActive",
+      "brief": "ImGuiCol_FrameBgActive\n",
+      "description": "ImGuiCol_FrameBgActive\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_TitleBg",
+      "brief": "ImGuiCol_TitleBg\n",
+      "description": "ImGuiCol_TitleBg\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_TitleBgActive",
+      "brief": "ImGuiCol_TitleBgActive\n",
+      "description": "ImGuiCol_TitleBgActive\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_TitleBgCollapsed",
+      "brief": "ImGuiCol_TitleBgCollapsed\n",
+      "description": "ImGuiCol_TitleBgCollapsed\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_MenuBarBg",
+      "brief": "ImGuiCol_MenuBarBg\n",
+      "description": "ImGuiCol_MenuBarBg\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_ScrollbarBg",
+      "brief": "ImGuiCol_ScrollbarBg\n",
+      "description": "ImGuiCol_ScrollbarBg\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_ScrollbarGrab",
+      "brief": "ImGuiCol_ScrollbarGrab\n",
+      "description": "ImGuiCol_ScrollbarGrab\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_ScrollbarGrabHovered",
+      "brief": "ImGuiCol_ScrollbarGrabHovered\n",
+      "description": "ImGuiCol_ScrollbarGrabHovered\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_ScrollbarGrabActive",
+      "brief": "ImGuiCol_ScrollbarGrabActive\n",
+      "description": "ImGuiCol_ScrollbarGrabActive\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_CheckMark",
+      "brief": "ImGuiCol_CheckMark\n",
+      "description": "ImGuiCol_CheckMark\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_SliderGrab",
+      "brief": "ImGuiCol_SliderGrab\n",
+      "description": "ImGuiCol_SliderGrab\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_SliderGrabActive",
+      "brief": "ImGuiCol_SliderGrabActive\n",
+      "description": "ImGuiCol_SliderGrabActive\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_Button",
+      "brief": "ImGuiCol_Button\n",
+      "description": "ImGuiCol_Button\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_ButtonHovered",
+      "brief": "ImGuiCol_ButtonHovered\n",
+      "description": "ImGuiCol_ButtonHovered\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_ButtonActive",
+      "brief": "ImGuiCol_ButtonActive\n",
+      "description": "ImGuiCol_ButtonActive\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_Header",
+      "brief": "ImGuiCol_Header\n",
+      "description": "ImGuiCol_Header\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_HeaderHovered",
+      "brief": "ImGuiCol_HeaderHovered\n",
+      "description": "ImGuiCol_HeaderHovered\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_HeaderActive",
+      "brief": "ImGuiCol_HeaderActive\n",
+      "description": "ImGuiCol_HeaderActive\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_Separator",
+      "brief": "ImGuiCol_Separator\n",
+      "description": "ImGuiCol_Separator\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_SeparatorHovered",
+      "brief": "ImGuiCol_SeparatorHovered\n",
+      "description": "ImGuiCol_SeparatorHovered\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_SeparatorActive",
+      "brief": "ImGuiCol_SeparatorActive\n",
+      "description": "ImGuiCol_SeparatorActive\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_ResizeGrip",
+      "brief": "ImGuiCol_ResizeGrip\n",
+      "description": "ImGuiCol_ResizeGrip\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_ResizeGripHovered",
+      "brief": "ImGuiCol_ResizeGripHovered\n",
+      "description": "ImGuiCol_ResizeGripHovered\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_ResizeGripActive",
+      "brief": "ImGuiCol_ResizeGripActive\n",
+      "description": "ImGuiCol_ResizeGripActive\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_Tab",
+      "brief": "ImGuiCol_Tab\n",
+      "description": "ImGuiCol_Tab\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_TabHovered",
+      "brief": "ImGuiCol_TabHovered\n",
+      "description": "ImGuiCol_TabHovered\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_TabActive",
+      "brief": "ImGuiCol_TabActive\n",
+      "description": "ImGuiCol_TabActive\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_TabUnfocused",
+      "brief": "ImGuiCol_TabUnfocused\n",
+      "description": "ImGuiCol_TabUnfocused\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_TabUnfocusedActive",
+      "brief": "ImGuiCol_TabUnfocusedActive\n",
+      "description": "ImGuiCol_TabUnfocusedActive\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_PlotLines",
+      "brief": "ImGuiCol_PlotLines\n",
+      "description": "ImGuiCol_PlotLines\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_PlotLinesHovered",
+      "brief": "ImGuiCol_PlotLinesHovered\n",
+      "description": "ImGuiCol_PlotLinesHovered\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_PlotHistogram",
+      "brief": "ImGuiCol_PlotHistogram\n",
+      "description": "ImGuiCol_PlotHistogram\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_PlotHistogramHovered",
+      "brief": "ImGuiCol_PlotHistogramHovered\n",
+      "description": "ImGuiCol_PlotHistogramHovered\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_TableHeaderBg",
+      "brief": "ImGuiCol_TableHeaderBg\n",
+      "description": "ImGuiCol_TableHeaderBg\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_TableBorderStrong",
+      "brief": "ImGuiCol_TableBorderStrong\n",
+      "description": "ImGuiCol_TableBorderStrong\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_TableBorderLight",
+      "brief": "ImGuiCol_TableBorderLight\n",
+      "description": "ImGuiCol_TableBorderLight\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_TableRowBg",
+      "brief": "ImGuiCol_TableRowBg\n",
+      "description": "ImGuiCol_TableRowBg\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_TableRowBgAlt",
+      "brief": "ImGuiCol_TableRowBgAlt\n",
+      "description": "ImGuiCol_TableRowBgAlt\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_TextSelectedBg",
+      "brief": "ImGuiCol_TextSelectedBg\n",
+      "description": "ImGuiCol_TextSelectedBg\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_DragDropTarget",
+      "brief": "ImGuiCol_DragDropTarget\n",
+      "description": "ImGuiCol_DragDropTarget\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_NavHighlight",
+      "brief": "ImGuiCol_NavHighlight\n",
+      "description": "ImGuiCol_NavHighlight\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_NavWindowingHighlight",
+      "brief": "ImGuiCol_NavWindowingHighlight\n",
+      "description": "ImGuiCol_NavWindowingHighlight\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_NavWindowingDimBg",
+      "brief": "ImGuiCol_NavWindowingDimBg\n",
+      "description": "ImGuiCol_NavWindowingDimBg\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.ImGuiCol_ModalWindowDimBg",
+      "brief": "ImGuiCol_ModalWindowDimBg\n",
+      "description": "ImGuiCol_ModalWindowDimBg\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLECOLUMN_NONE",
+      "brief": "TABLECOLUMN_NONE\n",
+      "description": "TABLECOLUMN_NONE\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLECOLUMN_DEFAULTHIDE",
+      "brief": "TABLECOLUMN_DEFAULTHIDE Default as a hidden/disabled column.\n",
+      "description": "TABLECOLUMN_DEFAULTHIDE Default as a hidden/disabled column.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLECOLUMN_DEFAULTSORT",
+      "brief": "TABLECOLUMN_DEFAULTSORT Default as a sorting column.\n",
+      "description": "TABLECOLUMN_DEFAULTSORT Default as a sorting column.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLECOLUMN_WIDTHSTRETCH",
+      "brief": "TABLECOLUMN_WIDTHSTRETCH Column will stretch. Preferable with horizontal scrolling disabled (default if table sizing policy is _SizingStretchSame or _SizingStretchProp).\n",
+      "description": "TABLECOLUMN_WIDTHSTRETCH Column will stretch. Preferable with horizontal scrolling disabled (default if table sizing policy is _SizingStretchSame or _SizingStretchProp).\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLECOLUMN_WIDTHFIXED",
+      "brief": "TABLECOLUMN_WIDTHFIXED Column will not stretch. Preferable with horizontal scrolling enabled (default if table sizing policy is _SizingFixedFit and table is resizable).\n",
+      "description": "TABLECOLUMN_WIDTHFIXED Column will not stretch. Preferable with horizontal scrolling enabled (default if table sizing policy is _SizingFixedFit and table is resizable).\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLECOLUMN_NORESIZE",
+      "brief": "TABLECOLUMN_NORESIZE Disable manual resizing.\n",
+      "description": "TABLECOLUMN_NORESIZE Disable manual resizing.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLECOLUMN_NOREORDER",
+      "brief": "TABLECOLUMN_NOREORDER Disable manual reordering this column, this will also prevent other columns from crossing over this column.\n",
+      "description": "TABLECOLUMN_NOREORDER Disable manual reordering this column, this will also prevent other columns from crossing over this column.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLECOLUMN_NOHIDE",
+      "brief": "TABLECOLUMN_NOHIDE Disable ability to hide/disable this column.\n",
+      "description": "TABLECOLUMN_NOHIDE Disable ability to hide/disable this column.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLECOLUMN_NOCLIP",
+      "brief": "TABLECOLUMN_NOCLIP Disable clipping for this column (all NoClip columns will render in a same draw command).\n",
+      "description": "TABLECOLUMN_NOCLIP Disable clipping for this column (all NoClip columns will render in a same draw command).\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLECOLUMN_NOSORT",
+      "brief": "TABLECOLUMN_NOSORT Disable ability to sort on this field (even if ImGuiTableFlags_Sortable is set on the table).\n",
+      "description": "TABLECOLUMN_NOSORT Disable ability to sort on this field (even if ImGuiTableFlags_Sortable is set on the table).\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLECOLUMN_NOSORTASCENDING",
+      "brief": "TABLECOLUMN_NOSORTASCENDING Disable ability to sort in the ascending direction.\n",
+      "description": "TABLECOLUMN_NOSORTASCENDING Disable ability to sort in the ascending direction.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLECOLUMN_NOSORTDESCENDING",
+      "brief": "TABLECOLUMN_NOSORTDESCENDING Disable ability to sort in the descending direction.\n",
+      "description": "TABLECOLUMN_NOSORTDESCENDING Disable ability to sort in the descending direction.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLECOLUMN_NOHEADERWIDTH",
+      "brief": "TABLECOLUMN_NOHEADERWIDTH Disable header text width contribution to automatic column width.\n",
+      "description": "TABLECOLUMN_NOHEADERWIDTH Disable header text width contribution to automatic column width.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLECOLUMN_PREFERSORTASCENDING",
+      "brief": "TABLECOLUMN_PREFERSORTASCENDING Make the initial sort direction Ascending when first sorting on this column (default).\n",
+      "description": "TABLECOLUMN_PREFERSORTASCENDING Make the initial sort direction Ascending when first sorting on this column (default).\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLECOLUMN_PREFERSORTDESCENDING",
+      "brief": "TABLECOLUMN_PREFERSORTDESCENDING Make the initial sort direction Descending when first sorting on this column.\n",
+      "description": "TABLECOLUMN_PREFERSORTDESCENDING Make the initial sort direction Descending when first sorting on this column.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLECOLUMN_INDENTENABLE",
+      "brief": "TABLECOLUMN_INDENTENABLE Use current Indent value when entering cell (default for column 0).\n",
+      "description": "TABLECOLUMN_INDENTENABLE Use current Indent value when entering cell (default for column 0).\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLECOLUMN_INDENTDISABLE",
+      "brief": "TABLECOLUMN_INDENTDISABLE Ignore current Indent value when entering cell (default for columns > 0). Indentation changes _within_ the cell will still be honored.\n",
+      "description": "TABLECOLUMN_INDENTDISABLE Ignore current Indent value when entering cell (default for columns > 0). Indentation changes _within_ the cell will still be honored.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_NONE",
+      "brief": "TABLE_NONE\n",
+      "description": "TABLE_NONE\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_RESIZABLE",
+      "brief": "TABLE_RESIZABLE Enable resizing columns.\n",
+      "description": "TABLE_RESIZABLE Enable resizing columns.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_REORDERABLE",
+      "brief": "TABLE_REORDERABLE Enable reordering columns in header row (need calling TableSetupColumn() + TableHeadersRow() to display headers)\n",
+      "description": "TABLE_REORDERABLE Enable reordering columns in header row (need calling TableSetupColumn() + TableHeadersRow() to display headers)\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_HIDEABLE",
+      "brief": "TABLE_HIDEABLE Enable hiding/disabling columns in context menu.\n",
+      "description": "TABLE_HIDEABLE Enable hiding/disabling columns in context menu.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_SORTABLE",
+      "brief": "TABLE_SORTABLE Enable sorting. Call TableGetSortSpecs() to obtain sort specs. Also see ImGuiTableFlags_SortMulti and ImGuiTableFlags_SortTristate.\n",
+      "description": "TABLE_SORTABLE Enable sorting. Call TableGetSortSpecs() to obtain sort specs. Also see ImGuiTableFlags_SortMulti and ImGuiTableFlags_SortTristate.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_NOSAVEDSETTINGS",
+      "brief": "TABLE_NOSAVEDSETTINGS Disable persisting columns order, width and sort settings in the .ini file.\n",
+      "description": "TABLE_NOSAVEDSETTINGS Disable persisting columns order, width and sort settings in the .ini file.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_CONTEXTMENUINBODY",
+      "brief": "TABLE_CONTEXTMENUINBODY Right-click on columns body/contents will display table context menu. By default it is available in TableHeadersRow().\n",
+      "description": "TABLE_CONTEXTMENUINBODY Right-click on columns body/contents will display table context menu. By default it is available in TableHeadersRow().\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_ROWBG",
+      "brief": "TABLE_ROWBG Set each RowBg color with ImGuiCol_TableRowBg or ImGuiCol_TableRowBgAlt (equivalent of calling TableSetBgColor with ImGuiTableBgFlags_RowBg0 on each row manually)\n",
+      "description": "TABLE_ROWBG Set each RowBg color with ImGuiCol_TableRowBg or ImGuiCol_TableRowBgAlt (equivalent of calling TableSetBgColor with ImGuiTableBgFlags_RowBg0 on each row manually)\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_BORDERSINNERH",
+      "brief": "TABLE_BORDERSINNERH Draw horizontal borders between rows.\n",
+      "description": "TABLE_BORDERSINNERH Draw horizontal borders between rows.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_BORDERSOUTERH",
+      "brief": "TABLE_BORDERSOUTERH Draw horizontal borders at the top and bottom.\n",
+      "description": "TABLE_BORDERSOUTERH Draw horizontal borders at the top and bottom.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_BORDERSINNERV",
+      "brief": "TABLE_BORDERSINNERV Draw vertical borders between columns.\n",
+      "description": "TABLE_BORDERSINNERV Draw vertical borders between columns.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_BORDERSOUTERV",
+      "brief": "TABLE_BORDERSOUTERV Draw vertical borders on the left and right sides.\n",
+      "description": "TABLE_BORDERSOUTERV Draw vertical borders on the left and right sides.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_BORDERSH",
+      "brief": "TABLE_BORDERSH Draw horizontal borders.\n",
+      "description": "TABLE_BORDERSH Draw horizontal borders.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_BORDERSV",
+      "brief": "TABLE_BORDERSV Draw vertical borders.\n",
+      "description": "TABLE_BORDERSV Draw vertical borders.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_BORDERSINNER",
+      "brief": "TABLE_BORDERSINNER Draw inner borders.\n",
+      "description": "TABLE_BORDERSINNER Draw inner borders.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_BORDERSOUTER",
+      "brief": "TABLE_BORDERSOUTER Draw outer borders.\n",
+      "description": "TABLE_BORDERSOUTER Draw outer borders.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_BORDERS",
+      "brief": "TABLE_BORDERS Draw all borders.\n",
+      "description": "TABLE_BORDERS Draw all borders.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_NOBORDERSINBODY",
+      "brief": "TABLE_NOBORDERSINBODY [ALPHA] Disable vertical borders in columns Body (borders will always appears in Headers). -> May move to style\n",
+      "description": "TABLE_NOBORDERSINBODY [ALPHA] Disable vertical borders in columns Body (borders will always appears in Headers). -> May move to style\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_NOBORDERSINBODYUNTILRESIZE",
+      "brief": "TABLE_NOBORDERSINBODYUNTILRESIZE [ALPHA] Disable vertical borders in columns Body until hovered for resize (borders will always appears in Headers). -> May move to style\n",
+      "description": "TABLE_NOBORDERSINBODYUNTILRESIZE [ALPHA] Disable vertical borders in columns Body until hovered for resize (borders will always appears in Headers). -> May move to style\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_SIZINGFIXEDFIT",
+      "brief": "TABLE_SIZINGFIXEDFIT Columns default to _WidthFixed or _WidthAuto (if resizable or not resizable), matching contents width.\n",
+      "description": "TABLE_SIZINGFIXEDFIT Columns default to _WidthFixed or _WidthAuto (if resizable or not resizable), matching contents width.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_SIZINGFIXEDSAME",
+      "brief": "TABLE_SIZINGFIXEDSAME Columns default to _WidthFixed or _WidthAuto (if resizable or not resizable), matching the maximum contents width of all columns. Implicitly enable ImGuiTableFlags_NoKeepColumnsVisible.\n",
+      "description": "TABLE_SIZINGFIXEDSAME Columns default to _WidthFixed or _WidthAuto (if resizable or not resizable), matching the maximum contents width of all columns. Implicitly enable ImGuiTableFlags_NoKeepColumnsVisible.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_SIZINGSTRETCHPROP",
+      "brief": "TABLE_SIZINGSTRETCHPROP Columns default to _WidthStretch with default weights proportional to each columns contents widths.\n",
+      "description": "TABLE_SIZINGSTRETCHPROP Columns default to _WidthStretch with default weights proportional to each columns contents widths.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_SIZINGSTRETCHSAME",
+      "brief": "TABLE_SIZINGSTRETCHSAME Columns default to _WidthStretch with default weights all equal, unless overriden by TableSetupColumn().\n",
+      "description": "TABLE_SIZINGSTRETCHSAME Columns default to _WidthStretch with default weights all equal, unless overriden by TableSetupColumn().\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_NOHOSTEXTENDX",
+      "brief": "TABLE_NOHOSTEXTENDX Make outer width auto-fit to columns, overriding outer_size.x value. Only available when ScrollX/ScrollY are disabled and Stretch columns are not used.\n",
+      "description": "TABLE_NOHOSTEXTENDX Make outer width auto-fit to columns, overriding outer_size.x value. Only available when ScrollX/ScrollY are disabled and Stretch columns are not used.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_NOHOSTEXTENDY",
+      "brief": "TABLE_NOHOSTEXTENDY Make outer height stop exactly at outer_size.y (prevent auto-extending table past the limit). Only available when ScrollX/ScrollY are disabled. Data below the limit will be clipped and not visible.\n",
+      "description": "TABLE_NOHOSTEXTENDY Make outer height stop exactly at outer_size.y (prevent auto-extending table past the limit). Only available when ScrollX/ScrollY are disabled. Data below the limit will be clipped and not visible.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_NOKEEPCOLUMNSVISIBLE",
+      "brief": "TABLE_NOKEEPCOLUMNSVISIBLE Disable keeping column always minimally visible when ScrollX is off and table gets too small. Not recommended if columns are resizable.\n",
+      "description": "TABLE_NOKEEPCOLUMNSVISIBLE Disable keeping column always minimally visible when ScrollX is off and table gets too small. Not recommended if columns are resizable.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_PRECISEWIDTHS",
+      "brief": "TABLE_PRECISEWIDTHS Disable distributing remainder width to stretched columns (width allocation on a 100-wide table with 3 columns: Without this flag: 33,33,34. With this flag: 33,33,33). With larger number of columns, resizing will appear to be less smooth.\n",
+      "description": "TABLE_PRECISEWIDTHS Disable distributing remainder width to stretched columns (width allocation on a 100-wide table with 3 columns: Without this flag: 33,33,34. With this flag: 33,33,33). With larger number of columns, resizing will appear to be less smooth.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_NOCLIP",
+      "brief": "TABLE_NOCLIP Disable clipping rectangle for every individual columns (reduce draw command count, items will be able to overflow into other columns). Generally incompatible with TableSetupScrollFreeze().\n",
+      "description": "TABLE_NOCLIP Disable clipping rectangle for every individual columns (reduce draw command count, items will be able to overflow into other columns). Generally incompatible with TableSetupScrollFreeze().\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_PADOUTERX",
+      "brief": "TABLE_PADOUTERX Default if BordersOuterV is on. Enable outer-most padding. Generally desirable if you have headers.\n",
+      "description": "TABLE_PADOUTERX Default if BordersOuterV is on. Enable outer-most padding. Generally desirable if you have headers.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_NOPADOUTERX",
+      "brief": "TABLE_NOPADOUTERX Default if BordersOuterV is off. Disable outer-most padding.\n",
+      "description": "TABLE_NOPADOUTERX Default if BordersOuterV is off. Disable outer-most padding.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_NOPADINNERX",
+      "brief": "TABLE_NOPADINNERX Disable inner padding between columns (double inner padding if BordersOuterV is on, single inner padding if BordersOuterV is off).\n",
+      "description": "TABLE_NOPADINNERX Disable inner padding between columns (double inner padding if BordersOuterV is on, single inner padding if BordersOuterV is off).\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_SCROLLX",
+      "brief": "TABLE_SCROLLX Enable horizontal scrolling. Require 'outer_size' parameter of BeginTable() to specify the container size. Changes default sizing policy. Because this create a child window, ScrollY is currently generally recommended when using ScrollX.\n",
+      "description": "TABLE_SCROLLX Enable horizontal scrolling. Require 'outer_size' parameter of BeginTable() to specify the container size. Changes default sizing policy. Because this create a child window, ScrollY is currently generally recommended when using ScrollX.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_SCROLLY",
+      "brief": "TABLE_SCROLLY Enable vertical scrolling. Require 'outer_size' parameter of BeginTable() to specify the container size.\n",
+      "description": "TABLE_SCROLLY Enable vertical scrolling. Require 'outer_size' parameter of BeginTable() to specify the container size.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_SORTMULTI",
+      "brief": "TABLE_SORTMULTI Hold shift when clicking headers to sort on multiple column. TableGetSortSpecs() may return specs where (SpecsCount > 1).\n",
+      "description": "TABLE_SORTMULTI Hold shift when clicking headers to sort on multiple column. TableGetSortSpecs() may return specs where (SpecsCount > 1).\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.TABLE_SORTTRISTATE",
+      "brief": "TABLE_SORTTRISTATE Allow no sorting, disable default sorting. TableGetSortSpecs() may return specs where (SpecsCount == 0).\n",
+      "description": "TABLE_SORTTRISTATE Allow no sorting, disable default sorting. TableGetSortSpecs() may return specs where (SpecsCount == 0).\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.WINDOWFLAGS_NONE",
+      "brief": "WINDOWFLAGS_NONE\n",
+      "description": "WINDOWFLAGS_NONE\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.WINDOWFLAGS_NOTITLEBAR",
+      "brief": "WINDOWFLAGS_NOTITLEBAR Disable title-bar\n",
+      "description": "WINDOWFLAGS_NOTITLEBAR Disable title-bar\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.WINDOWFLAGS_NORESIZE",
+      "brief": "WINDOWFLAGS_NORESIZE Disable user resizing with the lower-right grip\n",
+      "description": "WINDOWFLAGS_NORESIZE Disable user resizing with the lower-right grip\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.WINDOWFLAGS_NOMOVE",
+      "brief": "WINDOWFLAGS_NOMOVE Disable user moving the window\n",
+      "description": "WINDOWFLAGS_NOMOVE Disable user moving the window\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.WINDOWFLAGS_NOSCROLLBAR",
+      "brief": "WINDOWFLAGS_NOSCROLLBAR Disable scrollbars (window can still scroll with mouse or programmatically)\n",
+      "description": "WINDOWFLAGS_NOSCROLLBAR Disable scrollbars (window can still scroll with mouse or programmatically)\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.WINDOWFLAGS_NOSCROLLWITHMOUSE",
+      "brief": "WINDOWFLAGS_NOSCROLLWITHMOUSE Disable user vertically scrolling with mouse wheel. On child window, mouse wheel will be forwarded to the parent unless NoScrollbar is also set.\n",
+      "description": "WINDOWFLAGS_NOSCROLLWITHMOUSE Disable user vertically scrolling with mouse wheel. On child window, mouse wheel will be forwarded to the parent unless NoScrollbar is also set.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.WINDOWFLAGS_NOCOLLAPSE",
+      "brief": "WINDOWFLAGS_NOCOLLAPSE Disable user collapsing window by double-clicking on it\n",
+      "description": "WINDOWFLAGS_NOCOLLAPSE Disable user collapsing window by double-clicking on it\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.WINDOWFLAGS_ALWAYSAUTORESIZE",
+      "brief": "WINDOWFLAGS_ALWAYSAUTORESIZE Resize every window to its content every frame\n",
+      "description": "WINDOWFLAGS_ALWAYSAUTORESIZE Resize every window to its content every frame\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.WINDOWFLAGS_NOBACKGROUND",
+      "brief": "WINDOWFLAGS_NOBACKGROUND Disable drawing background color (WindowBg, etc.) and outside border. Similar as using SetNextWindowBgAlpha(0.0f).\n",
+      "description": "WINDOWFLAGS_NOBACKGROUND Disable drawing background color (WindowBg, etc.) and outside border. Similar as using SetNextWindowBgAlpha(0.0f).\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.WINDOWFLAGS_NOSAVEDSETTINGS",
+      "brief": "WINDOWFLAGS_NOSAVEDSETTINGS Never load/save settings in .ini file\n",
+      "description": "WINDOWFLAGS_NOSAVEDSETTINGS Never load/save settings in .ini file\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.WINDOWFLAGS_NOMOUSEINPUTS",
+      "brief": "WINDOWFLAGS_NOMOUSEINPUTS Disable catching mouse, hovering test with pass through.\n",
+      "description": "WINDOWFLAGS_NOMOUSEINPUTS Disable catching mouse, hovering test with pass through.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.WINDOWFLAGS_MENUBAR",
+      "brief": "WINDOWFLAGS_MENUBAR Has a menu-bar\n",
+      "description": "WINDOWFLAGS_MENUBAR Has a menu-bar\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.WINDOWFLAGS_HORIZONTALSCROLLBAR",
+      "brief": "WINDOWFLAGS_HORIZONTALSCROLLBAR prior to calling Begin() to specify width. Read code in imgui_demo in the \"Horizontal Scrolling\" section.\n",
+      "description": "WINDOWFLAGS_HORIZONTALSCROLLBAR prior to calling Begin() to specify width. Read code in imgui_demo in the \"Horizontal Scrolling\" section.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.WINDOWFLAGS_NOFOCUSONAPPEARING",
+      "brief": "WINDOWFLAGS_NOFOCUSONAPPEARING Disable taking focus when transitioning from hidden to visible state\n",
+      "description": "WINDOWFLAGS_NOFOCUSONAPPEARING Disable taking focus when transitioning from hidden to visible state\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.WINDOWFLAGS_NOBRINGTOFRONTONFOCUS",
+      "brief": "WINDOWFLAGS_NOBRINGTOFRONTONFOCUS Disable bringing window to front when taking focus (e.g. clicking on it or programmatically giving it focus)\n",
+      "description": "WINDOWFLAGS_NOBRINGTOFRONTONFOCUS Disable bringing window to front when taking focus (e.g. clicking on it or programmatically giving it focus)\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.WINDOWFLAGS_ALWAYSVERTICALSCROLLBAR",
+      "brief": "WINDOWFLAGS_ALWAYSVERTICALSCROLLBAR Always show vertical scrollbar (even if ContentSize.y < Size.y)\n",
+      "description": "WINDOWFLAGS_ALWAYSVERTICALSCROLLBAR Always show vertical scrollbar (even if ContentSize.y < Size.y)\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.WINDOWFLAGS_ALWAYSHORIZONTALSCROLLBAR",
+      "brief": "WINDOWFLAGS_ALWAYSHORIZONTALSCROLLBAR Always show horizontal scrollbar (even if ContentSize.x < Size.x)\n",
+      "description": "WINDOWFLAGS_ALWAYSHORIZONTALSCROLLBAR Always show horizontal scrollbar (even if ContentSize.x < Size.x)\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.WINDOWFLAGS_ALWAYSUSEWINDOWPADDING",
+      "brief": "WINDOWFLAGS_ALWAYSUSEWINDOWPADDING Ensure child windows without border uses style.WindowPadding (ignored by default for non-bordered child windows, because more convenient)\n",
+      "description": "WINDOWFLAGS_ALWAYSUSEWINDOWPADDING Ensure child windows without border uses style.WindowPadding (ignored by default for non-bordered child windows, because more convenient)\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.WINDOWFLAGS_NONAVINPUTS",
+      "brief": "WINDOWFLAGS_NONAVINPUTS No gamepad/keyboard navigation within the window\n",
+      "description": "WINDOWFLAGS_NONAVINPUTS No gamepad/keyboard navigation within the window\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.WINDOWFLAGS_NONAVFOCUS",
+      "brief": "WINDOWFLAGS_NONAVFOCUS No focusing toward this window with gamepad/keyboard navigation (e.g. skipped by CTRL+TAB)\n",
+      "description": "WINDOWFLAGS_NONAVFOCUS No focusing toward this window with gamepad/keyboard navigation (e.g. skipped by CTRL+TAB)\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.WINDOWFLAGS_UNSAVEDDOCUMENT",
+      "brief": "WINDOWFLAGS_UNSAVEDDOCUMENT Append '*' to title without affecting the ID, as a convenience to avoid using the ### operator. When used in a tab/docking context, tab is selected on closure and closure is deferred by one frame to allow code to cancel the closure (with a confirmation popup, etc.) without flicker.\n",
+      "description": "WINDOWFLAGS_UNSAVEDDOCUMENT Append '*' to title without affecting the ID, as a convenience to avoid using the ### operator. When used in a tab/docking context, tab is selected on closure and closure is deferred by one frame to allow code to cancel the closure (with a confirmation popup, etc.) without flicker.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.WINDOWFLAGS_NONAV",
+      "brief": "WINDOWFLAGS_NONAV ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus,\n",
+      "description": "WINDOWFLAGS_NONAV ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus,\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.WINDOWFLAGS_NODECORATION",
+      "brief": "WINDOWFLAGS_NODECORATION ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse,\n",
+      "description": "WINDOWFLAGS_NODECORATION ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse,\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.WINDOWFLAGS_NOINPUTS",
+      "brief": "WINDOWFLAGS_NOINPUTS ImGuiWindowFlags_NoMouseInputs | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus,\n",
+      "description": "WINDOWFLAGS_NOINPUTS ImGuiWindowFlags_NoMouseInputs | ImGuiWindowFlags_NoNavInputs | ImGuiWindowFlags_NoNavFocus,\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.POPUPFLAGS_NONE",
+      "brief": "POPUPFLAGS_NONE\n",
+      "description": "POPUPFLAGS_NONE\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.POPUPFLAGS_MOUSEBUTTONLEFT",
+      "brief": "POPUPFLAGS_MOUSEBUTTONLEFT // For BeginPopupContext*(): open on Left Mouse release. Guaranteed to always be == 0 (same as ImGuiMouseButton_Left)\n",
+      "description": "POPUPFLAGS_MOUSEBUTTONLEFT // For BeginPopupContext*(): open on Left Mouse release. Guaranteed to always be == 0 (same as ImGuiMouseButton_Left)\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.POPUPFLAGS_MOUSEBUTTONRIGHT",
+      "brief": "POPUPFLAGS_MOUSEBUTTONRIGHT // For BeginPopupContext*(): open on Right Mouse release. Guaranteed to always be == 1 (same as ImGuiMouseButton_Right)\n",
+      "description": "POPUPFLAGS_MOUSEBUTTONRIGHT // For BeginPopupContext*(): open on Right Mouse release. Guaranteed to always be == 1 (same as ImGuiMouseButton_Right)\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.POPUPFLAGS_MOUSEBUTTONMIDDLE",
+      "brief": "POPUPFLAGS_MOUSEBUTTONMIDDLE // For BeginPopupContext*(): open on Middle Mouse release. Guaranteed to always be == 2 (same as ImGuiMouseButton_Middle)\n",
+      "description": "POPUPFLAGS_MOUSEBUTTONMIDDLE // For BeginPopupContext*(): open on Middle Mouse release. Guaranteed to always be == 2 (same as ImGuiMouseButton_Middle)\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.POPUPFLAGS_MOUSEBUTTONMASK",
+      "brief": "POPUPFLAGS_MOUSEBUTTONMASK\n",
+      "description": "POPUPFLAGS_MOUSEBUTTONMASK\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.POPUPFLAGS_MOUSEBUTTONDEFAULT",
+      "brief": "POPUPFLAGS_MOUSEBUTTONDEFAULT\n",
+      "description": "POPUPFLAGS_MOUSEBUTTONDEFAULT\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.POPUPFLAGS_NOOPENOVEREXISTINGPOPUP",
+      "brief": "POPUPFLAGS_NOOPENOVEREXISTINGPOPUP For OpenPopup*(), BeginPopupContext*(): don't open if there's already a popup at the same level of the popup stack\n",
+      "description": "POPUPFLAGS_NOOPENOVEREXISTINGPOPUP For OpenPopup*(), BeginPopupContext*(): don't open if there's already a popup at the same level of the popup stack\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.POPUPFLAGS_NOOPENOVERITEMS",
+      "brief": "POPUPFLAGS_NOOPENOVERITEMS For BeginPopupContextWindow(): don't return true when hovering items, only when hovering empty space\n",
+      "description": "POPUPFLAGS_NOOPENOVERITEMS For BeginPopupContextWindow(): don't return true when hovering items, only when hovering empty space\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.POPUPFLAGS_ANYPOPUPID",
+      "brief": "POPUPFLAGS_ANYPOPUPID For IsPopupOpen(): ignore the ImGuiID parameter and test for any popup.\n",
+      "description": "POPUPFLAGS_ANYPOPUPID For IsPopupOpen(): ignore the ImGuiID parameter and test for any popup.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.POPUPFLAGS_ANYPOPUPLEVEL",
+      "brief": "POPUPFLAGS_ANYPOPUPLEVEL For IsPopupOpen(): search/test at any level of the popup stack (default test in the current level)\n",
+      "description": "POPUPFLAGS_ANYPOPUPLEVEL For IsPopupOpen(): search/test at any level of the popup stack (default test in the current level)\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.POPUPFLAGS_ANYPOPUP",
+      "brief": "POPUPFLAGS_ANYPOPUP\n",
+      "description": "POPUPFLAGS_ANYPOPUP\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.DROPFLAGS_NONE",
+      "brief": "DROPFLAGS_NONE\n",
+      "description": "DROPFLAGS_NONE\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.DROPFLAGS_SOURCENOPREVIEWTOOLTIP",
+      "brief": "DROPFLAGS_SOURCENOPREVIEWTOOLTIP By default, a successful call to BeginDragDropSource opens a tooltip so you can display a preview or description of the source contents. This flag disable this behavior.\n",
+      "description": "DROPFLAGS_SOURCENOPREVIEWTOOLTIP By default, a successful call to BeginDragDropSource opens a tooltip so you can display a preview or description of the source contents. This flag disable this behavior.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.DROPFLAGS_SOURCENODISABLEHOVER",
+      "brief": "DROPFLAGS_SOURCENODISABLEHOVER By default, when dragging we clear data so that IsItemHovered() will return false, to avoid subsequent user code submitting tooltips. This flag disable this behavior so you can still call IsItemHovered() on the source item.\n",
+      "description": "DROPFLAGS_SOURCENODISABLEHOVER By default, when dragging we clear data so that IsItemHovered() will return false, to avoid subsequent user code submitting tooltips. This flag disable this behavior so you can still call IsItemHovered() on the source item.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.DROPFLAGS_SOURCENOHOLDTOOPENOTHERS",
+      "brief": "DROPFLAGS_SOURCENOHOLDTOOPENOTHERS Disable the behavior that allows to open tree nodes and collapsing header by holding over them while dragging a source item.\n",
+      "description": "DROPFLAGS_SOURCENOHOLDTOOPENOTHERS Disable the behavior that allows to open tree nodes and collapsing header by holding over them while dragging a source item.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.DROPFLAGS_SOURCEALLOWNULLID",
+      "brief": "DROPFLAGS_SOURCEALLOWNULLID Allow items such as Text(), Image() that have no unique identifier to be used as drag source, by manufacturing a temporary identifier based on their window-relative position. This is extremely unusual within the dear imgui ecosystem and so we made it explicit.\n",
+      "description": "DROPFLAGS_SOURCEALLOWNULLID Allow items such as Text(), Image() that have no unique identifier to be used as drag source, by manufacturing a temporary identifier based on their window-relative position. This is extremely unusual within the dear imgui ecosystem and so we made it explicit.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.DROPFLAGS_SOURCEEXTERN",
+      "brief": "DROPFLAGS_SOURCEEXTERN External source (from outside of dear imgui), won't attempt to read current item/window info. Will always return true. Only one Extern source can be active simultaneously.\n",
+      "description": "DROPFLAGS_SOURCEEXTERN External source (from outside of dear imgui), won't attempt to read current item/window info. Will always return true. Only one Extern source can be active simultaneously.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.DROPFLAGS_SOURCEAUTOEXPIREPAYLOAD",
+      "brief": "DROPFLAGS_SOURCEAUTOEXPIREPAYLOAD Automatically expire the payload if the source cease to be submitted (otherwise payloads are persisting while being dragged)\n",
+      "description": "DROPFLAGS_SOURCEAUTOEXPIREPAYLOAD Automatically expire the payload if the source cease to be submitted (otherwise payloads are persisting while being dragged)\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.DROPFLAGS_ACCEPTBEFOREDELIVERY",
+      "brief": "DROPFLAGS_ACCEPTBEFOREDELIVERY AcceptDragDropPayload() will returns true even before the mouse button is released. You can then call IsDelivery() to test if the payload needs to be delivered.\n",
+      "description": "DROPFLAGS_ACCEPTBEFOREDELIVERY AcceptDragDropPayload() will returns true even before the mouse button is released. You can then call IsDelivery() to test if the payload needs to be delivered.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.DROPFLAGS_ACCEPTNODRAWDEFAULTRECT",
+      "brief": "DROPFLAGS_ACCEPTNODRAWDEFAULTRECT Do not draw the default highlight rectangle when hovering over target.\n",
+      "description": "DROPFLAGS_ACCEPTNODRAWDEFAULTRECT Do not draw the default highlight rectangle when hovering over target.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.DROPFLAGS_ACCEPTNOPREVIEWTOOLTIP",
+      "brief": "DROPFLAGS_ACCEPTNOPREVIEWTOOLTIP Request hiding the BeginDragDropSource tooltip from the BeginDragDropTarget site.\n",
+      "description": "DROPFLAGS_ACCEPTNOPREVIEWTOOLTIP Request hiding the BeginDragDropSource tooltip from the BeginDragDropTarget site.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.DROPFLAGS_ACCEPTPEEKONLY",
+      "brief": "DROPFLAGS_ACCEPTPEEKONLY For peeking ahead and inspecting the payload before delivery.\n",
+      "description": "DROPFLAGS_ACCEPTPEEKONLY For peeking ahead and inspecting the payload before delivery.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.INPUTFLAGS_NONE",
+      "brief": "INPUTFLAGS_NONE\n",
+      "description": "INPUTFLAGS_NONE\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.INPUTFLAGS_CHARSDECIMAL",
+      "brief": "INPUTFLAGS_CHARSDECIMAL\n",
+      "description": "INPUTFLAGS_CHARSDECIMAL\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.INPUTFLAGS_CHARSHEXADECIMAL",
+      "brief": "INPUTFLAGS_CHARSHEXADECIMAL\n",
+      "description": "INPUTFLAGS_CHARSHEXADECIMAL\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.INPUTFLAGS_CHARSUPPERCASE",
+      "brief": "INPUTFLAGS_CHARSUPPERCASE Turn a..z into A..Z\n",
+      "description": "INPUTFLAGS_CHARSUPPERCASE Turn a..z into A..Z\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.INPUTFLAGS_CHARSNOBLANK",
+      "brief": "INPUTFLAGS_CHARSNOBLANK Filter out spaces, tabs\n",
+      "description": "INPUTFLAGS_CHARSNOBLANK Filter out spaces, tabs\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.INPUTFLAGS_AUTOSELECTALL",
+      "brief": "INPUTFLAGS_AUTOSELECTALL Select entire text when first taking mouse focus\n",
+      "description": "INPUTFLAGS_AUTOSELECTALL Select entire text when first taking mouse focus\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.INPUTFLAGS_ENTERRETURNSTRUE",
+      "brief": "INPUTFLAGS_ENTERRETURNSTRUE Return 'true' when Enter is pressed (as opposed to every time the value was modified). Consider looking at the IsItemDeactivatedAfterEdit() function.\n",
+      "description": "INPUTFLAGS_ENTERRETURNSTRUE Return 'true' when Enter is pressed (as opposed to every time the value was modified). Consider looking at the IsItemDeactivatedAfterEdit() function.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.INPUTFLAGS_CALLBACKCOMPLETION",
+      "brief": "INPUTFLAGS_CALLBACKCOMPLETION Callback on pressing TAB (for completion handling)\n",
+      "description": "INPUTFLAGS_CALLBACKCOMPLETION Callback on pressing TAB (for completion handling)\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.INPUTFLAGS_CALLBACKHISTORY",
+      "brief": "INPUTFLAGS_CALLBACKHISTORY Callback on pressing Up/Down arrows (for history handling)\n",
+      "description": "INPUTFLAGS_CALLBACKHISTORY Callback on pressing Up/Down arrows (for history handling)\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.INPUTFLAGS_CALLBACKALWAYS",
+      "brief": "INPUTFLAGS_CALLBACKALWAYS Callback on each iteration. User code may query cursor position, modify text buffer.\n",
+      "description": "INPUTFLAGS_CALLBACKALWAYS Callback on each iteration. User code may query cursor position, modify text buffer.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.INPUTFLAGS_CALLBACKCHARFILTER",
+      "brief": "INPUTFLAGS_CALLBACKCHARFILTER Callback on character inputs to replace or discard them. Modify 'EventChar' to replace or discard, or return 1 in callback to discard.\n",
+      "description": "INPUTFLAGS_CALLBACKCHARFILTER Callback on character inputs to replace or discard them. Modify 'EventChar' to replace or discard, or return 1 in callback to discard.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.INPUTFLAGS_ALLOWTABINPUT",
+      "brief": "INPUTFLAGS_ALLOWTABINPUT Pressing TAB input a '\\t' character into the text field\n",
+      "description": "INPUTFLAGS_ALLOWTABINPUT Pressing TAB input a '\\t' character into the text field\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.INPUTFLAGS_CTRLENTERFORNEWLINE",
+      "brief": "INPUTFLAGS_CTRLENTERFORNEWLINE In multi-line mode, unfocus with Enter, add new line with Ctrl+Enter (default is opposite: unfocus with Ctrl+Enter, add line with Enter).\n",
+      "description": "INPUTFLAGS_CTRLENTERFORNEWLINE In multi-line mode, unfocus with Enter, add new line with Ctrl+Enter (default is opposite: unfocus with Ctrl+Enter, add line with Enter).\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.INPUTFLAGS_NOHORIZONTALSCROLL",
+      "brief": "INPUTFLAGS_NOHORIZONTALSCROLL Disable following the cursor horizontally\n",
+      "description": "INPUTFLAGS_NOHORIZONTALSCROLL Disable following the cursor horizontally\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.INPUTFLAGS_ALWAYSOVERWRITE",
+      "brief": "INPUTFLAGS_ALWAYSOVERWRITE Insert mode\n",
+      "description": "INPUTFLAGS_ALWAYSOVERWRITE Insert mode\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.INPUTFLAGS_READONLY",
+      "brief": "INPUTFLAGS_READONLY Read-only mode\n",
+      "description": "INPUTFLAGS_READONLY Read-only mode\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.INPUTFLAGS_PASSWORD",
+      "brief": "INPUTFLAGS_PASSWORD Password mode, display all characters as '*'\n",
+      "description": "INPUTFLAGS_PASSWORD Password mode, display all characters as '*'\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.INPUTFLAGS_NOUNDOREDO",
+      "brief": "INPUTFLAGS_NOUNDOREDO Disable undo/redo. Note that input text owns the text data while active, if you want to provide your own undo/redo stack you need e.g. to call ClearActiveID().\n",
+      "description": "INPUTFLAGS_NOUNDOREDO Disable undo/redo. Note that input text owns the text data while active, if you want to provide your own undo/redo stack you need e.g. to call ClearActiveID().\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.INPUTFLAGS_CHARSSCIENTIFIC",
+      "brief": "INPUTFLAGS_CHARSSCIENTIFIC Allow 0123456789.+-*/eE (Scientific notation input)\n",
+      "description": "INPUTFLAGS_CHARSSCIENTIFIC Allow 0123456789.+-*/eE (Scientific notation input)\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.INPUTFLAGS_CALLBACKRESIZE",
+      "brief": "INPUTFLAGS_CALLBACKRESIZE Callback on buffer capacity changes request (beyond 'buf_size' parameter value), allowing the string to grow. Notify when the string wants to be resized (for string types which hold a cache of their Size). You will be provided a new BufSize in the callback and NEED to honor it. (see misc/cpp/imgui_stdlib.h for an example of using this)\n",
+      "description": "INPUTFLAGS_CALLBACKRESIZE Callback on buffer capacity changes request (beyond 'buf_size' parameter value), allowing the string to grow. Notify when the string wants to be resized (for string types which hold a cache of their Size). You will be provided a new BufSize in the callback and NEED to honor it. (see misc/cpp/imgui_stdlib.h for an example of using this)\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.INPUTFLAGS_CALLBACKEDIT",
+      "brief": "INPUTFLAGS_CALLBACKEDIT Callback on any edit (note that InputText() already returns true on edit, the callback is useful mainly to manipulate the underlying buffer while focus is active)\n",
+      "description": "INPUTFLAGS_CALLBACKEDIT Callback on any edit (note that InputText() already returns true on edit, the callback is useful mainly to manipulate the underlying buffer while focus is active)\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.INPUTFLAGS_ESCAPECLEARSALL",
+      "brief": "INPUTFLAGS_ESCAPECLEARSALL Callback on any edit (note that InputText() already returns true on edit, the callback is useful mainly to manipulate the underlying buffer while focus is active)\n",
+      "description": "INPUTFLAGS_ESCAPECLEARSALL Callback on any edit (note that InputText() already returns true on edit, the callback is useful mainly to manipulate the underlying buffer while focus is active)\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COLOREDITFLAGS_NONE",
+      "brief": "COLOREDITFLAGS_NONE\n",
+      "description": "COLOREDITFLAGS_NONE\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COLOREDITFLAGS_NOALPHA",
+      "brief": "COLOREDITFLAGS_NOALPHA // ColorEdit, ColorPicker, ColorButton: ignore Alpha component (will only read 3 components from the input pointer).\n",
+      "description": "COLOREDITFLAGS_NOALPHA // ColorEdit, ColorPicker, ColorButton: ignore Alpha component (will only read 3 components from the input pointer).\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COLOREDITFLAGS_NOPICKER",
+      "brief": "COLOREDITFLAGS_NOPICKER // ColorEdit: disable picker when clicking on color square.\n",
+      "description": "COLOREDITFLAGS_NOPICKER // ColorEdit: disable picker when clicking on color square.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COLOREDITFLAGS_NOOPTIONS",
+      "brief": "COLOREDITFLAGS_NOOPTIONS // ColorEdit: disable toggling options menu when right-clicking on inputs/small preview.\n",
+      "description": "COLOREDITFLAGS_NOOPTIONS // ColorEdit: disable toggling options menu when right-clicking on inputs/small preview.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COLOREDITFLAGS_NOSMALLPREVIEW",
+      "brief": "COLOREDITFLAGS_NOSMALLPREVIEW // ColorEdit, ColorPicker: disable color square preview next to the inputs. (e.g. to show only the inputs)\n",
+      "description": "COLOREDITFLAGS_NOSMALLPREVIEW // ColorEdit, ColorPicker: disable color square preview next to the inputs. (e.g. to show only the inputs)\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COLOREDITFLAGS_NOINPUTS",
+      "brief": "COLOREDITFLAGS_NOINPUTS // ColorEdit, ColorPicker: disable inputs sliders/text widgets (e.g. to show only the small preview color square).\n",
+      "description": "COLOREDITFLAGS_NOINPUTS // ColorEdit, ColorPicker: disable inputs sliders/text widgets (e.g. to show only the small preview color square).\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COLOREDITFLAGS_NOTOOLTIP",
+      "brief": "COLOREDITFLAGS_NOTOOLTIP // ColorEdit, ColorPicker, ColorButton: disable tooltip when hovering the preview.\n",
+      "description": "COLOREDITFLAGS_NOTOOLTIP // ColorEdit, ColorPicker, ColorButton: disable tooltip when hovering the preview.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COLOREDITFLAGS_NOLABEL",
+      "brief": "COLOREDITFLAGS_NOLABEL // ColorEdit, ColorPicker: disable display of inline text label (the label is still forwarded to the tooltip and picker).\n",
+      "description": "COLOREDITFLAGS_NOLABEL // ColorEdit, ColorPicker: disable display of inline text label (the label is still forwarded to the tooltip and picker).\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COLOREDITFLAGS_NOSIDEPREVIEW",
+      "brief": "COLOREDITFLAGS_NOSIDEPREVIEW // ColorPicker: disable bigger color preview on right side of the picker, use small color square preview instead.\n",
+      "description": "COLOREDITFLAGS_NOSIDEPREVIEW // ColorPicker: disable bigger color preview on right side of the picker, use small color square preview instead.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COLOREDITFLAGS_NODRAGDROP",
+      "brief": "COLOREDITFLAGS_NODRAGDROP // ColorEdit: disable drag and drop target. ColorButton: disable drag and drop source.\n",
+      "description": "COLOREDITFLAGS_NODRAGDROP // ColorEdit: disable drag and drop target. ColorButton: disable drag and drop source.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COLOREDITFLAGS_NOBORDER",
+      "brief": "COLOREDITFLAGS_NOBORDER // ColorButton: disable border (which is enforced by default)\n",
+      "description": "COLOREDITFLAGS_NOBORDER // ColorButton: disable border (which is enforced by default)\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COLOREDITFLAGS_ALPHABAR",
+      "brief": "COLOREDITFLAGS_ALPHABAR // ColorEdit, ColorPicker: show vertical alpha bar/gradient in picker.\n",
+      "description": "COLOREDITFLAGS_ALPHABAR // ColorEdit, ColorPicker: show vertical alpha bar/gradient in picker.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COLOREDITFLAGS_ALPHAPREVIEW",
+      "brief": "COLOREDITFLAGS_ALPHAPREVIEW // ColorEdit, ColorPicker, ColorButton: display preview as a transparent color over a checkerboard, instead of opaque.\n",
+      "description": "COLOREDITFLAGS_ALPHAPREVIEW // ColorEdit, ColorPicker, ColorButton: display preview as a transparent color over a checkerboard, instead of opaque.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COLOREDITFLAGS_ALPHAPREVIEWHALF",
+      "brief": "COLOREDITFLAGS_ALPHAPREVIEWHALF // ColorEdit, ColorPicker, ColorButton: display half opaque / half checkerboard, instead of opaque.\n",
+      "description": "COLOREDITFLAGS_ALPHAPREVIEWHALF // ColorEdit, ColorPicker, ColorButton: display half opaque / half checkerboard, instead of opaque.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COLOREDITFLAGS_HDR",
+      "brief": "COLOREDITFLAGS_HDR // (WIP) ColorEdit: Currently only disable 0.0f..1.0f limits in RGBA edition (note: you probably want to use ImGuiColorEditFlags_Float flag as well).\n",
+      "description": "COLOREDITFLAGS_HDR // (WIP) ColorEdit: Currently only disable 0.0f..1.0f limits in RGBA edition (note: you probably want to use ImGuiColorEditFlags_Float flag as well).\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COLOREDITFLAGS_DISPLAYRGB",
+      "brief": "COLOREDITFLAGS_DISPLAYRGB [Display]    // ColorEdit: override _display_ type among RGB/HSV/Hex. ColorPicker: select any combination using one or more of RGB/HSV/Hex.\n",
+      "description": "COLOREDITFLAGS_DISPLAYRGB [Display]    // ColorEdit: override _display_ type among RGB/HSV/Hex. ColorPicker: select any combination using one or more of RGB/HSV/Hex.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COLOREDITFLAGS_DISPLAYHSV",
+      "brief": "COLOREDITFLAGS_DISPLAYHSV [Display]    // \"\n",
+      "description": "COLOREDITFLAGS_DISPLAYHSV [Display]    // \"\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COLOREDITFLAGS_DISPLAYHEX",
+      "brief": "COLOREDITFLAGS_DISPLAYHEX [Display]    // \"\n",
+      "description": "COLOREDITFLAGS_DISPLAYHEX [Display]    // \"\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COLOREDITFLAGS_UINT8",
+      "brief": "COLOREDITFLAGS_UINT8 [DataType]   // ColorEdit, ColorPicker, ColorButton: _display_ values formatted as 0..255.\n",
+      "description": "COLOREDITFLAGS_UINT8 [DataType]   // ColorEdit, ColorPicker, ColorButton: _display_ values formatted as 0..255.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COLOREDITFLAGS_FLOAT",
+      "brief": "COLOREDITFLAGS_FLOAT [DataType]   // ColorEdit, ColorPicker, ColorButton: _display_ values formatted as 0.0f..1.0f floats instead of 0..255 integers. No round-trip of value via integers.\n",
+      "description": "COLOREDITFLAGS_FLOAT [DataType]   // ColorEdit, ColorPicker, ColorButton: _display_ values formatted as 0.0f..1.0f floats instead of 0..255 integers. No round-trip of value via integers.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COLOREDITFLAGS_PICKERHUEBAR",
+      "brief": "COLOREDITFLAGS_PICKERHUEBAR [Picker]     // ColorPicker: bar for Hue, rectangle for Sat/Value.\n",
+      "description": "COLOREDITFLAGS_PICKERHUEBAR [Picker]     // ColorPicker: bar for Hue, rectangle for Sat/Value.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COLOREDITFLAGS_PICKERHUEWHEEL",
+      "brief": "COLOREDITFLAGS_PICKERHUEWHEEL [Picker]     // ColorPicker: wheel for Hue, triangle for Sat/Value.\n",
+      "description": "COLOREDITFLAGS_PICKERHUEWHEEL [Picker]     // ColorPicker: wheel for Hue, triangle for Sat/Value.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COLOREDITFLAGS_INPUTRGB",
+      "brief": "COLOREDITFLAGS_INPUTRGB [Input]      // ColorEdit, ColorPicker: input and output data in RGB format.\n",
+      "description": "COLOREDITFLAGS_INPUTRGB [Input]      // ColorEdit, ColorPicker: input and output data in RGB format.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COLOREDITFLAGS_INPUTHSV",
+      "brief": "COLOREDITFLAGS_INPUTHSV [Input]      // ColorEdit, ColorPicker: input and output data in HSV format.\n",
+      "description": "COLOREDITFLAGS_INPUTHSV [Input]      // ColorEdit, ColorPicker: input and output data in HSV format.\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COND_NONE",
+      "brief": "COND_NONE No condition (always set the variable), same as _Always\n",
+      "description": "COND_NONE No condition (always set the variable), same as _Always\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COND_ALWAYS",
+      "brief": "COND_ALWAYS No condition (always set the variable)\n",
+      "description": "COND_ALWAYS No condition (always set the variable)\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COND_ONCE",
+      "brief": "COND_ONCE Set the variable once per runtime session (only the first call will succeed)\n",
+      "description": "COND_ONCE Set the variable once per runtime session (only the first call will succeed)\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COND_FIRSTUSEEVER",
+      "brief": "COND_FIRSTUSEEVER Set the variable if the object/window has no persistently saved data (no entry in .ini file)\n",
+      "description": "COND_FIRSTUSEEVER Set the variable if the object/window has no persistently saved data (no entry in .ini file)\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.COND_APPEARING",
+      "brief": "COND_APPEARING Set the variable if the object/window is appearing after being hidden/inactive (or the first time)\n",
+      "description": "COND_APPEARING Set the variable if the object/window is appearing after being hidden/inactive (or the first time)\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.DIR_NONE",
+      "brief": "DIR_NONE\n",
+      "description": "DIR_NONE\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.DIR_LEFT",
+      "brief": "DIR_LEFT\n",
+      "description": "DIR_LEFT\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.DIR_RIGHT",
+      "brief": "DIR_RIGHT\n",
+      "description": "DIR_RIGHT\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.DIR_UP",
+      "brief": "DIR_UP\n",
+      "description": "DIR_UP\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.DIR_DOWN",
+      "brief": "DIR_DOWN\n",
+      "description": "DIR_DOWN\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.GLYPH_RANGES_DEFAULT",
+      "brief": "GLYPH_RANGES_DEFAULT // Basic Latin, Extended Latin\n",
+      "description": "GLYPH_RANGES_DEFAULT // Basic Latin, Extended Latin\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.GLYPH_RANGES_GREEK",
+      "brief": "GLYPH_RANGES_GREEK // Default + Greek and Coptic\n",
+      "description": "GLYPH_RANGES_GREEK // Default + Greek and Coptic\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.GLYPH_RANGES_KOREAN",
+      "brief": "GLYPH_RANGES_KOREAN // Default + Korean characters\n",
+      "description": "GLYPH_RANGES_KOREAN // Default + Korean characters\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.GLYPH_RANGES_JAPANESE",
+      "brief": "GLYPH_RANGES_JAPANESE // Default + Hiragana, Katakana, Half-Width, Selection of 2999 Ideographs\n",
+      "description": "GLYPH_RANGES_JAPANESE // Default + Hiragana, Katakana, Half-Width, Selection of 2999 Ideographs\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.GLYPH_RANGES_CHINESEFULL",
+      "brief": "GLYPH_RANGES_CHINESEFULL // Default + Half-Width + Japanese Hiragana/Katakana + full set of about 21000 CJK Unified Ideographs\n",
+      "description": "GLYPH_RANGES_CHINESEFULL // Default + Half-Width + Japanese Hiragana/Katakana + full set of about 21000 CJK Unified Ideographs\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.GLYPH_RANGES_CHINESESIMPLIFIEDCOMMON",
+      "brief": "GLYPH_RANGES_CHINESESIMPLIFIEDCOMMON // Default + Half-Width + Japanese Hiragana/Katakana + set of 2500 CJK Unified Ideographs for common simplified Chinese\n",
+      "description": "GLYPH_RANGES_CHINESESIMPLIFIEDCOMMON // Default + Half-Width + Japanese Hiragana/Katakana + set of 2500 CJK Unified Ideographs for common simplified Chinese\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.GLYPH_RANGES_CYRILLIC",
+      "brief": "GLYPH_RANGES_CYRILLIC // Default + about 400 Cyrillic characters\n",
+      "description": "GLYPH_RANGES_CYRILLIC // Default + about 400 Cyrillic characters\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.GLYPH_RANGES_THAI",
+      "brief": "GLYPH_RANGES_THAI // Default + Thai characters\n",
+      "description": "GLYPH_RANGES_THAI // Default + Thai characters\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.GLYPH_RANGES_VIETNAMESE",
+      "brief": "GLYPH_RANGES_VIETNAMESE // Default + Vietnamese characters\n",
+      "description": "GLYPH_RANGES_VIETNAMESE // Default + Vietnamese characters\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_ALPHA",
+      "brief": "STYLEVAR_ALPHA // float  Alpha\n",
+      "description": "STYLEVAR_ALPHA // float  Alpha\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_DISABLEDALPHA",
+      "brief": "STYLEVAR_DISABLEDALPHA float  DisabledAlpha\n",
+      "description": "STYLEVAR_DISABLEDALPHA float  DisabledAlpha\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_WINDOWPADDING",
+      "brief": "STYLEVAR_WINDOWPADDING ImVec2 WindowPadding\n",
+      "description": "STYLEVAR_WINDOWPADDING ImVec2 WindowPadding\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_WINDOWROUNDING",
+      "brief": "STYLEVAR_WINDOWROUNDING // float  WindowRounding\n",
+      "description": "STYLEVAR_WINDOWROUNDING // float  WindowRounding\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_WINDOWBORDERSIZE",
+      "brief": "STYLEVAR_WINDOWBORDERSIZE // float  WindowBorderSize\n",
+      "description": "STYLEVAR_WINDOWBORDERSIZE // float  WindowBorderSize\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_WINDOWMINSIZE",
+      "brief": "STYLEVAR_WINDOWMINSIZE ImVec2 WindowMinSize\n",
+      "description": "STYLEVAR_WINDOWMINSIZE ImVec2 WindowMinSize\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_WINDOWTITLEALIGN",
+      "brief": "STYLEVAR_WINDOWTITLEALIGN // ImVec2 WindowTitleAlign\n",
+      "description": "STYLEVAR_WINDOWTITLEALIGN // ImVec2 WindowTitleAlign\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_CHILDROUNDING",
+      "brief": "STYLEVAR_CHILDROUNDING float  ChildRounding\n",
+      "description": "STYLEVAR_CHILDROUNDING float  ChildRounding\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_CHILDBORDERSIZE",
+      "brief": "STYLEVAR_CHILDBORDERSIZE // float  ChildBorderSize\n",
+      "description": "STYLEVAR_CHILDBORDERSIZE // float  ChildBorderSize\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_POPUPROUNDING",
+      "brief": "STYLEVAR_POPUPROUNDING float  PopupRounding\n",
+      "description": "STYLEVAR_POPUPROUNDING float  PopupRounding\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_POPUPBORDERSIZE",
+      "brief": "STYLEVAR_POPUPBORDERSIZE // float  PopupBorderSize\n",
+      "description": "STYLEVAR_POPUPBORDERSIZE // float  PopupBorderSize\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_FRAMEPADDING",
+      "brief": "STYLEVAR_FRAMEPADDING // ImVec2 FramePadding\n",
+      "description": "STYLEVAR_FRAMEPADDING // ImVec2 FramePadding\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_FRAMEROUNDING",
+      "brief": "STYLEVAR_FRAMEROUNDING float  FrameRounding\n",
+      "description": "STYLEVAR_FRAMEROUNDING float  FrameRounding\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_FRAMEBORDERSIZE",
+      "brief": "STYLEVAR_FRAMEBORDERSIZE // float  FrameBorderSize\n",
+      "description": "STYLEVAR_FRAMEBORDERSIZE // float  FrameBorderSize\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_ITEMSPACING",
+      "brief": "STYLEVAR_ITEMSPACING // ImVec2 ItemSpacing\n",
+      "description": "STYLEVAR_ITEMSPACING // ImVec2 ItemSpacing\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_ITEMINNERSPACING",
+      "brief": "STYLEVAR_ITEMINNERSPACING // ImVec2 ItemInnerSpacing\n",
+      "description": "STYLEVAR_ITEMINNERSPACING // ImVec2 ItemInnerSpacing\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_INDENTSPACING",
+      "brief": "STYLEVAR_INDENTSPACING float  IndentSpacing\n",
+      "description": "STYLEVAR_INDENTSPACING float  IndentSpacing\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_CELLPADDING",
+      "brief": "STYLEVAR_CELLPADDING // ImVec2 CellPadding\n",
+      "description": "STYLEVAR_CELLPADDING // ImVec2 CellPadding\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_SCROLLBARSIZE",
+      "brief": "STYLEVAR_SCROLLBARSIZE float  ScrollbarSize\n",
+      "description": "STYLEVAR_SCROLLBARSIZE float  ScrollbarSize\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_SCROLLBARROUNDING",
+      "brief": "STYLEVAR_SCROLLBARROUNDING // float  ScrollbarRounding\n",
+      "description": "STYLEVAR_SCROLLBARROUNDING // float  ScrollbarRounding\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_GRABMINSIZE",
+      "brief": "STYLEVAR_GRABMINSIZE // float  GrabMinSize\n",
+      "description": "STYLEVAR_GRABMINSIZE // float  GrabMinSize\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_GRABROUNDING",
+      "brief": "STYLEVAR_GRABROUNDING // float  GrabRounding\n",
+      "description": "STYLEVAR_GRABROUNDING // float  GrabRounding\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_TABROUNDING",
+      "brief": "STYLEVAR_TABROUNDING // float  TabRounding\n",
+      "description": "STYLEVAR_TABROUNDING // float  TabRounding\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_TABBORDERSIZE",
+      "brief": "STYLEVAR_TABBORDERSIZE float  TabBorderSize\n",
+      "description": "STYLEVAR_TABBORDERSIZE float  TabBorderSize\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_TABBARBORDERSIZE",
+      "brief": "STYLEVAR_TABBARBORDERSIZE // float  TabBarBorderSize\n",
+      "description": "STYLEVAR_TABBARBORDERSIZE // float  TabBarBorderSize\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_TABLEANGLEDHEADERSANGLE",
+      "brief": "STYLEVAR_TABLEANGLEDHEADERSANGLE // float  TableAngledHeadersAngle\n",
+      "description": "STYLEVAR_TABLEANGLEDHEADERSANGLE // float  TableAngledHeadersAngle\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_TABLEANGLEDHEADERSTEXTALIGN",
+      "brief": "STYLEVAR_TABLEANGLEDHEADERSTEXTALIGN ImVec2 TableAngledHeadersTextAlign\n",
+      "description": "STYLEVAR_TABLEANGLEDHEADERSTEXTALIGN ImVec2 TableAngledHeadersTextAlign\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_BUTTONTEXTALIGN",
+      "brief": "STYLEVAR_BUTTONTEXTALIGN // ImVec2 ButtonTextAlign\n",
+      "description": "STYLEVAR_BUTTONTEXTALIGN // ImVec2 ButtonTextAlign\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_SELECTABLETEXTALIGN",
+      "brief": "STYLEVAR_SELECTABLETEXTALIGN // ImVec2 SelectableTextAlign\n",
+      "description": "STYLEVAR_SELECTABLETEXTALIGN // ImVec2 SelectableTextAlign\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_SEPARATORTEXTBORDERSIZE",
+      "brief": "STYLEVAR_SEPARATORTEXTBORDERSIZE // float  SeparatorTextBorderSize\n",
+      "description": "STYLEVAR_SEPARATORTEXTBORDERSIZE // float  SeparatorTextBorderSize\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_SEPARATORTEXTALIGN",
+      "brief": "STYLEVAR_SEPARATORTEXTALIGN // ImVec2 SeparatorTextAlign\n",
+      "description": "STYLEVAR_SEPARATORTEXTALIGN // ImVec2 SeparatorTextAlign\n"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "imgui.STYLEVAR_SEPARATORTEXTPADDING",
+      "brief": "STYLEVAR_SEPARATORTEXTPADDING // ImVec2 SeparatorTextPadding\n",
+      "description": "STYLEVAR_SEPARATORTEXTPADDING // ImVec2 SeparatorTextPadding\n"
     }
   ]
 }
