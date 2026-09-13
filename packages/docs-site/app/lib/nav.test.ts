@@ -597,6 +597,7 @@ describe("libraryOwnerGroups", () => {
         { namespace: "monarch.monarch", route: "/api/monarch.monarch" },
       ],
       origins,
+      [],
     );
     expect(groups.map((group) => group.label)).toEqual(["britzl", "paweljarosz"]);
     expect(groups[0]?.libraries.map((lib) => lib.label)).toEqual(["defold-input", "monarch"]);
@@ -618,6 +619,7 @@ describe("libraryOwnerGroups", () => {
         { namespace: "in.cursor", route: "/api/in.cursor" },
       ],
       origins,
+      [],
     );
     expect(group?.libraries.map((lib) => lib.repo)).toEqual(["defold-input"]);
   });
@@ -626,6 +628,7 @@ describe("libraryOwnerGroups", () => {
     const [group] = libraryOwnerGroups(
       [{ namespace: "orphan.module", route: "/api/orphan.module" }],
       new Map(),
+      [],
     );
     expect(group?.owner).toBe("orphan");
     expect(group?.libraries[0]?.label).toBe("orphan");
@@ -642,6 +645,7 @@ describe("libraryOwnerGroups", () => {
         ["saver.saver", { owner: "Insality", repo: "defold-saver" }],
         ["saver.storage", { owner: "Insality", repo: "defold-saver" }],
       ]),
+      [],
     );
     expect(groups.map((group) => group.label)).toEqual(["Insality"]);
     const libraries = groups[0]?.libraries ?? [];
@@ -666,6 +670,7 @@ describe("libraryOwnerGroups", () => {
         ["fake.fake", { owner: "defold", repo: "fake" }],
         ["monarch.monarch", { owner: "britzl", repo: "monarch" }],
       ]),
+      [],
     );
     expect(groups.map((group) => group.owner)).toEqual(["britzl", "defold", "paweljarosz"]);
     for (const group of groups) expect("official" in group).toBe(false);
@@ -752,7 +757,7 @@ describe("libraryOwnerGroups over the committed library manifests", () => {
     .filter((page) => page.category === "library")
     .map((page) => ({ namespace: page.namespace, route: page.route }));
   const origins = libraryOrigins(REAL_LIBRARY_TYPES_DIR);
-  const groups = libraryOwnerGroups(pages, origins);
+  const groups = libraryOwnerGroups(pages, origins, []);
 
   test("puts the official defold group first and orders the rest alphabetically", () => {
     expect(groups[0]?.owner).toBe("defold");

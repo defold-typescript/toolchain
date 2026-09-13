@@ -2,6 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { Hono } from "hono";
+import { createLibraryListingRoute } from "../routes/libraries/[owner]/[repo]";
 import { canonicalNamespaces, defoldListings } from "./api-content";
 import { versionedApiParams } from "./api-page-render";
 import { combinedRedirect } from "./api-redirect";
@@ -10,6 +12,7 @@ import { renderGuidePage } from "./content";
 import { parseFrontmatter } from "./frontmatter";
 import { listGuidePages } from "./guide-loader";
 import { renderMarkdown } from "./markdown";
+import { ssgRoutePaths } from "./ssg-routes";
 
 const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");
 const FIXTURES = join(import.meta.dir, "__fixtures__");
@@ -90,14 +93,15 @@ export function emittedApiRoutes(typesDir: string, libraryTypesDir: string): Set
 // is the page at its own name, `index` is `/`, a leading `_` is a layout rather
 // than a page, and a bracketed name is a catch-all whose paths come from the
 // enumerator it hands `ssgParams` — for `[slug].tsx` that is `listGuidePages`,
-// read here rather than recomputed, and for `libraries/[owner]/[repo].tsx` it is
-// `defoldListings`, when a library-types dir is given. `api.tsx` lands in this set
-// too, but no `/api…` target is ever looked up in it: those dispatch to
-// `emittedApiRoutes`.
+// read here rather than recomputed. `libraries/[owner]/[repo].tsx` paths are the
+// given `catchAllRoutes`: the pages that route's own `ssgParams` emits, read
+// through `ssgRoutePaths` so the set is what the static build writes. `api.tsx`
+// lands in this set too, but no `/api…` target is ever looked up in it: those
+// dispatch to `emittedApiRoutes`.
 export function staticRoutes(
   routesDir: string,
   guideDir: string,
-  libraryTypesDir?: string,
+  catchAllRoutes: Iterable<string> = [],
 ): Set<string> {
   const routes = new Set<string>();
   for (const file of readdirSync(routesDir)) {
@@ -107,9 +111,7 @@ export function staticRoutes(
     routes.add(name === "index" ? "/" : `/${name}`);
   }
   for (const page of listGuidePages(guideDir)) routes.add(page.route);
-  if (libraryTypesDir) {
-    for (const listing of defoldListings(libraryTypesDir)) routes.add(listing.route);
-  }
+  for (const route of catchAllRoutes) routes.add(route);
   return routes;
 }
 
@@ -226,7 +228,15 @@ function format(broken: Broken[]): string {
 // The production path highlights every fence on every guide page; several tests
 // read the same report, so it is rendered once.
 const API_ROUTES = emittedApiRoutes(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
-const STATIC_ROUTES = staticRoutes(REAL_ROUTES_DIR, GUIDE_DIR, REAL_LIBRARY_TYPES_DIR);
+const listingApp = new Hono();
+listingApp.get(
+  "/libraries/:owner/:repo",
+  ...createLibraryListingRoute({
+    typesDir: REAL_TYPES_DIR,
+    libraryTypesDir: REAL_LIBRARY_TYPES_DIR,
+  }),
+);
+const STATIC_ROUTES = staticRoutes(REAL_ROUTES_DIR, GUIDE_DIR, await ssgRoutePaths(listingApp));
 const TRACKED_VERSION_IDS = new Set(versionsWithDiskFixtures(REAL_TYPES_DIR).map((v) => v.id));
 const siteReport = checkCorpus(GUIDE_DIR, siteRenderer(GUIDE_DIR), {
   api: API_ROUTES,

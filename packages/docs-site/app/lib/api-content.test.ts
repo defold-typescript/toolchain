@@ -16,6 +16,8 @@ import {
   canonicalApiPages,
   canonicalNamespaces,
   combinedApiPages,
+  defoldListings,
+  libraryNavGroups,
   versionIndependentPages,
   versionIndexPages,
   windowedApiPages,
@@ -25,11 +27,14 @@ import { apiLinkify, apiPageMarkdown } from "./api-page-render";
 import type { ApiPage } from "./api-surface";
 import { loadApiSurfaceForVersion } from "./api-surface-loader";
 import { compareSemverDesc } from "./combined-surface";
+import { buildNav, type NavLink } from "./nav";
+import { NO_TYPED_API_ICON } from "./no-typed-api-icon";
 import { resolveVersionWindow } from "./version-window";
 
 const ENGINE_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
 const LIBRARY_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/library-display");
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
+const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
 
 // A minimal page carrying only the fields the namespace-ownership union reads.
 function page(namespace: string): ApiPage {
@@ -326,5 +331,55 @@ describe("withVersionIndependentPages", () => {
     );
     expect(merged.filter((p) => p.namespace === "Hash")).toHaveLength(1);
     expect(merged.map((p) => p.namespace)).toEqual(["go", "Hash", "Vector3"]);
+  });
+});
+
+// The Libraries tab the renderer builds, composed the way `_renderer.tsx` composes
+// it over the committed pages and manifest, so an untyped library that stops
+// reaching the sidebar, or a typed one the composition drops, reds here.
+describe("libraryNavGroups — the sidebar Libraries tab over the committed manifest", () => {
+  const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+  const listings = defoldListings(REAL_LIBRARY_TYPES_DIR);
+  const libraries =
+    buildNav([], {
+      globals: [],
+      globalTypes: [],
+      luaStdlib: [],
+      engine: [],
+      libraries: libraryNavGroups(pages, REAL_LIBRARY_TYPES_DIR),
+    }).find((category) => category.id === "libraries")?.links ?? [];
+
+  const leaves = (links: NavLink[]): NavLink[] =>
+    links.flatMap((link) => (link.children ? leaves(link.children) : [link]));
+
+  test("every untyped listing is an icon-marked leaf under its owner, routed to its own page", () => {
+    expect(listings.length).toBeGreaterThan(0);
+    for (const listing of listings) {
+      const owner = libraries.find((link) => link.label === listing.owner);
+      const leaf = owner?.children?.find((link) => link.label === listing.repo);
+      expect({
+        route: leaf?.route,
+        children: leaf?.children,
+        tooltip: leaf?.tooltip,
+        icon: leaf?.labelHtml.includes(NO_TYPED_API_ICON),
+      }).toEqual({
+        route: listing.route,
+        children: undefined,
+        tooltip: `${listing.owner}/${listing.repo}`,
+        icon: true,
+      });
+    }
+  });
+
+  test("every typed library page stays reachable and the icon marks only the listings", () => {
+    const allLeaves = leaves(libraries);
+    const leafRoutes = new Set(allLeaves.map((leaf) => leaf.route));
+    const libraryRoutes = pages.filter((p) => p.category === "library").map((p) => p.route);
+    expect(libraryRoutes.length).toBeGreaterThan(0);
+    for (const route of libraryRoutes)
+      expect({ route, reachable: leafRoutes.has(route) }).toEqual({ route, reachable: true });
+    expect(allLeaves.filter((leaf) => leaf.labelHtml.includes(NO_TYPED_API_ICON))).toHaveLength(
+      listings.length,
+    );
   });
 });
