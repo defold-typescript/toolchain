@@ -29,7 +29,8 @@
           "doc": "One of wss, ws, tcp or udp\n",
           "types": [
             "string"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -51,7 +52,8 @@
           "doc": "",
           "types": [
             "string"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -124,14 +126,16 @@
           "doc": "",
           "types": [
             "table"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "matchmaking_options",
           "doc": "",
           "types": [
             "table"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -146,7 +150,8 @@
           "doc": "",
           "types": [
             "table"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -168,7 +173,8 @@
           "doc": "",
           "types": [
             "table"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -190,14 +196,16 @@
           "doc": "",
           "types": [
             "table"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "join_room_options",
           "doc": "",
           "types": [
             "table"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -219,7 +227,8 @@
           "doc": "",
           "types": [
             "table"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -234,14 +243,16 @@
           "doc": "",
           "types": [
             "boolean"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "send_auth_cookie",
           "doc": "",
           "types": [
             "boolean"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -352,7 +363,8 @@
           "doc": "",
           "types": [
             "string"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -374,14 +386,16 @@
           "doc": "Initial position of created game object\n",
           "types": [
             "vector3"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "rotation",
           "doc": "Initial rotation of created game object\n",
           "types": [
             "quat"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "map",
@@ -425,7 +439,8 @@
           "doc": "",
           "types": [
             "string"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -468,7 +483,8 @@
           "doc": "",
           "types": [
             "string"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -483,7 +499,8 @@
           "doc": "",
           "types": [
             "string"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -603,7 +620,8 @@
           "doc": "",
           "types": [
             "table"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [
@@ -633,7 +651,8 @@
           "doc": "Subscriber id\n",
           "types": [
             "hash"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -655,7 +674,8 @@
           "doc": "Which object should unsubscribe\n",
           "types": [
             "hash"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -700,7 +720,8 @@
           "doc": "Id of the object to get the owner for\n",
           "types": [
             "string"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [
@@ -723,7 +744,8 @@
           "doc": "",
           "types": [
             "string"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [
@@ -746,7 +768,8 @@
           "doc": "Id of the object\n",
           "types": [
             "string"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [
@@ -776,7 +799,8 @@
           "doc": "Id of the object to own\n",
           "types": [
             "string"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -791,7 +815,8 @@
           "doc": "Id of the object to clear cooldown for\n",
           "types": [
             "string"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -842,7 +867,8 @@
           "doc": "Id of the object to send rate for\n",
           "types": [
             "string"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -864,7 +890,8 @@
           "doc": "Id of the object to send rate for\n",
           "types": [
             "string"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -879,7 +906,8 @@
           "doc": "Id of the object to reset send rate for\n",
           "types": [
             "string"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []

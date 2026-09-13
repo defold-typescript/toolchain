@@ -15,6 +15,59 @@
           "doc": "A callback which receives info about finished requests taking the following parameters:",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "webview_id",
+              "doc": "The webview id",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "request_id",
+              "doc": "The request id",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "type",
+              "doc": "The type of callback\n- `webview.CALLBACK_RESULT_URL_OK`\n- `webview.CALLBACK_RESULT_URL_ERROR`\n- `webview.CALLBACK_RESULT_URL_LOADING`\n- `webview.CALLBACK_RESULT_EVAL_OK`\n- `webview.CALLBACK_RESULT_EVAL_ERROR`",
+              "types": [
+                "enum"
+              ]
+            },
+            {
+              "name": "data",
+              "doc": "A table holding the data",
+              "types": [
+                "table"
+              ],
+              "fields": [
+                {
+                  "name": "url",
+                  "doc": "The url used in the `webview.open()` call. `nil` otherwise.",
+                  "types": [
+                    "string"
+                  ]
+                },
+                {
+                  "name": "result",
+                  "doc": "Holds the result of either: a failed url open, a successful eval request or a failed eval. `nil` otherwise.",
+                  "types": [
+                    "string"
+                  ]
+                }
+              ]
+            }
           ]
         }
       ],
@@ -60,6 +113,29 @@
           "doc": "A table of options for the request. Currently it holds these options:",
           "types": [
             "table"
+          ],
+          "fields": [
+            {
+              "name": "hidden",
+              "doc": "If true, the webview will stay hidden (default=false)",
+              "types": [
+                "boolean"
+              ]
+            },
+            {
+              "name": "headers",
+              "doc": "A table of header keys and values",
+              "types": [
+                "table"
+              ]
+            },
+            {
+              "name": "transparent",
+              "doc": "If true, the webview background will be transparent (default=false)",
+              "types": [
+                "boolean"
+              ]
+            }
           ]
         }
       ],

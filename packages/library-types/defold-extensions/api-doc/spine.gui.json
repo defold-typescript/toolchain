@@ -61,6 +61,36 @@
           "doc": "optional table with properties",
           "types": [
             "table"
+          ],
+          "fields": [
+            {
+              "name": "blend_duration",
+              "doc": "The duration of a linear blend between the current and new animation",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "offset",
+              "doc": "The normalized initial value of the animation cursor when the animation starts playing",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "playback_rate",
+              "doc": "The rate with which the animation will be played. Must be positive",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "track",
+              "doc": "The track number for the animation (1-based). Defaults to track 1. Multiple tracks allow for layered animations.",
+              "types": [
+                "number"
+              ]
+            }
           ]
         },
         {
@@ -68,6 +98,101 @@
           "doc": "function to call when the animation has completed or when spine events occur",
           "types": [
             "function(self, node, message_id, message)"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The context of the calling script",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "node",
+              "doc": "The spine node that completed the animation or triggered the event",
+              "types": [
+                "node"
+              ]
+            },
+            {
+              "name": "message_id",
+              "doc": "The name of the message (\"spine_animation_done\" or \"spine_event\")",
+              "types": [
+                "hash"
+              ]
+            },
+            {
+              "name": "message",
+              "doc": "A table that contains the response",
+              "types": [
+                "table"
+              ],
+              "fields": [
+                {
+                  "name": "animation_id",
+                  "doc": "The animation that was completed or triggered the event",
+                  "types": [
+                    "hash"
+                  ]
+                },
+                {
+                  "name": "track",
+                  "doc": "The track index of the animation",
+                  "types": [
+                    "number"
+                  ]
+                },
+                {
+                  "name": "playback",
+                  "doc": "(spine_animation_done only!) The playback mode for the animation",
+                  "types": [
+                    "constant"
+                  ]
+                },
+                {
+                  "name": "event_id",
+                  "doc": "(spine_event only!) the event that was triggered.",
+                  "types": [
+                    "hash"
+                  ]
+                },
+                {
+                  "name": "blend_weight",
+                  "doc": "(spine_event only!) Deprecated. Always 0.",
+                  "types": [
+                    "float"
+                  ]
+                },
+                {
+                  "name": "t",
+                  "doc": "(spine_event only!) the time at which the event occurred (seconds)",
+                  "types": [
+                    "float"
+                  ]
+                },
+                {
+                  "name": "integer",
+                  "doc": "(spine_event only!) a custom integer associated with the event (0 by default).",
+                  "types": [
+                    "int"
+                  ]
+                },
+                {
+                  "name": "float",
+                  "doc": "(spine_event only!) a custom float associated with the event (0 by default)",
+                  "types": [
+                    "float"
+                  ]
+                },
+                {
+                  "name": "string",
+                  "doc": "(spine_event only!) a custom string associated with the event (hash(\"\") by default)",
+                  "types": [
+                    "hash"
+                  ]
+                }
+              ]
+            }
           ]
         }
       ],
@@ -90,6 +215,15 @@
           "doc": "optional table with properties",
           "types": [
             "table"
+          ],
+          "fields": [
+            {
+              "name": "track",
+              "doc": "The track number to cancel (1-based). If not specified, cancels all tracks.",
+              "types": [
+                "number"
+              ]
+            }
           ]
         }
       ],
@@ -300,6 +434,15 @@
           "doc": "optional table with properties",
           "types": [
             "table"
+          ],
+          "fields": [
+            {
+              "name": "track",
+              "doc": "The track number to get animation from (1-based). Defaults to track 1.",
+              "types": [
+                "number"
+              ]
+            }
           ]
         }
       ],
@@ -329,6 +472,15 @@
           "doc": "optional table with properties",
           "types": [
             "table"
+          ],
+          "fields": [
+            {
+              "name": "track",
+              "doc": "The track number to set cursor for (1-based). Defaults to track 1.",
+              "types": [
+                "number"
+              ]
+            }
           ]
         }
       ],
@@ -351,6 +503,15 @@
           "doc": "optional table with properties",
           "types": [
             "table"
+          ],
+          "fields": [
+            {
+              "name": "track",
+              "doc": "The track number to get cursor from (1-based). Defaults to track 1.",
+              "types": [
+                "number"
+              ]
+            }
           ]
         }
       ],
@@ -380,6 +541,15 @@
           "doc": "optional table with properties",
           "types": [
             "table"
+          ],
+          "fields": [
+            {
+              "name": "track",
+              "doc": "The track number to set playback rate for (1-based). Defaults to track 1.",
+              "types": [
+                "number"
+              ]
+            }
           ]
         }
       ],
@@ -402,6 +572,15 @@
           "doc": "optional table with properties",
           "types": [
             "table"
+          ],
+          "fields": [
+            {
+              "name": "track",
+              "doc": "The track number to get playback rate from (1-based). Defaults to track 1.",
+              "types": [
+                "number"
+              ]
+            }
           ]
         }
       ],

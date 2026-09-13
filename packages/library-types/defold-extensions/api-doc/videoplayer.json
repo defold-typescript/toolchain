@@ -22,13 +22,55 @@
           "doc": "Optional settings.",
           "types": [
             "table"
-          ]
+          ],
+          "fields": [
+            {
+              "name": "play_sound",
+              "doc": "Play audio (default true).",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "is_optional": "True"
         },
         {
           "name": "callback",
           "doc": "Called on video events.",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "handle",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "event",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "data",
+              "doc": "On READY contains width/height.",
+              "types": [
+                "table"
+              ],
+              "is_optional": "True"
+            }
           ]
         }
       ],

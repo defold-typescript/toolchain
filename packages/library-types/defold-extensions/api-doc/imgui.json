@@ -387,28 +387,32 @@
           "doc": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "uv0y",
           "doc": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "uv1x",
           "doc": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "uv2x",
           "doc": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -479,7 +483,8 @@
           "doc": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -550,7 +555,8 @@
           "doc": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -1567,21 +1573,24 @@
           "doc": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "x",
           "doc": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "y",
           "doc": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [
@@ -1625,14 +1634,16 @@
           "doc": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "weight",
           "doc": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -1747,7 +1758,8 @@
           "doc": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -1776,7 +1788,8 @@
           "doc": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [
@@ -1863,7 +1876,8 @@
           "doc": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [
@@ -1907,7 +1921,8 @@
           "doc": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [
@@ -1972,7 +1987,8 @@
           "doc": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [
@@ -2037,7 +2053,8 @@
           "doc": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [
@@ -2637,7 +2654,8 @@
           "doc": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [
@@ -2674,14 +2692,16 @@
           "doc": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "height",
           "doc": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [
@@ -2734,14 +2754,16 @@
           "doc": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "height",
           "doc": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [
@@ -2919,7 +2941,8 @@
           "doc": "",
           "types": [
             "boolean"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [
@@ -2970,7 +2993,8 @@
           "doc": "",
           "types": [
             "boolean"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [
@@ -3000,7 +3024,8 @@
           "doc": "",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -4017,7 +4042,8 @@
           "doc": "",
           "types": [
             "string"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []

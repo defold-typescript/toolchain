@@ -14,7 +14,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Improved
 
 - **Every Defold library is now listed under [Libraries](/libraries) › defold, which leads the sidebar and the Libraries page marked `(official)`.** Each `.script_api` a `defold` GitHub org repo ships gets a page at its pin, with setup steps matching that release, tag or commit, while repos with no typed API appear as cards linking to GitHub; [`iac`](/api/iac), [`iap`](/api/iap), [`push`](/api/push) and [`webview`](/api/webview) moved there from the engine reference, and their `/api/` links still work.
-- **Defold library pages now carry each extension's constants and code examples.** Pages such as [`admob`](/api/admob) and [`iap`](/api/iap) gain a Constants section with the values the extension's `.script_api` declares, and functions show the upstream usage examples with each block's own language, both of which the pages previously left out.
+- **Defold library pages now show each extension's constants, code examples, callback arguments and optional parameters.** Pages such as [`admob`](/api/admob) and [`iap`](/api/iap) gain a Constants section and the upstream usage examples, list a callback's arguments and a table's fields nested under their parameter, and mark optional parameters with `?` — all of which the pages previously left out.
 
 ### Fixed
 

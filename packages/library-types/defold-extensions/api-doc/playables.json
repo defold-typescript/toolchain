@@ -50,6 +50,25 @@
           "doc": "",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script instance.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "data",
+              "doc": "The serialized game data on success, otherwise nil.",
+              "types": []
+            },
+            {
+              "name": "error",
+              "doc": "The SDK error message on failure, otherwise nil.",
+              "types": []
+            }
           ]
         }
       ],
@@ -72,6 +91,27 @@
           "doc": "",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script instance.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "success",
+              "doc": "True when the save completed successfully.",
+              "types": [
+                "boolean"
+              ]
+            },
+            {
+              "name": "error",
+              "doc": "The UTF-8 decoding or SDK error message on failure, otherwise nil.",
+              "types": []
+            }
           ]
         }
       ],
@@ -100,7 +140,23 @@
         {
           "name": "callback",
           "doc": "The event callback, or nil to unregister the current callback.",
-          "types": []
+          "types": [],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script instance.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "is_audio_enabled",
+              "doc": "True when game audio should be enabled.",
+              "types": [
+                "boolean"
+              ]
+            }
+          ]
         }
       ],
       "returnvalues": []
@@ -113,7 +169,16 @@
         {
           "name": "callback",
           "doc": "The event callback, or nil to unregister the current callback.",
-          "types": []
+          "types": [],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script instance.",
+              "types": [
+                "object"
+              ]
+            }
+          ]
         }
       ],
       "returnvalues": []
@@ -126,7 +191,16 @@
         {
           "name": "callback",
           "doc": "The event callback, or nil to unregister the current callback.",
-          "types": []
+          "types": [],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script instance.",
+              "types": [
+                "object"
+              ]
+            }
+          ]
         }
       ],
       "returnvalues": []
@@ -141,6 +215,25 @@
           "doc": "",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script instance.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "language",
+              "doc": "The BCP-47 language tag on success, otherwise nil.",
+              "types": []
+            },
+            {
+              "name": "error",
+              "doc": "The SDK error message on failure, otherwise nil.",
+              "types": []
+            }
           ]
         }
       ],
@@ -163,6 +256,27 @@
           "doc": "",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script instance.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "success",
+              "doc": "True when the request succeeded.",
+              "types": [
+                "boolean"
+              ]
+            },
+            {
+              "name": "error",
+              "doc": "The SDK error message on failure, otherwise nil.",
+              "types": []
+            }
           ]
         }
       ],
@@ -185,13 +299,35 @@
           "doc": "CONTENT_TYPE_VIDEO or CONTENT_TYPE_PLAYABLE.",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "callback",
           "doc": "",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script instance.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "success",
+              "doc": "True when the request succeeded. This does not guarantee that the content opened.",
+              "types": [
+                "boolean"
+              ]
+            },
+            {
+              "name": "error",
+              "doc": "The SDK error message on failure, otherwise nil.",
+              "types": []
+            }
           ]
         }
       ],
@@ -207,6 +343,27 @@
           "doc": "",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script instance.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "success",
+              "doc": "True when the request succeeded. This does not guarantee that an ad was shown.",
+              "types": [
+                "boolean"
+              ]
+            },
+            {
+              "name": "error",
+              "doc": "The SDK error message on failure, otherwise nil.",
+              "types": []
+            }
           ]
         }
       ],
@@ -229,6 +386,25 @@
           "doc": "",
           "types": [
             "function"
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The calling script instance.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "reward_earned",
+              "doc": "True if a reward was earned, false if no reward was earned, or nil if the request failed.",
+              "types": []
+            },
+            {
+              "name": "error",
+              "doc": "The SDK error message on failure, otherwise nil.",
+              "types": []
+            }
           ]
         }
       ],

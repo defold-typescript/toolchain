@@ -15,7 +15,280 @@
           "doc": "",
           "types": [
             "function"
-          ]
+          ],
+          "fields": [
+            {
+              "name": "self",
+              "doc": "The script instance that installed the callback.",
+              "types": [
+                "object"
+              ]
+            },
+            {
+              "name": "message_id",
+              "doc": "One of MSG_INIT, MSG_INTERSTITIAL, MSG_REWARDED, MSG_BANNER, or MSG_TRACKING.",
+              "types": [
+                "number"
+              ]
+            },
+            {
+              "name": "message",
+              "doc": "Event data. Every asynchronous SDK event contains `event`. Events from a created ad object also contain `handle`; pre-creation validation errors do not.",
+              "types": [
+                "table"
+              ],
+              "fields": [
+                {
+                  "name": "event",
+                  "doc": "An EVENT_* constant, or a TRACKING_STATUS_* constant for MSG_TRACKING.",
+                  "types": [
+                    "number"
+                  ]
+                },
+                {
+                  "name": "handle",
+                  "doc": "The ad object that emitted the event.",
+                  "types": [
+                    "number"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "error_code",
+                  "doc": "",
+                  "types": [
+                    "number"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "error_message",
+                  "doc": "",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "error_domain",
+                  "doc": "Native error domain when supplied by iOS.",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "operation",
+                  "doc": "Bridge operation associated with a validation error.",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "error",
+                  "doc": "Serialization error detail for EVENT_JSON_ERROR.",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "ad_quality_enabled",
+                  "doc": "Whether Ad Quality is enabled, when reported during initialization.",
+                  "types": [
+                    "boolean"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "ad_id",
+                  "doc": "",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "ad_unit_id",
+                  "doc": "",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "ad_unit_name",
+                  "doc": "",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "ad_format",
+                  "doc": "",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "placement_name",
+                  "doc": "",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "auction_id",
+                  "doc": "",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "country",
+                  "doc": "",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "ab",
+                  "doc": "",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "segment_name",
+                  "doc": "",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "ad_network",
+                  "doc": "",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "instance_name",
+                  "doc": "",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "instance_id",
+                  "doc": "",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "revenue",
+                  "doc": "",
+                  "types": [
+                    "number"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "precision",
+                  "doc": "",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "encrypted_cpm",
+                  "doc": "",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "creative_id",
+                  "doc": "",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "conversion_value",
+                  "doc": "Conversion value when supplied by iOS.",
+                  "types": [
+                    "number"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "reward_name",
+                  "doc": "",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "reward_amount",
+                  "doc": "",
+                  "types": [
+                    "number"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "ad_width",
+                  "doc": "",
+                  "types": [
+                    "number"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "ad_height",
+                  "doc": "",
+                  "types": [
+                    "number"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "ad_size_description",
+                  "doc": "",
+                  "types": [
+                    "string"
+                  ],
+                  "is_optional": "True"
+                },
+                {
+                  "name": "ad_size_is_adaptive",
+                  "doc": "",
+                  "types": [
+                    "boolean"
+                  ],
+                  "is_optional": "True"
+                }
+              ]
+            }
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -37,7 +310,8 @@
           "doc": "Stable application user ID included in the initialization request.",
           "types": [
             "string"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -53,7 +327,8 @@
           "doc": "",
           "types": [
             "string"
-          ]
+          ],
+          "is_optional": "True"
         }
       ]
     },
@@ -141,14 +416,16 @@
           "doc": "Meta country code. Zero, the default, asks Meta to geolocate.",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         },
         {
           "name": "state",
           "doc": "Meta state code. Zero, the default, asks Meta to geolocate.",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [
@@ -254,7 +531,8 @@
           "doc": "One of TRACKING_STATUS_NOT_DETERMINED, TRACKING_STATUS_RESTRICTED, TRACKING_STATUS_DENIED, or TRACKING_STATUS_AUTHORIZED.",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ]
     },
@@ -275,7 +553,8 @@
           "doc": "Optional minimum eCPM in USD. It applies to every load by this object; changing it requires destroying the handle and creating a new object.",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [
@@ -284,7 +563,8 @@
           "doc": "Positive handle, or nil when native creation is rejected.",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ]
     },
@@ -358,7 +638,8 @@
           "doc": "",
           "types": [
             "string"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -403,7 +684,8 @@
           "doc": "Optional minimum eCPM in USD. It applies to every load by this object; changing it requires destroying the handle and creating a new object.",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [
@@ -412,7 +694,8 @@
           "doc": "Positive handle, or nil when native creation is rejected.",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ]
     },
@@ -486,7 +769,8 @@
           "doc": "",
           "types": [
             "string"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": []
@@ -531,7 +815,8 @@
           "doc": "",
           "types": [
             "string"
-          ]
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [
@@ -540,7 +825,24 @@
           "doc": "",
           "types": [
             "table"
-          ]
+          ],
+          "fields": [
+            {
+              "name": "name",
+              "doc": "",
+              "types": [
+                "string"
+              ]
+            },
+            {
+              "name": "amount",
+              "doc": "",
+              "types": [
+                "number"
+              ]
+            }
+          ],
+          "is_optional": "True"
         }
       ]
     },
@@ -561,7 +863,50 @@
           "doc": "Creation-time banner configuration. These fields apply to every load and show; changing one requires destroying the handle and creating a new banner.",
           "types": [
             "table"
-          ]
+          ],
+          "fields": [
+            {
+              "name": "size",
+              "doc": "A BANNER_SIZE_* constant. Defaults to BANNER_SIZE_ADAPTIVE.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "position",
+              "doc": "BANNER_POSITION_TOP or BANNER_POSITION_BOTTOM. Defaults to BANNER_POSITION_BOTTOM.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "placement",
+              "doc": "Dashboard placement used for reporting by this banner object.",
+              "types": [
+                "string"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "bid_floor",
+              "doc": "Minimum eCPM in USD applied to every load by this banner object.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "respect_safe_area",
+              "doc": "Whether the banner avoids system bars and display cutouts. Defaults to true.",
+              "types": [
+                "boolean"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "is_optional": "True"
         }
       ],
       "returnvalues": [
@@ -570,7 +915,8 @@
           "doc": "Positive handle, or nil when native creation is rejected.",
           "types": [
             "number"
-          ]
+          ],
+          "is_optional": "True"
         }
       ]
     },
