@@ -121,6 +121,10 @@ The sections below mirror the top navigation; each lists the pages in its left-s
     * [`llms-full.txt`](https://defold-typescript.github.io/toolchain/llms-full.txt) is the full corpus (grep it, never read it whole). The same pair ships into a consumer's `node_modules/@defold-typescript/docs/` on install.
     * [`init-agents`](./init-agents.md) wires them up — it writes the managed `AGENTS.md` / `CLAUDE.md` block that points your agent at both files and at the runbooks, so a fresh session orients from the project's own documentation instead of from training-data recall.
 
+#### Credits
+
+Language and platform logos come from [Devicon](https://github.com/devicons/devicon), MIT License, Copyright (c) 2015 konpa ([license](https://github.com/devicons/devicon/blob/master/LICENSE)). Other interface icons come from [Phosphor Icons](https://github.com/phosphor-icons/core), MIT License, Copyright (c) 2023 Phosphor Icons ([license](https://github.com/phosphor-icons/core/blob/main/LICENSE)). Logos are trademarks of their respective owners and indicate compatibility only.
+
 
 ### Getting started
 
