@@ -7,7 +7,7 @@ import type { NamespaceBadgeCounts } from "../lib/combined-surface";
 import { getStartedPages } from "../lib/get-started";
 import type { GuidePage } from "../lib/guide";
 import { groupGuidePages } from "../lib/guide-groups";
-import { humanize, type LibraryOrigin, libraryPathSegments } from "../lib/nav";
+import { humanize, type LibraryListing, type LibraryOrigin, libraryPathSegments } from "../lib/nav";
 import {
   apiCardBadgeHtml,
   apiPageCardDescription,
@@ -353,11 +353,13 @@ export function LibraryPath({
 export function LibraryIndex({
   pages,
   origins,
+  listings = [],
 }: {
   pages: ApiPage[];
   origins: Map<string, LibraryOrigin>;
+  listings?: LibraryListing[];
 }) {
-  const groups = groupLibraryIndexByOwner(pages, origins);
+  const groups = groupLibraryIndexByOwner(pages, origins, listings);
   const total = groups.reduce(
     (sum, group) => sum + group.libraries.reduce((acc, lib) => acc + lib.pages.length, 0),
     0,
@@ -385,14 +387,25 @@ export function LibraryIndex({
         <LandingSection heading={group.label}>
           <LandingCardGrid>
             {group.libraries.flatMap((lib) =>
-              lib.pages.map((page) => (
+              lib.listingOnly ? (
                 <LandingCard
                   mono
-                  href={page.route}
-                  title={<LibraryPath owner="" repo={lib.label} namespace={page.namespace} />}
-                  description={apiPageCardDescription(page) || null}
+                  href={lib.listingOnly.url}
+                  title={<LibraryPath owner="" repo={lib.label} namespace="" />}
+                  description={[lib.listingOnly.description, "No typed API — ships no .script_api."]
+                    .filter((part) => part !== "")
+                    .join(" ")}
                 />
-              )),
+              ) : (
+                lib.pages.map((page) => (
+                  <LandingCard
+                    mono
+                    href={page.route}
+                    title={<LibraryPath owner="" repo={lib.label} namespace={page.namespace} />}
+                    description={apiPageCardDescription(page) || null}
+                  />
+                ))
+              ),
             )}
           </LandingCardGrid>
         </LandingSection>

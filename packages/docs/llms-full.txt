@@ -6508,6 +6508,10 @@ read from — the latest release, else the newest tag, else a commit. That pin
 only fixes what the page shows: which version your project depends on is still
 your choice in `game.project`, and `resolve` types whichever one you pick.
 
+Defold libraries that ship no `.script_api` are listed there too, as cards that
+link to the GitHub repo and say they have no typed API, so you can see they
+exist; `resolve` reports each one as `asset-only, skipped`.
+
 For the command itself — `--frozen`, version pinning, drift detection, and the
 cache location — see [Resolve](./resolve.md).
 

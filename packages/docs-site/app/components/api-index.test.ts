@@ -71,6 +71,35 @@ describe("LibraryIndex — card titles", () => {
   });
 });
 
+describe("LibraryIndex — listing-only libraries", () => {
+  const url = "https://github.com/defold/extension-adpf";
+  const render = () =>
+    String(
+      LibraryIndex({
+        pages: [libraryPage("iap", "/api/iap", false)],
+        origins: new Map<string, LibraryOrigin>([
+          ["iap", { owner: "defold", repo: "extension-iap" }],
+        ]),
+        listings: [
+          { owner: "defold", repo: "extension-adpf", url, description: "Android performance" },
+        ],
+      }),
+    );
+
+  test("links the GitHub repo verbatim and says the library has no typed API", () => {
+    const html = render();
+    expect(html).toContain(`<a href="${url}"`);
+    const inner = cardInner(html, url);
+    expect(inner).toContain("extension-adpf");
+    expect(inner).toContain("Android performance");
+    expect(inner).toContain("No typed API");
+  });
+
+  test("keeps the namespace count to documented pages", () => {
+    expect(render()).toContain("1 namespace documented");
+  });
+});
+
 // A dot between letters and a path slash are both non-breaking under UAX #14, so
 // without explicit break hints a long namespace overflows its heading and widens
 // the page horizontally.

@@ -2031,12 +2031,12 @@ describe("Defold extension pages", () => {
   };
   const firstPinnedWithDocs = (refKind: string) => {
     const entry = manifest.libraries.find((e) => e.refKind === refKind && e.docs.length > 0);
-    if (!entry) {
+    const doc = entry?.docs[0];
+    if (!entry || !doc) {
       throw new Error(
         `defold-extensions.json has no ${refKind}-pinned entry with docs; pick another subject`,
       );
     }
-    const doc = entry.docs[0];
     const md = render(`/api/${doc.page}`);
     return { entry, doc, md, step1: stepOne(md) };
   };

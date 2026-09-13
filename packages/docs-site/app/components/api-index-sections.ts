@@ -1,7 +1,7 @@
 import { namespaceCountBadges } from "../lib/api-page-render";
 import type { ApiPage } from "../lib/api-surface";
 import type { NamespaceBadgeCounts } from "../lib/combined-surface";
-import { type LibraryOrigin, libraryOwnerGroups } from "../lib/nav";
+import { type LibraryListing, type LibraryOrigin, libraryOwnerGroups } from "../lib/nav";
 
 // The `/api` index renders one card grid per page category. Membership lives
 // here (a JSX-free module) so the grouping is unit-testable under root
@@ -19,6 +19,7 @@ export interface LibraryIndexGroup {
   repo: string;
   label: string;
   pages: ApiPage[];
+  listingOnly?: { url: string; description: string };
 }
 
 export interface LibraryOwnerIndexGroup {
@@ -57,13 +58,17 @@ export function apiPageCardDescription(page: ApiPage): string {
   return "";
 }
 
+// Library pages grouped by owner, then repo, in the sidebar's order. Listings
+// (libraries with no typed API) have no route, so the sidebar never sees them;
+// they merge into their owner group here as page-less libraries sorted by repo.
 export function groupLibraryIndexByOwner(
   pages: ApiPage[],
   origins: Map<string, LibraryOrigin>,
+  listings: LibraryListing[] = [],
 ): LibraryOwnerIndexGroup[] {
   const libraryPages = pages.filter((page) => page.category === "library");
   const byNamespace = new Map(libraryPages.map((page) => [page.namespace, page]));
-  return libraryOwnerGroups(
+  const groups: LibraryOwnerIndexGroup[] = libraryOwnerGroups(
     libraryPages.map((page) => ({ namespace: page.namespace, route: page.route })),
     origins,
   ).map((owner) => ({
@@ -77,4 +82,22 @@ export function groupLibraryIndexByOwner(
         .filter((page): page is ApiPage => page !== undefined),
     })),
   }));
+  if (listings.length === 0) return groups;
+
+  for (const listing of listings) {
+    let group = groups.find((candidate) => candidate.owner === listing.owner);
+    if (!group) {
+      group = { owner: listing.owner, label: listing.owner, libraries: [] };
+      groups.push(group);
+    }
+    if (group.libraries.some((library) => library.repo === listing.repo)) continue;
+    group.libraries.push({
+      repo: listing.repo,
+      label: listing.repo,
+      pages: [],
+      listingOnly: { url: listing.url, description: listing.description },
+    });
+  }
+  for (const group of groups) group.libraries.sort((a, b) => a.repo.localeCompare(b.repo));
+  return groups.sort((a, b) => a.owner.localeCompare(b.owner, undefined, { sensitivity: "base" }));
 }

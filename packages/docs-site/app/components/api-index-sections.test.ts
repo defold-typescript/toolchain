@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import type { ApiModule } from "@defold-typescript/types";
+import { defoldListings, libraryOrigins } from "../lib/api-content";
 import type { ApiPage, ApiPageCategory } from "../lib/api-surface";
+import { loadApiSurface } from "../lib/api-surface-loader";
 import type { NamespaceBadgeCounts } from "../lib/combined-surface";
 import { buildNav, type LibraryOrigin, libraryOwnerGroups } from "../lib/nav";
 import { CombinedIndex } from "./api-index";
@@ -10,6 +14,9 @@ import {
   groupApiIndexPages,
   groupLibraryIndexByOwner,
 } from "./api-index-sections";
+
+const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
+const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
 
 function page(
   namespace: string,
@@ -129,6 +136,72 @@ describe("groupLibraryIndexByOwner", () => {
         })),
       })),
     );
+  });
+});
+
+describe("groupLibraryIndexByOwner with listing-only Defold libraries", () => {
+  const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+  const origins = libraryOrigins(REAL_LIBRARY_TYPES_DIR);
+  const listings = defoldListings(REAL_LIBRARY_TYPES_DIR);
+  const manifest = JSON.parse(
+    readFileSync(join(REAL_LIBRARY_TYPES_DIR, "defold-extensions.json"), "utf8"),
+  ) as { libraries: { repo: string; description: string; docs: unknown[] }[] };
+  const untypedRepos = manifest.libraries
+    .filter((entry) => entry.docs.length === 0)
+    .map((entry) => entry.repo);
+  const typedRepos = manifest.libraries
+    .filter((entry) => entry.docs.length > 0)
+    .map((entry) => entry.repo);
+  const groups = groupLibraryIndexByOwner(pages, origins, listings);
+  const defold = groups.find((group) => group.owner === "defold");
+
+  test("lists every manifest entry without docs exactly once under defold, with no pages", () => {
+    expect(untypedRepos.length).toBeGreaterThan(0);
+    const listed = (defold?.libraries ?? []).filter((library) => library.listingOnly);
+    expect(listed.map((library) => library.listingOnly?.url).sort()).toEqual(
+      [...untypedRepos].sort(),
+    );
+    for (const library of listed) {
+      const entry = manifest.libraries.find((e) => e.repo === library.listingOnly?.url);
+      expect(library.pages).toEqual([]);
+      expect(library.repo).toBe(library.listingOnly?.url.split("/").pop() ?? "");
+      expect(library.listingOnly?.description).toBe(entry?.description ?? "");
+    }
+  });
+
+  test("never lists a typed library as listing-only, and extension-iap keeps its page", () => {
+    const listedUrls = new Set(
+      groups.flatMap((group) =>
+        group.libraries.flatMap((library) =>
+          library.listingOnly ? [library.listingOnly.url] : [],
+        ),
+      ),
+    );
+    for (const repo of typedRepos) expect(listedUrls.has(repo)).toBe(false);
+    const iap = defold?.libraries.find((library) => library.repo === "extension-iap");
+    expect(iap?.listingOnly).toBeUndefined();
+    expect(iap?.pages.map((p) => p.route)).toEqual(["/api/iap"]);
+  });
+
+  test("sorts listing-only libraries among the typed ones by repo", () => {
+    const repos = (defold?.libraries ?? []).map((library) => library.repo);
+    expect(repos).toEqual([...repos].sort((a, b) => a.localeCompare(b)));
+  });
+
+  test("leaves every other owner group unchanged", () => {
+    const without = groupLibraryIndexByOwner(pages, origins);
+    const shape = (all: typeof groups) =>
+      all
+        .filter((group) => group.owner !== "defold")
+        .map((group) => ({
+          owner: group.owner,
+          libraries: group.libraries.map((library) => ({
+            repo: library.repo,
+            listingOnly: library.listingOnly,
+            pages: library.pages.map((p) => p.route),
+          })),
+        }));
+    expect(shape(groups)).toEqual(shape(without));
   });
 });
 

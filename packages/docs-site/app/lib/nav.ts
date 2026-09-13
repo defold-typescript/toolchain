@@ -47,6 +47,13 @@ export interface LibraryOrigin {
   repo: string;
 }
 
+// A library listed on the Libraries index with no typed API: it ships no
+// `.script_api`, so it has no page or route and appears only as a repo card.
+export interface LibraryListing extends LibraryOrigin {
+  url: string;
+  description: string;
+}
+
 /** One upstream repo: its `modules` render as namespace leaves under a route-less repo header. */
 export interface LibraryGroup {
   repo: string;

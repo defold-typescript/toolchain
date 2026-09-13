@@ -13,7 +13,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **Defold's own extensions are now browsable under [Libraries](/libraries) › defold.** Every `.script_api` an extension in the `defold` GitHub org ships gets a page at the pin it was read from, with setup steps that match that pin (release, tag or commit) and tell you to call its global with no import; [`iac`](/api/iac), [`iap`](/api/iap), [`push`](/api/push) and [`webview`](/api/webview) moved there from the engine reference, and their `/api/` links still work.
+- **Every Defold library is now listed under [Libraries](/libraries) › defold.** Each `.script_api` a `defold` GitHub org repo ships gets a page at its pin, with setup steps matching that release, tag or commit, while repos with no typed API appear as cards linking to GitHub; [`iac`](/api/iac), [`iap`](/api/iap), [`push`](/api/push) and [`webview`](/api/webview) moved there from the engine reference, and their `/api/` links still work.
 
 ### Fixed
 

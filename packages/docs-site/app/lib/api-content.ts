@@ -2,6 +2,7 @@ import { join } from "node:path";
 import type { ApiPage } from "./api-surface";
 import {
   type ApiVersion,
+  defoldListingsFromManifest,
   libraryOriginByNamespace,
   loadApiSurface,
   loadApiSurfaceForVersion,
@@ -16,7 +17,7 @@ import {
   combinedNamespaceToApiPage,
   type SignaturesArtifact,
 } from "./combined-surface";
-import type { LibraryOrigin } from "./nav";
+import type { LibraryListing, LibraryOrigin } from "./nav";
 import { resolveVersionWindow, type VersionWindow, windowCombinedSurface } from "./version-window";
 
 export const TYPES_DIR = join(process.cwd(), "../types");
@@ -272,4 +273,9 @@ export function libraryOrigins(
   libraryTypesDir: string = LIBRARY_TYPES_DIR,
 ): Map<string, LibraryOrigin> {
   return libraryOriginByNamespace(libraryTypesDir);
+}
+
+// Defold libraries with no typed API, listed on the Libraries index as repo cards.
+export function defoldListings(libraryTypesDir: string = LIBRARY_TYPES_DIR): LibraryListing[] {
+  return defoldListingsFromManifest(libraryTypesDir);
 }

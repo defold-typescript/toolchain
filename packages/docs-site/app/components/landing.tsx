@@ -33,7 +33,7 @@ export function LandingCard({
   return (
     <li>
       <a
-        href={withBase(href)}
+        href={/^https?:\/\//.test(href) ? href : withBase(href)}
         class="block rounded-lg border border-border bg-surface px-4 py-3 transition hover:border-border-strong hover:bg-surface-2"
       >
         <span class="flex items-center gap-2">
