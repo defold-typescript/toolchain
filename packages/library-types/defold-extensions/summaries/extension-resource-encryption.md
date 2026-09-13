@@ -11,7 +11,8 @@ project replace the default key or the algorithm itself.
 
 ## Using it
 
-Fork the repository, change the key in both the Java plugin and
-`src/plugin.cpp`, and add the fork's archive URL to the `game.project`
-dependencies. Rebuild the plugin jar with `build_plugin.sh` after changing
-the build-time part. It adds no functions for scripts to call.
+1. Fork the repository and depend on your fork's archive URL instead.
+2. Change the key in both the Java plugin and `src/plugin.cpp`.
+3. Rebuild the plugin jar with `build_plugin.sh` after changing the build-time
+   part.
+4. Expect no functions for scripts to call.

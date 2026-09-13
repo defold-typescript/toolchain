@@ -57,13 +57,18 @@ export type LibraryApiKind = "none" | "untyped";
 
 // A library with no typed API: it ships no `.script_api`, so instead of an `/api/`
 // page it gets a `/libraries/<owner>/<repo>` page built from an authored summary.
+// The summary's sections arrive split: `ships` leads the page, `steps` follow the
+// rendered add-the-dependency step, and `engineApis` closes it when authored.
 export interface LibraryListing extends LibraryOrigin {
   url: string;
   ref: string;
+  pinKind: "release" | "tag" | "commit";
   description: string;
   route: string;
   api: LibraryApiKind;
-  summary: string;
+  ships: string;
+  steps: string[];
+  engineApis?: string;
 }
 
 /** One upstream repo: its `modules` render as namespace leaves under a route-less repo header. */

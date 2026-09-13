@@ -269,6 +269,55 @@ export function libraryOriginByNamespace(libraryTypesDir: string): Map<string, L
   return origins;
 }
 
+const LISTING_SECTIONS = ["What it ships", "Using it", "Engine APIs"] as const;
+
+// A summary body is exactly its `## ` sections. `Using it` is an ordered list of
+// the steps after fetching the dependency — the page renders that first step
+// itself — so each item, continuation lines joined, becomes one step.
+function parseListingSummary(
+  body: string,
+  file: string,
+): { ships: string; steps: string[]; engineApis?: string } {
+  const where = `defold-extensions/summaries/${file}`;
+  const sections = new Map<string, string>();
+  const [preamble = "", ...chunks] = body.split(/^## /m);
+  if (preamble.trim() !== "") {
+    throw new Error(`${where}: content before the first section heading`);
+  }
+  for (const chunk of chunks) {
+    const newline = chunk.indexOf("\n");
+    const heading = (newline === -1 ? chunk : chunk.slice(0, newline)).trim();
+    if (!(LISTING_SECTIONS as readonly string[]).includes(heading)) {
+      throw new Error(
+        `${where}: unknown section "${heading}"; expected ${LISTING_SECTIONS.join(", ")}`,
+      );
+    }
+    if (sections.has(heading)) throw new Error(`${where}: duplicate section "${heading}"`);
+    sections.set(heading, newline === -1 ? "" : chunk.slice(newline + 1).trim());
+  }
+  const ships = sections.get("What it ships") ?? "";
+  if (ships === "") throw new Error(`${where}: section "What it ships" is missing or empty`);
+  const using = sections.get("Using it") ?? "";
+  if (using === "") throw new Error(`${where}: section "Using it" is missing or empty`);
+  const steps: string[] = [];
+  for (const line of using.split("\n")) {
+    const item = /^\d+\. (.+)$/.exec(line);
+    const continuation = /^ {3}(\S.*)$/.exec(line);
+    if (line.trim() === "") continue;
+    if (item?.[1]) steps.push(item[1].trim());
+    else if (continuation?.[1] && steps.length > 0) {
+      steps[steps.length - 1] = `${steps[steps.length - 1]} ${continuation[1].trim()}`;
+    } else {
+      throw new Error(
+        `${where}: section "Using it" must be only numbered steps with 3-space continuation lines, got ${JSON.stringify(line)}`,
+      );
+    }
+  }
+  const engineApis = sections.get("Engine APIs");
+  if (engineApis === "") throw new Error(`${where}: section "Engine APIs" is empty`);
+  return engineApis === undefined ? { ships, steps } : { ships, steps, engineApis };
+}
+
 // Defold's libraries that ship no `.script_api` (`docs: []`). Each gets a
 // `/libraries/<owner>/<repo>` page from an authored summary in
 // `defold-extensions/summaries/<repo>.md`, whose frontmatter records whether the
@@ -306,20 +355,20 @@ export function defoldListingsFromManifest(libraryTypesDir: string): LibraryList
           `defold-extensions/summaries/${repo}.md: frontmatter api must be "none" or "untyped", got ${JSON.stringify(data.api)}`,
         );
       }
-      const summary = body.trim();
-      if (summary === "") {
-        throw new Error(`defold-extensions/summaries/${repo}.md: summary body is empty`);
-      }
+      const { ships, steps, engineApis } = parseListingSummary(body, `${repo}.md`);
       return {
         owner,
         repo,
         url: entry.repo,
         ref: entry.ref,
+        pinKind: entry.refKind,
         description: entry.description,
         official: true as const,
         route: `/libraries/${owner}/${repo}`,
         api: data.api,
-        summary,
+        ships,
+        steps,
+        ...(engineApis === undefined ? {} : { engineApis }),
       };
     })
     .filter((listing) => listing.owner !== "" && listing.repo !== "");

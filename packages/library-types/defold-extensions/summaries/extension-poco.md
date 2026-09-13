@@ -12,10 +12,10 @@ server module and a native `poco_helper` module (`dump`, `click`, `swipe`,
 
 ## Using it
 
-Add a release zip URL from the repository's releases to the `game.project`
-dependencies, then `require('poco.lua.defold-poco')` in a script or GUI
-script. Call `poco:init_server(15004)` in `init` and `poco:server_loop()` in
-`update`; `poco:set_dispatch_fn` adds custom functions the client can call.
+1. `require('poco.lua.defold-poco')` in a script or GUI script.
+2. Call `poco:init_server(15004)` in `init`.
+3. Call `poco:server_loop()` in `update`.
+4. Add custom functions the client can call with `poco:set_dispatch_fn`.
 
 ## Engine APIs
 

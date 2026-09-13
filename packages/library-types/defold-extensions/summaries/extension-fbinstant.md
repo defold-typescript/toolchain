@@ -11,7 +11,6 @@ Games API. It registers an `fbinstant` Lua module with functions such as
 
 ## Using it
 
-Add the repository's master zip or a specific release zip to the
-`game.project` dependencies, then configure the HTML5 section of
-`game.project`. The extension ships an engine HTML template and example
-collections covering ads, context, leaderboards, payments and player data.
+1. Configure the HTML5 section of `game.project`.
+2. Start from the engine HTML template and the example collections covering
+   ads, context, leaderboards, payments and player data.
