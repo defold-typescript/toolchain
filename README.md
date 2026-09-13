@@ -105,4 +105,8 @@ The sections below mirror the top navigation; each lists the pages in its left-s
     * [`llms-full.txt`](https://defold-typescript.github.io/toolchain/llms-full.txt) is the full corpus (grep it, never read it whole). The same pair ships into a consumer's `node_modules/@defold-typescript/docs/` on install.
     * [`init-agents`](https://defold-typescript.github.io/toolchain/init-agents) wires them up — it writes the managed `AGENTS.md` / `CLAUDE.md` block that points your agent at both files and at the runbooks, so a fresh session orients from the project's own documentation instead of from training-data recall.
 
+## Credits
+
+Language and platform logos come from [Devicon](https://github.com/devicons/devicon), MIT License, Copyright (c) 2015 konpa ([license](https://github.com/devicons/devicon/blob/master/LICENSE)). Other interface icons come from [Phosphor Icons](https://github.com/phosphor-icons/core), MIT License, Copyright (c) 2023 Phosphor Icons ([license](https://github.com/phosphor-icons/core/blob/main/LICENSE)). Logos are trademarks of their respective owners and indicate compatibility only.
+
 [^src-root]: `src/` is this guide's shorthand and the scaffold's default, not a fixed location. Your source roots are the `include` globs in `tsconfig.json` — `["src/**/*.ts"]` out of the box, and any list of folders you set; `build` and `watch` compile exactly what those globs match, and ignore `exclude`.

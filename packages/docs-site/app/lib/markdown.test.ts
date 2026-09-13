@@ -510,15 +510,12 @@ describe("renderMarkdown", () => {
 
 const nodeRequire = createRequire(import.meta.url);
 
-// The first path of a Phosphor duotone asset, read from the package the renderer
+// The first path of a Devicon asset, read from the package the renderer
 // inlines, so the assertion identifies the glyph without restating its markup.
-function phosphorPath(name: string): string {
-  const svg = readFileSync(
-    nodeRequire.resolve(`@phosphor-icons/core/duotone/${name}-duotone.svg`),
-    "utf8",
-  );
+function deviconPath(file: string): string {
+  const svg = readFileSync(nodeRequire.resolve(`devicon/icons/${file}.svg`), "utf8");
   const d = svg.match(/ d="([^"]+)"/)?.[1];
-  if (!d) throw new Error(`no path in ${name}`);
+  if (!d) throw new Error(`no path in ${file}`);
   return d;
 }
 
@@ -540,7 +537,7 @@ describe("renderMarkdown fence language badges", () => {
     expect(figure?.children.map((c) => c.tagName)).toEqual(["SPAN", "PRE"]);
     const badge = languageBadge(figure?.children[0]);
     expect(badge.label).toBe("Lua");
-    expect(badge.paths).toContain(phosphorPath("moon"));
+    expect(badge.paths).toContain(deviconPath("lua/lua-plain"));
     const pre = figure?.children[1];
     expect(pre?.querySelector('[data-slot="badge"]')).toBeNull();
     // mini-dom concatenates an element's own text ahead of its children, which
@@ -559,7 +556,7 @@ describe("renderMarkdown fence language badges", () => {
     expect(caption?.className).toBe("code-title");
     const badge = languageBadge(caption?.children[0]);
     expect(badge.label).toBe("TypeScript");
-    expect(badge.paths).toContain(phosphorPath("file-ts"));
+    expect(badge.paths).toContain(deviconPath("typescript/typescript-plain"));
     expect(figure?.children[1]?.tagName).toBe("PRE");
     expect(figure?.querySelectorAll('[data-slot="badge"]')).toHaveLength(1);
     expect(html).toMatch(
@@ -608,7 +605,7 @@ describe("renderMarkdown platform markers", () => {
     expect(badge?.getAttribute("role")).toBe("img");
     expect(badge?.getAttribute("aria-label")).toBe("iOS");
     const paths = (badge?.querySelectorAll("path") ?? []).map((p) => p.getAttribute("d"));
-    expect(paths).toContain(phosphorPath("apple-logo"));
+    expect(paths).toContain(deviconPath("apple/apple-original"));
     expect(html).not.toContain("[icon:ios]");
     expect(root.querySelector("p")?.text).toContain("Only ");
   });
