@@ -499,7 +499,7 @@ describe("loadApiSurface — multi-module same-repo library grouping (real corpu
     const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR)
       .filter((p) => p.category === "library")
       .map((p) => ({ namespace: p.namespace, route: p.route }));
-    return libraryOwnerGroups(pages, libraryOriginByNamespace(REAL_LIBRARY_TYPES_DIR));
+    return libraryOwnerGroups(pages, libraryOriginByNamespace(REAL_LIBRARY_TYPES_DIR), []);
   }
 
   test("groups defold-saver's two modules into exactly one authored-here library under Insality", () => {
