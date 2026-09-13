@@ -11,10 +11,9 @@ image buffer and its side length.
 
 ## Using it
 
-Add a release zip URL from the repository's releases to the `game.project`
-dependencies. The included example app scans camera images and creates QR
-codes; it depends on a camera extension that supports only macOS, iOS and
-Android.
+1. See the included example app, which scans camera images and creates QR
+   codes; it depends on a camera extension that supports only macOS, iOS and
+   Android.
 
 ## Engine APIs
 

@@ -10,5 +10,4 @@ no extension code, Lua module, or example project.
 
 ## Using it
 
-There is nothing to add to a project yet; no dependency or callable API is
-provided at this revision.
+1. Expect nothing to use yet: no callable API is provided at this revision.

@@ -11,6 +11,8 @@ registers the `androidnative` Lua module with functions such as `vibrate`,
 
 ## Using it
 
-Open the project and build it for Android. The example menu GUI script checks
-that `androidnative` is not nil before calling it; the `java_src` and
-`lib_src` build scripts show how the `.jar` and `.a` files are produced.
+1. Build the project for Android.
+2. Check that `androidnative` is not nil before calling it, as the example
+   menu GUI script does.
+3. See the `java_src` and `lib_src` build scripts for how the `.jar` and `.a`
+   files are produced.

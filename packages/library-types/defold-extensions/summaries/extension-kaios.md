@@ -11,7 +11,8 @@ template, maps the left softkey, right softkey and call keys to `KEY_F1`,
 
 ## Using it
 
-`kaios.play_sound` plays sounds through the JavaScript AudioContext, so the
-sound files must be included with the bundle resources setting in
-`game.project`. For KaiAds integration upstream points to the separate
-`extension-kaiads` repository.
+1. Include the sound files with the bundle resources setting in
+   `game.project`, since `kaios.play_sound` plays them through the JavaScript
+   AudioContext.
+2. For KaiAds integration, use the separate `extension-kaiads` repository
+   upstream points to.

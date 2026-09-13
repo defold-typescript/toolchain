@@ -12,6 +12,7 @@ with demonstration functions such as `html5nativeext.multiply`,
 
 ## Using it
 
-The repository is an example project rather than a packaged library. Build
-it for HTML5 and its `main.script` calls the module's functions, including
-polling `html5nativeext.get_user_data` for data set from the web page.
+1. Build the project for HTML5; the repository is an example project rather
+   than a packaged library.
+2. Call the module's functions as its `main.script` does, including polling
+   `html5nativeext.get_user_data` for data set from the web page.

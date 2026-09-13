@@ -21,6 +21,8 @@ import {
 import { type ApiVersion, versionsWithDiskFixtures } from "./api-surface-loader";
 import type { BadgeCountTable } from "./api-surface-pref";
 import { type NamespaceBadgeCounts, reachableBadgeCounts } from "./combined-surface";
+import type { LibraryListing } from "./nav";
+import { LIBRARY_API_KIND_SENTENCE } from "./no-typed-api-icon";
 import { platformDocText } from "./platform-icons";
 import type { SignatureSymbolTarget } from "./signature-brand-links";
 import { buildSymbolIndex } from "./symbol-index";
@@ -348,6 +350,53 @@ function symbolBlock(symbol: ApiSymbol, badges = "", dots = "", note = ""): stri
   );
 }
 
+// The `  1.` adopt step naming the dependency URL for a repo at its pin — shared by
+// typed library pages and untyped listing pages so both give one instruction per
+// pin kind. `ref` is the pinned tag or commit; a release pin leaves the choice to
+// the reader, so it goes unused there.
+export function dependencyStep(
+  repoUrl: string,
+  pinKind: LibraryMeta["pinKind"],
+  ref: string,
+): string {
+  const repo = repoUrl ? repoUrl.replace(/^https?:\/\/[^/]+\/?/, "").replace(/\/$/, "") : "";
+  const isGithub = /^https?:\/\/github\.com\//i.test(repoUrl);
+  const base = repoUrl.replace(/\/$/, "");
+  const dependencies = "to `game.project` under `[project]` `dependencies`";
+  const step1 = !isGithub
+    ? `Pick a release from the library's GitHub repository and add its **Source code (zip)** URL (or a packaged \`.zip\` asset, if the library ships one) ${dependencies}`
+    : pinKind === "tag"
+      ? `This repo publishes no releases. Pick a tag from [${repo} tags](${base}/tags) and add its **Source code (zip)** URL — for the pinned tag, \`${base}/archive/refs/tags/${ref}.zip\` — ${dependencies}`
+      : pinKind === "commit"
+        ? `This repo publishes no releases or tags. Add a commit archive URL — for the pinned commit, \`${base}/archive/${ref}.zip\` — ${dependencies}`
+        : `Pick a release from [${repo} releases](${base}/releases) and add its **Source code (zip)** URL (or a packaged \`.zip\` asset, if the library ships one) ${dependencies}`;
+  return `  1. ${step1}, then **Fetch Libraries** in the Defold editor.`;
+}
+
+// A 40-hex commit pin reads as its short sha; a tag or release pin reads verbatim.
+function pinLabel(ref: string): string {
+  return /^[0-9a-f]{40}$/.test(ref) ? ref.slice(0, 7) : ref;
+}
+
+// An untyped library's `/libraries/<owner>/<repo>` page body in the typed library
+// page's order: the authored lead, the api-kind sentence, the linked GitHub pin
+// with the dependency step and the authored steps nested under it, then the
+// optional `Engine APIs` section.
+export function listingPageMarkdown(listing: LibraryListing): string {
+  const repo = `${listing.owner}/${listing.repo}`;
+  const lines = [
+    listing.ships,
+    "",
+    LIBRARY_API_KIND_SENTENCE[listing.api],
+    "",
+    `- GitHub: [${repo}](${listing.url}) — pinned to [\`${pinLabel(listing.ref)}\`](${listing.url}/tree/${listing.ref})`,
+    dependencyStep(listing.url, listing.pinKind, listing.ref),
+    ...listing.steps.map((step, index) => `  ${index + 2}. ${step}`),
+  ];
+  if (listing.engineApis) lines.push("", "## Engine APIs", "", listing.engineApis);
+  return lines.join("\n");
+}
+
 // The uniform provenance block for a `library` page: the bullets lead with the
 // real origin (author + upstream GitHub repo), followed by the ts-defold
 // commit pin, the import string, and the license. Author and GitHub are
@@ -385,16 +434,6 @@ function libraryMetaBlock(meta: LibraryMeta, hasGlobals: boolean): string[] {
   const head = meta.authorUrl
     ? `- GitHub: [${repo || meta.authorUrl}](${meta.authorUrl}) — pinned to ${pin}`
     : `- Commit pin: ${pin}`;
-  const isGithub = /^https?:\/\/github\.com\//i.test(meta.authorUrl);
-  const repoUrl = meta.authorUrl.replace(/\/$/, "");
-  const dependencies = "to `game.project` under `[project]` `dependencies`";
-  const step1 = !isGithub
-    ? `Pick a release from the library's GitHub repository and add its **Source code (zip)** URL (or a packaged \`.zip\` asset, if the library ships one) ${dependencies}`
-    : meta.pinKind === "tag"
-      ? `This repo publishes no releases. Pick a tag from [${repo} tags](${repoUrl}/tags) and add its **Source code (zip)** URL — for the pinned tag, \`${repoUrl}/archive/refs/tags/${meta.commit}.zip\` — ${dependencies}`
-      : meta.pinKind === "commit"
-        ? `This repo publishes no releases or tags. Add a commit archive URL — for the pinned commit, \`${repoUrl}/archive/${meta.commit}.zip\` — ${dependencies}`
-        : `Pick a release from [${repo} releases](${repoUrl}/releases) and add its **Source code (zip)** URL (or a packaged \`.zip\` asset, if the library ships one) ${dependencies}`;
   // A native extension registers its namespace as a Lua global, so step 3 names
   // that global instead of an import a user could not write.
   const step3 =
@@ -414,7 +453,7 @@ function libraryMetaBlock(meta: LibraryMeta, hasGlobals: boolean): string[] {
         ];
   return [
     head,
-    `  1. ${step1}, then **Fetch Libraries** in the Defold editor.`,
+    dependencyStep(meta.authorUrl, meta.pinKind, meta.commit),
     "  2. Run `bunx @defold-typescript/cli resolve` to materialize its types.",
     ...step3,
     // A fork like `boom` or `deftest` publishes most of its surface outside the

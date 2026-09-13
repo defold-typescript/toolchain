@@ -10,10 +10,9 @@ component and light data from Defold's built-in light components.
 
 ## Using it
 
-Add the repository zip archive to the `[project]` dependencies in
-`game.project` and fetch libraries. Assign `/defold-pbr/pbr.material` to any
-model that should use the shader; extension shaders can include
-`pbr_lighting.glsl` to add their own lighting terms.
+1. Assign `/defold-pbr/pbr.material` to any model that should use the shader.
+2. Include `pbr_lighting.glsl` from an extension shader to add its own
+   lighting terms.
 
 ## Engine APIs
 

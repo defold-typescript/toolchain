@@ -10,4 +10,4 @@ content or Lua API.
 
 ## Using it
 
-There is nothing to add to a project yet at this revision.
+1. Expect nothing to use yet: this revision adds nothing to a project.

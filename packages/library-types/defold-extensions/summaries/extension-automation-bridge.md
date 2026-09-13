@@ -12,8 +12,7 @@ scripts call `publish`, `emit`, `command` and `annotate`.
 
 ## Using it
 
-Add the repository zip archive to the `[project]` dependencies in
-`game.project`, fetch libraries, then install the Python wrapper with the
-extension's `install.py`. Scene inspection, input and screenshots need no Lua
-setup; set `application_api = 1` under `[automation_bridge]` in
-`game.project` to enable the Lua module.
+1. Install the Python wrapper with the extension's `install.py`.
+2. Inspect scenes, send input and take screenshots; these need no Lua setup.
+3. Set `application_api = 1` under `[automation_bridge]` in `game.project` to
+   enable the Lua module.

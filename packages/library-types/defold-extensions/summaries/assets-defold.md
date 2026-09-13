@@ -11,7 +11,5 @@ original.
 
 ## Using it
 
-Add the repository zip archive to the `[project]` dependencies in
-`game.project`; the images are then available under `/assets-defold`, for
-example on a splash screen. Use of other logo versions requires permission
-from the Defold Foundation.
+1. Use the images under `/assets-defold`, for example on a splash screen.
+2. Ask the Defold Foundation for permission before using other logo versions.

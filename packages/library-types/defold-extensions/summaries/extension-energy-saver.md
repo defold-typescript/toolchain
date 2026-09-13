@@ -11,10 +11,10 @@ configurable delay.
 
 ## Using it
 
-Add a release zip URL from the repository's releases to the `game.project`
-dependencies, then drag `energysaver.go` into the bootstrap collection and
-tune its script properties. Set the `is_energy_saving_allowed` property with
-`go.set` to pause the savings temporarily, for example during cutscenes.
+1. Drag `energysaver.go` into the bootstrap collection.
+2. Tune its script properties.
+3. Set the `is_energy_saving_allowed` property with `go.set` to pause the
+   savings temporarily, for example during cutscenes.
 
 ## Engine APIs
 

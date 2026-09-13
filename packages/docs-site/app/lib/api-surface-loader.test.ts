@@ -16,7 +16,7 @@ import {
   loadVersionIndependentPages,
   versionsWithDiskFixtures,
 } from "./api-surface-loader";
-import { libraryOwnerGroups } from "./nav";
+import { type LibraryListing, libraryOwnerGroups } from "./nav";
 
 const ENGINE_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
 const LIBRARY_FIXTURE_DIR = join(import.meta.dir, "__fixtures__/library-display");
@@ -621,10 +621,10 @@ describe("Defold extensions under Libraries", () => {
     return dir;
   }
 
-  test("every untyped Defold library yields a listing with its page route, api kind and summary", () => {
+  test("every untyped Defold library yields a listing with its page route, api kind, lead and steps", () => {
     const manifest = JSON.parse(
       readFileSync(join(REAL_LIBRARY_TYPES_DIR, "defold-extensions.json"), "utf8"),
-    ) as { libraries: { repo: string; docs: unknown[] }[] };
+    ) as { libraries: { repo: string; refKind: string; docs: unknown[] }[] };
     const untyped = manifest.libraries.filter((entry) => entry.docs.length === 0);
     const listings = defoldListingsFromManifest(REAL_LIBRARY_TYPES_DIR);
     expect(untyped.length).toBeGreaterThan(0);
@@ -633,12 +633,36 @@ describe("Defold extensions under Libraries", () => {
     );
     for (const listing of listings) {
       const repo = listing.url.split("/").pop() ?? "";
+      const entry = untyped.find((candidate) => candidate.repo === listing.url);
       expect(listing.route).toBe(`/libraries/defold/${repo}`);
       expect(["none", "untyped"]).toContain(listing.api);
-      expect(listing.summary.trim()).not.toBe("");
-      expect(listing.summary).not.toContain("api:");
+      expect(listing.ships).not.toBe("");
+      expect(listing.ships).not.toContain("api:");
+      expect(listing.steps.length).toBeGreaterThan(0);
+      expect(listing.pinKind).toBe(entry?.refKind as LibraryListing["pinKind"]);
     }
   });
+
+  const structuredSummary = [
+    "---",
+    "api: untyped",
+    "---",
+    "",
+    "## What it ships",
+    "",
+    "A module that tunes performance.",
+    "",
+    "## Using it",
+    "",
+    "1. Require `tuner` from a script.",
+    "2. Call `tuner.start` in `init` and",
+    "   `tuner.stop` in `final`.",
+    "",
+    "## Engine APIs",
+    "",
+    "Reads [`sys`](/api/sys) settings.",
+    "",
+  ].join("\n");
 
   function libraryTypesWithListings(repos: string[], summaries: Record<string, string>): string {
     const dir = mkdtempSync(join(tmpdir(), "defold-listings-loader-"));
@@ -664,24 +688,75 @@ describe("Defold extensions under Libraries", () => {
 
   test("a listing with no summary file throws naming the repo", () => {
     const dir = libraryTypesWithListings(["extension-described", "extension-bare"], {
-      "extension-described": "---\napi: none\n---\n\nShips content.\n",
+      "extension-described": structuredSummary,
     });
     expect(() => defoldListingsFromManifest(dir)).toThrow(/extension-bare/);
   });
 
   test("a summary file for a repo that is not an untyped entry throws naming the file", () => {
     const dir = libraryTypesWithListings(["extension-described"], {
-      "extension-described": "---\napi: none\n---\n\nShips content.\n",
-      "extension-orphan": "---\napi: untyped\n---\n\nRegisters a module.\n",
+      "extension-described": structuredSummary,
+      "extension-orphan": structuredSummary,
     });
     expect(() => defoldListingsFromManifest(dir)).toThrow(/extension-orphan\.md/);
   });
 
   test("a summary whose api kind is neither none nor untyped throws naming the file", () => {
     const dir = libraryTypesWithListings(["extension-described"], {
-      "extension-described": "---\napi: typed\n---\n\nShips content.\n",
+      "extension-described": structuredSummary.replace("api: untyped", "api: typed"),
     });
     expect(() => defoldListingsFromManifest(dir)).toThrow(/extension-described\.md/);
+  });
+
+  test("a summary's sections become the listing's lead, numbered steps and engine APIs", () => {
+    const dir = libraryTypesWithListings(["extension-tuner"], {
+      "extension-tuner": structuredSummary,
+    });
+    const [listing] = defoldListingsFromManifest(dir);
+    expect(listing?.ships).toBe("A module that tunes performance.");
+    expect(listing?.steps).toEqual([
+      "Require `tuner` from a script.",
+      "Call `tuner.start` in `init` and `tuner.stop` in `final`.",
+    ]);
+    expect(listing?.engineApis).toBe("Reads [`sys`](/api/sys) settings.");
+    expect(listing?.pinKind).toBe("release");
+  });
+
+  test("a summary without an Engine APIs section leaves engineApis undefined", () => {
+    const dir = libraryTypesWithListings(["extension-tuner"], {
+      "extension-tuner": structuredSummary.slice(0, structuredSummary.indexOf("## Engine APIs")),
+    });
+    const [listing] = defoldListingsFromManifest(dir);
+    expect(listing?.steps).toHaveLength(2);
+    expect(listing?.engineApis).toBeUndefined();
+  });
+
+  test("a Using it section written as prose throws naming the file and the section", () => {
+    const dir = libraryTypesWithListings(["extension-tuner"], {
+      "extension-tuner": structuredSummary.replace(
+        "1. Require `tuner` from a script.",
+        "Require `tuner` from a script.",
+      ),
+    });
+    expect(() => defoldListingsFromManifest(dir)).toThrow(
+      /summaries\/extension-tuner\.md.*Using it/,
+    );
+  });
+
+  test("a missing What it ships, a missing or empty Using it, or an unknown section throws naming the file", () => {
+    const usingStart = structuredSummary.indexOf("## Using it");
+    const enginesStart = structuredSummary.indexOf("## Engine APIs");
+    const variants = [
+      structuredSummary.replace("## What it ships", "## Overview"),
+      structuredSummary.replace("## What it ships\n\nA module that tunes performance.\n\n", ""),
+      `${structuredSummary.slice(0, usingStart)}${structuredSummary.slice(enginesStart)}`,
+      `${structuredSummary.slice(0, usingStart)}## Using it\n\n${structuredSummary.slice(enginesStart)}`,
+      `${structuredSummary}\n## Notes\n\nMore.\n`,
+    ];
+    for (const body of variants) {
+      const dir = libraryTypesWithListings(["extension-tuner"], { "extension-tuner": body });
+      expect(() => defoldListingsFromManifest(dir)).toThrow(/summaries\/extension-tuner\.md/);
+    }
   });
 
   test("a Defold page key equal to a vendored library namespace or another Defold key throws", () => {

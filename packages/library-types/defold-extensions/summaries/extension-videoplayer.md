@@ -11,10 +11,10 @@ use. It registers a `videoplayer` Lua module with functions such as
 
 ## Using it
 
-Add the repository's archive zip URL to the `game.project` dependencies.
-Load the video with `resource.load`, open it with `videoplayer.open`, then
-call `videoplayer.update` each frame and upload the frame buffer to a
-texture.
+1. Load the video with `resource.load`.
+2. Open it with `videoplayer.open`.
+3. Call `videoplayer.update` each frame and upload the frame buffer to a
+   texture.
 
 ## Engine APIs
 

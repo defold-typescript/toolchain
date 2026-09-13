@@ -11,11 +11,12 @@ Defold collections.
 
 ## Using it
 
-Attach `/defold-pbr/core.script` to a game object to create the PBR context,
-then require `defold-pbr/core` to call functions such as `set_environment`,
-`add_light_point` and `set_camera_world`. The render script passes
-`get_constants()` to its model draw call and wraps it in `enable_textures()`
-and `disable_textures()`.
+1. Attach `/defold-pbr/core.script` to a game object to create the PBR
+   context.
+2. Require `defold-pbr/core` to call functions such as `set_environment`,
+   `add_light_point` and `set_camera_world`.
+3. In the render script, pass `get_constants()` to the model draw call and
+   wrap it in `enable_textures()` and `disable_textures()`.
 
 ## Engine APIs
 

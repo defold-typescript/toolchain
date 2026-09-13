@@ -6517,9 +6517,11 @@ your choice in `game.project`, and `resolve` types whichever one you pick.
 Defold libraries that ship no `.script_api` have pages there too, such as
 [extension-qrcode](/libraries/defold/extension-qrcode) and
 [asset-pbr](/libraries/defold/asset-pbr). Their sidebar entries and cards are
-marked with a no-typed-API icon, and each page describes what the library
-ships, how a project adds and uses it, and whether it registers a Lua API that
-is simply not typed. `resolve` still reports each one as `asset-only, skipped`.
+marked with a no-typed-API icon. Each page describes what the library ships and
+whether it registers a Lua API that is simply not typed, then shows the same
+GitHub pin and numbered setup steps as a typed library page: add the dependency
+at that pin, then the library's own steps. `resolve` still reports each one as
+`asset-only, skipped`.
 
 For the command itself — `--frozen`, version pinning, drift detection, and the
 cache location — see [Resolve](./resolve.md).

@@ -11,10 +11,10 @@ example of adding a custom resource and component type.
 
 ## Using it
 
-Add a release zip URL from the repository's releases to the `game.project`
-dependencies and add `.simpledata` components to game objects. Read single
-fields with `go.get`, or read the whole float array into a Lua table with
-`simpledata.get_array_f32(url)`.
+1. Add `.simpledata` components to game objects.
+2. Read single fields with `go.get`.
+3. Read the whole float array into a Lua table with
+   `simpledata.get_array_f32(url)`.
 
 ## Engine APIs
 
