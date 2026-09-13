@@ -1,0 +1,252 @@
+{
+  "info": {
+    "namespace": "playables",
+    "brief": "Functions for interacting with the YouTube Playables SDK.",
+    "description": "Functions for interacting with the YouTube Playables SDK."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "playables.is_in_playables_env",
+      "description": "Returns whether the SDK reports that the game is running in the Playables environment. Returns false if the SDK is not loaded.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "in_playables_env",
+          "doc": "True when the SDK is loaded and IN_PLAYABLES_ENV is true, otherwise false.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "playables.get_sdk_version",
+      "description": "Returns the loaded YouTube Playables SDK version, or nil if it is unavailable.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "sdk_version",
+          "doc": "The value of SDK_VERSION, or nil if the SDK or its version is unavailable.",
+          "types": []
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "playables.game_ready",
+      "description": "Notifies YouTube that the loading screen is gone and the game is ready for players to interact with. The extension automatically calls firstFrameReady() during initialization.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "playables.load_data",
+      "description": "Loads serialized game data from YouTube. Only one load request may be in progress at a time. The request remains in progress until its callback returns, so the callback cannot start another load_data() request.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "playables.save_data",
+      "description": "Saves valid UTF-8 text to YouTube, with a maximum size of 3 MiB. Invalid UTF-8 returns false and an error through the callback before the SDK is called. Base64-encode binary data such as sys.serialize() output before saving. Only one save request may be in progress at a time. The request remains in progress until its callback returns, so the callback cannot start another save_data() request.",
+      "parameters": [
+        {
+          "name": "data",
+          "doc": "The serialized game data as valid UTF-8 text. Embedded zero bytes are supported.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "playables.is_audio_enabled",
+      "description": "Returns whether game audio is enabled in the player's YouTube settings. Use this to initialize the game audio state.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "is_audio_enabled",
+          "doc": "True when game audio is enabled.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "playables.on_audio_enabled_change",
+      "description": "Registers a callback for YouTube audio-setting changes. Before the callback runs, the extension automatically mutes the master sound group when audio is disabled, or unmutes it when audio is enabled and the game is not paused. A new callback replaces the previous one. Pass nil to unregister it. This function cannot be called from its own callback.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "The event callback, or nil to unregister the current callback.",
+          "types": []
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "playables.on_pause",
+      "description": "Registers a callback for YouTube pause events. The extension automatically mutes the master sound group before the callback runs. A new callback replaces the previous one. Pass nil to unregister it. This function cannot be called from its own callback. A paused game is not guaranteed to resume.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "The event callback, or nil to unregister the current callback.",
+          "types": []
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "playables.on_resume",
+      "description": "Registers a callback for YouTube resume events. Before the callback runs, the extension automatically unmutes the master sound group if YouTube audio is enabled, or keeps it muted if audio is disabled. A new callback replaces the previous one. Pass nil to unregister it. This function cannot be called from its own callback.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "The event callback, or nil to unregister the current callback.",
+          "types": []
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "playables.get_language",
+      "description": "Gets the language in the player's YouTube settings as a BCP-47 language tag. Only one request may be in progress at a time. The request remains in progress until its callback returns, so the callback cannot start another get_language() request.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "playables.send_score",
+      "description": "Sends an integer score to YouTube. Use one consistent score dimension across the game. Only one request may be in progress at a time. The request remains in progress until its callback returns, so the callback cannot start another send_score() request.",
+      "parameters": [
+        {
+          "name": "score",
+          "doc": "An integer no greater than JavaScript's maximum safe integer.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "playables.open_yt_content",
+      "description": "Requests that YouTube open a video or another Playable. The content type is optional and defaults to CONTENT_TYPE_VIDEO. Only one request may be in progress at a time. The request remains in progress until its callback returns, so the callback cannot start another open_yt_content() request.",
+      "parameters": [
+        {
+          "name": "content_id",
+          "doc": "The YouTube video or Playable ID.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "content_type",
+          "doc": "CONTENT_TYPE_VIDEO or CONTENT_TYPE_PLAYABLE.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "playables.request_interstitial_ad",
+      "description": "Requests an interstitial ad. Success does not guarantee that an ad was shown. Do not use this API to grant rewards. Only one interstitial request may be in progress at a time. The request remains in progress until its callback returns, so the callback cannot start another request_interstitial_ad() request. Keep handling YouTube audio, pause, and resume events during ads.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "playables.request_rewarded_ad",
+      "description": "Requests a rewarded ad. Grant a reward only when reward_earned is true. Only one rewarded request may be in progress at a time. The request remains in progress until its callback returns, so the callback cannot start another request_rewarded_ad() request. Keep handling YouTube audio, pause, and resume events during ads.",
+      "parameters": [
+        {
+          "name": "reward_id",
+          "doc": "A stable ID unique to the reward type. Reuse it for each offer of that reward and do not include user data.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "playables.log_error",
+      "description": "Reports an error occurrence to YouTube. Takes no arguments and returns no value. Reporting is best-effort and rate-limited, so delivery is not guaranteed.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "playables.log_warning",
+      "description": "Reports a warning occurrence to YouTube. Takes no arguments and returns no value. Reporting is best-effort and rate-limited, so delivery is not guaranteed.",
+      "parameters": [],
+      "returnvalues": []
+    }
+  ]
+}

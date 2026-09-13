@@ -1,0 +1,462 @@
+{
+  "info": {
+    "namespace": "onion",
+    "brief": "Functions and constants for interacting with Onion APIs.",
+    "description": "Functions and constants for interacting with Onion APIs."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "onion.play_animation",
+      "description": "Plays the specified animation on a Onion model.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Onion model.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "animation_id",
+          "doc": "Id of the animation to play.",
+          "types": [
+            "string",
+            "hash"
+          ]
+        },
+        {
+          "name": "playback",
+          "doc": "Playback mode of the animation (available go.PLAYBACK_ONCE_FORWARD, go.PLAYBACK_LOOP_FORWARD).",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "Playback options.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "callback_function",
+          "doc": "function to call when the animation has completed or a Onion event occured.",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "onion.set_entity",
+      "description": "Sets the entity on a onion model.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Onion model.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "entity",
+          "doc": "Id of the entity.",
+          "types": [
+            "string",
+            "hash"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "onion.set_symbol_group",
+      "description": "Sets the symbol group on a onion model.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Onion model.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "symbol_group_id",
+          "doc": "Id of the symbol group.",
+          "types": [
+            "string",
+            "hash"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "onion.pause",
+      "description": "Sets the pause on a onion model.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "onion.resume",
+      "description": "Sets the resume on a onion model.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "onion.hide_layer",
+      "description": "Sets hide layer on a onion model.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Onion model.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "layer_id",
+          "doc": "Id of the layer.",
+          "types": [
+            "string",
+            "hash"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "onion.show_layer",
+      "description": "Sets show layer on a onion model.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Onion model.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "layer_id",
+          "doc": "Id of the layer.",
+          "types": [
+            "string",
+            "hash"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "onion.show_all_layers",
+      "description": "Sets show all layers on a onion model.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "onion.hide_symbol",
+      "description": "Sets hide symbol on a onion model.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Onion model.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "symbol_id",
+          "doc": "Id of the symbol.",
+          "types": [
+            "string",
+            "hash"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "onion.show_symbol",
+      "description": "Sets show symbol on a onion model.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Onion model.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "symbol_id",
+          "doc": "Id of the symbol.",
+          "types": [
+            "string",
+            "hash"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "onion.show_all_symbols",
+      "description": "Sets show all symbols on a onion model.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "onion.override_symbol",
+      "description": "Sets override symbol on a onion model.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Onion model.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "symbol_id",
+          "doc": "Id of the symbol.",
+          "types": [
+            "string",
+            "hash"
+          ]
+        },
+        {
+          "name": "to_symbol_id",
+          "doc": "Id of the symbol to replace.",
+          "types": [
+            "string",
+            "hash"
+          ]
+        },
+        {
+          "name": "from_symbol_group_id",
+          "doc": "Id of the symbol group from replace.",
+          "types": [
+            "string",
+            "hash"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "onion.clear_override_symbol",
+      "description": "Sets clear override symbol on a onion model.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Onion model.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "symbol_id",
+          "doc": "Id of the symbol.",
+          "types": [
+            "string",
+            "hash"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "onion.clear_all_override_symbols",
+      "description": "Sets clear all override symbol on a onion model.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "onion.add_override_symbol_group",
+      "description": "Sets add override symbol group on a onion model.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Onion model.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "symbol_group_id",
+          "doc": "Id of the symbol group.",
+          "types": [
+            "string",
+            "hash"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "onion.clear_override_symbol_group",
+      "description": "Sets clear override symbol group on a onion model.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Onion model.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "symbol_group_id",
+          "doc": "Id of the symbol group.",
+          "types": [
+            "string",
+            "hash"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "onion.clear_all_override_symbol_groups",
+      "description": "Sets clear all override symbol group on a onion model.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Onion model.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "onion.set_hflip",
+      "description": "Sets flip horisontal on a onion model.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Onion model.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "flip",
+          "doc": "Sign of flip.",
+          "types": [
+            "bool"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "onion.set_vflip",
+      "description": "Sets flip vertical on a onion model.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Onion model.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "flip",
+          "doc": "Sign of flip.",
+          "types": [
+            "bool"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "onion.set_blend_mode",
+      "description": "Sets blend on a onion model.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Onion model.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "blend",
+          "doc": "Id of the blend mode.",
+          "types": [
+            "integer"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "onion.get_blend_mode",
+      "description": "Sets blend on a onion model.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Onion model.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

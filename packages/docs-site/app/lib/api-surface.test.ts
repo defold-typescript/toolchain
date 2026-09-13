@@ -112,6 +112,15 @@ function vendoredLibraryModules(): string[] {
     .filter((mod) => !deferred.has(mod));
 }
 
+// The page keys the committed Defold manifest claims: each is a library page, and
+// an engine namespace among them (`iap`) leaves every version's engine family.
+function defoldExtensionPages(): string[] {
+  const { libraries } = JSON.parse(
+    readFileSync(join(REAL_LIBRARY_TYPES_DIR, "defold-extensions.json"), "utf8"),
+  ) as { libraries: { docs: { page: string }[] }[] };
+  return libraries.flatMap((library) => library.docs.map((doc) => doc.page));
+}
+
 describe("loadApiSurface", () => {
   test("returns one ApiPage per module of the default target (engine then lua-stdlib), globals first then alphabetical", () => {
     const pages = loadApiSurface(FIXTURE_DIR);
@@ -229,9 +238,11 @@ describe("loadApiSurface library pages", () => {
   const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
   const libraryPages = pages.filter((p) => p.category === "library");
 
-  test("adds one default-surface `library` page per vendored library fixture", () => {
+  test("adds one default-surface `library` page per vendored library fixture and Defold doc", () => {
     expect(modules.length).toBeGreaterThan(0);
-    expect(libraryPages.map((p) => p.namespace).sort()).toEqual([...modules].sort());
+    expect(libraryPages.map((p) => p.namespace).sort()).toEqual(
+      [...modules, ...defoldExtensionPages()].sort(),
+    );
     for (const page of libraryPages) {
       expect(page.route).toBe(`/api/${libraryRouteSlug(page.namespace)}`);
       expect(page.route.startsWith("/api/")).toBe(true);
@@ -3299,7 +3310,10 @@ describe("complete release snapshots", () => {
       // Every version — the default included — now owns an explicit `/api/<id>/…`
       // engine family. Lua stdlib is version-independent and canonical-only, so it
       // is no longer part of any version's exact-route family.
-      const declared = target.modules.map((m) => m.namespace);
+      const defoldPages = new Set(defoldExtensionPages());
+      const declared = target.modules
+        .map((m) => m.namespace)
+        .filter((namespace) => !defoldPages.has(namespace));
       const routeByNamespace = new Map(
         pagesByVersion[version.id]?.map((p) => [p.namespace, p.route]),
       );

@@ -1,0 +1,308 @@
+{
+  "info": {
+    "namespace": "rive",
+    "brief": "Rive animation helpers exposed to Lua scripts",
+    "description": "Rive animation helpers exposed to Lua scripts"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "rive.pointer_move",
+      "description": "Lua wrapper for pointer movement.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "Component receiving the pointer move.",
+          "types": [
+            "url"
+          ]
+        },
+        {
+          "name": "x",
+          "doc": "Pointer x coordinate in component space.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "Pointer y coordinate in component space.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "pointer_id",
+          "doc": "Optional stable pointer identifier for multitouch. Defaults to 0.",
+          "types": [
+            "number",
+            "nil"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.pointer_up",
+      "description": "Lua wrapper for pointer up events.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "Component receiving the pointer release.",
+          "types": [
+            "url"
+          ]
+        },
+        {
+          "name": "x",
+          "doc": "Pointer x coordinate.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "Pointer y coordinate.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "pointer_id",
+          "doc": "Optional stable pointer identifier for multitouch. Defaults to 0.",
+          "types": [
+            "number",
+            "nil"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.pointer_down",
+      "description": "Lua wrapper for pointer down events.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "Component receiving the pointer press.",
+          "types": [
+            "url"
+          ]
+        },
+        {
+          "name": "x",
+          "doc": "Pointer x coordinate.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "Pointer y coordinate.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "pointer_id",
+          "doc": "Optional stable pointer identifier for multitouch. Defaults to 0.",
+          "types": [
+            "number",
+            "nil"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.pointer_exit",
+      "description": "Lua wrapper for pointer exit events.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "Component receiving the pointer leave.",
+          "types": [
+            "url"
+          ]
+        },
+        {
+          "name": "x",
+          "doc": "Pointer x coordinate.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "Pointer y coordinate.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "pointer_id",
+          "doc": "Optional stable pointer identifier for multitouch. Defaults to 0.",
+          "types": [
+            "number",
+            "nil"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.get_projection_matrix",
+      "description": "Returns the projection matrix in render coordinates.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.set_file_listener",
+      "description": "Sets or clears the global file listener callback.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Callback invoked for file system events; pass nil to disable.",
+          "types": [
+            "function(self, event, data)",
+            "nil"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.get_file",
+      "description": "Returns the Rive file handle tied to the component.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "Component whose file handle to query.",
+          "types": [
+            "url"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.set_artboard",
+      "description": "Switches the active artboard for the component.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "Component using the artboard.",
+          "types": [
+            "url"
+          ]
+        },
+        {
+          "name": "name",
+          "doc": "Name of the artboard to create and set. Pass nil to create a default artboard.",
+          "types": [
+            "string",
+            "nil"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.get_artboard",
+      "description": "Queries the current artboard handle for the component.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "Component whose artboard handle to return.",
+          "types": [
+            "url"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.set_state_machine",
+      "description": "Selects a state machine by name on the component.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "Component owning the state machine.",
+          "types": [
+            "url"
+          ]
+        },
+        {
+          "name": "name",
+          "doc": "Name of the state machine to create and set. Pass nil to create a default state machine.",
+          "types": [
+            "string",
+            "nil"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.get_state_machine",
+      "description": "Returns the active state machine handle for the component.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "Component whose active state machine to query.",
+          "types": [
+            "url"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.set_view_model_instance",
+      "description": "Selects a default view model instance by name.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "Component owning the view model instance.",
+          "types": [
+            "url"
+          ]
+        },
+        {
+          "name": "name",
+          "doc": "View model name whose default instance should be activated.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.get_view_model_instance",
+      "description": "Returns the handle of the currently bound view model instance.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "Component whose view model instance handle to query.",
+          "types": [
+            "url"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

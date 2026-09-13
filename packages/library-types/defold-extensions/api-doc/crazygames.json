@@ -1,0 +1,661 @@
+{
+  "info": {
+    "namespace": "crazygames",
+    "brief": "Functions and constants for interacting with the CrazyGames SDK APIs",
+    "description": "Functions and constants for interacting with the CrazyGames SDK APIs"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.get_environment",
+      "description": "Get the CrazyGames SDK environment. SDK functionality should only be used when the result is \"local\" or \"crazygames\".",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "environment",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.get_game_settings",
+      "description": "Get the current CrazyGames game settings, including muteAudio and disableChat.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "settings",
+          "doc": "The current settings table, or nil if settings are unavailable.",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.add_settings_change_listener",
+      "description": "Register a listener that is called whenever the CrazyGames game settings change. Registering again replaces the previous listener.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "The function takes two arguments, self and the updated settings table.",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.remove_settings_change_listener",
+      "description": "Remove the currently registered game-settings listener.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.gameplay_start",
+      "description": "The gameplayStart() function has to be called whenever the player starts playing or resumes playing after a break (menu/loading/achievement screen, game paused, etc.)",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.gameplay_stop",
+      "description": "The gameplayStop() function has to be called on every game break (entering a menu, switching level, pausing the game, ...) don't forget to call gameplayStart() when the gameplay resumes",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.loading_start",
+      "description": "The loadingStart() function has to be called whenever you start loading your game.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.loading_stop",
+      "description": "The loadingStop() function has to be called when the loading is complete and eventually the gameplay starts.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.happytime",
+      "description": "Celebrate a major player achievement, such as beating a boss or reaching a high score.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.report_game_completed_percentage",
+      "description": "Report the player's current game-completion percentage to CrazyGames. The value must be between 0 and 100.",
+      "parameters": [
+        {
+          "name": "percentage",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.set_game_context",
+      "description": "Attach JSON-serializable game state to feedback submitted by the player. Call clear_game_context when the state is no longer relevant.",
+      "parameters": [
+        {
+          "name": "context",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.clear_game_context",
+      "description": "Clear the game context previously supplied with set_game_context.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.show_rewarded_ad",
+      "description": "Show a rewarded ad.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.show_midgame_ad",
+      "description": "Show a midgame ad.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.has_ad_block",
+      "description": "Detect if the user has an adblocker.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "The function takes two arguments, self and a boolean indicating whether an adblocker was detected.",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.request_banner",
+      "description": "Request a banner. The container will be resized to the specified width.",
+      "parameters": [
+        {
+          "name": "div",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "width",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.request_responsive_banner",
+      "description": "The responsive banners feature will request ads that fit into your container, without the need to specify or select a size beforehand.",
+      "parameters": [
+        {
+          "name": "div",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.clear_banner",
+      "description": "Clear a banner. Will also hide it.",
+      "parameters": [
+        {
+          "name": "div",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.clear_all_banners",
+      "description": "Clear all banners.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.invite_link",
+      "description": "Create a link to your game to invite others to join a multiplayer game.",
+      "parameters": [
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "link",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.show_invite_button",
+      "description": "Display a button in the game footer that opens a popup containing an invite link. This CrazyGames feature is deprecated in favor of Room Data, but remains available for existing integrations.",
+      "parameters": [
+        {
+          "name": "params",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "link",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.hide_invite_button",
+      "description": "Hide the invite button when it is no longer necessary.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.get_invite_param",
+      "description": "Get an invite link parameter.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "The parameter value, or nil if the parameter is missing.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.get_invite_params",
+      "description": "Get all invite parameters supplied when the game was opened from an invite link.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "invite_params",
+          "doc": "The invite parameters, or nil if the game was not opened from an invite link.",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.is_instant_multiplayer",
+      "description": "For multiplayer games, if is_instant_multiplayer() returns true, you should instantly create a new room/lobby for the user.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "instant",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.update_room",
+      "description": "Update the current multiplayer room. The table can contain roomId (string), isJoinable (boolean), and inviteParams (a table of string, number, or boolean values). Only supplied fields are updated.",
+      "parameters": [
+        {
+          "name": "room",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.left_room",
+      "description": "Notify CrazyGames that the player has left the current multiplayer room.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.add_join_room_listener",
+      "description": "Register a listener for requests to join a multiplayer room. Registering again replaces the previous listener.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "The function takes two arguments, self and the invite parameters table.",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.remove_join_room_listener",
+      "description": "Remove the currently registered join-room listener.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.clear_data",
+      "description": "Remove all stored game data from the CrazyGames data module.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.get_item",
+      "description": "Get a stored value from the CrazyGames data module.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "The stored value, or nil if the key does not exist.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.remove_item",
+      "description": "Remove a stored value from the CrazyGames data module.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.set_item",
+      "description": "Store a value in the CrazyGames data module.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.get_system_info",
+      "description": "Get information about the user's locale, country, device, operating system, browser, and CrazyGames application type.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "system_info",
+          "doc": "The current system information, or nil if it is unavailable.",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.list_friends",
+      "description": "Retrieve one page of the current user's CrazyGames friends. Only one list_friends request may be active at a time. The callback receives nil if the request fails.",
+      "parameters": [
+        {
+          "name": "page",
+          "doc": "Page number, starting at 1.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "size",
+          "doc": "Number of friends to retrieve, between 1 and 50.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "The function takes two arguments, self and the friends-page table.",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.submit_score",
+      "description": "Submit an encrypted score and its plain numeric value to a CrazyGames leaderboard. Leaderboards must be enabled and configured for the game.",
+      "parameters": [
+        {
+          "name": "encrypted_score",
+          "doc": "The score encrypted with the game's CrazyGames leaderboard encryption key and encoded as Base64.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "score",
+          "doc": "The unencrypted numeric score.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.is_user_account_available",
+      "description": "Before using any user account features, you should always ensure that the user account system is available.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "available",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.get_user",
+      "description": "Retrieve the user currently logged in CrazyGames. If the user is not logged in CrazyGames, the callback receives nil. Will call the provided callback with the logged in user account.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "The function takes two arguments, self and the user table",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.get_user_token",
+      "description": "The user token is in JWT format and contains the userId of the player that is currently logged in to CrazyGames, as well as other useful information. You should send it to your server when required, and verify/decode it there to extract the userId. Will call the provided callback with the token.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "The function takes two arguments, self and the token",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.get_xsolla_user_token",
+      "description": "Generates a custom Xsolla token that you use with the Xsolla SDK. Will call the provided callback with the token.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "The function takes two arguments, self and the xsolla token",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.track_order",
+      "description": "Report an in-game purchase order to CrazyGames analytics. Order tracking is optional; use provider \"xsolla\" for Xsolla orders.",
+      "parameters": [
+        {
+          "name": "provider",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "order",
+          "doc": "The JSON-serializable order returned by the payment provider.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.show_auth_prompt",
+      "description": "By calling this method, the log in or register popup will be displayed on CrazyGames. The user can log in their existing account, or create a new account. Will call the provided callback on log in.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "The function takes two arguments, self and the user table",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.set_auth_listener",
+      "description": "You can register a user auth listener that is triggered when the player logs in to CrazyGames. A log out doesn't trigger the auth listener, since the entire page is refreshed when the player logs out.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "The function takes two arguments, self and the user table",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.remove_auth_listener",
+      "description": "Remove any previously set auth listener.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "crazygames.show_account_link_prompt",
+      "description": "Show an account linking prompt to link a CrazyGames account to the in-game account. Will call the provided callback with a response table containing either response = \"yes\" or response = \"no\". The response is nil if the prompt fails.",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "The function takes two arguments, self and the response table",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

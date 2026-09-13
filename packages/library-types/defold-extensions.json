@@ -1,0 +1,825 @@
+{
+  "libraries": [
+    {
+      "repo": "https://github.com/defold/asset-pbr",
+      "ref": "0.1.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/assets-defold",
+      "ref": "ec348f0684519746f6d5ff19d745ca64c1c8ea51",
+      "refKind": "commit",
+      "license": "MIT",
+      "description": "Defold logos to use on splash screens or other kinds of in-game promotions for Defold",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/codepad",
+      "ref": "1.2.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Online Defold compiler/interpreter",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/defold-pbr",
+      "ref": "0.1.1",
+      "refKind": "release",
+      "license": "",
+      "description": "",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/defwarez-shared",
+      "ref": "7071233025bcb5139d0ac71049d7e4480ea670cb",
+      "refKind": "commit",
+      "license": "",
+      "description": "",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/extension-adinfo",
+      "ref": "3.0.3",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Extension for retrieving advertising identifier",
+      "docs": [
+        {
+          "path": "extension-adinfo/api/extension-adinfo.script_api",
+          "namespace": "adinfo",
+          "page": "adinfo"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-admob",
+      "ref": "4.2.2",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Defold native extension which provides access to AdMob functionality on Android and iOS",
+      "docs": [
+        {
+          "path": "extension-admob/api/admob.script_api",
+          "namespace": "admob",
+          "page": "admob"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-adpf",
+      "ref": "5d64f0249109295d3019e457c5228806050ee871",
+      "refKind": "commit",
+      "license": "MIT",
+      "description": "Defold extension for Android Device Performance Framework",
+      "docs": [
+        {
+          "path": "adpf/api/adpf.script_api",
+          "namespace": "adpf",
+          "page": "adpf"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-android",
+      "ref": "9e6e3d286fff5388e9eaa2ee415e8b32f9d7ea07",
+      "refKind": "commit",
+      "license": "MIT",
+      "description": "Example of a native extension for Android",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/extension-automation-bridge",
+      "ref": "2.3.2",
+      "refKind": "release",
+      "license": "",
+      "description": "Debug-only native extension for inspecting a running Defold game and sending input from local automation clients such as Codex",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/extension-camera",
+      "ref": "2.2.3",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Example of interacting with the camera through native extensions",
+      "docs": [
+        {
+          "path": "camera/api/extension-camera.script_api",
+          "namespace": "camera",
+          "page": "extension-camera"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-crazygames",
+      "ref": "1.3.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "CrazyGames SDK for Defold",
+      "docs": [
+        {
+          "path": "crazygames/api/crazygames.script_api",
+          "namespace": "crazygames",
+          "page": "crazygames"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-crypt",
+      "ref": "1.1.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Native extension binding the dmCrypt Defold C++ SDK to Lua",
+      "docs": [
+        {
+          "path": "crypt/api/crypt.script_api",
+          "namespace": "crypt",
+          "page": "crypt"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-energy-saver",
+      "ref": "1.0.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Extension to help reduce power consumption in your Defold game",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/extension-eos",
+      "ref": "507504541dea5bf39257cef4ac60126f3cfc7750",
+      "refKind": "commit",
+      "license": "MIT",
+      "description": "",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/extension-facebook",
+      "ref": "9.0.2",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Facebook extension using the official SDKs",
+      "docs": [
+        {
+          "path": "facebook/api/facebook.script_api",
+          "namespace": "facebook",
+          "page": "facebook"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-fbinstant",
+      "ref": "8.0.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Facebook Instant Games extension for the Defold game engine",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/extension-firebase",
+      "ref": "2.3.1",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Firebase is Google's mobile platform that helps you quickly develop high-quality apps and grow your business. This repository contains the core components required by the various products included in Firebase. It is not intended for use on its own",
+      "docs": [
+        {
+          "path": "firebase/api/firebase.script_api",
+          "namespace": "firebase",
+          "page": "firebase"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-firebase-analytics",
+      "ref": "3.3.1",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Google Firebase Analytics extension for the Defold game engine",
+      "docs": [
+        {
+          "path": "firebase_analytics/api/firebase.script_api",
+          "namespace": "firebase",
+          "page": "firebase-analytics"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-firebase-crashlytics",
+      "ref": "1.0.3",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "",
+      "docs": [
+        {
+          "path": "firebase_crashlytics/api/firebase.script_api",
+          "namespace": "firebase",
+          "page": "firebase-crashlytics"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-firebase-remoteconfig",
+      "ref": "2.3.1",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Firebase Remote Config integration with the Defold game engine.",
+      "docs": [
+        {
+          "path": "firebase_remoteconfig/api/firebase.script_api",
+          "namespace": "firebase",
+          "page": "firebase-remoteconfig"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-fontgen",
+      "ref": "0.9",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Adds custom font support",
+      "docs": [
+        {
+          "path": "fontgen/api/fontgen.script_api",
+          "namespace": "fontgen",
+          "page": "fontgen"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-gamelift",
+      "ref": "2.0.1",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Amazon Gamelift extension for the Defold game engine",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/extension-gpgs",
+      "ref": "5.0.1",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Defold native extension for Google Play Game Services",
+      "docs": [
+        {
+          "path": "gpgs/api/gpgs.script_api",
+          "namespace": "gpgs",
+          "page": "gpgs"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-html5",
+      "ref": "141feb6a0d5cf0cbf2a8dc8640628539ba12270a",
+      "refKind": "commit",
+      "license": "MIT",
+      "description": "Example showing how to create a native extension for HTML5",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/extension-iac",
+      "ref": "1.5.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Inter-app communication extension for Defold",
+      "docs": [
+        {
+          "path": "extension-iac/api/iac.script_api",
+          "namespace": "iac",
+          "page": "iac"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-iap",
+      "ref": "8.4.1",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "In-app purchase extension for Defold",
+      "docs": [
+        {
+          "path": "extension-iap/api/iap.script_api",
+          "namespace": "iap",
+          "page": "iap"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-imgui",
+      "ref": "2.14.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Dear ImGUI extension for Defold",
+      "docs": [
+        {
+          "path": "imgui/api/imgui.script_api",
+          "namespace": "imgui",
+          "page": "imgui"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-inappupdate",
+      "ref": "a2a969d0c9487c454bd7d43d85e96b984213c338",
+      "refKind": "commit",
+      "license": "MIT",
+      "description": "",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/extension-kaiads",
+      "ref": "2.0.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Integration of the KaiAds SDK with the Defold game engine",
+      "docs": [
+        {
+          "path": "kaiads/api/kaiads.script_api",
+          "namespace": "kaiads",
+          "page": "kaiads"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-kaios",
+      "ref": "7c50667210666d65fd0b5d5ebfc6c24d6feb33d7",
+      "refKind": "commit",
+      "license": "MIT",
+      "description": "Defold native extension for use with KaiOS",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/extension-levelplay",
+      "ref": "2.0.1",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Defold native extension which provides access to Unity LevelPlay mediation on Android and iOS",
+      "docs": [
+        {
+          "path": "extension-levelplay/api/levelplay.script_api",
+          "namespace": "levelplay",
+          "page": "levelplay"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-lua-preprocessor",
+      "ref": "1.2.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Small and simple Lua preprocessor for Defold",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/extension-network-info",
+      "ref": "8820f43f9e24aaeb57542a102aced11db04198d9",
+      "refKind": "commit",
+      "license": "MIT",
+      "description": "This extension provides functions to get information about the network configuration of the device",
+      "docs": [
+        {
+          "path": "extension-network-info/api/extension-network-info.script_api",
+          "namespace": "networkinfo",
+          "page": "networkinfo"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-odin",
+      "ref": "1.0.0",
+      "refKind": "tag",
+      "license": "MIT",
+      "description": "Defold native extension for the ODIN Voice SDK framework.",
+      "docs": [
+        {
+          "path": "odin/api/odin.script_api",
+          "namespace": "odin",
+          "page": "odin"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-onetrust",
+      "ref": "142749e96b63a336839b45ac4b82536d84218806",
+      "refKind": "commit",
+      "license": "MIT",
+      "description": "",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/extension-onion-runtime",
+      "ref": "ad12c4bba8dd286cb39be1151dfc5abcd8d87f70",
+      "refKind": "commit",
+      "license": "NOASSERTION",
+      "description": "",
+      "docs": [
+        {
+          "path": "agl-onion/api/onion.script_api",
+          "namespace": "onion",
+          "page": "onion"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-pad",
+      "ref": "1.0.2",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Extension for the Google Play Asset Delivery API",
+      "docs": [
+        {
+          "path": "pad/api/pad.script_api",
+          "namespace": "pad",
+          "page": "pad"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-permissions",
+      "ref": "1.1.1",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Extension to query for and request application permissions from the user or operating system",
+      "docs": [
+        {
+          "path": "extension-permissions/api/permissions.script_api",
+          "namespace": "permissions",
+          "page": "permissions"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-photon-fusion",
+      "ref": "1.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Defold native extension for the Photon Fusion framework.",
+      "docs": [
+        {
+          "path": "fusion/api/fusion.script_api",
+          "namespace": "fusion",
+          "page": "fusion"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-photon-realtime",
+      "ref": "1.0.0",
+      "refKind": "tag",
+      "license": "MIT",
+      "description": "Defold native extension for the Photon Realtime framework.",
+      "docs": [
+        {
+          "path": "realtime/api/realtime.script_api",
+          "namespace": "realtime",
+          "page": "realtime"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-playables",
+      "ref": "b1122a7a81dd23a573856a263003c3dcebf2cbb5",
+      "refKind": "commit",
+      "license": "MIT",
+      "description": "Defold native extension for the YouTube Playables SDK",
+      "docs": [
+        {
+          "path": "playables/api/playables.script_api",
+          "namespace": "playables",
+          "page": "playables"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-playintegrity",
+      "ref": "619b94591a73dcda0f0a4b5b12ca1b6d6ca6bf0b",
+      "refKind": "commit",
+      "license": "MIT",
+      "description": "Defold extension to integrate Google Play Integrity API",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/extension-poco",
+      "ref": "1.0.2",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Test automation from a computer to a test device using the Poco APO",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/extension-poki-sdk",
+      "ref": "4.1.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Poki SDK native extension for Defold game engine",
+      "docs": [
+        {
+          "path": "poki-sdk/api/poki-sdk.script_api",
+          "namespace": "poki_sdk",
+          "page": "poki_sdk"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-profile-counters",
+      "ref": "7fddaa2c251c77952a4cc2e873a75e30212d7c18",
+      "refKind": "commit",
+      "license": "MIT",
+      "description": "Provides the profile counters in release mode via a Lua interface",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/extension-prometheus",
+      "ref": "2.0.3",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Lua obfuscation using Prometheus",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/extension-proto",
+      "ref": "c9db0928cc5a452caf71d3c30cbff00b567c08d3",
+      "refKind": "commit",
+      "license": "MIT",
+      "description": "This extension generates Lua bindings to encode and decode a predefined set of protobuf messages using Lua",
+      "docs": [
+        {
+          "path": "extension-proto/api/extension-proto.script_api",
+          "namespace": "proto",
+          "page": "extension-proto"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-push",
+      "ref": "4.2.1",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "This is a Defold native extension which provides access to Push Notifications functionality on iOs and Android devices.",
+      "docs": [
+        {
+          "path": "extension-push/api/push.script_api",
+          "namespace": "push",
+          "page": "push"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-qrcode",
+      "ref": "1.1",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "A small extension to encode and decode QR codes.",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/extension-resource-encryption",
+      "ref": "84459eb9e176ca7a9a8d6be5b250de3c01fc7272",
+      "refKind": "commit",
+      "license": "MIT",
+      "description": "Example of how to create a resource encryption plugin for Defold assets",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/extension-review",
+      "ref": "3.2.3",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Native iOS and Android ratings and reviews window for Defold",
+      "docs": [
+        {
+          "path": "review/api/api.script_api",
+          "namespace": "review",
+          "page": "review"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-rive",
+      "ref": "13.1.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Adding Rive.app support to the Defold engine",
+      "docs": [
+        {
+          "path": "defold-rive/api/rive.script_api",
+          "namespace": "rive",
+          "page": "rive"
+        },
+        {
+          "path": "defold-rive/api/rive.script_api",
+          "namespace": "rive.cmd",
+          "page": "rive.cmd"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-safearea",
+      "ref": "1.5.2",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Simple native extension library for Defold that will change the view/render of a game to fit into the safe area on newer iPhones.",
+      "docs": [
+        {
+          "path": "safearea/api/safearea.script_api",
+          "namespace": "safearea",
+          "page": "safearea"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-simpledata",
+      "ref": "v1.2.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Example how to bring custom data to a game object",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/extension-siwa",
+      "ref": "1.2.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Sign in with Apple extension for Defold",
+      "docs": [
+        {
+          "path": "siwa/api/siwa.script_api",
+          "namespace": "siwa",
+          "page": "siwa"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-spine",
+      "ref": "4.8.0",
+      "refKind": "release",
+      "license": "NOASSERTION",
+      "description": "The Defold specific Spine runtime implementation",
+      "docs": [
+        {
+          "path": "defold-spine/api/spine.script_api",
+          "namespace": "spine",
+          "page": "spine"
+        },
+        {
+          "path": "defold-spine/api/spine_gui.script_api",
+          "namespace": "gui",
+          "page": "spine.gui"
+        },
+        {
+          "path": "defold-spine/api/spine_resource.script_api",
+          "namespace": "resource",
+          "page": "spine.resource"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-steam",
+      "ref": "1.15.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Steamworks SDK integration with Defold",
+      "docs": [
+        {
+          "path": "steam/api/steam.script_api",
+          "namespace": "steam",
+          "page": "steam"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-teal",
+      "ref": "v1.5",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Defold transpilation support for Teal",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/extension-texturepacker",
+      "ref": "2.7.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Adds support for the TexturePacker atlas format",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/extension-videoplayer",
+      "ref": "1.0.0",
+      "refKind": "tag",
+      "license": "MIT",
+      "description": "Videoplayer for the Defold engine",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/extension-videoplayer-mpeg",
+      "ref": "1.1.1",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Native extension to play back mpeg1 video using pl_mpeg",
+      "docs": [
+        {
+          "path": "mpeg/api/mpeg.script_api",
+          "namespace": "mpeg",
+          "page": "mpeg"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-videoplayer-native",
+      "ref": "1.4.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Videoplayer extension using native views",
+      "docs": [
+        {
+          "path": "videoplayer/api/videoplayer.script_api",
+          "namespace": "videoplayer",
+          "page": "videoplayer"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-vulkan",
+      "ref": "1.1.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Enables support for Vulkan graphics",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/extension-webmonetization",
+      "ref": "4.0.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Defold integration to the Web Monetization API",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/extension-websocket",
+      "ref": "4.2.4",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "A native websocket implementation for Defold",
+      "docs": [
+        {
+          "path": "websocket/api/api.script_api",
+          "namespace": "websocket",
+          "page": "websocket"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-webtransport",
+      "ref": "8b2e941b8552d1a56c2bf4fc776e90ea7132b971",
+      "refKind": "commit",
+      "license": "MIT",
+      "description": "WebTransport implementation for Defold",
+      "docs": []
+    },
+    {
+      "repo": "https://github.com/defold/extension-webview",
+      "ref": "1.5.1",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Defold extension for creating and controlling webviews to show html pages or evaluate javascript.",
+      "docs": [
+        {
+          "path": "webview/api/webview.script_api",
+          "namespace": "webview",
+          "page": "webview"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-xsolla",
+      "ref": "1.2.0",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Xsolla integration for Defold",
+      "docs": [
+        {
+          "path": "xsolla/api/shop.script_api",
+          "namespace": "shop",
+          "page": "shop"
+        }
+      ]
+    },
+    {
+      "repo": "https://github.com/defold/extension-zendesk",
+      "ref": "1.0.1",
+      "refKind": "release",
+      "license": "MIT",
+      "description": "Zendesk SDK integration for Defold",
+      "docs": [
+        {
+          "path": "zendesk/api/zendesk.script_api",
+          "namespace": "zendesk",
+          "page": "zendesk"
+        }
+      ]
+    }
+  ]
+}

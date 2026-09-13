@@ -1,0 +1,929 @@
+{
+  "info": {
+    "namespace": "proto",
+    "brief": "Compile and use protobuf messages from Lua",
+    "description": "Compile and use protobuf messages from Lua"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "proto.encode_testp3_scalars",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.decode_testp3_scalars",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.encode_testp3_scalars_totext",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.decode_testp3_scalars_fromtext",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.encode_testp3_outer",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.decode_testp3_outer",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.encode_testp3_outer_totext",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.decode_testp3_outer_fromtext",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.encode_testp3_basic",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.decode_testp3_basic",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.encode_testp3_basic_totext",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.decode_testp3_basic_fromtext",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.encode_testp3_container",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.decode_testp3_container",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.encode_testp3_container_totext",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.decode_testp3_container_fromtext",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.encode_testp3_oneof",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.decode_testp3_oneof",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.encode_testp3_oneof_totext",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.decode_testp3_oneof_fromtext",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.encode_testp2_scalars",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.decode_testp2_scalars",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.encode_testp2_scalars_totext",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.decode_testp2_scalars_fromtext",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.encode_testp2_outer",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.decode_testp2_outer",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.encode_testp2_outer_totext",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.decode_testp2_outer_fromtext",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.encode_testp2_basic",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.decode_testp2_basic",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.encode_testp2_basic_totext",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.decode_testp2_basic_fromtext",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.encode_testp2_container",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.decode_testp2_container",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.encode_testp2_container_totext",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.decode_testp2_container_fromtext",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.encode_testp2_oneof",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.decode_testp2_oneof",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.encode_testp2_oneof_totext",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "proto.decode_testp2_oneof_fromtext",
+      "description": "",
+      "parameters": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "msg",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    }
+  ]
+}
