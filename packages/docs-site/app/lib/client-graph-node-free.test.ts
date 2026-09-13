@@ -11,18 +11,21 @@ function toPosix(p: string): string {
   return p.replaceAll("\\", "/");
 }
 
-// The three client islands rolldown ships to the browser. Every module their
-// imports transitively reach must be node-free, or the loader code leaks into
-// the client bundle as an externalized stub (and warns on every build).
+// The client islands rolldown ships to the browser that import app modules.
+// Every module their imports transitively reach must be node-free, or the
+// loader code leaks into the client bundle as an externalized stub (and warns on
+// every build).
 const ISLAND_SEEDS = [
   "islands/search.tsx",
   "islands/search-results.tsx",
   "islands/symbol-tooltip.tsx",
+  "islands/ui-tooltip.tsx",
 ];
 
 // Modules that must stay on the walked path, so a future refactor that severs
 // an edge can't make the gate pass by reaching nothing.
 const NON_VACUOUS = [
+  "components/ui/tooltip.tsx",
   "lib/api-surface.ts",
   "lib/guide.ts",
   "lib/search-index.ts",

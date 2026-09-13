@@ -1,8 +1,13 @@
 import { describe, expect, test } from "bun:test";
+import { join } from "node:path";
 import type { ApiModule } from "@defold-typescript/types";
+import { apiPages, libraryOrigins } from "../lib/api-content";
 import type { ApiPage, LibraryMeta } from "../lib/api-surface";
 import { type LibraryOrigin, libraryPathSegments } from "../lib/nav";
 import { CombinedIndex, LibraryIndex, LibraryPath } from "./api-index";
+
+const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
+const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
 
 function libraryPage(namespace: string, route: string, authoredHere: boolean): ApiPage {
   const module: ApiModule = {
@@ -236,5 +241,24 @@ describe("CombinedIndex — tracked-versions disclosure", () => {
     const { versions, text } = disclosure(render(["1.13.1"]));
     expect(versions).toBe("1.13.1");
     expect(text).toContain("Defold 1.13.1");
+  });
+});
+
+describe("LibraryIndex — platform markers", () => {
+  const html = String(
+    LibraryIndex({
+      pages: apiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR),
+      origins: libraryOrigins(REAL_LIBRARY_TYPES_DIR),
+    }),
+  );
+
+  test("the adinfo card description reads as prose with no bracket markers", () => {
+    const description = html.match(
+      /Provides functionality to get the advertising id and tracking status\.[^<]*/,
+    )?.[0];
+    expect(description).toBe(
+      "Provides functionality to get the advertising id and tracking status. Supported on iOS and Android.",
+    );
+    expect(html).not.toContain("[icon:");
   });
 });

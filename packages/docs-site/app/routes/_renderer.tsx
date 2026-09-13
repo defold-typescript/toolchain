@@ -11,6 +11,7 @@ import SidebarTooltip from "../islands/sidebar-tooltip";
 import SymbolTooltip from "../islands/symbol-tooltip";
 import ThemeToggle from "../islands/theme-toggle";
 import Toc from "../islands/toc";
+import UiTooltip from "../islands/ui-tooltip";
 import {
   apiVersions,
   canonicalApiPages,
@@ -453,6 +454,7 @@ export default jsxRenderer(({ children, title, headings, contentClass }: Rendere
           </main>
         </div>
         <SymbolTooltip versionIds={versionIds} />
+        <UiTooltip />
         <CodeCopy />
         <script dangerouslySetInnerHTML={{ __html: SIDEBAR_SCROLL_INIT }} />
         <script dangerouslySetInnerHTML={{ __html: TOPBAR_HEIGHT_INIT }} />

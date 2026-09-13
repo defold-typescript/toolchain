@@ -594,3 +594,35 @@ describe("renderMarkdown fence language badges", () => {
     expect(html).toContain('<figcaption class="code-title">tsconfig.json</figcaption>');
   });
 });
+
+describe("renderMarkdown platform markers", () => {
+  test("a known marker in prose becomes a tooltip trigger around an icon-only outline badge", async () => {
+    const html = await renderMarkdown("Only [icon:ios] on phones.\n");
+    const root = parseHtml(html);
+    const triggers = root.querySelectorAll('[data-slot="tooltip-trigger"]');
+    expect(triggers).toHaveLength(1);
+    const trigger = triggers[0];
+    expect(trigger?.getAttribute("data-tooltip-content")).toBe("iOS");
+    const badge = trigger?.querySelector('[data-slot="badge"]');
+    expect(badge?.getAttribute("data-variant")).toBe("outline");
+    expect(badge?.getAttribute("role")).toBe("img");
+    expect(badge?.getAttribute("aria-label")).toBe("iOS");
+    const paths = (badge?.querySelectorAll("path") ?? []).map((p) => p.getAttribute("d"));
+    expect(paths).toContain(phosphorPath("apple-logo"));
+    expect(html).not.toContain("[icon:ios]");
+    expect(root.querySelector("p")?.text).toContain("Only ");
+  });
+
+  test("markers inside a code span or fence stay literal", async () => {
+    const html = await renderMarkdown("Use `[icon:ios]` here.\n\n```\n[icon:android]\n```\n");
+    expect(html).toContain("<code>[icon:ios]</code>");
+    expect(html).toContain("[icon:android]");
+    expect(html).not.toContain("tooltip-trigger");
+  });
+
+  test("an unknown marker name stays literal text", async () => {
+    const html = await renderMarkdown("Maybe [icon:unknown] later.\n");
+    expect(html).toContain("[icon:unknown]");
+    expect(html).not.toContain("tooltip-trigger");
+  });
+});

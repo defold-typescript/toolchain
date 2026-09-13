@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs";
-import { createRequire } from "node:module";
 import { fromHighlighter } from "@shikijs/markdown-it/core";
 import {
   transformerMetaHighlight,
@@ -11,26 +9,12 @@ import MarkdownIt from "markdown-it";
 import footnotePlugin from "markdown-it-footnote";
 import { type BundledLanguage, createHighlighter, type Highlighter } from "shiki";
 import { Badge } from "../components/ui/badge";
+import { TooltipTrigger } from "../components/ui/tooltip";
 import { withBase } from "./base";
 import { slugify } from "./headings";
+import { phosphorDuotone } from "./phosphor";
+import { PLATFORM_ICONS, PLATFORM_MARKER } from "./platform-icons";
 import { type SignatureSymbolTarget, splitSignatureBrandLinks } from "./signature-brand-links";
-
-const nodeRequire = createRequire(import.meta.url);
-
-// Load a Phosphor duotone glyph from `@phosphor-icons/core` as the source of
-// truth (no hand-copied path data), then decorate the bare asset: size it to
-// the surrounding text, mark it decorative, and add a class hook. The asset
-// already carries `fill="currentColor"`, so the glyph tracks the link colour.
-function phosphorDuotone(name: string, className: string): string {
-  const raw = readFileSync(
-    nodeRequire.resolve(`@phosphor-icons/core/duotone/${name}-duotone.svg`),
-    "utf8",
-  );
-  return raw.replace(
-    "<svg ",
-    `<svg class="${className}" aria-hidden="true" width="0.9em" height="0.9em" `,
-  );
-}
 
 /**
  * Two Shiki themes paired to the page's light/dark data-theme. Shiki emits
@@ -162,6 +146,33 @@ function fenceLanguageBadge(info: string): string | undefined {
       }),
     );
     languageBadges.set(lang, badge);
+  }
+  return badge;
+}
+
+const platformBadges = new Map<string, string>();
+
+// A known `[icon:X]` marker as an icon-only badge inside a tooltip trigger that
+// names the platform; unknown names return undefined and stay literal text.
+function platformBadge(name: string): string | undefined {
+  const platform = PLATFORM_ICONS[name];
+  if (!platform) return undefined;
+  let badge = platformBadges.get(name);
+  if (badge === undefined) {
+    badge = String(
+      TooltipTrigger({
+        content: platform.label,
+        class: "platform-badge",
+        children: Badge({
+          variant: "outline",
+          class: "platform-badge-icon",
+          icon: phosphorDuotone(platform.icon, "platform-badge-glyph"),
+          role: "img",
+          "aria-label": platform.label,
+        }),
+      }),
+    );
+    platformBadges.set(name, badge);
   }
   return badge;
 }
@@ -331,6 +342,43 @@ export async function renderMarkdown(
           }
         }
         out.push(child);
+      }
+      token.children = out;
+    }
+  });
+  // Split known `[icon:X]` platform markers out of prose text into badge HTML.
+  // Only `text` tokens are visited, so markers in code spans and fences stay literal.
+  md.core.ruler.push("platform-badges", (state) => {
+    for (const token of state.tokens) {
+      if (token.type !== "inline" || !token.children) continue;
+      const out: typeof token.children = [];
+      for (const child of token.children) {
+        if (child.type !== "text" || !child.content.includes("[icon:")) {
+          out.push(child);
+          continue;
+        }
+        let cursor = 0;
+        for (const match of child.content.matchAll(PLATFORM_MARKER)) {
+          const badge = platformBadge(match[1] as string);
+          if (!badge) continue;
+          const index = match.index ?? 0;
+          if (index > cursor) {
+            const text = new state.Token("text", "", 0);
+            text.content = child.content.slice(cursor, index);
+            out.push(text);
+          }
+          const html = new state.Token("html_inline", "", 0);
+          html.content = badge;
+          out.push(html);
+          cursor = index + match[0].length;
+        }
+        if (cursor === 0) {
+          out.push(child);
+        } else if (cursor < child.content.length) {
+          const text = new state.Token("text", "", 0);
+          text.content = child.content.slice(cursor);
+          out.push(text);
+        }
       }
       token.children = out;
     }
