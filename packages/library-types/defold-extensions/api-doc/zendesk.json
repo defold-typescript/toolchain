@@ -9,14 +9,30 @@
       "type": "FUNCTION",
       "name": "zendesk.initialize",
       "description": "Initialize the Zendesk SDK",
-      "parameters": [],
+      "parameters": [
+        {
+          "name": "channel",
+          "doc": "Zendesk channel to initialize SDK with",
+          "types": [
+            "string"
+          ]
+        }
+      ],
       "returnvalues": []
     },
     {
       "type": "FUNCTION",
       "name": "zendesk.set_callback",
       "description": "Set a callback for events from the Zendesk SDK",
-      "parameters": [],
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Function to call when a Zendesk SDK event is received (self, event, data)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
       "returnvalues": []
     },
     {
@@ -30,7 +46,15 @@
       "type": "FUNCTION",
       "name": "zendesk.set_conversation_fields",
       "description": "Set conversation fields in the SDK to add contextual data about the conversation.",
-      "parameters": [],
+      "parameters": [
+        {
+          "name": "fields",
+          "doc": "Key value pairs of fields. Keys must be strings. Values can be strings, numbers and booleans.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
       "returnvalues": []
     },
     {
@@ -44,7 +68,15 @@
       "type": "FUNCTION",
       "name": "zendesk.set_conversation_tags",
       "description": "Set custom conversation tags in the SDK to add contextual data about the conversation.",
-      "parameters": [],
+      "parameters": [
+        {
+          "name": "tags",
+          "doc": "Array of string",
+          "types": [
+            "table"
+          ]
+        }
+      ],
       "returnvalues": []
     },
     {
@@ -58,7 +90,15 @@
       "type": "FUNCTION",
       "name": "zendesk.login",
       "description": "Authenticate a user.",
-      "parameters": [],
+      "parameters": [
+        {
+          "name": "jwt",
+          "doc": "JSON Web Token for authentication",
+          "types": [
+            "string"
+          ]
+        }
+      ],
       "returnvalues": []
     },
     {

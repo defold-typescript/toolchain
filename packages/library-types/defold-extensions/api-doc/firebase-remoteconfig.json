@@ -116,7 +116,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "The value",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -131,7 +139,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "The value",
+          "types": [
+            "string"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -146,7 +162,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "The value",
+          "types": [
+            "number"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -161,14 +185,30 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "The value",
+          "types": [
+            "string"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
       "name": "firebase.remoteconfig.get_keys",
       "description": "Gets the set of all keys.",
       "parameters": [],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "keys",
+          "doc": "An array of strings representing parameter keys",
+          "types": [
+            "table"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",

@@ -411,6 +411,28 @@ describe("Defold library page callback arguments", () => {
     const md = apiPageMarkdown(admob as ApiPage, (t) => t);
     expect(md).toMatch(/^- `callback`.*\n(?: {2}- .*\n)* {2}- `message_id`/m);
   });
+
+  const librarySymbols = (namespace: string) => {
+    const page = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR).find(
+      (p) => p.category === "library" && p.namespace === namespace,
+    );
+    expect(page).toBeDefined();
+    return apiModuleSymbols(page as ApiPage);
+  };
+
+  test("adinfo.get reads its callback from the upstream members: key", () => {
+    const get = librarySymbols("adinfo").find((s) => s.name === "adinfo.get");
+    expect(fieldNames(get?.parameters)).toEqual(["callback"]);
+  });
+
+  test("generator placeholder names never become symbols or parameters", () => {
+    expect(librarySymbols("imgui").map((s) => s.name)).not.toContain("imgui.None");
+    expect(librarySymbols("realtime").filter((s) => s.name.includes(" "))).toEqual([]);
+    const shop = librarySymbols("shop");
+    expect(shop.length).toBeGreaterThan(0);
+    const bracketed = shop.flatMap((s) => s.parameters.filter((p) => p.name.includes("(")));
+    expect(bracketed).toEqual([]);
+  });
 });
 
 describe("apiPageMarkdown library provenance block", () => {

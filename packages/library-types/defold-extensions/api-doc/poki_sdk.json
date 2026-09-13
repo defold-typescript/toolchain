@@ -247,7 +247,15 @@
       "name": "poki_sdk.get_device_info",
       "description": "",
       "parameters": [],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",

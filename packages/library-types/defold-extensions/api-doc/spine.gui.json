@@ -27,7 +27,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "node",
+          "doc": "new spine node",
+          "types": [
+            "node"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -250,7 +258,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "bone",
+          "doc": "node corresponding to the spine bone",
+          "types": [
+            "node"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -288,7 +304,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "spine_scene",
+          "doc": "spine scene id",
+          "types": [
+            "hash"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -415,7 +439,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "id",
+          "doc": "spine skin id, 0 if no explicit skin is set",
+          "types": [
+            "hash"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -446,7 +478,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "id",
+          "doc": "spine animation id, 0 if no animation is playing",
+          "types": [
+            "hash"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -515,7 +555,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "cursor_value",
+          "doc": "cursor value",
+          "types": [
+            "number"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
@@ -584,7 +632,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "rate",
+          "doc": "playback rate",
+          "types": [
+            "number"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",

@@ -548,3 +548,154 @@ describe("scriptApiToRefDoc nested slots", () => {
     }
   });
 });
+
+const DIALECTS = `
+- name: dia
+  type: table
+  desc: Upstream dialects.
+  members:
+  - name: get
+    type: function
+    desc: members instead of parameters
+    members:
+    - name: callback
+      type: function
+      desc: the callback
+  - name: open
+    type: function
+    desc: params instead of parameters
+    params:
+    - name: url
+      type: string
+      desc: the url
+  - name: both
+    type: function
+    desc: parameters wins over members
+    parameters:
+    - name: first
+      type: string
+      desc: the canonical slot
+    members:
+    - name: second
+      type: string
+      desc: the alias slot
+  - name: count_list
+    type: function
+    desc: return as a list
+    return:
+    - name: count
+      type: number
+      desc: the count
+  - name: count_single
+    type: function
+    desc: return as a single mapping
+    return:
+      type: number
+      desc: the count
+  - name: returns_single
+    type: function
+    desc: returns as a single mapping
+    returns:
+      type: number
+      desc: the count
+  - name: parameters_single
+    type: function
+    desc: parameters as a single mapping
+    parameters:
+      name: value
+      type: number
+      desc: the value
+  - name: configure
+    type: function
+    desc: a table slot with members
+    parameters:
+    - name: options
+      type: table
+      desc: the options
+      members:
+      - name: timeout
+        type: number
+        desc: the timeout
+  - name: purchase
+    type: function
+    desc: a required placeholder suffix
+    parameters:
+    - name: project_id (REQUIRED)
+      type: number
+      desc: the project
+  - name: None
+    type: function
+    desc: generator artifact
+  - name: int JoinRandomRoom
+    type: function
+    desc: generator artifact with a C return type
+  - name: sub
+    type: table
+    desc: a sub-namespace
+    members:
+    - name: None
+      type: function
+      desc: generator artifact one level deep
+    - name: int JoinRandomRoom
+      type: function
+      desc: generator artifact one level deep
+    - name: valid
+      type: function
+      desc: a real nested function
+`;
+
+function dialect(name: string, options: { complete?: boolean } = {}) {
+  return functionElements(scriptApiToRefDoc(parse(DIALECTS), options)).find(
+    (e) => e.name === `dia.${name}`,
+  );
+}
+
+describe("scriptApiToRefDoc upstream dialects", () => {
+  it("reads function slots from members: and params:", () => {
+    expect(dialect("get")?.parameters).toEqual([
+      { name: "callback", doc: "the callback", types: ["function"] },
+    ]);
+    expect(dialect("open")?.parameters).toEqual([
+      { name: "url", doc: "the url", types: ["string"] },
+    ]);
+  });
+
+  it("reads only parameters: when an alias key is also present", () => {
+    expect(dialect("both")?.parameters.map((p) => p.name)).toEqual(["first"]);
+  });
+
+  it("reads return: as a list and as a single mapping", () => {
+    for (const name of ["count_list", "count_single", "returns_single"]) {
+      const returns = dialect(name)?.returnvalues ?? [];
+      expect(returns).toHaveLength(1);
+      expect(returns[0]?.types).toEqual(["number"]);
+    }
+    expect(dialect("parameters_single")?.parameters).toEqual([
+      { name: "value", doc: "the value", types: ["number"] },
+    ]);
+  });
+
+  it("emits a single-mapping return as the function's return type", () => {
+    const module = parseDefoldApiDoc(parseScriptApi(DIALECTS));
+    const emitted = emitDeclarations(module);
+    expect(emitted).toContain("function count_single(): number;");
+  });
+
+  it("carries a table slot's members: as fields in complete mode only", () => {
+    const options = dialect("configure", { complete: true })?.parameters[0];
+    expect(options?.fields).toEqual([{ name: "timeout", doc: "the timeout", types: ["number"] }]);
+    expect(dialect("configure")?.parameters[0]).not.toHaveProperty("fields");
+  });
+
+  it("skips placeholder function names at both levels and keeps valid siblings", () => {
+    const names = functionElements(scriptApiToRefDoc(parse(DIALECTS))).map((e) => e.name);
+    expect(names.filter((name) => name.includes("None") || name.includes(" "))).toEqual([]);
+    expect(names).toContain("dia.get");
+    expect(names).toContain("dia.sub.valid");
+  });
+
+  it("strips a (REQUIRED) suffix without marking the slot optional", () => {
+    const slot = dialect("purchase", { complete: true })?.parameters[0];
+    expect(slot).toEqual({ name: "project_id", doc: "the project", types: ["number"] });
+  });
+});

@@ -41,7 +41,15 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "path_hash",
+          "doc": "canonical path hash of the created resource",
+          "types": [
+            "hash"
+          ]
+        }
+      ]
     }
   ]
 }

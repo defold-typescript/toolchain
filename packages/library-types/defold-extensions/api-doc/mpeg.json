@@ -19,7 +19,22 @@
           ]
         }
       ],
-      "returnvalues": []
+      "returnvalues": [
+        {
+          "name": "handle",
+          "doc": "Returns video handle. Use in subsequent calls.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "err",
+          "doc": "Error message if video failed to open.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
     },
     {
       "type": "FUNCTION",
