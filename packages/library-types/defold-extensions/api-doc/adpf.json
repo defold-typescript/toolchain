@@ -1,0 +1,100 @@
+{
+  "info": {
+    "namespace": "adpf",
+    "brief": "Functions and constants for interacting with the Android Device Performance Framework",
+    "description": "Functions and constants for interacting with the Android Device Performance Framework"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "adpf.hint.initialize",
+      "description": "Initialise performance hints",
+      "parameters": [
+        {
+          "name": "target_fps_nanos",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "available",
+          "doc": "Return true if the PerformanceHintManager API is available on the device",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "adpf.hint.update_target_fps",
+      "description": "Update the target fps",
+      "parameters": [
+        {
+          "name": "target_fps_nanos",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "adpf.thermal.initialize",
+      "description": "Initialise thermal",
+      "parameters": [
+        {
+          "name": "available",
+          "doc": "Return true if the Thermal API is available on the device",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "adpf.thermal.get_headroom",
+      "description": "Provides an estimate of how much thermal headroom the device currently has before hitting severe throttling.",
+      "parameters": [
+        {
+          "name": "forecast_seconds",
+          "doc": "how many seconds in the future to forecast",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "headroom",
+          "doc": "a value greater than or equal to 0.0 where 1.0 indicates the SEVERE throttling threshold",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "adpf.thermal.get_status",
+      "description": "Get the current thermal status of the device",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "status",
+          "doc": "The current thermal status of the device. One of THERMAL_STATUS_XYZ.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    }
+  ]
+}

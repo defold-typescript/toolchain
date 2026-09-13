@@ -1,0 +1,53 @@
+{
+  "info": {
+    "namespace": "firebase",
+    "brief": "Functions and constants for interacting with Firebase",
+    "description": "Functions and constants for interacting with Firebase"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "firebase.initialize",
+      "description": "Initialize Firebase.",
+      "parameters": [
+        {
+          "name": "options",
+          "doc": "Optional table with initialization parameters to use instead of those specified in google-services.xml/plist. When passing this, disable creation of the default Firebase App by specifying firebase.no_auto_init in game.project. Valid keys in the table are api_key, app_id, database_url, messaging_sender_id, project_id, storage_bucket. All values are strings.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.get_installation_auth_token",
+      "description": "Get the Firebase Installation auth token",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.set_callback",
+      "description": "Sets a callback function for receiving events from the SDK. Call `firebase.set_callback(nil)` to remove callback",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Callback function that is executed on any event in the SDK, or nil to remove the current callback.",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "firebase.get_installation_id",
+      "description": "Get the Firebase Installation id",
+      "parameters": [],
+      "returnvalues": []
+    }
+  ]
+}

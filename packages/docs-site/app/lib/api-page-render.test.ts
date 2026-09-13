@@ -196,6 +196,7 @@ function libraryPageWithMeta(overrides: Partial<ApiPage> = {}): ApiPage {
       importString: 'import * as camera from "orthographic.camera"',
       license: "MIT",
       authoredHere: false,
+      usage: "import",
     },
     ...overrides,
   };
@@ -448,6 +449,7 @@ describe("apiPageMarkdown library provenance block", () => {
           importString: 'import * as camera from "orthographic.camera"',
           license: "MIT",
           authoredHere: false,
+          usage: "import",
         },
       }),
       (t) => t,
@@ -1995,5 +1997,31 @@ describe("apiPageMarkdown — provenance on a non-default version's windowed pag
       apiLinkify(canonicalPages),
     );
     expect(canonical).toContain("demo.evolving(a: string, b?: number): void");
+  });
+});
+
+describe("Defold extension pages", () => {
+  const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+  const render = (route: string) => {
+    const page = pages.find((p) => p.route === route);
+    if (!page) throw new Error(`no page at ${route}`);
+    return apiPageMarkdown(page, (t) => t);
+  };
+
+  test("an extension page links its releases, keeps resolve, and calls the global with no import", () => {
+    const md = render("/api/iap");
+    expect(md).toContain("](https://github.com/defold/extension-iap/releases)");
+    expect(md).toContain(
+      "  2. Run `bunx @defold-typescript/cli resolve` to materialize its types.",
+    );
+    expect(md).not.toContain("import * as");
+    expect(md).toContain("  3. Call it through the global `iap` — no import.");
+  });
+
+  test("an extension doc that declares an engine namespace says it adds members to it", () => {
+    const md = render("/api/spine.gui");
+    expect(md).toContain(
+      "  3. Call it through the global `gui` — no import. It adds members to the engine `gui` namespace.",
+    );
   });
 });

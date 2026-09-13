@@ -1,0 +1,54 @@
+{
+  "info": {
+    "namespace": "permissions",
+    "brief": "Functions and constants for interacting with permissions related APIs",
+    "description": "Functions and constants for interacting with permissions related APIs"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "permissions.check",
+      "description": "Determine whether you have been granted a particular permission.",
+      "parameters": [
+        {
+          "name": "permission",
+          "doc": "A constant that represent permission, for example `android.permission.ACCESS_NETWORK_STATE`",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "A result can be one of the predefined constants below\n- `permissions.PERMISSION_GRANTED`\n- `permissions.PERMISSION_DENIED`\n- `permissions.PERMISSION_SHOW_RATIONALE`",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "permissions.request",
+      "description": "Requests permissions to be granted to this application.",
+      "parameters": [
+        {
+          "name": "request_tbl",
+          "doc": "An array with constants that represent permissions.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "A callback taking the following parameters",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

@@ -1,0 +1,128 @@
+{
+  "info": {
+    "namespace": "videoplayer",
+    "brief": "Fullscreen video playback using native/HTML5 backends.",
+    "description": "Fullscreen video playback using native/HTML5 backends."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "videoplayer.create",
+      "description": "Create a video handle for a URI and register a callback.",
+      "parameters": [
+        {
+          "name": "uri",
+          "doc": "Video URI (remote URL or bundled resource).",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "settings",
+          "doc": "Optional settings.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "Called on video events.",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "Video handle or nil on failure.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "videoplayer.destroy",
+      "description": "Destroy a video handle and remove the view.",
+      "parameters": [
+        {
+          "name": "handle",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "videoplayer.start",
+      "description": "Start playback.",
+      "parameters": [
+        {
+          "name": "handle",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "videoplayer.stop",
+      "description": "Stop playback without removing the video view or emitting VIDEO_EVENT_FINISHED. Call destroy to skip and remove the video.",
+      "parameters": [
+        {
+          "name": "handle",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "videoplayer.pause",
+      "description": "Pause playback.",
+      "parameters": [
+        {
+          "name": "handle",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "videoplayer.set_visible",
+      "description": "Show or hide the video view.",
+      "parameters": [
+        {
+          "name": "handle",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "visible",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

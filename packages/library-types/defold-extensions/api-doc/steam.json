@@ -1,0 +1,2597 @@
+{
+  "info": {
+    "namespace": "steam",
+    "brief": "Functions and constants for interacting with Steamworks.",
+    "description": "Functions and constants for interacting with Steamworks."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "steam.init",
+      "description": "Initialize Steamworks.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "success",
+          "doc": "True if successful\n",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "message",
+          "doc": "Error message if unsuccessful.\n",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.update",
+      "description": "Update Steamworks. Call this from a script component.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.restart",
+      "description": "Restart Steamworks.",
+      "parameters": [
+        {
+          "name": "appid",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.final",
+      "description": "Finalize Steamworks.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.apps_is_dlc_installed",
+      "description": "Takes AppID of DLC and checks if the user owns the DLC &amp; if the DLC is installed.",
+      "parameters": [
+        {
+          "name": "app_id",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "installed",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.apps_get_current_game_language",
+      "description": "Gets the current game language.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "language",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.friends_get_friend_persona_name",
+      "description": "Returns the name of another user. Same rules as GetFriendPersonaState() apply as to whether or not the user knowns the name of the other user note that on first joining a lobby, chat room or game server the local user will not known the name of the other users automatically; that information will arrive asyncronously.",
+      "parameters": [
+        {
+          "name": "steamIDFriend",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "name",
+          "doc": "Name of user\n",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.friends_get_persona_name",
+      "description": "Returns the local players name - guaranteed to not be NULL. This is the same name as on the users community profile page. This is stored in UTF-8 format.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "name",
+          "doc": "Name of user\n",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.friends_get_persona_state",
+      "description": "Gets the status of the current user. Returned as EPersonaState.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "state",
+          "doc": "Status of user.\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.friends_get_friend_count",
+      "description": "Friend iteration. Takes a set of EFriendFlags, and returns the number of users the client knows about who meet that criteria. Then GetFriendByIndex() can then be used to return the id's of each of those users.",
+      "parameters": [
+        {
+          "name": "iFriendFlags",
+          "doc": "Set of friend flags to match friends against.\n",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "count",
+          "doc": "Number of users matching search.\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.friends_get_friend_by_index",
+      "description": "Returns the steamID of a user. The returned CSteamID can then be used by all the functions below to access details about the user.",
+      "parameters": [
+        {
+          "name": "iFriend",
+          "doc": "Is a index of range [0, GetFriendCount())\n",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "iFriendsFlags",
+          "doc": "Must be the same value as used in GetFriendCount()\n",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "steamID",
+          "doc": "Steam id of the user\n",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.friends_get_friend_persona_state",
+      "description": "Returns the current status of the specified user. This will only be known by the local user if steamIDFriend is in their friends list; on the same game server; in a chat room or lobby; or in a small group with the local user.",
+      "parameters": [
+        {
+          "name": "steamIDFriend",
+          "doc": "Id of friend\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "state",
+          "doc": "State of friend\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.friends_get_friend_steam_level",
+      "description": "Get friends steam level.",
+      "parameters": [
+        {
+          "name": "steamIDFriend",
+          "doc": "Id of friend\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "level",
+          "doc": "Steam level of friend\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.friends_get_friend_relationship",
+      "description": "Returns a relationship to a user.",
+      "parameters": [
+        {
+          "name": "steamIDFriend",
+          "doc": "Id of friend\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "relationship",
+          "doc": "Relationship to the user.\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.friends_get_small_friend_avatar",
+      "description": "Gets a handle to the small (32*32px) avatar for the specified user. This is a handle to be used in IClientUtils::GetImageRGBA(), or 0 if none set",
+      "parameters": [
+        {
+          "name": "steamIDFriend",
+          "doc": "Id of friend\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "handle",
+          "doc": "Image handle.\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.friends_get_medium_friend_avatar",
+      "description": "Gets a handle to the medium (64*64px) avatar for the specified user. This is a handle to be used in IClientUtils::GetImageRGBA(), or 0 if none set",
+      "parameters": [
+        {
+          "name": "steamIDFriend",
+          "doc": "Id of friend\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "handle",
+          "doc": "Image handle.\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.friends_get_large_friend_avatar",
+      "description": "Gets a handle to the large (128*128px) avatar for the specified user. This is a handle to be used in IClientUtils::GetImageRGBA(), or 0 if none set",
+      "parameters": [
+        {
+          "name": "steamIDFriend",
+          "doc": "Id of friend\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "handle",
+          "doc": "Image handle.\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.friends_activate_game_overlay_to_store",
+      "description": "Activates game overlay to store page for app.",
+      "parameters": [
+        {
+          "name": "app_id",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "flag",
+          "doc": "EOverlayToStoreFlag\n",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.friends_activate_game_overlay_to_web_page",
+      "description": "Activates game overlay web browser directly to the specified URL. Full address with protocol type is required, e.g. http://www.steamgames.com/",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "mode",
+          "doc": "EActivateGameOverlayToWebPageMode\n",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.friends_set_rich_presence",
+      "description": "Sets a Rich Presence key/value for the current user.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "success",
+          "doc": "True if the rich presence was set successfully, otherwise False.\n",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.friends_clear_rich_presence",
+      "description": "Clears all of the current user&#x27;s Rich Presence key/values.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.friends_invite_user_to_game",
+      "description": "Invites a friend or clan member to the current game using a special invite string. If the target accepts the invite, a GameRichPresenceJoinRequested_t callback is posted containing the connect string.",
+      "parameters": [
+        {
+          "name": "steamIDFriend",
+          "doc": "Id of friend\n",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "connect",
+          "doc": "String\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "success",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.set_listener",
+      "description": "Set a listener.",
+      "parameters": [
+        {
+          "name": "listener",
+          "doc": "Listener function to call\n",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_add_request_lobby_list_string_filter",
+      "description": "Adds a string comparison filter to the next RequestLobbyList call.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "cmp",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_add_request_lobby_list_numerical_filter",
+      "description": "Adds a numerical comparison filter to the next RequestLobbyList call.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "cmp",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_add_request_lobby_list_near_value_filter",
+      "description": "Sorts the results closest to the specified value.",
+      "parameters": [
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_add_request_lobby_list_filter_slots_available",
+      "description": "Filters to only return lobbies with the specified number of open slots. Available.",
+      "parameters": [
+        {
+          "name": "slots",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_add_request_lobby_list_distance_filter",
+      "description": "Sets the physical distance for which we should search for lobbies, this is. Based on the users IP address and a IP location map on the Steam backed.",
+      "parameters": [
+        {
+          "name": "dist",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_add_request_lobby_list_result_count_filter",
+      "description": "Sets the maximum number of lobbies to return. The lower the count the faster. It is to download the lobby results & details to the client.",
+      "parameters": [
+        {
+          "name": "max_count",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_add_request_lobby_list_compatible_members_filter",
+      "description": "Unused - Checks the player compatibility based on the frenemy system.",
+      "parameters": [
+        {
+          "name": "steam_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_request_lobby_list",
+      "description": "Get a filtered list of relevant lobbies. Will return results as a LobbyMatchList_t event",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "id",
+          "doc": "Callback id\n",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_get_lobby_by_index",
+      "description": "Gets the Steam ID of the lobby at the specified index. This should only be called after a LobbyMatchList_t call result is received",
+      "parameters": [
+        {
+          "name": "index",
+          "doc": "The index of the lobby to get the Steam ID of, from 0 to\nLobbyMatchList_t.m_nLobbiesMatching\n",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "id",
+          "doc": "Id of lobby\n",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_create_lobby",
+      "description": "Create a new matchmaking lobby. Will generate a LobbyCreated_t, LobbyEnter_t and LobbyDataUpdate_t event",
+      "parameters": [
+        {
+          "name": "lobby_type",
+          "doc": "The type and visibility of this lobby.\n",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "max_members",
+          "doc": "The maximum number of players that can join this lobby.\n",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "id",
+          "doc": "Callback id\n",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_join_lobby",
+      "description": "Joins an existing lobby. Will generate a LobbyEnter_t event",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "The Steam ID of the lobby to join.\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "id",
+          "doc": "Callback id\n",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_leave_lobby",
+      "description": "Leave a lobby that the user is currently in. Leave a lobby that the user is currently in; this will take effect immediately on the client side, other users in the lobby will be notified by a LobbyChatUpdate_t callback.",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "The lobby to leave\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_get_lobby_owner",
+      "description": "Returns the current lobby owner. There always one lobby owner - if the current owner leaves, another user in the lobby will become the owner automatically. It is possible (but rare) to join a lobby just as the owner is leaving, thus entering a lobby with self as the owner. You must be a member of the lobby to access this.",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "The Steam ID of the lobby to get the owner of.\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "id",
+          "doc": "Id of owner\n",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_set_lobby_owner",
+      "description": "Changes who the lobby owner is. This can only be set by the owner of the lobby. This will trigger a LobbyDataUpdate_t for all of the users in the lobby, each user should update their local state to reflect the new owner. This is typically accomplished by displaying a crown icon next to the owners name.",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "The Steam ID of the lobby to get the owner of.\n",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "new_owner",
+          "doc": "The new owner\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_set_lobby_type",
+      "description": "Updates what type of lobby this is. This is also set when you create the lobby with CreateLobby. This can only be set by the owner of the lobby.",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "The Steam ID of the lobby\n",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "type",
+          "doc": "The lobby type\n",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_set_lobby_joinable",
+      "description": "Sets whether or not a lobby is joinable by other players. This always defaults to enabled for a new lobby. If joining is disabled, then no players can join, even if they are a friend or have been invited. Lobbies with joining disabled will not be returned from a lobby search.",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "The Steam ID of the lobby\n",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "joinable",
+          "doc": "Enable or disable allowing users to join this lobby?\n",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "Success\n",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_set_lobby_member_limit",
+      "description": "Set the maximum number of players that can join the lobby. This is also set when you create the lobby with CreateLobby. This can only be set by the owner of the lobby.",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "The Steam ID of the lobby to set the member limit for.\n",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "max_members",
+          "doc": "The maximum number of players allowed in this lobby. This\ncan not be above 250.\n",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "Success\n",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_get_lobby_member_limit",
+      "description": "The current limit on the",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "The Steam ID of the lobby to get the member limit of.\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "limit",
+          "doc": "The current limit\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_get_num_lobby_members",
+      "description": "Gets the number of users in a lobby. This is used for iteration, after calling this then GetLobbyMemberByIndex can be used to get the Steam ID of each person in the lobby. Persona information for other lobby members (name, avatar, etc.) is automatically received and accessible via the ISteamFriends interface. The current user must be in the lobby to retrieve the Steam IDs of other users in that lobby.",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "The Steam ID of the lobby to get the owner of.\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "count",
+          "doc": "Number of users in the lobby\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_get_lobby_member_by_index",
+      "description": "Gets the Steam ID of the lobby member at the given index. You must call matchmaking_get_num_lobby_members before calling this. The current user must be in the lobby to retrieve the Steam IDs of other users in that lobby.",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "index",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "id",
+          "doc": "Id of member\n",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_set_lobby_data",
+      "description": "Sets a key/value pair in the lobby metadata.",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_set_lobby_member_data",
+      "description": "Sets per-user metadata for the local user.",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_get_lobby_data",
+      "description": "Get data associated with this lobby.",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "data",
+          "doc": "Data\n",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_get_lobby_member_data",
+      "description": "Gets per-user metadata from another player in the specified lobby.",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "user_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "data",
+          "doc": "Data\n",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_get_lobby_data_count",
+      "description": "Returns the number of metadata keys set on the specified lobby.",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "count",
+          "doc": "Number of keys\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_get_lobby_data_by_index",
+      "description": "Returns a lobby metadata key/values pair by index.",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "index",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "success",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "key",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_send_lobby_chat_message",
+      "description": "Broadcasts a chat message to the all the users in the lobby.",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "body",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "success",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.matchmaking_get_lobby_chat_entry",
+      "description": "Get a chat message as specified in a LobbyChatMsg_t callback.",
+      "parameters": [
+        {
+          "name": "lobby_id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "index",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "user",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "type",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.networking_send_message_to_user",
+      "description": "Send message.",
+      "parameters": [
+        {
+          "name": "identity_remote",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "send_flags",
+          "doc": "A bitmask of k_nSteamNetworkingSend_xxx options\n",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "remote_channel",
+          "doc": "A routing number you can use to help route message to different systems\n",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.networking_receive_messages_on_channel",
+      "description": "Receive message.",
+      "parameters": [
+        {
+          "name": "localChannel",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "message",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.networking_accept_session_with_user",
+      "description": "Accept session. Call this in response to a SteamNetworkingMessagesSessionRequest_t callback.",
+      "parameters": [
+        {
+          "name": "identity_remote",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "Returns false if there is no session with the user\npending or otherwise. If there is an existing active session, this function\nwill return true, even if it is not pending.\n",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.networking_close_session_with_user",
+      "description": "Close sesssion. Call this when you're done talking to a user to immediately free up resources under-the-hood",
+      "parameters": [
+        {
+          "name": "identity_remote",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.networking_close_channel_with_user",
+      "description": "Close channel. Call this when you're done talking to a user on a specific channel.",
+      "parameters": [
+        {
+          "name": "identity_remote",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "local_channel",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.networking_get_session_connection_info",
+      "description": "Get connection info. Returns information about the latest state of a connection, if any, with the given peer.",
+      "parameters": [
+        {
+          "name": "identity_remote",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "info",
+          "doc": "Connection info (state, info, status)\n",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.remote_storage_file_share",
+      "description": "Share a file.",
+      "parameters": [
+        {
+          "name": "filename",
+          "doc": "Name of file to share\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.remote_storage_get_file_count",
+      "description": "Get number of uploaded files.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "count",
+          "doc": "File count\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.remote_storage_get_file_name_and_size",
+      "description": "Get file information.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "count",
+          "doc": "File count\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.remote_storage_get_quota",
+      "description": "Get storage quota.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "available",
+          "doc": "Available bytes\n",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "total",
+          "doc": "Total bytes\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.remote_storage_file_write",
+      "description": "Creates a new file, writes the bytes to the file, and then closes the file. If the target file already exists, it is overwritten.",
+      "parameters": [
+        {
+          "name": "filename",
+          "doc": "The name of the file to write to.\n",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "Success\n",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.remote_storage_file_read",
+      "description": "Opens a binary file, reads the contents of the file into a byte array,. And then closes the file.",
+      "parameters": [
+        {
+          "name": "filename",
+          "doc": "Name of the file to read from\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "data",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_get_steam_id",
+      "description": "Returns the CSteamID of the account currently logged into the Steam client. A CSteamID is a unique identifier for an account, and used to differentiate users in all parts of the Steamworks API.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "id",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_get_player_steam_level",
+      "description": "Gets the Steam Level of the user, as shown on their profile.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "level",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_get_game_badge_level",
+      "description": "Trading Card badges data access. If you only have one set of cards, the series will be 1. The user has can have two different badges for a series; the regular (max level 5) and the foil (max level 1).",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "series",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "foil",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_logged_on",
+      "description": "Returns true if the Steam client current has a live connection to the Steam. Servers.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "logged_on",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_is_behind_nat",
+      "description": "Returns true if this users looks like they are behind a NAT device. Only valid once the user has connected to steam .",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "behind_nat",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_is_phone_verified",
+      "description": "Gets whether the users phone number is verified.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "verified",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_is_phone_identifying",
+      "description": "Gets whether the users phone number is identifying.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "verifying",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_is_phone_requiring_verification",
+      "description": "Gets whether the users phone number is awaiting (re)verification.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "verification",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_is_two_factor_enabled",
+      "description": "Gets whether the user has two factor enabled on their account.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "enabled",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_get_auth_session_ticket",
+      "description": "Get an authentication ticket. Retrieve an authentication ticket to be sent to the entity who wishes to authenticate you.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "ticket",
+          "doc": "Auth ticket or null\n",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "handle",
+          "doc": "Ticket handle or null\n",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "error",
+          "doc": "Error message or null\n",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_begin_auth_session",
+      "description": "Validate an authentication ticket. Authenticate the ticket from the entity Steam ID to be sure it is valid and isn't reused. Note that identity is not confirmed until the callback ValidateAuthTicketResponse_t is received and the return value in that callback is checked for success.",
+      "parameters": [
+        {
+          "name": "ticket",
+          "doc": "The auth ticket to validate\n",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "steamId",
+          "doc": "The entity's Steam ID that sent this ticket.\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_cancel_auth_ticket",
+      "description": "Cancels an auth ticket. Cancels an auth ticket received from GetAuthSessionTicket or GetAuthTicketForWebApi. This should be called when no longer playing with the specified entity.",
+      "parameters": [
+        {
+          "name": "ticket",
+          "doc": "The active auth ticket to cancel.\n",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_end_auth_session",
+      "description": "Ends an auth session. Ends an auth session that was started with BeginAuthSession. This should be called when no longer playing with the specified entity.",
+      "parameters": [
+        {
+          "name": "steamId",
+          "doc": "The entity to end the active auth session with.\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_get_auth_ticket_for_web_api",
+      "description": "Get an authentication ticket for web API. Request an authentication ticket suitable to authenticated in a web backend. Will trigger a GetTicketForWebApiResponse_t callback when the ticket is ready.",
+      "parameters": [
+        {
+          "name": "identity",
+          "doc": "Optional identity string to associate with the ticket\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "hAuthTicket",
+          "doc": "The handle of the requested ticket\n",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "error",
+          "doc": "Error message or null\n",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_stats_get_stat_int",
+      "description": "Get user stat as an integer. Https://partner.steamgames.com/doc/api/ISteamUserStats#GetStat",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Id of the stat to get\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "ok",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "stat",
+          "doc": "The stat or nil\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_stats_set_stat_int",
+      "description": "Set user stat. Https://partner.steamgames.com/doc/api/ISteamUserStats#SetStat",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Id of the stat to set\n",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "stat",
+          "doc": "Number to set\n",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "ok",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_stats_get_stat_float",
+      "description": "Get user stat as a floating point number. Https://partner.steamgames.com/doc/api/ISteamUserStats#GetStat",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Id of the stat to get\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "ok",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "stat",
+          "doc": "The stat\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_stats_set_stat_float",
+      "description": "Set user stat. Https://partner.steamgames.com/doc/api/ISteamUserStats#SetStat",
+      "parameters": [
+        {
+          "name": "id",
+          "doc": "Id of the stat to set\n",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "stat",
+          "doc": "Number to set\n",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "ok",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_stats_request_global_stats",
+      "description": "Requests global stats data, which is available for stats marked as &quot;aggregated&quot;. This call is asynchronous, with the results returned in GlobalStatsReceived_t. nHistoryDays specifies how many days of day-by-day history to retrieve in addition to the overall totals. The limit is 60. https://partner.steamgames.com/doc/api/ISteamUserStats#RequestGlobalStats",
+      "parameters": [
+        {
+          "name": "history_days",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "ok",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_stats_store_stats",
+      "description": "Store the current data on the server. Will get a callback when set and one callback for every new achievement  If the callback has a result of k_EResultInvalidParam, one or more stats uploaded has been rejected, either because they broke constraints or were out of date. In this case the server sends back updated values. The stats should be re-iterated to keep in sync. https://partner.steamgames.com/doc/api/ISteamUserStats#StoreStats",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "ok",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_stats_reset_all_stats",
+      "description": "Reset stats. Https://partner.steamgames.com/doc/api/ISteamUserStats#ResetAllStats",
+      "parameters": [
+        {
+          "name": "achievements",
+          "doc": "True if achievements should be reset as well.\n",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "ok",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_stats_set_achievement",
+      "description": "Set achievement. Https://partner.steamgames.com/doc/api/ISteamUserStats#SetAchievement",
+      "parameters": [
+        {
+          "name": "name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "ok",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_stats_get_achievement",
+      "description": "Get achievement. Https://partner.steamgames.com/doc/api/ISteamUserStats#GetAchievement",
+      "parameters": [
+        {
+          "name": "name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "ok",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "achieved",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_stats_clear_achievement",
+      "description": "Clear achievement. Https://partner.steamgames.com/doc/api/ISteamUserStats#ClearAchievement",
+      "parameters": [
+        {
+          "name": "name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "ok",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_stats_get_num_achievements",
+      "description": "Used for iterating achievements. In general games should not need these functions because they should have a list of existing achievements compiled into them. https://partner.steamgames.com/doc/api/ISteamUserStats#GetNumAchievements",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "num",
+          "doc": "Number of achievements.\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_stats_get_achievement_name",
+      "description": "Get achievement name iAchievement in [0,GetNumAchievements). Https://partner.steamgames.com/doc/api/ISteamUserStats#GetAchievementName",
+      "parameters": [
+        {
+          "name": "index",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_stats_get_achievement_display_attribute",
+      "description": "Get general attributes for an achievement. Accepts the following keys * \"name\" and \"desc\" for retrieving the localized achievement name and description (returned in UTF8) * \"hidden\" for retrieving if an achievement is hidden (returns \"0\" when not hidden, \"1\" when hidden) https://partner.steamgames.com/doc/api/ISteamUserStats#GetAchievementDisplayAttribute",
+      "parameters": [
+        {
+          "name": "name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "key",
+          "doc": "Either \"name\", \"desc\" or \"hidden\"\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "attribute",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_stats_get_achievement_achieved_percent",
+      "description": "Returns the percentage of users who have achieved the specified achievement. Https://partner.steamgames.com/doc/api/ISteamUserStats#GetAchievementAchievedPercent",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "ok",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "percent",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_stats_find_leaderboard",
+      "description": "Find a leaderboard. Will return leaderboard asynchronously. https://partner.steamgames.com/doc/api/ISteamUserStats#FindLeaderboard",
+      "parameters": [
+        {
+          "name": "name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_stats_find_or_create_leaderboard",
+      "description": "Gets a leaderboard by name, it will create it if it&#x27;s not yet created. This call is asynchronous, with the result returned in a listener callback with event set to LeaderboardFindResult_t. https://partner.steamgames.com/doc/api/ISteamUserStats#FindOrCreateLeaderboard",
+      "parameters": [
+        {
+          "name": "leaderboard_name",
+          "doc": "The name of the leaderboard to find or create.\n",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "eLeaderboardSortMethod",
+          "doc": "The sort order of the new leaderboard if it's created.\n",
+          "types": [
+            "ELeaderboardSortMethod"
+          ]
+        },
+        {
+          "name": "eLeaderboardDisplayType",
+          "doc": "The display type (used by the Steam Community web site) of the new leaderboard if it's created.\n",
+          "types": [
+            "ELeaderboardDisplayType"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_stats_get_leaderboard_name",
+      "description": "Get the name of a leaderboard. Https://partner.steamgames.com/doc/api/ISteamUserStats#GetLeaderboardName",
+      "parameters": [
+        {
+          "name": "leaderboard",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "name",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_stats_get_leaderboard_entry_count",
+      "description": "Get the total number of entries in a leaderboard, as of the last request. Https://partner.steamgames.com/doc/api/ISteamUserStats#GetLeaderboardEntryCount",
+      "parameters": [
+        {
+          "name": "leaderboard",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "count",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_stats_get_leaderboard_sort_method",
+      "description": "Returns the sort method of the leaderboard. Https://partner.steamgames.com/doc/api/ISteamUserStats#GetLeaderboardSortMethod",
+      "parameters": [
+        {
+          "name": "leaderboard",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "sort_order",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_stats_get_leaderboard_display_type",
+      "description": "Returns the display type of a leaderboard handle. Https://partner.steamgames.com/doc/api/ISteamUserStats#GetLeaderboardDisplayType",
+      "parameters": [
+        {
+          "name": "leaderboard",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "display_type",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_stats_download_leaderboard_entries",
+      "description": "Asks the Steam back-end for a set of rows in the leaderboard. This call is asynchronous, with the result returned in a listener callback with event set to LeaderboardScoresDownloaded_t. LeaderboardScoresDownloaded_t will contain a handle to pull the results from GetDownloadedLeaderboardEntries(). You can ask for more entries than exist, and it will return as many as do exist. * k_ELeaderboardDataRequestGlobal requests rows in the leaderboard from the full table, with nRangeStart & nRangeEnd in the range [1, TotalEntries] * k_ELeaderboardDataRequestGlobalAroundUser requests rows around the current user, nRangeStart being negate e.g. DownloadLeaderboardEntries( hLeaderboard, k_ELeaderboardDataRequestGlobalAroundUser, -3, 3 ) will return 7 rows, 3 before the user, 3 after * k_ELeaderboardDataRequestFriends requests all the rows for friends of the current user https://partner.steamgames.com/doc/api/ISteamUserStats#DownloadLeaderboardEntries",
+      "parameters": [
+        {
+          "name": "leaderboard",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "request",
+          "doc": "",
+          "types": [
+            "ELeaderboardDataRequest"
+          ]
+        },
+        {
+          "name": "start",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "end",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_stats_get_downloaded_leaderboard_entry",
+      "description": "Returns data about a single leaderboard entry. Https://partner.steamgames.com/doc/api/ISteamUserStats#GetDownloadedLeaderboardEntry",
+      "parameters": [
+        {
+          "name": "hSteamLeaderboardEntries",
+          "doc": "Leaderboard entries handle\n",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "index",
+          "doc": "Which entry to get\n",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "ok",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "entry",
+          "doc": "The requested leaderboard entry.\n",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_stats_upload_leaderboard_score",
+      "description": "Uploads a user score to a specified leaderboard. This call is asynchronous, with the result returned in a listener callback with event set to LeaderboardScoreUploaded_t. https://partner.steamgames.com/doc/api/ISteamUserStats#UploadLeaderboardScore",
+      "parameters": [
+        {
+          "name": "leaderboard",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "eLeaderboardUploadScoreMethod",
+          "doc": "",
+          "types": [
+            "ELeaderboardUploadScoreMethod"
+          ]
+        },
+        {
+          "name": "nScore",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.user_stats_attach_leadboard_ugc",
+      "description": "Attaches a piece of user generated content the current user&#x27;s entry on a. Leaderboard. https://partner.steamgames.com/doc/api/ISteamUserStats#AttachLeaderboardUGC",
+      "parameters": [
+        {
+          "name": "leaderboard",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "ugc_handle",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "Steam",
+          "doc": "API call id\n",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.utils_get_app_id",
+      "description": "Returns the appID of the current process.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "app_id",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.utils_get_seconds_since_app_active",
+      "description": "Return the number of seconds since the user.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "seconds",
+          "doc": "",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.utils_is_steam_running_on_steam_deck",
+      "description": "Returns true if currently running on the Steam Deck device.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "running_on_steamdeck",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.utils_is_steam_overlay_available",
+      "description": "Returns true if the Steam Overlay is running and the user can access it.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "steam_overlay_available",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.utils_get_image_size",
+      "description": "Get size of image.",
+      "parameters": [
+        {
+          "name": "image",
+          "doc": "Image handle\n",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "ok",
+          "doc": "True if size of image was read successfully\n",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "width",
+          "doc": "Image width or nil\n",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "doc": "Image height or nil\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.utils_get_image_rgba",
+      "description": "Get image in RGBA format.",
+      "parameters": [
+        {
+          "name": "image",
+          "doc": "Image handle\n",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "size",
+          "doc": "Size of image\n",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "ok",
+          "doc": "True if size of image was read successfully\n",
+          "types": [
+            "boolean"
+          ]
+        },
+        {
+          "name": "Image",
+          "doc": "",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.utils_get_server_real_time",
+      "description": "Returns the Steam server time in Unix epoch format. (Number of seconds since Jan 1, 1970 UTC).",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "Server",
+          "doc": "Time\n",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.utils_show_floating_gamepad_text_input",
+      "description": "Opens a floating keyboard over the game content and sends OS keyboard keys directly to the game.",
+      "parameters": [
+        {
+          "name": "mode",
+          "doc": "EFloatingGamepadTextInputMode\n",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "x",
+          "doc": "Text field x position\n",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "y",
+          "doc": "Text field y position\n",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "width",
+          "doc": "Text field width\n",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "doc": "Text field height\n",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "True if the floating keyboard was shown, otherwise, false.\n",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "steam.utils_show_gamepad_text_input",
+      "description": "Activates the Big Picture text input dialog which only supports gamepad input.",
+      "parameters": [
+        {
+          "name": "input_mode",
+          "doc": "EGamepadTextInputMode\n",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "line_input_mode",
+          "doc": "EGamepadTextInputLineMode\n",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "description",
+          "doc": "Sets the description that should inform the user what the input dialog is for\n",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "existing_text",
+          "doc": "Sets the preexisting text which the user can edit.\n",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "True if the big picture overlay is running; otherwise, false\n",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "info": {
+    "namespace": "zendesk",
+    "brief": "Defold native extension to interact with the Zendesk SDK.",
+    "description": "Defold native extension to interact with the Zendesk SDK."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "zendesk.initialize",
+      "description": "Initialize the Zendesk SDK",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "zendesk.set_callback",
+      "description": "Set a callback for events from the Zendesk SDK",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "zendesk.show_messaging",
+      "description": "Show the conversation screen.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "zendesk.set_conversation_fields",
+      "description": "Set conversation fields in the SDK to add contextual data about the conversation.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "zendesk.clear_conversation_fields",
+      "description": "Clear conversation fields from the SDK storage when the client side context changes.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "zendesk.set_conversation_tags",
+      "description": "Set custom conversation tags in the SDK to add contextual data about the conversation.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "zendesk.clear_conversation_tags",
+      "description": "Clear conversation tags from SDK storage when the client side context changes.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "zendesk.login",
+      "description": "Authenticate a user.",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "zendesk.logout",
+      "description": "Unauthenticate a user.",
+      "parameters": [],
+      "returnvalues": []
+    }
+  ]
+}

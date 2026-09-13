@@ -1,0 +1,61 @@
+{
+  "info": {
+    "namespace": "kaiads",
+    "brief": "Functions and constants for interacting with the KaiAds SDK.",
+    "description": "Functions and constants for interacting with the KaiAds SDK."
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "kaiads.init",
+      "description": "Initialise KaiAds.",
+      "parameters": [
+        {
+          "name": "publisher_id",
+          "doc": "Id of the publisher",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "kaiads.set_listener",
+      "description": "Listen to events from the KaiAds SDK.",
+      "parameters": [
+        {
+          "name": "listener",
+          "doc": "function to call when a KaiAds event is received from the SDK.",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "kaiads.preload",
+      "description": "Preload an ad.",
+      "parameters": [
+        {
+          "name": "config",
+          "doc": "Ad configuration as a JSON encoded string.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "kaiads.show",
+      "description": "Show an ad. You must have called preload() and received a callback that the ad was preloaded before attempting to show an ad.",
+      "parameters": [],
+      "returnvalues": []
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "info": {
+    "namespace": "siwa",
+    "brief": "Functions and constants for interacting Sign in with Apple. [icon:ios]",
+    "description": "Functions and constants for interacting Sign in with Apple. [icon:ios]"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "siwa.is_supported",
+      "description": "Check if Sign in with Apple is available (iOS 13+).",
+      "parameters": [],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "siwa.get_credential_state",
+      "description": "Get the credential state of a user.",
+      "parameters": [
+        {
+          "name": "user_id",
+          "doc": "User id to get credential state for.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "callback",
+          "doc": "Credential state callback function.",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "siwa.authenticate",
+      "description": "Show the Sign in with Apple UI",
+      "parameters": [
+        {
+          "name": "callback",
+          "doc": "Authentication callback function.",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

@@ -1,0 +1,457 @@
+{
+  "info": {
+    "namespace": "spine",
+    "brief": "Functions and constants for interacting with Spine models",
+    "description": "Functions and constants for interacting with Spine models"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "spine.play_anim",
+      "description": "Plays the specified animation on a Spine model. A [ref:spine_animation_done] message is sent to the callback (or message handler). Any spine events will also be handled in the same way. [icon:attention] The callback is not called (or message sent) if the animation is cancelled with [ref:spine.cancel]. The callback is called (or message sent) only for animations that play with the following playback modes * `go.PLAYBACK_ONCE_FORWARD` * `go.PLAYBACK_ONCE_BACKWARD` * `go.PLAYBACK_ONCE_PINGPONG`",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Spine model for which to play an animation",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "anim_id",
+          "doc": "Id of the animation to play",
+          "types": [
+            "string",
+            "hash"
+          ]
+        },
+        {
+          "name": "playback",
+          "doc": "Playback mode of the animation (from go.PLAYBACK_*)",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "Playback options",
+          "types": [
+            "table",
+            "nil"
+          ]
+        },
+        {
+          "name": "callback_function",
+          "doc": "function to call when the animation has completed or a Spine event occurred",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spine.cancel",
+      "description": "Cancels all running animations on a specified spine model component",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Spine model for which to cancel the animation",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "Cancel options",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spine.get_go",
+      "description": "Returns the id of the game object that corresponds to a specified skeleton bone. Before using this function, make sure the \"Create Go Bones\" option is enabled in your Spine model.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Spine model to query",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "bone_id",
+          "doc": "Id of the corresponding bone",
+          "types": [
+            "hash"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spine.set_skin",
+      "description": "Sets the spine skin on a spine model.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Spine model to query",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "skin",
+          "doc": "Id of the corresponding skin",
+          "types": [
+            "string",
+            "hash"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spine.add_skin",
+      "description": "Adds one spine skin on a spine model to another on the same model.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Spine model to query",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "skin_a",
+          "doc": "Id of the corresponding skin that will recieve the added skin",
+          "types": [
+            "string",
+            "hash"
+          ]
+        },
+        {
+          "name": "skin_b",
+          "doc": "Id of the corresponding skin to add",
+          "types": [
+            "string",
+            "hash"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spine.copy_skin",
+      "description": "Copies one spine skin on a spine model to another on the same model.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Spine model to query",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "skin_a",
+          "doc": "Id of the corresponding skin that will recieve the copied skin",
+          "types": [
+            "string",
+            "hash"
+          ]
+        },
+        {
+          "name": "skin_b",
+          "doc": "Id of the corresponding skin to copy.",
+          "types": [
+            "string",
+            "hash"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spine.clear_skin",
+      "description": "Clear all attachments and constraints from a skin on a spine model",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Spine model to query",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "skin",
+          "doc": "Id of the corresponding skin",
+          "types": [
+            "string",
+            "hash"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spine.set_attachment",
+      "description": "Set the attachment of a slot on a spine model.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Spine model to query",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "slot",
+          "doc": "Id of the slot",
+          "types": [
+            "string",
+            "hash"
+          ]
+        },
+        {
+          "name": "attachment",
+          "doc": "Id of the attachment. May be nil to reset to default attachment.",
+          "types": [
+            "string",
+            "hash",
+            "nil"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spine.set_slot_color",
+      "description": "Set the color a slot will tint its attachments on a spine model.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Spine model to query",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "slot",
+          "doc": "Id of the slot",
+          "types": [
+            "string",
+            "hash"
+          ]
+        },
+        {
+          "name": "color",
+          "doc": "Tint applied to attachments in a slot",
+          "types": [
+            "vector4"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spine.reset_constant",
+      "description": "Resets a shader constant for a spine model component. (Previously set with `go.set()`)",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Spine model to query",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "constant",
+          "doc": "name of the constant",
+          "types": [
+            "string",
+            "hash"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spine.reset_ik_target",
+      "description": "reset the IK constraint target position to default of a spinemodel.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Spine model",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "ik_constraint_id",
+          "doc": "id of the corresponding IK constraint",
+          "types": [
+            "string",
+            "hash"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spine.set_ik_target_position",
+      "description": "set the target position of an IK constraint object.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Spine model",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "ik_constraint_id",
+          "doc": "id of the corresponding IK constraint",
+          "types": [
+            "string",
+            "hash"
+          ]
+        },
+        {
+          "name": "position",
+          "doc": "target position",
+          "types": [
+            "vector3"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spine.set_ik_target",
+      "description": "set the IK constraint object target position to follow position.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Spine model to query",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "ik_constraint_id",
+          "doc": "id of the corresponding IK constraint",
+          "types": [
+            "string",
+            "hash"
+          ]
+        },
+        {
+          "name": "target_url",
+          "doc": "target game object",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spine.physics_translate",
+      "description": "Apply a physics-based translation to the Spine model.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Spine model component to translate.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "translation",
+          "doc": "The translation vector to apply to the Spine model.",
+          "types": [
+            "vector3"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "spine.physics_rotate",
+      "description": "Apply a physics-based rotation to the Spine model.",
+      "parameters": [
+        {
+          "name": "url",
+          "doc": "The Spine model component to rotate.",
+          "types": [
+            "string",
+            "hash",
+            "url"
+          ]
+        },
+        {
+          "name": "center",
+          "doc": "The center point around which to rotate.",
+          "types": [
+            "vector3"
+          ]
+        },
+        {
+          "name": "degrees",
+          "doc": "The rotation angle in degrees.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

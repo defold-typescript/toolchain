@@ -1,0 +1,1428 @@
+{
+  "info": {
+    "namespace": "rive.cmd",
+    "brief": "Command queue helpers for interacting with the Rive runtime",
+    "description": "Command queue helpers for interacting with the Rive runtime"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.instantiateArtboardNamed",
+      "description": "Returns the artboard handle created for the named artboard.",
+      "parameters": [
+        {
+          "name": "file_handle",
+          "doc": "Handle to a previously loaded Rive file.",
+          "types": [
+            "FileHandle"
+          ]
+        },
+        {
+          "name": "artboard_name",
+          "doc": "Name of the artboard to instantiate.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.instantiateDefaultArtboard",
+      "description": "Returns the default artboard handle for the file.",
+      "parameters": [
+        {
+          "name": "file_handle",
+          "doc": "Handle to a previously loaded Rive file.",
+          "types": [
+            "FileHandle"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.deleteArtboard",
+      "description": "Deletes an instantiated artboard.",
+      "parameters": [
+        {
+          "name": "artboard_handle",
+          "doc": "Handle to the artboard that should be removed.",
+          "types": [
+            "ArtboardHandle"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.instantiateStateMachineNamed",
+      "description": "Creates a named state machine for the provided artboard.",
+      "parameters": [
+        {
+          "name": "artboard_handle",
+          "doc": "Artboard where the state machine resides.",
+          "types": [
+            "ArtboardHandle"
+          ]
+        },
+        {
+          "name": "name",
+          "doc": "Name to assign to the new state machine.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.instantiateDefaultStateMachine",
+      "description": "Creates the default state machine for an artboard.",
+      "parameters": [
+        {
+          "name": "artboard_handle",
+          "doc": "Artboard used as the source for the state machine.",
+          "types": [
+            "ArtboardHandle"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.advanceStateMachine",
+      "description": "Advances the state machine by the requested delta time.",
+      "parameters": [
+        {
+          "name": "state_machine_handle",
+          "doc": "State machine to advance.",
+          "types": [
+            "StateMachineHandle"
+          ]
+        },
+        {
+          "name": "delta",
+          "doc": "Time in seconds to advance the state machine.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.bindViewModelInstance",
+      "description": "Binds the state machine to the provided view model instance.",
+      "parameters": [
+        {
+          "name": "state_machine_handle",
+          "doc": "State machine handle.",
+          "types": [
+            "StateMachineHandle"
+          ]
+        },
+        {
+          "name": "view_model_handle",
+          "doc": "View model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.deleteStateMachine",
+      "description": "Deletes a created state machine.",
+      "parameters": [
+        {
+          "name": "state_machine_handle",
+          "doc": "Handle to the state machine to delete.",
+          "types": [
+            "StateMachineHandle"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.instantiateBlankViewModelInstance",
+      "description": "Returns a blank view model instance handle for the given artboard or view model.",
+      "parameters": [
+        {
+          "name": "file_handle",
+          "doc": "Handle to a previously loaded Rive file.",
+          "types": [
+            "FileHandle"
+          ]
+        },
+        {
+          "name": "artboard_or_viewmodel",
+          "doc": "Artboard handle or view model name that identifies where to instantiate.",
+          "types": [
+            "ArtboardHandle",
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.instantiateDefaultViewModelInstance",
+      "description": "Returns a default-populated view model instance handle for the given artboard or view model.",
+      "parameters": [
+        {
+          "name": "file_handle",
+          "doc": "Handle to a previously loaded Rive file.",
+          "types": [
+            "FileHandle"
+          ]
+        },
+        {
+          "name": "artboard_or_viewmodel",
+          "doc": "Artboard handle or view model name the instance should derive from.",
+          "types": [
+            "ArtboardHandle",
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.instantiateViewModelInstanceNamed",
+      "description": "Creates a named view model instance and returns its handle.",
+      "parameters": [
+        {
+          "name": "file_handle",
+          "doc": "Handle to a previously loaded Rive file.",
+          "types": [
+            "FileHandle"
+          ]
+        },
+        {
+          "name": "artboard_or_viewmodel",
+          "doc": "Artboard handle or view model name that will host the instance.",
+          "types": [
+            "ArtboardHandle",
+            "string"
+          ]
+        },
+        {
+          "name": "instance_name",
+          "doc": "Name to assign to the new view model instance.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.referenceNestedViewModelInstance",
+      "description": "Returns a handle to the nested view model at the given path.",
+      "parameters": [
+        {
+          "name": "view_model_handle",
+          "doc": "Parent view model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "path",
+          "doc": "Dot-delimited path to the nested view model.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.referenceListViewModelInstance",
+      "description": "Returns the handle for the list entry at the specified path and index.",
+      "parameters": [
+        {
+          "name": "view_model_handle",
+          "doc": "Parent view model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "path",
+          "doc": "Dot-delimited path to the list view model.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "index",
+          "doc": "Index within the list entry to reference.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.setViewModelInstanceNestedViewModel",
+      "description": "Replaces the nested view model at the given path with the supplied handle.",
+      "parameters": [
+        {
+          "name": "view_model_handle",
+          "doc": "View model instance whose nested child is updated.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "path",
+          "doc": "Path to the nested view model.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "nested_handle",
+          "doc": "Handle of the nested view model to attach.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.insertViewModelInstanceListViewModel",
+      "description": "Inserts a nested view model into the list at the given index.",
+      "parameters": [
+        {
+          "name": "view_model_handle",
+          "doc": "View model instance owning the list.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "path",
+          "doc": "Path to the target list.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "nested_handle",
+          "doc": "Handle of the view model to insert.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "index",
+          "doc": "Destination index for the insertion.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.appendViewModelInstanceListViewModel",
+      "description": "Appends a nested view model to the list at the specified path.",
+      "parameters": [
+        {
+          "name": "view_model_handle",
+          "doc": "View model instance owning the list.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "path",
+          "doc": "Path to the target list.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "nested_handle",
+          "doc": "Handle of the view model to append.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.swapViewModelInstanceListValues",
+      "description": "Swaps two entries in the nested list.",
+      "parameters": [
+        {
+          "name": "view_model_handle",
+          "doc": "View model instance that owns the list.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "path",
+          "doc": "Path to the nested list.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "indexa",
+          "doc": "First index to swap.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "indexb",
+          "doc": "Second index to swap.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.removeViewModelInstanceListViewModelIndex",
+      "description": "Removes the entry at the supplied index from the nested list.",
+      "parameters": [
+        {
+          "name": "view_model_handle",
+          "doc": "View model instance owning the list.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "path",
+          "doc": "Path to the target list.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "index",
+          "doc": "Index of the entry to remove.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.removeViewModelInstanceListViewModel",
+      "description": "Removes the specified nested view model from the list at the path.",
+      "parameters": [
+        {
+          "name": "view_model_handle",
+          "doc": "View model instance owning the list.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "path",
+          "doc": "Path to the target list.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "nested_handle",
+          "doc": "Handle of the view model to remove.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.deleteViewModelInstance",
+      "description": "Deletes the view model instance handle.",
+      "parameters": [
+        {
+          "name": "view_model_handle",
+          "doc": "View model instance to delete.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.fireViewModelTrigger",
+      "description": "Fires a trigger on the view model instance.",
+      "parameters": [
+        {
+          "name": "view_model_handle",
+          "doc": "View model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "trigger_path",
+          "doc": "Trigger path to activate.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.setViewModelInstanceBool",
+      "description": "Updates the boolean property at the path.",
+      "parameters": [
+        {
+          "name": "view_model_handle",
+          "doc": "View model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "path",
+          "doc": "Path to the boolean property.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value",
+          "doc": "New boolean value.",
+          "types": [
+            "boolean"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.setViewModelInstanceNumber",
+      "description": "Updates the numeric property at the path.",
+      "parameters": [
+        {
+          "name": "view_model_handle",
+          "doc": "View model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "path",
+          "doc": "Path to the numeric property.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "value",
+          "doc": "New numeric value.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.setViewModelInstanceColor",
+      "description": "Updates the color property using the supplied vector.",
+      "parameters": [
+        {
+          "name": "view_model_handle",
+          "doc": "View model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "path",
+          "doc": "Path to the color property.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "vector4_color",
+          "doc": "Color encoded as a Defold Vector4 (WXYZ).",
+          "types": [
+            "vector4"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.setViewModelInstanceEnum",
+      "description": "Updates the enum property at the path.",
+      "parameters": [
+        {
+          "name": "view_model_handle",
+          "doc": "View model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "path",
+          "doc": "Path to the enum property.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "enum_string",
+          "doc": "Enum name to select.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.setViewModelInstanceString",
+      "description": "Updates the string property at the path.",
+      "parameters": [
+        {
+          "name": "view_model_handle",
+          "doc": "View model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "path",
+          "doc": "Path to the string property.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "string_value",
+          "doc": "New string value.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.setViewModelInstanceImage",
+      "description": "Updates the image property at the path.",
+      "parameters": [
+        {
+          "name": "view_model_handle",
+          "doc": "View model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "path",
+          "doc": "Path to the image property.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "render_image_handle",
+          "doc": "Render image handle to assign.",
+          "types": [
+            "RenderImageHandle"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.setViewModelInstanceArtboard",
+      "description": "Updates the artboard reference at the path.",
+      "parameters": [
+        {
+          "name": "view_model_handle",
+          "doc": "View model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "path",
+          "doc": "Path to the artboard reference.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "artboard_handle",
+          "doc": "Artboard handle to assign.",
+          "types": [
+            "ArtboardHandle"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.getViewModelInstanceBool",
+      "description": "Returns the cached boolean property at the path.",
+      "parameters": [
+        {
+          "name": "view_model_handle",
+          "doc": "View model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "path",
+          "doc": "Path to the boolean property.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.getViewModelInstanceNumber",
+      "description": "Returns the cached numeric property at the path.",
+      "parameters": [
+        {
+          "name": "view_model_handle",
+          "doc": "View model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "path",
+          "doc": "Path to the numeric property.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.getViewModelInstanceColor",
+      "description": "Returns the cached color property at the path.",
+      "parameters": [
+        {
+          "name": "view_model_handle",
+          "doc": "View model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "path",
+          "doc": "Path to the color property.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.getViewModelInstanceEnum",
+      "description": "Returns the cached enum property at the path.",
+      "parameters": [
+        {
+          "name": "view_model_handle",
+          "doc": "View model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "path",
+          "doc": "Path to the enum property.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.getViewModelInstanceString",
+      "description": "Returns the cached string property at the path.",
+      "parameters": [
+        {
+          "name": "view_model_handle",
+          "doc": "View model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "path",
+          "doc": "Path to the string property.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.getViewModelInstanceListSize",
+      "description": "Returns the cached list size for the path.",
+      "parameters": [
+        {
+          "name": "view_model_handle",
+          "doc": "View model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "path",
+          "doc": "Path to the list property.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.subscribeToViewModelProperty",
+      "description": "Subscribes for updates to the named property.",
+      "parameters": [
+        {
+          "name": "view_model_handle",
+          "doc": "View model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "path",
+          "doc": "Path to the property to subscribe.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "data_type",
+          "doc": "Data type identifier from rive::DataType.",
+          "types": [
+            "enum"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.unsubscribeToViewModelProperty",
+      "description": "Cancels a previous subscription.",
+      "parameters": [
+        {
+          "name": "view_model_handle",
+          "doc": "View model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "path",
+          "doc": "Path to the property.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "data_type",
+          "doc": "Data type identifier previously subscribed.",
+          "types": [
+            "enum"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.loadFile",
+      "description": "Loads Rive bytes and returns a file handle.",
+      "parameters": [
+        {
+          "name": "riv_bytes",
+          "doc": "Raw Rive file data.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.deleteFile",
+      "description": "Deletes the runtime file handle.",
+      "parameters": [
+        {
+          "name": "file_handle",
+          "doc": "File handle to delete.",
+          "types": [
+            "FileHandle"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.decodeImage",
+      "description": "Decodes image bytes and returns a render image handle.",
+      "parameters": [
+        {
+          "name": "image_bytes",
+          "doc": "Encoded image data.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.deleteImage",
+      "description": "Deletes the render image handle.",
+      "parameters": [
+        {
+          "name": "image_handle",
+          "doc": "Render image handle to delete.",
+          "types": [
+            "RenderImageHandle"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.decodeAudio",
+      "description": "Decodes audio bytes and returns an audio source handle.",
+      "parameters": [
+        {
+          "name": "audio_bytes",
+          "doc": "Encoded audio data.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.deleteAudio",
+      "description": "Deletes the audio source handle.",
+      "parameters": [
+        {
+          "name": "audio_handle",
+          "doc": "Audio source handle to delete.",
+          "types": [
+            "AudioSourceHandle"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.decodeFont",
+      "description": "Decodes font bytes and returns a font handle.",
+      "parameters": [
+        {
+          "name": "font_bytes",
+          "doc": "Encoded font data.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.deleteFont",
+      "description": "Deletes the font handle.",
+      "parameters": [
+        {
+          "name": "font_handle",
+          "doc": "Font handle to delete.",
+          "types": [
+            "FontHandle"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.addGlobalImageAsset",
+      "description": "Registers a global image asset.",
+      "parameters": [
+        {
+          "name": "asset_name",
+          "doc": "Name used to reference the global asset.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "render_image_handle",
+          "doc": "Render image handle to register.",
+          "types": [
+            "RenderImageHandle"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.removeGlobalImageAsset",
+      "description": "Unregisters the named global image asset.",
+      "parameters": [
+        {
+          "name": "asset_name",
+          "doc": "Name of the asset to remove.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.addGlobalAudioAsset",
+      "description": "Registers a global audio asset.",
+      "parameters": [
+        {
+          "name": "asset_name",
+          "doc": "Name used to reference the global audio.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "audio_handle",
+          "doc": "Audio source handle to register.",
+          "types": [
+            "AudioSourceHandle"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.removeGlobalAudioAsset",
+      "description": "Unregisters the named global audio asset.",
+      "parameters": [
+        {
+          "name": "asset_name",
+          "doc": "Name of the audio asset to remove.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.addGlobalFontAsset",
+      "description": "Registers a global font asset.",
+      "parameters": [
+        {
+          "name": "asset_name",
+          "doc": "Name used to reference the global font.",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "font_handle",
+          "doc": "Font handle to register.",
+          "types": [
+            "FontHandle"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.removeGlobalFontAsset",
+      "description": "Unregisters the named global font asset.",
+      "parameters": [
+        {
+          "name": "asset_name",
+          "doc": "Name of the font asset to remove.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.requestViewModelNames",
+      "description": "Requests view model names for the file.",
+      "parameters": [
+        {
+          "name": "file_handle",
+          "doc": "File handle whose view models to query.",
+          "types": [
+            "FileHandle"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.requestArtboardNames",
+      "description": "Requests artboard names for the file.",
+      "parameters": [
+        {
+          "name": "file_handle",
+          "doc": "File handle whose artboards to query.",
+          "types": [
+            "FileHandle"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.requestViewModelInstanceViewModelName",
+      "description": "Requests the view model name used by the view model instance.",
+      "parameters": [
+        {
+          "name": "instance_handle",
+          "doc": "View model instance handle to query.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.requestViewModelEnums",
+      "description": "Requests enum definitions for the file.",
+      "parameters": [
+        {
+          "name": "file_handle",
+          "doc": "File handle whose enums to query.",
+          "types": [
+            "FileHandle"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.requestViewModelPropertyDefinitions",
+      "description": "Requests property definitions for the view model.",
+      "parameters": [
+        {
+          "name": "file_handle",
+          "doc": "File handle whose view models to query.",
+          "types": [
+            "FileHandle"
+          ]
+        },
+        {
+          "name": "viewmodel_name",
+          "doc": "View model name whose property metadata to request.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.requestViewModelInstanceNames",
+      "description": "Requests instance names for the view model.",
+      "parameters": [
+        {
+          "name": "file_handle",
+          "doc": "File handle whose view models to query.",
+          "types": [
+            "FileHandle"
+          ]
+        },
+        {
+          "name": "viewmodel_name",
+          "doc": "View model name to inspect.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.requestViewModelInstanceBool",
+      "description": "Requests the boolean value for the property.",
+      "parameters": [
+        {
+          "name": "instance_handle",
+          "doc": "View model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "property_name",
+          "doc": "Name of the bool property.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.requestViewModelInstanceNumber",
+      "description": "Requests the numeric value for the property.",
+      "parameters": [
+        {
+          "name": "instance_handle",
+          "doc": "View model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "property_name",
+          "doc": "Name of the numeric property.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.requestViewModelInstanceColor",
+      "description": "Requests the color value for the property.",
+      "parameters": [
+        {
+          "name": "instance_handle",
+          "doc": "View model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "property_name",
+          "doc": "Name of the color property.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.requestViewModelInstanceEnum",
+      "description": "Requests the enum value for the property.",
+      "parameters": [
+        {
+          "name": "instance_handle",
+          "doc": "View model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "property_name",
+          "doc": "Name of the enum property.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.requestViewModelInstanceString",
+      "description": "Requests the string value for the property.",
+      "parameters": [
+        {
+          "name": "instance_handle",
+          "doc": "View model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "property_name",
+          "doc": "Name of the string property.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.requestViewModelInstanceListSize",
+      "description": "Requests the list size for the property.",
+      "parameters": [
+        {
+          "name": "instance_handle",
+          "doc": "View model instance handle.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "property_name",
+          "doc": "Name of the list property.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.requestViewModelInstanceListClear",
+      "description": "Clears all entries from the nested list at the path.",
+      "parameters": [
+        {
+          "name": "view_model_handle",
+          "doc": "View model instance owning the list.",
+          "types": [
+            "ViewModelInstanceHandle"
+          ]
+        },
+        {
+          "name": "path",
+          "doc": "Path to the target list.",
+          "types": [
+            "string"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.requestStateMachineNames",
+      "description": "Requests state machine names for the artboard.",
+      "parameters": [
+        {
+          "name": "artboard_handle",
+          "doc": "Artboard handle to query.",
+          "types": [
+            "ArtboardHandle"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rive.cmd.requestDefaultViewModelInfo",
+      "description": "Requests metadata about the default view model or artboard.",
+      "parameters": [
+        {
+          "name": "artboard_handle",
+          "doc": "Artboard handle to query.",
+          "types": [
+            "ArtboardHandle"
+          ]
+        },
+        {
+          "name": "file_handle",
+          "doc": "File handle providing metadata.",
+          "types": [
+            "FileHandle"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

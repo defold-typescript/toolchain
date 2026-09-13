@@ -1,0 +1,31 @@
+{
+  "info": {
+    "namespace": "resource",
+    "brief": "Functions for creating Spine resources dynamically",
+    "description": "Functions for creating Spine resources dynamically"
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "resource.create_spinescene",
+      "description": "Creates a spinescene resource (.spinescenec) from runtime data. Creates a Spine scene resource dynamically at runtime. This allows loading Spine animations from data rather than pre-built assets. The atlas path must reference a compiled `.texturesetc` resource. The created spinescene is tracked for cleanup when the collection unloads; internal intermediate JSON is removed automatically.",
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "The target resource path. Must end with .spinescenec",
+          "types": [
+            "string"
+          ]
+        },
+        {
+          "name": "options",
+          "doc": "Table with fields",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

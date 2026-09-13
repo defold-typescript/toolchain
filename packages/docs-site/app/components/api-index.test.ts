@@ -23,6 +23,7 @@ function libraryPage(namespace: string, route: string, authoredHere: boolean): A
     importString: "",
     license: "",
     authoredHere,
+    usage: "import",
   };
   return {
     namespace,
