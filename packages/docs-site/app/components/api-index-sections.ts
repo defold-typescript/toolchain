@@ -2,7 +2,7 @@ import { namespaceCountBadges } from "../lib/api-page-render";
 import type { ApiPage } from "../lib/api-surface";
 import type { NamespaceBadgeCounts } from "../lib/combined-surface";
 import {
-  compareLibraryOwners,
+  type LibraryApiKind,
   type LibraryListing,
   type LibraryOrigin,
   libraryOwnerGroups,
@@ -24,7 +24,7 @@ export interface LibraryIndexGroup {
   repo: string;
   label: string;
   pages: ApiPage[];
-  listingOnly?: { url: string; description: string };
+  listing?: { url: string; description: string; route: string; api: LibraryApiKind };
 }
 
 export interface LibraryOwnerIndexGroup {
@@ -65,8 +65,8 @@ export function apiPageCardDescription(page: ApiPage): string {
 }
 
 // Library pages grouped by owner, then repo, in the sidebar's order. Listings
-// (libraries with no typed API) have no route, so the sidebar never sees them;
-// they merge into their owner group here as page-less libraries sorted by repo.
+// (libraries with no typed API) come from the same `libraryOwnerGroups` merge the
+// sidebar reads, so the index and the tree cannot disagree about where one sits.
 export function groupLibraryIndexByOwner(
   pages: ApiPage[],
   origins: Map<string, LibraryOrigin>,
@@ -74,38 +74,34 @@ export function groupLibraryIndexByOwner(
 ): LibraryOwnerIndexGroup[] {
   const libraryPages = pages.filter((page) => page.category === "library");
   const byNamespace = new Map(libraryPages.map((page) => [page.namespace, page]));
-  const groups: LibraryOwnerIndexGroup[] = libraryOwnerGroups(
+  const listingByRoute = new Map(listings.map((listing) => [listing.route, listing]));
+  return libraryOwnerGroups(
     libraryPages.map((page) => ({ namespace: page.namespace, route: page.route })),
     origins,
+    listings,
   ).map((owner) => ({
     owner: owner.owner,
     label: owner.label,
     ...(owner.official ? { official: true as const } : {}),
-    libraries: owner.libraries.map((lib) => ({
-      repo: lib.repo,
-      label: lib.label,
-      pages: lib.modules
-        .map((module) => byNamespace.get(module.label))
-        .filter((page): page is ApiPage => page !== undefined),
-    })),
+    libraries: owner.libraries.map((lib): LibraryIndexGroup => {
+      const listing = lib.listing ? listingByRoute.get(lib.listing.route) : undefined;
+      return {
+        repo: lib.repo,
+        label: lib.label,
+        pages: lib.modules
+          .map((module) => byNamespace.get(module.label))
+          .filter((page): page is ApiPage => page !== undefined),
+        ...(listing
+          ? {
+              listing: {
+                url: listing.url,
+                description: listing.description,
+                route: listing.route,
+                api: listing.api,
+              },
+            }
+          : {}),
+      };
+    }),
   }));
-  if (listings.length === 0) return groups;
-
-  for (const listing of listings) {
-    let group = groups.find((candidate) => candidate.owner === listing.owner);
-    if (!group) {
-      group = { owner: listing.owner, label: listing.owner, libraries: [] };
-      groups.push(group);
-    }
-    if (listing.official) group.official = true;
-    if (group.libraries.some((library) => library.repo === listing.repo)) continue;
-    group.libraries.push({
-      repo: listing.repo,
-      label: listing.repo,
-      pages: [],
-      listingOnly: { url: listing.url, description: listing.description },
-    });
-  }
-  for (const group of groups) group.libraries.sort((a, b) => a.repo.localeCompare(b.repo));
-  return groups.sort(compareLibraryOwners);
 }

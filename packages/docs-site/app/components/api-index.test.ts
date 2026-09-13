@@ -3,7 +3,8 @@ import { join } from "node:path";
 import type { ApiModule } from "@defold-typescript/types";
 import { apiPages, libraryOrigins } from "../lib/api-content";
 import type { ApiPage, LibraryMeta } from "../lib/api-surface";
-import { type LibraryOrigin, libraryPathSegments } from "../lib/nav";
+import { type LibraryListing, type LibraryOrigin, libraryPathSegments } from "../lib/nav";
+import { LIBRARY_API_KIND_SENTENCE, NO_TYPED_API_ICON } from "../lib/no-typed-api-icon";
 import { CombinedIndex, LibraryIndex, LibraryPath } from "./api-index";
 
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
@@ -76,32 +77,53 @@ describe("LibraryIndex — card titles", () => {
   });
 });
 
-describe("LibraryIndex — listing-only libraries", () => {
+describe("LibraryIndex — untyped library listings", () => {
   const url = "https://github.com/defold/extension-adpf";
-  const render = () =>
+  const route = "/libraries/defold/extension-adpf";
+  const listing = (description: string, summary: string): LibraryListing => ({
+    owner: "defold",
+    repo: "extension-adpf",
+    url,
+    ref: "1.0.0",
+    description,
+    official: true,
+    route,
+    api: "untyped",
+    summary,
+  });
+  const render = (description: string, summary = "## What it ships\n\nTunes performance.") =>
     String(
       LibraryIndex({
         pages: [libraryPage("iap", "/api/iap", false)],
         origins: new Map<string, LibraryOrigin>([
-          ["iap", { owner: "defold", repo: "extension-iap" }],
+          ["iap", { owner: "defold", repo: "extension-iap", official: true }],
         ]),
-        listings: [
-          { owner: "defold", repo: "extension-adpf", url, description: "Android performance" },
-        ],
+        listings: [listing(description, summary)],
       }),
     );
 
-  test("links the GitHub repo verbatim and says the library has no typed API", () => {
-    const html = render();
-    expect(html).toContain(`<a href="${url}"`);
-    const inner = cardInner(html, url);
+  test("links the listing page, never GitHub, and marks the title with the icon", () => {
+    const html = render("Android performance");
+    expect(html).not.toContain(`href="${url}"`);
+    const inner = cardInner(html, route);
     expect(inner).toContain("extension-adpf");
+    expect(inner).toContain(NO_TYPED_API_ICON);
     expect(inner).toContain("Android performance");
-    expect(inner).toContain("No typed API");
+    expect(inner).toContain(LIBRARY_API_KIND_SENTENCE.untyped.replace(/`/g, ""));
+  });
+
+  test("falls back to the summary's first sentence when the manifest description is empty", () => {
+    const inner = cardInner(
+      render("", "## What it ships\n\nTunes thermal headroom. Also reports status."),
+      route,
+    );
+    expect(inner).toContain("Tunes thermal headroom.");
+    expect(inner).not.toContain("Also reports status.");
+    expect(inner).not.toContain("What it ships");
   });
 
   test("keeps the namespace count to documented pages", () => {
-    expect(render()).toContain("1 namespace documented");
+    expect(render("Android performance")).toContain("1 namespace documented");
   });
 });
 

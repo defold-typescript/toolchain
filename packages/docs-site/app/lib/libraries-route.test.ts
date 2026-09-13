@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import { basename, join } from "node:path";
+import { join } from "node:path";
 import { Hono } from "hono";
 import { createLibrariesRoute } from "../routes/libraries";
-import { apiPages } from "./api-content";
+import { apiPages, defoldListings } from "./api-content";
+import { NO_TYPED_API_ICON } from "./no-typed-api-icon";
 
 const REAL_TYPES_DIR = join(import.meta.dir, "../../../types");
 const REAL_LIBRARY_TYPES_DIR = join(import.meta.dir, "../../../library-types");
@@ -43,17 +44,26 @@ describe("/libraries route composition", () => {
     (page) => page.category === "library",
   );
 
-  test("renders every untyped Defold library as one GitHub card saying it has no typed API", async () => {
+  test("renders every untyped Defold library as one icon-marked card linking its own page", async () => {
     const { status, html } = await renderLibraries();
     expect(status).toBe(200);
-    const untyped = manifest.filter((entry) => entry.docs.length === 0);
-    expect(untyped.length).toBeGreaterThan(0);
-    for (const entry of untyped) {
-      const cards = cardAnchors(html, escapeRegExp(entry.repo));
-      expect({ repo: entry.repo, cards: cards.length }).toEqual({ repo: entry.repo, cards: 1 });
+    const listings = defoldListings(REAL_LIBRARY_TYPES_DIR);
+    expect(listings.map((listing) => listing.url).sort()).toEqual(
+      manifest
+        .filter((entry) => entry.docs.length === 0)
+        .map((entry) => entry.repo)
+        .sort(),
+    );
+    for (const listing of listings) {
+      const cards = cardAnchors(html, `[^"]*${escapeRegExp(listing.route)}`);
+      expect({ route: listing.route, cards: cards.length }).toEqual({
+        route: listing.route,
+        cards: 1,
+      });
       const inner = cards[0] ?? "";
-      expect(inner).toContain(basename(entry.repo));
-      expect(inner).toContain("No typed API");
+      expect(inner).toContain(listing.repo);
+      expect(inner).toContain(NO_TYPED_API_ICON);
+      expect(html).not.toContain(`href="${listing.url}"`);
     }
   });
 
