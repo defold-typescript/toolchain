@@ -264,6 +264,252 @@
         }
       ],
       "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.STATE_OPEN",
+      "brief": "The Facebook login session is open",
+      "description": "The Facebook login session is open"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.STATE_CLOSED_LOGIN_FAILED",
+      "brief": "The Facebook login session has closed because login failed",
+      "description": "The Facebook login session has closed because login failed"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.GAMEREQUEST_ACTIONTYPE_NONE",
+      "brief": "Game request action type \"none\" for \"apprequests\" dialog",
+      "description": "Game request action type \"none\" for \"apprequests\" dialog"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.GAMEREQUEST_ACTIONTYPE_SEND",
+      "brief": "Game request action type \"send\" for \"apprequests\" dialog",
+      "description": "Game request action type \"send\" for \"apprequests\" dialog"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.GAMEREQUEST_ACTIONTYPE_ASKFOR",
+      "brief": "Game request action type \"askfor\" for \"apprequests\" dialog",
+      "description": "Game request action type \"askfor\" for \"apprequests\" dialog"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.GAMEREQUEST_ACTIONTYPE_TURN",
+      "brief": "Game request action type \"turn\" for \"apprequests\" dialog",
+      "description": "Game request action type \"turn\" for \"apprequests\" dialog"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.GAMEREQUEST_FILTER_NONE",
+      "brief": "Game request filter type \"none\" for \"apprequests\" dialog",
+      "description": "Game request filter type \"none\" for \"apprequests\" dialog"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.GAMEREQUEST_FILTER_APPUSERS",
+      "brief": "Game request filter type \"app_users\" for \"apprequests\" dialog",
+      "description": "Game request filter type \"app_users\" for \"apprequests\" dialog"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.GAMEREQUEST_FILTER_APPNONUSERS",
+      "brief": "Game request filter type \"app_non_users\" for \"apprequests\" dialog",
+      "description": "Game request filter type \"app_non_users\" for \"apprequests\" dialog"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.EVENT_ACHIEVED_LEVEL",
+      "brief": "Log this event when the user has achieved a level",
+      "description": "Log this event when the user has achieved a level"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.EVENT_ADDED_PAYMENT_INFO",
+      "brief": "Log this event when the user has entered their payment info",
+      "description": "Log this event when the user has entered their payment info"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.EVENT_ADDED_TO_CART",
+      "brief": "Log this event when the user has added an item to their cart The value_to_sum passed to facebook.post_event should be the item's price.",
+      "description": "Log this event when the user has added an item to their cart The value_to_sum passed to facebook.post_event should be the item's price."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.EVENT_ADDED_TO_WISHLIST",
+      "brief": "Log this event when the user has added an item to their wish list The value_to_sum passed to facebook.post_event should be the item's price.",
+      "description": "Log this event when the user has added an item to their wish list The value_to_sum passed to facebook.post_event should be the item's price."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.EVENT_COMPLETED_REGISTRATION",
+      "brief": "Log this event when a user has completed registration with the app",
+      "description": "Log this event when a user has completed registration with the app"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.EVENT_COMPLETED_TUTORIAL",
+      "brief": "Log this event when the user has completed a tutorial in the app",
+      "description": "Log this event when the user has completed a tutorial in the app"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.EVENT_INITIATED_CHECKOUT",
+      "brief": "Log this event when the user has entered the checkout process The value_to_sum passed to facebook.post_event should be the total price in the cart.",
+      "description": "Log this event when the user has entered the checkout process The value_to_sum passed to facebook.post_event should be the total price in the cart."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.EVENT_PURCHASED",
+      "brief": "Log this event when the user has completed a purchase. The value_to_sum passed to facebook.post_event should be the numeric rating.",
+      "description": "Log this event when the user has completed a purchase. The value_to_sum passed to facebook.post_event should be the numeric rating."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.EVENT_RATED",
+      "brief": "Log this event when the user has rated an item in the app",
+      "description": "Log this event when the user has rated an item in the app"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.EVENT_SEARCHED",
+      "brief": "Log this event when a user has performed a search within the app",
+      "description": "Log this event when a user has performed a search within the app"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.EVENT_SPENT_CREDITS",
+      "brief": "Log this event when the user has spent app credits The value_to_sum passed to facebook.post_event should be the number of credits spent.",
+      "description": "Log this event when the user has spent app credits The value_to_sum passed to facebook.post_event should be the number of credits spent."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.EVENT_TIME_BETWEEN_SESSIONS",
+      "brief": "Log this event when measuring the time between user sessions",
+      "description": "Log this event when measuring the time between user sessions"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.EVENT_UNLOCKED_ACHIEVEMENT",
+      "brief": "Log this event when the user has unlocked an achievement in the app",
+      "description": "Log this event when the user has unlocked an achievement in the app"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.EVENT_VIEWED_CONTENT",
+      "brief": "Log this event when a user has viewed a form of content in the app",
+      "description": "Log this event when a user has viewed a form of content in the app"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.PARAM_CONTENT_ID",
+      "brief": "Parameter key used to specify an ID for the content being logged about\nThe parameter key could be an EAN, article identifier, etc., depending on the nature of the app.",
+      "description": "Parameter key used to specify an ID for the content being logged about\nThe parameter key could be an EAN, article identifier, etc., depending on the nature of the app."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.PARAM_CONTENT_TYPE",
+      "brief": "Parameter key used to specify a generic content type/family for the logged event\nThe key is an arbitrary type/family (e.g. \"music\", \"photo\", \"video\") depending on the nature of the app.",
+      "description": "Parameter key used to specify a generic content type/family for the logged event\nThe key is an arbitrary type/family (e.g. \"music\", \"photo\", \"video\") depending on the nature of the app."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.PARAM_CURRENCY",
+      "brief": "Parameter key used to specify currency used with logged event\nUse a currency value key, e.g. \"USD\", \"EUR\", \"GBP\" etc. See See ISO-4217 for specific values.",
+      "description": "Parameter key used to specify currency used with logged event\nUse a currency value key, e.g. \"USD\", \"EUR\", \"GBP\" etc. See See ISO-4217 for specific values."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.PARAM_DESCRIPTION",
+      "brief": "Parameter key used to specify a description appropriate to the event being logged\nUse this for app specific event description, for instance the name of the achievement unlocked in the facebook.EVENT_UNLOCKED_ACHIEVEMENT event.",
+      "description": "Parameter key used to specify a description appropriate to the event being logged\nUse this for app specific event description, for instance the name of the achievement unlocked in the facebook.EVENT_UNLOCKED_ACHIEVEMENT event."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.PARAM_LEVEL",
+      "brief": "Parameter key used to specify the level achieved",
+      "description": "Parameter key used to specify the level achieved"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.PARAM_MAX_RATING_VALUE",
+      "brief": "Parameter key used to specify the maximum rating available\nSet to specify the max rating available for the facebook.EVENT_RATED event. E.g., \"5\" or \"10\".",
+      "description": "Parameter key used to specify the maximum rating available\nSet to specify the max rating available for the facebook.EVENT_RATED event. E.g., \"5\" or \"10\"."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.PARAM_NUM_ITEMS",
+      "brief": "Parameter key used to specify how many items are being processed\nSet to specify the number of items being processed for an facebook.EVENT_INITIATED_CHECKOUT or facebook.EVENT_PURCHASED event.",
+      "description": "Parameter key used to specify how many items are being processed\nSet to specify the number of items being processed for an facebook.EVENT_INITIATED_CHECKOUT or facebook.EVENT_PURCHASED event."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.PARAM_PAYMENT_INFO_AVAILABLE",
+      "brief": "Parameter key used to specify whether payment info is available\nSet to specify if payment info is available for the facebook.EVENT_INITIATED_CHECKOUT event.",
+      "description": "Parameter key used to specify whether payment info is available\nSet to specify if payment info is available for the facebook.EVENT_INITIATED_CHECKOUT event."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.PARAM_REGISTRATION_METHOD",
+      "brief": "Parameter key used to specify method user has used to register for the app\nSet to specify what registation method a user used for the app, e.g. \"Facebook\", \"email\", \"Twitter\", etc.",
+      "description": "Parameter key used to specify method user has used to register for the app\nSet to specify what registation method a user used for the app, e.g. \"Facebook\", \"email\", \"Twitter\", etc."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.PARAM_SEARCH_STRING",
+      "brief": "Parameter key used to specify user search string\nSet this to the the string that the user provided for a search operation.",
+      "description": "Parameter key used to specify user search string\nSet this to the the string that the user provided for a search operation."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.PARAM_SOURCE_APPLICATION",
+      "brief": "Parameter key used to specify source application package",
+      "description": "Parameter key used to specify source application package"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.PARAM_SUCCESS",
+      "brief": "Parameter key used to specify activity success\nSet this key to indicate whether the activity being logged about was successful or not.",
+      "description": "Parameter key used to specify activity success\nSet this key to indicate whether the activity being logged about was successful or not."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.AUDIENCE_NONE",
+      "brief": "Publish permission to reach no audience",
+      "description": "Publish permission to reach no audience"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.AUDIENCE_ONLYME",
+      "brief": "Publish permission to reach only me (private to current user)",
+      "description": "Publish permission to reach only me (private to current user)"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.AUDIENCE_FRIENDS",
+      "brief": "Publish permission to reach user friends",
+      "description": "Publish permission to reach user friends"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.AUDIENCE_EVERYONE",
+      "brief": "Publish permission to reach everyone",
+      "description": "Publish permission to reach everyone"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.LOGIN_TRACKING_LIMITED",
+      "brief": "Login tracking Limited",
+      "description": "Login tracking Limited"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "facebook.LOGIN_TRACKING_ENABLED",
+      "brief": "Login tracking enabled",
+      "description": "Login tracking enabled"
     }
   ]
 }

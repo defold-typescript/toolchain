@@ -67,6 +67,72 @@
       "description": "Unauthenticate a user.",
       "parameters": [],
       "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "zendesk.MSG_INIT_ERROR",
+      "brief": "An error was detected while initializing the Zendesk SDK",
+      "description": "An error was detected while initializing the Zendesk SDK"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "zendesk.MSG_INIT_SUCCESS",
+      "brief": "The Zendesk SDK has been initialized successfully",
+      "description": "The Zendesk SDK has been initialized successfully"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "zendesk.MSG_INTERNAL_ERROR",
+      "brief": "An internal error occured",
+      "description": "An internal error occured"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "zendesk.MSG_ERROR",
+      "brief": "An generic error occured",
+      "description": "An generic error occured"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "zendesk.MSG_UNREAD_MESSAGE_COUNT_CHANGED",
+      "brief": "The number of unread messages has changed",
+      "description": "The number of unread messages has changed"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "zendesk.MSG_AUTHENTICATION_FAILED",
+      "brief": "A REST call failed for authentication reasons",
+      "description": "A REST call failed for authentication reasons"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "zendesk.MSG_FIELD_VALIDATION_FAILED",
+      "brief": "Validation checks failed for conversation fields",
+      "description": "Validation checks failed for conversation fields"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "zendesk.MSG_LOGIN_SUCCESS",
+      "brief": "Login was successful",
+      "description": "Login was successful"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "zendesk.MSG_LOGIN_FAILED",
+      "brief": "Login failed",
+      "description": "Login failed"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "zendesk.MSG_LOGOUT_SUCCESS",
+      "brief": "Logout was successful",
+      "description": "Logout was successful"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "zendesk.MSG_LOGOUT_FAILED",
+      "brief": "Logout failed",
+      "description": "Logout failed"
     }
   ]
 }

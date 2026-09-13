@@ -95,6 +95,48 @@
           ]
         }
       ]
+    },
+    {
+      "type": "CONSTANT",
+      "name": "adpf.thermal.THERMAL_STATUS_CRITICAL",
+      "brief": "Platform has done everything to reduce power.",
+      "description": "Platform has done everything to reduce power."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "adpf.thermal.THERMAL_STATUS_EMERGENCY",
+      "brief": "Key components in platform are shutting down due to thermal condition.",
+      "description": "Key components in platform are shutting down due to thermal condition."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "adpf.thermal.THERMAL_STATUS_LIGHT",
+      "brief": "Light throttling where UX is not impacted.",
+      "description": "Light throttling where UX is not impacted."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "adpf.thermal.THERMAL_STATUS_MODERATE",
+      "brief": "Moderate throttling where UX is not largely impacted.",
+      "description": "Moderate throttling where UX is not largely impacted."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "adpf.thermal.THERMAL_STATUS_NONE",
+      "brief": "Not under throttling.",
+      "description": "Not under throttling."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "adpf.thermal.THERMAL_STATUS_SEVERE",
+      "brief": "Severe throttling where UX is largely impacted.",
+      "description": "Severe throttling where UX is largely impacted."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "adpf.thermal.THERMAL_STATUS_SHUTDOWN",
+      "brief": "Need shutdown immediately",
+      "description": "Need shutdown immediately"
     }
   ]
 }

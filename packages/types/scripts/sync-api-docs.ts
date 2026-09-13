@@ -265,6 +265,12 @@ export function scriptApiToFixtureJson(text: string): string {
   return JSON.stringify(parseScriptApi(text));
 }
 
+// The docs-only variant: the same ref-doc JSON with constants kept, for pages
+// that render a module's full surface rather than feed the emitter.
+export function scriptApiToDocsJson(text: string): string {
+  return JSON.stringify(parseScriptApi(text, { complete: true }));
+}
+
 // The types-api-coverage `What` checklist in vision.md lists every namespace as
 // a backtick-quoted token on the "Concrete breadth checklist" line. Reading it
 // here keeps SYNC_MANIFEST + UNMAPPED honest against the source of truth: the

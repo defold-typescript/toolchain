@@ -49,6 +49,24 @@
         }
       ],
       "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "permissions.PERMISSION_GRANTED",
+      "brief": "The permission has been granted to the given package.",
+      "description": "The permission has been granted to the given package."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "permissions.PERMISSION_DENIED",
+      "brief": "The permission has not been granted to the given package.",
+      "description": "The permission has not been granted to the given package."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "permissions.PERMISSION_SHOW_RATIONALE",
+      "brief": "Explain why your app needs the permission [Android doc](https://developer.android.com/training/permissions/requesting#explain)",
+      "description": "Explain why your app needs the permission [Android doc](https://developer.android.com/training/permissions/requesting#explain)"
     }
   ]
 }

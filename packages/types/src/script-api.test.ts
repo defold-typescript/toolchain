@@ -4,7 +4,12 @@ import { join, resolve } from "node:path";
 import { parse } from "yaml";
 import { parseDefoldApiDoc } from "./api-doc";
 import { emitDeclarations } from "./emit-dts";
-import { parseScriptApi, type RefDoc, type RefDocElement, scriptApiToRefDoc } from "./script-api";
+import {
+  parseScriptApi,
+  type RefDoc,
+  type RefDocFunctionElement,
+  scriptApiToRefDoc,
+} from "./script-api";
 
 const SAMPLE = `
 - name: demo
@@ -96,6 +101,10 @@ const MIXED = `
       desc: a nested function
 `;
 
+function functionElements(doc: RefDoc): RefDocFunctionElement[] {
+  return doc.elements.filter((e): e is RefDocFunctionElement => e.type === "FUNCTION");
+}
+
 function refDoc(): RefDoc {
   return scriptApiToRefDoc(parse(SAMPLE));
 }
@@ -120,19 +129,19 @@ describe("scriptApiToRefDoc", () => {
   });
 
   it("lifts each parameter's singular type into a types array", () => {
-    expect(refDoc().elements[0]?.parameters).toEqual([
+    expect(functionElements(refDoc())[0]?.parameters).toEqual([
       { name: "who", doc: "the name to greet", types: ["string"] },
     ]);
   });
 
   it("maps returns to returnvalues with the same singular-to-array lift", () => {
-    expect(refDoc().elements[0]?.returnvalues).toEqual([
+    expect(functionElements(refDoc())[0]?.returnvalues).toEqual([
       { name: "message", doc: "the greeting text", types: ["string"] },
     ]);
   });
 
   it("drops a leading self parameter so the emitted function honors @noSelfInFile", () => {
-    expect(refDoc().elements[0]?.parameters.some((p) => p.name === "self")).toBe(false);
+    expect(functionElements(refDoc())[0]?.parameters.some((p) => p.name === "self")).toBe(false);
   });
 
   it("drops scalar (constant) members", () => {
@@ -166,7 +175,7 @@ describe("scriptApiToRefDoc nested namespaces", () => {
   });
 
   it("maps a nested function's parameters and returns, stripping self", () => {
-    const on = bridgeDoc().elements.find((e) => e.name === "bridge.platform.on");
+    const on = functionElements(bridgeDoc()).find((e) => e.name === "bridge.platform.on");
     expect(on?.parameters).toEqual([{ name: "event", doc: "the event name", types: ["string"] }]);
     expect(on?.returnvalues).toEqual([
       { name: "handle", doc: "the subscription handle", types: ["number"] },
@@ -189,6 +198,79 @@ describe("scriptApiToRefDoc nested namespaces", () => {
     const names = mixedDoc().elements.map((e) => e.name);
     expect(names).toContain("mixed.flat_fn");
     expect(names).toContain("mixed.sub.nested_fn");
+  });
+});
+
+const CONSTANTS = `
+- name: demo
+  type: table
+  desc: A demo namespace.
+  members:
+  - name: MSG_A
+    type: number
+    desc: the first message
+  - name: greet
+    type: function
+    desc: Greet someone.
+  - name: sub
+    type: table
+    desc: a sub-namespace
+    members:
+    - name: KIND_B
+      type: string
+    - name: run
+      type: function
+      desc: run it
+    - name: deep
+      type: table
+      members:
+      - name: BURIED
+        type: number
+  - name: LABEL
+    type: string
+    desc: a string constant
+`;
+
+describe("scriptApiToRefDoc complete mode", () => {
+  it("emits top-level and one-level-nested scalars as CONSTANT elements in member order", () => {
+    const constants = scriptApiToRefDoc(parse(CONSTANTS), { complete: true }).elements.filter(
+      (e) => e.type === "CONSTANT",
+    );
+    expect(constants).toEqual([
+      {
+        type: "CONSTANT",
+        name: "demo.MSG_A",
+        brief: "the first message",
+        description: "the first message",
+      },
+      { type: "CONSTANT", name: "demo.sub.KIND_B", brief: "", description: "" },
+      {
+        type: "CONSTANT",
+        name: "demo.LABEL",
+        brief: "a string constant",
+        description: "a string constant",
+      },
+    ]);
+  });
+
+  it("keeps the default output free of constants and identical to complete mode's functions", () => {
+    const plain = scriptApiToRefDoc(parse(CONSTANTS));
+    const complete = scriptApiToRefDoc(parse(CONSTANTS), { complete: true });
+    expect(plain.elements.some((e) => e.type === "CONSTANT")).toBe(false);
+    expect(plain).toEqual({
+      ...complete,
+      elements: complete.elements.filter((e) => e.type !== "CONSTANT"),
+    });
+  });
+
+  it("lists the constants in parseDefoldApiDoc's module.constants", () => {
+    const module = parseDefoldApiDoc(parseScriptApi(CONSTANTS, { complete: true }));
+    expect(module.constants.map((c) => c.name)).toEqual([
+      "demo.MSG_A",
+      "demo.sub.KIND_B",
+      "demo.LABEL",
+    ]);
+    expect(module.functions.map((f) => f.name)).toEqual(["demo.greet", "demo.sub.run"]);
   });
 });
 
@@ -229,7 +311,7 @@ const UNION_TYPES = `
 
 function unionReturn(name: string): string[] | undefined {
   const doc = scriptApiToRefDoc(parse(UNION_TYPES));
-  return doc.elements.find((e) => e.name === `u.${name}`)?.returnvalues[0]?.types;
+  return functionElements(doc).find((e) => e.name === `u.${name}`)?.returnvalues[0]?.types;
 }
 
 describe("scriptApiToRefDoc pipe-separated types", () => {
@@ -239,7 +321,9 @@ describe("scriptApiToRefDoc pipe-separated types", () => {
 
   it("parses irregular spacing identically", () => {
     expect(unionReturn("tight")).toEqual(["string", "nil"]);
-    const wide = scriptApiToRefDoc(parse(UNION_TYPES)).elements.find((e) => e.name === "u.wide");
+    const wide = functionElements(scriptApiToRefDoc(parse(UNION_TYPES))).find(
+      (e) => e.name === "u.wide",
+    );
     expect(wide?.parameters[0]?.types).toEqual(["string", "nil"]);
   });
 
@@ -269,7 +353,7 @@ describe("scriptApiToRefDoc pipe-separated types", () => {
         }
         const elements = (doc as { elements?: unknown }).elements;
         if (!Array.isArray(elements)) continue;
-        for (const element of elements as RefDocElement[]) {
+        for (const element of elements as RefDocFunctionElement[]) {
           const slots = [...(element.parameters ?? []), ...(element.returnvalues ?? [])];
           for (const slot of slots) {
             for (const token of slot.types ?? []) {

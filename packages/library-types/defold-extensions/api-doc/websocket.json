@@ -85,6 +85,30 @@
         }
       ],
       "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "websocket.EVENT_CONNECTED",
+      "brief": "The websocket was connected",
+      "description": "The websocket was connected"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "websocket.EVENT_DISCONNECTED",
+      "brief": "The websocket disconnected",
+      "description": "The websocket disconnected"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "websocket.EVENT_MESSAGE",
+      "brief": "The websocket received data",
+      "description": "The websocket received data"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "websocket.EVENT_ERROR",
+      "brief": "The websocket encountered an error",
+      "description": "The websocket encountered an error"
     }
   ]
 }

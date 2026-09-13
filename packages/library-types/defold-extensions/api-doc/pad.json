@@ -232,6 +232,210 @@
         }
       ],
       "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.EVENT_PACK_STATE_UPDATED",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.EVENT_PACK_STATE_ERROR",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.EVENT_REMOVE_PACK_COMPLETED",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.EVENT_REMOVE_PACK_CANCELED",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.EVENT_REMOVE_PACK_ERROR",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.EVENT_DIALOG_CONFIRMED",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.EVENT_DIALOG_DECLINED",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.EVENT_DIALOG_CANCELED",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.EVENT_DIALOG_ERROR",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.STATUS_UNKNOWN",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.STATUS_PENDING",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.STATUS_DOWNLOADING",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.STATUS_TRANSFERRING",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.STATUS_COMPLETED",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.STATUS_FAILED",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.STATUS_CANCELED",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.STATUS_WAITING_FOR_WIFI",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.STATUS_NOT_INSTALLED",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.STATUS_REQUIRES_USER_CONFIRMATION",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.ERRORCODE_ACCESS_DENIED",
+      "brief": "Download not permitted under the current device circumstances",
+      "description": "Download not permitted under the current device circumstances"
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.ERRORCODE_API_NOT_AVAILABLE",
+      "brief": "The Asset Delivery API isn&#x27;t available.",
+      "description": "The Asset Delivery API isn&#x27;t available."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.ERRORCODE_APP_NOT_OWNED",
+      "brief": "The app isn&#x27;t owned by any user on this device.",
+      "description": "The app isn&#x27;t owned by any user on this device."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.ERRORCODE_APP_UNAVAILABLE",
+      "brief": "The requesting app is unavailable.",
+      "description": "The requesting app is unavailable."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.ERRORCODE_CONFIRMATION_NOT_REQUIRED",
+      "brief": "Returned if AssetPackManager.showConfirmationDialog(Activity) is called but no asset packs require user confirmation.",
+      "description": "Returned if AssetPackManager.showConfirmationDialog(Activity) is called but no asset packs require user confirmation."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.ERRORCODE_DOWNLOAD_NOT_FOUND",
+      "brief": "The requested download isn&#x27;t found.",
+      "description": "The requested download isn&#x27;t found."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.ERRORCODE_INSUFFICIENT_STORAGE",
+      "brief": "Asset pack download failed due to insufficient storage.",
+      "description": "Asset pack download failed due to insufficient storage."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.ERRORCODE_INTERNAL_ERROR",
+      "brief": "Unknown error downloading an asset pack.",
+      "description": "Unknown error downloading an asset pack."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.ERRORCODE_INVALID_REQUEST",
+      "brief": "The request is invalid.",
+      "description": "The request is invalid."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.ERRORCODE_NETWORK_ERROR",
+      "brief": "Network error.",
+      "description": "Network error."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.ERRORCODE_NETWORK_UNRESTRICTED",
+      "brief": "Returned if AssetPackManager.showCellularDataConfirmation(Activity) is called but no asset packs are waiting for Wi-Fi.",
+      "description": "Returned if AssetPackManager.showCellularDataConfirmation(Activity) is called but no asset packs are waiting for Wi-Fi."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.ERRORCODE_NO_ERROR",
+      "brief": "",
+      "description": ""
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.ERRORCODE_PACK_UNAVAILABLE",
+      "brief": "The requested asset pack isn&#x27;t available.",
+      "description": "The requested asset pack isn&#x27;t available."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.ERRORCODE_PLAY_STORE_NOT_FOUND",
+      "brief": "The Play Store app is either not installed or not the official version.",
+      "description": "The Play Store app is either not installed or not the official version."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "pad.ERRORCODE_UNRECOGNIZED_INSTALLATION",
+      "brief": "The installed app version is not recognized by Play.",
+      "description": "The installed app version is not recognized by Play."
     }
   ]
 }

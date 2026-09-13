@@ -48,6 +48,48 @@
         }
       ],
       "returnvalues": []
+    },
+    {
+      "type": "CONSTANT",
+      "name": "siwa.STATE_NOT_FOUND",
+      "brief": "The user can’t be found.",
+      "description": "The user can’t be found."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "siwa.STATE_UNKNOWN",
+      "brief": "Unknown credential state.",
+      "description": "Unknown credential state."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "siwa.STATE_AUTHORIZED",
+      "brief": "The user is authorized.",
+      "description": "The user is authorized."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "siwa.STATE_REVOKED",
+      "brief": "Authorization for the given user has been revoked.",
+      "description": "Authorization for the given user has been revoked."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "siwa.STATUS_UNKNOWN",
+      "brief": "The system hasn’t determined whether the user might be a real person.",
+      "description": "The system hasn’t determined whether the user might be a real person."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "siwa.STATUS_UNSUPPORTED",
+      "brief": "The system can’t determine this user’s status as a real person.",
+      "description": "The system can’t determine this user’s status as a real person."
+    },
+    {
+      "type": "CONSTANT",
+      "name": "siwa.STATUS_LIKELY_REAL",
+      "brief": "The user appears to be a real person.",
+      "description": "The user appears to be a real person."
     }
   ]
 }
