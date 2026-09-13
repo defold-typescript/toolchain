@@ -38,10 +38,10 @@ describe("Badge", () => {
   });
 
   test("gives each variant distinct classes and appends an extra class to the recipe", () => {
-    const classes = (["default", "secondary", "outline"] as const).map(
+    const classes = (["default", "secondary", "outline", "warning"] as const).map(
       (variant) => badgeElement(String(<Badge variant={variant}>x</Badge>))?.className,
     );
-    expect(new Set(classes).size).toBe(3);
+    expect(new Set(classes).size).toBe(4);
     const extra = badgeElement(String(<Badge class="code-badge">x</Badge>))?.className ?? "";
     expect(extra.split(" ")).toContain("code-badge");
     expect(extra.startsWith(classes[0] ?? "\0")).toBe(true);

@@ -9,9 +9,13 @@ export type Glyph = { set: "phosphor"; name: string } | { set: "devicon"; file: 
  * `<span class="icon-ios"></span>`. Both normalise to the bracket marker, which
  * the markdown renderer turns into a badge and plain-text surfaces strip.
  * `glyph` names a single-colour Devicon brand mark where Devicon has one for the
- * platform, else a Phosphor duotone glyph. Client-reachable, so no node imports.
+ * platform, else a Phosphor duotone glyph. `tone: "warning"` marks a caution
+ * rather than a platform, drawn in the warning callout's colour.
+ * Client-reachable, so no node imports.
  */
-export const PLATFORM_ICONS: Record<string, { label: string; glyph: Glyph }> = {
+export type PlatformIcon = { label: string; glyph: Glyph; tone?: "warning" };
+
+export const PLATFORM_ICONS: Record<string, PlatformIcon> = {
   ios: { label: "iOS", glyph: { set: "devicon", file: "apple/apple-original" } },
   apple: { label: "Apple", glyph: { set: "devicon", file: "apple/apple-original" } },
   android: { label: "Android", glyph: { set: "devicon", file: "android/android-plain" } },
@@ -23,12 +27,12 @@ export const PLATFORM_ICONS: Record<string, { label: string; glyph: Glyph }> = {
   googleplay: { label: "Google Play", glyph: { set: "phosphor", name: "google-play-logo" } },
   amazon: { label: "Amazon", glyph: { set: "phosphor", name: "amazon-logo" } },
   facebook: { label: "Facebook", glyph: { set: "devicon", file: "facebook/facebook-plain" } },
-  attention: { label: "Attention", glyph: { set: "phosphor", name: "warning" } },
-  alert: { label: "Attention", glyph: { set: "phosphor", name: "warning" } },
+  attention: { label: "Attention", glyph: { set: "phosphor", name: "warning" }, tone: "warning" },
+  alert: { label: "Attention", glyph: { set: "phosphor", name: "warning" }, tone: "warning" },
 };
 
 /** The table entry for a marker name, ignoring inherited `Object` members. */
-export function platformIcon(name: string): { label: string; glyph: Glyph } | undefined {
+export function platformIcon(name: string): PlatformIcon | undefined {
   return Object.hasOwn(PLATFORM_ICONS, name) ? PLATFORM_ICONS[name] : undefined;
 }
 

@@ -610,6 +610,18 @@ describe("renderMarkdown platform markers", () => {
     expect(root.querySelector("p")?.text).toContain("Only ");
   });
 
+  test("a caution marker takes the warning badge tone while platform markers stay outlined", async () => {
+    const html = await renderMarkdown("Careful [icon:attention] [icon:alert] on [icon:android].\n");
+    const variants = parseHtml(html)
+      .querySelectorAll('[data-slot="badge"]')
+      .map((badge) => [badge.getAttribute("aria-label"), badge.getAttribute("data-variant")]);
+    expect(variants).toEqual([
+      ["Attention", "warning"],
+      ["Attention", "warning"],
+      ["Android", "outline"],
+    ]);
+  });
+
   test("markers inside a code span or fence stay literal", async () => {
     const html = await renderMarkdown("Use `[icon:ios]` here.\n\n```\n[icon:android]\n```\n");
     expect(html).toContain("<code>[icon:ios]</code>");

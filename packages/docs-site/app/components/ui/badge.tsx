@@ -5,7 +5,7 @@ import type { Child, JSX } from "hono/jsx";
 // A port of shadcn/ui's Badge contract (variant, icon slot, `data-slot`) onto
 // the site tokens. Markdown renderers stringify it with `String(<Badge />)`, so
 // the component must stay synchronous.
-export type BadgeVariant = "default" | "secondary" | "outline";
+export type BadgeVariant = "default" | "secondary" | "outline" | "warning";
 
 const BASE =
   "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium whitespace-nowrap";
@@ -14,6 +14,7 @@ const VARIANTS: Record<BadgeVariant, string> = {
   default: "border-transparent bg-accent text-bg",
   secondary: "border-transparent bg-surface-2 text-text",
   outline: "border-border bg-surface text-text-muted",
+  warning: "border-warning/40 bg-warning/15 text-warning",
 };
 
 export type BadgeProps = Omit<JSX.IntrinsicElements["span"], "icon"> & {
