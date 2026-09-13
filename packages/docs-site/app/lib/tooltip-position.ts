@@ -32,3 +32,34 @@ export function tooltipPosition(a: TooltipAnchor): {
   const maxHeight = Math.max(0, Math.min(CARD_MAX_H, a.innerHeight - top - MARGIN));
   return { top, left, maxHeight };
 }
+
+export interface LabelTooltipAnchor {
+  rectLeft: number;
+  rectTop: number;
+  rectBottom: number;
+  rectWidth: number;
+  innerWidth: number;
+  tipWidth: number;
+  tipHeight: number;
+}
+
+const LABEL_GAP = 6;
+
+/**
+ * Places a short label tooltip (the `ui/tooltip` island) centred above its
+ * trigger. `left` is clamped into `[MARGIN, innerWidth - tipWidth - MARGIN]` so
+ * a trigger near either edge keeps the tip on screen; when the space above the
+ * trigger (less the gap and margin) cannot hold the tip it flips below.
+ */
+export function labelTooltipPosition(a: LabelTooltipAnchor): {
+  top: number;
+  left: number;
+  placement: "top" | "bottom";
+} {
+  const centred = a.rectLeft + a.rectWidth / 2 - a.tipWidth / 2;
+  const left = Math.max(MARGIN, Math.min(centred, a.innerWidth - a.tipWidth - MARGIN));
+  if (a.rectTop - LABEL_GAP - MARGIN < a.tipHeight) {
+    return { top: a.rectBottom + LABEL_GAP, left, placement: "bottom" };
+  }
+  return { top: a.rectTop - LABEL_GAP - a.tipHeight, left, placement: "top" };
+}
