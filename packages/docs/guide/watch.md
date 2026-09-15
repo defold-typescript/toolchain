@@ -83,9 +83,13 @@ startup [pin check](./pinning-defold-target.md) may have found no editor to
 compare against. If it disagrees with a concrete `defold-target` pin, `watch`
 prints the same `set-target --detected` notice startup would have; with no pin,
 it names both versions and tells you to restart `watch`, since the API surface
-stays fixed for the life of the loop. Each version is reported once, a channel
-pin or a `--defold-target` override is never checked, and the notice never
-changes the exit status, even under `--fail-on-drift`.
+stays fixed for the life of the loop. A version that matches the target, the
+version startup already compared, or the last version reported is not reported
+again; an editor that goes from 1.13.0 to 1.14.0 and back to 1.13.0 is reported
+three times unless startup compared 1.13.0. A check that is still running when
+its editor quits reports
+nothing. A channel pin or a `--defold-target` override is never checked, and
+the notice never changes the exit status, even under `--fail-on-drift`.
 
 Ordinary `INFO:`/`DEBUG:` frame logging is filtered out, and console history
 recorded before `watch` attached is skipped — attaching mid-session prints the
