@@ -2222,6 +2222,162 @@ describe("runWatch console surfacing", () => {
   });
 });
 
+describe("runWatch editor discovery while unattached", () => {
+  const DISCOVERY_MS = 5;
+
+  function pause(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  function startWatch(
+    editor: FakeEditor,
+    streams: ReturnType<typeof captureStreams>,
+    json = false,
+  ) {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    return runWatch({
+      cwd,
+      stdout: streams.stdout,
+      stderr: streams.stderr,
+      json,
+      watcherFactory: makeFactory().factory,
+      editorClient: editor.client,
+      editorDiscoveryMs: DISCOVERY_MS,
+    });
+  }
+
+  test("an editor opened after the watch started attaches and surfaces errors without a file change", async () => {
+    const streams = captureStreams();
+    const editor = makeEditor(null);
+    const handle = startWatch(editor, streams);
+    await handle.waitForIdle();
+
+    editor.setBaseUrl("http://localhost:7777");
+    await until(() => editor.consoles.length === 1, 1000);
+    await until(() => streams.err().includes("attached to Defold editor"), 1000);
+
+    const stream = editor.consoles[0] as FakeConsole;
+    stream.push("ERROR:SCRIPT: main/main.script:2: surfaced late");
+    await stream.settled();
+
+    expect(
+      countMatches(streams.err(), /attached to Defold editor at http:\/\/localhost:7777/g),
+    ).toBe(1);
+    expect(streams.err()).toContain("defold-typescript watch: editor: ERROR:SCRIPT:");
+    expect(streams.err()).toContain("surfaced late");
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("an attached watch with a live console does not probe again", async () => {
+    const streams = captureStreams();
+    const editor = makeEditor(null);
+    const handle = startWatch(editor, streams);
+    await handle.waitForIdle();
+
+    editor.setBaseUrl("http://localhost:7777");
+    await until(() => editor.consoles.length === 1, 1000);
+    await handle.waitForIdle();
+
+    const before = editor.resolveCount();
+    await pause(10 * DISCOVERY_MS);
+    expect(editor.resolveCount()).toBe(before);
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("an editor that quits is reported without a rebuild, and one that returns is attached again", async () => {
+    const streams = captureStreams();
+    const editor = makeEditor("http://localhost:7777");
+    const handle = startWatch(editor, streams);
+    await handle.waitForIdle();
+    await until(() => editor.consoles.length === 1, 1000);
+
+    editor.setBaseUrl(null);
+    (editor.consoles[0] as FakeConsole).end();
+    await until(() => streams.err().includes("no Defold editor detected"), 1000);
+
+    editor.setBaseUrl("http://localhost:7777");
+    await until(() => editor.consoles.length === 2, 1000);
+    await until(() => countMatches(streams.err(), /attached to Defold editor/g) === 2, 1000);
+
+    expect(countMatches(streams.err(), /no Defold editor detected/g)).toBe(1);
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("repeated discovery with no editor prints the no-editor notice once", async () => {
+    const streams = captureStreams();
+    const editor = makeEditor(null);
+    const handle = startWatch(editor, streams);
+    await handle.waitForIdle();
+
+    const startupResolves = editor.resolveCount();
+    await until(() => editor.resolveCount() >= startupResolves + 10, 1000);
+
+    expect(countMatches(streams.err(), /no Defold editor detected/g)).toBe(1);
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("json mode: discovery attaching a late editor adds no event to stdout", async () => {
+    const readEvents = (text: string): unknown[] =>
+      text
+        .trimEnd()
+        .split("\n")
+        .map((line) => JSON.parse(line) as unknown);
+
+    const absentStreams = captureStreams();
+    const absent = makeEditor(null);
+    const absentHandle = startWatch(absent, absentStreams, true);
+    await absentHandle.waitForIdle();
+    const absentStartup = absent.resolveCount();
+    await until(() => absent.resolveCount() >= absentStartup + 10, 1000);
+    absentHandle.stop();
+    await absentHandle.done;
+
+    const lateStreams = captureStreams();
+    const late = makeEditor(null);
+    const lateHandle = startWatch(late, lateStreams, true);
+    await lateHandle.waitForIdle();
+    late.setBaseUrl("http://localhost:7777");
+    await until(() => late.consoles.length === 1, 1000);
+    await pause(10 * DISCOVERY_MS);
+    lateHandle.stop();
+    await lateHandle.done;
+
+    expect(readEvents(lateStreams.out())).toEqual(readEvents(absentStreams.out()));
+    expect(lateStreams.err()).toBe("");
+  });
+
+  test("a stopped watch probes nothing and writes nothing", async () => {
+    const streams = captureStreams();
+    const editor = makeEditor(null);
+    const handle = startWatch(editor, streams);
+    await handle.waitForIdle();
+    const startupResolves = editor.resolveCount();
+    await until(() => editor.resolveCount() > startupResolves, 1000);
+
+    handle.stop();
+    await handle.done;
+    await handle.waitForIdle();
+    const resolves = editor.resolveCount();
+    const out = streams.out();
+    const err = streams.err();
+
+    await pause(10 * DISCOVERY_MS);
+
+    expect(editor.resolveCount()).toBe(resolves);
+    expect(streams.out()).toBe(out);
+    expect(streams.err()).toBe(err);
+  });
+});
+
 describe("runWatch stop lifecycle", () => {
   test("stopping a watch releases an idle console stream instead of parking on it", async () => {
     writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);

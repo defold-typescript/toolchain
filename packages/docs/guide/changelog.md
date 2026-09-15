@@ -9,6 +9,12 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.35.0
+
+### Improved
+
+- **[`watch`](./watch.md#hot-reload) attaches to a Defold editor opened after it started within about a second, and reports one that quits, without waiting for a file save.** Runtime errors from a game launched before your first edit now reach the terminal straight away.
+
 ## v0.34.0
 
 ### Improved
