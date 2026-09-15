@@ -120,6 +120,7 @@ export interface RunWatchOptions {
   readonly upstreamRelease?: { readonly current: string; readonly latest: string };
   readonly hotReload?: boolean;
   readonly editorClient?: WatchEditorClient;
+  readonly editorDiscoveryMs?: number;
 }
 
 export interface RunWatchHandle {
@@ -129,6 +130,7 @@ export interface RunWatchHandle {
 }
 
 const DEFAULT_DEBOUNCE_MS = 50;
+const EDITOR_DISCOVERY_INTERVAL_MS = 1000;
 
 export const recursiveWatcherFactory: WatcherFactory = (root, onEvent) => {
   const w = fsWatch(root, { recursive: true }, (eventType, filename) => {
@@ -266,6 +268,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   let syncScheduled: ReturnType<typeof setTimeout> | null = null;
   let resolveScheduled: ReturnType<typeof setTimeout> | null = null;
   let sceneScheduled: ReturnType<typeof setTimeout> | null = null;
+  let discoveryTimer: ReturnType<typeof setInterval> | null = null;
   let rebuildBusy = false;
   let syncBusy = false;
   let resolveBusy = false;
@@ -684,6 +687,10 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       clearTimeout(sceneScheduled);
       sceneScheduled = null;
     }
+    if (discoveryTimer) {
+      clearInterval(discoveryTimer);
+      discoveryTimer = null;
+    }
     watcher.close();
     componentWatcher?.close();
     // Order matters: the abort is what unparks a stream waiting on the socket,
@@ -723,6 +730,15 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   }
 
   scheduleAttach();
+
+  // Rebuilds alone would leave an editor opened between saves invisible. An
+  // attachment pauses the probe: a live console reports its own end, and
+  // `drainConsole` clearing the state is what resumes it.
+  discoveryTimer = setInterval(() => {
+    if (attachBusy || reloadBusy || rebuildBusy || consoleRunning) return;
+    if (attachedBaseUrl !== null) return;
+    scheduleAttach();
+  }, opts.editorDiscoveryMs ?? EDITOR_DISCOVERY_INTERVAL_MS);
 
   return { stop, done, waitForIdle };
 }
