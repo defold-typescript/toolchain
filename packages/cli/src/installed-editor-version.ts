@@ -79,7 +79,7 @@ export function runningEditorDeclines(cwd: string): boolean {
   return readEditorPort(cwd) === null;
 }
 
-const defaultEvalVersion = async (
+export const runningEditorVersion = async (
   cwd: string,
   signal?: AbortSignal,
   transport?: EditorTransport,
@@ -183,7 +183,7 @@ export async function probeInstalledEditor(
   const cwd = opts.cwd ?? process.cwd();
   const evalVersion =
     opts.evalVersion ??
-    ((c: string, signal?: AbortSignal) => defaultEvalVersion(c, signal, opts.transport));
+    ((c: string, signal?: AbortSignal) => runningEditorVersion(c, signal, opts.transport));
   // The entry names the port file so the report keeps its "here is what was
   // read" meaning for a source that is not a config file.
   const portPath = join(cwd, EDITOR_PORT_FILE);

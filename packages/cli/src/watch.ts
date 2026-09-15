@@ -88,6 +88,13 @@ function reloadCommandsFor(written: readonly string[]): EditorReloadCommand[] {
   return commands;
 }
 
+export interface EditorVersionNotice {
+  readonly message: string;
+  readonly editor: string;
+  readonly target: string;
+  readonly targetSource: "pin" | "detected" | "default";
+}
+
 export interface RunWatchOptions {
   readonly cwd: string;
   readonly stdout: NodeJS.WritableStream;
@@ -121,6 +128,15 @@ export interface RunWatchOptions {
   readonly hotReload?: boolean;
   readonly editorClient?: WatchEditorClient;
   readonly editorDiscoveryMs?: number;
+  /**
+   * Diagnostic-only: asked once per attach transition, so an editor opened after
+   * startup can report a version the watch's fixed API surface disagrees with.
+   * Its notices never change the exit status or stop the watch.
+   */
+  readonly editorAttached?: (
+    baseUrl: string,
+    signal: AbortSignal,
+  ) => Promise<readonly EditorVersionNotice[]>;
 }
 
 export interface RunWatchHandle {
@@ -276,12 +292,22 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   let sceneBusy = false;
   let reloadBusy = false;
   let attachBusy = false;
+  let versionBusy = false;
   let stopped = false;
   let idleResolvers: Array<() => void> = [];
   const pending = new Set<string>();
 
   function notifyIdle(): void {
-    if (rebuildBusy || syncBusy || resolveBusy || sceneBusy || reloadBusy || attachBusy) return;
+    if (
+      rebuildBusy ||
+      syncBusy ||
+      resolveBusy ||
+      sceneBusy ||
+      reloadBusy ||
+      attachBusy ||
+      versionBusy
+    )
+      return;
     const resolvers = idleResolvers;
     idleResolvers = [];
     for (const resolve of resolvers) resolve();
@@ -312,6 +338,39 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     detachNoticed = false;
     if (!opts.json)
       stderr.write(`defold-typescript watch: attached to Defold editor at ${baseUrl}\n`);
+    checkEditorVersion(baseUrl);
+  }
+
+  function checkEditorVersion(baseUrl: string): void {
+    const check = opts.editorAttached;
+    if (check === undefined) return;
+    versionBusy = true;
+    void (async () => {
+      try {
+        const notices = await check(baseUrl, editorAbort.signal);
+        if (stopped) return;
+        for (const notice of notices) {
+          if (opts.json) {
+            stdout.write(
+              renderWatchEvent({
+                event: "editorVersion",
+                editor: notice.editor,
+                target: notice.target,
+                targetSource: notice.targetSource,
+              }),
+            );
+          } else {
+            stderr.write(`defold-typescript watch: ${notice.message}\n`);
+          }
+        }
+      } catch {
+        // A failed version probe is only a missing diagnostic; the attachment it
+        // was asked about is unaffected.
+      } finally {
+        versionBusy = false;
+        notifyIdle();
+      }
+    })();
   }
 
   function noteDetached(): void {
@@ -719,12 +778,21 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     sceneBusy = false;
     reloadBusy = false;
     attachBusy = false;
+    versionBusy = false;
     notifyIdle();
     resolveDone(0);
   }
 
   function waitForIdle(): Promise<void> {
-    if (!rebuildBusy && !syncBusy && !resolveBusy && !sceneBusy && !reloadBusy && !attachBusy) {
+    if (
+      !rebuildBusy &&
+      !syncBusy &&
+      !resolveBusy &&
+      !sceneBusy &&
+      !reloadBusy &&
+      !attachBusy &&
+      !versionBusy
+    ) {
       return Promise.resolve();
     }
     return new Promise<void>((resolve) => {

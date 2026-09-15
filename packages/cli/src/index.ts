@@ -23,6 +23,7 @@ export {
 } from "./init-agents";
 export type {
   EditorReloadCommand,
+  EditorVersionNotice,
   RunWatchHandle,
   RunWatchOptions,
   WatchEditorClient,
