@@ -2712,8 +2712,9 @@ needs no flag, because `--hot-reload` governs whether a reload is *posted*, not
 whether the editor is read. Where the build's source map can answer, each
 reported location names the authored `.ts` line in front of the generated chunk
 one; see [`reload`](./reload.md#why-it-reads-the-console) for when that mapping
-is available. The same holds for an editor opened after `watch` started: it is
-picked up within about a second, with no save needed.
+is available. The same holds for an editor opened at any time after `watch`
+started: `watch` checks for one about once a second, so it is picked up with no
+save needed.
 
 An editor that attaches after startup is also asked its version, because the
 startup [pin check](./pinning-defold-target.md) may have found no editor to
@@ -2755,8 +2756,7 @@ Four things are worth knowing about how it behaves:
   and making the change look like it did nothing.
 - **The editor may come and go.** The port is re-read on every reload, and while
   no editor is attached `watch` looks for one about once a second, so an editor
-  opened after the loop started is attached within about a second without a
-  save. One that quits is reported once and leaves the loop rebuilding until it
+  opened at any time after the loop started is attached without a save. One that quits is reported once and leaves the loop rebuilding until it
   returns. An editor whose console fails to open is retried at growing
   intervals, up to about 30 seconds apart, so its runtime errors appear once the
   console opens and an editor that quits meanwhile is still reported. Nothing
