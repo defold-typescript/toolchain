@@ -23,6 +23,7 @@ import { CURRENT_STABLE_SURFACE_ID } from "./api-surface";
 import type { DefoldIo } from "./bob-command";
 import { GENERATED_BANNER } from "./build-output";
 import { readCliVersion } from "./cli-version";
+import { describeDetectedPinMismatch } from "./defold-target";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import { dispatch } from "./dispatch";
 import { EDITOR_PORT_FILE, EDITOR_TOKEN_FILE, type EditorTransport } from "./editor-attach";
@@ -1666,6 +1667,143 @@ describe("dispatch", () => {
     expect(start.pinMismatch).toEqual({ installed: "1.13.0", pinned: "1.12.4" });
     // The notice rides `start` alone — exactly once across the whole stream.
     expect(out().split("set-target --detected").length - 1).toBe(1);
+  });
+
+  // The watch attaches to the injected editor on its first discovery, which is
+  // after dispatch's startup version check: that is the late editor.
+  async function watchLateEditor(
+    args: readonly string[],
+    lateVersion: string | null,
+    internals: Parameters<typeof dispatch>[2] = {},
+  ) {
+    const streams = captureStreams();
+    const editor = makeEditorClient("http://localhost:7777");
+    const factory: WatcherFactory = (_dir, _onEvent): Watcher => ({ close() {} });
+    let probes = 0;
+    const { onWatchStart, ready } = watchHandle();
+    const result = dispatch(["watch", cwd, ...args], streams.io, {
+      watcherFactory: factory,
+      onWatchStart,
+      editorClient: editor.client,
+      runningEditorVersion: async () => {
+        probes += 1;
+        return lateVersion;
+      },
+      ...internals,
+    });
+    const handle = await ready;
+    await handle.waitForIdle();
+    handle.stop();
+    const code = await result;
+    return {
+      code,
+      out: streams.out(),
+      err: streams.err(),
+      probes,
+      resolves: editor.resolveCount(),
+    };
+  }
+
+  test("watch reports a pin mismatch for an editor attached after startup", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+
+    const run = await watchLateEditor(["--fail-on-drift"], "1.13.0", {
+      detectEditorVersion: () => null,
+    });
+
+    expect(run.code).toBe(0);
+    expect(run.probes).toBe(1);
+    expect(run.err).toContain(
+      `defold-typescript watch: ${describeDetectedPinMismatch("1.13.0", "1.12.4")[0]}`,
+    );
+    expect(run.err.split("set-target --detected").length - 1).toBe(1);
+  });
+
+  test("watch --json reports a late editor's pin mismatch as one editorVersion event", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+
+    const run = await watchLateEditor(["--json"], "1.13.0", { detectEditorVersion: () => null });
+
+    expect(run.code).toBe(0);
+    const events = run.out
+      .trimEnd()
+      .split("\n")
+      .map((line) => JSON.parse(line) as Record<string, unknown>)
+      .filter((event) => event.command === "watch");
+    const start = events.find((event) => event.event === "start");
+    expect(start !== undefined && "pinMismatch" in start).toBe(false);
+    expect(events.filter((event) => event.event === "editorVersion")).toEqual([
+      {
+        command: "watch",
+        event: "editorVersion",
+        ok: true,
+        written: [],
+        editor: "1.13.0",
+        target: "1.12.4",
+        targetSource: "pin",
+      },
+    ]);
+    expect(run.err).not.toContain("set-target --detected");
+  });
+
+  test("a late editor matching startup's detected version prints nothing", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+
+    const run = await watchLateEditor([], "1.13.0", { detectEditorVersion: () => "1.13.0" });
+
+    expect(run.code).toBe(0);
+    expect(run.probes).toBe(1);
+    expect(run.err.split("set-target --detected").length - 1).toBe(1);
+  });
+
+  test("an inferred target names the late editor and asks for a restart", async () => {
+    scaffoldBuildProject();
+    const lateVersion = "9.9.9";
+    expect(lateVersion).not.toBe(CURRENT_STABLE_DEFOLD_VERSION);
+
+    const run = await watchLateEditor([], lateVersion, { detectEditorVersion: () => null });
+
+    expect(run.code).toBe(0);
+    expect(run.err).toContain(
+      `defold-typescript watch: the Defold editor at http://localhost:7777 runs ${lateVersion}, but this watch resolved its API surface for ${CURRENT_STABLE_DEFOLD_VERSION}; restart watch to follow the editor.`,
+    );
+  });
+
+  test("a channel pin and a --defold-target override never probe the late editor", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "stable" } });
+    const channel = await watchLateEditor([], "1.13.0", {
+      detectEditorVersion: () => null,
+      fetchChannelInfo: async () => ({ version: CURRENT_STABLE_DEFOLD_VERSION, sha1: "abc123" }),
+    });
+    expect(channel.code).toBe(0);
+    expect(channel.resolves).toBeGreaterThan(0);
+    expect(channel.probes).toBe(0);
+
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+    const override = await watchLateEditor(["--defold-target", "1.12.4"], "1.13.0", {
+      detectEditorVersion: () => null,
+    });
+    expect(override.code).toBe(0);
+    expect(override.resolves).toBeGreaterThan(0);
+    expect(override.probes).toBe(0);
+  });
+
+  test("a startup version read from the running editor is not probed again on first attach", async () => {
+    scaffoldBuildProject({ "defold-typescript": { "defold-target": "1.12.4" } });
+    mkdirSync(path.join(cwd, ".internal"), { recursive: true });
+    writeFileSync(path.join(cwd, EDITOR_PORT_FILE), "58433");
+
+    const run = await watchLateEditor([], "1.13.0", {
+      probeEditor: async () => ({
+        version: "1.13.0",
+        probed: [{ path: path.join(cwd, EDITOR_PORT_FILE), reason: "found" }],
+      }),
+    });
+
+    expect(run.code).toBe(0);
+    expect(run.resolves).toBeGreaterThan(0);
+    expect(run.probes).toBe(0);
+    expect(run.err.split("set-target --detected").length - 1).toBe(1);
   });
 
   test("watch carries the unresolvable-target notice on stderr and its --json start event", async () => {

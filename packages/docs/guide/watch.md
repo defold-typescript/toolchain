@@ -78,6 +78,15 @@ one; see [`reload`](./reload.md#why-it-reads-the-console) for when that mapping
 is available. The same holds for an editor opened after `watch` started: it is
 picked up within about a second, with no save needed.
 
+An editor that attaches after startup is also asked its version, because the
+startup [pin check](./pinning-defold-target.md) may have found no editor to
+compare against. If it disagrees with a concrete `defold-target` pin, `watch`
+prints the same `set-target --detected` notice startup would have; with no pin,
+it names both versions and tells you to restart `watch`, since the API surface
+stays fixed for the life of the loop. Each version is reported once, a channel
+pin or a `--defold-target` override is never checked, and the notice never
+changes the exit status, even under `--fail-on-drift`.
+
 Ordinary `INFO:`/`DEBUG:` frame logging is filtered out, and console history
 recorded before `watch` attached is skipped — attaching mid-session prints the
 next error rather than replaying old ones. Under `--json` these lines stay on
@@ -136,7 +145,8 @@ status you can branch on.
 - `--json` — stream the build lifecycle as newline-delimited JSON for agents and
   scripts. See [Agent runbooks](./agent-runbooks.md#machine-readable-output)
   for the event stream. Each reload adds a `reload` event; a reload the editor
-  declined because no game is running is silent.
+  declined because no game is running is silent. A late editor's version notice
+  arrives as an `editorVersion` event instead of on stderr.
 
 ## As a mise task
 

@@ -211,6 +211,25 @@ describe("renderWatchEvent", () => {
     expect("error" in parsed).toBe(false);
   });
 
+  test("serializes an editorVersion event with the editor, target and target source", () => {
+    const out = renderWatchEvent({
+      event: "editorVersion",
+      editor: "1.13.0",
+      target: "1.12.4",
+      targetSource: "pin",
+    });
+    expect(JSON.parse(out)).toEqual({
+      command: "watch",
+      event: "editorVersion",
+      ok: true,
+      written: [],
+      editor: "1.13.0",
+      target: "1.12.4",
+      targetSource: "pin",
+    });
+    expect("editor" in JSON.parse(renderWatchEvent({ event: "start" }))).toBe(false);
+  });
+
   test("start and stop events are a single line terminated by exactly one newline", () => {
     expect(renderWatchEvent({ event: "start" }).endsWith("\n")).toBe(true);
     expect(renderWatchEvent({ event: "start" }).trimEnd()).not.toContain("\n");

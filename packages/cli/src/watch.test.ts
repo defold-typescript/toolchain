@@ -33,6 +33,8 @@ import {
 import {
   createWatchEditorClient,
   type EditorReloadCommand,
+  type EditorVersionNotice,
+  type RunWatchOptions,
   runWatch,
   type WatchEditorClient,
   type WatchEvent,
@@ -2233,6 +2235,7 @@ describe("runWatch editor discovery while unattached", () => {
     editor: FakeEditor,
     streams: ReturnType<typeof captureStreams>,
     json = false,
+    extra: Partial<RunWatchOptions> = {},
   ) {
     writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeProjectFile("src/main.ts", scriptSource(1));
@@ -2244,8 +2247,174 @@ describe("runWatch editor discovery while unattached", () => {
       watcherFactory: makeFactory().factory,
       editorClient: editor.client,
       editorDiscoveryMs: DISCOVERY_MS,
+      ...extra,
     });
   }
+
+  const LATE_NOTICE: EditorVersionNotice = {
+    message: "late notice",
+    editor: "1.13.0",
+    target: "1.12.4",
+    targetSource: "pin",
+  };
+
+  function recordVersionChecks(gate: Promise<void> | null = null) {
+    const baseUrls: string[] = [];
+    const editorAttached = async (baseUrl: string): Promise<readonly EditorVersionNotice[]> => {
+      baseUrls.push(baseUrl);
+      if (gate) await gate;
+      return [LATE_NOTICE];
+    };
+    return { baseUrls, editorAttached };
+  }
+
+  test("an attach transition runs the version check once and prints its notices", async () => {
+    const streams = captureStreams();
+    const editor = makeEditor(null);
+    const checks = recordVersionChecks();
+    const watcher = makeFactory();
+    const handle = startWatch(editor, streams, false, {
+      editorAttached: checks.editorAttached,
+      watcherFactory: watcher.factory,
+    });
+    await handle.waitForIdle();
+
+    editor.setBaseUrl("http://localhost:7777");
+    await until(() => streams.err().includes("defold-typescript watch: late notice"), 1000);
+    await handle.waitForIdle();
+
+    // A rebuild re-runs discovery against the attached editor; that is not a
+    // new attachment, so it must not ask the editor its version again.
+    writeProjectFile("src/main.ts", scriptSource(2));
+    watcher.trigger("change", "src/main.ts");
+    await until(() => countMatches(streams.out(), /build finished/g) === 2, 1000);
+    await handle.waitForIdle();
+    await pause(10 * DISCOVERY_MS);
+
+    expect(checks.baseUrls).toEqual(["http://localhost:7777"]);
+    expect(countMatches(streams.err(), /late notice/g)).toBe(1);
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("a re-attach after the editor quits runs the version check again", async () => {
+    const streams = captureStreams();
+    const editor = makeEditor(null);
+    const checks = recordVersionChecks();
+    const handle = startWatch(editor, streams, false, { editorAttached: checks.editorAttached });
+    await handle.waitForIdle();
+
+    editor.setBaseUrl("http://localhost:7777");
+    await until(() => editor.consoles.length === 1 && checks.baseUrls.length === 1, 1000);
+    const noticesBefore = countMatches(streams.err(), /no Defold editor detected/g);
+
+    editor.setBaseUrl(null);
+    (editor.consoles[0] as FakeConsole).end();
+    await until(
+      () => countMatches(streams.err(), /no Defold editor detected/g) > noticesBefore,
+      1000,
+    );
+
+    editor.setBaseUrl("http://localhost:7777");
+    await until(() => checks.baseUrls.length === 2, 1000);
+    await handle.waitForIdle();
+
+    expect(checks.baseUrls).toEqual(["http://localhost:7777", "http://localhost:7777"]);
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("--json writes one editorVersion event per notice and nothing on stderr", async () => {
+    const streams = captureStreams();
+    const editor = makeEditor(null);
+    const checks = recordVersionChecks();
+    const handle = startWatch(editor, streams, true, { editorAttached: checks.editorAttached });
+    await handle.waitForIdle();
+
+    editor.setBaseUrl("http://localhost:7777");
+    await until(() => streams.out().includes('"editorVersion"'), 1000);
+    await handle.waitForIdle();
+    handle.stop();
+    await handle.done;
+
+    const events = streams
+      .out()
+      .trimEnd()
+      .split("\n")
+      .map((line) => JSON.parse(line) as Record<string, unknown>)
+      .filter((event) => event.event === "editorVersion");
+    expect(events).toEqual([
+      {
+        command: "watch",
+        event: "editorVersion",
+        ok: true,
+        written: [],
+        editor: "1.13.0",
+        target: "1.12.4",
+        targetSource: "pin",
+      },
+    ]);
+    expect(streams.err()).not.toContain("late notice");
+  });
+
+  test("a version check settling after stop writes nothing", async () => {
+    const streams = captureStreams();
+    const editor = makeEditor(null);
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const checks = recordVersionChecks(gate);
+    const handle = startWatch(editor, streams, false, { editorAttached: checks.editorAttached });
+    await handle.waitForIdle();
+
+    editor.setBaseUrl("http://localhost:7777");
+    await until(() => checks.baseUrls.length === 1, 1000);
+
+    handle.stop();
+    let idle = false;
+    await handle.waitForIdle().then(() => {
+      idle = true;
+    });
+    expect(idle).toBe(true);
+
+    release();
+    await handle.done;
+    await pause(5 * DISCOVERY_MS);
+
+    expect(streams.err()).not.toContain("late notice");
+    expect(streams.out()).not.toContain("late notice");
+  });
+
+  test("the version check stays busy until it settles", async () => {
+    const streams = captureStreams();
+    const editor = makeEditor(null);
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const checks = recordVersionChecks(gate);
+    const handle = startWatch(editor, streams, false, { editorAttached: checks.editorAttached });
+    await handle.waitForIdle();
+
+    editor.setBaseUrl("http://localhost:7777");
+    await until(() => checks.baseUrls.length === 1, 1000);
+    let idle = false;
+    const idled = handle.waitForIdle().then(() => {
+      idle = true;
+    });
+    await pause(5 * DISCOVERY_MS);
+    expect(idle).toBe(false);
+
+    release();
+    await idled;
+    expect(streams.err()).toContain("defold-typescript watch: late notice");
+
+    handle.stop();
+    await handle.done;
+  });
 
   test("an editor opened after the watch started attaches and surfaces errors without a file change", async () => {
     const streams = captureStreams();
