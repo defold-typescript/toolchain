@@ -74,6 +74,7 @@ export interface RunResolveResult {
   readonly materializedSurface: string | null;
   readonly extensions: ResolvedExtensionReport[];
   readonly libraries: ResolvedLibraryReport[];
+  readonly warnings: readonly string[];
 }
 
 function hasProjectSection(text: string): boolean {
@@ -112,6 +113,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       materializedSurface: null,
       extensions: [],
       libraries: [],
+      warnings: [],
     };
   }
 
@@ -123,6 +125,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       materializedSurface: null,
       extensions: [],
       libraries: [],
+      warnings: [],
     };
   }
 
@@ -138,7 +141,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     });
     ensureLibraryTypesReference(cwd, librariesDir);
     materializeLibrarySceneSources({ cwd, bundles: [] });
-    return { ok: true, materializedSurface: null, extensions: [], libraries: [] };
+    return { ok: true, materializedSurface: null, extensions: [], libraries: [], warnings: [] };
   }
 
   const bundles = await resolveExtensionDeclarations(deps, {
@@ -153,12 +156,13 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   // The dependency scene surface the editor plugin, `scene-types` and `build`
   // all read: unpacked here because the archive seam cannot run inside tsserver.
   const { counts: sceneSourceCounts } = materializeLibrarySceneSources({ cwd, bundles });
+  const warnings: string[] = [];
   for (const bundle of bundles) {
     for (const reason of bundle.sceneReasons) {
-      console.warn(`no scene source from ${bundle.url}: ${reason}`);
+      warnings.push(`no scene source from ${bundle.url}: ${reason}`);
     }
     for (const entry of bundle.sceneRefused) {
-      console.warn(`refusing unsafe scene path from ${bundle.url}: ${entry}`);
+      warnings.push(`refusing unsafe scene path from ${bundle.url}: ${entry}`);
     }
   }
 
@@ -201,7 +205,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     });
   ensureLibraryTypesReference(cwd, librariesDir);
   for (const module of skippedLibraryModules) {
-    console.warn(`skipping library module ${module}: no generated .d.ts in the vendored corpus`);
+    warnings.push(`skipping library module ${module}: no generated .d.ts in the vendored corpus`);
   }
   const libraries: ResolvedLibraryReport[] = matchedLibraries.map(
     ({ library, url, confirmed }) => ({
@@ -261,5 +265,5 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     return report;
   });
 
-  return { ok: true, materializedSurface: materializedDir, extensions, libraries };
+  return { ok: true, materializedSurface: materializedDir, extensions, libraries, warnings };
 }

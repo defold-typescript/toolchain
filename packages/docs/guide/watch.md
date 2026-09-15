@@ -77,7 +77,8 @@ reported location names the authored `.ts` line in front of the generated chunk
 one; see [`reload`](./reload.md#why-it-reads-the-console) for when that mapping
 is available. The same holds for an editor opened at any time after `watch`
 started: `watch` checks for one about once a second, so it is picked up with no
-save needed.
+save needed. On a terminal the leading `ERROR` and `WARNING` tags are colored;
+see [Terminal output](./terminal-output.md#defold-editor-console-lines).
 
 An editor that attaches after startup is also asked its version, because the
 startup [pin check](./pinning-defold-target.md) may have found no editor to

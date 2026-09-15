@@ -32,3 +32,13 @@ export function severityLine(message: string, severity: Severity, color: boolean
     : severity;
   return `${prefix}${word}: ${rest}`;
 }
+
+const CONSOLE_TAG = /^(ERROR|WARNING):/;
+
+export function colorConsoleTag(line: string, color: boolean): string {
+  if (!color) return line;
+  const tag = line.match(CONSOLE_TAG)?.[1];
+  if (tag === undefined) return line;
+  const sgr = tag === "ERROR" ? SGR_ERROR : SGR_WARNING;
+  return `${sgr}${tag}${SGR_RESET}${line.slice(tag.length)}`;
+}
