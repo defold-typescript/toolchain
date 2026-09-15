@@ -131,6 +131,7 @@ export interface RunWatchHandle {
 
 const DEFAULT_DEBOUNCE_MS = 50;
 const EDITOR_DISCOVERY_INTERVAL_MS = 1000;
+const CONSOLE_RETRY_MAX_TICKS = 30;
 
 export const recursiveWatcherFactory: WatcherFactory = (root, onEvent) => {
   const w = fsWatch(root, { recursive: true }, (eventType, filename) => {
@@ -296,6 +297,8 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   let refusedBaseUrl: string | null = null;
   let detachNoticed = false;
   let consoleRunning = false;
+  let consoleFailures = 0;
+  let consoleRetryTicks = 0;
   // A parked async iterator cannot be closed from the consumer side, so
   // cancellation has to reach the transport: this is what unparks an idle
   // console stream when the watch stops.
@@ -314,6 +317,8 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   function noteDetached(): void {
     attachedBaseUrl = null;
     refusedBaseUrl = null;
+    consoleFailures = 0;
+    consoleRetryTicks = 0;
     if (detachNoticed) return;
     detachNoticed = true;
     if (!opts.json) stderr.write("defold-typescript watch: no Defold editor detected\n");
@@ -365,6 +370,8 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       // to unattached so the next rebuild can attach to whatever starts next.
       if (consoleReader === reader) consoleReader = null;
       consoleRunning = false;
+      consoleFailures = 0;
+      consoleRetryTicks = 0;
       attachedBaseUrl = null;
       refusedBaseUrl = null;
     }
@@ -400,10 +407,14 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       if (lines === null || stopped) {
         consoleRunning = false;
         if (lines !== null) void lines[Symbol.asyncIterator]().return?.(undefined);
-        // A client whose console never opened is still attached, just silent; a
-        // stopped watch is not, and callers read this value as permission to post.
+        // A client whose console never opened is still attached, just silent
+        // until the discovery tick's retry opens it; a stopped watch is not,
+        // and callers read this value as permission to post.
         if (stopped) return null;
+        consoleFailures += 1;
+        consoleRetryTicks = Math.min(2 ** (consoleFailures - 1), CONSOLE_RETRY_MAX_TICKS);
       } else {
+        consoleFailures = 0;
         const reader = lines[Symbol.asyncIterator]();
         consoleReader = reader;
         void drainConsole(reader);
@@ -733,10 +744,17 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
 
   // Rebuilds alone would leave an editor opened between saves invisible. An
   // attachment pauses the probe: a live console reports its own end, and
-  // `drainConsole` clearing the state is what resumes it.
+  // `drainConsole` clearing the state is what resumes it. An attachment whose
+  // console failed to open has no end to report, so it keeps retrying, with a
+  // doubling gap that caps a persistently closed console's request budget.
   discoveryTimer = setInterval(() => {
     if (attachBusy || reloadBusy || rebuildBusy || consoleRunning) return;
-    if (attachedBaseUrl !== null) return;
+    if (attachedBaseUrl !== null) {
+      const client = opts.editorClient ?? defaultEditorClient;
+      if (client.openConsole === undefined || consoleFailures === 0) return;
+      consoleRetryTicks -= 1;
+      if (consoleRetryTicks > 0) return;
+    }
     scheduleAttach();
   }, opts.editorDiscoveryMs ?? EDITOR_DISCOVERY_INTERVAL_MS);
 

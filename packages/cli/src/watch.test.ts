@@ -2289,8 +2289,7 @@ describe("runWatch editor discovery while unattached", () => {
     await handle.done;
   });
 
-  test("an attached watch whose console never opened does not probe again", async () => {
-    const streams = captureStreams();
+  async function attachWithClosedConsole(streams: ReturnType<typeof captureStreams>) {
     const editor = makeEditor(null);
     editor.setConsoleOpen(false);
     const handle = startWatch(editor, streams);
@@ -2303,13 +2302,60 @@ describe("runWatch editor discovery while unattached", () => {
     );
     await handle.waitForIdle();
     expect(editor.consoles.length).toBe(0);
+    return { editor, handle };
+  }
 
-    const before = editor.resolveCount();
-    await pause(10 * DISCOVERY_MS);
-    expect(editor.resolveCount()).toBe(before);
+  test("a console that failed to open is read once it opens, without a file save", async () => {
+    const streams = captureStreams();
+    const { editor, handle } = await attachWithClosedConsole(streams);
+
+    editor.setConsoleOpen(true);
+    await until(() => editor.consoles.length === 1, 1000);
+    const stream = editor.consoles[0] as FakeConsole;
+    stream.push("ERROR:SCRIPT: main/main.script:2: surfaced after retry");
+    await stream.settled();
+
+    expect(streams.err()).toContain("defold-typescript watch: editor: ERROR:SCRIPT:");
+    expect(streams.err()).toContain("surfaced after retry");
     expect(
       countMatches(streams.err(), /attached to Defold editor at http:\/\/localhost:7777/g),
     ).toBe(1);
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("an attached editor whose console never opened is reported when it quits", async () => {
+    const streams = captureStreams();
+    const { editor, handle } = await attachWithClosedConsole(streams);
+    // The startup probe found no editor, so one notice precedes the attach.
+    const noticesBefore = countMatches(streams.err(), /no Defold editor detected/g);
+
+    editor.setBaseUrl(null);
+    await until(
+      () => countMatches(streams.err(), /no Defold editor detected/g) > noticesBefore,
+      1000,
+    );
+    await pause(10 * DISCOVERY_MS);
+
+    expect(countMatches(streams.err(), /no Defold editor detected/g)).toBe(noticesBefore + 1);
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("console retries back off while the console stays closed", async () => {
+    const streams = captureStreams();
+    const { editor, handle } = await attachWithClosedConsole(streams);
+
+    const attached = editor.resolveCount();
+    await until(() => editor.resolveCount() > attached, 1000);
+    const firstRetry = editor.resolveCount();
+    await pause(40 * DISCOVERY_MS);
+
+    // Retrying on every tick would make ~40 attempts; timer starvation under
+    // load only lowers the count, so this bound cannot fail spuriously.
+    expect(editor.resolveCount() - firstRetry).toBeLessThanOrEqual(6);
 
     handle.stop();
     await handle.done;
