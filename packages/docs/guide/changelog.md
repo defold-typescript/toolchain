@@ -11,8 +11,13 @@ What changed in each published `defold-typescript` toolchain release.
 
 ## v0.35.0
 
+### Breaking
+
+- **An engine parameter typed as a constant now accepts only the constants its reference documentation names.** Passing a generic `Opaque<"constant">`, a constant from another family (`gui.PLAYBACK_ONCE_FORWARD` into [`model.play_anim`](/api/model)), or the result of [`window.get_dim_mode()`](/api/window), which can be `DIMMING_UNKNOWN`, into `window.set_dim_mode` no longer compiles; pass the documented constant instead ([enum constants](./typescript-gotchas.md#enum-constants-are-branded-numbers--a-bare-number-wont-do)).
+
 ### Improved
 
+- **Documented constants now compile where the reference says to pass them, and getter results compare against their constants.** `gui.animate(node, gui.PROP_COLOR, to, gui.EASING_INOUTQUAD, 0.5)` and the other [`gui`](/api/gui) setters, `render.enable_state(graphics.STATE_DEPTH_TEST)` in [`render`](/api/render), and the [`profiler`](/api/profiler), [`model`](/api/model), [`window`](/api/window) and [`buffer`](/api/buffer) metadata calls type-check, and `sys.get_connectivity() === sys.NETWORK_CONNECTED` is no longer rejected as a comparison that can never be true.
 - **CLI failure lines now read `defold-typescript <command>: error: <message>` and non-fatal problems `… warning: <message>`, with the word bold red or yellow on a terminal, and the `ERROR:`/`WARNING:` tag of Defold console lines forwarded by [`watch`](./watch.md) and [`reload`](./reload.md) is colored the same way.** `resolve`'s scene-source warnings now carry the command prefix, `--no-color`, `NO_COLOR`, `TERM=dumb` and `--json` turn color off, and `--json` payloads are unchanged ([terminal output](./terminal-output.md)).
 
 - **[`watch`](./watch.md#runtime-errors-in-the-terminal) looks for a Defold editor about once a second while none is attached, so an editor opened at any time is attached, and one that quits is reported, without waiting for a file save.** Runtime errors from a game launched before your first edit reach the terminal straight away, and an editor whose console fails to open is retried at growing intervals until it opens or the editor quits.

@@ -3708,3 +3708,151 @@ describe("component property type fidelity", () => {
     expect(emitDeclarations(module)).toContain("    frame_count: Hash;");
   });
 });
+
+describe("documented constant slot expansion", () => {
+  const brand = (fqn: string): string => `number & { readonly __brand: "${fqn}" }`;
+  const union = (fqns: readonly string[]): string => fqns.map(brand).join(" | ");
+
+  function signatureLine(out: string, marker: string): string {
+    const line = out.split("\n").find((candidate) => candidate.includes(marker));
+    if (line === undefined) throw new Error(`no emitted line contains ${marker}`);
+    return line.trim();
+  }
+
+  const gui = parseDefoldApiDoc(guiDoc);
+  const guiOut = emitDeclarations(gui);
+  const guiConstants = (prefix: string): string[] =>
+    gui.constants
+      .map((c) => c.name)
+      .filter((name) => name.startsWith(prefix))
+      .sort();
+
+  test("a slot whose doc lists constants renders exactly those brands in doc order", () => {
+    expect(signatureLine(guiOut, "function set_blend_mode(")).toBe(
+      `function set_blend_mode(node: Opaque<"node">, blend_mode: ${union([
+        "gui.BLEND_ALPHA",
+        "gui.BLEND_ADD",
+        "gui.BLEND_ADD_ALPHA",
+        "gui.BLEND_MULT",
+        "gui.BLEND_SCREEN",
+      ])}): void;`,
+    );
+  });
+
+  test("a wildcard expands to every constant with that prefix, beside the other tokens", () => {
+    const easing = guiConstants("gui.EASING_");
+    expect(easing).toContain("gui.EASING_INOUTQUAD");
+    const line = signatureLine(guiOut, "function animate(");
+    expect(line).toContain(`easing: ${union(easing)} | Vector, duration: number`);
+    expect(line).toEndWith(
+      `playback?: ${union([
+        "gui.PLAYBACK_ONCE_FORWARD",
+        "gui.PLAYBACK_ONCE_BACKWARD",
+        "gui.PLAYBACK_ONCE_PINGPONG",
+        "gui.PLAYBACK_LOOP_FORWARD",
+        "gui.PLAYBACK_LOOP_BACKWARD",
+        "gui.PLAYBACK_LOOP_PINGPONG",
+      ])}): void;`,
+    );
+    expect(line).not.toContain('Opaque<"constant">');
+  });
+
+  test("a getter return expands to the same brands as its setter parameter", () => {
+    const pivots = union([
+      "gui.PIVOT_CENTER",
+      "gui.PIVOT_N",
+      "gui.PIVOT_NE",
+      "gui.PIVOT_E",
+      "gui.PIVOT_SE",
+      "gui.PIVOT_S",
+      "gui.PIVOT_SW",
+      "gui.PIVOT_W",
+      "gui.PIVOT_NW",
+    ]);
+    expect(signatureLine(guiOut, "function get_pivot(")).toBe(
+      `function get_pivot(node: Opaque<"node">): ${pivots};`,
+    );
+    expect(signatureLine(guiOut, "function set_pivot(")).toBe(
+      `function set_pivot(node: Opaque<"node">, pivot: ${pivots}): void;`,
+    );
+  });
+
+  test("a slot whose doc names no constant borrows the documented sibling's constants", () => {
+    const props = union(
+      [
+        "POSITION",
+        "ROTATION",
+        "EULER",
+        "SCALE",
+        "COLOR",
+        "OUTLINE",
+        "SHADOW",
+        "SIZE",
+        "FILL_ANGLE",
+        "INNER_RADIUS",
+        "LEADING",
+        "TRACKING",
+        "SLICE9",
+      ].map((name) => `gui.PROP_${name}`),
+    );
+    expect(signatureLine(guiOut, "function cancel_animations(")).toBe(
+      `function cancel_animations(node: Opaque<"node">, property?: string | ${props}): void;`,
+    );
+    expect(signatureLine(guiOut, "function get(")).toContain(
+      `property: string | Hash | ${props}, options?:`,
+    );
+  });
+
+  test("a slot's own doc listing wins over a borrow entry keyed to it", () => {
+    const module: ApiModule = {
+      ...gui,
+      functions: gui.functions.map((fn) =>
+        fn.name === "gui.cancel_animations"
+          ? {
+              ...fn,
+              parameters: fn.parameters.map((p) =>
+                p.name === "property" ? { ...p, doc: "only <code>gui.PROP_COLOR</code>" } : p,
+              ),
+            }
+          : fn,
+      ),
+    };
+    expect(signatureLine(emitDeclarations(module), "function cancel_animations(")).toBe(
+      `function cancel_animations(node: Opaque<"node">, property?: string | ${brand("gui.PROP_COLOR")}): void;`,
+    );
+  });
+
+  test("a family entry types a slot whose prose names nothing but whose example does", () => {
+    const buffer = parseDefoldApiDoc(bufferDoc);
+    const valueTypes = union(
+      buffer.constants
+        .map((c) => c.name)
+        .filter((name) => name.startsWith("buffer.VALUE_TYPE_"))
+        .sort(),
+    );
+    const out = emitDeclarations(buffer);
+    expect(signatureLine(out, "function set_metadata(")).toEndWith(
+      `value_type: ${valueTypes}): void;`,
+    );
+    expect(signatureLine(out, "function get_metadata(")).toEndWith(
+      `LuaMultiReturn<[number[] | undefined, ${valueTypes} | undefined]>;`,
+    );
+  });
+
+  test("a residual slot keeps the generic constant, and an unknown doc FQN adds nothing", () => {
+    expect(signatureLine(guiOut, "function new_texture(")).toContain(
+      'type: string | Opaque<"constant">, buffer: string',
+    );
+    const iap = emitDeclarations(parseDefoldApiDoc(iapDoc));
+    expect(signatureLine(iap, "function get_provider_id(")).toBe(
+      'function get_provider_id(): Opaque<"constant">;',
+    );
+  });
+
+  test("the signature ledger carries the same expansion", () => {
+    const ledger = emitSymbolSignatures(gui);
+    const entry = ledger.find((candidate) => candidate.identity.name === "gui.set_blend_mode");
+    expect(entry?.tsSignature).toContain(brand("gui.BLEND_SCREEN"));
+    expect(entry?.tsSignature).toBe(signatureLine(guiOut, "function set_blend_mode("));
+  });
+});

@@ -142,7 +142,7 @@ declare global {
      * if (values) print(`${values.length} values in 'somefloats'`);
      * ```
      */
-    function get_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, Opaque<"constant"> | undefined]>;
+    function get_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, number & { readonly __brand: "buffer.VALUE_TYPE_FLOAT32" } | number & { readonly __brand: "buffer.VALUE_TYPE_INT16" } | number & { readonly __brand: "buffer.VALUE_TYPE_INT32" } | number & { readonly __brand: "buffer.VALUE_TYPE_INT64" } | number & { readonly __brand: "buffer.VALUE_TYPE_INT8" } | number & { readonly __brand: "buffer.VALUE_TYPE_UINT16" } | number & { readonly __brand: "buffer.VALUE_TYPE_UINT32" } | number & { readonly __brand: "buffer.VALUE_TYPE_UINT64" } | number & { readonly __brand: "buffer.VALUE_TYPE_UINT8" } | undefined]>;
     /**
      * Get a specified stream from a buffer.
      *
@@ -169,7 +169,7 @@ declare global {
      * buffer.set_metadata(buf, hash("somefloats"), [-2.5, 10.0, 32.2], buffer.VALUE_TYPE_FLOAT32);
      * ```
      */
-    function set_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string, values: number[], value_type: Opaque<"constant">): void;
+    function set_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string, values: number[], value_type: number & { readonly __brand: "buffer.VALUE_TYPE_FLOAT32" } | number & { readonly __brand: "buffer.VALUE_TYPE_INT16" } | number & { readonly __brand: "buffer.VALUE_TYPE_INT32" } | number & { readonly __brand: "buffer.VALUE_TYPE_INT64" } | number & { readonly __brand: "buffer.VALUE_TYPE_INT8" } | number & { readonly __brand: "buffer.VALUE_TYPE_UINT16" } | number & { readonly __brand: "buffer.VALUE_TYPE_UINT32" } | number & { readonly __brand: "buffer.VALUE_TYPE_UINT64" } | number & { readonly __brand: "buffer.VALUE_TYPE_UINT8" }): void;
   }
 }
 
