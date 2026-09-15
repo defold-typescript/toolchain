@@ -85,7 +85,7 @@ model.play_anim(url, "run", gui.PLAYBACK_ONCE_FORWARD); // TS error — gui's fa
 window.set_dim_mode(window.get_dim_mode());          // TS error — the getter can return DIMMING_UNKNOWN
 ```
 
-A few slots name no constant at all (`gui.new_texture`'s `type` lists only strings, `iap.get_provider_id` names constants no ref-doc defines) and keep the generic `Opaque<"constant">`. `packages/types/test-d/documented-constant-slots.ts` pins the documented calls in each affected namespace.
+A few slots name no constant at all (`gui.new_texture`'s `type` lists only strings, `iap.get_provider_id`, typed once [`resolve`](./resolve.md) has run for extension-iap, names constants no ref-doc defines) and keep the generic `Opaque<"constant">`. `packages/types/test-d/documented-constant-slots.ts` pins the documented calls in each affected namespace.
 
 ## Engine handles are opaque — you cannot fabricate or cast across kinds
 

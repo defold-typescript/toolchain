@@ -99,44 +99,6 @@ export function promotedNamespacesFor(version: string): string[] {
   return [...(PROMOTED_NAMESPACES_BY_VERSION[version] ?? [])];
 }
 
-export interface ExtensionPin {
-  readonly namespace: string;
-  readonly repo: string;
-  readonly tag: string;
-  readonly path: string;
-}
-
-// Extension-only namespaces pinned to a release tag. The types-side sync script
-// holds these values in its own `EXTENSION_MANIFEST` (the per-package rootDir
-// boundary prevents importing this module); `release-model.test.ts`
-// correspondence-guards that manifest against these pins so tag drift fails CI.
-export const EXTENSION_PINS: readonly ExtensionPin[] = [
-  {
-    namespace: "iac",
-    repo: "defold/extension-iac",
-    tag: "1.4.0",
-    path: "extension-iac/api/iac.script_api",
-  },
-  {
-    namespace: "iap",
-    repo: "defold/extension-iap",
-    tag: "8.4.0",
-    path: "extension-iap/api/iap.script_api",
-  },
-  {
-    namespace: "push",
-    repo: "defold/extension-push",
-    tag: "4.1.0",
-    path: "extension-push/api/push.script_api",
-  },
-  {
-    namespace: "webview",
-    repo: "defold/extension-webview",
-    tag: "1.5.0",
-    path: "webview/api/webview.script_api",
-  },
-];
-
 export interface TargetMeta {
   readonly fixturesDir: string;
   readonly generatedDir: string;

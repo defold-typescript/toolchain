@@ -403,8 +403,8 @@ describe("scriptApiToRefDoc pipe-separated types", () => {
     expect(unionReturn("plain")).toEqual(["string"]);
   });
 
-  // The `.script_api` sources for the built-in extensions are fetched, not
-  // committed, so the offline guard that the split moves no frozen golden runs
+  // The `.script_api` sources behind the committed extension-golden fixtures are
+  // not committed, so the offline guard that the split moves no frozen golden runs
   // over the emitted fixtures: none of them carries a pipe-bearing type token,
   // therefore none of them can re-emit differently once `|` is split.
   it("no committed engine fixture carries a pipe-bearing type token", () => {

@@ -273,17 +273,17 @@ project as `druid.druid`.
 ## Libraries that ship a `.script_api`
 
 A native or hybrid library that ships an extension `.script_api` (the same YAML
-format the four built-in extensions use) has a **third** ingestion mode, distinct
+format every Defold extension ships) has a **third** ingestion mode, distinct
 from the LuaLS front-end above: `packages/library-types/scripts/sync-script-api-types.ts`,
 driven by `packages/library-types/script-api-targets.json`. Instead of parsing
 `---@` annotations, it routes the committed `.script_api` snapshot through the
 **shared ref-doc emitter** — `scriptApiToFixtureJson` → `generateModuleDeclaration`,
-the exact path the built-in extensions and resolve-time extension typing use — so
+the exact path resolve-time extension typing uses — so
 one-level nested sub-namespaces (`bridge.platform`, `bridge.achievements`) survive
 into nested `namespace` blocks. The output is an importable module keyed by
 `moduleId` (`declare module 'bridge.bridge'`), matching the LuaLS library goldens,
-so the library imports under its pinned specifier; the built-in extensions'
-`declare global` form is unchanged.
+so the library imports under its pinned specifier; the `declare global` form
+stays the resolve emitter's, for extensions a project declares.
 
 Each entry pins `repo`, `ref`, `scriptApi` (the path to the `.script_api` in the
 repo), `moduleId`, `namespace`, and the exact `generated` / `apiDoc` / `fidelity`
@@ -294,7 +294,7 @@ cd packages/library-types
 
 bun scripts/sync-script-api-types.ts --fetch      # snapshot the pinned .script_api into fixtures/script-api/<moduleId>.script_api
 bun scripts/sync-script-api-types.ts --emit       # emit the pinned generated/<...>.d.ts
-bun scripts/sync-script-api-types.ts --api-doc     # lower the pinned api-doc/<...>.json (raw ref-doc doc, uniform with the built-in extensions)
+bun scripts/sync-script-api-types.ts --api-doc     # lower the pinned api-doc/<...>.json (raw ref-doc doc, uniform with the engine fixtures)
 bun scripts/sync-script-api-types.ts --fidelity    # build the pinned fidelity/<...>.json
 ```
 

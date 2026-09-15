@@ -20,6 +20,7 @@
     "test-d/versions",
     "test-d/custom-catalog",
     "test-d/kinds",
+    "test-d/extensions",
     "test/fixtures",
     "src/editor-vm-globals.d.ts"
   ]

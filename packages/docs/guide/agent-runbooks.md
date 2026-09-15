@@ -1308,10 +1308,6 @@ bump reports each one as a manual review point rather than deciding silently.
   deprecation list is never auto-edited.
 - **Re-confirm `import-manifest.json`** — verify the imported release tag matches
   the intended `<to>` build.
-- **Re-confirm the extension release tags** — verify the pinned
-  `EXTENSION_MANIFEST` tags (iac/iap/push/webview) still match the intended
-  `<to>` build; a new Defold release may bundle newer extension versions. These
-  pin independently of `import-manifest.json`.
 - **Author the upgrade guide** — add a `<!-- release: <new> -->` section to
   `packages/docs/guide/upgrading-defold-versions.md`. The readiness gate follows
   the marker, so no new page and no new gate is owed per bump. Shape the section

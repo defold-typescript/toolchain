@@ -1,5 +1,3 @@
-/// <reference path="../index.d.ts" />
-
 // iap.finish and iap.acknowledge take the same prose-only transaction object the
 // field parser cannot read; it is hand-curated as a param-side object curation,
 // so every field is optional. A value shaped like the curated transaction is
