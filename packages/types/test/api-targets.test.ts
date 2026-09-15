@@ -108,7 +108,7 @@ describe("api-targets registry", () => {
       for (const module of demoted.modules) {
         expect(currentNamespaces.has(module.namespace)).toBe(true);
       }
-      expect(demoted.modules.length).toBeGreaterThanOrEqual(39);
+      expect(demoted.modules.length).toBeGreaterThanOrEqual(35);
     }
   });
 

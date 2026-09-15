@@ -1,5 +1,13 @@
 import { describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { resolve } from "node:path";
 import { materializeVersionedSurface } from "../scripts/materialize-version";
 import { loadApiTargets } from "../scripts/regen";
@@ -158,6 +166,63 @@ describe("versioned API surface — consumer tsconfig proof", () => {
       rmSync(cacheDir, { recursive: true, force: true });
     }
   });
+});
+
+// Every committed surface a consumer can select: the default entrypoint plus each
+// pinned `generated/versions/<target>/index.d.ts`, read from disk so a newly
+// committed target is covered without editing this list.
+function committedSurfaceIndexes(): string[] {
+  const versionsDir = resolve(PACKAGE_ROOT, "generated", "versions");
+  const pinned = readdirSync(versionsDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => `generated/versions/${entry.name}/index.d.ts`);
+  for (const index of pinned) {
+    if (!existsSync(resolve(PACKAGE_ROOT, index))) {
+      throw new Error(`${index} is missing; tsc would compile the proof without the surface`);
+    }
+  }
+  if (pinned.length === 0) {
+    throw new Error(
+      "no committed generated/versions/*/index.d.ts found; the wall would pass vacuously",
+    );
+  }
+  return ["index.d.ts", ...pinned];
+}
+
+describe("committed API surfaces — extensions are never ambient", () => {
+  for (const index of committedSurfaceIndexes()) {
+    test(`${index} declares none of iac, iap, push, webview`, () => {
+      const root = mkdtempSync(resolve(PACKAGE_ROOT, "ext-wall-"));
+      try {
+        const tsconfigPath = resolve(root, "tsconfig.json");
+        writeFileSync(
+          tsconfigPath,
+          `${JSON.stringify(
+            {
+              extends: "../../../tsconfig.json",
+              compilerOptions: { noEmit: true, types: [] },
+              include: [
+                resolve(VERSIONS_DIR, "no-ambient-extensions-proof.ts"),
+                resolve(PACKAGE_ROOT, index),
+              ],
+            },
+            null,
+            2,
+          )}\n`,
+        );
+        const { exitCode, output } = typecheck(tsconfigPath);
+        if (exitCode !== 0) {
+          throw new Error(
+            `${index} proof failed — an extension namespace is declared on this surface ` +
+              `(unused @ts-expect-error):\n${output}`,
+          );
+        }
+        expect(exitCode).toBe(0);
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
+    });
+  }
 });
 
 describe("versioned API surface — src augmentations reach the consumer", () => {

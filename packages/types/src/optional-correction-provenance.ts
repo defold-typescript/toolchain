@@ -24,13 +24,19 @@ interface VersionedManifestEntry extends ManifestEntry {
   readonly editor?: boolean;
 }
 
+// The provenance target the committed extension goldens are recorded under. They
+// belong to no engine version: `resolve` applies the same correction table to them.
+export const EXTENSION_GOLDENS_TARGET = "extension-goldens";
+
 // Every runtime module regen emits through the global correction table: the
-// default target's manifest plus every older generated target's. Editor-VM
-// entries are outside the scope the corrections cover.
+// default target's manifest plus every older generated target's, plus the
+// extension goldens when given. Editor-VM entries are outside the scope the
+// corrections cover.
 export function retainedSurfaces(
   defaultTarget: string,
   defaultManifest: readonly ManifestEntry[],
   versionedManifest: readonly VersionedManifestEntry[],
+  extensionGoldenManifest: readonly ManifestEntry[] = [],
 ): ProvenanceSurface[] {
   return [
     ...defaultManifest.map((entry) => ({
@@ -41,6 +47,11 @@ export function retainedSurfaces(
     ...versionedManifest
       .filter((entry) => entry.editor !== true)
       .map((entry) => ({ target: entry.versionId, namespace: entry.namespace, doc: entry.doc })),
+    ...extensionGoldenManifest.map((entry) => ({
+      target: EXTENSION_GOLDENS_TARGET,
+      namespace: entry.namespace,
+      doc: entry.doc,
+    })),
   ];
 }
 

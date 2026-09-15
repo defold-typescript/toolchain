@@ -7,14 +7,9 @@ import {
   PREVIOUS_STABLE_DEFOLD_VERSION,
 } from "../packages/cli/src/defold-version.ts";
 import { DEFOLD_1_13_PROMOTED_NAMESPACES } from "../packages/types/scripts/import-defold-release.ts";
-import {
-  DEFOLD_VERSION,
-  EXTENSION_MANIFEST,
-  SYNC_MANIFEST,
-} from "../packages/types/scripts/sync-api-docs.ts";
+import { DEFOLD_VERSION, SYNC_MANIFEST } from "../packages/types/scripts/sync-api-docs.ts";
 import {
   classifyTransition,
-  EXTENSION_PINS,
   fixtureDir,
   promotedNamespacesFor,
   RELEASE_MODEL,
@@ -116,24 +111,13 @@ describe("release model", () => {
 
     test("every synced fixture path is rooted at the model fixtureDir", () => {
       const prefix = `${fixtureDir(RELEASE_MODEL.current)}/`;
-      for (const entry of [...SYNC_MANIFEST, ...EXTENSION_MANIFEST]) {
+      for (const entry of SYNC_MANIFEST) {
         expect(entry.fixture.startsWith(prefix)).toBe(true);
       }
     });
 
     test("promoted namespaces read by import-defold-release match the model", () => {
       expect(promotedNamespacesFor("1.13.0")).toEqual([...DEFOLD_1_13_PROMOTED_NAMESPACES]);
-    });
-
-    test("extension pins read by sync-api-docs match the model", () => {
-      expect(
-        EXTENSION_MANIFEST.map(({ namespace, repo, tag, path }) => ({
-          namespace,
-          repo,
-          tag,
-          path,
-        })),
-      ).toEqual([...EXTENSION_PINS]);
     });
   });
 });

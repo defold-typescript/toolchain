@@ -15,6 +15,7 @@
       "!**/dist",
       "!**/node_modules",
       "!**/generated",
+      "!**/extension-goldens",
       "!**/api-doc",
       "!**/fidelity",
       "!**/library-classification.json",

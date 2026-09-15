@@ -11,17 +11,21 @@ through, applied to whatever extensions your project actually declares. The
 generated surface lands in a project-local, gitignored `.defold-types/` package,
 so extension functions gain autocomplete and `tsc` coverage with no import.
 
+No extension is ambient until it is resolved. That includes the ones Defold
+maintains, such as `iap`, `iac`, `push` and `webview`:
+`@defold-typescript/types` declares only the engine, so `iap.buy(...)` is a
+type error until the project depends on
+[extension-iap](https://github.com/defold/extension-iap) and `resolve` has run.
+
 ## Declaring an extension
 
-Extensions are declared in `game.project` under `[dependencies]`, one archive
-URL per numbered key — the same INI surface the Defold editor's *Fetch
-Libraries* writes:
+Extensions are declared in `game.project` under `[project]`, one archive URL
+per numbered `dependencies#N` key — the same INI surface the Defold editor's
+*Fetch Libraries* writes:
 
 ```ini
 [project]
 title = My Game
-
-[dependencies]
 dependencies#0 = https://github.com/defold/extension-iap/archive/main.zip
 dependencies#1 = https://github.com/some/asset-pack/archive/main.zip
 ```
@@ -42,7 +46,7 @@ bunx @defold-typescript/cli resolve
 
 Run it once after declaring a dependency, and re-run it (or leave
 [`watch`](./watch.md) running, which re-resolves on every `game.project` save)
-whenever you edit `[dependencies]`. See [Resolve](./resolve.md) for the full
+whenever you edit the `dependencies#N` keys. See [Resolve](./resolve.md) for the full
 behavior, the `--frozen` lockfile mode, version pinning, and the cache location.
 
 ## Consuming the generated namespace

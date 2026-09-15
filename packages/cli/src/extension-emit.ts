@@ -1,18 +1,19 @@
 // Pure parse->emit core of the `[dependencies]`-driven extension typing pipeline.
 // Given one extension `.script_api` (YAML) text it produces the ambient-namespace
-// `.d.ts` declaration, reusing the exact pipeline the four built-in extensions
-// flow through: `scriptApiToFixtureJson` (YAML -> core ref-doc JSON) feeding
-// `generateModuleDeclaration`. The namespace is read from the doc's own
-// top-level table `name`, never a caller argument. Reading bytes out of a
-// resolved archive, writing into `.defold-types/`, and the CLI `resolve` verb
-// are later slices; this stays text-pure and IO-free.
+// `.d.ts` declaration through `scriptApiToFixtureJson` (YAML -> core ref-doc
+// JSON) feeding `generateModuleDeclaration`, the same call regen uses to write
+// the committed extension goldens (`packages/types/extension-goldens/`). The
+// namespace is read from the doc's own top-level table `name`, never a caller
+// argument. Reading bytes out of a resolved archive, writing into
+// `.defold-types/`, and the CLI `resolve` verb are later slices; this stays
+// text-pure and IO-free.
 
 import { join } from "node:path";
 import { resolveTypesPackageRoot } from "./api-registry";
 
-// Mirror the EXTENSION_MANIFEST-derived built-ins: their generated `.d.ts`
-// import branded engine handles from the types package's core-types via this
-// relative path. Only emitted when the declaration actually references one.
+// Shared with the committed extension goldens, which import branded engine
+// handles from the types package's core-types via this relative path. Only
+// emitted when the declaration actually references one.
 const EXTENSION_CORE_TYPES_IMPORT = "../src/core-types";
 
 export interface EmittedExtension {
@@ -46,16 +47,10 @@ async function loadEmitter(): Promise<ScriptApiToFixtureJson & RegenModule> {
   return { ...sync, ...regen };
 }
 
-// The four extensions Defold ships with the engine. They flow through the
-// build-time `api-targets.json` path today; the parity guard locks them to this
-// runtime emitter so there is one extension-typing path, not two. Adding a
-// built-in here is the guard's single touch-point.
-export const BUILTIN_EXTENSION_NAMESPACES = ["iac", "iap", "push", "webview"] as const;
-
-// Doc-level core shared by the YAML entrypoint and the built-in parity guard.
-// The doc is the post-`scriptApiToFixtureJson` ref-doc JSON the build path also
-// feeds, so passing a committed `fixtures/<ns>_doc.json` reproduces the
-// committed `generated/<ns>.d.ts` byte-for-byte (regen writes the same
+// Doc-level core shared by the YAML entrypoint and the extension golden parity
+// guard. The doc is the post-`scriptApiToFixtureJson` ref-doc JSON, so passing a
+// committed `fixtures/<ns>_doc.json` reproduces the committed
+// `extension-goldens/<ns>.d.ts` byte-for-byte (regen writes the same
 // `generateModuleDeclaration` output with no formatting pass).
 export async function emitExtensionDeclarationFromDoc(doc: {
   info: { namespace: string };

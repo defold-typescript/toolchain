@@ -191,15 +191,6 @@ const DEFAULT_TARGET = API_TARGETS.find((t) => t.default === true) as ApiTarget;
 
 export const MODULE_MANIFEST: readonly ModuleManifestEntry[] = loadTargetModules(DEFAULT_TARGET);
 
-// The fidelity audit runs over the promoted default surface (the `default: true`
-// target) so the 1.13-only modules (b2d.*, compute, material) and the 1.13 model
-// additions are audited too — auditing the older 1.12.4 target left them unseen,
-// which is how the promoted surface shipped opaque `Record` fallbacks while the
-// gate read `recordTables: 0`.
-const FIDELITY_BASELINE_TARGET = DEFAULT_TARGET;
-export const FIDELITY_BASELINE_MANIFEST: readonly ModuleManifestEntry[] =
-  loadTargetModules(FIDELITY_BASELINE_TARGET);
-
 // Handle tokens the editor VM alone exposes. `transaction_step[` is what
 // upstream literally emits for `transaction_step[]` — the ref-doc's own type
 // string loses the closing bracket — so it is repaired here, per entry, rather
@@ -751,6 +742,21 @@ if (import.meta.main) {
   const messagesOut = resolve(generated, MESSAGES_MANIFEST.outFile);
   writeFileSync(messagesOut, generateBuiltinMessagesDeclaration(MESSAGES_MANIFEST));
   console.log(`wrote ${messagesOut}`);
+
+  // Imported here rather than at module scope: its fixtures are not published,
+  // and `resolve` loads this module from an installed package.
+  const { EXTENSION_GOLDENS_DIR, EXTENSION_GOLDEN_MANIFEST } = await import("./extension-goldens");
+  const goldens = resolve(PACKAGE_ROOT, EXTENSION_GOLDENS_DIR);
+  mkdirSync(goldens, { recursive: true });
+  for (const entry of EXTENSION_GOLDEN_MANIFEST) {
+    const { contents, dropped } = generateModuleDeclaration(entry);
+    if (dropped.length > 0) {
+      console.log(`note: dropped skipped member(s) from ${entry.namespace}: ${dropped.join(", ")}`);
+    }
+    const out = resolve(goldens, entry.outFile);
+    writeFileSync(out, contents);
+    console.log(`wrote ${out}`);
+  }
 
   // The target's own `generatedDir` is where a version lands, so a declaring
   // target's editor surface (and its `editor-vm/` subdirectory) rides the same

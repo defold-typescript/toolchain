@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { EXTENSION_GOLDEN_MANIFEST } from "../scripts/extension-goldens";
 import {
   collectConstantFqns,
   generateModuleDeclaration,
@@ -15,6 +16,7 @@ import {
   documentedConstantTokens,
   resolveConstantSlotTokens,
 } from "../src/emit-dts";
+import { EXTENSION_GOLDENS_TARGET } from "../src/optional-correction-provenance";
 
 const defaultTarget = loadApiTargets().find((candidate) => candidate.default === true);
 if (!defaultTarget) throw new Error("api-targets.json: no default target");
@@ -38,13 +40,15 @@ interface ConstantSlot {
 }
 
 // Every runtime module regen emits, for the default target and every older
-// committed target: the same retained set the optional-slot corrections walk.
+// committed target, plus the extension goldens `resolve` reproduces: the same
+// retained set the optional-slot corrections walk.
 const surfaces: Surface[] = [
   ...MODULE_MANIFEST.map((entry) => ({ target: defaultTarget.id, entry })),
   ...VERSIONED_MODULE_MANIFEST.filter((entry) => entry.editor !== true).map((entry) => ({
     target: entry.versionId,
     entry,
   })),
+  ...EXTENSION_GOLDEN_MANIFEST.map((entry) => ({ target: EXTENSION_GOLDENS_TARGET, entry })),
 ].map(({ target, entry }) => {
   const options = { knownConstantFqns, translations: {} };
   const { contents, dropped } = generateModuleDeclaration(entry, options);

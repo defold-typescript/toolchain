@@ -110,16 +110,6 @@
           "outFile": "http.d.ts"
         },
         {
-          "namespace": "iac",
-          "fixture": "iac_doc.json",
-          "outFile": "iac.d.ts"
-        },
-        {
-          "namespace": "iap",
-          "fixture": "iap_doc.json",
-          "outFile": "iap.d.ts"
-        },
-        {
           "namespace": "image",
           "fixture": "image_doc.json",
           "outFile": "image.d.ts"
@@ -171,11 +161,6 @@
           "outFile": "profiler.d.ts"
         },
         {
-          "namespace": "push",
-          "fixture": "push_doc.json",
-          "outFile": "push.d.ts"
-        },
-        {
           "namespace": "render",
           "fixture": "render_doc.json",
           "outFile": "render.d.ts"
@@ -225,11 +210,6 @@
           "fixture": "vmath_doc.json",
           "outFile": "vmath.d.ts",
           "skipFunctions": ["clamp", "lerp", "slerp", "mul_per_elem", "normalize"]
-        },
-        {
-          "namespace": "webview",
-          "fixture": "webview_doc.json",
-          "outFile": "webview.d.ts"
         },
         {
           "namespace": "window",
@@ -459,16 +439,6 @@
           "outFile": "http.d.ts"
         },
         {
-          "namespace": "iac",
-          "fixture": "iac_doc.json",
-          "outFile": "iac.d.ts"
-        },
-        {
-          "namespace": "iap",
-          "fixture": "iap_doc.json",
-          "outFile": "iap.d.ts"
-        },
-        {
           "namespace": "image",
           "fixture": "image_doc.json",
           "outFile": "image.d.ts"
@@ -520,11 +490,6 @@
           "outFile": "profiler.d.ts"
         },
         {
-          "namespace": "push",
-          "fixture": "push_doc.json",
-          "outFile": "push.d.ts"
-        },
-        {
           "namespace": "render",
           "fixture": "render_doc.json",
           "outFile": "render.d.ts"
@@ -574,11 +539,6 @@
           "fixture": "vmath_doc.json",
           "outFile": "vmath.d.ts",
           "skipFunctions": ["clamp", "lerp", "slerp", "mul_per_elem", "normalize"]
-        },
-        {
-          "namespace": "webview",
-          "fixture": "webview_doc.json",
-          "outFile": "webview.d.ts"
         },
         {
           "namespace": "window",
@@ -771,16 +731,6 @@
           "outFile": "http.d.ts"
         },
         {
-          "namespace": "iac",
-          "fixture": "iac_doc.json",
-          "outFile": "iac.d.ts"
-        },
-        {
-          "namespace": "iap",
-          "fixture": "iap_doc.json",
-          "outFile": "iap.d.ts"
-        },
-        {
           "namespace": "image",
           "fixture": "image_doc.json",
           "outFile": "image.d.ts"
@@ -825,11 +775,6 @@
           "namespace": "profiler",
           "fixture": "profiler_doc.json",
           "outFile": "profiler.d.ts"
-        },
-        {
-          "namespace": "push",
-          "fixture": "push_doc.json",
-          "outFile": "push.d.ts"
         },
         {
           "namespace": "render",
@@ -881,11 +826,6 @@
           "fixture": "vmath_doc.json",
           "outFile": "vmath.d.ts",
           "skipFunctions": ["clamp", "lerp", "slerp", "mul_per_elem", "normalize"]
-        },
-        {
-          "namespace": "webview",
-          "fixture": "webview_doc.json",
-          "outFile": "webview.d.ts"
         },
         {
           "namespace": "window",

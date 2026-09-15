@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
+import { EXTENSION_GOLDEN_MANIFEST, EXTENSION_GOLDENS_DIR } from "../scripts/extension-goldens";
 import { loadApiTargets, MODULE_MANIFEST, VERSIONED_MODULE_MANIFEST } from "../scripts/regen";
 import { OPTIONAL_SLOT_CORRECTIONS } from "../src/emit-dts";
 import { correctionProvenance, retainedSurfaces } from "../src/optional-correction-provenance";
@@ -11,6 +12,7 @@ import {
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const GENERATED_DIR = resolve(PACKAGE_ROOT, "generated");
+const EXTENSION_GOLDENS = resolve(PACKAGE_ROOT, EXTENSION_GOLDENS_DIR);
 
 function declarationFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -20,13 +22,13 @@ function declarationFiles(dir: string): string[] {
   });
 }
 
-// One slot map across every committed declaration the emitter writes. A slot
-// counts omissible only when every copy that names it does, so a required
-// versioned copy reds whatever order the walk yields, and a namespace split
-// across files still resolves.
+// One slot map across every committed declaration the emitter writes, the
+// extension goldens included. A slot counts omissible only when every copy that
+// names it does, so a required versioned copy reds whatever order the walk
+// yields, and a namespace split across files still resolves.
 const declaredSlots = mergeDeclaredParameterSlots(
-  declarationFiles(GENERATED_DIR).map((path) =>
-    enumerateDeclaredParameterSlots(readFileSync(path, "utf8"), relative(GENERATED_DIR, path)),
+  [...declarationFiles(GENERATED_DIR), ...declarationFiles(EXTENSION_GOLDENS)].map((path) =>
+    enumerateDeclaredParameterSlots(readFileSync(path, "utf8"), relative(PACKAGE_ROOT, path)),
   ),
 );
 
@@ -36,7 +38,12 @@ if (!target) throw new Error("api-targets.json: no default target");
 const provenance = new Map(
   correctionProvenance(
     [...OPTIONAL_SLOT_CORRECTIONS.keys()],
-    retainedSurfaces(target.id, MODULE_MANIFEST, VERSIONED_MODULE_MANIFEST),
+    retainedSurfaces(
+      target.id,
+      MODULE_MANIFEST,
+      VERSIONED_MODULE_MANIFEST,
+      EXTENSION_GOLDEN_MANIFEST,
+    ),
   ).map((entry) => [entry.key, entry]),
 );
 
@@ -67,7 +74,7 @@ describe("OPTIONAL_SLOT_CORRECTIONS reaches the shipped declarations", () => {
     for (const { key, element, slot } of corrections) {
       const slots = declaredSlots.get(element);
       if (!slots) {
-        unreached.push(`${key}: generated/ declares no ${element}`);
+        unreached.push(`${key}: no committed declaration declares ${element}`);
         continue;
       }
       const declared = slots.get(slot);
