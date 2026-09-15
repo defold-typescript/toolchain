@@ -4,5 +4,5 @@
     "noEmit": true,
     "types": []
   },
-  "include": ["script-proof.ts", "../../generated/kinds/script.d.ts"]
+  "include": ["script-proof.ts", "../../generated/kinds/script.d.ts", "../no-ambient-extensions.ts"]
 }

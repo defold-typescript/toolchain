@@ -4,5 +4,9 @@
     "noEmit": true,
     "types": []
   },
-  "include": ["gui-script-proof.ts", "../../generated/kinds/gui-script.d.ts"]
+  "include": [
+    "gui-script-proof.ts",
+    "../../generated/kinds/gui-script.d.ts",
+    "../no-ambient-extensions.ts"
+  ]
 }

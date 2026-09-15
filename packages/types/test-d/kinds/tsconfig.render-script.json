@@ -4,5 +4,9 @@
     "noEmit": true,
     "types": []
   },
-  "include": ["render-script-proof.ts", "../../generated/kinds/render-script.d.ts"]
+  "include": [
+    "render-script-proof.ts",
+    "../../generated/kinds/render-script.d.ts",
+    "../no-ambient-extensions.ts"
+  ]
 }
