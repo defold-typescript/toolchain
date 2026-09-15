@@ -104,6 +104,7 @@ export interface RenderResultInput {
     readonly column: number;
   }[];
   readonly consoleObserved?: boolean;
+  readonly consoleWindowComplete?: boolean;
 }
 
 export function renderResult(input: RenderResultInput): string {
@@ -199,10 +200,14 @@ export function renderResult(input: RenderResultInput): string {
     "consoleErrorLocations" in input
       ? { ...withConsoleErrors, consoleErrorLocations: input.consoleErrorLocations }
       : withConsoleErrors;
-  const payload =
+  const withConsoleObserved =
     "consoleObserved" in input
       ? { ...withConsoleLocations, consoleObserved: input.consoleObserved }
       : withConsoleLocations;
+  const payload =
+    "consoleWindowComplete" in input
+      ? { ...withConsoleObserved, consoleWindowComplete: input.consoleWindowComplete }
+      : withConsoleObserved;
   return `${JSON.stringify(payload)}\n`;
 }
 

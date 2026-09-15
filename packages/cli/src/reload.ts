@@ -37,6 +37,8 @@ const REFUSED = "the Defold editor refused the reload: no game running, or nothi
 const REPORTED_ERROR = "the reloaded code reported an error";
 const UNOBSERVABLE =
   "the editor console could not be opened, so nothing was observed for this reload";
+const INTERRUPTED = (waitMs: number): string =>
+  `the editor console closed before the ${waitMs}ms window ended, so later errors were not observed`;
 
 /**
  * Whether the window the caller asked for was actually read. `skipped` is the
@@ -88,12 +90,16 @@ async function bounded<T extends object>(
  * The window, not the stream, ends the read: `/console/stream` stays open for
  * the editor's whole session, so a reload that logged nothing would otherwise
  * park here forever.
+ *
+ * `completed` is true only when the window ran out. A stream that ends or
+ * rejects first leaves the rest of the window unread, so an empty `captured`
+ * then says nothing about errors the reload raised afterwards.
  */
 async function drainWindow(
   reader: AsyncIterator<string>,
   waitMs: number,
   abort: AbortController,
-): Promise<string[]> {
+): Promise<{ readonly captured: string[]; readonly completed: boolean }> {
   const captured: string[] = [];
   let timer: ReturnType<typeof setTimeout> | undefined;
   const expiry = new Promise<"expired">((resolve) => {
@@ -103,7 +109,8 @@ async function drainWindow(
     let inError = false;
     for (;;) {
       const next = await Promise.race([reader.next(), expiry]);
-      if (next === "expired" || next.done === true) return captured;
+      if (next === "expired") return { captured, completed: true };
+      if (next.done === true) return { captured, completed: false };
       const line = next.value;
       if (isConsoleErrorHeader(line)) {
         inError = true;
@@ -114,9 +121,9 @@ async function drainWindow(
       captured.push(line);
     }
   } catch {
-    // An aborted stream rejects rather than ending; the window closing is the
-    // ordinary end of this read, not a failure of the reload.
-    return captured;
+    // Nothing aborts the stream until `finally` below, so a rejection here is
+    // the transport failing mid-window, not the window closing.
+    return { captured, completed: false };
   } finally {
     if (timer !== undefined) clearTimeout(timer);
     // Order matters, as in `watch`: the abort unparks a stream waiting on the
@@ -147,6 +154,7 @@ export async function runReload(opts: RunReloadOptions): Promise<number> {
     outcome: ReloadOutcome,
     errors: readonly string[],
     consoleObserved: boolean,
+    windowComplete: boolean,
     error?: string,
   ): number => {
     // The raw lines are what `captured` holds, so the JSON's `consoleErrors`
@@ -160,6 +168,7 @@ export async function runReload(opts: RunReloadOptions): Promise<number> {
           consoleErrors: errors,
           consoleErrorLocations: errors.flatMap((line) => consoleLineLocations(cwd, line)),
           consoleObserved,
+          consoleWindowComplete: windowComplete,
           ...(error === undefined ? {} : { error }),
         }),
       );
@@ -178,7 +187,7 @@ export async function runReload(opts: RunReloadOptions): Promise<number> {
   );
   if (endpoint === null) {
     abort.abort();
-    return report("unavailable", [], false, UNAVAILABLE);
+    return report("unavailable", [], false, false, UNAVAILABLE);
   }
 
   // Opened before the post, never after: `openConsole` reads the watermark it
@@ -209,7 +218,7 @@ export async function runReload(opts: RunReloadOptions): Promise<number> {
   if (outcome !== "accepted") {
     abort.abort();
     void reader?.return?.(undefined);
-    return report(outcome, [], observed, outcome === "skipped" ? REFUSED : UNAVAILABLE);
+    return report(outcome, [], observed, false, outcome === "skipped" ? REFUSED : UNAVAILABLE);
   }
 
   if (!opts.json) {
@@ -222,13 +231,22 @@ export async function runReload(opts: RunReloadOptions): Promise<number> {
   // is preserved; the exit status is what carries the inability to observe.
   if (consoleState === "failed") {
     abort.abort();
-    return report("accepted", [], false, UNOBSERVABLE);
+    return report("accepted", [], false, false, UNOBSERVABLE);
   }
 
-  const captured = reader === null ? [] : await drainWindow(reader, waitMs, abort);
+  // Only the `--wait 0` opt-out reaches here without a reader, and it read no
+  // window at all, so it cannot claim a complete one.
+  const { captured, completed } =
+    reader === null ? { captured: [], completed: false } : await drainWindow(reader, waitMs, abort);
   abort.abort();
 
-  if (captured.length > 0) return report("accepted", captured, observed, REPORTED_ERROR);
+  if (captured.length > 0) {
+    return report("accepted", captured, observed, completed, REPORTED_ERROR);
+  }
+
+  if (reader !== null && !completed) {
+    return report("accepted", [], observed, false, INTERRUPTED(waitMs));
+  }
 
   if (!opts.json) {
     stdout.write(
@@ -237,5 +255,5 @@ export async function runReload(opts: RunReloadOptions): Promise<number> {
         : "defold-typescript reload: no error observed; the console was not read\n",
     );
   }
-  return report("accepted", [], observed);
+  return report("accepted", [], observed, completed);
 }
