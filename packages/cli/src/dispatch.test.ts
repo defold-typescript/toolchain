@@ -4092,6 +4092,8 @@ describe("dispatch bob", () => {
   // to dereference, so the tag lookup is exactly what fails first.
   const TAG_LOOKUP_ERROR =
     "defold-typescript: could not resolve the Defold version tag (https://api.github.com/repos/defold/defold/git/refs/tags/1.0.0 -> 404 Not Found).";
+  const TAG_LOOKUP_ERROR_LINE =
+    "defold-typescript: error: could not resolve the Defold version tag (https://api.github.com/repos/defold/defold/git/refs/tags/1.0.0 -> 404 Not Found).\n";
 
   function rejectingVersionFetch(): { fetchVersionInfo: () => Promise<{ sha1: string }> } {
     return {
@@ -4121,7 +4123,7 @@ describe("dispatch bob", () => {
     for (const version of registeredTargetVersions()) {
       expect(stderr).toContain(version);
     }
-    expect(stderr).toContain(TAG_LOOKUP_ERROR);
+    expect(stderr).toContain(TAG_LOOKUP_ERROR_LINE);
   });
 
   test("bob build --json folds the notice and unresolvableTarget into the failing payload", async () => {
@@ -4178,7 +4180,7 @@ describe("dispatch bob", () => {
     for (const version of registeredTargetVersions()) {
       expect(plain.err()).toContain(version);
     }
-    expect(plain.err()).toContain(TAG_LOOKUP_ERROR);
+    expect(plain.err()).toContain(TAG_LOOKUP_ERROR_LINE);
 
     const jsonRun = captureStreams();
     const { internals: internals2 } = defoldInternals();
@@ -7937,5 +7939,101 @@ describe("upstream release notice", () => {
 
     expect(code).toBe(0);
     expect(channelCalls).toEqual([]);
+  });
+});
+
+describe("dispatch error lines", () => {
+  const REMOVED_FLAG_MESSAGE =
+    "--defold-version/--channel were removed; use --defold-target <version|stable|beta|alpha>";
+
+  function ttyStderr(streams: ReturnType<typeof captureStreams>): typeof streams {
+    Object.assign(streams.io.stderr, { isTTY: true });
+    return streams;
+  }
+
+  test("a failure on a terminal stderr carries a bold red error word", () => {
+    const { io, err } = ttyStderr(captureStreams());
+
+    const code = dispatch(["build", "--defold-version", "1.0"], io, { env: {} });
+
+    expect(code).toBe(1);
+    expect(err()).toBe(`defold-typescript: \x1b[1;31merror\x1b[0m: ${REMOVED_FLAG_MESSAGE}\n`);
+  });
+
+  test("--no-color keeps the word and drops the escapes", () => {
+    const { io, err } = ttyStderr(captureStreams());
+
+    const code = dispatch(["build", "--defold-version", "1.0", "--no-color"], io, { env: {} });
+
+    expect(code).toBe(1);
+    expect(err()).toBe(`defold-typescript: error: ${REMOVED_FLAG_MESSAGE}\n`);
+  });
+
+  test("NO_COLOR keeps the word and drops the escapes", () => {
+    const { io, err } = ttyStderr(captureStreams());
+
+    const code = dispatch(["build", "--defold-version", "1.0"], io, { env: { NO_COLOR: "1" } });
+
+    expect(code).toBe(1);
+    expect(err()).toBe(`defold-typescript: error: ${REMOVED_FLAG_MESSAGE}\n`);
+  });
+
+  test("a stderr that is not a terminal gets the plain word", () => {
+    const { io, err } = captureStreams();
+
+    const code = dispatch(["build", "--defold-version", "1.0"], io, { env: {} });
+
+    expect(code).toBe(1);
+    expect(err()).toBe(`defold-typescript: error: ${REMOVED_FLAG_MESSAGE}\n`);
+  });
+
+  test("--json keeps the envelope error free of the word and escapes", () => {
+    const { io, out, err } = ttyStderr(captureStreams());
+
+    const code = dispatch(["build", "--defold-version", "1.0", "--json"], io, { env: {} });
+
+    expect(code).toBe(1);
+    expect(err()).toBe("");
+    expect(JSON.parse(out()).error).toBe(`defold-typescript: ${REMOVED_FLAG_MESSAGE}`);
+  });
+
+  test("a per-command failure takes the word after the command prefix", async () => {
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["set-target"], io, { env: {} });
+
+    expect(code).toBe(1);
+    expect(err()).toBe(
+      "defold-typescript set-target: error: pass a version|stable|beta|alpha token, or --detected, and an optional path.\n",
+    );
+  });
+
+  test("reload inherits the stderr color decision", async () => {
+    const { io, err } = ttyStderr(captureStreams());
+    const client: WatchEditorClient = {
+      ...makeEditorClient().client,
+      resolve: () => Promise.resolve(null),
+    };
+
+    const code = await dispatch(["reload", cwd, "--wait", "0"], io, {
+      env: {},
+      editorClient: client,
+    });
+
+    expect(code).toBe(1);
+    expect(err()).toBe(
+      "defold-typescript reload: \x1b[1;31merror\x1b[0m: no running Defold editor accepted the reload\n",
+    );
+  });
+
+  test("--no-color is a flag, not a positional", async () => {
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["set-target", "--no-color"], io, { env: {} });
+
+    expect(code).toBe(1);
+    expect(err()).toBe(
+      "defold-typescript set-target: error: pass a version|stable|beta|alpha token, or --detected, and an optional path.\n",
+    );
   });
 });

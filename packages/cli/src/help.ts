@@ -195,6 +195,7 @@ const COMMANDS: readonly HelpCommand[] = [
 
 const GLOBAL_FLAGS: readonly HelpFlag[] = [
   { flag: "--json", desc: "emit machine-readable JSON output" },
+  { flag: "--no-color", desc: "disable colored output (also: NO_COLOR=1)" },
   { flag: "-v, --version", desc: "print the CLI version and exit" },
   { flag: "-h, --help", desc: "print this help and exit" },
 ];

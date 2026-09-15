@@ -208,7 +208,27 @@ describe("runReload", () => {
     expect(code).toBe(1);
     expect(editor.posts).toEqual([]);
     expect(editor.consoles.length).toBe(0);
-    expect(io.err()).toContain("no running Defold editor");
+    expect(io.err()).toBe(
+      "defold-typescript reload: error: no running Defold editor accepted the reload\n",
+    );
+  });
+
+  test("color wraps only the error word of a failed reload", async () => {
+    const editor = makeEditor({ baseUrl: null });
+    const io = captureStreams();
+
+    await runReload({
+      cwd: "/project",
+      stdout: io.stdout,
+      stderr: io.stderr,
+      editorClient: editor.client,
+      waitMs: NEVER_ELAPSES_MS,
+      color: true,
+    });
+
+    expect(io.err()).toBe(
+      "defold-typescript reload: \x1b[1;31merror\x1b[0m: no running Defold editor accepted the reload\n",
+    );
   });
 
   test("a quiet console within the window exits 0 without claiming success", async () => {

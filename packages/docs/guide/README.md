@@ -68,6 +68,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - [wall](./wall.md) — opt-in per-directory API walls that narrow a single-kind source directory to its script-kind surface, in interactive and flag forms.
 - [resolve](./resolve.md) — generate ambient TypeScript namespaces from your `game.project` native-extension dependencies, with pin/drift detection and a `--frozen` lockfile mode.
 - [scene-types](./scene-types.md) — generate the scene-address declaration from your `.collection`/`.go` files so game-object paths and component ids complete in the editor; how `build` and `watch` keep it current, how `init` and `upgrade` wire it into your program, and why it can never reject an address.
+- [Terminal output](./terminal-output.md) — how failure lines read (`defold-typescript <command>: error: <message>`), when the `error` word is colored, and how `--no-color`, `NO_COLOR`, `TERM=dumb`, and `--json` turn color off.
 
 ### Toolchain & workflow
 
