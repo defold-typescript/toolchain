@@ -48,6 +48,7 @@ import {
   runningEditorVersion,
 } from "./installed-editor-version";
 import { renderResult } from "./json-output";
+import { createLateEditorVersionCheck } from "./late-editor-version";
 import type { VendoredLibrary } from "./library-match";
 import type { RefDocResolveOptions } from "./materialize";
 import {
@@ -69,13 +70,7 @@ import {
 } from "./upstream-notice";
 import type { CrossWorldAddressEntry, UnreachableAddressEntry } from "./url-reachability-scan";
 import type { CheckboxPrompt } from "./wall-interactive";
-import type {
-  EditorVersionNotice,
-  RunWatchHandle,
-  RunWatchOptions,
-  WatchEditorClient,
-  WatcherFactory,
-} from "./watch";
+import type { RunWatchHandle, RunWatchOptions, WatchEditorClient, WatcherFactory } from "./watch";
 
 export interface DispatchIo {
   readonly stdout: NodeJS.WritableStream;
@@ -1144,48 +1139,19 @@ function dispatchCommand(
           const targetVersion = target.version;
           const source = target.source;
           if (source !== "pin" && source !== "detected" && source !== "default") return undefined;
-          let compared = source === "pin" ? installedForDrift : detected;
-          // Startup already asked this very editor, so its first attach would
-          // repeat the question and, on a mismatch, the notice.
-          let skipNext = fromRunningEditor;
-          const readVersion =
-            internals?.runningEditorVersion ??
-            ((signal: AbortSignal) =>
-              runningEditorVersion(cwd, signal, internals?.editorTransport));
-          const probeLateEditor = async (signal: AbortSignal): Promise<string | null> => {
-            if (signal.aborted) return null;
-            const probe = new AbortController();
-            const abort = (): void => probe.abort();
-            const timer = setTimeout(abort, timeoutMs);
-            signal.addEventListener("abort", abort, { once: true });
-            try {
-              // The race ends a wait the transport itself does not honor.
-              return await Promise.race([
-                readVersion(probe.signal).catch(() => null),
-                new Promise<null>((resolve) => {
-                  probe.signal.addEventListener("abort", () => resolve(null));
-                }),
-              ]);
-            } finally {
-              clearTimeout(timer);
-              signal.removeEventListener("abort", abort);
-            }
-          };
-          return async (baseUrl, signal): Promise<readonly EditorVersionNotice[]> => {
-            if (skipNext) {
-              skipNext = false;
-              return [];
-            }
-            const version = await probeLateEditor(signal);
-            if (version === null || version === compared || version === targetVersion) return [];
-            compared = version;
-            const message =
-              source === "pin"
-                ? describeDetectedPinMismatch(version, targetVersion)[0]
-                : `the Defold editor at ${baseUrl} runs ${version}, but this watch resolved its API surface for ${targetVersion}; restart watch to follow the editor.`;
-            if (message === undefined) return [];
-            return [{ message, editor: version, target: targetVersion, targetSource: source }];
-          };
+          return createLateEditorVersionCheck({
+            source,
+            targetVersion,
+            startupVersion: source === "pin" ? installedForDrift : detected,
+            // Startup already asked this very editor, so its first attach would
+            // repeat the question and, on a mismatch, the notice.
+            skipFirst: fromRunningEditor,
+            readVersion:
+              internals?.runningEditorVersion ??
+              ((signal: AbortSignal) =>
+                runningEditorVersion(cwd, signal, internals?.editorTransport)),
+            timeoutMs,
+          });
         };
 
         const launchWatch = (): Promise<number> => {

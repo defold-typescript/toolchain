@@ -133,12 +133,16 @@ export interface RunWatchOptions {
   /**
    * Diagnostic-only: asked once per attach transition, so an editor opened after
    * startup can report a version the watch's fixed API surface disagrees with.
-   * Its notices never change the exit status or stop the watch.
+   * Its notices never change the exit status or stop the watch. `signal` aborts
+   * when that attachment ends; `report` writes a notice and returns `true` only
+   * while the attachment is current, so a caller can record exactly what it
+   * delivered.
    */
   readonly editorAttached?: (
     baseUrl: string,
     signal: AbortSignal,
-  ) => Promise<readonly EditorVersionNotice[]>;
+    report: (notice: EditorVersionNotice) => boolean,
+  ) => Promise<void>;
 }
 
 export interface RunWatchHandle {
@@ -294,7 +298,9 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   let sceneBusy = false;
   let reloadBusy = false;
   let attachBusy = false;
-  let versionBusy = false;
+  // A set, not a flag: a superseded check can still be settling when the next
+  // attachment starts its own, and the first to settle must not clear the other.
+  const versionChecks = new Set<AbortController>();
   let stopped = false;
   let idleResolvers: Array<() => void> = [];
   const pending = new Set<string>();
@@ -307,7 +313,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       sceneBusy ||
       reloadBusy ||
       attachBusy ||
-      versionBusy
+      versionChecks.size > 0
     )
       return;
     const resolvers = idleResolvers;
@@ -332,51 +338,63 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   // console stream when the watch stops.
   const editorAbort = new AbortController();
   let consoleReader: AsyncIterator<string> | null = null;
+  // Scopes work that belongs to one attachment rather than to the watch: it
+  // aborts whenever `attachedBaseUrl` stops naming the editor it was made for.
+  let attachment: AbortController | null = null;
+
+  function endAttachment(): void {
+    attachedBaseUrl = null;
+    attachment?.abort();
+    attachment = null;
+  }
 
   function noteAttached(baseUrl: string): void {
     refusedBaseUrl = null;
     if (attachedBaseUrl === baseUrl) return;
+    attachment?.abort();
+    attachment = new AbortController();
     attachedBaseUrl = baseUrl;
     detachNoticed = false;
     if (!opts.json)
       stderr.write(`defold-typescript watch: attached to Defold editor at ${baseUrl}\n`);
-    checkEditorVersion(baseUrl);
+    checkEditorVersion(baseUrl, attachment);
   }
 
-  function checkEditorVersion(baseUrl: string): void {
+  function checkEditorVersion(baseUrl: string, owner: AbortController): void {
     const check = opts.editorAttached;
     if (check === undefined) return;
-    versionBusy = true;
+    versionChecks.add(owner);
+    const report = (notice: EditorVersionNotice): boolean => {
+      if (stopped || owner.signal.aborted) return false;
+      if (opts.json) {
+        stdout.write(
+          renderWatchEvent({
+            event: "editorVersion",
+            editor: notice.editor,
+            target: notice.target,
+            targetSource: notice.targetSource,
+          }),
+        );
+      } else {
+        stderr.write(`defold-typescript watch: ${notice.message}\n`);
+      }
+      return true;
+    };
     void (async () => {
       try {
-        const notices = await check(baseUrl, editorAbort.signal);
-        if (stopped) return;
-        for (const notice of notices) {
-          if (opts.json) {
-            stdout.write(
-              renderWatchEvent({
-                event: "editorVersion",
-                editor: notice.editor,
-                target: notice.target,
-                targetSource: notice.targetSource,
-              }),
-            );
-          } else {
-            stderr.write(`defold-typescript watch: ${notice.message}\n`);
-          }
-        }
+        await check(baseUrl, owner.signal, report);
       } catch {
         // A failed version probe is only a missing diagnostic; the attachment it
         // was asked about is unaffected.
       } finally {
-        versionBusy = false;
+        versionChecks.delete(owner);
         notifyIdle();
       }
     })();
   }
 
   function noteDetached(): void {
-    attachedBaseUrl = null;
+    endAttachment();
     refusedBaseUrl = null;
     consoleFailures = 0;
     consoleRetryTicks = 0;
@@ -391,7 +409,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
    * and share the one-notice latch.
    */
   function noteReloadFailed(baseUrl: string): void {
-    attachedBaseUrl = null;
+    endAttachment();
     refusedBaseUrl = baseUrl;
     if (detachNoticed) return;
     detachNoticed = true;
@@ -433,7 +451,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       consoleRunning = false;
       consoleFailures = 0;
       consoleRetryTicks = 0;
-      attachedBaseUrl = null;
+      endAttachment();
       refusedBaseUrl = null;
     }
   }
@@ -768,6 +786,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     // Order matters: the abort is what unparks a stream waiting on the socket,
     // and `return()` is the ordinary close for one that is mid-chunk.
     editorAbort.abort();
+    attachment?.abort();
     const reader = consoleReader;
     consoleReader = null;
     void reader?.return?.(undefined);
@@ -780,7 +799,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     sceneBusy = false;
     reloadBusy = false;
     attachBusy = false;
-    versionBusy = false;
+    versionChecks.clear();
     notifyIdle();
     resolveDone(0);
   }
@@ -793,7 +812,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       !sceneBusy &&
       !reloadBusy &&
       !attachBusy &&
-      !versionBusy
+      versionChecks.size === 0
     ) {
       return Promise.resolve();
     }
