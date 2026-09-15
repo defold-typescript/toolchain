@@ -1,7 +1,10 @@
 import { describe, expect, test } from "bun:test";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { absenceDirectiveLine, partialNamespaceStub, unusedDirectiveLines } from "./absence-proof";
 
 const KINDS_DIR = resolve(import.meta.dir, "..", "test-d", "kinds");
+const REPO_TSCONFIG = resolve(import.meta.dir, "..", "..", "..", "tsconfig.json");
 
 function typecheck(tsconfig: string): { exitCode: number; output: string } {
   const proc = Bun.spawnSync(["bunx", "tsc", "-p", resolve(KINDS_DIR, tsconfig), "--noEmit"], {
@@ -87,4 +90,47 @@ describe("per-kind ambient API wall — consumer tsconfig proof", () => {
     const { exitCode } = typecheck("tsconfig.script-neg.json");
     expect(exitCode).not.toBe(0);
   });
+});
+
+// Each case rebuilds the kind's program from the committed tsconfig's own
+// `include`, so it fails both when the shared absence proof was never wired
+// into that kind and when the proof stops rejecting a namespace whose proven
+// member is missing.
+describe("per-kind ambient API wall — a partial extension namespace still fails", () => {
+  const PARTIAL_BY_KIND = {
+    script: "iac",
+    "gui-script": "push",
+    "render-script": "webview",
+  } as const;
+
+  for (const [kind, namespace] of Object.entries(PARTIAL_BY_KIND)) {
+    test(`${kind} program reacts to an ambient ${namespace} that declares no proven member`, () => {
+      const root = mkdtempSync(resolve(KINDS_DIR, `partial-${kind}-`));
+      try {
+        const stub = resolve(root, "partial-namespace.d.ts");
+        writeFileSync(stub, partialNamespaceStub(namespace));
+        const committed = JSON.parse(
+          readFileSync(resolve(KINDS_DIR, `tsconfig.${kind}.json`), "utf8"),
+        ) as { compilerOptions: Record<string, unknown>; include: string[] };
+        const tsconfigPath = resolve(root, "tsconfig.json");
+        writeFileSync(
+          tsconfigPath,
+          `${JSON.stringify(
+            {
+              extends: REPO_TSCONFIG,
+              compilerOptions: committed.compilerOptions,
+              include: [...committed.include.map((entry) => resolve(KINDS_DIR, entry)), stub],
+            },
+            null,
+            2,
+          )}\n`,
+        );
+        const { exitCode, output } = typecheck(tsconfigPath);
+        expect(exitCode).not.toBe(0);
+        expect(unusedDirectiveLines(output)).toContain(absenceDirectiveLine(namespace));
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
+    });
+  }
 });

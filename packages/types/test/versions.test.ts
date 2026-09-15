@@ -13,6 +13,13 @@ import { materializeVersionedSurface } from "../scripts/materialize-version";
 import { loadApiTargets } from "../scripts/regen";
 import { SYNC_MANIFEST, type ZipAccessor } from "../scripts/sync-api-docs";
 import {
+  ABSENCE_PROOF,
+  absenceDirectiveLine,
+  partialNamespaceStub,
+  rotatingNamespace,
+  unusedDirectiveLines,
+} from "./absence-proof";
+import {
   typecheckSurface as typecheck,
   unexpectedDiagnostics,
   writeStrictSurfaceTsconfig,
@@ -201,10 +208,7 @@ describe("committed API surfaces — extensions are never ambient", () => {
             {
               extends: "../../../tsconfig.json",
               compilerOptions: { noEmit: true, types: [] },
-              include: [
-                resolve(VERSIONS_DIR, "no-ambient-extensions-proof.ts"),
-                resolve(PACKAGE_ROOT, index),
-              ],
+              include: [ABSENCE_PROOF, resolve(PACKAGE_ROOT, index)],
             },
             null,
             2,
@@ -223,6 +227,41 @@ describe("committed API surfaces — extensions are never ambient", () => {
       }
     });
   }
+});
+
+// A surface that declares one of the four but omits the member a proof happens
+// to call leaves that `@ts-expect-error` satisfied by a property error, so the
+// wall above still exits 0 while the namespace is ambient. Each case injects
+// exactly that shape and demands the proof notice.
+describe("committed API surfaces — a partial extension namespace still fails the wall", () => {
+  committedSurfaceIndexes().forEach((index, position) => {
+    const namespace = rotatingNamespace(position);
+    test(`${index} proof reacts to an ambient ${namespace} that declares no proven member`, () => {
+      const root = mkdtempSync(resolve(PACKAGE_ROOT, "ext-partial-"));
+      try {
+        const stub = resolve(root, "partial-namespace.d.ts");
+        writeFileSync(stub, partialNamespaceStub(namespace));
+        const tsconfigPath = resolve(root, "tsconfig.json");
+        writeFileSync(
+          tsconfigPath,
+          `${JSON.stringify(
+            {
+              extends: "../../../tsconfig.json",
+              compilerOptions: { noEmit: true, types: [] },
+              include: [ABSENCE_PROOF, resolve(PACKAGE_ROOT, index), stub],
+            },
+            null,
+            2,
+          )}\n`,
+        );
+        const { exitCode, output } = typecheck(tsconfigPath);
+        expect(exitCode).not.toBe(0);
+        expect(unusedDirectiveLines(output)).toContain(absenceDirectiveLine(namespace));
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
+    });
+  });
 });
 
 describe("versioned API surface — src augmentations reach the consumer", () => {
