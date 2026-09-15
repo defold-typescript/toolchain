@@ -45,6 +45,7 @@ import {
   probeEditorConfigFiles,
   probeInstalledEditor,
   runningEditorDeclines,
+  runningEditorVersion,
 } from "./installed-editor-version";
 import { renderResult } from "./json-output";
 import type { VendoredLibrary } from "./library-match";
@@ -68,7 +69,13 @@ import {
 } from "./upstream-notice";
 import type { CrossWorldAddressEntry, UnreachableAddressEntry } from "./url-reachability-scan";
 import type { CheckboxPrompt } from "./wall-interactive";
-import type { RunWatchHandle, RunWatchOptions, WatchEditorClient, WatcherFactory } from "./watch";
+import type {
+  EditorVersionNotice,
+  RunWatchHandle,
+  RunWatchOptions,
+  WatchEditorClient,
+  WatcherFactory,
+} from "./watch";
 
 export interface DispatchIo {
   readonly stdout: NodeJS.WritableStream;
@@ -79,6 +86,9 @@ export interface DispatchInternals {
   readonly watcherFactory?: WatcherFactory;
   readonly editorClient?: WatchEditorClient;
   readonly editorProbeTimeoutMs?: number;
+  // What `watch` asks an editor it attaches to after startup. The default reads
+  // `editor.version` over `/eval` from the project's port file.
+  readonly runningEditorVersion?: (signal: AbortSignal) => Promise<string | null>;
   readonly componentWatcherFactory?: WatcherFactory;
   readonly debounceMs?: number;
   readonly onWatchStart?: (handle: RunWatchHandle) => void;
@@ -501,7 +511,10 @@ function dispatchCommand(
   // awaits the probe first and calls the same body with the answer. A second
   // copy of this tail would drift, and the drift would only ever show up for
   // users who have the editor open.
-  const withEditorVersion = (detectInstalled: () => string | null): number | Promise<number> => {
+  const withEditorVersion = (
+    detectInstalled: () => string | null,
+    fromRunningEditor: boolean,
+  ): number | Promise<number> => {
     let detected: string | undefined;
     if (defoldTargetFlag === undefined && pin === undefined) {
       const result = detectInstalled();
@@ -1121,6 +1134,60 @@ function dispatchCommand(
           };
         }
 
+        // The surface is fixed for the whole watch, so an editor that attaches
+        // later is only diagnosed, under the same source gate as the startup
+        // drift check: a channel pin tracks its head and a flag override is
+        // already announced, so neither is probed. `drift.escalate` stays the
+        // startup verdict alone.
+        const lateEditorVersionCheck = (): RunWatchOptions["editorAttached"] => {
+          if (target.kind !== "version") return undefined;
+          const targetVersion = target.version;
+          const source = target.source;
+          if (source !== "pin" && source !== "detected" && source !== "default") return undefined;
+          let compared = source === "pin" ? installedForDrift : detected;
+          // Startup already asked this very editor, so its first attach would
+          // repeat the question and, on a mismatch, the notice.
+          let skipNext = fromRunningEditor;
+          const readVersion =
+            internals?.runningEditorVersion ??
+            ((signal: AbortSignal) =>
+              runningEditorVersion(cwd, signal, internals?.editorTransport));
+          const probeLateEditor = async (signal: AbortSignal): Promise<string | null> => {
+            if (signal.aborted) return null;
+            const probe = new AbortController();
+            const abort = (): void => probe.abort();
+            const timer = setTimeout(abort, timeoutMs);
+            signal.addEventListener("abort", abort, { once: true });
+            try {
+              // The race ends a wait the transport itself does not honor.
+              return await Promise.race([
+                readVersion(probe.signal).catch(() => null),
+                new Promise<null>((resolve) => {
+                  probe.signal.addEventListener("abort", () => resolve(null));
+                }),
+              ]);
+            } finally {
+              clearTimeout(timer);
+              signal.removeEventListener("abort", abort);
+            }
+          };
+          return async (baseUrl, signal): Promise<readonly EditorVersionNotice[]> => {
+            if (skipNext) {
+              skipNext = false;
+              return [];
+            }
+            const version = await probeLateEditor(signal);
+            if (version === null || version === compared || version === targetVersion) return [];
+            compared = version;
+            const message =
+              source === "pin"
+                ? describeDetectedPinMismatch(version, targetVersion)[0]
+                : `the Defold editor at ${baseUrl} runs ${version}, but this watch resolved its API surface for ${targetVersion}; restart watch to follow the editor.`;
+            if (message === undefined) return [];
+            return [{ message, editor: version, target: targetVersion, targetSource: source }];
+          };
+        };
+
         const launchWatch = (): Promise<number> => {
           // The JSON `start` event carries pin diagnostics; prepend the drift notice
           // so `--json` surfaces it there once. The non-JSON stderr line has no such
@@ -1132,6 +1199,7 @@ function dispatchCommand(
               io.stderr.write(`defold-typescript watch: ${notice}\n`);
             }
           }
+          const editorAttached = lateEditorVersionCheck();
           const watchOpts: RunWatchOptions = {
             cwd,
             stdout: io.stdout,
@@ -1151,6 +1219,7 @@ function dispatchCommand(
             ...upstreamRelease,
             ...(hotReload ? { hotReload: true } : {}),
             ...(internals?.editorClient ? { editorClient: internals.editorClient } : {}),
+            ...(editorAttached ? { editorAttached } : {}),
           };
           const handle = runWatch(watchOpts);
           if (internals) {
@@ -1785,7 +1854,7 @@ function dispatchCommand(
   // `stat`, which is what keeps every command in an editor-less project --
   // every CI run, every test -- on the synchronous return it has today.
   if (runningEditorDeclines(cwd)) {
-    return withEditorVersion(syncEditorVersion);
+    return withEditorVersion(syncEditorVersion, false);
   }
   return (async () => {
     const probe = new AbortController();
@@ -1811,6 +1880,9 @@ function dispatchCommand(
     clearTimeout(timer);
     // A silent editor is not an answer: fall back to the lane that needs no
     // network, exactly as if none were open.
-    return withEditorVersion(probed === null ? syncEditorVersion : () => probed.version);
+    return withEditorVersion(
+      probed === null ? syncEditorVersion : () => probed.version,
+      probed?.probed[0]?.reason === "found",
+    );
   })();
 }
