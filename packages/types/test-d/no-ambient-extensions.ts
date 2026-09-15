@@ -1,11 +1,14 @@
 export {};
 
 // Extensions are typed only through `resolve`: none is declared on this surface.
+// Each directive guards the bare identifier, not a member call — a member call
+// is satisfied by the property error a partially declared namespace raises, so
+// it would keep the directive used and let the namespace through.
 // @ts-expect-error iap is not ambient until extension-iap is resolved
-iap.finish({});
+void iap;
 // @ts-expect-error iac is not ambient until extension-iac is resolved
-iac.set_listener({}, 1);
+void iac;
 // @ts-expect-error push is not ambient until extension-push is resolved
-push.register([], () => {});
+void push;
 // @ts-expect-error webview is not ambient until extension-webview is resolved
-webview.create(() => {});
+void webview;
