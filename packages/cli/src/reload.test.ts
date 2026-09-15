@@ -18,6 +18,8 @@ interface FakeConsole {
   readonly items: AsyncIterable<string>;
   push(...lines: string[]): void;
   end(): void;
+  /** Rejects the reader's pending `next()`, as a reset socket does mid-stream. */
+  fail(error: Error): void;
   released(): Promise<void>;
 }
 
@@ -25,6 +27,7 @@ function makeConsole(signal?: AbortSignal): FakeConsole {
   const queue: string[] = [];
   let wake: (() => void) | null = null;
   let ended = false;
+  let failure: Error | null = null;
   let markReleased!: () => void;
   const released = new Promise<void>((resolve) => {
     markReleased = resolve;
@@ -39,6 +42,7 @@ function makeConsole(signal?: AbortSignal): FakeConsole {
   async function* iterate(): AsyncGenerator<string> {
     for (;;) {
       while (queue.length > 0) yield queue.shift() as string;
+      if (failure !== null) throw failure;
       if (ended) return;
       await new Promise<void>((resolve) => {
         wake = resolve;
@@ -74,6 +78,10 @@ function makeConsole(signal?: AbortSignal): FakeConsole {
     },
     end() {
       ended = true;
+      resume();
+    },
+    fail(error) {
+      failure = error;
       resume();
     },
     released: () => released,
@@ -244,6 +252,7 @@ describe("runReload", () => {
     const traceback = io.err().indexOf("stack traceback:");
     expect(header).toBeGreaterThan(-1);
     expect(traceback).toBeGreaterThan(header);
+    expect(io.err()).toContain("the reloaded code reported an error");
   });
 
   test("info lines are filtered out and leave the reload quiet", async () => {
@@ -251,6 +260,68 @@ describe("runReload", () => {
       onConsole: (stream) => {
         stream.push("INFO:DLIB: SSDP started");
         stream.push("DEBUG:SCRIPT: frame 1");
+      },
+    });
+    const io = captureStreams();
+
+    const code = await runReload({
+      cwd: "/project",
+      stdout: io.stdout,
+      stderr: io.stderr,
+      editorClient: editor.client,
+      waitMs: SHORT_WINDOW_MS,
+    });
+
+    expect(code).toBe(0);
+    expect(io.err()).not.toContain("SSDP started");
+    expect(io.err()).not.toContain("frame 1");
+  });
+
+  const INTERRUPTED = "closed before the";
+
+  const cutShort: readonly {
+    readonly title: string;
+    readonly cut: (stream: FakeConsole) => void;
+  }[] = [
+    {
+      title: "a console that closes before the window ends exits 1 as interrupted",
+      cut: (stream) => stream.end(),
+    },
+    {
+      title: "a console stream that fails mid-window exits 1 as interrupted",
+      cut: (stream) => stream.fail(new Error("socket reset")),
+    },
+  ];
+
+  for (const { title, cut } of cutShort) {
+    test(title, async () => {
+      const editor = makeEditor({
+        onConsole: (stream) => {
+          stream.push("INFO:DLIB: SSDP started");
+          cut(stream);
+        },
+      });
+      const io = captureStreams();
+
+      const code = await runReload({
+        cwd: "/project",
+        stdout: io.stdout,
+        stderr: io.stderr,
+        editorClient: editor.client,
+        waitMs: NEVER_ELAPSES_MS,
+      });
+
+      expect(code).toBe(1);
+      expect(editor.posts).toEqual(["hot-reload"]);
+      expect(io.err()).toContain(INTERRUPTED);
+      expect(io.out()).not.toContain("no error observed within");
+    });
+  }
+
+  test("--json marks a cut-short window incomplete while preserving the outcome", async () => {
+    const editor = makeEditor({
+      onConsole: (stream) => {
+        stream.push("INFO:DLIB: SSDP started");
         stream.end();
       },
     });
@@ -261,12 +332,25 @@ describe("runReload", () => {
       stdout: io.stdout,
       stderr: io.stderr,
       editorClient: editor.client,
+      json: true,
       waitMs: NEVER_ELAPSES_MS,
     });
 
-    expect(code).toBe(0);
-    expect(io.err()).not.toContain("SSDP started");
-    expect(io.err()).not.toContain("frame 1");
+    expect(code).toBe(1);
+    const lines = io.out().trim().split("\n");
+    expect(lines.length).toBe(1);
+    const payload = JSON.parse(lines[0] as string) as {
+      ok: boolean;
+      outcome: string;
+      consoleObserved: boolean;
+      consoleWindowComplete: boolean;
+      consoleErrors: string[];
+    };
+    expect(payload.ok).toBe(false);
+    expect(payload.outcome).toBe("accepted");
+    expect(payload.consoleObserved).toBe(true);
+    expect(payload.consoleWindowComplete).toBe(false);
+    expect(payload.consoleErrors).toEqual([]);
   });
 
   test("a refused post releases the console without draining and exits 1", async () => {
@@ -433,9 +517,14 @@ describe("runReload", () => {
     expect(code).toBe(0);
     expect(editor.posts).toEqual(["hot-reload"]);
     expect(editor.consoleCalls()).toBe(0);
-    const payload = JSON.parse(io.out().trim()) as { ok: boolean; consoleObserved: boolean };
+    const payload = JSON.parse(io.out().trim()) as {
+      ok: boolean;
+      consoleObserved: boolean;
+      consoleWindowComplete: boolean;
+    };
     expect(payload.ok).toBe(true);
     expect(payload.consoleObserved).toBe(false);
+    expect(payload.consoleWindowComplete).toBe(false);
   });
 
   test("a quiet window that was actually read reports the console as observed", async () => {
@@ -452,9 +541,14 @@ describe("runReload", () => {
     });
 
     expect(code).toBe(0);
-    const payload = JSON.parse(io.out().trim()) as { ok: boolean; consoleObserved: boolean };
+    const payload = JSON.parse(io.out().trim()) as {
+      ok: boolean;
+      consoleObserved: boolean;
+      consoleWindowComplete: boolean;
+    };
     expect(payload.ok).toBe(true);
     expect(payload.consoleObserved).toBe(true);
+    expect(payload.consoleWindowComplete).toBe(true);
   });
 
   test("a refused post outranks an unopenable console", async () => {
