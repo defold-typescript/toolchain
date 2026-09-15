@@ -13,7 +13,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Breaking
 
-- **An engine parameter typed as a constant now accepts only the constants its reference documentation names.** Passing a generic `Opaque<"constant">`, a constant from another family (`gui.PLAYBACK_ONCE_FORWARD` into [`model.play_anim`](/api/model)), or the result of [`window.get_dim_mode()`](/api/window), which can be `DIMMING_UNKNOWN`, into `window.set_dim_mode` no longer compiles; pass the documented constant instead ([enum constants](./typescript-gotchas.md#enum-constants-are-branded-numbers--a-bare-number-wont-do)).
+- **A constant-typed function argument whose reference documentation names constants the typings declare now accepts only those constants.** Passing such an argument a generic `Opaque<"constant">`, a constant from another family (`gui.PLAYBACK_ONCE_FORWARD` into [`model.play_anim`](/api/model)), or the result of [`window.get_dim_mode()`](/api/window), which can be `DIMMING_UNKNOWN`, into `window.set_dim_mode` no longer compiles; pass the documented constant instead ([enum constants](./typescript-gotchas.md#enum-constants-are-branded-numbers--a-bare-number-wont-do)).
 
 ### Improved
 
