@@ -88,8 +88,7 @@ stays fixed for the life of the loop. A version that matches the target, the
 version startup already compared, or the last version reported is not reported
 again; an editor that goes from 1.13.0 to 1.14.0 and back to 1.13.0 is reported
 three times unless startup compared 1.13.0. A check that is still running when
-its editor quits reports
-nothing. A channel pin or a `--defold-target` override is never checked, and
+its editor quits, or is replaced by another editor, reports nothing. A channel pin or a `--defold-target` override is never checked, and
 the notice never changes the exit status, even under `--fail-on-drift`.
 
 Ordinary `INFO:`/`DEBUG:` frame logging is filtered out, and console history
@@ -120,7 +119,9 @@ Four things are worth knowing about how it behaves:
 - **The editor may come and go.** The port is re-read on every reload, and while
   no editor is attached `watch` looks for one about once a second, so an editor
   opened at any time after the loop started is attached without a save. One that quits is reported once and leaves the loop rebuilding until it
-  returns. An editor whose console fails to open is retried at growing
+  returns. A reload that lands on a different editor while the old one's console
+  is still open attaches the new editor, and the old console closing later
+  leaves it attached and starts reading its console instead. An editor whose console fails to open is retried at growing
   intervals, up to about 30 seconds apart, so its runtime errors appear once the
   console opens and an editor that quits meanwhile is still reported. Nothing
   more is printed while the game is not running — that is the ordinary case, not
