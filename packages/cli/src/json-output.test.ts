@@ -136,6 +136,25 @@ describe("renderResult", () => {
     const parsed = JSON.parse(out) as Record<string, unknown>;
     expect("pinMismatch" in parsed).toBe(false);
   });
+
+  test("carries consoleWindowComplete right after consoleObserved when present", () => {
+    const out = renderResult({
+      command: "reload",
+      outcome: "accepted",
+      consoleErrors: [],
+      consoleObserved: true,
+      consoleWindowComplete: false,
+    });
+    const keys = Object.keys(JSON.parse(out) as Record<string, unknown>);
+    expect(keys.slice(-2)).toEqual(["consoleObserved", "consoleWindowComplete"]);
+    expect((JSON.parse(out) as Record<string, unknown>).consoleWindowComplete).toBe(false);
+  });
+
+  test("omits consoleWindowComplete when undefined", () => {
+    const out = renderResult({ command: "reload", outcome: "accepted", consoleObserved: true });
+    const parsed = JSON.parse(out) as Record<string, unknown>;
+    expect("consoleWindowComplete" in parsed).toBe(false);
+  });
 });
 
 describe("renderWatchEvent", () => {
