@@ -28,6 +28,7 @@ import {
 } from "./editor-attach";
 import { renderWatchEvent } from "./json-output";
 import { isComponentPath, isScenePath, isSkipped } from "./script-kind";
+import { severityLine } from "./terminal-style";
 
 export interface WatchEvent {
   readonly kind: "change" | "rename";
@@ -122,6 +123,8 @@ export interface RunWatchOptions {
    */
   readonly sceneObjects?: () => SceneObjectComponents | undefined;
   readonly json?: boolean;
+  /** Whether stderr's severity words carry color; dispatch decides it from the stream. */
+  readonly color?: boolean;
   readonly pinDiagnostics?: readonly string[];
   readonly pinMismatch?: { readonly installed: string; readonly pinned: string };
   readonly upstreamRelease?: { readonly current: string; readonly latest: string };
@@ -204,14 +207,20 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     rejectDone = rej;
   });
 
-  // A BuildFailureError is a compile failure: report every located line (human)
-  // or a structured `errors` event (json), keeping the watcher alive. Any other
-  // error keeps today's single-message behavior.
+  const writeError = (message: string): void => {
+    stderr.write(`${severityLine(message, "error", opts.color === true)}\n`);
+  };
+
+  // A BuildFailureError is a compile failure: report a headline plus every
+  // located line (human) or a structured `errors` event (json), keeping the
+  // watcher alive. Any other error keeps today's single-message behavior.
   function reportFailure(err: unknown, event: "build" | "rebuild"): void {
     if (err instanceof BuildFailureError) {
       if (opts.json) {
         stdout.write(renderWatchEvent({ event, error: err.message, errors: err.entries }));
       } else {
+        const files = new Set(err.entries.map((entry) => entry.file)).size;
+        writeError(`defold-typescript watch: ${files} file(s) failed:`);
         for (const entry of err.entries) {
           stderr.write(`${formatFailureLine(entry)}\n`);
         }
@@ -222,7 +231,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     if (opts.json) {
       stdout.write(renderWatchEvent({ event, error: message }));
     } else {
-      stderr.write(`${message}\n`);
+      writeError(message);
     }
   }
 
@@ -414,9 +423,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     if (detachNoticed) return;
     detachNoticed = true;
     if (!opts.json)
-      stderr.write(
-        `defold-typescript watch: Defold editor at ${baseUrl} did not accept the reload\n`,
-      );
+      writeError(`defold-typescript watch: Defold editor at ${baseUrl} did not accept the reload`);
   }
 
   /**
@@ -640,7 +647,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       opts.syncSurface?.();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      stderr.write(`${message}\n`);
+      writeError(message);
     }
     syncBusy = false;
     notifyIdle();
@@ -685,7 +692,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
         if (opts.json) {
           stdout.write(renderWatchEvent({ event: "resolve", error: message }));
         } else {
-          stderr.write(`${message}\n`);
+          writeError(message);
         }
       }
     }
@@ -750,7 +757,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
         if (opts.json) {
           stdout.write(renderWatchEvent({ event: "sceneTypes", error: message }));
         } else {
-          stderr.write(`${message}\n`);
+          writeError(message);
         }
       }
     }

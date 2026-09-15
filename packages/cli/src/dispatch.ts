@@ -60,6 +60,7 @@ import {
 } from "./scene-types-command";
 import { runSetTarget } from "./set-target";
 import { runSetupDebug } from "./setup-debug";
+import { colorEnabled, severityLine } from "./terminal-style";
 import { runUpgrade, type UpgradeIo } from "./upgrade";
 import {
   readUpstreamCache,
@@ -142,6 +143,9 @@ export interface DispatchInternals {
   // from the npm registry, `spawn` runs the hand-off and the install, and `env`
   // carries the `npm_config_user_agent` the runner is detected from.
   readonly upgradeInternals?: Partial<UpgradeIo>;
+  // The environment the color policy reads (`NO_COLOR`, `TERM`). Tests pass a
+  // fixed one so the host shell's variables never decide an assertion.
+  readonly env?: Readonly<Record<string, string | undefined>>;
 }
 
 // Derived from the help registry so a verb can never ship with a usage line
@@ -275,6 +279,17 @@ function dispatchCommand(
   const tail = dashIndex === -1 ? [] : argv.slice(dashIndex + 1);
 
   const json = head.includes("--json");
+  // Decided from stderr alone: every severity line goes there, and stdout can
+  // be piped while stderr is still a terminal.
+  const stderrColor = colorEnabled({
+    stream: io.stderr as { isTTY?: boolean },
+    env: internals?.env ?? process.env,
+    noColor: head.includes("--no-color"),
+    json,
+  });
+  const writeError = (message: string): void => {
+    io.stderr.write(`${severityLine(message, "error", stderrColor)}\n`);
+  };
 
   if (head.includes("--version") || head.includes("-v")) {
     const version = internals?.cliVersion ?? readCliVersion();
@@ -329,6 +344,7 @@ function dispatchCommand(
   const positional = nonFlagArgs.filter(
     (a) =>
       a !== "--json" &&
+      a !== "--no-color" &&
       a !== "--force" &&
       a !== "--suppress-install-reminder" &&
       a !== "--remove" &&
@@ -374,7 +390,7 @@ function dispatchCommand(
     if (json) {
       io.stdout.write(renderResult({ command: "build", error: message }));
     } else {
-      io.stderr.write(`${message}\n`);
+      writeError(message);
     }
     return 1;
   }
@@ -394,7 +410,7 @@ function dispatchCommand(
       if (json) {
         io.stdout.write(renderResult({ command: "set-target", error: message }));
       } else {
-        io.stderr.write(`${message}\n`);
+        writeError(message);
       }
       return 1;
     };
@@ -460,7 +476,7 @@ function dispatchCommand(
           }),
         );
       } else if (!result.ok) {
-        io.stderr.write(`${result.error}\n`);
+        writeError(`${result.error}`);
       } else if (result.written.length === 0) {
         io.stdout.write(`defold-typescript set-target: already ${result.to}\n`);
       } else {
@@ -529,7 +545,7 @@ function dispatchCommand(
       if (json) {
         io.stdout.write(renderResult({ command: "build", error: message }));
       } else {
-        io.stderr.write(`${message}\n`);
+        writeError(message);
       }
       return 1;
     }
@@ -692,7 +708,7 @@ function dispatchCommand(
           if (json) {
             io.stdout.write(renderResult({ command: "init", error: message }));
           } else {
-            io.stderr.write(`${message}\n`);
+            writeError(message);
           }
           return 1;
         }
@@ -723,7 +739,7 @@ function dispatchCommand(
         if (json) {
           io.stdout.write(renderResult({ command: "init-agents", error: message }));
         } else {
-          io.stderr.write(`${message}\n`);
+          writeError(message);
         }
         return 1;
       }
@@ -758,7 +774,7 @@ function dispatchCommand(
         if (json) {
           io.stdout.write(renderResult({ command: "scene-types", error: message }));
         } else {
-          io.stderr.write(`${message}\n`);
+          writeError(message);
         }
         return 1;
       }
@@ -805,7 +821,7 @@ function dispatchCommand(
             io.stdout.write(`  - ${step}\n`);
           }
         } else {
-          io.stderr.write(`${result.error}\n`);
+          writeError(`${result.error}`);
         }
         return result.ok ? 0 : 1;
       })();
@@ -829,7 +845,7 @@ function dispatchCommand(
           if (json) {
             io.stdout.write(renderResult({ command: "build", error: message }));
           } else {
-            io.stderr.write(`${message}\n`);
+            writeError(message);
           }
           return 1;
         }
@@ -921,7 +937,7 @@ function dispatchCommand(
           if (json) {
             io.stdout.write(renderResult({ command: "build", error: message }));
           } else {
-            io.stderr.write(`${message}\n`);
+            writeError(message);
           }
           return 1;
         };
@@ -1020,7 +1036,7 @@ function dispatchCommand(
           head = syncHead ?? (await resolveHead());
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
-          io.stderr.write(`${message}\n`);
+          writeError(message);
           return 1;
         }
         const surface = selectApiSurface(head.version);
@@ -1122,7 +1138,7 @@ function dispatchCommand(
                 ),
               );
             } else if (!result.ok) {
-              io.stderr.write(`${result.error ?? "resolve failed"}\n`);
+              writeError(result.error ?? "resolve failed");
             } else if (result.materializedSurface !== null) {
               io.stdout.write(`defold-typescript resolve: wrote ${result.materializedSurface}\n`);
             }
@@ -1180,6 +1196,7 @@ function dispatchCommand(
             sceneObjects: () => sceneObjects,
             scriptWorlds: () => scriptWorlds,
             ...(json ? { json: true } : {}),
+            ...(stderrColor ? { color: true } : {}),
             ...(pinDiagnostics.length > 0 ? { pinDiagnostics } : {}),
             ...(pinMismatch ? { pinMismatch } : {}),
             ...upstreamRelease,
@@ -1195,7 +1212,7 @@ function dispatchCommand(
           }
           return handle.done.catch((err: unknown) => {
             const message = err instanceof Error ? err.message : String(err);
-            io.stderr.write(`${message}\n`);
+            writeError(message);
             return 1;
           });
         };
@@ -1291,7 +1308,7 @@ function dispatchCommand(
             if (json) {
               io.stdout.write(renderResult({ command: "wall", error: message }));
             } else {
-              io.stderr.write(`${message}\n`);
+              writeError(message);
             }
             return 1;
           }
@@ -1300,8 +1317,8 @@ function dispatchCommand(
         // `--json` is machine-driven intent, so it never prompts even on a TTY.
         const interactive = !json && (internals?.isTty ?? Boolean(process.stdout.isTTY));
         if (!interactive) {
-          io.stderr.write(
-            "defold-typescript wall: no directory given; pass <dir> or run in a terminal for the interactive menu\n",
+          writeError(
+            "defold-typescript wall: no directory given; pass <dir> or run in a terminal for the interactive menu",
           );
           return 1;
         }
@@ -1315,7 +1332,7 @@ function dispatchCommand(
           );
           return 0;
         } catch (err) {
-          io.stderr.write(`${err instanceof Error ? err.message : String(err)}\n`);
+          writeError(err instanceof Error ? err.message : String(err));
           return 1;
         }
       })();
@@ -1333,7 +1350,7 @@ function dispatchCommand(
           if (json) {
             io.stdout.write(renderResult({ command: "resolve", error: message }));
           } else {
-            io.stderr.write(`${message}\n`);
+            writeError(message);
           }
           return 1;
         }
@@ -1415,7 +1432,7 @@ function dispatchCommand(
             );
           }
         } else {
-          io.stderr.write(`${result.error}\n`);
+          writeError(`${result.error}`);
         }
         if (!result.ok) {
           return 1;
@@ -1430,9 +1447,7 @@ function dispatchCommand(
         const { runReload } = await import("./reload");
         const parsedWait = waitFlag === undefined ? undefined : Number(waitFlag);
         if (parsedWait !== undefined && (!Number.isFinite(parsedWait) || parsedWait < 0)) {
-          io.stderr.write(
-            `defold-typescript reload: --wait expects milliseconds, got ${waitFlag}\n`,
-          );
+          writeError(`defold-typescript reload: --wait expects milliseconds, got ${waitFlag}`);
           return 1;
         }
         return runReload({
@@ -1440,6 +1455,7 @@ function dispatchCommand(
           stdout: io.stdout,
           stderr: io.stderr,
           ...(json ? { json: true } : {}),
+          ...(stderrColor ? { color: true } : {}),
           ...(reloadExtensions ? { extensions: true } : {}),
           ...(parsedWait === undefined ? {} : { waitMs: parsedWait }),
           ...(internals?.editorClient ? { editorClient: internals.editorClient } : {}),
@@ -1500,7 +1516,7 @@ function dispatchCommand(
             );
             io.stdout.write(`  java: ${status.java ?? "(not found)"}\n`);
             if (!status.ok) {
-              io.stderr.write(`${status.error ?? "bob status failed"}\n`);
+              writeError(status.error ?? "bob status failed");
             }
           }
           return status.ok ? 0 : 1;
@@ -1552,11 +1568,9 @@ function dispatchCommand(
                   }),
                 );
               } else {
-                io.stderr.write(
-                  `${
-                    prepared.error ??
-                    `defold-typescript bob run: bob build exited with code ${prepared.buildExitCode}`
-                  }\n`,
+                writeError(
+                  prepared.error ??
+                    `defold-typescript bob run: bob build exited with code ${prepared.buildExitCode}`,
                 );
               }
               return failedBuild ? prepared.buildExitCode : 1;
@@ -1601,7 +1615,7 @@ function dispatchCommand(
                 }),
               );
             } else {
-              io.stderr.write(`${message}\n`);
+              writeError(message);
             }
             return 1;
           }
@@ -1674,8 +1688,8 @@ function dispatchCommand(
               ),
             );
           } else if (!result.ok) {
-            io.stderr.write(
-              `defold-typescript bob ${result.subcommand}: bob exited with code ${result.exitCode}\n`,
+            writeError(
+              `defold-typescript bob ${result.subcommand}: bob exited with code ${result.exitCode}`,
             );
           }
           return result.exitCode;
@@ -1694,7 +1708,7 @@ function dispatchCommand(
               }),
             );
           } else {
-            io.stderr.write(`${message}\n`);
+            writeError(message);
           }
           return 1;
         }
@@ -1719,7 +1733,7 @@ function dispatchCommand(
         if (json) {
           io.stdout.write(renderResult({ command: "run", error: message }));
         } else {
-          io.stderr.write(`${message}\n`);
+          writeError(message);
         }
         return 1;
       }
@@ -1787,7 +1801,7 @@ function dispatchCommand(
               }),
             );
           } else if (outcome.error !== undefined) {
-            io.stderr.write(`${outcome.error}\n`);
+            writeError(outcome.error);
           } else {
             for (const notice of notices) {
               io.stderr.write(`defold-typescript upgrade: ${notice}\n`);
@@ -1804,7 +1818,7 @@ function dispatchCommand(
           if (json) {
             io.stdout.write(renderResult({ command: "upgrade", error: message }));
           } else {
-            io.stderr.write(`${message}\n`);
+            writeError(message);
           }
           return 1;
         }
