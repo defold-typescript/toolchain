@@ -2258,15 +2258,120 @@ describe("runWatch editor discovery while unattached", () => {
     targetSource: "pin",
   };
 
+  type EditorAttached = NonNullable<RunWatchOptions["editorAttached"]>;
+
   function recordVersionChecks(gate: Promise<void> | null = null) {
     const baseUrls: string[] = [];
-    const editorAttached = async (baseUrl: string): Promise<readonly EditorVersionNotice[]> => {
+    const reported: boolean[] = [];
+    const editorAttached: EditorAttached = async (baseUrl, _signal, report) => {
       baseUrls.push(baseUrl);
       if (gate) await gate;
-      return [LATE_NOTICE];
+      reported.push(report(LATE_NOTICE));
     };
-    return { baseUrls, editorAttached };
+    return { baseUrls, reported, editorAttached };
   }
+
+  interface GatedVersionCheck {
+    readonly baseUrl: string;
+    readonly signal: AbortSignal;
+    readonly settled: Promise<void>;
+    release(): void;
+    reported(): boolean | undefined;
+  }
+
+  // Each call parks on its own gate and reports `late notice <n>`, so overlapping
+  // checks can be settled in a chosen order and told apart on the stream.
+  function gatedVersionChecks() {
+    const calls: GatedVersionCheck[] = [];
+    const editorAttached: EditorAttached = (baseUrl, signal, report) => {
+      const n = calls.length + 1;
+      let release!: () => void;
+      const gate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      let reported: boolean | undefined;
+      const settled = gate.then(() => {
+        reported = report({ ...LATE_NOTICE, message: `late notice ${n}` });
+      });
+      calls.push({ baseUrl, signal, settled, release, reported: () => reported });
+      return settled;
+    };
+    return { calls, editorAttached };
+  }
+
+  // Leaves call 1 pending against an attachment that has ended and call 2
+  // pending against the re-attachment that replaced it.
+  async function supersedeVersionCheck(
+    editor: FakeEditor,
+    streams: ReturnType<typeof captureStreams>,
+    checks: ReturnType<typeof gatedVersionChecks>,
+  ): Promise<[GatedVersionCheck, GatedVersionCheck]> {
+    editor.setBaseUrl("http://localhost:7777");
+    await until(() => editor.consoles.length === 1 && checks.calls.length === 1, 1000);
+    const noticesBefore = countMatches(streams.err(), /no Defold editor detected/g);
+
+    editor.setBaseUrl(null);
+    (editor.consoles[0] as FakeConsole).end();
+    await until(
+      () => countMatches(streams.err(), /no Defold editor detected/g) > noticesBefore,
+      1000,
+    );
+
+    editor.setBaseUrl("http://localhost:7777");
+    await until(() => checks.calls.length === 2, 1000);
+    return checks.calls as [GatedVersionCheck, GatedVersionCheck];
+  }
+
+  test("a version check superseded by a re-attach writes nothing", async () => {
+    const streams = captureStreams();
+    const editor = makeEditor(null);
+    const checks = gatedVersionChecks();
+    const handle = startWatch(editor, streams, false, { editorAttached: checks.editorAttached });
+    await handle.waitForIdle();
+
+    const [first, second] = await supersedeVersionCheck(editor, streams, checks);
+    expect(first.signal.aborted).toBe(true);
+    expect(second.signal.aborted).toBe(false);
+
+    first.release();
+    await first.settled;
+    second.release();
+    await second.settled;
+
+    expect(first.reported()).toBe(false);
+    expect(second.reported()).toBe(true);
+    expect(countMatches(streams.err(), /late notice 2/g)).toBe(1);
+    expect(streams.err()).not.toContain("late notice 1");
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("waitForIdle waits for every overlapping version check", async () => {
+    const streams = captureStreams();
+    const editor = makeEditor(null);
+    const checks = gatedVersionChecks();
+    const handle = startWatch(editor, streams, false, { editorAttached: checks.editorAttached });
+    await handle.waitForIdle();
+
+    const [first, second] = await supersedeVersionCheck(editor, streams, checks);
+    let idle = false;
+    const idled = handle.waitForIdle().then(() => {
+      idle = true;
+    });
+
+    first.release();
+    await first.settled;
+    await pause(5 * DISCOVERY_MS);
+    expect(idle).toBe(false);
+
+    second.release();
+    await second.settled;
+    await idled;
+
+    handle.stop();
+    await handle.done;
+  });
 
   test("an attach transition runs the version check once and prints its notices", async () => {
     const streams = captureStreams();
@@ -2384,6 +2489,7 @@ describe("runWatch editor discovery while unattached", () => {
     await handle.done;
     await pause(5 * DISCOVERY_MS);
 
+    expect(checks.reported).toEqual([false]);
     expect(streams.err()).not.toContain("late notice");
     expect(streams.out()).not.toContain("late notice");
   });

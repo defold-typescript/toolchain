@@ -14,7 +14,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Improved
 
 - **[`watch`](./watch.md#hot-reload) attaches to a Defold editor opened after it started within about a second, and reports one that quits, without waiting for a file save.** Runtime errors from a game launched before your first edit reach the terminal straight away, and an editor whose console fails to open is retried at growing intervals until it opens or the editor quits.
-- **[`watch`](./watch.md#runtime-errors-in-the-terminal) checks the version of an editor that attaches after startup.** A mismatch with a concrete `defold-target` pin prints the `set-target --detected` notice, an unpinned watch names both versions and asks for a restart, and `--json` reports it as an `editorVersion` event; the exit status is never affected.
+- **[`watch`](./watch.md#runtime-errors-in-the-terminal) checks the version of an editor that attaches after startup.** A mismatch with a concrete `defold-target` pin prints the `set-target --detected` notice, an unpinned watch names both versions and asks for a restart, and `--json` reports it as an `editorVersion` event; a version matching the target, the one startup compared, or the last one reported is not repeated, a check whose editor quit before it finished reports nothing, and the exit status is never affected.
 
 ### Fixed
 
