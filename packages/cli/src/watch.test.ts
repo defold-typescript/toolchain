@@ -2289,6 +2289,32 @@ describe("runWatch editor discovery while unattached", () => {
     await handle.done;
   });
 
+  test("an attached watch whose console never opened does not probe again", async () => {
+    const streams = captureStreams();
+    const editor = makeEditor(null);
+    editor.setConsoleOpen(false);
+    const handle = startWatch(editor, streams);
+    await handle.waitForIdle();
+
+    editor.setBaseUrl("http://localhost:7777");
+    await until(
+      () => streams.err().includes("attached to Defold editor at http://localhost:7777"),
+      1000,
+    );
+    await handle.waitForIdle();
+    expect(editor.consoles.length).toBe(0);
+
+    const before = editor.resolveCount();
+    await pause(10 * DISCOVERY_MS);
+    expect(editor.resolveCount()).toBe(before);
+    expect(
+      countMatches(streams.err(), /attached to Defold editor at http:\/\/localhost:7777/g),
+    ).toBe(1);
+
+    handle.stop();
+    await handle.done;
+  });
+
   test("an editor that quits is reported without a rebuild, and one that returns is attached again", async () => {
     const streams = captureStreams();
     const editor = makeEditor("http://localhost:7777");
