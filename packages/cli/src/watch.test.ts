@@ -298,6 +298,45 @@ describe("runWatch", () => {
     expect(code).toBe(0);
   });
 
+  test("a failed rebuild leads its located lines with an error headline", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+
+    const handle = runWatch({ cwd, stdout, stderr, watcherFactory: factory.factory });
+    await handle.waitForIdle();
+
+    writeProjectFile("src/main.ts", 'const x: number = "oops";\n');
+    factory.trigger("change", "src/main.ts");
+    await handle.waitForIdle();
+
+    const lines = err().split("\n");
+    const located = lines.findIndex((line) => /^ {2}src\/main\.ts:\d+:\d+: /.test(line));
+    expect(located).toBeGreaterThan(0);
+    expect(lines[located - 1]).toBe("defold-typescript watch: error: 1 file(s) failed:");
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("color wraps only the error word of a rebuild failure headline", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", 'const x: number = "oops";\n');
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+
+    const handle = runWatch({ cwd, stdout, stderr, color: true, watcherFactory: factory.factory });
+    await handle.waitForIdle();
+
+    expect(err()).toContain(
+      "defold-typescript watch: \x1b[1;31merror\x1b[0m: 1 file(s) failed:\n  src/main.ts:",
+    );
+
+    handle.stop();
+    await handle.done;
+  });
+
   test("missing tsconfig.json at startup rejects and never opens a watcher", async () => {
     const { stdout, stderr } = captureStreams();
     const factory = makeFactory();
