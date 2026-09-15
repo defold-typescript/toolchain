@@ -46,14 +46,19 @@ export const GUIDE_GROUPS: GuideGroup[] = [
       "wall",
       "resolve",
       "scene-types",
-      "terminal-output",
     ],
   },
   {
     id: "toolchain-workflow",
     label: "Toolchain & workflow",
     subtitle: "Build, inspect, and drive the transpiler.",
-    slugs: ["transpile-diagnostics", "debugging", "agent-runbooks", "helper-scripts"],
+    slugs: [
+      "transpile-diagnostics",
+      "debugging",
+      "agent-runbooks",
+      "helper-scripts",
+      "terminal-output",
+    ],
   },
   {
     id: "project-configuration",

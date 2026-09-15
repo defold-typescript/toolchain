@@ -69,7 +69,6 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - [wall](https://defold-typescript.github.io/toolchain/wall) — opt-in per-directory API walls that narrow a single-kind source directory to its script-kind surface, in interactive and flag forms.
 - [resolve](https://defold-typescript.github.io/toolchain/resolve) — generate ambient TypeScript namespaces from your `game.project` native-extension dependencies, with pin/drift detection and a `--frozen` lockfile mode.
 - [scene-types](https://defold-typescript.github.io/toolchain/scene-types) — generate the scene-address declaration from your `.collection`/`.go` files so game-object paths and component ids complete in the editor; how `build` and `watch` keep it current, how `init` and `upgrade` wire it into your program, and why it can never reject an address.
-- [Terminal output](https://defold-typescript.github.io/toolchain/terminal-output) — how failure lines read (`defold-typescript <command>: error: <message>`), when the `error` word is colored, and how `--no-color`, `NO_COLOR`, `TERM=dumb`, and `--json` turn color off.
 
 ### Toolchain & workflow
 
@@ -77,6 +76,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - [Debugging](https://defold-typescript.github.io/toolchain/debugging) — step through `.ts` source with breakpoints via the Local Lua Debugger and the scaffolded Bun launch path (no shell, Windows-native), resolving through the emitted `<name>.ts.script.map`.
 - [Agent runbooks](https://defold-typescript.github.io/toolchain/agent-runbooks) — harness-neutral procedures for driving the CLI from an automated agent: scaffold a project, [install the agent contract](https://defold-typescript.github.io/toolchain/agent-runbooks#install-the-agent-contract), regenerate extension types, [add and attach a script](https://defold-typescript.github.io/toolchain/agent-runbooks#add-a-script) (build, wire the compiled component, verify), and fix the Lua output over the `--json` envelope, gating on `ok`.
 - [Helper scripts](https://defold-typescript.github.io/toolchain/helper-scripts) — where build, codegen, and maintenance scripts live: a project-root `/scripts` folder run with Bun, typed by their own `scripts/tsconfig.json`, kept off the Lua build path and out of the Defold-typed `src/` surface.
+- [Terminal output](https://defold-typescript.github.io/toolchain/terminal-output) — how failure lines read (`defold-typescript <command>: error: <message>`), when the `error` word is colored, and how `--no-color`, `NO_COLOR`, `TERM=dumb`, and `--json` turn color off.
 
 ### Project configuration
 
