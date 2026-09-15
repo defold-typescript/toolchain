@@ -275,6 +275,33 @@ describe("runReload", () => {
     expect(io.err()).toContain("the reloaded code reported an error");
   });
 
+  test("color tints the console level tag and leaves its traceback plain", async () => {
+    const editor = makeEditor({
+      onConsole: (stream) => {
+        stream.push("ERROR:SCRIPT: /main/main.script:12: attempt to index a nil value");
+        stream.push("  stack traceback:");
+        stream.end();
+      },
+    });
+    const io = captureStreams();
+
+    const code = await runReload({
+      cwd: "/project",
+      stdout: io.stdout,
+      stderr: io.stderr,
+      editorClient: editor.client,
+      waitMs: NEVER_ELAPSES_MS,
+      color: true,
+    });
+
+    expect(code).toBe(1);
+    expect(io.err()).toBe(
+      "defold-typescript reload: editor: \x1b[1;31mERROR\x1b[0m:SCRIPT: /main/main.script:12: attempt to index a nil value\n" +
+        "defold-typescript reload: editor:   stack traceback:\n" +
+        "defold-typescript reload: \x1b[1;31merror\x1b[0m: the reloaded code reported an error\n",
+    );
+  });
+
   test("info lines are filtered out and leave the reload quiet", async () => {
     const editor = makeEditor({
       onConsole: (stream) => {

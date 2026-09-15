@@ -92,12 +92,15 @@ const EDITOR_STATUS = /^defold-typescript watch: (attached to Defold editor|no D
 // A hole in the scene address universe rides stderr as a non-fatal warning, so
 // a fixture that declares a dependency it never resolves reports one without
 // having failed at anything.
-const SCENE_TYPES_WARNING = /^defold-typescript scene-types: /;
+const SCENE_TYPES_WARNING = /^defold-typescript scene-types: warning: /;
+// Every non-fatal problem line carries the `warning` word, so the same reasoning
+// covers a fixture archive that ships no scene source during a re-resolve.
+const WARNING_LINE = /^defold-typescript [a-z -]+: warning: /;
 
 function failureOutput(stderrText: string): string {
   return stderrText
     .split("\n")
-    .filter((line) => line !== "" && !EDITOR_STATUS.test(line) && !SCENE_TYPES_WARNING.test(line))
+    .filter((line) => line !== "" && !EDITOR_STATUS.test(line) && !WARNING_LINE.test(line))
     .join("\n");
 }
 
@@ -765,8 +768,25 @@ describe("dispatch", () => {
     expect(holeAt).toBeGreaterThanOrEqual(0);
     expect(orphanAt).toBeGreaterThanOrEqual(0);
     expect(holeAt).toBeLessThan(orphanAt);
-    expect(lines[holeAt]?.startsWith("defold-typescript build: ")).toBe(true);
-    expect(lines[orphanAt]?.startsWith("defold-typescript build: ")).toBe(true);
+    expect(lines[holeAt]?.startsWith("defold-typescript build: warning: ")).toBe(true);
+    expect(lines[orphanAt]?.startsWith("defold-typescript build: warning: ")).toBe(true);
+  });
+
+  test("scene-types writes an unresolved dependency as a warning and exits 0", async () => {
+    scaffoldUnresolvedDependencyBuild();
+    const { io, err } = captureStreams();
+
+    const code = await dispatch(["scene-types", cwd], io);
+
+    expect(code).toBe(0);
+    const lines = err()
+      .split("\n")
+      .filter((line) => line !== "");
+    expect(lines.length).toBeGreaterThan(0);
+    for (const line of lines) {
+      expect(line.startsWith("defold-typescript scene-types: warning: ")).toBe(true);
+    }
+    expect(lines.some((line) => line.includes(UNRESOLVED_DEPENDENCY_URL))).toBe(true);
   });
 
   test("a ref-doc-surface build keeps the same order", async () => {
@@ -1714,7 +1734,7 @@ describe("dispatch", () => {
     expect(run.code).toBe(0);
     expect(run.probes).toBe(1);
     expect(run.err).toContain(
-      `defold-typescript watch: ${describeDetectedPinMismatch("1.13.0", "1.12.4")[0]}`,
+      `defold-typescript watch: warning: ${describeDetectedPinMismatch("1.13.0", "1.12.4")[0]}`,
     );
     expect(run.err.split("set-target --detected").length - 1).toBe(1);
   });
@@ -1765,7 +1785,7 @@ describe("dispatch", () => {
 
     expect(run.code).toBe(0);
     expect(run.err).toContain(
-      `defold-typescript watch: the Defold editor at http://localhost:7777 runs ${lateVersion}, but this watch resolved its API surface for ${CURRENT_STABLE_DEFOLD_VERSION}; restart watch to follow the editor.`,
+      `defold-typescript watch: warning: the Defold editor at http://localhost:7777 runs ${lateVersion}, but this watch resolved its API surface for ${CURRENT_STABLE_DEFOLD_VERSION}; restart watch to follow the editor.`,
     );
   });
 
@@ -4273,6 +4293,11 @@ describe("dispatch bob", () => {
 });
 
 describe("dispatch resolve", () => {
+  const noSceneSource = (url: string): string =>
+    `defold-typescript resolve: warning: no scene source from ${url}: ships no game.project, so it declares no [library] include_dirs\n`;
+  const withoutDigests = (text: string): string =>
+    text.replace(/sha256:[0-9a-f]{64}/g, "sha256:<digest>");
+
   function resolveInternals(url: string): {
     resolveInternals: {
       download: () => Promise<Uint8Array>;
@@ -4532,8 +4557,9 @@ describe("dispatch resolve", () => {
 
     expect(code).toBe(0);
     expect(out()).not.toContain("mylib.core");
-    expect(err()).toContain("unverified");
-    expect(err()).toContain(url);
+    expect(err()).toBe(
+      `${noSceneSource(url)}defold-typescript resolve: warning: unverified library match for ${url}: repo name matched but no shipped module path was found in the archive; not materialized\n`,
+    );
   });
 
   test("a missing game.project returns 1 and, under --json, reports ok:false", async () => {
@@ -4568,10 +4594,9 @@ describe("dispatch resolve", () => {
     const code = await dispatch(["resolve", cwd], io, resolveInternals(url));
 
     expect(code).toBe(0);
-    const warning = err();
-    expect(warning).toContain(url);
-    expect(warning).toContain("sha256:pinned");
-    expect(warning).toMatch(/drift/);
+    expect(withoutDigests(err())).toBe(
+      `${noSceneSource(url)}defold-typescript resolve: warning: pin drift for ${url}: sha256:pinned -> sha256:<digest>\n`,
+    );
   });
 
   test("--frozen fails on drift and does not seed absent pins", async () => {
@@ -4617,9 +4642,9 @@ describe("dispatch resolve", () => {
     const code = await dispatch(["resolve", cwd, "--frozen"], io, internals);
 
     expect(code).toBe(1);
-    const warning = err();
-    expect(warning).toContain(driftedUrl);
-    expect(warning).toContain("sha256:stale");
+    expect(withoutDigests(err())).toBe(
+      `${noSceneSource(driftedUrl)}${noSceneSource(freshUrl)}defold-typescript resolve: error: pin drift for ${driftedUrl}: sha256:stale -> sha256:<digest>\n`,
+    );
     // package.json byte-unchanged: no drift clobber, no absent-pinned seed
     expect(readFileSync(pkgPath, "utf8")).toBe(originalPkg);
   });
@@ -4698,7 +4723,9 @@ describe("dispatch resolve", () => {
     expect(parsed.extensions).toHaveLength(1);
     expect(parsed.extensions[0]?.url).toBe(url);
     expect(parsed.extensions[0]?.pinStatus).toBe("drift");
-    expect(err()).toContain("drift");
+    expect(withoutDigests(err())).toBe(
+      `${noSceneSource(url)}defold-typescript resolve: error: 1 extension pin(s) drifted:\n  ${url}: sha256:stale -> sha256:<digest>\n`,
+    );
   });
 
   function writePin(pkg: Record<string, unknown>): void {
@@ -6703,7 +6730,9 @@ describe("watch scene-address surface wiring", () => {
       .split("\n")
       .filter((line) => line.includes("nobody"));
     expect(reported.length).toBeGreaterThan(0);
-    expect(reported.every((line) => line.startsWith("defold-typescript watch: "))).toBe(true);
+    expect(reported.every((line) => line.startsWith("defold-typescript watch: warning: "))).toBe(
+      true,
+    );
     expect(reported.some((line) => line.includes("src/main.ts"))).toBe(true);
     // The findings are advisory: the cycle sentinel still closes the rebuild.
     expect(out()).toContain("defold-typescript watch: build finished");
@@ -7245,7 +7274,9 @@ describe("watch scene-address surface wiring", () => {
       .split("\n")
       .filter((line) => line.includes('the world "other"'));
     expect(reported.length).toBeGreaterThan(0);
-    expect(reported.every((line) => line.startsWith("defold-typescript watch: "))).toBe(true);
+    expect(reported.every((line) => line.startsWith("defold-typescript watch: warning: "))).toBe(
+      true,
+    );
     expect(reported.some((line) => line.includes("src/main.ts"))).toBe(true);
   });
 
@@ -8024,6 +8055,26 @@ describe("dispatch error lines", () => {
     expect(err()).toBe(
       "defold-typescript reload: \x1b[1;31merror\x1b[0m: no running Defold editor accepted the reload\n",
     );
+  });
+
+  test("a warning on a terminal stderr carries a bold yellow warning word", async () => {
+    scaffoldUnresolvedDependency(cwd);
+    const colored = ttyStderr(captureStreams());
+    const plain = ttyStderr(captureStreams());
+
+    const coloredCode = await dispatch(["scene-types", cwd], colored.io, { env: {} });
+    const plainCode = await dispatch(["scene-types", cwd, "--no-color"], plain.io, { env: {} });
+
+    expect(coloredCode).toBe(0);
+    expect(plainCode).toBe(0);
+    const coloredLines = colored.err().split("\n").filter(Boolean);
+    expect(coloredLines.length).toBeGreaterThan(0);
+    for (const line of coloredLines) {
+      expect(line.startsWith("defold-typescript scene-types: \x1b[1;33mwarning\x1b[0m: ")).toBe(
+        true,
+      );
+    }
+    expect(colored.err().replaceAll("\x1b[1;33mwarning\x1b[0m", "warning")).toBe(plain.err());
   });
 
   test("--no-color is a flag, not a positional", async () => {
