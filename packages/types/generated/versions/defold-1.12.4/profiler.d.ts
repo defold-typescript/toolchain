@@ -1,6 +1,4 @@
 /** @noSelfInFile */
-import type { Opaque } from "../../../src/core-types";
-
 declare global {
   /**
    * Functions for getting profiling data in runtime.
@@ -176,7 +174,7 @@ declare global {
      * }
      * ```
      */
-    function set_ui_mode(mode: Opaque<"constant">): void;
+    function set_ui_mode(mode: number & { readonly __brand: "profiler.MODE_RUN" } | number & { readonly __brand: "profiler.MODE_PAUSE" } | number & { readonly __brand: "profiler.MODE_SHOW_PEAK_FRAME" } | number & { readonly __brand: "profiler.MODE_RECORD" }): void;
     /**
      * Set the on-screen profile view mode - minimized or expanded
      *
@@ -191,7 +189,7 @@ declare global {
      * profiler.set_ui_view_mode(profiler.VIEW_MODE_MINIMIZED);
      * ```
      */
-    function set_ui_view_mode(mode: Opaque<"constant">): void;
+    function set_ui_view_mode(mode: number & { readonly __brand: "profiler.VIEW_MODE_FULL" } | number & { readonly __brand: "profiler.VIEW_MODE_MINIMIZED" }): void;
     /**
      * Shows or hides the time the engine waits for vsync in the on-screen profiler
      * Each frame the engine waits for vsync and depending on your vsync settings and how much time

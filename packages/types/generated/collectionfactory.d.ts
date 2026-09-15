@@ -1,5 +1,5 @@
 /** @noSelfInFile */
-import type { Hash, Opaque, Quaternion, Url, Vector3 } from "../src/core-types";
+import type { Hash, Quaternion, Url, Vector3 } from "../src/core-types";
 
 declare global {
   /**
@@ -92,7 +92,7 @@ declare global {
      *
      * - `collectionfactory.STATUS_LOADED`
      */
-    function get_status(url?: string | Hash | Url): Opaque<"constant">;
+    function get_status(url?: string | Hash | Url): number & { readonly __brand: "collectionfactory.STATUS_UNLOADED" } | number & { readonly __brand: "collectionfactory.STATUS_LOADING" } | number & { readonly __brand: "collectionfactory.STATUS_LOADED" };
     /**
      * Resources loaded are referenced by the collection factory component until the existing (parent) collection is destroyed or collectionfactory.unload is called.
      * Calling this function when the factory is not marked as dynamic loading does nothing.

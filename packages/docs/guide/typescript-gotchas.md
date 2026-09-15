@@ -76,6 +76,17 @@ render.get_render_target_width(rt, 0);                                // TS erro
 
 `packages/types/test-d/graphics-render-buffer-types.ts` pins this: the real `graphics` constant type-checks and a bare number carries `@ts-expect-error`.
 
+**A slot the reference types as a bare `constant` takes the constants its documentation names.** Many parameters and getter returns (`gui.set_pivot`, `gui.animate`'s easing and playback, `render.enable_state`, `window.set_dim_mode`, `sys.get_connectivity`, …) carry no constant list in their ref-doc type, only in their prose — a `gui.PIVOT_*` list, or "one of the `gui.EASING_*` constants". The generated typings read that prose, so each such slot is the union of the named constants' brands. A constant from another family, or a generic `Opaque<"constant">`, is rejected:
+
+```ts
+gui.set_pivot(node, gui.get_pivot(node));           // OK — getter and setter share the PIVOT_* union
+model.play_anim(url, "run", go.PLAYBACK_ONCE_FORWARD); // OK — the family the doc lists
+model.play_anim(url, "run", gui.PLAYBACK_ONCE_FORWARD); // TS error — gui's family, not go's
+window.set_dim_mode(window.get_dim_mode());          // TS error — the getter can return DIMMING_UNKNOWN
+```
+
+A few slots name no constant at all (`gui.new_texture`'s `type` lists only strings, `iap.get_provider_id` names constants no ref-doc defines) and keep the generic `Opaque<"constant">`. `packages/types/test-d/documented-constant-slots.ts` pins the documented calls in each affected namespace.
+
 ## Engine handles are opaque — you cannot fabricate or cast across kinds
 
 **Symptom.** A GUI `node`, a render `texture` or `render_target`, a `buffer`, a `resource`, a box2d `b2World`/`b2Body`, and similar engine handles each have a distinct nominal type. A value obtained for one kind is not accepted where another kind is expected, and a plain value (a number, an object literal) is never accepted:
@@ -92,7 +103,7 @@ render.set_render_target(undefined);     // TS error — undefined is not a rend
 
 **Named handle types.** Each handle is also referenceable as a named type alias under its namespace — `render.render_target`, `render.constant_buffer`, `render.texture`, `socket.master`, `socket.client`, `socket.unconnected`, `b2d.b2World`, `b2d.b2Body` — so you can annotate a binding directly (`const rt: render.render_target = render.render_target("rt", {})`). The alias resolves to the same `Opaque<"<token>">` brand the handle-returning function yields, so the annotation and the returned value are the same nominal type.
 
-**How we pin this in the type tests.** `packages/types/test-d/ambient.ts` passes an `Opaque<"constant">`-typed value to `model.play_anim` and asserts a bare `0` in the same slot carries `@ts-expect-error`. It also binds `render.render_target(...)` to a `render.render_target`-typed variable and asserts a bare `0` cannot be — proving the named alias and the function's return type share one brand. If the brand is dropped or widened to `unknown`, the expected errors disappear and the typecheck gate fails.
+**How we pin this in the type tests.** `packages/types/test-d/ambient.ts` passes a documented `go.PLAYBACK_*` constant to `model.play_anim` and asserts that both a generic `Opaque<"constant">` value and a bare `0` in the same slot carry `@ts-expect-error`. It also binds `render.render_target(...)` to a `render.render_target`-typed variable and asserts a bare `0` cannot be — proving the named alias and the function's return type share one brand. If the brand is dropped or widened to `unknown`, the expected errors disappear and the typecheck gate fails.
 
 ## Callback parameters type-check as functions, not `unknown`
 
