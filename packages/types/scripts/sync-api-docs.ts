@@ -109,9 +109,9 @@ export const SYNC_MANIFEST: readonly SyncManifestEntry[] = [
   entry("zlib", "doc/src-script_zlib.cpp_doc.json"),
 ];
 
-// Checklist namespaces with no machine-readable doc anywhere (neither core
-// ref-doc.zip nor a published extension `.script_api`). Currently empty: the
-// four extension-only surfaces are wired via EXTENSION_MANIFEST below.
+// Checklist namespaces with no machine-readable doc anywhere in core
+// ref-doc.zip. Currently empty: extension namespaces are not engine surfaces;
+// they are typed through `resolve` from each extension's own `.script_api`.
 export const UNMAPPED: ReadonlyMap<string, string> = new Map();
 
 // A Lua script namespace is a lowercase, dot-separated identifier (`sys`,
@@ -211,52 +211,17 @@ function entry(
   return { namespace, zipEntry, fixture, ...(mergeEntries ? { mergeEntries } : {}) };
 }
 
-export interface ExtensionManifestEntry {
-  readonly namespace: string;
-  readonly repo: string;
-  readonly tag: string;
-  readonly path: string;
-  readonly fixture: string;
-}
-
-// Extension-only namespaces: each ships a single `.script_api` (YAML) doc in
-// its own repo rather than appearing in core ref-doc.zip. Pinned to a release
-// tag and converted to the core ref-doc JSON shape via parseScriptApi so they
-// flow through MODULE_MANIFEST and the drift guard like every core namespace.
-export const EXTENSION_MANIFEST: readonly ExtensionManifestEntry[] = [
-  ext("iac", "defold/extension-iac", "1.4.0", "extension-iac/api/iac.script_api"),
-  ext("iap", "defold/extension-iap", "8.4.0", "extension-iap/api/iap.script_api"),
-  ext("push", "defold/extension-push", "4.1.0", "extension-push/api/push.script_api"),
-  ext("webview", "defold/extension-webview", "1.5.0", "webview/api/webview.script_api"),
-];
-
-function ext(namespace: string, repo: string, tag: string, path: string): ExtensionManifestEntry {
-  return {
-    namespace,
-    repo,
-    tag,
-    path,
-    fixture: `fixtures/defold-1.13.1/${namespace}_doc.json`,
-  };
-}
-
 // Every vendored fixture set the coverage report audits, and the namespaces it
 // counts as reached from upstream. Composed once here so the `--check` run and
 // the guard over it cannot disagree about which sets are in scope.
 export const COVERAGE_MANIFEST: readonly { readonly namespace: string }[] = [
   ...SYNC_MANIFEST,
-  ...EXTENSION_MANIFEST,
   ...EDITOR_MANIFEST,
 ];
 
 export const UPSTREAM_MAPPED_NAMESPACES: ReadonlySet<string> = new Set(
-  [...SYNC_MANIFEST, ...EXTENSION_MANIFEST, ...LUA_STDLIB_MANIFEST, ...EDITOR_MANIFEST].map(
-    (e) => e.namespace,
-  ),
+  [...SYNC_MANIFEST, ...LUA_STDLIB_MANIFEST, ...EDITOR_MANIFEST].map((e) => e.namespace),
 );
-
-export const extensionRawUrl = (e: ExtensionManifestEntry): string =>
-  `https://raw.githubusercontent.com/${e.repo}/${e.tag}/${e.path}`;
 
 // Convert a raw `.script_api` YAML doc to the core ref-doc JSON string written
 // to fixtures/<ns>_doc.json. The result is byte-compared by the same drift
@@ -492,25 +457,6 @@ export function syncExtractedFixtures(
   return results;
 }
 
-export async function downloadExtensionFixtures(
-  manifest: readonly ExtensionManifestEntry[] = EXTENSION_MANIFEST,
-): Promise<ExtractedFixture[]> {
-  const out: ExtractedFixture[] = [];
-  for (const e of manifest) {
-    const url = extensionRawUrl(e);
-    const res = await fetch(url);
-    if (!res.ok) {
-      throw new Error(`extension doc download failed: ${url} -> ${res.status} ${res.statusText}`);
-    }
-    out.push({
-      namespace: e.namespace,
-      fixture: e.fixture,
-      contents: scriptApiToFixtureJson(await res.text()),
-    });
-  }
-  return out;
-}
-
 function readFixtureOrNull(path: string): string | null {
   try {
     return readFileSync(path, "utf8");
@@ -681,18 +627,16 @@ if (import.meta.main) {
   const zip = zipPath ? readZip(zipPath) : await downloadZip();
 
   const coreFixtures = extractFixtures(zip);
-  const extensionFixtures = await downloadExtensionFixtures();
   const luaStdlibFixtures = extractFixtures(zip, LUA_STDLIB_MANIFEST);
   const editorFixtures = extractFixtures(zip, EDITOR_MANIFEST);
   const editorVmFixtures = extractFixtures(zip, EDITOR_VM_MANIFEST);
   const results = [
     ...syncExtractedFixtures(coreFixtures, { check }),
-    ...syncExtractedFixtures(extensionFixtures, { check }),
     ...syncExtractedFixtures(luaStdlibFixtures, { check }),
     ...syncExtractedFixtures(editorFixtures, { check }),
     ...syncExtractedFixtures(editorVmFixtures, { check }),
   ];
-  const syncedDocs = [...coreFixtures, ...extensionFixtures].map((f) => ({
+  const syncedDocs = coreFixtures.map((f) => ({
     namespace: f.namespace,
     doc: JSON.parse(f.contents),
   }));

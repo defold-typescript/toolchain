@@ -61,9 +61,6 @@ export interface DefoldGitHub {
 export interface ReservedNamespaces {
   // Every engine namespace any tracked Defold version documents.
   engineNamespaces: ReadonlySet<string>;
-  // Engine namespaces sourced from a Defold extension (`EXTENSION_MANIFEST`),
-  // which the extension's own page replaces.
-  movedNamespaces: ReadonlySet<string>;
   // Namespaces a vendored library page already routes at `/api/<namespace>`.
   libraryNamespaces: ReadonlySet<string>;
 }
@@ -165,8 +162,7 @@ export function assignPageKeys(
     const stem = repoStem(name);
     const docs = entry.docs.map((doc) => {
       const shadowsPage =
-        (reserved.engineNamespaces.has(doc.namespace) &&
-          !reserved.movedNamespaces.has(doc.namespace)) ||
+        reserved.engineNamespaces.has(doc.namespace) ||
         reserved.libraryNamespaces.has(doc.namespace);
       const shared = (declaringRepos.get(doc.namespace)?.size ?? 0) > 1;
       let page = doc.namespace;
@@ -189,7 +185,6 @@ export function assignPageKeys(
 
 interface SyncApiDocsModule {
   scriptApiToDocsJson: (text: string) => string;
-  EXTENSION_MANIFEST: readonly { namespace: string }[];
 }
 
 // Loaded by resolved path from the sibling types package, mirroring
@@ -205,14 +200,12 @@ export async function loadReservedNamespaces(packageRoot: string): Promise<Reser
   const { targets } = JSON.parse(
     readFileSync(join(packageRoot, "..", "types", "api-targets.json"), "utf8"),
   ) as { targets: { modules: { namespace: string }[] }[] };
-  const { EXTENSION_MANIFEST } = await loadSyncApiDocs(packageRoot);
   const libraryNamespaces = readdirSync(join(packageRoot, "api-doc"))
     .filter((file) => file.endsWith(".json"))
     .map((file) => file.replace(/\.json$/, ""))
     .filter((namespace) => existsSync(join(packageRoot, "generated", `${namespace}.d.ts`)));
   return {
     engineNamespaces: new Set(targets.flatMap((t) => t.modules.map((m) => m.namespace))),
-    movedNamespaces: new Set(EXTENSION_MANIFEST.map((e) => e.namespace)),
     libraryNamespaces: new Set(libraryNamespaces),
   };
 }

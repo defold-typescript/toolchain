@@ -23,13 +23,25 @@ import {
   trailingOptionalCutoff,
 } from "../src/emit-dts";
 import { parseMessagesDoc } from "../src/emit-messages";
+import { EXTENSION_GOLDEN_MANIFEST } from "./extension-goldens";
 import {
   collectConstantFqns,
-  FIDELITY_BASELINE_MANIFEST,
   generateModuleDeclaration,
   MESSAGES_MANIFEST,
+  MODULE_MANIFEST,
   type ModuleManifestEntry,
 } from "./regen";
+
+// The fidelity audit runs over the promoted default surface (the `default: true`
+// target, `MODULE_MANIFEST`) so the 1.13-only modules (b2d.*, compute, material)
+// and the 1.13 model additions are audited too — auditing the older 1.12.4 target
+// left them unseen, which is how the promoted surface shipped opaque `Record`
+// fallbacks while the gate read `recordTables: 0`. The extension goldens ride
+// along because `resolve` applies the same curations to them.
+export const FIDELITY_BASELINE_MANIFEST: readonly ModuleManifestEntry[] = [
+  ...MODULE_MANIFEST,
+  ...EXTENSION_GOLDEN_MANIFEST,
+];
 
 const NO_KNOWN_CONSTANTS: ReadonlySet<string> = new Set();
 

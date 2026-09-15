@@ -140,11 +140,10 @@ describe("assignPageKeys", () => {
     });
   });
 
-  test("the reserved sets are the real ones: camera is live, iap is moved, proto is vendored", () => {
+  test("the reserved sets are the real ones: camera is live, iap is no engine page, proto is vendored", () => {
     expect(reserved.libraryNamespaces.has("proto")).toBe(true);
     expect(reserved.engineNamespaces.has("camera")).toBe(true);
-    expect(reserved.movedNamespaces.has("camera")).toBe(false);
-    expect([...reserved.movedNamespaces].sort()).toEqual(["iac", "iap", "push", "webview"]);
+    expect(reserved.engineNamespaces.has("iap")).toBe(false);
   });
 
   test("two docs resolving to one key throw naming both", () => {

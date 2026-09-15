@@ -7,7 +7,7 @@ import type { FidelityReport } from "./luals-fidelity";
  * the ts-defold codemod (`sync-library-types.ts`) and the LuaLS front-end
  * (`sync-luals-types.ts`). It ingests a library's own committed `.script_api`
  * snapshot and routes it through the *shared ref-doc emitter* — the exact path
- * the four built-in extensions and the resolve-time extension path use — rather
+ * the committed extension goldens and the resolve-time extension emitter use — rather
  * than the LuaLS `emitLibraryDeclarations` (which consumes a `LibraryModel`).
  *
  * Each target pins its exact output paths. Like the LuaLS libraries, a migrated
@@ -171,8 +171,8 @@ interface TypesModules {
 
 // bridge references no branded engine handle, so `generateModuleDeclaration`
 // emits no core-types import and this value never reaches the golden; it mirrors
-// the built-in extensions' import for the day a script_api target does reference
-// one.
+// the resolve emitter's import (and the extension goldens') for the day a
+// script_api target does reference one.
 const SCRIPT_API_CORE_TYPES_IMPORT = "../src/core-types";
 
 /**
@@ -256,8 +256,9 @@ export async function emitScriptApiDeclaration(
 
 /**
  * The api-doc golden is the parsed ref-doc `doc` itself, pretty-printed — the same
- * `{ info, elements }` shape the built-in extensions' `<ns>_doc.json` fixtures
- * feed the docs-site through `parseDefoldApiDoc`, so the shape stays uniform.
+ * `{ info, elements }` shape the extension goldens' `<ns>_doc.json` fixtures and
+ * every engine fixture feed through `parseDefoldApiDoc`, so the shape stays
+ * uniform.
  */
 export async function lowerScriptApiApiDoc(
   packageRoot: string,

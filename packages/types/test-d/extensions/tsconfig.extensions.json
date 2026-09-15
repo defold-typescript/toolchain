@@ -1,0 +1,9 @@
+{
+  "extends": "../../../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": []
+  },
+  "include": ["*.ts", "../../extension-goldens/*.d.ts"],
+  "exclude": ["extensions-neg-proof.ts"]
+}
