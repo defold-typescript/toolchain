@@ -46,6 +46,7 @@ export const GUIDE_GROUPS: GuideGroup[] = [
       "wall",
       "resolve",
       "scene-types",
+      "terminal-output",
     ],
   },
   {

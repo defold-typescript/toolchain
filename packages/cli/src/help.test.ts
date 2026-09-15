@@ -238,3 +238,18 @@ describe("--no-update-check help listing", () => {
     expect(renderHelp(null)).not.toContain("--no-update-check");
   });
 });
+
+describe("--no-color help listing", () => {
+  test("global help lists --no-color and its NO_COLOR equivalent", () => {
+    const text = renderHelp(null);
+
+    expect(text).toContain("--no-color");
+    expect(text).toContain("NO_COLOR");
+  });
+
+  test("global JSON flags carry --no-color", () => {
+    const parsed = JSON.parse(renderHelpJson(null));
+
+    expect(parsed.flags.some((f: { flag: string }) => f.flag === "--no-color")).toBe(true);
+  });
+});
