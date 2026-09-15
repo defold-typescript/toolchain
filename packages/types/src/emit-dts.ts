@@ -351,6 +351,119 @@ export const OPTIONAL_SLOT_CORRECTIONS: ReadonlyMap<string, string> = new Map([
   ),
 ]);
 
+export type ConstantSlotResolution =
+  | { readonly borrow: string }
+  | { readonly family: string; readonly evidence: string }
+  | { readonly residual: string };
+
+// A top-level `constant` slot takes the constants its own doc names. This table
+// fills only a slot whose own doc names none: a `borrow` reads another slot's doc
+// (same key shape), a `family` expands a `<prefix>*` wildcard evidenced by the
+// named element's example, and a `residual` records why nothing can brand it.
+// Constants always come from the brand universe, never from a hand-typed list.
+export const CONSTANT_SLOT_RESOLUTIONS: ReadonlyMap<string, ConstantSlotResolution> = new Map<
+  string,
+  ConstantSlotResolution
+>([
+  ["gui.get:param:property", { borrow: "gui.animate:param:property" }],
+  ["gui.set:param:property", { borrow: "gui.animate:param:property" }],
+  ["gui.cancel_animations:param:property", { borrow: "gui.animate:param:property" }],
+  [
+    "buffer.set_metadata:param:value_type",
+    { family: "buffer.VALUE_TYPE_*", evidence: "buffer.set_metadata" },
+  ],
+  [
+    "buffer.get_metadata:return:value_type",
+    { family: "buffer.VALUE_TYPE_*", evidence: "buffer.set_metadata" },
+  ],
+  ["gui.new_texture:param:type", { residual: "the doc lists texture type strings only" }],
+  ["gui.set_texture_data:param:type", { residual: "the doc lists texture type strings only" }],
+  [
+    "iap.get_provider_id:return:provider_id",
+    { residual: "the doc names iap.PROVIDER_ID_*, which no ref-doc defines as a constant" },
+  ],
+]);
+
+const DOC_CONSTANT_TOKEN =
+  /(?<![A-Za-z0-9_.])([a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*\.[A-Z][A-Z0-9_]*)(\*)?/g;
+
+// The constant FQNs a piece of ref-doc text names, in doc order: exact tokens kept
+// only when they are in `universe`, and each `<prefix>*` wildcard expanded to every
+// universe FQN with that prefix, sorted.
+export function documentedConstantTokens(text: string, universe: ReadonlySet<string>): string[] {
+  const out = new Set<string>();
+  for (const match of text.replace(/<[^>]*>/g, "").matchAll(DOC_CONSTANT_TOKEN)) {
+    const token = match[1] as string;
+    if (match[2] === undefined) {
+      if (universe.has(token)) out.add(token);
+      continue;
+    }
+    for (const fqn of [...universe].filter((candidate) => candidate.startsWith(token)).sort()) {
+      out.add(fqn);
+    }
+  }
+  return [...out];
+}
+
+type SlotDocLookup = (slotKey: string) => string | undefined;
+
+function constantSlotTokens(
+  ownDoc: string,
+  slotKey: string,
+  lookupDoc: SlotDocLookup,
+  universe: ReadonlySet<string>,
+): string[] {
+  const own = documentedConstantTokens(ownDoc, universe);
+  if (own.length > 0) return own;
+  const entry = CONSTANT_SLOT_RESOLUTIONS.get(slotKey);
+  if (entry === undefined || "residual" in entry) return [];
+  if ("borrow" in entry) return documentedConstantTokens(lookupDoc(entry.borrow) ?? "", universe);
+  return documentedConstantTokens(entry.family, universe);
+}
+
+function slotDocLookup(module: ApiModule): SlotDocLookup {
+  const docs = new Map<string, string>();
+  for (const fn of module.functions) {
+    for (const p of fn.parameters) {
+      const key = tableSlotKey(fn.name, "param", p.name);
+      if (!docs.has(key)) docs.set(key, p.doc);
+    }
+    for (const rv of fn.returnValues) {
+      const key = tableSlotKey(fn.name, "return", rv.name);
+      if (!docs.has(key)) docs.set(key, rv.doc);
+    }
+  }
+  return (slotKey) => docs.get(slotKey);
+}
+
+// The constants a module's top-level `constant` slot expands into: its own doc
+// first, then its CONSTANT_SLOT_RESOLUTIONS entry. Empty means the slot keeps
+// `Opaque<"constant">`.
+export function resolveConstantSlotTokens(
+  module: ApiModule,
+  slotKey: string,
+  universe: ReadonlySet<string>,
+): string[] {
+  const lookupDoc = slotDocLookup(module);
+  return constantSlotTokens(lookupDoc(slotKey) ?? "", slotKey, lookupDoc, universe);
+}
+
+type ConstantSlotTokens = (
+  elementName: string,
+  slotKind: "param" | "return",
+  slotName: string,
+  doc: string,
+) => readonly string[];
+
+function constantSlotTokenResolver(
+  module: ApiModule,
+  universe: ReadonlySet<string>,
+): ConstantSlotTokens {
+  const lookupDoc = slotDocLookup(module);
+  return (elementName, slotKind, slotName, doc) =>
+    constantSlotTokens(doc, tableSlotKey(elementName, slotKind, slotName), lookupDoc, universe);
+}
+
 // FQN-keyed allowlist of the `types.is_*` checks that genuinely narrow their
 // argument, mapped to the `DEFOLD_TYPE_MAP` token whose interface they prove.
 // Emitting these as user-defined type guards (`var_ is Vector3`) is the only way
@@ -1580,6 +1693,10 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
     constantFqns.has(token) || knownConstantFqns?.has(token)
       ? brandType(token)
       : baseMapType(token);
+  const constantTokens = constantSlotTokenResolver(
+    module,
+    new Set([...constantFqns, ...(knownConstantFqns ?? [])]),
+  );
 
   const constants = module.constants
     .map((c) => prepareConstant(c, prefix))
@@ -1656,7 +1773,9 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
       for (const docLine of functionDocLines(fn.original, translations, handleIndent)) {
         lines.push(docLine);
       }
-      lines.push(`${handleIndent}${emitMethod(fn, mapType, resolver, urlParameters)}`);
+      lines.push(
+        `${handleIndent}${emitMethod(fn, mapType, resolver, constantTokens, urlParameters)}`,
+      );
     }
     lines.push(`${INDENT}}`);
   }
@@ -1685,7 +1804,7 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
     const reserved = TS_RESERVED_NAMES.has(fn.name);
     const emitName = aliasName(fn.name, aliases);
     for (const docLine of functionDocLines(fn.original, translations)) lines.push(docLine);
-    const line = emitFunction(fn, emitName, mapType, resolver, urlParameters);
+    const line = emitFunction(fn, emitName, mapType, resolver, constantTokens, urlParameters);
     lines.push(`${INDENT}${reserved ? "" : decl}${line}`);
   }
 
@@ -1733,7 +1852,7 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
           lines.push(docLine);
         }
         lines.push(
-          `${bodyIndent}${reserved ? "" : segmentDecl}${emitFunction(fn, emitName, mapType, resolver, urlParameters)}`,
+          `${bodyIndent}${reserved ? "" : segmentDecl}${emitFunction(fn, emitName, mapType, resolver, constantTokens, urlParameters)}`,
         );
       }
       for (const alias of [...segmentAliases].sort((a, b) => a.public.localeCompare(b.public))) {
@@ -1789,6 +1908,10 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
     constantFqns.has(token) || knownConstantFqns?.has(token)
       ? brandType(token)
       : baseMapType(token);
+  const constantTokens = constantSlotTokenResolver(
+    module,
+    new Set([...constantFqns, ...(knownConstantFqns ?? [])]),
+  );
   const resolver = buildTableDocResolver(
     module.functions.map((fn) => ({
       name: fn.name,
@@ -1815,6 +1938,7 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
         emitName(prepared.name),
         mapType,
         resolver,
+        constantTokens,
         urlParameters,
       ),
     });
@@ -1835,7 +1959,14 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
   for (const fn of nested.functions) {
     out.push({
       identity: fnIdentity(fn.original),
-      tsSignature: emitFunction(fn, emitName(fn.name), mapType, resolver, urlParameters),
+      tsSignature: emitFunction(
+        fn,
+        emitName(fn.name),
+        mapType,
+        resolver,
+        constantTokens,
+        urlParameters,
+      ),
     });
   }
 
@@ -1844,7 +1975,7 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
     for (const prepared of group) {
       out.push({
         identity: fnIdentity(prepared.original),
-        tsSignature: emitMethod(prepared, mapType, resolver, urlParameters),
+        tsSignature: emitMethod(prepared, mapType, resolver, constantTokens, urlParameters),
       });
     }
   }
@@ -2072,6 +2203,7 @@ function memberSignature(
   name: string,
   mapType: (t: string) => string,
   resolver: TableDocResolver,
+  constantTokens: ConstantSlotTokens,
   urlParameters: UrlParameterTable,
 ): string {
   const original = prepared.original.parameters;
@@ -2079,17 +2211,31 @@ function memberSignature(
   const cutoff = trailingOptionalCutoff(original, elementName);
   const varargIndex = original.findIndex(isVarargParameter);
   const positional = (varargIndex === -1 ? original : original.slice(0, varargIndex)).map((p, i) =>
-    emitParameter(p, i, i >= cutoff, mapType, resolver, elementName, urlParameters),
+    emitParameter(p, i, i >= cutoff, mapType, resolver, constantTokens, elementName, urlParameters),
   );
   const params = (
     varargIndex === -1
       ? positional
       : [
           ...positional,
-          emitRestParameter(original, varargIndex, mapType, resolver, elementName, urlParameters),
+          emitRestParameter(
+            original,
+            varargIndex,
+            mapType,
+            resolver,
+            constantTokens,
+            elementName,
+            urlParameters,
+          ),
         ]
   ).join(", ");
-  const ret = emitReturn(prepared.original.returnValues, mapType, resolver, elementName);
+  const ret = emitReturn(
+    prepared.original.returnValues,
+    mapType,
+    resolver,
+    constantTokens,
+    elementName,
+  );
   const predicateToken = TYPE_PREDICATES.get(elementName);
   const soleParam = original[0];
   if (
@@ -2108,9 +2254,10 @@ function emitFunction(
   name: string,
   mapType: (t: string) => string,
   resolver: TableDocResolver,
+  constantTokens: ConstantSlotTokens,
   urlParameters: UrlParameterTable,
 ): string {
-  return `function ${memberSignature(prepared, name, mapType, resolver, urlParameters)}`;
+  return `function ${memberSignature(prepared, name, mapType, resolver, constantTokens, urlParameters)}`;
 }
 
 // A colon-method member of a handle interface: identical signature machinery to a
@@ -2120,9 +2267,10 @@ function emitMethod(
   prepared: PreparedFunction,
   mapType: (t: string) => string,
   resolver: TableDocResolver,
+  constantTokens: ConstantSlotTokens,
   urlParameters: UrlParameterTable,
 ): string {
-  return memberSignature(prepared, prepared.name, mapType, resolver, urlParameters);
+  return memberSignature(prepared, prepared.name, mapType, resolver, constantTokens, urlParameters);
 }
 
 // Build the indented JSDoc lines for a function from its ref-doc prose. The
@@ -2238,6 +2386,7 @@ function parameterType(
   p: ApiParameter,
   mapType: (t: string) => string,
   resolver: TableDocResolver,
+  constantTokens: ConstantSlotTokens,
   elementName: string,
   urlParameters: UrlParameterTable,
 ): string {
@@ -2247,7 +2396,17 @@ function parameterType(
   const alias = SCENE_ADDRESS_ALIASES[classifyUrlParameter(urlParameters, elementName, p.name)];
   const slotMapType = alias === undefined ? mapType : addressMapType(mapType, alias);
   return concrete.length > 0
-    ? mapSlotUnion(concrete, p.doc, slotMapType, true, resolver, elementName, "param", p.name)
+    ? mapSlotUnion(
+        concrete,
+        p.doc,
+        slotMapType,
+        true,
+        resolver,
+        constantTokens,
+        elementName,
+        "param",
+        p.name,
+      )
     : "unknown";
 }
 
@@ -2277,6 +2436,7 @@ function emitRestParameter(
   varargIndex: number,
   mapType: (t: string) => string,
   resolver: TableDocResolver,
+  constantTokens: ConstantSlotTokens,
   elementName: string,
   urlParameters: UrlParameterTable,
 ): string {
@@ -2286,7 +2446,9 @@ function emitRestParameter(
     ...new Set(
       params
         .slice(varargIndex)
-        .map((p) => parameterType(p, mapType, resolver, elementName, urlParameters)),
+        .map((p) =>
+          parameterType(p, mapType, resolver, constantTokens, elementName, urlParameters),
+        ),
     ),
   ];
   const first = members[0] ?? "unknown";
@@ -2300,11 +2462,12 @@ function emitParameter(
   optional: boolean,
   mapType: (t: string) => string,
   resolver: TableDocResolver,
+  constantTokens: ConstantSlotTokens,
   elementName: string,
   urlParameters: UrlParameterTable,
 ): string {
   const name = safeParamName(p.name, index);
-  const ts = parameterType(p, mapType, resolver, elementName, urlParameters);
+  const ts = parameterType(p, mapType, resolver, constantTokens, elementName, urlParameters);
   // An interior doc-optional param (a required param follows, so the trailing-`?`
   // projection cannot mark it) keeps its optionality as `| undefined` — TSTL
   // lowers `undefined` to `nil`, the faithful call. Trailing optionals keep the
@@ -2317,6 +2480,7 @@ function emitReturn(
   returnValues: ApiParameter[],
   mapType: (t: string) => string,
   resolver: TableDocResolver,
+  constantTokens: ConstantSlotTokens,
   elementName: string,
 ): { type: string; trailing: string } {
   const override = RETURN_TYPE_OVERRIDES.get(elementName);
@@ -2328,7 +2492,17 @@ function emitReturn(
     // typescript-to-lua erases to `local a, b = fn()`.
     const slots = returnValues.map((rv) =>
       rv.types.length > 0
-        ? mapSlotUnion(rv.types, rv.doc, mapType, false, resolver, elementName, "return", rv.name)
+        ? mapSlotUnion(
+            rv.types,
+            rv.doc,
+            mapType,
+            false,
+            resolver,
+            constantTokens,
+            elementName,
+            "return",
+            rv.name,
+          )
         : "unknown",
     );
     return { type: `LuaMultiReturn<[${slots.join(", ")}]>`, trailing: "" };
@@ -2343,6 +2517,7 @@ function emitReturn(
           mapType,
           false,
           resolver,
+          constantTokens,
           elementName,
           "return",
           first.name,
@@ -2380,13 +2555,26 @@ function mapSlotUnion(
   mapType: (t: string) => string,
   optionalFields: boolean,
   resolver: TableDocResolver,
+  constantTokens: ConstantSlotTokens,
   elementName: string,
   slotKind?: "param" | "return",
   slotName?: string,
 ): string {
   const mapped: string[] = [];
   const seen = new Set<string>();
+  const push = (ts: string): void => {
+    if (seen.has(ts)) return;
+    seen.add(ts);
+    mapped.push(ts);
+  };
   for (const token of types) {
+    if (token === "constant" && slotKind !== undefined && slotName !== undefined) {
+      const expanded = constantTokens(elementName, slotKind, slotName, doc);
+      if (expanded.length > 0) {
+        for (const fqn of expanded) push(mapType(fqn));
+        continue;
+      }
+    }
     let ts: string;
     if (token === "table") {
       const curation =
@@ -2457,9 +2645,7 @@ function mapSlotUnion(
           : undefined;
       ts = curated ?? mapType(token);
     }
-    if (seen.has(ts)) continue;
-    seen.add(ts);
-    mapped.push(ts);
+    push(ts);
   }
   // A genuine `unknown` member (an `any` slot, including `any | nil`) absorbs
   // every other union member, so collapse to exactly `unknown` rather than emit

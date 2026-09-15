@@ -1,6 +1,4 @@
 /** @noSelfInFile */
-import type { Opaque } from "../../../src/core-types";
-
 declare global {
   /**
    * Functions and constants to access the window, window event listeners
@@ -58,7 +56,7 @@ declare global {
      *
      * - `window.DIMMING_OFF`
      */
-    function get_dim_mode(): Opaque<"constant">;
+    function get_dim_mode(): number & { readonly __brand: "window.DIMMING_UNKNOWN" } | number & { readonly __brand: "window.DIMMING_ON" } | number & { readonly __brand: "window.DIMMING_OFF" };
     /**
      * This returns the content scale of the current display.
      *
@@ -113,7 +111,7 @@ declare global {
      *
      * - `window.DIMMING_OFF`
      */
-    function set_dim_mode(mode: Opaque<"constant">): void;
+    function set_dim_mode(mode: number & { readonly __brand: "window.DIMMING_ON" } | number & { readonly __brand: "window.DIMMING_OFF" }): void;
     /**
      * Sets a window event listener. Only one window event listener can be set at a time.
      *
