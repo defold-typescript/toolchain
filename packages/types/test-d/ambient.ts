@@ -154,9 +154,12 @@ void _badSound;
 void _musicPlaying;
 void _groupGain;
 
+model.play_anim(msg.url(), "run", go.PLAYBACK_ONCE_FORWARD, {}, undefined);
+model.play_anim(msg.url(), go.get_id("run"), go.PLAYBACK_LOOP_FORWARD, {}, undefined);
+
 declare const _playback: Opaque<"constant">;
+// @ts-expect-error play_anim playback takes the documented go.PLAYBACK_* constants, not any constant
 model.play_anim(msg.url(), "run", _playback, {}, undefined);
-model.play_anim(msg.url(), go.get_id("run"), _playback, {}, undefined);
 
 // @ts-expect-error play_anim playback is a nominal engine handle, not a plain number
 model.play_anim(msg.url(), "run", 0, {}, undefined);

@@ -128,7 +128,7 @@ declare global {
      * render.draw(self.tile_pred);
      * ```
      */
-    function disable_state(state: Opaque<"constant">): void;
+    function disable_state(state: number & { readonly __brand: "graphics.STATE_DEPTH_TEST" } | number & { readonly __brand: "graphics.STATE_STENCIL_TEST" } | number & { readonly __brand: "graphics.STATE_BLEND" } | number & { readonly __brand: "graphics.STATE_ALPHA_TEST" } | number & { readonly __brand: "graphics.STATE_CULL_FACE" } | number & { readonly __brand: "graphics.STATE_POLYGON_OFFSET_FILL" }): void;
     /**
      * Disables a texture that has previourly been enabled.
      *
@@ -307,7 +307,7 @@ declare global {
      * render.disable_state(graphics.STATE_STENCIL_TEST);
      * ```
      */
-    function enable_state(state: Opaque<"constant">): void;
+    function enable_state(state: number & { readonly __brand: "graphics.STATE_DEPTH_TEST" } | number & { readonly __brand: "graphics.STATE_STENCIL_TEST" } | number & { readonly __brand: "graphics.STATE_BLEND" } | number & { readonly __brand: "graphics.STATE_ALPHA_TEST" } | number & { readonly __brand: "graphics.STATE_CULL_FACE" } | number & { readonly __brand: "graphics.STATE_POLYGON_OFFSET_FILL" }): void;
     /**
      * Sets the specified texture handle for a render target attachment or a regular texture
      * that should be used for rendering. The texture can be bound to either a texture unit

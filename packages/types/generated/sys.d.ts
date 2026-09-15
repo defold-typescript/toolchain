@@ -228,7 +228,7 @@ declare global {
      * }
      * ```
      */
-    function get_connectivity(): Opaque<"constant">;
+    function get_connectivity(): number & { readonly __brand: "sys.NETWORK_DISCONNECTED" } | number & { readonly __brand: "sys.NETWORK_CONNECTED_CELLULAR" } | number & { readonly __brand: "sys.NETWORK_CONNECTED" };
     /**
      * Returns a table with engine information.
      *
