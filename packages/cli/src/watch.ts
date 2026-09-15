@@ -128,6 +128,8 @@ export interface RunWatchOptions {
   readonly hotReload?: boolean;
   readonly editorClient?: WatchEditorClient;
   readonly editorDiscoveryMs?: number;
+  /** Receives the discovery tick and returns the function that stops it. */
+  readonly editorDiscoveryTicker?: (tick: () => void) => () => void;
   /**
    * Diagnostic-only: asked once per attach transition, so an editor opened after
    * startup can report a version the watch's fixed API surface disagrees with.
@@ -285,7 +287,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   let syncScheduled: ReturnType<typeof setTimeout> | null = null;
   let resolveScheduled: ReturnType<typeof setTimeout> | null = null;
   let sceneScheduled: ReturnType<typeof setTimeout> | null = null;
-  let discoveryTimer: ReturnType<typeof setInterval> | null = null;
+  let stopDiscovery: (() => void) | null = null;
   let rebuildBusy = false;
   let syncBusy = false;
   let resolveBusy = false;
@@ -757,9 +759,9 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       clearTimeout(sceneScheduled);
       sceneScheduled = null;
     }
-    if (discoveryTimer) {
-      clearInterval(discoveryTimer);
-      discoveryTimer = null;
+    if (stopDiscovery) {
+      stopDiscovery();
+      stopDiscovery = null;
     }
     watcher.close();
     componentWatcher?.close();
@@ -815,7 +817,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   // `drainConsole` clearing the state is what resumes it. An attachment whose
   // console failed to open has no end to report, so it keeps retrying, with a
   // doubling gap that caps a persistently closed console's request budget.
-  discoveryTimer = setInterval(() => {
+  function discoveryTick(): void {
     if (attachBusy || reloadBusy || rebuildBusy || consoleRunning) return;
     if (attachedBaseUrl !== null) {
       const client = opts.editorClient ?? defaultEditorClient;
@@ -824,7 +826,14 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       if (consoleRetryTicks > 0) return;
     }
     scheduleAttach();
-  }, opts.editorDiscoveryMs ?? EDITOR_DISCOVERY_INTERVAL_MS);
+  }
+  const startDiscovery =
+    opts.editorDiscoveryTicker ??
+    ((tick: () => void) => {
+      const timer = setInterval(tick, opts.editorDiscoveryMs ?? EDITOR_DISCOVERY_INTERVAL_MS);
+      return () => clearInterval(timer);
+    });
+  stopDiscovery = startDiscovery(discoveryTick);
 
   return { stop, done, waitForIdle };
 }
