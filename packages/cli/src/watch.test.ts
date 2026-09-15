@@ -2513,18 +2513,45 @@ describe("runWatch editor discovery while unattached", () => {
     await handle.done;
   });
 
-  test("console retries back off while the console stays closed", async () => {
+  test("console retries wait 1, 2, 4, 8, 16, 30, 30 ticks while the console stays closed", async () => {
     const streams = captureStreams();
-    const { editor, handle } = await attachWithClosedConsole(streams);
+    const editor = makeEditor(null);
+    editor.setConsoleOpen(false);
+    let manualTick: () => void = () => {
+      throw new Error("the discovery ticker was never started");
+    };
+    const handle = startWatch(editor, streams, false, {
+      editorDiscoveryTicker: (tick) => {
+        manualTick = tick;
+        return () => {};
+      },
+    });
+    await handle.waitForIdle();
 
-    const attached = editor.resolveCount();
-    await until(() => editor.resolveCount() > attached, 1000);
-    const firstRetry = editor.resolveCount();
-    await pause(40 * DISCOVERY_MS);
+    editor.setBaseUrl("http://localhost:7777");
+    manualTick();
+    await handle.waitForIdle();
+    expect(streams.err()).toContain("attached to Defold editor at http://localhost:7777");
+    expect(editor.consoles.length).toBe(0);
 
-    // Retrying on every tick would make ~40 attempts; timer starvation under
-    // load only lowers the count, so this bound cannot fail spuriously.
-    expect(editor.resolveCount() - firstRetry).toBeLessThanOrEqual(6);
+    const gaps: number[] = [];
+    for (let retry = 0; retry < 7; retry += 1) {
+      const before = editor.resolveCount();
+      let ticks = 0;
+      // Bounded so a missing or raised cap reds on the recorded gap, not a hang.
+      while (editor.resolveCount() === before && ticks < 64) {
+        manualTick();
+        await handle.waitForIdle();
+        ticks += 1;
+      }
+      gaps.push(ticks);
+    }
+
+    expect(gaps).toEqual([1, 2, 4, 8, 16, 30, 30]);
+    expect(
+      countMatches(streams.err(), /attached to Defold editor at http:\/\/localhost:7777/g),
+    ).toBe(1);
+    expect(editor.consoles.length).toBe(0);
 
     handle.stop();
     await handle.done;
