@@ -213,6 +213,7 @@ export function renderResult(input: RenderResultInput): string {
 
 export type WatchEventName =
   | "build"
+  | "editorVersion"
   | "rebuild"
   | "reload"
   | "resolve"
@@ -237,6 +238,9 @@ export interface RenderWatchEventInput {
   readonly crossWorldAddresses?: readonly CrossWorldAddressEntry[];
   readonly pinMismatch?: { readonly installed: string; readonly pinned: string };
   readonly upstreamRelease?: { readonly current: string; readonly latest: string };
+  readonly editor?: string;
+  readonly target?: string;
+  readonly targetSource?: "pin" | "detected" | "default";
   readonly error?: string;
   readonly errors?: readonly WatchErrorEntry[];
 }
@@ -266,5 +270,9 @@ export function renderWatchEvent(input: RenderWatchEventInput): string {
     "upstreamRelease" in input
       ? { ...withPinMismatch, upstreamRelease: input.upstreamRelease }
       : withPinMismatch;
-  return `${JSON.stringify(withUpstream)}\n`;
+  const withEditor = "editor" in input ? { ...withUpstream, editor: input.editor } : withUpstream;
+  const withTarget = "target" in input ? { ...withEditor, target: input.target } : withEditor;
+  const payload =
+    "targetSource" in input ? { ...withTarget, targetSource: input.targetSource } : withTarget;
+  return `${JSON.stringify(payload)}\n`;
 }

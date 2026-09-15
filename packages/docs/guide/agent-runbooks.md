@@ -117,7 +117,10 @@ the scene walk, so the check starts from the first `rebuild` or the first
 
 A `resolve` event is emitted whenever a `game.project` save re-resolves the
 extension surface (re-materializing `.defold-types/extensions/` from the declared
-`[dependencies]` URLs). `start` arrives once, before the initial full build — the
+`[dependencies]` URLs). An `editorVersion` event — `editor`, `target`, and
+`targetSource` (`pin`, `detected`, or `default`) — is emitted when an editor
+attached after startup runs a version other than the one the watch targets; it
+is diagnostic only and never changes the exit status. `start` arrives once, before the initial full build — the
 process is up and listening. `stop` arrives once on graceful shutdown. A failed
 startup (missing `tsconfig.json`, etc.) emits `start` then exits non-zero with
 **no** `stop` line; a rebuild that fails emits an `ok: false` line **to stdout
