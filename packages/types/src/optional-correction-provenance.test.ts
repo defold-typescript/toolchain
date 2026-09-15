@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { EXTENSION_GOLDEN_MANIFEST } from "../scripts/extension-goldens";
 import { loadApiTargets, MODULE_MANIFEST, VERSIONED_MODULE_MANIFEST } from "../scripts/regen";
 import { OPTIONAL_SLOT_CORRECTIONS } from "./emit-dts";
 import {
@@ -117,8 +118,14 @@ const DEFAULT_TARGET = loadApiTargets().find((candidate) => candidate.default ==
 if (!DEFAULT_TARGET) throw new Error("api-targets.json: no default target");
 
 // Every runtime module regen emits, in the default target and every older
-// generated one, since the correction table is global and reaches them all.
-const SURFACES = retainedSurfaces(DEFAULT_TARGET.id, MODULE_MANIFEST, VERSIONED_MODULE_MANIFEST);
+// generated one, plus the extension goldens `resolve` reproduces, since the
+// correction table is global and reaches them all.
+const SURFACES = retainedSurfaces(
+  DEFAULT_TARGET.id,
+  MODULE_MANIFEST,
+  VERSIONED_MODULE_MANIFEST,
+  EXTENSION_GOLDEN_MANIFEST,
+);
 
 // Corrections some retained target already marks optional while an older one
 // still needs them, each with the targets that mark it. A metadata fix in one
@@ -187,9 +194,10 @@ describe("modules upstream leaves wholly unmarked", () => {
   // and gets a real optionality audit there, and a new target records its own
   // row, including any module that arrives unmarked.
   const UNMARKED_BY_TARGET: Record<string, string[]> = {
-    "defold-1.13.1": ["iac", "iap", "push", "webview"],
-    "defold-1.13.0": ["iac", "iap", "push", "webview"],
-    "defold-1.12.4": ["iac", "iap", "push", "webview"],
+    "defold-1.13.1": [],
+    "defold-1.13.0": [],
+    "defold-1.12.4": [],
+    "extension-goldens": ["iac", "iap", "push", "webview"],
   };
 
   test("each retained target carries no is_optional field on exactly its recorded modules", () => {

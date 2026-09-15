@@ -11,7 +11,6 @@ import {
   DEFOLD_VERSION,
   EDITOR_MANIFEST,
   EDITOR_VM_MANIFEST,
-  EXTENSION_MANIFEST,
   extractFixtures,
   IGNORED_UPSTREAM,
   LUA_STDLIB_MANIFEST,
@@ -45,11 +44,11 @@ describe("SYNC_MANIFEST coverage", () => {
   // in a fresh checkout (CI). This cross-check runs only where that private doc
   // exists; it is an authoring-time guard, not a shipped invariant.
   test.skipIf(!existsSync(VISION))(
-    "covers every vision.md checklist namespace (core-mapped, extension-mapped, or UNMAPPED)",
+    "covers every vision.md checklist namespace (core-mapped or UNMAPPED)",
     async () => {
       const checklist = parseChecklistNamespaces(await Bun.file(VISION).text());
       expect(checklist.length).toBeGreaterThan(0);
-      const mapped = new Set([...SYNC_MANIFEST, ...EXTENSION_MANIFEST].map((e) => e.namespace));
+      const mapped = new Set(SYNC_MANIFEST.map((e) => e.namespace));
       const missing = checklist.filter((ns) => !mapped.has(ns) && !UNMAPPED.has(ns));
       expect(missing).toEqual([]);
     },
@@ -90,8 +89,8 @@ describe("SYNC_MANIFEST coverage", () => {
     }
   });
 
-  test("every MODULE_MANIFEST namespace is mapped to a core or extension source", () => {
-    const mapped = new Set([...SYNC_MANIFEST, ...EXTENSION_MANIFEST].map((e) => e.namespace));
+  test("every MODULE_MANIFEST namespace is mapped to a core ref-doc source", () => {
+    const mapped = new Set(SYNC_MANIFEST.map((e) => e.namespace));
     for (const entry of MODULE_MANIFEST) {
       expect(mapped.has(entry.namespace)).toBe(true);
     }
@@ -259,26 +258,7 @@ describe("parseChecklistNamespaces", () => {
   });
 });
 
-describe("EXTENSION_MANIFEST", () => {
-  test("each entry carries repo, tag, path, and the standard fixture path", () => {
-    expect(EXTENSION_MANIFEST.length).toBeGreaterThan(0);
-    for (const entry of EXTENSION_MANIFEST) {
-      expect(entry.namespace.length).toBeGreaterThan(0);
-      expect(entry.repo).toMatch(/^[\w.-]+\/[\w.-]+$/);
-      expect(entry.tag.length).toBeGreaterThan(0);
-      expect(entry.path.length).toBeGreaterThan(0);
-      expect(entry.fixture).toBe(`fixtures/defold-${DEFOLD_VERSION}/${entry.namespace}_doc.json`);
-    }
-  });
-
-  test("an extension namespace is never also core-mapped or UNMAPPED", () => {
-    const core = new Set(SYNC_MANIFEST.map((e) => e.namespace));
-    for (const entry of EXTENSION_MANIFEST) {
-      expect(core.has(entry.namespace)).toBe(false);
-      expect(UNMAPPED.has(entry.namespace)).toBe(false);
-    }
-  });
-
+describe("scriptApiToFixtureJson", () => {
   test("scriptApiToFixtureJson yields a core-format doc parseable by parseDefoldApiDoc", () => {
     const text = [
       "- name: demo",

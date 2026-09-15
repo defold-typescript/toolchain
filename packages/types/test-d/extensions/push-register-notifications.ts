@@ -1,5 +1,3 @@
-/// <reference path="../index.d.ts" />
-
 // push.register's `notifications` is a prose-only `table (array) of
 // push.NOTIFICATION_*` shape the field parser cannot read; the fixture carries no
 // NOTIFICATION_* brand, so its element type is the honest `number` token curated

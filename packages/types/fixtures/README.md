@@ -24,9 +24,15 @@ missing-mapping modules, Defold type tokens that would emit `unknown`, and
 dropped reserved-name functions).
 
 Surfaces Defold ships no per-namespace doc for live in the `UNMAPPED` set in
-the same script (the extension-only `iac` / `iap` / `push` / `webview`); the
-built-in message catalog `messages_doc.json` stays hand-vendored (see below)
-and is not part of `SYNC_MANIFEST`.
+the same script (currently empty); the built-in message catalog
+`messages_doc.json` stays hand-vendored (see below) and is not part of
+`SYNC_MANIFEST`.
+
+The root `iac_doc.json`, `iap_doc.json`, `push_doc.json` and `webview_doc.json`
+are extension-golden inputs, not engine fixtures: `../scripts/extension-goldens.ts`
+reads them, regen writes `../extension-goldens/<ns>.d.ts` from them, and a parity
+test holds the `resolve` emitter to those goldens. No engine surface imports
+them, and they are not published.
 
 Adding a synced fixture to the published types is still a separate, incremental
 edit: wire its `MODULE_MANIFEST` row in `../scripts/regen.ts` and commit the

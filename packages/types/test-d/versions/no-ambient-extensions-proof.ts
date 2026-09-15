@@ -1,12 +1,5 @@
 export {};
 
-vmath.vector3(1, 2, 3);
-const _w: number = gui.get_width();
-void _w;
-
-// @ts-expect-error render.* is absent on the gui-script surface
-render.get_width();
-
 // Extensions are typed only through `resolve`: none is declared on this surface.
 // @ts-expect-error iap is not ambient until extension-iap is resolved
 iap.finish({});

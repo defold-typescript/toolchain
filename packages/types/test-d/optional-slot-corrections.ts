@@ -53,9 +53,6 @@ b2d.fixture.set_shape(body, 2, { type: 0, radius: 1 });
 const hit = b2d.shape.ray_cast(shapeId, vmath.vector3(0), vmath.vector3(1, 0, 0));
 void hit.fraction;
 
-// iap.buy — "optional parameters as properties".
-iap.buy("sword");
-
 // Every b2d.joint constructor opens its definition doc with "optional
 // definition"; the two-argument form is the shape all twelve share.
 const gear = b2d.joint.create_gear(jointA, jointB);

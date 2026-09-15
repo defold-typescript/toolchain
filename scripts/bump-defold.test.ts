@@ -21,13 +21,7 @@ import {
   spawn,
   stageCommand,
 } from "./bump-defold.ts";
-import {
-  compareVersions,
-  EXTENSION_PINS,
-  fixtureDir,
-  RELEASE_MODEL,
-  targetMetaFor,
-} from "./release-model.ts";
+import { compareVersions, fixtureDir, RELEASE_MODEL, targetMetaFor } from "./release-model.ts";
 
 const REPO = path.resolve(import.meta.dir, "..");
 
@@ -209,23 +203,6 @@ describe("runBump", () => {
 });
 
 describe("remainingHumanDecisions", () => {
-  const [pin] = EXTENSION_PINS;
-  if (!pin) throw new Error("EXTENSION_PINS is empty");
-
-  test("a minor bump reports an extension-release-tag reconfirmation naming a pinned tag", () => {
-    const decisions = remainingHumanDecisions(planBump("1.14.0"));
-    const entry = decisions.find((d) => /extension release tag/i.test(d));
-    expect(entry).toBeDefined();
-    expect(entry).toContain(`${pin.namespace}@${pin.tag}`);
-  });
-
-  test("a patch bump carries the same extension-tag entry — it is unconditional", () => {
-    const decisions = remainingHumanDecisions(planBump(NEXT_PATCH));
-    const entry = decisions.find((d) => /extension release tag/i.test(d));
-    expect(entry).toBeDefined();
-    expect(entry).toContain(`${pin.namespace}@${pin.tag}`);
-  });
-
   test("a patch bump reports the demoted surface for review, just as a minor does", () => {
     const joined = remainingHumanDecisions(planBump(NEXT_PATCH)).join("\n");
     expect(joined).toContain(`demoted defold-${RELEASE_MODEL.current} surface`);
@@ -240,7 +217,7 @@ describe("remainingHumanDecisions", () => {
     }
   });
 
-  test("the import-manifest reconfirmation survives alongside the new extension-tag line", () => {
+  test("a bump reports the import-manifest release tag reconfirmation", () => {
     const joined = remainingHumanDecisions(planBump("1.14.0")).join("\n");
     expect(joined).toMatch(/manifest.*tag/i);
     expect(joined).toContain("import-manifest.json");
@@ -267,11 +244,11 @@ describe("applyVersionRotation", () => {
     expect(sync).toContain(`DEFOLD_VERSION = "${NEXT_MINOR}"`);
   });
 
-  test("both core and extension fixture templates retarget the new dir", () => {
+  test("the core fixture template retargets the new dir", () => {
     const { versionFile, syncFile } = tmpCopies();
     applyVersionRotation(planBump(NEXT_MINOR), { versionFile, syncFile });
     const sync = readFileSync(syncFile, "utf8");
-    expect(occurrences(sync, `fixtures/defold-${NEXT_MINOR}/`)).toBe(2);
+    expect(occurrences(sync, `fixtures/defold-${NEXT_MINOR}/`)).toBe(1);
     expect(occurrences(sync, `fixtures/defold-${RELEASE_MODEL.current}/`)).toBe(0);
   });
 });

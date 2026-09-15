@@ -2,7 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parseDefoldApiDoc } from "../src/api-doc";
-import { EDITOR_VM_MANIFEST, EXTENSION_MANIFEST, SYNC_MANIFEST } from "./sync-api-docs";
+import { EXTENSION_GOLDEN_MANIFEST } from "./extension-goldens";
+import { EDITOR_VM_MANIFEST, SYNC_MANIFEST } from "./sync-api-docs";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 
@@ -14,7 +15,11 @@ const EMPTY_BY_UPSTREAM: ReadonlyMap<string, string> = new Map();
 
 function elementCount(fixture: string): number {
   const path = resolve(PACKAGE_ROOT, fixture);
-  const module = parseDefoldApiDoc(JSON.parse(readFileSync(path, "utf8")));
+  return docElementCount(JSON.parse(readFileSync(path, "utf8")));
+}
+
+function docElementCount(doc: unknown): number {
+  const module = parseDefoldApiDoc(doc);
   return (
     module.functions.length +
     module.variables.length +
@@ -33,7 +38,7 @@ describe("fixture completeness", () => {
     }
   });
 
-  for (const entry of [...SYNC_MANIFEST, ...EXTENSION_MANIFEST]) {
+  for (const entry of SYNC_MANIFEST) {
     const allowlisted = EMPTY_BY_UPSTREAM.has(entry.namespace);
     test(`${entry.namespace} fixture parses to at least one element`, () => {
       const count = elementCount(entry.fixture);
@@ -42,6 +47,13 @@ describe("fixture completeness", () => {
       } else {
         expect(count).toBeGreaterThan(0);
       }
+    });
+  }
+
+  // The extension goldens read their own root fixtures rather than a synced path.
+  for (const entry of EXTENSION_GOLDEN_MANIFEST) {
+    test(`${entry.namespace} extension golden doc parses to at least one element`, () => {
+      expect(docElementCount(entry.doc)).toBeGreaterThan(0);
     });
   }
 

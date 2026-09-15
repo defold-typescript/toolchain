@@ -5,7 +5,6 @@ import { runBumpCheck } from "./bump-defold-check.ts";
 import {
   classifyTransition,
   compareVersions,
-  EXTENSION_PINS,
   fixtureDir,
   RELEASE_MODEL,
   type ReleaseTransition,
@@ -126,7 +125,6 @@ export function remainingHumanDecisions(plan: BumpPlan): string[] {
   const decisions = [
     `curate api-migrations.json for the ${plan.from} -> ${plan.to} transition (never auto-edited)`,
     `re-confirm the import-manifest.json release tag matches the intended ${plan.to} build`,
-    `re-confirm the pinned extension release tags (${EXTENSION_PINS.map((p) => `${p.namespace}@${p.tag}`).join(", ")}) still match the intended ${plan.to} build`,
     `author the ${plan.to} upgrade guide`,
   ];
   decisions.push(`review the demoted defold-${plan.from} surface under generated/versions/`);
@@ -263,9 +261,8 @@ export function applyTargetOps(plan: BumpPlan, targetsPath = TARGETS_PATH): void
 // on temp copies. `DEFOLD_VERSIONS` seeds `RELEASE_MODEL`, so it holds exactly
 // the plan's pre-baked set — decided by `SURFACE_RETENTION` at plan time, never
 // re-derived from whatever the file happens to say; the sync file's
-// `DEFOLD_VERSION` and both `fixtures/defold-<from>/` templates must retarget the
-// new dir so the next sync writes core *and* extension fixtures into
-// `fixtures/defold-<to>/`.
+// `DEFOLD_VERSION` and its `fixtures/defold-<from>/` template must retarget the
+// new dir so the next sync writes the core fixtures into `fixtures/defold-<to>/`.
 export function applyVersionRotation(
   plan: BumpPlan,
   paths: { versionFile?: string; syncFile?: string } = {},

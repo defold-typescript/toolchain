@@ -755,7 +755,7 @@ model.play_anim(url, "run", gui.PLAYBACK_ONCE_FORWARD); // TS error — gui's fa
 window.set_dim_mode(window.get_dim_mode());          // TS error — the getter can return DIMMING_UNKNOWN
 ```
 
-A few slots name no constant at all (`gui.new_texture`'s `type` lists only strings, `iap.get_provider_id` names constants no ref-doc defines) and keep the generic `Opaque<"constant">`. `packages/types/test-d/documented-constant-slots.ts` pins the documented calls in each affected namespace.
+A few slots name no constant at all (`gui.new_texture`'s `type` lists only strings, `iap.get_provider_id`, typed once [`resolve`](./resolve.md) has run for extension-iap, names constants no ref-doc defines) and keep the generic `Opaque<"constant">`. `packages/types/test-d/documented-constant-slots.ts` pins the documented calls in each affected namespace.
 
 #### Engine handles are opaque — you cannot fabricate or cast across kinds
 
@@ -5447,10 +5447,6 @@ bump reports each one as a manual review point rather than deciding silently.
   deprecation list is never auto-edited.
 - **Re-confirm `import-manifest.json`** — verify the imported release tag matches
   the intended `<to>` build.
-- **Re-confirm the extension release tags** — verify the pinned
-  `EXTENSION_MANIFEST` tags (iac/iap/push/webview) still match the intended
-  `<to>` build; a new Defold release may bundle newer extension versions. These
-  pin independently of `import-manifest.json`.
 - **Author the upgrade guide** — add a `<!-- release: <new> -->` section to
   `packages/docs/guide/upgrading-defold-versions.md`. The readiness gate follows
   the marker, so no new page and no new gate is owed per bump. Shape the section
@@ -6545,17 +6541,21 @@ through, applied to whatever extensions your project actually declares. The
 generated surface lands in a project-local, gitignored `.defold-types/` package,
 so extension functions gain autocomplete and `tsc` coverage with no import.
 
+No extension is ambient until it is resolved. That includes the ones Defold
+maintains, such as `iap`, `iac`, `push` and `webview`:
+`@defold-typescript/types` declares only the engine, so `iap.buy(...)` is a
+type error until the project depends on
+[extension-iap](https://github.com/defold/extension-iap) and `resolve` has run.
+
 #### Declaring an extension
 
-Extensions are declared in `game.project` under `[dependencies]`, one archive
-URL per numbered key — the same INI surface the Defold editor's *Fetch
-Libraries* writes:
+Extensions are declared in `game.project` under `[project]`, one archive URL
+per numbered `dependencies#N` key — the same INI surface the Defold editor's
+*Fetch Libraries* writes:
 
 ```ini
 [project]
 title = My Game
-
-[dependencies]
 dependencies#0 = https://github.com/defold/extension-iap/archive/main.zip
 dependencies#1 = https://github.com/some/asset-pack/archive/main.zip
 ```
@@ -6576,7 +6576,7 @@ bunx @defold-typescript/cli resolve
 
 Run it once after declaring a dependency, and re-run it (or leave
 [`watch`](./watch.md) running, which re-resolves on every `game.project` save)
-whenever you edit `[dependencies]`. See [Resolve](./resolve.md) for the full
+whenever you edit the `dependencies#N` keys. See [Resolve](./resolve.md) for the full
 behavior, the `--frozen` lockfile mode, version pinning, and the cache location.
 
 #### Consuming the generated namespace
@@ -6919,17 +6919,17 @@ project as `druid.druid`.
 #### Libraries that ship a `.script_api`
 
 A native or hybrid library that ships an extension `.script_api` (the same YAML
-format the four built-in extensions use) has a **third** ingestion mode, distinct
+format every Defold extension ships) has a **third** ingestion mode, distinct
 from the LuaLS front-end above: `packages/library-types/scripts/sync-script-api-types.ts`,
 driven by `packages/library-types/script-api-targets.json`. Instead of parsing
 `---@` annotations, it routes the committed `.script_api` snapshot through the
 **shared ref-doc emitter** — `scriptApiToFixtureJson` → `generateModuleDeclaration`,
-the exact path the built-in extensions and resolve-time extension typing use — so
+the exact path resolve-time extension typing uses — so
 one-level nested sub-namespaces (`bridge.platform`, `bridge.achievements`) survive
 into nested `namespace` blocks. The output is an importable module keyed by
 `moduleId` (`declare module 'bridge.bridge'`), matching the LuaLS library goldens,
-so the library imports under its pinned specifier; the built-in extensions'
-`declare global` form is unchanged.
+so the library imports under its pinned specifier; the `declare global` form
+stays the resolve emitter's, for extensions a project declares.
 
 Each entry pins `repo`, `ref`, `scriptApi` (the path to the `.script_api` in the
 repo), `moduleId`, `namespace`, and the exact `generated` / `apiDoc` / `fidelity`
@@ -6940,7 +6940,7 @@ cd packages/library-types
 
 bun scripts/sync-script-api-types.ts --fetch      # snapshot the pinned .script_api into fixtures/script-api/<moduleId>.script_api
 bun scripts/sync-script-api-types.ts --emit       # emit the pinned generated/<...>.d.ts
-bun scripts/sync-script-api-types.ts --api-doc     # lower the pinned api-doc/<...>.json (raw ref-doc doc, uniform with the built-in extensions)
+bun scripts/sync-script-api-types.ts --api-doc     # lower the pinned api-doc/<...>.json (raw ref-doc doc, uniform with the engine fixtures)
 bun scripts/sync-script-api-types.ts --fidelity    # build the pinned fidelity/<...>.json
 ```
 
