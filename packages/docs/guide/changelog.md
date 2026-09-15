@@ -13,7 +13,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **[`watch`](./watch.md#hot-reload) attaches to a Defold editor opened after it started within about a second, and reports one that quits, without waiting for a file save.** Runtime errors from a game launched before your first edit now reach the terminal straight away.
+- **[`watch`](./watch.md#hot-reload) attaches to a Defold editor opened after it started within about a second, and reports one that quits, without waiting for a file save.** Runtime errors from a game launched before your first edit reach the terminal straight away, and an editor whose console fails to open is retried at growing intervals until it opens or the editor quits.
 
 ## v0.34.0
 
