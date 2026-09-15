@@ -14,11 +14,12 @@ What changed in each published `defold-typescript` toolchain release.
 ### Improved
 
 - **[`watch`](./watch.md#runtime-errors-in-the-terminal) looks for a Defold editor about once a second while none is attached, so an editor opened at any time is attached, and one that quits is reported, without waiting for a file save.** Runtime errors from a game launched before your first edit reach the terminal straight away, and an editor whose console fails to open is retried at growing intervals until it opens or the editor quits.
-- **[`watch`](./watch.md#runtime-errors-in-the-terminal) checks the version of an editor that attaches after startup.** A mismatch with a concrete `defold-target` pin prints the `set-target --detected` notice, an unpinned watch names both versions and asks for a restart, and `--json` reports it as an `editorVersion` event; a version matching the target, the one startup compared, or the last one reported is not repeated, a check whose editor quit before it finished reports nothing, and the exit status is never affected.
+- **[`watch`](./watch.md#runtime-errors-in-the-terminal) checks the version of an editor that attaches after startup.** A mismatch with a concrete `defold-target` pin prints the `set-target --detected` notice, an unpinned watch names both versions and asks for a restart, and `--json` reports it as an `editorVersion` event; a version matching the target, the one startup compared, or the last one reported is not repeated, a check whose own editor quit or was replaced before it finished reports nothing, and the exit status is never affected.
 
 ### Fixed
 
 - **[`reload`](./reload.md) exits 1 when the editor console closes or fails before its `--wait` window ends.** Such a reload used to exit 0 with "no error observed" even though the rest of the window went unread; `--json` now reports `consoleWindowComplete` so an empty `consoleErrors` can be trusted only when it is `true`.
+- **[`watch`](./watch.md#runtime-errors-in-the-terminal) keeps an editor that replaced another one attached when the old editor's console closes.** The replacement is no longer detached and announced a second time, and its runtime errors keep reaching the terminal.
 
 ## v0.34.0
 
