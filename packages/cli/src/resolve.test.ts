@@ -774,7 +774,7 @@ describe("runResolve library matching", () => {
     expect(tsconfig.compilerOptions.types).not.toContain(LIBRARIES_DIR);
   });
 
-  test("a matched library whose generated file is missing is reported on stderr, not thrown", async () => {
+  test("a matched library whose generated file is missing is returned as a warning, not thrown", async () => {
     const cwd = tmp();
     const url = "https://github.com/owner/mylib/archive/main.zip";
     writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
@@ -801,7 +801,10 @@ describe("runResolve library matching", () => {
 
     expect(result.ok).toBe(true);
     expect(existsSync(join(cwd, ".defold-types", LIBRARIES_DIR))).toBe(false);
-    expect(warnings.join("\n")).toContain("mylib.core");
+    expect(result.warnings).toContain(
+      "skipping library module mylib.core: no generated .d.ts in the vendored corpus",
+    );
+    expect(warnings).toEqual([]);
   });
 });
 
@@ -1148,8 +1151,10 @@ instances {
     // reached it — otherwise the scene walk would report it as an unresolved
     // hole for good.
     expect(readdirSync(join(cwd, ".defold-types", "dependencies"))).toEqual(["dependencies.json"]);
-    expect(warnings.join("\n")).toContain(url);
-    expect(warnings.join("\n")).toContain("game.project");
+    expect(result.warnings).toHaveLength(1);
+    expect(result.warnings[0]?.startsWith(`no scene source from ${url}: `)).toBe(true);
+    expect(result.warnings[0]).toContain("game.project");
+    expect(warnings).toEqual([]);
   });
 
   test("a refused archive entry reaches the warning channel", async () => {
@@ -1196,8 +1201,9 @@ instances {
     expect(existsSync(join(cwd, "main.collection"))).toBe(false);
     // Counted as what was written, not as what the archive offered.
     expect(result.extensions[0]?.sceneSources).toBe(1);
-    expect(warnings.filter((line) => line.includes(escaping))).toEqual([
+    expect(result.warnings.filter((line) => line.includes(escaping))).toEqual([
       `refusing unsafe scene path from ${url}: ${escaping}`,
     ]);
+    expect(warnings).toEqual([]);
   });
 });

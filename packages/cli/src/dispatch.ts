@@ -290,6 +290,9 @@ function dispatchCommand(
   const writeError = (message: string): void => {
     io.stderr.write(`${severityLine(message, "error", stderrColor)}\n`);
   };
+  const writeWarning = (message: string): void => {
+    io.stderr.write(`${severityLine(message, "warning", stderrColor)}\n`);
+  };
 
   if (head.includes("--version") || head.includes("-v")) {
     const version = internals?.cliVersion ?? readCliVersion();
@@ -499,7 +502,7 @@ function dispatchCommand(
   ];
   if (!json && command !== undefined) {
     for (const diagnostic of targetDiagnostics) {
-      io.stderr.write(`defold-typescript ${command}: ${diagnostic}\n`);
+      writeWarning(`defold-typescript ${command}: ${diagnostic}`);
     }
   }
   // The editor feeds two sites below -- the no-flag/no-pin resolution fallback
@@ -696,7 +699,7 @@ function dispatchCommand(
               );
             }
             for (const warning of warnings) {
-              io.stderr.write(`defold-typescript init: ${warning}\n`);
+              writeWarning(`defold-typescript init: ${warning}`);
             }
             if (!suppressInstallReminder) {
               io.stdout.write(`Next: run \`${installHint()}\` to install dependencies.\n`);
@@ -758,7 +761,7 @@ function dispatchCommand(
           // declaration is still written from whatever did resolve, and the
           // exit code stays 0.
           for (const reason of incomplete) {
-            io.stderr.write(`defold-typescript scene-types: ${reason}\n`);
+            writeWarning(`defold-typescript scene-types: ${reason}`);
           }
           if (wrote) {
             io.stdout.write(`defold-typescript scene-types: wrote ${declaration}\n`);
@@ -927,7 +930,7 @@ function dispatchCommand(
               io.stderr.write(`defold-typescript build: ${notice}\n`);
             }
             for (const warning of warnings) {
-              io.stderr.write(`defold-typescript build: ${warning}\n`);
+              writeWarning(`defold-typescript build: ${warning}`);
             }
           }
           return 0;
@@ -969,8 +972,8 @@ function dispatchCommand(
               ...(internals?.refDocRegistry ? { registry: internals.refDocRegistry } : {}),
             });
             if (!json && materializedDir === null) {
-              io.stderr.write(
-                `defold-typescript build: could not materialize ${surfaceId}; the default surface stays active\n`,
+              writeWarning(
+                `defold-typescript build: could not materialize ${surfaceId}; the default surface stays active`,
               );
             }
             return reportBuild(
@@ -1090,7 +1093,7 @@ function dispatchCommand(
             );
           } else {
             for (const reason of fresh) {
-              io.stderr.write(`defold-typescript scene-types: ${reason}\n`);
+              writeWarning(`defold-typescript scene-types: ${reason}`);
             }
             if (wrote) {
               io.stdout.write(`defold-typescript scene-types: wrote ${declaration}\n`);
@@ -1124,6 +1127,9 @@ function dispatchCommand(
                 ? { libraryGeneratedDir: resolveSeams.libraryGeneratedDir }
                 : {}),
             });
+            for (const warning of result.warnings) {
+              writeWarning(`defold-typescript resolve: ${warning}`);
+            }
             if (json) {
               io.stdout.write(
                 renderResult(
@@ -1365,6 +1371,9 @@ function dispatchCommand(
             : {}),
           ...(frozen ? { freeze: true } : {}),
         });
+        for (const warning of result.warnings) {
+          writeWarning(`defold-typescript resolve: ${warning}`);
+        }
         if (json) {
           io.stdout.write(
             renderResult(
@@ -1387,9 +1396,8 @@ function dispatchCommand(
           if (frozen && result.ok) {
             const drifted = result.extensions.filter((e) => e.pinStatus === "drift");
             if (drifted.length > 0) {
-              io.stderr.write(
-                `defold-typescript resolve: ${drifted.length} extension pin(s) drifted:\n`,
-              );
+              // This branch always exits non-zero below, so the header is an error.
+              writeError(`defold-typescript resolve: ${drifted.length} extension pin(s) drifted:`);
               for (const ext of drifted) {
                 io.stderr.write(
                   `  ${ext.url}: ${ext.pinnedVersion ?? "(none)"} -> ${ext.resolvedVersion}\n`,
@@ -1409,8 +1417,8 @@ function dispatchCommand(
                     `  ${library.modules.join(", ")} <- ${ext.url} (vendored library)\n`,
                   );
                 } else if (library !== undefined) {
-                  io.stderr.write(
-                    `defold-typescript resolve: unverified library match for ${ext.url}: repo name matched but no shipped module path was found in the archive; not materialized\n`,
+                  writeWarning(
+                    `defold-typescript resolve: unverified library match for ${ext.url}: repo name matched but no shipped module path was found in the archive; not materialized`,
                   );
                 } else {
                   io.stdout.write(`  ${ext.url}: asset-only, skipped\n`);
@@ -1426,9 +1434,10 @@ function dispatchCommand(
             }
           }
           const drifted = result.extensions.filter((e) => e.pinStatus === "drift");
+          const report = frozen ? writeError : writeWarning;
           for (const ext of drifted) {
-            io.stderr.write(
-              `defold-typescript resolve: pin drift for ${ext.url}: ${ext.pinnedVersion ?? "(none)"} -> ${ext.resolvedVersion}\n`,
+            report(
+              `defold-typescript resolve: pin drift for ${ext.url}: ${ext.pinnedVersion ?? "(none)"} -> ${ext.resolvedVersion}`,
             );
           }
         } else {
@@ -1577,7 +1586,7 @@ function dispatchCommand(
             }
             const { runnable } = prepared;
             for (const warning of runnable.warnings) {
-              io.stderr.write(`defold-typescript bob run: ${warning}\n`);
+              writeWarning(`defold-typescript bob run: ${warning}`);
             }
             const exitCode = await launchEngine(runnable, {
               platform: runEngine.platform,
@@ -1739,7 +1748,7 @@ function dispatchCommand(
       }
 
       for (const warning of runnable.warnings) {
-        io.stderr.write(`defold-typescript run: ${warning}\n`);
+        writeWarning(`defold-typescript run: ${warning}`);
       }
       // The drift notice is mutually exclusive with its JSON form: stderr here,
       // folded into `warnings`/`pinMismatch` below under `--json` (as `build` does).
