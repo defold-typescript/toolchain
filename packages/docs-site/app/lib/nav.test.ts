@@ -406,13 +406,13 @@ describe("buildNav", () => {
       "/wall",
       "/resolve",
       "/scene-types",
-      "/terminal-output",
     ]);
     expect(byLabel("Toolchain & workflow")?.children?.map((c) => c.route)).toEqual([
       "/transpile-diagnostics",
       "/debugging",
       "/agent-runbooks",
       "/helper-scripts",
+      "/terminal-output",
     ]);
     expect(byLabel("Project configuration")?.children?.map((c) => c.route)).toEqual([
       "/pinning-defold-target",

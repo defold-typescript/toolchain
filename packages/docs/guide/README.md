@@ -68,7 +68,6 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - [wall](./wall.md) — opt-in per-directory API walls that narrow a single-kind source directory to its script-kind surface, in interactive and flag forms.
 - [resolve](./resolve.md) — generate ambient TypeScript namespaces from your `game.project` native-extension dependencies, with pin/drift detection and a `--frozen` lockfile mode.
 - [scene-types](./scene-types.md) — generate the scene-address declaration from your `.collection`/`.go` files so game-object paths and component ids complete in the editor; how `build` and `watch` keep it current, how `init` and `upgrade` wire it into your program, and why it can never reject an address.
-- [Terminal output](./terminal-output.md) — how failure lines read (`defold-typescript <command>: error: <message>`), when the `error` word is colored, and how `--no-color`, `NO_COLOR`, `TERM=dumb`, and `--json` turn color off.
 
 ### Toolchain & workflow
 
@@ -76,6 +75,7 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 - [Debugging](./debugging.md) — step through `.ts` source with breakpoints via the Local Lua Debugger and the scaffolded Bun launch path (no shell, Windows-native), resolving through the emitted `<name>.ts.script.map`.
 - [Agent runbooks](./agent-runbooks.md) — harness-neutral procedures for driving the CLI from an automated agent: scaffold a project, [install the agent contract](./agent-runbooks.md#install-the-agent-contract), regenerate extension types, [add and attach a script](./agent-runbooks.md#add-a-script) (build, wire the compiled component, verify), and fix the Lua output over the `--json` envelope, gating on `ok`.
 - [Helper scripts](./helper-scripts.md) — where build, codegen, and maintenance scripts live: a project-root `/scripts` folder run with Bun, typed by their own `scripts/tsconfig.json`, kept off the Lua build path and out of the Defold-typed `src/` surface.
+- [Terminal output](./terminal-output.md) — how failure lines read (`defold-typescript <command>: error: <message>`), when the `error` word is colored, and how `--no-color`, `NO_COLOR`, `TERM=dumb`, and `--json` turn color off.
 
 ### Project configuration
 
