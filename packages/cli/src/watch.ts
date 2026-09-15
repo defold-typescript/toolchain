@@ -425,7 +425,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
    * must stay pure NDJSON, and dropping the errors there instead would leave
    * `--json` strictly less informative with nothing put in their place.
    */
-  async function drainConsole(reader: AsyncIterator<string>): Promise<void> {
+  async function drainConsole(reader: AsyncIterator<string>, baseUrl: string): Promise<void> {
     try {
       let inError = false;
       for (;;) {
@@ -447,11 +447,13 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     } finally {
       // The stream ending is the editor quitting, not a watch failure: fall back
       // to unattached so the next rebuild can attach to whatever starts next.
+      // Only the editor the stream was read from is detached; one that already
+      // replaced it stays attached and gets its own console on the next tick.
       if (consoleReader === reader) consoleReader = null;
       consoleRunning = false;
       consoleFailures = 0;
       consoleRetryTicks = 0;
-      endAttachment();
+      if (attachedBaseUrl === baseUrl) endAttachment();
       refusedBaseUrl = null;
     }
   }
@@ -496,7 +498,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
         consoleFailures = 0;
         const reader = lines[Symbol.asyncIterator]();
         consoleReader = reader;
-        void drainConsole(reader);
+        void drainConsole(reader, endpoint.baseUrl);
       }
     }
     return endpoint;
@@ -833,16 +835,20 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
 
   // Rebuilds alone would leave an editor opened between saves invisible. An
   // attachment pauses the probe: a live console reports its own end, and
-  // `drainConsole` clearing the state is what resumes it. An attachment whose
-  // console failed to open has no end to report, so it keeps retrying, with a
-  // doubling gap that caps a persistently closed console's request budget.
+  // `drainConsole` clearing the state is what resumes it -- including the end
+  // of a replaced editor's console, which leaves its replacement attached with
+  // no console of its own. An attachment whose console failed to open has no
+  // end to report, so it keeps retrying, with a doubling gap that caps a
+  // persistently closed console's request budget.
   function discoveryTick(): void {
     if (attachBusy || reloadBusy || rebuildBusy || consoleRunning) return;
     if (attachedBaseUrl !== null) {
       const client = opts.editorClient ?? defaultEditorClient;
-      if (client.openConsole === undefined || consoleFailures === 0) return;
-      consoleRetryTicks -= 1;
-      if (consoleRetryTicks > 0) return;
+      if (client.openConsole === undefined) return;
+      if (consoleFailures > 0) {
+        consoleRetryTicks -= 1;
+        if (consoleRetryTicks > 0) return;
+      }
     }
     scheduleAttach();
   }

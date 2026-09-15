@@ -2373,6 +2373,80 @@ describe("runWatch editor discovery while unattached", () => {
     await handle.done;
   });
 
+  test("a console settling after its editor was replaced leaves the replacement attached", async () => {
+    const streams = captureStreams();
+    const editor = makeEditor(null);
+    const checks = gatedVersionChecks();
+    const watcher = makeFactory();
+    const handle = startWatch(editor, streams, false, {
+      hotReload: true,
+      watcherFactory: watcher.factory,
+      editorAttached: checks.editorAttached,
+    });
+    await handle.waitForIdle();
+
+    editor.setBaseUrl("http://localhost:7777");
+    await until(() => editor.consoles.length === 1 && checks.calls.length === 1, 1000);
+
+    editor.setBaseUrl("http://localhost:8888");
+    writeProjectFile("src/main.ts", scriptSource(2));
+    watcher.trigger("change", "src/main.ts");
+    await until(() => editor.posts.length === 1 && checks.calls.length === 2, 1000);
+    const [first, second] = checks.calls as [GatedVersionCheck, GatedVersionCheck];
+    expect(second.baseUrl).toBe("http://localhost:8888");
+    expect(first.signal.aborted).toBe(true);
+    expect(second.signal.aborted).toBe(false);
+
+    (editor.consoles[0] as FakeConsole).end();
+    await until(() => editor.consoles.length === 2, 1000);
+    expect(second.signal.aborted).toBe(false);
+
+    first.release();
+    await first.settled;
+    second.release();
+    await second.settled;
+
+    expect(second.reported()).toBe(true);
+    expect(countMatches(streams.err(), /late notice 2/g)).toBe(1);
+    expect(streams.err()).not.toContain("late notice 1");
+    expect(
+      countMatches(streams.err(), /attached to Defold editor at http:\/\/localhost:8888/g),
+    ).toBe(1);
+    expect(checks.calls.length).toBe(2);
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("a console opened by a reload detaches its editor when it ends", async () => {
+    const streams = captureStreams();
+    const editor = makeEditor(null);
+    const checks = gatedVersionChecks();
+    const watcher = makeFactory();
+    const handle = startWatch(editor, streams, false, {
+      hotReload: true,
+      watcherFactory: watcher.factory,
+      editorAttached: checks.editorAttached,
+      editorDiscoveryTicker: () => () => {},
+    });
+    await handle.waitForIdle();
+
+    editor.setBaseUrl("http://localhost:7777");
+    writeProjectFile("src/main.ts", scriptSource(2));
+    watcher.trigger("change", "src/main.ts");
+    await until(() => editor.posts.length === 1 && checks.calls.length === 1, 1000);
+    const [first] = checks.calls as [GatedVersionCheck];
+    expect(first.signal.aborted).toBe(false);
+
+    (editor.consoles[0] as FakeConsole).end();
+    await until(() => first.signal.aborted, 1000);
+
+    first.release();
+    await first.settled;
+    handle.stop();
+    await handle.done;
+  });
+
   test("an attach transition runs the version check once and prints its notices", async () => {
     const streams = captureStreams();
     const editor = makeEditor(null);
