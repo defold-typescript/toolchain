@@ -2120,6 +2120,86 @@ describe("runWatch console surfacing", () => {
     await handle.done;
   });
 
+  test("color tints only the leading level tag of a mapped line, never its traceback", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      editorClient: editor.client,
+      color: true,
+    });
+    await handle.waitForIdle();
+
+    const lua = readFileSync(path.join(cwd, "src/main.ts.script"), "utf8").split("\n");
+    const chunkLine = lua.findIndex((text) => text.includes("vmath.vector3")) + 1;
+    expect(chunkLine).toBeGreaterThan(0);
+
+    const stream = editor.consoles[0] as FakeConsole;
+    stream.push(
+      `ERROR:SCRIPT: /src/main.ts.script:${chunkLine}: attempt to index a nil value`,
+      "stack traceback:",
+      "\tmain/main.script:5: in function <main/main.script:4>",
+      "WARNING:SCRIPT: main/main.script:7: a deprecated call",
+    );
+    await stream.settled();
+
+    const lines = err()
+      .split("\n")
+      .filter((line) => line.startsWith("defold-typescript watch: editor: "));
+    expect(lines).toHaveLength(4);
+    expect(lines[0]).toMatch(
+      new RegExp(
+        `^defold-typescript watch: editor: \\x1b\\[1;31mERROR\\x1b\\[0m:SCRIPT: src/main\\.ts:\\d+:\\d+ \\(/src/main\\.ts\\.script:${chunkLine}\\): attempt to index a nil value$`,
+      ),
+    );
+    expect(lines[1]).toBe("defold-typescript watch: editor: stack traceback:");
+    expect(lines[2]).toBe(
+      "defold-typescript watch: editor: \tmain/main.script:5: in function <main/main.script:4>",
+    );
+    expect(lines[3]).toBe(
+      "defold-typescript watch: editor: \x1b[1;33mWARNING\x1b[0m:SCRIPT: main/main.script:7: a deprecated call",
+    );
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("without color a forwarded console line is written unchanged", async () => {
+    writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeProjectFile("src/main.ts", scriptSource(1));
+    const { stdout, stderr, err } = captureStreams();
+    const factory = makeFactory();
+    const editor = makeEditor();
+
+    const handle = runWatch({
+      cwd,
+      stdout,
+      stderr,
+      watcherFactory: factory.factory,
+      editorClient: editor.client,
+    });
+    await handle.waitForIdle();
+
+    const stream = editor.consoles[0] as FakeConsole;
+    stream.push("ERROR:SCRIPT: main/main.script:5: attempt to index a nil value");
+    await stream.settled();
+
+    expect(err()).toContain(
+      "defold-typescript watch: editor: ERROR:SCRIPT: main/main.script:5: attempt to index a nil value\n",
+    );
+    expect(err()).not.toContain("\x1b[");
+
+    handle.stop();
+    await handle.done;
+  });
+
   test("a drained error line names the authored TypeScript beside the generated chunk", async () => {
     writeProjectFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeProjectFile("src/main.ts", scriptSource(1));
@@ -2498,7 +2578,10 @@ describe("runWatch editor discovery while unattached", () => {
     await handle.waitForIdle();
 
     editor.setBaseUrl("http://localhost:7777");
-    await until(() => streams.err().includes("defold-typescript watch: late notice"), 1000);
+    await until(
+      () => streams.err().includes("defold-typescript watch: warning: late notice"),
+      1000,
+    );
     await handle.waitForIdle();
 
     // A rebuild re-runs discovery against the attached editor; that is not a
@@ -2629,7 +2712,7 @@ describe("runWatch editor discovery while unattached", () => {
 
     release();
     await idled;
-    expect(streams.err()).toContain("defold-typescript watch: late notice");
+    expect(streams.err()).toContain("defold-typescript watch: warning: late notice");
 
     handle.stop();
     await handle.done;

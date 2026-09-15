@@ -28,7 +28,7 @@ import {
 } from "./editor-attach";
 import { renderWatchEvent } from "./json-output";
 import { isComponentPath, isScenePath, isSkipped } from "./script-kind";
-import { severityLine } from "./terminal-style";
+import { colorConsoleTag, severityLine } from "./terminal-style";
 
 export interface WatchEvent {
   readonly kind: "change" | "rename";
@@ -210,6 +210,9 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   const writeError = (message: string): void => {
     stderr.write(`${severityLine(message, "error", opts.color === true)}\n`);
   };
+  const writeWarning = (message: string): void => {
+    stderr.write(`${severityLine(message, "warning", opts.color === true)}\n`);
+  };
 
   // A BuildFailureError is a compile failure: report a headline plus every
   // located line (human) or a structured `errors` event (json), keeping the
@@ -277,7 +280,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       } else {
         stdout.write(formatBuildLine(written));
         for (const warning of warnings) {
-          stderr.write(`defold-typescript watch: ${warning}\n`);
+          writeWarning(`defold-typescript watch: ${warning}`);
         }
       }
     } catch (buildErr) {
@@ -385,7 +388,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
           }),
         );
       } else {
-        stderr.write(`defold-typescript watch: ${notice.message}\n`);
+        writeWarning(`defold-typescript watch: ${notice.message}`);
       }
       return true;
     };
@@ -446,7 +449,9 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
           inError = false;
           continue;
         }
-        stderr.write(`${CONSOLE_PREFIX}${mapConsoleLine(cwd, line)}\n`);
+        stderr.write(
+          `${CONSOLE_PREFIX}${colorConsoleTag(mapConsoleLine(cwd, line), opts.color === true)}\n`,
+        );
       }
     } catch {
       // An aborted stream rejects rather than ending; that is the ordinary stop
@@ -600,7 +605,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       } else {
         stdout.write(formatBuildLine(written));
         for (const warning of warnings) {
-          stderr.write(`defold-typescript watch: ${warning}\n`);
+          writeWarning(`defold-typescript watch: ${warning}`);
         }
       }
       // Inside the success branch on purpose: reloading after a failed build
@@ -745,7 +750,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
           );
         } else if (findings) {
           for (const warning of findings.warnings) {
-            stderr.write(`defold-typescript watch: ${warning}\n`);
+            writeWarning(`defold-typescript watch: ${warning}`);
           }
         }
       }

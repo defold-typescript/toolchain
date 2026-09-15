@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { colorEnabled, severityLine } from "./terminal-style";
+import { colorConsoleTag, colorEnabled, severityLine } from "./terminal-style";
 
 const tty = { isTTY: true };
 
@@ -85,5 +85,35 @@ describe("severityLine", () => {
       "defold-typescript reload: error: editor refused",
     );
     expect(severityLine("error: already worded", "error", false)).toBe("error: already worded");
+  });
+});
+
+describe("colorConsoleTag", () => {
+  const scriptError = "ERROR:SCRIPT: main/main.script:5: attempt to index a nil value";
+
+  test("color wraps only the leading level token", () => {
+    expect(colorConsoleTag(scriptError, true)).toBe(
+      "\x1b[1;31mERROR\x1b[0m:SCRIPT: main/main.script:5: attempt to index a nil value",
+    );
+    expect(colorConsoleTag("WARNING:DLIB: slow frame", true)).toBe(
+      "\x1b[1;33mWARNING\x1b[0m:DLIB: slow frame",
+    );
+  });
+
+  test("without color the line is unchanged", () => {
+    expect(colorConsoleTag(scriptError, false)).toBe(scriptError);
+    expect(colorConsoleTag("WARNING:DLIB: slow frame", false)).toBe("WARNING:DLIB: slow frame");
+  });
+
+  test("lines without a leading error or warning tag are unchanged", () => {
+    for (const line of [
+      "INFO:ENGINE: Defold Engine 1.9.8",
+      "\tmain/main.script:5: in function <main/main.script:4>",
+      "stack traceback:",
+      "note: saw ERROR:SCRIPT: earlier",
+      " ERROR:SCRIPT: indented",
+    ]) {
+      expect(colorConsoleTag(line, true)).toBe(line);
+    }
   });
 });

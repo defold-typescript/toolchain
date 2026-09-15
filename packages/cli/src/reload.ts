@@ -6,7 +6,7 @@ import {
   type ReloadOutcome,
 } from "./editor-attach";
 import { renderResult } from "./json-output";
-import { severityLine } from "./terminal-style";
+import { colorConsoleTag, severityLine } from "./terminal-style";
 import { defaultEditorClient, type EditorReloadCommand, type WatchEditorClient } from "./watch";
 
 export interface RunReloadOptions {
@@ -176,7 +176,11 @@ export async function runReload(opts: RunReloadOptions): Promise<number> {
       );
       return error === undefined ? 0 : 1;
     }
-    for (const line of errors) stderr.write(`${CONSOLE_PREFIX}${mapConsoleLine(cwd, line)}\n`);
+    for (const line of errors) {
+      stderr.write(
+        `${CONSOLE_PREFIX}${colorConsoleTag(mapConsoleLine(cwd, line), opts.color === true)}\n`,
+      );
+    }
     if (error !== undefined) {
       stderr.write(
         `${severityLine(`defold-typescript reload: ${error}`, "error", opts.color === true)}\n`,
