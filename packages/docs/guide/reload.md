@@ -44,7 +44,9 @@ always kept.
 - **0** — the editor accepted the reload, and either no error appeared during the
   window or `--wait 0` opened no window at all.
 - **1** — no editor was running, the editor refused the reload, an error appeared
-  during the window, or a console window was requested and could not be opened.
+  during the window, a console window was requested and could not be opened, or
+  the console closed or failed before the window ended, leaving the rest of it
+  unread.
 
 Exit 0 is **not** proof that the reload succeeded. With a window, it is a
 heuristic: an error thrown after the window closes, or on a frame the game has
@@ -75,7 +77,7 @@ to the editor's Build Errors tab, never to the console.
 `--json` writes exactly one JSON object to stdout:
 
 ```json
-{"command":"reload","ok":false,"error":"the reloaded code reported an error","outcome":"accepted","consoleErrors":["ERROR:SCRIPT: /src/main.ts.script:4: attempt to index a nil value"],"consoleErrorLocations":[{"chunk":"/src/main.ts.script","chunkLine":4,"file":"src/main.ts","line":5,"column":11}],"consoleObserved":true}
+{"command":"reload","ok":false,"error":"the reloaded code reported an error","outcome":"accepted","consoleErrors":["ERROR:SCRIPT: /src/main.ts.script:4: attempt to index a nil value"],"consoleErrorLocations":[{"chunk":"/src/main.ts.script","chunkLine":4,"file":"src/main.ts","line":5,"column":11}],"consoleObserved":true,"consoleWindowComplete":true}
 ```
 
 `outcome` is the editor's answer to the post — `accepted`, `skipped` (the editor
@@ -87,7 +89,10 @@ resolved, so it is `[]` when nothing could be mapped and can hold more than one
 entry for a single traceback line. `consoleObserved` says whether the console
 was actually read: `false` under
 `--wait 0`, and `false` with an error when a requested window could not be
-opened, so an empty `consoleErrors` is only meaningful when it is `true`. Note
+opened. `consoleWindowComplete` says whether that read lasted the whole window:
+it is `false` with an error when the console closed or failed first, and
+`false` whenever `consoleObserved` is. An empty `consoleErrors` covers the whole
+window only when `consoleWindowComplete` is `true`. Note
 that `ok` is `false` while `outcome` is `accepted` when the post landed and the
 reloaded code then threw — the two fields answer different questions.
 

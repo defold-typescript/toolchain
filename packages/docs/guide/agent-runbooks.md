@@ -864,7 +864,7 @@ post with HTTP 202 — *queued* — and a Lua error in the reloaded chunk reache
 console, never that response. Its single JSON line is:
 
 ```json
-{"command":"reload","ok":false,"error":"the reloaded code reported an error","outcome":"accepted","consoleErrors":["ERROR:SCRIPT: /src/main.ts.script:4: attempt to index a nil value"],"consoleErrorLocations":[{"chunk":"/src/main.ts.script","chunkLine":4,"file":"src/main.ts","line":5,"column":11}],"consoleObserved":true}
+{"command":"reload","ok":false,"error":"the reloaded code reported an error","outcome":"accepted","consoleErrors":["ERROR:SCRIPT: /src/main.ts.script:4: attempt to index a nil value"],"consoleErrorLocations":[{"chunk":"/src/main.ts.script","chunkLine":4,"file":"src/main.ts","line":5,"column":11}],"consoleObserved":true,"consoleWindowComplete":true}
 ```
 
 `consoleErrors` is always the console's own text, naming the generated chunk.
@@ -890,10 +890,16 @@ Branch on `outcome` first, then `consoleObserved`, then `ok`:
 - `outcome: "accepted"` with `consoleObserved: false` and `ok: true` — `--wait 0`:
   no console was read at all, so the post being accepted is the whole claim.
 - `outcome: "accepted"` with `consoleObserved: true` and `ok: true` — the post
-  was accepted, a console window was read, and nothing appeared on it.
-- `outcome: "accepted"` with `ok: false` and `consoleObserved: true` — the post
-  was accepted and the new code threw. `consoleErrors` carries the header and its
-  traceback frames in order; that is your stack trace.
+  was accepted, the whole console window was read (`consoleWindowComplete:
+  true`), and nothing appeared on it.
+- `outcome: "accepted"` with `ok: false`, `consoleObserved: true` and a
+  non-empty `consoleErrors` — the post was accepted and the new code threw.
+  `consoleErrors` carries the header and its traceback frames in order; that is
+  your stack trace.
+- `outcome: "accepted"` with `ok: false`, `consoleObserved: true`,
+  `consoleWindowComplete: false` and an empty `consoleErrors` — the console
+  closed or failed before the window ended, so errors raised later were not
+  seen. Retry the reload rather than reading it as quiet.
 
 **`ok: true` is not proof the reload succeeded.** The window is a heuristic: an
 error thrown after it closes, or on a frame the game has not reached, is missed.
