@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
+import { globalNamespacesIn } from "../scripts/augmentation-namespaces";
 import {
   EDITOR_MODULE_MANIFEST,
   EDITOR_SKIP_FUNCTIONS,
@@ -897,7 +898,7 @@ describe("restricted src augmentation scoping", () => {
   // `loadSrcAugmentations` actually hands every materialization path.
   const augmentations = loadSrcAugmentations().map((file) => ({
     name: file.path.replace(/\.d\.ts$/, ""),
-    namespaces: [...file.contents.matchAll(/^ {2}namespace (\w+) \{/gm)].map((m) => m[1] ?? ""),
+    namespaces: globalNamespacesIn(file.path, file.contents),
   }));
 
   const importsIn = (kind: string): string[] =>
