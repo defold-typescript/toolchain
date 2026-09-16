@@ -385,6 +385,7 @@ describe("buildNav", () => {
       "/typescript-vs-lua",
       "/typescript-gotchas",
       "/data-structures",
+      "/lua-table-constructs",
     ]);
     expect(byLabel("Core concepts")?.children?.map((c) => c.route)).toEqual([
       "/script-lifecycle",
