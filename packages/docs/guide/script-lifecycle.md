@@ -224,7 +224,8 @@ type ShipProps = {
 };
 
 type ShipState = {
-  phase: "idle" | "boosting";
+  // Optional because no `init` writes it: the field starts absent.
+  phase?: "idle" | "boosting";
 };
 
 export default defineScript<ShipProps, ShipState>({
@@ -233,13 +234,15 @@ export default defineScript<ShipProps, ShipState>({
   },
   on_message(self, message_id: Hash) {
     // The merge again: `phase` is state, `speed` is property-backed.
-    if (message_id === hash("boost") && self.phase === "idle") {
+    if (message_id === hash("boost") && self.phase !== "boosting") {
       self.phase = "boosting";
       self.speed += 60;
     }
   },
 });
 ```
+
+A type argument describes the state a script keeps; it does not create it. A field no `init` assigns is `nil` on a fresh instance whatever the type says, so model it optional and handle the absent case — here the boost guard asks whether the ship is *not already* boosting, which is true of a ship that has never boosted.
 
 ### Why one type argument does not work beside `properties`
 

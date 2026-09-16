@@ -17,7 +17,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **[Script lifecycle](./script-lifecycle.md#three-ways-to-type-self) now lays out all three ways to type `self` and what inference costs.** The page shows `init(self): State` and `defineScript<Props, State>` alongside the inferred default, says that `self` outside `init` is the declared properties merged with the state `init` returns, explains why a single type argument cannot be used beside `properties`, and shows a string literal widening to `string` unless you name the state. It also notes that `Hash`, `Vector3` and the other engine value types are available globally as well as through an import.
+- **[Script lifecycle](./script-lifecycle.md#three-ways-to-type-self) now lays out all three ways to type `self` and what inference costs.** The page shows `init(self): State` and `defineScript<Props, State>` beside the inferred default, says `self` outside `init` is the declared properties merged with the state `init` returns, explains why one type argument cannot sit next to `properties`, and shows a string literal widening to `string` unless you name the state. It also spells out that a type argument describes state without creating it — a field no `init` writes is `nil` on a fresh instance, so the no-`init` example models it optional — and that `Hash`, `Vector3` and the other engine value types are global as well as importable.
 
 ## v0.35.0
 
