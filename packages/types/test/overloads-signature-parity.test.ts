@@ -6,6 +6,7 @@ import {
   GO_SIGNATURES_PATH,
   loadSignatureFile,
   MSG_SIGNATURES_PATH,
+  RENDER_SIGNATURES_PATH,
   VMATH_SIGNATURES_PATH,
 } from "../scripts/signature-store-fs";
 
@@ -33,7 +34,14 @@ const NAMESPACES: readonly OverloadNamespace[] = [
     namespace: "vmath",
     declarationsPath: overloadsPath("vmath-overloads.d.ts"),
     storePath: VMATH_SIGNATURES_PATH,
-    fqns: ["vmath.clamp", "vmath.lerp", "vmath.slerp", "vmath.mul_per_elem", "vmath.normalize"],
+    fqns: [
+      "vmath.clamp",
+      "vmath.euler_to_quat",
+      "vmath.lerp",
+      "vmath.slerp",
+      "vmath.mul_per_elem",
+      "vmath.normalize",
+    ],
     reflow: {
       from: "function lerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion;",
       to: "function lerp(\n      t: number,\n      q1: Quaternion,\n      q2: Quaternion,\n    ): Quaternion;",
@@ -87,6 +95,26 @@ const NAMESPACES: readonly OverloadNamespace[] = [
       fqn: "msg.url",
       from: "Construct a URL. A URL is",
       to: "Build a URL. A URL is",
+    },
+  },
+  {
+    namespace: "render",
+    declarationsPath: overloadsPath("render-overloads.d.ts"),
+    storePath: RENDER_SIGNATURES_PATH,
+    fqns: ["render.render_target"],
+    reflow: {
+      from: 'function render_target(parameters: Record<string | number, unknown>): Opaque<"render_target">;',
+      to: 'function render_target(\n      parameters: Record<string | number, unknown>,\n    ): Opaque<"render_target">;',
+    },
+    driftSignature: {
+      fqn: "render.render_target",
+      from: "name: string,\n      parameters: Record<string | number, unknown>,",
+      to: "name: string,\n      parameters: Record<string, unknown>,",
+    },
+    driftDoc: {
+      fqn: "render.render_target",
+      from: "Creates a new render target according to the supplied specification table.",
+      to: "Creates a render target according to the supplied specification table.",
     },
   },
 ];
@@ -240,6 +268,8 @@ const OVERLOAD_COUNTS: Record<string, number> = {
   "go.property": 7,
   "msg.post": 2,
   "msg.url": 3,
+  "render.render_target": 2,
+  "vmath.euler_to_quat": 2,
 };
 
 describe.each(

@@ -39,6 +39,7 @@ import "./generated/particlefx";
 import "./generated/physics";
 import "./generated/profiler";
 import "./generated/render";
+import "./src/render-overloads";
 import "./generated/resource";
 import "./generated/socket";
 import "./src/socket-types";

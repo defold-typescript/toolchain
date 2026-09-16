@@ -25,6 +25,8 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Fixed
 
+- **[`render.render_target({...})`](/api/render) and [`vmath.euler_to_quat(v)`](/api/vmath) now compile.** The engine accepts a lone parameter table and a lone vector3 — the calls the reference's own examples make — but the typings required the two- and three-argument forms; both spellings of each call now type-check on the default surface and on every pinned `defold-target`.
+- **Hand-authored engine overloads show their signature again on the canonical API reference pages.** [`go.get`](/api/go), [`go.set`](/api/go), [`go.property`](/api/go), [`msg.post`](/api/msg), [`msg.url`](/api/msg) and the [`vmath`](/api/vmath) generics rendered an empty signature on their unversioned `/api/<namespace>` page, while the version-pinned pages showed it.
 - **[`reload`](./reload.md) exits 1 when the editor console closes or fails before its `--wait` window ends.** Such a reload used to exit 0 with "no error observed" even though the rest of the window went unread; `--json` now reports `consoleWindowComplete` so an empty `consoleErrors` can be trusted only when it is `true`.
 - **[`watch`](./watch.md#runtime-errors-in-the-terminal) keeps an editor that replaced another one attached when the old editor's console closes.** The replacement is no longer detached and announced a second time, and its runtime errors keep reaching the terminal.
 
