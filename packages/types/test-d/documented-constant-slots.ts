@@ -57,6 +57,23 @@ gui.set_pivot(node, gui.BLEND_ADD);
 // render, profiler, model, window — constants owned by another namespace, too.
 render.enable_state(graphics.STATE_DEPTH_TEST);
 render.disable_state(graphics.STATE_BLEND);
+
+// render.clear's mapping *key* is a documented constant slot too: the three
+// graphics.BUFFER_TYPE_* constants its reference names, written through the
+// exported alias.
+const clearBuffers = new LuaMap<render.ClearBufferKey, number | Vector4>();
+clearBuffers.set(graphics.BUFFER_TYPE_COLOR0_BIT, vmath.vector4(0, 0, 0, 0));
+clearBuffers.set(graphics.BUFFER_TYPE_DEPTH_BIT, 1);
+clearBuffers.set(graphics.BUFFER_TYPE_STENCIL_BIT, 0);
+render.clear(clearBuffers);
+
+// @ts-expect-error a graphics state constant is not a clear-buffer key
+clearBuffers.set(graphics.STATE_BLEND, 1);
+
+declare const looseBuffers: LuaMap<number, number | Vector4>;
+
+// @ts-expect-error the clear-buffer key is the three documented constants, not any number
+render.clear(looseBuffers);
 profiler.set_ui_mode(profiler.MODE_RUN);
 profiler.set_ui_view_mode(profiler.VIEW_MODE_MINIMIZED);
 model.play_anim(url, "run", go.PLAYBACK_ONCE_FORWARD);

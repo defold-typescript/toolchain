@@ -473,6 +473,13 @@ export function deadResiduals(
   return [...residuals.keys()].filter((key) => !flagged.has(key));
 }
 
+// A curated mapping key or value may be a `T | U` union token that emit-dts
+// splits per token; the audit has to split it the same way or it measures a
+// token the emitted surface never produces.
+function unionTokens(token: string): string[] {
+  return token.split("|").map((part) => part.trim());
+}
+
 function overloadIndex(functions: readonly ApiFunction[]): Map<string, ApiFunction[]> {
   const byName = new Map<string, ApiFunction[]>();
   for (const fn of functions) {
@@ -595,17 +602,16 @@ function auditEntry(
           // same way the object branch does; a nested-mapping value
           // (`LuaMap<K, LuaMap<K, V>>`) feeds the outer key plus the inner
           // key/value tokens — so an unmapped token in any arm still surfaces.
+          // The key and a string value may each be a `T | U` union token
+          // (render.clear's three graphics.BUFFER_TYPE_* keys, its
+          // `number | vector4` value); split on `|` exactly as the emit branch
+          // does so each token is checked individually and a single token is
+          // unaffected.
+          const keyTokens = unionTokens(tableSlotCuration.key);
           if (typeof tableSlotCuration.value === "string") {
-            // The value may be a `T | U` union token (render.clear's
-            // `number | vector4`); split on `|` exactly as the emit branch does
-            // so each token is checked against DEFOLD_TYPE_MAP individually and a
-            // single-token value is unaffected.
-            considerTypes([
-              tableSlotCuration.key,
-              ...tableSlotCuration.value.split("|").map((token) => token.trim()),
-            ]);
+            considerTypes([...keyTokens, ...unionTokens(tableSlotCuration.value)]);
           } else if (Array.isArray(tableSlotCuration.value)) {
-            considerTypes([tableSlotCuration.key]);
+            considerTypes(keyTokens);
             for (const field of tableSlotCuration.value) {
               if (field.fields !== undefined) {
                 for (const nested of field.fields) {
@@ -618,12 +624,12 @@ function auditEntry(
             }
           } else {
             const nested = tableSlotCuration.value as NestedMapping;
-            considerTypes([tableSlotCuration.key, nested.key, nested.value]);
+            considerTypes([...keyTokens, nested.key, nested.value]);
           }
           continue;
         }
         if (mappingSlot !== undefined) {
-          considerTypes([mappingSlot.key, mappingSlot.value]);
+          considerTypes([...unionTokens(mappingSlot.key), mappingSlot.value]);
           continue;
         }
         // A homogeneous-array slot is recovered by emit-dts into `T[]` (or a
