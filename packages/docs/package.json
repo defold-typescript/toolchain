@@ -18,5 +18,8 @@
   ],
   "publishConfig": {
     "access": "public"
+  },
+  "devDependencies": {
+    "@defold-typescript/transpiler": "workspace:*"
   }
 }
