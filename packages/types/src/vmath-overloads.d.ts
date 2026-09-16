@@ -57,6 +57,25 @@ declare global {
      */
     function lerp(t: number, n1: number, n2: number): number;
     /**
+     * Converts euler angles in degrees into a quaternion, reading the x, y and z
+     * angles from a vector3.
+     * The error is guaranteed to be less than 0.001.
+     *
+     * @param v - vector3 with euler angles in degrees
+     * @returns quaternion describing an equivalent rotation (231 (YZX) rotation sequence)
+     */
+    function euler_to_quat(v: Vector3): Quaternion;
+    /**
+     * Converts euler angles (x, y, z) in degrees into a quaternion.
+     * The error is guaranteed to be less than 0.001.
+     *
+     * @param x - rotation around x-axis in degrees
+     * @param y - rotation around y-axis in degrees
+     * @param z - rotation around z-axis in degrees
+     * @returns quaternion describing an equivalent rotation (231 (YZX) rotation sequence)
+     */
+    function euler_to_quat(x: number, y: number, z: number): Quaternion;
+    /**
      * Performs an element wise multiplication between two vectors of the same type
      * The returned value is a vector defined as (e.g. for a vector3):
      * `v = vmath.mul_per_elem(a, b) = vmath.vector3(a.x * b.x, a.y * b.y, a.z * b.z)`

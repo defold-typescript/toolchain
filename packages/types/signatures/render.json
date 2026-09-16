@@ -1,0 +1,12 @@
+{
+  "render.render_target": {
+    "signatures": [
+      "render.render_target(parameters: Record<string | number, unknown>): Opaque<\"render_target\">",
+      "render.render_target(name: string, parameters: Record<string | number, unknown>): Opaque<\"render_target\">"
+    ],
+    "docs": [
+      "Creates a new render target according to the supplied specification table. The parameter table is keyed by buffer type, with one parameter table per attachment; see the reference for the available keys and values.",
+      "Creates a new named render target according to the supplied specification table. The name is used by the profiler and by render target lookups."
+    ]
+  }
+}

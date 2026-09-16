@@ -238,24 +238,10 @@ export const OPTIONALITY_EVIDENCE: Readonly<
     ownExampleCalls(fn, overloads).some((args) => args[index] === "nil"),
 };
 
-const ARITY_OVERLOAD_REASON =
-  "the example `vmath.euler_to_quat(v)` passes one vector3 for all three angles: " +
-  "y and z are required in the three-number form, and the one-argument call needs " +
-  "an overload the declaration lacks, not an omissible slot";
-
 // Slots the evidence flags that are genuinely required, keyed like
 // `OPTIONAL_SLOT_CORRECTIONS`. Each value is the recorded reason, so an
 // exemption is a decision someone can re-check rather than a silent skip.
-export const OPTIONALITY_EVIDENCE_EXEMPTIONS: ReadonlyMap<string, string> = new Map([
-  [
-    "render.render_target:param:parameters",
-    "both upstream examples pass the parameters table first, in place of `name`: an " +
-      "argument shifted into another slot rather than this one omitted, which an " +
-      "overload the declaration lacks would express",
-  ],
-  ["vmath.euler_to_quat:param:y", ARITY_OVERLOAD_REASON],
-  ["vmath.euler_to_quat:param:z", ARITY_OVERLOAD_REASON],
-]);
+export const OPTIONALITY_EVIDENCE_EXEMPTIONS: ReadonlyMap<string, string> = new Map([]);
 
 export interface EvidencedSlot {
   readonly key: string;
