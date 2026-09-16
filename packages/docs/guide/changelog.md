@@ -23,7 +23,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Fixed
 
-- **API reference Parameters and Returns entries now show the same type as the signature above them.** Slots whose real type the typings recovered — [`render.clear`](/api/render)'s buffer table, [`render.enable_state`](/api/render)'s state constant, and every other curated mapping, documented constant or recovered options table — used to read `Record<string | number, unknown>` or `Opaque<"constant">` in the breakdown while the signature showed the branded type you actually pass.
+- **API reference Parameters and Returns entries now show the same type as the signature above them, on each overload's own row.** Slots whose real type the typings recovered — [`render.clear`](/api/render)'s buffer table, [`render.enable_state`](/api/render)'s state constant, [`b2d.body.create_fixture`](/api/b2d.body)'s fixture-definition table, and every other curated mapping, documented constant or recovered options table — used to read `Record<string | number, unknown>` or `Opaque<"constant">` in the breakdown while the signature showed the branded type you actually pass.
 
 ## v0.35.0
 

@@ -49,6 +49,14 @@ export interface AvailabilityLookup {
 
 type IdentityKind = "FUNCTION" | "CONSTANT" | "VARIABLE" | "PROPERTY" | "TYPEDEF";
 
+function availabilityForIdentity(
+  availability: AvailabilityLookup | undefined,
+  identity: string,
+): ApiAvailability | undefined {
+  if (!availability) return undefined;
+  return availability.records.get(identity);
+}
+
 function joinAvailability(
   availability: AvailabilityLookup | undefined,
   namespace: string,
@@ -56,8 +64,10 @@ function joinAvailability(
   name: string,
   signature: string,
 ): ApiAvailability | undefined {
-  if (!availability) return undefined;
-  return availability.records.get(symbolIdentityKey({ namespace, kind, name, signature }));
+  return availabilityForIdentity(
+    availability,
+    symbolIdentityKey({ namespace, kind, name, signature }),
+  );
 }
 
 // The authoritative inner signature for one symbol, or `undefined` when the page
@@ -370,6 +380,15 @@ export interface ApiSymbol {
   parameters: ApiSymbolParam[];
   /** Structured return values; always present, empty for non-functions. */
   returnValues: ApiSymbolParam[];
+  /**
+   * The exact declaration identity this row's authoritative-signature, slot and
+   * availability lookups keyed on — {@link symbolIdentityKey} over the namespace,
+   * the kind, the name and the normalized ref-doc signature. Distinguishes the
+   * rows of an ordinary overload, which share a name. Absent on an authored
+   * override's arm rows, which render `.d.ts` text no single ref-doc declaration
+   * produced.
+   */
+  declarationIdentity?: string;
   /**
    * Version-correct lifecycle/backend metadata joined by exact overload identity;
    * absent when the symbol has no availability record. The render layer turns it
@@ -870,19 +889,13 @@ export function apiModuleSymbols(
   const isLibrary = page.category === "library";
   const authoritative = page.authoritativeSignatures;
   const slotTypes = page.authoritativeSlotTypes;
-  // Slots resolve through the same exact identity the authoritative signature
-  // does, and are used only on a row that actually renders that signature. A row
-  // whose signature fell back to the token render keeps token-derived slots too,
-  // so the two halves of a row can never come from different sources.
-  const slotsFor = (fn: ApiFunction): SlotTypes | undefined =>
-    slotTypes?.get(
-      symbolIdentityKey({
-        namespace: m.namespace,
-        kind: "FUNCTION",
-        name: fn.name,
-        signature: normalizedFunctionSignature(fn),
-      }),
-    );
+  const functionIdentity = (fn: ApiFunction): string =>
+    symbolIdentityKey({
+      namespace: m.namespace,
+      kind: "FUNCTION",
+      name: fn.name,
+      signature: normalizedFunctionSignature(fn),
+    });
   const symbols: ApiSymbol[] = [];
   const overrideEmitted = new Set<string>();
   // Every ref-doc entry of an override-covered FQN, grouped in source order
@@ -901,16 +914,14 @@ export function apiModuleSymbols(
     // override-covered FQN: render the store signatures once, not per fixture entry
     // (`vmath.lerp` has 3 ref-doc entries but one authored override set).
     if (ov !== null && overrideEmitted.has(fn.name)) continue;
+    // One key for every per-declaration lookup this row makes, so the signature,
+    // the slots, the availability badge and the identity the row reports can never
+    // come from different declarations.
+    const identity = functionIdentity(fn);
     // The authoritative Combined signature wins over both the token render and
     // the authored override store; on exact-version pages the map is absent, so
     // the existing override/token precedence is unchanged.
-    const authSig = authoritativeSignatureFor(
-      authoritative,
-      m.namespace,
-      "FUNCTION",
-      fn.name,
-      normalizedFunctionSignature(fn),
-    );
+    const authSig = authoritative?.get(identity);
     const primarySignature =
       authSig ??
       (ov === null
@@ -937,14 +948,17 @@ export function apiModuleSymbols(
       return entry ? platformDocText(entry.description || entry.brief) : fixtureDoc;
     };
     const primaryEntry = rowEntry(0);
-    // Only the row rendering the authoritative declaration may read its slots;
-    // an authored override arm renders `.d.ts` text the emitter never produced.
+    // Slots resolve through the same exact identity the authoritative signature
+    // does, and are used only on a row that actually renders that signature. A row
+    // whose signature fell back to the token render keeps token-derived slots too,
+    // so the two halves of a row can never come from different sources.
     const primarySlots =
-      authSig !== undefined && primarySignature === authSig ? slotsFor(fn) : undefined;
+      authSig !== undefined && primarySignature === authSig ? slotTypes?.get(identity) : undefined;
     const symbol: ApiSymbol = {
       kind: "function",
       name: fn.name,
       signature: primarySignature,
+      declarationIdentity: identity,
       docMarkdown: ov === null ? fixtureDoc : overloadDoc(0),
       parameters: primaryEntry
         ? projectParams(primaryEntry.parameters, mapType, primarySlots, "param")
@@ -968,13 +982,7 @@ export function apiModuleSymbols(
     // `api-availability.json` was derived with — so a badge lands on the one
     // overload it identifies. Authored-override extra rows below share the raw
     // symbol and carry no badge of their own.
-    const av = joinAvailability(
-      page.availability,
-      m.namespace,
-      "FUNCTION",
-      fn.name,
-      normalizedFunctionSignature(fn),
-    );
+    const av = availabilityForIdentity(page.availability, identity);
     if (av) symbol.availability = av;
     symbols.push(symbol);
     // Each remaining authored overload renders as its own row, reusing the
