@@ -5,14 +5,18 @@ import { ARBITRARY_TABLE_SLOT_KEYS, OPTIONAL_SLOT_CORRECTIONS } from "../src/emi
 import {
   buildFidelityReport,
   countDroppedHandleMethods,
+  declaredArities,
   evidencedOptionalSlots,
+  exampleScanReach,
   type FidelityEntry,
+  INEXPRESSIBLE_EXAMPLE_RESIDUALS,
+  inexpressibleExampleCalls,
   FIDELITY_BASELINE_MANIFEST as MODULE_MANIFEST,
   OPTIONALITY_EVIDENCE_EXEMPTIONS,
   unmarkedOptionalSlots,
 } from "./fidelity-audit";
 import baseline from "./fidelity-baseline.json" with { type: "json" };
-import type { ModuleManifestEntry } from "./regen";
+import { MODULE_MANIFEST as ENGINE_MODULE_MANIFEST, type ModuleManifestEntry } from "./regen";
 
 function manifestOf(doc: unknown): readonly ModuleManifestEntry[] {
   return [{ namespace: "test", doc, outFile: "test.d.ts" }];
@@ -1383,5 +1387,164 @@ describe("promoted default surface coverage and record-table gate", () => {
     const entry = requireEntry(buildFidelityReport(manifestOf(doc)), "test");
     expect(entry.recordTables).toBe(0);
     expect(entry.unknownTokens).toContain("mystery");
+  });
+});
+
+const syntheticEntry = (
+  elements: readonly unknown[],
+  skipFunctions?: readonly string[],
+  namespace = "test",
+): ModuleManifestEntry => ({
+  namespace,
+  doc: { info: { namespace }, elements },
+  outFile: `${namespace}.d.ts`,
+  ...(skipFunctions === undefined ? {} : { skipFunctions }),
+});
+
+const element = (name: string, parameters: readonly unknown[], examples = "") => ({
+  type: "FUNCTION",
+  name,
+  parameters,
+  returnvalues: [],
+  examples,
+});
+
+const req = (name: string) => ({ name, doc: "", types: ["number"], is_optional: "False" });
+const opt = (name: string) => ({ name, doc: "", types: ["number"], is_optional: "True" });
+const vararg = (name: string) => ({
+  name,
+  doc: "",
+  types: ["number"],
+  is_optional: "False",
+  is_vararg: "True",
+});
+
+describe("declared arities — the argument counts the shipped surface accepts", () => {
+  test("a three-parameter function whose last two are doc-optional spans 1 to 3", () => {
+    const arities = declaredArities(
+      syntheticEntry([element("test.f", [req("a"), opt("b"), opt("c")])]),
+    );
+    expect(arities.get("test.f")).toEqual([{ min: 1, max: 3 }]);
+  });
+
+  test("a vararg parameter leaves the maximum unbounded", () => {
+    const arities = declaredArities(
+      syntheticEntry([element("test.f", [req("a"), vararg("rest")])]),
+    );
+    expect(arities.get("test.f")).toEqual([{ min: 1, max: Number.POSITIVE_INFINITY }]);
+  });
+
+  test("hand-authored overloads are read from the src augmentations, not the ref-doc", () => {
+    // Both are `skipFunctions`, so a generated-only implementation reports the
+    // ref-doc's own arity here instead of the shipped declaration's.
+    const aritiesOf = (namespace: string, fqn: string) => {
+      const entry = ENGINE_MODULE_MANIFEST.find((e) => e.namespace === namespace);
+      if (!entry) throw new Error(`manifest entry missing: ${namespace}`);
+      return (declaredArities(entry).get(fqn) ?? []).map((range) => range.max).sort();
+    };
+    expect(aritiesOf("render", "render.render_target")).toEqual([1, 2]);
+    expect(aritiesOf("vmath", "vmath.euler_to_quat")).toEqual([1, 3]);
+  });
+
+  test("every skipped function in the audited surface resolves to a declared arity", () => {
+    const unresolved: string[] = [];
+    for (const entry of ENGINE_MODULE_MANIFEST) {
+      const arities = declaredArities(entry);
+      for (const rule of entry.skipFunctions ?? []) {
+        if (rule.endsWith(".")) continue;
+        const fqn = `${entry.namespace}.${rule}`;
+        if ((arities.get(fqn) ?? []).length === 0) unresolved.push(fqn);
+      }
+    }
+    expect(unresolved).toEqual([]);
+  });
+});
+
+describe("inexpressible example calls — the arity class gate", () => {
+  test("an example calling fewer arguments than any declared arity is reported", () => {
+    const declared = syntheticEntry([element("test.f", [req("a"), req("b")], "test.f(1)")]);
+    expect(inexpressibleExampleCalls(declared)).toEqual([{ fqn: "test.f", argumentCount: 1 }]);
+    // The ref-doc documents `render_target` with two required parameters, but the
+    // authored declaration carries a one-argument arm, so the same call fits.
+    const twoRequired = [req("name"), req("parameters")];
+    const example = "render.render_target(p)";
+    expect(
+      inexpressibleExampleCalls(
+        syntheticEntry([element("render.render_target", twoRequired, example)], [], "render"),
+      ),
+    ).toEqual([{ fqn: "render.render_target", argumentCount: 1 }]);
+    expect(
+      inexpressibleExampleCalls(
+        syntheticEntry(
+          [element("render.render_target", twoRequired, example)],
+          ["render_target"],
+          "render",
+        ),
+      ),
+    ).toEqual([]);
+  });
+
+  test("a forwarded vararg proves nothing about arity and is never reported", () => {
+    const entry = syntheticEntry([element("test.f", [req("a"), req("b")], "test.f(1, ...)")]);
+    expect(inexpressibleExampleCalls(entry)).toEqual([]);
+  });
+
+  test("a call a same-named ref-doc sibling accepts is that sibling's call", () => {
+    const entry = syntheticEntry([
+      element("test.vec", [req("x"), req("y"), req("z")], "test.vec(2.0)"),
+      element("test.vec", [req("n")]),
+    ]);
+    expect(inexpressibleExampleCalls(entry)).toEqual([]);
+  });
+
+  test("a call inside a Lua comment is not a call site", () => {
+    // How the ref-doc shows printed output: `--> vmath.matrix4(1, 0, …)` is
+    // sixteen commas of prose, not a sixteen-argument call.
+    const entry = syntheticEntry([
+      element("test.f", [req("a")], "test.f(1)\nprint(x) --> test.f(1, 0, 0, 1)"),
+    ]);
+    expect(inexpressibleExampleCalls(entry)).toEqual([]);
+  });
+
+  test("a `--` inside a string literal does not open a comment", () => {
+    // A comment strip that ignores quotes swallows the rest of the line, the
+    // call never closes, and the real one-argument call goes unreported.
+    const entry = syntheticEntry([element("test.f", [req("a"), req("b")], 'test.f("a--b")')]);
+    expect(inexpressibleExampleCalls(entry)).toEqual([{ fqn: "test.f", argumentCount: 1 }]);
+  });
+
+  test("no audited engine function has an example its declaration cannot express", () => {
+    const flagged = ENGINE_MODULE_MANIFEST.flatMap((entry) => inexpressibleExampleCalls(entry));
+    const unexplained = flagged.filter((call) => !INEXPRESSIBLE_EXAMPLE_RESIDUALS.has(call.fqn));
+    expect(unexplained).toEqual([]);
+  });
+
+  test("every residual still names something the evidence flags, with a stated reason", () => {
+    const flagged = new Set(
+      ENGINE_MODULE_MANIFEST.flatMap((entry) =>
+        inexpressibleExampleCalls(entry).map((call) => call.fqn),
+      ),
+    );
+    const dead = [...INEXPRESSIBLE_EXAMPLE_RESIDUALS.keys()].filter((fqn) => !flagged.has(fqn));
+    expect(dead).toEqual([]);
+    const unexplained = [...INEXPRESSIBLE_EXAMPLE_RESIDUALS]
+      .filter(([, reason]) => reason.trim().length === 0)
+      .map(([fqn]) => fqn);
+    expect(unexplained).toEqual([]);
+  });
+
+  test("an empty residual means scanned and clean, not scanned nothing", () => {
+    const reach = ENGINE_MODULE_MANIFEST.reduce(
+      (total, entry) => {
+        const { withCalls, withoutCalls } = exampleScanReach(entry);
+        return {
+          withCalls: total.withCalls + withCalls,
+          withoutCalls: total.withoutCalls + withoutCalls,
+        };
+      },
+      { withCalls: 0, withoutCalls: 0 },
+    );
+    expect(reach.withCalls).toBeGreaterThan(0);
+    expect(reach.withCalls + reach.withoutCalls).toBeGreaterThan(reach.withCalls);
   });
 });
