@@ -151,6 +151,65 @@ describe("hand-authored symbols survive the skip filter", () => {
   }
 });
 
+describe("per-slot rendered types travel with the signature", () => {
+  const artifact = buildSignaturesArtifact();
+
+  const functionKey = (version: string, namespace: string, name: string): string => {
+    const hit = Object.keys(artifact.versions[version] ?? {}).find((key) => {
+      const [ns, kind, symbolName] = key.split("\0");
+      return ns === namespace && kind === "FUNCTION" && symbolName === name;
+    });
+    if (!hit) throw new Error(`no signature for ${name}`);
+    return hit;
+  };
+
+  test("the slot map spans the same version axis as the signature map", () => {
+    expect(Object.keys(artifact.slotTypes).sort()).toEqual(Object.keys(artifact.versions).sort());
+  });
+
+  test("a curated slot carries the recovered type the token map cannot reach", () => {
+    const key = functionKey(CURRENT_VERSION, "render", "render.clear");
+    const buffers = artifact.slotTypes[CURRENT_VERSION]?.[key]?.["param:0:buffers"];
+    expect(buffers).toContain("LuaMap<");
+    expect(buffers).not.toContain("Record<string | number, unknown>");
+
+    const stateKey = functionKey(CURRENT_VERSION, "render", "render.enable_state");
+    const state = artifact.slotTypes[CURRENT_VERSION]?.[stateKey]?.["param:0:state"];
+    expect(state).toContain('__brand: "graphics.STATE_DEPTH_TEST"');
+    expect(state).not.toContain('Opaque<"constant">');
+  });
+
+  test("every recorded slot type is a substring of that symbol's own signature", () => {
+    const mismatches: string[] = [];
+    let compared = 0;
+    for (const [version, perSymbol] of Object.entries(artifact.slotTypes)) {
+      for (const [key, slots] of Object.entries(perSymbol)) {
+        const signature = artifact.versions[version]?.[key];
+        expect(signature).toBeDefined();
+        for (const [slot, ts] of Object.entries(slots)) {
+          compared += 1;
+          if (!(signature as string).includes(ts)) {
+            mismatches.push(`${version} ${key.split("\0")[2]} ${slot}: ${ts}`);
+          }
+        }
+      }
+    }
+    expect(mismatches).toEqual([]);
+    expect(compared).toBeGreaterThan(1000);
+  });
+
+  test("an authored-fold symbol records no slots, so the render falls back", () => {
+    for (const target of COMPLETE_TARGETS) {
+      const version = target.id.replace(/^defold-/, "");
+      for (const entry of loadTargetModules(target, PACKAGE_ROOT)) {
+        for (const { key } of withheldSymbols(entry)) {
+          expect(artifact.slotTypes[version]?.[key]).toBeUndefined();
+        }
+      }
+    }
+  });
+});
+
 describe("committed artifact drift gate", () => {
   test("fresh derivation equals the committed api-signatures.json", () => {
     expect(buildSignaturesArtifact()).toEqual(committed as unknown as SignaturesArtifact);

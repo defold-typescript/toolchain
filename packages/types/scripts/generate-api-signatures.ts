@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
 import { symbolIdentityKey } from "../src/api-availability";
+import type { SlotTypes } from "../src/emit-dts";
 import { selectCompleteVersionSurfaces, versionOf } from "./generate-api-availability";
 import {
   generateModuleSignatures,
@@ -15,6 +16,11 @@ const SIGNATURES_PATH = resolve(PACKAGE_ROOT, "api-signatures.json");
 export interface SignaturesArtifact {
   // version -> symbolIdentityKey -> authoritative TS signature text
   readonly versions: Record<string, Record<string, string>>;
+  // The same axis and keys, carrying each documented slot's rendered type. Kept
+  // parallel rather than folded into `versions` because three consumers
+  // (`api-surface-loader`, `combined-surface`, `version-window`) type that map's
+  // value as a string; a symbol documenting no slot is absent here.
+  readonly slotTypes: Record<string, Record<string, SlotTypes>>;
 }
 
 export interface BuildSignaturesOptions {
@@ -51,9 +57,9 @@ export function withheldSymbols(entry: ModuleManifestEntry): { key: string; fqn:
   return withheld;
 }
 
-function sortObjectKeys(record: Record<string, string>): Record<string, string> {
-  const sorted: Record<string, string> = {};
-  for (const key of Object.keys(record).sort()) sorted[key] = record[key] as string;
+function sortObjectKeys<T>(record: Record<string, T>): Record<string, T> {
+  const sorted: Record<string, T> = {};
+  for (const key of Object.keys(record).sort()) sorted[key] = record[key] as T;
   return sorted;
 }
 
@@ -62,21 +68,33 @@ export function buildSignaturesArtifact(options: BuildSignaturesOptions = {}): S
   const registryPath = options.registryPath ?? resolve(packageRoot, "api-targets.json");
   const targets = selectCompleteVersionSurfaces(loadApiTargets(registryPath));
   const versions: Record<string, Record<string, string>> = {};
+  const slotTypes: Record<string, Record<string, SlotTypes>> = {};
   for (const target of targets) {
     const version = versionOf(target);
     const perSymbol: Record<string, string> = {};
+    const perSymbolSlots: Record<string, SlotTypes> = {};
     for (const entry of loadTargetModules(target, packageRoot)) {
-      for (const { identity, tsSignature } of generateModuleSignatures(entry)) {
-        perSymbol[symbolIdentityKey(identity)] = tsSignature;
+      for (const signature of generateModuleSignatures(entry)) {
+        const key = symbolIdentityKey(signature.identity);
+        perSymbol[key] = signature.tsSignature;
+        if (Object.keys(signature.slotTypes).length > 0) {
+          perSymbolSlots[key] = sortObjectKeys({ ...signature.slotTypes });
+        }
       }
+      // An authored fold replaces the declaration text wholesale, so whatever
+      // slots the generated emit had recorded no longer describe it.
       for (const { key, fqn } of withheldSymbols(entry)) {
         const authored = authoredSignature(packageRoot, entry.namespace, fqn);
-        if (authored !== null) perSymbol[key] = authored;
+        if (authored !== null) {
+          perSymbol[key] = authored;
+          delete perSymbolSlots[key];
+        }
       }
     }
     versions[version] = sortObjectKeys(perSymbol);
+    slotTypes[version] = sortObjectKeys(perSymbolSlots);
   }
-  return { versions };
+  return { versions, slotTypes };
 }
 
 function biomeFormatJson(raw: string): string {
@@ -86,7 +104,14 @@ function biomeFormatJson(raw: string): string {
   if (out.exitCode !== 0) {
     throw new Error(`biome format failed: ${out.stderr.toString()}`);
   }
-  return out.stdout.toString();
+  const formatted = out.stdout.toString();
+  // Biome exits 0 and emits nothing for input it declined to read (a payload over
+  // `files.maxSize` is reported only on stderr), which would otherwise serialize
+  // the artifact as an empty file.
+  if (formatted.length === 0) {
+    throw new Error(`biome format produced no output: ${out.stderr.toString()}`);
+  }
+  return formatted;
 }
 
 export function serializeSignaturesArtifact(artifact: SignaturesArtifact): string {

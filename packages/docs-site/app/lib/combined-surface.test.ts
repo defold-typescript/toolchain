@@ -279,6 +279,34 @@ describe("loadCombinedSurface (committed artifacts)", () => {
     ]);
   });
 
+  test("the loaded artifact carries the per-slot map through to the built entry", () => {
+    const signatures = loadSignaturesArtifact(REAL_TYPES_DIR);
+    expect(Object.keys(signatures.slotTypes ?? {}).length).toBeGreaterThan(0);
+
+    let carried = 0;
+    for (const ns of surface.namespaces) {
+      for (const entry of ns.entries) {
+        if (!entry.slotTypes) continue;
+        const newest = surface.versions.find((v) => entry.availableIn.includes(v));
+        expect(entry.slotTypes).toEqual(
+          signatures.slotTypes?.[newest as string]?.[
+            symbolIdentityKey(entry.identity)
+          ] as NonNullable<typeof entry.slotTypes>,
+        );
+        carried += 1;
+      }
+    }
+    // Without a floor the loop above passes on a surface that carries no slots.
+    expect(carried).toBeGreaterThan(500);
+  });
+
+  test("a curated slot reaches the entry with its recovered type", () => {
+    const render = surface.namespaces.find((ns) => ns.namespace === "render");
+    const clear = render?.entries.find((entry) => entry.identity.name === "render.clear");
+    expect(clear?.slotTypes?.["param:0:buffers"]).toContain("LuaMap<");
+    expect(clear?.slotTypes?.["param:0:buffers"]).not.toContain("Record<string | number, unknown>");
+  });
+
   test("every non-empty combined signature equals the authoritative api-signatures value", () => {
     const signatures = loadSignaturesArtifact(REAL_TYPES_DIR);
     for (const ns of surface.namespaces) {

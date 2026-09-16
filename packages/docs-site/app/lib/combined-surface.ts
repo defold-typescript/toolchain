@@ -8,6 +8,7 @@ import {
   availabilityLabel,
   normalizedFunctionSignature,
   type SignatureStore,
+  type SlotTypes,
   signatureTransitionNames,
   symbolIdentityKey,
   symbolNameKey,
@@ -34,7 +35,17 @@ type ApiTypedef = ApiModule["typedefs"][number];
  */
 export interface SignaturesArtifact {
   readonly versions: Record<string, Record<string, string>>;
+  /**
+   * The parallel per-slot map on the same axis and keys: each documented
+   * parameter and return slot's rendered type, keyed
+   * `param|return:<position>:<raw ref-doc name>`. A symbol absent here documents
+   * no slot, or is an authored fold whose declaration the emitter did not
+   * produce; either way the render layer falls back to its token-derived type.
+   */
+  readonly slotTypes?: Record<string, Record<string, SlotTypes>>;
 }
+
+export type { SlotTypes };
 
 /** One tracked version's engine surface, addressed by bare semver (`1.13.0`). */
 export interface CombinedVersionSurface {
@@ -71,6 +82,11 @@ export interface BuildCombinedSurfaceInput {
 export interface CombinedEntry {
   readonly identity: ApiSymbolIdentity;
   readonly authoritativeSignature: string;
+  /**
+   * The slot types emitted alongside {@link authoritativeSignature}, resolved
+   * from the same version it was. Absent when the artifact records none.
+   */
+  readonly slotTypes?: SlotTypes;
   readonly availableIn: readonly string[];
   readonly label: AvailabilityLabel;
   readonly transition: boolean;
@@ -131,6 +147,7 @@ export function combinedNamespaceToApiPage(ns: CombinedNamespace): ApiPage {
     category: "engine",
     availability: ns.availability,
     authoritativeSignatures: combinedAuthoritativeSignatures(ns),
+    authoritativeSlotTypes: combinedAuthoritativeSlotTypes(ns),
   };
 }
 
@@ -203,6 +220,28 @@ function innerRenderSignature(identity: ApiSymbolIdentity, declaration: string):
  * kind's expected shape is skipped, so a lookup miss falls the render layer back
  * to the token-derived signature.
  */
+/**
+ * The per-slot companion to {@link combinedAuthoritativeSignatures}, keyed by the
+ * **same exact identity** so a row can only take slot types from the declaration
+ * it is actually rendering. Keying by name alone would attach the emitter's slots
+ * to a row whose signature lookup missed and fell back to the token render — the
+ * socket handle methods, whose page signature is ref-doc prose — reintroducing the
+ * contradiction from the other side.
+ */
+export function combinedAuthoritativeSlotTypes(
+  ns: CombinedNamespace,
+): ReadonlyMap<string, SlotTypes> {
+  const map = new Map<string, SlotTypes>();
+  for (const entry of ns.entries) {
+    if (entry.slotTypes === undefined) continue;
+    // A declaration the render layer cannot reduce to its inner form is dropped
+    // from the signature map, so its slots must drop with it.
+    if (!innerRenderSignature(entry.identity, entry.authoritativeSignature)) continue;
+    map.set(symbolIdentityKey(entry.identity), entry.slotTypes);
+  }
+  return map;
+}
+
 export function combinedAuthoritativeSignatures(
   ns: CombinedNamespace,
 ): ReadonlyMap<string, string> {
@@ -600,9 +639,11 @@ export function buildCombinedSurface(input: BuildCombinedSurfaceInput): Combined
     const facts = curatedFacts(overlayRecords?.get(key));
     const availableIn = availableWithDeprecation(presenceIn, facts.deprecatedSince, versions);
     const transition = transitionNames.has(symbolNameKey(identity));
+    const slotTypes = input.signatures.slotTypes?.[newest]?.[key];
     return {
       identity,
       authoritativeSignature: input.signatures.versions[newest]?.[key] ?? "",
+      ...(slotTypes ? { slotTypes } : {}),
       availableIn,
       label: availabilityLabel(availableIn, versions, { transition }),
       transition,

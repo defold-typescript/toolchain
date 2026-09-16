@@ -26,8 +26,8 @@ function matchingDrift(): DriftInputs {
     llmsTxt: { committed: "llms", fresh: "llms" },
     llmsFull: { committed: "llms-full", fresh: "llms-full" },
     signatures: {
-      committed: { versions: { "1.13.0": { a: "x" } } },
-      fresh: { versions: { "1.13.0": { a: "x" } } },
+      committed: { versions: { "1.13.0": { a: "x" } }, slotTypes: {} },
+      fresh: { versions: { "1.13.0": { a: "x" } }, slotTypes: {} },
     },
   };
 }
@@ -74,8 +74,8 @@ describe("driftProblems — llms + signatures drift seam", () => {
     const inputs: DriftInputs = {
       ...matchingDrift(),
       signatures: {
-        committed: { versions: { "1.13.0": { a: "OLD" } } },
-        fresh: { versions: { "1.13.0": { a: "NEW" } } },
+        committed: { versions: { "1.13.0": { a: "OLD" } }, slotTypes: {} },
+        fresh: { versions: { "1.13.0": { a: "NEW" } }, slotTypes: {} },
       },
     };
     const problems = driftProblems(inputs);
@@ -87,8 +87,8 @@ describe("driftProblems — llms + signatures drift seam", () => {
     const inputs: DriftInputs = {
       ...matchingDrift(),
       signatures: {
-        committed: { versions: { "1.13.0": { a: "x", b: "y" } } },
-        fresh: { versions: { "1.13.0": { b: "y", a: "x" } } },
+        committed: { versions: { "1.13.0": { a: "x", b: "y" } }, slotTypes: {} },
+        fresh: { versions: { "1.13.0": { b: "y", a: "x" } }, slotTypes: {} },
       },
     };
     expect(driftProblems(inputs)).toEqual([]);

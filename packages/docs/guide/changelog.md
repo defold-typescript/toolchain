@@ -19,6 +19,10 @@ What changed in each published `defold-typescript` toolchain release.
 
 - **[Script lifecycle](./script-lifecycle.md#three-ways-to-type-self) now lays out all three ways to type `self` and what inference costs.** The page shows `init(self): State` and `defineScript<Props, State>` beside the inferred default, says `self` outside `init` is the declared properties merged with the state `init` returns, explains why one type argument cannot sit next to `properties`, and shows a string literal widening to `string` unless you name the state. It also spells out that a type argument describes state without creating it — a field no `init` writes is `nil` on a fresh instance, so the no-`init` example models it optional — and that `Hash`, `Vector3` and the other engine value types are global as well as importable.
 
+### Fixed
+
+- **API reference Parameters and Returns entries now show the same type as the signature above them.** Slots whose real type the typings recovered — [`render.clear`](/api/render)'s buffer table, [`render.enable_state`](/api/render)'s state constant, and every other curated mapping, documented constant or recovered options table — used to read `Record<string | number, unknown>` or `Opaque<"constant">` in the breakdown while the signature showed the branded type you actually pass.
+
 ## v0.35.0
 
 ### Breaking
