@@ -768,25 +768,30 @@ export function targetKindManifest(target: ApiTarget): readonly KindManifestEntr
 // import, so the dynamic import below stays unreached from an installed package.
 export async function assertSrcAugmentationScoping(
   packageRoot: string = PACKAGE_ROOT,
-): Promise<void> {
+): Promise<number> {
   // Imported here rather than at module scope: it imports the devDependency
   // `typescript`, and `resolve` loads this module from an installed package.
   const { srcAugmentationScopingViolations } = await import("./augmentation-namespaces");
+  const files = loadSrcAugmentations(packageRoot);
   const violations = srcAugmentationScopingViolations(
-    loadSrcAugmentations(packageRoot),
+    files,
     RESTRICTED_SRC_AUGMENTATIONS,
     RESTRICTED_NAMESPACES,
   );
   if (violations.length > 0) {
     throw new Error(`src augmentation scoping violations:\n${violations.join("\n")}`);
   }
+  return files.length;
 }
 
 if (import.meta.main) {
-  await assertSrcAugmentationScoping();
   // Ordering contract: `regen-entrypoint.test.ts` reads this line's prefix to
-  // prove the guard runs before the first write. Not noise — do not delete.
-  console.log(`src augmentation scoping checked: ${SRC_AUGMENTATION_MODULES.length} file(s)`);
+  // prove the guard runs before the first write. The count comes from the guard's
+  // own return value so the marker cannot be printed without a completed guard
+  // run — do not simplify it back to `SRC_AUGMENTATION_MODULES.length`, which
+  // would let the guard be deleted or reordered with the line still intact.
+  const checked = await assertSrcAugmentationScoping();
+  console.log(`src augmentation scoping checked: ${checked} file(s)`);
 
   const generated = resolve(import.meta.dir, "..", "generated");
   mkdirSync(resolve(generated, "editor-vm"), { recursive: true });
