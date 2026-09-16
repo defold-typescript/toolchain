@@ -223,12 +223,25 @@ function exampleCalls(fn: ApiFunction): readonly (readonly string[])[] {
   return calls;
 }
 
-// Whether a call passing `count` arguments fits this declaration's arity, with
-// the emitter's own trailing-optional cutoff as the floor.
-function acceptsArgumentCount(fn: ApiFunction, count: number): boolean {
+// The argument counts one declaration accepts, with the emitter's own
+// trailing-optional cutoff as the floor. A vararg slot emits as a rest
+// parameter, which accepts nothing at all, so it bounds the minimum as well as
+// unbounding the maximum — `trailingOptionalCutoff` only sees doc-optionality
+// and cannot lower it.
+export function declaredArity(fn: ApiFunction): ArityRange {
   const params = fn.parameters;
-  if (count < trailingOptionalCutoff(params, fn.name)) return false;
-  return count <= params.length || params.some(isVarargParameter);
+  const firstVararg = params.findIndex(isVarargParameter);
+  const unbounded = firstVararg !== -1;
+  return {
+    min: Math.min(trailingOptionalCutoff(params, fn.name), unbounded ? firstVararg : params.length),
+    max: unbounded ? Number.POSITIVE_INFINITY : params.length,
+  };
+}
+
+// Whether a call passing `count` arguments fits this declaration's arity.
+function acceptsArgumentCount(fn: ApiFunction, count: number): boolean {
+  const { min, max } = declaredArity(fn);
+  return count >= min && count <= max;
 }
 
 // The ref-doc documents an overload as a separate element sharing the name, and
@@ -408,22 +421,7 @@ export function declaredArities(
       result.set(fn.name, authored.get(fn.name) ?? []);
       continue;
     }
-    const params = fn.parameters;
-    // A vararg slot emits as a rest parameter, which accepts nothing at all, so
-    // it bounds the minimum as well as unbounding the maximum —
-    // `trailingOptionalCutoff` only sees doc-optionality and cannot lower it.
-    const firstVararg = params.findIndex(isVarargParameter);
-    const unbounded = firstVararg !== -1;
-    result.set(fn.name, [
-      ...(result.get(fn.name) ?? []),
-      {
-        min: Math.min(
-          trailingOptionalCutoff(params, fn.name),
-          unbounded ? firstVararg : params.length,
-        ),
-        max: unbounded ? Number.POSITIVE_INFINITY : params.length,
-      },
-    ]);
+    result.set(fn.name, [...(result.get(fn.name) ?? []), declaredArity(fn)]);
   }
   return result;
 }
