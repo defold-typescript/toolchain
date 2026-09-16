@@ -14,9 +14,13 @@ import {
   type KindManifestEntry,
   LUA_STDLIB_REFERENCES,
   loadApiTargets,
+  loadSrcAugmentations,
   MESSAGES_MANIFEST,
   MODULE_MANIFEST,
+  RESTRICTED_NAMESPACES,
+  RESTRICTED_SRC_AUGMENTATIONS,
   RUNTIME_KIND_MANIFEST,
+  SRC_AUGMENTATION_MODULES,
   targetKindManifest,
   VERSIONED_MODULE_MANIFEST,
   versionedModuleManifest,
@@ -885,5 +889,85 @@ describe("nil-return union absorption guard", () => {
     expect(absorbingUnionLines("  function h(): number | unknown;")).toEqual([
       "  function h(): number | unknown;",
     ]);
+  });
+});
+
+describe("restricted src augmentation scoping", () => {
+  // The namespaces one augmentation file re-opens, read out of the files
+  // `loadSrcAugmentations` actually hands every materialization path.
+  const augmentations = loadSrcAugmentations().map((file) => ({
+    name: file.path.replace(/\.d\.ts$/, ""),
+    namespaces: [...file.contents.matchAll(/^ {2}namespace (\w+) \{/gm)].map((m) => m[1] ?? ""),
+  }));
+
+  const importsIn = (kind: string): string[] =>
+    [...generateKindIndex(kind).matchAll(/^import "([^"]+)";$/gm)].map((m) => m[1] ?? "");
+
+  const importsAugmentation = (kind: string, name: string): boolean =>
+    importsIn(kind).some((specifier) => specifier.endsWith(`/${name}`));
+
+  test("the namespace extraction is not vacuous", () => {
+    // Guards the extraction above: a changed declaration shape would otherwise
+    // make every assertion below pass by matching nothing. A guard augmentation
+    // legitimately declares bare globals and no namespace, so the floor is on
+    // the union rather than on each file.
+    const declared = new Set(augmentations.flatMap((a) => a.namespaces));
+    expect(declared.size).toBeGreaterThan(0);
+    for (const namespace of Object.keys(RESTRICTED_NAMESPACES)) {
+      if (augmentations.some((a) => a.namespaces.includes(namespace))) return;
+    }
+    throw new Error("no augmentation declares a restricted namespace — extraction is vacuous");
+  });
+
+  test("an augmentation of a restricted namespace reaches only that namespace's kind", () => {
+    const restricted = augmentations.filter((a) =>
+      a.namespaces.some((ns) => Object.hasOwn(RESTRICTED_NAMESPACES, ns)),
+    );
+    expect(restricted.length).toBeGreaterThan(0);
+    for (const augmentation of restricted) {
+      const owner = augmentation.namespaces.find((ns) => Object.hasOwn(RESTRICTED_NAMESPACES, ns));
+      for (const entry of RUNTIME_KIND_MANIFEST) {
+        expect({
+          kind: entry.kind,
+          augmentation: augmentation.name,
+          imported: importsAugmentation(entry.kind, augmentation.name),
+        }).toEqual({
+          kind: entry.kind,
+          augmentation: augmentation.name,
+          imported: entry.restricted === owner,
+        });
+      }
+    }
+  });
+
+  test("an augmentation of no restricted namespace still reaches every runtime kind", () => {
+    const universal = augmentations.filter(
+      (a) => !a.namespaces.some((ns) => Object.hasOwn(RESTRICTED_NAMESPACES, ns)),
+    );
+    expect(universal.length).toBeGreaterThan(0);
+    for (const augmentation of universal) {
+      for (const entry of RUNTIME_KIND_MANIFEST) {
+        expect({
+          kind: entry.kind,
+          augmentation: augmentation.name,
+          imported: importsAugmentation(entry.kind, augmentation.name),
+        }).toEqual({ kind: entry.kind, augmentation: augmentation.name, imported: true });
+      }
+    }
+  });
+
+  test("the restriction never narrows the augmentation set the surfaces carry", () => {
+    // `SRC_AUGMENTATION_MODULES` feeds materialization and the expressibility
+    // scan; a restricted augmentation is scoped per kind index, never dropped.
+    for (const augmentation of augmentations) {
+      expect(SRC_AUGMENTATION_MODULES).toContain(augmentation.name);
+    }
+    expect(Object.keys(RESTRICTED_SRC_AUGMENTATIONS).length).toBeGreaterThan(0);
+    for (const [name, namespace] of Object.entries(RESTRICTED_SRC_AUGMENTATIONS)) {
+      expect(SRC_AUGMENTATION_MODULES).toContain(name);
+      expect(Object.hasOwn(RESTRICTED_NAMESPACES, namespace)).toBe(true);
+      const declared = augmentations.find((a) => a.name === name)?.namespaces ?? [];
+      expect(declared).toContain(namespace);
+    }
   });
 });

@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { type ApiPage, apiModuleSymbols } from "../app/lib/api-surface";
 import { loadApiSurface, loadCombinedSurface } from "../app/lib/api-surface-loader";
 import { withBase } from "../app/lib/base";
-import { compactAvailability, llmsSignatureForEntry } from "../app/lib/combined-surface";
+import { compactAvailability, llmsSignaturesForEntry } from "../app/lib/combined-surface";
 import { parseFrontmatter } from "../app/lib/frontmatter";
 import type { GuidePage } from "../app/lib/guide";
 import { listGuidePages } from "../app/lib/guide-loader";
@@ -308,11 +308,23 @@ export function buildLlmsFull(target: LlmsTarget = SITE_TARGET): string {
   for (const ns of combined.namespaces) {
     lines.push(`### ${ns.namespace}`, "");
     const fallbackEmitted = new Set<string>();
+    // An FQN with several ref-doc identities shares one authored arm set, so the
+    // set is emitted for the first identity that reaches it and skipped after.
+    const armsEmitted = new Set<string>();
     for (const entry of ns.entries) {
       if (entry.authoritativeSignature) {
-        const signature = llmsSignatureForEntry(entry);
+        const signatures = llmsSignaturesForEntry(entry);
+        if (signatures.length > 1) {
+          const armKey = `${ns.namespace}::${entry.identity.name}`;
+          if (armsEmitted.has(armKey)) continue;
+          armsEmitted.add(armKey);
+        }
         const tag = compactAvailability(entry);
-        lines.push(tag ? `- ${signature} ${tag}` : `- ${signature}`);
+        // The availability span is a fact about the symbol, so it rides the
+        // first arm rather than repeating on each.
+        for (const [index, signature] of signatures.entries()) {
+          lines.push(tag && index === 0 ? `- ${signature} ${tag}` : `- ${signature}`);
+        }
         continue;
       }
       const key = `${ns.namespace}::${entry.identity.name}`;

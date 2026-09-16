@@ -176,15 +176,30 @@ describe("materializeApiSurface", () => {
     }
   });
 
-  test("drift guard: materializes every src overload the real script kind imports", () => {
+  test("drift guard: materializes every src overload the real runtime kinds import", () => {
     const pkgRoot = path.resolve(import.meta.dir, "..", "..", "types");
     const gen = path.join(pkgRoot, "generated");
-    const scriptKind = readFileSync(path.join(gen, "kinds", "script.d.ts"), "utf8");
-    const wanted = [...scriptKind.matchAll(/import "\.\.\/\.\.\/src\/([^"]+)";/g)]
-      .map((m) => m[1])
-      .filter((name) => name !== "engine-globals");
+    // The union over every runtime kind index, not `script.d.ts` alone: an
+    // augmentation restricted to one namespace appears only on that kind's
+    // entrypoint, and must still ship on the surface.
+    const kindsDir = path.join(gen, "kinds");
+    const wanted = [
+      ...new Set(
+        readdirSync(kindsDir)
+          .filter((file) => file.endsWith(".d.ts") && file !== "editor-script.d.ts")
+          .flatMap((file) =>
+            [
+              ...readFileSync(path.join(kindsDir, file), "utf8").matchAll(
+                /import "\.\.\/\.\.\/src\/([^"]+)";/g,
+              ),
+            ].map((m) => m[1] ?? ""),
+          )
+          .filter((name) => name !== "engine-globals"),
+      ),
+    ];
     expect(wanted).toContain("vmath-overloads");
     expect(wanted).toContain("window-event-guard");
+    expect(wanted).toContain("render-overloads");
 
     const { materializedDir } = materializeApiSurface({
       cwd,
@@ -908,6 +923,33 @@ describe("materializeRefDocSurface per-kind subpaths", () => {
     expect(index).toContain('import "./gui";');
     expect(index).toContain('import "./render";');
     expect(index).toContain('import "./sprite";');
+
+    rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
+  });
+
+  test("an augmentation of a restricted namespace ships, but only on that kind's subpath", async () => {
+    const resolveOpts = multiKindRefDocResolveOpts();
+
+    await materializeRefDocSurface({
+      cwd,
+      surfaceId: "defold-1.9.8",
+      resolveOpts,
+      registry: [multiKindRefDocTarget()],
+    });
+
+    const dir = path.join(cwd, ".defold-types", surfaceDir("defold-1.9.8"));
+    // The file must still reach the surface — scoping is a property of one kind
+    // index, never a reason to stop shipping the declaration.
+    expect(existsSync(path.join(dir, "render-overloads.d.ts"))).toBe(true);
+
+    const kinds = path.join(dir, "kinds");
+    const importsRenderOverloads = (kind: string): boolean =>
+      readFileSync(path.join(kinds, `${kind}.d.ts`), "utf8").includes(
+        'import "../render-overloads";',
+      );
+    expect(importsRenderOverloads("render-script")).toBe(true);
+    expect(importsRenderOverloads("script")).toBe(false);
+    expect(importsRenderOverloads("gui-script")).toBe(false);
 
     rmSync(resolveOpts.cacheDir, { recursive: true, force: true });
   });

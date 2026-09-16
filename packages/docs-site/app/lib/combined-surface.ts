@@ -7,6 +7,7 @@ import {
   type AvailabilityLabel,
   availabilityLabel,
   normalizedFunctionSignature,
+  type SignatureStore,
   signatureTransitionNames,
   symbolIdentityKey,
   symbolNameKey,
@@ -44,6 +45,13 @@ export interface CombinedVersionSurface {
 export interface BuildCombinedSurfaceInput {
   readonly surfaces: readonly CombinedVersionSurface[];
   readonly signatures: SignaturesArtifact;
+  /**
+   * The merged `signatures/*.json` authored override store. Combined carries it
+   * so the canonical `/api/<ns>` page renders every hand-authored overload arm,
+   * exactly as the version-independent pages already do; the artifact above still
+   * supplies the single primary row per identity.
+   */
+  readonly signatureStore?: SignatureStore;
   /**
    * The committed `api-availability.json` lookup, consulted only for curated
    * facts (deprecation, replacement, Box2D backend) that the ref-doc snapshots
@@ -83,11 +91,15 @@ export interface CombinedNamespace {
   readonly module: ApiModule;
   readonly availability: AvailabilityLookup;
   readonly entries: readonly CombinedEntry[];
+  /** The authored override store this namespace's page renders its arms from. */
+  readonly signatureStore?: SignatureStore;
 }
 
 export interface CombinedSurface {
   readonly versions: readonly string[];
   readonly namespaces: readonly CombinedNamespace[];
+  /** The merged authored override store every namespace above carries. */
+  readonly signatureStore?: SignatureStore;
   /**
    * Set only on a {@link windowCombinedSurface} result: the `[from, to]` bounds
    * the membership was narrowed to. `versions` stays the full tracked axis
@@ -102,7 +114,9 @@ export interface CombinedSurface {
  * carrying the union `module` and the synthetic availability lookup. Combined is
  * the canonical unprefixed surface, so the projection owns the canonical route at
  * its source — no consumer re-maps it afterward. Combined omits example
- * translations (they render as their Lua fallback) and signature overrides. Pure
+ * translations (they render as their Lua fallback) but carries the authored
+ * signature override store, so every hand-authored overload arm renders as its
+ * own row. Pure
  * — the node-free counterpart the canonical `/api` routes, the search index, and
  * the symbol index all reuse so none re-walks the raw per-version surfaces.
  */
@@ -113,7 +127,7 @@ export function combinedNamespaceToApiPage(ns: CombinedNamespace): ApiPage {
     brief: ns.module.brief,
     module: ns.module,
     translations: {},
-    signatures: {},
+    signatures: ns.signatureStore ?? {},
     category: "engine",
     availability: ns.availability,
     authoritativeSignatures: combinedAuthoritativeSignatures(ns),
@@ -147,7 +161,18 @@ function innerRenderSignature(identity: ApiSymbolIdentity, declaration: string):
   const decl = declaration.trim();
   switch (identity.kind) {
     case "FUNCTION": {
-      if (!decl.startsWith("function ")) return "";
+      // An authored multi-arm entry is folded into the artifact already in
+      // namespace-qualified inner form, one arm per line. Its first line is arm
+      // 0 — the same primary row `apiModuleSymbols` computes from the store — so
+      // returning it keeps the map one-signature-per-identity while the render
+      // layer sources arms 1..n from the store itself.
+      if (!decl.startsWith("function ")) {
+        const first = decl.split("\n")[0]?.trim() ?? "";
+        const after = first.slice(identity.name.length);
+        return first.startsWith(identity.name) && (after.startsWith("(") || after.startsWith("<"))
+          ? first
+          : "";
+      }
       const body = decl.replace(/^function /, "").replace(/;\s*$/, "");
       const paren = body.indexOf("(");
       if (paren === -1) return "";
@@ -198,11 +223,23 @@ export function combinedAuthoritativeSignatures(
  * declaration does not match its expected shape.
  */
 export function llmsSignatureForEntry(entry: CombinedEntry): string {
-  if (entry.identity.kind === "FUNCTION") return entry.authoritativeSignature;
-  return (
+  return llmsSignaturesForEntry(entry)[0] ?? "";
+}
+
+/**
+ * Every symbol form a Combined entry contributes to the agent corpus, one per
+ * list item. A `FUNCTION` whose authoritative declaration is an authored
+ * multi-arm fold yields one form per arm; every other entry yields exactly one,
+ * so the caller emits a uniform list either way.
+ */
+export function llmsSignaturesForEntry(entry: CombinedEntry): string[] {
+  if (entry.identity.kind === "FUNCTION") {
+    return entry.authoritativeSignature.split("\n").filter((arm) => arm.trim() !== "");
+  }
+  return [
     innerRenderSignature(entry.identity, entry.authoritativeSignature) ||
-    entry.authoritativeSignature
-  );
+      entry.authoritativeSignature,
+  ];
 }
 
 /** Every Combined namespace projected as an `ApiPage`, in projection order. */
@@ -619,9 +656,14 @@ export function buildCombinedSurface(input: BuildCombinedSurfaceInput): Combined
       },
       availability: { versions, records, transitions: transitionNames },
       entries: identities.map(entryFor),
+      ...(input.signatureStore ? { signatureStore: input.signatureStore } : {}),
     });
   }
   result.sort((a, b) => a.namespace.localeCompare(b.namespace));
 
-  return { versions, namespaces: result };
+  return {
+    versions,
+    namespaces: result,
+    ...(input.signatureStore ? { signatureStore: input.signatureStore } : {}),
+  };
 }
