@@ -1,7 +1,8 @@
 // Not published: this module imports the devDependency `typescript`, while
-// `scripts/` otherwise ships and is loaded from the installed package.
+// `scripts/` otherwise ships and is loaded from the installed package. It takes
+// every value it classifies against as a parameter, so it needs no runtime name
+// from `./regen` and a test can vary the restriction it checks.
 import * as ts from "typescript";
-import { loadSrcAugmentations, RESTRICTED_NAMESPACES, RESTRICTED_SRC_AUGMENTATIONS } from "./regen";
 
 // The namespaces one `.d.ts` puts in global scope. Read by syntax rather than
 // by text, so the spelling an augmentation uses — `declare global` at any
@@ -49,14 +50,15 @@ export function globalNamespacesIn(path: string, contents: string): string[] {
 // `generateKindIndex`, and an `only` kind's `extraModules` take no part in the
 // universal set.
 export function srcAugmentationScopingViolations(
-  files: { path: string; contents: string }[] = loadSrcAugmentations(),
-  restricted: Readonly<Record<string, string>> = RESTRICTED_SRC_AUGMENTATIONS,
+  files: { path: string; contents: string }[],
+  restricted: Readonly<Record<string, string>>,
+  namespaces: Readonly<Record<string, string>>,
 ): string[] {
   const violations: string[] = [];
   for (const file of files) {
     const name = file.path.replace(/\.d\.ts$/, "");
     const reopened = globalNamespacesIn(file.path, file.contents).filter((ns) =>
-      Object.hasOwn(RESTRICTED_NAMESPACES, ns),
+      Object.hasOwn(namespaces, ns),
     );
     const declared = restricted[name];
     for (const ns of reopened) {
