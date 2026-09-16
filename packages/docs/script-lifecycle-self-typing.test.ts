@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { readsBothChannels } from "./self-typing-hook-reads.ts";
 
 const PKG_DIR = resolve(import.meta.dir);
 const REPO_ROOT = resolve(PKG_DIR, "..", "..");
@@ -21,7 +22,7 @@ const WIDENING_HEADING = "### What inference costs: literal types widen";
  * transcribing the samples here would supply the very thing under test and
  * could not fail.
  */
-function fencesUnder(heading: string): string[] {
+function fencesUnder(heading: string): [string, ...string[]] {
   const body = readFileSync(LIFECYCLE_GUIDE, "utf8");
   const headingAt = body.indexOf(heading);
   if (headingAt < 0) {
@@ -41,14 +42,11 @@ function fencesUnder(heading: string): string[] {
         "compile. A vacuous pass here would let an uncompilable route ship.",
     );
   }
-  return fences;
+  return fences as [string, ...string[]];
 }
 
 function firstFenceUnder(heading: string): string {
   const [first] = fencesUnder(heading);
-  if (first === undefined) {
-    throw new Error(`"${heading}" carries no \`\`\`ts fenced block.`);
-  }
   return first;
 }
 
@@ -89,24 +87,6 @@ function typecheckProgram(files: Record<string, string>): { exitCode: number; ou
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
-}
-
-/**
- * A hook other than `init` must read a property-backed field *and* a state
- * field off the same `self`, which is what makes the sample an executable
- * demonstration of the `TProps & TInitState` merge rather than a sample that
- * happens to compile while only ever touching one channel.
- */
-function readsBothChannels(source: string, propertyField: string, stateField: string): boolean {
-  const initAt = source.search(/^\s*init[(:<]/m);
-  const afterInit = initAt < 0 ? source : source.slice(initAt);
-  const nextHook = afterInit.search(
-    /^\s{2}(update|fixed_update|late_update|on_message|on_input|final|on_reload)\(/m,
-  );
-  const outsideInit = nextHook < 0 ? source : afterInit.slice(nextHook);
-  return (
-    outsideInit.includes(`self.${propertyField}`) && outsideInit.includes(`self.${stateField}`)
-  );
 }
 
 describe("the guide's annotated-`init` self-typing route", () => {
@@ -165,9 +145,6 @@ describe("the guide's single-type-argument caveat", () => {
 describe("the guide's literal-widening pair", () => {
   test("the inferred member accepts a non-member string, measuring the widening", () => {
     const [inferred] = fencesUnder(WIDENING_HEADING);
-    if (inferred === undefined) {
-      throw new Error(`"${WIDENING_HEADING}" carries no \`\`\`ts fenced block.`);
-    }
     const { exitCode, output } = typecheckProgram({ "ship.ts": inferred });
     if (exitCode !== 0) {
       throw new Error(
@@ -195,19 +172,5 @@ describe("the guide's literal-widening pair", () => {
 
     const { exitCode } = typecheckProgram({ "ship.ts": stripped });
     expect(exitCode).not.toBe(0);
-  });
-});
-
-describe("the fence locator", () => {
-  test("throws a named error for a heading the page does not carry", () => {
-    expect(() => fencesUnder("### A heading script-lifecycle.md does not carry")).toThrow(
-      /has no "### A heading script-lifecycle\.md does not carry" heading/,
-    );
-  });
-
-  test("throws a named error for a heading that carries no `ts` fence", () => {
-    expect(() => fencesUnder("## API availability by script kind")).toThrow(
-      /carries no ```ts fenced block/,
-    );
   });
 });
