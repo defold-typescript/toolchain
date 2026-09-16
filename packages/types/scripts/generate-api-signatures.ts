@@ -1,7 +1,13 @@
 import { resolve } from "node:path";
 import { symbolIdentityKey } from "../src/api-availability";
 import { selectCompleteVersionSurfaces, versionOf } from "./generate-api-availability";
-import { generateModuleSignatures, loadApiTargets, loadTargetModules } from "./regen";
+import {
+  generateModuleSignatures,
+  loadApiTargets,
+  loadTargetModules,
+  type ModuleManifestEntry,
+} from "./regen";
+import { loadSignatureFile } from "./signature-store-fs";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const SIGNATURES_PATH = resolve(PACKAGE_ROOT, "api-signatures.json");
@@ -14,6 +20,35 @@ export interface SignaturesArtifact {
 export interface BuildSignaturesOptions {
   readonly packageRoot?: string;
   readonly registryPath?: string;
+}
+
+// The authored replacement for a symbol the skip filter withheld, read from the
+// same `signatures/<ns>.json` store the version-prefixed API pages render from.
+// One seam keeps all three artifacts consistent: `overloads-signature-parity`
+// pins the store to the `src/*-overloads.d.ts` declarations, so folding the
+// store in cannot drift from the surface a consumer actually compiles against.
+function authoredSignature(packageRoot: string, namespace: string, fqn: string): string | null {
+  const store = loadSignatureFile(resolve(packageRoot, "signatures", `${namespace}.json`));
+  const forms = store[fqn]?.signatures ?? [];
+  return forms.length > 0 ? forms.join("\n") : null;
+}
+
+// The symbols `skipFunctions` removed from this module, as the difference
+// between the unfiltered and filtered signature emits. Derived rather than
+// re-matched so the withholding rules stay owned by `prepareGeneratedModule`.
+export function withheldSymbols(entry: ModuleManifestEntry): { key: string; fqn: string }[] {
+  if ((entry.skipFunctions ?? []).length === 0) return [];
+  const kept = new Set(
+    generateModuleSignatures(entry).map(({ identity }) => symbolIdentityKey(identity)),
+  );
+  const withheld: { key: string; fqn: string }[] = [];
+  for (const { identity } of generateModuleSignatures({ ...entry, skipFunctions: [] })) {
+    const key = symbolIdentityKey(identity);
+    if (kept.has(key)) continue;
+    const fqn = key.split("\0")[2] as string;
+    withheld.push({ key, fqn });
+  }
+  return withheld;
 }
 
 function sortObjectKeys(record: Record<string, string>): Record<string, string> {
@@ -33,6 +68,10 @@ export function buildSignaturesArtifact(options: BuildSignaturesOptions = {}): S
     for (const entry of loadTargetModules(target, packageRoot)) {
       for (const { identity, tsSignature } of generateModuleSignatures(entry)) {
         perSymbol[symbolIdentityKey(identity)] = tsSignature;
+      }
+      for (const { key, fqn } of withheldSymbols(entry)) {
+        const authored = authoredSignature(packageRoot, entry.namespace, fqn);
+        if (authored !== null) perSymbol[key] = authored;
       }
     }
     versions[version] = sortObjectKeys(perSymbol);

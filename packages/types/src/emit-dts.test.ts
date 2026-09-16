@@ -1963,14 +1963,16 @@ describe("recoverCallbackSignature", () => {
 });
 
 describe("OVERLOAD_COVERED_SKIPS", () => {
-  test("is exactly the FQNs served by the hand-written go/msg/vmath overloads, in sort order", () => {
+  test("is exactly the FQNs served by the hand-written go/msg/render/vmath overloads, in sort order", () => {
     expect([...OVERLOAD_COVERED_SKIPS].sort()).toEqual([
       "go.get",
       "go.property",
       "go.set",
       "msg.post",
       "msg.url",
+      "render.render_target",
       "vmath.clamp",
+      "vmath.euler_to_quat",
       "vmath.lerp",
       "vmath.mul_per_elem",
       "vmath.normalize",
@@ -1993,7 +1995,6 @@ describe("ARBITRARY_TABLE_SLOTS", () => {
       "on_message",
       "push.get_all_scheduled",
       "push.get_scheduled",
-      "render.render_target",
       "render.set_render_target",
       "socket.dns.getaddrinfo",
       "socket.dns.getnameinfo",

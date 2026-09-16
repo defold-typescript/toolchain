@@ -92,25 +92,6 @@ declare global {
      */
     function dot(v1: Vector3 | Vector4, v2: Vector3 | Vector4): number;
     /**
-     * Converts euler angles (x, y, z) in degrees into a quaternion
-     * The error is guaranteed to be less than 0.001.
-     * If the first argument is vector3, its values are used as x, y, z angles.
-     *
-     * @param x - rotation around x-axis in degrees or vector3 with euler angles in degrees
-     * @param y - rotation around y-axis in degrees
-     * @param z - rotation around z-axis in degrees
-     * @returns quaternion describing an equivalent rotation (231 (YZX) rotation sequence)
-     * @example
-     * ```ts
-     * const q = vmath.euler_to_quat(0, 45, 90);
-     * print(q); // => vmath.quat(0.27059805393219, 0.27059805393219, 0.65328145027161, 0.65328145027161)
-     *
-     * const v = vmath.vector3(0, 0, 90);
-     * print(vmath.euler_to_quat(v)); // => vmath.quat(0, 0, 0.70710676908493, 0.70710676908493)
-     * ```
-     */
-    function euler_to_quat(x: number | Vector3, y: number, z: number): Quaternion;
-    /**
      * The resulting matrix is the inverse of the supplied matrix.
      * For ortho-normal matrices, e.g. regular object transformation,
      * use `vmath.ortho_inv()` instead.

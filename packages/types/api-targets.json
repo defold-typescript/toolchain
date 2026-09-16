@@ -163,7 +163,8 @@
         {
           "namespace": "render",
           "fixture": "render_doc.json",
-          "outFile": "render.d.ts"
+          "outFile": "render.d.ts",
+          "skipFunctions": ["render_target"]
         },
         {
           "namespace": "resource",
@@ -209,7 +210,7 @@
           "namespace": "vmath",
           "fixture": "vmath_doc.json",
           "outFile": "vmath.d.ts",
-          "skipFunctions": ["clamp", "lerp", "slerp", "mul_per_elem", "normalize"]
+          "skipFunctions": ["clamp", "euler_to_quat", "lerp", "slerp", "mul_per_elem", "normalize"]
         },
         {
           "namespace": "window",
@@ -492,7 +493,8 @@
         {
           "namespace": "render",
           "fixture": "render_doc.json",
-          "outFile": "render.d.ts"
+          "outFile": "render.d.ts",
+          "skipFunctions": ["render_target"]
         },
         {
           "namespace": "resource",
@@ -538,7 +540,7 @@
           "namespace": "vmath",
           "fixture": "vmath_doc.json",
           "outFile": "vmath.d.ts",
-          "skipFunctions": ["clamp", "lerp", "slerp", "mul_per_elem", "normalize"]
+          "skipFunctions": ["clamp", "euler_to_quat", "lerp", "slerp", "mul_per_elem", "normalize"]
         },
         {
           "namespace": "window",
@@ -779,7 +781,8 @@
         {
           "namespace": "render",
           "fixture": "render_doc.json",
-          "outFile": "render.d.ts"
+          "outFile": "render.d.ts",
+          "skipFunctions": ["render_target"]
         },
         {
           "namespace": "resource",
@@ -825,7 +828,7 @@
           "namespace": "vmath",
           "fixture": "vmath_doc.json",
           "outFile": "vmath.d.ts",
-          "skipFunctions": ["clamp", "lerp", "slerp", "mul_per_elem", "normalize"]
+          "skipFunctions": ["clamp", "euler_to_quat", "lerp", "slerp", "mul_per_elem", "normalize"]
         },
         {
           "namespace": "window",

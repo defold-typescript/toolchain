@@ -35,5 +35,14 @@ import "./types";
 import "./vmath";
 import "./window";
 import "./zlib";
+import "../../../src/custom-messages";
+import "../../../src/engine-globals";
+import "../../../src/msg-overloads";
+import "../../../src/message-guard";
+import "../../../src/window-event-guard";
+import "../../../src/scene-addresses";
+import "../../../src/go-overloads";
+import "../../../src/render-overloads";
+import "../../../src/vmath-overloads";
 
 export {};

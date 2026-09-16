@@ -2,13 +2,15 @@ import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import committed from "../api-signatures.json" with { type: "json" };
+import { OVERLOAD_COVERED_SKIPS } from "../src/emit-dts";
 import { selectCompleteVersionSurfaces } from "./generate-api-availability";
 import {
   buildSignaturesArtifact,
   type SignaturesArtifact,
   serializeSignaturesArtifact,
+  withheldSymbols,
 } from "./generate-api-signatures";
-import { loadApiTargets } from "./regen";
+import { loadApiTargets, loadTargetModules } from "./regen";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const SIGNATURES_PATH = resolve(PACKAGE_ROOT, "api-signatures.json");
@@ -44,13 +46,30 @@ describe("authoritative signature artifact", () => {
     }
   });
 
-  test("every authoritative signature appears verbatim in that version's committed .d.ts", () => {
-    for (const [version, perSymbol] of Object.entries(artifact.versions)) {
+  // Folded authored entries are excluded: they are rendered call forms from
+  // `signatures/<ns>.json`, not declaration text, and they are declared in
+  // `src/*-overloads.d.ts` rather than in the generated modules this blob reads.
+  // `overloads-signature-parity` is what pins that store to its declarations.
+  const foldedKeysFor = (target: (typeof COMPLETE_TARGETS)[number]): Set<string> => {
+    const keys = new Set<string>();
+    for (const entry of loadTargetModules(target, PACKAGE_ROOT)) {
+      for (const { key } of withheldSymbols(entry)) keys.add(key);
+    }
+    return keys;
+  };
+
+  test("every generated authoritative signature appears verbatim in that version's committed .d.ts", () => {
+    for (const target of COMPLETE_TARGETS) {
+      const version = target.id.replace(/^defold-/, "");
+      const perSymbol = artifact.versions[version] as Record<string, string>;
+      const folded = foldedKeysFor(target);
       const blob = committedDtsBlob(version);
       const missing = Object.entries(perSymbol).filter(
-        ([, signature]) => !blob.includes(signature),
+        ([key, signature]) => !folded.has(key) && !blob.includes(signature),
       );
       expect(missing).toEqual([]);
+      // The exclusion must not swallow the whole assertion.
+      expect(Object.keys(perSymbol).length).toBeGreaterThan(folded.size * 10);
     }
   });
 
@@ -84,6 +103,52 @@ describe("authoritative signature artifact", () => {
       expect(find(ns, name)).toMatch(/\}\[\];$/);
     }
   });
+});
+
+// A skipped symbol is withheld from `generateModuleSignatures`, so without the
+// authored fold it vanishes from this artifact — and the canonical `/api/<ns>`
+// page, which reads only this artifact, renders an empty signature for a symbol
+// the surface really ships.
+describe("hand-authored symbols survive the skip filter", () => {
+  const artifact = buildSignaturesArtifact();
+
+  const declaredSkips = (target: (typeof COMPLETE_TARGETS)[number]): string[] => {
+    const out: string[] = [];
+    for (const fqn of OVERLOAD_COVERED_SKIPS) {
+      const dot = fqn.indexOf(".");
+      const module = target.modules.find((m) => m.namespace === fqn.slice(0, dot));
+      if (module && (module.skipFunctions ?? []).includes(fqn.slice(dot + 1))) out.push(fqn);
+    }
+    return out;
+  };
+
+  const symbolNamesIn = (version: string): Set<string> => {
+    const names = new Set<string>();
+    for (const key of Object.keys(artifact.versions[version] ?? {})) {
+      const [, kind, symbolName] = key.split("\0");
+      if (kind === "FUNCTION") names.add(symbolName as string);
+    }
+    return names;
+  };
+
+  for (const target of COMPLETE_TARGETS) {
+    const version = target.id.replace(/^defold-/, "");
+
+    test(`${version} carries every overload-covered skip it declares`, () => {
+      const expected = declaredSkips(target);
+      expect(expected.length).toBeGreaterThan(0);
+      const present = symbolNamesIn(version);
+      expect(expected.filter((fqn) => !present.has(fqn))).toEqual([]);
+    });
+
+    test(`${version} folds authored declarations without inventing entries`, () => {
+      const present = symbolNamesIn(version);
+      // Neither generated on this surface nor hand-authored anywhere: the fold
+      // adds only what a store really declares.
+      expect(present.has("vmath.not_a_real_function")).toBe(false);
+      expect(present.has("render.not_a_real_function")).toBe(false);
+    });
+  }
 });
 
 describe("committed artifact drift gate", () => {
