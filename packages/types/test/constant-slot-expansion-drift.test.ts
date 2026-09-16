@@ -13,6 +13,7 @@ import { normalizedFunctionSignature } from "../src/api-availability";
 import { type ApiFunction, type ApiModule, parseDefoldApiDoc } from "../src/api-doc";
 import {
   CONSTANT_SLOT_RESOLUTIONS,
+  documentedConstantKeyTokens,
   documentedConstantTokens,
   resolveConstantSlotTokens,
 } from "../src/emit-dts";
@@ -78,6 +79,24 @@ const slots: ConstantSlot[] = surfaces.flatMap((surface) =>
       .filter((rv) => rv.types.includes("constant"))
       .map((rv) => ({ surface, fn, key: `${fn.name}:return:${rv.name}`, doc: rv.doc })),
   ]),
+);
+
+// Entered from the full retained `table`-slot set rather than from the curated
+// entries, so a slot that starts documenting constant keys upstream is in scope
+// before anyone curates it — the case the gate exists to catch.
+const tableSlots: ConstantSlot[] = surfaces.flatMap((surface) =>
+  surface.module.functions.flatMap((fn) => [
+    ...fn.parameters
+      .filter((p) => p.types.includes("table"))
+      .map((p) => ({ surface, fn, key: `${fn.name}:param:${p.name}`, doc: p.doc })),
+    ...fn.returnValues
+      .filter((rv) => rv.types.includes("table"))
+      .map((rv) => ({ surface, fn, key: `${fn.name}:return:${rv.name}`, doc: rv.doc })),
+  ]),
+);
+
+const constantKeyedSlots = tableSlots.filter(
+  ({ surface, doc }) => documentedConstantKeyTokens(doc, surface.universe).length > 0,
 );
 
 const isResidual = (key: string): boolean => {
@@ -165,6 +184,40 @@ describe("documented constant slots reach both shipped surfaces", () => {
       }
     }
     expect(problems).toEqual([]);
+  });
+
+  test("the walk reaches table slots, and some carry documented constant keys", () => {
+    // Two-way, like the constant-slot reach above: an empty candidate set would
+    // leave the key assertions green while proving nothing.
+    expect(tableSlots.length).toBeGreaterThan(0);
+    expect(constantKeyedSlots.length).toBeGreaterThan(0);
+  });
+
+  test("every table slot whose doc names constant keys brands them on every surface", () => {
+    const missing: string[] = [];
+    for (const { surface, fn, key, doc } of constantKeyedSlots) {
+      if (isResidual(key)) continue;
+      const signature = signatureOf(surface, fn);
+      if (signature === undefined) {
+        missing.push(`${surface.target}: ${key} has no ledger signature`);
+        continue;
+      }
+      for (const fqn of documentedConstantKeyTokens(doc, surface.universe)) {
+        if (!signature.includes(`__brand: "${fqn}"`)) {
+          missing.push(`${surface.target}: ${key} does not brand its documented key ${fqn}`);
+        }
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+
+  test("the documented-constant-key population is still the single curated slot", () => {
+    // Pinned so a slot entering or leaving the class is a visible test change.
+    // Growth is the signal that "extend the mapping path only, build no general
+    // table-key machinery" needs revisiting.
+    expect([...new Set(constantKeyedSlots.map(({ key }) => key))]).toEqual([
+      "render.clear:param:buffers",
+    ]);
   });
 
   test("every borrow and family entry still yields constants from its evidence", () => {

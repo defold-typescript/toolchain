@@ -2533,14 +2533,38 @@ describe("TABLE_SLOT_CURATIONS", () => {
     expect(out).not.toContain("Record<string | number, unknown>");
   });
 
-  test("render.clear recovers a number-keyed map to the number | Vector4 clear-value union", () => {
+  test("render.clear recovers a branded-constant-keyed map to the number | Vector4 clear-value union", () => {
     const module = parseDefoldApiDoc(renderDoc);
+    const out = emitDeclarations(
+      {
+        ...module,
+        functions: [requireFunction(module, "render.clear")],
+      },
+      {
+        knownConstantFqns: new Set([
+          "graphics.BUFFER_TYPE_COLOR0_BIT",
+          "graphics.BUFFER_TYPE_DEPTH_BIT",
+          "graphics.BUFFER_TYPE_STENCIL_BIT",
+        ]),
+      },
+    );
+    const brand = (fqn: string): string => `number & { readonly __brand: "${fqn}" }`;
+    expect(out).toContain(
+      `function clear(buffers: LuaMap<${brand("graphics.BUFFER_TYPE_COLOR0_BIT")} | ${brand(
+        "graphics.BUFFER_TYPE_DEPTH_BIT",
+      )} | ${brand("graphics.BUFFER_TYPE_STENCIL_BIT")}, number | Vector4>): void;`,
+    );
+    expect(out).not.toContain("Record<string | number, unknown>");
+  });
+
+  test("a single-token mapping key is unaffected by the key union split", () => {
+    const module = parseDefoldApiDoc(computeDoc);
     const out = emitDeclarations({
       ...module,
-      functions: [requireFunction(module, "render.clear")],
+      functions: [requireFunction(module, "compute.set_textures")],
     });
-    expect(out).toContain("function clear(buffers: LuaMap<number, number | Vector4>): void;");
-    expect(out).not.toContain("Record<string | number, unknown>");
+    expect(out).toContain("textures: LuaMap<string, Hash>");
+    expect(out).not.toContain("LuaMap<string |");
   });
 
   test("go.on_input and gui.on_input recover the shared InputAction object (all fields optional)", () => {
