@@ -21,7 +21,7 @@ export const GUIDE_GROUPS: GuideGroup[] = [
     id: "typescript",
     label: "TypeScript",
     subtitle: "Writing TypeScript for this toolchain and how it lowers to Lua.",
-    slugs: ["typescript-vs-lua", "typescript-gotchas", "data-structures"],
+    slugs: ["typescript-vs-lua", "typescript-gotchas", "data-structures", "lua-table-constructs"],
   },
   {
     id: "core-concepts",
