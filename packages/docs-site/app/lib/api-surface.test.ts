@@ -1063,6 +1063,53 @@ describe("apiModuleSymbols", () => {
     };
   }
 
+  const slotFn = {
+    name: "demo.run",
+    brief: "run it",
+    description: "Runs the demo.",
+    parameters: [{ name: "opts", doc: "", types: ["table"], isOptional: false }],
+    returnValues: [{ name: "id", doc: "", types: ["hash"], isOptional: false }],
+  };
+  const slotIdentity = symbolIdentityKey({
+    namespace: "demo",
+    kind: "FUNCTION",
+    name: "demo.run",
+    signature: normalizedFunctionSignature(slotFn),
+  });
+  const slotSignature = "demo.run(opts: { mode: string }): Hash";
+
+  test("a slot the artifact covers renders the emitted type, not the token render", () => {
+    const page = pageWith({ functions: [slotFn] });
+    const symbol = apiModuleSymbols({
+      ...page,
+      authoritativeSignatures: new Map([[slotIdentity, slotSignature]]),
+      authoritativeSlotTypes: new Map([
+        [slotIdentity, { "param:0:opts": "{ mode: string }", "return:0:id": "Hash" }],
+      ]),
+    })[0];
+    expect(symbol?.signature).toBe(slotSignature);
+    expect(symbol?.parameters[0]?.types).toEqual(["{ mode: string }"]);
+    expect(symbol?.returnValues[0]?.types).toEqual(["Hash"]);
+  });
+
+  test("a slot the artifact does not cover keeps the token render", () => {
+    const page = pageWith({ functions: [slotFn] });
+    const symbol = apiModuleSymbols({
+      ...page,
+      authoritativeSignatures: new Map([[slotIdentity, slotSignature]]),
+      authoritativeSlotTypes: new Map([[slotIdentity, { "return:0:id": "Hash" }]]),
+    })[0];
+    // `opts` has no artifact entry, so it must still render something.
+    expect(symbol?.parameters[0]?.types).toEqual([mapDocType("table")]);
+    expect(symbol?.returnValues[0]?.types).toEqual(["Hash"]);
+  });
+
+  test("a page carrying no slot map renders every slot from the token map", () => {
+    const symbol = apiModuleSymbols(pageWith({ functions: [slotFn] }))[0];
+    expect(symbol?.parameters[0]?.types).toEqual([mapDocType("table")]);
+    expect(symbol?.returnValues[0]?.types).toEqual([mapDocType("hash")]);
+  });
+
   test("extracts a function symbol with signature, doc, and example", () => {
     const symbols = apiModuleSymbols(
       pageWith({

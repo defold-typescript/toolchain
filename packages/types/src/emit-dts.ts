@@ -1906,10 +1906,25 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
   return `${lines.join("\n")}\n`;
 }
 
+/**
+ * Every documented slot's rendered TS type, keyed `param|return:<position>:<raw
+ * ref-doc name>`. The position is part of the key because a multi-return can
+ * carry several unnamed slots (`push.schedule` renders two), which a name-only
+ * key would collapse into one. Each value appears verbatim inside the symbol's
+ * own `tsSignature`, so a consumer rendering a slot's type beside that signature
+ * cannot contradict it.
+ */
+export type SlotTypes = Readonly<Record<string, string>>;
+
+function slotKey(kind: "param" | "return", position: number, name: string): string {
+  return `${kind}:${position}:${name}`;
+}
+
 /** One emitted symbol's identity paired with its rendered TS signature text. */
 export interface SymbolSignature {
   readonly identity: ApiSymbolIdentity;
   readonly tsSignature: string;
+  readonly slotTypes: SlotTypes;
 }
 
 /**
@@ -1954,9 +1969,14 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
   });
   const emitName = (name: string): string => (TS_RESERVED_NAMES.has(name) ? `_${name}` : name);
 
+  // A member with no call list (constant, variable, property, typedef) documents
+  // no slot, so it reports an empty map rather than being absent from the ledger.
+  const NO_SLOTS: SlotTypes = {};
+
   for (const fn of module.functions) {
     const prepared = prepareFunction(fn, prefix);
     if (prepared === null) continue;
+    const slotTypes: Record<string, string> = {};
     out.push({
       identity: fnIdentity(fn),
       tsSignature: emitFunction(
@@ -1966,7 +1986,9 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
         resolver,
         constantTokens,
         urlParameters,
+        slotTypes,
       ),
+      slotTypes,
     });
   }
 
@@ -1980,9 +2002,11 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
         signature: "",
       },
       tsSignature: emitVariable(v, emitName(v.name), mapType),
+      slotTypes: NO_SLOTS,
     });
   }
   for (const fn of nested.functions) {
+    const slotTypes: Record<string, string> = {};
     out.push({
       identity: fnIdentity(fn.original),
       tsSignature: emitFunction(
@@ -1992,16 +2016,27 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
         resolver,
         constantTokens,
         urlParameters,
+        slotTypes,
       ),
+      slotTypes,
     });
   }
 
   const handleGroups = collectHandleMethodGroups(module);
   for (const group of handleGroups.values()) {
     for (const prepared of group) {
+      const slotTypes: Record<string, string> = {};
       out.push({
         identity: fnIdentity(prepared.original),
-        tsSignature: emitMethod(prepared, mapType, resolver, constantTokens, urlParameters),
+        tsSignature: emitMethod(
+          prepared,
+          mapType,
+          resolver,
+          constantTokens,
+          urlParameters,
+          slotTypes,
+        ),
+        slotTypes,
       });
     }
   }
@@ -2012,6 +2047,7 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
     out.push({
       identity: { namespace: module.namespace, kind: "CONSTANT", name: c.name, signature: "" },
       tsSignature: `const ${prepared.name}: ${brandType(prepared.fqn)};`,
+      slotTypes: NO_SLOTS,
     });
   }
 
@@ -2021,6 +2057,7 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
     out.push({
       identity: { namespace: module.namespace, kind: "VARIABLE", name: v.name, signature: "" },
       tsSignature: emitVariable(prepared, emitName(prepared.name), mapType),
+      slotTypes: NO_SLOTS,
     });
   }
 
@@ -2028,6 +2065,7 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
     out.push({
       identity: { namespace: module.namespace, kind: "PROPERTY", name: p.name, signature: "" },
       tsSignature: emitPropertyMember(p, mapType, module.namespace),
+      slotTypes: NO_SLOTS,
     });
   }
 
@@ -2036,6 +2074,7 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
     out.push({
       identity: { namespace: module.namespace, kind: "TYPEDEF", name: t.name, signature: "" },
       tsSignature: `type ${t.name} = Opaque<"${t.name}">;`,
+      slotTypes: NO_SLOTS,
     });
   }
 
@@ -2231,6 +2270,7 @@ function memberSignature(
   resolver: TableDocResolver,
   constantTokens: ConstantSlotTokens,
   urlParameters: UrlParameterTable,
+  slotSink?: Record<string, string>,
 ): string {
   const original = prepared.original.parameters;
   const elementName = prepared.original.name;
@@ -2239,22 +2279,19 @@ function memberSignature(
   const positional = (varargIndex === -1 ? original : original.slice(0, varargIndex)).map((p, i) =>
     emitParameter(p, i, i >= cutoff, mapType, resolver, constantTokens, elementName, urlParameters),
   );
-  const params = (
+  const rest =
     varargIndex === -1
-      ? positional
-      : [
-          ...positional,
-          emitRestParameter(
-            original,
-            varargIndex,
-            mapType,
-            resolver,
-            constantTokens,
-            elementName,
-            urlParameters,
-          ),
-        ]
-  ).join(", ");
+      ? null
+      : emitRestParameter(
+          original,
+          varargIndex,
+          mapType,
+          resolver,
+          constantTokens,
+          elementName,
+          urlParameters,
+        );
+  const params = [...positional.map((p) => p.text), ...(rest ? [rest.text] : [])].join(", ");
   const ret = emitReturn(
     prepared.original.returnValues,
     mapType,
@@ -2264,12 +2301,28 @@ function memberSignature(
   );
   const predicateToken = TYPE_PREDICATES.get(elementName);
   const soleParam = original[0];
-  if (
+  const isPredicate =
     predicateToken !== undefined &&
     soleParam !== undefined &&
     original.length === 1 &&
-    ret.type === "boolean"
-  ) {
+    ret.type === "boolean";
+  if (slotSink !== undefined) {
+    for (const [i, p] of positional.entries()) {
+      const raw = original[i];
+      if (raw) slotSink[slotKey("param", i, raw.name)] = p.ts;
+    }
+    for (const slot of rest?.slots ?? []) {
+      slotSink[slotKey("param", slot.position, slot.name)] = slot.ts;
+    }
+    // A predicate renders `arg is T` in place of the mapped `boolean`, so its
+    // return slot has no text in the signature to stand on and is not reported.
+    if (!isPredicate) {
+      for (const slot of ret.slots) {
+        slotSink[slotKey("return", slot.position, slot.name)] = slot.ts;
+      }
+    }
+  }
+  if (isPredicate && soleParam !== undefined && predicateToken !== undefined) {
     return `${name}(${params}): ${safeParamName(soleParam.name, 0)} is ${mapType(predicateToken)};`;
   }
   return `${name}(${params}): ${ret.type};${ret.trailing}`;
@@ -2282,8 +2335,9 @@ function emitFunction(
   resolver: TableDocResolver,
   constantTokens: ConstantSlotTokens,
   urlParameters: UrlParameterTable,
+  slotSink?: Record<string, string>,
 ): string {
-  return `function ${memberSignature(prepared, name, mapType, resolver, constantTokens, urlParameters)}`;
+  return `function ${memberSignature(prepared, name, mapType, resolver, constantTokens, urlParameters, slotSink)}`;
 }
 
 // A colon-method member of a handle interface: identical signature machinery to a
@@ -2295,8 +2349,17 @@ function emitMethod(
   resolver: TableDocResolver,
   constantTokens: ConstantSlotTokens,
   urlParameters: UrlParameterTable,
+  slotSink?: Record<string, string>,
 ): string {
-  return memberSignature(prepared, prepared.name, mapType, resolver, constantTokens, urlParameters);
+  return memberSignature(
+    prepared,
+    prepared.name,
+    mapType,
+    resolver,
+    constantTokens,
+    urlParameters,
+    slotSink,
+  );
 }
 
 // Build the indented JSDoc lines for a function from its ref-doc prose. The
@@ -2467,21 +2530,29 @@ function emitRestParameter(
   constantTokens: ConstantSlotTokens,
   elementName: string,
   urlParameters: UrlParameterTable,
-): string {
+): { text: string; slots: EmittedSlot[] } {
   const vararg = params[varargIndex];
-  if (vararg === undefined) return "";
-  const members = [
-    ...new Set(
-      params
-        .slice(varargIndex)
-        .map((p) =>
-          parameterType(p, mapType, resolver, constantTokens, elementName, urlParameters),
-        ),
-    ),
-  ];
+  if (vararg === undefined) return { text: "", slots: [] };
+  const folded = params.slice(varargIndex).map((p, offset) => ({
+    position: varargIndex + offset,
+    name: p.name,
+    ts: parameterType(p, mapType, resolver, constantTokens, elementName, urlParameters),
+  }));
+  const members = [...new Set(folded.map((slot) => slot.ts))];
   const first = members[0] ?? "unknown";
   const element = members.length > 1 ? `(${members.join(" | ")})` : first;
-  return `...${varargParamName(vararg.name, varargIndex)}: ${element}[]`;
+  return {
+    text: `...${varargParamName(vararg.name, varargIndex)}: ${element}[]`,
+    slots: folded,
+  };
+}
+
+// A slot's rendered type paired with the position and raw ref-doc name that
+// identify it, so the signature text and the per-slot map come out of one call.
+interface EmittedSlot {
+  readonly position: number;
+  readonly name: string;
+  readonly ts: string;
 }
 
 function emitParameter(
@@ -2493,7 +2564,7 @@ function emitParameter(
   constantTokens: ConstantSlotTokens,
   elementName: string,
   urlParameters: UrlParameterTable,
-): string {
+): { text: string; ts: string } {
   const name = safeParamName(p.name, index);
   const ts = parameterType(p, mapType, resolver, constantTokens, elementName, urlParameters);
   // An interior doc-optional param (a required param follows, so the trailing-`?`
@@ -2501,7 +2572,7 @@ function emitParameter(
   // lowers `undefined` to `nil`, the faithful call. Trailing optionals keep the
   // `?` form; required params are untouched.
   const interiorOptional = !optional && isDocOptional(p, elementName) ? " | undefined" : "";
-  return `${name}${optional ? "?" : ""}: ${ts}${interiorOptional}`;
+  return { text: `${name}${optional ? "?" : ""}: ${ts}${interiorOptional}`, ts };
 }
 
 function emitReturn(
@@ -2510,33 +2581,42 @@ function emitReturn(
   resolver: TableDocResolver,
   constantTokens: ConstantSlotTokens,
   elementName: string,
-): { type: string; trailing: string } {
+): { type: string; trailing: string; slots: EmittedSlot[] } {
+  // An authored whole-return override is not a per-slot render, so it reports no
+  // slots and leaves the consumer on its token-derived fallback.
   const override = RETURN_TYPE_OVERRIDES.get(elementName);
-  if (override !== undefined) return { type: override, trailing: "" };
-  if (returnValues.length === 0) return { type: "void", trailing: "" };
+  if (override !== undefined) return { type: override, trailing: "", slots: [] };
+  if (returnValues.length === 0) return { type: "void", trailing: "", slots: [] };
   if (returnValues.length > 1) {
     // Defold multi-returns are positional and always present; each slot maps
     // straight through (unknown when the doc lists no type) into a tuple that
     // typescript-to-lua erases to `local a, b = fn()`.
-    const slots = returnValues.map((rv) =>
-      rv.types.length > 0
-        ? mapSlotUnion(
-            rv.types,
-            rv.doc,
-            mapType,
-            false,
-            resolver,
-            constantTokens,
-            elementName,
-            "return",
-            rv.name,
-          )
-        : "unknown",
-    );
-    return { type: `LuaMultiReturn<[${slots.join(", ")}]>`, trailing: "" };
+    const emitted = returnValues.map((rv, index) => ({
+      position: index,
+      name: rv.name,
+      ts:
+        rv.types.length > 0
+          ? mapSlotUnion(
+              rv.types,
+              rv.doc,
+              mapType,
+              false,
+              resolver,
+              constantTokens,
+              elementName,
+              "return",
+              rv.name,
+            )
+          : "unknown",
+    }));
+    return {
+      type: `LuaMultiReturn<[${emitted.map((slot) => slot.ts).join(", ")}]>`,
+      trailing: "",
+      slots: emitted,
+    };
   }
   const first = returnValues[0];
-  if (!first) return { type: "void", trailing: "" };
+  if (!first) return { type: "void", trailing: "", slots: [] };
   const ts =
     first.types.length > 0
       ? mapSlotUnion(
@@ -2551,7 +2631,7 @@ function emitReturn(
           first.name,
         )
       : "unknown";
-  return { type: ts, trailing: "" };
+  return { type: ts, trailing: "", slots: [{ position: 0, name: first.name, ts }] };
 }
 
 function emitPropertyMember(
