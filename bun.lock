@@ -29,6 +29,9 @@
     "packages/docs": {
       "name": "@defold-typescript/docs",
       "version": "0.0.0",
+      "devDependencies": {
+        "@defold-typescript/transpiler": "workspace:*",
+      },
     },
     "packages/docs-site": {
       "name": "@defold-typescript/docs-site",
