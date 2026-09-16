@@ -38,7 +38,7 @@ export default defineScript({
 });
 ```
 
-Each source file is exactly one Defold script of one kind: you export a single factory call as `default`, never two in the same file, and a `.script` and a `.gui_script` are always separate files. A script with no `init` to infer `self` from — or one whose state you want to name up front — uses the explicit type-argument escape hatch instead, in its own file:
+Each source file is exactly one Defold script of one kind: you export a single factory call as `default`, never two in the same file, and a `.script` and a `.gui_script` are always separate files. A script with no `init` to infer `self` from takes an explicit type argument instead, in its own file:
 
 ```ts
 import { defineGuiScript, type Hash } from "@defold-typescript/types";
@@ -62,7 +62,10 @@ export default defineGuiScript<MenuSelf>({
 });
 ```
 
-With an explicit type argument (`defineGuiScript<MenuSelf>`), `init`'s return is checked against `MenuSelf` rather than inferred from it.
+With an explicit type argument (`defineGuiScript<MenuSelf>`), `init`'s return is checked against `MenuSelf` rather than inferred from it. That single argument is one of three routes to a typed `self`, and it is the one that stops working the moment you also declare `properties` — see [Three ways to type `self`](#three-ways-to-type-self) for the other two and for what inference costs you.
+
+> [!NOTE]
+> The samples import `Hash` for the sake of being copy-pasteable, but the engine value types — `Hash`, `Vector3`, `Vector4`, `Quaternion`, and the rest — are also declared globally, so a source file that imports nothing can still annotate with them. There is no need to recover one as `ReturnType<typeof hash>`.
 
 ## Script properties on `self`
 
@@ -166,6 +169,137 @@ export default defineScript({
 ```
 
 The emitted Lua is the same either way — `go.property("health", 100)` at chunk scope — so moving a property into the field changes what the compiler knows, not what the engine runs.
+
+## Three ways to type `self`
+
+Three routes reach a typed `self`. Which one you pick decides whether TypeScript learns your literal types or widens them away.
+
+| Route                 | Spelling                             | Reach for it when                                                  |
+| --------------------- | ------------------------------------ | ------------------------------------------------------------------ |
+| inferred (the default) | `init: () => ({ … })`                | `init` exists and the widened return is good enough                |
+| annotated `init`      | `init(self): State { … }`            | you want the returned state named, with or without `properties`    |
+| both type arguments   | `defineScript<Props, State>({ … })`  | there is no `init` to infer from                                   |
+
+Two of those routes name a type, and in both the name belongs to the **state channel** — what `init` returns — not to the whole `self`. Outside `init`, `self` is `TProps & TInitState`: the declared properties merged with the returned state. Neither route describes `self` on its own, and a state type that happens to repeat the property fields does so because `init` copied them onto the state, not because it has to.
+
+### Naming the state with an annotated `init`
+
+Annotate `init`'s return type and the state is named with no type argument at all, which is why this route composes with a `properties` block:
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+
+type ShipState = {
+  phase: "idle" | "boosting";
+};
+
+export default defineScript({
+  properties: {
+    speed: 120,
+  },
+  init(self): ShipState {
+    // Inside init, `self` is the property channel alone.
+    void self.speed; // replace with real usage
+    return { phase: "idle" };
+  },
+  update(self) {
+    // Outside init, `self` is the merge: `speed` came from `properties`,
+    // `phase` from init's return.
+    if (self.phase === "boosting") {
+      self.speed += 1;
+    }
+  },
+});
+```
+
+### Naming both channels with type arguments
+
+A script with no `init` has no return to infer from, so both channels are spelled as types. `defineScript`'s **first** type parameter is `TProps`, the property channel — so whenever `properties` is declared, pass *two* arguments, `Props` then `State`:
+
+```ts
+import { defineScript, type Hash } from "@defold-typescript/types";
+
+type ShipProps = {
+  speed: number;
+};
+
+type ShipState = {
+  phase: "idle" | "boosting";
+};
+
+export default defineScript<ShipProps, ShipState>({
+  properties: {
+    speed: 120,
+  },
+  on_message(self, message_id: Hash) {
+    // The merge again: `phase` is state, `speed` is property-backed.
+    if (message_id === hash("boost") && self.phase === "idle") {
+      self.phase = "boosting";
+      self.speed += 60;
+    }
+  },
+});
+```
+
+### Why one type argument does not work beside `properties`
+
+Because `TProps` comes first, `defineScript<ShipSelf>` makes `ShipSelf` the *property* channel, and the `properties` block is then checked against that whole shape:
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+
+type ShipSelf = {
+  speed: number;
+  phase: "idle" | "boosting";
+};
+
+export default defineScript<ShipSelf>({
+  properties: {
+    speed: 120,
+  },
+  update(self) {
+    self.phase = "boosting";
+  },
+});
+```
+
+That reports `TS2741: Property 'phase' is missing in type '{ speed: number; }' but required in type 'ShipSelf'` — the state field is being demanded of the `properties` block. The fix is the two-argument form above, not a wider `properties` block. The single-argument form stays correct for a script that declares no `properties`, which is what the `defineGuiScript<MenuSelf>` sample at the top of this page is.
+
+### What inference costs: literal types widen
+
+Inference widens a string literal to `string`, so an inferred `self` keeps the field but loses the union:
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+
+export default defineScript({
+  init: () => ({ phase: "idle" }),
+  update(self) {
+    // `self.phase` is `string`: the literal widened, so this typo compiles.
+    self.phase = "boostng";
+  },
+});
+```
+
+Either naming route is the opt-out. Annotating the same `init` pins the union, and the typo becomes a compile error:
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+
+type ShipState = {
+  phase: "idle" | "boosting";
+};
+
+export default defineScript({
+  init: (): ShipState => ({ phase: "idle" }),
+  update(self) {
+    // @ts-expect-error `self.phase` is the literal union, so the typo is caught.
+    self.phase = "boostng";
+  },
+});
+```
+
+Widening is the right default for a counter — `init() { return { hits: 0 } }` then `self.hits += 1` needs `number`, not `0`. It is the wrong default for a state machine, and naming the state is how you say so.
 
 ## Frame-update hooks
 
