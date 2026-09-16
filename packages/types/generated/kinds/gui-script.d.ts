@@ -45,7 +45,6 @@ import "../../src/engine-globals";
 import "../../src/go-overloads";
 import "../../src/message-guard";
 import "../../src/msg-overloads";
-import "../../src/render-overloads";
 import "../../src/scene-addresses";
 import "../../src/vmath-overloads";
 import "../../src/window-event-guard";

@@ -15,7 +15,12 @@ import {
   resolveTargetModules,
 } from "./regen";
 
-export { RUNTIME_KIND_MANIFEST, SRC_AUGMENTATION_MODULES, targetKindManifest } from "./regen";
+export {
+  RESTRICTED_SRC_AUGMENTATIONS,
+  RUNTIME_KIND_MANIFEST,
+  SRC_AUGMENTATION_MODULES,
+  targetKindManifest,
+} from "./regen";
 
 // The surface's own `core-types` module: a re-export of the installed package's,
 // so every declaration in the surface reaches the brand types through a
@@ -26,6 +31,10 @@ export interface RenderMaterializedKindIndexOptions {
   readonly kind: string;
   readonly universalModules: readonly string[];
   readonly restrictedModule: string | null;
+  // The `src/*` augmentations this kind earns because they re-open the very
+  // namespace the kind is restricted to. They sit outside `universalModules`
+  // precisely so no other kind imports them.
+  readonly restrictedAugmentations?: readonly string[];
   // Set for a kind built from the target's own editor documents. It replaces
   // the universal set outright — an editor kind is disjoint from the runtime
   // surface, not a narrowing of it.
@@ -53,6 +62,11 @@ export function renderMaterializedKindIndex(opts: RenderMaterializedKindIndexOpt
   const lines = modules.map((mod) => `import "../${mod}";`);
   if (entry.only === undefined && opts.restrictedModule) {
     lines.push(`import "../${opts.restrictedModule}";`);
+  }
+  if (entry.only === undefined) {
+    for (const augmentation of opts.restrictedAugmentations ?? []) {
+      lines.push(`import "../${augmentation}";`);
+    }
   }
   const from = installedFactoryModule(entry);
   const values = [entry.factory, ...(entry.extraExports ?? [])].join(", ");

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { canonicalApiPages } from "./api-content";
 import { apiLinkify, apiPageMarkdown } from "./api-page-render";
-import type { ApiPage } from "./api-surface";
+import { type ApiPage, apiModuleSymbols } from "./api-surface";
 import { loadApiSurfaceForVersion, versionsWithDiskFixtures } from "./api-surface-loader";
 import { renderGuidePage } from "./content";
 import { listGuidePages } from "./guide-loader";
@@ -47,13 +47,23 @@ describe("authored symbol notes", () => {
   });
 
   test("a note leads its symbol's section on the canonical page", () => {
+    const page = canonical.find((p) => p.module.namespace === "go");
+    if (!page) throw new Error("no /api/go page");
     const section = sectionFor(markdownFor(canonical, "go"), "go.property(");
     const note = SYMBOL_NOTES["go.property"] ?? "";
     expect(note).not.toBe("");
     expect(section).toContain(note);
-    // Ahead of the upstream description it qualifies — a warning printed after
-    // Defold's own Lua example would arrive too late to stop the copy-paste.
-    expect(section.indexOf(note)).toBeLessThan(section.indexOf("This function defines a property"));
+    // Ahead of the description it qualifies — a warning printed after the Lua
+    // example would arrive too late to stop the copy-paste. The description is
+    // read from the rendered symbol rather than named as prose, because which
+    // text that row carries depends on whether an authored overload doc covers
+    // it, and the ordering guarantee holds either way.
+    const row = apiModuleSymbols(page, page.translations, page.signatures).find(
+      (s) => s.name === "go.property",
+    );
+    expect(row?.docMarkdown).toBeTruthy();
+    expect(section).toContain(row?.docMarkdown ?? "");
+    expect(section.indexOf(note)).toBeLessThan(section.indexOf(row?.docMarkdown ?? ""));
   });
 
   test("an overload set carries the note once, not once per row", () => {

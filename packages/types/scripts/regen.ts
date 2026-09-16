@@ -535,17 +535,28 @@ export function kindStdlibReferences(entry: KindManifestEntry): string {
   return `${LUA_51_REFERENCE}${entry.jit === false ? "" : LUA_JIT_ONLY_REFERENCE}`;
 }
 
-const UNIVERSAL_EXTRA_IMPORTS: readonly string[] = [
-  "../builtin-messages",
-  "../../src/custom-messages",
-  "../../src/engine-globals",
-  "../../src/msg-overloads",
-  "../../src/message-guard",
-  "../../src/window-event-guard",
-  "../../src/scene-addresses",
-  "../../src/go-overloads",
-  "../../src/render-overloads",
-  "../../src/vmath-overloads",
+// One augmentation a complete script surface imports. `restrictedTo` names the
+// kind-restricted namespace the augmentation re-opens: such an entry belongs on
+// that namespace's kind index alone, or it would re-open a wall the kind closes.
+// The marker is declared rather than parsed out of the `.d.ts`, so
+// `generateKindIndex` stays pure; `regen.test.ts`'s derivation guard is what
+// catches a future restricted augmentation added without one.
+interface UniversalExtraImport {
+  readonly specifier: string;
+  readonly restrictedTo?: string;
+}
+
+const UNIVERSAL_EXTRA_IMPORTS: readonly UniversalExtraImport[] = [
+  { specifier: "../builtin-messages" },
+  { specifier: "../../src/custom-messages" },
+  { specifier: "../../src/engine-globals" },
+  { specifier: "../../src/msg-overloads" },
+  { specifier: "../../src/message-guard" },
+  { specifier: "../../src/window-event-guard" },
+  { specifier: "../../src/scene-addresses" },
+  { specifier: "../../src/go-overloads" },
+  { specifier: "../../src/render-overloads", restrictedTo: "render" },
+  { specifier: "../../src/vmath-overloads" },
 ];
 
 const SRC_IMPORT_PREFIX = "../../src/";
@@ -553,9 +564,18 @@ const SRC_IMPORT_PREFIX = "../../src/";
 // The hand-authored `src/*` augmentations a complete script surface needs,
 // derived from the one declaration the generated kind index renders from so a
 // new augmentation reaches every materialization path with no second edit.
-export const SRC_AUGMENTATION_MODULES: readonly string[] = UNIVERSAL_EXTRA_IMPORTS.filter(
-  (specifier) => specifier.startsWith(SRC_IMPORT_PREFIX),
-).map((specifier) => specifier.slice(SRC_IMPORT_PREFIX.length));
+export const SRC_AUGMENTATION_MODULES: readonly string[] = UNIVERSAL_EXTRA_IMPORTS.filter((entry) =>
+  entry.specifier.startsWith(SRC_IMPORT_PREFIX),
+).map((entry) => entry.specifier.slice(SRC_IMPORT_PREFIX.length));
+
+// The `src/*` augmentations bound to a kind-restricted namespace, as
+// `<module name> -> <namespace>`. Exported so the CLI's materialization scopes
+// them the same way the in-repo kind indexes do, from one declaration.
+export const RESTRICTED_SRC_AUGMENTATIONS: Readonly<Record<string, string>> = Object.fromEntries(
+  UNIVERSAL_EXTRA_IMPORTS.filter(
+    (entry) => entry.restrictedTo !== undefined && entry.specifier.startsWith(SRC_IMPORT_PREFIX),
+  ).map((entry) => [entry.specifier.slice(SRC_IMPORT_PREFIX.length), entry.restrictedTo as string]),
+);
 
 // Read those augmentations as surface-root files. Mirrors
 // `loadTargetEditorModules`: a missing file throws with its path rather than
@@ -656,9 +676,14 @@ export function generateKindIndex(kind: string, target: ApiTarget = DEFAULT_TARG
   const universalNamespaces = MODULE_MANIFEST.filter(
     (m) => !Object.hasOwn(RESTRICTED_NAMESPACES, m.namespace),
   ).map((m) => `../${m.outFile.replace(/\.d\.ts$/, "")}`);
+  // An augmentation bound to a restricted namespace rides only that namespace's
+  // kind index; every unmarked entry stays universal.
+  const extraImports = UNIVERSAL_EXTRA_IMPORTS.filter(
+    (extra) => extra.restrictedTo === undefined || extra.restrictedTo === entry.restricted,
+  ).map((extra) => extra.specifier);
   const modules = (
     entry.only === undefined
-      ? [...new Set([...universalNamespaces.sort(), ...[...UNIVERSAL_EXTRA_IMPORTS].sort()])]
+      ? [...new Set([...universalNamespaces.sort(), ...extraImports.sort()])]
       : [...editorKindModules(target), ...(entry.extraModules ?? [])]
   ).map((path) => retargetSrcPath(path, srcPrefix));
   const lines = modules.map((path) => `import "${path}";`);

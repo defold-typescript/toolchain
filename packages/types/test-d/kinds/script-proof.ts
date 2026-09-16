@@ -8,6 +8,11 @@ gui.get_width();
 // @ts-expect-error render.* is absent on the script surface
 render.get_width();
 
+// The hand-authored `render` augmentation is restricted the same as the
+// generated namespace: an augmentation must not re-open a wall the kind closes.
+// @ts-expect-error render.* is absent on the script surface
+render.render_target({});
+
 // The editor VM libraries must not reach a runtime kind. `http`, `json`, `zlib`
 // and `pprint` are runtime surfaces in their own right, so the wall is checked
 // on the two the engine has no form of: `zip`, and the `tiles` sub-namespace of

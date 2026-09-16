@@ -913,11 +913,17 @@ export function loadSignaturesArtifact(typesDir: string): SignaturesArtifact {
 export function loadCombinedSurface(typesDir: string): CombinedSurface {
   const overlay = loadAvailability(typesDir);
   const signatures = loadSignaturesArtifact(typesDir);
+  const signatureStore = loadSignatureStore(typesDir);
   const surfaces = versionsWithDiskFixtures(typesDir).map((version) => ({
     version: bareVersion(version.id),
     modules: loadApiSurfaceForVersion(typesDir, version.id)
       .filter((page) => page.category === "engine")
       .map((page) => page.module),
   }));
-  return buildCombinedSurface({ surfaces, signatures, ...(overlay ? { overlay } : {}) });
+  return buildCombinedSurface({
+    surfaces,
+    signatures,
+    signatureStore,
+    ...(overlay ? { overlay } : {}),
+  });
 }
