@@ -3653,6 +3653,91 @@ describe("nested member signature parity", () => {
   });
 });
 
+describe("per-slot rendered types", () => {
+  // The constant FQNs the committed regen feeds `render`, so the curated slots
+  // below emit the same branded text the artifact carries.
+  const renderConstants = new Set([
+    "graphics.BUFFER_TYPE_COLOR0_BIT",
+    "graphics.BUFFER_TYPE_DEPTH_BIT",
+    "graphics.BUFFER_TYPE_STENCIL_BIT",
+    "graphics.STATE_DEPTH_TEST",
+    "graphics.STATE_STENCIL_TEST",
+    "graphics.STATE_BLEND",
+    "graphics.STATE_ALPHA_TEST",
+    "graphics.STATE_CULL_FACE",
+    "graphics.STATE_POLYGON_OFFSET_FILL",
+  ]);
+
+  function slotsOf(
+    doc: unknown,
+    fqn: string,
+    options?: Parameters<typeof emitSymbolSignatures>[1],
+  ) {
+    const module = parseDefoldApiDoc(doc as Parameters<typeof parseDefoldApiDoc>[0]);
+    const entry = emitSymbolSignatures(module, options).find(
+      (candidate) => candidate.identity.name === fqn,
+    );
+    if (entry === undefined) throw new Error(`no emitted signature for ${fqn}`);
+    return entry;
+  }
+
+  test("a curated mapping slot reports the recovered LuaMap, not the opaque record", () => {
+    const entry = slotsOf(renderDoc, "render.clear", { knownConstantFqns: renderConstants });
+    const buffers = entry.slotTypes["param:0:buffers"];
+    expect(buffers).toContain("LuaMap<");
+    expect(buffers).toContain('__brand: "graphics.BUFFER_TYPE_COLOR0_BIT"');
+    expect(buffers).toContain("number | Vector4");
+    expect(buffers).not.toContain("Record<string | number, unknown>");
+  });
+
+  test("a documented-constant slot reports the brand union, not Opaque", () => {
+    const entry = slotsOf(renderDoc, "render.enable_state", { knownConstantFqns: renderConstants });
+    const state = entry.slotTypes["param:0:state"];
+    expect(state).toContain('__brand: "graphics.STATE_DEPTH_TEST"');
+    expect(state).toContain('__brand: "graphics.STATE_POLYGON_OFFSET_FILL"');
+    expect(state).not.toContain('Opaque<"constant">');
+  });
+
+  test("a plain-token slot reports what the token map already yields", () => {
+    const entry = slotsOf(goDoc, "go.get_id");
+    expect(entry.slotTypes["param:0:path"]).toBe("string");
+  });
+
+  test("a return slot is reported, so Returns is covered and not only Parameters", () => {
+    const entry = slotsOf(goDoc, "go.get_id");
+    expect(entry.slotTypes["return:0:id"]).toBe("Hash");
+  });
+
+  test("two unnamed return slots stay distinct under the positional key", () => {
+    const entry = slotsOf(pushDoc, "push.schedule");
+    expect(entry.tsSignature).toContain("LuaMultiReturn<[number, string]>");
+    expect(entry.slotTypes["return:0:"]).toBe("number");
+    expect(entry.slotTypes["return:1:"]).toBe("string");
+  });
+
+  test("every reported slot type is a substring of that symbol's own signature", () => {
+    const modules: [unknown, Parameters<typeof emitSymbolSignatures>[1]][] = [
+      [renderDoc, { knownConstantFqns: renderConstants }],
+      [goDoc, undefined],
+      [pushDoc, undefined],
+      [guiDoc, undefined],
+      [sysDoc, undefined],
+    ];
+    const mismatches: string[] = [];
+    for (const [doc, options] of modules) {
+      const module = parseDefoldApiDoc(doc as Parameters<typeof parseDefoldApiDoc>[0]);
+      for (const entry of emitSymbolSignatures(module, options)) {
+        for (const [slot, ts] of Object.entries(entry.slotTypes)) {
+          if (!entry.tsSignature.includes(ts)) {
+            mismatches.push(`${entry.identity.name} ${slot}: ${ts} not in ${entry.tsSignature}`);
+          }
+        }
+      }
+    }
+    expect(mismatches).toEqual([]);
+  });
+});
+
 describe("component property type fidelity", () => {
   test("a property slot typed float emits number rather than unknown", () => {
     const module = parseDefoldApiDoc(camera113Doc);

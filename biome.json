@@ -6,6 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
+    "maxSize": 4194304,
     "includes": [
       "**/*.ts",
       "**/*.tsx",
