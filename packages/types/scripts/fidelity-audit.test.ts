@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { resolve } from "node:path";
 import socketDoc from "../fixtures/socket_doc.json" with { type: "json" };
+import type { ApiParameter } from "../src/api-doc";
 import {
   ARBITRARY_TABLE_SLOT_KEYS,
   isVarargParameter,
@@ -11,6 +12,7 @@ import {
   countDroppedHandleMethods,
   deadResiduals,
   declaredArities,
+  declaredArity,
   evidencedOptionalSlots,
   exampleScanReach,
   type FidelityEntry,
@@ -1489,6 +1491,57 @@ describe("declared arities — the argument counts the shipped surface accepts",
       ]),
     );
     expect(positionalSlot).toEqual([{ key: "test.f:param:rest", emittedRequired: true }]);
+  });
+
+  test("a sibling ending in a rest parameter owns the short call, so it evidences nothing", () => {
+    // `test.f(1)` fits `(a, ...rest)`, so it is that arm's call and says nothing
+    // about whether the two-required arm's second slot may be omitted.
+    const slots = evidencedOptionalSlots(
+      syntheticEntry([
+        element("test.f", [req("a"), req("b")], "test.f(1)"),
+        element("test.f", [req("a"), vararg("rest")]),
+      ]),
+    );
+    expect(slots).toEqual([]);
+  });
+
+  test("a sibling flagged vararg under a positional name accepts no short call", () => {
+    // The converse: that sibling emits two positional parameters, so the call
+    // really is the two-required arm's own and really evidences its second slot.
+    const slots = evidencedOptionalSlots(
+      syntheticEntry([
+        element("test.f", [req("a"), req("b")], "test.f(1)"),
+        element("test.f", [req("a"), varargFlagOnly("rest")]),
+      ]),
+    );
+    expect(slots).toEqual([{ key: "test.f:param:b", emittedRequired: true }]);
+  });
+
+  test("one declaration's accepted range comes from a single shared computation", () => {
+    const slot = (name: string, isOptional: boolean, isVararg = false): ApiParameter => ({
+      name,
+      doc: "",
+      types: ["number"],
+      isOptional,
+      isVararg,
+    });
+    const arityOf = (parameters: ApiParameter[]) =>
+      declaredArity({
+        name: "test.f",
+        brief: "",
+        description: "",
+        parameters,
+        returnValues: [],
+      });
+    expect(arityOf([slot("a", false), slot("...rest", false)])).toEqual({
+      min: 1,
+      max: Number.POSITIVE_INFINITY,
+    });
+    expect(arityOf([slot("a", false), slot("rest", false, true)])).toEqual({ min: 2, max: 2 });
+    expect(arityOf([slot("a", false), slot("b", true), slot("c", true)])).toEqual({
+      min: 1,
+      max: 3,
+    });
   });
 
   test("hand-authored overloads are read from the src augmentations, not the ref-doc", () => {
