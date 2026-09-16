@@ -24,6 +24,7 @@ Only guide pages are inlined into `llms-full.txt`; pages marked `llms-full: fals
 - [TypeScript vs Lua](guide/typescript-vs-lua.md)
 - [TypeScript gotchas](guide/typescript-gotchas.md)
 - [Data structures](guide/data-structures.md)
+- [Lua table constructs](guide/lua-table-constructs.md)
 - [Script lifecycle](guide/script-lifecycle.md)
 - [Messages](guide/messages.md)
 - [Script state](guide/script-state.md)

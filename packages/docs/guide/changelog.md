@@ -13,9 +13,11 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Breaking
 
-- **[`render.clear`](/api/render)'s buffer table is now keyed by the three `graphics.BUFFER_TYPE_*` constants its reference names, not by any number.** `LuaMap<number, number | Vector4>` no longer compiles — `LuaMap`'s key type is invariant — so declare the table as `LuaMap<render.ClearBufferKey, number | Vector4>`, an alias exported on the default surface and every pinned `defold-target`.
+- **[`render.clear`](/api/render)'s buffer table is now keyed by the three `graphics.BUFFER_TYPE_*` constants its reference names, not by any number.** `LuaMap<number, number | Vector4>` no longer compiles — `LuaMap`'s key type is invariant — so declare the table as `LuaMap<render.ClearBufferKey, number | Vector4>`, an alias exported on the default surface and every pinned `defold-target`. [Lua table constructs](./lua-table-constructs.md) is the new guide page for writing such a table.
 
 ### Improved
+
+- **[Lua table constructs](./lua-table-constructs.md) is a new guide page on writing a table the engine reads by constant key**, such as [`render.clear`](/api/render)'s buffer table: why the object literal does not compile, the checked `LuaMap` route and the inline cast with the Lua each emits, and the mapped type that looks like the fix while silently accepting a key from another family.
 
 - **[Script lifecycle](./script-lifecycle.md#three-ways-to-type-self) now lays out all three ways to type `self` and what inference costs.** The page shows `init(self): State` and `defineScript<Props, State>` beside the inferred default, says `self` outside `init` is the declared properties merged with the state `init` returns, explains why one type argument cannot sit next to `properties`, and shows a string literal widening to `string` unless you name the state. It also spells out that a type argument describes state without creating it — a field no `init` writes is `nil` on a fresh instance, so the no-`init` example models it optional — and that `Hash`, `Vector3` and the other engine value types are global as well as importable.
 
