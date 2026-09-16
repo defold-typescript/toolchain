@@ -9,7 +9,11 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
-## v0.35.1
+## v0.36.0
+
+### Breaking
+
+- **[`render.clear`](/api/render)'s buffer table is now keyed by the three `graphics.BUFFER_TYPE_*` constants its reference names, not by any number.** `LuaMap<number, number | Vector4>` no longer compiles — `LuaMap`'s key type is invariant — so declare the table as `LuaMap<render.ClearBufferKey, number | Vector4>`, an alias exported on the default surface and every pinned `defold-target`.
 
 ### Improved
 

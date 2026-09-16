@@ -87,6 +87,17 @@ window.set_dim_mode(window.get_dim_mode());          // TS error — the getter 
 
 A few slots name no constant at all (`gui.new_texture`'s `type` lists only strings, `iap.get_provider_id`, typed once [`resolve`](./resolve.md) has run for extension-iap, names constants no ref-doc defines) and keep the generic `Opaque<"constant">`. `packages/types/test-d/documented-constant-slots.ts` pins the documented calls in each affected namespace.
 
+**A table whose *keys* are constants needs the exported alias.** `render.clear`'s reference names the three `graphics.BUFFER_TYPE_*` constants as the buffer table's keys, so the parameter is `LuaMap<render.ClearBufferKey, number | Vector4>`. `LuaMap`'s iterator makes its key parameter invariant, so a `LuaMap<number, number | Vector4>` is rejected however its entries were set — declare the map with the alias:
+
+```ts
+const buffers = new LuaMap<render.ClearBufferKey, number | Vector4>();
+buffers.set(graphics.BUFFER_TYPE_COLOR0_BIT, vmath.vector4(0, 0, 0, 0));
+buffers.set(graphics.BUFFER_TYPE_DEPTH_BIT, 1);
+render.clear(buffers);
+```
+
+`render.ClearBufferKey` is exported on the default surface and on every pinned `defold-target`. `packages/types/test-d/documented-constant-slots.ts` pins the accepted call and rejects a key from another family, and `packages/types/test-d/versions/clear-buffer-key-proof.ts` proves the alias on each committed surface.
+
 ## Engine handles are opaque — you cannot fabricate or cast across kinds
 
 **Symptom.** A GUI `node`, a render `texture` or `render_target`, a `buffer`, a `resource`, a box2d `b2World`/`b2Body`, and similar engine handles each have a distinct nominal type. A value obtained for one kind is not accepted where another kind is expected, and a plain value (a number, an object literal) is never accepted:
