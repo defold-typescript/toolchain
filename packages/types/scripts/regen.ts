@@ -539,8 +539,9 @@ export function kindStdlibReferences(entry: KindManifestEntry): string {
 // kind-restricted namespace the augmentation re-opens: such an entry belongs on
 // that namespace's kind index alone, or it would re-open a wall the kind closes.
 // The marker is declared rather than parsed out of the `.d.ts`, so
-// `generateKindIndex` stays pure; `regen.test.ts`'s derivation guard is what
-// catches a future restricted augmentation added without one.
+// `generateKindIndex` stays pure; `srcAugmentationScopingViolations` in
+// `./augmentation-namespaces` is what catches a future restricted augmentation
+// added without one, by reading the namespaces each file really re-opens.
 interface UniversalExtraImport {
   readonly specifier: string;
   readonly restrictedTo?: string;
@@ -762,6 +763,14 @@ export function targetKindManifest(target: ApiTarget): readonly KindManifestEntr
 }
 
 if (import.meta.main) {
+  // Imported here rather than at module scope: it imports the devDependency
+  // `typescript`, and `resolve` loads this module from an installed package.
+  const { srcAugmentationScopingViolations } = await import("./augmentation-namespaces");
+  const scopingViolations = srcAugmentationScopingViolations();
+  if (scopingViolations.length > 0) {
+    throw new Error(`src augmentation scoping violations:\n${scopingViolations.join("\n")}`);
+  }
+
   const generated = resolve(import.meta.dir, "..", "generated");
   mkdirSync(resolve(generated, "editor-vm"), { recursive: true });
   for (const entry of [

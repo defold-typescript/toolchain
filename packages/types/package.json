@@ -67,7 +67,8 @@
     "!scripts/**/*.test.ts",
     "!src/**/__snapshots__",
     "!scripts/lua-types-signature-index.ts",
-    "!scripts/fidelity-audit.ts"
+    "!scripts/fidelity-audit.ts",
+    "!scripts/augmentation-namespaces.ts"
   ],
   "publishConfig": {
     "access": "public"
