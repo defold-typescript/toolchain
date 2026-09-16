@@ -1110,6 +1110,97 @@ describe("apiModuleSymbols", () => {
     expect(symbol?.returnValues[0]?.types).toEqual([mapDocType("hash")]);
   });
 
+  test("the row's declarationIdentity is the key its own slot lookup resolved through", () => {
+    const page = pageWith({ functions: [slotFn] });
+    const symbol = apiModuleSymbols({
+      ...page,
+      authoritativeSignatures: new Map([[slotIdentity, slotSignature]]),
+      authoritativeSlotTypes: new Map([
+        [slotIdentity, { "param:0:opts": "{ mode: string }", "return:0:id": "Hash" }],
+      ]),
+      availability: {
+        versions: ["1.10.0"],
+        records: new Map<string, ApiAvailability>([
+          [
+            slotIdentity,
+            {
+              identity: { namespace: "demo", kind: "FUNCTION", name: "demo.run", signature: "" },
+              availableIn: ["1.10.0"],
+            },
+          ],
+        ]),
+        transitions: new Set<string>(),
+      },
+    })[0];
+    // The slot render and the badge both landed, so `slotIdentity` is demonstrably
+    // the key production keyed those lookups on — and the row must report it.
+    expect(symbol?.parameters[0]?.types).toEqual(["{ mode: string }"]);
+    expect(symbol?.availability?.availableIn).toEqual(["1.10.0"]);
+    expect(symbol?.declarationIdentity).toBe(slotIdentity);
+  });
+
+  test("two ref-doc entries under one name render rows with distinct declarationIdentity", () => {
+    const overloads: ApiFunction[] = [
+      {
+        name: "demo.each",
+        brief: "",
+        description: "",
+        parameters: [{ name: "list", doc: "", types: ["table"], isOptional: false }],
+        returnValues: [],
+      },
+      {
+        name: "demo.each",
+        brief: "",
+        description: "",
+        parameters: [
+          { name: "list", doc: "", types: ["table"], isOptional: false },
+          { name: "fn", doc: "", types: ["function"], isOptional: false },
+        ],
+        returnValues: [],
+      },
+    ];
+    const symbols = apiModuleSymbols(pageWith({ functions: overloads }));
+    expect(symbols).toHaveLength(2);
+    const identities = symbols.map((s) => s.declarationIdentity);
+    expect(identities.every((id) => typeof id === "string" && id.length > 0)).toBe(true);
+    expect(new Set(identities).size).toBe(2);
+    expect(identities).toEqual(
+      overloads.map((fn) =>
+        symbolIdentityKey({
+          namespace: "demo",
+          kind: "FUNCTION",
+          name: fn.name,
+          signature: normalizedFunctionSignature(fn),
+        }),
+      ),
+    );
+  });
+
+  test("an authored override collapses onto one identified row; its arm rows carry none", () => {
+    const store: SignatureStore = {
+      "demo.play": { signatures: ["demo.play(a: number): void", "demo.play(a: string): void"] },
+    };
+    const fn: ApiFunction = {
+      name: "demo.play",
+      brief: "",
+      description: "",
+      parameters: [{ name: "a", doc: "", types: ["number"], isOptional: false }],
+      returnValues: [],
+    };
+    const armSignatures = store["demo.play"]?.signatures ?? [];
+    const symbols = apiModuleSymbols(pageWith({ functions: [fn] }), {}, store);
+    expect(symbols.map((s) => s.signature)).toEqual([...armSignatures]);
+    expect(symbols[0]?.declarationIdentity).toBe(
+      symbolIdentityKey({
+        namespace: "demo",
+        kind: "FUNCTION",
+        name: "demo.play",
+        signature: normalizedFunctionSignature(fn),
+      }),
+    );
+    expect(symbols[1]?.declarationIdentity).toBeUndefined();
+  });
+
   test("extracts a function symbol with signature, doc, and example", () => {
     const symbols = apiModuleSymbols(
       pageWith({
