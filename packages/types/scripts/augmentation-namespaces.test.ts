@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { globalNamespacesIn, srcAugmentationScopingViolations } from "./augmentation-namespaces";
+import { loadSrcAugmentations, RESTRICTED_NAMESPACES, RESTRICTED_SRC_AUGMENTATIONS } from "./regen";
 
 describe("globalNamespacesIn", () => {
   test("a script-style source contributes its top-level namespace", () => {
@@ -144,13 +145,20 @@ describe("srcAugmentationScopingViolations", () => {
   const guiFile = (body: string) => ({ path: "gui-overloads.d.ts", contents: body });
 
   test("the real tree carries no scoping violation", () => {
-    expect(srcAugmentationScopingViolations()).toEqual([]);
+    expect(
+      srcAugmentationScopingViolations(
+        loadSrcAugmentations(),
+        RESTRICTED_SRC_AUGMENTATIONS,
+        RESTRICTED_NAMESPACES,
+      ),
+    ).toEqual([]);
   });
 
   test("an unmarked augmentation re-opening a restricted namespace is a violation", () => {
     const violations = srcAugmentationScopingViolations(
       [guiFile(["export {};", "declare global {", "  namespace gui {}", "}"].join("\n"))],
       {},
+      RESTRICTED_NAMESPACES,
     );
     expect(violations.length).toBe(1);
     expect(violations[0]).toContain("gui-overloads");
@@ -158,7 +166,11 @@ describe("srcAugmentationScopingViolations", () => {
   });
 
   test("the top-level script spelling is caught the same way", () => {
-    const violations = srcAugmentationScopingViolations([guiFile("declare namespace gui {}")], {});
+    const violations = srcAugmentationScopingViolations(
+      [guiFile("declare namespace gui {}")],
+      {},
+      RESTRICTED_NAMESPACES,
+    );
     expect(violations.length).toBe(1);
     expect(violations[0]).toContain("gui");
   });
@@ -167,6 +179,7 @@ describe("srcAugmentationScopingViolations", () => {
     const violations = srcAugmentationScopingViolations(
       [guiFile(["export {};", "declare global {", "  namespace go {}", "}"].join("\n"))],
       { "gui-overloads": "gui" },
+      RESTRICTED_NAMESPACES,
     );
     expect(violations.length).toBe(1);
     expect(violations[0]).toContain("gui");
@@ -177,6 +190,7 @@ describe("srcAugmentationScopingViolations", () => {
       srcAugmentationScopingViolations(
         [guiFile(["export {};", "declare global {", "  namespace gui {}", "}"].join("\n"))],
         { "gui-overloads": "gui" },
+        RESTRICTED_NAMESPACES,
       ),
     ).toEqual([]);
   });
@@ -191,6 +205,35 @@ describe("srcAugmentationScopingViolations", () => {
           },
         ],
         {},
+        RESTRICTED_NAMESPACES,
+      ),
+    ).toEqual([]);
+  });
+
+  // The map is an input, not a built-in list: a checker that matched `gui` and
+  // `render` as literals would pass every case above and fail both of these.
+  test("a namespace the handed map restricts is a violation, though production does not restrict it", () => {
+    const violations = srcAugmentationScopingViolations(
+      [
+        {
+          path: "sound-overloads.d.ts",
+          contents: ["export {};", "declare global {", "  namespace sound {}", "}"].join("\n"),
+        },
+      ],
+      {},
+      { sound: "sound_script" },
+    );
+    expect(violations.length).toBe(1);
+    expect(violations[0]).toContain("sound-overloads");
+    expect(violations[0]).toContain("sound");
+  });
+
+  test("a namespace the handed map omits is clean, though production restricts it", () => {
+    expect(
+      srcAugmentationScopingViolations(
+        [guiFile(["export {};", "declare global {", "  namespace gui {}", "}"].join("\n"))],
+        {},
+        { sound: "sound_script" },
       ),
     ).toEqual([]);
   });

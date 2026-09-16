@@ -762,14 +762,31 @@ export function targetKindManifest(target: ApiTarget): readonly KindManifestEntr
   return [...RUNTIME_KIND_MANIFEST, ...KIND_MODULE_MANIFEST.filter((e) => e.only !== undefined)];
 }
 
-if (import.meta.main) {
+// Every `src/*` augmentation bound to a kind-restricted namespace carries its
+// `restrictedTo` marker, and every marker names a namespace its file re-opens.
+// Exported so a test can reach the guard the entry point runs; never called on
+// import, so the dynamic import below stays unreached from an installed package.
+export async function assertSrcAugmentationScoping(
+  packageRoot: string = PACKAGE_ROOT,
+): Promise<void> {
   // Imported here rather than at module scope: it imports the devDependency
   // `typescript`, and `resolve` loads this module from an installed package.
   const { srcAugmentationScopingViolations } = await import("./augmentation-namespaces");
-  const scopingViolations = srcAugmentationScopingViolations();
-  if (scopingViolations.length > 0) {
-    throw new Error(`src augmentation scoping violations:\n${scopingViolations.join("\n")}`);
+  const violations = srcAugmentationScopingViolations(
+    loadSrcAugmentations(packageRoot),
+    RESTRICTED_SRC_AUGMENTATIONS,
+    RESTRICTED_NAMESPACES,
+  );
+  if (violations.length > 0) {
+    throw new Error(`src augmentation scoping violations:\n${violations.join("\n")}`);
   }
+}
+
+if (import.meta.main) {
+  await assertSrcAugmentationScoping();
+  // Ordering contract: `regen-entrypoint.test.ts` reads this line's prefix to
+  // prove the guard runs before the first write. Not noise — do not delete.
+  console.log(`src augmentation scoping checked: ${SRC_AUGMENTATION_MODULES.length} file(s)`);
 
   const generated = resolve(import.meta.dir, "..", "generated");
   mkdirSync(resolve(generated, "editor-vm"), { recursive: true });
