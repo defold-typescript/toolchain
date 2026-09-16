@@ -301,6 +301,41 @@ describe("committed API surfaces — overload-covered arity holds per target", (
   }
 });
 
+const CLEAR_BUFFER_KEY_PROOF = resolve(VERSIONS_DIR, "clear-buffer-key-proof.ts");
+
+describe("committed API surfaces — render.ClearBufferKey is writable per target", () => {
+  for (const index of committedSurfaceIndexes()) {
+    test(`${index} exports the alias its narrowed clear key requires`, () => {
+      const root = mkdtempSync(resolve(PACKAGE_ROOT, "clear-key-wall-"));
+      try {
+        const tsconfigPath = resolve(root, "tsconfig.json");
+        writeFileSync(
+          tsconfigPath,
+          `${JSON.stringify(
+            {
+              extends: "../../../tsconfig.json",
+              compilerOptions: { noEmit: true, types: [] },
+              include: [CLEAR_BUFFER_KEY_PROOF, resolve(PACKAGE_ROOT, index)],
+            },
+            null,
+            2,
+          )}\n`,
+        );
+        const { exitCode, output } = typecheck(tsconfigPath);
+        if (exitCode !== 0) {
+          throw new Error(
+            `${index} proof failed — the alias the breaking-change migration path names is ` +
+              `absent or does not match this surface's clear key:\n${output}`,
+          );
+        }
+        expect(exitCode).toBe(0);
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
+    });
+  }
+});
+
 // The compile wall above cannot see a missing `render_target` skip: the authored
 // wide arm repeats the generated signature verbatim, so an un-skipped surface
 // accepts exactly the same calls. Parity between the two production registries

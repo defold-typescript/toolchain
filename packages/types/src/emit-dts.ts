@@ -222,7 +222,9 @@ export const OVERLOAD_COVERED_SKIPS = new Set([
 // is the TSTL non-string-key Lua-table idiom and resolves the same way the
 // already-emitted `LuaMultiReturn` does. The audit consults this map too, so the
 // gate and the emitted surface stay coupled; a slot not curated here still
-// surfaces under `recordTables` until a human adds it.
+// surfaces under `recordTables` until a human adds it. Key and value are both
+// `A | B` union tokens split per token, so a key whose doc names constants
+// brands each of them rather than widening to `number`.
 export const MAPPING_TABLE_SLOTS: ReadonlyMap<string, { key: string; value: string }> = new Map([
   ["gui.clone_tree", { key: "hash", value: "node" }],
   ["gui.get_tree", { key: "hash", value: "node" }],
@@ -406,6 +408,18 @@ export function documentedConstantTokens(text: string, universe: ReadonlySet<str
     }
   }
   return [...out];
+}
+
+// The constants a `table` slot's doc names as the table's *keys*, as opposed to
+// the far commoner shape where a field's *value* is a constant
+// (`physics.get_shape`'s `type`, `resource.create_texture`'s `format`). Upstream
+// marks the difference in prose — render.clear reads "table with keys specifying
+// which buffers to clear ... Available keys are:" — so a key mention alongside a
+// named constant is the discriminator. Empty means the slot has no documented
+// constant keys, which is true of every `table` slot but one today.
+export function documentedConstantKeyTokens(doc: string, universe: ReadonlySet<string>): string[] {
+  if (!/\bkeys?\b/i.test(doc.replace(/<[^>]*>/g, ""))) return [];
+  return documentedConstantTokens(doc, universe);
 }
 
 type SlotDocLookup = (slotKey: string) => string | undefined;
@@ -830,11 +844,20 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   // render.predicate's `tags` is "table of tags ... can be of either hash or
   // string type", a homogeneous array whose element is the string|hash union.
   ["render.predicate:param:tags", { kind: "array", element: ["string", "hash"] }],
-  // render.clear's `buffers` maps the numeric graphics.BUFFER_* constants to
-  // their clear value: vector4 for the color buffer, number for depth/stencil.
-  // The mapping value is the `number | vector4` union; the mapping string branch
-  // splits the union token, so the value emits `number | Vector4`.
-  ["render.clear:param:buffers", { kind: "mapping", key: "number", value: "number | vector4" }],
+  // render.clear's `buffers` maps the graphics.BUFFER_TYPE_* constants its doc
+  // names as keys to their clear value: vector4 for the color buffer, number for
+  // depth/stencil. Both sides are union tokens the mapping string branch splits,
+  // so the key emits the three branded constants and the value `number | Vector4`.
+  // The key is branded rather than `number`, which is the narrowing users migrate
+  // to via the authored `render.ClearBufferKey` alias.
+  [
+    "render.clear:param:buffers",
+    {
+      kind: "mapping",
+      key: "graphics.BUFFER_TYPE_COLOR0_BIT | graphics.BUFFER_TYPE_DEPTH_BIT | graphics.BUFFER_TYPE_STENCIL_BIT",
+      value: "number | vector4",
+    },
+  ],
   // go.on_input and gui.on_input share the same well-known InputAction shape
   // (the on_input function description lists the well-known fields: value,
   // pressed, released, repeated, x/y/screen_x/screen_y/dx/dy/screen_dx/screen_dy,
@@ -2606,7 +2629,14 @@ function mapSlotUnion(
           const nested = mapping.value as NestedMapping;
           value = `LuaMap<${mapType(nested.key)}, ${mapType(nested.value)}>`;
         }
-        ts = `LuaMap<${mapType(mapping.key)}, ${value}>`;
+        // A mapping key may be a `A | B` union token too (render.clear's three
+        // documented graphics.BUFFER_TYPE_* constants); split it the same way
+        // the value above is split. A single-token key (no `|`) is unaffected.
+        const key = unionFromTokens(
+          mapping.key.split("|").map((token) => token.trim()),
+          mapType,
+        );
+        ts = `LuaMap<${key}, ${value}>`;
       } else if (element !== undefined) {
         ts = arrayTypeFromTokens(element, mapType);
       } else if (curation?.kind === "object" || curation?.kind === "array-object") {

@@ -52,7 +52,7 @@ declare global {
      * });
      * ```
      */
-    function clear(buffers: LuaMap<number, number | Vector4>): void;
+    function clear(buffers: LuaMap<number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR0_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_DEPTH_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_STENCIL_BIT" }, number | Vector4>): void;
     /**
      * Constant buffers are used to set shader program variables and are optionally passed to the `render.draw()` function.
      * The buffer's constant elements can be indexed like an ordinary Lua table, but you can't iterate over them with pairs() or ipairs().
