@@ -22,8 +22,9 @@ function syntheticRoot(overrides: Record<string, string>): string {
 }
 
 describe("assertSrcAugmentationScoping", () => {
-  test("the real package root passes the guard", async () => {
-    await assertSrcAugmentationScoping(PACKAGE_ROOT);
+  test("the real package root passes the guard, and reports what it checked", async () => {
+    const checked = await assertSrcAugmentationScoping(PACKAGE_ROOT);
+    expect(checked).toBe(SRC_AUGMENTATION_MODULES.length);
   });
 
   test("an unmarked augmentation re-opening a restricted namespace rejects", async () => {
@@ -63,5 +64,8 @@ describe("the regeneration entry point", () => {
     expect(checked).toBeGreaterThanOrEqual(0);
     expect(firstWrite).toBeGreaterThanOrEqual(0);
     expect(checked).toBeLessThan(firstWrite);
+
+    const count = (lines[checked] ?? "").slice(SCOPING_CHECKED_PREFIX.length).match(/\d+/)?.[0];
+    expect(count).toBe(String(SRC_AUGMENTATION_MODULES.length));
   });
 });
