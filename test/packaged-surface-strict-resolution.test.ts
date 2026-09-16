@@ -25,6 +25,14 @@ const REPO_ROOT = path.resolve(import.meta.dir, "..");
 const TYPES_ROOT = path.join(REPO_ROOT, "packages", "types");
 const REGISTRY = path.join(TYPES_ROOT, "api-targets.json");
 
+// Every test below spawns `tsc` at least once, and the mutation row spawns it
+// per row. One run costs ~0.8s on macOS but ~2s on a Windows runner, so the
+// 5s bun:test default leaves the multi-run tests no headroom and they die on
+// SIGTERM mid-measurement. Same budget the other tsc-spawning suites use
+// (packages/types/test/promoted-surface-typecheck.test.ts); the real ceiling
+// stays `typecheckSurface`'s own 120s subprocess timeout.
+const TYPECHECK_TEST_TIMEOUT_MS = 120_000;
+
 // The gated set is whatever the shipped registry currently offers a packaged
 // materialization for, filtered by production's own resolver rather than a
 // second copy of its `source == null && generatedDir` predicate. A target added
@@ -115,57 +123,69 @@ describe("packaged API surface — strict resolution", () => {
   });
 
   for (const surfaceId of PACKAGED_TARGET_IDS) {
-    test(`no declaration in the ${surfaceId} packaged materialization references a name the surface does not declare`, () => {
-      const fixture = materialize(surfaceId);
+    test(
+      `no declaration in the ${surfaceId} packaged materialization references a name the surface does not declare`,
+      () => {
+        const fixture = materialize(surfaceId);
+        try {
+          expect(diagnosticsFor(fixture)).toEqual([]);
+        } finally {
+          rmSync(fixture.cwd, { recursive: true, force: true });
+        }
+      },
+      TYPECHECK_TEST_TIMEOUT_MS,
+    );
+  }
+
+  test(
+    "a carried declaration that cannot resolve its module or member is rejected",
+    () => {
+      const fixture = materialize(MUTATION_TARGET);
       try {
-        expect(diagnosticsFor(fixture)).toEqual([]);
+        for (const mutation of CARRIED_MUTATIONS) {
+          const filePath = path.join(fixture.surfaceDir, mutation.file);
+          const pristine = readFileSync(filePath, "utf8");
+          const mutated = mutation.apply(pristine);
+          if (mutated === pristine) {
+            throw new Error(
+              `mutation "${mutation.row}" was inert — the carried ${mutation.file} no longer ` +
+                "carries the text this row rewrites, so the row proves nothing",
+            );
+          }
+          writeFileSync(filePath, mutated);
+          try {
+            const rejected = diagnosticsFor(fixture);
+            if (!rejected.some((line) => line.includes(`error ${mutation.code}:`))) {
+              throw new Error(
+                `mutation "${mutation.row}" was not rejected with ${mutation.code}; the gate ` +
+                  `returned:\n${rejected.join("\n")}`,
+              );
+            }
+          } finally {
+            writeFileSync(filePath, pristine);
+          }
+        }
       } finally {
         rmSync(fixture.cwd, { recursive: true, force: true });
       }
-    });
-  }
+    },
+    TYPECHECK_TEST_TIMEOUT_MS,
+  );
 
-  test("a carried declaration that cannot resolve its module or member is rejected", () => {
-    const fixture = materialize(MUTATION_TARGET);
-    try {
-      for (const mutation of CARRIED_MUTATIONS) {
-        const filePath = path.join(fixture.surfaceDir, mutation.file);
-        const pristine = readFileSync(filePath, "utf8");
-        const mutated = mutation.apply(pristine);
-        if (mutated === pristine) {
-          throw new Error(
-            `mutation "${mutation.row}" was inert — the carried ${mutation.file} no longer ` +
-              "carries the text this row rewrites, so the row proves nothing",
-          );
-        }
-        writeFileSync(filePath, mutated);
-        try {
-          const rejected = diagnosticsFor(fixture);
-          if (!rejected.some((line) => line.includes(`error ${mutation.code}:`))) {
-            throw new Error(
-              `mutation "${mutation.row}" was not rejected with ${mutation.code}; the gate ` +
-                `returned:\n${rejected.join("\n")}`,
-            );
-          }
-        } finally {
-          writeFileSync(filePath, pristine);
-        }
+  test(
+    "a carried module missing from the materialization is caught",
+    () => {
+      const fixture = materialize(MUTATION_TARGET);
+      try {
+        const dropped = path.join(fixture.surfaceDir, "builtin-messages.d.ts");
+        expect(readdirSync(fixture.surfaceDir)).toContain("builtin-messages.d.ts");
+        unlinkSync(dropped);
+        const rejected = diagnosticsFor(fixture);
+        expect(rejected.filter((line) => line.includes("error TS2304:")).length).toBeGreaterThan(0);
+      } finally {
+        rmSync(fixture.cwd, { recursive: true, force: true });
       }
-    } finally {
-      rmSync(fixture.cwd, { recursive: true, force: true });
-    }
-  });
-
-  test("a carried module missing from the materialization is caught", () => {
-    const fixture = materialize(MUTATION_TARGET);
-    try {
-      const dropped = path.join(fixture.surfaceDir, "builtin-messages.d.ts");
-      expect(readdirSync(fixture.surfaceDir)).toContain("builtin-messages.d.ts");
-      unlinkSync(dropped);
-      const rejected = diagnosticsFor(fixture);
-      expect(rejected.filter((line) => line.includes("error TS2304:")).length).toBeGreaterThan(0);
-    } finally {
-      rmSync(fixture.cwd, { recursive: true, force: true });
-    }
-  });
+    },
+    TYPECHECK_TEST_TIMEOUT_MS,
+  );
 });
