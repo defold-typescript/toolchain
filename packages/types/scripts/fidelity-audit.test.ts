@@ -344,10 +344,6 @@ describe("optionality evidence — slots upstream leaves unmarked", () => {
 
   test("an exempted slot counts nothing, and every exemption states its reason", () => {
     const params = [required("x", "", ["number", "vector3"]), required("y"), required("z")];
-    expect(OPTIONALITY_EVIDENCE_EXEMPTIONS.has("vmath.euler_to_quat:param:y")).toBe(true);
-    expect(optionalAsRequiredOf(fn("vmath.euler_to_quat", params, "vmath.euler_to_quat(v)"))).toBe(
-      0,
-    );
     expect(optionalAsRequiredOf(fn("test.euler_to_quat", params, "test.euler_to_quat(v)"))).toBe(2);
     const unexplained = [...OPTIONALITY_EVIDENCE_EXEMPTIONS]
       .filter(([, reason]) => reason.trim().length === 0)

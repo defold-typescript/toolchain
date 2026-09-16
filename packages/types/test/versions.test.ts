@@ -9,9 +9,11 @@ import {
   writeFileSync,
 } from "node:fs";
 import { resolve } from "node:path";
+import { selectCompleteVersionSurfaces } from "../scripts/generate-api-availability";
 import { materializeVersionedSurface } from "../scripts/materialize-version";
 import { loadApiTargets } from "../scripts/regen";
 import { SYNC_MANIFEST, type ZipAccessor } from "../scripts/sync-api-docs";
+import { OVERLOAD_COVERED_SKIPS } from "../src/emit-dts";
 import {
   ABSENCE_PROOF,
   absenceDirectiveLine,
@@ -262,6 +264,68 @@ describe("committed API surfaces — a partial extension namespace still fails t
       }
     });
   });
+});
+
+const ARITY_OVERLOAD_PROOF = resolve(VERSIONS_DIR, "engine-arity-overloads-proof.ts");
+
+describe("committed API surfaces — overload-covered arity holds per target", () => {
+  for (const index of committedSurfaceIndexes()) {
+    test(`${index} withholds the generated euler_to_quat arm`, () => {
+      const root = mkdtempSync(resolve(PACKAGE_ROOT, "arity-wall-"));
+      try {
+        const tsconfigPath = resolve(root, "tsconfig.json");
+        writeFileSync(
+          tsconfigPath,
+          `${JSON.stringify(
+            {
+              extends: "../../../tsconfig.json",
+              compilerOptions: { noEmit: true, types: [] },
+              include: [ARITY_OVERLOAD_PROOF, resolve(PACKAGE_ROOT, index)],
+            },
+            null,
+            2,
+          )}\n`,
+        );
+        const { exitCode, output } = typecheck(tsconfigPath);
+        if (exitCode !== 0) {
+          throw new Error(
+            `${index} proof failed — the generated euler_to_quat declaration survives on ` +
+              `this surface, so its skipFunctions entry is missing:\n${output}`,
+          );
+        }
+        expect(exitCode).toBe(0);
+      } finally {
+        rmSync(root, { recursive: true, force: true });
+      }
+    });
+  }
+});
+
+// The compile wall above cannot see a missing `render_target` skip: the authored
+// wide arm repeats the generated signature verbatim, so an un-skipped surface
+// accepts exactly the same calls. Parity between the two production registries
+// is what catches a skip wired into one target and forgotten in another.
+describe("api-targets — every overload-covered skip is wired into every target", () => {
+  const completeTargets = selectCompleteVersionSurfaces(loadApiTargets());
+
+  test("the complete-target listing is not empty", () => {
+    expect(completeTargets.length).toBeGreaterThan(0);
+  });
+
+  for (const target of completeTargets) {
+    test(`${target.id} skips every OVERLOAD_COVERED_SKIPS symbol it declares`, () => {
+      const missing: string[] = [];
+      for (const fqn of OVERLOAD_COVERED_SKIPS) {
+        const dot = fqn.indexOf(".");
+        const namespace = fqn.slice(0, dot);
+        const local = fqn.slice(dot + 1);
+        const module = target.modules.find((m) => m.namespace === namespace);
+        if (!module) continue;
+        if (!(module.skipFunctions ?? []).includes(local)) missing.push(fqn);
+      }
+      expect(missing).toEqual([]);
+    });
+  }
 });
 
 describe("versioned API surface — src augmentations reach the consumer", () => {

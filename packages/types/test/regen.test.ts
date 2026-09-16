@@ -20,6 +20,7 @@ import {
   targetKindManifest,
   VERSIONED_MODULE_MANIFEST,
   versionedModuleManifest,
+  versionSrcAugmentationImports,
 } from "../scripts/regen";
 import { parseDefoldApiDoc } from "../src/api-doc";
 import { unexpressedFixtureNames } from "./declared-fqns";
@@ -570,7 +571,13 @@ describe("versioned regen drift guard", () => {
   test.each([
     ...new Set(VERSIONED_MODULE_MANIFEST.map((entry) => entry.versionId)),
   ])("%s: committed per-version index.d.ts matches a fresh generateVersionIndex", async (versionId) => {
-    const fresh = generateVersionIndex(versionId);
+    const target = loadApiTargets().find((candidate) => candidate.id === versionId);
+    if (!target) throw new Error(`no committed target for version ${versionId}`);
+    const fresh = generateVersionIndex(
+      versionId,
+      VERSIONED_MODULE_MANIFEST,
+      versionSrcAugmentationImports(target),
+    );
     const path = resolve(GENERATED, "versions", versionId, "index.d.ts");
     const committed = await Bun.file(path).text();
     if (committed !== fresh) {

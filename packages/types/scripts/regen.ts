@@ -544,6 +544,7 @@ const UNIVERSAL_EXTRA_IMPORTS: readonly string[] = [
   "../../src/window-event-guard",
   "../../src/scene-addresses",
   "../../src/go-overloads",
+  "../../src/render-overloads",
   "../../src/vmath-overloads",
 ];
 
@@ -678,8 +679,10 @@ export function generateKindIndex(kind: string, target: ApiTarget = DEFAULT_TARG
 export function generateVersionIndex(
   versionId: string,
   manifest: readonly VersionedModuleManifestEntry[] = VERSIONED_MODULE_MANIFEST,
-  // Bare names appended after the module imports. A materialized surface carries
-  // the `src/*` augmentations beside its modules; the in-repo emit does not.
+  // Names appended after the module imports. A materialized surface carries the
+  // `src/*` augmentations beside its modules and names them bare; the in-repo
+  // emit reaches back into the package and passes an already-relative specifier,
+  // which is kept verbatim rather than re-anchored to the surface directory.
   extraImports: readonly string[] = [],
 ): string {
   const imports = [
@@ -689,12 +692,22 @@ export function generateVersionIndex(
       .sort(),
     ...extraImports,
   ]
-    .map((module) => `import "./${module}";`)
+    .map((module) => `import "${module.startsWith(".") ? module : `./${module}`}";`)
     .join("\n");
   // A pinned consumer names this surface in `types` and never loads the
   // package entrypoint, so the stdlib directives have to lead here too. A
   // runtime surface is LuaJIT, so it takes both lines.
   return `${LUA_STDLIB_REFERENCES}${imports}\n\nexport {};\n`;
+}
+
+// The authored augmentations a committed per-version index imports, addressed
+// back into the package's `src/`. The in-repo surface has no copies beside its
+// modules, so a skipped symbol would otherwise be declared on no versioned
+// surface at all. Derived from `SRC_AUGMENTATION_MODULES`, so a new augmentation
+// reaches the pinned surfaces on the same edit that reaches the materialized ones.
+export function versionSrcAugmentationImports(target: ApiTarget): string[] {
+  const srcPrefix = target.coreTypesImport.slice(0, -"core-types".length);
+  return SRC_AUGMENTATION_MODULES.map((name) => `${srcPrefix}${name}`);
 }
 
 // The `src/`-relative prefix a kind index living in `<generatedDir>/kinds/` needs
@@ -784,7 +797,14 @@ if (import.meta.main) {
   for (const target of versionedTargets) {
     const indexOut = resolve(versionDirOf(target.id), "index.d.ts");
     mkdirSync(dirname(indexOut), { recursive: true });
-    writeFileSync(indexOut, generateVersionIndex(target.id));
+    writeFileSync(
+      indexOut,
+      generateVersionIndex(
+        target.id,
+        VERSIONED_MODULE_MANIFEST,
+        versionSrcAugmentationImports(target),
+      ),
+    );
     console.log(`wrote ${indexOut}`);
 
     const editorKinds = targetKindManifest(target).filter((entry) => entry.only !== undefined);

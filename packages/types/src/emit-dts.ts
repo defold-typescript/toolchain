@@ -151,11 +151,10 @@ export const ARBITRARY_TABLE_SLOTS = new Set([
   "socket.dns.toip",
   "socket.dns.getaddrinfo",
   "socket.dns.getnameinfo",
-  // engine-built render-target tables: the "see the description" cross-refs
-  // are dead (the function's own description is empty) or carry a typed
+  // engine-built render-target tables: the "see the description" cross-ref is
+  // dead (the function's own description is empty) or carries a typed
   // `transient: table` field whose sub-doc is prose-only, so the nested table
   // is opaque to the field-list parser and the whole-slot `Record` is faithful.
-  "render.render_target",
   "render.set_render_target",
   // reserved-but-undocumented options bag: `collectionproxy.load`'s `options`
   // slot is documented verbatim as "options table, currently unused" and accepts
@@ -204,6 +203,10 @@ export const OVERLOAD_COVERED_SKIPS = new Set([
   // msg-overloads.d.ts supplies the typed msg.url shape (0 / 1-string / 3-arg
   // arities; the runtime-invalid two-arg form is intentionally omitted).
   "msg.url",
+  // render-overloads.d.ts supplies the name-less and named render_target arities.
+  "render.render_target",
+  // vmath-overloads.d.ts supplies the vector3 and three-number euler_to_quat arities.
+  "vmath.euler_to_quat",
   // vmath-overloads.d.ts supplies the generic covariant signatures.
   "vmath.clamp",
   "vmath.lerp",

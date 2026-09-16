@@ -7,6 +7,16 @@
       "Clamp input value to be in range of [min, max]. In case if input value has vector3|vector4 type return new vector3|vector4 with clamped value at every vector's element. Min/max arguments can be vector3|vector4. In that case clamp excuted per every vector's element"
     ]
   },
+  "vmath.euler_to_quat": {
+    "signatures": [
+      "vmath.euler_to_quat(v: Vector3): Quaternion",
+      "vmath.euler_to_quat(x: number, y: number, z: number): Quaternion"
+    ],
+    "docs": [
+      "Converts euler angles in degrees into a quaternion, reading the x, y and z angles from a vector3. The error is guaranteed to be less than 0.001.",
+      "Converts euler angles (x, y, z) in degrees into a quaternion. The error is guaranteed to be less than 0.001."
+    ]
+  },
   "vmath.lerp": {
     "signatures": [
       "vmath.lerp<T extends Vector3 | Vector4>(t: number, v1: T, v2: T): T",
