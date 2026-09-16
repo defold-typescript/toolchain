@@ -134,6 +134,7 @@ function windowNamespace(
       ...entry,
       authoritativeSignature: windowedSignature(entry, signatures, inSlice),
     })),
+    ...(ns.signatureStore ? { signatureStore: ns.signatureStore } : {}),
   };
 }
 
@@ -161,7 +162,12 @@ export function windowCombinedSurface(
     const windowed = windowNamespace(ns, signatures, inSlice);
     if (windowed) namespaces.push(windowed);
   }
-  return { versions: combined.versions, namespaces, window };
+  return {
+    versions: combined.versions,
+    namespaces,
+    window,
+    ...(combined.signatureStore ? { signatureStore: combined.signatureStore } : {}),
+  };
 }
 
 /**

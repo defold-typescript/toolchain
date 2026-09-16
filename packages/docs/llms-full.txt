@@ -8550,8 +8550,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[], recursive?: boolean): void;
 - function exists(url: SceneGameObjectAddress | Hash | Url): boolean;
 - go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]
-go.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions): go.properties[K]
-go.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion
+- go.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions): go.properties[K]
+- go.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion
 - function get_id(path?: string): Hash;
 - function get_parent(id?: SceneGameObjectAddress | Hash | Url): Hash | undefined;
 - function get_position(id?: SceneGameObjectAddress | Hash | Url): Vector3;
@@ -8564,15 +8564,15 @@ go.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoProp
 - function get_world_scale_uniform(id?: SceneGameObjectAddress | Hash | Url): number;
 - function get_world_transform(id?: SceneGameObjectAddress | Hash | Url): Matrix4;
 - go.property(name: string, value: number): ScriptProperty<number>
-go.property(name: string, value: boolean): ScriptProperty<boolean>
-go.property(name: string, value: Hash): ScriptProperty<Hash>
-go.property(name: string, value: Url): ScriptProperty<Url>
-go.property(name: string, value: Vector3): ScriptProperty<Vector3>
-go.property(name: string, value: Vector4): ScriptProperty<Vector4>
-go.property(name: string, value: Quaternion): ScriptProperty<Quaternion>
+- go.property(name: string, value: boolean): ScriptProperty<boolean>
+- go.property(name: string, value: Hash): ScriptProperty<Hash>
+- go.property(name: string, value: Url): ScriptProperty<Url>
+- go.property(name: string, value: Vector3): ScriptProperty<Vector3>
+- go.property(name: string, value: Vector4): ScriptProperty<Vector4>
+- go.property(name: string, value: Quaternion): ScriptProperty<Quaternion>
 - go.set<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void
-go.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void
-go.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion, options?: GoPropertyOptions): void
+- go.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void
+- go.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion, options?: GoPropertyOptions): void
 - function set_parent(id?: SceneGameObjectAddress | Hash | Url, parent_id?: SceneGameObjectAddress | Hash | Url, keep_world_transform?: boolean): void;
 - function set_position(position: Vector3, id?: SceneGameObjectAddress | Hash | Url): void;
 - function set_rotation(rotation: Quaternion, id?: SceneGameObjectAddress | Hash | Url): void;
@@ -9099,16 +9099,10 @@ go.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | 
 ### msg
 
 - msg.post<K extends string>(receiver: SceneAddress | Url | Hash, message_id: K, message?: MessagePayload<K>): void
-msg.post(receiver: SceneAddress | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void
+- msg.post(receiver: SceneAddress | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void
 - msg.url(): Url
-msg.url(urlstring: SceneAddress | undefined): Url
-msg.url(socket: string | Hash | undefined, path: string | Hash, fragment: string | Hash): Url
-- msg.url(): Url
-msg.url(urlstring: SceneAddress | undefined): Url
-msg.url(socket: string | Hash | undefined, path: string | Hash, fragment: string | Hash): Url
-- msg.url(): Url
-msg.url(urlstring: SceneAddress | undefined): Url
-msg.url(socket: string | Hash | undefined, path: string | Hash, fragment: string | Hash): Url
+- msg.url(urlstring: SceneAddress | undefined): Url
+- msg.url(socket: string | Hash | undefined, path: string | Hash, fragment: string | Hash): Url
 
 ### particlefx
 
@@ -9207,7 +9201,7 @@ msg.url(socket: string | Hash | undefined, path: string | Hash, fragment: string
 - function get_window_width(): number;
 - function predicate(tags: (string | Hash)[]): number;
 - render.render_target(parameters: Record<string | number, unknown>): Opaque<"render_target">
-render.render_target(name: string, parameters: Record<string | number, unknown>): Opaque<"render_target">
+- render.render_target(name: string, parameters: Record<string | number, unknown>): Opaque<"render_target">
 - function set_blend_equation_separate(equation_color: number, equation_alpha: number): void; [since 1.13.0]
 - function set_blend_func(source_factor: number, destination_factor: number): void;
 - function set_blend_func_separate(source_factor_color: number, destination_factor_color: number, source_factor_alpha: number, destination_factor_alpha: number): void; [since 1.13.0]
@@ -9456,19 +9450,13 @@ render.render_target(name: string, parameters: Record<string | number, unknown>)
 - function cross(v1: Vector3, v2: Vector3): Vector3;
 - function dot(v1: Vector3 | Vector4, v2: Vector3 | Vector4): number;
 - vmath.euler_to_quat(v: Vector3): Quaternion
-vmath.euler_to_quat(x: number, y: number, z: number): Quaternion
+- vmath.euler_to_quat(x: number, y: number, z: number): Quaternion
 - function inv(m1: Matrix4): Matrix4;
 - function length(v: Vector3 | Vector4 | Quaternion): number;
 - function length_sqr(v: Vector3 | Vector4 | Quaternion): number;
 - vmath.lerp<T extends Vector3 | Vector4>(t: number, v1: T, v2: T): T
-vmath.lerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion
-vmath.lerp(t: number, n1: number, n2: number): number
-- vmath.lerp<T extends Vector3 | Vector4>(t: number, v1: T, v2: T): T
-vmath.lerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion
-vmath.lerp(t: number, n1: number, n2: number): number
-- vmath.lerp<T extends Vector3 | Vector4>(t: number, v1: T, v2: T): T
-vmath.lerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion
-vmath.lerp(t: number, n1: number, n2: number): number
+- vmath.lerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion
+- vmath.lerp(t: number, n1: number, n2: number): number
 - function matrix4(): Matrix4;
 - function matrix4(m1: Matrix4): Matrix4;
 - function matrix4_axis_angle(v: Vector3, angle: number): Matrix4;
@@ -9502,9 +9490,7 @@ vmath.lerp(t: number, n1: number, n2: number): number
 - function quat_to_euler(q: Quaternion): LuaMultiReturn<[number, number, number]>;
 - function rotate(q: Quaternion, v1: Vector3): Vector3;
 - vmath.slerp<T extends Vector3 | Vector4>(t: number, v1: T, v2: T): T
-vmath.slerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion
-- vmath.slerp<T extends Vector3 | Vector4>(t: number, v1: T, v2: T): T
-vmath.slerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion
+- vmath.slerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion
 - function vector(t: number[]): Vector;
 - function vector3(): Vector3;
 - function vector3(x: number, y: number, z: number): Vector3;
