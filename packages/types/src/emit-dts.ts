@@ -2415,7 +2415,9 @@ function parameterType(
 
 const VARARG_PREFIX = "...";
 
-function isVarargParameter(p: ApiParameter): boolean {
+// Exported because the fidelity audit must ask the same question about the
+// same input: what the emitted declaration accepts is the emitter's to decide.
+export function isVarargParameter(p: ApiParameter): boolean {
   return p.name.startsWith(VARARG_PREFIX);
 }
 
