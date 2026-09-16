@@ -105,6 +105,24 @@ function typecheckFence(source: string): { exitCode: number; output: string } {
   }
 }
 
+/**
+ * Every `ts` fence under `heading`, paired with its type-check verdict. The
+ * live route compiles and the second-fence mutation read this one lane, so
+ * narrowing it to `fences[0]` reds the mutation rather than passing silently;
+ * split back into two loops, neither can see the other go blind. The fence text
+ * rides along because the mapped-type control asserts on the source as well as
+ * the verdict.
+ */
+function compiledFencesUnder(
+  heading: string,
+  source: string = guideSource(),
+): Array<{ fence: string; exitCode: number; output: string }> {
+  return fencesUnder(heading, "ts", source).map((fence) => ({
+    fence,
+    ...typecheckFence(fence),
+  }));
+}
+
 describe("the guide's fence locator", () => {
   // Measures the harness, not the content: a heading rename or a fence removal
   // would otherwise leave every compile below with nothing to compile.
@@ -130,18 +148,37 @@ describe("the guide's fence locator", () => {
   });
 
   test("a second `ts` fence under a route reaches the compile lane", () => {
-    const spliced = guideSource().replace(
-      ROUTE_A_HEADING,
-      `${ROUTE_A_HEADING}\n\n\`\`\`ts\nconst broken: number = "not a number";\n\`\`\`\n`,
-    );
-    const fences = fencesUnder(ROUTE_A_HEADING, "ts", spliced);
-    expect(fences.length).toBeGreaterThan(1);
-    const failed = fences.filter((fence) => typecheckFence(fence).exitCode !== 0);
-    if (failed.length === 0) {
+    const source = guideSource();
+    const [published] = fencesUnder(ROUTE_A_HEADING, "ts", source);
+    // `fencePattern` captures the body between the opening fence's newline and
+    // the closing fence, so this reconstruction is byte-identical to the page's.
+    const publishedFence = `\`\`\`ts\n${published}\`\`\``;
+    const at = source.indexOf(publishedFence);
+    if (at < 0) {
       throw new Error(
-        "an uncompilable second fence spliced under Route A compiled clean, " +
-          "so the compile lane is reading only the first fence of a section " +
-          "and a second one could ship unchecked.",
+        "Route A's published `ts` fence could not be located verbatim in the " +
+          "page, so the invalid fence cannot be spliced behind it. Splicing at " +
+          "a computed offset would mutate the wrong bytes.",
+      );
+    }
+    const splicedAt = at + publishedFence.length;
+    const spliced = `${source.slice(0, splicedAt)}\n\n\`\`\`ts\nconst broken: number = "not a number";\n\`\`\`${source.slice(splicedAt)}`;
+
+    // Conclude nothing from the compiles until the splice is known to have
+    // landed: an anchor that stopped matching would otherwise pass vacuously.
+    expect(fencesUnder(ROUTE_A_HEADING, "ts", spliced).length).toBe(
+      fencesUnder(ROUTE_A_HEADING, "ts", source).length + 1,
+    );
+
+    const failedAt = compiledFencesUnder(ROUTE_A_HEADING, spliced).findIndex(
+      ({ exitCode }) => exitCode !== 0,
+    );
+    if (failedAt <= 0) {
+      throw new Error(
+        "an uncompilable `ts` fence spliced behind Route A's published one was " +
+          `not the fence the compile lane rejected (index ${failedAt}), so the ` +
+          "lane is not reading past the first fence of a section and a second " +
+          "one could ship unchecked.",
       );
     }
   });
@@ -152,8 +189,7 @@ describe("the guide's working routes", () => {
     [ROUTE_A_HEADING, "default"],
     [ROUTE_B_HEADING, "escape hatch"],
   ])("%s compiles against the shipped declarations", (heading) => {
-    for (const fence of fencesUnder(heading)) {
-      const { exitCode, output } = typecheckFence(fence);
+    for (const { exitCode, output } of compiledFencesUnder(heading)) {
       if (exitCode !== 0) {
         throw new Error(
           `a fence under ${heading} does not compile against the shipped ` +
@@ -191,8 +227,7 @@ describe("the guide's working routes", () => {
 
 describe("the guide's object-literal negative control", () => {
   test("the literal fails with TS2740, naming the missing `LuaMap` members", () => {
-    for (const fence of fencesUnder(LITERAL_HEADING)) {
-      const { exitCode, output } = typecheckFence(fence);
+    for (const { exitCode, output } of compiledFencesUnder(LITERAL_HEADING)) {
       expect(exitCode).not.toBe(0);
       // The specific diagnostic is the page's premise: the literal is rejected
       // for missing `LuaMap`'s members, not for some unrelated reason. A
@@ -211,9 +246,8 @@ describe("the guide's rejected mapped type", () => {
   // them upstream reds this and reopens the recorded rejection rather than
   // letting the page outlive it.
   test("the recorded-as-rejected fence still compiles, unsoundness and all", () => {
-    for (const fence of fencesUnder(MAPPED_TYPE_HEADING)) {
+    for (const { fence, exitCode, output } of compiledFencesUnder(MAPPED_TYPE_HEADING)) {
       expect(fence).toContain("@ts-expect-error");
-      const { exitCode, output } = typecheckFence(fence);
       if (exitCode !== 0) {
         throw new Error(
           "the mapped type the page records as rejected no longer behaves as " +
