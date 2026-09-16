@@ -1354,43 +1354,65 @@ The error names the cause exactly: a literal is not a `LuaMap`. Everything below
 
 #### Two routes that work
 
+`render.clear` is legal only inside a render script, so both routes below are whole `.render_script` sources rather than loose statements. The `lua` block under each is the transpiler's own output for the `ts` block above it, minus the generated-by banner — the guide's tests transpile each fence and compare, so what you read is what you would get in `build/`.
+
 ##### Route A — declare the map, then set each entry
 
 ```ts
-const buffers = new LuaMap<render.ClearBufferKey, number | Vector4>();
-buffers.set(graphics.BUFFER_TYPE_COLOR0_BIT, vmath.vector4(0, 0, 0, 0));
-buffers.set(graphics.BUFFER_TYPE_DEPTH_BIT, 1);
-render.clear(buffers);
+import { defineRenderScript } from "@defold-typescript/types";
+
+export default defineRenderScript({
+  update() {
+    const buffers = new LuaMap<render.ClearBufferKey, number | Vector4>();
+    buffers.set(graphics.BUFFER_TYPE_COLOR0_BIT, vmath.vector4(0, 0, 0, 0));
+    buffers.set(graphics.BUFFER_TYPE_DEPTH_BIT, 1);
+    render.clear(buffers);
+  },
+});
 ```
 
 Keys and values are fully checked: a constant from another family, or a value that is neither a number nor a `Vector4`, is a compile error at the `set` that introduced it. The emitted Lua is the same table the reference builds, assembled one entry at a time:
 
 ```lua
-buffers = {}
-buffers[graphics.BUFFER_TYPE_COLOR0_BIT] = vmath.vector4(0, 0, 0, 0)
-buffers[graphics.BUFFER_TYPE_DEPTH_BIT] = 1
-render.clear(buffers)
+local ____exports = {}
+function update()
+    local buffers = {}
+    buffers[graphics.BUFFER_TYPE_COLOR0_BIT] = vmath.vector4(0, 0, 0, 0)
+    buffers[graphics.BUFFER_TYPE_DEPTH_BIT] = 1
+    render.clear(buffers)
+end
+return ____exports
 ```
 
 ##### Route B — the inline table, cast
 
 ```ts
-const buffers = {
-  [graphics.BUFFER_TYPE_COLOR0_BIT]: vmath.vector4(0, 0, 0, 0),
-  [graphics.BUFFER_TYPE_DEPTH_BIT]: 1,
-} as unknown as LuaMap<render.ClearBufferKey, number | Vector4>;
-render.clear(buffers);
+import { defineRenderScript } from "@defold-typescript/types";
+
+export default defineRenderScript({
+  update() {
+    render.clear({
+      [graphics.BUFFER_TYPE_COLOR0_BIT]: vmath.vector4(0, 0, 0, 0),
+      [graphics.BUFFER_TYPE_DEPTH_BIT]: 1,
+    } as unknown as LuaMap<render.ClearBufferKey, number | Vector4>);
+  },
+});
 ```
 
-This emits the reference's constructor verbatim:
+Cast in argument position, this emits the reference's constructor verbatim — one table, built where it is passed:
 
 ```lua
-buffers = {
-    [graphics.BUFFER_TYPE_COLOR0_BIT] = vmath.vector4(0, 0, 0, 0),
-    [graphics.BUFFER_TYPE_DEPTH_BIT] = 1
-}
-render.clear(buffers)
+local ____exports = {}
+function update()
+    render.clear({
+        [graphics.BUFFER_TYPE_COLOR0_BIT] = vmath.vector4(0, 0, 0, 0),
+        [graphics.BUFFER_TYPE_DEPTH_BIT] = 1
+    })
+end
+return ____exports
 ```
+
+Assign the cast to a `const` first and you get the table and the call as two statements instead — still correct, but no longer the shape this route exists for.
 
 The `as unknown as` pair is what the double cast costs you: it erases the type on the way through, so **neither the keys nor the values are checked**. `{ [graphics.STATE_BLEND]: "red" }` compiles just as happily.
 
@@ -1422,7 +1444,7 @@ It does not. `graphics.STATE_BLEND` is a render-state constant, not a buffer key
 
 It also never reaches `render.clear`, because a mapped type is still an object type and still has none of `LuaMap`'s members. So the route buys no checking and no assignability, and is recorded here as rejected rather than left out — it is the first thing you would try.
 
-`packages/docs/lua-table-constructs.test.ts` compiles every fence on this page against the shipped declarations, including this one: if TypeScript ever closes the excess-property hole, that test reds and this rejection is revisited rather than silently outliving its reason.
+`packages/docs/lua-table-constructs.test.ts` compiles every TypeScript fence on this page against the shipped declarations, including this one: if TypeScript ever closes the excess-property hole, that test reds and this rejection is revisited rather than silently outliving its reason.
 
 ### Script lifecycle helpers
 
