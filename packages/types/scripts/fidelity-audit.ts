@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import * as ts from "typescript";
 import { type ApiFunction, parseDefoldApiDoc } from "../src/api-doc";
 import { DEFOLD_TYPE_MAP } from "../src/core-types";
 import {
@@ -27,6 +28,7 @@ import { EXTENSION_GOLDEN_MANIFEST } from "./extension-goldens";
 import {
   collectConstantFqns,
   generateModuleDeclaration,
+  loadSrcAugmentations,
   MESSAGES_MANIFEST,
   MODULE_MANIFEST,
   type ModuleManifestEntry,
@@ -158,6 +160,46 @@ function splitArguments(text: string, start: number): string[] | null {
   return null;
 }
 
+// A call inside a Lua comment is not a call site, and prose there carries commas
+// that would otherwise read as argument separators — `--> vmath.matrix4(1, 0, …)`
+// showing printed output is the sharpest case. Quote-aware so a `--` inside a
+// string literal stays put. Newlines survive, so line structure is unchanged.
+function stripLuaComments(text: string): string {
+  let out = "";
+  let quote: string | null = null;
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i] as string;
+    if (quote !== null) {
+      out += ch;
+      if (ch === "\\") {
+        out += text[i + 1] ?? "";
+        i += 1;
+      } else if (ch === quote) {
+        quote = null;
+      }
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      quote = ch;
+      out += ch;
+      continue;
+    }
+    if (ch === "-" && text[i + 1] === "-") {
+      if (text.startsWith("--[[", i)) {
+        const end = text.indexOf("]]", i + 4);
+        i = end === -1 ? text.length : end + 1;
+        continue;
+      }
+      const newline = text.indexOf("\n", i);
+      if (newline === -1) break;
+      i = newline - 1;
+      continue;
+    }
+    out += ch;
+  }
+  return out;
+}
+
 // Inline `<code>` in example prose names a function rather than calling it
 // (`<code>gui.set_texture()</code> is sufficient`). A highlighted block's `<code>`
 // always wraps token spans, so only the prose kind is bare text.
@@ -169,7 +211,7 @@ const exampleCallCache = new WeakMap<ApiFunction, readonly (readonly string[])[]
 function exampleCalls(fn: ApiFunction): readonly (readonly string[])[] {
   const cached = exampleCallCache.get(fn);
   if (cached !== undefined) return cached;
-  const text = plainText((fn.examples ?? "").replace(INLINE_CODE, ""));
+  const text = stripLuaComments(plainText((fn.examples ?? "").replace(INLINE_CODE, "")));
   const escaped = fn.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const calls: string[][] = [];
   for (const match of text.matchAll(new RegExp(`(?<![\\w.:])${escaped}\\s*\\(`, "g"))) {
@@ -258,10 +300,7 @@ export function evidencedOptionalSlots(
 ): EvidencedSlot[] {
   const skipFunctions = new Set(entry.skipFunctions ?? []);
   const functions = parseDefoldApiDoc(entry.doc).functions;
-  const overloadsByName = new Map<string, ApiFunction[]>();
-  for (const fn of functions) {
-    overloadsByName.set(fn.name, [...(overloadsByName.get(fn.name) ?? []), fn]);
-  }
+  const overloadsByName = overloadIndex(functions);
   const emittedRequired = new Map<string, boolean>();
   for (const fn of functions) {
     if (skipFunctions.has(stripNamespace(fn.name))) continue;
@@ -287,6 +326,176 @@ export function unmarkedOptionalSlots(
   return evidencedOptionalSlots(entry)
     .filter((slot) => slot.emittedRequired)
     .map((slot) => slot.key);
+}
+
+// `min` is the fewest arguments a call may pass, `max` the most;
+// `Number.POSITIVE_INFINITY` for a declaration that takes a rest parameter.
+export interface ArityRange {
+  readonly min: number;
+  readonly max: number;
+}
+
+function signatureArity(params: readonly ts.ParameterDeclaration[]): ArityRange {
+  const fixed = params.filter((param) => param.dotDotDotToken === undefined);
+  return {
+    min: fixed.filter(
+      (param) => param.questionToken === undefined && param.initializer === undefined,
+    ).length,
+    max: fixed.length === params.length ? params.length : Number.POSITIVE_INFINITY,
+  };
+}
+
+function collectAuthoredArities(
+  container: ts.SourceFile | ts.ModuleBlock,
+  prefix: string,
+  out: Map<string, ArityRange[]>,
+): void {
+  for (const statement of container.statements) {
+    if (
+      ts.isModuleDeclaration(statement) &&
+      statement.body !== undefined &&
+      ts.isModuleBlock(statement.body)
+    ) {
+      // `declare global` is an augmentation wrapper, not a namespace segment.
+      const name = statement.name.text;
+      const next = name === "global" ? prefix : prefix === "" ? name : `${prefix}.${name}`;
+      collectAuthoredArities(statement.body, next, out);
+    } else if (ts.isFunctionDeclaration(statement) && statement.name !== undefined) {
+      const fqn = prefix === "" ? statement.name.text : `${prefix}.${statement.name.text}`;
+      out.set(fqn, [...(out.get(fqn) ?? []), signatureArity(statement.parameters)]);
+    }
+  }
+}
+
+// A skipped function has no generated declaration at all, so its arity exists
+// only as text in the hand-authored augmentations. Parsed once per process:
+// every manifest entry asks the same small set of files.
+let authoredAritiesCache: Map<string, ArityRange[]> | null = null;
+
+function authoredArities(): Map<string, ArityRange[]> {
+  if (authoredAritiesCache !== null) return authoredAritiesCache;
+  const out = new Map<string, ArityRange[]>();
+  for (const { path, contents } of loadSrcAugmentations()) {
+    collectAuthoredArities(
+      ts.createSourceFile(path, contents, ts.ScriptTarget.Latest, true),
+      "",
+      out,
+    );
+  }
+  authoredAritiesCache = out;
+  return out;
+}
+
+// Every argument count the shipped surface accepts, keyed by FQN. This is a
+// per-call question, unlike OPTIONALITY_EVIDENCE.exampleArity's per-slot one: an
+// argument shifted into another slot keeps the slot count and still fails to
+// compile, which is why omissibility alone could not see it.
+export function declaredArities(
+  entry: Pick<ModuleManifestEntry, "doc" | "namespace" | "skipFunctions">,
+): Map<string, ArityRange[]> {
+  const rules = entry.skipFunctions ?? [];
+  const exact = new Set(rules.filter((rule) => !rule.endsWith(".")));
+  const segments = rules.filter((rule) => rule.endsWith("."));
+  const prefix = `${entry.namespace}.`;
+  const authored = authoredArities();
+  const result = new Map<string, ArityRange[]>();
+  for (const fn of parseDefoldApiDoc(entry.doc).functions) {
+    const local = fn.name.startsWith(prefix) ? fn.name.slice(prefix.length) : fn.name;
+    if (exact.has(local) || segments.some((segment) => local.startsWith(segment))) {
+      // Every ref-doc element sharing the name resolves to the same authored
+      // signature set, so record it once rather than per element.
+      result.set(fn.name, authored.get(fn.name) ?? []);
+      continue;
+    }
+    const params = fn.parameters;
+    // A vararg slot emits as a rest parameter, which accepts nothing at all, so
+    // it bounds the minimum as well as unbounding the maximum —
+    // `trailingOptionalCutoff` only sees doc-optionality and cannot lower it.
+    const firstVararg = params.findIndex((param) => param.isVararg === true);
+    const unbounded = firstVararg !== -1;
+    result.set(fn.name, [
+      ...(result.get(fn.name) ?? []),
+      {
+        min: Math.min(
+          trailingOptionalCutoff(params, fn.name),
+          unbounded ? firstVararg : params.length,
+        ),
+        max: unbounded ? Number.POSITIVE_INFINITY : params.length,
+      },
+    ]);
+  }
+  return result;
+}
+
+// FQN to the recorded reason an upstream example calls an argument count no
+// declaration accepts, mirroring OPTIONALITY_EVIDENCE_EXEMPTIONS. Empty is the
+// goal state, not a gap: the gate below asserts both directions.
+export const INEXPRESSIBLE_EXAMPLE_RESIDUALS: ReadonlyMap<string, string> = new Map([
+  [
+    "b2d.shape.set_shape",
+    "upstream documents an alternative call form inside one slot — the `shape_id` " +
+      'parameter reads "shape handle from a shape info table, or pass body, shape_index" ' +
+      "— so the four-argument example has one more argument than any parameter list " +
+      "upstream declares. Expressing it needs a hand-authored b2d.shape overload pair, " +
+      "which changes the shipped surface and is its own piece of work.",
+  ],
+]);
+
+export interface InexpressibleCall {
+  readonly fqn: string;
+  readonly argumentCount: number;
+}
+
+function overloadIndex(functions: readonly ApiFunction[]): Map<string, ApiFunction[]> {
+  const byName = new Map<string, ApiFunction[]>();
+  for (const fn of functions) {
+    byName.set(fn.name, [...(byName.get(fn.name) ?? []), fn]);
+  }
+  return byName;
+}
+
+export function inexpressibleExampleCalls(
+  entry: Pick<ModuleManifestEntry, "doc" | "namespace" | "skipFunctions">,
+): InexpressibleCall[] {
+  const arities = declaredArities(entry);
+  const functions = parseDefoldApiDoc(entry.doc).functions;
+  const byName = overloadIndex(functions);
+  const seen = new Set<string>();
+  const calls: InexpressibleCall[] = [];
+  for (const fn of functions) {
+    const ranges = arities.get(fn.name) ?? [];
+    for (const args of ownExampleCalls(fn, byName.get(fn.name) ?? [fn])) {
+      // A forwarded vararg stands for an unknown number of values, the same
+      // reason exampleArity discounts it.
+      if (args.at(-1) === "...") continue;
+      const argumentCount = args.length;
+      if (ranges.some((range) => argumentCount >= range.min && argumentCount <= range.max))
+        continue;
+      const key = `${fn.name}:${argumentCount}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      calls.push({ fqn: fn.name, argumentCount });
+    }
+  }
+  return calls;
+}
+
+// The scan can only speak for functions whose ref-doc carries a parseable
+// example call. Reporting that split is what stops an empty residual from
+// reading as stronger coverage than it is.
+export function exampleScanReach(entry: Pick<ModuleManifestEntry, "doc">): {
+  withCalls: number;
+  withoutCalls: number;
+} {
+  const functions = parseDefoldApiDoc(entry.doc).functions;
+  const byName = overloadIndex(functions);
+  let withCalls = 0;
+  let withoutCalls = 0;
+  for (const fn of functions) {
+    if (ownExampleCalls(fn, byName.get(fn.name) ?? [fn]).length > 0) withCalls += 1;
+    else withoutCalls += 1;
+  }
+  return { withCalls, withoutCalls };
 }
 
 function auditEntry(
