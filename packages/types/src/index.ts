@@ -49,6 +49,7 @@ export {
   type EmitOptions,
   emitDeclarations,
   emitSymbolSignatures,
+  type SlotTypes,
   type SymbolSignature,
   TS_IDENTIFIER,
   TS_RESERVED_NAMES,

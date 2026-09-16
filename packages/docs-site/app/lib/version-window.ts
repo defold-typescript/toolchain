@@ -7,6 +7,7 @@ import {
   funcIdentity,
   memberIdentity,
   type SignaturesArtifact,
+  type SlotTypes,
 } from "./combined-surface";
 
 /**
@@ -61,12 +62,15 @@ function declaredInWindow(
   entry: CombinedEntry,
   signatures: SignaturesArtifact,
   inSlice: ReadonlySet<string>,
-): string | undefined {
+): { declaration: string; slotTypes: SlotTypes | undefined } | undefined {
   const key = symbolIdentityKey(entry.identity);
   for (const version of entry.availableIn) {
     if (!inSlice.has(version)) continue;
     const declaration = signatures.versions[version]?.[key];
-    if (declaration) return declaration;
+    // The slot types come from the same version as the declaration that won, so
+    // a slot's type can never describe a different declaration than the one
+    // rendered beside it.
+    if (declaration) return { declaration, slotTypes: signatures.slotTypes?.[version]?.[key] };
   }
   return undefined;
 }
@@ -86,12 +90,19 @@ function windowedSignature(
   entry: CombinedEntry,
   signatures: SignaturesArtifact,
   inSlice: ReadonlySet<string>,
-): string {
+): Pick<CombinedEntry, "authoritativeSignature" | "slotTypes"> {
+  const built = {
+    authoritativeSignature: entry.authoritativeSignature,
+    ...(entry.slotTypes ? { slotTypes: entry.slotTypes } : {}),
+  };
   const newestInWindow = entry.availableIn.find((version) => inSlice.has(version));
-  if (newestInWindow === undefined || newestInWindow === entry.availableIn[0]) {
-    return entry.authoritativeSignature;
-  }
-  return declaredInWindow(entry, signatures, inSlice) ?? entry.authoritativeSignature;
+  if (newestInWindow === undefined || newestInWindow === entry.availableIn[0]) return built;
+  const resolved = declaredInWindow(entry, signatures, inSlice);
+  if (resolved === undefined) return built;
+  return {
+    authoritativeSignature: resolved.declaration,
+    ...(resolved.slotTypes ? { slotTypes: resolved.slotTypes } : {}),
+  };
 }
 
 function windowNamespace(
@@ -130,10 +141,10 @@ function windowNamespace(
       records: new Map([...ns.availability.records].filter(([key]) => kept.has(key))),
       transitions: ns.availability.transitions,
     },
-    entries: survivors.map((entry) => ({
-      ...entry,
-      authoritativeSignature: windowedSignature(entry, signatures, inSlice),
-    })),
+    entries: survivors.map((entry) => {
+      const { slotTypes: _dropped, ...rest } = entry;
+      return { ...rest, ...windowedSignature(entry, signatures, inSlice) };
+    }),
     ...(ns.signatureStore ? { signatureStore: ns.signatureStore } : {}),
   };
 }

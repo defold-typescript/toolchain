@@ -16,6 +16,7 @@ import {
   luaMultiReturn,
   normalizedFunctionSignature,
   type SignatureStore,
+  type SlotTypes,
   symbolIdentityKey,
   symbolNameKey,
   type TranslationStore,
@@ -306,6 +307,16 @@ export interface ApiPage {
    */
   authoritativeSignatures?: ReadonlyMap<string, string>;
   /**
+   * The per-slot companion to {@link authoritativeSignatures}, keyed by name
+   * identity (`<ns>\0FUNCTION\0<fqn>`) rather than by overload signature: the
+   * Parameters and Returns lists render one ref-doc entry per row, and its raw
+   * overload key does not survive the authored-override collapse. A slot present
+   * here renders the type its signature shows; one absent falls back to
+   * {@link mapDocType}, which is what keeps lua-stdlib, editor-vm and
+   * override-supplied symbols rendering at all.
+   */
+  authoritativeSlotTypes?: ReadonlyMap<string, SlotTypes>;
+  /**
    * `engine` for Defold-engine namespaces emitted from `api-targets.json` `modules`
    * and the synthetic globals page; `lua-stdlib` for pure-Lua / LuaJIT surfaces
    * (currently `base`, `bit`) sourced from `target.luaStdlib` and rendered under
@@ -512,14 +523,30 @@ function typeList(types: string[], mapType: MapType = mapDocType): string {
   return real.length > 0 ? real.join(" | ") : "unknown";
 }
 
-function projectParams(list: ApiParameter[], mapType: MapType = mapDocType): ApiSymbolParam[] {
-  return list.map((p) => ({
-    name: p.name,
-    doc: platformDocText(p.doc),
-    types: normalizeTypes(p.types).map(mapType),
-    isOptional: p.isOptional,
-    ...(p.fields ? { fields: projectParams(p.fields, mapType) } : {}),
-  }));
+/**
+ * Project one call list into render rows. When `slots` carries an entry for a
+ * row's `<kind>:<position>:<name>`, that row shows the type the emitter actually
+ * rendered into the signature above it — the curated mapping, documented-constant
+ * brand or recovered inline object a bare token cannot express. Absent, the row
+ * keeps the `mapDocType` render. Nested `fields` always take the token path: they
+ * carry per-field prose and sit below a slot type that already spells them out.
+ */
+function projectParams(
+  list: ApiParameter[],
+  mapType: MapType = mapDocType,
+  slots?: SlotTypes,
+  kind: "param" | "return" = "param",
+): ApiSymbolParam[] {
+  return list.map((p, index) => {
+    const emitted = slots?.[`${kind}:${index}:${p.name}`];
+    return {
+      name: p.name,
+      doc: platformDocText(p.doc),
+      types: emitted !== undefined ? [emitted] : normalizeTypes(p.types).map(mapType),
+      isOptional: p.isOptional,
+      ...(p.fields ? { fields: projectParams(p.fields, mapType) } : {}),
+    };
+  });
 }
 
 /**
@@ -829,7 +856,10 @@ export function apiModuleMarkdown(
  * rows. `apiModuleMarkdown` stays the flat search/index projection.
  */
 export function apiModuleSymbols(
-  page: Pick<ApiPage, "module" | "category" | "availability" | "authoritativeSignatures">,
+  page: Pick<
+    ApiPage,
+    "module" | "category" | "availability" | "authoritativeSignatures" | "authoritativeSlotTypes"
+  >,
   translations: TranslationStore = {},
   signatures: SignatureStore = {},
 ): ApiSymbol[] {
@@ -839,6 +869,20 @@ export function apiModuleSymbols(
   const mapType: MapType = page.category === "library" ? (t) => t : mapDocType;
   const isLibrary = page.category === "library";
   const authoritative = page.authoritativeSignatures;
+  const slotTypes = page.authoritativeSlotTypes;
+  // Slots resolve through the same exact identity the authoritative signature
+  // does, and are used only on a row that actually renders that signature. A row
+  // whose signature fell back to the token render keeps token-derived slots too,
+  // so the two halves of a row can never come from different sources.
+  const slotsFor = (fn: ApiFunction): SlotTypes | undefined =>
+    slotTypes?.get(
+      symbolIdentityKey({
+        namespace: m.namespace,
+        kind: "FUNCTION",
+        name: fn.name,
+        signature: normalizedFunctionSignature(fn),
+      }),
+    );
   const symbols: ApiSymbol[] = [];
   const overrideEmitted = new Set<string>();
   // Every ref-doc entry of an override-covered FQN, grouped in source order
@@ -893,13 +937,21 @@ export function apiModuleSymbols(
       return entry ? platformDocText(entry.description || entry.brief) : fixtureDoc;
     };
     const primaryEntry = rowEntry(0);
+    // Only the row rendering the authoritative declaration may read its slots;
+    // an authored override arm renders `.d.ts` text the emitter never produced.
+    const primarySlots =
+      authSig !== undefined && primarySignature === authSig ? slotsFor(fn) : undefined;
     const symbol: ApiSymbol = {
       kind: "function",
       name: fn.name,
       signature: primarySignature,
       docMarkdown: ov === null ? fixtureDoc : overloadDoc(0),
-      parameters: primaryEntry ? projectParams(primaryEntry.parameters, mapType) : [],
-      returnValues: primaryEntry ? projectParams(primaryEntry.returnValues, mapType) : [],
+      parameters: primaryEntry
+        ? projectParams(primaryEntry.parameters, mapType, primarySlots, "param")
+        : [],
+      returnValues: primaryEntry
+        ? projectParams(primaryEntry.returnValues, mapType, primarySlots, "return")
+        : [],
     };
     const example = exampleMarkdownFor(fn, translations);
     if (example) symbol.exampleMarkdown = example;
