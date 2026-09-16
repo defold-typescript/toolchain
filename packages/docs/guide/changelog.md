@@ -17,8 +17,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **[Lua table constructs](./lua-table-constructs.md) is a new guide page on writing a table the engine reads by constant key**, such as [`render.clear`](/api/render)'s buffer table: why the object literal does not compile, the checked `LuaMap` route and the inline cast with the Lua each emits, and the mapped type that looks like the fix while silently accepting a key from another family.
-
+- **[Lua table constructs](./lua-table-constructs.md) is a new guide page on writing a table the engine reads by constant key**, such as [`render.clear`](/api/render)'s buffer table: why the object literal does not compile, the checked `LuaMap` route and the inline cast, and the mapped type that looks like the fix while silently accepting a key from another family. Both working routes are complete render scripts, and the Lua printed under each is the transpiler's own output for the sample above it.
 - **[Script lifecycle](./script-lifecycle.md#three-ways-to-type-self) now lays out all three ways to type `self` and what inference costs.** The page shows `init(self): State` and `defineScript<Props, State>` beside the inferred default, says `self` outside `init` is the declared properties merged with the state `init` returns, explains why one type argument cannot sit next to `properties`, and shows a string literal widening to `string` unless you name the state. It also spells out that a type argument describes state without creating it — a field no `init` writes is `nil` on a fresh instance, so the no-`init` example models it optional — and that `Hash`, `Vector3` and the other engine value types are global as well as importable.
 
 ### Fixed
