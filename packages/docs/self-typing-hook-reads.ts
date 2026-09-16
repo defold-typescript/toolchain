@@ -75,23 +75,32 @@ function hooksOutsideInit(source: ts.SourceFile): Hook[] {
 }
 
 /**
- * Field names read off `fn`'s first parameter. Attribution is by the binding's
- * own identifier text rather than by the literal `self.`, so a hook that names
- * its parameter something else still counts and a read off a neighbouring
- * object never does.
+ * Field names read off `fn`'s first parameter. Attribution is by the
+ * parameter's own *binding*, resolved through the checker, so a hook that
+ * names its parameter something else still counts, a read off a neighbouring
+ * object never does, and neither does a read off a nested binding that merely
+ * reuses the parameter's name.
  */
-function fieldsReadOffFirstParameter(fn: ts.FunctionLikeDeclaration): Set<string> {
+function fieldsReadOffFirstParameter(
+  fn: ts.FunctionLikeDeclaration,
+  checker: ts.TypeChecker,
+): Set<string> {
   const fields = new Set<string>();
   const [first] = fn.parameters;
   if (first === undefined || !ts.isIdentifier(first.name) || fn.body === undefined) {
     return fields;
   }
-  const binding = first.name.text;
+  const binding = checker.getSymbolAtLocation(first.name);
+  // Without a symbol every unresolved identifier would compare equal to every
+  // other, which is the fail-open this guard exists to close.
+  if (binding === undefined) {
+    return fields;
+  }
   const visit = (node: ts.Node): void => {
     if (
       ts.isPropertyAccessExpression(node) &&
       ts.isIdentifier(node.expression) &&
-      node.expression.text === binding
+      checker.getSymbolAtLocation(node.expression) === binding
     ) {
       fields.add(node.name.text);
     }
@@ -99,6 +108,34 @@ function fieldsReadOffFirstParameter(fn: ts.FunctionLikeDeclaration): Set<string
   };
   visit(fn.body);
   return fields;
+}
+
+const FENCE_FILE = "fence.ts";
+
+/**
+ * A single-file program over the fence text. The binder the checker runs is
+ * what distinguishes a parameter from a same-name inner binding;
+ * `ts.createSourceFile` alone parses without binding. `noLib`/`noResolve` keep
+ * the fence's `@defold-typescript/types` import from reaching the filesystem.
+ */
+function fenceProgram(source: string): ts.Program {
+  const file = ts.createSourceFile(FENCE_FILE, source, ts.ScriptTarget.Latest, true);
+  const host: ts.CompilerHost = {
+    getSourceFile: (name) => (name === FENCE_FILE ? file : undefined),
+    getDefaultLibFileName: () => "lib.d.ts",
+    writeFile: () => {},
+    getCurrentDirectory: () => "",
+    getCanonicalFileName: (name) => name,
+    useCaseSensitiveFileNames: () => true,
+    getNewLine: () => "\n",
+    fileExists: (name) => name === FENCE_FILE,
+    readFile: (name) => (name === FENCE_FILE ? source : undefined),
+  };
+  return ts.createProgram(
+    [FENCE_FILE],
+    { noLib: true, noResolve: true, target: ts.ScriptTarget.Latest },
+    host,
+  );
 }
 
 /**
@@ -116,8 +153,13 @@ export function readsBothChannels(
   propertyField: string,
   stateField: string,
 ): boolean {
-  const parsed = ts.createSourceFile("fence.ts", source, ts.ScriptTarget.Latest, true);
-  const hooks = hooksOutsideInit(parsed);
+  const program = fenceProgram(source);
+  const bound = program.getSourceFile(FENCE_FILE);
+  if (bound === undefined) {
+    throw new Error("the fence source file could not be read back from its own program");
+  }
+  const checker = program.getTypeChecker();
+  const hooks = hooksOutsideInit(bound);
   if (hooks.length === 0) {
     throw new Error(
       "no lifecycle hook outside `init` could be located in this fence — looked " +
@@ -128,7 +170,7 @@ export function readsBothChannels(
     );
   }
   return hooks.some((hook) => {
-    const fields = fieldsReadOffFirstParameter(hook.fn);
+    const fields = fieldsReadOffFirstParameter(hook.fn, checker);
     return fields.has(propertyField) && fields.has(stateField);
   });
 }

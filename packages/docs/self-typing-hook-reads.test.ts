@@ -110,3 +110,39 @@ describe("parameter binding", () => {
     expect(readsBothChannels(source, "speed", "phase")).toBe(false);
   });
 });
+
+describe("nested binding shadows", () => {
+  test("a nested callback parameter reusing the hook parameter's name does not count", () => {
+    const source = fence(`  update(self) {
+    entries.forEach((self) => {
+      if (self.phase !== "boosting") {
+        self.speed += 1;
+      }
+    });
+  },`);
+    expect(readsBothChannels(source, "speed", "phase")).toBe(false);
+  });
+
+  test("a nested block-scoped `const` reusing the hook parameter's name does not count", () => {
+    const source = fence(`  update(self) {
+    {
+      const self = snapshot;
+      if (self.phase !== "boosting") {
+        self.speed += 1;
+      }
+    }
+  },`);
+    expect(readsBothChannels(source, "speed", "phase")).toBe(false);
+  });
+
+  test("reads off the real first parameter inside a nested non-shadowing closure still count", () => {
+    const source = fence(`  update(self) {
+    timer.delay(0, false, () => {
+      if (self.phase !== "boosting") {
+        self.speed += 1;
+      }
+    });
+  },`);
+    expect(readsBothChannels(source, "speed", "phase")).toBe(true);
+  });
+});
