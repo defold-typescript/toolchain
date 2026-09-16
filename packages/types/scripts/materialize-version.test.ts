@@ -406,15 +406,25 @@ function committedTarget(id: string): ApiTarget {
 
 describe("buildVersionedSurfaceFiles src augmentation carry", () => {
   test("SRC_AUGMENTATION_MODULES is the kind manifest's src set, not a second list", () => {
-    const scriptKind = readFileSync(
-      resolve(PACKAGE_ROOT, "generated", "kinds", "script.d.ts"),
-      "utf8",
-    );
-    const fromKindIndex = [...scriptKind.matchAll(/^import "\.\.\/\.\.\/src\/([^"]+)";$/gm)]
-      .map((match) => match[1] ?? "")
-      .sort();
-    expect(fromKindIndex.length).toBeGreaterThan(0);
-    expect([...SRC_AUGMENTATION_MODULES].sort()).toEqual(fromKindIndex);
+    // The union over every runtime kind index: an augmentation restricted to a
+    // namespace rides only that namespace's entrypoint, so `script.d.ts` alone
+    // is a subset of the set a complete surface carries.
+    const kindsDir = resolve(PACKAGE_ROOT, "generated", "kinds");
+    const fromKindIndexes = [
+      ...new Set(
+        readdirSync(kindsDir)
+          .filter((file) => file.endsWith(".d.ts") && file !== "editor-script.d.ts")
+          .flatMap((file) =>
+            [
+              ...readFileSync(resolve(kindsDir, file), "utf8").matchAll(
+                /^import "\.\.\/\.\.\/src\/([^"]+)";$/gm,
+              ),
+            ].map((match) => match[1] ?? ""),
+          ),
+      ),
+    ].sort();
+    expect(fromKindIndexes.length).toBeGreaterThan(0);
+    expect([...SRC_AUGMENTATION_MODULES].sort()).toEqual(fromKindIndexes);
   });
 
   test("carries every src augmentation the kind manifest names", async () => {

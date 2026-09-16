@@ -445,3 +445,33 @@ describe("src/ source-root footnote in the corpus", () => {
     });
   }
 });
+
+describe("llms API section line shape", () => {
+  const full = buildLlmsFull(PACKAGE_TARGET);
+  const api = section(full, "## API");
+
+  // Every symbol form is its own list item. A multi-arm authored override folded
+  // into one value would splice arms 2..n in as bare continuation lines, which an
+  // agent reads as prose rather than as callable signatures.
+  test("every non-blank API line is a list item or a heading", () => {
+    const stray = api
+      .split("\n")
+      .filter((line) => line.trim() !== "")
+      .filter((line) => !line.startsWith("- ") && !line.startsWith("#"));
+    expect(stray).toEqual([]);
+  });
+
+  test("a multi-arm authored symbol contributes one item per arm, once", () => {
+    const store = JSON.parse(
+      readFileSync(join(TYPES_DIR, "signatures", "msg.json"), "utf8"),
+    ) as Record<string, { signatures: string[] }>;
+    const arms = store["msg.url"]?.signatures ?? [];
+    expect(arms.length).toBeGreaterThan(1);
+    // Three ref-doc identities share this one authored arm set: the corpus must
+    // carry it once, not once per identity.
+    for (const arm of arms) {
+      const occurrences = api.split("\n").filter((line) => line.startsWith(`- ${arm}`)).length;
+      expect({ arm, occurrences }).toEqual({ arm, occurrences: 1 });
+    }
+  });
+});

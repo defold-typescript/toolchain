@@ -62,7 +62,8 @@ export function combinedSurface(): CombinedSurface {
 // A Combined namespace projected as an `ApiPage` for the existing render/index
 // components: an `engine` page routed at the canonical `/api/<ns>`, carrying the
 // union module and the synthetic availability lookup. Combined omits example
-// translations (they render as their Lua fallback) and signature overrides.
+// translations (they render as their Lua fallback) but carries the authored
+// signature override store, so every hand-authored overload arm renders.
 export function toCombinedApiPage(ns: CombinedNamespace): ApiPage {
   return combinedNamespaceToApiPage(ns);
 }

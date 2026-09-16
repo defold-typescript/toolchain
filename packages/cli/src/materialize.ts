@@ -508,10 +508,13 @@ export function materializeApiSurface(
 
   // The `*-overloads`/guard augmentations and the `core-types` they import live
   // in the types package `src/` (sibling of `generated/`), not among the
-  // generated module surfaces. The full-script kind entrypoint
-  // (`generated/kinds/script.d.ts`) already enumerates the exact set a complete
-  // surface needs, so derive from it — that single source of truth kills the
+  // generated module surfaces. The emitted kind entrypoints
+  // (`generated/kinds/*.d.ts`) already enumerate the exact set a complete
+  // surface needs, so derive from them — that single source of truth kills the
   // drift trap that dropped `vmath-overloads`/`window-event-guard` (bug-42).
+  // The set is the *union* over every runtime kind, not `script.d.ts` alone: an
+  // augmentation restricted to a namespace appears only on that namespace's
+  // entrypoint, and deriving from one kind would stop shipping the file.
   // `engine-globals` is excluded here; it rides the includeEngineGlobals branch
   // below. Synthetic fixtures with no kinds entrypoint fall back to the
   // historical trio; a missing sibling `src/` filters everything out.
@@ -532,14 +535,26 @@ export function materializeApiSurface(
   const currentGeneratedDir = usesPackagedSurface
     ? path.join(typesRoot, "generated")
     : path.resolve(sourceGeneratedDir, "..", "generated");
-  const scriptKindEntry = usesPackagedSurface
-    ? path.join(typesRoot, "generated", "kinds", "script.d.ts")
-    : path.join(sourceGeneratedDir, "kinds", "script.d.ts");
-  const derivedOverloads = existsSync(scriptKindEntry)
-    ? [...readFileSync(scriptKindEntry, "utf8").matchAll(/import "\.\.\/\.\.\/src\/([^"]+)";/g)]
-        .map((match) => `${match[1]}.d.ts`)
-        .filter((file) => file !== "engine-globals.d.ts")
-    : ["msg-overloads.d.ts", "message-guard.d.ts", "go-overloads.d.ts"];
+  const kindsEntryDir = usesPackagedSurface
+    ? path.join(typesRoot, "generated", "kinds")
+    : path.join(sourceGeneratedDir, "kinds");
+  const kindEntrypoints = existsSync(kindsEntryDir)
+    ? readdirSync(kindsEntryDir)
+        .filter((file) => file.endsWith(".d.ts") && file !== "editor-script.d.ts")
+        .map((file) => path.join(kindsEntryDir, file))
+    : [];
+  const derivedOverloads =
+    kindEntrypoints.length > 0
+      ? [
+          ...new Set(
+            kindEntrypoints.flatMap((entry) =>
+              [...readFileSync(entry, "utf8").matchAll(/import "\.\.\/\.\.\/src\/([^"]+)";/g)].map(
+                (match) => `${match[1]}.d.ts`,
+              ),
+            ),
+          ),
+        ].filter((file) => file !== "engine-globals.d.ts")
+      : ["msg-overloads.d.ts", "message-guard.d.ts", "go-overloads.d.ts"];
   const overloads = derivedOverloads.filter((file) => existsSync(path.join(srcDir, file)));
   const coreTypesSrc = path.join(srcDir, "core-types.ts");
   const includeCoreTypes = overloads.length > 0 && existsSync(coreTypesSrc);
@@ -816,10 +831,13 @@ interface MaterializeVersionedSurfaceModule {
     kind: string;
     universalModules: readonly string[];
     restrictedModule: string | null;
+    restrictedAugmentations?: readonly string[];
     editorModules?: readonly string[];
   }) => string;
   readonly RUNTIME_KIND_MANIFEST: readonly KindManifestEntry[];
   readonly targetKindManifest: (target: unknown) => readonly KindManifestEntry[];
+  // `<src augmentation module> -> <kind-restricted namespace it re-opens>`.
+  readonly RESTRICTED_SRC_AUGMENTATIONS: Readonly<Record<string, string>>;
 }
 
 // gui/render are the only kind-restricted namespaces; every other module is
@@ -905,7 +923,14 @@ export async function materializeRefDocSurface(
           base !== "engine-globals" &&
           !editorOwned.has(base),
       );
-    const universalModules = surfaceModules.filter((base) => !RESTRICTED_NAMESPACES.has(base));
+    // An augmentation bound to a restricted namespace is scoped exactly as the
+    // generated namespace is: out of the universal set, onto that kind alone.
+    // The binding is read from the types package's own declaration rather than
+    // restated here, so the two derivations cannot drift apart.
+    const restrictedAugmentations = mod.RESTRICTED_SRC_AUGMENTATIONS;
+    const universalModules = surfaceModules.filter(
+      (base) => !RESTRICTED_NAMESPACES.has(base) && !Object.hasOwn(restrictedAugmentations, base),
+    );
     const kinds = mod.targetKindManifest(target);
     const kindsDir = path.join(absDir, "kinds");
     mkdirSync(kindsDir, { recursive: true });
@@ -918,6 +943,12 @@ export async function materializeRefDocSurface(
           kind: entry.kind,
           universalModules,
           restrictedModule,
+          restrictedAugmentations: surfaceModules.filter(
+            (base) =>
+              Object.hasOwn(restrictedAugmentations, base) &&
+              entry.restricted !== undefined &&
+              restrictedAugmentations[base] === entry.restricted,
+          ),
           editorModules: [...editorModules, ...EDITOR_HAND_AUTHORED],
         }),
       );
