@@ -13,6 +13,7 @@ import {
   isDocOptional,
   isRecordsCollectionSlot,
   isSlotLevelList,
+  isVarargParameter,
   MAPPING_TABLE_SLOTS,
   type NestedMapping,
   OVERLOAD_COVERED_SKIPS,
@@ -227,7 +228,7 @@ function exampleCalls(fn: ApiFunction): readonly (readonly string[])[] {
 function acceptsArgumentCount(fn: ApiFunction, count: number): boolean {
   const params = fn.parameters;
   if (count < trailingOptionalCutoff(params, fn.name)) return false;
-  return count <= params.length || params.some((p) => p.isVararg === true);
+  return count <= params.length || params.some(isVarargParameter);
 }
 
 // The ref-doc documents an overload as a separate element sharing the name, and
@@ -306,7 +307,7 @@ export function evidencedOptionalSlots(
     if (skipFunctions.has(stripNamespace(fn.name))) continue;
     const overloads = overloadsByName.get(fn.name) ?? [fn];
     fn.parameters.forEach((param, index) => {
-      if (param.isVararg === true) return;
+      if (isVarargParameter(param)) return;
       if (!Object.values(OPTIONALITY_EVIDENCE).some((axis) => axis(fn, index, overloads))) return;
       const omissible = overloads.some((other) => {
         const slot = other.parameters[index];
@@ -411,7 +412,7 @@ export function declaredArities(
     // A vararg slot emits as a rest parameter, which accepts nothing at all, so
     // it bounds the minimum as well as unbounding the maximum —
     // `trailingOptionalCutoff` only sees doc-optionality and cannot lower it.
-    const firstVararg = params.findIndex((param) => param.isVararg === true);
+    const firstVararg = params.findIndex(isVarargParameter);
     const unbounded = firstVararg !== -1;
     result.set(fn.name, [
       ...(result.get(fn.name) ?? []),
@@ -427,12 +428,15 @@ export function declaredArities(
   return result;
 }
 
-// FQN to the recorded reason an upstream example calls an argument count no
-// declaration accepts, mirroring OPTIONALITY_EVIDENCE_EXEMPTIONS. Empty is the
-// goal state, not a gap: the gate below asserts both directions.
+// Call shape (`<fqn>:<argumentCount>`) to the recorded reason an upstream
+// example calls an argument count no declaration accepts, mirroring
+// OPTIONALITY_EVIDENCE_EXEMPTIONS. The key is the shape rather than the name
+// because each reason explains one argument count: a second unsupported arity
+// on the same function is new evidence, not something an existing entry covers.
+// Empty is the goal state, not a gap: the gate below asserts both directions.
 export const INEXPRESSIBLE_EXAMPLE_RESIDUALS: ReadonlyMap<string, string> = new Map([
   [
-    "b2d.shape.set_shape",
+    "b2d.shape.set_shape:4",
     "upstream documents an alternative call form inside one slot — the `shape_id` " +
       'parameter reads "shape handle from a shape info table, or pass body, shape_index" ' +
       "— so the four-argument example has one more argument than any parameter list " +
@@ -444,6 +448,31 @@ export const INEXPRESSIBLE_EXAMPLE_RESIDUALS: ReadonlyMap<string, string> = new 
 export interface InexpressibleCall {
   readonly fqn: string;
   readonly argumentCount: number;
+}
+
+// One function owns the key format so the producer and the consumer below
+// cannot drift apart.
+export function residualKey(call: InexpressibleCall): string {
+  return `${call.fqn}:${call.argumentCount}`;
+}
+
+// The flagged calls no residual explains. A residual covers exactly the one
+// call shape its reason describes.
+export function unexplainedInexpressibleCalls(
+  calls: readonly InexpressibleCall[],
+  residuals: ReadonlyMap<string, string> = INEXPRESSIBLE_EXAMPLE_RESIDUALS,
+): InexpressibleCall[] {
+  return calls.filter((call) => !residuals.has(residualKey(call)));
+}
+
+// The residuals no flagged call produces any more, so the recorded reason is
+// excusing something the evidence no longer shows.
+export function deadResiduals(
+  calls: readonly InexpressibleCall[],
+  residuals: ReadonlyMap<string, string> = INEXPRESSIBLE_EXAMPLE_RESIDUALS,
+): string[] {
+  const flagged = new Set(calls.map(residualKey));
+  return [...residuals.keys()].filter((key) => !flagged.has(key));
 }
 
 function overloadIndex(functions: readonly ApiFunction[]): Map<string, ApiFunction[]> {

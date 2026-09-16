@@ -1,10 +1,15 @@
 import { describe, expect, test } from "bun:test";
 import { resolve } from "node:path";
 import socketDoc from "../fixtures/socket_doc.json" with { type: "json" };
-import { ARBITRARY_TABLE_SLOT_KEYS, OPTIONAL_SLOT_CORRECTIONS } from "../src/emit-dts";
+import {
+  ARBITRARY_TABLE_SLOT_KEYS,
+  isVarargParameter,
+  OPTIONAL_SLOT_CORRECTIONS,
+} from "../src/emit-dts";
 import {
   buildFidelityReport,
   countDroppedHandleMethods,
+  deadResiduals,
   declaredArities,
   evidencedOptionalSlots,
   exampleScanReach,
@@ -13,6 +18,8 @@ import {
   inexpressibleExampleCalls,
   FIDELITY_BASELINE_MANIFEST as MODULE_MANIFEST,
   OPTIONALITY_EVIDENCE_EXEMPTIONS,
+  residualKey,
+  unexplainedInexpressibleCalls,
   unmarkedOptionalSlots,
 } from "./fidelity-audit";
 import baseline from "./fidelity-baseline.json" with { type: "json" };
@@ -1411,9 +1418,19 @@ const element = (name: string, parameters: readonly unknown[], examples = "") =>
 
 const req = (name: string) => ({ name, doc: "", types: ["number"], is_optional: "False" });
 const opt = (name: string) => ({ name, doc: "", types: ["number"], is_optional: "True" });
-const vararg = (name: string) => ({
+// The shape the emitter actually sees: a variadic slot is named `...`, and no
+// engine ref-doc sets `is_vararg` at all.
+const vararg = (name: string, doc = "") => ({
+  name: `...${name}`,
+  doc,
+  types: ["number"],
+  is_optional: "False",
+});
+
+// The converse: the flag set on a slot the emitter would emit positionally.
+const varargFlagOnly = (name: string, doc = "") => ({
   name,
-  doc: "",
+  doc,
   types: ["number"],
   is_optional: "False",
   is_vararg: "True",
@@ -1427,11 +1444,51 @@ describe("declared arities — the argument counts the shipped surface accepts",
     expect(arities.get("test.f")).toEqual([{ min: 1, max: 3 }]);
   });
 
-  test("a vararg parameter leaves the maximum unbounded", () => {
+  test("a vararg parameter leaves the maximum unbounded and does not bind the minimum", () => {
     const arities = declaredArities(
       syntheticEntry([element("test.f", [req("a"), vararg("rest")])]),
     );
     expect(arities.get("test.f")).toEqual([{ min: 1, max: Number.POSITIVE_INFINITY }]);
+  });
+
+  test("an `is_vararg` flag under a positional name leaves the maximum finite", () => {
+    // The emitter emits no rest parameter for it, so the audit must not invent
+    // one: the shipped declaration takes exactly its two parameters.
+    const arities = declaredArities(
+      syntheticEntry([element("test.f", [req("a"), varargFlagOnly("rest")])]),
+    );
+    expect(arities.get("test.f")).toEqual([{ min: 2, max: 2 }]);
+  });
+
+  test("the audit's variadic predicate is the emitter's own", () => {
+    // The coupling this pins: both halves above follow from `isVarargParameter`,
+    // not from a second convention the audit maintains for itself.
+    const parsed = (name: string, isVararg: boolean) => ({
+      name,
+      doc: "",
+      types: ["number"],
+      isOptional: false,
+      isVararg,
+    });
+    expect(isVarargParameter(parsed(vararg("rest").name, false))).toBe(true);
+    expect(isVarargParameter(parsed(varargFlagOnly("rest").name, true))).toBe(false);
+  });
+
+  test("a rest parameter gathers no optionality evidence, a flagged positional one does", () => {
+    // A rest slot is already omissible in the emitted declaration, so prose
+    // calling it optional is nothing the generator can lose; a positional slot
+    // the emitter emits required is.
+    const restSlot = evidencedOptionalSlots(
+      syntheticEntry([element("test.f", [req("a"), vararg("rest", "optional extra values")])]),
+    );
+    expect(restSlot).toEqual([]);
+
+    const positionalSlot = evidencedOptionalSlots(
+      syntheticEntry([
+        element("test.f", [req("a"), varargFlagOnly("rest", "optional extra values")]),
+      ]),
+    );
+    expect(positionalSlot).toEqual([{ key: "test.f:param:rest", emittedRequired: true }]);
   });
 
   test("hand-authored overloads are read from the src augmentations, not the ref-doc", () => {
@@ -1513,24 +1570,64 @@ describe("inexpressible example calls — the arity class gate", () => {
     expect(inexpressibleExampleCalls(entry)).toEqual([{ fqn: "test.f", argumentCount: 1 }]);
   });
 
+  test("a rest parameter accepts an example passing more arguments than slots", () => {
+    // The emitted declaration ends in a rest parameter, so nothing about this
+    // call is inexpressible — reading the unset `is_vararg` flag would flag it.
+    const entry = syntheticEntry([
+      element("test.f", [req("a"), vararg("rest")], "test.f(1, 2, 3)"),
+    ]);
+    expect(inexpressibleExampleCalls(entry)).toEqual([]);
+  });
+
+  test("an `is_vararg` flag under a positional name accepts no extra arguments", () => {
+    const entry = syntheticEntry([
+      element("test.f", [req("a"), varargFlagOnly("rest")], "test.f(1, 2, 3)"),
+    ]);
+    expect(inexpressibleExampleCalls(entry)).toEqual([{ fqn: "test.f", argumentCount: 3 }]);
+  });
+
   test("no audited engine function has an example its declaration cannot express", () => {
     const flagged = ENGINE_MODULE_MANIFEST.flatMap((entry) => inexpressibleExampleCalls(entry));
-    const unexplained = flagged.filter((call) => !INEXPRESSIBLE_EXAMPLE_RESIDUALS.has(call.fqn));
-    expect(unexplained).toEqual([]);
+    expect(unexplainedInexpressibleCalls(flagged)).toEqual([]);
   });
 
   test("every residual still names something the evidence flags, with a stated reason", () => {
-    const flagged = new Set(
-      ENGINE_MODULE_MANIFEST.flatMap((entry) =>
-        inexpressibleExampleCalls(entry).map((call) => call.fqn),
-      ),
-    );
-    const dead = [...INEXPRESSIBLE_EXAMPLE_RESIDUALS.keys()].filter((fqn) => !flagged.has(fqn));
-    expect(dead).toEqual([]);
+    const flagged = ENGINE_MODULE_MANIFEST.flatMap((entry) => inexpressibleExampleCalls(entry));
+    expect(deadResiduals(flagged)).toEqual([]);
     const unexplained = [...INEXPRESSIBLE_EXAMPLE_RESIDUALS]
       .filter(([, reason]) => reason.trim().length === 0)
-      .map(([fqn]) => fqn);
+      .map(([key]) => key);
     expect(unexplained).toEqual([]);
+  });
+
+  test("a residual excuses one call shape, leaving another arity on the same name unexplained", () => {
+    // A recorded reason explains a specific argument count, so a second
+    // unsupported arity on the same function is new evidence, not covered.
+    const flagged = [
+      { fqn: "test.f", argumentCount: 4 },
+      { fqn: "test.f", argumentCount: 2 },
+    ];
+    const residuals = new Map([["test.f:4", "the four-argument form is upstream-only"]]);
+    expect(unexplainedInexpressibleCalls(flagged, residuals)).toEqual([
+      { fqn: "test.f", argumentCount: 2 },
+    ]);
+  });
+
+  test("a residual whose name is still flagged at another arity is dead", () => {
+    const flagged = [{ fqn: "test.f", argumentCount: 2 }];
+    const residuals = new Map([["test.f:4", "the four-argument form is upstream-only"]]);
+    expect(deadResiduals(flagged, residuals)).toEqual(["test.f:4"]);
+  });
+
+  test("a residual naming the exact flagged shape settles both directions", () => {
+    const flagged = [{ fqn: "test.f", argumentCount: 4 }];
+    const residuals = new Map([["test.f:4", "the four-argument form is upstream-only"]]);
+    expect(unexplainedInexpressibleCalls(flagged, residuals)).toEqual([]);
+    expect(deadResiduals(flagged, residuals)).toEqual([]);
+  });
+
+  test("the residual key is the call shape, so producer and consumer cannot drift", () => {
+    expect(residualKey({ fqn: "test.f", argumentCount: 4 })).toBe("test.f:4");
   });
 
   test("an empty residual means scanned and clean, not scanned nothing", () => {
