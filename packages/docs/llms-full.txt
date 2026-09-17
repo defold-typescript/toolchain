@@ -2201,9 +2201,9 @@ export default defineScript({
 });
 ```
 
-The error names `count` and both lines that reach it. Move `count` and `increment` into a module of their own — the singleton above — and import them from the script: the state then has one home, and every reader sees the same value.
+The error names `count` and both lines that reach it. Move `count` and `increment` into a module of their own — the singleton above — and import them from the script: the state then has one home, and every reader sees the same value. What counts is the rebinding, not how it is spelled: `count = 1`, `[count] = [1]`, `({ count } = …)` and `for (count of …)` are one shape. Writing through a binding — `state.ready = true` — is not, because both sides hold the same table.
 
-The other rejected shape is an effectful top-level statement — a call rather than a literal — written above an exported declaration. Move it below the exports, or into `init`.
+The other rejected shape is an effectful top-level statement — a call rather than a literal — with any exported declaration, or anything one of them reaches, below it. Move it below them all, or into `init`.
 
 #### Truly global variables: `declare global`
 

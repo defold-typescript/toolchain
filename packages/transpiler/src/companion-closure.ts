@@ -41,6 +41,18 @@ export interface CompanionClosure {
   readonly violations: readonly ClosureViolation[];
 }
 
+/**
+ * One runtime value export. The public `name` is what a consumer sees and what
+ * the reserved-field rule judges; `symbol` is the local binding the dependency
+ * closure walks, and the two differ under an alias.
+ */
+interface ExportEntry {
+  readonly symbol: ts.Symbol;
+  readonly name: string;
+  /** Where the diagnostic points. */
+  readonly nameNode: ts.Node;
+}
+
 interface TopLevelDecl {
   readonly name: string;
   /** The whole statement, which moves or stays as a unit. */
@@ -118,10 +130,104 @@ function forEachReference(
 ): void {
   const walk = (node: ts.Node): void => {
     if (ts.isIdentifier(node) && !isDeclarationName(node) && !isTypePosition(node)) {
-      const symbol = checker.getSymbolAtLocation(node);
+      const symbol = resolveReferencedSymbol(node, checker);
       if (symbol !== undefined) {
         visit(node, symbol);
       }
+    }
+    ts.forEachChild(node, walk);
+  };
+  walk(root);
+}
+
+// `getSymbolAtLocation` on a shorthand property's name yields the *property*
+// symbol, so `{ count }` would name neither the binding it reads nor the one a
+// destructuring assignment rebinds.
+function resolveReferencedSymbol(
+  node: ts.Identifier,
+  checker: ts.TypeChecker,
+): ts.Symbol | undefined {
+  const parent = node.parent;
+  if (parent !== undefined && ts.isShorthandPropertyAssignment(parent) && parent.name === node) {
+    return checker.getShorthandAssignmentValueSymbol(parent) ?? checker.getSymbolAtLocation(node);
+  }
+  return checker.getSymbolAtLocation(node);
+}
+
+/**
+ * Every position the source writes to, classified structurally. Recursing
+ * through parentheses and destructuring patterns is what separates a rebinding
+ * — which a split cannot carry — from a property or element write, which is
+ * shared by reference and stays safe.
+ */
+function forEachAssignmentTarget(
+  root: ts.Node,
+  checker: ts.TypeChecker,
+  visit: (node: ts.Identifier, symbol: ts.Symbol) => void,
+): void {
+  const classify = (target: ts.Node): void => {
+    if (ts.isParenthesizedExpression(target)) {
+      classify(target.expression);
+      return;
+    }
+    if (ts.isPropertyAccessExpression(target) || ts.isElementAccessExpression(target)) {
+      return;
+    }
+    if (ts.isArrayLiteralExpression(target)) {
+      for (const element of target.elements) {
+        if (ts.isOmittedExpression(element)) {
+          continue;
+        }
+        if (ts.isSpreadElement(element)) {
+          classify(element.expression);
+        } else if (
+          ts.isBinaryExpression(element) &&
+          element.operatorToken.kind === ts.SyntaxKind.EqualsToken
+        ) {
+          classify(element.left);
+        } else {
+          classify(element);
+        }
+      }
+      return;
+    }
+    if (ts.isObjectLiteralExpression(target)) {
+      for (const property of target.properties) {
+        if (ts.isPropertyAssignment(property)) {
+          classify(property.initializer);
+        } else if (ts.isSpreadAssignment(property)) {
+          classify(property.expression);
+        } else if (ts.isShorthandPropertyAssignment(property)) {
+          const symbol = checker.getShorthandAssignmentValueSymbol(property);
+          if (symbol !== undefined) {
+            visit(property.name, symbol);
+          }
+        }
+      }
+      return;
+    }
+    if (ts.isIdentifier(target)) {
+      const symbol = checker.getSymbolAtLocation(target);
+      if (symbol !== undefined) {
+        visit(target, symbol);
+      }
+    }
+  };
+
+  const walk = (node: ts.Node): void => {
+    if (ts.isBinaryExpression(node) && isAssignmentOperator(node.operatorToken.kind)) {
+      classify(node.left);
+    } else if (
+      (ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node)) &&
+      (node.operator === ts.SyntaxKind.PlusPlusToken ||
+        node.operator === ts.SyntaxKind.MinusMinusToken)
+    ) {
+      classify(node.operand);
+    } else if (
+      (ts.isForInStatement(node) || ts.isForOfStatement(node)) &&
+      !ts.isVariableDeclarationList(node.initializer)
+    ) {
+      classify(node.initializer);
     }
     ts.forEachChild(node, walk);
   };
@@ -220,19 +326,34 @@ function collectExports(
   sourceFile: ts.SourceFile,
   checker: ts.TypeChecker,
   topLevel: Map<ts.Symbol, TopLevelDecl>,
-): ts.Symbol[] {
-  const exported: ts.Symbol[] = [];
-  const seen = new Set<ts.Symbol>();
+): ExportEntry[] {
+  const exported: ExportEntry[] = [];
+  const seen = new Set<string>();
 
-  const take = (symbol: ts.Symbol | undefined): void => {
-    if (symbol === undefined || seen.has(symbol) || !topLevel.has(symbol)) {
+  const take = (symbol: ts.Symbol | undefined, name: string, nameNode: ts.Node): void => {
+    const declaration = symbol && topLevel.get(symbol);
+    if (symbol === undefined || declaration === undefined) {
       return;
     }
     if (!isValueSymbol(symbol, checker)) {
       return;
     }
-    seen.add(symbol);
-    exported.push(symbol);
+    // The pair, not the symbol: `export { value as a, value as b }` is two
+    // exports of one member.
+    const key = `${declaration.order} ${name}`;
+    if (seen.has(key)) {
+      return;
+    }
+    seen.add(key);
+    exported.push({ symbol, name, nameNode });
+  };
+
+  const takeLocal = (symbol: ts.Symbol | undefined, name: ts.Identifier): void => {
+    const declaration = symbol && topLevel.get(symbol);
+    if (declaration === undefined) {
+      return;
+    }
+    take(symbol, name.text, declaration.node);
   };
 
   for (const statement of sourceFile.statements) {
@@ -248,7 +369,7 @@ function collectExports(
         if (element.isTypeOnly) {
           continue;
         }
-        take(checker.getExportSpecifierLocalTargetSymbol(element));
+        take(checker.getExportSpecifierLocalTargetSymbol(element), element.name.text, element.name);
       }
       continue;
     }
@@ -257,14 +378,18 @@ function collectExports(
     }
     if (ts.isVariableStatement(statement)) {
       for (const declaration of statement.declarationList.declarations) {
-        forEachDeclaredName(declaration.name, (name) => take(checker.getSymbolAtLocation(name)));
+        forEachDeclaredName(declaration.name, (name) =>
+          takeLocal(checker.getSymbolAtLocation(name), name),
+        );
       }
     } else if (
       ts.isFunctionDeclaration(statement) ||
       ts.isClassDeclaration(statement) ||
       ts.isEnumDeclaration(statement)
     ) {
-      take(statement.name && checker.getSymbolAtLocation(statement.name));
+      if (statement.name !== undefined) {
+        takeLocal(checker.getSymbolAtLocation(statement.name), statement.name);
+      }
     }
   }
 
@@ -421,10 +546,10 @@ export function computeCompanionClosure(
   checker: ts.TypeChecker,
 ): CompanionClosure {
   const topLevel = collectTopLevel(sourceFile, checker);
-  const exportSymbols = collectExports(sourceFile, checker, topLevel);
+  const exportEntries = collectExports(sourceFile, checker, topLevel);
 
   const memberSymbols = new Set<ts.Symbol>();
-  const queue: ts.Symbol[] = [...exportSymbols];
+  const queue: ts.Symbol[] = exportEntries.map((entry) => entry.symbol);
   while (queue.length > 0) {
     const symbol = queue.pop();
     if (symbol === undefined || memberSymbols.has(symbol)) {
@@ -453,21 +578,11 @@ export function computeCompanionClosure(
   // Reassignment anywhere in the source, the companion side included: that is
   // what the `increment()` shape turns on, where nothing in the script assigns.
   const mutations = new Map<ts.Symbol, ts.Identifier[]>();
-  forEachReference(sourceFile, checker, (node, symbol) => {
+  forEachAssignmentTarget(sourceFile, checker, (node, symbol) => {
     if (!memberSymbols.has(symbol)) {
       return;
     }
-    const parent = node.parent;
-    const assigned =
-      (ts.isBinaryExpression(parent) &&
-        parent.left === node &&
-        isAssignmentOperator(parent.operatorToken.kind)) ||
-      ((ts.isPrefixUnaryExpression(parent) || ts.isPostfixUnaryExpression(parent)) &&
-        (parent.operator === ts.SyntaxKind.PlusPlusToken ||
-          parent.operator === ts.SyntaxKind.MinusMinusToken));
-    if (assigned) {
-      mutations.set(symbol, [...(mutations.get(symbol) ?? []), node]);
-    }
+    mutations.set(symbol, [...(mutations.get(symbol) ?? []), node]);
   });
 
   // The script is every top-level statement outside the closure. An export
@@ -492,7 +607,7 @@ export function computeCompanionClosure(
     })
     .sort((a, b) => a.declaration.order - b.declaration.order);
 
-  const exportSet = new Set(exportSymbols);
+  const exportSet = new Set(exportEntries.map((entry) => entry.symbol));
   const violations: ClosureViolation[] = [];
 
   for (const { symbol, declaration } of ordered) {
@@ -522,15 +637,14 @@ export function computeCompanionClosure(
     });
   }
 
-  for (const symbol of exportSymbols) {
-    const declaration = topLevel.get(symbol);
-    if (declaration === undefined || declaration.name !== COMPANION_INTERNAL_FIELD) {
+  for (const entry of exportEntries) {
+    if (entry.name !== COMPANION_INTERNAL_FIELD) {
       continue;
     }
-    const sites = [siteOf(declaration.node, "exported")];
+    const sites = [siteOf(entry.nameNode, "exported")];
     violations.push({
       kind: "reserved-internal-name",
-      member: declaration.name,
+      member: entry.name,
       sites,
       message:
         `"${COMPANION_INTERNAL_FIELD}" is reserved for the companion's own internals ` +
@@ -538,39 +652,38 @@ export function computeCompanionClosure(
     });
   }
 
-  const first = ordered[0];
-  if (first !== undefined) {
-    const boundary = first.declaration.statement.getStart(sourceFile);
-    for (const statement of sourceFile.statements) {
-      if (
-        closureStatements.has(statement) ||
-        statement.getStart(sourceFile) >= boundary ||
-        isEffectFreeStatement(statement, checker)
-      ) {
-        continue;
-      }
-      const sites = [
-        siteOf(statement, "runs in the script"),
-        siteOf(first.declaration.node, "moves into the companion"),
-      ];
-      violations.push({
-        kind: "initialization-order",
-        member: first.declaration.name,
-        sites,
-        message:
-          `top-level work precedes "${first.declaration.name}", which the companion would run first, ` +
-          `reversing their order (${formatSites(sites)}). ` +
-          "Move that work below the companion's declarations, or into a lifecycle hook.",
-      });
+  // The companion loads as a unit, so the constraint is pairwise: any effectful
+  // script statement with any closure declaration below it is reordered by the
+  // split, whatever the first member's position.
+  for (const statement of sourceFile.statements) {
+    if (closureStatements.has(statement) || isEffectFreeStatement(statement, checker)) {
+      continue;
     }
+    const start = statement.getStart(sourceFile);
+    const hoisted = ordered.find(
+      (entry) => entry.declaration.statement.getStart(sourceFile) > start,
+    );
+    if (hoisted === undefined) {
+      continue;
+    }
+    const sites = [
+      siteOf(statement, "runs in the script"),
+      siteOf(hoisted.declaration.node, "moves into the companion"),
+    ];
+    violations.push({
+      kind: "initialization-order",
+      member: hoisted.declaration.name,
+      sites,
+      message:
+        `top-level work precedes "${hoisted.declaration.name}", which the companion would run first, ` +
+        `reversing their order (${formatSites(sites)}). ` +
+        "Move that work below the companion's declarations, or into a lifecycle hook.",
+    });
   }
 
   return {
     members: ordered.map(({ declaration }) => declaration.name),
-    exports: exportSymbols.flatMap((symbol) => {
-      const declaration = topLevel.get(symbol);
-      return declaration === undefined ? [] : [declaration.name];
-    }),
+    exports: exportEntries.map((entry) => entry.name),
     internals: ordered
       .filter(({ symbol }) => !exportSet.has(symbol) && scriptReferences.has(symbol))
       .map(({ declaration }) => declaration.name),
