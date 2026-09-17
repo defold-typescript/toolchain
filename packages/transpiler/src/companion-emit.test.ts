@@ -316,6 +316,102 @@ describe("companion emit — every name a chunk reads is bound in that chunk", (
   });
 });
 
+describe("companion emit — only genuinely free names pull a declaration across", () => {
+  const BOOT = lines("export function warm(): number {", '  print("warming");', "  return 7;", "}");
+
+  // The effectful declaration sits below the exported one on purpose: above it
+  // the initialization-order rule declines the split and nothing is emitted.
+  function doorShadowing(...body: readonly string[]): string {
+    return lines(
+      FACTORY_IMPORT,
+      'import { warm } from "../lib/boot";',
+      "",
+      ...body,
+      "",
+      "const gain = warm();",
+      "",
+      "defineScript({",
+      "  init() {",
+      "    print(gain);",
+      "  },",
+      "});",
+    );
+  }
+
+  for (const [spelling, body] of [
+    ["a parameter", ["export function bump(gain: number): number {", "  return gain + 1;", "}"]],
+    [
+      "a local inside the body",
+      [
+        "export function bump(n: number): number {",
+        "  const gain = n * 2;",
+        "  return gain + 1;",
+        "}",
+      ],
+    ],
+    [
+      "a loop variable",
+      [
+        "export function bump(values: number[]): number {",
+        "  let total = 0;",
+        "  for (const gain of values) {",
+        "    total += gain;",
+        "  }",
+        "  return total;",
+        "}",
+      ],
+    ],
+  ] as const) {
+    test(`${spelling} shadowing a script-side declaration does not copy it across`, () => {
+      const result = emit({
+        "game/lib/boot.ts": BOOT,
+        "game/doors/door.ts": doorShadowing(...body),
+      });
+      const script = chunkFor(result, "game/doors/door.ts");
+      const companion = companionFor(result, "game/doors/door.ts");
+
+      expect(companion).toContain("function ____exports.bump(");
+      expect(companion).not.toContain("warm");
+      expect(findEmittedRequires(companion)).toEqual([]);
+
+      // The effect stays where the source put it, and runs once.
+      expect(definitionCount(script, "gain")).toBe(1);
+      expect(script).toContain("warm(");
+      expect(findEmittedRequires(script)).toEqual(["game.lib.boot", "game.doors.door"]);
+    });
+  }
+
+  test("a name both read free and shadowed deeper still brings its prelude across", () => {
+    const result = emit({
+      "game/lib/boot.ts": BOOT,
+      "game/doors/door.ts": lines(
+        FACTORY_IMPORT,
+        'import { warm } from "../lib/boot";',
+        "",
+        "export const seed = warm();",
+        "export function bump(warm: number): number {",
+        "  return warm + 1;",
+        "}",
+        "",
+        "defineScript({",
+        "  init() {",
+        "    print(seed);",
+        "  },",
+        "});",
+      ),
+    });
+    const script = chunkFor(result, "game/doors/door.ts");
+    const companion = companionFor(result, "game/doors/door.ts");
+
+    expect(findEmittedRequires(companion)).toContain("game.lib.boot");
+    expect(definitionCount(companion, "warm")).toBe(1);
+    expect(companion).toContain("____exports.seed =");
+
+    expect(definitionCount(script, "warm")).toBe(1);
+    expect(script).toContain("____exports.seed");
+  });
+});
+
 describe("companion emit — sources that are left alone", () => {
   test("a script-kind source with an empty closure emits one chunk", () => {
     const source = lines(
