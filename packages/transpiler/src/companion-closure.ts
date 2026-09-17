@@ -43,6 +43,12 @@ export interface CompanionClosure {
    * = 2;` is two members and one unit of code.
    */
   readonly statements: readonly ts.Statement[];
+  /**
+   * Import bindings the closure reaches, in source order. An import is copyable
+   * rather than movable — its statement never appears in `statements` — so the
+   * companion takes its own `require` of the same module instead.
+   */
+  readonly importBindings: readonly string[];
   /** Shapes a split cannot preserve. Empty means the source is splittable. */
   readonly violations: readonly ClosureViolation[];
 }
@@ -554,7 +560,22 @@ export function computeCompanionClosure(
   const topLevel = collectTopLevel(sourceFile, checker);
   const exportEntries = collectExports(sourceFile, checker, topLevel);
 
+  // Which statement declares a binding is what the emit moves, so the walk
+  // reaches its fixpoint over statements rather than names: moving one makes
+  // every binding it declares a member, and those bindings' own references
+  // extend the closure again. Without that, `const a = 1, b = p + 1` carries `b`
+  // across while leaving `p` behind, and the companion reads an unbound global.
+  const siblingsOf = new Map<ts.Statement, ts.Symbol[]>();
+  for (const [symbol, declaration] of topLevel) {
+    siblingsOf.set(declaration.statement, [
+      ...(siblingsOf.get(declaration.statement) ?? []),
+      symbol,
+    ]);
+  }
+
   const memberSymbols = new Set<ts.Symbol>();
+  const importBindingSymbols = new Set<ts.Symbol>();
+  const closureStatements = new Set<ts.Statement>();
   const queue: ts.Symbol[] = exportEntries.map((entry) => entry.symbol);
   while (queue.length > 0) {
     const symbol = queue.pop();
@@ -566,6 +587,20 @@ export function computeCompanionClosure(
     if (declaration === undefined) {
       continue;
     }
+    // An import is copyable, not movable: TSTL emits its `require` bindings
+    // through its own hoisting, so there is no statement here to move.
+    if (ts.isImportDeclaration(declaration.statement)) {
+      importBindingSymbols.add(symbol);
+      continue;
+    }
+    if (!closureStatements.has(declaration.statement)) {
+      closureStatements.add(declaration.statement);
+      for (const sibling of siblingsOf.get(declaration.statement) ?? []) {
+        if (!memberSymbols.has(sibling)) {
+          queue.push(sibling);
+        }
+      }
+    }
     forEachReference(declaration.node, checker, (_node, referenced) => {
       if (topLevel.has(referenced) && !memberSymbols.has(referenced)) {
         queue.push(referenced);
@@ -573,11 +608,35 @@ export function computeCompanionClosure(
     });
   }
 
-  const closureStatements = new Set<ts.Statement>();
-  for (const symbol of memberSymbols) {
-    const declaration = topLevel.get(symbol);
-    if (declaration !== undefined) {
-      closureStatements.add(declaration.statement);
+  // An export declaration is the machinery that opens the companion, so it
+  // travels with what it reads: leaving it behind makes the script assign a
+  // local it no longer binds, into a table every importer has already loaded.
+  const splits = closureStatements.size > 0;
+  for (const statement of sourceFile.statements) {
+    if (!ts.isExportDeclaration(statement) || statement.isTypeOnly) {
+      continue;
+    }
+    if (statement.moduleSpecifier !== undefined) {
+      // A re-export's whole emitted block is export machinery, with no local
+      // half to keep, so it moves whenever the source splits at all.
+      if (splits) {
+        closureStatements.add(statement);
+      }
+      continue;
+    }
+    const clause = statement.exportClause;
+    if (clause === undefined || !ts.isNamedExports(clause)) {
+      continue;
+    }
+    const readsMember = clause.elements.some((element) => {
+      if (element.isTypeOnly) {
+        return false;
+      }
+      const local = checker.getExportSpecifierLocalTargetSymbol(element);
+      return local !== undefined && memberSymbols.has(local);
+    });
+    if (readsMember) {
+      closureStatements.add(statement);
     }
   }
 
@@ -691,6 +750,9 @@ export function computeCompanionClosure(
     members: ordered.map(({ declaration }) => declaration.name),
     exports: exportEntries.map((entry) => entry.name),
     statements: sourceFile.statements.filter((statement) => closureStatements.has(statement)),
+    importBindings: ordered
+      .filter(({ symbol }) => importBindingSymbols.has(symbol))
+      .map(({ declaration }) => declaration.name),
     internals: ordered
       .filter(({ symbol }) => !exportSet.has(symbol) && scriptReferences.has(symbol))
       .map(({ declaration }) => declaration.name),
