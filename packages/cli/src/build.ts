@@ -18,8 +18,9 @@ import {
   toPosix,
   writeScriptFile,
 } from "./build-output";
-import { throwOnCompanionViolations } from "./companion-violations";
+import { findCompanionExports, throwOnCompanionViolations } from "./companion-violations";
 import { scanOrphanOutputs } from "./orphan-scan";
+import { companionClaimant, companionOutputRels, createOutputClaimRegistry } from "./output-claims";
 import { throwOnUnresolvedRequires } from "./require-resolution";
 import { scanFilesSync } from "./scan";
 import { scanSceneResourceRefs } from "./scene-resource-scan";
@@ -120,36 +121,70 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
       scriptSources.push(rel);
     }
   }
+  const companionBySource = companionOutputRels(result, config);
 
   // Before the write loop, so a build whose requires cannot resolve leaves no
   // half-correct output behind. Skipped while the program has type errors: the
   // emit is already untrustworthy there and the diagnostics are the real report.
   if (failures.size === 0) {
+    // Violations first: an unsplittable source emits no companion, so an
+    // importer of it also reports an unresolvable require. The violation names
+    // the member and both positions, which is the diagnosis; the require error
+    // would only name the symptom.
+    const preEmitProgram = session.getProgram();
+    if (preEmitProgram) {
+      throwOnCompanionViolations({ program: preEmitProgram, scriptSources });
+    }
     throwOnUnresolvedRequires({
       lua: result.lua,
       sources: outputBySource,
       plannedOutputs: sources.flatMap((rel) => {
         const outputRel = outputBySource[rel];
-        return outputRel !== undefined && result.lua[rel] !== undefined ? [outputRel] : [];
+        if (outputRel === undefined || result.lua[rel] === undefined) {
+          return [];
+        }
+        const companionRel = companionBySource[rel];
+        return companionRel === undefined ? [outputRel] : [outputRel, companionRel];
       }),
     });
-    const preEmitProgram = session.getProgram();
-    if (preEmitProgram) {
-      throwOnCompanionViolations({ program: preEmitProgram, scriptSources });
-    }
   }
 
+  // Every output path is claimed before anything is written, so a contested path
+  // fails the build with its own file byte-unchanged rather than half a tree
+  // behind.
+  const claims = createOutputClaimRegistry(cwd);
+  const claimProgram = session.getProgram();
+  const exportsBySource = claimProgram
+    ? findCompanionExports({ program: claimProgram, scriptSources })
+    : new Map<string, readonly string[]>();
+  const writable = sources.filter((rel) => !failures.has(rel) && Boolean(result.lua[rel]));
+  for (const rel of writable) {
+    const outputRel = outputBySource[rel];
+    if (outputRel !== undefined) {
+      claims.claim(outputRel, { source: rel });
+    }
+    const companionRel = companionBySource[rel];
+    if (companionRel !== undefined) {
+      claims.claim(companionRel, companionClaimant(rel, result, exportsBySource));
+    }
+  }
+  claims.throwOnCollisions();
+
   const written: string[] = [];
-  for (const rel of sources) {
-    if (failures.has(rel)) {
-      continue;
-    }
+  for (const rel of writable) {
     const lua = result.lua[rel];
-    if (!lua) {
+    const outputRel = outputBySource[rel];
+    if (lua === undefined || outputRel === undefined) {
       continue;
     }
-    const outputRel = computeOutputRel(rel, config, detectSourceOutputKind(files[rel] ?? ""));
-    pruneAlternativeOutputs(cwd, rel, config, outputRel);
+    const companionRel = companionBySource[rel];
+    const companion = result.companions?.[rel];
+    pruneAlternativeOutputs(
+      cwd,
+      rel,
+      config,
+      companionRel === undefined ? [outputRel] : [outputRel, companionRel],
+    );
     writeScriptFile(
       cwd,
       outputRel,
@@ -157,6 +192,12 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
       retargetSourceRoot(result.sourceMaps[rel], outputRel, rel),
     );
     written.push(outputRel);
+    if (companionRel !== undefined && companion !== undefined) {
+      // No map: the companion is assembled from statements the script no longer
+      // holds, so a map would point a debugger at a chunk that does not exist.
+      writeScriptFile(cwd, companionRel, companion, undefined);
+      written.push(companionRel);
+    }
   }
 
   if (result.lualib !== undefined) {

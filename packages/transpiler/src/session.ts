@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import * as path from "node:path";
 import * as ts from "typescript";
 import * as tstl from "typescript-to-lua";
+import { type CompanionEmitter, createCompanionEmitPlugin } from "./companion-emit";
 import { editorScriptErasurePlugin } from "./editor-script-erasure";
 import { lifecycleErasurePlugin } from "./lifecycle-erasure";
 import { messageDispatchLoweringPlugin } from "./message-dispatch-lowering";
@@ -18,28 +19,34 @@ export interface TranspileSession {
 
 const requireFromHere = createRequire(import.meta.url);
 
-const COMPILER_OPTIONS: tstl.CompilerOptions = {
-  luaTarget: tstl.LuaTarget.Lua51,
-  sourceMap: true,
-  // Already-resolved CompilerOptions, so the value is the lib file name, not the
-  // tsconfig spelling "ES2022". Drops the default `lib.dom`, whose `declare var
-  // window` shadows Defold's `window` namespace. Keep in lockstep with transpile.ts.
-  lib: ["lib.es2022.d.ts"],
-  // Don't cross-check the seeded ambient .d.ts surface against itself; only user
-  // files matter (mirrors transpileProject and the editor's skipLibCheck).
-  skipLibCheck: true,
-  // Defold scripts are not OO: free helper functions never receive a context,
-  // so suppress TSTL's implicit `self` parameter and the `_G` call-site filler.
-  noImplicitSelf: true,
-  luaPlugins: [
-    { plugin: lifecycleErasurePlugin },
-    { plugin: editorScriptErasurePlugin },
-    { plugin: messageGuardLoweringPlugin },
-    { plugin: windowEventGuardLoweringPlugin },
-    { plugin: messageDispatchLoweringPlugin },
-    { plugin: timersLoweringPlugin },
-  ],
-};
+// A function rather than a const because the companion emitter carries the
+// chunks of one transpile: a shared instance would hand an editor rebuild the
+// companions of the rebuild before it. Keep in lockstep with transpile.ts.
+function compilerOptions(companionEmit: CompanionEmitter): tstl.CompilerOptions {
+  return {
+    luaTarget: tstl.LuaTarget.Lua51,
+    sourceMap: true,
+    // Already-resolved CompilerOptions, so the value is the lib file name, not the
+    // tsconfig spelling "ES2022". Drops the default `lib.dom`, whose `declare var
+    // window` shadows Defold's `window` namespace.
+    lib: ["lib.es2022.d.ts"],
+    // Don't cross-check the seeded ambient .d.ts surface against itself; only user
+    // files matter (mirrors transpileProject and the editor's skipLibCheck).
+    skipLibCheck: true,
+    // Defold scripts are not OO: free helper functions never receive a context,
+    // so suppress TSTL's implicit `self` parameter and the `_G` call-site filler.
+    noImplicitSelf: true,
+    luaPlugins: [
+      { plugin: lifecycleErasurePlugin },
+      { plugin: editorScriptErasurePlugin },
+      { plugin: messageGuardLoweringPlugin },
+      { plugin: windowEventGuardLoweringPlugin },
+      { plugin: messageDispatchLoweringPlugin },
+      { plugin: timersLoweringPlugin },
+      { plugin: companionEmit.plugin },
+    ],
+  };
+}
 
 function normalizeSlashes(p: string): string {
   return p.replace(/\\/g, "/");
@@ -151,7 +158,8 @@ export function createTranspileSession(): TranspileSession {
     const userKeys = new Set(userFiles.keys());
     const rootNames = [...Object.keys(AMBIENT_FILES).map(normalizeSlashes), ...userKeys];
 
-    program = ts.createProgram(rootNames, COMPILER_OPTIONS, host, program);
+    const companionEmit = createCompanionEmitPlugin();
+    program = ts.createProgram(rootNames, compilerOptions(companionEmit), host, program);
 
     const preEmitDiagnostics = ts.getPreEmitDiagnostics(program);
     const collector = createOutputCollector();
@@ -163,7 +171,7 @@ export function createTranspileSession(): TranspileSession {
       ...ts.sortAndDeduplicateDiagnostics([...preEmitDiagnostics, ...transpileDiagnostics]),
     ];
 
-    return collectOutputs(collector.files, diagnostics, userKeys);
+    return collectOutputs(collector.files, diagnostics, userKeys, companionEmit.companions);
   }
 
   return {
