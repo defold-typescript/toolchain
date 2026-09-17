@@ -41,6 +41,23 @@ const COMMITTED_MODULES = [
   ...EDITOR_VM_MODULE_MANIFEST,
 ];
 
+describe("root entrypoint completeness", () => {
+  // `index.d.ts` is hand-maintained, unlike every per-version index, which
+  // `generateVersionIndex` writes from the manifest. Nothing tied the two
+  // together, so a module added to `api-targets.json` reached the kind subpaths
+  // and the pinned surfaces while the default surface silently lacked it.
+  test("the root imports every module the default target emits", () => {
+    const root = readFileSync(resolve(import.meta.dir, "..", "index.d.ts"), "utf8");
+    const imported = new Set(
+      [...root.matchAll(/^import "\.\/generated\/([^"]+)";$/gm)].map((match) => match[1]),
+    );
+    const missing = MODULE_MANIFEST.map((entry) => entry.outFile.replace(/\.d\.ts$/, "")).filter(
+      (module) => !imported.has(module),
+    );
+    expect(missing).toEqual([]);
+  });
+});
+
 describe("regen drift guard", () => {
   test.each(
     COMMITTED_MODULES.map((entry) => [entry.namespace, entry] as const),

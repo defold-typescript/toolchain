@@ -22,6 +22,7 @@ import "./generated/collectionproxy";
 import "./generated/compute";
 import "./generated/crash";
 import "./generated/factory";
+import "./generated/font";
 import "./generated/go";
 import "./src/go-overloads";
 import "./generated/graphics";
