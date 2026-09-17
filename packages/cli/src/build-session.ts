@@ -23,6 +23,7 @@ import {
   writeScriptFile,
 } from "./build-output";
 import { scanOrphanOutputs } from "./orphan-scan";
+import { throwOnUnresolvedRequires } from "./require-resolution";
 import { scanFilesSync } from "./scan";
 import { scanSceneResourceRefs } from "./scene-resource-scan";
 import { loadUrlParameterTable } from "./url-parameter-table";
@@ -92,6 +93,21 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
   const config: BuildConfig = readBuildConfig(cwd);
   const session: TranspileSession = createTranspileSession();
 
+  // The whole program's source text, carried across rebuilds. `applyEvents`
+  // holds only the changed files, and the require check gets a false negative
+  // from a partial inventory in either direction: an untouched script-kind
+  // target reads as external library Lua, and an output written on an earlier
+  // rebuild reads as never written.
+  const sourceTexts = new Map<string, string>();
+
+  function plannedOutputBySource(): Record<string, string> {
+    const outputs: Record<string, string> = {};
+    for (const [rel, text] of sourceTexts) {
+      outputs[rel] = computeOutputRel(rel, config, detectSourceOutputKind(text));
+    }
+    return outputs;
+  }
+
   // Deliberately over the whole program rather than over the files an
   // incremental rebuild happened to touch: a fragment goes bad when the scenes
   // change as readily as when its own file does, and narrowing the scan would
@@ -134,6 +150,16 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     pruneAlternatives = false,
   ): BuildResult {
     const failures = collectFailures(result.diagnostics);
+    if (failures.size === 0) {
+      const outputs = plannedOutputBySource();
+      throwOnUnresolvedRequires({
+        lua: result.lua,
+        sources: outputs,
+        plannedOutputs: Object.entries(outputs).flatMap(([rel, outputRel]) =>
+          result.lua[rel] !== undefined ? [outputRel] : [],
+        ),
+      });
+    }
     const written: string[] = [];
     for (const rel of keys) {
       if (failures.has(rel)) {
@@ -192,6 +218,10 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     }
 
     const result = session.update(files);
+    sourceTexts.clear();
+    for (const rel of sources) {
+      sourceTexts.set(rel, files[rel] ?? "");
+    }
     const built = writeOutputs(result, sources, files, true);
     const reachability = scanReachability();
     const crossWorld = scanCrossWorld();
@@ -220,6 +250,13 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     }
 
     const result = session.update(changes);
+
+    for (const rel of sourceChanged) {
+      sourceTexts.set(rel, changes[rel] ?? "");
+    }
+    for (const rel of sourceRemoved) {
+      sourceTexts.delete(rel);
+    }
 
     for (const rel of sourceRemoved) {
       pruneOutputs(rel);

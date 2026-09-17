@@ -19,6 +19,7 @@ import {
   writeScriptFile,
 } from "./build-output";
 import { scanOrphanOutputs } from "./orphan-scan";
+import { throwOnUnresolvedRequires } from "./require-resolution";
 import { scanFilesSync } from "./scan";
 import { scanSceneResourceRefs } from "./scene-resource-scan";
 import { loadUrlParameterTable } from "./url-parameter-table";
@@ -108,6 +109,25 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
   const session = createTranspileSession();
   const result = session.update(files);
   const failures = collectFailures(result.diagnostics);
+
+  const outputBySource: Record<string, string> = {};
+  for (const rel of sources) {
+    outputBySource[rel] = computeOutputRel(rel, config, detectSourceOutputKind(files[rel] ?? ""));
+  }
+
+  // Before the write loop, so a build whose requires cannot resolve leaves no
+  // half-correct output behind. Skipped while the program has type errors: the
+  // emit is already untrustworthy there and the diagnostics are the real report.
+  if (failures.size === 0) {
+    throwOnUnresolvedRequires({
+      lua: result.lua,
+      sources: outputBySource,
+      plannedOutputs: sources.flatMap((rel) => {
+        const outputRel = outputBySource[rel];
+        return outputRel !== undefined && result.lua[rel] !== undefined ? [outputRel] : [];
+      }),
+    });
+  }
 
   const written: string[] = [];
   for (const rel of sources) {

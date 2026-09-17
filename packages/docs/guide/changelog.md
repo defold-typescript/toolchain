@@ -14,6 +14,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Breaking
 
 - **[`render.clear`](/api/render)'s buffer table is now keyed by the three `graphics.BUFFER_TYPE_*` constants its reference names, not by any number.** `LuaMap<number, number | Vector4>` no longer compiles — `LuaMap`'s key type is invariant — so declare the table as `LuaMap<render.ClearBufferKey, number | Vector4>`, an alias exported on the default surface and every pinned `defold-target`. [Lua table constructs](./lua-table-constructs.md) is the new guide page for writing such a table.
+- **[`build`](./build.md) and [`watch`](./watch.md) now fail when an emitted `require` cannot reach the output the build writes, naming the file, the require path and the source it points at.** Two builds that used to succeed and then break when Defold loaded them are now reported at compile time: importing a *value* from a source with a lifecycle factory, whose output is a script component Defold never puts on the require path — move the shared value into a source with no factory — and any cross-file import in a project with a configured `outDir`. Type-only imports are unaffected, and a `require` with no TypeScript source behind it, such as a library's Lua or `lldebugger.debug`, is left alone.
 
 ### Improved
 
