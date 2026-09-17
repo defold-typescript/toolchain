@@ -7,9 +7,10 @@ export const TIMERS_REQUIRE_NAME = "defold_typescript_timers";
 
 // Hand-authored runtime Lua. Unlike `defineScript` (which `lifecycle-erasure`
 // removes), these wrappers have real behavior, so the Lua must reach the Defold
-// project. `__TS__Promise`/`__TS__New` come from the lualib bundle the build
-// already writes alongside this file; `wait` resolves its promise from inside
-// the `timer.delay` callback, the only thing that advances it (no event loop).
+// project. `__TS__Promise`/`__TS__New` come from the lualib bundle that exists
+// because the import lowering registers those two features when it rewrites the
+// polyfill specifier; `wait` resolves its promise from inside the `timer.delay`
+// callback, the only thing that advances it (no event loop).
 export const TIMERS_RUNTIME = `local ____lualib = require("lualib_bundle")
 local __TS__Promise = ____lualib.__TS__Promise
 local __TS__New = ____lualib.__TS__New

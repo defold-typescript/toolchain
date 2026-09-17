@@ -1,5 +1,5 @@
 import * as ts from "typescript";
-import type { Plugin } from "typescript-to-lua";
+import { LuaLibFeature, type Plugin } from "typescript-to-lua";
 import { TIMERS_MODULE_SPECIFIER, TIMERS_REQUIRE_NAME } from "./timers-runtime";
 
 function isTimersSpecifier(node: ts.Expression): node is ts.StringLiteral {
@@ -30,6 +30,15 @@ export const timersLoweringPlugin: Plugin = {
       if (!isTimersSpecifier(node.moduleSpecifier)) {
         return context.superTransformStatements(node);
       }
+      // This chunk reads neither helper, but the hand-authored runtime the
+      // rewritten require loads does, and TSTL synthesizes `lualib_bundle.lua`
+      // only for features registered here — it never sees the runtime source.
+      // Registering both (rather than only `Promise`, which recursively pulls
+      // `New`) also keeps the emitted prelude complete under
+      // `luaLibImport: "require-minimal"`, where the bundle is rebuilt from a
+      // scan of the emitted chunks' `local X = ____lualib.X` lines.
+      context.usedLuaLibFeatures.add(LuaLibFeature.Promise);
+      context.usedLuaLibFeatures.add(LuaLibFeature.New);
       const rewritten = ts.factory.updateImportDeclaration(
         node,
         node.modifiers,

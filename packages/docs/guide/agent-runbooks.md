@@ -687,8 +687,8 @@ per the table above. `import` is rewritten to `require("<module>")` resolving
 against the emitted `.lua`, so a shared module must be built for its require to
 resolve at runtime. Two runtime modules are synthesized at the output root on
 demand: `lualib_bundle.lua` (when a source uses a TS runtime helper like
-`Object.keys` or spread) and `defold_typescript_timers.lua` (when timers are
-used).
+`Object.keys` or spread, or when timers are used, since the timer runtime
+requires it) and `defold_typescript_timers.lua` (when timers are used).
 
 Who creates these: [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL)
 produces the Lua *content* in memory; the CLI writes the *files*, choosing the
