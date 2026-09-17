@@ -4,6 +4,7 @@ export {
   componentIdOfSameObjectAddress,
 } from "./component-animation-index";
 export { buildConfigKeyIndex, readGameProjectSetting } from "./config-key-index";
+export { findEmittedRequires } from "./emitted-requires";
 export type { GuiFlipbookIndex } from "./gui-flipbook-index";
 export { buildGuiFlipbookIndex } from "./gui-flipbook-index";
 export type { GuiNodeIndex } from "./gui-node-index";
@@ -34,6 +35,7 @@ export {
   computeOutputRel,
   DEFAULT_INCLUDE,
   parseBuildConfig,
+  requirePathForRel,
   SCRIPT_SUFFIX_BY_KIND,
   stripIncludeBase,
 } from "./output-paths";

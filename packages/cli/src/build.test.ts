@@ -13,7 +13,7 @@ import * as path from "node:path";
 import { Writable } from "node:stream";
 import type { SceneComponentIndex } from "@defold-typescript/transpiler";
 import { type RunBuildResult, runBuild } from "./build";
-import { GENERATED_BANNER } from "./build-output";
+import { BuildFailureError, GENERATED_BANNER } from "./build-output";
 import { dispatch } from "./dispatch";
 import { runInit } from "./init";
 import {
@@ -1010,5 +1010,83 @@ describe("runBuild reports addresses naming a foreign world", () => {
 
     expect(result.crossWorldAddresses).toEqual([]);
     expect(result.warnings.some((w) => w.includes("mylevel"))).toBe(false);
+  });
+});
+
+describe("runBuild (require resolution)", () => {
+  const SHARED_SCRIPT =
+    'import { defineScript } from "@defold-typescript/types";\nexport type Shared = number;\nexport const shared = 7;\nexport default defineScript({ init() {} });\n';
+  const IMPORTER_VALUE =
+    'import { defineScript } from "@defold-typescript/types";\nimport { shared } from "./shared";\nexport default defineScript({ init() { print(shared); } });\n';
+  const IMPORTER_TYPE_ONLY =
+    'import { defineScript } from "@defold-typescript/types";\nimport type { Shared } from "./shared";\nexport default defineScript({ init() { const s: Shared = 1; print(s); } });\n';
+
+  test("fails on a script-to-script value import and writes no output for the importer", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/shared.ts", SHARED_SCRIPT);
+    writeFile("src/importer.ts", IMPORTER_VALUE);
+
+    let thrown: unknown;
+    try {
+      runBuild({ cwd });
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toBeInstanceOf(BuildFailureError);
+    const entries = (thrown as BuildFailureError).entries;
+    expect(entries).toHaveLength(1);
+    expect(entries[0]?.file).toBe("src/importer.ts");
+    expect(entries[0]?.message).toContain("src.shared");
+    expect(entries[0]?.message).toContain("src/shared.ts.script");
+    expect(existsSync(path.join(cwd, "src/importer.ts.script"))).toBe(false);
+  });
+
+  test("a type-only import across the same pair builds and emits no require between them", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/shared.ts", SHARED_SCRIPT);
+    writeFile("src/importer.ts", IMPORTER_TYPE_ONLY);
+
+    const result = runBuild({ cwd });
+
+    expect(result.written).toContain("src/importer.ts.script");
+    expect(readFileSync(path.join(cwd, "src/importer.ts.script"), "utf8")).not.toContain(
+      'require("src.shared")',
+    );
+  });
+
+  test("fails on a cross-file module import under a configured outDir", () => {
+    writeFile(
+      "tsconfig.json",
+      JSON.stringify(
+        {
+          compilerOptions: {
+            target: "ES2022",
+            module: "ESNext",
+            strict: true,
+            outDir: "build/lua",
+          },
+          include: ["src/**/*.ts"],
+        },
+        null,
+        2,
+      ),
+    );
+    writeFile("src/bar.ts", "export const v = 1;\n");
+    writeFile("src/foo.ts", "import { v } from './bar';\nexport const w = v + 1;\n");
+
+    let thrown: unknown;
+    try {
+      runBuild({ cwd });
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toBeInstanceOf(BuildFailureError);
+    const entries = (thrown as BuildFailureError).entries;
+    expect(entries).toHaveLength(1);
+    expect(entries[0]?.file).toBe("src/foo.ts");
+    expect(entries[0]?.message).toContain("src.bar");
+    expect(entries[0]?.message).toContain("build/lua/bar.lua");
   });
 });

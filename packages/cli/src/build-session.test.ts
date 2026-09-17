@@ -12,7 +12,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import type { SceneComponentIndex } from "@defold-typescript/transpiler";
 import { runBuild } from "./build";
-import { GENERATED_BANNER } from "./build-output";
+import { BuildFailureError, GENERATED_BANNER } from "./build-output";
 import { createBuildSession } from "./build-session";
 
 let cwd: string;
@@ -389,5 +389,73 @@ describe("createBuildSession", () => {
 
     expect(rescanned.warnings.some((w) => w.includes("sprite"))).toBe(true);
     expect(existsSync(path.join(cwd, mainOutput))).toBe(false);
+  });
+  describe("unresolvable requires", () => {
+    const SHARED_SCRIPT =
+      'import { defineScript } from "@defold-typescript/types";\nexport const shared = 7;\nexport default defineScript({ init() {} });\n';
+    const IMPORTER_VALUE =
+      'import { defineScript } from "@defold-typescript/types";\nimport { shared } from "./shared";\nexport default defineScript({ init() { print(shared); } });\n';
+    const IMPORTER_TYPE_ONLY =
+      'import { defineScript } from "@defold-typescript/types";\nimport type { Shared } from "./shared";\nexport default defineScript({ init() { const s: Shared = 1; print(s); } });\n';
+    const SHARED_WITH_TYPE =
+      'import { defineScript } from "@defold-typescript/types";\nexport type Shared = number;\nexport const shared = 7;\nexport default defineScript({ init() {} });\n';
+
+    test("a value import of an untouched script surfaces on the rebuild that introduces it", () => {
+      writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
+      writeIn(cwd, "src/shared.ts", SHARED_WITH_TYPE);
+      writeIn(cwd, "src/importer.ts", IMPORTER_TYPE_ONLY);
+
+      const session = createBuildSession({ cwd });
+      expect(session.buildAll().written).toContain("src/importer.ts.script");
+
+      writeIn(cwd, "src/importer.ts", IMPORTER_VALUE);
+      let thrown: unknown;
+      try {
+        session.applyEvents(["src/importer.ts"], []);
+      } catch (error) {
+        thrown = error;
+      }
+
+      // The edited file is the importer; the target is never touched, so a
+      // finding that names it proves the check reads the whole-program
+      // inventory rather than the event batch.
+      expect(thrown).toBeInstanceOf(BuildFailureError);
+      const entries = (thrown as BuildFailureError).entries;
+      expect(entries).toHaveLength(1);
+      expect(entries[0]?.file).toBe("src/importer.ts");
+      expect(entries[0]?.message).toContain("src.shared");
+      expect(entries[0]?.message).toContain("src/shared.ts");
+      expect(entries[0]?.line).toBeUndefined();
+
+      writeIn(cwd, "src/importer.ts", IMPORTER_TYPE_ONLY);
+      expect(session.applyEvents(["src/importer.ts"], []).written).toContain(
+        "src/importer.ts.script",
+      );
+    });
+
+    test("a require satisfied by an untouched module output stays resolved", () => {
+      writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
+      writeIn(cwd, "src/util.ts", UTIL);
+      writeIn(cwd, "src/main.ts", MAIN);
+
+      const session = createBuildSession({ cwd });
+      session.buildAll();
+
+      writeIn(cwd, "src/main.ts", MAIN.replace("clamp(42, 0, 100);", "clamp(1, 0, 2);"));
+      const rebuilt = session.applyEvents(["src/main.ts"], []);
+
+      expect(rebuilt.written).toContain("src/main.ts.script");
+    });
+
+    test("buildAll fails on a script-to-script value import", () => {
+      writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
+      writeIn(cwd, "src/shared.ts", SHARED_SCRIPT);
+      writeIn(cwd, "src/importer.ts", IMPORTER_VALUE);
+
+      const session = createBuildSession({ cwd });
+
+      expect(() => session.buildAll()).toThrow(BuildFailureError);
+      expect(existsSync(path.join(cwd, "src/importer.ts.script"))).toBe(false);
+    });
   });
 });
