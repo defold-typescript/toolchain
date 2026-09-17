@@ -1139,7 +1139,7 @@ export async function main(): Promise<void> {
 }
 ```
 
-These are not ambient globals: each script is an isolated Lua chunk with no shared scope, so the import lowers to a `require` of the timer runtime the build writes to the output root (the same mechanism as `lualib_bundle`). Because there is no global, a bare `setTimeout(...)`/`setInterval(...)` (the muscle-memory web form) is a **compile error** — `TS2304: Cannot find name 'setTimeout'` — under the scaffolded `lib: ["ES2022"]` surface (no DOM/Node globals). That error is the warning: add the `import { setTimeout, … } from "@defold-typescript/types/timers"` line and it resolves. Your editor does this for you — tsserver lists the timers module in autocomplete and offers an *Add import from "@defold-typescript/types/timers"* quick-fix on the `TS2304` squiggle, so the fix is one keystroke (works in any tsserver-backed editor; no extension needed). Do not "fix" it by widening `lib` to `"DOM"` or adding `@types/node` — that would restore a global `setTimeout` declaration that type-checks but has no runtime behind it in Defold, turning the honest compile error into a silent forever-suspended `await`.
+These are not ambient globals: each script is an isolated Lua chunk with no shared scope, so the import lowers to a `require` of the timer runtime the build writes to the output root. That runtime requires `lualib_bundle` in turn, so a timers import brings both files with it. Because there is no global, a bare `setTimeout(...)`/`setInterval(...)` (the muscle-memory web form) is a **compile error** — `TS2304: Cannot find name 'setTimeout'` — under the scaffolded `lib: ["ES2022"]` surface (no DOM/Node globals). That error is the warning: add the `import { setTimeout, … } from "@defold-typescript/types/timers"` line and it resolves. Your editor does this for you — tsserver lists the timers module in autocomplete and offers an *Add import from "@defold-typescript/types/timers"* quick-fix on the `TS2304` squiggle, so the fix is one keystroke (works in any tsserver-backed editor; no extension needed). Do not "fix" it by widening `lib` to `"DOM"` or adding `@types/node` — that would restore a global `setTimeout` declaration that type-checks but has no runtime behind it in Defold, turning the honest compile error into a silent forever-suspended `await`.
 
 **Caveats.** The polyfills are timer-backed, not a drop-in `setTimeout`. Four differences bite:
 
@@ -3347,7 +3347,9 @@ When a source uses a runtime helper TypeScript-to-Lua provides (`Object.keys`,
 object spread, and similar), the build also writes a `lualib_bundle.lua` at the
 output root automatically, and the generated Lua requires it by the path it lands
 at — `require("lualib_bundle")` alongside the sources, or the `outDir`-rooted
-spelling under a configured `outDir`.
+spelling under a configured `outDir`. Importing the
+[timers module](./typescript-gotchas.md) writes it too, because the timer runtime
+that import pulls in requires the bundle itself.
 
 Because the output kind is the factory a source calls, adding or removing a
 factory switches the artifact (`src/main.lua` becomes `src/main.ts.script`, or the
@@ -5205,8 +5207,8 @@ per the table above. `import` is rewritten to `require("<module>")` resolving
 against the emitted `.lua`, so a shared module must be built for its require to
 resolve at runtime. Two runtime modules are synthesized at the output root on
 demand: `lualib_bundle.lua` (when a source uses a TS runtime helper like
-`Object.keys` or spread) and `defold_typescript_timers.lua` (when timers are
-used).
+`Object.keys` or spread, or when timers are used, since the timer runtime
+requires it) and `defold_typescript_timers.lua` (when timers are used).
 
 Who creates these: [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL)
 produces the Lua *content* in memory; the CLI writes the *files*, choosing the

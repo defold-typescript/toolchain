@@ -143,6 +143,10 @@ describe("createBuildSession", () => {
     expect(existsSync(runtimePath)).toBe(true);
     expect(readFileSync(runtimePath, "utf8")).toContain("timer.delay");
     expect(result.written).toContain("defold_typescript_timers.lua");
+
+    expect(existsSync(path.join(cwd, "lualib_bundle.lua"))).toBe(true);
+    expect(result.written).toContain("lualib_bundle.lua");
+    expect(readFileSync(runtimePath, "utf8")).toContain('require("lualib_bundle")');
   });
 
   test("applyEvents removes a deleted helper file's module outputs and drops it from later builds", () => {
@@ -491,6 +495,39 @@ describe("createBuildSession", () => {
       const runtime = readFileSync(path.join(cwd, runtimeRel), "utf8");
       expect(runtime).toContain(`require("${requirePathForRel(bundleRel)}")`);
       expect(runtime).not.toContain('require("lualib_bundle")');
+    });
+
+    // The case above writes `Object.keys` into the importer, so it emits the
+    // bundle whether or not the timers lowering registers anything. Here the
+    // timers import is the only thing that can pull it in.
+    test("a timers-only source writes and relocates the bundle on both write paths", () => {
+      writeIn(cwd, "tsconfig.json", OUTDIR_TSCONFIG);
+      writeIn(
+        cwd,
+        "src/main.ts",
+        'import { setTimeout } from "@defold-typescript/types/timers";\nsetTimeout(() => print(1), 250);\n',
+      );
+
+      const bundleRel = lualibBundleRel(OUTDIR_CONFIG);
+      const runtimeRel = timersModuleRel(OUTDIR_CONFIG);
+      const expectRelocated = (): void => {
+        expect(existsSync(path.join(cwd, bundleRel))).toBe(true);
+        const runtime = readFileSync(path.join(cwd, runtimeRel), "utf8");
+        expect(runtime).toContain(`require("${requirePathForRel(bundleRel)}")`);
+        expect(runtime).not.toContain('require("lualib_bundle")');
+      };
+
+      const session = createBuildSession({ cwd });
+      session.buildAll();
+      expectRelocated();
+
+      writeIn(
+        cwd,
+        "src/main.ts",
+        'import { setTimeout } from "@defold-typescript/types/timers";\nsetTimeout(() => print(2), 500);\n',
+      );
+      session.applyEvents(["src/main.ts"], []);
+      expectRelocated();
     });
 
     test("a require satisfied by an untouched module output stays resolved", () => {

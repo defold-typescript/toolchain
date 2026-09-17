@@ -49,10 +49,12 @@ export interface TranspileProjectResult {
   // own chunk requires it at the module-kind output path, so the CLI must write
   // it there. Absent for a source that emits a single chunk.
   readonly companions?: Readonly<Record<string, string>>;
-  // TSTL synthesizes this bundle (no user source) whenever a lualib feature
-  // (`Object.keys`, spread, `__TS__TypeOf`, ...) is used; the emitted
-  // `require("lualib_bundle")` only resolves in Defold if the CLI writes it to
-  // the output root. Absent when no feature pulls it in.
+  // TSTL synthesizes this bundle (no user source) whenever a lualib feature is
+  // registered — either by a user source using one (`Object.keys`, spread,
+  // `__TS__TypeOf`, ...) or by the timers import lowering, whose generated
+  // runtime requires the bundle. The emitted `require("lualib_bundle")` only
+  // resolves in Defold if the CLI writes it to the output root. Absent when
+  // neither trigger fires.
   readonly lualib?: string;
   // Hand-authored runtime Lua for the `@defold-typescript/types/timers`
   // polyfills (`setTimeout`/`wait`/...). Unlike `defineScript`, the import is
