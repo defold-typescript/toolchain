@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import * as path from "node:path";
 import type * as ts from "typescript";
 import * as tstl from "typescript-to-lua";
+import { createCompanionEmitPlugin } from "./companion-emit";
 import { editorScriptErasurePlugin } from "./editor-script-erasure";
 import {
   findDirectGoPropertyCalls,
@@ -43,6 +44,11 @@ export interface TranspileProjectResult {
   readonly lua: Readonly<Record<string, string>>;
   readonly sourceMaps: Readonly<Record<string, string>>;
   readonly diagnostics: readonly TranspileDiagnostic[];
+  // The companion module a script-kind source with runtime value exports emits
+  // alongside its script, keyed by the same source rel as `lua`. The script's
+  // own chunk requires it at the module-kind output path, so the CLI must write
+  // it there. Absent for a source that emits a single chunk.
+  readonly companions?: Readonly<Record<string, string>>;
   // TSTL synthesizes this bundle (no user source) whenever a lualib feature
   // (`Object.keys`, spread, `__TS__TypeOf`, ...) is used; the emitted
   // `require("lualib_bundle")` only resolves in Defold if the CLI writes it to
@@ -215,9 +221,11 @@ export function collectOutputs(
   transpiledFiles: readonly CollectableFile[],
   diagnostics: readonly ts.Diagnostic[],
   userKeys: ReadonlySet<string>,
+  emittedCompanions: ReadonlyMap<string, string> = new Map(),
 ): TranspileProjectResult {
   const lua: Record<string, string> = {};
   const sourceMaps: Record<string, string> = {};
+  const companions: Record<string, string> = {};
   let lualib: string | undefined;
   for (const file of transpiledFiles) {
     if (isLualibBundle(file) && typeof file.lua === "string") {
@@ -231,6 +239,10 @@ export function collectOutputs(
     lua[userSource.fileName] = file.lua;
     if (typeof file.luaSourceMap === "string") {
       sourceMaps[userSource.fileName] = file.luaSourceMap;
+    }
+    const companion = emittedCompanions.get(userSource.fileName);
+    if (companion !== undefined) {
+      companions[userSource.fileName] = companion;
     }
   }
 
@@ -276,6 +288,7 @@ export function collectOutputs(
     lua,
     sourceMaps,
     diagnostics: collectedDiagnostics,
+    ...(Object.keys(companions).length > 0 ? { companions } : {}),
     ...(lualib !== undefined ? { lualib } : {}),
     ...(timersImported ? { timersRuntime: TIMERS_RUNTIME } : {}),
   };
@@ -284,6 +297,7 @@ export function collectOutputs(
 export function transpileProject(input: TranspileProjectInput): TranspileProjectResult {
   const userKeys = new Set(Object.keys(input.files));
   const merged: Record<string, string> = { ...AMBIENT_FILES, ...input.files };
+  const companionEmit = createCompanionEmitPlugin();
 
   const result = tstl.transpileVirtualProject(merged, {
     luaTarget: tstl.LuaTarget.Lua51,
@@ -305,10 +319,16 @@ export function transpileProject(input: TranspileProjectInput): TranspileProject
       { plugin: windowEventGuardLoweringPlugin },
       { plugin: messageDispatchLoweringPlugin },
       { plugin: timersLoweringPlugin },
+      { plugin: companionEmit.plugin },
     ],
   });
 
-  return collectOutputs(result.transpiledFiles, result.diagnostics, userKeys);
+  return collectOutputs(
+    result.transpiledFiles,
+    result.diagnostics,
+    userKeys,
+    companionEmit.companions,
+  );
 }
 
 export function transpile(source: string): TranspileResult {

@@ -1021,25 +1021,20 @@ describe("runBuild (require resolution)", () => {
   const IMPORTER_TYPE_ONLY =
     'import { defineScript } from "@defold-typescript/types";\nimport type { Shared } from "./shared";\nexport default defineScript({ init() { const s: Shared = 1; print(s); } });\n';
 
-  test("fails on a script-to-script value import and writes no output for the importer", () => {
+  test("a script-to-script value import resolves through the exporter's companion", () => {
     writeFile("tsconfig.json", DEFAULT_TSCONFIG);
     writeFile("src/shared.ts", SHARED_SCRIPT);
     writeFile("src/importer.ts", IMPORTER_VALUE);
 
-    let thrown: unknown;
-    try {
-      runBuild({ cwd });
-    } catch (error) {
-      thrown = error;
-    }
+    const result = runBuild({ cwd });
 
-    expect(thrown).toBeInstanceOf(BuildFailureError);
-    const entries = (thrown as BuildFailureError).entries;
-    expect(entries).toHaveLength(1);
-    expect(entries[0]?.file).toBe("src/importer.ts");
-    expect(entries[0]?.message).toContain("src.shared");
-    expect(entries[0]?.message).toContain("src/shared.ts.script");
-    expect(existsSync(path.join(cwd, "src/importer.ts.script"))).toBe(false);
+    expect(result.written.sort()).toEqual([
+      "src/importer.ts.script",
+      "src/shared.lua",
+      "src/shared.ts.script",
+    ]);
+    const importer = readFileSync(path.join(cwd, "src/importer.ts.script"), "utf8");
+    expect(importer).toContain('require("src.shared")');
   });
 
   test("a type-only import across the same pair builds and emits no require between them", () => {
@@ -1204,5 +1199,88 @@ describe("runBuild (companion closure violations)", () => {
     );
 
     expect(runBuild({ cwd }).written).toContain("src/util.lua");
+  });
+});
+
+describe("runBuild (companion module emit)", () => {
+  // The bug-199 arrangement itself: a door component that owns lifecycle hooks
+  // and also exports a value the player reads.
+  const DOOR =
+    'import { defineScript } from "@defold-typescript/types";\n' +
+    "export const DOOR_SPEED = 3;\n" +
+    "export default defineScript({ init() { print(DOOR_SPEED); } });\n";
+  const PLAYER =
+    'import { defineScript } from "@defold-typescript/types";\n' +
+    'import { DOOR_SPEED } from "./doors/door";\n' +
+    "export default defineScript({ update() { print(DOOR_SPEED); } });\n";
+
+  function scaffold(): void {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/doors/door.ts", DOOR);
+    writeFile("src/player.ts", PLAYER);
+  }
+
+  test("writes both components and the companion, and every require names a written file", () => {
+    scaffold();
+
+    const result = runBuild({ cwd });
+
+    expect(result.written.sort()).toEqual([
+      "src/doors/door.lua",
+      "src/doors/door.ts.script",
+      "src/player.ts.script",
+    ]);
+    const written = new Set(result.written);
+    for (const rel of ["src/doors/door.ts.script", "src/player.ts.script"]) {
+      const lua = readFileSync(path.join(cwd, rel), "utf8");
+      for (const [, requirePath] of lua.matchAll(/require\("([^"]+)"\)/g)) {
+        expect(written.has(`${(requirePath as string).split(".").join("/")}.lua`)).toBe(true);
+      }
+    }
+  });
+
+  test("the exported value is one definition, read by both chunks off the companion", () => {
+    scaffold();
+    runBuild({ cwd });
+
+    const companion = readFileSync(path.join(cwd, "src/doors/door.lua"), "utf8");
+    const script = readFileSync(path.join(cwd, "src/doors/door.ts.script"), "utf8");
+
+    expect(companion).toContain("____exports.DOOR_SPEED = 3");
+    expect(script).not.toContain("DOOR_SPEED = 3");
+    expect(script).toContain('require("src.doors.door")');
+  });
+
+  test("a module flipped to script-kind keeps the same .lua path claimed", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/doors/door.ts", "export const DOOR_SPEED = 3;\n");
+    writeFile("src/player.ts", PLAYER);
+
+    expect(runBuild({ cwd }).written).toContain("src/doors/door.lua");
+
+    writeFile("src/doors/door.ts", DOOR);
+    const flipped = runBuild({ cwd });
+
+    expect(flipped.written).toContain("src/doors/door.lua");
+    expect(readFileSync(path.join(cwd, "src/player.ts.script"), "utf8")).toContain(
+      'require("src.doors.door")',
+    );
+  });
+
+  test("prune keeps the live companion and drops it once the last export goes", () => {
+    scaffold();
+    runBuild({ cwd });
+    expect(existsSync(path.join(cwd, "src/doors/door.lua"))).toBe(true);
+
+    writeFile("src/player.ts", EMPTY_SCRIPT);
+    writeFile(
+      "src/doors/door.ts",
+      'import { defineScript } from "@defold-typescript/types";\nexport default defineScript({ init() {} });\n',
+    );
+    const rebuilt = runBuild({ cwd });
+
+    expect(rebuilt.written).not.toContain("src/doors/door.lua");
+    expect(existsSync(path.join(cwd, "src/doors/door.lua"))).toBe(false);
+    expect(existsSync(path.join(cwd, "src/doors/door.ts.script"))).toBe(true);
   });
 });

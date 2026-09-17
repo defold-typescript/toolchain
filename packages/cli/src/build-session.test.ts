@@ -92,7 +92,9 @@ describe("createBuildSession", () => {
 
     const result = session.applyEvents(["src/main.ts"], []);
 
-    expect(result.written).toEqual(["src/main.ts.script"]);
+    // The new export opens a companion alongside the script, so the rebuild
+    // writes both of the one changed source's outputs and nothing else.
+    expect(result.written).toEqual(["src/main.lua", "src/main.ts.script"]);
     expect(readFileSync(path.join(cwd, "src/util.lua"), "utf8")).toBe(utilLuaBefore);
     expect(readFileSync(path.join(cwd, "src/main.ts.script"), "utf8")).not.toBe(mainLuaBefore);
   });
@@ -215,8 +217,10 @@ describe("createBuildSession", () => {
     writeIn(cwd, "src/main.ts", `${MAIN_NO_IMPORT}export const extra = 2;\n`);
     const result = session.applyEvents(["src/main.ts"], ["src/old.ts.script"]);
 
-    expect(result.written).toEqual(["src/main.ts.script"]);
-    expect(readFileSync(path.join(cwd, "src/main.ts.script"), "utf8")).toContain("2");
+    expect(result.written).toEqual(["src/main.lua", "src/main.ts.script"]);
+    // The re-emitted export lives in the companion now, which is where the
+    // rebuild has to land for the script's require to see the new value.
+    expect(readFileSync(path.join(cwd, "src/main.lua"), "utf8")).toContain("2");
   });
 
   test("a type error in a changed file throws the build-shaped error and the session stays usable", () => {
@@ -397,16 +401,31 @@ describe("createBuildSession", () => {
       'import { defineScript } from "@defold-typescript/types";\nimport { shared } from "./shared";\nexport default defineScript({ init() { print(shared); } });\n';
     const IMPORTER_TYPE_ONLY =
       'import { defineScript } from "@defold-typescript/types";\nimport type { Shared } from "./shared";\nexport default defineScript({ init() { const s: Shared = 1; print(s); } });\n';
-    const SHARED_WITH_TYPE =
-      'import { defineScript } from "@defold-typescript/types";\nexport type Shared = number;\nexport const shared = 7;\nexport default defineScript({ init() {} });\n';
 
-    test("a value import of an untouched script surfaces on the rebuild that introduces it", () => {
-      writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
-      writeIn(cwd, "src/shared.ts", SHARED_WITH_TYPE);
+    // An `outDir` is the remaining shape no companion can serve: the output is
+    // re-rooted under it while the emitted require still names the source tree.
+    const OUTDIR_TSCONFIG = JSON.stringify(
+      {
+        compilerOptions: {
+          target: "ES2022",
+          module: "ESNext",
+          strict: true,
+          outDir: "build/lua",
+        },
+        include: ["src/**/*.ts"],
+      },
+      null,
+      2,
+    );
+    const SHARED_MODULE = "export type Shared = number;\nexport const shared = 7;\n";
+
+    test("a value import of an untouched source surfaces on the rebuild that introduces it", () => {
+      writeIn(cwd, "tsconfig.json", OUTDIR_TSCONFIG);
+      writeIn(cwd, "src/shared.ts", SHARED_MODULE);
       writeIn(cwd, "src/importer.ts", IMPORTER_TYPE_ONLY);
 
       const session = createBuildSession({ cwd });
-      expect(session.buildAll().written).toContain("src/importer.ts.script");
+      expect(session.buildAll().written).toContain("build/lua/importer.ts.script");
 
       writeIn(cwd, "src/importer.ts", IMPORTER_VALUE);
       let thrown: unknown;
@@ -429,7 +448,7 @@ describe("createBuildSession", () => {
 
       writeIn(cwd, "src/importer.ts", IMPORTER_TYPE_ONLY);
       expect(session.applyEvents(["src/importer.ts"], []).written).toContain(
-        "src/importer.ts.script",
+        "build/lua/importer.ts.script",
       );
     });
 
@@ -447,15 +466,17 @@ describe("createBuildSession", () => {
       expect(rebuilt.written).toContain("src/main.ts.script");
     });
 
-    test("buildAll fails on a script-to-script value import", () => {
+    test("buildAll resolves a script-to-script value import through the companion", () => {
       writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
       writeIn(cwd, "src/shared.ts", SHARED_SCRIPT);
       writeIn(cwd, "src/importer.ts", IMPORTER_VALUE);
 
       const session = createBuildSession({ cwd });
+      const result = session.buildAll();
 
-      expect(() => session.buildAll()).toThrow(BuildFailureError);
-      expect(existsSync(path.join(cwd, "src/importer.ts.script"))).toBe(false);
+      expect(result.written).toContain("src/shared.lua");
+      expect(existsSync(path.join(cwd, "src/importer.ts.script"))).toBe(true);
+      expect(existsSync(path.join(cwd, "src/shared.ts.script"))).toBe(true);
     });
   });
 
@@ -504,5 +525,46 @@ describe("createBuildSession", () => {
       writeIn(cwd, "src/door.ts", SPLITTABLE);
       expect(session.applyEvents(["src/door.ts"], []).written).toContain("src/door.ts.script");
     });
+  });
+});
+
+describe("createBuildSession (companion module emit)", () => {
+  let cwd: string;
+
+  beforeEach(() => {
+    cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-session-companion-"));
+  });
+
+  afterEach(() => {
+    rmSync(cwd, { recursive: true, force: true });
+  });
+
+  const DOOR =
+    'import { defineScript } from "@defold-typescript/types";\n' +
+    "export const DOOR_SPEED = 3;\n" +
+    "export default defineScript({ init() { print(DOOR_SPEED); } });\n";
+  const DOOR_NO_EXPORT =
+    'import { defineScript } from "@defold-typescript/types";\n' +
+    "export default defineScript({ init() {} });\n";
+
+  test("a watch rebuild keeps the live companion, then deletes it when the last export goes", () => {
+    writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
+    writeIn(cwd, "src/door.ts", DOOR);
+
+    const session = createBuildSession({ cwd });
+    expect(session.buildAll().written).toContain("src/door.lua");
+
+    // A rebuild that changes nothing about the exports must not prune the
+    // companion it just wrote — the module path is one of the source's own
+    // alternative outputs.
+    writeIn(cwd, "src/door.ts", DOOR.replace("= 3;", "= 4;"));
+    expect(session.applyEvents(["src/door.ts"], []).written).toContain("src/door.lua");
+    expect(readFileSync(path.join(cwd, "src/door.lua"), "utf8")).toContain("4");
+
+    writeIn(cwd, "src/door.ts", DOOR_NO_EXPORT);
+    const rebuilt = session.applyEvents(["src/door.ts"], []);
+
+    expect(rebuilt.written).toEqual(["src/door.ts.script"]);
+    expect(existsSync(path.join(cwd, "src/door.lua"))).toBe(false);
   });
 });

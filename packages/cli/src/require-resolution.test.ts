@@ -23,10 +23,15 @@ function check(
     }
     sources[rel] = computeOutputRel(rel, config, detectSourceOutputKind(files[rel] ?? ""));
   }
+  // Companion rels join `plannedOutputs` the way both build entry points join
+  // them, so a require a companion satisfies reads as resolvable here too.
+  const companions = Object.keys(result.companions ?? {}).map((rel) =>
+    computeOutputRel(rel, config, "module"),
+  );
   return findUnresolvedRequires({
     lua: result.lua,
     sources,
-    plannedOutputs: Object.values(sources),
+    plannedOutputs: [...Object.values(sources), ...companions],
   });
 }
 
@@ -47,19 +52,13 @@ describe("findUnresolvedRequires", () => {
     ).toEqual([]);
   });
 
-  test("a script value-importing another script names the importer, the require, and the target", () => {
-    const findings = check({
-      "src/bar.ts": script("export const shared = 1;"),
-      "src/foo.ts": script("import { shared } from './bar';\nprint(shared);"),
-    });
-
-    expect(findings).toHaveLength(1);
-    expect(findings[0]).toMatchObject({
-      importer: "src/foo.ts",
-      requirePath: "src.bar",
-      target: "src/bar.ts",
-      expected: "src/bar.ts.script",
-    });
+  test("a script value-importing another script resolves through the exporter's companion", () => {
+    expect(
+      check({
+        "src/bar.ts": script("export const shared = 1;"),
+        "src/foo.ts": script("import { shared } from './bar';\nprint(shared);"),
+      }),
+    ).toEqual([]);
   });
 
   test("a type-only import across two scripts emits no require and no finding", () => {
@@ -73,20 +72,14 @@ describe("findUnresolvedRequires", () => {
     ).toEqual([]);
   });
 
-  test("a barrel re-exporting a script's value is itself the unresolvable require", () => {
-    const findings = check({
-      "src/bar.ts": script("export const shared = 1;"),
-      "src/barrel.ts": "export { shared } from './bar';\n",
-      "src/foo.ts": script("import { shared } from './barrel';\nprint(shared);"),
-    });
-
-    expect(findings).toHaveLength(1);
-    expect(findings[0]).toMatchObject({
-      importer: "src/barrel.ts",
-      requirePath: "src.bar",
-      target: "src/bar.ts",
-      expected: "src/bar.ts.script",
-    });
+  test("a barrel re-exporting a script's value resolves through that script's companion", () => {
+    expect(
+      check({
+        "src/bar.ts": script("export const shared = 1;"),
+        "src/barrel.ts": "export { shared } from './bar';\n",
+        "src/foo.ts": script("import { shared } from './barrel';\nprint(shared);"),
+      }),
+    ).toEqual([]);
   });
 
   test("a configured outDir breaks a cross-file module import", () => {
@@ -116,15 +109,20 @@ describe("findUnresolvedRequires", () => {
     ).toEqual([]);
   });
 
+  // A dotted name is the one shape a companion cannot rescue: it lands at
+  // `src/foo.bar.lua` while every require of it says `src.foo_bar`, so the
+  // exporting script cannot reach its own companion either.
   test("a dotted source rel is matched through the require path TSTL emits for it", () => {
     const findings = check({
       "src/foo.bar.ts": script("export const shared = 1;"),
       "src/main.ts": script("import { shared } from './foo.bar';\nprint(shared);"),
     });
 
-    expect(findings).toHaveLength(1);
-    expect(findings[0]).toMatchObject({
-      importer: "src/main.ts",
+    expect(findings.map((finding) => finding.importer).sort()).toEqual([
+      "src/foo.bar.ts",
+      "src/main.ts",
+    ]);
+    expect(findings.find((finding) => finding.importer === "src/main.ts")).toMatchObject({
       requirePath: "src.foo_bar",
       target: "src/foo.bar.ts",
       expected: "src/foo.bar.ts.script",

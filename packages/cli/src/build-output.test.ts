@@ -382,7 +382,7 @@ describe("pruneAlternativeOutputs", () => {
     }
     const keepRel = computeOutputRel(rel, config, "render-script");
 
-    pruneAlternativeOutputs(cwd, rel, config, keepRel);
+    pruneAlternativeOutputs(cwd, rel, config, [keepRel]);
 
     expect(existsSync(path.join(cwd, keepRel))).toBe(true);
     expect(existsSync(path.join(cwd, `${keepRel}.map`))).toBe(true);

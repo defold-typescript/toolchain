@@ -146,18 +146,22 @@ export function outputRelsForSource(rel: string, config: BuildConfig): string[] 
 // on any line, so its position never matters to detection.
 export const GENERATED_BANNER = "--# defold-typescript:generated";
 
-// Delete every output a source could have produced except the one it currently
-// does (`keepRel` and its `.map`). With a source on disk, its non-current
+// Delete every output a source could have produced except the ones it currently
+// does (each `keep` rel and its `.map`). With a source on disk, its non-current
 // outputs are provably stale, so a kind switch never leaves the prior artifact
-// behind. With no `keepRel`, removes all of the source's outputs.
+// behind. A set rather than one rel: a script-kind source that exports values
+// writes both its component resource and its companion module, and the
+// module-kind path is one of its own alternatives. With no `keep`, removes all
+// of the source's outputs.
 export function pruneAlternativeOutputs(
   cwd: string,
   rel: string,
   config: BuildConfig,
-  keepRel?: string,
+  keep: readonly string[] = [],
 ): void {
+  const live = new Set(keep.flatMap((keepRel) => [keepRel, `${keepRel}.map`]));
   for (const outputRel of outputRelsForSource(rel, config)) {
-    if (outputRel !== keepRel && outputRel !== `${keepRel}.map`) {
+    if (!live.has(outputRel)) {
       rmSync(path.join(cwd, outputRel), { force: true });
     }
   }
