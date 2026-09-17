@@ -381,7 +381,35 @@ describe("companion emit — only genuinely free names pull a declaration across
     });
   }
 
-  test("a name both read free and shadowed deeper still brings its prelude across", () => {
+  test("a nested recursive local function shadowing a script-side declaration does not copy it across", () => {
+    const result = emit({
+      "game/lib/boot.ts": BOOT,
+      "game/doors/door.ts": doorShadowing(
+        "export function bump(n: number): number {",
+        "  function gain(k: number): number {",
+        "    return k <= 0 ? 0 : k + gain(k - 1);",
+        "  }",
+        "  return gain(n);",
+        "}",
+      ),
+    });
+    const script = chunkFor(result, "game/doors/door.ts");
+    const companion = companionFor(result, "game/doors/door.ts");
+
+    expect(companion).toContain("function ____exports.bump(");
+    expect(companion).toContain("local function gain(");
+    expect(companion).not.toContain("warm");
+    expect(findEmittedRequires(companion)).toEqual([]);
+
+    expect(definitionCount(script, "gain")).toBe(1);
+    expect(script).toContain("warm(");
+    expect(findEmittedRequires(script)).toEqual(["game.lib.boot", "game.doors.door"]);
+  });
+
+  // `importBindings` alone seeds `warm` here, so this is a copy-and-resolve
+  // case: it proves the prelude survives a deeper shadow, not that a free-name
+  // read found it.
+  test("an import the closure needs is copied with its resolved require even when a nested scope shadows it", () => {
     const result = emit({
       "game/lib/boot.ts": BOOT,
       "game/doors/door.ts": lines(
