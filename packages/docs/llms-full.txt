@@ -3311,7 +3311,19 @@ hand-authored Lua. The build claims every path it is about to write and fails
 before touching anything when one is contested — naming the path, the source, and
 the exports it carries — so a companion never overwrites a `.lua` file you wrote
 yourself, and two sources collapsing onto one rel under a shared `outDir` is an
-error rather than whichever one happened to be written last.
+error rather than whichever one happened to be written last. A rebuild under
+[`watch`](./watch.md) claims on behalf of the whole project, not just the files it
+recompiled, so editing one source into another's output path fails the rebuild
+instead of quietly replacing a module nothing touched.
+
+The two runtime artifacts the build writes for itself — `lualib_bundle.lua` and
+`defold_typescript_timers.lua`, both at the output root — are inside the same
+contract. A hand-authored file at either path fails the build with its bytes
+intact, and must be renamed; so must a source of your own that compiles to one of
+those names. A bundle an earlier build wrote carries the generated banner and is
+replaced as usual. Upgrading a project that already has a `lualib_bundle.lua` from
+another toolchain is the case you are most likely to meet this in: that file
+carries no banner, so the first build after the upgrade stops and names it.
 
 If a Defold editor is open on this project, `build` names it on stderr
 (`attached to Defold editor at http://localhost:<port>`) and moves on. It is a

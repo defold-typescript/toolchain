@@ -568,3 +568,78 @@ describe("createBuildSession (companion module emit)", () => {
     expect(existsSync(path.join(cwd, "src/door.lua"))).toBe(false);
   });
 });
+
+describe("createBuildSession — the incremental claim inventory", () => {
+  // Two include roots collapsing under one `outDir` is the shape that puts two
+  // sources on one output rel without either being renamed, so a rebuild of one
+  // of them can reach the other's file.
+  const SHARED_TSCONFIG = JSON.stringify(
+    {
+      compilerOptions: { target: "ES2022", module: "ESNext", strict: true, outDir: "build" },
+      include: ["src/**/*.ts", "vendor/**/*.ts"],
+    },
+    null,
+    2,
+  );
+  const SHARED_SCRIPT =
+    'import { defineScript } from "@defold-typescript/types";\n' +
+    "const RATE = 1;\n" +
+    "export default defineScript({ init() { print(RATE); } });\n";
+  const EXPORTING_SCRIPT =
+    'import { defineScript } from "@defold-typescript/types";\n' +
+    "export const DOOR_SPEED = 3;\n" +
+    "export default defineScript({ init() { print(DOOR_SPEED); } });\n";
+
+  function scaffoldTwoRoots(): void {
+    writeIn(cwd, "tsconfig.json", SHARED_TSCONFIG);
+    writeIn(cwd, "src/shared.ts", SHARED_SCRIPT);
+    writeIn(cwd, "vendor/shared.ts", "export const VALUE = 2;\n");
+  }
+
+  test("a rebuild onto an untouched source's output fails and leaves it unchanged", () => {
+    scaffoldTwoRoots();
+
+    const session = createBuildSession({ cwd });
+    expect(session.buildAll().written).toEqual(["build/shared.lua", "build/shared.ts.script"]);
+    const vendorLua = readFileSync(path.join(cwd, "build/shared.lua"), "utf8");
+
+    writeIn(cwd, "src/shared.ts", "export const VALUE = 99;\n");
+
+    expect(() => session.applyEvents(["src/shared.ts"], [])).toThrow(/build\/shared\.lua/);
+    expect(readFileSync(path.join(cwd, "build/shared.lua"), "utf8")).toBe(vendorLua);
+  });
+
+  test("the rebuild's failure names both sources", () => {
+    scaffoldTwoRoots();
+
+    const session = createBuildSession({ cwd });
+    session.buildAll();
+    writeIn(cwd, "src/shared.ts", "export const VALUE = 99;\n");
+
+    expect(() => session.applyEvents(["src/shared.ts"], [])).toThrow(/src\/shared\.ts/);
+
+    writeIn(cwd, "src/shared.ts", "export const VALUE = 98;\n");
+    expect(() => session.applyEvents(["src/shared.ts"], [])).toThrow(/vendor\/shared\.ts/);
+  });
+
+  test("a valid rebuild still writes and reports only the changed source's outputs", () => {
+    writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
+    writeIn(cwd, "src/door.ts", EXPORTING_SCRIPT);
+    writeIn(cwd, "src/util.ts", UTIL);
+
+    const session = createBuildSession({ cwd });
+    session.buildAll();
+
+    const utilLua = readFileSync(path.join(cwd, "src/util.lua"), "utf8");
+    const utilMtime = statSync(path.join(cwd, "src/util.lua")).mtimeMs;
+
+    writeIn(cwd, "src/door.ts", EXPORTING_SCRIPT.replace("= 3;", "= 7;"));
+    const rebuilt = session.applyEvents(["src/door.ts"], []);
+
+    // Claiming over the whole program must not widen what the rebuild writes:
+    // `src/util.lua` is claimed but not rewritten, and stays out of `written`.
+    expect(rebuilt.written).toEqual(["src/door.lua", "src/door.ts.script"]);
+    expect(readFileSync(path.join(cwd, "src/util.lua"), "utf8")).toBe(utilLua);
+    expect(statSync(path.join(cwd, "src/util.lua")).mtimeMs).toBe(utilMtime);
+  });
+});
