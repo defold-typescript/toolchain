@@ -10,6 +10,8 @@ export interface UnresolvedRequire {
   readonly target: string;
   /** The output the build will actually write for that source. */
   readonly expected: string;
+  /** The rel Defold's Lua loader opens for `requirePath`. */
+  readonly loadPath: string;
 }
 
 export interface FindUnresolvedRequiresInput {
@@ -36,6 +38,15 @@ export interface FindUnresolvedRequiresInput {
  * `foo.ts.script` is addressed from a `.go` file and is never on the require
  * path.
  */
+// The rel Lua opens for a module path: dots are path separators to the loader,
+// so this is the one spelling that reaches the module. The output side is
+// compared against it literally rather than through `requirePathForRel`, which
+// would map `src/foo.bar.lua` and `src/foo_bar.lua` onto one key and let a
+// dotted source name cancel the mismatch it creates.
+function luaLoadPath(requirePath: string): string {
+  return `${requirePath.replace(/\./g, "/")}.lua`;
+}
+
 export function findUnresolvedRequires(input: FindUnresolvedRequiresInput): UnresolvedRequire[] {
   const { lua, sources, plannedOutputs } = input;
 
@@ -44,12 +55,7 @@ export function findUnresolvedRequires(input: FindUnresolvedRequiresInput): Unre
     sourceByRequirePath.set(requirePathForRel(rel), rel);
   }
 
-  const satisfiedRequirePaths = new Set<string>();
-  for (const outputRel of plannedOutputs) {
-    if (outputRel.endsWith(".lua")) {
-      satisfiedRequirePaths.add(requirePathForRel(outputRel));
-    }
-  }
+  const plannedLuaOutputs = new Set(plannedOutputs.filter((rel) => rel.endsWith(".lua")));
 
   const findings: UnresolvedRequire[] = [];
   for (const importer of Object.keys(sources)) {
@@ -59,7 +65,11 @@ export function findUnresolvedRequires(input: FindUnresolvedRequiresInput): Unre
     }
     for (const requirePath of findEmittedRequires(emitted)) {
       const target = sourceByRequirePath.get(requirePath);
-      if (target === undefined || satisfiedRequirePaths.has(requirePath)) {
+      if (target === undefined) {
+        continue;
+      }
+      const loadPath = luaLoadPath(requirePath);
+      if (plannedLuaOutputs.has(loadPath)) {
         continue;
       }
       findings.push({
@@ -67,6 +77,7 @@ export function findUnresolvedRequires(input: FindUnresolvedRequiresInput): Unre
         requirePath,
         target,
         expected: sources[target] ?? "",
+        loadPath,
       });
     }
   }
@@ -79,9 +90,15 @@ export function findUnresolvedRequires(input: FindUnresolvedRequiresInput): Unre
 // looks, while any other suffix is a component resource that is never on the
 // require path at all.
 function describe(finding: UnresolvedRequire): string {
-  const { requirePath, target, expected } = finding;
+  const { requirePath, target, expected, loadPath } = finding;
   if (expected.endsWith(".lua")) {
-    return `requires "${requirePath}", but ${target} is written to ${expected}, which that require does not reach`;
+    // Putting the output back through the require rule reproduces the load path
+    // exactly when the only difference is a dot the require path underscored —
+    // a source-name problem with a rename as its remedy, not an `outDir` one.
+    if (luaLoadPath(requirePathForRel(expected)) === loadPath) {
+      return `requires "${requirePath}", which Defold loads from ${loadPath}, but ${target} is written to ${expected} — a dot in the source name is kept in the output and underscored in the require, so rename the source`;
+    }
+    return `requires "${requirePath}", which Defold loads from ${loadPath}, but ${target} is written to ${expected}, which that require does not reach`;
   }
   return `requires "${requirePath}", but ${target} is written to ${expected}, a component resource Defold addresses from a .go file and never puts on the require path — move the shared value into a source with no lifecycle factory`;
 }

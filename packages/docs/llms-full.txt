@@ -3262,8 +3262,11 @@ every `require` it emits against the outputs it is about to write and fails with
 the offending file, the require path, and the source it names, so an import that
 cannot resolve is a build error rather than a load failure inside the editor. The
 same check catches a cross-file import under a configured `outDir`, where the
-emitted `require` still points at the source tree. A `require` with no TypeScript
-source behind it — a Lua module from a Defold library dependency, the
+emitted `require` still points at the source tree. It also catches a source whose
+name contains a dot: `src/foo.bar.ts` is written to `src/foo.bar.lua` with the dot
+intact, while Lua reads a dot as a path separator, so the emitted
+`require("src.foo_bar")` looks for `src/foo_bar.lua` and finds nothing — rename the
+source to remove the dot. A `require` with no TypeScript source behind it — a Lua module from a Defold library dependency, the
 `lldebugger.debug` module the [debugging guide](./debugging.md) sets up,
 hand-authored Lua — is external and is left alone.
 
