@@ -1299,6 +1299,8 @@ return ____exports
 
 `LuaSet.add` becomes `t[v] = true`, `LuaMap.set`/`get` become plain `t[k] = v` / `t[k]`, and nothing pulls `lualib_bundle`. The trade is a deliberately thin surface: `get`/`set`/`has`/`delete` (plus `add` on the set), and that is all — no `.size`, no `for...of`, no insertion order. Reach for the standard `Map`/`Set` when you need to enumerate or count; reach for `LuaMap`/`LuaSet` when you only get, set, and test membership and want zero runtime overhead.
 
+Overhead is not the only way you meet `LuaMap`. Engine calls that take a table keyed by *constants* — `render.clear` is the worked example — declare that slot `LuaMap<render.ClearBufferKey, number | Vector4>`, because `LuaMap` checks the key as a `set` argument and so enforces which [enum constants](./typescript-gotchas.md#enum-constants-are-branded-numbers--a-bare-number-wont-do) may be used. A plain object type keyed by the same union does not: a computed branded key slips past excess-property checking, so a constant from another family is accepted silently — and the object is still not a `LuaMap`, so it cannot be passed either way. There the `LuaMap` is forced rather than chosen; [Lua table constructs](./lua-table-constructs.md) has the two spellings that work.
+
 Use them as **ambient globals — do not import them.** `import { LuaMap } from "@typescript-to-lua/language-extensions"` is rejected (`… is not a module`) and silently falls back to the heavyweight `lualib` `Map`; written bare, `LuaMap`/`LuaSet`/`LuaTable` are part of the global type surface like the engine namespaces. (The Lua standard library itself — typed by `lua-types` — adds no container types beyond the universal `table`; these extension types are the typed way to use that raw table directly.)
 
 #### Not available — reach for instead
@@ -1315,6 +1317,7 @@ Regex is the one that bites most often. `"x".match(/b/)` type-checks but fails t
 #### See also
 
 - [TypeScript vs Lua](./typescript-vs-lua.md#tables-vs-objects-arrays-and-maps) — the container translation cheat sheet this page deepens.
+- [Lua table constructs](./lua-table-constructs.md) — the narrower case: writing a table the engine reads by constant key.
 - [Where script state lives](./script-state.md) — where to *put* these containers: per-instance `self`, a shared module local, or a module singleton.
 - [TypeScript gotchas](./typescript-gotchas.md) — the runtime sharp edges (truthiness, `nil` collapse) that bite once the data is in a container.
 
@@ -1333,7 +1336,7 @@ For the general container map — which Lua `table` shape becomes which TypeScri
 
 #### Why the slot is a `LuaMap`
 
-An [enum constant is a branded number](./typescript-gotchas.md#enum-constants-are-branded-numbers--a-bare-number-wont-do), and a TypeScript index signature accepts only `string`, `number` or `symbol` — never a brand. A generated declaration therefore cannot describe "a table keyed by these three constants" as an index signature at all, so the slot is typed `LuaMap<render.ClearBufferKey, number | Vector4>`: a `LuaMap` key parameter *can* carry the brand.
+An [enum constant is a branded number](./typescript-gotchas.md#enum-constants-are-branded-numbers--a-bare-number-wont-do). A TypeScript index signature *can* be keyed by that brand — `{ [key: render.ClearBufferKey]: number | Vector4 }` compiles — but it does not buy what it appears to: a computed key whose type is a non-literal branded number defeats excess-property checking, so a constant from another family is accepted with no error (the [rejected mapped type](#rejected--a-mapped-type-over-the-key-union) below demonstrates this). The slot is therefore typed `LuaMap<render.ClearBufferKey, number | Vector4>`, where the key is checked as an argument to `set` and the wrong family is a compile error.
 
 `render.ClearBufferKey` is the exported union of the three constants, available on the default surface and on every pinned `defold-target`. `LuaMap`'s iterator makes its key parameter invariant, so `LuaMap<number, number | Vector4>` is rejected however its entries were set — declare the map with the alias. `packages/types/test-d/documented-constant-slots.ts` pins the accepted call and rejects a key from another family, and `packages/types/test-d/versions/clear-buffer-key-proof.ts` proves the alias on each committed surface.
 
