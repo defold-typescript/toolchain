@@ -1,3 +1,10 @@
+export type {
+  ClosureSite,
+  ClosureViolation,
+  ClosureViolationKind,
+  CompanionClosure,
+} from "./companion-closure";
+export { COMPANION_INTERNAL_FIELD, computeCompanionClosure } from "./companion-closure";
 export type { ComponentAnimationIndex } from "./component-animation-index";
 export {
   buildComponentAnimationIndex,

@@ -86,6 +86,31 @@ import { register, spawnedCount } from "./registry";
 
 `import { register } from "./registry"` lowers to a `require` that Defold caches once, so `spawner.ts` and `hud.ts` read and write the **same** `spawned`/`names` values. This is the idiomatic pattern for game-wide tracking — prefer it over raw globals: a module singleton is scoped, typed, and explicit about who depends on it.
 
+### When the build sends you here
+
+`build` and `watch` reject a script whose exported values cannot be told apart from its lifecycle hooks. The clearest case is a private binding an exported function reassigns while a hook also reads it:
+
+```ts
+// door.ts — rejected.
+import { defineScript } from "@defold-typescript/types";
+
+let count = 0;
+export function increment(): void {
+  count++;
+}
+
+export default defineScript({
+  update() {
+    increment();
+    print(count);
+  },
+});
+```
+
+The error names `count` and both lines that reach it. Move `count` and `increment` into a module of their own — the singleton above — and import them from the script: the state then has one home, and every reader sees the same value.
+
+The other rejected shape is an effectful top-level statement — a call rather than a literal — written above an exported declaration. Move it below the exports, or into `init`.
+
 ## Truly global variables: `declare global`
 
 The widest tier is a bare Lua global, shared across the entire VM — every script, no import. You reach it from TypeScript with `declare global`. The declaration itself emits no Lua; the first assignment creates the global at runtime:

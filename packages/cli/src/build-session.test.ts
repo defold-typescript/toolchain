@@ -458,4 +458,51 @@ describe("createBuildSession", () => {
       expect(existsSync(path.join(cwd, "src/importer.ts.script"))).toBe(false);
     });
   });
+
+  describe("companion closure violations", () => {
+    const SPLITTABLE = [
+      'import { defineScript } from "@defold-typescript/types";',
+      "",
+      "let count = 0;",
+      "export function increment(): void {",
+      "  count++;",
+      "}",
+      "",
+      "export default defineScript({",
+      "  update() {",
+      "    increment();",
+      "  },",
+      "});",
+      "",
+    ].join("\n");
+    const UNSPLITTABLE = SPLITTABLE.replace(
+      "    increment();",
+      "    increment();\n    print(count);",
+    );
+
+    test("an edit that introduces a violation surfaces it, and reverting clears it", () => {
+      writeIn(cwd, "tsconfig.json", DEFAULT_TSCONFIG);
+      writeIn(cwd, "src/door.ts", SPLITTABLE);
+
+      const session = createBuildSession({ cwd });
+      expect(session.buildAll().written).toContain("src/door.ts.script");
+
+      writeIn(cwd, "src/door.ts", UNSPLITTABLE);
+      let thrown: unknown;
+      try {
+        session.applyEvents(["src/door.ts"], []);
+      } catch (error) {
+        thrown = error;
+      }
+
+      expect(thrown).toBeInstanceOf(BuildFailureError);
+      const entries = (thrown as BuildFailureError).entries;
+      expect(entries).toHaveLength(1);
+      expect(entries[0]?.file).toBe("src/door.ts");
+      expect(entries[0]?.message).toContain("count");
+
+      writeIn(cwd, "src/door.ts", SPLITTABLE);
+      expect(session.applyEvents(["src/door.ts"], []).written).toContain("src/door.ts.script");
+    });
+  });
 });
