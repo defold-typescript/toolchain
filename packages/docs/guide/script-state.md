@@ -86,6 +86,33 @@ import { register, spawnedCount } from "./registry";
 
 `import { register } from "./registry"` lowers to a `require` that Defold caches once, so `spawner.ts` and `hud.ts` read and write the **same** `spawned`/`names` values. This is the idiomatic pattern for game-wide tracking — prefer it over raw globals: a module singleton is scoped, typed, and explicit about who depends on it.
 
+### Exporting a value from a script itself
+
+A script does not have to hand its shared values to a separate module. A source that calls `defineScript` (or `defineGuiScript`/`defineRenderScript`) **and** exports runtime values builds into two files: the component resource the editor loads, and a companion Lua module beside it holding those exports.
+
+```ts
+// game/doors/door.ts — one source, two outputs.
+import { defineScript } from "@defold-typescript/types";
+
+export const DOOR_SPEED = 3;
+export const state = { open: false };
+
+export default defineScript({
+  init() {
+    state.open = true;
+  },
+});
+```
+
+`build` writes `game/doors/door.ts.script` and `game/doors/door.lua`. The component requires the companion rather than redeclaring its exports, so `state` is **one table**: the door's own `init` and any `import { state } from "./doors/door"` elsewhere read and write the same object. Values only the script uses stay in the script.
+
+The companion takes the whole dependency closure of the exports — a private helper an exported function calls moves with it. That is why the two shapes below are rejected: they are the cases where "one definition" and "runs in the script" cannot both hold.
+
+Two limits are worth knowing before you lean on this:
+
+- **A configured `outDir` is not supported with companions.** The companion lands under the `outDir` while the emitted `require` still names the source tree, so the build fails with the unresolvable-require error rather than shipping a module nothing can load.
+- **A dot in the source name is not supported either.** `foo.bar.ts` compiles to `foo.bar.lua` while every `require` of it says `foo_bar` — rename the source.
+
 ### When the build sends you here
 
 `build` and `watch` reject a script whose exported values cannot be told apart from its lifecycle hooks. The clearest case is a private binding an exported function reassigns while a hook also reads it:
@@ -107,7 +134,7 @@ export default defineScript({
 });
 ```
 
-The error names `count` and both lines that reach it. Move `count` and `increment` into a module of their own — the singleton above — and import them from the script: the state then has one home, and every reader sees the same value. What counts is the rebinding, not how it is spelled: `count = 1`, `[count] = [1]`, `({ count } = …)` and `for (count of …)` are one shape. Writing through a binding — `state.ready = true` — is not, because both sides hold the same table.
+The error names `count` and both lines that reach it. A companion cannot carry this: `count` would live in the module while the hook read a copy, so the script would never see `increment`'s update. Move `count` and `increment` into a module of their own — the singleton above — and import them from the script. What counts is the rebinding, not how it is spelled: `count = 1`, `[count] = [1]`, `({ count } = …)` and `for (count of …)` are one shape. Writing through a binding — `state.ready = true` — is not, because both sides hold the same table, which is exactly why an exported object is safe to share.
 
 The other rejected shape is an effectful top-level statement — a call rather than a literal — with any exported declaration, or anything one of them reaches, below it. Move it below them all, or into `init`.
 

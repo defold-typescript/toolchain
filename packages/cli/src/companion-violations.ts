@@ -45,6 +45,32 @@ export function findCompanionViolations(input: FindCompanionViolationsInput): Co
 }
 
 /**
+ * The runtime value exports each script-kind source's companion carries, for the
+ * sources that have one. The contested-path messages name them, because they are
+ * what the companion's output path has to serve.
+ */
+export function findCompanionExports(
+  input: FindCompanionViolationsInput,
+): Map<string, readonly string[]> {
+  const { program, scriptSources } = input;
+  const checker = program.getTypeChecker();
+  const exports = new Map<string, readonly string[]>();
+
+  for (const source of scriptSources) {
+    const sourceFile = program.getSourceFile(source);
+    if (sourceFile === undefined) {
+      continue;
+    }
+    const closure = computeCompanionClosure(sourceFile, checker);
+    if (closure.exports.length > 0) {
+      exports.set(source, closure.exports);
+    }
+  }
+
+  return exports;
+}
+
+/**
  * Fail the build on any companion-closure violation. Entries are file-scoped:
  * the message carries the member and both positions, which is what identifies
  * the shape, while the split itself is a property of the whole source.
