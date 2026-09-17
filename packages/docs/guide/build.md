@@ -90,7 +90,9 @@ When a source uses a runtime helper TypeScript-to-Lua provides (`Object.keys`,
 object spread, and similar), the build also writes a `lualib_bundle.lua` at the
 output root automatically, and the generated Lua requires it by the path it lands
 at — `require("lualib_bundle")` alongside the sources, or the `outDir`-rooted
-spelling under a configured `outDir`.
+spelling under a configured `outDir`. Importing the
+[timers module](./typescript-gotchas.md) writes it too, because the timer runtime
+that import pulls in requires the bundle itself.
 
 Because the output kind is the factory a source calls, adding or removing a
 factory switches the artifact (`src/main.lua` becomes `src/main.ts.script`, or the
