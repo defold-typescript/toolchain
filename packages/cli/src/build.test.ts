@@ -1089,6 +1089,51 @@ describe("runBuild (require resolution)", () => {
     expect(entries[0]?.message).toContain("src.bar");
     expect(entries[0]?.message).toContain("build/lua/bar.lua");
   });
+
+  test("fails on a dotted plain module a script imports, and writes nothing", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/foo.bar.ts", "export const shared = 1;\n");
+    writeFile(
+      "src/main.ts",
+      'import { defineScript } from "@defold-typescript/types";\nimport { shared } from "./foo.bar";\nexport default defineScript({ init() { print(shared); } });\n',
+    );
+
+    let thrown: unknown;
+    try {
+      runBuild({ cwd });
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toBeInstanceOf(BuildFailureError);
+    const entries = (thrown as BuildFailureError).entries;
+    expect(entries).toHaveLength(1);
+    expect(entries[0]?.file).toBe("src/main.ts");
+    expect(entries[0]?.message).toContain("src.foo_bar");
+    expect(entries[0]?.message).toContain("src/foo_bar.lua");
+    expect(existsSync(path.join(cwd, "src/main.ts.script"))).toBe(false);
+    expect(existsSync(path.join(cwd, "src/foo.bar.lua"))).toBe(false);
+  });
+
+  test("two sources sharing one require path fail the build", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/foo.bar.ts", "export const a = 1;\n");
+    writeFile("src/foo_bar.ts", "export const b = 2;\n");
+
+    let thrown: unknown;
+    try {
+      runBuild({ cwd });
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toBeInstanceOf(BuildFailureError);
+    const entries = (thrown as BuildFailureError).entries;
+    const joined = entries.map((entry) => `${entry.file}: ${entry.message}`).join("\n");
+    expect(joined).toContain("src/foo.bar.ts");
+    expect(joined).toContain("src/foo_bar.ts");
+    expect(joined).toContain("src/foo_bar.lua");
+  });
 });
 
 describe("runBuild (companion closure violations)", () => {
