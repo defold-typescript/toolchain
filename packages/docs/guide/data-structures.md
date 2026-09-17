@@ -65,7 +65,7 @@ ____exports.c = __TS__New(____exports.Counter)
 return ____exports
 ```
 
-The `require("lualib_bundle")` only resolves at runtime because the CLI writes `lualib_bundle.lua` to the output root when any feature pulls it in. You never manage that file by hand.
+The `require("lualib_bundle")` only resolves at runtime because the CLI writes `lualib_bundle.lua` to the output root when any feature pulls it in; under a configured `outDir` the same require carries the `outDir`-rooted path instead. You never manage that file by hand.
 
 ## Lower-overhead containers: the Lua table extensions
 
