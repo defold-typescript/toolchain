@@ -15,6 +15,7 @@ import {
   isDoStatement,
   isForInStatement,
   isForStatement,
+  isFunctionDefinition,
   isFunctionExpression,
   isIdentifier,
   isMethodCallExpression,
@@ -163,6 +164,18 @@ function freeNames(statements: readonly Statement[]): Set<string> {
     }
     // `right` before `left`, so `local x = x` reads the outer `x` as Lua does.
     if (isVariableDeclarationStatement(node)) {
+      // Except the one shape the printer emits as `local function name(...)`
+      // "to allow recursion" — there the name is bound inside its own body.
+      // `FunctionDefinition` narrows only `right`, so mirror the printer, which
+      // binds `left[0]` and prints no other name in this shape.
+      if (isFunctionDefinition(node)) {
+        const [name] = node.left;
+        if (name !== undefined) {
+          declare(name.text);
+        }
+        visit(node.right[0]);
+        return;
+      }
       visitEach(node.right);
       for (const name of node.left) {
         declare(name.text);
@@ -348,6 +361,10 @@ function withResolvedRequire(statement: Statement, paths: ReadonlyMap<string, st
  */
 function copiedPrelude(halves: SplitHalves, importBindings: readonly string[]): Statement[] {
   const needed = new Set(importBindings);
+  // `importBindings` is what the companion's import needs actually come from.
+  // This second seed is a net over the scope model: today it contributes only
+  // names no script declaration binds, so it copies nothing, and a future gap
+  // in `freeNames` surfaces as an over-copy rather than an unbound global.
   for (const name of freeNames(halves.companion)) {
     needed.add(name);
   }
