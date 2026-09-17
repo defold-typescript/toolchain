@@ -38,10 +38,10 @@ declare global {
      * @example
      * ```ts
      * // Clear the color buffer and the depth buffer.
-     * render.clear({
-     *   [graphics.BUFFER_TYPE_COLOR0_BIT]: vmath.vector4(0, 0, 0, 0),
-     *   [graphics.BUFFER_TYPE_DEPTH_BIT]: 1,
-     * });
+     * const buffers = new LuaMap<render.ClearBufferKey, number | Vector4>();
+     * buffers.set(graphics.BUFFER_TYPE_COLOR0_BIT, vmath.vector4(0, 0, 0, 0));
+     * buffers.set(graphics.BUFFER_TYPE_DEPTH_BIT, 1);
+     * render.clear(buffers);
      * ```
      */
     function clear(buffers: LuaMap<number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR0_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_DEPTH_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_STENCIL_BIT" }, number | Vector4>): void;
