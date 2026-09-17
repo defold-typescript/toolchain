@@ -10,8 +10,10 @@ import {
   createTableFieldExpression,
   createTableIndexExpression,
   createVariableDeclarationStatement,
+  isCallExpression,
   isIdentifier,
   isReturnStatement,
+  isStringLiteral,
   isTableExpression,
   isVariableDeclarationStatement,
   LuaPrinter,
@@ -58,6 +60,8 @@ interface CompanionPlan {
   readonly closureStarts: ReadonlySet<number>;
   /** Members the script reaches by bare name, which the companion must expose. */
   readonly internals: readonly string[];
+  /** Import bindings the companion needs its own `require` of. */
+  readonly importBindings: readonly string[];
   /** The module path the script's `require` names. */
   readonly requirePath: string;
 }
@@ -75,6 +79,7 @@ function planFor(sourceFile: ts.SourceFile, checker: ts.TypeChecker): CompanionP
   return {
     closureStarts: new Set(closure.statements.map((statement) => statement.pos)),
     internals: closure.internals,
+    importBindings: closure.importBindings,
     requirePath: requirePathForRel(sourceFile.fileName),
   };
 }
@@ -96,6 +101,160 @@ function forEachLuaNode(root: Node, visit: (node: Node) => void): void {
       forEachLuaNode(value, visit);
     }
   }
+}
+
+function identifierNames(statement: Statement): Set<string> {
+  const names = new Set<string>();
+  forEachLuaNode(statement, (node) => {
+    if (isIdentifier(node)) {
+      names.add(node.text);
+    }
+  });
+  return names;
+}
+
+function declaredNames(statement: Statement): readonly string[] {
+  return isVariableDeclarationStatement(statement) ? statement.left.map((name) => name.text) : [];
+}
+
+/**
+ * Where each module specifier the source imports from lands as a Lua require.
+ *
+ * TSTL rewrites its own requires by string substitution over the printed code,
+ * in a pass that runs *after* `afterPrint` — so the script's copy is rewritten
+ * and the companion's, printed here, never is. Resolving through the checker and
+ * `requirePathForRel` reaches the same spelling by the same segment math the
+ * build's resolution check reads. A specifier that resolves to no emitted source
+ * — a declaration file, an unresolved module — is left as the source wrote it.
+ */
+function resolvedRequirePaths(
+  sourceFile: ts.SourceFile,
+  checker: ts.TypeChecker,
+): Map<string, string> {
+  const paths = new Map<string, string>();
+  for (const statement of sourceFile.statements) {
+    const specifier =
+      ts.isImportDeclaration(statement) || ts.isExportDeclaration(statement)
+        ? statement.moduleSpecifier
+        : undefined;
+    if (specifier === undefined || !ts.isStringLiteral(specifier)) {
+      continue;
+    }
+    const target = checker
+      .getSymbolAtLocation(specifier)
+      ?.declarations?.find((declaration): declaration is ts.SourceFile =>
+        ts.isSourceFile(declaration),
+      );
+    if (target === undefined || target.isDeclarationFile) {
+      continue;
+    }
+    paths.set(specifier.text, requirePathForRel(target.fileName));
+  }
+  return paths;
+}
+
+/**
+ * Rewrites every `require` a moved statement carries, at whatever depth — a
+ * re-export's is nested in the `do … end` block TSTL emits for it.
+ *
+ * In place, which is safe for exactly these statements: `split` sends an owned
+ * statement to the companion alone, so no printer ever sees the node again.
+ */
+function resolveMovedRequires(
+  statements: readonly Statement[],
+  paths: ReadonlyMap<string, string>,
+) {
+  for (const statement of statements) {
+    forEachLuaNode(statement, (node) => {
+      if (!isCallExpression(node) || !isIdentifier(node.expression)) {
+        return;
+      }
+      if (node.expression.text !== "require" || node.params.length !== 1) {
+        return;
+      }
+      const [argument] = node.params;
+      if (argument === undefined || !isStringLiteral(argument)) {
+        return;
+      }
+      const resolved = paths.get(argument.value);
+      if (resolved !== undefined) {
+        argument.value = resolved;
+      }
+    });
+  }
+}
+
+// Rebuilt rather than mutated in place: the script keeps the very same node, and
+// its require is still spelled the way TSTL's later pass expects to find it.
+function withResolvedRequire(statement: Statement, paths: ReadonlyMap<string, string>): Statement {
+  if (!isVariableDeclarationStatement(statement) || statement.left.length !== 1) {
+    return statement;
+  }
+  const name = statement.left[0];
+  const [value] = statement.right ?? [];
+  if (name === undefined || value === undefined || !isCallExpression(value)) {
+    return statement;
+  }
+  if (!isIdentifier(value.expression) || value.expression.text !== "require") {
+    return statement;
+  }
+  const [argument] = value.params;
+  if (argument === undefined || !isStringLiteral(argument)) {
+    return statement;
+  }
+  const resolved = paths.get(argument.value);
+  if (resolved === undefined) {
+    return statement;
+  }
+  return createVariableDeclarationStatement(
+    createIdentifier(name.text),
+    createCallExpression(createIdentifier("require"), [createStringLiteral(resolved)]),
+  );
+}
+
+/**
+ * The script statements binding names the companion reads but does not bind —
+ * TSTL's hoisted `require` prelude — to copy, not move, into the companion.
+ *
+ * Copying is the only option and also the right one: an import's Lua comes from
+ * TSTL's own hoisting rather than from the visitor, so there is no statement to
+ * move, and Lua's module cache makes the second `require` the same table, so a
+ * mutable import keeps its identity across the split. The walk is transitive
+ * because `local x = ____lib.x` is useless without `local ____lib = require(…)`.
+ */
+function copiedPrelude(halves: SplitHalves, importBindings: readonly string[]): Statement[] {
+  const needed = new Set(importBindings);
+  for (const statement of halves.companion) {
+    for (const name of identifierNames(statement)) {
+      needed.add(name);
+    }
+  }
+  for (const statement of halves.companion) {
+    for (const name of declaredNames(statement)) {
+      needed.delete(name);
+    }
+  }
+
+  const alreadyCarried = new Set(halves.companion);
+  const candidates = halves.script.filter(
+    (statement) => isVariableDeclarationStatement(statement) && !alreadyCarried.has(statement),
+  );
+  const copied = new Set<Statement>();
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const statement of candidates) {
+      if (copied.has(statement) || !declaredNames(statement).some((name) => needed.has(name))) {
+        continue;
+      }
+      copied.add(statement);
+      for (const name of identifierNames(statement)) {
+        needed.add(name);
+      }
+      grew = true;
+    }
+  }
+  return halves.script.filter((statement) => copied.has(statement));
 }
 
 function namesIdentifier(statement: Statement, names: ReadonlySet<string>): boolean {
@@ -244,7 +403,10 @@ export function createCompanionEmitPlugin(): CompanionEmitter {
     [ts.SyntaxKind.FunctionDeclaration]: capture,
     [ts.SyntaxKind.ClassDeclaration]: capture,
     [ts.SyntaxKind.EnumDeclaration]: capture,
-    [ts.SyntaxKind.ImportDeclaration]: capture,
+    // Not ImportDeclaration: `superTransformStatements` returns nothing for one,
+    // because TSTL emits its `require` bindings through its own hoisting. The
+    // companion takes a copy of that prelude instead — see `copiedPrelude`.
+    [ts.SyntaxKind.ExportDeclaration]: capture,
   };
 
   let configuredNoResolvePaths: readonly string[] = [];
@@ -297,6 +459,10 @@ function emitCompanion(
     return;
   }
   const halves = split(luaAst.statements, owned);
+  const requirePaths = resolvedRequirePaths(sourceFile, program.getTypeChecker());
+  // A require that moved is no longer in the script for TSTL's later pass to
+  // find, so the companion is the only place left to spell it correctly.
+  resolveMovedRequires(halves.companion, requirePaths);
 
   const closureTable = createTableExpression(
     plan.internals.map((name) =>
@@ -305,6 +471,9 @@ function emitCompanion(
   );
   const companionStatements: Statement[] = [
     createVariableDeclarationStatement(exportsIdentifier(), createTableExpression()),
+    ...copiedPrelude(halves, plan.importBindings).map((statement) =>
+      withResolvedRequire(statement, requirePaths),
+    ),
     ...halves.companion,
     ...(plan.internals.length > 0
       ? [

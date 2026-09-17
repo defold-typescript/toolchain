@@ -152,6 +152,170 @@ describe("companion emit — the two chunks", () => {
   });
 });
 
+describe("companion emit — every name a chunk reads is bound in that chunk", () => {
+  for (const [spelling, clause] of [
+    ["aliased", "export { value as speed };"],
+    ["plain", "export { value };"],
+  ] as const) {
+    const exported = spelling === "aliased" ? "speed" : "value";
+
+    test(`an ${spelling} export declaration is assigned in the companion, not the script`, () => {
+      const result = emit({
+        "game/doors/door.ts": lines(
+          FACTORY_IMPORT,
+          "",
+          "const value = 1;",
+          clause,
+          "",
+          "defineScript({",
+          "  init() {",
+          '    print("hi");',
+          "  },",
+          "});",
+        ),
+      });
+      const script = chunkFor(result, "game/doors/door.ts");
+      const companion = companionFor(result, "game/doors/door.ts");
+
+      expect(companion).toContain(`____exports.${exported} =`);
+      expect(companion).toContain("local value = 1");
+      expect(script).not.toContain(`____exports.${exported} =`);
+      expect(definitionCount(script, "value")).toBe(0);
+      expect(script).not.toMatch(/(^|[^.\w])value\b/m);
+    });
+  }
+
+  test("a re-export is carried by the companion's table", () => {
+    const result = emit({
+      "game/lib/rates.ts": "export const x = 7;\n",
+      "game/doors/door.ts": lines(
+        FACTORY_IMPORT,
+        'export { x } from "../lib/rates";',
+        "",
+        "export const DOOR_SPEED = 3;",
+        "",
+        "defineScript({",
+        "  init() {",
+        '    print("hi");',
+        "  },",
+        "});",
+      ),
+    });
+    const script = chunkFor(result, "game/doors/door.ts");
+    const companion = companionFor(result, "game/doors/door.ts");
+
+    expect(companion).toContain("____exports.x");
+    expect(findEmittedRequires(companion)).toContain("game.lib.rates");
+    expect(script).not.toContain("____exports.x =");
+  });
+
+  test("a module both imported and re-exported leaves the script its own binding", () => {
+    const result = emit({
+      "game/lib/rates.ts": "export const x = 7;\nexport const y = 9;\n",
+      "game/doors/door.ts": lines(
+        FACTORY_IMPORT,
+        'import { y } from "../lib/rates";',
+        'export { x } from "../lib/rates";',
+        "",
+        "export const DOOR_SPEED = 3;",
+        "",
+        "defineScript({",
+        "  init() {",
+        "    print(y);",
+        "  },",
+        "});",
+      ),
+    });
+    const script = chunkFor(result, "game/doors/door.ts");
+    const companion = companionFor(result, "game/doors/door.ts");
+
+    expect(findEmittedRequires(script)).toContain("game.lib.rates");
+    expect(definitionCount(script, "y")).toBe(1);
+    expect(companion).toContain("____exports.x");
+    expect(findEmittedRequires(companion)).toContain("game.lib.rates");
+  });
+
+  test("a private sibling of a multi-binding declaration is bound once, in the companion", () => {
+    const result = emit({
+      "game/doors/door.ts": lines(
+        FACTORY_IMPORT,
+        "",
+        "const a = 1, b = 2;",
+        "export function speed(): number {",
+        "  return a;",
+        "}",
+        "",
+        "defineScript({",
+        "  init() {",
+        "    print(b);",
+        "  },",
+        "});",
+      ),
+    });
+    const script = chunkFor(result, "game/doors/door.ts");
+    const companion = companionFor(result, "game/doors/door.ts");
+
+    // Bound once where its initializer runs; the script only re-reads it off
+    // the reserved field, the way any other private member reaches the script.
+    expect(definitionCount(companion, "b")).toBe(1);
+    expect(companion).toContain("local b = 2");
+    expect(script).not.toContain("local b = 2");
+    expect(script).toContain(`____exports.${COMPANION_INTERNAL_FIELD}.b`);
+  });
+
+  test("a named import the closure depends on is copied into the companion", () => {
+    const result = emit({
+      "game/lib/rates.ts": "export const x = 7;\n",
+      "game/doors/door.ts": lines(
+        FACTORY_IMPORT,
+        'import { x } from "../lib/rates";',
+        "",
+        "export const wrapped = x + 1;",
+        "",
+        "defineScript({",
+        "  init() {",
+        '    print("hi");',
+        "  },",
+        "});",
+      ),
+    });
+    const script = chunkFor(result, "game/doors/door.ts");
+    const companion = companionFor(result, "game/doors/door.ts");
+
+    expect(findEmittedRequires(companion)).toContain("game.lib.rates");
+    expect(definitionCount(companion, "x")).toBe(1);
+    expect(companion).toContain("____exports.wrapped = x + 1");
+
+    // The script keeps the binding it already had, and its require order stands.
+    expect(findEmittedRequires(script)).toEqual(["game.lib.rates", "game.doors.door"]);
+    expect(definitionCount(script, "x")).toBe(1);
+  });
+
+  test("a namespace import the closure depends on is copied the same way", () => {
+    const result = emit({
+      "game/lib/rates.ts": "export const x = 7;\n",
+      "game/doors/door.ts": lines(
+        FACTORY_IMPORT,
+        'import * as rates from "../lib/rates";',
+        "",
+        "export const wrapped = rates.x + 1;",
+        "",
+        "defineScript({",
+        "  init() {",
+        '    print("hi");',
+        "  },",
+        "});",
+      ),
+    });
+    const script = chunkFor(result, "game/doors/door.ts");
+    const companion = companionFor(result, "game/doors/door.ts");
+
+    expect(findEmittedRequires(companion)).toContain("game.lib.rates");
+    expect(companion).toContain("____exports.wrapped =");
+    expect(findEmittedRequires(script)).toEqual(["game.lib.rates", "game.doors.door"]);
+  });
+});
+
 describe("companion emit — sources that are left alone", () => {
   test("a script-kind source with an empty closure emits one chunk", () => {
     const source = lines(
