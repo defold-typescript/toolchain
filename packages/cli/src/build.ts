@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import {
   createTranspileSession,
+  rewriteEmittedRequires,
   type SceneComponentIndex,
   type SceneObjectComponents,
 } from "@defold-typescript/transpiler";
@@ -28,7 +29,12 @@ import {
   createOutputClaimRegistry,
   runtimeArtifactClaimant,
 } from "./output-claims";
-import { throwOnUnresolvedRequires } from "./require-resolution";
+import {
+  requireRewrites,
+  rewriteAll,
+  throwOnUnaddressableArtifacts,
+  throwOnUnresolvedRequires,
+} from "./require-resolution";
 import { scanFilesSync } from "./scan";
 import { scanSceneResourceRefs } from "./scene-resource-scan";
 import { loadUrlParameterTable } from "./url-parameter-table";
@@ -130,6 +136,24 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
   }
   const companionBySource = companionOutputRels(result, config);
 
+  // Every chunk the build writes is respelled to the paths the build writes,
+  // before the resolution check reads it: a require the map does not cover keeps
+  // its source-rooted spelling, so the check still catches it.
+  const rewrites = requireRewrites({
+    sources: outputBySource,
+    companions: companionBySource,
+    ...(result.lualib !== undefined ? { lualibRel: lualibBundleRel(config) } : {}),
+    ...(result.timersRuntime !== undefined ? { timersRel: timersModuleRel(config) } : {}),
+  });
+  const luaBySource = rewriteAll(result.lua, rewrites);
+  const companionLuaBySource = rewriteAll(result.companions ?? {}, rewrites);
+  const lualib =
+    result.lualib === undefined ? undefined : rewriteEmittedRequires(result.lualib, rewrites);
+  const timersRuntime =
+    result.timersRuntime === undefined
+      ? undefined
+      : rewriteEmittedRequires(result.timersRuntime, rewrites);
+
   // Before the write loop, so a build whose requires cannot resolve leaves no
   // half-correct output behind. Skipped while the program has type errors: the
   // emit is already untrustworthy there and the diagnostics are the real report.
@@ -143,17 +167,25 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
       throwOnCompanionViolations({ program: preEmitProgram, scriptSources });
     }
     throwOnUnresolvedRequires({
-      lua: result.lua,
+      lua: luaBySource,
       sources: outputBySource,
       plannedOutputs: sources.flatMap((rel) => {
         const outputRel = outputBySource[rel];
-        if (outputRel === undefined || result.lua[rel] === undefined) {
+        if (outputRel === undefined || luaBySource[rel] === undefined) {
           return [];
         }
         const companionRel = companionBySource[rel];
         return companionRel === undefined ? [outputRel] : [outputRel, companionRel];
       }),
     });
+    throwOnUnaddressableArtifacts([
+      ...(lualib !== undefined
+        ? [{ label: LUALIB_BUNDLE_LABEL, outputRel: lualibBundleRel(config) }]
+        : []),
+      ...(timersRuntime !== undefined
+        ? [{ label: TIMERS_RUNTIME_LABEL, outputRel: timersModuleRel(config) }]
+        : []),
+    ]);
   }
 
   // Every output path is claimed before anything is written, so a contested path
@@ -166,13 +198,13 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
     : new Map<string, readonly string[]>();
   // Ahead of the source claims, so a source landing on an artifact's rel is
   // reported against the artifact as the incumbent.
-  if (result.lualib !== undefined) {
+  if (lualib !== undefined) {
     claims.claim(lualibBundleRel(config), runtimeArtifactClaimant(LUALIB_BUNDLE_LABEL));
   }
-  if (result.timersRuntime !== undefined) {
+  if (timersRuntime !== undefined) {
     claims.claim(timersModuleRel(config), runtimeArtifactClaimant(TIMERS_RUNTIME_LABEL));
   }
-  const writable = sources.filter((rel) => !failures.has(rel) && Boolean(result.lua[rel]));
+  const writable = sources.filter((rel) => !failures.has(rel) && Boolean(luaBySource[rel]));
   for (const rel of writable) {
     const outputRel = outputBySource[rel];
     if (outputRel !== undefined) {
@@ -187,13 +219,13 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
 
   const written: string[] = [];
   for (const rel of writable) {
-    const lua = result.lua[rel];
+    const lua = luaBySource[rel];
     const outputRel = outputBySource[rel];
     if (lua === undefined || outputRel === undefined) {
       continue;
     }
     const companionRel = companionBySource[rel];
-    const companion = result.companions?.[rel];
+    const companion = companionLuaBySource[rel];
     pruneAlternativeOutputs(
       cwd,
       rel,
@@ -215,15 +247,15 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
     }
   }
 
-  if (result.lualib !== undefined) {
+  if (lualib !== undefined) {
     const bundleRel = lualibBundleRel(config);
-    writeScriptFile(cwd, bundleRel, result.lualib, undefined);
+    writeScriptFile(cwd, bundleRel, lualib, undefined);
     written.push(bundleRel);
   }
 
-  if (result.timersRuntime !== undefined) {
+  if (timersRuntime !== undefined) {
     const runtimeRel = timersModuleRel(config);
-    writeScriptFile(cwd, runtimeRel, result.timersRuntime, undefined);
+    writeScriptFile(cwd, runtimeRel, timersRuntime, undefined);
     written.push(runtimeRel);
   }
 

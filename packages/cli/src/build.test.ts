@@ -11,9 +11,19 @@ import {
 import * as os from "node:os";
 import * as path from "node:path";
 import { Writable } from "node:stream";
-import type { SceneComponentIndex } from "@defold-typescript/transpiler";
+import {
+  type BuildConfig,
+  computeOutputRel,
+  requirePathForRel,
+  type SceneComponentIndex,
+} from "@defold-typescript/transpiler";
 import { type RunBuildResult, runBuild } from "./build";
-import { BuildFailureError, GENERATED_BANNER } from "./build-output";
+import {
+  BuildFailureError,
+  GENERATED_BANNER,
+  lualibBundleRel,
+  timersModuleRel,
+} from "./build-output";
 import { dispatch } from "./dispatch";
 import { runInit } from "./init";
 import {
@@ -47,6 +57,27 @@ function writeFile(rel: string, contents: string): void {
 const DEFAULT_TSCONFIG = JSON.stringify(
   {
     compilerOptions: { target: "ES2022", module: "ESNext", strict: true },
+    include: ["src/**/*.ts"],
+  },
+  null,
+  2,
+);
+
+// The build config the outDir cases share, in both the shapes they need it:
+// the tsconfig text the build reads, and the parsed form the expected output
+// paths are computed from.
+const OUTDIR_CONFIG: BuildConfig = { outDir: "build/lua", include: ["src/**/*.ts"] };
+const OUTDIR_TSCONFIG = JSON.stringify(
+  {
+    compilerOptions: { target: "ES2022", module: "ESNext", strict: true, outDir: "build/lua" },
+    include: ["src/**/*.ts"],
+  },
+  null,
+  2,
+);
+const DOTTED_OUTDIR_TSCONFIG = JSON.stringify(
+  {
+    compilerOptions: { target: "ES2022", module: "ESNext", strict: true, outDir: "build.out" },
     include: ["src/**/*.ts"],
   },
   null,
@@ -343,6 +374,10 @@ describe("runBuild", () => {
     expect(existsSync(path.join(cwd, "out/lua/lualib_bundle.lua"))).toBe(true);
     expect(existsSync(path.join(cwd, "lualib_bundle.lua"))).toBe(false);
     expect(result.written).toContain("out/lua/lualib_bundle.lua");
+
+    const lua = readFileSync(path.join(cwd, "out/lua/main.lua"), "utf8");
+    expect(lua).toContain(`require("${requirePathForRel("out/lua/lualib_bundle.lua")}")`);
+    expect(lua).not.toContain('require("lualib_bundle")');
   });
 
   test("does not write a lualib bundle when no source uses a lualib feature", () => {
@@ -391,6 +426,12 @@ describe("runBuild", () => {
     expect(existsSync(path.join(cwd, "out/lua/defold_typescript_timers.lua"))).toBe(true);
     expect(existsSync(path.join(cwd, "defold_typescript_timers.lua"))).toBe(false);
     expect(result.written).toContain("out/lua/defold_typescript_timers.lua");
+
+    const lua = readFileSync(path.join(cwd, "out/lua/main.lua"), "utf8");
+    expect(lua).toContain(
+      `require("${requirePathForRel("out/lua/defold_typescript_timers.lua")}")`,
+    );
+    expect(lua).not.toContain('require("defold_typescript_timers")');
   });
 
   test("does not write the timers runtime when no source imports it", () => {
@@ -520,11 +561,6 @@ describe("runBuild", () => {
 });
 
 describe("runBuild outDir tree mirroring", () => {
-  const OUTDIR_TSCONFIG = JSON.stringify(
-    { compilerOptions: { outDir: "build/lua", strict: true }, include: ["src/**/*.ts"] },
-    null,
-    2,
-  );
   const NESTED_SCRIPT =
     'import { defineScript } from "@defold-typescript/types";\nexport default defineScript({ init() {} });\n';
 
@@ -574,6 +610,140 @@ describe("runBuild outDir tree mirroring", () => {
     // Never re-rooted under the source subtree.
     expect(result.written).not.toContain("build/lua/world/lualib_bundle.lua");
     expect(result.written).not.toContain("build/lua/world/defold_typescript_timers.lua");
+  });
+
+  // The only cover these two chunk kinds get: the resolution check reads
+  // `result.lua` alone, so neither a companion nor a generated runtime is ever
+  // scanned by it.
+  test("a component, its companion and a module it pulls in all require their written paths", () => {
+    writeFile("tsconfig.json", OUTDIR_TSCONFIG);
+    writeFile(
+      "src/math/clamp.ts",
+      "export const clamp = (n: number): number => (n < 0 ? 0 : n);\n",
+    );
+    writeFile(
+      "src/world/player.ts",
+      [
+        'import { defineScript } from "@defold-typescript/types";',
+        'import { clamp } from "../math/clamp";',
+        "export const health = clamp(-1);",
+        "export default defineScript({ init() { print(health); } });",
+        "",
+      ].join("\n"),
+    );
+    writeFile(
+      "src/world/hud.ts",
+      [
+        'import { defineScript } from "@defold-typescript/types";',
+        'import { health } from "./player";',
+        "export default defineScript({ init() { print(health); } });",
+        "",
+      ].join("\n"),
+    );
+
+    const result = runBuild({ cwd });
+
+    const componentRel = computeOutputRel("src/world/player.ts", OUTDIR_CONFIG, "script");
+    const companionRel = computeOutputRel("src/world/player.ts", OUTDIR_CONFIG, "module");
+    const clampRel = computeOutputRel("src/math/clamp.ts", OUTDIR_CONFIG, "module");
+    const hudRel = computeOutputRel("src/world/hud.ts", OUTDIR_CONFIG, "script");
+    for (const rel of [componentRel, companionRel, clampRel, hudRel]) {
+      expect(result.written).toContain(rel);
+      expect(existsSync(path.join(cwd, rel))).toBe(true);
+    }
+
+    // The component reaches its own companion, and the companion reaches the
+    // third module the split carried its statements away from.
+    expect(readFileSync(path.join(cwd, componentRel), "utf8")).toContain(
+      `require("${requirePathForRel(companionRel)}")`,
+    );
+    expect(readFileSync(path.join(cwd, companionRel), "utf8")).toContain(
+      `require("${requirePathForRel(clampRel)}")`,
+    );
+    expect(readFileSync(path.join(cwd, hudRel), "utf8")).toContain(
+      `require("${requirePathForRel(companionRel)}")`,
+    );
+
+    // Every build-owned require in every written chunk reaches a written file.
+    for (const rel of [componentRel, companionRel, clampRel, hudRel]) {
+      expect(readFileSync(path.join(cwd, rel), "utf8")).not.toContain('require("src.');
+    }
+  });
+
+  test("the written timers runtime requires the relocated lualib bundle", () => {
+    writeFile("tsconfig.json", OUTDIR_TSCONFIG);
+    writeFile(
+      "src/main.ts",
+      [
+        'import { setTimeout } from "@defold-typescript/types/timers";',
+        "export const ks = Object.keys({ a: 1 });",
+        "setTimeout(() => print(ks.length), 250);",
+        "",
+      ].join("\n"),
+    );
+
+    const result = runBuild({ cwd });
+
+    const bundleRel = lualibBundleRel(OUTDIR_CONFIG);
+    const runtimeRel = timersModuleRel(OUTDIR_CONFIG);
+    expect(result.written).toContain(bundleRel);
+    expect(result.written).toContain(runtimeRel);
+
+    const runtime = readFileSync(path.join(cwd, runtimeRel), "utf8");
+    expect(runtime).toContain(`require("${requirePathForRel(bundleRel)}")`);
+    expect(runtime).not.toContain('require("lualib_bundle")');
+
+    const main = readFileSync(
+      path.join(cwd, computeOutputRel("src/main.ts", OUTDIR_CONFIG, "module")),
+      "utf8",
+    );
+    expect(main).toContain(`require("${requirePathForRel(bundleRel)}")`);
+    expect(main).toContain(`require("${requirePathForRel(runtimeRel)}")`);
+  });
+});
+
+describe("runBuild unaddressable runtime artifacts", () => {
+  // A dot in the `outDir` is underscored by the require rule but kept in the
+  // written path, so neither artifact can be named by any require. Nothing
+  // reports it today: the resolution check never scans a generated chunk, and
+  // both names are exempt from it anyway.
+  test("a dotted outDir fails the build for the lualib bundle and writes nothing", () => {
+    writeFile("tsconfig.json", DOTTED_OUTDIR_TSCONFIG);
+    writeFile("src/main.ts", "export const ks = Object.keys({ a: 1, b: 2 });\n");
+
+    let thrown: unknown;
+    try {
+      runBuild({ cwd });
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toBeInstanceOf(BuildFailureError);
+    const message = (thrown as BuildFailureError).message;
+    expect(message).toContain("build.out/lualib_bundle.lua");
+    expect(message).toContain("build_out.lualib_bundle");
+    expect(existsSync(path.join(cwd, "build.out"))).toBe(false);
+  });
+
+  test("a dotted outDir fails the build for the timers runtime and writes nothing", () => {
+    writeFile("tsconfig.json", DOTTED_OUTDIR_TSCONFIG);
+    writeFile(
+      "src/main.ts",
+      'import { setInterval } from "@defold-typescript/types/timers";\nsetInterval(() => print(1), 1000);\n',
+    );
+
+    let thrown: unknown;
+    try {
+      runBuild({ cwd });
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toBeInstanceOf(BuildFailureError);
+    const message = (thrown as BuildFailureError).message;
+    expect(message).toContain("build.out/defold_typescript_timers.lua");
+    expect(message).toContain("build_out.defold_typescript_timers");
+    expect(existsSync(path.join(cwd, "build.out"))).toBe(false);
   });
 });
 
@@ -1050,39 +1220,23 @@ describe("runBuild (require resolution)", () => {
     );
   });
 
-  test("fails on a cross-file module import under a configured outDir", () => {
-    writeFile(
-      "tsconfig.json",
-      JSON.stringify(
-        {
-          compilerOptions: {
-            target: "ES2022",
-            module: "ESNext",
-            strict: true,
-            outDir: "build/lua",
-          },
-          include: ["src/**/*.ts"],
-        },
-        null,
-        2,
-      ),
-    );
+  test("a cross-file module import under a configured outDir requires the written path", () => {
+    writeFile("tsconfig.json", OUTDIR_TSCONFIG);
     writeFile("src/bar.ts", "export const v = 1;\n");
     writeFile("src/foo.ts", "import { v } from './bar';\nexport const w = v + 1;\n");
 
-    let thrown: unknown;
-    try {
-      runBuild({ cwd });
-    } catch (error) {
-      thrown = error;
-    }
+    const result = runBuild({ cwd });
 
-    expect(thrown).toBeInstanceOf(BuildFailureError);
-    const entries = (thrown as BuildFailureError).entries;
-    expect(entries).toHaveLength(1);
-    expect(entries[0]?.file).toBe("src/foo.ts");
-    expect(entries[0]?.message).toContain("src.bar");
-    expect(entries[0]?.message).toContain("build/lua/bar.lua");
+    const targetRel = computeOutputRel("src/bar.ts", OUTDIR_CONFIG, "module");
+    expect(result.written).toContain(targetRel);
+    expect(existsSync(path.join(cwd, targetRel))).toBe(true);
+
+    const importer = readFileSync(
+      path.join(cwd, computeOutputRel("src/foo.ts", OUTDIR_CONFIG, "module")),
+      "utf8",
+    );
+    expect(importer).toContain(`require("${requirePathForRel(targetRel)}")`);
+    expect(importer).not.toContain('require("src.bar")');
   });
 
   test("fails on a dotted plain module a script imports, and writes nothing", () => {

@@ -1104,7 +1104,7 @@ export async function main(): Promise<void> {
 - `await x` is lowered to `__TS__Await(x)`, which yields the value through the body's Lua coroutine. The awaiter wraps the yielded value as `Promise.resolve(x)`, registers a continuation, and `coroutine.resume`s the body with the result once that promise settles.
 - `__TS__Promise` is TSTL's own Lua class with `then`/`catch`/`finally`/`all`/`resolve`/`reject`. Resolution is callback-based and synchronous: a callback registered on an already-settled promise fires immediately; otherwise it is stored until `resolve()`/`reject()` is called.
 
-These helpers ship in `lualib_bundle.lua`, which the build writes to the output root; the emitted module does `require("lualib_bundle")` to pull them in. No setup or polyfill is needed.
+These helpers ship in `lualib_bundle.lua`, which the build writes to the output root; the emitted module requires it by the path it lands at — `require("lualib_bundle")` alongside the sources, or the `outDir`-rooted spelling under a configured `outDir`. No setup or polyfill is needed.
 
 The consequences are where it bites:
 
@@ -1269,7 +1269,7 @@ ____exports.c = __TS__New(____exports.Counter)
 return ____exports
 ```
 
-The `require("lualib_bundle")` only resolves at runtime because the CLI writes `lualib_bundle.lua` to the output root when any feature pulls it in. You never manage that file by hand.
+The `require("lualib_bundle")` only resolves at runtime because the CLI writes `lualib_bundle.lua` to the output root when any feature pulls it in; under a configured `outDir` the same require carries the `outDir`-rooted path instead. You never manage that file by hand.
 
 #### Lower-overhead containers: the Lua table extensions
 
@@ -2202,10 +2202,11 @@ export default defineScript({
 
 The companion takes the whole dependency closure of the exports — a private helper an exported function calls moves with it, as does a sibling of the same `const a = 1, b = 2;` declaration, and an export list such as `export { value as speed };` travels with the values it names. An import the closure needs is copied rather than moved: the companion takes its own `require` of that module, and Lua's module cache makes it the same table the script holds. That is why the two shapes below are rejected: they are the cases where "one definition" and "runs in the script" cannot both hold.
 
-Two limits are worth knowing before you lean on this:
+One limit is worth knowing before you lean on this:
 
-- **A configured `outDir` is not supported with companions.** The companion lands under the `outDir` while the emitted `require` still names the source tree, so the build fails with the unresolvable-require error rather than shipping a module nothing can load.
-- **A dot in the source name is not supported either.** `foo.bar.ts` compiles to `foo.bar.lua` while every `require` of it says `foo_bar` — rename the source.
+- **A dot in the source name is not supported.** `foo.bar.ts` compiles to `foo.bar.lua` while every `require` of it says `foo_bar` — rename the source.
+
+A configured `outDir` needs no special handling: the companion lands under the `outDir` and the component requires it by the path it was written to.
 
 ##### When the build sends you here
 
@@ -3299,12 +3300,15 @@ type-only import is erased and emits no `require` at all.
 The build checks every `require` it emits against the outputs it is about to write
 and fails with the offending file, the require path, and the source it names, so
 an import that cannot resolve is a build error rather than a load failure inside
-the editor. That is what catches the two arrangements a companion cannot serve. A
-configured `outDir` re-roots the output while the emitted `require` still points at
-the source tree, so companions are not supported under one. A source whose name
+the editor. Under a configured `outDir` every emitted `require` carries the
+`outDir`-rooted path the build actually writes, so a cross-file import, a script's
+companion and the generated runtime files all load from there. A source whose name
 contains a dot is written to `src/foo.bar.lua` with the dot intact, while Lua reads
 a dot as a path separator, so the emitted `require("src.foo_bar")` looks for
-`src/foo_bar.lua` and finds nothing — rename the source to remove the dot. A
+`src/foo_bar.lua` and finds nothing — rename the source to remove the dot. An
+`outDir` whose own name contains a dot has the same problem one level up and no
+`require` can spell it, so the build fails before writing anything — pick an
+`outDir` with no dot in it. A
 `require` with no TypeScript source behind it — a Lua module from a Defold library
 dependency, the `lldebugger.debug` module the [debugging guide](./debugging.md)
 sets up, hand-authored Lua — is external and is left alone.
@@ -3341,8 +3345,9 @@ absent and the build carries on, so a stale port file can never hold it up.
 
 When a source uses a runtime helper TypeScript-to-Lua provides (`Object.keys`,
 object spread, and similar), the build also writes a `lualib_bundle.lua` at the
-output root automatically; the generated Lua's `require("lualib_bundle")` resolves
-against it.
+output root automatically, and the generated Lua requires it by the path it lands
+at — `require("lualib_bundle")` alongside the sources, or the `outDir`-rooted
+spelling under a configured `outDir`.
 
 Because the output kind is the factory a source calls, adding or removing a
 factory switches the artifact (`src/main.lua` becomes `src/main.ts.script`, or the

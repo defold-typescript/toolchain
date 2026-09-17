@@ -4,8 +4,8 @@ import {
   computeOutputRel,
   transpileProject,
 } from "@defold-typescript/transpiler";
-import { detectSourceOutputKind } from "./build-output";
-import { findUnresolvedRequires } from "./require-resolution";
+import { detectSourceOutputKind, lualibBundleRel, timersModuleRel } from "./build-output";
+import { findUnresolvedRequires, requireRewrites } from "./require-resolution";
 
 // The expected paths come from `computeOutputRel` and `detectSourceOutputKind`
 // themselves, and the Lua from a real transpile, so this suite reds if either
@@ -82,7 +82,7 @@ describe("findUnresolvedRequires", () => {
     ).toEqual([]);
   });
 
-  test("a configured outDir breaks a cross-file module import", () => {
+  test("a configured outDir breaks a cross-file module import in un-rewritten Lua", () => {
     const findings = check(
       {
         "src/bar.ts": "export const v = 1;\n",
@@ -215,5 +215,133 @@ describe("findUnresolvedRequires", () => {
         plannedOutputs: ["src/main.ts.script"],
       }),
     ).toEqual([]);
+  });
+});
+
+// The map is built from the same `computeOutputRel`/`requirePathForRel` the
+// writer uses, so every expected value here is the path the build would write
+// rather than a second derivation of it.
+function rewrites(
+  files: Record<string, string>,
+  config: BuildConfig = { outDir: undefined, include: ["src/**/*.ts"] },
+): Map<string, string> {
+  const result = transpileProject({ files });
+  expect(result.diagnostics.filter((d) => d.category !== "warning")).toEqual([]);
+  const sources: Record<string, string> = {};
+  for (const rel of Object.keys(files)) {
+    if (rel.endsWith(".d.ts")) {
+      continue;
+    }
+    sources[rel] = computeOutputRel(rel, config, detectSourceOutputKind(files[rel] ?? ""));
+  }
+  const companions: Record<string, string> = {};
+  for (const rel of Object.keys(result.companions ?? {})) {
+    companions[rel] = computeOutputRel(rel, config, "module");
+  }
+  return requireRewrites({
+    sources,
+    companions,
+    ...(result.lualib !== undefined ? { lualibRel: lualibBundleRel(config) } : {}),
+    ...(result.timersRuntime !== undefined ? { timersRel: timersModuleRel(config) } : {}),
+  });
+}
+
+const OUTDIR: BuildConfig = { outDir: "build/lua", include: ["src/**/*.ts"] };
+const DOTTED_OUTDIR: BuildConfig = { outDir: "build.out", include: ["src/**/*.ts"] };
+
+const TIMERS_ONLY =
+  'import { setTimeout } from "@defold-typescript/types/timers";\nsetTimeout(() => print(1), 250);\n';
+// A lualib feature alongside the timers import, so the build emits both
+// artifacts and the runtime's own bundle require has a written target.
+const TIMERS_AND_LUALIB = `${TIMERS_ONLY}export const ks = Object.keys({ a: 1 });\n`;
+
+describe("requireRewrites", () => {
+  test("a module-kind source under an outDir maps to its output-rooted require", () => {
+    expect(
+      rewrites(
+        {
+          "src/b/two.ts": "export const v = 1;\n",
+          "src/a.ts": "import { v } from './b/two';\nexport const w = v + 1;\n",
+        },
+        OUTDIR,
+      ),
+    ).toEqual(
+      new Map([
+        ["src.b.two", "build.lua.b.two"],
+        ["src.a", "build.lua.a"],
+      ]),
+    );
+  });
+
+  test("with no outDir every key would equal its value, so the map is empty", () => {
+    expect(
+      rewrites({
+        "src/b/two.ts": "export const v = 1;\n",
+        "src/a.ts": "import { v } from './b/two';\nexport const w = v + 1;\n",
+      }),
+    ).toEqual(new Map());
+  });
+
+  test("an include base outside the source root is stripped before the outDir prefix", () => {
+    expect(
+      rewrites(
+        { "game/src/one.ts": "export const v = 1;\n" },
+        { outDir: "build/lua", include: ["game/src/**/*.ts"] },
+      ),
+    ).toEqual(new Map([["game.src.one", "build.lua.one"]]));
+  });
+
+  test("a dotted source name gets no entry, so its existing diagnostic survives", () => {
+    expect(rewrites({ "src/foo.bar.ts": "export const shared = 1;\n" }, OUTDIR)).toEqual(new Map());
+  });
+
+  test("a dotted outDir gets no entry for any source", () => {
+    expect(rewrites({ "src/one.ts": "export const v = 1;\n" }, DOTTED_OUTDIR)).toEqual(new Map());
+  });
+
+  test("a script-kind source with a companion maps to the companion's written path", () => {
+    expect(
+      rewrites(
+        {
+          "src/bar.ts": script("export const shared = 1;"),
+          "src/foo.ts": script("import { shared } from './bar';\nprint(shared);"),
+        },
+        OUTDIR,
+      ),
+    ).toEqual(new Map([["src.bar", "build.lua.bar"]]));
+  });
+
+  test("a script-kind source with no companion gets no entry", () => {
+    expect(rewrites({ "src/foo.ts": script("print(1);") }, OUTDIR)).toEqual(new Map());
+  });
+
+  test("the lualib bundle is mapped to the path the build writes it to", () => {
+    expect(
+      rewrites({ "src/main.ts": "export const ks = Object.keys({ a: 1 });\n" }, OUTDIR).get(
+        "lualib_bundle",
+      ),
+    ).toBe("build.lua.lualib_bundle");
+  });
+
+  test("the timers runtime is mapped to the path the build writes it to", () => {
+    const map = rewrites({ "src/main.ts": TIMERS_AND_LUALIB }, OUTDIR);
+
+    expect(map.get("defold_typescript_timers")).toBe("build.lua.defold_typescript_timers");
+    expect(map.get("lualib_bundle")).toBe("build.lua.lualib_bundle");
+  });
+
+  // Only the artifacts the build writes are mapped. The timers runtime carries
+  // its own `require("lualib_bundle")` whether or not a user source pulls the
+  // bundle in, and mapping a bundle nothing writes would name a second path that
+  // is equally absent.
+  test("a program that emits the timers runtime but no bundle maps only the runtime", () => {
+    const map = rewrites({ "src/main.ts": TIMERS_ONLY }, OUTDIR);
+
+    expect(map.get("defold_typescript_timers")).toBe("build.lua.defold_typescript_timers");
+    expect(map.has("lualib_bundle")).toBe(false);
+  });
+
+  test("a dotted outDir leaves both runtime artifacts unmapped", () => {
+    expect(rewrites({ "src/main.ts": TIMERS_AND_LUALIB }, DOTTED_OUTDIR)).toEqual(new Map());
   });
 });
