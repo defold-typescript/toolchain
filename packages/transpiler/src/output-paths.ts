@@ -60,6 +60,26 @@ function relUnderOutDir(rel: string, config: BuildConfig): string {
   return path.posix.join(outDir, relUnderBase);
 }
 
+/**
+ * The `require` path Lua reaches a rel by, mirroring the segment math TSTL
+ * applies when it emits one: the extension comes off the last segment, then
+ * every remaining `.` becomes `_` *within* a segment, because Lua reads a dot as
+ * a path separator and `src/foo.bar.lua` would otherwise be unreachable as
+ * `require("src.foo.bar")`. Both sides of the resolution check key through this,
+ * so a require and the output meant to satisfy it cannot be spelled differently.
+ */
+export function requirePathForRel(rel: string): string {
+  const segments = rel
+    .split("/")
+    .filter((segment) => segment !== "" && segment !== "." && segment !== "..");
+  const last = segments.length - 1;
+  const lastSegment = segments[last];
+  if (lastSegment !== undefined) {
+    segments[last] = lastSegment.replace(/\.[^.]*$/, "");
+  }
+  return segments.map((segment) => segment.replace(/\./g, "_")).join(".");
+}
+
 export function computeOutputRel(rel: string, config: BuildConfig, kind: SourceOutputKind): string {
   const baseRel = relUnderOutDir(rel, config);
   if (kind === "module") {
