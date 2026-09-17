@@ -405,6 +405,13 @@ describe("runBuild", () => {
 
     const lua = readFileSync(path.join(cwd, "src/main.lua"), "utf8");
     expect(lua).toContain('require("defold_typescript_timers")');
+
+    // The runtime requires the bundle, so the timers import alone must write it.
+    const bundlePath = path.join(cwd, "lualib_bundle.lua");
+    expect(existsSync(bundlePath)).toBe(true);
+    expect(result.written).toContain("lualib_bundle.lua");
+    // Alongside the sources the bare name already resolves, so it is left alone.
+    expect(readFileSync(runtimePath, "utf8")).toContain('require("lualib_bundle")');
   });
 
   test("writes the timers runtime under outDir when one is configured", () => {
@@ -432,6 +439,14 @@ describe("runBuild", () => {
       `require("${requirePathForRel("out/lua/defold_typescript_timers.lua")}")`,
     );
     expect(lua).not.toContain('require("defold_typescript_timers")');
+
+    expect(existsSync(path.join(cwd, "out/lua/lualib_bundle.lua"))).toBe(true);
+    expect(result.written).toContain("out/lua/lualib_bundle.lua");
+
+    // Under an outDir the runtime's own bundle require must be relocated too.
+    const runtime = readFileSync(path.join(cwd, "out/lua/defold_typescript_timers.lua"), "utf8");
+    expect(runtime).toContain(`require("${requirePathForRel("out/lua/lualib_bundle.lua")}")`);
+    expect(runtime).not.toContain('require("lualib_bundle")');
   });
 
   test("does not write the timers runtime when no source imports it", () => {

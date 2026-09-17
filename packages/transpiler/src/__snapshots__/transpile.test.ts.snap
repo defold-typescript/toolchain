@@ -60,6 +60,8 @@ return ____exports
 
 exports[`transpileProject lowers a timers import to a flat require and surfaces the runtime 1`] = `
 "local ____lualib = require("lualib_bundle")
+local __TS__Promise = ____lualib.__TS__Promise
+local __TS__New = ____lualib.__TS__New
 local __TS__AsyncAwaiter = ____lualib.__TS__AsyncAwaiter
 local __TS__Await = ____lualib.__TS__Await
 local ____exports = {}

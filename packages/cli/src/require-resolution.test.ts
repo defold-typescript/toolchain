@@ -251,8 +251,8 @@ const DOTTED_OUTDIR: BuildConfig = { outDir: "build.out", include: ["src/**/*.ts
 
 const TIMERS_ONLY =
   'import { setTimeout } from "@defold-typescript/types/timers";\nsetTimeout(() => print(1), 250);\n';
-// A lualib feature alongside the timers import, so the build emits both
-// artifacts and the runtime's own bundle require has a written target.
+// A user-source lualib feature alongside the timers import, so the bundle is
+// pulled in from both directions at once.
 const TIMERS_AND_LUALIB = `${TIMERS_ONLY}export const ks = Object.keys({ a: 1 });\n`;
 
 describe("requireRewrites", () => {
@@ -330,15 +330,11 @@ describe("requireRewrites", () => {
     expect(map.get("lualib_bundle")).toBe("build.lua.lualib_bundle");
   });
 
-  // Only the artifacts the build writes are mapped. The timers runtime carries
-  // its own `require("lualib_bundle")` whether or not a user source pulls the
-  // bundle in, and mapping a bundle nothing writes would name a second path that
-  // is equally absent.
-  test("a program that emits the timers runtime but no bundle maps only the runtime", () => {
+  test("a timers-only program maps both runtime artifacts", () => {
     const map = rewrites({ "src/main.ts": TIMERS_ONLY }, OUTDIR);
 
     expect(map.get("defold_typescript_timers")).toBe("build.lua.defold_typescript_timers");
-    expect(map.has("lualib_bundle")).toBe(false);
+    expect(map.get("lualib_bundle")).toBe("build.lua.lualib_bundle");
   });
 
   test("a dotted outDir leaves both runtime artifacts unmapped", () => {
