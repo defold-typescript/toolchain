@@ -18,6 +18,12 @@ import {
   FLOOR_MANIFEST_FILE,
   parseFloors,
 } from "../packages/library-types/scripts/fidelity-floor.ts";
+import {
+  PINS_DIR,
+  PINS_FILE,
+  parseTypecheckPins,
+  pinSlots,
+} from "../packages/types/scripts/example-pins.ts";
 
 /** The coverage every floor is working toward; anything under it is backlog. */
 export const FLOOR_TARGET = 1;
@@ -32,6 +38,14 @@ export interface RatchetSource {
   /** Manifest filename, which also prefixes every line so one line names its source. */
   file: string;
   parse: (raw: unknown, path: string) => Record<string, unknown>;
+  /**
+   * How this manifest's open slots are read, defaulting to `openSlots`. A
+   * one-sided *numeric* floor is what `openSlots` understands — it reports a
+   * number below target and skips arrays outright — so a manifest whose entries
+   * are not numbers supplies its own collector rather than fragmenting discovery
+   * across a second command.
+   */
+  collect?: (manifestFile: string, parsed: Record<string, unknown>) => string[];
 }
 
 export const RATCHET_SOURCES: readonly RatchetSource[] = [
@@ -46,6 +60,13 @@ export const RATCHET_SOURCES: readonly RatchetSource[] = [
     dir: MANIFEST_DIR,
     file: FLOOR_MANIFEST_FILE,
     parse: parseFloors,
+  },
+  {
+    id: "authored-example-typecheck",
+    dir: PINS_DIR,
+    file: PINS_FILE,
+    parse: parseTypecheckPins,
+    collect: pinSlots,
   },
 ];
 
@@ -92,10 +113,8 @@ export function collectOpenSlots(root: string, id?: string): string[] {
   const sources = id === undefined ? RATCHET_SOURCES : [resolveSource(id)];
   return sources.flatMap((source) => {
     const path = join(root, source.dir, source.file);
-    return openSlots(
-      source.file,
-      source.parse(JSON.parse(readFileSync(path, "utf8")), source.file),
-    );
+    const collect = source.collect ?? openSlots;
+    return collect(source.file, source.parse(JSON.parse(readFileSync(path, "utf8")), source.file));
   });
 }
 
