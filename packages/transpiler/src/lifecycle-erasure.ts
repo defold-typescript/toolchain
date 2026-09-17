@@ -35,7 +35,7 @@ const FACTORY_SPECIFIERS = new Set([
   `${FACTORY_MODULE}/render-script`,
 ]);
 
-function resolvesToFactoryExport(callee: ts.Expression, checker: ts.TypeChecker): boolean {
+export function resolvesToFactoryExport(callee: ts.Expression, checker: ts.TypeChecker): boolean {
   let symbol = checker.getSymbolAtLocation(callee);
   if (symbol === undefined) {
     return false;

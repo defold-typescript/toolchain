@@ -1090,3 +1090,74 @@ describe("runBuild (require resolution)", () => {
     expect(entries[0]?.message).toContain("build/lua/bar.lua");
   });
 });
+
+describe("runBuild (companion closure violations)", () => {
+  const SHARED_MUTABLE = [
+    'import { defineScript } from "@defold-typescript/types";',
+    "",
+    "let count = 0;",
+    "export function increment(): void {",
+    "  count++;",
+    "}",
+    "",
+    "export default defineScript({",
+    "  update() {",
+    "    increment();",
+    "    print(count);",
+    "  },",
+    "});",
+    "",
+  ].join("\n");
+
+  const ORDINARY = [
+    'import { defineScript } from "@defold-typescript/types";',
+    "",
+    "export const SPEED = 3;",
+    "",
+    "export default defineScript({",
+    "  init() {",
+    "    print(SPEED);",
+    "  },",
+    "});",
+    "",
+  ].join("\n");
+
+  test("fails on a mutable member reached from both chunks and writes no output", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/door.ts", SHARED_MUTABLE);
+
+    let thrown: unknown;
+    try {
+      runBuild({ cwd });
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).toBeInstanceOf(BuildFailureError);
+    const entries = (thrown as BuildFailureError).entries;
+    expect(entries).toHaveLength(1);
+    expect(entries[0]?.file).toBe("src/door.ts");
+    expect(entries[0]?.message).toContain("count");
+    expect(entries[0]?.message).toContain("5:3");
+    expect(entries[0]?.message).toContain("11:11");
+    expect(entries[0]?.line).toBeUndefined();
+    expect(existsSync(path.join(cwd, "src/door.ts.script"))).toBe(false);
+  });
+
+  test("the ordinary defineScript plus export const source still builds", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile("src/door.ts", ORDINARY);
+
+    expect(runBuild({ cwd }).written).toContain("src/door.ts.script");
+  });
+
+  test("a plain module is never checked, so ordered top-level work is fine", () => {
+    writeFile("tsconfig.json", DEFAULT_TSCONFIG);
+    writeFile(
+      "src/util.ts",
+      'const first = print("first");\nexport const second = print("second");\n',
+    );
+
+    expect(runBuild({ cwd }).written).toContain("src/util.lua");
+  });
+});
