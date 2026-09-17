@@ -39,20 +39,21 @@ declare global {
      * export default defineScript({
      *   init(self) {
      *     // create a new game object and provide property values
-     *     self.my_created_object = factory.create("#factory", undefined, undefined, { my_value: 1 });
+     *     const created = factory.create("#factory", undefined, undefined, { my_value: 1 });
      *     // communicate with the object
-     *     msg.post(self.my_created_object, "hello");
+     *     msg.post(created, "hello");
      *   },
      * });
      *
-     * // And then let the new game object have a script attached:
-     * go.property("my_value", 0);
-     *
-     * export default defineScript({
-     *   init(self) {
-     *     // do something with self.my_value which is now one
-     *   },
-     * });
+     * // And then let the new game object have a script attached, in its own file:
+     * //
+     * //   go.property("my_value", 0);
+     * //
+     * //   export default defineScript({
+     * //     init(self) {
+     * //       // do something with self.my_value which is now one
+     * //     },
+     * //   });
      * ```
      */
     function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: Record<string | number, unknown>, scale?: number | Vector3): Hash;

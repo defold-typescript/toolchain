@@ -206,7 +206,7 @@
   "factory.create": [
     {
       "sourceHash": "d2cd2037a9127ec6",
-      "ts": "// How to create a new game object:\nexport default defineScript({\n  init(self) {\n    // create a new game object and provide property values\n    self.my_created_object = factory.create(\"#factory\", undefined, undefined, { my_value: 1 });\n    // communicate with the object\n    msg.post(self.my_created_object, \"hello\");\n  },\n});\n\n// And then let the new game object have a script attached:\ngo.property(\"my_value\", 0);\n\nexport default defineScript({\n  init(self) {\n    // do something with self.my_value which is now one\n  },\n});"
+      "ts": "// How to create a new game object:\nexport default defineScript({\n  init(self) {\n    // create a new game object and provide property values\n    const created = factory.create(\"#factory\", undefined, undefined, { my_value: 1 });\n    // communicate with the object\n    msg.post(created, \"hello\");\n  },\n});\n\n// And then let the new game object have a script attached, in its own file:\n//\n//   go.property(\"my_value\", 0);\n//\n//   export default defineScript({\n//     init(self) {\n//       // do something with self.my_value which is now one\n//     },\n//   });"
     }
   ],
   "factory.load": [
@@ -320,7 +320,7 @@
   "go.get_world_position": [
     {
       "sourceHash": "ab804a5cdcfd4f7d",
-      "ts": "// Get the world position of the game object the script is attached to:\nconst p = go.get_world_position();\n\n// Reach a sibling game object by its id \u2014 relative addressing, no socket prefix:\nconst p2 = go.get_world_position(\"x\");"
+      "ts": "// Get the world position of the game object the script is attached to:\nconst p = go.get_world_position();\n\n// Reach a sibling game object by its id — relative addressing, no socket prefix:\nconst p2 = go.get_world_position(\"x\");"
     }
   ],
   "go.get_world_rotation": [
@@ -368,7 +368,7 @@
   "go.set_position": [
     {
       "sourceHash": "ad83d0274d776e8f",
-      "ts": "// `p` is the desired position (a Vector3).\nconst p = vmath.vector3();\n\n// Set the position of the game object the script is attached to:\ngo.set_position(p);\n\n// Reach a sibling game object by its id \u2014 relative addressing, no socket prefix:\ngo.set_position(p, \"x\");"
+      "ts": "// `p` is the desired position (a Vector3).\nconst p = vmath.vector3();\n\n// Set the position of the game object the script is attached to:\ngo.set_position(p);\n\n// Reach a sibling game object by its id — relative addressing, no socket prefix:\ngo.set_position(p, \"x\");"
     }
   ],
   "go.set_rotation": [
@@ -770,7 +770,7 @@
   "on_message": [
     {
       "sourceHash": "bfed6bd72e3242e2",
-      "ts": "// This example demonstrates how a game object instance, called \"a\", can communicate with another instance, called \"b\". It\n// is assumed that both script components of the instances has id \"script\".\n\n// a.script \u2014 Script of instance \"a\":\nexport default defineScript({\n  init() {\n    // let b know about some important data\n    msg.post(\"b#script\", \"my_data\", { important_value: 1 });\n  },\n});\n\n// b.script \u2014 Script of instance \"b\":\nexport default defineScript({\n  init() {\n    // store the url of instance \"a\" for later use, by specifying undefined as socket we\n    // automatically use our own socket\n    return { a_url: msg.url(undefined, go.get_id(\"a\"), \"script\") };\n  },\n\n  on_message(self, message_id, message, sender) {\n    // check message and sender\n    if (message_id === hash(\"my_data\") && sender === self.a_url) {\n      // use the data in some way\n      self.important_value = message.important_value;\n    }\n  },\n});"
+      "ts": "// This example demonstrates how a game object instance, called \"a\", can communicate with another instance, called \"b\". It\n// is assumed that both script components of the instances has id \"script\".\n\n// a.script — Script of instance \"a\":\nexport default defineScript({\n  init() {\n    // let b know about some important data\n    msg.post(\"b#script\", \"my_data\", { important_value: 1 });\n  },\n});\n\n// b.script — Script of instance \"b\":\nexport default defineScript({\n  init() {\n    // store the url of instance \"a\" for later use, by specifying undefined as socket we\n    // automatically use our own socket\n    return { a_url: msg.url(undefined, go.get_id(\"a\"), \"script\") };\n  },\n\n  on_message(self, message_id, message, sender) {\n    // check message and sender\n    if (message_id === hash(\"my_data\") && sender === self.a_url) {\n      // use the data in some way\n      self.important_value = message.important_value;\n    }\n  },\n});"
     }
   ],
   "on_reload": [
@@ -928,7 +928,7 @@
   "render.clear": [
     {
       "sourceHash": "70406f065fc91216",
-      "ts": "// Clear the color buffer and the depth buffer.\nrender.clear({\n  [graphics.BUFFER_TYPE_COLOR0_BIT]: vmath.vector4(0, 0, 0, 0),\n  [graphics.BUFFER_TYPE_DEPTH_BIT]: 1,\n});"
+      "ts": "// Clear the color buffer and the depth buffer.\nconst buffers = new LuaMap<render.ClearBufferKey, number | Vector4>();\nbuffers.set(graphics.BUFFER_TYPE_COLOR0_BIT, vmath.vector4(0, 0, 0, 0));\nbuffers.set(graphics.BUFFER_TYPE_DEPTH_BIT, 1);\nrender.clear(buffers);"
     }
   ],
   "render.constant_buffer": [
@@ -1978,7 +1978,7 @@
   "zlib.inflate": [
     {
       "sourceHash": "6b8b8cc6d9afe679",
-      "ts": "const data = \"\\120\\94\\11\\201\\200\\44\\86\\0\\162\\68\\133\\226\\146\\162\\204\\188\\116\\133\\242\\204\\146\\12\\133\\210\\188\\228\\252\\220\\130\\162\\212\\226\\226\\212\\20\\133\\148\\196\\146\\68\\61\\0\\44\\67\\14\\201\";\nconst uncompressed_data = zlib.inflate(data);\nprint(uncompressed_data); //> This is a string with uncompressed data."
+      "ts": "const data =\n  \"\\x78\\x5e\\x0b\\xc9\\xc8\\x2c\\x56\\x00\\xa2\\x44\\x85\\xe2\\x92\\xa2\\xcc\\xbc\\x74\\x85\\xf2\\xcc\\x92\\x0c\\x85\\xd2\\xbc\\xe4\\xfc\\xdc\\x82\\xa2\\xd4\\xe2\\xe2\\xd4\\x14\\x85\\x94\\xc4\\x92\\x44\\x3d\\x00\\x2c\\x43\\x0e\\xc9\";\nconst uncompressed_data = zlib.inflate(data);\nprint(uncompressed_data); //> This is a string with uncompressed data."
     }
   ]
 }
