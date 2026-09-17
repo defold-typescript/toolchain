@@ -1,6 +1,7 @@
+import { scanEmittedRequires } from "./lua-require-scan";
 import { TIMERS_REQUIRE_NAME } from "./timers-runtime";
 
-const LUALIB_REQUIRE_NAME = "lualib_bundle";
+export const LUALIB_REQUIRE_NAME = "lualib_bundle";
 
 // Written unconditionally by both build paths and backed by no TypeScript
 // source, so a require of either can never be unresolvable.
@@ -9,123 +10,21 @@ const GENERATED_RUNTIME_REQUIRES: ReadonlySet<string> = new Set([
   TIMERS_REQUIRE_NAME,
 ]);
 
-const PLACEHOLDER = "\u0000";
-
-// `[`, `[=[`, `[==[` … open a long bracket; the count of `=` is its level and
-// the matching close repeats it. Returns undefined when the `[` opens nothing.
-function longBracketLevel(src: string, open: number): number | undefined {
-  let i = open + 1;
-  let level = 0;
-  while (src[i] === "=") {
-    level++;
-    i++;
-  }
-  return src[i] === "[" ? level : undefined;
-}
-
-function skipLongBracket(src: string, open: number, level: number): number {
-  const close = `]${"=".repeat(level)}]`;
-  const end = src.indexOf(close, open + level + 2);
-  return end === -1 ? src.length : end + close.length;
-}
-
-interface Masked {
-  readonly text: string;
-  readonly literals: readonly string[];
-}
-
-// Replace every comment with a space and every string literal with an indexed
-// placeholder, so a `require` spelled inside either is not a require at all and
-// the surviving text can be matched with a plain regex.
-function mask(lua: string): Masked {
-  const literals: string[] = [];
-  let text = "";
-  let i = 0;
-
-  while (i < lua.length) {
-    const c = lua[i];
-
-    if (c === "-" && lua[i + 1] === "-") {
-      const level = lua[i + 2] === "[" ? longBracketLevel(lua, i + 2) : undefined;
-      if (level !== undefined) {
-        i = skipLongBracket(lua, i + 2, level);
-      } else {
-        const newline = lua.indexOf("\n", i);
-        i = newline === -1 ? lua.length : newline;
-      }
-      text += " ";
-      continue;
-    }
-
-    if (c === '"' || c === "'") {
-      let j = i + 1;
-      let value = "";
-      while (j < lua.length) {
-        const ch = lua[j];
-        if (ch === "\\") {
-          const next = lua[j + 1] ?? "";
-          value += next === "n" ? "\n" : next === "t" ? "\t" : next;
-          j += 2;
-          continue;
-        }
-        if (ch === c) {
-          j++;
-          break;
-        }
-        if (ch === "\n") {
-          break;
-        }
-        value += ch;
-        j++;
-      }
-      text += `${PLACEHOLDER}${literals.length}${PLACEHOLDER}`;
-      literals.push(value);
-      i = j;
-      continue;
-    }
-
-    if (c === "[") {
-      const level = longBracketLevel(lua, i);
-      if (level !== undefined) {
-        const end = skipLongBracket(lua, i, level);
-        const close = `]${"=".repeat(level)}]`;
-        const inner = lua.slice(i + level + 2, Math.max(i + level + 2, end - close.length));
-        text += `${PLACEHOLDER}${literals.length}${PLACEHOLDER}`;
-        literals.push(inner);
-        i = end;
-        continue;
-      }
-    }
-
-    text += c;
-    i++;
-  }
-
-  return { text, literals };
-}
-
-const REQUIRE_RE = new RegExp(
-  String.raw`(?<![A-Za-z0-9_.])require\s*\(\s*${PLACEHOLDER}(\d+)${PLACEHOLDER}\s*\)`,
-  "g",
-);
-
 /**
  * The distinct string-literal module paths an emitted Lua chunk requires, in
  * source order. The two generated runtimes are skipped, as is any require whose
  * argument is not a string literal — neither can name a source the build owns.
  */
 export function findEmittedRequires(lua: string): string[] {
-  const { text, literals } = mask(lua);
   const found: string[] = [];
   const seen = new Set<string>();
 
-  for (const match of text.matchAll(REQUIRE_RE)) {
-    const value = literals[Number(match[1])];
-    if (value === undefined || GENERATED_RUNTIME_REQUIRES.has(value) || seen.has(value)) {
+  for (const { path } of scanEmittedRequires(lua)) {
+    if (GENERATED_RUNTIME_REQUIRES.has(path) || seen.has(path)) {
       continue;
     }
-    seen.add(value);
-    found.push(value);
+    seen.add(path);
+    found.push(path);
   }
 
   return found;

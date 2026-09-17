@@ -108,10 +108,11 @@ export default defineScript({
 
 The companion takes the whole dependency closure of the exports — a private helper an exported function calls moves with it, as does a sibling of the same `const a = 1, b = 2;` declaration, and an export list such as `export { value as speed };` travels with the values it names. An import the closure needs is copied rather than moved: the companion takes its own `require` of that module, and Lua's module cache makes it the same table the script holds. That is why the two shapes below are rejected: they are the cases where "one definition" and "runs in the script" cannot both hold.
 
-Two limits are worth knowing before you lean on this:
+One limit is worth knowing before you lean on this:
 
-- **A configured `outDir` is not supported with companions.** The companion lands under the `outDir` while the emitted `require` still names the source tree, so the build fails with the unresolvable-require error rather than shipping a module nothing can load.
-- **A dot in the source name is not supported either.** `foo.bar.ts` compiles to `foo.bar.lua` while every `require` of it says `foo_bar` — rename the source.
+- **A dot in the source name is not supported.** `foo.bar.ts` compiles to `foo.bar.lua` while every `require` of it says `foo_bar` — rename the source.
+
+A configured `outDir` needs no special handling: the companion lands under the `outDir` and the component requires it by the path it was written to.
 
 ### When the build sends you here
 

@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import {
   createTranspileSession,
+  rewriteEmittedRequires,
   type SceneComponentIndex,
   type SceneObjectComponents,
   type TranspileProjectResult,
@@ -32,7 +33,12 @@ import {
   createOutputClaimRegistry,
   runtimeArtifactClaimant,
 } from "./output-claims";
-import { throwOnUnresolvedRequires } from "./require-resolution";
+import {
+  requireRewrites,
+  rewriteAll,
+  throwOnUnaddressableArtifacts,
+  throwOnUnresolvedRequires,
+} from "./require-resolution";
 import { scanFilesSync } from "./scan";
 import { scanSceneResourceRefs } from "./scene-resource-scan";
 import { loadUrlParameterTable } from "./url-parameter-table";
@@ -176,6 +182,26 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     const failures = collectFailures(result.diagnostics);
     const companionBySource = companionOutputRels(result, config);
     const scriptSources = scriptKindSources();
+    const outputs = plannedOutputBySource();
+
+    // The watch path rewrites the same chunks `runBuild` does, and for the same
+    // reason: an incremental rebuild writes companions and generated runtimes
+    // that the resolution check never scans.
+    const rewrites = requireRewrites({
+      sources: outputs,
+      companions: companionBySource,
+      ...(result.lualib !== undefined ? { lualibRel: lualibBundleRel(config) } : {}),
+      ...(result.timersRuntime !== undefined ? { timersRel: timersModuleRel(config) } : {}),
+    });
+    const luaBySource = rewriteAll(result.lua, rewrites);
+    const companionLuaBySource = rewriteAll(result.companions ?? {}, rewrites);
+    const lualib =
+      result.lualib === undefined ? undefined : rewriteEmittedRequires(result.lualib, rewrites);
+    const timersRuntime =
+      result.timersRuntime === undefined
+        ? undefined
+        : rewriteEmittedRequires(result.timersRuntime, rewrites);
+
     if (failures.size === 0) {
       // Violations first, for the reason `runBuild` runs them first: an
       // unsplittable source emits no companion, and its importer's unresolvable
@@ -184,23 +210,30 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
       if (program) {
         throwOnCompanionViolations({ program, scriptSources });
       }
-      const outputs = plannedOutputBySource();
       throwOnUnresolvedRequires({
-        lua: result.lua,
+        lua: luaBySource,
         sources: outputs,
         plannedOutputs: Object.entries(outputs).flatMap(([rel, outputRel]) => {
-          if (result.lua[rel] === undefined) {
+          if (luaBySource[rel] === undefined) {
             return [];
           }
           const companionRel = companionBySource[rel];
           return companionRel === undefined ? [outputRel] : [outputRel, companionRel];
         }),
       });
+      throwOnUnaddressableArtifacts([
+        ...(lualib !== undefined
+          ? [{ label: LUALIB_BUNDLE_LABEL, outputRel: lualibBundleRel(config) }]
+          : []),
+        ...(timersRuntime !== undefined
+          ? [{ label: TIMERS_RUNTIME_LABEL, outputRel: timersModuleRel(config) }]
+          : []),
+      ]);
     }
 
     // Claimed before anything is written, for the reason `runBuild` claims
     // first: a contested path must fail with its own file byte-unchanged.
-    const writable = keys.filter((rel) => !failures.has(rel) && result.lua[rel] !== undefined);
+    const writable = keys.filter((rel) => !failures.has(rel) && luaBySource[rel] !== undefined);
     const claims = createOutputClaimRegistry(cwd);
     const claimProgram = session.getProgram();
     const exportsBySource = claimProgram
@@ -209,10 +242,10 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
 
     // Ahead of the source claims, so a source landing on an artifact's rel is
     // reported against the artifact as the incumbent.
-    if (result.lualib !== undefined) {
+    if (lualib !== undefined) {
       claims.claim(lualibBundleRel(config), runtimeArtifactClaimant(LUALIB_BUNDLE_LABEL));
     }
-    if (result.timersRuntime !== undefined) {
+    if (timersRuntime !== undefined) {
       claims.claim(timersModuleRel(config), runtimeArtifactClaimant(TIMERS_RUNTIME_LABEL));
     }
 
@@ -223,7 +256,7 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     // write set below stays on `keys`, so claiming more never writes more.
     const outputRelBySource = new Map<string, string>();
     for (const [rel, text] of sourceTexts) {
-      if (failures.has(rel) || result.lua[rel] === undefined) {
+      if (failures.has(rel) || luaBySource[rel] === undefined) {
         continue;
       }
       const outputRel = computeOutputRel(rel, config, detectSourceOutputKind(text));
@@ -238,13 +271,13 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
 
     const written: string[] = [];
     for (const rel of writable) {
-      const lua = result.lua[rel];
+      const lua = luaBySource[rel];
       const outputRel = outputRelBySource.get(rel);
       if (lua === undefined || outputRel === undefined) {
         continue;
       }
       const companionRel = companionBySource[rel];
-      const companion = result.companions?.[rel];
+      const companion = companionLuaBySource[rel];
       if (pruneAlternatives) {
         pruneOutputs(rel, companionRel === undefined ? [outputRel] : [outputRel, companionRel]);
       }
@@ -260,14 +293,14 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
         written.push(companionRel);
       }
     }
-    if (result.lualib !== undefined) {
+    if (lualib !== undefined) {
       const bundleRel = lualibBundleRel(config);
-      writeScriptFile(cwd, bundleRel, result.lualib, undefined);
+      writeScriptFile(cwd, bundleRel, lualib, undefined);
       written.push(bundleRel);
     }
-    if (result.timersRuntime !== undefined) {
+    if (timersRuntime !== undefined) {
       const runtimeRel = timersModuleRel(config);
-      writeScriptFile(cwd, runtimeRel, result.timersRuntime, undefined);
+      writeScriptFile(cwd, runtimeRel, timersRuntime, undefined);
       written.push(runtimeRel);
     }
     throwIfFailures(failures);

@@ -433,7 +433,7 @@ export async function main(): Promise<void> {
 - `await x` is lowered to `__TS__Await(x)`, which yields the value through the body's Lua coroutine. The awaiter wraps the yielded value as `Promise.resolve(x)`, registers a continuation, and `coroutine.resume`s the body with the result once that promise settles.
 - `__TS__Promise` is TSTL's own Lua class with `then`/`catch`/`finally`/`all`/`resolve`/`reject`. Resolution is callback-based and synchronous: a callback registered on an already-settled promise fires immediately; otherwise it is stored until `resolve()`/`reject()` is called.
 
-These helpers ship in `lualib_bundle.lua`, which the build writes to the output root; the emitted module does `require("lualib_bundle")` to pull them in. No setup or polyfill is needed.
+These helpers ship in `lualib_bundle.lua`, which the build writes to the output root; the emitted module requires it by the path it lands at — `require("lualib_bundle")` alongside the sources, or the `outDir`-rooted spelling under a configured `outDir`. No setup or polyfill is needed.
 
 The consequences are where it bites:
 

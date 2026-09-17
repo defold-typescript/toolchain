@@ -43,12 +43,15 @@ type-only import is erased and emits no `require` at all.
 The build checks every `require` it emits against the outputs it is about to write
 and fails with the offending file, the require path, and the source it names, so
 an import that cannot resolve is a build error rather than a load failure inside
-the editor. That is what catches the two arrangements a companion cannot serve. A
-configured `outDir` re-roots the output while the emitted `require` still points at
-the source tree, so companions are not supported under one. A source whose name
+the editor. Under a configured `outDir` every emitted `require` carries the
+`outDir`-rooted path the build actually writes, so a cross-file import, a script's
+companion and the generated runtime files all load from there. A source whose name
 contains a dot is written to `src/foo.bar.lua` with the dot intact, while Lua reads
 a dot as a path separator, so the emitted `require("src.foo_bar")` looks for
-`src/foo_bar.lua` and finds nothing — rename the source to remove the dot. A
+`src/foo_bar.lua` and finds nothing — rename the source to remove the dot. An
+`outDir` whose own name contains a dot has the same problem one level up and no
+`require` can spell it, so the build fails before writing anything — pick an
+`outDir` with no dot in it. A
 `require` with no TypeScript source behind it — a Lua module from a Defold library
 dependency, the `lldebugger.debug` module the [debugging guide](./debugging.md)
 sets up, hand-authored Lua — is external and is left alone.
@@ -85,8 +88,9 @@ absent and the build carries on, so a stale port file can never hold it up.
 
 When a source uses a runtime helper TypeScript-to-Lua provides (`Object.keys`,
 object spread, and similar), the build also writes a `lualib_bundle.lua` at the
-output root automatically; the generated Lua's `require("lualib_bundle")` resolves
-against it.
+output root automatically, and the generated Lua requires it by the path it lands
+at — `require("lualib_bundle")` alongside the sources, or the `outDir`-rooted
+spelling under a configured `outDir`.
 
 Because the output kind is the factory a source calls, adding or removing a
 factory switches the artifact (`src/main.lua` becomes `src/main.ts.script`, or the
