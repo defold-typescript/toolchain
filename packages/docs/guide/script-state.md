@@ -106,7 +106,7 @@ export default defineScript({
 
 `build` writes `game/doors/door.ts.script` and `game/doors/door.lua`. The component requires the companion rather than redeclaring its exports, so `state` is **one table**: the door's own `init` and any `import { state } from "./doors/door"` elsewhere read and write the same object. Values only the script uses stay in the script.
 
-The companion takes the whole dependency closure of the exports — a private helper an exported function calls moves with it. That is why the two shapes below are rejected: they are the cases where "one definition" and "runs in the script" cannot both hold.
+The companion takes the whole dependency closure of the exports — a private helper an exported function calls moves with it, as does a sibling of the same `const a = 1, b = 2;` declaration, and an export list such as `export { value as speed };` travels with the values it names. An import the closure needs is copied rather than moved: the companion takes its own `require` of that module, and Lua's module cache makes it the same table the script holds. That is why the two shapes below are rejected: they are the cases where "one definition" and "runs in the script" cannot both hold.
 
 Two limits are worth knowing before you lean on this:
 
