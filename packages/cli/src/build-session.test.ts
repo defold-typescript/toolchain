@@ -10,10 +10,22 @@ import {
 } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import type { SceneComponentIndex } from "@defold-typescript/transpiler";
+import {
+  type BuildConfig,
+  computeOutputRel,
+  requirePathForRel,
+  type SceneComponentIndex,
+} from "@defold-typescript/transpiler";
 import { runBuild } from "./build";
-import { BuildFailureError, GENERATED_BANNER } from "./build-output";
+import {
+  BuildFailureError,
+  GENERATED_BANNER,
+  lualibBundleRel,
+  timersModuleRel,
+} from "./build-output";
 import { createBuildSession } from "./build-session";
+
+const OUTDIR_CONFIG: BuildConfig = { outDir: "build/lua", include: ["src/**/*.ts"] };
 
 let cwd: string;
 let other: string;
@@ -402,8 +414,6 @@ describe("createBuildSession", () => {
     const IMPORTER_TYPE_ONLY =
       'import { defineScript } from "@defold-typescript/types";\nimport type { Shared } from "./shared";\nexport default defineScript({ init() { const s: Shared = 1; print(s); } });\n';
 
-    // An `outDir` is the remaining shape no companion can serve: the output is
-    // re-rooted under it while the emitted require still names the source tree.
     const OUTDIR_TSCONFIG = JSON.stringify(
       {
         compilerOptions: {
@@ -419,7 +429,10 @@ describe("createBuildSession", () => {
     );
     const SHARED_MODULE = "export type Shared = number;\nexport const shared = 7;\n";
 
-    test("a value import of an untouched source surfaces on the rebuild that introduces it", () => {
+    // The edited file is the importer and the target is never touched, so a
+    // rewrite that reached the right path proves the rebuild keys off the
+    // whole-program inventory rather than the event batch.
+    test("a value import of an untouched source requires its written path on the rebuild that introduces it", () => {
       writeIn(cwd, "tsconfig.json", OUTDIR_TSCONFIG);
       writeIn(cwd, "src/shared.ts", SHARED_MODULE);
       writeIn(cwd, "src/importer.ts", IMPORTER_TYPE_ONLY);
@@ -428,28 +441,56 @@ describe("createBuildSession", () => {
       expect(session.buildAll().written).toContain("build/lua/importer.ts.script");
 
       writeIn(cwd, "src/importer.ts", IMPORTER_VALUE);
-      let thrown: unknown;
-      try {
-        session.applyEvents(["src/importer.ts"], []);
-      } catch (error) {
-        thrown = error;
+      const rebuilt = session.applyEvents(["src/importer.ts"], []);
+
+      const targetRel = computeOutputRel("src/shared.ts", OUTDIR_CONFIG, "module");
+      expect(rebuilt.written).toContain("build/lua/importer.ts.script");
+      expect(existsSync(path.join(cwd, targetRel))).toBe(true);
+
+      const importer = readFileSync(path.join(cwd, "build/lua/importer.ts.script"), "utf8");
+      expect(importer).toContain(`require("${requirePathForRel(targetRel)}")`);
+      expect(importer).not.toContain('require("src.shared")');
+    });
+
+    // `applyEvents` is its own write path: an implementation could rewrite
+    // companions and runtimes in `runBuild` alone and stay green everywhere the
+    // resolution check looks, which is neither of these chunk kinds.
+    test("a rebuild rewrites the companion and the timers runtime it writes", () => {
+      writeIn(cwd, "tsconfig.json", OUTDIR_TSCONFIG);
+      writeIn(cwd, "src/shared.ts", SHARED_SCRIPT);
+      writeIn(
+        cwd,
+        "src/importer.ts",
+        [
+          'import { defineScript } from "@defold-typescript/types";',
+          'import { setTimeout } from "@defold-typescript/types/timers";',
+          'import { shared } from "./shared";',
+          "const ks = Object.keys({ a: 1 });",
+          "export default defineScript({ init() { setTimeout(() => print(shared + ks.length), 1); } });",
+          "",
+        ].join("\n"),
+      );
+
+      const session = createBuildSession({ cwd });
+      session.buildAll();
+
+      writeIn(cwd, "src/shared.ts", SHARED_SCRIPT.replace("shared = 7", "shared = 8"));
+      session.applyEvents(["src/shared.ts"], []);
+
+      const companionRel = computeOutputRel("src/shared.ts", OUTDIR_CONFIG, "module");
+      const componentRel = computeOutputRel("src/shared.ts", OUTDIR_CONFIG, "script");
+      const bundleRel = lualibBundleRel(OUTDIR_CONFIG);
+      const runtimeRel = timersModuleRel(OUTDIR_CONFIG);
+      for (const rel of [companionRel, componentRel, bundleRel, runtimeRel]) {
+        expect(existsSync(path.join(cwd, rel))).toBe(true);
       }
 
-      // The edited file is the importer; the target is never touched, so a
-      // finding that names it proves the check reads the whole-program
-      // inventory rather than the event batch.
-      expect(thrown).toBeInstanceOf(BuildFailureError);
-      const entries = (thrown as BuildFailureError).entries;
-      expect(entries).toHaveLength(1);
-      expect(entries[0]?.file).toBe("src/importer.ts");
-      expect(entries[0]?.message).toContain("src.shared");
-      expect(entries[0]?.message).toContain("src/shared.ts");
-      expect(entries[0]?.line).toBeUndefined();
-
-      writeIn(cwd, "src/importer.ts", IMPORTER_TYPE_ONLY);
-      expect(session.applyEvents(["src/importer.ts"], []).written).toContain(
-        "build/lua/importer.ts.script",
+      expect(readFileSync(path.join(cwd, componentRel), "utf8")).toContain(
+        `require("${requirePathForRel(companionRel)}")`,
       );
+      const runtime = readFileSync(path.join(cwd, runtimeRel), "utf8");
+      expect(runtime).toContain(`require("${requirePathForRel(bundleRel)}")`);
+      expect(runtime).not.toContain('require("lualib_bundle")');
     });
 
     test("a require satisfied by an untouched module output stays resolved", () => {

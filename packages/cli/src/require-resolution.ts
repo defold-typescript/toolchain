@@ -1,5 +1,11 @@
-import { findEmittedRequires, requirePathForRel } from "@defold-typescript/transpiler";
-import { BuildFailureError } from "./build-output";
+import {
+  findEmittedRequires,
+  LUALIB_REQUIRE_NAME,
+  requirePathForRel,
+  rewriteEmittedRequires,
+  TIMERS_REQUIRE_NAME,
+} from "@defold-typescript/transpiler";
+import { BuildFailureError, PROJECT_BUCKET } from "./build-output";
 
 export interface UnresolvedRequire {
   /** The source whose emitted Lua carries the require. */
@@ -45,6 +51,112 @@ export interface FindUnresolvedRequiresInput {
 // dotted source name cancel the mismatch it creates.
 function luaLoadPath(requirePath: string): string {
   return `${requirePath.replace(/\./g, "/")}.lua`;
+}
+
+export interface RequireRewritesInput {
+  /** Every source rel in the program, mapped to the output the build writes for it. */
+  readonly sources: Readonly<Record<string, string>>;
+  /** Every source rel that emits a companion, mapped to the companion's rel. */
+  readonly companions: Readonly<Record<string, string>>;
+  /** Where the lualib bundle lands, when the build emits one. */
+  readonly lualibRel?: string;
+  /** Where the timers polyfill runtime lands, when the build emits one. */
+  readonly timersRel?: string;
+}
+
+/**
+ * How to respell each `require` an emitted chunk carries so it names the path
+ * the build writes, keyed by the source-rooted spelling TSTL emits.
+ *
+ * The value side goes through the same `computeOutputRel` the writer uses —
+ * passed in as `sources`/`companions` rather than re-derived — so the require
+ * and the write cannot drift apart. A component resource is never on the require
+ * path, so a script-kind source is addressed through its companion or not at
+ * all.
+ *
+ * Two entries are deliberately omitted. One whose key equals its value changes
+ * nothing, so a build with no `outDir` rewrites nothing and emits byte-identical
+ * Lua. One whose mapped require does not round-trip to the output rel —
+ * `luaLoadPath(mapped) !== outputRel`, which a dot in the source name or in the
+ * `outDir` causes — would swap a reported break for a silent one: the
+ * source-rooted require survives instead, and the existing dotted-name
+ * diagnostic still fires against it.
+ */
+export function requireRewrites(input: RequireRewritesInput): Map<string, string> {
+  const { sources, companions, lualibRel, timersRel } = input;
+  const rewrites = new Map<string, string>();
+
+  const add = (requirePath: string, outputRel: string): void => {
+    const mapped = requirePathForRel(outputRel);
+    if (mapped === requirePath || luaLoadPath(mapped) !== outputRel) {
+      return;
+    }
+    rewrites.set(requirePath, mapped);
+  };
+
+  for (const [rel, outputRel] of Object.entries(sources)) {
+    // A `.lua` output is the module itself; anything else is a component
+    // resource, whose require-addressable half is its companion when it has one.
+    const target = outputRel.endsWith(".lua") ? outputRel : companions[rel];
+    if (target !== undefined) {
+      add(requirePathForRel(rel), target);
+    }
+  }
+
+  if (lualibRel !== undefined) {
+    add(LUALIB_REQUIRE_NAME, lualibRel);
+  }
+  if (timersRel !== undefined) {
+    add(TIMERS_REQUIRE_NAME, timersRel);
+  }
+
+  return rewrites;
+}
+
+/** Every chunk in a per-source map, rewritten against the same map. */
+export function rewriteAll(
+  chunks: Readonly<Record<string, string>>,
+  rewrites: ReadonlyMap<string, string>,
+): Record<string, string> {
+  const rewritten: Record<string, string> = {};
+  for (const [rel, lua] of Object.entries(chunks)) {
+    rewritten[rel] = rewriteEmittedRequires(lua, rewrites);
+  }
+  return rewritten;
+}
+
+export interface RuntimeArtifact {
+  /** What to call the artifact in a failure message; it has no source rel. */
+  readonly label: string;
+  /** The rel the build would write it to. */
+  readonly outputRel: string;
+}
+
+/**
+ * Fail the build on a generated runtime artifact no require can name.
+ *
+ * These two are the one silent half of the require/output agreement: they are
+ * backed by no source, so `findUnresolvedRequires` never scans their chunks and
+ * exempts their names besides. When the output rel does not round-trip through
+ * the require rule — a dot in the `outDir` is kept in the path and underscored
+ * in the require — the artifact is written where nothing can load it, so the
+ * build says so and writes nothing instead.
+ */
+export function throwOnUnaddressableArtifacts(artifacts: readonly RuntimeArtifact[]): void {
+  const entries = artifacts
+    .filter(({ outputRel }) => luaLoadPath(requirePathForRel(outputRel)) !== outputRel)
+    .map(({ label, outputRel }) => ({
+      file: PROJECT_BUCKET,
+      message: `${label} is written to ${outputRel}, which Defold reaches only as require("${requirePathForRel(outputRel)}") — no require names the path it lands at, so give outDir a name with no dot in it`,
+    }));
+  if (entries.length === 0) {
+    return;
+  }
+  const formatted = entries.map(({ file, message }) => `  ${file}: ${message}`).join("\n");
+  throw new BuildFailureError(
+    `defold-typescript build: ${entries.length} unaddressable runtime artifact(s):\n${formatted}`,
+    entries,
+  );
 }
 
 export function findUnresolvedRequires(input: FindUnresolvedRequiresInput): UnresolvedRequire[] {

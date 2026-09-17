@@ -11,7 +11,7 @@ export {
   componentIdOfSameObjectAddress,
 } from "./component-animation-index";
 export { buildConfigKeyIndex, readGameProjectSetting } from "./config-key-index";
-export { findEmittedRequires } from "./emitted-requires";
+export { findEmittedRequires, LUALIB_REQUIRE_NAME } from "./emitted-requires";
 export type { GuiFlipbookIndex } from "./gui-flipbook-index";
 export { buildGuiFlipbookIndex } from "./gui-flipbook-index";
 export type { GuiNodeIndex } from "./gui-node-index";
@@ -48,6 +48,7 @@ export {
 } from "./output-paths";
 export { getProgramDiagnostics } from "./program-diagnostics";
 export { isDefignoredPath, SCAFFOLDED_DEFIGNORE_LINES } from "./project-resources";
+export { rewriteEmittedRequires } from "./require-rewrite";
 export { buildSceneAddressDeclaration } from "./scene-address-declaration";
 export type { SceneCollectionRoles, SceneCollectionRolesInput } from "./scene-collection-roles";
 export { buildSceneCollectionRoles } from "./scene-collection-roles";
@@ -84,6 +85,7 @@ export type { SceneMessage } from "./scene-text-format";
 export { parseSceneTextFormat, SceneTextFormatError } from "./scene-text-format";
 export type { TranspileSession } from "./session";
 export { createTranspileSession } from "./session";
+export { TIMERS_REQUIRE_NAME } from "./timers-runtime";
 export type {
   TranspileDiagnostic,
   TranspileProjectInput,
