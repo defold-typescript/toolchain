@@ -131,6 +131,47 @@ describe("findUnresolvedRequires", () => {
     });
   });
 
+  test("a dotted plain module is written where the require cannot reach it", () => {
+    const findings = check({
+      "src/foo.bar.ts": "export const shared = 1;\n",
+      "src/main.ts": script("import { shared } from './foo.bar';\nprint(shared);"),
+    });
+
+    expect(findings).toHaveLength(1);
+    expect(findings[0]).toMatchObject({
+      importer: "src/main.ts",
+      requirePath: "src.foo_bar",
+      target: "src/foo.bar.ts",
+      expected: "src/foo.bar.lua",
+      loadPath: "src/foo_bar.lua",
+    });
+  });
+
+  test("a dotted directory segment is compared too, not just the basename", () => {
+    const findings = check({
+      "src/a.b/c.ts": "export const shared = 1;\n",
+      "src/main.ts": script("import { shared } from './a.b/c';\nprint(shared);"),
+    });
+
+    expect(findings).toHaveLength(1);
+    expect(findings[0]).toMatchObject({
+      importer: "src/main.ts",
+      requirePath: "src.a_b.c",
+      target: "src/a.b/c.ts",
+      expected: "src/a.b/c.lua",
+      loadPath: "src/a_b/c.lua",
+    });
+  });
+
+  test("the undotted sibling of a dotted name still resolves", () => {
+    expect(
+      check({
+        "src/foo_bar.ts": "export const shared = 1;\n",
+        "src/main.ts": script("import { shared } from './foo_bar';\nprint(shared);"),
+      }),
+    ).toEqual([]);
+  });
+
   test("a @noResolution ambient module produces no finding", () => {
     expect(
       check({
