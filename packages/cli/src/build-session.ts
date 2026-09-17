@@ -13,10 +13,12 @@ import {
   computeOutputRel,
   detectSourceOutputKind,
   isTranspilerSource,
+  LUALIB_BUNDLE_LABEL,
   lualibBundleRel,
   pruneAlternativeOutputs,
   readBuildConfig,
   retargetSourceRoot,
+  TIMERS_RUNTIME_LABEL,
   throwIfFailures,
   timersModuleRel,
   toPosix,
@@ -24,7 +26,12 @@ import {
 } from "./build-output";
 import { findCompanionExports, throwOnCompanionViolations } from "./companion-violations";
 import { scanOrphanOutputs } from "./orphan-scan";
-import { companionClaimant, companionOutputRels, createOutputClaimRegistry } from "./output-claims";
+import {
+  companionClaimant,
+  companionOutputRels,
+  createOutputClaimRegistry,
+  runtimeArtifactClaimant,
+} from "./output-claims";
 import { throwOnUnresolvedRequires } from "./require-resolution";
 import { scanFilesSync } from "./scan";
 import { scanSceneResourceRefs } from "./scene-resource-scan";
@@ -158,10 +165,12 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     pruneAlternativeOutputs(cwd, rel, config, keep);
   }
 
+  // `keys` is what this pass writes; the text every rel is judged by comes from
+  // `sourceTexts`, which already holds the standing program and is what the
+  // claim inventory below walks.
   function writeOutputs(
     result: TranspileProjectResult,
     keys: readonly string[],
-    sources: Record<string, string>,
     pruneAlternatives = false,
   ): BuildResult {
     const failures = collectFailures(result.diagnostics);
@@ -197,9 +206,27 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     const exportsBySource = claimProgram
       ? findCompanionExports({ program: claimProgram, scriptSources })
       : new Map<string, readonly string[]>();
+
+    // Ahead of the source claims, so a source landing on an artifact's rel is
+    // reported against the artifact as the incumbent.
+    if (result.lualib !== undefined) {
+      claims.claim(lualibBundleRel(config), runtimeArtifactClaimant(LUALIB_BUNDLE_LABEL));
+    }
+    if (result.timersRuntime !== undefined) {
+      claims.claim(timersModuleRel(config), runtimeArtifactClaimant(TIMERS_RUNTIME_LABEL));
+    }
+
+    // Over the whole standing program rather than this rebuild's event batch,
+    // for the same reason the reachability scan is: another source's output is
+    // contested by what this rebuild compiles, and `session.update` re-emits
+    // every source, so `result` already carries the Lua to judge it by. The
+    // write set below stays on `keys`, so claiming more never writes more.
     const outputRelBySource = new Map<string, string>();
-    for (const rel of writable) {
-      const outputRel = computeOutputRel(rel, config, detectSourceOutputKind(sources[rel] ?? ""));
+    for (const [rel, text] of sourceTexts) {
+      if (failures.has(rel) || result.lua[rel] === undefined) {
+        continue;
+      }
+      const outputRel = computeOutputRel(rel, config, detectSourceOutputKind(text));
       outputRelBySource.set(rel, outputRel);
       claims.claim(outputRel, { source: rel });
       const companionRel = companionBySource[rel];
@@ -274,7 +301,7 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     for (const rel of sources) {
       sourceTexts.set(rel, files[rel] ?? "");
     }
-    const built = writeOutputs(result, sources, files, true);
+    const built = writeOutputs(result, sources, true);
     const reachability = scanReachability();
     const crossWorld = scanCrossWorld();
     return {
@@ -314,11 +341,7 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
       pruneOutputs(rel);
     }
 
-    const changedSources: Record<string, string> = {};
-    for (const rel of sourceChanged) {
-      changedSources[rel] = changes[rel] ?? "";
-    }
-    const built = writeOutputs(result, sourceChanged, changedSources, true);
+    const built = writeOutputs(result, sourceChanged, true);
     const reachability = scanReachability();
     const crossWorld = scanCrossWorld();
     return {

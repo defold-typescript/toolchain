@@ -9,10 +9,12 @@ import {
   collectFailures,
   computeOutputRel,
   detectSourceOutputKind,
+  LUALIB_BUNDLE_LABEL,
   lualibBundleRel,
   pruneAlternativeOutputs,
   readBuildConfig,
   retargetSourceRoot,
+  TIMERS_RUNTIME_LABEL,
   throwIfFailures,
   timersModuleRel,
   toPosix,
@@ -20,7 +22,12 @@ import {
 } from "./build-output";
 import { findCompanionExports, throwOnCompanionViolations } from "./companion-violations";
 import { scanOrphanOutputs } from "./orphan-scan";
-import { companionClaimant, companionOutputRels, createOutputClaimRegistry } from "./output-claims";
+import {
+  companionClaimant,
+  companionOutputRels,
+  createOutputClaimRegistry,
+  runtimeArtifactClaimant,
+} from "./output-claims";
 import { throwOnUnresolvedRequires } from "./require-resolution";
 import { scanFilesSync } from "./scan";
 import { scanSceneResourceRefs } from "./scene-resource-scan";
@@ -157,6 +164,14 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
   const exportsBySource = claimProgram
     ? findCompanionExports({ program: claimProgram, scriptSources })
     : new Map<string, readonly string[]>();
+  // Ahead of the source claims, so a source landing on an artifact's rel is
+  // reported against the artifact as the incumbent.
+  if (result.lualib !== undefined) {
+    claims.claim(lualibBundleRel(config), runtimeArtifactClaimant(LUALIB_BUNDLE_LABEL));
+  }
+  if (result.timersRuntime !== undefined) {
+    claims.claim(timersModuleRel(config), runtimeArtifactClaimant(TIMERS_RUNTIME_LABEL));
+  }
   const writable = sources.filter((rel) => !failures.has(rel) && Boolean(result.lua[rel]));
   for (const rel of writable) {
     const outputRel = outputBySource[rel];
