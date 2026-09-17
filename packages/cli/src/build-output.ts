@@ -13,7 +13,7 @@ import {
 export type { BuildConfig, SourceOutputKind };
 export { computeOutputRel, parseBuildConfig, stripIncludeBase };
 
-const PROJECT_BUCKET = "<project>";
+export const PROJECT_BUCKET = "<project>";
 
 export function toPosix(p: string, sep: string = path.sep): string {
   return p.split(sep).join("/");
@@ -103,6 +103,12 @@ export function detectSourceOutputKind(source: string): SourceOutputKind {
   }
   return "module";
 }
+
+// How each runtime artifact names itself when it contends for its own output
+// path. No source produced it, so a contested-path failure has no source rel to
+// print and says what the file is instead.
+export const LUALIB_BUNDLE_LABEL = "the TypeScript standard-library bundle";
+export const TIMERS_RUNTIME_LABEL = "the timers polyfill runtime";
 
 // Defold resolves `require("lualib_bundle")` to `lualib_bundle.lua` at the
 // project/output root, so the synthesized bundle lands once there regardless of

@@ -119,6 +119,86 @@ describe("output claims — two sources on one path", () => {
   });
 });
 
+describe("output claims — the runtime artifacts", () => {
+  // A spread pulls the TypeScript standard-library bundle, so the build writes
+  // `lualib_bundle.lua` alongside the source's own output.
+  const SPREADING =
+    'import { defineScript } from "@defold-typescript/types";\n' +
+    "const parts = [1, 2];\n" +
+    "const all = [...parts, 3];\n" +
+    "export default defineScript({ init() { print(all[0]); } });\n";
+  const TIMING =
+    'import { setTimeout } from "@defold-typescript/types/timers";\n' +
+    "setTimeout(() => print(1), 250);\n";
+  const HAND_AUTHORED = "local M = {}\nfunction M.helper() end\nreturn M\n";
+
+  function scaffold(source: string): void {
+    writeFile("tsconfig.json", TSCONFIG);
+    writeFile("src/main.ts", source);
+  }
+
+  test("a hand-authored lualib bundle fails the build and is left alone", () => {
+    scaffold(SPREADING);
+    writeFile("lualib_bundle.lua", HAND_AUTHORED);
+
+    expect(() => runBuild({ cwd })).toThrow(/lualib_bundle\.lua/);
+    expect(read("lualib_bundle.lua")).toBe(HAND_AUTHORED);
+    expect(existsSync(path.join(cwd, "src/main.ts.script"))).toBe(false);
+  });
+
+  test("a hand-authored timers runtime fails the build and is left alone", () => {
+    scaffold(TIMING);
+    writeFile("defold_typescript_timers.lua", HAND_AUTHORED);
+
+    expect(() => runBuild({ cwd })).toThrow(/defold_typescript_timers\.lua/);
+    expect(read("defold_typescript_timers.lua")).toBe(HAND_AUTHORED);
+    expect(existsSync(path.join(cwd, "src/main.lua"))).toBe(false);
+  });
+
+  test("a generated lualib bundle is still overwritten", () => {
+    scaffold(SPREADING);
+    writeFile("lualib_bundle.lua", `-- stale\n${GENERATED_BANNER}\n`);
+
+    const result = runBuild({ cwd });
+
+    expect(result.written).toContain("lualib_bundle.lua");
+    expect(read("lualib_bundle.lua")).not.toContain("-- stale");
+  });
+
+  test("a source compiling to the bundle's path collides with the artifact", () => {
+    // An `outDir` strips the include base, so a source named after the bundle
+    // lands on the very rel the bundle claims.
+    writeFile(
+      "tsconfig.json",
+      JSON.stringify(
+        {
+          compilerOptions: { target: "ES2022", module: "ESNext", strict: true, outDir: "build" },
+          include: ["src/**/*.ts"],
+        },
+        null,
+        2,
+      ),
+    );
+    writeFile("src/main.ts", SPREADING);
+    writeFile("src/lualib_bundle.ts", "export const VALUE = 1;\n");
+
+    // The artifact claims first, so it is the incumbent the source contends with.
+    expect(() => runBuild({ cwd })).toThrow(
+      /build\/lualib_bundle\.lua is claimed by two sources: the TypeScript standard-library bundle and src\/lualib_bundle\.ts/,
+    );
+  });
+
+  test("a hand-authored lualib bundle fails a watch build too", () => {
+    scaffold(SPREADING);
+    writeFile("lualib_bundle.lua", HAND_AUTHORED);
+
+    const session = createBuildSession({ cwd });
+
+    expect(() => session.buildAll()).toThrow(/lualib_bundle\.lua/);
+    expect(read("lualib_bundle.lua")).toBe(HAND_AUTHORED);
+  });
+});
+
 describe("output claims — the watch rebuild path", () => {
   test("a hand-authored companion path fails a watch build too", () => {
     scaffoldDoor();

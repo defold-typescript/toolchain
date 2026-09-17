@@ -10,11 +10,18 @@ import {
   BuildFailureError,
   computeOutputRel,
   GENERATED_BANNER,
+  PROJECT_BUCKET,
 } from "./build-output";
 
 export interface OutputClaimant {
   /** The source rel whose output this is. */
   readonly source: string;
+  /**
+   * What to call this claimant in a failure message when `source` is not a
+   * source rel — a runtime artifact the build writes on its own behalf has no
+   * authored file to name, so it names what the file is.
+   */
+  readonly label?: string;
   /**
    * The runtime value exports the claimed file carries, when the claim is a
    * companion's. They are what the contested path has to serve, so naming them
@@ -53,7 +60,16 @@ function describe(claimant: OutputClaimant): string {
       ? ` (exports ${[...claimant.exports].join(", ")})`
       : "";
   const importer = claimant.importer !== undefined ? `, imported by ${claimant.importer}` : "";
-  return `${claimant.source}${exports}${importer}`;
+  return `${claimant.label ?? claimant.source}${exports}${importer}`;
+}
+
+/**
+ * The claim the build makes on a path it writes on its own behalf rather than
+ * for a source. It buckets as project-level, the way a diagnostic with no file
+ * does, so the failure row reads like every other project-scoped one.
+ */
+export function runtimeArtifactClaimant(label: string): OutputClaimant {
+  return { source: PROJECT_BUCKET, label };
 }
 
 function isGenerated(cwd: string, outputRel: string): boolean {
