@@ -60,8 +60,10 @@ the exports it carries — so a companion never overwrites a `.lua` file you wro
 yourself, and two sources collapsing onto one rel under a shared `outDir` is an
 error rather than whichever one happened to be written last. A rebuild under
 [`watch`](./watch.md) claims on behalf of the whole project, not just the files it
-recompiled, so editing one source into another's output path fails the rebuild
-instead of quietly replacing a module nothing touched.
+recompiled, so editing one source into another's output path is reported and the
+rebuild rejected, instead of quietly replacing a module nothing touched. The
+existing file stays as it is, and the watch [keeps running](./watch.md#hot-reload),
+picking the fix up on the next save.
 
 The two runtime artifacts the build writes for itself — `lualib_bundle.lua` and
 `defold_typescript_timers.lua`, both at the output root — are inside the same
