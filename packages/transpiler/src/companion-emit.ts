@@ -10,8 +10,15 @@ import {
   createTableFieldExpression,
   createTableIndexExpression,
   createVariableDeclarationStatement,
+  isBlock,
   isCallExpression,
+  isDoStatement,
+  isForInStatement,
+  isForStatement,
+  isFunctionExpression,
   isIdentifier,
+  isMethodCallExpression,
+  isRepeatStatement,
   isReturnStatement,
   isStringLiteral,
   isTableExpression,
@@ -103,18 +110,135 @@ function forEachLuaNode(root: Node, visit: (node: Node) => void): void {
   }
 }
 
-function identifierNames(statement: Statement): Set<string> {
-  const names = new Set<string>();
-  forEachLuaNode(statement, (node) => {
-    if (isIdentifier(node)) {
-      names.add(node.text);
-    }
-  });
-  return names;
-}
-
 function declaredNames(statement: Statement): readonly string[] {
   return isVariableDeclarationStatement(statement) ? statement.left.map((name) => name.text) : [];
+}
+
+/**
+ * The names these statements read but do not bind, under Lua's own scoping.
+ *
+ * A flat identifier walk cannot answer this: a parameter, a nested `local` and a
+ * loop variable are all spelled as plain identifiers, so every name introduced
+ * inside a moved function would read as a free reference to whatever the script
+ * happens to bind under the same spelling.
+ *
+ * The statements' own top level is one scope, pre-seeded with everything it
+ * declares before the walk starts. That makes it order-insensitive, unlike the
+ * nested scopes, which is what keeps TSTL's hoisted `local a, b` forward
+ * references reading as bound.
+ */
+function freeNames(statements: readonly Statement[]): Set<string> {
+  const free = new Set<string>();
+  const scopes: Set<string>[] = [new Set()];
+
+  function declare(name: string): void {
+    scopes[scopes.length - 1]?.add(name);
+  }
+
+  function isBound(name: string): boolean {
+    return scopes.some((scope) => scope.has(name));
+  }
+
+  function inScope(run: () => void): void {
+    scopes.push(new Set());
+    run();
+    scopes.pop();
+  }
+
+  function visitEach(nodes: readonly Node[] | undefined): void {
+    for (const node of nodes ?? []) {
+      visit(node);
+    }
+  }
+
+  function visit(node: Node | undefined): void {
+    if (node === undefined) {
+      return;
+    }
+    if (isIdentifier(node)) {
+      if (!isBound(node.text)) {
+        free.add(node.text);
+      }
+      return;
+    }
+    // `right` before `left`, so `local x = x` reads the outer `x` as Lua does.
+    if (isVariableDeclarationStatement(node)) {
+      visitEach(node.right);
+      for (const name of node.left) {
+        declare(name.text);
+      }
+      return;
+    }
+    if (isFunctionExpression(node)) {
+      inScope(() => {
+        for (const param of node.params ?? []) {
+          declare(param.text);
+        }
+        visit(node.body);
+      });
+      return;
+    }
+    if (isForStatement(node)) {
+      visit(node.controlVariableInitializer);
+      visit(node.limitExpression);
+      visit(node.stepExpression);
+      inScope(() => {
+        declare(node.controlVariable.text);
+        visit(node.body);
+      });
+      return;
+    }
+    if (isForInStatement(node)) {
+      visitEach(node.expressions);
+      inScope(() => {
+        for (const name of node.names) {
+          declare(name.text);
+        }
+        visit(node.body);
+      });
+      return;
+    }
+    // `repeat … until` is the one loop whose condition sees the body's locals.
+    if (isRepeatStatement(node)) {
+      inScope(() => {
+        visitEach(node.body.statements);
+        visit(node.condition);
+      });
+      return;
+    }
+    if (isBlock(node) || isDoStatement(node)) {
+      inScope(() => visitEach(node.statements));
+      return;
+    }
+    // A method name is not a variable read; a table index spelled as an
+    // identifier is.
+    if (isMethodCallExpression(node)) {
+      visit(node.prefixExpression);
+      visitEach(node.params);
+      return;
+    }
+    for (const value of Object.values(node)) {
+      if (Array.isArray(value)) {
+        for (const element of value) {
+          if (isLuaNode(element)) {
+            visit(element);
+          }
+        }
+      } else if (isLuaNode(value)) {
+        visit(value);
+      }
+    }
+  }
+
+  for (const statement of statements) {
+    for (const name of declaredNames(statement)) {
+      declare(name);
+    }
+  }
+  for (const statement of statements) {
+    visit(statement);
+  }
+  return free;
 }
 
 /**
@@ -224,15 +348,8 @@ function withResolvedRequire(statement: Statement, paths: ReadonlyMap<string, st
  */
 function copiedPrelude(halves: SplitHalves, importBindings: readonly string[]): Statement[] {
   const needed = new Set(importBindings);
-  for (const statement of halves.companion) {
-    for (const name of identifierNames(statement)) {
-      needed.add(name);
-    }
-  }
-  for (const statement of halves.companion) {
-    for (const name of declaredNames(statement)) {
-      needed.delete(name);
-    }
+  for (const name of freeNames(halves.companion)) {
+    needed.add(name);
   }
 
   const alreadyCarried = new Set(halves.companion);
@@ -248,7 +365,9 @@ function copiedPrelude(halves: SplitHalves, importBindings: readonly string[]): 
         continue;
       }
       copied.add(statement);
-      for (const name of identifierNames(statement)) {
+      // The statement's own free names, so copying `local warm = ____boot.warm`
+      // pulls `____boot` behind it and not `warm`.
+      for (const name of freeNames([statement])) {
         needed.add(name);
       }
       grew = true;
