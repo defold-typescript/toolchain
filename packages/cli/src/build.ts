@@ -18,6 +18,7 @@ import {
   toPosix,
   writeScriptFile,
 } from "./build-output";
+import { throwOnCompanionViolations } from "./companion-violations";
 import { scanOrphanOutputs } from "./orphan-scan";
 import { throwOnUnresolvedRequires } from "./require-resolution";
 import { scanFilesSync } from "./scan";
@@ -111,8 +112,13 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
   const failures = collectFailures(result.diagnostics);
 
   const outputBySource: Record<string, string> = {};
+  const scriptSources: string[] = [];
   for (const rel of sources) {
-    outputBySource[rel] = computeOutputRel(rel, config, detectSourceOutputKind(files[rel] ?? ""));
+    const kind = detectSourceOutputKind(files[rel] ?? "");
+    outputBySource[rel] = computeOutputRel(rel, config, kind);
+    if (kind !== "module") {
+      scriptSources.push(rel);
+    }
   }
 
   // Before the write loop, so a build whose requires cannot resolve leaves no
@@ -127,6 +133,10 @@ export function runBuild(opts: RunBuildOptions): RunBuildResult {
         return outputRel !== undefined && result.lua[rel] !== undefined ? [outputRel] : [];
       }),
     });
+    const preEmitProgram = session.getProgram();
+    if (preEmitProgram) {
+      throwOnCompanionViolations({ program: preEmitProgram, scriptSources });
+    }
   }
 
   const written: string[] = [];

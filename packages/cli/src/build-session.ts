@@ -22,6 +22,7 @@ import {
   toPosix,
   writeScriptFile,
 } from "./build-output";
+import { throwOnCompanionViolations } from "./companion-violations";
 import { scanOrphanOutputs } from "./orphan-scan";
 import { throwOnUnresolvedRequires } from "./require-resolution";
 import { scanFilesSync } from "./scan";
@@ -108,6 +109,19 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     return outputs;
   }
 
+  // Over the whole program rather than the rebuild's event batch, for the same
+  // reason the reachability scan is: an edit to one source can make another's
+  // split unsound, and a narrowed scan would report it as still fine.
+  function scriptKindSources(): string[] {
+    const scripts: string[] = [];
+    for (const [rel, text] of sourceTexts) {
+      if (detectSourceOutputKind(text) !== "module") {
+        scripts.push(rel);
+      }
+    }
+    return scripts;
+  }
+
   // Deliberately over the whole program rather than over the files an
   // incremental rebuild happened to touch: a fragment goes bad when the scenes
   // change as readily as when its own file does, and narrowing the scan would
@@ -159,6 +173,10 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
           result.lua[rel] !== undefined ? [outputRel] : [],
         ),
       });
+      const program = session.getProgram();
+      if (program) {
+        throwOnCompanionViolations({ program, scriptSources: scriptKindSources() });
+      }
     }
     const written: string[] = [];
     for (const rel of keys) {
