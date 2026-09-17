@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type * as ts from "typescript";
+import * as ts from "typescript";
 import {
   COMPANION_INTERNAL_FIELD,
   type CompanionClosure,
@@ -592,5 +592,137 @@ describe("computeCompanionClosure — initialization order", () => {
       ),
     );
     expect(closure.violations).toEqual([]);
+  });
+});
+
+describe("computeCompanionClosure — statement ownership", () => {
+  test("an export declaration travels with the declarations it reads", () => {
+    const closure = closureOf(
+      lines(
+        FACTORY_IMPORT,
+        "",
+        "const value = 1;",
+        "export { value as speed };",
+        "",
+        "defineScript({});",
+      ),
+    );
+    expect(closure.exports).toEqual(["speed"]);
+    expect(closure.statements.filter(ts.isExportDeclaration)).toHaveLength(1);
+    expect(closure.statements.filter(ts.isVariableStatement)).toHaveLength(1);
+  });
+
+  test("a carried sibling the script reads is a member and an internal", () => {
+    const closure = closureOf(
+      lines(
+        FACTORY_IMPORT,
+        "",
+        "const a = 1, b = 2;",
+        "export function f(): number {",
+        "  return a;",
+        "}",
+        "",
+        "defineScript({",
+        "  init() {",
+        "    print(b);",
+        "  },",
+        "});",
+      ),
+    );
+    expect(new Set(closure.members)).toEqual(new Set(["f", "a", "b"]));
+    expect(closure.internals).toEqual(["b"]);
+  });
+
+  test("a carried sibling drags its own dependencies across", () => {
+    const closure = closureOf(
+      lines(
+        FACTORY_IMPORT,
+        "",
+        "const p = 5;",
+        "const a = 1, b = p + 1;",
+        "export function f(): number {",
+        "  return a;",
+        "}",
+        "",
+        "defineScript({",
+        "  init() {",
+        "    print(b);",
+        "  },",
+        "});",
+      ),
+    );
+    expect(new Set(closure.members)).toEqual(new Set(["f", "a", "b", "p"]));
+    expect(closure.internals).toEqual(["b"]);
+  });
+
+  test("a carried sibling reassigned by the script is reported shared-mutable", () => {
+    const closure = closureOf(
+      lines(
+        FACTORY_IMPORT,
+        "",
+        "let a = 1, b = 2;",
+        "export function f(): number {",
+        "  return a;",
+        "}",
+        "",
+        "defineScript({",
+        "  init() {",
+        "    b = b + 1;",
+        "  },",
+        "});",
+      ),
+    );
+    expect(kinds(closure)).toEqual(["shared-mutable"]);
+    expect(members(closure, "shared-mutable")).toEqual(["b"]);
+  });
+
+  test("an import the closure reaches is reported as a binding, not a moved statement", () => {
+    const closure = closureOf(
+      lines(
+        FACTORY_IMPORT,
+        'import { helper } from "./helper";',
+        "",
+        "export const VALUE = helper();",
+        "",
+        "defineScript({});",
+      ),
+    );
+    expect(closure.importBindings).toEqual(["helper"]);
+    expect(closure.statements.filter(ts.isImportDeclaration)).toEqual([]);
+    expect(closure.statements.filter(ts.isVariableStatement)).toHaveLength(1);
+  });
+
+  test("a namespace import the closure reaches is reported the same way", () => {
+    const closure = closureOf(
+      lines(
+        FACTORY_IMPORT,
+        'import * as helpers from "./helper";',
+        "",
+        "export const VALUE = helpers.helper();",
+        "",
+        "defineScript({});",
+      ),
+    );
+    expect(closure.importBindings).toEqual(["helpers"]);
+    expect(closure.statements.filter(ts.isImportDeclaration)).toEqual([]);
+  });
+
+  test("an import no closure member reaches is reported in neither", () => {
+    const closure = closureOf(
+      lines(
+        FACTORY_IMPORT,
+        'import { helper } from "./helper";',
+        "",
+        "export const VALUE = 1;",
+        "",
+        "defineScript({",
+        "  init() {",
+        "    helper();",
+        "  },",
+        "});",
+      ),
+    );
+    expect(closure.importBindings).toEqual([]);
+    expect(closure.statements.filter(ts.isImportDeclaration)).toEqual([]);
   });
 });
