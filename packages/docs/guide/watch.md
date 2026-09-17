@@ -114,9 +114,12 @@ bunx @defold-typescript/cli watch --hot-reload
 
 Four things are worth knowing about how it behaves:
 
-- **A failed build reloads nothing.** A compile error leaves the running game on
-  the last code that actually built, rather than pushing the previous emit's Lua
-  and making the change look like it did nothing.
+- **A failed build reloads nothing, and stops nothing.** A compile error — a type
+  error, an unreachable `require`, an unsplittable script, a contested output
+  path — is printed and the loop keeps watching, so fixing the file rebuilds it;
+  only a setup failure such as an unreadable `tsconfig.json` ends the run. The
+  running game stays on the last code that actually built, rather than being
+  pushed the previous emit's Lua and making the change look like it did nothing.
 - **The editor may come and go.** The port is re-read on every reload, and while
   no editor is attached `watch` looks for one about once a second, so an editor
   opened at any time after the loop started is attached without a save. One that quits is reported once and leaves the loop rebuilding until it

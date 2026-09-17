@@ -3083,9 +3083,12 @@ bunx @defold-typescript/cli watch --hot-reload
 
 Four things are worth knowing about how it behaves:
 
-- **A failed build reloads nothing.** A compile error leaves the running game on
-  the last code that actually built, rather than pushing the previous emit's Lua
-  and making the change look like it did nothing.
+- **A failed build reloads nothing, and stops nothing.** A compile error — a type
+  error, an unreachable `require`, an unsplittable script, a contested output
+  path — is printed and the loop keeps watching, so fixing the file rebuilds it;
+  only a setup failure such as an unreadable `tsconfig.json` ends the run. The
+  running game stays on the last code that actually built, rather than being
+  pushed the previous emit's Lua and making the change look like it did nothing.
 - **The editor may come and go.** The port is re-read on every reload, and while
   no editor is attached `watch` looks for one about once a second, so an editor
   opened at any time after the loop started is attached without a save. One that quits is reported once and leaves the loop rebuilding until it
@@ -3313,8 +3316,10 @@ the exports it carries — so a companion never overwrites a `.lua` file you wro
 yourself, and two sources collapsing onto one rel under a shared `outDir` is an
 error rather than whichever one happened to be written last. A rebuild under
 [`watch`](./watch.md) claims on behalf of the whole project, not just the files it
-recompiled, so editing one source into another's output path fails the rebuild
-instead of quietly replacing a module nothing touched.
+recompiled, so editing one source into another's output path is reported and the
+rebuild rejected, instead of quietly replacing a module nothing touched. The
+existing file stays as it is, and the watch [keeps running](./watch.md#hot-reload),
+picking the fix up on the next save.
 
 The two runtime artifacts the build writes for itself — `lualib_bundle.lua` and
 `defold_typescript_timers.lua`, both at the output root — are inside the same
