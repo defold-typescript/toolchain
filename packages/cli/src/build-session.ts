@@ -22,8 +22,9 @@ import {
   toPosix,
   writeScriptFile,
 } from "./build-output";
-import { throwOnCompanionViolations } from "./companion-violations";
+import { findCompanionExports, throwOnCompanionViolations } from "./companion-violations";
 import { scanOrphanOutputs } from "./orphan-scan";
+import { companionClaimant, companionOutputRels, createOutputClaimRegistry } from "./output-claims";
 import { throwOnUnresolvedRequires } from "./require-resolution";
 import { scanFilesSync } from "./scan";
 import { scanSceneResourceRefs } from "./scene-resource-scan";
@@ -153,8 +154,8 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     return scanCrossWorldAddresses({ program, worldsOf, table: loadUrlParameterTable() });
   }
 
-  function pruneOutputs(rel: string, keepRel?: string): void {
-    pruneAlternativeOutputs(cwd, rel, config, keepRel);
+  function pruneOutputs(rel: string, keep: readonly string[] = []): void {
+    pruneAlternativeOutputs(cwd, rel, config, keep);
   }
 
   function writeOutputs(
@@ -164,32 +165,61 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
     pruneAlternatives = false,
   ): BuildResult {
     const failures = collectFailures(result.diagnostics);
+    const companionBySource = companionOutputRels(result, config);
+    const scriptSources = scriptKindSources();
     if (failures.size === 0) {
+      // Violations first, for the reason `runBuild` runs them first: an
+      // unsplittable source emits no companion, and its importer's unresolvable
+      // require is the symptom rather than the diagnosis.
+      const program = session.getProgram();
+      if (program) {
+        throwOnCompanionViolations({ program, scriptSources });
+      }
       const outputs = plannedOutputBySource();
       throwOnUnresolvedRequires({
         lua: result.lua,
         sources: outputs,
-        plannedOutputs: Object.entries(outputs).flatMap(([rel, outputRel]) =>
-          result.lua[rel] !== undefined ? [outputRel] : [],
-        ),
+        plannedOutputs: Object.entries(outputs).flatMap(([rel, outputRel]) => {
+          if (result.lua[rel] === undefined) {
+            return [];
+          }
+          const companionRel = companionBySource[rel];
+          return companionRel === undefined ? [outputRel] : [outputRel, companionRel];
+        }),
       });
-      const program = session.getProgram();
-      if (program) {
-        throwOnCompanionViolations({ program, scriptSources: scriptKindSources() });
+    }
+
+    // Claimed before anything is written, for the reason `runBuild` claims
+    // first: a contested path must fail with its own file byte-unchanged.
+    const writable = keys.filter((rel) => !failures.has(rel) && result.lua[rel] !== undefined);
+    const claims = createOutputClaimRegistry(cwd);
+    const claimProgram = session.getProgram();
+    const exportsBySource = claimProgram
+      ? findCompanionExports({ program: claimProgram, scriptSources })
+      : new Map<string, readonly string[]>();
+    const outputRelBySource = new Map<string, string>();
+    for (const rel of writable) {
+      const outputRel = computeOutputRel(rel, config, detectSourceOutputKind(sources[rel] ?? ""));
+      outputRelBySource.set(rel, outputRel);
+      claims.claim(outputRel, { source: rel });
+      const companionRel = companionBySource[rel];
+      if (companionRel !== undefined) {
+        claims.claim(companionRel, companionClaimant(rel, result, exportsBySource));
       }
     }
+    claims.throwOnCollisions();
+
     const written: string[] = [];
-    for (const rel of keys) {
-      if (failures.has(rel)) {
-        continue;
-      }
+    for (const rel of writable) {
       const lua = result.lua[rel];
-      if (lua === undefined) {
+      const outputRel = outputRelBySource.get(rel);
+      if (lua === undefined || outputRel === undefined) {
         continue;
       }
-      const outputRel = computeOutputRel(rel, config, detectSourceOutputKind(sources[rel] ?? ""));
+      const companionRel = companionBySource[rel];
+      const companion = result.companions?.[rel];
       if (pruneAlternatives) {
-        pruneOutputs(rel, outputRel);
+        pruneOutputs(rel, companionRel === undefined ? [outputRel] : [outputRel, companionRel]);
       }
       writeScriptFile(
         cwd,
@@ -198,6 +228,10 @@ export function createBuildSession(opts: CreateBuildSessionOptions): BuildSessio
         retargetSourceRoot(result.sourceMaps[rel], outputRel, rel),
       );
       written.push(outputRel);
+      if (companionRel !== undefined && companion !== undefined) {
+        writeScriptFile(cwd, companionRel, companion, undefined);
+        written.push(companionRel);
+      }
     }
     if (result.lualib !== undefined) {
       const bundleRel = lualibBundleRel(config);

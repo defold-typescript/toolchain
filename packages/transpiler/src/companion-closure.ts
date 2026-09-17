@@ -37,6 +37,12 @@ export interface CompanionClosure {
   readonly exports: readonly string[];
   /** Members outside `exports` the script still references, in source order. */
   readonly internals: readonly string[];
+  /**
+   * The top-level statements carrying those members, in source order. A
+   * statement, not a name, is what the emit actually moves: one `const a = 1, b
+   * = 2;` is two members and one unit of code.
+   */
+  readonly statements: readonly ts.Statement[];
   /** Shapes a split cannot preserve. Empty means the source is splittable. */
   readonly violations: readonly ClosureViolation[];
 }
@@ -684,6 +690,7 @@ export function computeCompanionClosure(
   return {
     members: ordered.map(({ declaration }) => declaration.name),
     exports: exportEntries.map((entry) => entry.name),
+    statements: sourceFile.statements.filter((statement) => closureStatements.has(statement)),
     internals: ordered
       .filter(({ symbol }) => !exportSet.has(symbol) && scriptReferences.has(symbol))
       .map(({ declaration }) => declaration.name),

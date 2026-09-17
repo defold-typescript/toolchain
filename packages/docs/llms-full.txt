@@ -2180,6 +2180,33 @@ import { register, spawnedCount } from "./registry";
 
 `import { register } from "./registry"` lowers to a `require` that Defold caches once, so `spawner.ts` and `hud.ts` read and write the **same** `spawned`/`names` values. This is the idiomatic pattern for game-wide tracking — prefer it over raw globals: a module singleton is scoped, typed, and explicit about who depends on it.
 
+##### Exporting a value from a script itself
+
+A script does not have to hand its shared values to a separate module. A source that calls `defineScript` (or `defineGuiScript`/`defineRenderScript`) **and** exports runtime values builds into two files: the component resource the editor loads, and a companion Lua module beside it holding those exports.
+
+```ts
+// game/doors/door.ts — one source, two outputs.
+import { defineScript } from "@defold-typescript/types";
+
+export const DOOR_SPEED = 3;
+export const state = { open: false };
+
+export default defineScript({
+  init() {
+    state.open = true;
+  },
+});
+```
+
+`build` writes `game/doors/door.ts.script` and `game/doors/door.lua`. The component requires the companion rather than redeclaring its exports, so `state` is **one table**: the door's own `init` and any `import { state } from "./doors/door"` elsewhere read and write the same object. Values only the script uses stay in the script.
+
+The companion takes the whole dependency closure of the exports — a private helper an exported function calls moves with it. That is why the two shapes below are rejected: they are the cases where "one definition" and "runs in the script" cannot both hold.
+
+Two limits are worth knowing before you lean on this:
+
+- **A configured `outDir` is not supported with companions.** The companion lands under the `outDir` while the emitted `require` still names the source tree, so the build fails with the unresolvable-require error rather than shipping a module nothing can load.
+- **A dot in the source name is not supported either.** `foo.bar.ts` compiles to `foo.bar.lua` while every `require` of it says `foo_bar` — rename the source.
+
 ##### When the build sends you here
 
 `build` and `watch` reject a script whose exported values cannot be told apart from its lifecycle hooks. The clearest case is a private binding an exported function reassigns while a hook also reads it:
@@ -2201,7 +2228,7 @@ export default defineScript({
 });
 ```
 
-The error names `count` and both lines that reach it. Move `count` and `increment` into a module of their own — the singleton above — and import them from the script: the state then has one home, and every reader sees the same value. What counts is the rebinding, not how it is spelled: `count = 1`, `[count] = [1]`, `({ count } = …)` and `for (count of …)` are one shape. Writing through a binding — `state.ready = true` — is not, because both sides hold the same table.
+The error names `count` and both lines that reach it. A companion cannot carry this: `count` would live in the module while the hook read a copy, so the script would never see `increment`'s update. Move `count` and `increment` into a module of their own — the singleton above — and import them from the script. What counts is the rebinding, not how it is spelled: `count = 1`, `[count] = [1]`, `({ count } = …)` and `for (count of …)` are one shape. Writing through a binding — `state.ready = true` — is not, because both sides hold the same table, which is exactly why an exported object is safe to share.
 
 The other rejected shape is an effectful top-level statement — a call rather than a literal — with any exported declaration, or anything one of them reaches, below it. Move it below them all, or into `init`.
 
@@ -3243,32 +3270,48 @@ bunx @defold-typescript/cli build
 
 #### What it does
 
-Each source becomes exactly one output. A file with an
-`export default defineScript({...})` (or `defineGuiScript`/`defineRenderScript`)
-lifecycle factory becomes a Defold script component
-(`src/main.ts` -> `src/main.ts.script`); a plain module with no factory becomes a
-Lua module (`src/util.ts` -> `src/util.lua`) — a generated artifact you never edit
-or reference by hand, only ever the `src/util.ts` you author. Your `import`
-becomes a Lua `require` that resolves against that emitted module, so a shared
-module must be built before the script importing it will run. Open the project in
-the [Defold editor](./defold-editor.md) (or run it headlessly, below) to play it.
+A file with an `export default defineScript({...})` (or
+`defineGuiScript`/`defineRenderScript`) lifecycle factory becomes a Defold script
+component (`src/main.ts` -> `src/main.ts.script`); a plain module with no factory
+becomes a Lua module (`src/util.ts` -> `src/util.lua`) — a generated artifact you
+never edit or reference by hand, only ever the `src/util.ts` you author. Your
+`import` becomes a Lua `require` that resolves against that emitted module, so a
+shared module must be built before the script importing it will run. Open the
+project in the [Defold editor](./defold-editor.md) (or run it headlessly, below)
+to play it.
 
-A **value** imported across sources must therefore come from a source with no
-lifecycle factory. A script component is a resource addressed by path from a
-`.go` file, never a module on Defold's `require` path, so a `require` aimed at
-one resolves to nothing at runtime. **Types** cross freely in either direction —
-a type-only import is erased and emits no `require` at all. The build checks
-every `require` it emits against the outputs it is about to write and fails with
-the offending file, the require path, and the source it names, so an import that
-cannot resolve is a build error rather than a load failure inside the editor. The
-same check catches a cross-file import under a configured `outDir`, where the
-emitted `require` still points at the source tree. It also catches a source whose
-name contains a dot: `src/foo.bar.ts` is written to `src/foo.bar.lua` with the dot
-intact, while Lua reads a dot as a path separator, so the emitted
-`require("src.foo_bar")` looks for `src/foo_bar.lua` and finds nothing — rename the
-source to remove the dot. A `require` with no TypeScript source behind it — a Lua module from a Defold library dependency, the
-`lldebugger.debug` module the [debugging guide](./debugging.md) sets up,
-hand-authored Lua — is external and is left alone.
+A script component is a resource addressed by path from a `.go` file, never a
+module on Defold's `require` path, so a `require` aimed at one resolves to nothing
+at runtime. A script that also **exports runtime values** therefore builds into
+two outputs: the component, and a companion Lua module at the module-kind path
+(`src/door.ts` -> `src/door.ts.script` *and* `src/door.lua`) holding those exports
+and everything they reach. The component requires the companion instead of
+redeclaring it, so an exported object is one table for the script and for every
+importer — see [script state](./script-state.md#exporting-a-value-from-a-script-itself).
+Two shapes cannot be split that way and are build errors instead: a binding the
+exports reassign while a lifecycle hook also reads it, and effectful top-level
+work above an exported declaration. **Types** cross freely in either direction — a
+type-only import is erased and emits no `require` at all.
+
+The build checks every `require` it emits against the outputs it is about to write
+and fails with the offending file, the require path, and the source it names, so
+an import that cannot resolve is a build error rather than a load failure inside
+the editor. That is what catches the two arrangements a companion cannot serve. A
+configured `outDir` re-roots the output while the emitted `require` still points at
+the source tree, so companions are not supported under one. A source whose name
+contains a dot is written to `src/foo.bar.lua` with the dot intact, while Lua reads
+a dot as a path separator, so the emitted `require("src.foo_bar")` looks for
+`src/foo_bar.lua` and finds nothing — rename the source to remove the dot. A
+`require` with no TypeScript source behind it — a Lua module from a Defold library
+dependency, the `lldebugger.debug` module the [debugging guide](./debugging.md)
+sets up, hand-authored Lua — is external and is left alone.
+
+No two sources may write the same output path, and no generated file may land on
+hand-authored Lua. The build claims every path it is about to write and fails
+before touching anything when one is contested — naming the path, the source, and
+the exports it carries — so a companion never overwrites a `.lua` file you wrote
+yourself, and two sources collapsing onto one rel under a shared `outDir` is an
+error rather than whichever one happened to be written last.
 
 If a Defold editor is open on this project, `build` names it on stderr
 (`attached to Defold editor at http://localhost:<port>`) and moves on. It is a
@@ -3287,7 +3330,11 @@ against it.
 Because the output kind is the factory a source calls, adding or removing a
 factory switches the artifact (`src/main.lua` becomes `src/main.ts.script`, or the
 reverse). `build` and [`watch`](./watch.md) prune the stale alternative for you, so
-a kind switch never leaves the previous output behind. Every generated file
+a kind switch never leaves the previous output behind. A script's companion is a
+live output, not a stale alternative: it survives the prune while the source still
+exports a value, and is deleted on the build after the last one goes. Adding a
+factory to a module that other sources import keeps its `.lua` at the same path,
+so every `require` that names it keeps resolving across the switch. Every generated file
 carries a trailing `--# defold-typescript:generated` marker; on a full build the
 tool **warns, never deletes** about any marked `.lua` or `.ts.*` output whose
 TypeScript source no longer exists, so a deleted or renamed source's orphaned Lua
