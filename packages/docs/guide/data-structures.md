@@ -95,6 +95,8 @@ return ____exports
 
 `LuaSet.add` becomes `t[v] = true`, `LuaMap.set`/`get` become plain `t[k] = v` / `t[k]`, and nothing pulls `lualib_bundle`. The trade is a deliberately thin surface: `get`/`set`/`has`/`delete` (plus `add` on the set), and that is all — no `.size`, no `for...of`, no insertion order. Reach for the standard `Map`/`Set` when you need to enumerate or count; reach for `LuaMap`/`LuaSet` when you only get, set, and test membership and want zero runtime overhead.
 
+Overhead is not the only way you meet `LuaMap`. Engine calls that take a table keyed by *constants* — `render.clear` is the worked example — declare that slot `LuaMap<render.ClearBufferKey, number | Vector4>`, because `LuaMap` checks the key as a `set` argument and so enforces which [enum constants](./typescript-gotchas.md#enum-constants-are-branded-numbers--a-bare-number-wont-do) may be used. A plain object type keyed by the same union does not: a computed branded key slips past excess-property checking, so a constant from another family is accepted silently — and the object is still not a `LuaMap`, so it cannot be passed either way. There the `LuaMap` is forced rather than chosen; [Lua table constructs](./lua-table-constructs.md) has the two spellings that work.
+
 Use them as **ambient globals — do not import them.** `import { LuaMap } from "@typescript-to-lua/language-extensions"` is rejected (`… is not a module`) and silently falls back to the heavyweight `lualib` `Map`; written bare, `LuaMap`/`LuaSet`/`LuaTable` are part of the global type surface like the engine namespaces. (The Lua standard library itself — typed by `lua-types` — adds no container types beyond the universal `table`; these extension types are the typed way to use that raw table directly.)
 
 ## Not available — reach for instead
@@ -111,5 +113,6 @@ Regex is the one that bites most often. `"x".match(/b/)` type-checks but fails t
 ## See also
 
 - [TypeScript vs Lua](./typescript-vs-lua.md#tables-vs-objects-arrays-and-maps) — the container translation cheat sheet this page deepens.
+- [Lua table constructs](./lua-table-constructs.md) — the narrower case: writing a table the engine reads by constant key.
 - [Where script state lives](./script-state.md) — where to *put* these containers: per-instance `self`, a shared module local, or a module singleton.
 - [TypeScript gotchas](./typescript-gotchas.md) — the runtime sharp edges (truthiness, `nil` collapse) that bite once the data is in a container.
