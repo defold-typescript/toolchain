@@ -179,6 +179,37 @@ describe("computeCompanionClosure — the closure", () => {
     expect(closure.violations).toEqual([]);
   });
 
+  test("an export alias is the public name; the closure stays keyed on the local symbol", () => {
+    const closure = closureOf(
+      lines(
+        FACTORY_IMPORT,
+        "",
+        "const value = 1;",
+        "export { value as speed };",
+        "",
+        "defineScript({});",
+      ),
+    );
+    expect(closure.exports).toEqual(["speed"]);
+    expect(closure.members).toEqual(["value"]);
+    expect(closure.violations).toEqual([]);
+  });
+
+  test("repeated aliases of one binding are each an export", () => {
+    const closure = closureOf(
+      lines(
+        FACTORY_IMPORT,
+        "",
+        "const value = 1;",
+        "export { value as a, value as b };",
+        "",
+        "defineScript({});",
+      ),
+    );
+    expect(closure.exports).toEqual(["a", "b"]);
+    expect(closure.members).toEqual(["value"]);
+  });
+
   test("a private closure member the script reads is recorded in internals", () => {
     const closure = closureOf(
       lines(
@@ -336,6 +367,143 @@ describe("computeCompanionClosure — shared mutable state", () => {
     expect(kinds(closure)).toEqual(["reserved-internal-name"]);
     expect(members(closure, "reserved-internal-name")).toEqual([COMPANION_INTERNAL_FIELD]);
   });
+
+  test("reaching the reserved internal field through an export alias is reported", () => {
+    const closure = closureOf(
+      lines(
+        FACTORY_IMPORT,
+        "",
+        "const value = 1;",
+        `export { value as ${COMPANION_INTERNAL_FIELD} };`,
+        "",
+        "defineScript({});",
+      ),
+    );
+    expect(kinds(closure)).toEqual(["reserved-internal-name"]);
+    expect(members(closure, "reserved-internal-name")).toEqual([COMPANION_INTERNAL_FIELD]);
+  });
+
+  test("array destructuring across the boundary is reported", () => {
+    const closure = closureOf(
+      lines(
+        FACTORY_IMPORT,
+        "",
+        "let count = 0;",
+        "export function increment() {",
+        "  [count] = [1];",
+        "}",
+        "",
+        "defineScript({",
+        "  update() {",
+        "    increment();",
+        "    print(count);",
+        "  },",
+        "});",
+      ),
+    );
+    expect(kinds(closure)).toEqual(["shared-mutable"]);
+    expect(members(closure, "shared-mutable")).toEqual(["count"]);
+  });
+
+  test("object destructuring across the boundary is reported", () => {
+    const closure = closureOf(
+      lines(
+        FACTORY_IMPORT,
+        "",
+        "let count = 0;",
+        "export function increment() {",
+        "  ({ count } = { count: 1 });",
+        "}",
+        "",
+        "defineScript({",
+        "  update() {",
+        "    increment();",
+        "    print(count);",
+        "  },",
+        "});",
+      ),
+    );
+    expect(kinds(closure)).toEqual(["shared-mutable"]);
+    expect(members(closure, "shared-mutable")).toEqual(["count"]);
+  });
+
+  test("a for…of loop target across the boundary is reported", () => {
+    const closure = closureOf(
+      lines(
+        FACTORY_IMPORT,
+        "",
+        "let count = 0;",
+        "export function increment() {",
+        "  for (count of [1, 2]) {}",
+        "}",
+        "",
+        "defineScript({",
+        "  update() {",
+        "    increment();",
+        "    print(count);",
+        "  },",
+        "});",
+      ),
+    );
+    expect(kinds(closure)).toEqual(["shared-mutable"]);
+    expect(members(closure, "shared-mutable")).toEqual(["count"]);
+  });
+
+  test("a for…in loop target across the boundary is reported", () => {
+    const closure = closureOf(
+      lines(
+        FACTORY_IMPORT,
+        "",
+        'let key = "";',
+        "export function scan(table: Record<string, number>) {",
+        "  for (key in table) {}",
+        "}",
+        "",
+        "defineScript({",
+        "  update() {",
+        "    scan({});",
+        "    print(key);",
+        "  },",
+        "});",
+      ),
+    );
+    expect(kinds(closure)).toEqual(["shared-mutable"]);
+    expect(members(closure, "shared-mutable")).toEqual(["key"]);
+  });
+
+  test("a destructuring target the script never reads is not reported", () => {
+    const closure = closureOf(
+      lines(
+        FACTORY_IMPORT,
+        "",
+        "let count = 0;",
+        "export function increment() {",
+        "  [count] = [1];",
+        "}",
+        "",
+        "defineScript({",
+        "  update() {",
+        "    increment();",
+        "  },",
+        "});",
+      ),
+    );
+    expect(closure.violations).toEqual([]);
+  });
+
+  test("a shorthand property read drags its binding into the closure", () => {
+    const closure = closureOf(
+      lines(
+        FACTORY_IMPORT,
+        "",
+        "const count = 0;",
+        "export const o = { count };",
+        "",
+        "defineScript({});",
+      ),
+    );
+    expect(new Set(closure.members)).toEqual(new Set(["o", "count"]));
+  });
 });
 
 describe("computeCompanionClosure — initialization order", () => {
@@ -354,6 +522,39 @@ describe("computeCompanionClosure — initialization order", () => {
     const [violation] = closure.violations;
     expect(violation?.member).toBe("second");
     expect(violation?.sites.map((site) => site.line)).toEqual([3, 4]);
+  });
+
+  test("an effect interleaved between two closure members is reported", () => {
+    const closure = closureOf(
+      lines(
+        FACTORY_IMPORT,
+        "",
+        "const BASE = 10;",
+        'register("first");',
+        "export const second = BASE * 2;",
+        "",
+        "defineScript({});",
+      ),
+    );
+    expect(kinds(closure)).toEqual(["initialization-order"]);
+    const [violation] = closure.violations;
+    expect(violation?.member).toBe("second");
+    expect(violation?.sites.map((site) => site.line)).toEqual([4, 5]);
+  });
+
+  test("the same effect written below the closure is not reported", () => {
+    const closure = closureOf(
+      lines(
+        FACTORY_IMPORT,
+        "",
+        "const BASE = 10;",
+        "export const second = BASE * 2;",
+        'register("first");',
+        "",
+        "defineScript({});",
+      ),
+    );
+    expect(closure.violations).toEqual([]);
   });
 
   test("an effect-free top-level statement before a closure member is not reported", () => {
