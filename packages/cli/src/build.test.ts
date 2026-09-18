@@ -1293,7 +1293,14 @@ describe("runBuild (require resolution)", () => {
 
     expect(thrown).toBeInstanceOf(BuildFailureError);
     const entries = (thrown as BuildFailureError).entries;
-    const joined = entries.map((entry) => `${entry.file}: ${entry.message}`).join("\n");
+    // This collision is reported by TSTL's own `emitPathCollision` diagnostic,
+    // which embeds paths with the host separator — unlike our own messages,
+    // which are always `/`. Normalize so the assertion reads the same on
+    // Windows as it does on Linux and macOS.
+    const joined = entries
+      .map((entry) => `${entry.file}: ${entry.message}`)
+      .join("\n")
+      .replaceAll("\\", "/");
     expect(joined).toContain("src/foo.bar.ts");
     expect(joined).toContain("src/foo_bar.ts");
     expect(joined).toContain("src/foo_bar.lua");

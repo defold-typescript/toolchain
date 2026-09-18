@@ -212,6 +212,22 @@ export interface ExampleUnit {
 const UNITS_ROOT = resolve(PACKAGE_ROOT, ".example-gate", "units");
 
 /**
+ * Turn a host-native relative path into a module specifier. A specifier is
+ * always `/`-separated, and this one is emitted into a TypeScript string
+ * literal where `\` is an escape — so on Windows the native `relative` result
+ * `..\..\generated\kinds\gui-script` would reach the compiler as the
+ * unresolvable `....generatedkindsgui-script`. Splitting on both separators
+ * rather than on `sep` keeps the rule checkable from any host.
+ */
+export function moduleSpecifier(relativePath: string): string {
+  const specifier = relativePath
+    .split(/[\\/]/)
+    .join("/")
+    .replace(/\.d\.ts$/, "");
+  return specifier.startsWith(".") ? specifier : `./${specifier}`;
+}
+
+/**
  * The import a unit needs to see its surface the way a consumer does. A kind
  * subpath *exports* its factory rather than declaring it ambiently, so a user
  * writing a script imports `defineScript` from `@defold-typescript/types/script`
@@ -222,8 +238,7 @@ const UNITS_ROOT = resolve(PACKAGE_ROOT, ".example-gate", "units");
 export function surfacePrelude(surface: ExampleSurface, unitDir: string): string {
   const { values, types } = surface.exports;
   if (values.length === 0 && types.length === 0) return "";
-  let specifier = relative(unitDir, surface.entry).replace(/\.d\.ts$/, "");
-  if (!specifier.startsWith(".")) specifier = `./${specifier}`;
+  const specifier = moduleSpecifier(relative(unitDir, surface.entry));
   const lines: string[] = [];
   if (values.length > 0) lines.push(`import { ${values.join(", ")} } from "${specifier}";`);
   if (types.length > 0) lines.push(`import type { ${types.join(", ")} } from "${specifier}";`);
