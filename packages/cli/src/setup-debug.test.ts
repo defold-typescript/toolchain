@@ -794,6 +794,142 @@ describe("runSetupDebug target selection is include-bound", () => {
       rmSync(cwd, { recursive: true, force: true });
     }
   });
+
+  test("a boot component no configured source builds fails instead of picking a decoy", async () => {
+    const cwd = tempProject();
+    try {
+      writeBootCollection(cwd, [{ id: "logic", component: "/build/lua/excluded.ts.script" }]);
+      writeTsconfig(cwd, { include: ["game/**/*.ts"], outDir: "build/lua" });
+      writeSource(cwd, "tools/excluded.ts", FACTORY_SCRIPT);
+      writeSource(cwd, "game/decoy.ts", FACTORY_SCRIPT);
+      const beforeExcluded = readFileSync(path.join(cwd, "tools", "excluded.ts"), "utf8");
+      const beforeDecoy = readFileSync(path.join(cwd, "game", "decoy.ts"), "utf8");
+      const beforeProject = readFileSync(path.join(cwd, "game.project"), "utf8");
+      const result = await runSetupDebug({ cwd });
+      expect(result.ok).toBe(false);
+      expect(result.addedTo).toBeUndefined();
+      expect(result.error).toContain("/build/lua/excluded.ts.script");
+      expect(result.error).toContain("game/**/*.ts");
+      expect(readFileSync(path.join(cwd, "tools", "excluded.ts"), "utf8")).toBe(beforeExcluded);
+      expect(readFileSync(path.join(cwd, "game", "decoy.ts"), "utf8")).toBe(beforeDecoy);
+      expect(readFileSync(path.join(cwd, "game.project"), "utf8")).toBe(beforeProject);
+      expect(existsSync(path.join(cwd, "game", "lldebugger.debug.d.ts"))).toBe(false);
+      expect(existsSync(path.join(cwd, AMBIENT_DTS_REL))).toBe(false);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("a boot component whose source is absent entirely fails the same way", async () => {
+    const cwd = tempProject();
+    try {
+      writeBootCollection(cwd, [{ id: "logic", component: "/build/lua/gone.ts.script" }]);
+      writeTsconfig(cwd, { include: ["game/**/*.ts"], outDir: "build/lua" });
+      writeSource(cwd, "game/decoy.ts", FACTORY_SCRIPT);
+      const beforeDecoy = readFileSync(path.join(cwd, "game", "decoy.ts"), "utf8");
+      const beforeProject = readFileSync(path.join(cwd, "game.project"), "utf8");
+      const result = await runSetupDebug({ cwd });
+      expect(result.ok).toBe(false);
+      expect(result.addedTo).toBeUndefined();
+      expect(result.error).toContain("/build/lua/gone.ts.script");
+      expect(result.error).toContain("game/**/*.ts");
+      expect(readFileSync(path.join(cwd, "game", "decoy.ts"), "utf8")).toBe(beforeDecoy);
+      expect(readFileSync(path.join(cwd, "game.project"), "utf8")).toBe(beforeProject);
+      expect(existsSync(path.join(cwd, "game", "lldebugger.debug.d.ts"))).toBe(false);
+      expect(existsSync(path.join(cwd, AMBIENT_DTS_REL))).toBe(false);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("a boot component whose source makes no factory call still resolves by identity", async () => {
+    const cwd = tempProject();
+    try {
+      writeBootCollection(cwd, [{ id: "plain", component: "/game/plain.ts.script" }]);
+      writeTsconfig(cwd, { include: ["game/**/*.ts"] });
+      writeSource(cwd, "game/plain.ts", "export function tick(): void {}\n");
+      const result = await runSetupDebug({
+        cwd,
+        chooseScript: async () => {
+          throw new Error("chooser must not run for a single boot-path candidate");
+        },
+      });
+      expect(result.ok).toBe(true);
+      expect(result.addedTo).toBe("game/plain.ts");
+      expect(result.bootPath?.[result.bootPath.length - 1]).toBe("/game/plain.ts.script");
+      expect(readFileSync(path.join(cwd, "game", "plain.ts"), "utf8")).toContain(BLOCK_BEGIN);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("--script still wins and keeps its trace beside an unresolvable sibling component", async () => {
+    const cwd = tempProject();
+    try {
+      writeBootCollection(cwd, [
+        { id: "player", component: "/build/lua/excluded.ts.script" },
+        { id: "hud", component: "/game/hud.ts.script" },
+      ]);
+      writeTsconfig(cwd, { include: ["game/**/*.ts"] });
+      writeSource(cwd, "game/hud.ts", FACTORY_SCRIPT);
+      const result = await runSetupDebug({ cwd, script: "game/hud.ts" });
+      expect(result.ok).toBe(true);
+      expect(result.addedTo).toBe("game/hud.ts");
+      expect(result.bootPath).toEqual([
+        "game.project",
+        "main.collection",
+        "hud",
+        "/game/hud.ts.script",
+      ]);
+      expect(readFileSync(path.join(cwd, "game", "hud.ts"), "utf8")).toContain(BLOCK_BEGIN);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("--script naming a declaration file a broad include matches is refused", async () => {
+    const cwd = tempProject();
+    try {
+      writeFileSync(path.join(cwd, "game.project"), "[project]\ntitle = demo\n");
+      writeTsconfig(cwd, { include: ["**/*.ts"] });
+      writeSource(cwd, "src/types.d.ts", "export type Health = number;\n");
+      writeSource(cwd, "src/main.ts", FACTORY_SCRIPT);
+      const before = readFileSync(path.join(cwd, "src", "types.d.ts"), "utf8");
+      const beforeProject = readFileSync(path.join(cwd, "game.project"), "utf8");
+      const result = await runSetupDebug({ cwd, script: "src/types.d.ts" });
+      expect(result.ok).toBe(false);
+      expect(result.error).toContain("src/types.d.ts");
+      expect(result.error).toContain("declaration file");
+      expect(readFileSync(path.join(cwd, "src", "types.d.ts"), "utf8")).toBe(before);
+      expect(readFileSync(path.join(cwd, "game.project"), "utf8")).toBe(beforeProject);
+      expect(existsSync(path.join(cwd, "src", "lldebugger.debug.d.ts"))).toBe(false);
+      expect(existsSync(path.join(cwd, AMBIENT_DTS_REL))).toBe(false);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("--script naming a generated-tree file a broad include matches is refused", async () => {
+    const cwd = tempProject();
+    try {
+      writeFileSync(path.join(cwd, "game.project"), "[project]\ntitle = demo\n");
+      writeTsconfig(cwd, { include: ["**/*.ts"] });
+      writeSource(cwd, "build/gen/thing.ts", FACTORY_SCRIPT);
+      writeSource(cwd, "src/main.ts", FACTORY_SCRIPT);
+      const before = readFileSync(path.join(cwd, "build", "gen", "thing.ts"), "utf8");
+      const beforeProject = readFileSync(path.join(cwd, "game.project"), "utf8");
+      const result = await runSetupDebug({ cwd, script: "build/gen/thing.ts" });
+      expect(result.ok).toBe(false);
+      expect(result.error).toContain("build/gen/thing.ts");
+      expect(result.error).toContain("generated or dependency tree");
+      expect(readFileSync(path.join(cwd, "build", "gen", "thing.ts"), "utf8")).toBe(before);
+      expect(readFileSync(path.join(cwd, "game.project"), "utf8")).toBe(beforeProject);
+      expect(existsSync(path.join(cwd, "build", "gen", "lldebugger.debug.d.ts"))).toBe(false);
+      expect(existsSync(path.join(cwd, AMBIENT_DTS_REL))).toBe(false);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
 });
 
 // The regression teeth for Bug 08: the wired project must type-check clean.
