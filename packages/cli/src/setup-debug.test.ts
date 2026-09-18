@@ -237,7 +237,134 @@ describe("findEntryScriptCandidates", () => {
     try {
       mkdirSync(path.join(cwd, "src"), { recursive: true });
       writeFileSync(path.join(cwd, "src", "player.ts"), FACTORY_SCRIPT);
-      expect(findEntryScriptCandidates(cwd, () => ["src\\player.ts"])).toEqual(["src/player.ts"]);
+      expect(findEntryScriptCandidates(cwd, undefined, () => ["src\\player.ts"])).toEqual([
+        "src/player.ts",
+      ]);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+});
+
+const GUI_SCRIPT = `import { defineGuiScript } from "@defold-typescript/types";
+export default defineGuiScript({});
+`;
+
+function writeTsconfig(cwd: string, config: { include?: string[]; outDir?: string }): void {
+  writeFileSync(
+    path.join(cwd, "tsconfig.json"),
+    JSON.stringify({
+      ...(config.outDir === undefined ? {} : { compilerOptions: { outDir: config.outDir } }),
+      ...(config.include === undefined ? {} : { include: config.include }),
+    }),
+  );
+}
+
+function writeSource(cwd: string, rel: string, text: string): void {
+  const abs = path.join(cwd, rel);
+  mkdirSync(path.dirname(abs), { recursive: true });
+  writeFileSync(abs, text);
+}
+
+describe("includedProductionSources drives the candidate scan", () => {
+  test("scans every configured root, skipping declarations and generated trees", () => {
+    const cwd = tempProject();
+    try {
+      writeTsconfig(cwd, { include: ["game/**/*.ts", "lib/**/*.ts"] });
+      writeSource(cwd, "game/player.ts", FACTORY_SCRIPT);
+      writeSource(cwd, "lib/hud.ts", GUI_SCRIPT);
+      writeSource(cwd, "lib/util.ts", "export const x = 1;\n");
+      writeSource(cwd, "game/shims.d.ts", "declare function defineScript(x: unknown): void;\n");
+      writeSource(cwd, "game/node_modules/dep.ts", FACTORY_SCRIPT);
+      writeSource(cwd, "game/build/out.ts", FACTORY_SCRIPT);
+      expect(findEntryScriptCandidates(cwd)).toEqual(["game/player.ts", "lib/hud.ts"]);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("a wildcard-free include entry contributes exactly that file", () => {
+    const cwd = tempProject();
+    try {
+      writeTsconfig(cwd, { include: ["game/main.ts", "lib/**/*.ts"] });
+      writeSource(cwd, "game/main.ts", FACTORY_SCRIPT);
+      writeSource(cwd, "game/other.ts", FACTORY_SCRIPT);
+      writeSource(cwd, "lib/hud.ts", GUI_SCRIPT);
+      expect(findEntryScriptCandidates(cwd)).toEqual(["game/main.ts", "lib/hud.ts"]);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("normalizes Windows-shaped scan results from a configured root", () => {
+    const cwd = tempProject();
+    try {
+      writeTsconfig(cwd, { include: ["game/**/*.ts"] });
+      writeSource(cwd, "game/player.ts", FACTORY_SCRIPT);
+      expect(findEntryScriptCandidates(cwd, undefined, () => ["game\\player.ts"])).toEqual([
+        "game/player.ts",
+      ]);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("with no tsconfig.json the scan is the src default, unchanged", () => {
+    const cwd = tempProject();
+    try {
+      writeSource(cwd, "src/player.ts", FACTORY_SCRIPT);
+      writeSource(cwd, "src/util.ts", "export const x = 1;\n");
+      expect(existsSync(path.join(cwd, "tsconfig.json"))).toBe(false);
+      expect(findEntryScriptCandidates(cwd)).toEqual(["src/player.ts"]);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("the no-candidate failure names the configured patterns it searched", async () => {
+    const cwd = tempProject();
+    try {
+      writeFileSync(path.join(cwd, "game.project"), "[project]\ntitle = demo\n");
+      writeTsconfig(cwd, { include: ["game/**/*.ts"] });
+      writeSource(cwd, "game/util.ts", "export const x = 1;\n");
+      const result = await runSetupDebug({ cwd });
+      expect(result.ok).toBe(false);
+      expect(result.error).toContain("game/**/*.ts");
+      expect(result.error).not.toContain("under src/");
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("the no-candidate failure names the src default when there is no tsconfig.json", async () => {
+    const cwd = tempProject();
+    try {
+      writeBaseProject(cwd);
+      const result = await runSetupDebug({ cwd });
+      expect(result.ok).toBe(false);
+      expect(result.error).toContain("src/**/*.ts");
+      expect(readFileSync(path.join(cwd, "game.project"), "utf8")).not.toContain(LLDEBUGGER_URL);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("the stale-block strip walks every configured root, not just src", async () => {
+    const cwd = tempProject();
+    try {
+      writeFileSync(path.join(cwd, "game.project"), "[project]\ntitle = demo\n");
+      writeTsconfig(cwd, { include: ["game/**/*.ts", "lib/**/*.ts", "*.ts"] });
+      const wired = upsertManagedBlock(FACTORY_SCRIPT).text;
+      writeSource(cwd, "game/player.ts", wired);
+      writeSource(cwd, "lib/old.ts", wired);
+      writeSource(cwd, "root.ts", wired);
+      const result = await runSetupDebug({ cwd, script: "game/player.ts" });
+      expect(result.ok).toBe(true);
+      expect([...(result.removedFrom ?? [])].sort()).toEqual(["lib/old.ts", "root.ts"]);
+      expect(readFileSync(path.join(cwd, "game", "player.ts"), "utf8")).toContain(BLOCK_BEGIN);
+      expect(readFileSync(path.join(cwd, "lib", "old.ts"), "utf8")).not.toContain(BLOCK_BEGIN);
+      expect(readFileSync(path.join(cwd, "root.ts"), "utf8")).not.toContain(BLOCK_BEGIN);
+      expect(readFileSync(path.join(cwd, "lib", "old.ts"), "utf8")).toContain("defineScript({");
     } finally {
       rmSync(cwd, { recursive: true, force: true });
     }
@@ -566,6 +693,109 @@ describe("runSetupDebug boot-path selection", () => {
   });
 });
 
+// A boot project whose collection names each component path verbatim, so a
+// configured `outDir` can be exercised without assuming the source layout.
+function writeBootCollection(cwd: string, entries: { id: string; component: string }[]): void {
+  writeFileSync(
+    path.join(cwd, "game.project"),
+    "[project]\ntitle = demo\n\n[bootstrap]\nmain_collection = /main.collectionc\n",
+  );
+  writeFileSync(
+    path.join(cwd, "main.collection"),
+    `name: "main"\n${entries.map((e) => embeddedScript(e.id, e.component)).join("\n")}`,
+  );
+}
+
+describe("runSetupDebug target selection is include-bound", () => {
+  test("--script naming a file outside include fails and writes nothing", async () => {
+    const cwd = tempProject();
+    try {
+      writeFileSync(path.join(cwd, "game.project"), "[project]\ntitle = demo\n");
+      writeTsconfig(cwd, { include: ["game/**/*.ts"] });
+      writeSource(cwd, "game/player.ts", FACTORY_SCRIPT);
+      writeSource(cwd, "tools/gen.ts", FACTORY_SCRIPT);
+      const before = readFileSync(path.join(cwd, "tools", "gen.ts"), "utf8");
+      const result = await runSetupDebug({ cwd, script: "tools/gen.ts" });
+      expect(result.ok).toBe(false);
+      expect(result.error).toContain("tools/gen.ts");
+      expect(result.error).toContain("game/**/*.ts");
+      expect(readFileSync(path.join(cwd, "tools", "gen.ts"), "utf8")).toBe(before);
+      expect(readFileSync(path.join(cwd, "game.project"), "utf8")).not.toContain(LLDEBUGGER_URL);
+      expect(existsSync(path.join(cwd, "game", "lldebugger.debug.d.ts"))).toBe(false);
+      expect(existsSync(path.join(cwd, AMBIENT_DTS_REL))).toBe(false);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("a boot-path component under outDir resolves back to its source", async () => {
+    const cwd = tempProject();
+    try {
+      writeBootCollection(cwd, [{ id: "player", component: "/build/lua/main.ts.script" }]);
+      writeTsconfig(cwd, { include: ["game/**/*.ts"], outDir: "build/lua" });
+      writeSource(cwd, "game/main.ts", FACTORY_SCRIPT);
+      writeSource(cwd, "game/decoy.ts", FACTORY_SCRIPT);
+      const result = await runSetupDebug({
+        cwd,
+        chooseScript: async () => {
+          throw new Error("chooser must not run for a single boot-path candidate");
+        },
+      });
+      expect(result.ok).toBe(true);
+      expect(result.addedTo).toBe("game/main.ts");
+      expect(result.bootPath?.[result.bootPath.length - 1]).toBe("/build/lua/main.ts.script");
+      expect(readFileSync(path.join(cwd, "game", "main.ts"), "utf8")).toContain(BLOCK_BEGIN);
+      expect(readFileSync(path.join(cwd, "game", "decoy.ts"), "utf8")).not.toContain(BLOCK_BEGIN);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("a boot-path source outside include fails instead of being wired up", async () => {
+    const cwd = tempProject();
+    try {
+      writeBootCollection(cwd, [{ id: "player", component: "/src/player.ts.script" }]);
+      writeTsconfig(cwd, { include: ["game/**/*.ts"] });
+      writeSource(cwd, "src/player.ts", FACTORY_SCRIPT);
+      writeSource(cwd, "game/hud.ts", GUI_SCRIPT);
+      const before = readFileSync(path.join(cwd, "src", "player.ts"), "utf8");
+      const result = await runSetupDebug({ cwd });
+      expect(result.ok).toBe(false);
+      expect(result.error).toContain("src/player.ts");
+      expect(result.error).toContain("game/**/*.ts");
+      expect(readFileSync(path.join(cwd, "src", "player.ts"), "utf8")).toBe(before);
+      expect(readFileSync(path.join(cwd, "game.project"), "utf8")).not.toContain(LLDEBUGGER_URL);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("--script inside include still wins over the boot path and keeps its trace", async () => {
+    const cwd = tempProject();
+    try {
+      writeBootCollection(cwd, [
+        { id: "player", component: "/game/player.ts.script" },
+        { id: "hud", component: "/game/hud.ts.script" },
+      ]);
+      writeTsconfig(cwd, { include: ["game/**/*.ts"] });
+      writeSource(cwd, "game/player.ts", FACTORY_SCRIPT);
+      writeSource(cwd, "game/hud.ts", FACTORY_SCRIPT);
+      const result = await runSetupDebug({ cwd, script: "game/hud.ts" });
+      expect(result.ok).toBe(true);
+      expect(result.addedTo).toBe("game/hud.ts");
+      expect(result.bootPath).toEqual([
+        "game.project",
+        "main.collection",
+        "hud",
+        "/game/hud.ts.script",
+      ]);
+      expect(readFileSync(path.join(cwd, "game", "player.ts"), "utf8")).not.toContain(BLOCK_BEGIN);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+});
+
 // The regression teeth for Bug 08: the wired project must type-check clean.
 function linkTypes(cwd: string): void {
   const scope = path.join(cwd, "node_modules", "@defold-typescript");
@@ -573,10 +803,10 @@ function linkTypes(cwd: string): void {
   symlinkSync(TYPES_PKG, path.join(scope, "types"), "dir");
 }
 
-function writeGuardProject(cwd: string): void {
+function writeGuardProject(cwd: string, root: string = "src"): void {
   writeFileSync(path.join(cwd, "game.project"), "[project]\ntitle = demo\n");
-  mkdirSync(path.join(cwd, "src"), { recursive: true });
-  writeFileSync(path.join(cwd, "src", "player.ts"), FACTORY_SCRIPT);
+  mkdirSync(path.join(cwd, root), { recursive: true });
+  writeFileSync(path.join(cwd, root, "player.ts"), FACTORY_SCRIPT);
   writeFileSync(
     path.join(cwd, "tsconfig.json"),
     JSON.stringify(
@@ -590,7 +820,7 @@ function writeGuardProject(cwd: string): void {
           skipLibCheck: true,
           noEmit: true,
         },
-        include: ["src/**/*.ts", "src/**/*.d.ts"],
+        include: [`${root}/**/*.ts`, `${root}/**/*.d.ts`],
       },
       null,
       2,
@@ -657,6 +887,79 @@ describe("setup-debug wired project type-checks (Bug 08 regression)", () => {
         throw new Error(`wired entry script failed Biome:\n${output}`);
       }
       expect(code).toBe(0);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("the declaration lands inside a non-src configured root and compiles clean", async () => {
+    const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-setup-debug-tsc-game-"));
+    try {
+      writeGuardProject(cwd, "game");
+      linkTypes(cwd);
+      const result = await runSetupDebug({ cwd });
+      expect(result.ok).toBe(true);
+      expect(result.written).toContain("game/lldebugger.debug.d.ts");
+      expect(existsSync(path.join(cwd, AMBIENT_DTS_REL))).toBe(false);
+      const { code, output } = runTsc(cwd);
+      if (code !== 0) {
+        throw new Error(`wired project failed to compile:\n${output}`);
+      }
+      expect(code).toBe(0);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("a tool-written declaration at the legacy src path is removed", async () => {
+    const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-setup-debug-legacy-"));
+    try {
+      writeGuardProject(cwd, "game");
+      mkdirSync(path.join(cwd, "src"), { recursive: true });
+      writeFileSync(path.join(cwd, AMBIENT_DTS_REL), AMBIENT_DECLARATION);
+      const result = await runSetupDebug({ cwd });
+      expect(result.ok).toBe(true);
+      expect(result.actions[AMBIENT_DTS_REL]).toBe("removed");
+      expect(existsSync(path.join(cwd, AMBIENT_DTS_REL))).toBe(false);
+      expect(readFileSync(path.join(cwd, "game", "lldebugger.debug.d.ts"), "utf8")).toBe(
+        AMBIENT_DECLARATION,
+      );
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("a user-edited file at the legacy src path is left alone", async () => {
+    const cwd = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-setup-debug-user-dts-"));
+    try {
+      writeGuardProject(cwd, "game");
+      mkdirSync(path.join(cwd, "src"), { recursive: true });
+      const userText = `${AMBIENT_DECLARATION}\ndeclare const mine: number;\n`;
+      writeFileSync(path.join(cwd, AMBIENT_DTS_REL), userText);
+      const result = await runSetupDebug({ cwd });
+      expect(result.ok).toBe(true);
+      expect(result.actions[AMBIENT_DTS_REL]).toBeUndefined();
+      expect(readFileSync(path.join(cwd, AMBIENT_DTS_REL), "utf8")).toBe(userText);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("an exact-file include with no matching sibling fails and writes nothing", async () => {
+    const cwd = tempProject();
+    try {
+      writeFileSync(path.join(cwd, "game.project"), "[project]\ntitle = demo\n");
+      writeTsconfig(cwd, { include: ["game/main.ts"] });
+      writeSource(cwd, "game/main.ts", FACTORY_SCRIPT);
+      const before = readFileSync(path.join(cwd, "game", "main.ts"), "utf8");
+      const result = await runSetupDebug({ cwd });
+      expect(result.ok).toBe(false);
+      expect(result.error).toContain("game/lldebugger.debug.d.ts");
+      expect(result.error).toContain("game/main.ts");
+      expect(readFileSync(path.join(cwd, "game", "main.ts"), "utf8")).toBe(before);
+      expect(existsSync(path.join(cwd, "game", "lldebugger.debug.d.ts"))).toBe(false);
+      expect(existsSync(path.join(cwd, AMBIENT_DTS_REL))).toBe(false);
+      expect(readFileSync(path.join(cwd, "game.project"), "utf8")).not.toContain(LLDEBUGGER_URL);
     } finally {
       rmSync(cwd, { recursive: true, force: true });
     }
