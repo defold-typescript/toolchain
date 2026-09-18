@@ -9,6 +9,12 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.36.1
+
+### Fixed
+
+- **[`setup-debug`](./debugging.md) now works from your configured sources instead of assuming `src/`.** A project whose `tsconfig.json` `include` names other roots, exact files, or a configured `outDir` used to get "no entry script found" or the bootstrap in the wrong file; entry-script selection, the stale-block cleanup and the ambient `lldebugger.debug.d.ts` — now written next to the entry script so the compiler picks it up — all follow `include`, and a script no pattern covers is refused with an error naming the file and the patterns.
+
 ## v0.36.0
 
 ### Breaking
