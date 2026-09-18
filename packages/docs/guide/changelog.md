@@ -13,7 +13,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Fixed
 
-- **[`setup-debug`](./debugging.md) now works from your configured sources instead of assuming `src/`.** A project whose `tsconfig.json` `include` names other roots, exact files, or a configured `outDir` used to get "no entry script found" or the bootstrap in the wrong file; entry-script selection, the stale-block cleanup and the ambient `lldebugger.debug.d.ts` — now written next to the entry script so the compiler picks it up — all follow `include`. The script it edits must be one of those configured sources, so a path outside them, a declaration file, a file under `build`/`node_modules`, or a boot-path component nothing configured builds is refused by name rather than wired into a build that would not compile it.
+- **[`setup-debug`](./debugging.md) now works from your configured sources instead of assuming `src/`.** A project whose `tsconfig.json` `include` names other roots, exact files, or a configured `outDir` used to get "no entry script found" or the bootstrap in the wrong file; entry-script selection, the stale-block cleanup and the ambient `lldebugger.debug.d.ts` — now written next to the entry script so the compiler picks it up — all follow `include`, and a target that is not one of those configured sources is refused by name and cause — outside the patterns, a declaration file, or under a generated or dependency tree such as `build`/`node_modules` — whether you named it with `--script` or the boot path reached it.
 
 ## v0.36.0
 
