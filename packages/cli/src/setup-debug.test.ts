@@ -930,6 +930,68 @@ describe("runSetupDebug target selection is include-bound", () => {
       rmSync(cwd, { recursive: true, force: true });
     }
   });
+
+  test("a boot component naming a declaration file is refused as a declaration file", async () => {
+    const cwd = tempProject();
+    try {
+      writeBootCollection(cwd, [{ id: "types", component: "/src/types.d.ts.script" }]);
+      writeTsconfig(cwd, { include: ["**/*.ts"] });
+      writeSource(cwd, "src/types.d.ts", "export type Health = number;\n");
+      writeSource(cwd, "src/main.ts", FACTORY_SCRIPT);
+      const beforeTypes = readFileSync(path.join(cwd, "src", "types.d.ts"), "utf8");
+      const beforeMain = readFileSync(path.join(cwd, "src", "main.ts"), "utf8");
+      const beforeProject = readFileSync(path.join(cwd, "game.project"), "utf8");
+      const result = await runSetupDebug({
+        cwd,
+        chooseScript: async () => {
+          throw new Error("chooser must not run for a refused boot-path target");
+        },
+      });
+      expect(result.ok).toBe(false);
+      expect(result.addedTo).toBeUndefined();
+      expect(result.error).toContain("src/types.d.ts");
+      expect(result.error).toContain("declaration file");
+      expect(result.error).not.toContain("is not covered by");
+      expect(readFileSync(path.join(cwd, "src", "types.d.ts"), "utf8")).toBe(beforeTypes);
+      expect(readFileSync(path.join(cwd, "src", "main.ts"), "utf8")).toBe(beforeMain);
+      expect(readFileSync(path.join(cwd, "game.project"), "utf8")).toBe(beforeProject);
+      expect(existsSync(path.join(cwd, "src", "lldebugger.debug.d.ts"))).toBe(false);
+      expect(existsSync(path.join(cwd, AMBIENT_DTS_REL))).toBe(false);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("a boot component under a generated tree is refused as a generated tree", async () => {
+    const cwd = tempProject();
+    try {
+      writeBootCollection(cwd, [{ id: "thing", component: "/build/gen/thing.ts.script" }]);
+      writeTsconfig(cwd, { include: ["**/*.ts"] });
+      writeSource(cwd, "build/gen/thing.ts", FACTORY_SCRIPT);
+      writeSource(cwd, "src/main.ts", FACTORY_SCRIPT);
+      const beforeThing = readFileSync(path.join(cwd, "build", "gen", "thing.ts"), "utf8");
+      const beforeMain = readFileSync(path.join(cwd, "src", "main.ts"), "utf8");
+      const beforeProject = readFileSync(path.join(cwd, "game.project"), "utf8");
+      const result = await runSetupDebug({
+        cwd,
+        chooseScript: async () => {
+          throw new Error("chooser must not run for a refused boot-path target");
+        },
+      });
+      expect(result.ok).toBe(false);
+      expect(result.addedTo).toBeUndefined();
+      expect(result.error).toContain("build/gen/thing.ts");
+      expect(result.error).toContain("generated or dependency tree");
+      expect(result.error).not.toContain("is not covered by");
+      expect(readFileSync(path.join(cwd, "build", "gen", "thing.ts"), "utf8")).toBe(beforeThing);
+      expect(readFileSync(path.join(cwd, "src", "main.ts"), "utf8")).toBe(beforeMain);
+      expect(readFileSync(path.join(cwd, "game.project"), "utf8")).toBe(beforeProject);
+      expect(existsSync(path.join(cwd, "build", "gen", "lldebugger.debug.d.ts"))).toBe(false);
+      expect(existsSync(path.join(cwd, AMBIENT_DTS_REL))).toBe(false);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
 });
 
 // The regression teeth for Bug 08: the wired project must type-check clean.
