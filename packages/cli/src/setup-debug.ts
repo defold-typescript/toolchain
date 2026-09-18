@@ -291,6 +291,33 @@ function notConfiguredInput(rel: string, config: BuildConfig): string {
   return `defold-typescript setup-debug: ${rel} is not covered by the tsconfig.json "include" patterns (${config.include.join(", ")}); add a pattern that matches it, or choose a script that is already a configured input.`;
 }
 
+// An `include` pattern can match a path the build never compiles as an input.
+// The refusal names the cause, because "not a production source" is opaque next
+// to a file the user can see their own glob matching.
+function notProductionSource(rel: string, config: BuildConfig): string {
+  const patterns = config.include.join(", ");
+  if (rel.endsWith(".d.ts")) {
+    return `defold-typescript setup-debug: ${rel} is a declaration file, and the debugger bootstrap has to live in the .ts entry script the build compiles (configured "include": ${patterns}); pass that script with --script instead.`;
+  }
+  const segment = rel.split("/").find((part) => isSkipped(part)) ?? rel;
+  return `defold-typescript setup-debug: ${rel} sits under a generated or dependency tree ("${segment}"), so it is not one of the compiled inputs even though an "include" pattern matches it (${patterns}); choose an entry script from your own sources.`;
+}
+
+// A collection naming a `.ts.script` component claims the build writes it from a
+// TypeScript source. When nothing configured does, guessing a different script is
+// what edits the wrong file, so the claim fails loudly instead.
+function unresolvedBootTarget(
+  entry: { readonly candidate: string; readonly trace: readonly string[] },
+  cwd: string,
+  config: BuildConfig,
+): string {
+  if (existsSync(path.join(cwd, entry.candidate))) {
+    return notConfiguredInput(entry.candidate, config);
+  }
+  const component = entry.trace[entry.trace.length - 1] ?? entry.candidate;
+  return `defold-typescript setup-debug: the collection names the component ${component}, but no source the tsconfig.json "include" patterns cover (${config.include.join(", ")}) builds to it; add a pattern that matches its source, or drop the component from the collection.`;
+}
+
 function declarationNotIncluded(target: string, dtsRel: string, config: BuildConfig): string {
   return `defold-typescript setup-debug: the debugger declaration for ${target} belongs at ${dtsRel}, which no tsconfig.json "include" pattern covers (${config.include.join(", ")}); add "${dtsRel}" to "include" so the compiler picks it up.`;
 }
@@ -352,8 +379,10 @@ async function pickCandidate(
 // `.ts.script`); fall back to the configured-input factory-call scan only when
 // the boot path reaches no script. `--script` always wins, carrying the
 // boot-path trace for the report when the named file is itself on the path.
-// Every path the target can come from is gated on `include`, so the command
-// never edits a file the build does not compile.
+// Every target is a member of `includedProductionSources`, not merely a path
+// some `include` glob matches, so the command never edits a file the build does
+// not compile; and a `.ts.script` component the boot path reaches that no
+// configured source builds fails rather than falling through to the scan.
 async function resolveTargetScript(
   opts: SetupDebugOptions,
   config: BuildConfig,
@@ -371,12 +400,18 @@ async function resolveTargetScript(
   for (const { rel, text } of sources) {
     sourceByOutput.set(computeOutputRel(rel, config, detectSourceOutputKind(text)), rel);
   }
-  const bootCandidates = resolveBootPathScripts(cwd)
-    .map((entry) => {
-      const source = sourceByOutput.get(`${entry.candidate}.script`);
-      return source === undefined ? entry : { ...entry, candidate: source };
-    })
-    .filter((entry) => existsSync(path.join(cwd, entry.candidate)));
+  // Two ordered resolution steps, never a filter: the forward output map covers
+  // the `outDir` case, and identity against the production set covers a
+  // component whose source emits as a plain module, whose forward output is a
+  // `.lua` the collection never names. Only after both miss is the entry
+  // unresolved, and a resolved source is a member of `sources` by construction.
+  const productionRels = new Set(sources.map((source) => source.rel));
+  const bootEntries = resolveBootPathScripts(cwd).map((entry) => ({
+    ...entry,
+    source:
+      sourceByOutput.get(`${entry.candidate}.script`) ??
+      (productionRels.has(entry.candidate) ? entry.candidate : undefined),
+  }));
 
   if (script !== undefined) {
     if (!existsSync(path.join(cwd, script))) {
@@ -385,22 +420,26 @@ async function resolveTargetScript(
     if (!isFileIncluded(script, config.include)) {
       return failure(notConfiguredInput(script, config));
     }
-    const onPath = bootCandidates.find((entry) => entry.candidate === script);
+    if (!productionRels.has(script)) {
+      return failure(notProductionSource(script, config));
+    }
+    const onPath = bootEntries.find((entry) => entry.source === script);
     return { target: script, bootPath: onPath?.trace ?? [] };
   }
 
-  if (bootCandidates.length > 0) {
+  if (bootEntries.length > 0) {
+    const unresolved = bootEntries.find((entry) => entry.source === undefined);
+    if (unresolved !== undefined) {
+      return failure(unresolvedBootTarget(unresolved, cwd, config));
+    }
     const picked = await pickCandidate(
-      bootCandidates.map((entry) => entry.candidate),
+      bootEntries.map((entry) => entry.source as string),
       opts,
     );
     if (typeof picked !== "string") {
       return picked;
     }
-    if (!isFileIncluded(picked, config.include)) {
-      return failure(notConfiguredInput(picked, config));
-    }
-    const onPath = bootCandidates.find((entry) => entry.candidate === picked);
+    const onPath = bootEntries.find((entry) => entry.source === picked);
     return { target: picked, bootPath: onPath?.trace ?? [] };
   }
 
