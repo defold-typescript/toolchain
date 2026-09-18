@@ -293,7 +293,8 @@ function notConfiguredInput(rel: string, config: BuildConfig): string {
 
 // An `include` pattern can match a path the build never compiles as an input.
 // The refusal names the cause, because "not a production source" is opaque next
-// to a file the user can see their own glob matching.
+// to a file the user can see their own glob matching. Both target routes reach
+// this through `rejectedTargetReason`.
 function notProductionSource(rel: string, config: BuildConfig): string {
   const patterns = config.include.join(", ");
   if (rel.endsWith(".d.ts")) {
@@ -301,6 +302,15 @@ function notProductionSource(rel: string, config: BuildConfig): string {
   }
   const segment = rel.split("/").find((part) => isSkipped(part)) ?? rel;
   return `defold-typescript setup-debug: ${rel} sits under a generated or dependency tree ("${segment}"), so it is not one of the compiled inputs even though an "include" pattern matches it (${patterns}); choose an entry script from your own sources.`;
+}
+
+// The single place either target route decides why a path that exists is still
+// not an admissible target, so the boot branch and `--script` cannot drift into
+// describing the same file two different ways.
+function rejectedTargetReason(rel: string, config: BuildConfig): string {
+  return isFileIncluded(rel, config.include)
+    ? notProductionSource(rel, config)
+    : notConfiguredInput(rel, config);
 }
 
 // A collection naming a `.ts.script` component claims the build writes it from a
@@ -312,7 +322,7 @@ function unresolvedBootTarget(
   config: BuildConfig,
 ): string {
   if (existsSync(path.join(cwd, entry.candidate))) {
-    return notConfiguredInput(entry.candidate, config);
+    return rejectedTargetReason(entry.candidate, config);
   }
   const component = entry.trace[entry.trace.length - 1] ?? entry.candidate;
   return `defold-typescript setup-debug: the collection names the component ${component}, but no source the tsconfig.json "include" patterns cover (${config.include.join(", ")}) builds to it; add a pattern that matches its source, or drop the component from the collection.`;
@@ -417,11 +427,8 @@ async function resolveTargetScript(
     if (!existsSync(path.join(cwd, script))) {
       return failure(`defold-typescript setup-debug: script not found: ${script}`);
     }
-    if (!isFileIncluded(script, config.include)) {
-      return failure(notConfiguredInput(script, config));
-    }
     if (!productionRels.has(script)) {
-      return failure(notProductionSource(script, config));
+      return failure(rejectedTargetReason(script, config));
     }
     const onPath = bootEntries.find((entry) => entry.source === script);
     return { target: script, bootPath: onPath?.trace ?? [] };
