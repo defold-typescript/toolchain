@@ -16,6 +16,7 @@ import {
   exampleUnit,
   factoryAbsenceDiagnostic,
   gateFailures,
+  moduleSpecifier,
   type PinFile,
   pinIdentity,
   readPins,
@@ -194,6 +195,31 @@ describe("gate maintenance", () => {
     // The structural guard on runtime: adding an example must not add a program.
     expect(timings.length).toBe(surfaces.length);
     expect(timings.reduce((sum, t) => sum + t.units, 0)).toBeGreaterThan(timings.length * 10);
+  });
+
+  test("a surface prelude specifier is `/`-separated whatever the host path shape", () => {
+    // A Windows `relative` returns backslashes, and the specifier is emitted
+    // into a TypeScript string literal where `\` is an escape — so an
+    // unnormalized path reaches the compiler as `....generatedkindsgui-script`
+    // and every unit on that surface fails with TS2307 instead of being judged.
+    expect(moduleSpecifier("..\\..\\generated\\kinds\\gui-script.d.ts")).toBe(
+      "../../generated/kinds/gui-script",
+    );
+    expect(moduleSpecifier("../../generated/kinds/gui-script.d.ts")).toBe(
+      "../../generated/kinds/gui-script",
+    );
+    expect(moduleSpecifier("kinds\\script.d.ts")).toBe("./kinds/script");
+  });
+
+  test("no unit emits a specifier carrying a backslash or a .d.ts suffix", () => {
+    for (const surface of surfaces) {
+      const unit = exampleUnit(surface, "probe.fqn", "0000000000000000", "const x = 1;");
+      for (const line of unit.contents.split("\n")) {
+        if (!line.startsWith("import")) continue;
+        expect(line).not.toContain("\\");
+        expect(line).not.toContain(".d.ts");
+      }
+    }
   });
 
   test("every compiler-option override is recorded with its reason", () => {
