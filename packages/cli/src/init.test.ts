@@ -2555,6 +2555,19 @@ describe("resolveStarterTarget (the starter follows the configured include)", ()
     });
   });
 
+  test("an exact-file include resolves exactly when it names the starter itself", () => {
+    expect(resolveStarterTarget({ outDir: undefined, include: ["src/main.ts"] })).toEqual({
+      sourceRel: "src/main.ts",
+      outputRel: "src/main.ts.script",
+      componentPath: "/src/main.ts.script",
+    });
+    expect(resolveStarterTarget({ outDir: undefined, include: ["main.ts"] })).toEqual({
+      sourceRel: "main.ts",
+      outputRel: "main.ts.script",
+      componentPath: "/main.ts.script",
+    });
+  });
+
   test("an include reaching no writable starter path resolves to nothing", () => {
     for (const include of [
       ["foo/bar.ts"],
