@@ -2585,10 +2585,11 @@ pointing at `/game/main.ts.script`, and adding `"outDir": "build"` moves that
 component path to `/build/main.ts.script` in step with the compiled output. A
 tool-added `exclude` entry for that starter is pruned on every re-run, while an
 entry naming a root you have since moved off is left alone as yours. When no
-configured pattern reaches a writable path inside the project — an `include` of
-a single exact file, or one that only points outside it — `init` writes no
-starter and leaves the collection with no component, reporting the patterns it
-searched.
+configured pattern reaches a writable `main.ts` inside the project — an exact
+path naming some other file, such as `["foo/bar.ts"]`, or a pattern that only
+points outside it — `init` writes no starter and leaves the collection with no
+component, reporting the patterns it searched; an exact path that names the
+starter itself, `["src/main.ts"]`, seeds one normally.
 
 #### Flags
 
