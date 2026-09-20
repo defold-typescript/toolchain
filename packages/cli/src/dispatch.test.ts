@@ -5623,6 +5623,71 @@ describe("dispatch upgrade", () => {
     expect((parsed.warnings ?? []).some((w) => w.includes("game"))).toBe(true);
   });
 
+  test("a scaffold decision survives the install that fails after it", async () => {
+    const seedSkippedClaim = (): void => {
+      writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+      writeFileSync(
+        path.join(cwd, "tsconfig.json"),
+        `${JSON.stringify({ compilerOptions: {}, include: ["game/**/*.ts"] })}\n`,
+      );
+      mkdirSync(path.join(cwd, "game"), { recursive: true });
+      writeFileSync(path.join(cwd, "game", "main.ts"), "// entry\n");
+      writeFileSync(path.join(cwd, "game", "helper.lua"), "return {}\n");
+    };
+
+    seedSkippedClaim();
+    const failing = captureStreams();
+    const failingRun = upgradeHarness({ running: "1.3.0", latest: "1.3.0", exitCodes: [9] });
+
+    expect(await dispatch(["upgrade", cwd], failing.io, failingRun.internals)).toBe(9);
+    expect(failing.err()).toContain("game");
+    expect(failing.err()).toContain("exited with code 9");
+    expect(failing.out()).not.toContain("1.3.0 -> 1.3.0");
+
+    const ok = captureStreams();
+    const okRun = upgradeHarness({ running: "1.3.0", latest: "1.3.0" });
+
+    expect(await dispatch(["upgrade", cwd], ok.io, okRun.internals)).toBe(0);
+    expect(
+      ok
+        .err()
+        .split("\n")
+        .filter((line) => line.includes("game")),
+    ).toHaveLength(1);
+    expect(
+      ok
+        .out()
+        .split("\n")
+        .filter((line) => line.includes("->")),
+    ).toHaveLength(1);
+
+    const jsonRun = captureStreams();
+    const jsonInternals = upgradeHarness({ running: "1.3.0", latest: "1.3.0", exitCodes: [9] });
+
+    expect(await dispatch(["upgrade", cwd, "--json"], jsonRun.io, jsonInternals.internals)).toBe(9);
+    const parsed = JSON.parse(jsonRun.out().trim()) as { warnings?: string[]; error?: string };
+    expect((parsed.warnings ?? []).some((w) => w.includes("game"))).toBe(true);
+    expect(parsed.error).toContain("exited with code 9");
+    expect(jsonRun.err()).toBe("");
+  });
+
+  test("a failing plain hand-off writes only its error", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    const { io, err } = captureStreams();
+    const { internals } = upgradeHarness({
+      running: "1.2.0",
+      latest: "1.3.0",
+      exitCodes: [7],
+    });
+
+    expect(await dispatch(["upgrade", cwd], io, internals)).toBe(7);
+    expect(
+      err()
+        .split("\n")
+        .filter((line) => line.length > 0),
+    ).toHaveLength(1);
+  });
+
   test("a successful hand-off is followed by the install command and reports from -> to", async () => {
     writeFileSync(path.join(cwd, "game.project"), "[project]\n");
     const { io, out } = captureStreams();

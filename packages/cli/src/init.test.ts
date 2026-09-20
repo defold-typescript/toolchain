@@ -19,7 +19,6 @@ import {
   BIOME_JSON_CONTENT,
   biomeIncludesFromInclude,
   LUA_TYPES_SPEC,
-  RETIRED_MANAGED_ENTRIES,
   reconcileManagedList,
   runInit,
   SCAFFOLD_DEV_DEPS,
@@ -2279,6 +2278,29 @@ describe("runInit (merges an existing tsconfig)", () => {
   });
 });
 
+// Quoted from `git show v0.36.0:packages/cli/src/init.ts` — the gitignore globs
+// at `:50`-`:57`, the Biome includes at `:124` and `:130`-`:131`, and
+// `Lua.workspace.ignoreDir` at `:180`. It is a snapshot of a released tag, so a
+// real upgraded project carries exactly these lines on disk.
+//
+// Never edit it to match production. Production may grow past this set; it may
+// not shrink below it, and noticing that shrink is the whole point of the
+// literal standing apart from `RETIRED_MANAGED_ENTRIES`.
+const V0_36_MANAGED_ENTRIES = {
+  gitignore: [
+    "src/**/*.ts.script",
+    "src/**/*.ts.script.map",
+    "src/**/*.ts.gui_script",
+    "src/**/*.ts.gui_script.map",
+    "src/**/*.ts.render_script",
+    "src/**/*.ts.render_script.map",
+    "src/**/*.lua",
+    "src/**/*.lua.map",
+  ],
+  biomeIncludes: ["src/**/*.ts", "!src/**/*.lua", "!src/**/*.lua.map"],
+  ignoreDir: ["src"],
+} as const;
+
 describe("managed scaffold rules derived from tsconfig include", () => {
   function readJson(rel: string): Record<string, unknown> {
     return JSON.parse(readFileSync(path.join(cwd, rel), "utf8"));
@@ -2298,13 +2320,13 @@ describe("managed scaffold rules derived from tsconfig include", () => {
       `${JSON.stringify({ compilerOptions: {}, include: ["game/**/*.ts"] })}\n`,
     );
     seed("game/main.ts", "// entry\n");
-    seed(".gitignore", `${[...RETIRED_MANAGED_ENTRIES.gitignore, "/dist"].join("\n")}\n`);
+    seed(".gitignore", `${[...V0_36_MANAGED_ENTRIES.gitignore, "/dist"].join("\n")}\n`);
     seed(
       "biome.json",
       `${JSON.stringify(
         {
           $schema: BIOME_JSON_CONTENT.$schema,
-          files: { includes: [...RETIRED_MANAGED_ENTRIES.biomeIncludes, "custom/**/*.ts"] },
+          files: { includes: [...V0_36_MANAGED_ENTRIES.biomeIncludes, "custom/**/*.ts"] },
           linter: { rules: { preset: "recommended", style: { useConst: "error" } } },
         },
         null,
@@ -2313,7 +2335,14 @@ describe("managed scaffold rules derived from tsconfig include", () => {
     );
     seed(
       ".vscode/settings.json",
-      `${JSON.stringify({ "Lua.workspace.ignoreDir": ["src", "build"], "editor.tabSize": 4 }, null, 2)}\n`,
+      `${JSON.stringify(
+        {
+          "Lua.workspace.ignoreDir": [...V0_36_MANAGED_ENTRIES.ignoreDir, "build"],
+          "editor.tabSize": 4,
+        },
+        null,
+        2,
+      )}\n`,
     );
   }
 
@@ -2343,7 +2372,7 @@ describe("managed scaffold rules derived from tsconfig include", () => {
     runInit({ cwd, force: true });
 
     const gitignore = readFileSync(path.join(cwd, ".gitignore"), "utf8").split("\n");
-    for (const line of RETIRED_MANAGED_ENTRIES.gitignore) {
+    for (const line of V0_36_MANAGED_ENTRIES.gitignore) {
       expect(gitignore).not.toContain(line);
     }
     expect(gitignore).toContain("**/*.ts.script");
@@ -2353,7 +2382,7 @@ describe("managed scaffold rules derived from tsconfig include", () => {
       files: { includes: string[] };
       linter: { rules: { style?: { useConst?: string } } };
     };
-    for (const entry of RETIRED_MANAGED_ENTRIES.biomeIncludes) {
+    for (const entry of V0_36_MANAGED_ENTRIES.biomeIncludes) {
       expect(biome.files.includes).not.toContain(entry);
     }
     expect(biome.files.includes).toContain("game/**/*.ts");
@@ -2393,7 +2422,7 @@ describe("managed scaffold rules derived from tsconfig include", () => {
 
   test("a biome.json carrying comments is reported and left byte-identical", () => {
     seedReleasedProject();
-    const jsonc = `{\n  // hand-edited\n  "files": { "includes": ${JSON.stringify(RETIRED_MANAGED_ENTRIES.biomeIncludes)} }\n}\n`;
+    const jsonc = `{\n  // hand-edited\n  "files": { "includes": ${JSON.stringify(V0_36_MANAGED_ENTRIES.biomeIncludes)} }\n}\n`;
     seed("biome.json", jsonc);
     seed(
       ".vscode/settings.json",
@@ -2450,6 +2479,11 @@ describe("managed scaffold rules derived from tsconfig include", () => {
     expect(sourceRootsFromInclude(["src/**/*.ts", SCENE_ADDRESSES_DECLARATION])).toEqual(["src"]);
     expect(sourceRootsFromInclude(["game/**/*.ts", "shared/**/*.ts"])).toEqual(["game", "shared"]);
     expect(sourceRootsFromInclude(["game/**/*.ts", "game/**/*.tsx"])).toEqual(["game"]);
+  });
+
+  test("sourceRootsFromInclude keeps a root whose name merely begins with two periods", () => {
+    expect(sourceRootsFromInclude(["..local/**/*.ts"])).toEqual(["..local"]);
+    expect(sourceRootsFromInclude(["../shared/**/*.ts", "..local/**/*.ts"])).toEqual(["..local"]);
   });
 
   test("sourceRootsFromInclude rejects the project root, escapes, and absolute spellings", () => {

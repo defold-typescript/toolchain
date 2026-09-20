@@ -152,9 +152,10 @@ export const RETIRED_MANAGED_ENTRIES = {
 //
 // A root is a folder inside the project the scaffold can safely speak for, so a
 // pattern that resolves to the project root, escapes `cwd`, or is absolute in
-// any spelling yields nothing. Absoluteness is decided by string shape, never by
-// `path.isAbsolute`, which answers for the host OS and would wave a Windows
-// drive or UNC path through on a POSIX runner.
+// any spelling yields nothing. Escape is the normalized `..` *segment*, not a
+// two-period prefix: `..local` is an ordinary folder name. Absoluteness is
+// decided by string shape, never by `path.isAbsolute`, which answers for the
+// host OS and would wave a Windows drive or UNC path through on a POSIX runner.
 const ABSOLUTE_SPELLING_RE = /^(\/|\\\\|[A-Za-z]:[\\/])/;
 
 export function sourceRootsFromInclude(include: readonly string[]): string[] {
@@ -164,7 +165,7 @@ export function sourceRootsFromInclude(include: readonly string[]): string[] {
       continue;
     }
     const base = path.posix.normalize(stripIncludeBase(pattern.split("\\").join("/")));
-    if (base === "" || base === "." || base === "./" || base.startsWith("..")) {
+    if (base === "" || base === "." || base === "./" || base === ".." || base.startsWith("../")) {
       continue;
     }
     const root = base.endsWith("/") ? base.slice(0, -1) : base;
