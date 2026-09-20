@@ -6,7 +6,13 @@ import { anchoredGoals, implDir, parseIndexStatus, prdDir } from "./planning-led
 // A covering step is "terminal" when its Step Index Status cell is one of these.
 const TERMINAL = new Set(["shipped", "done", "complete", "Obsolete"]);
 
-type PrdGoal = { status: string; hasImpl: boolean; sourceFile: string; block: string };
+type PrdGoal = {
+  status: string;
+  hasImpl: boolean;
+  sourceFile: string;
+  block: string;
+  impl: string;
+};
 
 // PRD `### <goal>` blocks -> goal info. The Impl bullet may be a single line
 // (`- **Impl**: [link]`) or a header followed by indented sub-bullets, so the
@@ -18,8 +24,17 @@ function parsePrdGoals(md: string, sourceFile = ""): Map<string, PrdGoal> {
   let hasImpl = false;
   let inImpl = false;
   let block: string[] = [];
+  let impl: string[] = [];
   const flush = () => {
-    if (cur) out.set(cur, { status, hasImpl, sourceFile, block: block.join("\n") });
+    if (cur) {
+      out.set(cur, {
+        status,
+        hasImpl,
+        sourceFile,
+        block: block.join("\n"),
+        impl: impl.join("\n"),
+      });
+    }
   };
   for (const line of md.split("\n")) {
     const h = line.match(/^### (\S+)\s*$/);
@@ -30,6 +45,7 @@ function parsePrdGoals(md: string, sourceFile = ""): Map<string, PrdGoal> {
       hasImpl = false;
       inImpl = false;
       block = [line];
+      impl = [];
       continue;
     }
     if (!cur) continue;
@@ -42,12 +58,15 @@ function parsePrdGoals(md: string, sourceFile = ""): Map<string, PrdGoal> {
     }
     if (/^\s*- \*\*Impl\*\*/.test(line)) {
       inImpl = true;
+      impl.push(line);
       if (line.includes("](")) hasImpl = true;
       continue;
     }
     // A new top-level bullet or a heading ends the Impl region.
     if (/^- \*\*/.test(line) || /^#/.test(line)) inImpl = false;
-    if (inImpl && line.includes("](")) hasImpl = true;
+    if (!inImpl) continue;
+    impl.push(line);
+    if (line.includes("](")) hasImpl = true;
   }
   flush();
   return out;
@@ -64,6 +83,27 @@ function parkedBlockerGoals(goals: Map<string, PrdGoal>): string[] {
   for (const [goal, info] of goals) {
     if (info.status === "shipped") continue;
     if (PARKED_BLOCKER_PATTERNS.some((pattern) => pattern.test(info.block))) {
+      offenders.push(info.sourceFile ? `${goal} (${info.sourceFile})` : goal);
+    }
+  }
+  return offenders;
+}
+
+// A goal whose covering steps are all terminal owes no further slice under its
+// own id; the remainder belongs to a new goal. Matched against the Impl region
+// only, so a Why that quotes a deferral (this rule's own goal does) stays green.
+// Deliberately narrow: a deferral phrased any other way passes unnoticed, which
+// is the price of leaving the many goals that narrate slice history alone.
+const DEFERRED_SLICE_PATTERNS = [
+  /\bdeferred to (?:a|the) (?:second|third|next|further|later|follow-?up) slice\b/i,
+];
+
+function deferredSliceGoals(goals: Map<string, PrdGoal>, covered: string[]): string[] {
+  const offenders: string[] = [];
+  for (const goal of covered) {
+    const info = goals.get(goal);
+    if (!info) continue;
+    if (DEFERRED_SLICE_PATTERNS.some((pattern) => pattern.test(info.impl))) {
       offenders.push(info.sourceFile ? `${goal} (${info.sourceFile})` : goal);
     }
   }
@@ -137,6 +177,13 @@ describe("PRD goal status drift", () => {
     expect(offenders).toEqual([]);
   });
 
+  test.skipIf(!present)("covered-terminal goals defer no further slice", () => {
+    const prd = allPrdGoals();
+    const covered = coveredTerminalGoals();
+    expect(covered.length).toBeGreaterThan(0);
+    expect(deferredSliceGoals(prd, covered)).toEqual([]);
+  });
+
   test.skipIf(!present)("active PRD goals do not contain parked-blocker language", () => {
     expect(parkedBlockerGoals(allPrdGoals())).toEqual([]);
   });
@@ -157,6 +204,35 @@ describe("PRD goal status drift", () => {
       "synthetic.md",
     );
     expect(parkedBlockerGoals(goals)).toEqual(["parked-goal (synthetic.md)"]);
+  });
+
+  test("deferred-slice predicate reads the Impl region, not slice history", () => {
+    const goals = parsePrdGoals(
+      [
+        "### defers-remainder",
+        "- **Status**: shipped",
+        "- **Impl**: [slice one](../impl/one.md)",
+        "  Deferred to a second slice: the starter paths.",
+        "",
+        "### narrates-history",
+        "- **Status**: shipped",
+        "- **Impl**:",
+        "  - first slice: [the scan](../impl/scan.md)",
+        "  - tenth slice: [close that deferred follow-up](../impl/close.md)",
+        "",
+        "### plain-shipped",
+        "- **Status**: shipped",
+        "- **Impl**: [all of it](../impl/all.md)",
+        "",
+        "### quotes-in-why",
+        "- **Status**: shipped",
+        "- **Impl**: [the gate](../impl/gate.md)",
+        "- **Why**: A goal may not say Deferred to a second slice once covered.",
+      ].join("\n"),
+      "synthetic.md",
+    );
+    const covered = ["defers-remainder", "narrates-history", "plain-shipped", "quotes-in-why"];
+    expect(deferredSliceGoals(goals, covered)).toEqual(["defers-remainder (synthetic.md)"]);
   });
 
   test("resolver keys off the PRD anchor, not the Goal line or index column", () => {
