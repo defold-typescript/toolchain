@@ -294,7 +294,7 @@ declare global {
      * }
      * ```
      */
-    function get_ifaddrs(): { name: string; address: string; mac: string; up: boolean; running: boolean }[];
+    function get_ifaddrs(): { name: string; address?: string; mac?: string; up: boolean; running: boolean }[];
     /**
      * The save-file path is operating system specific and is typically located under the user's home directory.
      * This function will raise a Lua error if unable to get the save file path.
@@ -365,7 +365,7 @@ declare global {
      * }
      * ```
      */
-    function get_sys_info(options?: { ignore_secure?: boolean }): { device_model: string; manufacturer: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident: string; user_agent: string };
+    function get_sys_info(options?: { ignore_secure?: boolean }): { device_model?: string; manufacturer?: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident?: string; user_agent?: string };
     /**
      * If the file exists, it must have been created by `sys.save` to be loaded.
      * This function will raise a Lua error if an error occurs while loading the file.

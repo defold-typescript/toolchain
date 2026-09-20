@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import * as ts from "typescript";
+import b2dDoc from "../fixtures/b2d_doc.json" with { type: "json" };
 import bufferDoc from "../fixtures/buffer_doc.json" with { type: "json" };
 import collectionfactoryDoc from "../fixtures/collectionfactory_doc.json" with { type: "json" };
 import collectionproxyDoc from "../fixtures/collectionproxy_doc.json" with { type: "json" };
@@ -34,6 +35,7 @@ import urlParameterTable from "../url-parameters.json" with { type: "json" };
 import { type ApiFunction, type ApiModule, type ApiParameter, parseDefoldApiDoc } from "./api-doc";
 import {
   ARBITRARY_TABLE_SLOTS,
+  applyFieldOptionalityCorrections,
   applyNestedFieldCurations,
   buildTableDocResolver,
   collectHandleMethodGroups,
@@ -49,6 +51,7 @@ import {
   recoverCallbackSignature,
   SLOT_LEVEL_LIST_PROSE,
   TABLE_SLOT_CURATIONS,
+  type TableField,
 } from "./emit-dts";
 import type { UrlParameterTable } from "./url-parameters";
 
@@ -1004,7 +1007,7 @@ describe("emitDeclarations", () => {
   test("sys.get_sys_info options recover dash-list fields", () => {
     const module = parseDefoldApiDoc(sysDoc);
     expect(emitDeclarations(module)).toContain(
-      "function get_sys_info(options?: { ignore_secure?: boolean }): { device_model: string; manufacturer: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident: string; user_agent: string };",
+      "function get_sys_info(options?: { ignore_secure?: boolean }): { device_model?: string; manufacturer?: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident?: string; user_agent?: string };",
     );
   });
 
@@ -3311,7 +3314,7 @@ describe("slot-level array-of-object recovery", () => {
     const module = parseDefoldApiDoc(sysDoc);
     const out = emitDeclarations(module);
     expect(out).toContain(
-      "function get_ifaddrs(): { name: string; address: string; mac: string; up: boolean; running: boolean }[];",
+      "function get_ifaddrs(): { name: string; address?: string; mac?: string; up: boolean; running: boolean }[];",
     );
   });
 
@@ -4014,5 +4017,75 @@ describe("documented constant slot expansion", () => {
     const entry = ledger.find((candidate) => candidate.identity.name === "gui.set_blend_mode");
     expect(entry?.tsSignature).toContain(brand("gui.BLEND_SCREEN"));
     expect(entry?.tsSignature).toBe(signatureLine(guiOut, "function set_blend_mode("));
+  });
+});
+
+describe("return-side optionality corrections", () => {
+  const sys = parseDefoldApiDoc(sysDoc);
+  const b2d = parseDefoldApiDoc(b2dDoc);
+
+  function signatureLine(out: string, marker: string): string {
+    const line = out.split("\n").find((candidate) => candidate.includes(marker));
+    if (line === undefined) throw new Error(`no emitted line contains ${marker}`);
+    return line.trim();
+  }
+
+  test("sys.get_sys_info marks the platform-gated fields optional and leaves the rest required", () => {
+    const line = signatureLine(emitDeclarations(sys), "function get_sys_info(");
+    for (const field of ["device_model", "manufacturer", "device_ident", "user_agent"]) {
+      expect(line).toContain(`${field}?: string`);
+    }
+    for (const field of [
+      "system_name",
+      "system_version",
+      "api_version",
+      "language",
+      "device_language",
+      "territory",
+    ]) {
+      expect(line).toContain(`${field}: string`);
+      expect(line).not.toContain(`${field}?:`);
+    }
+    expect(line).toContain("gmt_offset: number");
+    expect(line).not.toContain("gmt_offset?:");
+  });
+
+  test("sys.get_ifaddrs marks address and mac optional and leaves the rest required", () => {
+    const line = signatureLine(emitDeclarations(sys), "function get_ifaddrs(");
+    expect(line).toBe(
+      "function get_ifaddrs(): { name: string; address?: string; mac?: string; up: boolean; running: boolean }[];",
+    );
+  });
+
+  test("a correction naming a field the parser did not recover is a hard error", () => {
+    expect(() =>
+      applyFieldOptionalityCorrections("sys.get_ifaddrs", "return", "ifaddrs", [
+        { name: "name", types: ["string"] },
+      ]),
+    ).toThrow(/sys\.get_ifaddrs:return:ifaddrs:address/);
+  });
+
+  test("a slot the corrections do not name passes through untouched", () => {
+    const fields: TableField[] = [{ name: "name", types: ["string"] }];
+    expect(applyFieldOptionalityCorrections("sys.open_url", "param", "attributes", fields)).toEqual(
+      fields,
+    );
+  });
+
+  test("a correction sets only presence, never the field's type", () => {
+    const line = signatureLine(emitDeclarations(sys), "function get_sys_info(");
+    expect(line).toContain("device_model?: string");
+    expect(line).not.toContain("device_model?: string | undefined");
+  });
+
+  test("b2d.get_body carries the prose-documented nil alternative", () => {
+    expect(signatureLine(emitDeclarations(b2d), "function get_body(")).toBe(
+      'function get_body(url: string | Hash | Url): Opaque<"b2Body"> | undefined;',
+    );
+  });
+
+  test("a return correction leaves every sibling b2d return alone", () => {
+    const out = emitDeclarations(b2d);
+    expect(signatureLine(out, "function get_world(")).not.toContain("undefined");
   });
 });

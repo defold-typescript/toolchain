@@ -13,9 +13,12 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Breaking
 
-- **Two return types now carry the shape the engine actually returns, matching the reference and the `@example` shipped beside them.**
+- **Five return types now carry what the engine actually returns, matching the reference and the `@example` shipped beside them.** Three of them gain values that can be absent, so the call sites below need a `??` default or a narrowing check.
   - **[`resource.get_render_target_info`](/api/resource)** — the per-attachment fields (`handle`, `width`, `height`, `depth`, `mipmaps`, `type`, `buffer_type`, `texture`) sat beside the top-level `handle` instead of inside the documented `attachments` array. Read them as `info.attachments[0].handle`; `texture` is optional, since the reference documents it only for a render target passed in as a resource.
   - **[`window.get_safe_area`](/api/window)** — the eight keys were wrapped in a `safe_area` level the engine never returns. Drop it: `window.get_safe_area().inset_left`.
+  - **[`sys.get_sys_info`](/api/sys)** — `device_model`, `manufacturer`, `device_ident` and `user_agent` are optional, since the reference gates each on iOS, Android or HTML5 and Lua leaves the key out elsewhere. The other fields are unchanged.
+  - **[`sys.get_ifaddrs`](/api/sys)** — `address` and `mac` are optional, which the reference has always said: "might be `nil` if not available".
+  - **[`b2d.get_body`](/api/b2d)** — returns `undefined` when the url names no collision object, as the reference's "Otherwise nil" says.
 
 ### Fixed
 
