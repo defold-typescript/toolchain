@@ -133,10 +133,12 @@ declare global {
      * @example
      * ```ts
      * const body = b2d.get_body("#collisionobject");
-     * const triangle = b2d.body.create_fixture(body, {
-     *   density: 1.0, friction: 0.3,
-     *   shape: { type: b2d.shape.SHAPE_TYPE_POLYGON, vertices: [vmath.vector3(-16, -16, 0), vmath.vector3(16, -16, 0), vmath.vector3(0, 16, 0)] },
-     * });
+     * if (body !== undefined) {
+     *   const triangle = b2d.body.create_fixture(body, {
+     *     density: 1.0, friction: 0.3,
+     *     shape: { type: b2d.shape.SHAPE_TYPE_POLYGON, vertices: [vmath.vector3(-16, -16, 0), vmath.vector3(16, -16, 0), vmath.vector3(0, 16, 0)] },
+     *   });
+     * }
      * ```
      */
     function create_fixture(body: Opaque<"b2Body">, definition: { shape?: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; friction?: number; restitution?: number; density?: number; sensor?: boolean; filter?: { category_bits?: number; mask_bits?: number; group_index?: number } }): { index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number };

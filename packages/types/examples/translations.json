@@ -8,19 +8,19 @@
   "b2d.body.create_fixture": [
     {
       "sourceHash": "1f1d588d084c0e48",
-      "ts": "const body = b2d.get_body(\"#collisionobject\");\nconst triangle = b2d.body.create_fixture(body, {\n  density: 1.0, friction: 0.3,\n  shape: { type: b2d.shape.SHAPE_TYPE_POLYGON, vertices: [vmath.vector3(-16, -16, 0), vmath.vector3(16, -16, 0), vmath.vector3(0, 16, 0)] },\n});"
+      "ts": "const body = b2d.get_body(\"#collisionobject\");\nif (body !== undefined) {\n  const triangle = b2d.body.create_fixture(body, {\n    density: 1.0, friction: 0.3,\n    shape: { type: b2d.shape.SHAPE_TYPE_POLYGON, vertices: [vmath.vector3(-16, -16, 0), vmath.vector3(16, -16, 0), vmath.vector3(0, 16, 0)] },\n  });\n}"
     }
   ],
   "b2d.fixture.set_shape": [
     {
       "sourceHash": "ff836b80569f5d30",
-      "ts": "const body = b2d.get_body(\"#collisionobject\");\nconst circle = b2d.fixture.get_shape(body, 1);\ncircle.center = vmath.vector3(24, 0, 0);\nb2d.fixture.set_shape(body, 1, circle, true);\nb2d.fixture.set_shape(body, 2, { type: b2d.shape.SHAPE_TYPE_EDGE, v1: vmath.vector3(-32, 0, 0), v2: vmath.vector3(32, 0, 0) });"
+      "ts": "const body = b2d.get_body(\"#collisionobject\");\nif (body !== undefined) {\n  const circle = b2d.fixture.get_shape(body, 1);\n  circle.center = vmath.vector3(24, 0, 0);\n  b2d.fixture.set_shape(body, 1, circle, true);\n  b2d.fixture.set_shape(body, 2, { type: b2d.shape.SHAPE_TYPE_EDGE, v1: vmath.vector3(-32, 0, 0), v2: vmath.vector3(32, 0, 0) });\n}"
     }
   ],
   "b2d.shape.set_shape": [
     {
       "sourceHash": "f31970e9ebb8d446",
-      "ts": "const body = b2d.get_body(\"#collisionobject\");\nconst circle = b2d.shape.get_shape(body, 1);\ncircle.center = vmath.vector3(24, 0, 0);\nb2d.shape.set_shape(body, 1, circle, true);\nb2d.shape.set_shape(body, 2, { type: b2d.shape.SHAPE_TYPE_SEGMENT, v1: vmath.vector3(-32, 0, 0), v2: vmath.vector3(32, 0, 0) });"
+      "ts": "const body = b2d.get_body(\"#collisionobject\");\nif (body !== undefined) {\n  const circle = b2d.shape.get_shape(body, 1);\n  circle.center = vmath.vector3(24, 0, 0);\n  b2d.shape.set_shape(body, 1, circle, true);\n  b2d.shape.set_shape(body, 2, { type: b2d.shape.SHAPE_TYPE_SEGMENT, v1: vmath.vector3(-32, 0, 0), v2: vmath.vector3(32, 0, 0) });\n}"
     }
   ],
   "buffer.copy_buffer": [
