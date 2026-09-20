@@ -1,14 +1,20 @@
 import { describe, expect, test } from "bun:test";
 import * as path from "node:path";
+import { type BuildConfig, computeOutputRel } from "@defold-typescript/transpiler";
+import { isFileIncluded } from "./build-output";
 import {
   DEBUG_LAUNCHER_REL,
   DEBUG_LAUNCHER_SOURCE,
   debugLaunchConfig,
+  debugScriptFilePatterns,
+  debugScriptRoots,
   engineDownloadUrl,
   nativeExtensionRuntimeWarnings,
   targetPlatform,
-  VSCODE_LAUNCH_CONTENT,
+  vscodeLaunchContent,
 } from "./debug-launcher";
+
+const DEFAULT_CONFIG: BuildConfig = { outDir: undefined, include: ["src/**/*.ts"] };
 
 describe("targetPlatform", () => {
   test("maps Apple Silicon macOS to the arm64-macos engine", () => {
@@ -120,24 +126,130 @@ describe("nativeExtensionRuntimeWarnings", () => {
   });
 });
 
+// The three runtime script kinds and the plain module: every shape
+// `writeScriptFile` appends a `--# sourceMappingURL=` trailer to, and so every
+// shape a breakpoint can bind in.
+const BREAKPOINTABLE_KINDS = ["script", "gui-script", "render-script", "module"] as const;
+
+describe("debugScriptFilePatterns / debugScriptRoots", () => {
+  const cases: ReadonlyArray<{ name: string; config: BuildConfig; rels: string[] }> = [
+    { name: "the default config", config: DEFAULT_CONFIG, rels: ["src/main.ts", "src/ui/hud.ts"] },
+    {
+      name: "a two-root config",
+      config: { outDir: undefined, include: ["src/**/*.ts", "game/**/*.ts"] },
+      rels: ["src/main.ts", "game/level/boss.ts"],
+    },
+    {
+      name: "a configured outDir",
+      config: { outDir: "dist", include: ["src/**/*.ts"] },
+      rels: ["src/main.ts", "src/ui/hud.ts"],
+    },
+    {
+      name: "an exact-file include",
+      config: { outDir: undefined, include: ["src/main.ts"] },
+      rels: ["src/main.ts"],
+    },
+    {
+      name: "a project-root include",
+      config: { outDir: undefined, include: ["**/*.ts"] },
+      rels: ["main.ts", "ui/hud.ts"],
+    },
+  ];
+
+  for (const { name, config, rels } of cases) {
+    test(`every output ${name} writes is pre-scanned`, () => {
+      const patterns = debugScriptFilePatterns(config);
+      for (const rel of rels) {
+        for (const kind of BREAKPOINTABLE_KINDS) {
+          const outputRel = computeOutputRel(rel, config, kind);
+          expect({ outputRel, matched: isFileIncluded(outputRel, patterns) }).toEqual({
+            outputRel,
+            matched: true,
+          });
+        }
+      }
+    });
+  }
+
+  test("a source added under a configured root after the patterns were computed matches", () => {
+    const config: BuildConfig = { outDir: undefined, include: ["src/**/*.ts"] };
+    const patterns = debugScriptFilePatterns(config);
+    const outputRel = computeOutputRel("src/late/arrival.ts", config, "script");
+    expect(isFileIncluded(outputRel, patterns)).toBe(true);
+  });
+
+  test("an editor script is matched by no derived pattern", () => {
+    for (const { config, rels } of cases) {
+      const patterns = debugScriptFilePatterns(config);
+      for (const rel of rels) {
+        const outputRel = computeOutputRel(rel, config, "editor-script");
+        expect({ outputRel, matched: isFileIncluded(outputRel, patterns) }).toEqual({
+          outputRel,
+          matched: false,
+        });
+      }
+    }
+  });
+
+  test("the declaration include entry sweeps no generated surface into the patterns", () => {
+    const patterns = debugScriptFilePatterns({
+      outDir: undefined,
+      include: ["src/**/*.ts", ".defold-types/scene-addresses.d.ts"],
+    });
+    expect(patterns.some((pattern) => pattern.startsWith(".defold-types/"))).toBe(false);
+  });
+
+  test("scriptRoots carry the output side and the source side when outDir splits them", () => {
+    const roots = debugScriptRoots({ outDir: "dist", include: ["src/**/*.ts"] });
+    expect(roots[0]).toBe(".");
+    expect(roots).toContain("dist");
+    expect(roots).toContain("src");
+  });
+
+  test("scriptRoots name a coinciding root once", () => {
+    expect(debugScriptRoots(DEFAULT_CONFIG)).toEqual([".", "src"]);
+  });
+
+  test("a windows-spelled include and outDir produce posix patterns and roots", () => {
+    const config: BuildConfig = { outDir: "dist\\out", include: ["src\\**\\*.ts"] };
+    for (const value of [...debugScriptFilePatterns(config), ...debugScriptRoots(config)]) {
+      expect(value).not.toContain("\\");
+    }
+    expect(debugScriptRoots(config)).toContain("dist/out");
+  });
+
+  test("the default scaffold config yields the src-shaped patterns for every output shape", () => {
+    expect([...debugScriptFilePatterns(DEFAULT_CONFIG)].sort()).toEqual(
+      [
+        "src/**/*.lua",
+        "src/**/*.ts.gui_script",
+        "src/**/*.ts.render_script",
+        "src/**/*.ts.script",
+      ].sort(),
+    );
+  });
+});
+
 describe("debugLaunchConfig / scaffolded artifacts", () => {
   test("the launch config runs bun against the scaffolded launcher, never bash", () => {
-    const config = debugLaunchConfig();
+    const config = debugLaunchConfig(DEFAULT_CONFIG);
     expect(config.type).toBe("lua-local");
     expect(config.program.command).toBe("bun");
     expect(config.args).toEqual([DEBUG_LAUNCHER_REL]);
     expect(JSON.stringify(config)).not.toContain("bash");
   });
 
-  test("the launch config declares scriptFiles/scriptRoots so .ts breakpoints bind", () => {
-    const config = debugLaunchConfig();
-    expect(config.scriptFiles).toEqual(["src/**/*.ts.script"]);
-    expect(config.scriptRoots).toEqual([".", "src"]);
+  test("the launch config spends the derived patterns and roots", () => {
+    const build: BuildConfig = { outDir: "dist", include: ["game/**/*.ts"] };
+    const config = debugLaunchConfig(build);
+    expect(config.scriptFiles).toEqual(debugScriptFilePatterns(build));
+    expect(config.scriptRoots).toEqual(debugScriptRoots(build));
   });
 
-  test("VSCODE_LAUNCH_CONTENT carries exactly the one lua-local config", () => {
-    expect(VSCODE_LAUNCH_CONTENT.version).toBe("0.2.0");
-    expect(VSCODE_LAUNCH_CONTENT.configurations).toEqual([debugLaunchConfig()]);
+  test("vscodeLaunchContent carries exactly the one lua-local config", () => {
+    const content = vscodeLaunchContent(DEFAULT_CONFIG);
+    expect(content.version).toBe("0.2.0");
+    expect(content.configurations).toEqual([debugLaunchConfig(DEFAULT_CONFIG)]);
   });
 
   test("the launcher source is a self-contained Bun script with no shell dependency", () => {

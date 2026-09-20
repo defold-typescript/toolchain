@@ -14,6 +14,7 @@ import { DEFAULT_INCLUDE } from "@defold-typescript/transpiler";
 import { SCRIPT_HOOK_NAMES } from "@defold-typescript/types";
 import { runBuild } from "./build";
 import { GENERATED_BANNER } from "./build-output";
+import { debugLaunchConfig } from "./debug-launcher";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import {
   authoredLuaUnder,
@@ -1563,7 +1564,95 @@ describe("runInit (.vscode debugger launch scaffold)", () => {
     const names = configs.map((c) => c.name);
     expect(names).toContain("My Launcher");
     expect(names).toContain("Defold: Debug (TypeScript)");
-    expect(result.written).not.toContain(".vscode/launch.json");
+    const ours = configs.find((c) => c.name === "Defold: Debug (TypeScript)");
+    expect(ours?.scriptFiles).toEqual(
+      debugLaunchConfig({ outDir: undefined, include: [...DEFAULT_INCLUDE] }).scriptFiles,
+    );
+    expect(result.written).toContain(".vscode/launch.json");
+  });
+
+  const RELEASED_LAUNCH_SPELLING = {
+    name: "Defold: Debug (TypeScript)",
+    type: "lua-local",
+    request: "launch",
+    program: { command: "bun" },
+    scriptFiles: ["src/**/*.ts.script"],
+    scriptRoots: [".", "src"],
+  };
+
+  function seedStaleLaunch(extra: Record<string, unknown> = {}): void {
+    touch("game.project", "[project]\n");
+    touch(
+      "tsconfig.json",
+      `${JSON.stringify(
+        { compilerOptions: { outDir: "dist" }, include: ["game/**/*.ts"] },
+        null,
+        2,
+      )}\n`,
+    );
+    mkdirSync(path.join(cwd, ".vscode"), { recursive: true });
+    touch(
+      ".vscode/launch.json",
+      `${JSON.stringify(
+        {
+          version: "0.2.0",
+          configurations: [{ ...RELEASED_LAUNCH_SPELLING, ...extra }],
+        },
+        null,
+        2,
+      )}\n`,
+    );
+  }
+
+  function ourLaunchConfig(): Record<string, unknown> {
+    const configs = readJson(".vscode/launch.json").configurations as Array<
+      Record<string, unknown>
+    >;
+    const ours = configs.find((c) => c.name === "Defold: Debug (TypeScript)");
+    expect(ours).toBeDefined();
+    return ours as Record<string, unknown>;
+  }
+
+  test("rewrites stale scriptFiles/scriptRoots to the values the configuration derives", () => {
+    seedStaleLaunch();
+
+    const result = runInit({ cwd, force: true });
+
+    const derived = debugLaunchConfig({
+      outDir: "dist",
+      include: ["game/**/*.ts", SCENE_ADDRESSES_DECLARATION],
+    });
+    const ours = ourLaunchConfig();
+    expect(ours.scriptFiles).toEqual(derived.scriptFiles);
+    expect(ours.scriptRoots).toEqual(derived.scriptRoots);
+    expect(result.written).toContain(".vscode/launch.json");
+  });
+
+  test("the rewrite keeps user-added keys on our config and a user's own configuration", () => {
+    seedStaleLaunch({ stopOnEntry: true, myField: "mine" });
+    const userConfig = { name: "My Launcher", type: "node", request: "launch", verbose: true };
+    const launch = readJson(".vscode/launch.json");
+    (launch.configurations as unknown[]).push(userConfig);
+    touch(".vscode/launch.json", `${JSON.stringify(launch, null, 2)}\n`);
+
+    runInit({ cwd, force: true });
+
+    const ours = ourLaunchConfig();
+    expect(ours.stopOnEntry).toBe(true);
+    expect(ours.myField).toBe("mine");
+    const configs = readJson(".vscode/launch.json").configurations as Array<
+      Record<string, unknown>
+    >;
+    expect(configs.find((c) => c.name === "My Launcher")).toEqual(userConfig);
+  });
+
+  test("a launch.json already carrying the derived fields reports no write", () => {
+    seedStaleLaunch();
+    runInit({ cwd, force: true });
+
+    const second = runInit({ cwd, force: true });
+
+    expect(second.written).not.toContain(".vscode/launch.json");
   });
 
   test("leaves an existing defold-debug.ts untouched", () => {
