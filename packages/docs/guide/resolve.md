@@ -28,9 +28,21 @@ It reads every `dependencies#N` URL under `[project]` in `game.project`. A
 
 | Kind                          | Detected by                                                                                        | What `resolve` produces                                                                                                           |
 | ----------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| **Native extension**          | the archive carries one or more `.script_api` docs                                                 | one ambient namespace per doc in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list                    |
 | **Vendored pure-Lua library** | the repo name matches the `@defold-typescript/library-types` corpus, confirmed against the archive | the committed `.d.ts` materialized into `.defold-types/libraries@<cliVersion>/`, plus that same name on the tsconfig `types` list |
-| **Asset-only / content**      | no `.script_api` and no library match — fonts, asset packs, other content archives                 | nothing: reported and skipped                                                                                                     |
+| **Native extension**          | no confirmed library match, and the archive carries one or more `.script_api` docs                 | one ambient namespace per doc in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list                    |
+| **Asset-only / content**      | no confirmed library match and no `.script_api` — fonts, asset packs, other content archives       | nothing: reported and skipped                                                                                                     |
+
+The kinds are tried **in that order**: a confirmed corpus match decides the type
+surface, so a library may ship its own `.script_api` without losing its curated
+types. A confirmed match proves more than a `.script_api` does — it is verified
+against the modules the archive actually ships (below), where a `.script_api`
+only proves the author wrote a doc. A repo-name match the archive does *not*
+confirm changes nothing: that dependency still resolves as a native extension or
+as asset-only, exactly as before.
+
+Only the *type* surface is decided this way. A superseded dependency is still a
+declared dependency: its [scene sources](#dependency-scene-sources) still unpack
+and its version and pin status still report.
 
 A skipped **asset-only** archive is never a failure — `resolve` still exits `0`
 and materializes types for the dependencies that do carry them. A typical run:
@@ -62,7 +74,7 @@ entry — nothing stale is left behind.
 ## Vendored library types
 
 Many popular Defold libraries are plain Lua — installed via **Fetch Libraries**,
-carrying no `.script_api`. This toolchain ships hand-vendored TypeScript types for
+and most carry no `.script_api`. This toolchain ships hand-vendored TypeScript types for
 a curated set of them in `@defold-typescript/library-types`. When a declared
 dependency matches one, its committed `.d.ts` is materialized verbatim (never
 regenerated), and the import specifier is the Lua `require` path —
@@ -79,6 +91,13 @@ does not confirm is reported **unverified** (a `stderr` warning) and never
 materialized, so a collision cannot inject the wrong types. A declared library
 whose vendored `.d.ts` is missing from the shipped corpus is likewise warned and
 skipped rather than failing the run.
+
+A library that documents itself — shipping both its Lua modules and its own
+`.script_api` — keeps the curated types: the confirmed match wins, and that
+dependency contributes no ambient `extensions/` namespace. Upgrading to this
+behavior reconciles itself; an `extensions/` namespace an earlier run wrote for
+such a dependency is pruned and its tsconfig entry dropped, so the stale ambient
+declarations cannot collide with the curated module.
 
 ## Dependency scene sources
 
