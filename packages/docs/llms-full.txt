@@ -9627,7 +9627,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function font(path?: string): Hash;
 - function get_atlas(path: Hash | string): { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: Opaque<"constant">; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] };
 - function get_buffer(path: Hash | string): Opaque<"buffer">;
-- function get_render_target_info(path: Hash | string | number): { handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash };
+- function get_render_target_info(path: Hash | string | number): { handle: number; attachments: { handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture?: Hash }[] };
 - function get_text_metrics(url: Hash, text: string, options?: { width?: number; leading?: number; tracking?: number; line_break?: boolean }): { width: number; height: number; max_ascent: number; max_descent: number };
 - function get_texture_info(path: Hash | string | number): { handle: number; width: number; height: number; depth: number; page_count: number; mipmaps: number; flags: number; type: number };
 - function load(path: string): Opaque<"buffer">;
@@ -9890,7 +9890,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_dim_mode(): number & { readonly __brand: "window.DIMMING_UNKNOWN" } | number & { readonly __brand: "window.DIMMING_ON" } | number & { readonly __brand: "window.DIMMING_OFF" };
 - function get_display_scale(): number;
 - function get_mouse_lock(): boolean;
-- function get_safe_area(): { safe_area: { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number } };
+- function get_safe_area(): { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number };
 - function get_size(): LuaMultiReturn<[number, number]>;
 - function set_dim_mode(mode: number & { readonly __brand: "window.DIMMING_ON" } | number & { readonly __brand: "window.DIMMING_OFF" }): void;
 - function set_listener(callback?: (self: unknown, event: typeof WINDOW_EVENT_FOCUS_LOST | typeof WINDOW_EVENT_FOCUS_GAINED | typeof WINDOW_EVENT_RESIZED | typeof WINDOW_EVENT_ICONFIED | typeof WINDOW_EVENT_DEICONIFIED, data: Record<string | number, unknown>) => void): void;

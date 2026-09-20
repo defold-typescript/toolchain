@@ -95,7 +95,7 @@ declare global {
      *
      * - number `inset_bottom`
      */
-    function get_safe_area(): { safe_area: { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number } };
+    function get_safe_area(): { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number };
     /**
      * This returns the current window size (width and height).
      */
