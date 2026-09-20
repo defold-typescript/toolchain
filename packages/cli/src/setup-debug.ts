@@ -9,8 +9,16 @@ import {
   isFileIncluded,
   readBuildConfig,
 } from "./build-output";
+import { DEBUG_LAUNCHER_REL } from "./debug-launcher";
 import { normalizeScannedPath, scanFilesSync } from "./scan";
 import { isSkipped } from "./script-kind";
+import {
+  VSCODE_EXTENSIONS_REL,
+  VSCODE_LAUNCH_REL,
+  writeDebugRecommendation,
+  writeVscodeDebugLauncher,
+  writeVscodeLaunch,
+} from "./vscode-debug-scaffold";
 
 // Our pinned release URL, mirrored from `packages/docs/guide/debugging.md`. The
 // `lldebugger-url` leak guard forbids the upstream ts-defold URL, so this must
@@ -560,6 +568,19 @@ export async function runSetupDebug(opts: SetupDebugOptions): Promise<SetupDebug
     }
   }
   removedFrom.sort();
+
+  // The editor half of the debug path: the launch configuration derived from
+  // this project's own inputs, the Bun launcher it runs, and the extension that
+  // provides the `lua-local` adapter.
+  const launchAction = writeVscodeLaunch(cwd, config, "create");
+  if (launchAction !== null) {
+    actions[VSCODE_LAUNCH_REL] = launchAction;
+    written.push(VSCODE_LAUNCH_REL);
+  }
+  actions[DEBUG_LAUNCHER_REL] = writeVscodeDebugLauncher(cwd);
+  written.push(DEBUG_LAUNCHER_REL);
+  actions[VSCODE_EXTENSIONS_REL] = writeDebugRecommendation(cwd);
+  written.push(VSCODE_EXTENSIONS_REL);
 
   return {
     ok: true,
