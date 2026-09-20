@@ -10,6 +10,7 @@ import {
 } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { DEBUG_LAUNCHER_REL, debugLaunchConfig } from "./debug-launcher";
 import {
   AMBIENT_DECLARATION,
   AMBIENT_DTS_REL,
@@ -503,6 +504,9 @@ describe("runSetupDebug", () => {
       expect(readFileSync(path.join(cwd, "src", "player.ts"), "utf8")).not.toContain(BLOCK_BEGIN);
       expect(readFileSync(path.join(cwd, "game.project"), "utf8")).not.toContain(LLDEBUGGER_URL);
       expect(existsSync(path.join(cwd, AMBIENT_DTS_REL))).toBe(false);
+      expect(existsSync(path.join(cwd, ".vscode", "launch.json"))).toBe(false);
+      expect(existsSync(path.join(cwd, DEBUG_LAUNCHER_REL))).toBe(false);
+      expect(existsSync(path.join(cwd, ".vscode", "extensions.json"))).toBe(false);
     } finally {
       rmSync(cwd, { recursive: true, force: true });
     }
@@ -534,6 +538,29 @@ describe("runSetupDebug", () => {
     }
   });
 
+  test("no-shell gate: the launch config runs bun and no debug artifact names bash or .sh", async () => {
+    const cwd = tempProject();
+    try {
+      writeBaseProject(cwd);
+      writeFileSync(path.join(cwd, "src", "player.ts"), FACTORY_SCRIPT);
+      await runSetupDebug({ cwd });
+
+      const launchText = readFileSync(path.join(cwd, ".vscode", "launch.json"), "utf8");
+      const configs = JSON.parse(launchText).configurations as Array<Record<string, unknown>>;
+      const luaLocal = configs.find((c) => c.type === "lua-local");
+      expect(luaLocal).toBeDefined();
+      expect((luaLocal?.program as Record<string, unknown>).command).toBe("bun");
+
+      const launcherText = readFileSync(path.join(cwd, DEBUG_LAUNCHER_REL), "utf8");
+      for (const text of [launchText, launcherText]) {
+        expect(text).not.toContain("bash");
+        expect(text).not.toMatch(/\.sh\b/);
+      }
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
   test("reports manual steps that remain after wiring", async () => {
     const cwd = tempProject();
     try {
@@ -542,6 +569,120 @@ describe("runSetupDebug", () => {
       const result = await runSetupDebug({ cwd });
       expect(result.manualSteps.length).toBeGreaterThan(0);
       expect(result.manualSteps.join("\n")).toMatch(/Fetch Libraries/i);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("scaffolds the .vscode debug files from the project's own inputs", async () => {
+    const cwd = tempProject();
+    try {
+      writeBaseProject(cwd);
+      mkdirSync(path.join(cwd, "game"), { recursive: true });
+      writeFileSync(path.join(cwd, "game", "player.ts"), FACTORY_SCRIPT);
+      writeFileSync(
+        path.join(cwd, "tsconfig.json"),
+        JSON.stringify({ compilerOptions: { outDir: "lua" }, include: ["game/**/*"] }),
+      );
+
+      const result = await runSetupDebug({ cwd });
+      expect(result.ok).toBe(true);
+      expect(result.written).toContain(".vscode/launch.json");
+      expect(result.written).toContain(DEBUG_LAUNCHER_REL);
+      expect(result.written).toContain(".vscode/extensions.json");
+      expect(result.actions[".vscode/launch.json"]).toBe("injected");
+      expect(result.actions[DEBUG_LAUNCHER_REL]).toBe("injected");
+      expect(result.actions[".vscode/extensions.json"]).toBe("injected");
+
+      const launch = JSON.parse(readFileSync(path.join(cwd, ".vscode", "launch.json"), "utf8"));
+      const mine = launch.configurations.find(
+        (c: { name: string }) => c.name === "Defold: Debug (TypeScript)",
+      );
+      const expected = debugLaunchConfig({ outDir: "lua", include: ["game/**/*"] });
+      expect(mine.scriptFiles).toEqual(expected.scriptFiles);
+      expect(mine.scriptRoots).toEqual(expected.scriptRoots);
+      expect(mine.scriptRoots).toContain("game");
+      expect(mine.scriptRoots).not.toContain("src");
+      expect(JSON.stringify(mine.scriptFiles)).toContain("lua");
+
+      const launcher = readFileSync(path.join(cwd, DEBUG_LAUNCHER_REL), "utf8");
+      expect(launcher).toContain("Bun.spawn");
+      expect(launcher).toContain("game.projectc");
+      const extensions = JSON.parse(
+        readFileSync(path.join(cwd, ".vscode", "extensions.json"), "utf8"),
+      );
+      expect(extensions.recommendations).toContain("tomblind.local-lua-debugger-vscode");
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("a second run leaves the .vscode debug files as they stand", async () => {
+    const cwd = tempProject();
+    try {
+      writeBaseProject(cwd);
+      writeFileSync(path.join(cwd, "src", "player.ts"), FACTORY_SCRIPT);
+      await runSetupDebug({ cwd });
+      const launcherPath = path.join(cwd, DEBUG_LAUNCHER_REL);
+      writeFileSync(launcherPath, "// edited by the user\n");
+
+      const result = await runSetupDebug({ cwd });
+      expect(result.ok).toBe(true);
+      expect(result.actions[".vscode/launch.json"]).toBe("unchanged");
+      expect(result.actions[DEBUG_LAUNCHER_REL]).toBe("unchanged");
+      expect(result.actions[".vscode/extensions.json"]).toBe("unchanged");
+
+      expect(readFileSync(launcherPath, "utf8")).toBe("// edited by the user\n");
+      const launch = JSON.parse(readFileSync(path.join(cwd, ".vscode", "launch.json"), "utf8"));
+      expect(
+        launch.configurations.filter(
+          (c: { name: string }) => c.name === "Defold: Debug (TypeScript)",
+        ),
+      ).toHaveLength(1);
+      const extensions = JSON.parse(
+        readFileSync(path.join(cwd, ".vscode", "extensions.json"), "utf8"),
+      );
+      expect(
+        extensions.recommendations.filter(
+          (id: string) => id === "tomblind.local-lua-debugger-vscode",
+        ),
+      ).toHaveLength(1);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("merges into a launch.json and an extensions.json the user already owns", async () => {
+    const cwd = tempProject();
+    try {
+      writeBaseProject(cwd);
+      writeFileSync(path.join(cwd, "src", "player.ts"), FACTORY_SCRIPT);
+      mkdirSync(path.join(cwd, ".vscode"), { recursive: true });
+      writeFileSync(
+        path.join(cwd, ".vscode", "launch.json"),
+        JSON.stringify({
+          version: "0.2.0",
+          configurations: [{ name: "My own launcher", type: "node", request: "launch" }],
+        }),
+      );
+      writeFileSync(
+        path.join(cwd, ".vscode", "extensions.json"),
+        JSON.stringify({ recommendations: ["esbenp.prettier-vscode"] }),
+      );
+
+      const result = await runSetupDebug({ cwd });
+      expect(result.ok).toBe(true);
+
+      const launch = JSON.parse(readFileSync(path.join(cwd, ".vscode", "launch.json"), "utf8"));
+      const names = launch.configurations.map((c: { name: string }) => c.name);
+      expect(names).toContain("My own launcher");
+      expect(names).toContain("Defold: Debug (TypeScript)");
+
+      const extensions = JSON.parse(
+        readFileSync(path.join(cwd, ".vscode", "extensions.json"), "utf8"),
+      );
+      expect(extensions.recommendations).toContain("esbenp.prettier-vscode");
+      expect(extensions.recommendations).toContain("tomblind.local-lua-debugger-vscode");
     } finally {
       rmSync(cwd, { recursive: true, force: true });
     }
