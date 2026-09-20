@@ -136,11 +136,15 @@ whether it was `assetOnly`, `sceneSources` (how many [shared scene
 files](./resolve.md#dependency-scene-sources) it unpacked), the `resolvedVersion`
 (sha256 digest of the resolved archive bytes), — when the project pins that url —
 the `pinnedVersion`, and the `pinStatus` (`unpinned` / `match` / `drift`). A separate `libraries` array reports
-each dependency that matched a [vendored
+a dependency that matched a [vendored
 library](./resolve.md#vendored-library-types) — its `url`, `source` (the vendored
 source identity), materialized `modules`, `provenance` (`vendored`), and `verified`.
-A `verified: false` entry (with an empty `modules`) is a repo-name match the
-downloaded archive did not confirm; it is reported but never materialized:
+A match the downloaded archive **confirms** always gets an entry. A `verified:
+false` entry (with an empty `modules`) is a repo-name match the archive did not
+confirm, reported but never materialized; it appears only when the dependency is
+asset-only. An unconfirmed match on a dependency that ships its own
+`.script_api` has no `libraries[]` entry at all and stays `typeSurface:
+"extension"` with its own namespaces.
 
 `typeSurface` is present on every `extensions[]` entry and names which type
 surface that dependency actually contributed:
