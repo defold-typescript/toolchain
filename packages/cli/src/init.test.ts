@@ -10,6 +10,7 @@ import {
 } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { DEFAULT_INCLUDE } from "@defold-typescript/transpiler";
 import { SCRIPT_HOOK_NAMES } from "@defold-typescript/types";
 import { runBuild } from "./build";
 import { GENERATED_BANNER } from "./build-output";
@@ -20,6 +21,7 @@ import {
   biomeIncludesFromInclude,
   LUA_TYPES_SPEC,
   reconcileManagedList,
+  resolveStarterTarget,
   runInit,
   SCAFFOLD_DEV_DEPS,
   sourceRootsFromInclude,
@@ -2202,7 +2204,7 @@ describe("runInit (merges an existing tsconfig)", () => {
   test("self-heals a tool-added src/main.ts exclude, dropping the key when it was the sole entry", () => {
     seedExistingTsconfig({
       compilerOptions: { types: ["defold-1.12.4"] },
-      include: ["game/**/*.ts"],
+      include: ["src/**/*.ts"],
       exclude: ["src/main.ts"],
     });
 
@@ -2214,7 +2216,7 @@ describe("runInit (merges an existing tsconfig)", () => {
   test("self-heals a tool-added src/main.ts exclude while preserving sibling excludes", () => {
     seedExistingTsconfig({
       compilerOptions: { types: ["defold-1.12.4"] },
-      include: ["game/**/*.ts"],
+      include: ["src/**/*.ts"],
       exclude: ["dist", "src/main.ts"],
     });
 
@@ -2253,13 +2255,13 @@ describe("runInit (merges an existing tsconfig)", () => {
     expect(tsconfig.exclude).toBeUndefined();
   });
 
-  test("reports src/main.ts as skipped with a reason for a user-authored project", () => {
+  test("reports the resolved starter as skipped with a reason for a user-authored project", () => {
     seedExistingTsconfig({ compilerOptions: {}, include: ["game/**/*.ts"] });
     seedUserAuthoredSources();
 
     const result = runInit({ cwd, force: true });
 
-    const op = result.operations.find((o) => o.target === "src/main.ts");
+    const op = result.operations.find((o) => o.target === "game/main.ts");
     expect(op?.status).toBe("skipped");
     expect((op?.detail ?? "").length).toBeGreaterThan(0);
   });
@@ -2510,5 +2512,170 @@ describe("managed scaffold rules derived from tsconfig include", () => {
       expect(sourceRootsFromInclude(include)).toEqual([]);
       expect(biomeIncludesFromInclude(include).length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("resolveStarterTarget (the starter follows the configured include)", () => {
+  test("the default include yields the src starter and the script the build emits", () => {
+    expect(resolveStarterTarget({ outDir: undefined, include: [...DEFAULT_INCLUDE] })).toEqual({
+      sourceRel: "src/main.ts",
+      outputRel: "src/main.ts.script",
+      componentPath: "/src/main.ts.script",
+    });
+  });
+
+  test("a non-src include root moves the starter and its component path together", () => {
+    expect(resolveStarterTarget({ outDir: undefined, include: ["game/**/*.ts"] })).toEqual({
+      sourceRel: "game/main.ts",
+      outputRel: "game/main.ts.script",
+      componentPath: "/game/main.ts.script",
+    });
+  });
+
+  test("the winner is include order, not sort order", () => {
+    expect(
+      resolveStarterTarget({ outDir: undefined, include: ["lib/**/*.ts", "app/**/*.ts"] }),
+    ).toEqual({
+      sourceRel: "lib/main.ts",
+      outputRel: "lib/main.ts.script",
+      componentPath: "/lib/main.ts.script",
+    });
+  });
+
+  test("outDir relocates the output while the source stays under the include base", () => {
+    expect(resolveStarterTarget({ outDir: "build", include: [...DEFAULT_INCLUDE] })).toEqual({
+      sourceRel: "src/main.ts",
+      outputRel: "build/main.ts.script",
+      componentPath: "/build/main.ts.script",
+    });
+    expect(resolveStarterTarget({ outDir: "build", include: ["game/**/*.ts"] })).toEqual({
+      sourceRel: "game/main.ts",
+      outputRel: "build/main.ts.script",
+      componentPath: "/build/main.ts.script",
+    });
+  });
+
+  test("an include reaching no writable starter path resolves to nothing", () => {
+    for (const include of [
+      ["foo/bar.ts"],
+      [SCENE_ADDRESSES_DECLARATION],
+      ["../shared/**/*.ts"],
+      ["/abs/**/*.ts"],
+      ["C:\\proj\\**\\*.ts"],
+      ["foo/../**/*.md"],
+    ]) {
+      expect(resolveStarterTarget({ outDir: undefined, include })).toBeUndefined();
+    }
+  });
+
+  test("a whole-project include seeds the starter at the project root", () => {
+    expect(resolveStarterTarget({ outDir: undefined, include: ["**/*.ts"] })).toEqual({
+      sourceRel: "main.ts",
+      outputRel: "main.ts.script",
+      componentPath: "/main.ts.script",
+    });
+  });
+
+  test("a backslash-spelled include resolves the same as its posix spelling", () => {
+    expect(resolveStarterTarget({ outDir: undefined, include: ["src\\**\\*.ts"] })).toEqual(
+      resolveStarterTarget({ outDir: undefined, include: ["src/**/*.ts"] }),
+    );
+  });
+});
+
+describe("runInit (starter sites read the resolved target)", () => {
+  function seedTsconfig(include: string[], compilerOptions: Record<string, unknown> = {}): void {
+    writeFileSync(
+      path.join(cwd, "tsconfig.json"),
+      `${JSON.stringify({ compilerOptions, include })}\n`,
+    );
+  }
+
+  function componentPathOf(collection: string): string {
+    const match = collection.match(/component:\s*\\"([^\\]+)\\"/);
+    if (match?.[1] === undefined) {
+      throw new Error(`collection declares no component:\n${collection}`);
+    }
+    return match[1];
+  }
+
+  function readCollection(): string {
+    return readFileSync(path.join(cwd, "main", "main.collection"), "utf8");
+  }
+
+  function collectionReferencing(componentPath: string): string {
+    return (
+      'name: "main"\nembedded_instances {\n  id: "main"\n' +
+      `  data: "components {\\n  id: \\"main\\"\\n  component: \\"${componentPath}\\"\\n}\\n"\n}\n`
+    );
+  }
+
+  test("a non-src include root builds to exactly the collection's component path", () => {
+    seedTsconfig(["game/**/*.ts"]);
+
+    runInit({ cwd, force: true });
+    const result = runBuild({ cwd });
+
+    const outputRel = componentPathOf(readCollection()).slice(1);
+    expect(result.written).toContain(outputRel);
+    expect(existsSync(path.join(cwd, outputRel))).toBe(true);
+  });
+
+  test("a configured outDir moves the collection's path and the emitted script together", () => {
+    seedTsconfig(["game/**/*.ts"], { outDir: "build" });
+
+    runInit({ cwd, force: true });
+    const result = runBuild({ cwd });
+
+    const outputRel = componentPathOf(readCollection()).slice(1);
+    expect(result.written).toContain(outputRel);
+    expect(existsSync(path.join(cwd, outputRel))).toBe(true);
+  });
+
+  test("an include reaching no writable starter path is reported, not scaffolded", () => {
+    seedTsconfig(["foo/bar.ts"]);
+
+    const result = runInit({ cwd, force: true });
+
+    expect(result.written.some((rel) => rel.endsWith("main.ts"))).toBe(false);
+    expect(existsSync(path.join(cwd, "src", "main.ts"))).toBe(false);
+    expect(existsSync(path.join(cwd, "foo", "main.ts"))).toBe(false);
+    expect(result.warnings.some((warning) => warning.includes("foo/bar.ts"))).toBe(true);
+    const skipped = result.operations.find(
+      (op) => op.status === "skipped" && op.detail?.includes("foo/bar.ts"),
+    );
+    expect(skipped).toBeDefined();
+    expect(readCollection()).not.toContain("component:");
+  });
+
+  test("the exclude prune follows the include root and leaves unrelated excludes", () => {
+    touch("game.project", "[project]\n");
+    seedTsconfig(["game/**/*.ts"]);
+    writeFileSync(
+      path.join(cwd, "tsconfig.json"),
+      `${JSON.stringify({ compilerOptions: {}, include: ["game/**/*.ts"], exclude: ["game/main.ts", "vendor/**"] })}\n`,
+    );
+
+    runInit({ cwd, force: true });
+
+    const tsconfig = JSON.parse(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")) as {
+      exclude?: string[];
+    };
+    expect(tsconfig.exclude).toEqual(["vendor/**"]);
+  });
+
+  test("greenfield detection recognizes a project laid out under another root", () => {
+    touch("game.project", "[project]\n");
+    seedTsconfig(["game/**/*.ts"]);
+    mkdirSync(path.join(cwd, "main"), { recursive: true });
+    writeFileSync(
+      path.join(cwd, "main", "main.collection"),
+      collectionReferencing("/game/main.ts.script"),
+    );
+
+    const result = runInit({ cwd, force: true });
+
+    expect(result.written).toContain("game/main.ts");
+    expect(existsSync(path.join(cwd, "game", "main.ts"))).toBe(true);
   });
 });
