@@ -224,15 +224,111 @@ describe("per-target provenance — mixed-version inputs", () => {
     const old = surface("old", "b2d", [getBody(["b2Body"], BODY_REASON)]);
     const fixed = surface("new", "b2d", [getBody(["b2Body", "nil"], BODY_REASON)]);
     expect(returnCorrectionProvenance(GET_BODY_ENTRIES, [old, fixed])).toEqual([
-      { key: GET_BODY, sightedIn: ["new", "old"], neededBy: ["old"], resolvedIn: ["new"] },
+      {
+        key: GET_BODY,
+        sightedIn: ["new", "old"],
+        neededBy: ["old"],
+        resolvedIn: ["new"],
+        driftedIn: [],
+        typeDrift: [],
+      },
     ]);
   });
 
   test("a target that keeps the tokens but drops the contradicting prose resolves it too", () => {
     const proseGone = surface("proseGone", "b2d", [getBody(["b2Body"], "the body.")]);
     expect(returnCorrectionProvenance(GET_BODY_ENTRIES, [proseGone])).toEqual([
-      { key: GET_BODY, sightedIn: ["proseGone"], neededBy: [], resolvedIn: ["proseGone"] },
+      {
+        key: GET_BODY,
+        sightedIn: ["proseGone"],
+        neededBy: [],
+        resolvedIn: ["proseGone"],
+        driftedIn: [],
+        typeDrift: [],
+      },
     ]);
+  });
+
+  test("a retyped return is drift, not a resolution", () => {
+    const retyped = surface("retyped", "b2d", [getBody(["b2BodyId"], BODY_REASON)]);
+    expect(returnCorrectionProvenance(GET_BODY_ENTRIES, [retyped])).toEqual([
+      {
+        key: GET_BODY,
+        sightedIn: ["retyped"],
+        neededBy: [],
+        resolvedIn: [],
+        driftedIn: ["retyped"],
+        typeDrift: ["retyped: pinned b2Body, found b2BodyId"],
+      },
+    ]);
+  });
+
+  test("a retype the prose no longer contradicts is still drift", () => {
+    const retyped = surface("retypedNew", "b2d", [getBody(["b2BodyId"], "the body.")]);
+    expect(returnCorrectionProvenance(GET_BODY_ENTRIES, [retyped])).toEqual([
+      {
+        key: GET_BODY,
+        sightedIn: ["retypedNew"],
+        neededBy: [],
+        resolvedIn: [],
+        driftedIn: ["retypedNew"],
+        typeDrift: ["retypedNew: pinned b2Body, found b2BodyId"],
+      },
+    ]);
+  });
+
+  test("a nil token beside a changed base does not resolve it", () => {
+    const retypedNil = surface("retypedNil", "b2d", [getBody(["b2BodyId", "nil"], BODY_REASON)]);
+    expect(returnCorrectionProvenance(GET_BODY_ENTRIES, [retypedNil])).toEqual([
+      {
+        key: GET_BODY,
+        sightedIn: ["retypedNil"],
+        neededBy: [],
+        resolvedIn: [],
+        driftedIn: ["retypedNil"],
+        typeDrift: ["retypedNil: pinned b2Body, found b2BodyId|nil"],
+      },
+    ]);
+  });
+
+  test("the pinned base plus nil still resolves, whatever the token order", () => {
+    const nilFirst = surface("nilFirst", "b2d", [getBody(["nil", "b2Body"], BODY_REASON)]);
+    expect(returnCorrectionProvenance(GET_BODY_ENTRIES, [nilFirst])).toEqual([
+      {
+        key: GET_BODY,
+        sightedIn: ["nilFirst"],
+        neededBy: [],
+        resolvedIn: ["nilFirst"],
+        driftedIn: [],
+        typeDrift: [],
+      },
+    ]);
+  });
+
+  test("drift outranks a needed declaration in the same target", () => {
+    const mixed = surface("mixed", "b2d", [
+      getBody(["b2Body"], BODY_REASON),
+      getBody(["b2BodyId"], BODY_REASON),
+    ]);
+    expect(returnCorrectionProvenance(GET_BODY_ENTRIES, [mixed])).toEqual([
+      {
+        key: GET_BODY,
+        sightedIn: ["mixed"],
+        neededBy: [],
+        resolvedIn: [],
+        driftedIn: ["mixed"],
+        typeDrift: ["mixed: pinned b2Body, found b2BodyId"],
+      },
+    ]);
+  });
+
+  test("recording a drifted target cannot clear it", () => {
+    const old = surface("old", "b2d", [getBody(["b2Body"], BODY_REASON)]);
+    const retyped = surface("retyped", "b2d", [getBody(["b2BodyId"], BODY_REASON)]);
+    const provenance = returnCorrectionProvenance(GET_BODY_ENTRIES, [old, retyped]);
+    expect(provenance[0]?.driftedIn).toEqual(["retyped"]);
+    expect(provenance[0]?.resolvedIn).toEqual([]);
+    expect(resolvedUpstreamDrift(provenance, { [GET_BODY]: ["retyped"] })).not.toEqual([]);
   });
 
   test("a return-type correction is deletable only once no retained target needs it", () => {
@@ -251,7 +347,16 @@ describe("per-target provenance — mixed-version inputs", () => {
     const old = surface("old", "b2d", [getBody(["b2Body"], BODY_REASON)]);
     expect(
       returnCorrectionProvenance([["b2d.no_such_function", GET_BODY_CORRECTION]], [old]),
-    ).toEqual([{ key: "b2d.no_such_function", sightedIn: [], neededBy: [], resolvedIn: [] }]);
+    ).toEqual([
+      {
+        key: "b2d.no_such_function",
+        sightedIn: [],
+        neededBy: [],
+        resolvedIn: [],
+        driftedIn: [],
+        typeDrift: [],
+      },
+    ]);
   });
 });
 
@@ -380,12 +485,22 @@ describe("return-type correction provenance", () => {
     expect(unresolved).toEqual([]);
   });
 
+  test("the return type pin holds wherever the correction applies", () => {
+    expect(provenance.flatMap((entry) => entry.typeDrift)).toEqual([]);
+  });
+
   test("every correction is still needed by some retained target", () => {
-    // A red here means every retained target now declares the token or dropped
-    // the contradicting prose: delete the RETURN_TYPE_CORRECTIONS entry, never
-    // re-pin it, once no retained target needs it.
+    // A red here means every retained target now declares the nil or dropped the
+    // contradicting prose *with the pinned base intact*: delete the
+    // RETURN_TYPE_CORRECTIONS entry, never re-pin it, once no retained target
+    // needs it. A target that retyped the base is drift, not a resolution — the
+    // pin assertion above reports it, and it is excluded here so a pending drift
+    // never reads as a deletion demand.
     const redundant = provenance
-      .filter((entry) => entry.sightedIn.length > 0 && entry.neededBy.length === 0)
+      .filter(
+        (entry) =>
+          entry.sightedIn.length > 0 && entry.neededBy.length === 0 && entry.driftedIn.length === 0,
+      )
       .map(
         (entry) =>
           `${entry.key}: every retained target (${entry.resolvedIn.join(", ")}) now documents it — delete the correction`,
