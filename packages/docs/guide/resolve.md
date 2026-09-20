@@ -88,9 +88,9 @@ that renamed its module folder — the match is then **verified against the
 downloaded archive**: `resolve` reads the archive's `.lua` require paths and
 materializes only the modules it actually ships. A repo-name match the archive
 does not confirm is reported **unverified** (a `stderr` warning) and never
-materialized, so a collision cannot inject the wrong types. A declared library
-whose vendored `.d.ts` is missing from the shipped corpus is likewise warned and
-skipped rather than failing the run.
+materialized when the dependency is asset-only, so a collision cannot inject the
+wrong types. A declared library whose vendored `.d.ts` is missing from the
+shipped corpus is likewise warned and skipped rather than failing the run.
 
 A library that documents itself — shipping both its Lua modules and its own
 `.script_api` — keeps the curated types: the confirmed match wins, and that
@@ -98,6 +98,12 @@ dependency contributes no ambient `extensions/` namespace. Upgrading to this
 behavior reconciles itself; an `extensions/` namespace an earlier run wrote for
 such a dependency is pruned and its tsconfig entry dropped, so the stale ambient
 declarations cannot collide with the curated module.
+
+When such a self-documenting dependency's match stays **unconfirmed** — the
+archive ships none of the vendored library's module paths — it
+keeps its own namespace from its `.script_api`, is not reported as a library at
+all, and raises no warning. Its types came from the archive itself, so nothing
+is missing and a warning would be noise.
 
 ## Dependency scene sources
 
