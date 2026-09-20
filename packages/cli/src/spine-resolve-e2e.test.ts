@@ -105,6 +105,7 @@ describe("extension-spine resolves and its materialized types are usable end to 
         url: URL,
         provenance: "download",
         namespaces: ["gui", "resource", "spine"],
+        typeSurface: "extension",
         scriptApiCount: 3,
         sceneSources: 0,
         assetOnly: false,

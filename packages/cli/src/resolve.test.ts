@@ -1,5 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { readCliVersion } from "./cli-version";
@@ -98,6 +105,7 @@ describe("runResolve", () => {
         url,
         provenance: "download",
         namespaces: ["alpha"],
+        typeSurface: "extension",
         scriptApiCount: 1,
         sceneSources: 0,
         assetOnly: false,
@@ -133,6 +141,7 @@ describe("runResolve", () => {
         url,
         provenance: "download",
         namespaces: [],
+        typeSurface: "none",
         scriptApiCount: 0,
         sceneSources: 0,
         assetOnly: true,
@@ -805,6 +814,325 @@ describe("runResolve library matching", () => {
       "skipping library module mylib.core: no generated .d.ts in the vendored corpus",
     );
     expect(warnings).toEqual([]);
+  });
+});
+
+describe("runResolve corpus match precedes .script_api", () => {
+  const MYLIB = "declare module 'mylib.core' { export const version: string; }\n";
+
+  function seedGenerated(): string {
+    const dir = tmp();
+    writeFileSync(join(dir, "mylib.core.d.ts"), MYLIB);
+    return dir;
+  }
+
+  const registry = [{ sourceId: "mylib", modules: ["mylib.core"] }];
+
+  // A self-documenting pure-Lua library: it ships the corpus module `mylib.core`
+  // *and* its own `.script_api`, so it is not asset-only yet the curated types
+  // must still win.
+  function selfDocumentingMylib(url: string): Record<string, FakeArchive> {
+    return {
+      [extensionArchiveKey(url)]: {
+        entries: ["mylib-main/mylib/core.lua", "mylib-main/ext/api/alpha.script_api"],
+        contents: { "mylib-main/ext/api/alpha.script_api": ALPHA },
+      },
+    };
+  }
+
+  test("a confirmed corpus match carrying its own .script_api materializes the curated types and writes no extension namespace", async () => {
+    const cwd = tmp();
+    const url = "https://github.com/owner/mylib/archive/main.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(selfDocumentingMylib(url)),
+      libraryRegistry: registry,
+      libraryGeneratedDir: seedGenerated(),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(readFileSync(join(cwd, ".defold-types", LIBRARIES_DIR, "mylib.core.d.ts"), "utf8")).toBe(
+      MYLIB,
+    );
+    expect(result.libraries).toEqual([
+      { url, source: "mylib", modules: ["mylib.core"], provenance: "vendored", verified: true },
+    ]);
+
+    expect(existsSync(join(cwd, ".defold-types", "extensions"))).toBe(false);
+    expect(result.materializedSurface).toBeNull();
+    expect(result.extensions[0]?.namespaces).toEqual([]);
+  });
+
+  test("a superseded bundle still unpacks its scene sources and still reports its version and pin status", async () => {
+    const cwd = tmp();
+    const url = "https://github.com/owner/mylib/archive/main.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(url)]: {
+        entries: [
+          "mylib-main/game.project",
+          "mylib-main/mylib/core.lua",
+          "mylib-main/ext/api/alpha.script_api",
+          "mylib-main/mylib/widget.gui",
+        ],
+        contents: {
+          "mylib-main/game.project": `[project]\ntitle = Mylib\n\n[library]\ninclude_dirs = mylib\n`,
+          "mylib-main/ext/api/alpha.script_api": ALPHA,
+          "mylib-main/mylib/widget.gui": 'name: "widget"\n',
+        },
+      },
+    };
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(byKey),
+      libraryRegistry: registry,
+      libraryGeneratedDir: seedGenerated(),
+    });
+
+    expect(result.ok).toBe(true);
+    // Suppressing the type surface must not filter the bundle out of the run.
+    expect(result.extensions[0]?.sceneSources).toBe(1);
+    expect(result.extensions[0]?.resolvedVersion).toMatch(/^sha256:[0-9a-f]{64}$/);
+    expect(result.extensions[0]?.pinStatus).toBe("unpinned");
+    expect(result.extensions[0]?.assetOnly).toBe(false);
+  });
+
+  test("a native extension matching no corpus entry still writes its namespace", async () => {
+    const cwd = tmp();
+    const url = "https://example.com/alpha.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(url)]: {
+        entries: ["ext/api/alpha.script_api"],
+        contents: { "ext/api/alpha.script_api": ALPHA },
+      },
+    };
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(byKey),
+      libraryRegistry: registry,
+      libraryGeneratedDir: seedGenerated(),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(existsSync(join(cwd, ".defold-types", "extensions", "alpha.d.ts"))).toBe(true);
+    expect(result.extensions[0]?.namespaces).toEqual(["alpha"]);
+    expect(result.libraries).toEqual([]);
+  });
+
+  test("a mixed project materializes both surfaces, with only the native extension's namespace", async () => {
+    const cwd = tmp();
+    const libUrl = "https://github.com/owner/mylib/archive/main.zip";
+    const extUrl = "https://example.com/alpha.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${libUrl}\ndependencies#1 = ${extUrl}\n`);
+    const byKey: Record<string, FakeArchive> = {
+      ...selfDocumentingMylib(libUrl),
+      [extensionArchiveKey(extUrl)]: {
+        entries: ["ext/api/alpha.script_api"],
+        contents: { "ext/api/alpha.script_api": ALPHA },
+      },
+    };
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(byKey),
+      libraryRegistry: registry,
+      libraryGeneratedDir: seedGenerated(),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(existsSync(join(cwd, ".defold-types", LIBRARIES_DIR, "mylib.core.d.ts"))).toBe(true);
+    expect(readdirSync(join(cwd, ".defold-types", "extensions")).sort()).toEqual([
+      "alpha.d.ts",
+      "index.d.ts",
+      "package.json",
+    ]);
+    expect(result.extensions.find((e) => e.url === libUrl)?.namespaces).toEqual([]);
+    expect(result.extensions.find((e) => e.url === extUrl)?.namespaces).toEqual(["alpha"]);
+  });
+
+  test("a repo-name match the archive does not confirm still resolves through the extension arm", async () => {
+    const cwd = tmp();
+    // The repo name matches `mylib`, but the archive ships no `mylib/core.lua`,
+    // so the match stays unconfirmed and must not suppress the namespace.
+    const url = "https://github.com/other-owner/mylib/archive/main.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(url)]: {
+        entries: ["mylib-main/somethingelse/init.lua", "mylib-main/ext/api/alpha.script_api"],
+        contents: { "mylib-main/ext/api/alpha.script_api": ALPHA },
+      },
+    };
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(byKey),
+      libraryRegistry: registry,
+      libraryGeneratedDir: seedGenerated(),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(existsSync(join(cwd, ".defold-types", LIBRARIES_DIR))).toBe(false);
+    expect(existsSync(join(cwd, ".defold-types", "extensions", "alpha.d.ts"))).toBe(true);
+    expect(result.extensions[0]?.namespaces).toEqual(["alpha"]);
+    // The bundle got its types from its own `.script_api`, so a bare repo-name
+    // collision is not an unverified library the user is missing: no entry, and
+    // so no "not materialized" warning.
+    expect(result.libraries).toEqual([]);
+  });
+
+  test("an existing extensions surface is cleared when its dependency becomes a confirmed match", async () => {
+    const cwd = tmp();
+    const url = "https://github.com/owner/mylib/archive/main.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+    // Seed what an older resolve run left behind for this same dependency.
+    const staleDir = join(cwd, ".defold-types", "extensions");
+    mkdirSync(staleDir, { recursive: true });
+    writeFileSync(join(staleDir, "alpha.d.ts"), "declare namespace alpha {}\n");
+    writeFileSync(
+      join(cwd, "tsconfig.json"),
+      `${JSON.stringify(
+        {
+          compilerOptions: {
+            typeRoots: [".defold-types"],
+            types: ["@defold-typescript/types", "extensions"],
+          },
+        },
+        null,
+        2,
+      )}\n`,
+    );
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(selfDocumentingMylib(url)),
+      libraryRegistry: registry,
+      libraryGeneratedDir: seedGenerated(),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(existsSync(join(cwd, ".defold-types", LIBRARIES_DIR, "mylib.core.d.ts"))).toBe(true);
+    expect(existsSync(staleDir)).toBe(false);
+    const tsconfig = JSON.parse(readFileSync(join(cwd, "tsconfig.json"), "utf8")) as {
+      compilerOptions: { types: string[] };
+    };
+    expect(tsconfig.compilerOptions.types).not.toContain("extensions");
+    expect(tsconfig.compilerOptions.types).toContain("@defold-typescript/types");
+  });
+
+  test("a project keeping one genuine native extension keeps the directory and the tsconfig entry", async () => {
+    const cwd = tmp();
+    const libUrl = "https://github.com/owner/mylib/archive/main.zip";
+    const extUrl = "https://example.com/alpha.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${libUrl}\ndependencies#1 = ${extUrl}\n`);
+    const byKey: Record<string, FakeArchive> = {
+      ...selfDocumentingMylib(libUrl),
+      [extensionArchiveKey(extUrl)]: {
+        entries: ["ext/api/alpha.script_api"],
+        contents: { "ext/api/alpha.script_api": ALPHA },
+      },
+    };
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(byKey),
+      libraryRegistry: registry,
+      libraryGeneratedDir: seedGenerated(),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(existsSync(join(cwd, ".defold-types", "extensions", "alpha.d.ts"))).toBe(true);
+    const tsconfig = JSON.parse(readFileSync(join(cwd, "tsconfig.json"), "utf8")) as {
+      compilerOptions: { types: string[] };
+    };
+    expect(tsconfig.compilerOptions.types).toContain("extensions");
+  });
+
+  test("removing every [dependencies] entry reconciles the extension surface too", async () => {
+    const cwd = tmp();
+    const cacheDir = tmp();
+    const generatedDir = seedGenerated();
+    const url = "https://example.com/alpha.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(url)]: {
+        entries: ["ext/api/alpha.script_api"],
+        contents: { "ext/api/alpha.script_api": ALPHA },
+      },
+    };
+
+    await runResolve({
+      cwd,
+      cacheDir,
+      download: someBytes,
+      readZip: makeReadZip(byKey),
+      libraryRegistry: registry,
+      libraryGeneratedDir: generatedDir,
+    });
+    expect(existsSync(join(cwd, ".defold-types", "extensions", "alpha.d.ts"))).toBe(true);
+
+    writeFileSync(join(cwd, "game.project"), "[project]\ntitle = Test\n");
+    const result = await runResolve({
+      cwd,
+      cacheDir,
+      download: someBytes,
+      readZip: () => {
+        throw new Error("readZip should not be called");
+      },
+      libraryRegistry: registry,
+      libraryGeneratedDir: generatedDir,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(existsSync(join(cwd, ".defold-types", "extensions"))).toBe(false);
+    const tsconfig = JSON.parse(readFileSync(join(cwd, "tsconfig.json"), "utf8")) as {
+      compilerOptions: { types: string[] };
+    };
+    expect(tsconfig.compilerOptions.types).not.toContain("extensions");
+  });
+
+  test("a .script_api-free corpus match keeps resolving as a vendored library", async () => {
+    const cwd = tmp();
+    const url = "https://github.com/owner/mylib/archive/main.zip";
+    writeProject(cwd, `[project]\ndependencies#0 = ${url}\n`);
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(url)]: {
+        entries: ["mylib-main/mylib/core.lua", "mylib-main/asset/foo.png"],
+        contents: {},
+      },
+    };
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(byKey),
+      libraryRegistry: registry,
+      libraryGeneratedDir: seedGenerated(),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(existsSync(join(cwd, ".defold-types", LIBRARIES_DIR, "mylib.core.d.ts"))).toBe(true);
+    expect(result.extensions[0]?.assetOnly).toBe(true);
+    expect(result.extensions[0]?.namespaces).toEqual([]);
   });
 });
 

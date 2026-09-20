@@ -1410,13 +1410,16 @@ function dispatchCommand(
             io.stdout.write("defold-typescript resolve: no extension dependencies declared\n");
           } else {
             for (const ext of result.extensions) {
-              if (ext.assetOnly) {
-                const library = result.libraries.find((lib) => lib.url === ext.url);
-                if (library?.verified) {
-                  io.stdout.write(
-                    `  ${library.modules.join(", ")} <- ${ext.url} (vendored library)\n`,
-                  );
-                } else if (library !== undefined) {
+              // A confirmed corpus match decides the surface, so look for the
+              // library before branching on `assetOnly` — a self-documenting
+              // library is not asset-only yet still prints as a library.
+              const library = result.libraries.find((lib) => lib.url === ext.url);
+              if (library?.verified) {
+                io.stdout.write(
+                  `  ${library.modules.join(", ")} <- ${ext.url} (vendored library)\n`,
+                );
+              } else if (ext.assetOnly) {
+                if (library !== undefined) {
                   writeWarning(
                     `defold-typescript resolve: unverified library match for ${ext.url}: repo name matched but no shipped module path was found in the archive; not materialized`,
                   );

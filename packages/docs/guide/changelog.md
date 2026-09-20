@@ -13,6 +13,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Breaking
 
+- **A pure-Lua library that ships its own `.script_api` now gets this toolchain's curated types instead of an ambient namespace generated from that doc.** [`resolve`](./resolve.md) matches every dependency against the vendored corpus first, and a confirmed match decides the type surface — so [boom](/api/boom) and [bridge](/api/bridge) resolve as the `declare module` surface they are really consumed through. Import them by their `require` path (`import * as boom from 'boom.boom'`) rather than reaching for a global; the stale `extensions/` namespace an earlier run wrote is pruned and its tsconfig entry dropped, so nothing collides during the switch. Dependencies whose repo name matches nothing, and unconfirmed matches, are unaffected.
 - **Five return types now carry what the engine actually returns, matching the reference and the `@example` shipped beside them.** Three of them gain values that can be absent, so the call sites below need a `??` default or a narrowing check.
   - **[`resource.get_render_target_info`](/api/resource)** — the per-attachment fields (`handle`, `width`, `height`, `depth`, `mipmaps`, `type`, `buffer_type`, `texture`) sat beside the top-level `handle` instead of inside the documented `attachments` array. Read them as `info.attachments[0].handle`; `texture` is optional, since the reference documents it only for a render target passed in as a resource.
   - **[`window.get_safe_area`](/api/window)** — the eight keys were wrapped in a `safe_area` level the engine never returns. Drop it: `window.get_safe_area().inset_left`.
@@ -20,8 +21,13 @@ What changed in each published `defold-typescript` toolchain release.
   - **[`sys.get_ifaddrs`](/api/sys)** — `address` and `mac` are optional, which the reference has always said: "might be `nil` if not available".
   - **[`b2d.get_body`](/api/b2d)** — returns `undefined` when the url names no collision object, as the reference's "Otherwise nil" says.
 
+### Improved
+
+- **[`resolve --json`](./agent-runbooks.md) now says which type surface each dependency contributed.** Every `extensions[]` entry carries `typeSurface` — `"extension"`, `"vendored-library"` or `"none"` — so an empty `namespaces` reads as the normal outcome it is rather than a failure, and summing `extensions[].namespaces` with `libraries[].modules` counts each module exactly once. Every declared dependency keeps its entry, pin fields included.
+
 ### Fixed
 
+- **[`resolve`](./resolve.md) now clears the extension surface when nothing declares one.** Removing the last `.script_api` dependency — or every `[dependencies]` entry — used to leave `.defold-types/extensions/` and its `"extensions"` tsconfig entry behind, so retired ambient declarations kept loading; all three surfaces now reconcile to exactly what is declared.
 - **[`setup-debug`](./debugging.md) now works from your configured sources instead of assuming `src/`.** A project whose `tsconfig.json` `include` names other roots, exact files, or a configured `outDir` used to get "no entry script found" or the bootstrap in the wrong file; entry-script selection, the stale-block cleanup and the ambient `lldebugger.debug.d.ts` — now written next to the entry script so the compiler picks it up — all follow `include`, and a target that is not one of those configured sources is refused by name and cause — outside the patterns, a declaration file, or under a generated or dependency tree such as `build`/`node_modules` — whether you named it with `--script` or the boot path reached it.
 
 ## v0.36.0
