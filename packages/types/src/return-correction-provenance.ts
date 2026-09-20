@@ -220,37 +220,87 @@ export interface ReturnTypeProvenance {
   readonly sightedIn: readonly string[];
   readonly neededBy: readonly string[];
   readonly resolvedIn: readonly string[];
+  readonly driftedIn: readonly string[];
+  readonly typeDrift: readonly string[];
+}
+
+// Same ranking argument as `FIELD_VERDICT_RANK`: `emitReturn` applies the
+// correction to every declaration of the FQN in a target, so one drifted
+// declaration makes that target's emit wrong whatever its siblings say.
+type ReturnVerdict = "drift" | "needed" | "resolved";
+
+const RETURN_VERDICT_RANK: Record<ReturnVerdict, number> = {
+  drift: 2,
+  needed: 1,
+  resolved: 0,
+};
+
+function baseTokens(tokens: readonly string[]): string {
+  return tokens.filter((token) => token !== "nil").join("|");
 }
 
 // The return-type class has the same two-sided evidence: the declared tokens
 // still say what the correction contradicts, and the slot prose still states the
 // contradiction. A target that fixes either half no longer needs the entry.
+//
+// Unlike the field lane, a changed base type is drift here rather than a
+// resolution. A field correction only flips `optional` and leaves the type
+// parser-authoritative, so a retyped field still emits what upstream declares; a
+// return correction replaces the whole emitted type, so a base upstream no longer
+// declares means the correction now overwrites a type nobody verified — a
+// decision for a human, not a deletion and not a silent bank.
 export function returnCorrectionProvenance(
   entries: readonly [string, ReturnTypeCorrection][],
   surfaces: readonly ProvenanceSurface[],
 ): ReturnTypeProvenance[] {
   return entries.map(([key, correction]) => {
     const namespace = namespaceOf(key);
+    const pinned = baseTokens(correction.upstream);
 
-    const neededByTarget = new Map<string, boolean>();
+    const verdicts = new Map<string, ReturnVerdict>();
+    const drift = new Map<string, Set<string>>();
     for (const surface of surfaces) {
       if (surface.namespace !== namespace) continue;
       // The correction rewrites the first return only, so only that slot is
       // evidence; a declaration with no returns at all sights nothing.
       for (const slot of firstReturnSlots(surface.doc, key)) {
-        const needed =
-          (slot.types ?? []).join("|") === correction.upstream.join("|") &&
-          decodeSlotProse(slot.doc ?? "").includes(correction.reason);
-        neededByTarget.set(surface.target, (neededByTarget.get(surface.target) ?? false) || needed);
+        const tokens = slot.types ?? [];
+
+        let verdict: ReturnVerdict;
+        if (baseTokens(tokens) !== pinned) {
+          verdict = "drift";
+          const messages = drift.get(surface.target) ?? new Set<string>();
+          drift.set(surface.target, messages);
+          messages.add(
+            `${surface.target}: pinned ${correction.upstream.join("|")}, found ${tokens.join("|")}`,
+          );
+        } else if (
+          tokens.includes("nil") ||
+          !decodeSlotProse(slot.doc ?? "").includes(correction.reason)
+        ) {
+          verdict = "resolved";
+        } else {
+          verdict = "needed";
+        }
+
+        const seen = verdicts.get(surface.target);
+        if (seen === undefined || RETURN_VERDICT_RANK[verdict] > RETURN_VERDICT_RANK[seen]) {
+          verdicts.set(surface.target, verdict);
+        }
       }
     }
 
-    const sightedIn = [...neededByTarget.keys()].sort();
+    const sightedIn = [...verdicts.keys()].sort();
+    const inBucket = (verdict: ReturnVerdict) =>
+      sightedIn.filter((target) => verdicts.get(target) === verdict);
+    const driftedIn = inBucket("drift");
     return {
       key,
       sightedIn,
-      neededBy: sightedIn.filter((target) => neededByTarget.get(target) === true),
-      resolvedIn: sightedIn.filter((target) => neededByTarget.get(target) === false),
+      neededBy: inBucket("needed"),
+      resolvedIn: inBucket("resolved"),
+      driftedIn,
+      typeDrift: driftedIn.flatMap((target) => [...(drift.get(target) ?? [])]).sort(),
     };
   });
 }
