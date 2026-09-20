@@ -39,7 +39,7 @@ Defold runs standard Lua 5.1 (LuaJIT), **not** Luau. If you want to read the *ge
 `init` scaffolds a `.vscode/` folder that encodes this:
 
 - `extensions.json` recommends only Local Lua Debugger and marks the Luau LSP as unwanted.
-- `settings.json` sets `Lua.workspace.ignoreDir: ["src"]` so that, *if* you install the optional sumneko Lua server, it does not lint the generated `*.ts.script` output (which would flag TSTL-emitted `self` parameters as unused). Hand-written Defold `.script` files under `main/` stay analyzed. The setting is harmless when sumneko is absent.
+- `settings.json` sets `Lua.workspace.ignoreDir` to your `tsconfig.json` source roots[^src-root] — `["src"]` for the default scaffold — so that, *if* you install the optional sumneko Lua server, it does not lint the generated `*.ts.script` output (which would flag TSTL-emitted `self` parameters as unused). A root holding hand-authored `.lua` is left out rather than ignored, and `init` reports the file it found; hand-written Defold `.script` files under `main/` stay analyzed either way. The setting is harmless when sumneko is absent.
 - `defold-typescript.code-snippets` expands an empty script over the lifecycle factories (the TypeScript equivalent of the Defold editor's "new script" templates).
 - `launch.json` + `defold-debug.ts` set up a shell-free, Windows-native debug launch path. See [Debugging](debugging.md).
 - `tasks.json` registers `defold-typescript: build` / `defold-typescript: watch` tasks with a shared problem matcher, so transpile errors land in the editor's Problems panel.

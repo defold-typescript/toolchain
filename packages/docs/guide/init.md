@@ -75,6 +75,19 @@ refresh rewrites only `description` and `run` inside each managed
 `env`, a comment of your own — are carried across every re-run. A managed task
 the scaffold stops shipping is removed with whatever you added to it.
 
+The file rules the scaffold manages read your layout off `tsconfig.json`
+`include`[^src-root] rather than assuming `src/`. Generated component output is
+ignored by its `.ts.` suffix, which no hand-authored Defold path has, so it needs
+no folder at all; `biome.json` lints exactly the patterns you compile; and
+`Lua.workspace.ignoreDir` claims one of your source roots only when nothing under
+it is hand-authored Lua, reporting the file it found when it skips. A generated
+`.lua` module is therefore tracked like any other file — set
+`compilerOptions.outDir` to keep build artifacts out of the tree. Re-running
+`init` retires the older `src`-shaped rules from a project that still carries the
+complete set, leaving every entry you added in place. The one exception is a
+`biome.json` you have hand-edited to hold comments: it cannot be rewritten
+without destroying them, so it is reported and left for you to update.
+
 ## Flags
 
 - `--template <name>` — pick a starter template when **creating a new project**
