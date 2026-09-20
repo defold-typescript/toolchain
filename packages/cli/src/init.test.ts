@@ -12,13 +12,18 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { SCRIPT_HOOK_NAMES } from "@defold-typescript/types";
 import { runBuild } from "./build";
+import { GENERATED_BANNER } from "./build-output";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import {
+  authoredLuaUnder,
   BIOME_JSON_CONTENT,
+  biomeIncludesFromInclude,
   LUA_TYPES_SPEC,
+  RETIRED_MANAGED_ENTRIES,
   reconcileManagedList,
   runInit,
   SCAFFOLD_DEV_DEPS,
+  sourceRootsFromInclude,
   TYPESCRIPT_SPEC,
   VSCODE_SNIPPETS_CONTENT,
 } from "./init";
@@ -447,16 +452,14 @@ describe("runInit (add-TS mode)", () => {
     expect(main).not.toContain("export function init");
   });
 
-  test("scaffolded .gitignore ignores generated Lua outputs next to source", () => {
+  test("scaffolded .gitignore ignores generated component output wherever it lands", () => {
     touch("game.project", "[project]\n");
 
     runInit({ cwd });
 
     const gitignore = readFileSync(path.join(cwd, ".gitignore"), "utf8");
-    expect(gitignore).toMatch(/^src\/\*\*\/\*\.ts\.script$/m);
-    expect(gitignore).toMatch(/^src\/\*\*\/\*\.ts\.script\.map$/m);
-    expect(gitignore).toMatch(/^src\/\*\*\/\*\.lua$/m);
-    expect(gitignore).toMatch(/^src\/\*\*\/\*\.lua\.map$/m);
+    expect(gitignore).toMatch(/^\*\*\/\*\.ts\.script$/m);
+    expect(gitignore).toMatch(/^\*\*\/\*\.ts\.script\.map$/m);
   });
 
   test("scaffolded .gitignore ignores node_modules", () => {
@@ -505,9 +508,8 @@ describe("runInit (add-TS mode)", () => {
     for (const line of [...DEFOLD_ARTIFACT_IGNORE_LINES, ...ROOT_TSTL_BUNDLE_IGNORE_LINES]) {
       expect(gitignore).toContain(line);
     }
-    for (const line of PRE_DEFOLD_ARTIFACT_GITIGNORE.split("\n")) {
-      expect(gitignore).toContain(line);
-    }
+    expect(gitignore).toContain("node_modules");
+    expect(gitignore).toContain(".vscode/dmengine*");
   });
 
   test("gitignore backfill is idempotent for Defold and root bundle lines", () => {
@@ -693,8 +695,8 @@ describe("runInit (add-TS mode)", () => {
 
     const gitignore = readFileSync(path.join(cwd, ".gitignore"), "utf8");
     for (const suffix of ["gui_script", "render_script"]) {
-      expect(gitignore).toMatch(new RegExp(`^src/\\*\\*/\\*\\.ts\\.${suffix}$`, "m"));
-      expect(gitignore).toMatch(new RegExp(`^src/\\*\\*/\\*\\.ts\\.${suffix}\\.map$`, "m"));
+      expect(gitignore).toMatch(new RegExp(`^\\*\\*/\\*\\.ts\\.${suffix}$`, "m"));
+      expect(gitignore).toMatch(new RegExp(`^\\*\\*/\\*\\.ts\\.${suffix}\\.map$`, "m"));
     }
 
     const biome = JSON.parse(readFileSync(path.join(cwd, "biome.json"), "utf8")) as {
@@ -702,8 +704,6 @@ describe("runInit (add-TS mode)", () => {
     };
     expect(biome.files.includes).toContain("!**/*.ts.gui_script");
     expect(biome.files.includes).toContain("!**/*.ts.render_script");
-    expect(biome.files.includes).toContain("!src/**/*.lua");
-    expect(biome.files.includes).toContain("!src/**/*.lua.map");
   });
 
   test("appends ignore lines to an existing .gitignore without clobbering, idempotently", () => {
@@ -714,10 +714,8 @@ describe("runInit (add-TS mode)", () => {
     const afterFirst = readFileSync(path.join(cwd, ".gitignore"), "utf8");
     expect(afterFirst).toContain("node_modules");
     expect(afterFirst).toContain("*.log");
-    expect(afterFirst).toMatch(/^src\/\*\*\/\*\.ts\.script$/m);
-    expect(afterFirst).toMatch(/^src\/\*\*\/\*\.ts\.script\.map$/m);
-    expect(afterFirst).toMatch(/^src\/\*\*\/\*\.lua$/m);
-    expect(afterFirst).toMatch(/^src\/\*\*\/\*\.lua\.map$/m);
+    expect(afterFirst).toMatch(/^\*\*\/\*\.ts\.script$/m);
+    expect(afterFirst).toMatch(/^\*\*\/\*\.ts\.script\.map$/m);
 
     // A second run must not duplicate the ignore lines.
     const second = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-init-rerun-"));
@@ -2278,5 +2276,205 @@ describe("runInit (merges an existing tsconfig)", () => {
     const result = runInit({ cwd });
     const op = result.operations.find((o) => o.target === "tsconfig.json");
     expect(op?.status).toBe("written");
+  });
+});
+
+describe("managed scaffold rules derived from tsconfig include", () => {
+  function readJson(rel: string): Record<string, unknown> {
+    return JSON.parse(readFileSync(path.join(cwd, rel), "utf8"));
+  }
+
+  function seed(rel: string, contents: string): void {
+    mkdirSync(path.dirname(path.join(cwd, rel)), { recursive: true });
+    writeFileSync(path.join(cwd, rel), contents);
+  }
+
+  // The v0.36.0 managed forms verbatim, as a project upgraded from that tag
+  // still carries them on disk.
+  function seedReleasedProject(): void {
+    touch("game.project", "[project]\n");
+    seed(
+      "tsconfig.json",
+      `${JSON.stringify({ compilerOptions: {}, include: ["game/**/*.ts"] })}\n`,
+    );
+    seed("game/main.ts", "// entry\n");
+    seed(".gitignore", `${[...RETIRED_MANAGED_ENTRIES.gitignore, "/dist"].join("\n")}\n`);
+    seed(
+      "biome.json",
+      `${JSON.stringify(
+        {
+          $schema: BIOME_JSON_CONTENT.$schema,
+          files: { includes: [...RETIRED_MANAGED_ENTRIES.biomeIncludes, "custom/**/*.ts"] },
+          linter: { rules: { preset: "recommended", style: { useConst: "error" } } },
+        },
+        null,
+        2,
+      )}\n`,
+    );
+    seed(
+      ".vscode/settings.json",
+      `${JSON.stringify({ "Lua.workspace.ignoreDir": ["src", "build"], "editor.tabSize": 4 }, null, 2)}\n`,
+    );
+  }
+
+  test("a fresh scaffold ignores component output by suffix, with no folder and no plain Lua", () => {
+    touch("game.project", "[project]\n");
+
+    runInit({ cwd });
+
+    const lines = readFileSync(path.join(cwd, ".gitignore"), "utf8").split("\n");
+    for (const suffix of [
+      ".ts.script",
+      ".ts.script.map",
+      ".ts.gui_script",
+      ".ts.gui_script.map",
+      ".ts.render_script",
+      ".ts.render_script.map",
+    ]) {
+      expect(lines).toContain(`**/*${suffix}`);
+    }
+    expect(lines.filter((line) => line.startsWith("src/"))).toEqual([]);
+    expect(lines.filter((line) => /^\*\*\/\*\.lua(\.map)?$/.test(line))).toEqual([]);
+  });
+
+  test("a re-init retires the released src-shaped rules and keeps everything else", () => {
+    seedReleasedProject();
+
+    runInit({ cwd, force: true });
+
+    const gitignore = readFileSync(path.join(cwd, ".gitignore"), "utf8").split("\n");
+    for (const line of RETIRED_MANAGED_ENTRIES.gitignore) {
+      expect(gitignore).not.toContain(line);
+    }
+    expect(gitignore).toContain("**/*.ts.script");
+    expect(gitignore).toContain("/dist");
+
+    const biome = readJson("biome.json") as {
+      files: { includes: string[] };
+      linter: { rules: { style?: { useConst?: string } } };
+    };
+    for (const entry of RETIRED_MANAGED_ENTRIES.biomeIncludes) {
+      expect(biome.files.includes).not.toContain(entry);
+    }
+    expect(biome.files.includes).toContain("game/**/*.ts");
+    expect(biome.files.includes).toContain("custom/**/*.ts");
+    expect(biome.linter.rules.style?.useConst).toBe("error");
+
+    const settings = readJson(".vscode/settings.json");
+    expect(settings["Lua.workspace.ignoreDir"]).toEqual(["build", "game"]);
+    expect(settings["editor.tabSize"]).toBe(4);
+  });
+
+  test("a partial released set is the user's own and is left alone", () => {
+    touch("game.project", "[project]\n");
+    seed(
+      "tsconfig.json",
+      `${JSON.stringify({ compilerOptions: {}, include: ["game/**/*.ts"] })}\n`,
+    );
+    seed("game/main.ts", "// entry\n");
+    seed(".gitignore", "src/**/*.lua\n");
+
+    runInit({ cwd, force: true });
+
+    expect(readFileSync(path.join(cwd, ".gitignore"), "utf8").split("\n")).toContain(
+      "src/**/*.lua",
+    );
+  });
+
+  test("a biome include holding the complete retired set plus a user pattern still migrates", () => {
+    seedReleasedProject();
+
+    runInit({ cwd, force: true });
+
+    const biome = readJson("biome.json") as { files: { includes: string[] } };
+    expect(biome.files.includes).toContain("custom/**/*.ts");
+    expect(biome.files.includes).not.toContain("src/**/*.ts");
+  });
+
+  test("a biome.json carrying comments is reported and left byte-identical", () => {
+    seedReleasedProject();
+    const jsonc = `{\n  // hand-edited\n  "files": { "includes": ${JSON.stringify(RETIRED_MANAGED_ENTRIES.biomeIncludes)} }\n}\n`;
+    seed("biome.json", jsonc);
+    seed(
+      ".vscode/settings.json",
+      `{\n  // hand-edited\n  "Lua.workspace.ignoreDir": ["src", "build"]\n}\n`,
+    );
+
+    const result = runInit({ cwd, force: true });
+
+    expect(readFileSync(path.join(cwd, "biome.json"), "utf8")).toBe(jsonc);
+    expect(result.warnings.some((w) => w.includes("biome.json"))).toBe(true);
+    expect(readJson(".vscode/settings.json")["Lua.workspace.ignoreDir"]).toEqual(["build", "game"]);
+  });
+
+  test("a second re-init on the migrated project changes no byte", () => {
+    seedReleasedProject();
+    runInit({ cwd, force: true });
+    const after = [".gitignore", "biome.json", ".vscode/settings.json"].map((rel) =>
+      readFileSync(path.join(cwd, rel), "utf8"),
+    );
+
+    runInit({ cwd, force: true });
+
+    expect(
+      [".gitignore", "biome.json", ".vscode/settings.json"].map((rel) =>
+        readFileSync(path.join(cwd, rel), "utf8"),
+      ),
+    ).toEqual(after);
+  });
+
+  test("a folder is claimed only when it holds no authored Lua", () => {
+    touch("game.project", "[project]\n");
+    seed(
+      "tsconfig.json",
+      `${JSON.stringify({ compilerOptions: {}, include: ["game/**/*.ts"] })}\n`,
+    );
+    seed("game/main.ts", "// entry\n");
+    seed("game/helper.lua", "return {}\n");
+
+    runInit({ cwd, force: true });
+
+    expect(authoredLuaUnder(cwd, "game")).toBe(path.join("game", "helper.lua"));
+    expect(readJson(".vscode/settings.json")["Lua.workspace.ignoreDir"]).toBeUndefined();
+
+    writeFileSync(path.join(cwd, "game", "helper.lua"), `return {}\n${GENERATED_BANNER}\n`);
+    rmSync(path.join(cwd, ".vscode", "settings.json"));
+
+    runInit({ cwd, force: true });
+
+    expect(authoredLuaUnder(cwd, "game")).toBeUndefined();
+    expect(readJson(".vscode/settings.json")["Lua.workspace.ignoreDir"]).toEqual(["game"]);
+  });
+
+  test("sourceRootsFromInclude keeps wildcard roots under cwd, in include order", () => {
+    expect(sourceRootsFromInclude(["src/**/*.ts", SCENE_ADDRESSES_DECLARATION])).toEqual(["src"]);
+    expect(sourceRootsFromInclude(["game/**/*.ts", "shared/**/*.ts"])).toEqual(["game", "shared"]);
+    expect(sourceRootsFromInclude(["game/**/*.ts", "game/**/*.tsx"])).toEqual(["game"]);
+  });
+
+  test("sourceRootsFromInclude rejects the project root, escapes, and absolute spellings", () => {
+    for (const entry of [
+      "**/*.ts",
+      "./**/*.ts",
+      "foo/../**/*.ts",
+      "game/entry.ts",
+      "../shared/**/*.ts",
+      "/abs/**/*.ts",
+      "C:\\proj\\**\\*.ts",
+      "\\\\server\\share\\**\\*.ts",
+      "..\\shared\\**\\*.ts",
+    ]) {
+      expect(sourceRootsFromInclude([entry])).toEqual([]);
+    }
+  });
+
+  test("biomeIncludesFromInclude covers what the compiler reads, never empty", () => {
+    expect(biomeIncludesFromInclude(["**/*.ts"])).toContain("**/*.ts");
+    expect(biomeIncludesFromInclude(["game/entry.ts"])).toContain("game/entry.ts");
+    expect(biomeIncludesFromInclude(["game/**/*.ts"])).toContain("!.defold-types/**");
+    for (const include of [["**/*.ts"], ["game/entry.ts"]]) {
+      expect(sourceRootsFromInclude(include)).toEqual([]);
+      expect(biomeIncludesFromInclude(include).length).toBeGreaterThan(0);
+    }
   });
 });

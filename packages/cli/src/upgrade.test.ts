@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { GENERATED_BANNER } from "./build-output";
 import { runInit } from "./init";
 import { SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 import {
@@ -340,6 +341,82 @@ describe("runUpgrade", () => {
     });
     expect(fromNoWritten.written).toEqual([]);
     expect(fromNoWritten.exitCode).toBe(0);
+  });
+
+  test("a scaffold decision taken on the user's behalf reaches an upgrading user", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    writeFileSync(
+      path.join(cwd, "tsconfig.json"),
+      `${JSON.stringify({ compilerOptions: {}, include: ["game/**/*.ts"] })}\n`,
+    );
+    mkdirSync(path.join(cwd, "game"), { recursive: true });
+    writeFileSync(path.join(cwd, "game", "main.ts"), "// entry\n");
+    writeFileSync(path.join(cwd, "game", "helper.lua"), "return {}\n");
+    const { io } = upgradeIo({ latest: "1.3.0" });
+
+    const outcome = await runUpgrade({ cwd, running: "1.3.0", capture: true, io });
+
+    expect(outcome.handedOff).toBe(false);
+    expect(outcome.warnings.some((w) => w.includes("game"))).toBe(true);
+  });
+
+  test("the in-process path reports no warning when only generated Lua is present", async () => {
+    writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+    writeFileSync(
+      path.join(cwd, "tsconfig.json"),
+      `${JSON.stringify({ compilerOptions: {}, include: ["game/**/*.ts"] })}\n`,
+    );
+    mkdirSync(path.join(cwd, "game"), { recursive: true });
+    writeFileSync(path.join(cwd, "game", "main.ts"), "// entry\n");
+    writeFileSync(path.join(cwd, "game", "helper.lua"), `return {}\n${GENERATED_BANNER}\n`);
+    const { io } = upgradeIo({ latest: "1.3.0" });
+
+    const outcome = await runUpgrade({ cwd, running: "1.3.0", capture: true, io });
+
+    expect(outcome.warnings).toEqual([]);
+  });
+
+  test("a captured hand-off surfaces the child's warnings beside its written files", async () => {
+    const { io } = upgradeIo({
+      latest: "1.3.0",
+      stdouts: [
+        `${JSON.stringify({
+          command: "init",
+          ok: true,
+          written: ["package.json"],
+          warnings: ["skipped the game folder claim: game/helper.lua is hand-authored Lua"],
+        })}\n`,
+      ],
+    });
+
+    const outcome = await runUpgrade({ cwd, running: "1.2.0", capture: true, io });
+
+    expect(outcome.written).toEqual(["package.json"]);
+    expect(outcome.warnings).toEqual([
+      "skipped the game folder claim: game/helper.lua is hand-authored Lua",
+    ]);
+  });
+
+  test("a child envelope without warnings, and an unparsable one, yield none and still succeed", async () => {
+    const noWarnings = upgradeIo({ latest: "1.3.0", stdouts: [initEnvelope(["package.json"])] });
+    const fromNoWarnings = await runUpgrade({
+      cwd,
+      running: "1.2.0",
+      capture: true,
+      io: noWarnings.io,
+    });
+    expect(fromNoWarnings.warnings).toEqual([]);
+    expect(fromNoWarnings.exitCode).toBe(0);
+
+    const garbage = upgradeIo({ latest: "1.3.0", stdouts: ["not json {{{"] });
+    const fromGarbage = await runUpgrade({
+      cwd,
+      running: "1.2.0",
+      capture: true,
+      io: garbage.io,
+    });
+    expect(fromGarbage.warnings).toEqual([]);
+    expect(fromGarbage.exitCode).toBe(0);
   });
 
   test("a human hand-off reports no written files and never reads the child's stdout", async () => {
