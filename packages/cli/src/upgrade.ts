@@ -106,7 +106,17 @@ export function handOffArgv(
 // The runner may print its own lines first, so the last parsable `init` envelope
 // wins; an unreadable report yields `[]` and never throws, because a report this
 // process could not parse must not fail an upgrade that otherwise succeeded.
-export function readHandOffWritten(stdout: string): readonly string[] {
+export interface HandOffReport {
+  readonly written: readonly string[];
+  readonly warnings: readonly string[];
+}
+
+const stringsOf = (value: unknown): string[] =>
+  Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : [];
+
+// The child did the scaffolding, so it also raised any decision it took on the
+// user's behalf. Both halves of its envelope are read in one pass.
+export function readHandOffReport(stdout: string): HandOffReport {
   const lines = stdout.split("\n");
   for (let i = lines.length - 1; i >= 0; i--) {
     const line = (lines[i] ?? "").trim();
@@ -121,15 +131,18 @@ export function readHandOffWritten(stdout: string): readonly string[] {
         (parsed as { command?: unknown }).command === "init" &&
         Array.isArray((parsed as { written?: unknown }).written)
       ) {
-        return (parsed as { written: unknown[] }).written.filter(
-          (entry): entry is string => typeof entry === "string",
-        );
+        const envelope = parsed as { written: unknown; warnings?: unknown };
+        return { written: stringsOf(envelope.written), warnings: stringsOf(envelope.warnings) };
       }
     } catch {
       // Not JSON, or not this CLI's envelope: keep walking back through the noise.
     }
   }
-  return [];
+  return { written: [], warnings: [] };
+}
+
+export function readHandOffWritten(stdout: string): readonly string[] {
+  return readHandOffReport(stdout).written;
 }
 
 export function installArgv(env: NodeJS.ProcessEnv = process.env): string[] {
@@ -169,6 +182,10 @@ export interface UpgradeOutcome {
   readonly to: string;
   readonly handedOff: boolean;
   readonly written: readonly string[];
+  // Scaffold decisions the re-init took on the user's behalf. They reach here
+  // from `runInit` in process, and from the delegated child's envelope on a
+  // captured hand-off; an inherited hand-off already printed its own.
+  readonly warnings: readonly string[];
   readonly exitCode: number;
   readonly error?: string;
   readonly output?: string;
@@ -264,6 +281,7 @@ export async function runUpgrade(opts: RunUpgradeOptions): Promise<UpgradeOutcom
   };
 
   let written: readonly string[] = [];
+  let warnings: readonly string[] = [];
   if (plan.action === "hand-off") {
     const handOff = io.spawn(handOffArgv(plan.target, io.env, { capture }), opts.cwd, { capture });
     const code = await handOff.exited;
@@ -273,16 +291,17 @@ export async function runUpgrade(opts: RunUpgradeOptions): Promise<UpgradeOutcom
       return {
         ...base,
         written,
+        warnings,
         exitCode: code,
         error: `defold-typescript upgrade: ${CLI_PACKAGE}@${plan.target} init exited with code ${code}; the project was not upgraded.`,
         ...(await failureOutput(handOff)),
       };
     }
     if (capture) {
-      written = readHandOffWritten((await handOff.stdout) ?? "");
+      ({ written, warnings } = readHandOffReport((await handOff.stdout) ?? ""));
     }
   } else {
-    written = runInit({ cwd: opts.cwd, force: true }).written;
+    ({ written, warnings } = runInit({ cwd: opts.cwd, force: true }));
   }
 
   const install = io.spawn(installArgv(io.env), opts.cwd, { capture });
@@ -291,10 +310,11 @@ export async function runUpgrade(opts: RunUpgradeOptions): Promise<UpgradeOutcom
     return {
       ...base,
       written,
+      warnings,
       exitCode: installCode,
       error: `defold-typescript upgrade: \`${installHint(io.env)}\` exited with code ${installCode}.`,
       ...(await failureOutput(install)),
     };
   }
-  return { ...base, written, exitCode: 0 };
+  return { ...base, written, warnings, exitCode: 0 };
 }

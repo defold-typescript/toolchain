@@ -1796,6 +1796,9 @@ function dispatchCommand(
             capture: json,
             ...(internals?.upgradeInternals ? { io: internals.upgradeInternals } : {}),
           });
+          // A scaffold decision the re-init took belongs beside this route's own
+          // notices: the user never saw the `init` that raised it.
+          const upgradeNotices = [...notices, ...outcome.warnings];
           if (json) {
             io.stdout.write(
               renderResult({
@@ -1804,7 +1807,7 @@ function dispatchCommand(
                 from: outcome.from,
                 to: outcome.to,
                 handedOff: outcome.handedOff,
-                ...(notices.length > 0 ? { warnings: notices } : {}),
+                ...(upgradeNotices.length > 0 ? { warnings: upgradeNotices } : {}),
                 ...(pinMismatch ? { pinMismatch } : {}),
                 ...upstreamRelease,
                 ...unresolvableTargetField,
@@ -1815,7 +1818,7 @@ function dispatchCommand(
           } else if (outcome.error !== undefined) {
             writeError(outcome.error);
           } else {
-            for (const notice of notices) {
+            for (const notice of upgradeNotices) {
               io.stderr.write(`defold-typescript upgrade: ${notice}\n`);
             }
             io.stdout.write(

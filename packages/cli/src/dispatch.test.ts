@@ -5598,6 +5598,31 @@ describe("dispatch upgrade", () => {
     expect(spawned[0]?.cwd).toBe(cwd);
   });
 
+  test("a scaffold decision the upgrade took reaches stderr and the --json envelope", async () => {
+    const seedSkippedClaim = (): void => {
+      writeFileSync(path.join(cwd, "game.project"), "[project]\n");
+      writeFileSync(
+        path.join(cwd, "tsconfig.json"),
+        `${JSON.stringify({ compilerOptions: {}, include: ["game/**/*.ts"] })}\n`,
+      );
+      mkdirSync(path.join(cwd, "game"), { recursive: true });
+      writeFileSync(path.join(cwd, "game", "main.ts"), "// entry\n");
+      writeFileSync(path.join(cwd, "game", "helper.lua"), "return {}\n");
+    };
+
+    seedSkippedClaim();
+    const plain = captureStreams();
+    const plainRun = upgradeHarness({ running: "1.3.0", latest: "1.3.0" });
+    expect(await dispatch(["upgrade", cwd], plain.io, plainRun.internals)).toBe(0);
+    expect(plain.err()).toContain("game");
+
+    const jsonRun = captureStreams();
+    const jsonInternals = upgradeHarness({ running: "1.3.0", latest: "1.3.0" });
+    expect(await dispatch(["upgrade", cwd, "--json"], jsonRun.io, jsonInternals.internals)).toBe(0);
+    const parsed = JSON.parse(jsonRun.out().trim()) as { warnings?: string[] };
+    expect((parsed.warnings ?? []).some((w) => w.includes("game"))).toBe(true);
+  });
+
   test("a successful hand-off is followed by the install command and reports from -> to", async () => {
     writeFileSync(path.join(cwd, "game.project"), "[project]\n");
     const { io, out } = captureStreams();
