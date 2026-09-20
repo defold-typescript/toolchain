@@ -11,7 +11,7 @@ import {
 } from "@defold-typescript/transpiler";
 import type { ScriptHookName } from "@defold-typescript/types";
 import { isFileIncluded } from "./build-output";
-import { DEBUG_LAUNCHER_SOURCE, debugLaunchConfig, vscodeLaunchContent } from "./debug-launcher";
+
 import { repairDefoldNamespace } from "./defold-target";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import { formatJsonLikeBiome } from "./format-json";
@@ -20,6 +20,8 @@ import { mergeMiseToml } from "./mise-scaffold";
 import { hasGeneratedBanner } from "./orphan-scan";
 import { SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 import { DEFAULT_TYPES_ENTRYPOINT } from "./script-kind";
+import { writeVscodeLaunch } from "./vscode-debug-scaffold";
+import { readVscodeJson, reconcileManagedList, writeJson } from "./vscode-json";
 import { mergeVscodeTasks, VSCODE_TASKS_CONTENT } from "./vscode-tasks";
 
 export interface RunInitOptions {
@@ -261,15 +263,14 @@ export const BIOME_JSON_CONTENT = {
 };
 
 const VSCODE_EXTENSIONS_CONTENT = {
-  recommendations: ["tomblind.local-lua-debugger-vscode"],
+  recommendations: [] as string[],
   unwantedRecommendations: ["johnnymorganz.luau-lsp"],
 };
 
-const MANAGED_RECOMMENDATIONS = [
-  "tomblind.local-lua-debugger-vscode",
-  "sumneko.lua",
-  "astronachos.defold",
-];
+// The Local Lua Debugger id is deliberately absent from both lists: `setup-debug`
+// writes it, and `reconcileManagedList` prunes a managed id that has left the
+// canonical set, so claiming it here would strip it on every later `upgrade`.
+const MANAGED_RECOMMENDATIONS = ["sumneko.lua", "astronachos.defold"];
 const MANAGED_UNWANTED = ["johnnymorganz.luau-lsp"];
 
 const LUA_IGNORE_DIR_KEY = "Lua.workspace.ignoreDir";
@@ -568,10 +569,6 @@ function repairManagedDevDeps(devDeps: Record<string, string>, force = false): v
   }
 }
 
-function writeJson(filePath: string, value: unknown): void {
-  writeFileSync(filePath, `${formatJsonLikeBiome(value)}\n`);
-}
-
 // Whether a file carries every entry the released scaffold wrote, which is the
 // only evidence that the entries are ours to retire rather than the user's.
 function carriesRetiredSet(present: ReadonlySet<string>, retired: readonly string[]): boolean {
@@ -739,61 +736,6 @@ function writeMiseTasks(cwd: string, written: string[]): void {
   written.push("mise.toml");
 }
 
-// Strip `//` line comments, `/* */` block comments, and trailing commas so a
-// hand-edited JSONC `.vscode` file parses with `JSON.parse`. The walk tracks
-// string state so a `//` or comma inside a value (e.g. a URL) is preserved.
-function parseJsonc(text: string): unknown {
-  let out = "";
-  let inString = false;
-  let inLineComment = false;
-  let inBlockComment = false;
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    const next = text[i + 1];
-    if (inLineComment) {
-      if (ch === "\n") {
-        inLineComment = false;
-        out += ch;
-      }
-      continue;
-    }
-    if (inBlockComment) {
-      if (ch === "*" && next === "/") {
-        inBlockComment = false;
-        i++;
-      }
-      continue;
-    }
-    if (inString) {
-      out += ch;
-      if (ch === "\\") {
-        out += next ?? "";
-        i++;
-      } else if (ch === '"') {
-        inString = false;
-      }
-      continue;
-    }
-    if (ch === '"') {
-      inString = true;
-      out += ch;
-    } else if (ch === "/" && next === "/") {
-      inLineComment = true;
-      i++;
-    } else if (ch === "/" && next === "*") {
-      inBlockComment = true;
-      i++;
-    } else {
-      out += ch;
-    }
-  }
-  return JSON.parse(out.replace(/,(\s*[}\]])/g, "$1"));
-}
-
-function isJsonObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
 function unionStrings(existing: unknown, additions: readonly string[]): string[] {
   const out = Array.isArray(existing)
     ? existing.filter((v): v is string => typeof v === "string")
@@ -804,43 +746,6 @@ function unionStrings(existing: unknown, additions: readonly string[]): string[]
     }
   }
   return out;
-}
-
-export function reconcileManagedList(
-  existing: unknown,
-  managed: readonly string[],
-  canonical: readonly string[],
-): string[] {
-  const managedSet = new Set(managed);
-  const canonicalSet = new Set(canonical);
-  const out: string[] = [];
-  const values = Array.isArray(existing)
-    ? existing.filter((value): value is string => typeof value === "string")
-    : [];
-  for (const value of values) {
-    if (out.includes(value)) {
-      continue;
-    }
-    if (managedSet.has(value) && !canonicalSet.has(value)) {
-      continue;
-    }
-    out.push(value);
-  }
-  for (const value of canonical) {
-    if (!out.includes(value)) {
-      out.push(value);
-    }
-  }
-  return out;
-}
-
-function readVscodeJson(filePath: string): Record<string, unknown> | null {
-  try {
-    const parsed = parseJsonc(readFileSync(filePath, "utf8"));
-    return isJsonObject(parsed) ? parsed : null;
-  } catch {
-    return null;
-  }
 }
 
 function writeVscodeExtensions(cwd: string, written: string[]): void {
@@ -983,47 +888,6 @@ function writeVscodeSnippets(cwd: string, written: string[], force = false): voi
   written.push(".vscode/defold-typescript.code-snippets");
 }
 
-// `scriptFiles` and `scriptRoots` are derived from `include` and `outDir`, so
-// they are the two fields that go stale when a project's inputs move and the
-// only two reasserted on an existing configuration. Every other key —
-// `stopOnEntry`, `verbose`, `internalConsoleOptions` — is a toggle ours at
-// creation and the user's afterwards.
-function writeVscodeLaunch(cwd: string, written: string[], config: BuildConfig): void {
-  const dir = path.join(cwd, ".vscode");
-  const filePath = path.join(dir, "launch.json");
-  const ours = debugLaunchConfig(config);
-  if (existsSync(filePath)) {
-    const existing = readVscodeJson(filePath);
-    if (existing === null) {
-      return;
-    }
-    const configs = Array.isArray(existing.configurations) ? [...existing.configurations] : [];
-    const mine = configs.find((c) => isJsonObject(c) && c.name === ours.name);
-    let changed = false;
-    if (isJsonObject(mine)) {
-      for (const field of ["scriptFiles", "scriptRoots"] as const) {
-        if (JSON.stringify(mine[field]) !== JSON.stringify(ours[field])) {
-          mine[field] = ours[field];
-          changed = true;
-        }
-      }
-    } else {
-      configs.push(ours);
-      changed = true;
-    }
-    existing.configurations = configs;
-    existing.version ??= vscodeLaunchContent(config).version;
-    writeJson(filePath, existing);
-    if (changed) {
-      written.push(".vscode/launch.json");
-    }
-    return;
-  }
-  mkdirSync(dir, { recursive: true });
-  writeJson(filePath, vscodeLaunchContent(config));
-  written.push(".vscode/launch.json");
-}
-
 function writeVscodeTasks(cwd: string, written: string[]): void {
   const dir = path.join(cwd, ".vscode");
   const filePath = path.join(dir, "tasks.json");
@@ -1038,17 +902,6 @@ function writeVscodeTasks(cwd: string, written: string[]): void {
   mkdirSync(dir, { recursive: true });
   writeJson(filePath, VSCODE_TASKS_CONTENT);
   written.push(".vscode/tasks.json");
-}
-
-function writeVscodeDebugLauncher(cwd: string, written: string[]): void {
-  const dir = path.join(cwd, ".vscode");
-  const filePath = path.join(dir, "defold-debug.ts");
-  if (existsSync(filePath)) {
-    return;
-  }
-  mkdirSync(dir, { recursive: true });
-  writeFileSync(filePath, DEBUG_LAUNCHER_SOURCE);
-  written.push(".vscode/defold-debug.ts");
 }
 
 // Dirs whose contents never count as user-authored project files: an installed
@@ -1250,12 +1103,18 @@ function writeTsSurface(opts: TsSurfaceOptions): void {
   writeVscodeExtensions(cwd, written);
   writeVscodeSettings(cwd, written, warnings, include);
   writeVscodeSnippets(cwd, written, force);
-  writeVscodeLaunch(cwd, written, {
-    outDir: typeof compilerOptions.outDir === "string" ? compilerOptions.outDir : undefined,
-    include,
-  });
+  const launchAction = writeVscodeLaunch(
+    cwd,
+    {
+      outDir: typeof compilerOptions.outDir === "string" ? compilerOptions.outDir : undefined,
+      include,
+    },
+    "refresh",
+  );
+  if (launchAction === "refreshed") {
+    written.push(".vscode/launch.json");
+  }
   writeVscodeTasks(cwd, written);
-  writeVscodeDebugLauncher(cwd, written);
 
   for (const target of runInitAgents({ cwd, force }).written) {
     if (!written.includes(target)) {
