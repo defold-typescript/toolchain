@@ -844,7 +844,7 @@ declare global {
      *     // the info table contains meta data about all the render target attachments
      *     // so it's not necessary to use resource.get_texture here, but we do it here
      *     // just to show that it's possible:
-     *     const info_attachment_1 = resource.get_texture_info(info.attachments[0].handle);
+     *     const info_attachment_1 = resource.get_texture_info(info.attachments[0]!.handle);
      *   },
      * });
      *
@@ -852,7 +852,7 @@ declare global {
      * export default defineScript({
      *   init() {
      *     const info = resource.get_render_target_info("/my_render_target.render_targetc");
-     *     const attachment = info.attachments[0].texture;
+     *     const attachment = info.attachments[0]!.texture!;
      *     // you can also get texture info from the 'texture' field, since it's a resource hash
      *     const texture_info = resource.get_texture_info(attachment);
      *     go.set("#model", "texture0", attachment);
@@ -860,7 +860,7 @@ declare global {
      * });
      * ```
      */
-    function get_render_target_info(path: Hash | string | number): { handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash };
+    function get_render_target_info(path: Hash | string | number): { handle: number; attachments: { handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture?: Hash }[] };
     /**
      * Gets the text metrics from a font
      *
@@ -1051,7 +1051,7 @@ declare global {
      * export default defineScript({
      *   init(self) {
      *     const rt_info = resource.get_render_target_info(self.my_render_target);
-     *     go.set("#model", "texture0", rt_info.attachments[0].texture);
+     *     go.set("#model", "texture0", rt_info.attachments[0]!.texture!);
      *   },
      * });
      * ```
