@@ -1,4 +1,9 @@
 import * as path from "node:path";
+import {
+  type BuildConfig,
+  projectRelativeBase,
+  SCRIPT_SUFFIX_BY_KIND,
+} from "@defold-typescript/transpiler";
 
 // One native extension whose build engine links platform runtime libraries the
 // Defold build server does not (yet) ship. `tracking` is the upstream note/URL
@@ -118,7 +123,94 @@ export function nativeExtensionRuntimeWarnings(
   return warnings;
 }
 
-export function debugLaunchConfig() {
+// Every output shape `writeScriptFile` appends a `--# sourceMappingURL=`
+// trailer to, and so every shape a breakpoint can bind in. `.ts.editor_script`
+// is absent deliberately: an editor script is not a game chunk and the engine
+// never runs it.
+const BREAKPOINTABLE_SUFFIXES = [
+  SCRIPT_SUFFIX_BY_KIND.script,
+  SCRIPT_SUFFIX_BY_KIND["gui-script"],
+  SCRIPT_SUFFIX_BY_KIND["render-script"],
+  ".lua",
+];
+
+function toPosix(value: string): string {
+  return value.split("\\").join("/");
+}
+
+// The project folders `include` speaks for, as posix roots with no trailing
+// slash (`""` for the project root itself). A wildcard-free `.d.ts` entry is
+// skipped: it compiles to nothing, and naming its folder as a root would sweep
+// the whole `.defold-types/` typeRoots surface into the pre-scan.
+function includeRoots(include: readonly string[]): string[] {
+  const roots: string[] = [];
+  for (const pattern of include) {
+    if (!/[*?[]/.test(pattern) && /\.d\.ts$/i.test(toPosix(pattern))) {
+      continue;
+    }
+    const base = projectRelativeBase(pattern);
+    if (base === undefined) {
+      continue;
+    }
+    const root = base.endsWith("/") ? base.slice(0, -1) : base;
+    if (!roots.includes(root)) {
+      roots.push(root);
+    }
+  }
+  return dropSubsumed(roots);
+}
+
+// `""` is the project root and subsumes everything; otherwise a root nested
+// under another contributes no path the wider one does not already cover.
+function dropSubsumed(roots: readonly string[]): string[] {
+  if (roots.includes("")) {
+    return [""];
+  }
+  return roots.filter(
+    (root) => !roots.some((other) => other !== root && root.startsWith(`${other}/`)),
+  );
+}
+
+// Where the build writes: a configured `outDir` collapses every source root
+// into one output root, otherwise each output sits beside its source under the
+// include base that matched it.
+export function debugScriptOutputRoots(config: BuildConfig): string[] {
+  const outDir = config.outDir === undefined ? "" : toPosix(config.outDir);
+  const normalized = outDir === "" || outDir === "." ? undefined : path.posix.normalize(outDir);
+  if (normalized !== undefined) {
+    return [normalized.endsWith("/") ? normalized.slice(0, -1) : normalized];
+  }
+  return includeRoots(config.include);
+}
+
+// The globs Local Lua Debugger (>=0.3.0) pre-scans for the emitted
+// `--# sourceMappingURL=` trailers so a breakpoint in a `.ts` resolves ahead of
+// time; without a pattern covering an output, no source-mapped breakpoint in it
+// ever binds.
+export function debugScriptFilePatterns(config: BuildConfig): string[] {
+  const patterns: string[] = [];
+  for (const root of debugScriptOutputRoots(config)) {
+    for (const suffix of BREAKPOINTABLE_SUFFIXES) {
+      patterns.push(root === "" ? `**/*${suffix}` : `${root}/**/*${suffix}`);
+    }
+  }
+  return patterns;
+}
+
+// The folders the debugger resolves a path against: the running Defold chunk
+// path (`/<outDir>/...`) lands on the output side, the map's bare `sources`
+// entry (`player.ts`) on the source side. With no `outDir` the two coincide.
+export function debugScriptRoots(config: BuildConfig): string[] {
+  const roots = ["."];
+  for (const root of [...debugScriptOutputRoots(config), ...includeRoots(config.include)]) {
+    if (root !== "" && !roots.includes(root)) {
+      roots.push(root);
+    }
+  }
+  return roots;
+}
+
+export function debugLaunchConfig(config: BuildConfig) {
   return {
     name: "Defold: Debug (TypeScript)",
     type: "lua-local",
@@ -128,21 +220,17 @@ export function debugLaunchConfig() {
     internalConsoleOptions: "openOnSessionStart",
     program: { command: "bun" },
     args: [DEBUG_LAUNCHER_REL],
-    // Local Lua Debugger (>=0.3.0) pre-scans `scriptFiles` for the emitted
-    // `--# sourceMappingURL=` trailers so a breakpoint in a `.ts` resolves
-    // ahead of time; without it no source-mapped breakpoint ever binds. Every
-    // build emits `<name>.ts.script` under `src/`. `scriptRoots` lets the
-    // debugger resolve the running Defold chunk path (`/src/...`) and the map's
-    // bare `sources` entry (`player.ts`) back to files on disk.
-    scriptFiles: ["src/**/*.ts.script"],
-    scriptRoots: [".", "src"],
+    scriptFiles: debugScriptFilePatterns(config),
+    scriptRoots: debugScriptRoots(config),
   };
 }
 
-export const VSCODE_LAUNCH_CONTENT = {
-  version: "0.2.0",
-  configurations: [debugLaunchConfig()],
-};
+export function vscodeLaunchContent(config: BuildConfig) {
+  return {
+    version: "0.2.0",
+    configurations: [debugLaunchConfig(config)],
+  };
+}
 
 // The scaffolded launcher embeds the same platform table and archive endpoints
 // the helpers above use, so the self-contained `.vscode/defold-debug.ts` and the
