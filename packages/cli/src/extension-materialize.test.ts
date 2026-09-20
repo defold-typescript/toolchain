@@ -198,6 +198,19 @@ describe("materializeExtensionDeclarations", () => {
     );
   });
 
+  test("an empty result prunes a previously-materialized dir instead of leaving it stale", () => {
+    materializeExtensionDeclarations({
+      cwd,
+      bundles: [bundle([decl("gone", "declare namespace gone {}\n")])],
+    });
+    expect(existsSync(path.join(extensionsDir(), "gone.d.ts"))).toBe(true);
+
+    const result = materializeExtensionDeclarations({ cwd, bundles: [bundle([])] });
+
+    expect(result).toEqual({ materializedDir: null, namespaces: [] });
+    expect(existsSync(extensionsDir())).toBe(false);
+  });
+
   test("a later bundle's namespace wins on duplicate", () => {
     const bundles = [
       bundle([decl("dup", "declare namespace dup { const first = 1; }\n")]),
@@ -257,7 +270,7 @@ describe("ensureExtensionTypesReference", () => {
     expect(readTsconfig().compilerOptions.types).toEqual(["defold-1.12.4", "extensions"]);
   });
 
-  test("a null materializedDir is a no-op", () => {
+  test("a null materializedDir leaves a tsconfig carrying no extensions entry untouched", () => {
     writeTsconfig({ compilerOptions: { types: ["defold-1.12.4"] } });
     const before = readFileSync(path.join(cwd, "tsconfig.json"), "utf8");
 
@@ -265,6 +278,23 @@ describe("ensureExtensionTypesReference", () => {
 
     expect(readFileSync(path.join(cwd, "tsconfig.json"), "utf8")).toBe(before);
     expect(existsSync(path.join(cwd, ".gitignore"))).toBe(false);
+  });
+
+  test("a null materializedDir drops the extensions entry, keeping siblings and typeRoots", () => {
+    writeTsconfig({
+      compilerOptions: {
+        strict: true,
+        typeRoots: [".defold-types"],
+        types: ["defold-1.12.4", "extensions", "libraries@1.2.3"],
+      },
+      include: ["src/**/*.ts"],
+    });
+
+    ensureExtensionTypesReference(cwd, null);
+
+    const tsconfig = readTsconfig();
+    expect(tsconfig.compilerOptions.types).toEqual(["defold-1.12.4", "libraries@1.2.3"]);
+    expect(tsconfig.compilerOptions.typeRoots).toEqual([".defold-types"]);
   });
 
   test("ensures the .defold-types/ gitignore line", () => {

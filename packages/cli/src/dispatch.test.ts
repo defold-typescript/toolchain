@@ -4371,6 +4371,7 @@ describe("dispatch resolve", () => {
         url,
         provenance: "download",
         namespaces: ["alpha"],
+        typeSurface: "extension",
         scriptApiCount: 1,
         sceneSources: 0,
         assetOnly: false,
@@ -4560,6 +4561,136 @@ describe("dispatch resolve", () => {
     expect(err()).toBe(
       `${noSceneSource(url)}defold-typescript resolve: warning: unverified library match for ${url}: repo name matched but no shipped module path was found in the archive; not materialized\n`,
     );
+  });
+
+  // A self-documenting pure-Lua library: it ships the corpus module and its own
+  // `.script_api`, so the confirmed corpus match decides its type surface.
+  function selfDocumentingResolveInternals(url: string): {
+    resolveInternals: {
+      download: () => Promise<Uint8Array>;
+      readZip: (zipPath: string) => ExtensionZip;
+      cacheDir: string;
+      libraryRegistry: { sourceId: string; modules: string[] }[];
+      libraryGeneratedDir: string;
+    };
+  } {
+    const cacheDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-"));
+    const generatedDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-lib-generated-"));
+    writeFileSync(path.join(generatedDir, "mylib.core.d.ts"), "declare module 'mylib.core' {}\n");
+    const key = extensionArchiveKey(url);
+    return {
+      resolveInternals: {
+        cacheDir,
+        libraryRegistry: [{ sourceId: "mylib", modules: ["mylib.core"] }],
+        libraryGeneratedDir: generatedDir,
+        download: async () => new TextEncoder().encode("z"),
+        readZip: (zipPath: string) => {
+          if (path.basename(path.dirname(zipPath)) !== key) {
+            throw new Error(`no fake archive for ${zipPath}`);
+          }
+          return {
+            entries: () => ["mylib-main/mylib/core.lua", "mylib-main/ext/api/alpha.script_api"],
+            read: () => ALPHA,
+          };
+        },
+      },
+    };
+  }
+
+  test("the human path prints the vendored-library form for a self-documenting library", async () => {
+    const { io, out } = captureStreams();
+    const url = "https://github.com/owner/mylib/archive/main.zip";
+    writeProject(`[project]\ndependencies#0 = ${url}\n`);
+
+    const code = await dispatch(["resolve", cwd], io, selfDocumentingResolveInternals(url));
+
+    expect(code).toBe(0);
+    expect(out()).toContain(`  mylib.core <- ${url} (vendored library)\n`);
+    expect(out()).not.toContain(".script_api,");
+  });
+
+  test("--json reports a superseded dependency once, as a vendored-library type surface", async () => {
+    const { io, out } = captureStreams();
+    const url = "https://github.com/owner/mylib/archive/main.zip";
+    writeProject(`[project]\ndependencies#0 = ${url}\n`);
+
+    const code = await dispatch(
+      ["resolve", cwd, "--json"],
+      io,
+      selfDocumentingResolveInternals(url),
+    );
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as {
+      extensions: {
+        url: string;
+        namespaces: string[];
+        scriptApiCount: number;
+        typeSurface: string;
+        resolvedVersion: string;
+        pinStatus: string;
+      }[];
+      libraries: { url: string; modules: string[] }[];
+    };
+    const entry = parsed.extensions[0];
+    expect(entry?.typeSurface).toBe("vendored-library");
+    expect(entry?.namespaces).toEqual([]);
+    // The archive really does carry one `.script_api`; only the surface changed.
+    expect(entry?.scriptApiCount).toBe(1);
+    expect(entry?.resolvedVersion).toMatch(/^sha256:[0-9a-f]{64}$/);
+    expect(entry?.pinStatus).toBe("unpinned");
+    // Summing the two arrays yields each module exactly once.
+    expect([
+      ...parsed.extensions.flatMap((e) => e.namespaces),
+      ...parsed.libraries.flatMap((l) => l.modules),
+    ]).toEqual(["mylib.core"]);
+  });
+
+  test("--json marks a genuine native extension as an extension type surface", async () => {
+    const { io, out } = captureStreams();
+    const url = "https://example.com/alpha.zip";
+    writeProject(`[project]\ndependencies#0 = ${url}\n`);
+
+    const code = await dispatch(["resolve", cwd, "--json"], io, resolveInternals(url));
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as {
+      extensions: { typeSurface: string; namespaces: string[] }[];
+    };
+    expect(parsed.extensions[0]?.typeSurface).toBe("extension");
+    expect(parsed.extensions[0]?.namespaces).toEqual(["alpha"]);
+  });
+
+  test("--json marks an asset-only dependency matching no corpus entry as no type surface", async () => {
+    const { io, out } = captureStreams();
+    const url = "https://example.com/unknown-asset.zip";
+    writeProject(`[project]\ndependencies#0 = ${url}\n`);
+    const cacheDir = mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-"));
+    const key = extensionArchiveKey(url);
+
+    const code = await dispatch(["resolve", cwd, "--json"], io, {
+      resolveInternals: {
+        cacheDir,
+        libraryRegistry: [],
+        libraryGeneratedDir: null,
+        download: async () => new TextEncoder().encode("z"),
+        readZip: (zipPath: string) => {
+          if (path.basename(path.dirname(zipPath)) !== key) {
+            throw new Error(`no fake archive for ${zipPath}`);
+          }
+          return { entries: () => ["asset/foo.png"], read: () => "" };
+        },
+      },
+    });
+
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out()) as {
+      extensions: { typeSurface: string; namespaces: string[]; pinStatus: string }[];
+    };
+    expect(parsed.extensions[0]?.typeSurface).toBe("none");
+    expect(parsed.extensions[0]?.namespaces).toEqual([]);
+    // A content archive is still pinnable.
+    expect(parsed.extensions[0]?.pinStatus).toBe("unpinned");
   });
 
   test("a missing game.project returns 1 and, under --json, reports ok:false", async () => {

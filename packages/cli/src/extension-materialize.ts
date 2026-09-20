@@ -46,12 +46,17 @@ export function materializeExtensionDeclarations(
   }
 
   const namespaces = [...byNamespace.keys()].sort();
+  const relDir = path.posix.join(MATERIALIZED_ROOT, EXTENSIONS_DIR);
+  const absDir = path.join(cwd, MATERIALIZED_ROOT, EXTENSIONS_DIR);
+
+  // reconcile-to-zero: no namespace remains, so remove a previously-materialized
+  // surface rather than leaving it to load beside what superseded it. Mirrors
+  // `materializeVendoredLibraries`, whose empty case already does this.
   if (namespaces.length === 0) {
+    rmSync(absDir, { recursive: true, force: true });
     return { materializedDir: null, namespaces: [] };
   }
 
-  const relDir = path.posix.join(MATERIALIZED_ROOT, EXTENSIONS_DIR);
-  const absDir = path.join(cwd, MATERIALIZED_ROOT, EXTENSIONS_DIR);
   mkdirSync(absDir, { recursive: true });
 
   const wanted = new Set(namespaces.map((ns) => `${ns}.d.ts`));
@@ -80,12 +85,29 @@ export function materializeExtensionDeclarations(
 }
 
 export function ensureExtensionTypesReference(cwd: string, materializedDir: string | null): void {
+  const tsconfigPath = path.join(cwd, "tsconfig.json");
+
+  // `null` is "no extension surface", so drop the entry that names one. Only
+  // the `types` entry goes: `typeRoots` and every sibling surface are shared.
   if (materializedDir === null) {
+    if (!existsSync(tsconfigPath)) {
+      return;
+    }
+    const tsconfig = JSON.parse(readFileSync(tsconfigPath, "utf8")) as {
+      compilerOptions?: Record<string, unknown>;
+      [key: string]: unknown;
+    };
+    const current = tsconfig.compilerOptions ?? {};
+    const types = Array.isArray(current.types) ? (current.types as unknown[]).slice() : [];
+    const kept = types.filter((entry) => entry !== EXTENSIONS_DIR);
+    if (kept.length !== types.length) {
+      tsconfig.compilerOptions = { ...current, types: kept };
+      writeFileSync(tsconfigPath, `${formatJsonLikeBiome(tsconfig)}\n`);
+    }
     return;
   }
   const entry = path.posix.basename(materializedDir);
 
-  const tsconfigPath = path.join(cwd, "tsconfig.json");
   if (existsSync(tsconfigPath)) {
     const tsconfig = JSON.parse(readFileSync(tsconfigPath, "utf8")) as {
       compilerOptions?: Record<string, unknown>;
