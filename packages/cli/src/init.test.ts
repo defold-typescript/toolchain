@@ -1655,6 +1655,16 @@ describe("runInit (.vscode debugger launch scaffold)", () => {
     expect(second.written).not.toContain(".vscode/launch.json");
   });
 
+  test("refuses an already-scaffolded project without --force and leaves launch.json alone", () => {
+    seedStaleLaunch();
+
+    expect(() => runInit({ cwd })).toThrow(/tsconfig\.json.*--force/s);
+
+    const ours = ourLaunchConfig();
+    expect(ours.scriptFiles).toEqual(RELEASED_LAUNCH_SPELLING.scriptFiles);
+    expect(ours.scriptRoots).toEqual(RELEASED_LAUNCH_SPELLING.scriptRoots);
+  });
+
   test("leaves an existing defold-debug.ts untouched", () => {
     touch("game.project", "[project]\n");
     mkdirSync(path.join(cwd, ".vscode"), { recursive: true });
