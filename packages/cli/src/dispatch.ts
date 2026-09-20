@@ -1815,17 +1815,19 @@ function dispatchCommand(
                 ...(outcome.output !== undefined ? { output: outcome.output } : {}),
               }),
             );
-          } else if (outcome.error !== undefined) {
-            writeError(outcome.error);
           } else {
             for (const notice of upgradeNotices) {
               io.stderr.write(`defold-typescript upgrade: ${notice}\n`);
             }
-            io.stdout.write(
-              `defold-typescript upgrade: ${outcome.from} -> ${outcome.to}${
-                outcome.handedOff ? "" : " (already latest; re-scaffolded managed files)"
-              }\n`,
-            );
+            if (outcome.error !== undefined) {
+              writeError(outcome.error);
+            } else {
+              io.stdout.write(
+                `defold-typescript upgrade: ${outcome.from} -> ${outcome.to}${
+                  outcome.handedOff ? "" : " (already latest; re-scaffolded managed files)"
+                }\n`,
+              );
+            }
           }
           return outcome.exitCode;
         } catch (err) {
