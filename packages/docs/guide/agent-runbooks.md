@@ -131,16 +131,32 @@ stderr.
 
 [`resolve --json`](./resolve.md) reports `materializedSurface` (the written
 directory, or `null` when nothing was materialized) and, per extension, the `url`,
-generated `namespaces`, `scriptApiCount`, `provenance` (`cache` or `download`),
+generated `namespaces`, `typeSurface`, `scriptApiCount`, `provenance` (`cache` or `download`),
 whether it was `assetOnly`, `sceneSources` (how many [shared scene
 files](./resolve.md#dependency-scene-sources) it unpacked), the `resolvedVersion`
 (sha256 digest of the resolved archive bytes), — when the project pins that url —
 the `pinnedVersion`, and the `pinStatus` (`unpinned` / `match` / `drift`). A separate `libraries` array reports
-each asset-only dependency that matched a [vendored
+each dependency that matched a [vendored
 library](./resolve.md#vendored-library-types) — its `url`, `source` (the vendored
 source identity), materialized `modules`, `provenance` (`vendored`), and `verified`.
 A `verified: false` entry (with an empty `modules`) is a repo-name match the
 downloaded archive did not confirm; it is reported but never materialized:
+
+`typeSurface` is present on every `extensions[]` entry and names which type
+surface that dependency actually contributed:
+
+| `typeSurface`        | Meaning                                                                    | `namespaces` |
+| -------------------- | -------------------------------------------------------------------------- | ------------ |
+| `"extension"`        | it emitted `.script_api` declarations                                      | its namespaces |
+| `"vendored-library"` | a confirmed corpus match supersedes it; its types are in `libraries[]`     | `[]`         |
+| `"none"`             | asset-only with no confirmed match — it contributes no types at all        | `[]`         |
+
+An entry with `namespaces: []` is **normal** for the latter two, not a failure —
+read `typeSurface` rather than inferring from an empty `namespaces` or from
+`assetOnly` (a superseded dependency is `assetOnly: false` and still contributes
+no namespace). Every declared dependency keeps an entry, so a pin-drift check
+still sees it. Summing `extensions[].namespaces` and `libraries[].modules`
+therefore yields each module exactly once:
 
 ```jsonc
 {
@@ -152,6 +168,7 @@ downloaded archive did not confirm; it is reported but never materialized:
     {
       "url": "https://github.com/defold/extension-iap/archive/main.zip",
       "namespaces": ["iap"],
+      "typeSurface": "extension",
       "scriptApiCount": 1,
       "provenance": "download",
       "assetOnly": false,
@@ -159,6 +176,17 @@ downloaded archive did not confirm; it is reported but never materialized:
       "resolvedVersion": "sha256:ab12…",
       "pinnedVersion": "sha256:ab12…",
       "pinStatus": "match"
+    },
+    {
+      "url": "https://github.com/paulomrpp/dicebag/archive/main.zip",
+      "namespaces": [],
+      "typeSurface": "vendored-library",
+      "scriptApiCount": 0,
+      "provenance": "download",
+      "assetOnly": true,
+      "sceneSources": 0,
+      "resolvedVersion": "sha256:cd34…",
+      "pinStatus": "unpinned"
     }
   ],
   "libraries": [
@@ -594,6 +622,7 @@ and `package.json` to exactly the declared set.
       "url": "<archive url>",
       "provenance": "<cache | download>",
       "namespaces": ["<namespace>"],
+      "typeSurface": "<none | extension | vendored-library>",
       "scriptApiCount": 1,
       "assetOnly": false,
       "sceneSources": 0,
@@ -613,8 +642,9 @@ On failure:
 **Reading `ok`:** if `ok` is `true`, the extension surface is current —
 `materializedSurface` is the regenerated surface directory
 (`.defold-types/extensions`), and `extensions` records where each dependency
-came from (`provenance`), how many `.script_api` files it contributed
-(`scriptApiCount`; an `assetOnly` dependency contributes no types), how many
+came from (`provenance`), which type surface it contributed (`typeSurface`), how
+many `.script_api` files the archive carries (`scriptApiCount` — a
+`"vendored-library"` entry can carry docs and still contribute no namespace), how many
 scene sources it shared (`sceneSources`), and its pin state
 (`resolvedVersion`/`pinStatus`). The `written` array is always empty for
 `resolve`. If `ok` is `false`, surface `error`; the existing surface is left

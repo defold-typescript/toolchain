@@ -29,10 +29,18 @@ import { ensureLibraryTypesReference, materializeVendoredLibraries } from "./lib
 import { loadVendoredLibraryRegistry } from "./library-registry";
 import { materializeLibrarySceneSources } from "./library-scene-materialize";
 
+// Which type surface a dependency actually contributed. `assetOnly` cannot
+// express this on its own: a superseded bundle is `assetOnly: false` and still
+// contributes no namespace, and an asset-only archive with no confirmed match
+// contributes neither surface, so calling it an extension would claim
+// declarations it does not have.
+export type ResolvedTypeSurface = "none" | "extension" | "vendored-library";
+
 export interface ResolvedExtensionReport {
   readonly url: string;
   readonly provenance: ExtensionArchiveProvenance;
   readonly namespaces: string[];
+  readonly typeSurface: ResolvedTypeSurface;
   readonly scriptApiCount: number;
   readonly assetOnly: boolean;
   readonly resolvedVersion: string;
@@ -131,15 +139,20 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
 
   const deps = readExtensionDependencies(text);
   if (deps.length === 0) {
-    // No declared dependencies means no matched libraries, so reconcile the
-    // library surface to zero — prune a previously-materialized one and drop its
-    // tsconfig entry.
+    // No declared dependencies means no library, extension or scene surface, so
+    // reconcile all three to zero — prune a previously-materialized one and drop
+    // its tsconfig entry.
     const { materializedDir: librariesDir } = materializeVendoredLibraries({
       cwd,
       matched: [],
       generatedDir: null,
     });
     ensureLibraryTypesReference(cwd, librariesDir);
+    const { materializedDir: extensionsDir } = materializeExtensionDeclarations({
+      cwd,
+      bundles: [],
+    });
+    ensureExtensionTypesReference(cwd, extensionsDir);
     materializeLibrarySceneSources({ cwd, bundles: [] });
     return { ok: true, materializedSurface: null, extensions: [], libraries: [], warnings: [] };
   }
@@ -150,7 +163,50 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     ...(opts.readZip ? { readZip: opts.readZip } : {}),
   });
 
-  const { materializedDir } = materializeExtensionDeclarations({ cwd, bundles });
+  // Match every dependency against the vendored pure-Lua corpus *before* the
+  // extension surface is materialized, so a confirmed match can decide which
+  // type surface the dependency contributes. A confirmed match already proves
+  // more than a `.script_api` does — it keys on a normalized source identity and
+  // is then filtered to the modules the archive actually ships — so a library
+  // that documents itself keeps its curated types. The registry is loaded at
+  // most once, only when a default is needed.
+  const loaded =
+    opts.libraryRegistry === undefined || opts.libraryGeneratedDir === undefined
+      ? loadVendoredLibraryRegistry()
+      : null;
+  const libraryRegistry = opts.libraryRegistry ?? loaded?.registry ?? [];
+  const libraryGeneratedDir =
+    opts.libraryGeneratedDir !== undefined
+      ? opts.libraryGeneratedDir
+      : (loaded?.generatedDir ?? null);
+  const matchedLibraries: { library: VendoredLibrary; url: string; confirmed: string[] }[] = [];
+  const confirmedLibraryUrls = new Set<string>();
+  for (const bundle of bundles) {
+    const library = matchVendoredLibrary(bundle.url, libraryRegistry);
+    if (library === null) {
+      continue;
+    }
+    const shipped = new Set(bundle.luaModules);
+    const confirmed = library.modules.filter((module) => shipped.has(module));
+    if (confirmed.length > 0) {
+      confirmedLibraryUrls.add(bundle.url);
+    } else if (!bundle.assetOnly) {
+      // unconfirmed-needs-no-surface: the bundle already contributed its own
+      // `.script_api` namespace, so a bare repo-name collision with the corpus is
+      // not a library the user is missing. Reporting it would fire the
+      // "not materialized" warning at someone whose types are fine.
+      continue;
+    }
+    matchedLibraries.push({ library, url: bundle.url, confirmed });
+  }
+
+  // Only the *type* surface is filtered: a superseded bundle stays a declared
+  // dependency below, so its scene sources still unpack and its version and pin
+  // status still report.
+  const { materializedDir } = materializeExtensionDeclarations({
+    cwd,
+    bundles: bundles.filter((bundle) => !confirmedLibraryUrls.has(bundle.url)),
+  });
   ensureExtensionTypesReference(cwd, materializedDir);
 
   // The dependency scene surface the editor plugin, `scene-types` and `build`
@@ -166,31 +222,6 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     }
   }
 
-  // Match each asset-only dependency (no `.script_api`, so it contributes no
-  // extension namespace) against the vendored pure-Lua corpus and materialize the
-  // matched libraries into the sibling `.defold-types/libraries/` surface. The
-  // registry is loaded at most once, only when a default is needed.
-  const loaded =
-    opts.libraryRegistry === undefined || opts.libraryGeneratedDir === undefined
-      ? loadVendoredLibraryRegistry()
-      : null;
-  const libraryRegistry = opts.libraryRegistry ?? loaded?.registry ?? [];
-  const libraryGeneratedDir =
-    opts.libraryGeneratedDir !== undefined
-      ? opts.libraryGeneratedDir
-      : (loaded?.generatedDir ?? null);
-  const matchedLibraries: { library: VendoredLibrary; url: string; confirmed: string[] }[] = [];
-  for (const bundle of bundles) {
-    if (!bundle.assetOnly) {
-      continue;
-    }
-    const library = matchVendoredLibrary(bundle.url, libraryRegistry);
-    if (library !== null) {
-      const shipped = new Set(bundle.luaModules);
-      const confirmed = library.modules.filter((module) => shipped.has(module));
-      matchedLibraries.push({ library, url: bundle.url, confirmed });
-    }
-  }
   const { materializedDir: librariesDir, skipped: skippedLibraryModules } =
     materializeVendoredLibraries({
       cwd,
@@ -236,13 +267,21 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
   }
 
   const extensions: ResolvedExtensionReport[] = bundles.map((bundle) => {
+    const supersededByLibrary = confirmedLibraryUrls.has(bundle.url);
     const pin = pins[bundle.url];
     const pinStatus: "unpinned" | "match" | "drift" =
       pin === undefined ? "unpinned" : pin === bundle.resolvedVersion ? "match" : "drift";
+    // A superseded bundle contributed no namespace, so reporting the ones its
+    // `.script_api` would have produced would double-count its modules against
+    // `libraries[]`. `scriptApiCount` stays the real archive count.
+    const namespaces = supersededByLibrary
+      ? []
+      : bundle.declarations.map((d) => d.namespace).sort();
     const report: {
       url: string;
       provenance: ExtensionArchiveProvenance;
       namespaces: string[];
+      typeSurface: ResolvedTypeSurface;
       scriptApiCount: number;
       assetOnly: boolean;
       resolvedVersion: string;
@@ -252,7 +291,12 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     } = {
       url: bundle.url,
       provenance: bundle.provenance,
-      namespaces: bundle.declarations.map((d) => d.namespace).sort(),
+      namespaces,
+      typeSurface: supersededByLibrary
+        ? "vendored-library"
+        : namespaces.length > 0
+          ? "extension"
+          : "none",
       scriptApiCount: bundle.declarations.length,
       assetOnly: bundle.assetOnly,
       resolvedVersion: bundle.resolvedVersion,
