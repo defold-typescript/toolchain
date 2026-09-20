@@ -46,6 +46,30 @@ export function stripIncludeBase(pattern: string): string {
   return lastSlash === -1 ? "" : upToWildcard.slice(0, lastSlash + 1);
 }
 
+// A root is a folder inside the project a tool can safely speak for, so a
+// pattern that resolves to the project root, escapes `cwd`, or is absolute in
+// any spelling yields nothing. Escape is the normalized `..` *segment*, not a
+// two-period prefix: `..local` is an ordinary folder name. Absoluteness is
+// decided by string shape, never by `path.isAbsolute`, which answers for the
+// host OS and would wave a Windows drive or UNC path through on a POSIX runner.
+const ABSOLUTE_SPELLING_RE = /^(\/|\\\\|[A-Za-z]:[\\/])/;
+
+// The folder an include pattern speaks for, as a project-relative posix base
+// (`""` for the project root itself), or `undefined` when the pattern reaches
+// outside the project. The scaffold-rule roots, the starter target and the
+// debug launch derivation all answer "which project folder does this pattern
+// speak for" here, so the three cannot drift.
+export function projectRelativeBase(pattern: string): string | undefined {
+  if (ABSOLUTE_SPELLING_RE.test(pattern)) {
+    return undefined;
+  }
+  const base = path.posix.normalize(stripIncludeBase(pattern.split("\\").join("/")));
+  if (base === ".." || base.startsWith("../")) {
+    return undefined;
+  }
+  return base === "." || base === "./" ? "" : base;
+}
+
 function relUnderOutDir(rel: string, config: BuildConfig): string {
   const { outDir, include } = config;
   if (outDir === undefined || outDir === "" || outDir === ".") {

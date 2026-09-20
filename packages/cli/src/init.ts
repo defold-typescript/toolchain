@@ -6,12 +6,12 @@ import {
   computeOutputRel,
   DEFAULT_INCLUDE,
   parseBuildConfig,
+  projectRelativeBase,
   SCAFFOLDED_DEFIGNORE_LINES,
-  stripIncludeBase,
 } from "@defold-typescript/transpiler";
 import type { ScriptHookName } from "@defold-typescript/types";
 import { isFileIncluded } from "./build-output";
-import { DEBUG_LAUNCHER_SOURCE, debugLaunchConfig, VSCODE_LAUNCH_CONTENT } from "./debug-launcher";
+import { DEBUG_LAUNCHER_SOURCE, debugLaunchConfig, vscodeLaunchContent } from "./debug-launcher";
 import { repairDefoldNamespace } from "./defold-target";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import { formatJsonLikeBiome } from "./format-json";
@@ -154,29 +154,6 @@ export const RETIRED_MANAGED_ENTRIES = {
 // rules got wrong. `sourceRootsFromInclude` names folders the scaffold may make
 // claims about; `biomeIncludesFromInclude` names files the program reads.
 //
-// A root is a folder inside the project the scaffold can safely speak for, so a
-// pattern that resolves to the project root, escapes `cwd`, or is absolute in
-// any spelling yields nothing. Escape is the normalized `..` *segment*, not a
-// two-period prefix: `..local` is an ordinary folder name. Absoluteness is
-// decided by string shape, never by `path.isAbsolute`, which answers for the
-// host OS and would wave a Windows drive or UNC path through on a POSIX runner.
-const ABSOLUTE_SPELLING_RE = /^(\/|\\\\|[A-Za-z]:[\\/])/;
-
-// The folder an include pattern speaks for, as a project-relative posix base
-// (`""` for the project root itself), or `undefined` when the pattern reaches
-// outside the project. Both the scaffold-rule roots and the starter target
-// derive their base here so the two cannot drift.
-function projectRelativeBase(pattern: string): string | undefined {
-  if (ABSOLUTE_SPELLING_RE.test(pattern)) {
-    return undefined;
-  }
-  const base = path.posix.normalize(stripIncludeBase(pattern.split("\\").join("/")));
-  if (base === ".." || base.startsWith("../")) {
-    return undefined;
-  }
-  return base === "." || base === "./" ? "" : base;
-}
-
 export function sourceRootsFromInclude(include: readonly string[]): string[] {
   const roots: string[] = [];
   for (const pattern of include) {
@@ -1006,27 +983,44 @@ function writeVscodeSnippets(cwd: string, written: string[], force = false): voi
   written.push(".vscode/defold-typescript.code-snippets");
 }
 
-function writeVscodeLaunch(cwd: string, written: string[]): void {
+// `scriptFiles` and `scriptRoots` are derived from `include` and `outDir`, so
+// they are the two fields that go stale when a project's inputs move and the
+// only two reasserted on an existing configuration. Every other key —
+// `stopOnEntry`, `verbose`, `internalConsoleOptions` — is a toggle ours at
+// creation and the user's afterwards.
+function writeVscodeLaunch(cwd: string, written: string[], config: BuildConfig): void {
   const dir = path.join(cwd, ".vscode");
   const filePath = path.join(dir, "launch.json");
-  const ours = debugLaunchConfig();
+  const ours = debugLaunchConfig(config);
   if (existsSync(filePath)) {
     const existing = readVscodeJson(filePath);
     if (existing === null) {
       return;
     }
     const configs = Array.isArray(existing.configurations) ? [...existing.configurations] : [];
-    const names = new Set(configs.map((c) => (isJsonObject(c) ? c.name : undefined)));
-    if (!names.has(ours.name)) {
+    const mine = configs.find((c) => isJsonObject(c) && c.name === ours.name);
+    let changed = false;
+    if (isJsonObject(mine)) {
+      for (const field of ["scriptFiles", "scriptRoots"] as const) {
+        if (JSON.stringify(mine[field]) !== JSON.stringify(ours[field])) {
+          mine[field] = ours[field];
+          changed = true;
+        }
+      }
+    } else {
       configs.push(ours);
+      changed = true;
     }
     existing.configurations = configs;
-    existing.version ??= VSCODE_LAUNCH_CONTENT.version;
+    existing.version ??= vscodeLaunchContent(config).version;
     writeJson(filePath, existing);
+    if (changed) {
+      written.push(".vscode/launch.json");
+    }
     return;
   }
   mkdirSync(dir, { recursive: true });
-  writeJson(filePath, VSCODE_LAUNCH_CONTENT);
+  writeJson(filePath, vscodeLaunchContent(config));
   written.push(".vscode/launch.json");
 }
 
@@ -1256,7 +1250,10 @@ function writeTsSurface(opts: TsSurfaceOptions): void {
   writeVscodeExtensions(cwd, written);
   writeVscodeSettings(cwd, written, warnings, include);
   writeVscodeSnippets(cwd, written, force);
-  writeVscodeLaunch(cwd, written);
+  writeVscodeLaunch(cwd, written, {
+    outDir: typeof compilerOptions.outDir === "string" ? compilerOptions.outDir : undefined,
+    include,
+  });
   writeVscodeTasks(cwd, written);
   writeVscodeDebugLauncher(cwd, written);
 
