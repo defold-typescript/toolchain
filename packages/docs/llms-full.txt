@@ -2532,13 +2532,13 @@ rule applies to [`init-agents`](./init-agents.md).
   `game.project` boots the collection and points `[input]` at the binding, so a
   fresh scaffold loads in Defold with no missing references. If the target folder
   already holds both a `.collection` and a `.ts` file (a `--force` synthesis into
-  a directory you have authored), the starter `main/main.collection` and
-  `src/main.ts` are skipped so your entry files are never clobbered.
+  a directory you have authored), the starter `main/main.collection` and the
+  seeded `main.ts` are skipped so your entry files are never clobbered.
 - **Add TypeScript.** Run inside a folder that already has a `game.project` and
   `init` adds only the TypeScript infrastructure, leaving `.script`,
   `.collection`, `.gui_script`, `.render_script`, `game.project`, and other engine
-  assets untouched. It writes a starter `src/main.ts` only for a fresh scaffold
-  shape, never dropping one into a project you have already authored. See
+  assets untouched. It writes the starter `main.ts`[^src-root] only for a fresh
+  scaffold shape, never dropping one into a project you have already authored. See
   [Add TypeScript to an existing project](./getting-started.md#add-typescript-to-an-existing-project).
 
 Both modes also write the agent contract — `AGENTS.md` (a managed block delimited
@@ -2574,6 +2574,21 @@ it is hand-authored Lua, reporting the file it found when it skips. A generated
 complete set, leaving every entry you added in place. The one exception is a
 `biome.json` you have hand-edited to hold comments: it cannot be rewritten
 without destroying them, so it is reported and left for you to update.
+
+The starter follows the same configuration. `init` derives one starter path from
+`include` and `compilerOptions.outDir`: the seeded `main.ts` lands under the
+first `include` pattern that admits it, the generated `main/main.collection`
+names the component [`build`](./build.md) emits for that file, and greenfield
+detection looks for the same pair rather than a `src` literal. A project whose
+`include` is `["game/**/*.ts"]` therefore gets `game/main.ts` and a collection
+pointing at `/game/main.ts.script`, and adding `"outDir": "build"` moves that
+component path to `/build/main.ts.script` in step with the compiled output. A
+tool-added `exclude` entry for that starter is pruned on every re-run, while an
+entry naming a root you have since moved off is left alone as yours. When no
+configured pattern reaches a writable path inside the project — an `include` of
+a single exact file, or one that only points outside it — `init` writes no
+starter and leaves the collection with no component, reporting the patterns it
+searched.
 
 #### Flags
 

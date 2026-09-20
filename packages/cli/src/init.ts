@@ -2,11 +2,15 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  type BuildConfig,
+  computeOutputRel,
   DEFAULT_INCLUDE,
+  parseBuildConfig,
   SCAFFOLDED_DEFIGNORE_LINES,
   stripIncludeBase,
 } from "@defold-typescript/transpiler";
 import type { ScriptHookName } from "@defold-typescript/types";
+import { isFileIncluded } from "./build-output";
 import { DEBUG_LAUNCHER_SOURCE, debugLaunchConfig, VSCODE_LAUNCH_CONTENT } from "./debug-launcher";
 import { repairDefoldNamespace } from "./defold-target";
 import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
@@ -158,14 +162,29 @@ export const RETIRED_MANAGED_ENTRIES = {
 // host OS and would wave a Windows drive or UNC path through on a POSIX runner.
 const ABSOLUTE_SPELLING_RE = /^(\/|\\\\|[A-Za-z]:[\\/])/;
 
+// The folder an include pattern speaks for, as a project-relative posix base
+// (`""` for the project root itself), or `undefined` when the pattern reaches
+// outside the project. Both the scaffold-rule roots and the starter target
+// derive their base here so the two cannot drift.
+function projectRelativeBase(pattern: string): string | undefined {
+  if (ABSOLUTE_SPELLING_RE.test(pattern)) {
+    return undefined;
+  }
+  const base = path.posix.normalize(stripIncludeBase(pattern.split("\\").join("/")));
+  if (base === ".." || base.startsWith("../")) {
+    return undefined;
+  }
+  return base === "." || base === "./" ? "" : base;
+}
+
 export function sourceRootsFromInclude(include: readonly string[]): string[] {
   const roots: string[] = [];
   for (const pattern of include) {
-    if (!/[*?[]/.test(pattern) || ABSOLUTE_SPELLING_RE.test(pattern)) {
+    if (!/[*?[]/.test(pattern)) {
       continue;
     }
-    const base = path.posix.normalize(stripIncludeBase(pattern.split("\\").join("/")));
-    if (base === "" || base === "." || base === "./" || base === ".." || base.startsWith("../")) {
+    const base = projectRelativeBase(pattern);
+    if (base === undefined || base === "") {
       continue;
     }
     const root = base.endsWith("/") ? base.slice(0, -1) : base;
@@ -174,6 +193,42 @@ export function sourceRootsFromInclude(include: readonly string[]): string[] {
     }
   }
   return roots;
+}
+
+const STARTER_BASENAME = "main.ts";
+
+export interface StarterTarget {
+  readonly sourceRel: string;
+  readonly outputRel: string;
+  readonly componentPath: string;
+}
+
+// The one starter path every scaffold site spells: the `main.ts` the configured
+// program actually reads, plus the resource the build emits for it. The first
+// include entry that both speaks for a project folder and admits its own
+// `main.ts` wins, so the winner is include order rather than disk or sort order.
+export function resolveStarterTarget(config: BuildConfig): StarterTarget | undefined {
+  for (const pattern of config.include) {
+    const base = projectRelativeBase(pattern);
+    if (base === undefined) {
+      continue;
+    }
+    const sourceRel = path.posix.join(base, STARTER_BASENAME);
+    if (!isFileIncluded(sourceRel, [pattern.split("\\").join("/")])) {
+      continue;
+    }
+    const outputRel = computeOutputRel(sourceRel, config, "script");
+    return { sourceRel, outputRel, componentPath: `/${outputRel}` };
+  }
+  return undefined;
+}
+
+function readBuildConfig(cwd: string): BuildConfig {
+  const tsconfigPath = path.join(cwd, "tsconfig.json");
+  if (!existsSync(tsconfigPath)) {
+    return { outDir: undefined, include: [...DEFAULT_INCLUDE] };
+  }
+  return parseBuildConfig(readFileSync(tsconfigPath, "utf8"));
 }
 
 export function biomeIncludesFromInclude(include: readonly string[]): string[] {
@@ -427,18 +482,26 @@ function resolveTemplate(template: string | undefined): InitTemplate {
   );
 }
 
-const MAIN_COLLECTION_CONTENT = `name: "main"
+// With no resolvable starter the collection is written empty rather than
+// pointing at a component the build will never emit.
+function mainCollectionContent(componentPath: string | undefined): string {
+  const components =
+    componentPath === undefined
+      ? ""
+      : `components {\\n  id: \\"main\\"\\n  component: \\"${componentPath}\\"\\n}\\n`;
+  return `name: "main"
 scale_along_z: 0
 embedded_instances {
   id: "main"
-  data: "components {\\n  id: \\"main\\"\\n  component: \\"/src/main.ts.script\\"\\n}\\n"
+  data: "${components}"
   position { x: 0.0 y: 0.0 z: 0.0 }
   rotation { x: 0.0 y: 0.0 z: 0.0 w: 1.0 }
   scale3 { x: 1.0 y: 1.0 z: 1.0 }
 }
 `;
+}
 
-// Empty binding (zero triggers): the starter src/main.ts reads no input; it
+// Empty binding (zero triggers): the starter script reads no input; it
 // exists only so the default game_binding reference resolves at build time.
 const GAME_INPUT_BINDING_CONTENT = "\n";
 
@@ -1038,33 +1101,62 @@ function anyFileWithExt(root: string, ext: string, exceptRel = ""): boolean {
 
 // The wired entry script belongs in the program; a merge only strips a
 // tool-added exclude, never adds one, so upgrades self-heal bug-41's regression.
-function pruneMainTsExclude(existing: unknown): string[] | undefined {
+// Only the starter this configuration resolves is stripped — a retired entry
+// from a root the project has since moved off is the user's.
+function pruneMainTsExclude(
+  existing: unknown,
+  starterRel: string | undefined,
+): string[] | undefined {
   if (!Array.isArray(existing)) return undefined;
-  const remaining = existing.filter((entry) => entry !== "src/main.ts");
+  const remaining = existing.filter((entry) => entry !== starterRel);
   return remaining.length > 0 ? (remaining as string[]) : undefined;
 }
 
-function writeTsSurface(
-  cwd: string,
-  written: string[],
-  operations: InitOperation[],
-  warnings: string[],
-  force = false,
-  mainTs: string = MAIN_TS_CONTENT,
-  writeMainTs = true,
-): void {
-  const mainPath = path.join(cwd, "src", "main.ts");
-  if (writeMainTs && !existsSync(mainPath)) {
-    mkdirSync(path.join(cwd, "src"), { recursive: true });
-    writeFileSync(mainPath, mainTs);
-    written.push("src/main.ts");
-    operations.push({ target: "src/main.ts", status: "written" });
+interface TsSurfaceOptions {
+  readonly cwd: string;
+  readonly written: string[];
+  readonly operations: InitOperation[];
+  readonly warnings: string[];
+  readonly config: BuildConfig;
+  readonly starter: StarterTarget | undefined;
+  readonly force?: boolean;
+  readonly mainTs?: string;
+  readonly writeMainTs?: boolean;
+}
+
+function writeTsSurface(opts: TsSurfaceOptions): void {
+  const {
+    cwd,
+    written,
+    operations,
+    warnings,
+    config,
+    starter,
+    force = false,
+    mainTs = MAIN_TS_CONTENT,
+    writeMainTs = true,
+  } = opts;
+  if (starter === undefined) {
+    const searched = config.include.join(", ");
+    const detail = `no include pattern reaches a writable starter path (searched ${searched})`;
+    warnings.push(`defold-typescript init: ${detail}; no starter script was written.`);
+    operations.push({ target: STARTER_BASENAME, status: "skipped", detail });
   } else {
-    operations.push({
-      target: "src/main.ts",
-      status: "skipped",
-      detail: writeMainTs ? "a src/main.ts already exists" : "existing project sources present",
-    });
+    const mainPath = path.join(cwd, ...starter.sourceRel.split("/"));
+    if (writeMainTs && !existsSync(mainPath)) {
+      mkdirSync(path.dirname(mainPath), { recursive: true });
+      writeFileSync(mainPath, mainTs);
+      written.push(starter.sourceRel);
+      operations.push({ target: starter.sourceRel, status: "written" });
+    } else {
+      operations.push({
+        target: starter.sourceRel,
+        status: "skipped",
+        detail: writeMainTs
+          ? `a ${starter.sourceRel} already exists`
+          : "existing project sources present",
+      });
+    }
   }
 
   // init: tsconfig-merge-preserves-config
@@ -1095,7 +1187,7 @@ function writeTsSurface(
 
   const existingInclude = Array.isArray(existing?.include)
     ? (existing.include as unknown[]).filter((entry): entry is string => typeof entry === "string")
-    : ["src/**/*.ts"];
+    : [...DEFAULT_INCLUDE];
   // The exact declaration path, never a glob: `.defold-types` is the project's
   // typeRoots, so a pattern there would sweep every other materialized surface
   // into the transpile source set. An `include` entry matching nothing is
@@ -1108,7 +1200,7 @@ function writeTsSurface(
     compilerOptions,
     include,
   };
-  const pruned = pruneMainTsExclude(existing?.exclude);
+  const pruned = pruneMainTsExclude(existing?.exclude, starter?.sourceRel);
   if (pruned !== undefined) {
     tsconfig.exclude = pruned;
   }
@@ -1205,6 +1297,8 @@ export function runNewProjectInit(
 
   // init: skip-on-user-authored-project
   const skipUserAuthored = anyFileWithExt(cwd, ".collection") && anyFileWithExt(cwd, ".ts");
+  const config = readBuildConfig(cwd);
+  const starter = resolveStarterTarget(config);
 
   const written: string[] = [];
   const operations: InitOperation[] = [];
@@ -1220,7 +1314,10 @@ export function runNewProjectInit(
 
   if (!skipUserAuthored) {
     mkdirSync(path.join(cwd, "main"), { recursive: true });
-    writeFileSync(path.join(cwd, "main", "main.collection"), MAIN_COLLECTION_CONTENT);
+    writeFileSync(
+      path.join(cwd, "main", "main.collection"),
+      mainCollectionContent(starter?.componentPath),
+    );
     written.push("main/main.collection");
   }
 
@@ -1228,7 +1325,17 @@ export function runNewProjectInit(
   writeFileSync(path.join(cwd, "input", "game.input_binding"), GAME_INPUT_BINDING_CONTENT);
   written.push("input/game.input_binding");
 
-  writeTsSurface(cwd, written, operations, warnings, force, mainTs, !skipUserAuthored);
+  writeTsSurface({
+    cwd,
+    written,
+    operations,
+    warnings,
+    config,
+    starter,
+    force,
+    mainTs,
+    writeMainTs: !skipUserAuthored,
+  });
 
   return withScaffoldOperations(written, operations, warnings);
 }
@@ -1259,11 +1366,16 @@ export function runInit(opts: RunInitOptions): RunInitResult {
   }
 
   // init: greenfield-starter-carveout
+  const config = readBuildConfig(cwd);
+  const starter = resolveStarterTarget(config);
   const mainCollectionRel = path.join("main", "main.collection");
-  const mainTsRel = path.join("src", "main.ts");
+  const mainTsRel = starter === undefined ? "" : path.join(...starter.sourceRel.split("/"));
   const mcPath = path.join(cwd, mainCollectionRel);
   const mcExists = existsSync(mcPath);
-  const mcRefs = mcExists && readFileSync(mcPath, "utf8").includes("src/main.ts.script");
+  const mcRefs =
+    starter !== undefined &&
+    mcExists &&
+    readFileSync(mcPath, "utf8").includes(starter.componentPath);
   const otherCollection = anyFileWithExt(cwd, ".collection", mainCollectionRel);
   const otherTs = anyFileWithExt(cwd, ".ts", mainTsRel);
   const writeMainTs = !(mcExists && !mcRefs) && !otherCollection && !otherTs;
@@ -1271,6 +1383,6 @@ export function runInit(opts: RunInitOptions): RunInitResult {
   const written: string[] = [];
   const operations: InitOperation[] = [];
   const warnings: string[] = [];
-  writeTsSurface(cwd, written, operations, warnings, force, MAIN_TS_CONTENT, writeMainTs);
+  writeTsSurface({ cwd, written, operations, warnings, config, starter, force, writeMainTs });
   return withScaffoldOperations(written, operations, warnings);
 }
