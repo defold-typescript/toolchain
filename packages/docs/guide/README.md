@@ -13,6 +13,18 @@ toc-title: Overview
 
 Build your [Defold](https://defold.com/) game in [TypeScript](https://www.typescriptlang.org/) and get VSCode's full editor experience — autocomplete, inline type errors, and safe refactors — across the whole Defold API, while still shipping the plain [Lua](https://www.lua.org/) the engine runs.
 
+> [!NOTE]
+> **Want to help shape v1.0?**
+>
+> The project is pre-1.0 and ships often — see the [changelog](./changelog.md). The most useful thing you can do is **use** the toolchain on a real project and report what you hit:
+>
+> - **Gaps in the API** — anything missing or mistyped against the Defold reference.
+> - **Rough edges in the tooling** — the CLI, the workflow, the debugger, or the library resolver.
+> - **Agent friction** — where thin documentation left a coding model guessing or looping.
+> - **Direction** — nothing is locked until v1.0, so say what feels wrong and what you would want built next.
+>
+> [Open an issue](https://github.com/defold-typescript/toolchain/issues) for any of it — it all steers where this goes. Pull requests stay closed until v1.0, then open right after.
+
 - **The full Defold API, typed** — every module and namespace is typed from the official reference, so `go`, `gui`, `vmath`, `msg`, and the rest autocomplete and type-check as you write, with the reference documentation rendered into the hover text.
 - **Compiles to plain Lua** — your TypeScript runs through the battle-tested [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) compiler down to the Lua Defold already runs: no engine fork, no proprietary runtime, no lock-in.
 - **Typed scripts end to end** — `self`, `on_message`, and `on_input` payloads are typed through `defineScript`, `defineGuiScript`, and `defineRenderScript`, and an editor property [declared in their `properties` field](./script-lifecycle.md#script-properties-on-self) lands on `self` with its own type while the toolchain emits the `go.property` registration for you; `defineEditorScript` types the editor extensions themselves.
@@ -22,7 +34,6 @@ Build your [Defold](https://defold.com/) game in [TypeScript](https://www.typesc
 - **Fits new and existing projects** — scaffold from scratch, or add the TypeScript surface to a project that already has `game.project` and adopt type safety gradually, one script at a time alongside your existing Lua.
   - **Preserves your project layout** — TypeScript blends into the existing project structure without creating a wrapper folder.
 - **Built for the real loop** — `watch` recompiles beside the Defold editor, live transpile diagnostics surface errors inline, and source maps let you set breakpoints in your `.ts`; [`--hot-reload`](./watch.md#hot-reload) pushes each successful rebuild into the running game, whose runtime errors arrive in your terminal naming the `.ts` line that threw.
-- **Moving fast, pre-1.0** — the toolchain ships often, and the [changelog](./changelog.md) calls out breaking changes first so an upgrade is never a surprise.
 
 This guide shows how to scaffold a project, write TypeScript that the toolchain compiles to Lua, and look up the language-and-toolchain quirks you will hit along the way.
 
