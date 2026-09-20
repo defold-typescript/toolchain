@@ -1224,7 +1224,7 @@
   "resource.get_render_target_info": [
     {
       "sourceHash": "5e526c539ed8ae25",
-      "ts": "// Get the metadata from a render target resource\nexport default defineScript({\n  init() {\n    const info = resource.get_render_target_info(\"/my_render_target.render_targetc\");\n    // the info table contains meta data about all the render target attachments\n    // so it's not necessary to use resource.get_texture here, but we do it here\n    // just to show that it's possible:\n    const info_attachment_1 = resource.get_texture_info(info.attachments[0].handle);\n  },\n});\n\n// Get a texture attachment from a render target and set it on a model component\nexport default defineScript({\n  init() {\n    const info = resource.get_render_target_info(\"/my_render_target.render_targetc\");\n    const attachment = info.attachments[0].texture;\n    // you can also get texture info from the 'texture' field, since it's a resource hash\n    const texture_info = resource.get_texture_info(attachment);\n    go.set(\"#model\", \"texture0\", attachment);\n  },\n});"
+      "ts": "// Get the metadata from a render target resource\nexport default defineScript({\n  init() {\n    const info = resource.get_render_target_info(\"/my_render_target.render_targetc\");\n    // the info table contains meta data about all the render target attachments\n    // so it's not necessary to use resource.get_texture here, but we do it here\n    // just to show that it's possible:\n    const info_attachment_1 = resource.get_texture_info(info.attachments[0]!.handle);\n  },\n});\n\n// Get a texture attachment from a render target and set it on a model component\nexport default defineScript({\n  init() {\n    const info = resource.get_render_target_info(\"/my_render_target.render_targetc\");\n    const attachment = info.attachments[0]!.texture!;\n    // you can also get texture info from the 'texture' field, since it's a resource hash\n    const texture_info = resource.get_texture_info(attachment);\n    go.set(\"#model\", \"texture0\", attachment);\n  },\n});"
     }
   ],
   "resource.get_text_metrics": [
@@ -1254,7 +1254,7 @@
   "resource.render_target": [
     {
       "sourceHash": "87231742204d2351",
-      "ts": "// Set a render target color attachment as a model texture:\ngo.property(\"my_render_target\", resource.render_target(\"/rt.render_target\"));\n\nexport default defineScript({\n  init(self) {\n    const rt_info = resource.get_render_target_info(self.my_render_target);\n    go.set(\"#model\", \"texture0\", rt_info.attachments[0].texture);\n  },\n});"
+      "ts": "// Set a render target color attachment as a model texture:\ngo.property(\"my_render_target\", resource.render_target(\"/rt.render_target\"));\n\nexport default defineScript({\n  init(self) {\n    const rt_info = resource.get_render_target_info(self.my_render_target);\n    go.set(\"#model\", \"texture0\", rt_info.attachments[0]!.texture!);\n  },\n});"
     }
   ],
   "resource.set": [

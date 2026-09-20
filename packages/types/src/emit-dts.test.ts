@@ -29,6 +29,7 @@ import sysDoc from "../fixtures/sys_doc.json" with { type: "json" };
 import tilemapDoc from "../fixtures/tilemap_doc.json" with { type: "json" };
 import typesDoc from "../fixtures/types_doc.json" with { type: "json" };
 import vmathDoc from "../fixtures/vmath_doc.json" with { type: "json" };
+import windowDoc from "../fixtures/window_doc.json" with { type: "json" };
 import urlParameterTable from "../url-parameters.json" with { type: "json" };
 import { type ApiFunction, type ApiModule, type ApiParameter, parseDefoldApiDoc } from "./api-doc";
 import {
@@ -1102,7 +1103,14 @@ describe("emitDeclarations", () => {
     );
   });
 
-  test("a single table return field followed by a <ul> emits a nested inline object", () => {
+  test("a <dl> header restating its own slot emits the <ul> keys flat", () => {
+    const module = parseDefoldApiDoc(windowDoc);
+    expect(emitDeclarations(module)).toContain(
+      "function get_safe_area(): { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number };",
+    );
+  });
+
+  test("a single table return field whose <dl> header names a different key stays nested", () => {
     const module: ApiModule = {
       namespace: "window",
       brief: "",
@@ -1115,7 +1123,7 @@ describe("emitDeclarations", () => {
           parameters: [],
           returnValues: [
             {
-              name: "safe_area",
+              name: "area",
               doc: 'safe area data\n<dl>\n<dt><code>safe_area</code></dt>\n<dd><span class="type">table</span> table containing these keys:</dd>\n</dl>\n<ul>\n<li><span class="type">number</span> <code>x</code></li>\n<li><span class="type">number</span> <code>y</code></li>\n<li><span class="type">number</span> <code>inset_top</code></li>\n</ul>',
               types: ["table"],
               isOptional: false,
@@ -1131,6 +1139,22 @@ describe("emitDeclarations", () => {
     expect(emitDeclarations(module)).toContain(
       "function get_safe_area(): { safe_area: { x: number; y: number; inset_top: number } };",
     );
+  });
+
+  test("get_render_target_info recovers its attachments level instead of flattening it", () => {
+    const module = parseDefoldApiDoc(resourceDoc);
+    const line =
+      emitDeclarations(module)
+        .split("\n")
+        .find((l) => l.includes("function get_render_target_info(")) ?? "";
+    expect(line).toContain(
+      "): { handle: number; attachments: { handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture?: Hash }[] };",
+    );
+    const top = line.slice(line.indexOf("): {"));
+    const attachmentsAt = top.indexOf("attachments:");
+    for (const field of ["width:", "height:", "depth:", "mipmaps:", "buffer_type:", "texture"]) {
+      expect(top.indexOf(field)).toBeGreaterThan(attachmentsAt);
+    }
   });
 
   test("a flattened multi-table option bag emits nested inline objects without duplicate top-level keys", () => {
@@ -1561,6 +1585,31 @@ describe("parseTableFields", () => {
 
   test("returns null for a doc with no <dl> field list", () => {
     expect(parseTableFields("optional options table, an opaque key-value map")).toBeNull();
+  });
+
+  describe("a lone table <dl> header followed by a <ul> key list", () => {
+    const doc =
+      'safe area data\n<dl>\n<dt><code>safe_area</code></dt>\n<dd><span class="type">table</span> table containing these keys:</dd>\n</dl>\n<ul>\n<li><span class="type">number</span> <code>x</code></li>\n<li><span class="type">number</span> <code>inset_top</code></li>\n</ul>';
+    const ulKeys = [
+      { name: "x", types: ["number"] },
+      { name: "inset_top", types: ["number"] },
+    ];
+
+    test("returns the <ul> keys flat when the header restates the slot name", () => {
+      expect(parseTableFields(doc, undefined, "safe_area")).toEqual(ulKeys);
+    });
+
+    test("keeps the nested shape when the header names a different key", () => {
+      expect(parseTableFields(doc, undefined, "area")).toEqual([
+        { name: "safe_area", types: ["table"], fields: ulKeys },
+      ]);
+    });
+
+    test("keeps the nested shape when no slot name is supplied", () => {
+      expect(parseTableFields(doc)).toEqual([
+        { name: "safe_area", types: ["table"], fields: ulKeys },
+      ]);
+    });
   });
 
   test("returns the ordered fields for a <ul> type-code field list (type before name)", () => {
@@ -2134,6 +2183,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
       "tilemap.get_tile_info:return:tile_info",
       "tilemap.get_tiles:return:tiles",
       "resource.get_text_metrics:return:metrics",
+      "resource.get_render_target_info:return:table",
       "profiler.view_recorded_frame:param:frame_index",
       "http.request:param:headers",
       "collectionproxy.get_resources:return:resources",

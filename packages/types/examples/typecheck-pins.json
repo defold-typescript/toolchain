@@ -761,14 +761,6 @@
       "text": "Cannot find name 'defineScript'."
     },
     {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash; }'."
-    },
-    {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash; }'."
-    },
-    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
@@ -823,10 +815,6 @@
     {
       "code": 2304,
       "text": "Cannot find name 'defineScript'."
-    },
-    {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash; }'."
     }
   ],
   "defold-1.12.4/kinds/gui-script:resource.set_atlas:349576ce8a915179": [
@@ -2241,14 +2229,6 @@
       "text": "Cannot find name 'defineScript'."
     },
     {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash; }'."
-    },
-    {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash; }'."
-    },
-    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
@@ -2303,10 +2283,6 @@
     {
       "code": 2304,
       "text": "Cannot find name 'defineScript'."
-    },
-    {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash; }'."
     }
   ],
   "defold-1.12.4/kinds/render-script:resource.set_atlas:349576ce8a915179": [
@@ -3231,14 +3207,6 @@
   ],
   "defold-1.12.4/kinds/script:resource.get_render_target_info:5e526c539ed8ae25": [
     {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash; }'."
-    },
-    {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash; }'."
-    },
-    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
@@ -3265,12 +3233,6 @@
     {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
-    }
-  ],
-  "defold-1.12.4/kinds/script:resource.render_target:87231742204d2351": [
-    {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash; }'."
     }
   ],
   "defold-1.12.4/kinds/script:resource.set_atlas:349576ce8a915179": [
@@ -4851,14 +4813,6 @@
       "text": "Cannot find name 'defineScript'."
     },
     {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash<string>; }'."
-    },
-    {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash<string>; }'."
-    },
-    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
@@ -4921,10 +4875,6 @@
     {
       "code": 2304,
       "text": "Cannot find name 'defineScript'."
-    },
-    {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash<string>; }'."
     }
   ],
   "defold-1.12.4:resource.set:fd3445f93ecdd85e": [
@@ -6265,14 +6215,6 @@
       "text": "Cannot find name 'defineScript'."
     },
     {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash; }'."
-    },
-    {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash; }'."
-    },
-    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
@@ -6327,10 +6269,6 @@
     {
       "code": 2304,
       "text": "Cannot find name 'defineScript'."
-    },
-    {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash; }'."
     }
   ],
   "defold-1.13.0/kinds/gui-script:resource.set_atlas:349576ce8a915179": [
@@ -7783,14 +7721,6 @@
       "text": "Cannot find name 'defineScript'."
     },
     {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash; }'."
-    },
-    {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash; }'."
-    },
-    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
@@ -7845,10 +7775,6 @@
     {
       "code": 2304,
       "text": "Cannot find name 'defineScript'."
-    },
-    {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash; }'."
     }
   ],
   "defold-1.13.0/kinds/render-script:resource.set_atlas:349576ce8a915179": [
@@ -8811,14 +8737,6 @@
   ],
   "defold-1.13.0/kinds/script:resource.get_render_target_info:5e526c539ed8ae25": [
     {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash; }'."
-    },
-    {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash; }'."
-    },
-    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
@@ -8845,12 +8763,6 @@
     {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
-    }
-  ],
-  "defold-1.13.0/kinds/script:resource.render_target:87231742204d2351": [
-    {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash; }'."
     }
   ],
   "defold-1.13.0/kinds/script:resource.set_atlas:349576ce8a915179": [
@@ -10469,14 +10381,6 @@
       "text": "Cannot find name 'defineScript'."
     },
     {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash<string>; }'."
-    },
-    {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash<string>; }'."
-    },
-    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
@@ -10539,10 +10443,6 @@
     {
       "code": 2304,
       "text": "Cannot find name 'defineScript'."
-    },
-    {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash<string>; }'."
     }
   ],
   "defold-1.13.0:resource.set:fd3445f93ecdd85e": [
@@ -12017,14 +11917,6 @@
       "text": "Cannot find name 'defineScript'."
     },
     {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash<string>; }'."
-    },
-    {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash<string>; }'."
-    },
-    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
@@ -12087,10 +11979,6 @@
     {
       "code": 2304,
       "text": "Cannot find name 'defineScript'."
-    },
-    {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash<string>; }'."
     }
   ],
   "defold-1.13.1/kinds/gui-script:resource.set:fd3445f93ecdd85e": [
@@ -13801,14 +13689,6 @@
       "text": "Cannot find name 'defineScript'."
     },
     {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash<string>; }'."
-    },
-    {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash<string>; }'."
-    },
-    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
@@ -13871,10 +13751,6 @@
     {
       "code": 2304,
       "text": "Cannot find name 'defineScript'."
-    },
-    {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash<string>; }'."
     }
   ],
   "defold-1.13.1/kinds/render-script:resource.set:fd3445f93ecdd85e": [
@@ -15097,14 +14973,6 @@
   ],
   "defold-1.13.1/kinds/script:resource.get_render_target_info:5e526c539ed8ae25": [
     {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash<string>; }'."
-    },
-    {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash<string>; }'."
-    },
-    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
@@ -15152,10 +15020,6 @@
     }
   ],
   "defold-1.13.1/kinds/script:resource.render_target:87231742204d2351": [
-    {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash<string>; }'."
-    },
     {
       "code": 2339,
       "text": "Property 'my_render_target' does not exist on type 'Record<never, never>'."
@@ -16991,14 +16855,6 @@
   ],
   "defold-1.13.1:resource.get_render_target_info:5e526c539ed8ae25": [
     {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash<string>; }'."
-    },
-    {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash<string>; }'."
-    },
-    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
@@ -17046,10 +16902,6 @@
     }
   ],
   "defold-1.13.1:resource.render_target:87231742204d2351": [
-    {
-      "code": 2339,
-      "text": "Property 'attachments' does not exist on type '{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash<string>; }'."
-    },
     {
       "code": 2339,
       "text": "Property 'my_render_target' does not exist on type 'Record<never, never>'."

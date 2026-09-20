@@ -819,6 +819,38 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       ],
     },
   ],
+  // resource.get_render_target_info's return `<dl>` writes one key as
+  // `<dt>'attachments'</dt>` — quoted rather than wrapped in `<code>` — so
+  // TABLE_FIELD drops it and parseTableFields hoists the seven per-attachment
+  // fields to the top level, contradicting the `info.attachments[0].handle`
+  // access in the doc's own `@example`. Same shape and same remedy as
+  // font.get_info:return:info above: replace the mis-parsed field list with the
+  // faithful nested isList object. `texture` is documented "only available if
+  // the render target passed in is a resource", hence optional.
+  [
+    "resource.get_render_target_info:return:table",
+    {
+      kind: "object",
+      fields: [
+        { name: "handle", types: ["number"] },
+        {
+          name: "attachments",
+          types: ["table"],
+          isList: true,
+          fields: [
+            { name: "handle", types: ["number"] },
+            { name: "width", types: ["number"] },
+            { name: "height", types: ["number"] },
+            { name: "depth", types: ["number"] },
+            { name: "mipmaps", types: ["number"] },
+            { name: "type", types: ["number"] },
+            { name: "buffer_type", types: ["number"] },
+            { name: "texture", types: ["hash"], optional: true },
+          ],
+        },
+      ],
+    },
+  ],
   // profiler.view_recorded_frame's `frame_index` is a typed `<ul>` "specify one
   // of the following": `distance` and `frame`, both numeric frame offsets. The
   // <li> items carry no `<span class="type">`, so parseTableFields recovers
@@ -1605,7 +1637,11 @@ export function buildTableDocResolver(sources: readonly TableDocSource[]): Table
   return (elementName) => docByName.get(elementName);
 }
 
-export function parseTableFields(doc: string, resolver?: TableDocResolver): TableField[] | null {
+export function parseTableFields(
+  doc: string,
+  resolver?: TableDocResolver,
+  slotName?: string,
+): TableField[] | null {
   const fields: TableField[] = [];
   for (const match of doc.matchAll(TABLE_FIELD)) {
     const name = (match[1] ?? "").trim();
@@ -1624,14 +1660,20 @@ export function parseTableFields(doc: string, resolver?: TableDocResolver): Tabl
   }
   // Nested recovery, scoped to the one unambiguous shape: a `<dl>` declaring a
   // single `table`-typed field whose keys sit in an immediately-following
-  // top-level `<ul>` typed-field list (`window.get_safe_area`). Attach the
-  // `<ul>` fields as that field's nested shape so the slot recovers as a nested
-  // object instead of a `Record`.
+  // top-level `<ul>` typed-field list. Attach the `<ul>` fields as that field's
+  // nested shape so the slot recovers as a nested object instead of a `Record`.
+  //
+  // Unless the header restates the slot it describes (`window.get_safe_area`'s
+  // `safe_area` return documented under a `safe_area` header): that is a
+  // restatement, not a nesting level, and wrapping it emits a level the engine
+  // never returns. Only a caller that knows the slot name can tell the two
+  // apart, so the `<ul>` keys are returned directly when they match.
   if (fields.length === 1) {
     const only = fields[0];
     if (only && only.types.length === 1 && only.types[0] === "table") {
       const nested = parseUlFields(doc);
       if (nested.length > 0) {
+        if (slotName !== undefined && slotName === only.name) return nested;
         only.fields = nested;
         return [only];
       }
@@ -2731,12 +2773,12 @@ function mapSlotUnion(
           elementName,
           slotKind,
           slotName,
-          parseTableFields(doc, resolver) ?? [],
+          parseTableFields(doc, resolver, slotName) ?? [],
         );
         const object = inlineTableType(parsed, mapType, optionalFields);
         ts = `Record<string, ${object}>`;
       } else {
-        const parsed = parseTableFields(doc, resolver);
+        const parsed = parseTableFields(doc, resolver, slotName);
         if (parsed !== null) {
           const nested = applyNestedFieldCurations(elementName, slotKind, slotName, parsed);
           const fields = applyFieldTypeOverrides(elementName, slotKind, slotName, nested);

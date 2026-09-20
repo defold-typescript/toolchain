@@ -1049,7 +1049,7 @@
       "resource\u0000FUNCTION\u0000resource.font\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"hash\"],\"isOptional\":false}]": "function font(path?: string): Hash;",
       "resource\u0000FUNCTION\u0000resource.get_atlas\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_atlas(path: Hash | string): { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: Opaque<\"constant\">; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] };",
       "resource\u0000FUNCTION\u0000resource.get_buffer\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"buffer\"],\"isOptional\":false}]": "function get_buffer(path: Hash | string): Opaque<\"buffer\">;",
-      "resource\u0000FUNCTION\u0000resource.get_render_target_info\u0000[{\"types\":[\"hash\",\"number\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_render_target_info(path: Hash | string | number): { handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash };",
+      "resource\u0000FUNCTION\u0000resource.get_render_target_info\u0000[{\"types\":[\"hash\",\"number\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_render_target_info(path: Hash | string | number): { handle: number; attachments: { handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture?: Hash }[] };",
       "resource\u0000FUNCTION\u0000resource.get_text_metrics\u0000[{\"types\":[\"hash\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_text_metrics(url: Hash, text: string, options?: { width?: number; leading?: number; tracking?: number; line_break?: boolean }): { width: number; height: number; max_ascent: number; max_descent: number };",
       "resource\u0000FUNCTION\u0000resource.get_texture_info\u0000[{\"types\":[\"hash\",\"number\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_texture_info(path: Hash | string | number): { handle: number; width: number; height: number; depth: number; page_count: number; mipmaps: number; flags: number; type: number };",
       "resource\u0000FUNCTION\u0000resource.load\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"buffer\"],\"isOptional\":false}]": "function load(path: string): Opaque<\"buffer\">;",
@@ -1292,7 +1292,7 @@
       "window\u0000FUNCTION\u0000window.get_dim_mode\u0000[]->[{\"types\":[\"constant\"],\"isOptional\":false}]": "function get_dim_mode(): number & { readonly __brand: \"window.DIMMING_UNKNOWN\" } | number & { readonly __brand: \"window.DIMMING_ON\" } | number & { readonly __brand: \"window.DIMMING_OFF\" };",
       "window\u0000FUNCTION\u0000window.get_display_scale\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_display_scale(): number;",
       "window\u0000FUNCTION\u0000window.get_mouse_lock\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_mouse_lock(): boolean;",
-      "window\u0000FUNCTION\u0000window.get_safe_area\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_safe_area(): { safe_area: { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number } };",
+      "window\u0000FUNCTION\u0000window.get_safe_area\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_safe_area(): { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number };",
       "window\u0000FUNCTION\u0000window.get_size\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_size(): LuaMultiReturn<[number, number]>;",
       "window\u0000FUNCTION\u0000window.set_dim_mode\u0000[{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function set_dim_mode(mode: number & { readonly __brand: \"window.DIMMING_ON\" } | number & { readonly __brand: \"window.DIMMING_OFF\" }): void;",
       "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function(self, event, data)\",\"nil\"],\"isOptional\":false}]->[]": "function set_listener(callback?: (self: unknown, event: typeof WINDOW_EVENT_FOCUS_LOST | typeof WINDOW_EVENT_FOCUS_GAINED | typeof WINDOW_EVENT_RESIZED | typeof WINDOW_EVENT_ICONFIED | typeof WINDOW_EVENT_DEICONIFIED, data: Record<string | number, unknown>) => void): void;",
@@ -2351,7 +2351,7 @@
       "resource\u0000FUNCTION\u0000resource.font\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"hash\"],\"isOptional\":false}]": "function font(path?: string): Hash;",
       "resource\u0000FUNCTION\u0000resource.get_atlas\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_atlas(path: Hash | string): { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: Opaque<\"constant\">; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] };",
       "resource\u0000FUNCTION\u0000resource.get_buffer\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"buffer\"],\"isOptional\":false}]": "function get_buffer(path: Hash | string): Opaque<\"buffer\">;",
-      "resource\u0000FUNCTION\u0000resource.get_render_target_info\u0000[{\"types\":[\"hash\",\"number\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_render_target_info(path: Hash | string | number): { handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash };",
+      "resource\u0000FUNCTION\u0000resource.get_render_target_info\u0000[{\"types\":[\"hash\",\"number\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_render_target_info(path: Hash | string | number): { handle: number; attachments: { handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture?: Hash }[] };",
       "resource\u0000FUNCTION\u0000resource.get_text_metrics\u0000[{\"types\":[\"hash\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_text_metrics(url: Hash, text: string, options?: { width?: number; leading?: number; tracking?: number; line_break?: boolean }): { width: number; height: number; max_ascent: number; max_descent: number };",
       "resource\u0000FUNCTION\u0000resource.get_texture_info\u0000[{\"types\":[\"hash\",\"number\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_texture_info(path: Hash | string | number): { handle: number; width: number; height: number; depth: number; page_count: number; mipmaps: number; flags: number; type: number };",
       "resource\u0000FUNCTION\u0000resource.load\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"buffer\"],\"isOptional\":false}]": "function load(path: string): Opaque<\"buffer\">;",
@@ -2594,7 +2594,7 @@
       "window\u0000FUNCTION\u0000window.get_dim_mode\u0000[]->[{\"types\":[\"constant\"],\"isOptional\":false}]": "function get_dim_mode(): number & { readonly __brand: \"window.DIMMING_UNKNOWN\" } | number & { readonly __brand: \"window.DIMMING_ON\" } | number & { readonly __brand: \"window.DIMMING_OFF\" };",
       "window\u0000FUNCTION\u0000window.get_display_scale\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_display_scale(): number;",
       "window\u0000FUNCTION\u0000window.get_mouse_lock\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_mouse_lock(): boolean;",
-      "window\u0000FUNCTION\u0000window.get_safe_area\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_safe_area(): { safe_area: { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number } };",
+      "window\u0000FUNCTION\u0000window.get_safe_area\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_safe_area(): { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number };",
       "window\u0000FUNCTION\u0000window.get_size\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_size(): LuaMultiReturn<[number, number]>;",
       "window\u0000FUNCTION\u0000window.set_dim_mode\u0000[{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function set_dim_mode(mode: number & { readonly __brand: \"window.DIMMING_ON\" } | number & { readonly __brand: \"window.DIMMING_OFF\" }): void;",
       "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function(self, event, data)\",\"nil\"],\"isOptional\":false}]->[]": "function set_listener(callback?: (self: unknown, event: typeof WINDOW_EVENT_FOCUS_LOST | typeof WINDOW_EVENT_FOCUS_GAINED | typeof WINDOW_EVENT_RESIZED | typeof WINDOW_EVENT_ICONFIED | typeof WINDOW_EVENT_DEICONIFIED, data: Record<string | number, unknown>) => void): void;",
@@ -3353,7 +3353,7 @@
       "resource\u0000FUNCTION\u0000resource.font\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"hash\"],\"isOptional\":false}]": "function font(path?: string): Hash;",
       "resource\u0000FUNCTION\u0000resource.get_atlas\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_atlas(path: Hash | string): { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: Opaque<\"constant\">; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] };",
       "resource\u0000FUNCTION\u0000resource.get_buffer\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"buffer\"],\"isOptional\":false}]": "function get_buffer(path: Hash | string): Opaque<\"buffer\">;",
-      "resource\u0000FUNCTION\u0000resource.get_render_target_info\u0000[{\"types\":[\"hash\",\"number\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_render_target_info(path: Hash | string | number): { handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash };",
+      "resource\u0000FUNCTION\u0000resource.get_render_target_info\u0000[{\"types\":[\"hash\",\"number\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_render_target_info(path: Hash | string | number): { handle: number; attachments: { handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture?: Hash }[] };",
       "resource\u0000FUNCTION\u0000resource.get_text_metrics\u0000[{\"types\":[\"hash\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_text_metrics(url: Hash, text: string, options?: { width?: number; leading?: number; tracking?: number; line_break?: boolean }): { width: number; height: number; max_ascent: number; max_descent: number };",
       "resource\u0000FUNCTION\u0000resource.get_texture_info\u0000[{\"types\":[\"hash\",\"number\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_texture_info(path: Hash | string | number): { handle: number; width: number; height: number; depth: number; page_count: number; mipmaps: number; flags: number; type: number };",
       "resource\u0000FUNCTION\u0000resource.load\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"buffer\"],\"isOptional\":false}]": "function load(path: string): Opaque<\"buffer\">;",
@@ -3594,7 +3594,7 @@
       "window\u0000FUNCTION\u0000window.get_dim_mode\u0000[]->[{\"types\":[\"constant\"],\"isOptional\":false}]": "function get_dim_mode(): number & { readonly __brand: \"window.DIMMING_UNKNOWN\" } | number & { readonly __brand: \"window.DIMMING_ON\" } | number & { readonly __brand: \"window.DIMMING_OFF\" };",
       "window\u0000FUNCTION\u0000window.get_display_scale\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_display_scale(): number;",
       "window\u0000FUNCTION\u0000window.get_mouse_lock\u0000[]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function get_mouse_lock(): boolean;",
-      "window\u0000FUNCTION\u0000window.get_safe_area\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_safe_area(): { safe_area: { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number } };",
+      "window\u0000FUNCTION\u0000window.get_safe_area\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_safe_area(): { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number };",
       "window\u0000FUNCTION\u0000window.get_size\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": "function get_size(): LuaMultiReturn<[number, number]>;",
       "window\u0000FUNCTION\u0000window.set_dim_mode\u0000[{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function set_dim_mode(mode: number & { readonly __brand: \"window.DIMMING_ON\" } | number & { readonly __brand: \"window.DIMMING_OFF\" }): void;",
       "window\u0000FUNCTION\u0000window.set_listener\u0000[{\"types\":[\"function(self, event, data)\",\"nil\"],\"isOptional\":false}]->[]": "function set_listener(callback?: (self: unknown, event: typeof WINDOW_EVENT_FOCUS_LOST | typeof WINDOW_EVENT_FOCUS_GAINED | typeof WINDOW_EVENT_RESIZED | typeof WINDOW_EVENT_ICONFIED | typeof WINDOW_EVENT_DEICONIFIED, data: Record<string | number, unknown>) => void): void;",
@@ -6222,7 +6222,7 @@
       },
       "resource\u0000FUNCTION\u0000resource.get_render_target_info\u0000[{\"types\":[\"hash\",\"number\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:path": "Hash | string | number",
-        "return:0:table": "{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash }"
+        "return:0:table": "{ handle: number; attachments: { handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture?: Hash }[] }"
       },
       "resource\u0000FUNCTION\u0000resource.get_text_metrics\u0000[{\"types\":[\"hash\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:url": "Hash",
@@ -7077,7 +7077,7 @@
         "return:0:state": "boolean"
       },
       "window\u0000FUNCTION\u0000window.get_safe_area\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
-        "return:0:safe_area": "{ safe_area: { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number } }"
+        "return:0:safe_area": "{ x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number }"
       },
       "window\u0000FUNCTION\u0000window.get_size\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": {
         "return:0:width": "number",
@@ -9722,7 +9722,7 @@
       },
       "resource\u0000FUNCTION\u0000resource.get_render_target_info\u0000[{\"types\":[\"hash\",\"number\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:path": "Hash | string | number",
-        "return:0:table": "{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash }"
+        "return:0:table": "{ handle: number; attachments: { handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture?: Hash }[] }"
       },
       "resource\u0000FUNCTION\u0000resource.get_text_metrics\u0000[{\"types\":[\"hash\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:url": "Hash",
@@ -10577,7 +10577,7 @@
         "return:0:state": "boolean"
       },
       "window\u0000FUNCTION\u0000window.get_safe_area\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
-        "return:0:safe_area": "{ safe_area: { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number } }"
+        "return:0:safe_area": "{ x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number }"
       },
       "window\u0000FUNCTION\u0000window.get_size\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": {
         "return:0:width": "number",
@@ -12111,7 +12111,7 @@
       },
       "resource\u0000FUNCTION\u0000resource.get_render_target_info\u0000[{\"types\":[\"hash\",\"number\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:path": "Hash | string | number",
-        "return:0:table": "{ handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture: Hash }"
+        "return:0:table": "{ handle: number; attachments: { handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture?: Hash }[] }"
       },
       "resource\u0000FUNCTION\u0000resource.get_text_metrics\u0000[{\"types\":[\"hash\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:url": "Hash",
@@ -12958,7 +12958,7 @@
         "return:0:state": "boolean"
       },
       "window\u0000FUNCTION\u0000window.get_safe_area\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
-        "return:0:safe_area": "{ safe_area: { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number } }"
+        "return:0:safe_area": "{ x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number }"
       },
       "window\u0000FUNCTION\u0000window.get_size\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]": {
         "return:0:width": "number",

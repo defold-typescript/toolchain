@@ -9,7 +9,13 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
-## v0.36.1
+## v0.37.0
+
+### Breaking
+
+- **Two return types now carry the shape the engine actually returns, matching the reference and the `@example` shipped beside them.**
+  - **[`resource.get_render_target_info`](/api/resource)** — the per-attachment fields (`handle`, `width`, `height`, `depth`, `mipmaps`, `type`, `buffer_type`, `texture`) sat beside the top-level `handle` instead of inside the documented `attachments` array. Read them as `info.attachments[0].handle`; `texture` is optional, since the reference documents it only for a render target passed in as a resource.
+  - **[`window.get_safe_area`](/api/window)** — the eight keys were wrapped in a `safe_area` level the engine never returns. Drop it: `window.get_safe_area().inset_left`.
 
 ### Fixed
 
