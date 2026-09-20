@@ -1,7 +1,11 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import { SCAFFOLDED_DEFIGNORE_LINES } from "@defold-typescript/transpiler";
+import {
+  DEFAULT_INCLUDE,
+  SCAFFOLDED_DEFIGNORE_LINES,
+  stripIncludeBase,
+} from "@defold-typescript/transpiler";
 import type { ScriptHookName } from "@defold-typescript/types";
 import { DEBUG_LAUNCHER_SOURCE, debugLaunchConfig, VSCODE_LAUNCH_CONTENT } from "./debug-launcher";
 import { repairDefoldNamespace } from "./defold-target";
@@ -9,6 +13,7 @@ import { CURRENT_STABLE_DEFOLD_VERSION } from "./defold-version";
 import { formatJsonLikeBiome } from "./format-json";
 import { runInitAgents } from "./init-agents";
 import { mergeMiseToml } from "./mise-scaffold";
+import { hasGeneratedBanner } from "./orphan-scan";
 import { SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 import { DEFAULT_TYPES_ENTRYPOINT } from "./script-kind";
 import { mergeVscodeTasks, VSCODE_TASKS_CONTENT } from "./vscode-tasks";
@@ -42,19 +47,22 @@ const TSCONFIG_COMPILER_OPTIONS = {
   skipLibCheck: true,
 };
 
+// The component globs carry the `.ts.` infix no hand-authored Defold path has,
+// so they need no folder to be correct and hold for any `include`. Generated
+// `.lua` modules are deliberately absent: only the banner distinguishes them
+// from authored Lua, which a glob cannot read, and `outDir` is the lever for
+// keeping them out of the tree.
 const GITIGNORE_LINES = [
   "node_modules",
   // `.vscode/defold-debug.ts` downloads the Defold engine binary beside itself
   // (`.vscode/dmengine`, `.vscode/dmengine.exe`); keep the multi-MB binary out of git.
   ".vscode/dmengine*",
-  "src/**/*.ts.script",
-  "src/**/*.ts.script.map",
-  "src/**/*.ts.gui_script",
-  "src/**/*.ts.gui_script.map",
-  "src/**/*.ts.render_script",
-  "src/**/*.ts.render_script.map",
-  "src/**/*.lua",
-  "src/**/*.lua.map",
+  "**/*.ts.script",
+  "**/*.ts.script.map",
+  "**/*.ts.gui_script",
+  "**/*.ts.gui_script.map",
+  "**/*.ts.render_script",
+  "**/*.ts.render_script.map",
   "/build",
   "/.internal",
   "/.editor_settings",
@@ -117,19 +125,74 @@ const GITATTRIBUTES_LINES = [
   "*.gui_script linguist-language=Lua",
 ];
 
+const BIOME_SCHEMA = "https://biomejs.dev/schemas/2.5.1/schema.json";
+
+// The `src`-shaped managed rules v0.36.0 shipped, quoted from that tag. A user's
+// file records no provenance, so retirement runs per file only when that file
+// carries the *complete* released set — the scaffold's signature. A partial set
+// may be the user's own and is never touched.
+export const RETIRED_MANAGED_ENTRIES = {
+  gitignore: [
+    "src/**/*.ts.script",
+    "src/**/*.ts.script.map",
+    "src/**/*.ts.gui_script",
+    "src/**/*.ts.gui_script.map",
+    "src/**/*.ts.render_script",
+    "src/**/*.ts.render_script.map",
+    "src/**/*.lua",
+    "src/**/*.lua.map",
+  ],
+  biomeIncludes: ["src/**/*.ts", "!src/**/*.lua", "!src/**/*.lua.map"],
+  ignoreDir: ["src"],
+} as const;
+
+// `include` answers two different questions, and conflating them is what these
+// rules got wrong. `sourceRootsFromInclude` names folders the scaffold may make
+// claims about; `biomeIncludesFromInclude` names files the program reads.
+//
+// A root is a folder inside the project the scaffold can safely speak for, so a
+// pattern that resolves to the project root, escapes `cwd`, or is absolute in
+// any spelling yields nothing. Absoluteness is decided by string shape, never by
+// `path.isAbsolute`, which answers for the host OS and would wave a Windows
+// drive or UNC path through on a POSIX runner.
+const ABSOLUTE_SPELLING_RE = /^(\/|\\\\|[A-Za-z]:[\\/])/;
+
+export function sourceRootsFromInclude(include: readonly string[]): string[] {
+  const roots: string[] = [];
+  for (const pattern of include) {
+    if (!/[*?[]/.test(pattern) || ABSOLUTE_SPELLING_RE.test(pattern)) {
+      continue;
+    }
+    const base = path.posix.normalize(stripIncludeBase(pattern.split("\\").join("/")));
+    if (base === "" || base === "." || base === "./" || base.startsWith("..")) {
+      continue;
+    }
+    const root = base.endsWith("/") ? base.slice(0, -1) : base;
+    if (root !== "" && !roots.includes(root)) {
+      roots.push(root);
+    }
+  }
+  return roots;
+}
+
+export function biomeIncludesFromInclude(include: readonly string[]): string[] {
+  return [
+    ...include,
+    "!**/dist",
+    "!**/node_modules",
+    "!**/*.ts.script",
+    "!**/*.ts.gui_script",
+    "!**/*.ts.render_script",
+    // The materialized type surface is generated, so it is read by the compiler
+    // but never linted or formatted.
+    "!.defold-types/**",
+  ];
+}
+
 export const BIOME_JSON_CONTENT = {
-  $schema: "https://biomejs.dev/schemas/2.5.1/schema.json",
+  $schema: BIOME_SCHEMA,
   files: {
-    includes: [
-      "src/**/*.ts",
-      "!**/dist",
-      "!**/node_modules",
-      "!**/*.ts.script",
-      "!**/*.ts.gui_script",
-      "!**/*.ts.render_script",
-      "!src/**/*.lua",
-      "!src/**/*.lua.map",
-    ],
+    includes: biomeIncludesFromInclude(DEFAULT_INCLUDE),
   },
   formatter: {
     enabled: true,
@@ -176,9 +239,7 @@ const MANAGED_RECOMMENDATIONS = [
 ];
 const MANAGED_UNWANTED = ["johnnymorganz.luau-lsp"];
 
-const VSCODE_SETTINGS_CONTENT = {
-  "Lua.workspace.ignoreDir": ["src"],
-};
+const LUA_IGNORE_DIR_KEY = "Lua.workspace.ignoreDir";
 
 interface VscodeSnippet {
   scope: string;
@@ -470,17 +531,34 @@ function writeJson(filePath: string, value: unknown): void {
   writeFileSync(filePath, `${formatJsonLikeBiome(value)}\n`);
 }
 
+// Whether a file carries every entry the released scaffold wrote, which is the
+// only evidence that the entries are ours to retire rather than the user's.
+function carriesRetiredSet(present: ReadonlySet<string>, retired: readonly string[]): boolean {
+  return retired.every((entry) => present.has(entry));
+}
+
 function writeGitignore(cwd: string): void {
   const gitignorePath = path.join(cwd, ".gitignore");
   if (existsSync(gitignorePath)) {
     const existing = readFileSync(gitignorePath, "utf8");
-    const present = new Set(existing.split("\n").map((line) => line.trim()));
-    const missing = GITIGNORE_LINES.filter((line) => !present.has(line));
-    if (missing.length === 0) {
+    let lines = existing.split("\n");
+    const present = new Set(lines.map((line) => line.trim()));
+    const retiring = carriesRetiredSet(present, RETIRED_MANAGED_ENTRIES.gitignore);
+    if (retiring) {
+      const retired = new Set<string>(RETIRED_MANAGED_ENTRIES.gitignore);
+      lines = lines.filter((line) => !retired.has(line.trim()));
+    }
+    const kept = new Set(lines.map((line) => line.trim()));
+    const missing = GITIGNORE_LINES.filter((line) => !kept.has(line));
+    if (!retiring && missing.length === 0) {
       return;
     }
-    const prefix = existing.endsWith("\n") || existing === "" ? "" : "\n";
-    writeFileSync(gitignorePath, `${existing}${prefix}${missing.join("\n")}\n`);
+    const body = lines.join("\n");
+    const prefix = body.endsWith("\n") || body === "" ? "" : "\n";
+    writeFileSync(
+      gitignorePath,
+      missing.length === 0 ? body : `${body}${prefix}${missing.join("\n")}\n`,
+    );
   } else {
     writeFileSync(gitignorePath, `${GITIGNORE_LINES.join("\n")}\n`);
   }
@@ -544,20 +622,72 @@ function migrateBiomeRecommended(raw: string): string | null {
   return `${formatJsonLikeBiome(value)}\n`;
 }
 
-function writeBiome(cwd: string, written: string[], force = false): void {
+// Replace the released `src`-shaped include list with one derived from the
+// project's own `include`, keeping every pattern the user added. Returns the
+// re-serialized JSON, or `null` when there is nothing to retire or the file does
+// not parse as JSON — the caller then leaves the file untouched.
+function migrateBiomeIncludes(raw: string, include: readonly string[]): string | null {
+  let value: unknown;
+  try {
+    value = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  const root = value as { files?: { includes?: unknown } };
+  const includes = root.files?.includes;
+  if (!Array.isArray(includes)) {
+    return null;
+  }
+  const entries = includes.filter((entry): entry is string => typeof entry === "string");
+  if (!carriesRetiredSet(new Set(entries), RETIRED_MANAGED_ENTRIES.biomeIncludes)) {
+    return null;
+  }
+  const retired = new Set<string>(RETIRED_MANAGED_ENTRIES.biomeIncludes);
+  const derived = biomeIncludesFromInclude(include);
+  const kept = entries.filter((entry) => !retired.has(entry) && !derived.includes(entry));
+  (root.files as { includes: string[] }).includes = [...derived, ...kept];
+  return `${formatJsonLikeBiome(value)}\n`;
+}
+
+function writeBiome(
+  cwd: string,
+  written: string[],
+  warnings: string[],
+  include: readonly string[],
+  force = false,
+): void {
   const biomePath = path.join(cwd, "biome.json");
   if (existsSync(biomePath)) {
     if (!force) {
       return;
     }
-    const migrated = migrateBiomeRecommended(readFileSync(biomePath, "utf8"));
+    const raw = readFileSync(biomePath, "utf8");
+    // Both passes are independent: a project can carry the deprecated rules key
+    // and the retired include list at once, so the second runs on the first's
+    // output rather than instead of it.
+    const withPreset = migrateBiomeRecommended(raw);
+    const migrated = migrateBiomeIncludes(withPreset ?? raw, include) ?? withPreset;
     if (migrated !== null) {
       writeFileSync(biomePath, migrated);
       written.push("biome.json");
+      return;
+    }
+    // `migrateBiomeRecommended` and the include reconciliation both take a plain
+    // `JSON.parse`, so a hand-edited JSONC file is reported rather than rewritten
+    // with its comments destroyed.
+    try {
+      JSON.parse(raw);
+    } catch {
+      warnings.push(
+        "left biome.json untouched: it contains comments, so the managed `files.includes` were not reconciled — update them by hand.",
+      );
     }
     return;
   }
-  writeJson(biomePath, BIOME_JSON_CONTENT);
+  writeJson(biomePath, {
+    ...BIOME_JSON_CONTENT,
+    files: { includes: biomeIncludesFromInclude(include) },
+  });
   written.push("biome.json");
 }
 
@@ -701,23 +831,71 @@ function writeVscodeExtensions(cwd: string, written: string[]): void {
   written.push(".vscode/extensions.json");
 }
 
-function writeVscodeSettings(cwd: string, written: string[]): void {
+// Claiming a folder holds only generated Lua is a claim the scaffold has to
+// earn: the build's own module output shares the `.lua` extension, so an
+// extension-only probe answers yes on every project that has ever been built.
+// The banner is the distinguishing signal. Returns the first authored file
+// found, for the warning to name, or `undefined` when the claim holds.
+export function authoredLuaUnder(cwd: string, root: string): string | undefined {
+  for (const rel of walkProjectFiles(path.join(cwd, root))) {
+    const projectRel = path.join(root, rel);
+    if (rel.endsWith(".lua") && !hasGeneratedBanner(cwd, projectRel)) {
+      return projectRel;
+    }
+  }
+  return undefined;
+}
+
+function ignoreDirRoots(cwd: string, include: readonly string[], warnings: string[]): string[] {
+  const claimed: string[] = [];
+  for (const root of sourceRootsFromInclude(include)) {
+    const authored = authoredLuaUnder(cwd, root);
+    if (authored === undefined) {
+      claimed.push(root);
+    } else {
+      warnings.push(
+        `left \`${LUA_IGNORE_DIR_KEY}\` without ${root}: ${authored} is hand-authored Lua, so ignoring the folder would hide it from the Lua language server.`,
+      );
+    }
+  }
+  return claimed;
+}
+
+function writeVscodeSettings(
+  cwd: string,
+  written: string[],
+  warnings: string[],
+  include: readonly string[],
+): void {
   const dir = path.join(cwd, ".vscode");
   const filePath = path.join(dir, "settings.json");
+  const claimed = ignoreDirRoots(cwd, include, warnings);
   if (existsSync(filePath)) {
     const existing = readVscodeJson(filePath);
     if (existing === null) {
       return;
     }
-    existing["Lua.workspace.ignoreDir"] = unionStrings(
-      existing["Lua.workspace.ignoreDir"],
-      VSCODE_SETTINGS_CONTENT["Lua.workspace.ignoreDir"],
-    );
+    const current = Array.isArray(existing[LUA_IGNORE_DIR_KEY])
+      ? (existing[LUA_IGNORE_DIR_KEY] as unknown[]).filter(
+          (value): value is string => typeof value === "string",
+        )
+      : [];
+    // The released `"src"` is replaced rather than unioned beside the derived
+    // root: leaving both would keep a stale claim about a folder this project
+    // does not build from.
+    const retired = new Set<string>(RETIRED_MANAGED_ENTRIES.ignoreDir);
+    const kept = current.filter((value) => !retired.has(value));
+    const merged = unionStrings(kept, claimed);
+    if (merged.length === 0) {
+      delete existing[LUA_IGNORE_DIR_KEY];
+    } else {
+      existing[LUA_IGNORE_DIR_KEY] = merged;
+    }
     writeJson(filePath, existing);
     return;
   }
   mkdirSync(dir, { recursive: true });
-  writeJson(filePath, VSCODE_SETTINGS_CONTENT);
+  writeJson(filePath, claimed.length === 0 ? {} : { [LUA_IGNORE_DIR_KEY]: claimed });
   written.push(".vscode/settings.json");
 }
 
@@ -979,11 +1157,11 @@ function writeTsSurface(
   writeDefignore(cwd);
   written.push(".defignore");
 
-  writeBiome(cwd, written, force);
+  writeBiome(cwd, written, warnings, include, force);
   writeMiseTasks(cwd, written);
 
   writeVscodeExtensions(cwd, written);
-  writeVscodeSettings(cwd, written);
+  writeVscodeSettings(cwd, written, warnings, include);
   writeVscodeSnippets(cwd, written, force);
   writeVscodeLaunch(cwd, written);
   writeVscodeTasks(cwd, written);

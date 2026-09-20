@@ -38,7 +38,7 @@ function outputScanRoots(config: BuildConfig): string[] {
   return [...roots];
 }
 
-function hasGeneratedBanner(cwd: string, rel: string): boolean {
+export function hasGeneratedBanner(cwd: string, rel: string): boolean {
   let content: string;
   try {
     content = readFileSync(path.join(cwd, rel), "utf8");
