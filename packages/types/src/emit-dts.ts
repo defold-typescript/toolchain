@@ -245,6 +245,32 @@ export const RETURN_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
   ["editor.tx.add", 'Opaque<"transaction_step">'],
 ]);
 
+// A function whose `returnvalues` declare a concrete type while the same slot's
+// prose documents a `nil` alternative. Distinct from RETURN_TYPE_OVERRIDES
+// above, which fills an *empty* `returnvalues`: these contradict a token
+// upstream explicitly declares, so each entry records it and
+// `return-correction-provenance.test.ts` pins it against every vendored
+// ref-doc. Upstream adding `nil` to `types` hands the case to the top-level
+// `nil` projection in `mapSlotUnion` and reds the entry, which is then deleted
+// rather than re-pinned.
+export interface ReturnTypeCorrection {
+  readonly ts: string;
+  readonly upstream: readonly string[];
+  readonly reason: string;
+}
+
+// Keyed by FQN, mirroring PROPERTY_TYPE_CORRECTIONS.
+export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> = new Map([
+  [
+    "b2d.get_body",
+    {
+      ts: 'Opaque<"b2Body"> | undefined',
+      upstream: ["b2Body"],
+      reason: "the body if successful. Otherwise nil.",
+    },
+  ],
+]);
+
 // A property whose upstream `<span class="type">` states a type the engine does
 // not use. Unlike every other override here, which fills a gap upstream left
 // empty, these contradict a token upstream explicitly declares — so each entry
@@ -1400,6 +1426,95 @@ export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
   ["material.set_vertex_attributes:param:attributes:value", ATTRIBUTE_VALUE_TS],
   ["material.get_vertex_attributes:return:table:value", ATTRIBUTE_VALUE_TS],
 ]);
+
+// A return-slot field upstream documents as platform-gated or nil-valued while
+// declaring it like any other. Lua removes a key assigned `nil`, so "might be
+// nil if not available" and "only available on iOS and Android" describe the
+// same runtime state — the key is absent — and the correction is always `?`,
+// never a required field widened to `| undefined`.
+//
+// Separate from TABLE_FIELD_TYPE_OVERRIDES because presence is the other axis:
+// the parser reads these fields' types correctly and stays authoritative for
+// them, so an entry here restates no type and cannot drift when upstream
+// retypes a field. `upstream` is pinned rather than consumed, and `evidence` is
+// the decoded prose `return-correction-provenance.test.ts` searches the slot doc
+// for; both red the entry once upstream marks the field or drops the gate.
+//
+// Keyed `<element>:<kind>:<slot>:<field>`, the TABLE_FIELD_TYPE_OVERRIDES shape.
+export interface ReturnFieldOptionalityCorrection {
+  readonly upstream: readonly string[];
+  readonly evidence: string;
+}
+
+// The platform-gate markers upstream renders as `<span class="icon-*">` decode
+// to `[ios]`, `[android]`, `[html5]` — `user_agent` states its gate through the
+// marker alone, with no availability sentence to pin.
+export const RETURN_FIELD_OPTIONALITY_CORRECTIONS: ReadonlyMap<
+  string,
+  ReturnFieldOptionalityCorrection
+> = new Map([
+  [
+    "sys.get_sys_info:return:sys_info:device_model",
+    { upstream: ["string"], evidence: "[ios][android] Only available on iOS and Android." },
+  ],
+  [
+    "sys.get_sys_info:return:sys_info:manufacturer",
+    { upstream: ["string"], evidence: "[ios][android] Only available on iOS and Android." },
+  ],
+  [
+    "sys.get_sys_info:return:sys_info:device_ident",
+    {
+      upstream: ["string"],
+      evidence: '[ios] "identifierForVendor" on iOS. [android] "android_id" on Android.',
+    },
+  ],
+  [
+    "sys.get_sys_info:return:sys_info:user_agent",
+    { upstream: ["string"], evidence: "[html5] The HTTP user agent" },
+  ],
+  [
+    "sys.get_ifaddrs:return:ifaddrs:address",
+    { upstream: ["string"], evidence: "might be nil if not available." },
+  ],
+  [
+    "sys.get_ifaddrs:return:ifaddrs:mac",
+    { upstream: ["string"], evidence: "might be nil if not available." },
+  ],
+]);
+
+// Mark a parser-recovered field optional from RETURN_FIELD_OPTIONALITY_CORRECTIONS,
+// leaving every other field — and every field's type — untouched. Sets the
+// `optional` flag `TableField` already carries and `inlineTableType` already
+// reads, so no `mapType` is needed and no correction can change a type.
+//
+// A correction keyed to this slot that matches no recovered field throws rather
+// than no-opping: a field upstream renamed would otherwise leave a stale entry
+// looking applied while the emitted declaration silently re-widened.
+// Returns a new array; never mutates the parser's result.
+export function applyFieldOptionalityCorrections(
+  elementName: string,
+  slotKind: "param" | "return" | undefined,
+  slotName: string | undefined,
+  fields: readonly TableField[],
+): TableField[] {
+  if (slotKind === undefined || slotName === undefined) return [...fields];
+  const prefix = `${tableSlotKey(elementName, slotKind, slotName)}:`;
+  const corrected = fields.map((field) =>
+    RETURN_FIELD_OPTIONALITY_CORRECTIONS.has(`${prefix}${field.name}`)
+      ? { ...field, optional: true }
+      : field,
+  );
+  const recovered = new Set(fields.map((field) => field.name));
+  const stale = [...RETURN_FIELD_OPTIONALITY_CORRECTIONS.keys()].filter(
+    (key) => key.startsWith(prefix) && !recovered.has(key.slice(prefix.length)),
+  );
+  if (stale.length > 0) {
+    throw new Error(
+      `field-optionality correction names no recovered field: ${stale.sort().join(", ")}`,
+    );
+  }
+  return corrected;
+}
 
 // Pin a parser-recovered field's TS type from TABLE_FIELD_TYPE_OVERRIDES,
 // leaving every other field parser-authoritative. A field the override does not
@@ -2628,6 +2743,10 @@ function emitReturn(
   // slots and leaves the consumer on its token-derived fallback.
   const override = RETURN_TYPE_OVERRIDES.get(elementName);
   if (override !== undefined) return { type: override, trailing: "", slots: [] };
+  // Kept beside the override lookup so the two stay visibly distinct: this one
+  // contradicts a declared token rather than filling an empty `returnvalues`,
+  // and it is a per-slot render, so it reports its slot.
+  const correction = RETURN_TYPE_CORRECTIONS.get(elementName);
   if (returnValues.length === 0) return { type: "void", trailing: "", slots: [] };
   if (returnValues.length > 1) {
     // Defold multi-returns are positional and always present; each slot maps
@@ -2659,6 +2778,13 @@ function emitReturn(
   }
   const first = returnValues[0];
   if (!first) return { type: "void", trailing: "", slots: [] };
+  if (correction !== undefined) {
+    return {
+      type: correction.ts,
+      trailing: "",
+      slots: [{ position: 0, name: first.name, ts: correction.ts }],
+    };
+  }
   const ts =
     first.types.length > 0
       ? mapSlotUnion(
@@ -2769,11 +2895,16 @@ function mapSlotUnion(
         // arbitrary name. Reusing the parser keeps the inner fields in lockstep
         // with the doc instead of a hand-listed drift-prone copy; a documented
         // array-form field is pinned via TABLE_FIELD_TYPE_OVERRIDES.
-        const parsed = applyFieldTypeOverrides(
+        const parsed = applyFieldOptionalityCorrections(
           elementName,
           slotKind,
           slotName,
-          parseTableFields(doc, resolver, slotName) ?? [],
+          applyFieldTypeOverrides(
+            elementName,
+            slotKind,
+            slotName,
+            parseTableFields(doc, resolver, slotName) ?? [],
+          ),
         );
         const object = inlineTableType(parsed, mapType, optionalFields);
         ts = `Record<string, ${object}>`;
@@ -2781,7 +2912,8 @@ function mapSlotUnion(
         const parsed = parseTableFields(doc, resolver, slotName);
         if (parsed !== null) {
           const nested = applyNestedFieldCurations(elementName, slotKind, slotName, parsed);
-          const fields = applyFieldTypeOverrides(elementName, slotKind, slotName, nested);
+          const typed = applyFieldTypeOverrides(elementName, slotKind, slotName, nested);
+          const fields = applyFieldOptionalityCorrections(elementName, slotKind, slotName, typed);
           const object = inlineTableType(fields, mapType, optionalFields);
           ts = isSlotLevelList(doc) ? `${object}[]` : object;
         } else {

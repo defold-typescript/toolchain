@@ -1,7 +1,7 @@
 {
   "versions": {
     "1.13.1": {
-      "b2d\u0000FUNCTION\u0000b2d.get_body\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false}]->[{\"types\":[\"b2Body\"],\"isOptional\":false}]": "function get_body(url: string | Hash | Url): Opaque<\"b2Body\">;",
+      "b2d\u0000FUNCTION\u0000b2d.get_body\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false}]->[{\"types\":[\"b2Body\"],\"isOptional\":false}]": "function get_body(url: string | Hash | Url): Opaque<\"b2Body\"> | undefined;",
       "b2d\u0000FUNCTION\u0000b2d.get_version\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_version(): { version: number; major: number; middle: number; minor: number };",
       "b2d\u0000FUNCTION\u0000b2d.get_world\u0000[]->[{\"types\":[\"b2World\"],\"isOptional\":false}]": "function get_world(): Opaque<\"b2World\">;",
       "b2d\u0000TYPEDEF\u0000b2Body\u0000": "type b2Body = Opaque<\"b2Body\">;",
@@ -1184,9 +1184,9 @@
       "sys\u0000FUNCTION\u0000sys.get_connectivity\u0000[]->[{\"types\":[\"constant\"],\"isOptional\":false}]": "function get_connectivity(): number & { readonly __brand: \"sys.NETWORK_DISCONNECTED\" } | number & { readonly __brand: \"sys.NETWORK_CONNECTED_CELLULAR\" } | number & { readonly __brand: \"sys.NETWORK_CONNECTED\" };",
       "sys\u0000FUNCTION\u0000sys.get_engine_info\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_engine_info(): { version: string; version_sha1: string; is_debug: boolean };",
       "sys\u0000FUNCTION\u0000sys.get_host_path\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_host_path(filename: string): string;",
-      "sys\u0000FUNCTION\u0000sys.get_ifaddrs\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_ifaddrs(): { name: string; address: string; mac: string; up: boolean; running: boolean }[];",
+      "sys\u0000FUNCTION\u0000sys.get_ifaddrs\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_ifaddrs(): { name: string; address?: string; mac?: string; up: boolean; running: boolean }[];",
       "sys\u0000FUNCTION\u0000sys.get_save_file\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_save_file(application_id: string, file_name: string): string;",
-      "sys\u0000FUNCTION\u0000sys.get_sys_info\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_sys_info(options?: { ignore_secure?: boolean }): { device_model: string; manufacturer: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident: string; user_agent: string };",
+      "sys\u0000FUNCTION\u0000sys.get_sys_info\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_sys_info(options?: { ignore_secure?: boolean }): { device_model?: string; manufacturer?: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident?: string; user_agent?: string };",
       "sys\u0000FUNCTION\u0000sys.load\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function load(filename: string): Record<string | number, unknown>;",
       "sys\u0000FUNCTION\u0000sys.load_buffer\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"buffer\"],\"isOptional\":false}]": "function load_buffer(path: string): Opaque<\"buffer\">;",
       "sys\u0000FUNCTION\u0000sys.load_buffer_async\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function(self, request_id, result)\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function load_buffer_async(path: string, status_callback: (self: unknown, request_id: unknown, result: unknown) => void): number;",
@@ -1304,7 +1304,7 @@
       "zlib\u0000FUNCTION\u0000zlib.inflate\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function inflate(buf: string): string;"
     },
     "1.13.0": {
-      "b2d\u0000FUNCTION\u0000b2d.get_body\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false}]->[{\"types\":[\"b2Body\"],\"isOptional\":false}]": "function get_body(url: string | Hash | Url): Opaque<\"b2Body\">;",
+      "b2d\u0000FUNCTION\u0000b2d.get_body\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false}]->[{\"types\":[\"b2Body\"],\"isOptional\":false}]": "function get_body(url: string | Hash | Url): Opaque<\"b2Body\"> | undefined;",
       "b2d\u0000FUNCTION\u0000b2d.get_version\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_version(): { version: number; major: number; middle: number; minor: number };",
       "b2d\u0000FUNCTION\u0000b2d.get_world\u0000[]->[{\"types\":[\"b2World\"],\"isOptional\":false}]": "function get_world(): Opaque<\"b2World\">;",
       "b2d\u0000TYPEDEF\u0000b2Body\u0000": "type b2Body = Opaque<\"b2Body\">;",
@@ -2486,9 +2486,9 @@
       "sys\u0000FUNCTION\u0000sys.get_connectivity\u0000[]->[{\"types\":[\"constant\"],\"isOptional\":false}]": "function get_connectivity(): number & { readonly __brand: \"sys.NETWORK_DISCONNECTED\" } | number & { readonly __brand: \"sys.NETWORK_CONNECTED_CELLULAR\" } | number & { readonly __brand: \"sys.NETWORK_CONNECTED\" };",
       "sys\u0000FUNCTION\u0000sys.get_engine_info\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_engine_info(): { version: string; version_sha1: string; is_debug: boolean };",
       "sys\u0000FUNCTION\u0000sys.get_host_path\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_host_path(filename: string): string;",
-      "sys\u0000FUNCTION\u0000sys.get_ifaddrs\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_ifaddrs(): { name: string; address: string; mac: string; up: boolean; running: boolean }[];",
+      "sys\u0000FUNCTION\u0000sys.get_ifaddrs\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_ifaddrs(): { name: string; address?: string; mac?: string; up: boolean; running: boolean }[];",
       "sys\u0000FUNCTION\u0000sys.get_save_file\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_save_file(application_id: string, file_name: string): string;",
-      "sys\u0000FUNCTION\u0000sys.get_sys_info\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_sys_info(options?: { ignore_secure?: boolean }): { device_model: string; manufacturer: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident: string; user_agent: string };",
+      "sys\u0000FUNCTION\u0000sys.get_sys_info\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_sys_info(options?: { ignore_secure?: boolean }): { device_model?: string; manufacturer?: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident?: string; user_agent?: string };",
       "sys\u0000FUNCTION\u0000sys.load\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function load(filename: string): Record<string | number, unknown>;",
       "sys\u0000FUNCTION\u0000sys.load_buffer\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"buffer\"],\"isOptional\":false}]": "function load_buffer(path: string): Opaque<\"buffer\">;",
       "sys\u0000FUNCTION\u0000sys.load_buffer_async\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function(self, request_id, result)\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function load_buffer_async(path: string, status_callback: (self: unknown, request_id: unknown, result: unknown) => void): number;",
@@ -2606,7 +2606,7 @@
       "zlib\u0000FUNCTION\u0000zlib.inflate\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function inflate(buf: string): string;"
     },
     "1.12.4": {
-      "b2d\u0000FUNCTION\u0000b2d.get_body\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false}]->[{\"types\":[\"b2Body\"],\"isOptional\":false}]": "function get_body(url: string | Hash | Url): Opaque<\"b2Body\">;",
+      "b2d\u0000FUNCTION\u0000b2d.get_body\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false}]->[{\"types\":[\"b2Body\"],\"isOptional\":false}]": "function get_body(url: string | Hash | Url): Opaque<\"b2Body\"> | undefined;",
       "b2d\u0000FUNCTION\u0000b2d.get_world\u0000[]->[{\"types\":[\"b2World\"],\"isOptional\":false}]": "function get_world(): Opaque<\"b2World\">;",
       "b2d\u0000TYPEDEF\u0000b2Body\u0000": "type b2Body = Opaque<\"b2Body\">;",
       "b2d\u0000TYPEDEF\u0000b2World\u0000": "type b2World = Opaque<\"b2World\">;",
@@ -3487,9 +3487,9 @@
       "sys\u0000FUNCTION\u0000sys.get_connectivity\u0000[]->[{\"types\":[\"constant\"],\"isOptional\":false}]": "function get_connectivity(): number & { readonly __brand: \"sys.NETWORK_DISCONNECTED\" } | number & { readonly __brand: \"sys.NETWORK_CONNECTED_CELLULAR\" } | number & { readonly __brand: \"sys.NETWORK_CONNECTED\" };",
       "sys\u0000FUNCTION\u0000sys.get_engine_info\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_engine_info(): { version: string; version_sha1: string; is_debug: boolean };",
       "sys\u0000FUNCTION\u0000sys.get_host_path\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_host_path(filename: string): string;",
-      "sys\u0000FUNCTION\u0000sys.get_ifaddrs\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_ifaddrs(): { name: string; address: string; mac: string; up: boolean; running: boolean }[];",
+      "sys\u0000FUNCTION\u0000sys.get_ifaddrs\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_ifaddrs(): { name: string; address?: string; mac?: string; up: boolean; running: boolean }[];",
       "sys\u0000FUNCTION\u0000sys.get_save_file\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_save_file(application_id: string, file_name: string): string;",
-      "sys\u0000FUNCTION\u0000sys.get_sys_info\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_sys_info(options?: { ignore_secure?: boolean }): { device_model: string; manufacturer: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident: string; user_agent: string };",
+      "sys\u0000FUNCTION\u0000sys.get_sys_info\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_sys_info(options?: { ignore_secure?: boolean }): { device_model?: string; manufacturer?: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident?: string; user_agent?: string };",
       "sys\u0000FUNCTION\u0000sys.load\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function load(filename: string): Record<string | number, unknown>;",
       "sys\u0000FUNCTION\u0000sys.load_buffer\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"buffer\"],\"isOptional\":false}]": "function load_buffer(path: string): Opaque<\"buffer\">;",
       "sys\u0000FUNCTION\u0000sys.load_buffer_async\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function(self, request_id, result)\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function load_buffer_async(path: string, status_callback: (self: unknown, request_id: unknown, result: unknown) => void): number;",
@@ -3610,7 +3610,7 @@
     "1.13.1": {
       "b2d\u0000FUNCTION\u0000b2d.get_body\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false}]->[{\"types\":[\"b2Body\"],\"isOptional\":false}]": {
         "param:0:url": "string | Hash | Url",
-        "return:0:body": "Opaque<\"b2Body\">"
+        "return:0:body": "Opaque<\"b2Body\"> | undefined"
       },
       "b2d\u0000FUNCTION\u0000b2d.get_version\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "return:0:info": "{ version: number; major: number; middle: number; minor: number }"
@@ -6702,7 +6702,7 @@
         "return:0:host_path": "string"
       },
       "sys\u0000FUNCTION\u0000sys.get_ifaddrs\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
-        "return:0:ifaddrs": "{ name: string; address: string; mac: string; up: boolean; running: boolean }[]"
+        "return:0:ifaddrs": "{ name: string; address?: string; mac?: string; up: boolean; running: boolean }[]"
       },
       "sys\u0000FUNCTION\u0000sys.get_save_file\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
         "param:0:application_id": "string",
@@ -6711,7 +6711,7 @@
       },
       "sys\u0000FUNCTION\u0000sys.get_sys_info\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:options": "{ ignore_secure?: boolean }",
-        "return:0:sys_info": "{ device_model: string; manufacturer: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident: string; user_agent: string }"
+        "return:0:sys_info": "{ device_model?: string; manufacturer?: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident?: string; user_agent?: string }"
       },
       "sys\u0000FUNCTION\u0000sys.load\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:filename": "string",
@@ -7115,7 +7115,7 @@
     "1.13.0": {
       "b2d\u0000FUNCTION\u0000b2d.get_body\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false}]->[{\"types\":[\"b2Body\"],\"isOptional\":false}]": {
         "param:0:url": "string | Hash | Url",
-        "return:0:body": "Opaque<\"b2Body\">"
+        "return:0:body": "Opaque<\"b2Body\"> | undefined"
       },
       "b2d\u0000FUNCTION\u0000b2d.get_version\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "return:0:info": "{ version: number; major: number; middle: number; minor: number }"
@@ -10202,7 +10202,7 @@
         "return:0:host_path": "string"
       },
       "sys\u0000FUNCTION\u0000sys.get_ifaddrs\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
-        "return:0:ifaddrs": "{ name: string; address: string; mac: string; up: boolean; running: boolean }[]"
+        "return:0:ifaddrs": "{ name: string; address?: string; mac?: string; up: boolean; running: boolean }[]"
       },
       "sys\u0000FUNCTION\u0000sys.get_save_file\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
         "param:0:application_id": "string",
@@ -10211,7 +10211,7 @@
       },
       "sys\u0000FUNCTION\u0000sys.get_sys_info\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:options": "{ ignore_secure?: boolean }",
-        "return:0:sys_info": "{ device_model: string; manufacturer: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident: string; user_agent: string }"
+        "return:0:sys_info": "{ device_model?: string; manufacturer?: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident?: string; user_agent?: string }"
       },
       "sys\u0000FUNCTION\u0000sys.load\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:filename": "string",
@@ -10615,7 +10615,7 @@
     "1.12.4": {
       "b2d\u0000FUNCTION\u0000b2d.get_body\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false}]->[{\"types\":[\"b2Body\"],\"isOptional\":false}]": {
         "param:0:url": "string | Hash | Url",
-        "return:0:body": "Opaque<\"b2Body\">"
+        "return:0:body": "Opaque<\"b2Body\"> | undefined"
       },
       "b2d\u0000FUNCTION\u0000b2d.get_world\u0000[]->[{\"types\":[\"b2World\"],\"isOptional\":false}]": {
         "return:0:world": "Opaque<\"b2World\">"
@@ -12587,7 +12587,7 @@
         "return:0:host_path": "string"
       },
       "sys\u0000FUNCTION\u0000sys.get_ifaddrs\u0000[]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
-        "return:0:ifaddrs": "{ name: string; address: string; mac: string; up: boolean; running: boolean }[]"
+        "return:0:ifaddrs": "{ name: string; address?: string; mac?: string; up: boolean; running: boolean }[]"
       },
       "sys\u0000FUNCTION\u0000sys.get_save_file\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
         "param:0:application_id": "string",
@@ -12596,7 +12596,7 @@
       },
       "sys\u0000FUNCTION\u0000sys.get_sys_info\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:options": "{ ignore_secure?: boolean }",
-        "return:0:sys_info": "{ device_model: string; manufacturer: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident: string; user_agent: string }"
+        "return:0:sys_info": "{ device_model?: string; manufacturer?: string; system_name: string; system_version: string; api_version: string; language: string; device_language: string; territory: string; gmt_offset: number; device_ident?: string; user_agent?: string }"
       },
       "sys\u0000FUNCTION\u0000sys.load\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:filename": "string",
