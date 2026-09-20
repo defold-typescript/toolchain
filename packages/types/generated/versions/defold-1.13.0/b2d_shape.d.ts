@@ -202,10 +202,12 @@ declare global {
      * @example
      * ```ts
      * const body = b2d.get_body("#collisionobject");
-     * const circle = b2d.shape.get_shape(body, 1);
-     * circle.center = vmath.vector3(24, 0, 0);
-     * b2d.shape.set_shape(body, 1, circle, true);
-     * b2d.shape.set_shape(body, 2, { type: b2d.shape.SHAPE_TYPE_SEGMENT, v1: vmath.vector3(-32, 0, 0), v2: vmath.vector3(32, 0, 0) });
+     * if (body !== undefined) {
+     *   const circle = b2d.shape.get_shape(body, 1);
+     *   circle.center = vmath.vector3(24, 0, 0);
+     *   b2d.shape.set_shape(body, 1, circle, true);
+     *   b2d.shape.set_shape(body, 2, { type: b2d.shape.SHAPE_TYPE_SEGMENT, v1: vmath.vector3(-32, 0, 0), v2: vmath.vector3(32, 0, 0) });
+     * }
      * ```
      */
     function set_shape(shape_id: Opaque<"b2Shape">, definition: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, update_mass: boolean): void;

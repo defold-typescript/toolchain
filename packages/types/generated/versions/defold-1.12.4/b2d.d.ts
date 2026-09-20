@@ -14,7 +14,7 @@ declare global {
      * @param url - the url to the game object collision component
      * @returns the body if successful. Otherwise `nil`.
      */
-    function get_body(url: string | Hash | Url): Opaque<"b2Body">;
+    function get_body(url: string | Hash | Url): Opaque<"b2Body"> | undefined;
     /**
      * Get the Box2D world from the current collection
      *
