@@ -42,6 +42,7 @@ export {
   computeOutputRel,
   DEFAULT_INCLUDE,
   parseBuildConfig,
+  projectRelativeBase,
   requirePathForRel,
   SCRIPT_SUFFIX_BY_KIND,
   stripIncludeBase,
