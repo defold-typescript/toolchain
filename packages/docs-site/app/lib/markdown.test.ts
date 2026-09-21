@@ -270,6 +270,38 @@ describe("renderMarkdown", () => {
     expect(html).not.toContain("admonition");
   });
 
+  test("leads the first paragraph with the label instead of a line of its own", async () => {
+    const html = await renderMarkdown("> [!NOTE]\n> Body.\n");
+    expect(html).toMatch(/<p><span class="admonition-title">[\s\S]*?<\/span>Body\.<\/p>/);
+  });
+
+  test("leads a same-line body with the label", async () => {
+    const html = await renderMarkdown("> [!TIP] Inline body.\n");
+    expect(html).toMatch(/<p><span class="admonition-title">[\s\S]*?<\/span>Inline body\.<\/p>/);
+  });
+
+  test("leads a headline body with the label, dropping the empty marker line", async () => {
+    const html = await renderMarkdown("> [!WARNING]\n>\n> ## Heads up\n>\n> Body.\n");
+    // The label leads the heading's own content, ahead of the permalink anchor,
+    // so it is not part of the link text or the slug the anchor points at.
+    expect(html).toMatch(/<h2 id="heads-up"><span class="admonition-title">/);
+    expect(html).toMatch(/<\/span><a class="heading-anchor" href="#heads-up"/);
+    expect(html).not.toContain("admonition-lead");
+    expect(html).toContain("<p>Body.</p>");
+  });
+
+  test("keeps the label on its own line when the body opens with a list", async () => {
+    const html = await renderMarkdown("> [!NOTE]\n>\n> - one\n> - two\n");
+    expect(html).toMatch(/<p class="admonition-lead"><span class="admonition-title">/);
+    expect(html).toContain("<li>one</li>");
+  });
+
+  test("keeps the label on its own line when the marker carries no body", async () => {
+    const html = await renderMarkdown("> [!CAUTION]\n");
+    expect(html).toMatch(/<p class="admonition-lead"><span class="admonition-title">/);
+    expect(html).not.toMatch(/<p><\/p>/);
+  });
+
   test("renders the admonition body as markdown", async () => {
     const html = await renderMarkdown("> [!NOTE]\n> Use `go.property`.\n");
     expect(html).toContain("<code>go.property</code>");

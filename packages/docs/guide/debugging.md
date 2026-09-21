@@ -3,37 +3,123 @@ toc-title: Debugging
 ---
 # Debugging TypeScript in Defold
 
-Step through your TypeScript with breakpoints set directly in the `.ts` source, even though Defold runs the transpiled Lua. The toolchain already emits the load-bearing piece: every build writes a `<name>.ts.script.map` source map next to the chunk and appends a `--# sourceMappingURL=` trailer. The [Local Lua Debugger](https://marketplace.visualstudio.com/items?itemName=tomblind.local-lua-debugger-vscode) extension reads that map, so a breakpoint in a `.ts` file resolves to the right generated line with no extra wiring.
+Set a breakpoint in a `.ts` file, press F5, and step through your own source while Defold runs the transpiled Lua.
 
-## Automated setup
+This works because every build already emits what a debugger needs: a `<name>.ts.script.map` source map beside each chunk, and a `--# sourceMappingURL=` trailer pointing at it. The [Local Lua Debugger](https://marketplace.visualstudio.com/items?itemName=tomblind.local-lua-debugger-vscode) extension reads those maps, so a breakpoint resolves to the right generated line with no extra wiring.
 
-```
-bunx @defold-typescript/cli setup-debug
-```
+## Quick start
 
-`setup-debug` is idempotent and sets up the whole debug path:
+1. **Wire the project.** From the project root:
 
-- `extensions.json` recommends `tomblind.local-lua-debugger-vscode` — the one required third-party extension for debugging. (Defold Kit is no longer recommended; sumneko Lua is an optional aid for reading generated Lua. See [editor setup](editor-setup.md).)
-- `launch.json` adds a `lua-local` configuration named **Defold: Debug (TypeScript)** whose `program.command` is `bun`. Its `scriptFiles` and `scriptRoots` are derived from your `include`[^src-root] and `outDir`: the pre-scan covers scripts, gui scripts, render scripts and plain `.lua` modules at the paths the build actually writes them (editor scripts are excluded — they are not game chunks), and `scriptRoots` names both the output side and the source side so the running Defold chunk path and the map's bare `sources` entry each resolve back to a file on disk. Local Lua Debugger (>=0.3.0) pre-scans `scriptFiles` for the emitted `--# sourceMappingURL=` trailers to resolve `.ts` breakpoints ahead of time — without a pattern covering an output, no source-mapped breakpoint in it binds. [`upgrade`](./upgrade.md) rewrites those two fields in place when `include` or `outDir` changes, and `init . --force` does the same on a project you are re-scaffolding by hand — see [`init`](./init.md) for what else that flag re-syncs. Plain `init` refuses an already-scaffolded project rather than refreshing it. Either refresh reasserts only those two fields on a configuration that is already there — it never creates one — and leaves every other key (including anything you added) untouched. A run that changes nothing does not rewrite the file at all, so your JSONC comments and hand formatting survive `setup-debug`, `upgrade` and `init . --force` alike.
-- `defold-debug.ts` is a self-contained Bun launcher that downloads and runs a stock `dmengine` (or your native-extension build engine) with its stdio inherited — the pipe Local Lua Debugger attaches over.
-- Adds the `lldebugger` library dependency to `game.project` (at the next free `dependencies#N` index, skipped if already present).
-- Writes the ambient `lldebugger.debug.d.ts` (the `@noResolution declare module`) next to the entry script it edits, so whichever `include`[^src-root] pattern covers that script covers the declaration too. It is regenerated whole, skipped when already current, and a copy an older version left at `src/lldebugger.debug.d.ts` is removed unless you have edited it.
-- Injects the gated `lldebugger.start()` bootstrap into your entry script inside a managed `BEGIN`/`END` block. A re-run refreshes the block if its wording drifted and is otherwise a no-op; a legacy single-marker block from an older version is upgraded in place. The block is kept in exactly one script: any stale managed block in another configured source is stripped on each run.
+   ```
+   bunx @defold-typescript/cli setup-debug
+   ```
 
-The launcher is **Bun, not a shell script**. The upstream `lua-local` template runs a `bash` script and, on Windows, routes it through Git Bash. This toolchain already mandates Bun and targets Windows, so the launcher uses `process.platform` for the OS, `fetch` for the engine download, and `Bun.spawn` for the run — no `bash`, no Git Bash dependency. All `.vscode` debug files merge additively into any config you already have. A `launch.json` that is not valid JSON or JSONC stops `setup-debug` naming the file, with nothing written.
+   This writes the whole debug path, and is safe to re-run.
 
-It selects the entry script from the Defold boot path: starting at `game.project`'s `[bootstrap] main_collection`, it walks the referenced `.collection` files (including nested `collection:` references) and collects every `.ts.script` component, mapping each back to its source `.ts`. A single boot-path script is wired automatically; with several, pass `--script <path>` to choose one or run interactively (without `--json`) to pick from a prompt, and `--json` errors naming the candidates. When the boot path reaches no `.ts.script` at all (or there is no `[bootstrap]`), it falls back to scanning your configured sources — every `include`[^src-root] pattern, `src/**/*.ts` out of the box — for a lifecycle-factory call (`defineScript`/`defineGuiScript`/`defineRenderScript`). The target must be one of those configured production sources, not merely a path an `include` pattern happens to match, so a declaration file or a file under a generated or dependency tree (`build`, `node_modules`, `.defold-types`) is refused too, each with an error naming the file and why it is not a compiled input. A `.ts.script` component on the boot path that no configured source builds is likewise refused — naming the component — rather than falling back to the factory-call scan and wiring an unrelated script. A project it cannot wire is left byte-identical. The plain output names the script added to, any scripts the block was removed from, and the boot-path trace behind the choice; `--json` emits a machine-readable `{command, ok, written, actions, manualSteps, addedTo, removedFrom, bootPath}` result. The same command is available as the `defold-typescript:setup-debug` mise task.
+2. **Do the two steps it cannot.** Both are reported when the command finishes:
 
-Two steps still require the Defold editor and VS Code and are reported as remaining manual steps:
+   - Install the *Local Lua Debugger* extension in VS Code (`tomblind.local-lua-debugger-vscode`).
+   - Run *Project -> Fetch Libraries* in the Defold editor, so the `lldebugger` module is downloaded.
 
-- Install the *Local Lua Debugger* VS Code extension.
-- Run *Project -> Fetch Libraries* so the `lldebugger` module is downloaded.
+3. **Build, then launch.** Transpile, compile the Defold project, then pick **Defold: Debug (TypeScript)** in VS Code and press F5.
 
-The manual walkthrough below remains the fallback and documents exactly what `setup-debug` automates.
+Each part is covered below. If you would rather wire things by hand, the manual setup section walks the same path step by step.
 
-## One-time setup
+## What `setup-debug` writes
 
-1. **Install the recommended extension.** Open the project in VS Code and accept the *Local Lua Debugger* recommendation (or install `tomblind.local-lua-debugger-vscode` directly).
+Six files — three in your project, three under `.vscode/`:
+
+- **`game.project`** — the `lldebugger` library dependency, at the next free `dependencies#N` index. Skipped if it is already there.
+- **your entry script** — a gated `lldebugger.start()` bootstrap, inside a managed `BEGIN`/`END` block.
+- **`lldebugger.debug.d.ts`** — the ambient `@noResolution declare module`, written next to the entry script so the same `include`[^src-root] pattern covers both.
+- **`.vscode/launch.json`** — a `lua-local` configuration named **Defold: Debug (TypeScript)** whose `program.command` is `bun`.
+- **`.vscode/defold-debug.ts`** — a self-contained Bun launcher that downloads and runs the engine with its stdio inherited, the pipe Local Lua Debugger attaches over. No `bash` and no Git Bash, unlike the upstream `lua-local` template.
+- **`.vscode/extensions.json`** — recommends `tomblind.local-lua-debugger-vscode`, the one third-party extension debugging requires. (Defold Kit is no longer recommended; sumneko Lua is an optional aid for reading generated Lua. See [editor setup](editor-setup.md).)
+
+The same command is available as the `defold-typescript:setup-debug` mise task.
+
+### Where breakpoints bind
+
+Two fields in the launch configuration decide this, and both are derived from your `include`[^src-root] and `outDir`:
+
+- `scriptFiles` covers scripts, gui scripts, render scripts and plain `.lua` modules, at the paths the build actually writes them. Editor scripts are excluded — they are not game chunks.
+- `scriptRoots` names both the output side and the source side, so the chunk path Defold runs and the map's bare `sources` entry each resolve back to a file on disk.
+
+Local Lua Debugger (0.3.0 and later) pre-scans `scriptFiles` for the emitted `--# sourceMappingURL=` trailers before the session starts. If no pattern covers an output, **no source-mapped breakpoint in it will bind** — which is why these two fields track your `tsconfig.json` instead of being fixed.
+
+### Picking the entry script
+
+`setup-debug` follows the Defold boot path rather than guessing:
+
+1. It starts at `game.project`'s `[bootstrap] main_collection`, walks the referenced `.collection` files (including nested `collection:` references), and collects every `.ts.script` component, mapping each back to its source `.ts`.
+2. A single boot-path script is wired automatically. With several, pass `--script <path>`, or run interactively (without `--json`) to pick from a prompt; `--json` errors and names the candidates.
+3. If the boot path reaches no `.ts.script` — or there is no `[bootstrap]` — it falls back to scanning your configured sources (every `include`[^src-root] pattern, `src/**/*.ts` out of the box) for a lifecycle-factory call: `defineScript`, `defineGuiScript` or `defineRenderScript`.
+
+The target must be a configured production source, not merely a path an `include` pattern happens to match. A declaration file, or a file under a generated or dependency tree such as `build`, `node_modules` or `.defold-types`, is refused by name and cause. So is a boot-path `.ts.script` component that no configured source builds — rather than falling back to the factory-call scan and wiring an unrelated script.
+
+The bootstrap stays in exactly one script: a stale managed block in any other configured source is stripped on each run.
+
+### Re-running it
+
+`setup-debug` is idempotent, and every `.vscode` file merges additively into what you already have — your own launch configurations, recommendations and an edited `defold-debug.ts` all survive.
+
+- A managed block whose wording has drifted is refreshed in place, and a legacy single-marker block from an older version is upgraded.
+- The ambient declaration is regenerated whole, or skipped when already current. A copy an older version left at `src/lldebugger.debug.d.ts` is removed, unless you have edited it.
+
+[`upgrade`](./upgrade.md) and `init . --force` also refresh the launch configuration when `include` or `outDir` moves — see [`init`](./init.md) for what else that flag re-syncs. Either one rewrites `scriptFiles` and `scriptRoots` in place on a configuration that is already there, creates none where there is none, and leaves every other key alone. Plain `init` refuses an already-scaffolded project rather than refreshing it.
+
+On all three routes, a run with nothing to change does not rewrite `launch.json` at all, so your JSONC comments and hand formatting survive untouched. A run that does have a change to make reserializes the file, and comments in it are lost.
+
+### When it refuses
+
+`setup-debug` is all-or-nothing: **a project it cannot wire is left byte-identical.** It stops, naming the file and the reason, when
+
+- `.vscode/launch.json` is not valid JSON or JSONC, so the configuration cannot be merged into it, or
+- the entry script cannot be resolved, for any of the reasons above.
+
+Otherwise the plain output names the script it added to, any scripts the block was removed from, and the boot-path trace behind the choice. `--json` emits a machine-readable `{command, ok, written, actions, manualSteps, addedTo, removedFrom, bootPath}` result.
+
+## Launching a debug session
+
+The launcher runs whatever already sits under `build/`; it does **not** compile the Defold project itself. The CLI build loop produces both artifacts headlessly, with no editor:
+
+1. **Transpile**, so the `.ts.script` and `.ts.script.map` files are current — `bunx @defold-typescript/cli build`, or keep `watch` running.
+
+2. **Compile the Defold project**, so `build/default/game.projectc` exists:
+
+   ```sh
+   bunx @defold-typescript/cli bob resolve   # first time / after editing dependencies
+   bunx @defold-typescript/cli bob build      # debug build into build/default
+   ```
+
+   `bob build` runs Defold's headless `bob` tool — see [Build](build.md#headless-builds-no-editor) for the JVM and cache details. Native-extension projects must add `--build-server <url>` so `bob` can compile the engine remotely.
+
+3. **Launch.** In VS Code, select the **Defold: Debug (TypeScript)** configuration and start it (F5). The Bun launcher resolves the engine, then runs `build/default/game.projectc`. Breakpoints in your `.ts` files resolve through the emitted `<name>.ts.script.map`.
+
+To debug-build and launch in one step, outside the editor debugger, `bunx @defold-typescript/cli bob run` composes the build with an engine launch, pinning bob, typings and the running engine to one resolved SHA.
+
+### Which engine the launcher runs
+
+It prefers the native-extension build engine at `build/<platform>/dmengine` when that exists. Otherwise it downloads a stock engine from `d.defold.com` next to the launcher, at `.vscode/dmengine`. The download is a one-time fetch per platform, and the scaffolded `.gitignore` keeps the binary out of version control.
+
+### Native-extension runtime libraries
+
+On a build-engine run the launcher checks each supported native extension's declared runtime libraries and warns-and-continues if any are missing. It never fetches them, because no extension has a fetchable source yet.
+
+OpenAL on Windows is currently the only declared extension: native-extension builds need `OpenAL32.dll` and `wrap_oal.dll` placed by hand next to the build engine, in `build/x86_64-win32/`. The Defold build server does not ship these runtime DLLs and no Defold-hosted archive serves them, so the launcher cannot fetch them; the copy fix is tracked upstream at [defold/defold#11860](https://github.com/defold/defold/issues/11860). When they are missing on a Windows build-engine run you get a one-line reminder, and the run continues.
+
+macOS and Linux declare no native-extension runtime libraries and resolve OpenAL from the system, so nothing needs placing.
+
+### Building from the editor instead
+
+The CLI build loop above is the primary path and needs no editor. If you prefer, you can still produce `build/default/game.projectc` (and any native-extension engine) by building from the Defold editor before launching from VS Code — the launcher runs whatever is already under `build/` either way.
+
+## Manual setup
+
+`setup-debug` automates exactly the steps below; follow them to wire a project by hand, or to see what the command did.
+
+1. **Install the recommended extension.** Open the project in VS Code and accept the *Local Lua Debugger* recommendation, or install `tomblind.local-lua-debugger-vscode` directly.
 
 2. **Add the `lldebugger` library to Defold.** In `game.project`, add the dependency:
 
@@ -43,7 +129,7 @@ The manual walkthrough below remains the fallback and documents exactly what `se
 
    This is our vendored, MIT-licensed snapshot of `ts-defold/defold-lldebugger`, hosted from this repo's releases — that is why the URL differs from the upstream docs. Then run *Project -> Fetch Libraries* in the Defold editor so the `lldebugger` Lua module is available to `require`.
 
-3. **Start the debugger from your entry script.** First create an ambient declaration named `lldebugger.debug.d.ts` next to that entry script — `src/lldebugger.debug.d.ts` in the scaffold's layout — so it sits under the same `include`[^src-root] pattern and TypeScript and [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) both know the module without resolving it:
+3. **Declare the module.** Create an ambient declaration named `lldebugger.debug.d.ts` next to your entry script — `src/lldebugger.debug.d.ts` in the scaffold's layout — so it sits under the same `include`[^src-root] pattern:
 
    ```ts
    /** @noResolution */
@@ -52,7 +138,9 @@ The manual walkthrough below remains the fallback and documents exactly what `se
    }
    ```
 
-   Then add the debugger entry near the top of your main script, inside the managed block, gated so it only runs in a debug build:
+   It has to be a `.d.ts`, not an inline `declare module` in a `.ts`: under `moduleResolution: "Bundler"` an inline augmentation that the entry script also imports fails to type-check. With the declaration here, TypeScript leaves the module unresolved and [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) keeps the literal path, so the emitted Lua is `require("lldebugger.debug")` followed by `lldebugger.start()`.
+
+4. **Start the debugger from your entry script.** Add the entry near the top, gated so it only runs in a debug build:
 
    ```ts
    // defold-typescript:setup-debug BEGIN — managed block, do not edit
@@ -65,33 +153,7 @@ The manual walkthrough below remains the fallback and documents exactly what `se
    // defold-typescript:setup-debug END
    ```
 
-   The `@noResolution` ambient declaration must live in a `.d.ts`, not inline in a `.ts` — under `moduleResolution: "Bundler"` an inline `declare module` augmentation that the entry script also imports fails to type-check. With the declaration in the ambient file, TypeScript leaves the module unresolved and [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) keeps the literal path, so the emitted Lua is `require("lldebugger.debug")` followed by `lldebugger.start()`. The `is_debug` guard keeps the call inert in release builds, so the entry is safe to leave in shipped code — it only activates in a debug build with the debugger attached. `setup-debug` writes both files for you; the `BEGIN`/`END` sentinels let a re-run refresh the block if its wording changes.
-
-## Launching a debug session
-
-The launcher runs whatever already sits under `build/`; it does **not** compile the Defold project itself. The CLI build loop produces both artifacts headlessly — no editor required:
-
-1. Transpile your TypeScript so the `.ts.script` and `.ts.script.map` files are current (`bunx @defold-typescript/cli build`, or keep `watch` running).
-2. Compile the Defold project so `build/default/game.projectc` exists:
-
-   ```sh
-   bunx @defold-typescript/cli bob resolve   # first time / after editing dependencies
-   bunx @defold-typescript/cli bob build      # debug build into build/default
-   ```
-
-   `bob build` runs Defold's headless `bob` tool — see [Build](build.md#headless-builds-no-editor) for the JVM and cache details. Native-extension projects must add `--build-server <url>` so `bob` can compile the engine remotely. To debug-build and launch in one step (outside the editor debugger), `bunx @defold-typescript/cli bob run` composes the build with an engine launch, pinning bob, typings, and the running engine to one resolved SHA.
-3. In VS Code, select the **Defold: Debug (TypeScript)** launch configuration and start it (F5).
-4. The Bun launcher resolves the engine, then runs `build/default/game.projectc`. Set breakpoints in your `.ts` files; they resolve through the emitted `<name>.ts.script.map`.
-
-The launcher prefers the native-extension build engine at `build/<platform>/dmengine` when it exists and otherwise downloads a stock engine from `d.defold.com` next to the launcher (`.vscode/dmengine`). The download is a one-time fetch per platform, and the scaffolded `.gitignore` keeps that binary out of version control.
-
-### Native-extension runtime libraries
-
-On a build-engine run the launcher checks each supported native extension's declared runtime libraries and warns-and-continues if any are missing — it never fetches them, because no extension has a fetchable source yet. OpenAL on Windows is currently the only declared extension: native-extension builds need `OpenAL32.dll` and `wrap_oal.dll` placed by hand next to the build engine (in `build/x86_64-win32/`). The Defold build server does not ship these runtime DLLs and no Defold-hosted archive serves them, so the launcher cannot fetch them; the copy fix is tracked upstream at [defold/defold#11860](https://github.com/defold/defold/issues/11860). When they are missing on a Windows build-engine run the launcher prints a one-line reminder and continues. macOS and Linux declare no native-extension runtime libraries and resolve OpenAL from the system, so nothing needs placing.
-
-### Building from the editor instead
-
-The CLI build loop above is the primary path and needs no editor. If you prefer, you can still produce `build/default/game.projectc` (and any native-extension engine) by building from the Defold editor before launching from VS Code — the launcher runs whatever is already under `build/` either way.
+   The `is_debug` guard keeps the call inert in release builds, so the entry is safe to leave in shipped code — it only activates in a debug build with the debugger attached. The `BEGIN`/`END` sentinels are what let a later `setup-debug` run refresh the block if its wording changes.
 
 ## See also
 

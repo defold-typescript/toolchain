@@ -14,16 +14,7 @@ toc-title: Overview
 Build your [Defold](https://defold.com/) game in [TypeScript](https://www.typescriptlang.org/) and get VSCode's full editor experience — autocomplete, inline type errors, and safe refactors — across the whole Defold API, while still shipping the plain [Lua](https://www.lua.org/) the engine runs.
 
 > [!NOTE]
-> **Want to help shape v1.0?**
->
-> The project is pre-1.0 and ships often — see the [changelog](./changelog.md). The most useful thing you can do is **use** the toolchain on a real project and report what you hit:
->
-> - **Gaps in the API** — anything missing or mistyped against the Defold reference.
-> - **Rough edges in the tooling** — the CLI, the workflow, the debugger, or the library resolver.
-> - **Agent friction** — where thin documentation left a coding model guessing or looping.
-> - **Direction** — nothing is locked until v1.0, so say what feels wrong and what you would want built next.
->
-> [Open an issue](https://github.com/defold-typescript/toolchain/issues) for any of it — it all steers where this goes. Pull requests stay closed until v1.0, then open right after.
+> **Want to help shape v1.0?** Nothing is locked in yet, and the project ships often — see the [changelog](./changelog.md). Use it on a real project and [open an issue](https://github.com/defold-typescript/toolchain/issues) about whatever you hit: a missing or mistyped API, a rough edge in the tooling, docs that left your coding agent guessing, or what you would want built next. Pull requests stay closed until the release.
 
 - **The full Defold API, typed** — every module and namespace is typed from the official reference, so `go`, `gui`, `vmath`, `msg`, and the rest autocomplete and type-check as you write, with the reference documentation rendered into the hover text.
 - **Compiles to plain Lua** — your TypeScript runs through the battle-tested [TypeScriptToLua](https://typescripttolua.github.io/) (TSTL) compiler down to the Lua Defold already runs: no engine fork, no proprietary runtime, no lock-in.
