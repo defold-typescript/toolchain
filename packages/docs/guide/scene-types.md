@@ -80,13 +80,20 @@ interface SceneComponentAddresses {
 `msg.post("/logic#wave", ...)` then completes and checks the ids that script's
 [`onMessage` handlers](./messages.md#ways-to-type-your-messages) declare. The
 source is found by mapping each program file forward to the resource it builds,
-so an `outDir` works. A bare `#wave` is linked only when every `wave` component
-in the project names the same script. Embedded components, non-script resources
-and scripts outside your program stay `true`.
+so an `outDir` works. The source must be a `defineScript` (or `defineGuiScript`)
+file; any other source stays `true`, as do embedded components, non-script
+resources and scripts outside your program.
 
-This reaches the absolute, literal addresses your scenes declare. For a relative
-address, a bare game-object address or a URL built at runtime, use
-`msg.url<M>(...)` or `CustomMessages` instead.
+Two address forms are linked automatically:
+
+- an absolute, literal component address your scenes declare, such as
+  `"/logic#wave"`;
+- a bare `"#wave"`, when every `wave` component in the project names the same
+  script.
+
+An object-relative address such as `"buddy#controller"`, a bare game-object
+address and a URL built at runtime are not linked; use `msg.url<M>(...)` or
+`CustomMessages` for those.
 
 ## Which world an address resolves in
 

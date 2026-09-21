@@ -103,7 +103,7 @@ Every route below is optional, and they combine. An id no route declares still c
 | --- | --- | --- | --- |
 | Handle it | The receiver's `onMessage` handler | Nothing new | The handler's own `message` |
 | Import the payload type | An exported type beside the handler | `import type` and a typed value | Whatever that value is assigned to |
-| Scene address | The receiver's handlers, linked by [`scene-types`](./scene-types.md#script-addresses-carry-their-messages) | A literal address such as `"/logic#wave"` | `msg.post` ids and payloads sent to that address |
+| Scene address | The receiver's handlers, linked by [`scene-types`](./scene-types.md#script-addresses-carry-their-messages) | A literal component address such as `"/logic#wave"` or `"#wave"` | `msg.post` ids and payloads sent to that address |
 | Typed receiver | The receiver's handlers, read by `ScriptMessages` | `msg.url<M>(...)` | `msg.post` ids and payloads sent to that address |
 | [`CustomMessages`](#declaring-your-own-messages) | One program-wide interface | Nothing new | Every `msg.post`, `isMessage` and `onMessage` in the program |
 
@@ -169,7 +169,7 @@ export default defineScript({
 });
 ```
 
-Use `msg.url<M>` for a relative address, a bare game-object address, or a URL built at runtime.
+The absolute component addresses your scenes declare (`"/logic#wave"`) are linked, and so is a bare `"#wave"` when every `wave` component names the same script. Use `msg.url<M>(...)` or `CustomMessages` for an object-relative address such as `"buddy#controller"`, a bare game-object address, or a URL built at runtime.
 
 **`CustomMessages`.** Declare an id program-wide when many receivers handle it, when you post it to `"."` or to a URL built at runtime, or when `isMessage` should narrow it. The next sections cover it.
 

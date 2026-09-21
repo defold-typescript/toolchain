@@ -280,7 +280,12 @@ describe("the guide's declaration-placement shapes", () => {
  * a scene address. Read from the guide's own bytes for the same reason as
  * {@link crossObjectBlocks}.
  */
-function waysBlocks(): [string, string, string] {
+const WAYS_FILES = ["wave.ts", "spawner.ts", "launcher.ts"] as const;
+
+// Each whole-file example is introduced by a lead-in ending `` — `src/<name>.ts`: ``
+// directly above its fence, so a block is found by the name a reader sees and a
+// fence with no such lead-in is not part of the program.
+function waysBlocks(): Map<string, string> {
   const body = readFileSync(MESSAGES_GUIDE, "utf8");
   const headingAt = body.indexOf(WAYS_HEADING);
   if (headingAt < 0) {
@@ -292,15 +297,23 @@ function waysBlocks(): [string, string, string] {
   const after = body.slice(headingAt + WAYS_HEADING.length);
   const nextHeading = after.search(/^## /m);
   const section = nextHeading < 0 ? after : after.slice(0, nextHeading);
-  const blocks = [...section.matchAll(/^```ts\n([\s\S]*?)^```$/gm)].map((match) => match[1] ?? "");
-  const [receiver, sender, sceneSender] = blocks;
-  if (blocks.length !== 3 || !receiver || !sender || !sceneSender) {
-    throw new Error(
-      `"${WAYS_HEADING}" carries ${blocks.length} \`\`\`ts blocks, not the ` +
-        "receiver and two senders this test compiles together.",
-    );
+  const blocks = new Map<string, string>();
+  for (const match of section.matchAll(/— `src\/([\w-]+\.ts)`:\n\n```ts\n([\s\S]*?)^```$/gm)) {
+    const [, name = "", block = ""] = match;
+    if (blocks.has(name)) {
+      throw new Error(`"${WAYS_HEADING}" introduces \`src/${name}\` twice.`);
+    }
+    blocks.set(name, block);
   }
-  return [receiver, sender, sceneSender];
+  for (const name of WAYS_FILES) {
+    if (!blocks.has(name)) {
+      throw new Error(
+        `"${WAYS_HEADING}" has no \`\`\`ts block introduced by \`src/${name}\`, which this ` +
+          "test compiles with the rest of the example.",
+      );
+    }
+  }
+  return blocks;
 }
 
 // The member `scene-types` writes for an object `/logic` hosting `wave.ts` as
@@ -310,11 +323,8 @@ const SCENE_ADDRESSES =
 
 describe("the guide's script-local message example", () => {
   test("the receiver and both typed senders type-check together as one program", () => {
-    const [receiver, sender, sceneSender] = waysBlocks();
     const { exitCode, output } = typecheckProgram({
-      "wave.ts": receiver,
-      "spawner.ts": sender,
-      "launcher.ts": sceneSender,
+      ...Object.fromEntries(waysBlocks()),
       "scene-addresses.d.ts": SCENE_ADDRESSES,
     });
     if (exitCode !== 0) {
