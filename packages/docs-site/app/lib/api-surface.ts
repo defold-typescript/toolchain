@@ -624,22 +624,28 @@ export function outerCallArity(signature: string): number | null {
 
 /**
  * Pair each authored override row with the ref-doc entry its call shape selects,
- * or `null` when the shapes cannot pick one out unambiguously — equal row and
- * entry counts, pairwise-distinct entry arities, and every entry's arity equal
- * to its row's. `vmath.lerp`/`vmath.slerp` fail the distinctness test (their
- * entries are arity-identical), so they keep the entry-0 projection.
+ * or `null` when the shapes cannot pick one out unambiguously — pairwise-distinct
+ * entry arities, and every row's arity equal to exactly one entry's. Rows may
+ * outnumber entries: `msg.url`'s receiver-typed forms share the arity, and so the
+ * entry, of the plain form they mirror. `vmath.lerp`/`vmath.slerp` fail the
+ * distinctness test (their entries are arity-identical), so they keep the
+ * entry-0 projection.
  */
 function pairFixtureEntries(
   entries: readonly ApiFunction[],
   rowSignatures: readonly string[],
 ): readonly ApiFunction[] | null {
-  if (entries.length !== rowSignatures.length) return null;
-  const arities = entries.map((e) => e.parameters.length);
-  if (new Set(arities).size !== arities.length) return null;
-  for (const [i, arity] of arities.entries()) {
-    if (outerCallArity(rowSignatures[i] as string) !== arity) return null;
+  if (entries.length > rowSignatures.length) return null;
+  const byArity = new Map(entries.map((e) => [e.parameters.length, e] as const));
+  if (byArity.size !== entries.length) return null;
+  const paired: ApiFunction[] = [];
+  for (const signature of rowSignatures) {
+    const arity = outerCallArity(signature);
+    const entry = arity === null ? undefined : byArity.get(arity);
+    if (entry === undefined) return null;
+    paired.push(entry);
   }
-  return entries;
+  return paired;
 }
 
 /**

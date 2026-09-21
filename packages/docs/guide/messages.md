@@ -89,9 +89,74 @@ export default defineScript<Self>({
 });
 ```
 
-`self` threads via the explicit `onMessage<Self>` type argument, mirroring `defineScript<Self>`; a bare `onMessage({...})` defaults it to an empty record. An unknown key is a compile error, just like `isMessage`.
+`self` threads via the explicit `onMessage<Self>` type argument, mirroring `defineScript<Self>`; a bare `onMessage({...})` defaults it to an empty record. An unknown key whose handler leaves `message` unannotated is a compile error, just like `isMessage`; annotating it declares a [script-local message](#ways-to-type-your-messages).
 
 Like `isMessage` and `defineScript`, the dispatcher is declaration-only — the transpiler lowers it to the flat `function on_message(self, message_id, message, sender)` chunk with a `message_id == hash("...")` if/elseif chain, so no `onMessage` symbol or runtime Lua reaches the output.
+
+## Ways to type your messages
+
+Every route below is optional, and they combine. An id no route declares still compiles, with an unchecked payload.
+
+| Route | Where the type lives | What the sender writes | What gets checked |
+| --- | --- | --- | --- |
+| Handle it | The receiver's `onMessage` handler | Nothing new | The handler's own `message` |
+| Import the payload type | An exported type beside the handler | `import type` and a typed value | Whatever that value is assigned to |
+| Typed receiver | The receiver's handlers, read by `ScriptMessages` | `msg.url<M>(...)` | `msg.post` ids and payloads sent to that address |
+| [`CustomMessages`](#declaring-your-own-messages) | One program-wide interface | Nothing new | Every `msg.post`, `isMessage` and `onMessage` in the program |
+
+**Handle it.** Annotate a handler's `message` and the id is declared for that script. The dispatcher still narrows built-in ids beside it. Export the payload type if a sender should reuse it — `src/wave.ts`:
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+
+export type SpawnWave = { count: number; boss?: boolean };
+
+export default defineScript({
+  on_message: onMessage({
+    spawn_wave(self, message: SpawnWave) {
+      print(`wave of ${message.count}`);
+    },
+    wave_cleared(self, message: { wave: number }) {
+      print(`cleared ${message.wave}`);
+    },
+    contact_point_response(self, message) {
+      print(message.other_group);
+    },
+  }),
+});
+```
+
+**Import the payload type, or type the receiver.** A sender can import `SpawnWave` and build a checked value, or read the receiver's whole map with `ScriptMessages` and pass it to `msg.url`. That address then completes and checks the receiver's ids — `src/spawner.ts`:
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+import type { SpawnWave } from "./wave";
+
+type WaveMessages = ScriptMessages<typeof import("./wave").default>;
+
+export default defineScript({
+  update() {
+    const next: SpawnWave = { count: 3 };
+    msg.post("/logic#wave", "spawn_wave", next);
+
+    const wave = msg.url<WaveMessages>("/logic#wave");
+    msg.post(wave, "spawn_wave", { count: 3, boss: true });
+    msg.post(wave, "wave_cleared", { wave: 1 });
+
+    // @ts-expect-error spawn_wave declares `count` as a number
+    msg.post(wave, "spawn_wave", { count: "3" });
+  },
+});
+```
+
+A typed receiver is still a plain `Url`, and it still accepts built-in ids with their built-in payloads and any id it did not declare. `ScriptMessages` works the same on `defineGuiScript` and `defineRenderScript` results. If you would rather not import the receiver, write the map yourself: `msg.url<{ spawn_wave: SpawnWave }>(...)`.
+
+**`CustomMessages`.** Declare an id program-wide when many receivers handle it, when you post it to `"."` or to a URL built at runtime, or when `isMessage` should narrow it. The next sections cover it.
+
+Two limits apply:
+
+- **`onMessage<Self>` does not declare local ids.** An explicit type argument fixes the handler map to the catalogs. To declare local ids and use script state, drop the type argument and annotate `self` in each handler: `spawn_wave(self: Self, message: SpawnWave)`.
+- **A local id is not program-wide.** `isMessage` and a plain `msg.post` address do not know it; only an address from `msg.url<M>` does.
 
 ## Declaring your own messages
 

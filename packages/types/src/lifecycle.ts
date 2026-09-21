@@ -571,6 +571,14 @@ export type RenderScriptHooksWithProperties<TProps, TSelf, TInitState> = Omit<
   properties?: TProps;
 };
 
+// The script-local message map an `onMessage` dispatcher carries, lifted onto
+// the factory result so `ScriptMessages<typeof script>` can read it. Matched
+// structurally so this module stays usable through its own `./lifecycle`
+// subpath, where the ambient `MessageDispatcher` is not declared.
+export type ScriptMessageChannel<TMessages> = {
+  on_message?: { readonly __messages?: TMessages };
+};
+
 /**
  * Extract a script module's declared property channel (`TProps`) as a nameable
  * type. A script declares its editor properties with the value-keyed
@@ -617,9 +625,15 @@ export type ScriptPropertiesOf<T extends { properties?: object }> = NonNullable<
  * });
  * ```
  */
-export function defineScript<TProps extends object = Record<never, never>, TInitState = TProps>(
-  hooks: ScriptHooksWithProperties<TProps, TProps & TInitState, TInitState>,
-): ScriptHooksWithProperties<TProps, TProps & TInitState, TInitState> {
+export function defineScript<
+  TProps extends object = Record<never, never>,
+  TInitState = TProps,
+  TMessages extends object = Record<never, never>,
+>(
+  hooks: ScriptHooksWithProperties<TProps, TProps & TInitState, TInitState> &
+    ScriptMessageChannel<TMessages>,
+): ScriptHooksWithProperties<TProps, TProps & TInitState, TInitState> &
+  ScriptMessageChannel<TMessages> {
   return hooks;
 }
 
@@ -652,9 +666,15 @@ export function defineScript<TProps extends object = Record<never, never>, TInit
  * });
  * ```
  */
-export function defineGuiScript<TProps extends object = Record<never, never>, TInitState = TProps>(
-  hooks: GuiScriptHooksWithProperties<TProps, TProps & TInitState, TInitState>,
-): GuiScriptHooksWithProperties<TProps, TProps & TInitState, TInitState> {
+export function defineGuiScript<
+  TProps extends object = Record<never, never>,
+  TInitState = TProps,
+  TMessages extends object = Record<never, never>,
+>(
+  hooks: GuiScriptHooksWithProperties<TProps, TProps & TInitState, TInitState> &
+    ScriptMessageChannel<TMessages>,
+): GuiScriptHooksWithProperties<TProps, TProps & TInitState, TInitState> &
+  ScriptMessageChannel<TMessages> {
   return hooks;
 }
 
@@ -689,8 +709,11 @@ export function defineGuiScript<TProps extends object = Record<never, never>, TI
 export function defineRenderScript<
   TProps extends object = Record<never, never>,
   TInitState = TProps,
+  TMessages extends object = Record<never, never>,
 >(
-  hooks: RenderScriptHooksWithProperties<TProps, TProps & TInitState, TInitState>,
-): RenderScriptHooksWithProperties<TProps, TProps & TInitState, TInitState> {
+  hooks: RenderScriptHooksWithProperties<TProps, TProps & TInitState, TInitState> &
+    ScriptMessageChannel<TMessages>,
+): RenderScriptHooksWithProperties<TProps, TProps & TInitState, TInitState> &
+  ScriptMessageChannel<TMessages> {
   return hooks;
 }

@@ -11842,7 +11842,7 @@
     },
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 2, '(receiver: Hash<string> | Url | (string & {}), message_id: \"add_textures\", message?: Record<string | number, unknown> | undefined): void', gave the following error.     Argument of type 'Hash<string>[]' is not assignable to parameter of type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'Hash<string>[]'.   Overload 2 of 2, '(receiver: Hash<string> | Url | (string & {}), message_id: Hash<string>, message?: Record<string | number, unknown> | undefined): void', gave the following error.     Argument of type 'string' is not assignable to parameter of type 'Hash<string>'."
+      "text": "No overload matches this call.   Overload 1 of 2, '(receiver: Hash<string> | (string & {}) | ReceiverUrl<Record<never, never>>, message_id: \"add_textures\", message?: Record<string | number, unknown> | undefined): void', gave the following error.     Argument of type 'Hash<string>[]' is not assignable to parameter of type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'Hash<string>[]'.   Overload 2 of 2, '(receiver: Hash<string> | Url | (string & {}), message_id: Hash<string>, message?: Record<string | number, unknown> | undefined): void', gave the following error.     Argument of type 'string' is not assignable to parameter of type 'Hash<string>'."
     }
   ],
   "defold-1.13.1/kinds/gui-script:resource.create_texture_async:b90223f19d598eaa": [
@@ -13614,7 +13614,7 @@
     },
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 2, '(receiver: Hash<string> | Url | (string & {}), message_id: \"add_textures\", message?: Record<string | number, unknown> | undefined): void', gave the following error.     Argument of type 'Hash<string>[]' is not assignable to parameter of type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'Hash<string>[]'.   Overload 2 of 2, '(receiver: Hash<string> | Url | (string & {}), message_id: Hash<string>, message?: Record<string | number, unknown> | undefined): void', gave the following error.     Argument of type 'string' is not assignable to parameter of type 'Hash<string>'."
+      "text": "No overload matches this call.   Overload 1 of 2, '(receiver: Hash<string> | (string & {}) | ReceiverUrl<Record<never, never>>, message_id: \"add_textures\", message?: Record<string | number, unknown> | undefined): void', gave the following error.     Argument of type 'Hash<string>[]' is not assignable to parameter of type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'Hash<string>[]'.   Overload 2 of 2, '(receiver: Hash<string> | Url | (string & {}), message_id: Hash<string>, message?: Record<string | number, unknown> | undefined): void', gave the following error.     Argument of type 'string' is not assignable to parameter of type 'Hash<string>'."
     }
   ],
   "defold-1.13.1/kinds/render-script:resource.create_texture_async:b90223f19d598eaa": [
@@ -14918,7 +14918,7 @@
     },
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 2, '(receiver: Hash<string> | Url | (string & {}), message_id: \"add_textures\", message?: Record<string | number, unknown> | undefined): void', gave the following error.     Argument of type 'Hash<string>[]' is not assignable to parameter of type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'Hash<string>[]'.   Overload 2 of 2, '(receiver: Hash<string> | Url | (string & {}), message_id: Hash<string>, message?: Record<string | number, unknown> | undefined): void', gave the following error.     Argument of type 'string' is not assignable to parameter of type 'Hash<string>'."
+      "text": "No overload matches this call.   Overload 1 of 2, '(receiver: Hash<string> | (string & {}) | ReceiverUrl<Record<never, never>>, message_id: \"add_textures\", message?: Record<string | number, unknown> | undefined): void', gave the following error.     Argument of type 'Hash<string>[]' is not assignable to parameter of type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'Hash<string>[]'.   Overload 2 of 2, '(receiver: Hash<string> | Url | (string & {}), message_id: Hash<string>, message?: Record<string | number, unknown> | undefined): void', gave the following error.     Argument of type 'string' is not assignable to parameter of type 'Hash<string>'."
     }
   ],
   "defold-1.13.1/kinds/script:resource.create_texture_async:b90223f19d598eaa": [
@@ -16800,7 +16800,7 @@
     },
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 2, '(receiver: Hash<string> | Url | (string & {}), message_id: \"add_textures\", message?: Record<string | number, unknown> | undefined): void', gave the following error.     Argument of type 'Hash<string>[]' is not assignable to parameter of type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'Hash<string>[]'.   Overload 2 of 2, '(receiver: Hash<string> | Url | (string & {}), message_id: Hash<string>, message?: Record<string | number, unknown> | undefined): void', gave the following error.     Argument of type 'string' is not assignable to parameter of type 'Hash<string>'."
+      "text": "No overload matches this call.   Overload 1 of 2, '(receiver: Hash<string> | (string & {}) | ReceiverUrl<Record<never, never>>, message_id: \"add_textures\", message?: Record<string | number, unknown> | undefined): void', gave the following error.     Argument of type 'Hash<string>[]' is not assignable to parameter of type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'Hash<string>[]'.   Overload 2 of 2, '(receiver: Hash<string> | Url | (string & {}), message_id: Hash<string>, message?: Record<string | number, unknown> | undefined): void', gave the following error.     Argument of type 'string' is not assignable to parameter of type 'Hash<string>'."
     }
   ],
   "defold-1.13.1:resource.create_texture_async:b90223f19d598eaa": [
