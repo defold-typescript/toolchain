@@ -2880,6 +2880,51 @@ describe("runWatch editor discovery while unattached", () => {
     await handle.done;
   });
 
+  test("a console stream that drops while the editor stays reachable does not re-announce it", async () => {
+    const streams = captureStreams();
+    const editor = makeEditor("http://localhost:7777");
+    const checks = recordVersionChecks();
+    const handle = startWatch(editor, streams, false, { editorAttached: checks.editorAttached });
+    await handle.waitForIdle();
+    await until(() => editor.consoles.length === 1, 1000);
+
+    (editor.consoles[0] as FakeConsole).end();
+    await until(() => editor.consoles.length === 2, 1000);
+    await handle.waitForIdle();
+
+    expect(countMatches(streams.err(), /attached to Defold editor/g)).toBe(1);
+    expect(streams.err()).not.toContain("no Defold editor detected");
+    expect(checks.baseUrls).toEqual(["http://localhost:7777"]);
+
+    handle.stop();
+    await handle.done;
+  });
+
+  test("a console stream that drops while the editor moves to another port announces the new one", async () => {
+    const streams = captureStreams();
+    const editor = makeEditor("http://localhost:7777");
+    const checks = recordVersionChecks();
+    const handle = startWatch(editor, streams, false, { editorAttached: checks.editorAttached });
+    await handle.waitForIdle();
+    await until(() => editor.consoles.length === 1, 1000);
+
+    editor.setBaseUrl("http://localhost:8888");
+    (editor.consoles[0] as FakeConsole).end();
+    await until(() => editor.consoles.length === 2, 1000);
+    await handle.waitForIdle();
+
+    expect(
+      countMatches(streams.err(), /attached to Defold editor at http:\/\/localhost:7777/g),
+    ).toBe(1);
+    expect(
+      countMatches(streams.err(), /attached to Defold editor at http:\/\/localhost:8888/g),
+    ).toBe(1);
+    expect(checks.baseUrls).toEqual(["http://localhost:7777", "http://localhost:8888"]);
+
+    handle.stop();
+    await handle.done;
+  });
+
   test("repeated discovery with no editor prints the no-editor notice once", async () => {
     const streams = captureStreams();
     const editor = makeEditor(null);

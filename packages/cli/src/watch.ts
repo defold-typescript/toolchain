@@ -334,10 +334,15 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
   }
 
   const pendingReload = new Set<EditorReloadCommand>();
+  // The editor this watch is live against: it pauses discovery and scopes the
+  // attachment's work, and clears whenever that attachment ends.
+  let attachedBaseUrl: string | null = null;
   // Attach is a transition, not a per-rebuild fact: the editor may start, stop
   // or restart at any point during a watch, and only the change is worth a line.
-  let attachedBaseUrl: string | null = null;
-  // Kept apart from `attachedBaseUrl` on purpose: a refusal has to clear the
+  // Outlives an attachment a dropped console stream ended, since the editor is
+  // usually still there; only a notice that told the user otherwise clears it.
+  let announcedBaseUrl: string | null = null;
+  // Kept apart from `announcedBaseUrl` on purpose: a refusal has to clear the
   // announced URL so a later recovery re-announces, so "is this endpoint's
   // reload landing" needs a key of its own.
   let refusedBaseUrl: string | null = null;
@@ -367,6 +372,8 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
     attachment = new AbortController();
     attachedBaseUrl = baseUrl;
     detachNoticed = false;
+    if (announcedBaseUrl === baseUrl) return;
+    announcedBaseUrl = baseUrl;
     if (!opts.json)
       stderr.write(`defold-typescript watch: attached to Defold editor at ${baseUrl}\n`);
     checkEditorVersion(baseUrl, attachment);
@@ -407,6 +414,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
 
   function noteDetached(): void {
     endAttachment();
+    announcedBaseUrl = null;
     refusedBaseUrl = null;
     consoleFailures = 0;
     consoleRetryTicks = 0;
@@ -422,6 +430,7 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
    */
   function noteReloadFailed(baseUrl: string): void {
     endAttachment();
+    announcedBaseUrl = null;
     refusedBaseUrl = baseUrl;
     if (detachNoticed) return;
     detachNoticed = true;
@@ -457,8 +466,9 @@ export function runWatch(opts: RunWatchOptions): RunWatchHandle {
       // An aborted stream rejects rather than ending; that is the ordinary stop
       // path, not a watch failure.
     } finally {
-      // The stream ending is the editor quitting, not a watch failure: fall back
-      // to unattached so the next rebuild can attach to whatever starts next.
+      // The stream ending is the editor quitting or its connection dropping, not a
+      // watch failure: fall back to unattached so the next tick can attach to
+      // whatever answers next, silently when it is the editor already announced.
       // Only the editor the stream was read from is detached; one that already
       // replaced it stays attached and gets its own console on the next tick.
       if (consoleReader === reader) consoleReader = null;
