@@ -223,8 +223,10 @@ const ALERT_ICONS: Record<AlertType, string> = {
   ),
 };
 
-function admonitionTitle(type: AlertType): string {
-  return `<p class="admonition-title">${ALERT_ICONS[type]}<span>${ALERT_LABELS[type]}</span></p>\n`;
+// Inline, not a block: the label leads the first line of the body rather than
+// owning a line above it, so it reads as one sentence with whatever follows.
+function admonitionLabel(type: AlertType): string {
+  return `<span class="admonition-title">${ALERT_ICONS[type]}<span>${ALERT_LABELS[type]}</span></span>`;
 }
 
 // A `> [!MORE]` blockquote (case-insensitive marker) becomes a native
@@ -430,10 +432,30 @@ export async function renderMarkdown(
         }
       }
 
-      const title = new state.Token("html_block", "", 0);
-      title.content = admonitionTitle(type);
-      tokens.splice(i + 1, 0, title);
-      i++;
+      // The label joins the first line of content instead of standing on its
+      // own. A marker that left its paragraph empty (`> [!NOTE]` with the body
+      // on a later line) drops that paragraph first, so the heading or
+      // paragraph below becomes the host. Content with no inline to lead — a
+      // list, a code fence, a table — keeps the label on a line of its own.
+      if (inline.content === "" && (inline.children?.length ?? 0) === 0) {
+        tokens.splice(i + 1, 3);
+      }
+      const host = tokens[i + 1];
+      const hostInline = tokens[i + 2];
+      const label = admonitionLabel(type);
+      if (
+        (host?.type === "paragraph_open" || host?.type === "heading_open") &&
+        hostInline?.type === "inline"
+      ) {
+        const leading = new state.Token("html_inline", "", 0);
+        leading.content = label;
+        hostInline.children = [leading, ...(hostInline.children ?? [])];
+      } else {
+        const standalone = new state.Token("html_block", "", 0);
+        standalone.content = `<p class="admonition-lead">${label}</p>\n`;
+        tokens.splice(i + 1, 0, standalone);
+        i++;
+      }
     }
   });
   // Retag `> [!MORE]` blockquotes as `<details class="more">` so beginner-facing

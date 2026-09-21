@@ -651,19 +651,30 @@
     --admonition-color: #cf222e;
   }
 
+  /* Inline: the label leads the first paragraph or heading of the body, so the
+     icon, the kind and the opening words share one line. `nowrap` keeps the
+     icon with its word when that line wraps. */
   .prose .admonition-title {
-    display: flex;
-    align-items: center;
-    gap: 0.4em;
     font-weight: 600;
     color: var(--admonition-color);
-    margin: 0 0 0.4em;
+    white-space: nowrap;
+    margin-right: 0.5em;
   }
 
+  /* Preflight resets `svg` to `display: block`, which would drop the icon onto
+     a line of its own now that the label is inline. Flow it with the text. */
   .prose .admonition-title svg {
+    display: inline-block;
     width: 1.1em;
     height: 1.1em;
-    flex: none;
+    vertical-align: -0.18em;
+    margin-right: 0.3em;
+  }
+
+  /* Body whose first block cannot host an inline label (a list, a code fence,
+     a table) keeps it on a line of its own. */
+  .prose .admonition-lead {
+    margin: 0 0 0.4em;
   }
 
   [data-theme="dark"] .prose .admonition-tip {
