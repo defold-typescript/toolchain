@@ -79,23 +79,4 @@ declare global {
     (self: TSelf, message_id: Hash, message: Record<string | number, unknown>, sender: Url): void;
     readonly __messages?: TLocal;
   }
-
-  /**
-   * The script-local messages a script declares by handling them: each
-   * annotated `onMessage` handler key outside the built-in and `CustomMessages`
-   * catalogs, mapped to its payload. Read it off the script module's default
-   * export and pass it to `msg.url<M>` to get a receiver-typed address.
-   *
-   * @example
-   * ```ts
-   * type WaveMessages = ScriptMessages<typeof import("./wave").default>;
-   * ```
-   */
-  type ScriptMessages<T> = T extends { on_message?: infer D }
-    ? NonNullable<D> extends { readonly __messages?: infer L }
-      ? L extends object
-        ? L
-        : Record<never, never>
-      : Record<never, never>
-    : Record<never, never>;
 }

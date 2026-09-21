@@ -333,3 +333,190 @@ describe("scene address declaration", () => {
     ).toEqual([[PROBE_FILE, 2322]]);
   });
 });
+
+// A declaration that names a script module has to be compiled beside that
+// module, at the paths the specifier is relative to: the generated file lives in
+// `.defold-types/`, the script under `src/`.
+const LINKED_DECLARATION = "/.defold-types/scene-addresses.d.ts";
+const LINKED_PROBE = "/probe.ts";
+
+// A stand-in script module whose default export carries a marker type only it
+// has, so a probe can tell "the value is this module's default" apart from
+// `true` or from another script's module.
+const SCRIPT_FIXTURES: Record<string, string> = {
+  "/src/wave.ts":
+    'declare const handlers: { readonly __script: "wave" };\nexport default { on_message: handlers };\n',
+  "/src/other.ts":
+    'declare const handlers: { readonly __script: "other" };\nexport default { on_message: handlers };\n',
+};
+
+function linkedProbeDiagnostics(declaration: string, probe: string): readonly ts.Diagnostic[] {
+  const files: Record<string, string> = {
+    "/types/scene-addresses.d.ts": SCENE_ADDRESSES,
+    ...SCRIPT_FIXTURES,
+    [LINKED_DECLARATION]: declaration,
+    [LINKED_PROBE]: probe,
+  };
+  const host: ts.CompilerHost = {
+    fileExists: (fileName) => files[fileName] !== undefined,
+    directoryExists: (dir) => Object.keys(files).some((name) => name.startsWith(`${dir}/`)),
+    getCanonicalFileName: (fileName) => fileName,
+    getCurrentDirectory: () => "/",
+    getDefaultLibFileName: () => "/lib.d.ts",
+    getNewLine: () => "\n",
+    getSourceFile: (fileName) => {
+      const content = files[fileName];
+      return content === undefined
+        ? undefined
+        : ts.createSourceFile(fileName, content, ts.ScriptTarget.Latest, false);
+    },
+    readFile: (fileName) => files[fileName],
+    useCaseSensitiveFileNames: () => true,
+    writeFile() {},
+  };
+  const program = ts.createProgram(
+    ["/types/scene-addresses.d.ts", LINKED_DECLARATION, LINKED_PROBE],
+    {
+      noLib: true,
+      strict: true,
+      module: ts.ModuleKind.ESNext,
+      moduleResolution: ts.ModuleResolutionKind.Bundler,
+    },
+    host,
+  );
+  return [...program.getSemanticDiagnostics(), ...program.getSyntacticDiagnostics()];
+}
+
+const LINKED_GAME_PROJECT = "[bootstrap]\nmain_collection = /main.collection\n";
+
+// `/logic` hosts the wave script beside an embedded component, a non-script
+// resource, and a script no program source maps to; `/hud` hosts a `wave`
+// component whose resource each case chooses.
+function linkedScenes(hudWave: string, extra: Record<string, string> = {}): Map<string, string> {
+  return new Map([
+    [
+      "main.collection",
+      'instances {\n  id: "logic"\n  prototype: "/logic.go"\n}\n' +
+        'instances {\n  id: "hud"\n  prototype: "/hud.go"\n}\n',
+    ],
+    [
+      "logic.go",
+      'components {\n  id: "wave"\n  component: "/src/wave.ts.script"\n}\n' +
+        'components {\n  id: "sound"\n  component: "/sounds/boom.sound"\n}\n' +
+        'components {\n  id: "orphan"\n  component: "/src/orphan.ts.script"\n}\n' +
+        'embedded_components {\n  id: "sprite"\n  type: "sprite"\n}\n',
+    ],
+    ["hud.go", `components {\n  id: "wave"\n  component: "${hudWave}"\n}\n`],
+    ...Object.entries(extra),
+  ]);
+}
+
+const SCRIPT_MODULES: ReadonlyMap<string, string> = new Map([
+  ["src/wave.ts.script", "../src/wave"],
+  ["src/other.ts.script", "../src/other"],
+]);
+
+function linkedDeclarationFor(documents: ReadonlyMap<string, string>): string {
+  return buildSceneAddressDeclaration(
+    documents,
+    buildSceneCollectionRoles({
+      documents,
+      references: new Map(),
+      gameProject: LINKED_GAME_PROJECT,
+    }),
+    SCRIPT_MODULES,
+  );
+}
+
+function linkedMessages(declaration: string, probe: string): string[] {
+  return messagesOf(linkedProbeDiagnostics(declaration, probe));
+}
+
+describe("script-linked component addresses", () => {
+  test("a script component's address is its source module's default export", () => {
+    const declaration = linkedDeclarationFor(linkedScenes("/src/wave.ts.script"));
+    expect(
+      linkedMessages(
+        declaration,
+        'type Wave = SceneComponentAddresses["/logic#wave"];\n' +
+          'const marker: Wave["on_message"]["__script"] = "wave";\nexport { marker };\n',
+      ),
+    ).toEqual([]);
+  });
+
+  test("an embedded component, a non-script resource, and an unmapped script stay true", () => {
+    const declaration = linkedDeclarationFor(linkedScenes("/src/wave.ts.script"));
+    expect(
+      linkedMessages(
+        declaration,
+        'const sprite: SceneComponentAddresses["/logic#sprite"] = true;\n' +
+          'const sound: SceneComponentAddresses["/logic#sound"] = true;\n' +
+          'const orphan: SceneComponentAddresses["/logic#orphan"] = true;\n' +
+          "export { sprite, sound, orphan };\n",
+      ),
+    ).toEqual([]);
+  });
+
+  test("a bare id is typed when every object hosting it names the same script", () => {
+    const declaration = linkedDeclarationFor(linkedScenes("/src/wave.ts.script"));
+    expect(
+      linkedMessages(
+        declaration,
+        'type Wave = SceneComponentAddresses["#wave"];\n' +
+          'const marker: Wave["on_message"]["__script"] = "wave";\nexport { marker };\n',
+      ),
+    ).toEqual([]);
+  });
+
+  test("a bare id stays true when two objects host different scripts under it", () => {
+    const declaration = linkedDeclarationFor(linkedScenes("/src/other.ts.script"));
+    expect(
+      linkedMessages(
+        declaration,
+        'const bare: SceneComponentAddresses["#wave"] = true;\n' +
+          'type Hud = SceneComponentAddresses["/hud#wave"];\n' +
+          'const marker: Hud["on_message"]["__script"] = "other";\nexport { bare, marker };\n',
+      ),
+    ).toEqual([]);
+  });
+
+  test("a bare id stays true when a factory prototype hosts another script under it", () => {
+    // The spawned object has no static path, so only the document itself says
+    // that `#wave` can also reach a different script.
+    const declaration = linkedDeclarationFor(
+      linkedScenes("/src/wave.ts.script", {
+        "spawned.go": 'components {\n  id: "wave"\n  component: "/src/other.ts.script"\n}\n',
+      }),
+    );
+    expect(
+      linkedMessages(
+        declaration,
+        'const bare: SceneComponentAddresses["#wave"] = true;\nexport { bare };\n',
+      ),
+    ).toEqual([]);
+  });
+
+  test("a bare id stays true when another object declares it as an embedded component", () => {
+    const declaration = linkedDeclarationFor(
+      linkedScenes("/src/wave.ts.script", {
+        "spawned.go": 'embedded_components {\n  id: "wave"\n  type: "sprite"\n}\n',
+      }),
+    );
+    expect(
+      linkedMessages(
+        declaration,
+        'const bare: SceneComponentAddresses["#wave"] = true;\nexport { bare };\n',
+      ),
+    ).toEqual([]);
+  });
+
+  test("a typed value is rejected where true was expected, so the true cases are not vacuous", () => {
+    const declaration = linkedDeclarationFor(linkedScenes("/src/wave.ts.script"));
+    expect(
+      linkedProbeDiagnostics(
+        declaration,
+        'const typed: SceneComponentAddresses["/logic#wave"] = true;\nexport { typed };\n',
+      ).map((d) => [d.file?.fileName, d.code]),
+    ).toEqual([[LINKED_PROBE, 2322]]);
+  });
+});
