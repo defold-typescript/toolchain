@@ -20,6 +20,7 @@ import {
   SCENE_ADDRESSES_DECLARATION,
   sceneIndexForBuild,
   sceneObjectsForBuild,
+  scriptModulesOf,
   scriptWorldsForBuild,
 } from "./scene-types-command";
 import {
@@ -414,7 +415,9 @@ describe("script-linked component addresses", () => {
     write("main/logic.go", 'components {\n  id: "wave"\n  component: "/build/wave.ts.script"\n}\n');
     write(
       "src/wave.ts",
-      'declare const handlers: { readonly __script: "wave" };\nexport default { on_message: handlers };\n',
+      "declare function defineScript<T>(handlers: T): T;\n" +
+        'declare const handlers: { readonly __script: "wave" };\n' +
+        "export default defineScript({ on_message: handlers });\n",
     );
 
     const { code } = await run("scene-types");
@@ -426,6 +429,61 @@ describe("script-linked component addresses", () => {
           'const marker: Wave["on_message"]["__script"] = "wave";\nexport { marker };\n',
       ).map((d) => ts.flattenDiagnosticMessageText(d.messageText, " ")),
     ).toEqual([]);
+  });
+
+  // A game object naming `/src/<name>.ts.script`, whose source is written as given.
+  async function linkedAddressOf(name: string, source: string): Promise<readonly string[]> {
+    write("tsconfig.json", JSON.stringify({ include: ["src/**/*.ts"] }));
+    write("game.project", "[bootstrap]\nmain_collection = /main/main.collectionc\n");
+    write("main/main.collection", 'instances {\n  id: "logic"\n  prototype: "/main/logic.go"\n}\n');
+    write(
+      "main/logic.go",
+      `components {\n  id: "${name}"\n  component: "/src/${name}.ts.script"\n}\n`,
+    );
+    write(`src/${name}.ts`, source);
+
+    const { code } = await run("scene-types");
+
+    expect(code).toBe(0);
+    return diskProbeDiagnostics(
+      `const linked: SceneComponentAddresses["/logic#${name}"] = true;\nexport { linked };\n`,
+    ).map((d) => ts.flattenDiagnosticMessageText(d.messageText, " "));
+  }
+
+  test("a plain module named as a script leaves its address untyped", async () => {
+    expect(
+      await linkedAddressOf(
+        "wave",
+        'declare const handlers: { readonly __script: "wave" };\n' +
+          "export default { on_message: handlers };\n",
+      ),
+    ).toEqual([]);
+  });
+
+  test("a gui script source named as a script leaves its address untyped", async () => {
+    expect(
+      await linkedAddressOf(
+        "hud",
+        "declare function defineGuiScript<T>(handlers: T): T;\n" +
+          'declare const handlers: { readonly __script: "hud" };\n' +
+          "export default defineGuiScript({ on_message: handlers });\n",
+      ),
+    ).toEqual([]);
+  });
+
+  test("each source maps only to the resource its detected kind builds", () => {
+    write("tsconfig.json", JSON.stringify({ include: ["src/**/*.ts"] }));
+    write("src/wave.ts", "export default defineScript({});\n");
+    write("src/hud.ts", "export default defineGuiScript({});\n");
+    write("src/util.ts", "export const util = 1;\n");
+    write("src/post.ts", "export default defineRenderScript({});\n");
+    write("src/tool.ts", "export default defineEditorScript({});\n");
+
+    const modules = scriptModulesOf(cwd);
+
+    expect([...modules.keys()].sort()).toEqual(["src/hud.ts.gui_script", "src/wave.ts.script"]);
+    expect(modules.get("src/wave.ts.script")).toEndWith("/src/wave");
+    expect(modules.get("src/hud.ts.gui_script")).toEndWith("/src/hud");
   });
 
   test("a project with no tsconfig.json still writes every address as true", async () => {

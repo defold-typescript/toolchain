@@ -21,7 +21,7 @@ import {
   type SceneObjectPathIndex,
   type SceneReadHost,
 } from "@defold-typescript/transpiler";
-import { type BuildConfig, readBuildConfig, toPosix } from "./build-output";
+import { type BuildConfig, detectSourceOutputKind, readBuildConfig, toPosix } from "./build-output";
 import { MATERIALIZED_ROOT } from "./materialize";
 import { scanFilesSync } from "./scan";
 
@@ -166,10 +166,12 @@ function tryReadBuildConfig(cwd: string): BuildConfig | undefined {
  *
  * The sources are the set `build` compiles, and each is mapped *forward* through
  * `computeOutputRel` for the reason `scriptWorldsForBuild` gives: an output path
- * cannot say which include base produced it. Both script kinds are mapped,
- * because nothing in a `.ts` says whether a game object or a `.gui` hosts it.
+ * cannot say which include base produced it. Each source maps only to the
+ * resource its detected kind builds — the same factory-call signal `build`
+ * uses — so a plain module, a render or editor script, or a gui script named as
+ * a `.script` never types that address.
  */
-function scriptModulesOf(cwd: string): Map<string, string> {
+export function scriptModulesOf(cwd: string): Map<string, string> {
   const modules = new Map<string, string>();
   const config = tryReadBuildConfig(cwd);
   if (config === undefined) return modules;
@@ -180,9 +182,9 @@ function scriptModulesOf(cwd: string): Map<string, string> {
       if (!rel.endsWith(".ts") || rel.endsWith(".d.ts")) continue;
       const relative = path.posix.relative(declarationDir, rel.slice(0, -".ts".length));
       const specifier = relative.startsWith("../") ? relative : `./${relative}`;
-      for (const kind of ["script", "gui-script"] as const) {
-        modules.set(computeOutputRel(rel, config, kind), specifier);
-      }
+      const kind = detectSourceOutputKind(readFileSync(path.join(cwd, rel), "utf8"));
+      if (kind !== "script" && kind !== "gui-script") continue;
+      modules.set(computeOutputRel(rel, config, kind), specifier);
     }
   }
   return modules;
