@@ -50,3 +50,26 @@ onMessage<Self>({
 });
 
 void _url;
+
+// An unannotated unknown key is a typo, not a declaration.
+onMessage({
+  // @ts-expect-error an unannotated key outside the catalog is rejected
+  spwan_wave(_self, _message) {},
+});
+
+// A local id declares itself through its annotated payload; `self` still
+// threads from the explicit type argument's handlers when annotated.
+onMessage({
+  spawn_wave(self: Self, message: { count: number }) {
+    const _hits: number = self.hits;
+    const _count: number = message.count;
+    void _hits;
+    void _count;
+    // @ts-expect-error the annotated payload has no `boss` field
+    void message.boss;
+  },
+  contact_point_response(_self, message) {
+    const _otherGroup: Hash = message.other_group;
+    void _otherGroup;
+  },
+});

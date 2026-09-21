@@ -13,6 +13,7 @@ const CATALOG_TSCONFIG = resolve(
 const CONSUMER = resolve(PACKAGE_DIR, "__completion__", "consumer.ts");
 const AUGMENTATION = resolve(PACKAGE_DIR, "__completion__", "augmentation.d.ts");
 const CONSUMER_SOURCE = 'msg.post(".", "");\n';
+const RECEIVER_SOURCE = 'msg.post(msg.url<{ spawn_wave: { count: number } }>("#x"), "");\n';
 const AUGMENTATION_SOURCE =
   "declare global { interface CustomMessages { spawn_wave: { count: number } } } export {};\n";
 
@@ -23,8 +24,8 @@ function consumerCompilerOptions(): ts.CompilerOptions {
   return ts.parseJsonConfigFileContent(rest, ts.sys, dirname(CATALOG_TSCONFIG)).options;
 }
 
-function messageIdCompletions(augmented: boolean): string[] {
-  const virtual = new Map<string, string>([[CONSUMER, CONSUMER_SOURCE]]);
+function messageIdCompletions(augmented: boolean, source = CONSUMER_SOURCE): string[] {
+  const virtual = new Map<string, string>([[CONSUMER, source]]);
   if (augmented) virtual.set(AUGMENTATION, AUGMENTATION_SOURCE);
   const options = consumerCompilerOptions();
   const host: ts.LanguageServiceHost = {
@@ -44,7 +45,7 @@ function messageIdCompletions(augmented: boolean): string[] {
     getDirectories: ts.sys.getDirectories,
   };
   const service = ts.createLanguageService(host, ts.createDocumentRegistry());
-  const position = CONSUMER_SOURCE.lastIndexOf('""') + 1;
+  const position = source.lastIndexOf('""') + 1;
   const completions = service.getCompletionsAtPosition(CONSUMER, position, {});
   return (completions?.entries ?? []).map((entry) => entry.name);
 }
@@ -65,5 +66,11 @@ describe("msg.post message_id completion", () => {
     const names = messageIdCompletions(true);
     expect(names).toContain("spawn_wave");
     expect(names).toContain("acquire_input_focus");
+  });
+
+  test("a receiver-typed address offers its declared ids beside the built-in ones", () => {
+    const names = messageIdCompletions(false, RECEIVER_SOURCE);
+    expect(names).toContain("spawn_wave");
+    expect(names).toContain("enable");
   });
 });

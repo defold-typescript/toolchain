@@ -1,7 +1,7 @@
 {
   "msg.post": {
     "signatures": [
-      "msg.post<K extends MessageId | (string & {})>(receiver: SceneAddress | Url | Hash, message_id: K, message?: MessagePayload<K>): void",
+      "msg.post<K extends (keyof M & string) | MessageId | (string & {}), M extends object = Record<never, never>>(receiver: SceneAddress | Hash | ReceiverUrl<M>, message_id: K, message?: K extends BuiltinMessageId ? MessagePayload<K> : K extends keyof M ? M[K] : MessagePayload<K>): void",
       "msg.post(receiver: SceneAddress | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void"
     ],
     "docs": [
@@ -13,8 +13,18 @@
     "signatures": [
       "msg.url(): Url",
       "msg.url(urlstring: SceneAddress | undefined): Url",
-      "msg.url(socket: string | Hash | undefined, path: string | Hash, fragment: string | Hash): Url"
+      "msg.url(socket: string | Hash | undefined, path: string | Hash, fragment: string | Hash): Url",
+      "msg.url<M extends object>(): ReceiverUrl<M>",
+      "msg.url<M extends object>(urlstring: SceneAddress | undefined): ReceiverUrl<M>",
+      "msg.url<M extends object>(socket: string | Hash | undefined, path: string | Hash, fragment: string | Hash): ReceiverUrl<M>"
     ],
-    "docs": ["Construct a URL. A URL is `[socket:][path][#fragment]`.", null, null]
+    "docs": [
+      "Construct a URL. A URL is `[socket:][path][#fragment]`.",
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
   }
 }

@@ -120,7 +120,7 @@ describe("canonical pages render every authored overload arm", () => {
   it("collapses a multi-identity FQN to one arm set per page", () => {
     const msg = signatureHeadings(markdownFor(namespaceByName("msg")));
     const msgUrlArms = storeFor("msg")?.["msg.url"]?.signatures ?? [];
-    expect(msgUrlArms.length).toBe(3);
+    expect(msgUrlArms.length).toBe(6);
     expect(armsOf(msg, "msg.url")).toEqual([...msgUrlArms]);
 
     const vmath = signatureHeadings(markdownFor(namespaceByName("vmath")));
