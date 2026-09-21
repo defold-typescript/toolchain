@@ -21,8 +21,9 @@ import {
   type SceneObjectPathIndex,
   type SceneReadHost,
 } from "@defold-typescript/transpiler";
-import { readBuildConfig } from "./build-output";
+import { type BuildConfig, readBuildConfig, toPosix } from "./build-output";
 import { MATERIALIZED_ROOT } from "./materialize";
+import { scanFilesSync } from "./scan";
 
 /** Where the declaration lands, project-relative — beside the materialized surfaces. */
 export const SCENE_ADDRESSES_DECLARATION = path.posix.join(
@@ -149,6 +150,44 @@ function writeIfChanged(target: string, contents: string): boolean {
   return true;
 }
 
+// A project that has not been initialised has no program to link addresses to,
+// and `scene-types` must still write the declaration for it.
+function tryReadBuildConfig(cwd: string): BuildConfig | undefined {
+  try {
+    return readBuildConfig(cwd);
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * The script resource each program source compiles to, mapped to that source's
+ * import specifier relative to the generated declaration.
+ *
+ * The sources are the set `build` compiles, and each is mapped *forward* through
+ * `computeOutputRel` for the reason `scriptWorldsForBuild` gives: an output path
+ * cannot say which include base produced it. Both script kinds are mapped,
+ * because nothing in a `.ts` says whether a game object or a `.gui` hosts it.
+ */
+function scriptModulesOf(cwd: string): Map<string, string> {
+  const modules = new Map<string, string>();
+  const config = tryReadBuildConfig(cwd);
+  if (config === undefined) return modules;
+  const declarationDir = path.posix.dirname(SCENE_ADDRESSES_DECLARATION);
+  for (const pattern of config.include) {
+    for (const match of scanFilesSync(cwd, pattern)) {
+      const rel = toPosix(match);
+      if (!rel.endsWith(".ts") || rel.endsWith(".d.ts")) continue;
+      const relative = path.posix.relative(declarationDir, rel.slice(0, -".ts".length));
+      const specifier = relative.startsWith("../") ? relative : `./${relative}`;
+      for (const kind of ["script", "gui-script"] as const) {
+        modules.set(computeOutputRel(rel, config, kind), specifier);
+      }
+    }
+  }
+  return modules;
+}
+
 /**
  * Read the project's scenes and write the game-object/component address
  * declaration the editor completes against.
@@ -188,7 +227,7 @@ export function runSceneTypes(opts: { cwd: string }): SceneTypesResult {
   const sceneObjects = buildSceneObjectPathIndex(documents, roles);
   const wrote = writeIfChanged(
     path.join(opts.cwd, SCENE_ADDRESSES_DECLARATION),
-    buildSceneAddressDeclaration(documents, roles),
+    buildSceneAddressDeclaration(documents, roles, scriptModulesOf(opts.cwd)),
   );
   return {
     declaration: SCENE_ADDRESSES_DECLARATION,

@@ -16,6 +16,11 @@ const CONSUMER_SOURCE = 'msg.post(".", "");\n';
 const RECEIVER_SOURCE = 'msg.post(msg.url<{ spawn_wave: { count: number } }>("#x"), "");\n';
 const AUGMENTATION_SOURCE =
   "declare global { interface CustomMessages { spawn_wave: { count: number } } } export {};\n";
+// What `scene-types` writes for an address hosting the fixture wave script.
+const SCENE_AUGMENTATION = resolve(PACKAGE_DIR, "__completion__", "scene-addresses.d.ts");
+const SCENE_AUGMENTATION_SOURCE =
+  'declare global { interface SceneComponentAddresses { "/logic#wave": typeof import("../test-d/script-messages/wave").default } } export {};\n';
+const SCENE_RECEIVER_SOURCE = 'msg.post("/logic#wave", "");\n';
 
 function consumerCompilerOptions(): ts.CompilerOptions {
   const { config, error } = ts.readConfigFile(CATALOG_TSCONFIG, ts.sys.readFile);
@@ -24,8 +29,12 @@ function consumerCompilerOptions(): ts.CompilerOptions {
   return ts.parseJsonConfigFileContent(rest, ts.sys, dirname(CATALOG_TSCONFIG)).options;
 }
 
-function messageIdCompletions(augmented: boolean, source = CONSUMER_SOURCE): string[] {
-  const virtual = new Map<string, string>([[CONSUMER, source]]);
+function messageIdCompletions(
+  augmented: boolean,
+  source = CONSUMER_SOURCE,
+  extra: ReadonlyMap<string, string> = new Map(),
+): string[] {
+  const virtual = new Map<string, string>([[CONSUMER, source], ...extra]);
   if (augmented) virtual.set(AUGMENTATION, AUGMENTATION_SOURCE);
   const options = consumerCompilerOptions();
   const host: ts.LanguageServiceHost = {
@@ -72,5 +81,20 @@ describe("msg.post message_id completion", () => {
     const names = messageIdCompletions(false, RECEIVER_SOURCE);
     expect(names).toContain("spawn_wave");
     expect(names).toContain("enable");
+  });
+
+  test("a scene address whose value is a script offers that script's ids beside the built-in ones", () => {
+    const names = messageIdCompletions(
+      false,
+      SCENE_RECEIVER_SOURCE,
+      new Map([[SCENE_AUGMENTATION, SCENE_AUGMENTATION_SOURCE]]),
+    );
+    expect(names).toContain("spawn_wave");
+    expect(names).toContain("wave_cleared");
+    expect(names).toContain("enable");
+  });
+
+  test("the same address offers no script id when the scenes did not link it", () => {
+    expect(messageIdCompletions(false, SCENE_RECEIVER_SOURCE)).not.toContain("spawn_wave");
   });
 });
