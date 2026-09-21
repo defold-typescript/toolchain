@@ -15,9 +15,13 @@ What changed in each published `defold-typescript` toolchain release.
 
 - **Messages can be typed where they are sent and handled, with no program-wide declaration required** — see [Ways to type your messages](./messages.md#ways-to-type-your-messages). Every call that compiled before still compiles.
   - **`msg.post` completion** lists every built-in id and every id declared in [CustomMessages](./messages.md#declaring-your-own-messages), and any other string still compiles.
-  - **Handler annotation** — annotating a handler's `message` in `onMessage` declares that id for the script, and `ScriptMessages<typeof script>` reads the ids back off `defineScript`, `defineGuiScript` or `defineRenderScript`.
+  - **Handler annotation** — annotating a handler's `message` in `onMessage` declares that id for the script, a numeric key under its string form (`1e3` is `"1000"`), and `ScriptMessages<typeof script>` reads the ids back off `defineScript`, `defineGuiScript` or `defineRenderScript`.
   - **Typed receiver** — `msg.url<M>(...)` returns an address that makes `msg.post` complete and check the receiver's own ids.
   - **Scene address** — [`scene-types`](./scene-types.md#script-addresses-carry-their-messages) links each script component's address to its source, so `msg.post("/logic#wave", ...)` completes and checks that script's ids with no import.
+
+### Fixed
+
+- A computed key such as `[WAVE]` or a shorthand handler in [`onMessage`](./messages.md#routing-many-messages-with-onmessage) was dropped from the built script without a warning. A computed literal key now lowers, and any handler that cannot be lowered fails the build at its position.
 
 ## v0.37.0
 

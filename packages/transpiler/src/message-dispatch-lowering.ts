@@ -47,7 +47,10 @@ type HandlerFunction = (ts.MethodDeclaration | ts.FunctionExpression | ts.ArrowF
   body: ts.ConciseBody;
 };
 
-function handlerName(property: ts.ObjectLiteralElementLike): string | undefined {
+function handlerName(
+  property: ts.ObjectLiteralElementLike,
+  checker: ts.TypeChecker,
+): string | undefined {
   const name = property.name;
   if (name === undefined) {
     return undefined;
@@ -55,7 +58,29 @@ function handlerName(property: ts.ObjectLiteralElementLike): string | undefined 
   if (ts.isIdentifier(name) || ts.isStringLiteral(name)) {
     return name.text;
   }
+  if (ts.isNumericLiteral(name)) {
+    return String(Number(name.text));
+  }
+  if (ts.isComputedPropertyName(name)) {
+    const type = checker.getTypeAtLocation(name.expression);
+    if (type.isStringLiteral() || type.isNumberLiteral()) {
+      return String(type.value);
+    }
+  }
   return undefined;
+}
+
+function unlowerableHandler(node: ts.Node, text: string): ts.Diagnostic {
+  const file = node.getSourceFile();
+  const start = node.getStart(file);
+  return {
+    file,
+    start,
+    length: node.getEnd() - start,
+    category: ts.DiagnosticCategory.Error,
+    code: 0,
+    messageText: `${DISPATCH_NAME} cannot lower \`${text}\`: pass an object literal whose keys are an identifier, a quoted or numeric literal, or a computed literal constant, each with its handler written inline.`,
+  };
 }
 
 function handlerFunction(property: ts.ObjectLiteralElementLike): HandlerFunction | undefined {
@@ -108,12 +133,14 @@ function handlerBody(fn: HandlerFunction, context: TransformationContext): State
 export const messageDispatchLoweringPlugin: Plugin = {
   visitors: {
     [ts.SyntaxKind.CallExpression]: (node, context): Expression => {
+      if (!resolvesToDispatchExport(node.expression, context.checker)) {
+        return context.superTransformExpression(node);
+      }
       const [handlersArg] = node.arguments;
       if (
         node.arguments.length === 1 &&
         handlersArg !== undefined &&
-        ts.isObjectLiteralExpression(handlersArg) &&
-        resolvesToDispatchExport(node.expression, context.checker)
+        ts.isObjectLiteralExpression(handlersArg)
       ) {
         let chain: IfStatement | undefined;
         const properties = [...handlersArg.properties];
@@ -122,9 +149,11 @@ export const messageDispatchLoweringPlugin: Plugin = {
           if (property === undefined) {
             continue;
           }
-          const name = handlerName(property);
+          const name = handlerName(property, context.checker);
           const fn = handlerFunction(property);
           if (name === undefined || fn === undefined) {
+            const offending = property.name ?? property;
+            context.diagnostics.push(unlowerableHandler(property, offending.getText()));
             continue;
           }
           const condition = createBinaryExpression(
@@ -149,6 +178,8 @@ export const messageDispatchLoweringPlugin: Plugin = {
           node,
         );
       }
+      const offending = handlersArg ?? node;
+      context.diagnostics.push(unlowerableHandler(offending, offending.getText()));
       return context.superTransformExpression(node);
     },
   },
