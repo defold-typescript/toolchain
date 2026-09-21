@@ -4,20 +4,23 @@ import ts from "typescript";
 
 const PACKAGE_DIR = resolve(import.meta.dir, "..");
 const INDEX_DTS = resolve(PACKAGE_DIR, "index.d.ts");
+// TypeScript hands the host forward-slash paths on every platform, so virtual keys must match.
+const virtualPath = (...segments: string[]) =>
+  resolve(PACKAGE_DIR, ...segments).replaceAll("\\", "/");
 const CATALOG_TSCONFIG = resolve(
   PACKAGE_DIR,
   "test-d",
   "custom-catalog",
   "tsconfig.custom-catalog.json",
 );
-const CONSUMER = resolve(PACKAGE_DIR, "__completion__", "consumer.ts");
-const AUGMENTATION = resolve(PACKAGE_DIR, "__completion__", "augmentation.d.ts");
+const CONSUMER = virtualPath("__completion__", "consumer.ts");
+const AUGMENTATION = virtualPath("__completion__", "augmentation.d.ts");
 const CONSUMER_SOURCE = 'msg.post(".", "");\n';
 const RECEIVER_SOURCE = 'msg.post(msg.url<{ spawn_wave: { count: number } }>("#x"), "");\n';
 const AUGMENTATION_SOURCE =
   "declare global { interface CustomMessages { spawn_wave: { count: number } } } export {};\n";
 // What `scene-types` writes for an address hosting the fixture wave script.
-const SCENE_AUGMENTATION = resolve(PACKAGE_DIR, "__completion__", "scene-addresses.d.ts");
+const SCENE_AUGMENTATION = virtualPath("__completion__", "scene-addresses.d.ts");
 const SCENE_AUGMENTATION_SOURCE =
   'declare global { interface SceneComponentAddresses { "/logic#wave": typeof import("../test-d/script-messages/wave").default } } export {};\n';
 const SCENE_RECEIVER_SOURCE = 'msg.post("/logic#wave", "");\n';
