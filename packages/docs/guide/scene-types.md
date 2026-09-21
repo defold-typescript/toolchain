@@ -64,6 +64,30 @@ indistinguishable from an object that genuinely owns none. Nothing here is a
 rejection: an address composed at runtime still type-checks, it is simply not
 offered as a completion.
 
+## Script addresses carry their messages
+
+When a component names a script that your program compiles, its address is
+written as that script's module instead of `true`:
+
+```ts
+interface SceneComponentAddresses {
+  "#wave": typeof import("../src/wave").default;
+  "/logic#wave": typeof import("../src/wave").default;
+  "/logic#sprite": true;
+}
+```
+
+`msg.post("/logic#wave", ...)` then completes and checks the ids that script's
+[`onMessage` handlers](./messages.md#ways-to-type-your-messages) declare. The
+source is found by mapping each program file forward to the resource it builds,
+so an `outDir` works. A bare `#wave` is linked only when every `wave` component
+in the project names the same script. Embedded components, non-script resources
+and scripts outside your program stay `true`.
+
+This reaches the absolute, literal addresses your scenes declare. For a relative
+address, a bare game-object address or a URL built at runtime, use
+`msg.url<M>(...)` or `CustomMessages` instead.
+
 ## Which world an address resolves in
 
 An address has two axes: **which world**, then **which path inside it**. Defold

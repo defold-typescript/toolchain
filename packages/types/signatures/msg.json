@@ -1,7 +1,7 @@
 {
   "msg.post": {
     "signatures": [
-      "msg.post<K extends (keyof M & string) | MessageId | (string & {}), M extends object = Record<never, never>>(receiver: SceneAddress | Hash | ReceiverUrl<M>, message_id: K, message?: K extends BuiltinMessageId ? MessagePayload<K> : K extends keyof M ? M[K] : MessagePayload<K>): void",
+      "msg.post<R extends SceneAddress | Hash | Url, K extends (keyof ReceiverMessages<R> & string) | MessageId | (string & {})>(receiver: R, message_id: K, message?: K extends BuiltinMessageId ? MessagePayload<K> : K extends keyof ReceiverMessages<R> ? ReceiverMessages<R>[K] : MessagePayload<K>): void",
       "msg.post(receiver: SceneAddress | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void"
     ],
     "docs": [

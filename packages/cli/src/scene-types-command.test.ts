@@ -378,6 +378,71 @@ describe("scene-types verb", () => {
   });
 });
 
+describe("script-linked component addresses", () => {
+  // The generated declaration compiled from disk, where it and the script it
+  // names actually live, so the specifier is checked against the real layout.
+  function diskProbeDiagnostics(probe: string): readonly ts.Diagnostic[] {
+    write("probe.ts", probe);
+    const options: ts.CompilerOptions = {
+      noLib: true,
+      strict: true,
+      module: ts.ModuleKind.ESNext,
+      moduleResolution: ts.ModuleResolutionKind.Bundler,
+    };
+    const program = ts.createProgram(
+      [
+        path.join(import.meta.dir, "../../types/src/scene-addresses.d.ts"),
+        path.join(cwd, DECLARATION_REL),
+        path.join(cwd, "probe.ts"),
+      ],
+      options,
+      ts.createCompilerHost(options),
+    );
+    return [...program.getSemanticDiagnostics(), ...program.getSyntacticDiagnostics()];
+  }
+
+  test("a script address resolves to its source through the build's outDir mapping", async () => {
+    // The scene names `/build/wave.ts.script`; only mapping `src/wave.ts`
+    // forward through `outDir` reaches it, and a reverse parse of the resource
+    // would look for `build/wave.ts` and find nothing.
+    write(
+      "tsconfig.json",
+      JSON.stringify({ compilerOptions: { outDir: "build" }, include: ["src/**/*.ts"] }),
+    );
+    write("game.project", "[bootstrap]\nmain_collection = /main/main.collectionc\n");
+    write("main/main.collection", 'instances {\n  id: "logic"\n  prototype: "/main/logic.go"\n}\n');
+    write("main/logic.go", 'components {\n  id: "wave"\n  component: "/build/wave.ts.script"\n}\n');
+    write(
+      "src/wave.ts",
+      'declare const handlers: { readonly __script: "wave" };\nexport default { on_message: handlers };\n',
+    );
+
+    const { code } = await run("scene-types");
+
+    expect(code).toBe(0);
+    expect(
+      diskProbeDiagnostics(
+        'type Wave = SceneComponentAddresses["/logic#wave"];\n' +
+          'const marker: Wave["on_message"]["__script"] = "wave";\nexport { marker };\n',
+      ).map((d) => ts.flattenDiagnosticMessageText(d.messageText, " ")),
+    ).toEqual([]);
+  });
+
+  test("a project with no tsconfig.json still writes every address as true", async () => {
+    scaffoldProject();
+
+    const { code } = await run("scene-types");
+
+    expect(code).toBe(0);
+    expect(
+      probeDiagnostics(
+        'const controller: SceneComponentAddresses["/player/player#controller"] = true;\n' +
+          "export { controller };\n",
+      ).map((d) => ts.flattenDiagnosticMessageText(d.messageText, " ")),
+    ).toEqual([]);
+  });
+});
+
 describe("sceneIndexForBuild", () => {
   test("a scene-less project whose walk failed still yields an index", () => {
     scaffoldUnresolvedDependencyManifest(cwd);

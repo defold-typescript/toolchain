@@ -101,6 +101,7 @@ Every route below is optional, and they combine. An id no route declares still c
 | --- | --- | --- | --- |
 | Handle it | The receiver's `onMessage` handler | Nothing new | The handler's own `message` |
 | Import the payload type | An exported type beside the handler | `import type` and a typed value | Whatever that value is assigned to |
+| Scene address | The receiver's handlers, linked by [`scene-types`](./scene-types.md#script-addresses-carry-their-messages) | A literal address such as `"/logic#wave"` | `msg.post` ids and payloads sent to that address |
 | Typed receiver | The receiver's handlers, read by `ScriptMessages` | `msg.url<M>(...)` | `msg.post` ids and payloads sent to that address |
 | [`CustomMessages`](#declaring-your-own-messages) | One program-wide interface | Nothing new | Every `msg.post`, `isMessage` and `onMessage` in the program |
 
@@ -150,6 +151,23 @@ export default defineScript({
 ```
 
 A typed receiver is still a plain `Url`, and it still accepts built-in ids with their built-in payloads and any id it did not declare. `ScriptMessages` works the same on `defineGuiScript` and `defineRenderScript` results. If you would rather not import the receiver, write the map yourself: `msg.url<{ spawn_wave: SpawnWave }>(...)`.
+
+**Scene address.** This is the default when the receiver is a literal address your scenes declare. [`scene-types`](./scene-types.md#script-addresses-carry-their-messages) links each script component's address to its source, so the sender needs no import — `src/launcher.ts`:
+
+```ts
+import { defineScript } from "@defold-typescript/types";
+
+export default defineScript({
+  update() {
+    msg.post("/logic#wave", "spawn_wave", { count: 3 });
+
+    // @ts-expect-error spawn_wave declares `count` as a number
+    msg.post("/logic#wave", "spawn_wave", { count: "3" });
+  },
+});
+```
+
+Use `msg.url<M>` for a relative address, a bare game-object address, or a URL built at runtime.
 
 **`CustomMessages`.** Declare an id program-wide when many receivers handle it, when you post it to `"."` or to a URL built at runtime, or when `isMessage` should narrow it. The next sections cover it.
 
