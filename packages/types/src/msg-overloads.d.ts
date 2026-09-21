@@ -25,8 +25,12 @@ declare global {
      *   position: go.get_world_position(),
      * });
      * ```
+     *
+     * @remarks
+     * The `(string & {})` term keeps every declared message id as a completion
+     * while still accepting any other string, so no existing call is rejected.
      */
-    function post<K extends string>(
+    function post<K extends MessageId | (string & {})>(
       receiver: SceneAddress | Url | Hash,
       message_id: K,
       message?: MessagePayload<K>,

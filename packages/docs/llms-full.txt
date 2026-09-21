@@ -1853,6 +1853,8 @@ The narrowing keys on the literal id. An arbitrary (non-builtin) string id addre
 msg.post("#logic", "spawn_wave", { count: 3, boss: true }); // undeclared id — payload unchecked
 ```
 
+While you type the `message_id` string, the editor suggests every built-in id and every id you declared in `CustomMessages`, and still accepts any other string.
+
 Passing the id as an already-hashed `Hash` also skips the check, since the hashed form has lost the literal the narrowing needs.
 
 #### Receiving messages with type narrowing
@@ -9628,7 +9630,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### msg
 
-- msg.post<K extends string>(receiver: SceneAddress | Url | Hash, message_id: K, message?: MessagePayload<K>): void
+- msg.post<K extends MessageId | (string & {})>(receiver: SceneAddress | Url | Hash, message_id: K, message?: MessagePayload<K>): void
 - msg.post(receiver: SceneAddress | Url | Hash, message_id: Hash, message?: Record<string | number, unknown>): void
 - msg.url(): Url
 - msg.url(urlstring: SceneAddress | undefined): Url
