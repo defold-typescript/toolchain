@@ -27,6 +27,8 @@ The narrowing keys on the literal id. An arbitrary (non-builtin) string id addre
 msg.post("#logic", "spawn_wave", { count: 3, boss: true }); // undeclared id — payload unchecked
 ```
 
+While you type the `message_id` string, the editor suggests every built-in id and every id you declared in `CustomMessages`, and still accepts any other string.
+
 Passing the id as an already-hashed `Hash` also skips the check, since the hashed form has lost the literal the narrowing needs.
 
 ## Receiving messages with type narrowing
