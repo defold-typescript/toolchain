@@ -21,7 +21,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Fixed
 
-- A computed key such as `[WAVE]` or a shorthand handler in [`onMessage`](./messages.md#routing-many-messages-with-onmessage) was dropped from the built script without a warning. A computed literal key now lowers, and any handler that cannot be lowered fails the build at its position.
+- An [`onMessage`](./messages.md#routing-many-messages-with-onmessage) handler under a computed key such as `[WAVE]` (with `const WAVE = "spawn_wave"`), or written as shorthand `{ onHit }`, built without an error but never ran. A key like `[WAVE]` now handles `"spawn_wave"`, and any handler the build cannot wire up fails the build at that line — see the [examples](./messages.md#which-handler-forms-build).
 
 ## v0.37.0
 
