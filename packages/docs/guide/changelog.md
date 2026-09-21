@@ -9,6 +9,12 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.38.1
+
+### Fixed
+
+- `watch` no longer repeats "attached to Defold editor" after the machine sleeps or the editor's console connection drops, and no longer repeats the editor version warning with it.
+
 ## v0.38.0
 
 ### Improved

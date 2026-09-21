@@ -3233,7 +3233,8 @@ Four things are worth knowing about how it behaves:
 - **The editor may come and go.** The port is re-read on every reload, and while
   no editor is attached `watch` looks for one about once a second, so an editor
   opened at any time after the loop started is attached without a save. One that quits is reported once and leaves the loop rebuilding until it
-  returns. A reload that lands on a different editor while the old one's console
+  returns. A console connection that drops while the editor keeps running, as after the machine sleeps, is
+  reopened without announcing the editor again. A reload that lands on a different editor while the old one's console
   is still open attaches the new editor, and the old console closing later
   leaves it attached and starts reading its console instead. An editor whose console fails to open is retried at growing
   intervals, up to about 30 seconds apart, so its runtime errors appear once the
