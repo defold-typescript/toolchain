@@ -23,6 +23,7 @@ import {
   runSetupDebug,
   upsertManagedBlock,
 } from "./setup-debug";
+import { readVscodeJson } from "./vscode-json";
 
 function tempProject(): string {
   return mkdtempSync(path.join(os.tmpdir(), "defold-typescript-setup-debug-"));
@@ -617,6 +618,122 @@ describe("runSetupDebug", () => {
     }
   });
 
+  function seedUnwiredProject(cwd: string, launchBody: string): string {
+    writeBaseProject(cwd);
+    writeFileSync(path.join(cwd, "src", "player.ts"), FACTORY_SCRIPT);
+    mkdirSync(path.join(cwd, ".vscode"), { recursive: true });
+    const launchPath = path.join(cwd, ".vscode", "launch.json");
+    writeFileSync(launchPath, launchBody);
+    return launchPath;
+  }
+
+  function expectProjectUntouched(cwd: string, launchPath: string, launchBody: string): void {
+    expect(readFileSync(launchPath, "utf8")).toBe(launchBody);
+    expect(readFileSync(path.join(cwd, "src", "player.ts"), "utf8")).not.toContain(BLOCK_BEGIN);
+    expect(readFileSync(path.join(cwd, "game.project"), "utf8")).not.toContain(LLDEBUGGER_URL);
+    expect(existsSync(path.join(cwd, AMBIENT_DTS_REL))).toBe(false);
+    expect(existsSync(path.join(cwd, DEBUG_LAUNCHER_REL))).toBe(false);
+    expect(existsSync(path.join(cwd, ".vscode", "extensions.json"))).toBe(false);
+  }
+
+  test("refuses a launch.json it cannot parse, leaving the project byte-identical", async () => {
+    const cwd = tempProject();
+    try {
+      const body = '{"configurations": [';
+      const launchPath = seedUnwiredProject(cwd, body);
+
+      const result = await runSetupDebug({ cwd, json: true });
+
+      expect(result.ok).toBe(false);
+      expect(result.error).toContain(".vscode/launch.json");
+      expectProjectUntouched(cwd, launchPath, body);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("refuses a launch.json whose top level is an array", async () => {
+    const cwd = tempProject();
+    try {
+      const body = "[]\n";
+      const launchPath = seedUnwiredProject(cwd, body);
+
+      const result = await runSetupDebug({ cwd, json: true });
+
+      expect(result.ok).toBe(false);
+      expect(result.error).toContain(".vscode/launch.json");
+      expectProjectUntouched(cwd, launchPath, body);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+  // Re-spell the file production just wrote as JSONC a user could have written:
+  // the same values, four-space indentation, and a comment production's parser
+  // strips. Returns the bytes a run that changes nothing must leave alone.
+  function annotateAsJsonc(launchPath: string): string {
+    const parsed = JSON.parse(readFileSync(launchPath, "utf8"));
+    const body = JSON.stringify(parsed, null, 4).replace(
+      "{\n",
+      "{\n    // the debug launcher, annotated by hand\n",
+    );
+    writeFileSync(launchPath, `${body}\n`);
+    return readFileSync(launchPath, "utf8");
+  }
+
+  test("backfills a missing launch.json version and reports the write", async () => {
+    const cwd = tempProject();
+    try {
+      writeBaseProject(cwd);
+      writeFileSync(path.join(cwd, "src", "player.ts"), FACTORY_SCRIPT);
+      await runSetupDebug({ cwd });
+      const launchPath = path.join(cwd, ".vscode", "launch.json");
+      const parsed = JSON.parse(readFileSync(launchPath, "utf8"));
+      delete parsed.version;
+      writeFileSync(launchPath, `${JSON.stringify(parsed, null, 2)}\n`);
+
+      const result = await runSetupDebug({ cwd });
+
+      expect(result.actions[".vscode/launch.json"]).toBe("refreshed");
+      expect(result.written).toContain(".vscode/launch.json");
+      expect(JSON.parse(readFileSync(launchPath, "utf8")).version).toBeDefined();
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
+  test("refreshes stale derived fields and keeps the keys around them", async () => {
+    const cwd = tempProject();
+    try {
+      writeBaseProject(cwd);
+      writeTsconfig(cwd, { outDir: "lua", include: ["src/**/*"] });
+      writeFileSync(path.join(cwd, "src", "player.ts"), FACTORY_SCRIPT);
+      await runSetupDebug({ cwd });
+      const launchPath = path.join(cwd, ".vscode", "launch.json");
+      const parsed = JSON.parse(readFileSync(launchPath, "utf8"));
+      const mine = parsed.configurations.find(
+        (c: { name: string }) => c.name === "Defold: Debug (TypeScript)",
+      );
+      mine.scriptFiles = ["stale/**/*.lua"];
+      mine.scriptRoots = ["stale"];
+      parsed.inputs = [{ id: "mine" }];
+      writeFileSync(launchPath, `${JSON.stringify(parsed, null, 2)}\n`);
+
+      const result = await runSetupDebug({ cwd });
+
+      expect(result.actions[".vscode/launch.json"]).toBe("refreshed");
+      const after = JSON.parse(readFileSync(launchPath, "utf8"));
+      const refreshed = after.configurations.find(
+        (c: { name: string }) => c.name === "Defold: Debug (TypeScript)",
+      );
+      const derived = debugLaunchConfig({ outDir: "lua", include: ["src/**/*"] });
+      expect(refreshed.scriptFiles).toEqual(derived.scriptFiles);
+      expect(refreshed.scriptRoots).toEqual(derived.scriptRoots);
+      expect(after.inputs).toEqual([{ id: "mine" }]);
+    } finally {
+      rmSync(cwd, { recursive: true, force: true });
+    }
+  });
+
   test("a second run leaves the .vscode debug files as they stand", async () => {
     const cwd = tempProject();
     try {
@@ -625,6 +742,8 @@ describe("runSetupDebug", () => {
       await runSetupDebug({ cwd });
       const launcherPath = path.join(cwd, DEBUG_LAUNCHER_REL);
       writeFileSync(launcherPath, "// edited by the user\n");
+      const launchPath = path.join(cwd, ".vscode", "launch.json");
+      const launchBytes = annotateAsJsonc(launchPath);
 
       const result = await runSetupDebug({ cwd });
       expect(result.ok).toBe(true);
@@ -633,11 +752,10 @@ describe("runSetupDebug", () => {
       expect(result.actions[".vscode/extensions.json"]).toBe("unchanged");
 
       expect(readFileSync(launcherPath, "utf8")).toBe("// edited by the user\n");
-      const launch = JSON.parse(readFileSync(path.join(cwd, ".vscode", "launch.json"), "utf8"));
+      expect(readFileSync(launchPath, "utf8")).toBe(launchBytes);
+      const launch = readVscodeJson(launchPath) as { configurations: { name: string }[] };
       expect(
-        launch.configurations.filter(
-          (c: { name: string }) => c.name === "Defold: Debug (TypeScript)",
-        ),
+        launch.configurations.filter((c) => c.name === "Defold: Debug (TypeScript)"),
       ).toHaveLength(1);
       const extensions = JSON.parse(
         readFileSync(path.join(cwd, ".vscode", "extensions.json"), "utf8"),
