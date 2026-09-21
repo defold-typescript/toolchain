@@ -13,6 +13,7 @@ import { DEBUG_LAUNCHER_REL } from "./debug-launcher";
 import { normalizeScannedPath, scanFilesSync } from "./scan";
 import { isSkipped } from "./script-kind";
 import {
+  launchJsonUnreadable,
   VSCODE_EXTENSIONS_REL,
   VSCODE_LAUNCH_REL,
   writeDebugRecommendation,
@@ -340,6 +341,10 @@ function declarationNotIncluded(target: string, dtsRel: string, config: BuildCon
   return `defold-typescript setup-debug: the debugger declaration for ${target} belongs at ${dtsRel}, which no tsconfig.json "include" pattern covers (${config.include.join(", ")}); add "${dtsRel}" to "include" so the compiler picks it up.`;
 }
 
+function launchNotParseable(): string {
+  return `defold-typescript setup-debug: ${VSCODE_LAUNCH_REL} is not valid JSON or JSONC, so the debug configuration cannot be merged into it; fix or move the file and re-run.`;
+}
+
 export interface SetupDebugOptions {
   readonly cwd: string;
   readonly script?: string;
@@ -496,6 +501,9 @@ export async function runSetupDebug(opts: SetupDebugOptions): Promise<SetupDebug
   const dtsRel = ambientDtsRel(target);
   if (!isFileIncluded(dtsRel, config.include)) {
     return failure(declarationNotIncluded(target, dtsRel, config));
+  }
+  if (launchJsonUnreadable(cwd)) {
+    return failure(launchNotParseable());
   }
 
   const written: string[] = [];
