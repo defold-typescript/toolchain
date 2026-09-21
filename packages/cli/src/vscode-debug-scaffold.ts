@@ -22,6 +22,15 @@ export const VSCODE_EXTENSIONS_REL = ".vscode/extensions.json";
  */
 export type LaunchWriteMode = "create" | "refresh";
 
+// A `launch.json` that does not parse cannot be merged, and the `null`
+// `writeVscodeLaunch` returns for it is indistinguishable from the `null`
+// `refresh` mode returns for a project with nothing to refresh. The probe gives
+// the caller the merge-failure half on its own, before any write.
+export function launchJsonUnreadable(cwd: string): boolean {
+  const filePath = path.join(cwd, VSCODE_LAUNCH_REL);
+  return existsSync(filePath) && readVscodeJson(filePath) === null;
+}
+
 // `scriptFiles` and `scriptRoots` are derived from `include` and `outDir`, so
 // they are the two fields that go stale when a project's inputs move and the
 // only two reasserted on an existing configuration. Every other key —
@@ -57,9 +66,19 @@ export function writeVscodeLaunch(
       configs.push(ours);
       changed = true;
     }
-    existing.configurations = configs;
-    existing.version ??= vscodeLaunchContent(config).version;
-    writeJson(filePath, existing);
+    if (existing.version === undefined) {
+      existing.version = vscodeLaunchContent(config).version;
+      changed = true;
+    }
+    // `configs` holds the live configuration objects, so the field mutations
+    // above already landed on `existing`; the reassignment matters only where
+    // the key was absent or not an array, which set `changed` itself. Writing
+    // only when something changed is what keeps a user's JSONC comments and
+    // formatting — neither of which survives the parse `writeJson` serializes.
+    if (changed) {
+      existing.configurations = configs;
+      writeJson(filePath, existing);
+    }
     return changed ? "refreshed" : "unchanged";
   }
   if (mode === "refresh") {

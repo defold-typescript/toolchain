@@ -1663,10 +1663,18 @@ describe("runInit (.vscode debugger launch scaffold)", () => {
   test("a launch.json already carrying the derived fields reports no write", () => {
     seedStaleLaunch();
     runInit({ cwd, force: true });
+    const launchPath = path.join(cwd, ".vscode", "launch.json");
+    const annotated = JSON.stringify(readJson(".vscode/launch.json"), null, 4).replace(
+      "{\n",
+      "{\n    // the debug launcher, annotated by hand\n",
+    );
+    touch(".vscode/launch.json", `${annotated}\n`);
+    const launchBytes = readFileSync(launchPath, "utf8");
 
     const second = runInit({ cwd, force: true });
 
     expect(second.written).not.toContain(".vscode/launch.json");
+    expect(readFileSync(launchPath, "utf8")).toBe(launchBytes);
   });
 
   test("refuses an already-scaffolded project without --force and leaves launch.json alone", () => {
