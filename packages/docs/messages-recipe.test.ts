@@ -274,12 +274,13 @@ describe("the guide's declaration-placement shapes", () => {
 });
 
 /**
- * The two `ts` fenced blocks under `## Ways to type your messages`, in page
- * order — the receiver that declares ids by handling them, and the sender that
- * imports its payload type and types its address. Read from the guide's own
- * bytes for the same reason as {@link crossObjectBlocks}.
+ * The three `ts` fenced blocks under `## Ways to type your messages`, in page
+ * order — the receiver that declares ids by handling them, the sender that
+ * imports its payload type and types its address, and the sender that posts to
+ * a scene address. Read from the guide's own bytes for the same reason as
+ * {@link crossObjectBlocks}.
  */
-function waysBlocks(): [string, string] {
+function waysBlocks(): [string, string, string] {
   const body = readFileSync(MESSAGES_GUIDE, "utf8");
   const headingAt = body.indexOf(WAYS_HEADING);
   if (headingAt < 0) {
@@ -292,20 +293,30 @@ function waysBlocks(): [string, string] {
   const nextHeading = after.search(/^## /m);
   const section = nextHeading < 0 ? after : after.slice(0, nextHeading);
   const blocks = [...section.matchAll(/^```ts\n([\s\S]*?)^```$/gm)].map((match) => match[1] ?? "");
-  const [receiver, sender] = blocks;
-  if (blocks.length !== 2 || !receiver || !sender) {
+  const [receiver, sender, sceneSender] = blocks;
+  if (blocks.length !== 3 || !receiver || !sender || !sceneSender) {
     throw new Error(
       `"${WAYS_HEADING}" carries ${blocks.length} \`\`\`ts blocks, not the ` +
-        "receiver and sender this test compiles together.",
+        "receiver and two senders this test compiles together.",
     );
   }
-  return [receiver, sender];
+  return [receiver, sender, sceneSender];
 }
 
+// The member `scene-types` writes for an object `/logic` hosting `wave.ts` as
+// its `wave` component, in the shape the generator's own tests pin.
+const SCENE_ADDRESSES =
+  'declare global {\n  interface SceneComponentAddresses {\n    "/logic#wave": typeof import("./wave").default;\n  }\n}\n\nexport {};\n';
+
 describe("the guide's script-local message example", () => {
-  test("the receiver and its typed sender type-check together as one program", () => {
-    const [receiver, sender] = waysBlocks();
-    const { exitCode, output } = typecheckProgram({ "wave.ts": receiver, "spawner.ts": sender });
+  test("the receiver and both typed senders type-check together as one program", () => {
+    const [receiver, sender, sceneSender] = waysBlocks();
+    const { exitCode, output } = typecheckProgram({
+      "wave.ts": receiver,
+      "spawner.ts": sender,
+      "launcher.ts": sceneSender,
+      "scene-addresses.d.ts": SCENE_ADDRESSES,
+    });
     if (exitCode !== 0) {
       throw new Error(
         `the ${WAYS_HEADING} example does not compile against the shipped declarations:\n${output}`,
