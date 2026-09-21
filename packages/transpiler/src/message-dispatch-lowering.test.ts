@@ -159,6 +159,41 @@ describe("message dispatch lowering", () => {
     expect(result.lua).not.toContain("require(");
   });
 
+  test("lowers an annotated script-local id beside a built-in one", () => {
+    const source = [
+      'import { defineScript } from "@defold-typescript/types";',
+      "",
+      "defineScript({",
+      "  on_message: onMessage({",
+      "    spawn_wave(self, message: { count: number }) {",
+      "      handle(message.count);",
+      "    },",
+      "    contact_point_response(self, message) {",
+      "      handle(message.distance);",
+      "    },",
+      "  }),",
+      "});",
+      "",
+      "declare function handle(n: number): void;",
+      "",
+    ].join("\n");
+    const result = transpile(source);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toMatchInlineSnapshot(`
+      "--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+      local ____exports = {}
+      function on_message(self, message_id, message, sender)
+          if message_id == hash("spawn_wave") then
+              handle(message.count)
+          elseif message_id == hash("contact_point_response") then
+              handle(message.distance)
+          end
+      end
+      return ____exports
+      "
+    `);
+  });
+
   test("aliases a handler param named other than `message`", () => {
     const source = [
       'import { defineScript } from "@defold-typescript/types";',

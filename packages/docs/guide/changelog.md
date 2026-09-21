@@ -13,7 +13,10 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **`msg.post` suggests message ids while you type them.** The editor lists every built-in id and every id you declared in [CustomMessages](./messages.md#declaring-your-own-messages), and any other string still compiles.
+- **Messages can be typed where they are sent and handled, with no program-wide declaration required** — see [Ways to type your messages](./messages.md#ways-to-type-your-messages). Every call that compiled before still compiles.
+  - **`msg.post` completion** lists every built-in id and every id declared in [CustomMessages](./messages.md#declaring-your-own-messages), and any other string still compiles.
+  - **Handler annotation** — annotating a handler's `message` in `onMessage` declares that id for the script, and `ScriptMessages<typeof script>` reads the ids back off `defineScript`, `defineGuiScript` or `defineRenderScript`.
+  - **Typed receiver** — `msg.url<M>(...)` returns an address that makes `msg.post` complete and check the receiver's own ids.
 
 ## v0.37.0
 

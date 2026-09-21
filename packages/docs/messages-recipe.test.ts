@@ -9,6 +9,7 @@ const MESSAGES_GUIDE = join(PKG_DIR, "guide", "messages.md");
 const HEADING = "## Declaring your own messages";
 const CROSS_OBJECT_HEADING = "## A message between two game objects";
 const PLACEMENT_HEADING = "## Where the declaration can live";
+const WAYS_HEADING = "## Ways to type your messages";
 // Reached as a workspace sibling on disk, the same way `llms-links.test.ts` and
 // `guide-types-subpaths.test.ts` reach the types package.
 const TYPES_ENTRY = resolve(PKG_DIR, "..", "types", "index.d.ts");
@@ -266,6 +267,48 @@ describe("the guide's declaration-placement shapes", () => {
       throw new Error(
         `the ${PLACEMENT_HEADING} mapping-table shape does not register ` +
           `\`spawn_wave\` once the module-form registration is removed:\n${output}`,
+      );
+    }
+    expect(exitCode).toBe(0);
+  });
+});
+
+/**
+ * The two `ts` fenced blocks under `## Ways to type your messages`, in page
+ * order — the receiver that declares ids by handling them, and the sender that
+ * imports its payload type and types its address. Read from the guide's own
+ * bytes for the same reason as {@link crossObjectBlocks}.
+ */
+function waysBlocks(): [string, string] {
+  const body = readFileSync(MESSAGES_GUIDE, "utf8");
+  const headingAt = body.indexOf(WAYS_HEADING);
+  if (headingAt < 0) {
+    throw new Error(
+      `messages.md has no "${WAYS_HEADING}" heading — the script-local message ` +
+        "example this test compiles cannot be located.",
+    );
+  }
+  const after = body.slice(headingAt + WAYS_HEADING.length);
+  const nextHeading = after.search(/^## /m);
+  const section = nextHeading < 0 ? after : after.slice(0, nextHeading);
+  const blocks = [...section.matchAll(/^```ts\n([\s\S]*?)^```$/gm)].map((match) => match[1] ?? "");
+  const [receiver, sender] = blocks;
+  if (blocks.length !== 2 || !receiver || !sender) {
+    throw new Error(
+      `"${WAYS_HEADING}" carries ${blocks.length} \`\`\`ts blocks, not the ` +
+        "receiver and sender this test compiles together.",
+    );
+  }
+  return [receiver, sender];
+}
+
+describe("the guide's script-local message example", () => {
+  test("the receiver and its typed sender type-check together as one program", () => {
+    const [receiver, sender] = waysBlocks();
+    const { exitCode, output } = typecheckProgram({ "wave.ts": receiver, "spawner.ts": sender });
+    if (exitCode !== 0) {
+      throw new Error(
+        `the ${WAYS_HEADING} example does not compile against the shipped declarations:\n${output}`,
       );
     }
     expect(exitCode).toBe(0);

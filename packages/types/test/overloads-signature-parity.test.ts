@@ -267,7 +267,7 @@ const OVERLOAD_COUNTS: Record<string, number> = {
   // "no JSDoc description" test below
   "go.property": 7,
   "msg.post": 2,
-  "msg.url": 3,
+  "msg.url": 6,
   "render.render_target": 2,
   "vmath.euler_to_quat": 2,
 };

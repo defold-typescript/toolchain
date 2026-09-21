@@ -2,6 +2,12 @@
 import type { Hash, Url } from "./core-types";
 
 declare global {
+  /**
+   * A `Url` that also names the messages its receiver declares. `__receives` is
+   * type-only and never exists at runtime; the value is an ordinary `Url`.
+   */
+  type ReceiverUrl<M> = Url & { readonly __receives?: M };
+
   namespace msg {
     /**
      * Post a message to a receiving URL. The most common case is to send messages
@@ -29,11 +35,21 @@ declare global {
      * @remarks
      * The `(string & {})` term keeps every declared message id as a completion
      * while still accepting any other string, so no existing call is rejected.
+     *
+     * A receiver from `msg.url<M>` also offers and checks the ids in `M`; a
+     * built-in id keeps its built-in payload, and any other id stays open.
      */
-    function post<K extends MessageId | (string & {})>(
-      receiver: SceneAddress | Url | Hash,
+    function post<
+      K extends (keyof M & string) | MessageId | (string & {}),
+      M extends object = Record<never, never>,
+    >(
+      receiver: SceneAddress | Hash | ReceiverUrl<M>,
       message_id: K,
-      message?: MessagePayload<K>,
+      message?: K extends BuiltinMessageId
+        ? MessagePayload<K>
+        : K extends keyof M
+          ? M[K]
+          : MessagePayload<K>,
     ): void;
     function post(
       receiver: SceneAddress | Url | Hash,
@@ -63,6 +79,11 @@ declare global {
      * (`msg.url("camera")`), absolute path (`msg.url("/camera")`), or
      * component (`msg.url("#main")`). The `socket:` prefix only crosses
      * into a collection-proxy-loaded world.
+     *
+     * Pass the receiver's message map as `M` (for example
+     * `msg.url<ScriptMessages<typeof import("./wave").default>>("/logic#wave")`)
+     * to get a receiver-typed address: `msg.post` then completes and checks
+     * those ids. The value is still an ordinary `Url`.
      *
      * @example
      * ```ts
@@ -95,5 +116,12 @@ declare global {
       path: string | Hash,
       fragment: string | Hash,
     ): Url;
+    function url<M extends object>(): ReceiverUrl<M>;
+    function url<M extends object>(urlstring: SceneAddress | undefined): ReceiverUrl<M>;
+    function url<M extends object>(
+      socket: string | Hash | undefined,
+      path: string | Hash,
+      fragment: string | Hash,
+    ): ReceiverUrl<M>;
   }
 }
