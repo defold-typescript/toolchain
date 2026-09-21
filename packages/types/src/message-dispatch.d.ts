@@ -66,8 +66,12 @@ declare global {
     ) => void;
   };
 
+  // A numeric key is sent under its JavaScript property key (`1e3` is "1000"),
+  // the id the transpiler hashes.
   type OnMessageLocalMessages<H> = {
-    [K in Exclude<keyof H, MessageId>]: OnMessageHandlerPayload<H[K]>;
+    [K in Exclude<keyof H, MessageId> as K extends number ? `${K}` : K]: OnMessageHandlerPayload<
+      H[K]
+    >;
   };
 
   /**
