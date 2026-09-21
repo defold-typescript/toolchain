@@ -9,6 +9,12 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.38.0
+
+### Improved
+
+- **`msg.post` suggests message ids while you type them.** The editor lists every built-in id and every id you declared in [CustomMessages](./messages.md#declaring-your-own-messages), and any other string still compiles.
+
 ## v0.37.0
 
 ### Breaking

@@ -32,6 +32,11 @@ const _openPayload: Exact<MessagePayload<"spawn_wave">, Record<string | number, 
 void _openPayload;
 
 msg.post(_url, "spawn_wave", { count: 3, boss: true });
+
+// An id only known at runtime still compiles against the open payload, so the
+// completion-only `(string & {})` term never turns a `string` into an error.
+const dynamicId: string = "spawn_wave";
+msg.post(_url, dynamicId, { x: 1 });
 msg.post(_url, "contact_point_response", {
   position: vmath.vector3(),
   normal: vmath.vector3(),
