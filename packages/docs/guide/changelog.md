@@ -17,7 +17,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **`msg.post` completion** lists every built-in id and every id declared in [CustomMessages](./messages.md#declaring-your-own-messages), and any other string still compiles.
   - **Handler annotation** — annotating a handler's `message` in `onMessage` declares that id for the script, a numeric key under its string form (`1e3` is `"1000"`), and `ScriptMessages<typeof script>` reads the ids back off `defineScript`, `defineGuiScript` or `defineRenderScript`.
   - **Typed receiver** — `msg.url<M>(...)` returns an address that makes `msg.post` complete and check the receiver's own ids.
-  - **Scene address** — [`scene-types`](./scene-types.md#script-addresses-carry-their-messages) links each script component's address to its source, so `msg.post("/logic#wave", ...)` completes and checks that script's ids with no import.
+  - **Scene address** — [`scene-types`](./scene-types.md#script-addresses-carry-their-messages) links each script component's address to the `defineScript` source that builds it, so `msg.post("/logic#wave", ...)` completes and checks that script's ids with no import.
 
 ### Fixed
 
