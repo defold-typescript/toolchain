@@ -22,6 +22,7 @@ import {
   type ExampleSurface,
   exampleIdentity,
   factoryBoundOwnership,
+  moduleBoundOwnership,
   translationOwnership,
 } from "./example-surfaces";
 
@@ -325,7 +326,11 @@ export function runGate(
   surfaces: readonly ExampleSurface[],
   extraUnits: ReadonlyMap<string, readonly ExampleUnit[]> = new Map(),
 ): GateResult {
-  const owners = factoryBoundOwnership(store, translationOwnership(store, surfaces), surfaces);
+  const owners = moduleBoundOwnership(
+    store,
+    factoryBoundOwnership(store, translationOwnership(store, surfaces), surfaces),
+    surfaces,
+  );
   const options = gateCompilerOptions();
   const bySurface = new Map<string, ExampleUnit[]>();
   for (const [fqn, entries] of Object.entries(store)) {

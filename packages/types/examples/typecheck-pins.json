@@ -51,24 +51,6 @@
       "text": "Cannot find name 'buf'."
     }
   ],
-  "defold-1.12.4/kinds/gui-script:camera.get_cameras:d332d9320898b958": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'predicate'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
   "defold-1.12.4/kinds/gui-script:go.get:7cac2203eda50a5e": [
     {
       "code": 2304,
@@ -527,52 +509,6 @@
       "text": "Cannot find name 'vector2'."
     }
   ],
-  "defold-1.12.4/kinds/gui-script:vmath.matrix4_frustum:f7ad37e0c5cb348a": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
-  "defold-1.12.4/kinds/gui-script:vmath.matrix4_look_at:90bdec3f296cdb34": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
-  "defold-1.12.4/kinds/gui-script:vmath.matrix4_orthographic:5e4ccc690aa0a732": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
-  "defold-1.12.4/kinds/gui-script:vmath.matrix4_perspective:90bdec3f296cdb34": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
-  "defold-1.12.4/kinds/gui-script:vmath.matrix4_translation:3b57dbafcbacb5e1": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
   "defold-1.12.4/kinds/gui-script:vmath.mul_per_elem:49995280c8b8dc5a": [
     {
       "code": 2304,
@@ -719,32 +655,6 @@
     {
       "code": 2345,
       "text": "Argument of type 'string | undefined' is not assignable to parameter of type 'string'.   Type 'undefined' is not assignable to type 'string'."
-    }
-  ],
-  "defold-1.12.4/kinds/render-script:image.load:d7c6b4708bd86c99": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'gui'."
-    },
-    {
-      "code": 18046,
-      "text": "'response' is of type 'unknown'."
-    },
-    {
-      "code": 18048,
-      "text": "'img' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'img' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'img' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'img' is possibly 'undefined'."
     }
   ],
   "defold-1.12.4/kinds/render-script:image.load_buffer:55649cadc660e25e": [
@@ -1051,16 +961,6 @@
       "text": "Property 'installed' does not exist on type '{}'."
     }
   ],
-  "defold-1.12.4/kinds/render-script:sys.get_engine_info:d115807db2962da4": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'gui'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'gui'."
-    }
-  ],
   "defold-1.12.4/kinds/render-script:sys.get_host_path:a059ecb3d55d5c22": [
     {
       "code": 2304,
@@ -1291,24 +1191,6 @@
       "text": "Cannot find name 'buf'."
     }
   ],
-  "defold-1.12.4/kinds/script:camera.get_cameras:d332d9320898b958": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'predicate'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
   "defold-1.12.4/kinds/script:collectionfactory.create:5a49721288808772": [
     {
       "code": 2304,
@@ -1423,32 +1305,6 @@
     {
       "code": 2345,
       "text": "Argument of type 'string | undefined' is not assignable to parameter of type 'string'.   Type 'undefined' is not assignable to type 'string'."
-    }
-  ],
-  "defold-1.12.4/kinds/script:image.load:d7c6b4708bd86c99": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'gui'."
-    },
-    {
-      "code": 18046,
-      "text": "'response' is of type 'unknown'."
-    },
-    {
-      "code": 18048,
-      "text": "'img' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'img' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'img' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'img' is possibly 'undefined'."
     }
   ],
   "defold-1.12.4/kinds/script:image.load_buffer:55649cadc660e25e": [
@@ -1867,16 +1723,6 @@
       "text": "Property 'installed' does not exist on type '{}'."
     }
   ],
-  "defold-1.12.4/kinds/script:sys.get_engine_info:d115807db2962da4": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'gui'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'gui'."
-    }
-  ],
   "defold-1.12.4/kinds/script:sys.get_host_path:a059ecb3d55d5c22": [
     {
       "code": 2304,
@@ -2051,52 +1897,6 @@
     {
       "code": 2304,
       "text": "Cannot find name 'vector2'."
-    }
-  ],
-  "defold-1.12.4/kinds/script:vmath.matrix4_frustum:f7ad37e0c5cb348a": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
-  "defold-1.12.4/kinds/script:vmath.matrix4_look_at:90bdec3f296cdb34": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
-  "defold-1.12.4/kinds/script:vmath.matrix4_orthographic:5e4ccc690aa0a732": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
-  "defold-1.12.4/kinds/script:vmath.matrix4_perspective:90bdec3f296cdb34": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
-  "defold-1.12.4/kinds/script:vmath.matrix4_translation:3b57dbafcbacb5e1": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
     }
   ],
   "defold-1.12.4/kinds/script:vmath.mul_per_elem:49995280c8b8dc5a": [
@@ -2841,24 +2641,6 @@
       "text": "Cannot find name 'buf'."
     }
   ],
-  "defold-1.13.0/kinds/gui-script:camera.get_cameras:d332d9320898b958": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'predicate'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
   "defold-1.13.0/kinds/gui-script:compute.set_textures:87edc357f8852364": [
     {
       "code": 2353,
@@ -3335,52 +3117,6 @@
       "text": "Cannot find name 'vector2'."
     }
   ],
-  "defold-1.13.0/kinds/gui-script:vmath.matrix4_frustum:f7ad37e0c5cb348a": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
-  "defold-1.13.0/kinds/gui-script:vmath.matrix4_look_at:90bdec3f296cdb34": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
-  "defold-1.13.0/kinds/gui-script:vmath.matrix4_orthographic:5e4ccc690aa0a732": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
-  "defold-1.13.0/kinds/gui-script:vmath.matrix4_perspective:90bdec3f296cdb34": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
-  "defold-1.13.0/kinds/gui-script:vmath.matrix4_translation:3b57dbafcbacb5e1": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
   "defold-1.13.0/kinds/gui-script:vmath.mul_per_elem:49995280c8b8dc5a": [
     {
       "code": 2304,
@@ -3553,32 +3289,6 @@
     {
       "code": 2345,
       "text": "Argument of type 'string | undefined' is not assignable to parameter of type 'string'.   Type 'undefined' is not assignable to type 'string'."
-    }
-  ],
-  "defold-1.13.0/kinds/render-script:image.load:d7c6b4708bd86c99": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'gui'."
-    },
-    {
-      "code": 18046,
-      "text": "'response' is of type 'unknown'."
-    },
-    {
-      "code": 18048,
-      "text": "'img' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'img' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'img' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'img' is possibly 'undefined'."
     }
   ],
   "defold-1.13.0/kinds/render-script:image.load_buffer:55649cadc660e25e": [
@@ -3897,16 +3607,6 @@
       "text": "Property 'installed' does not exist on type '{}'."
     }
   ],
-  "defold-1.13.0/kinds/render-script:sys.get_engine_info:d115807db2962da4": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'gui'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'gui'."
-    }
-  ],
   "defold-1.13.0/kinds/render-script:sys.get_host_path:a059ecb3d55d5c22": [
     {
       "code": 2304,
@@ -4157,24 +3857,6 @@
       "text": "Cannot find name 'buf'."
     }
   ],
-  "defold-1.13.0/kinds/script:camera.get_cameras:d332d9320898b958": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'predicate'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
   "defold-1.13.0/kinds/script:collectionfactory.create:5a49721288808772": [
     {
       "code": 2304,
@@ -4295,32 +3977,6 @@
     {
       "code": 2345,
       "text": "Argument of type 'string | undefined' is not assignable to parameter of type 'string'.   Type 'undefined' is not assignable to type 'string'."
-    }
-  ],
-  "defold-1.13.0/kinds/script:image.load:d7c6b4708bd86c99": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'gui'."
-    },
-    {
-      "code": 18046,
-      "text": "'response' is of type 'unknown'."
-    },
-    {
-      "code": 18048,
-      "text": "'img' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'img' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'img' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'img' is possibly 'undefined'."
     }
   ],
   "defold-1.13.0/kinds/script:image.load_buffer:55649cadc660e25e": [
@@ -4751,16 +4407,6 @@
       "text": "Property 'installed' does not exist on type '{}'."
     }
   ],
-  "defold-1.13.0/kinds/script:sys.get_engine_info:d115807db2962da4": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'gui'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'gui'."
-    }
-  ],
   "defold-1.13.0/kinds/script:sys.get_host_path:a059ecb3d55d5c22": [
     {
       "code": 2304,
@@ -4935,52 +4581,6 @@
     {
       "code": 2304,
       "text": "Cannot find name 'vector2'."
-    }
-  ],
-  "defold-1.13.0/kinds/script:vmath.matrix4_frustum:f7ad37e0c5cb348a": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
-  "defold-1.13.0/kinds/script:vmath.matrix4_look_at:90bdec3f296cdb34": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
-  "defold-1.13.0/kinds/script:vmath.matrix4_orthographic:5e4ccc690aa0a732": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
-  "defold-1.13.0/kinds/script:vmath.matrix4_perspective:90bdec3f296cdb34": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
-  "defold-1.13.0/kinds/script:vmath.matrix4_translation:3b57dbafcbacb5e1": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
     }
   ],
   "defold-1.13.0/kinds/script:vmath.mul_per_elem:49995280c8b8dc5a": [
@@ -5767,24 +5367,6 @@
       "text": "Cannot find name 'buf'."
     }
   ],
-  "defold-1.13.1/kinds/gui-script:camera.get_cameras:d332d9320898b958": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'predicate'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
   "defold-1.13.1/kinds/gui-script:collectionproxy.load:7f38a3119be56e98": [
     {
       "code": 18046,
@@ -6435,52 +6017,6 @@
       "text": "Cannot find name 'vector2'."
     }
   ],
-  "defold-1.13.1/kinds/gui-script:vmath.matrix4_frustum:f7ad37e0c5cb348a": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
-  "defold-1.13.1/kinds/gui-script:vmath.matrix4_look_at:90bdec3f296cdb34": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
-  "defold-1.13.1/kinds/gui-script:vmath.matrix4_orthographic:5e4ccc690aa0a732": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
-  "defold-1.13.1/kinds/gui-script:vmath.matrix4_perspective:90bdec3f296cdb34": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
-  "defold-1.13.1/kinds/gui-script:vmath.matrix4_translation:3b57dbafcbacb5e1": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
   "defold-1.13.1/kinds/gui-script:vmath.mul_per_elem:49995280c8b8dc5a": [
     {
       "code": 2304,
@@ -6689,32 +6225,6 @@
     {
       "code": 2345,
       "text": "Argument of type 'string | undefined' is not assignable to parameter of type 'string'.   Type 'undefined' is not assignable to type 'string'."
-    }
-  ],
-  "defold-1.13.1/kinds/render-script:image.load:d7c6b4708bd86c99": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'gui'."
-    },
-    {
-      "code": 18046,
-      "text": "'response' is of type 'unknown'."
-    },
-    {
-      "code": 18048,
-      "text": "'img' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'img' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'img' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'img' is possibly 'undefined'."
     }
   ],
   "defold-1.13.1/kinds/render-script:image.load_buffer:55649cadc660e25e": [
@@ -7205,16 +6715,6 @@
       "text": "Property 'installed' does not exist on type '{}'."
     }
   ],
-  "defold-1.13.1/kinds/render-script:sys.get_engine_info:d115807db2962da4": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'gui'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'gui'."
-    }
-  ],
   "defold-1.13.1/kinds/render-script:sys.get_host_path:a059ecb3d55d5c22": [
     {
       "code": 2304,
@@ -7523,24 +7023,6 @@
       "text": "Cannot find name 'buf'."
     }
   ],
-  "defold-1.13.1/kinds/script:camera.get_cameras:d332d9320898b958": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'predicate'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
   "defold-1.13.1/kinds/script:camera.screen_to_world:0738c074908495cb": [
     {
       "code": 2345,
@@ -7731,32 +7213,6 @@
     {
       "code": 2345,
       "text": "Argument of type 'string | undefined' is not assignable to parameter of type 'string'.   Type 'undefined' is not assignable to type 'string'."
-    }
-  ],
-  "defold-1.13.1/kinds/script:image.load:d7c6b4708bd86c99": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'gui'."
-    },
-    {
-      "code": 18046,
-      "text": "'response' is of type 'unknown'."
-    },
-    {
-      "code": 18048,
-      "text": "'img' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'img' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'img' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'img' is possibly 'undefined'."
     }
   ],
   "defold-1.13.1/kinds/script:image.load_buffer:55649cadc660e25e": [
@@ -8529,16 +7985,6 @@
       "text": "Property 'installed' does not exist on type '{}'."
     }
   ],
-  "defold-1.13.1/kinds/script:sys.get_engine_info:d115807db2962da4": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'gui'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'gui'."
-    }
-  ],
   "defold-1.13.1/kinds/script:sys.get_host_path:a059ecb3d55d5c22": [
     {
       "code": 2304,
@@ -8787,52 +8233,6 @@
     {
       "code": 2339,
       "text": "Property 't' does not exist on type 'Record<never, never>'."
-    }
-  ],
-  "defold-1.13.1/kinds/script:vmath.matrix4_frustum:f7ad37e0c5cb348a": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
-  "defold-1.13.1/kinds/script:vmath.matrix4_look_at:90bdec3f296cdb34": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
-  "defold-1.13.1/kinds/script:vmath.matrix4_orthographic:5e4ccc690aa0a732": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
-  "defold-1.13.1/kinds/script:vmath.matrix4_perspective:90bdec3f296cdb34": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    },
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
-    }
-  ],
-  "defold-1.13.1/kinds/script:vmath.matrix4_translation:3b57dbafcbacb5e1": [
-    {
-      "code": 2304,
-      "text": "Cannot find name 'render'."
     }
   ],
   "defold-1.13.1/kinds/script:vmath.mul_per_elem:49995280c8b8dc5a": [
