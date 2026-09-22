@@ -1418,6 +1418,10 @@ function dispatchCommand(
                 io.stdout.write(
                   `  ${library.modules.join(", ")} <- ${ext.url} (vendored library)\n`,
                 );
+              } else if (ext.typeSurface === "vendored-native") {
+                io.stdout.write(
+                  `  ${ext.namespaces.join(", ")} <- ${ext.url} (native extension)\n`,
+                );
               } else if (ext.assetOnly) {
                 if (library !== undefined) {
                   writeWarning(

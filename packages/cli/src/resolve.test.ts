@@ -1136,6 +1136,134 @@ describe("runResolve corpus match precedes .script_api", () => {
   });
 });
 
+describe("runResolve curated native extension", () => {
+  const DAABBCC_URL = "https://github.com/selimanac/defold-daabbcc/archive/refs/tags/v3.0.8.zip";
+  const CURATED =
+    "/** @noSelfInFile */\ndeclare global {\n  namespace daabbcc {\n    function reset(): void;\n  }\n}\n\nexport {};\n";
+  const DOC_DAABBCC = `
+- name: daabbcc
+  type: table
+  desc: Doc-emitted namespace.
+  members:
+  - name: from_doc
+    type: function
+    desc: only the doc declares this
+`;
+
+  function nativeRegistry(): {
+    sourceId: string;
+    namespace: string;
+    manifestDir: string;
+    declarationPath: string;
+  }[] {
+    const dir = tmp();
+    const declarationPath = join(dir, "daabbcc.d.ts");
+    writeFileSync(declarationPath, CURATED);
+    return [
+      { sourceId: "defold-daabbcc", namespace: "daabbcc", manifestDir: "daabbcc", declarationPath },
+    ];
+  }
+
+  function daabbccArchive(extra: Partial<FakeArchive> = {}): Record<string, FakeArchive> {
+    return {
+      [extensionArchiveKey(DAABBCC_URL)]: {
+        entries: [
+          "defold-daabbcc-3.0.8/daabbcc/ext.manifest",
+          "defold-daabbcc-3.0.8/daabbcc/src/extension.cpp",
+          "defold-daabbcc-3.0.8/daabbcc/annotation.lua",
+          ...(extra.entries ?? []),
+        ],
+        contents: { ...(extra.contents ?? {}) },
+      },
+    };
+  }
+
+  test("a source-id match confirmed by its ext.manifest writes the curated declaration", async () => {
+    const cwd = tmp();
+    writeProject(cwd, `[project]\ndependencies#0 = ${DAABBCC_URL}\n`);
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(daabbccArchive()),
+      libraryRegistry: [],
+      libraryGeneratedDir: null,
+      nativeRegistry: nativeRegistry(),
+    });
+
+    expect(result.ok).toBe(true);
+    const extensionsDir = join(cwd, ".defold-types", "extensions");
+    expect(readFileSync(join(extensionsDir, "daabbcc.d.ts"), "utf8")).toBe(CURATED);
+    expect(readFileSync(join(extensionsDir, "index.d.ts"), "utf8")).toContain(
+      'import "./daabbcc";',
+    );
+    expect(result.materializedSurface).toBe(".defold-types/extensions");
+    expect(result.extensions[0]?.typeSurface).toBe("vendored-native");
+    expect(result.extensions[0]?.namespaces).toEqual(["daabbcc"]);
+    expect(result.extensions[0]?.scriptApiCount).toBe(0);
+  });
+
+  test("a source-id match whose archive ships no ext.manifest in the named dir writes nothing", async () => {
+    const cwd = tmp();
+    writeProject(cwd, `[project]\ndependencies#0 = ${DAABBCC_URL}\n`);
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(DAABBCC_URL)]: {
+        entries: [
+          "defold-daabbcc-3.0.8/other/ext.manifest",
+          "defold-daabbcc-3.0.8/daabbcc/annotation.lua",
+        ],
+        contents: {},
+      },
+    };
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(byKey),
+      libraryRegistry: [],
+      libraryGeneratedDir: null,
+      nativeRegistry: nativeRegistry(),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(existsSync(join(cwd, ".defold-types", "extensions"))).toBe(false);
+    expect(result.extensions[0]?.typeSurface).toBe("none");
+    expect(result.extensions[0]?.namespaces).toEqual([]);
+  });
+
+  test("the curated declaration wins over a .script_api the same archive ships", async () => {
+    const cwd = tmp();
+    writeProject(cwd, `[project]\ndependencies#0 = ${DAABBCC_URL}\n`);
+    const docPath = "defold-daabbcc-3.0.8/daabbcc/api/daabbcc.script_api";
+
+    const result = await runResolve({
+      cwd,
+      cacheDir: tmp(),
+      download: someBytes,
+      readZip: makeReadZip(
+        daabbccArchive({ entries: [docPath], contents: { [docPath]: DOC_DAABBCC } }),
+      ),
+      libraryRegistry: [],
+      libraryGeneratedDir: null,
+      nativeRegistry: nativeRegistry(),
+    });
+
+    expect(result.ok).toBe(true);
+    const extensionsDir = join(cwd, ".defold-types", "extensions");
+    expect(readFileSync(join(extensionsDir, "daabbcc.d.ts"), "utf8")).toBe(CURATED);
+    expect(
+      readdirSync(extensionsDir)
+        .filter((f) => f.endsWith(".d.ts"))
+        .sort(),
+    ).toEqual(["daabbcc.d.ts", "index.d.ts"]);
+    expect(result.extensions[0]?.typeSurface).toBe("vendored-native");
+    expect(result.extensions[0]?.namespaces).toEqual(["daabbcc"]);
+    expect(result.extensions[0]?.scriptApiCount).toBe(1);
+  });
+});
+
 describe("runResolve druid LuaLS library", () => {
   const DRUID = "declare module 'druid.druid' { export const version: string; }\n";
 

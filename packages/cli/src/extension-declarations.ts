@@ -28,6 +28,10 @@ export interface ExtensionDeclarations {
   // leading GitHub archive-wrapper dir stripped). Downstream library matching
   // verifies a repo-name match against these before emitting.
   readonly luaModules: string[];
+  // Directories holding an `ext.manifest`, wrapper stripped (`daabbcc`). A native
+  // extension ships no Lua module, so this is what confirms a curated native
+  // target the way `luaModules` confirms a library.
+  readonly manifestDirs: string[];
   // The scene sources the archive's own `game.project` shares, at the resource
   // path a depending project addresses them by. Filled on both arms: a
   // collection-only library takes the asset-only one.
@@ -92,6 +96,19 @@ function archiveLuaModules(entries: readonly string[]): string[] {
   return [...modules].sort();
 }
 
+function archiveManifestDirs(entries: readonly string[]): string[] {
+  const wrapper = archiveWrapperOf(entries);
+  const dirs = new Set<string>();
+  for (const entry of entries) {
+    const withoutWrapper = wrapper === undefined ? entry : entry.slice(wrapper.length + 1);
+    const match = /^(.+)\/ext\.manifest$/.exec(withoutWrapper);
+    if (match?.[1] !== undefined) {
+      dirs.add(match[1]);
+    }
+  }
+  return [...dirs].sort();
+}
+
 export async function resolveExtensionDeclarations(
   deps: readonly ExtensionDependency[],
   opts: ResolveExtensionArchiveOptions,
@@ -103,6 +120,7 @@ export async function resolveExtensionDeclarations(
   for (const archive of resolved) {
     const zip = await open(archive.archivePath);
     const luaModules = archiveLuaModules(zip.entries());
+    const manifestDirs = archiveManifestDirs(zip.entries());
     const { sceneSources, sceneReasons, sceneRefused } = archiveSceneSources(zip);
     if (archive.assetOnly) {
       bundles.push({
@@ -112,6 +130,7 @@ export async function resolveExtensionDeclarations(
         resolvedVersion: archive.resolvedVersion,
         declarations: [],
         luaModules,
+        manifestDirs,
         sceneSources,
         sceneReasons,
         sceneRefused,
@@ -129,6 +148,7 @@ export async function resolveExtensionDeclarations(
       resolvedVersion: archive.resolvedVersion,
       declarations,
       luaModules,
+      manifestDirs,
       sceneSources,
       sceneReasons,
       sceneRefused,
