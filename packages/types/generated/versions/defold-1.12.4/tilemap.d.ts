@@ -55,8 +55,10 @@ declare global {
      * @returns index of the tile
      * @example
      * ```ts
-     * // get the tile under the player.
-     * const tileno = tilemap.get_tile("/level#tilemap", "foreground", self.player_x, self.player_y);
+     * function tile_under_player(self) {
+     *   // get the tile under the player.
+     *   const tileno = tilemap.get_tile("/level#tilemap", "foreground", self.player_x, self.player_y);
+     * }
      * ```
      */
     function get_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number): number;
@@ -74,15 +76,17 @@ declare global {
      * @returns index of the tile
      * @example
      * ```ts
-     * // get the tile under the player.
-     * const tile_info = tilemap.get_tile_info("/level#tilemap", "foreground", self.player_x, self.player_y);
-     * pprint(tile_info);
-     * // {
-     * //    index = 0,
-     * //    h_flip = false,
-     * //    v_flip = true,
-     * //    rotate_90 = false
-     * // }
+     * function tile_info_under_player(self) {
+     *   // get the tile under the player.
+     *   const tile_info = tilemap.get_tile_info("/level#tilemap", "foreground", self.player_x, self.player_y);
+     *   pprint(tile_info);
+     *   // {
+     *   //    index = 0,
+     *   //    h_flip = false,
+     *   //    v_flip = true,
+     *   //    rotate_90 = false
+     *   // }
+     * }
      * ```
      */
     function get_tile_info(url: string | Hash | Url, layer: string | Hash, x: number, y: number): { index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean };
@@ -141,14 +145,16 @@ declare global {
      * @param transform_bitmask - optional flip and/or rotation should be applied to the tile
      * @example
      * ```ts
-     * // Clear the tile under the player.
-     * tilemap.set_tile("/level#tilemap", "foreground", self.player_x, self.player_y, 0);
+     * function set_tiles(self, x, y) {
+     *   // Clear the tile under the player.
+     *   tilemap.set_tile("/level#tilemap", "foreground", self.player_x, self.player_y, 0);
      *
-     * // Set tile with different combination of flip and rotation
-     * tilemap.set_tile("#tilemap", "layer1", x, y, 0, tilemap.H_FLIP + tilemap.V_FLIP + tilemap.ROTATE_90);
-     * tilemap.set_tile("#tilemap", "layer1", x, y, 0, tilemap.H_FLIP + tilemap.ROTATE_270);
-     * tilemap.set_tile("#tilemap", "layer1", x, y, 0, tilemap.V_FLIP + tilemap.H_FLIP);
-     * tilemap.set_tile("#tilemap", "layer1", x, y, 0, tilemap.ROTATE_180);
+     *   // Set tile with different combination of flip and rotation
+     *   tilemap.set_tile("#tilemap", "layer1", x, y, 0, tilemap.H_FLIP + tilemap.V_FLIP + tilemap.ROTATE_90);
+     *   tilemap.set_tile("#tilemap", "layer1", x, y, 0, tilemap.H_FLIP + tilemap.ROTATE_270);
+     *   tilemap.set_tile("#tilemap", "layer1", x, y, 0, tilemap.V_FLIP + tilemap.H_FLIP);
+     *   tilemap.set_tile("#tilemap", "layer1", x, y, 0, tilemap.ROTATE_180);
+     * }
      * ```
      */
     function set_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: number): void;

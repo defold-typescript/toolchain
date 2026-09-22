@@ -114,6 +114,7 @@ declare global {
      * @param text - the string to send to the connected profiler
      * @example
      * ```ts
+     * const name = "my_event";
      * profiler.log_text(`Event: ${name}`);
      * ```
      */
@@ -136,6 +137,10 @@ declare global {
      * @param name - The name of the scope
      * @example
      * ```ts
+     * function test_function() {
+     *   // the work being measured
+     * }
+     *
      * // Go back one frame
      * profiler.scope_begin("test_function");
      * test_function();

@@ -1457,7 +1457,13 @@ declare global {
      * });
      *
      * // Update texture 2nd array page with loaded texture from png
-     * // new_tex is resource handle of texture which was created via resource.create_resource
+     * // new_tex is the resource handle of a texture created via resource.create_texture
+     * const new_tex = resource.create_texture("/my_array_texture.texturec", {
+     *   type: graphics.TEXTURE_TYPE_2D_ARRAY,
+     *   width: 128,
+     *   height: 128,
+     *   format: graphics.TEXTURE_FORMAT_RGB,
+     * });
      * const tex_path = "/bundle_resources/page_02.png";
      * const [data] = sys.load_resource(tex_path);
      * const buf = image.load_buffer(data);

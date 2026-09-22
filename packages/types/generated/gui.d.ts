@@ -524,6 +524,7 @@ declare global {
      * @example
      * ```ts
      * // How to start a simple color animation, where the node fades in to white during 0.5 seconds:
+     * const node = gui.get_node("my_node");
      * gui.set_color(node, vmath.vector4(0, 0, 0, 0)); // node is fully transparent
      * gui.animate(node, gui.PROP_COLOR, vmath.vector4(1, 1, 1, 1), gui.EASING_INOUTQUAD, 0.5); // start animation
      *
@@ -1355,6 +1356,8 @@ declare global {
      * });
      *
      * // How to create a texture using .astc format
+     * const size = 4;
+     * const pos = vmath.vector3(200, 200, 0);
      * const path = "/assets/images/logo_4x4.astc";
      * const buffer = sys.load_resource(path);
      * const n = gui.new_box_node(pos, vmath.vector3(size, size, 0));
@@ -1789,6 +1792,7 @@ declare global {
      * });
      *
      * // Remove a named runtime texture resource mapping:
+     * const atlas_params = { texture: "/runtime.texturec", animations: [], geometries: [] };
      * const atlas_id = resource.create_atlas("/runtime.texturesetc", atlas_params);
      * gui.set(msg.url(), "textures", atlas_id, { key: "runtime_texture" });
      * gui.set_texture(gui.get_node("box"), "runtime_texture");
