@@ -174,6 +174,23 @@ describe("parseNativeRegistration over the other spellings native extensions use
     expect(surface.moduleName).toBe("http://mod");
     expect(surface.functions).toEqual(["a", "b"]);
   });
+
+  test("a block-commented stale #define after the live one does not override it", () => {
+    const source = [
+      '#define MODULE_NAME "live"',
+      "/*",
+      '#define MODULE_NAME "stale"',
+      "*/",
+      "static const luaL_reg methods[] = {",
+      '  {"f", F},',
+      "  {0, 0}",
+      "};",
+      "static void LuaInit(lua_State* L) {",
+      "  luaL_register(L, MODULE_NAME, methods);",
+      "}",
+    ].join("\n");
+    expect(parseNativeRegistration(source, "inline.cpp").moduleName).toBe("live");
+  });
 });
 
 describe("parseNativeRegistration refuses what it cannot read", () => {
@@ -203,5 +220,21 @@ describe("parseNativeRegistration refuses what it cannot read", () => {
       "}",
     ].join("\n");
     expect(() => parseNativeRegistration(source, "ext/name.cpp")).toThrow(/ext\/name\.cpp/);
+  });
+
+  test("a module-name identifier defined only inside a comment throws naming the file", () => {
+    const source = [
+      "/*",
+      '#define MODULE_NAME "stale"',
+      "*/",
+      "static const luaL_reg methods[] = {",
+      '  {"f", F},',
+      "  {0, 0}",
+      "};",
+      "static void LuaInit(lua_State* L) {",
+      "  luaL_register(L, MODULE_NAME, methods);",
+      "}",
+    ].join("\n");
+    expect(() => parseNativeRegistration(source, "inline.cpp")).toThrow(/inline\.cpp.*MODULE_NAME/);
   });
 });
