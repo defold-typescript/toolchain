@@ -92,8 +92,10 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
   const referencedTypeNodes: ts.TypeNode[] = [];
   // Type nodes reached from file-scope declarations, kept apart from the module
   // block's so an ambient global can never pull a module-block shape onto `/api`
-  // that the module surface alone did not reach.
-  const globalTypeNodes: ts.TypeNode[] = [];
+  // that the module surface alone did not reach. Each carries the namespace
+  // blocks enclosing the member that named it, innermost first, so the reference
+  // resolves where it was written rather than at file scope only.
+  const globalTypeNodes: ScopedTypeNode[] = [];
   // Each alias's declaration paired with the bare element it already pushed, so
   // a reachable object-literal alias is filled in by merging into that element
   // rather than by appending a second one — element order stays as emitted.
@@ -110,10 +112,17 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
   // pushed eagerly — file scope carries far more incidental type machinery than a
   // module block, so a shape publishes only once reachability proves a published
   // signature names it.
-  const collect = (nodes: readonly ts.Statement[], prefix: string, global: boolean): void => {
+  const collect = (
+    nodes: readonly ts.Statement[],
+    prefix: string,
+    global: boolean,
+    scopes: readonly Scope[] = [],
+  ): void => {
     const qualify = (name: string): string => (prefix ? `${prefix}.${name}` : name);
     const mark = global ? { global: true } : {};
-    const typeNodes = global ? globalTypeNodes : referencedTypeNodes;
+    const typeNodes: TypeNodeSink = global
+      ? { push: (node: ts.TypeNode) => void globalTypeNodes.push({ node, scopes }) }
+      : referencedTypeNodes;
     // Inside an ambient namespace every member is ambient by containment, so the
     // nested lane emits regardless of an `export` keyword.
     const gate = (stmt: ts.HasModifiers): boolean =>
@@ -161,7 +170,11 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
         ts.isModuleBlock(stmt.body) &&
         gate(stmt)
       ) {
-        collect(stmt.body.statements, qualify(stmt.name.getText(sf)), global);
+        const nested = qualify(stmt.name.getText(sf));
+        const inner = global
+          ? [{ prefix: nested, declared: typeDeclarationsIn(stmt.body.statements) }, ...scopes]
+          : scopes;
+        collect(stmt.body.statements, nested, global, inner);
       }
     }
   };
@@ -221,30 +234,48 @@ export function extractApiDoc(source: string, moduleName: string): unknown {
   // has today. Its shapes resolve against file-scope declarations only, by node
   // identity, so a file-scope shape never borrows a same-named module-block one.
   collect(sf.statements, "", true);
-  const globalDeclared = typeDeclarationsIn(sf.statements);
-  for (const name of referencedTypeNames(globalDeclared, globalTypeNodes)) {
+  const fileScope: Scope = { prefix: "", declared: typeDeclarationsIn(sf.statements) };
+  for (const shape of reachedGlobalShapes(globalTypeNodes, fileScope)) {
+    const { name, alias, iface, scoped } = shape;
     if (emittedNames.has(name)) continue;
-    const alias = globalDeclared.aliases.get(name);
     if (alias) {
-      if (!ts.isTypeLiteralNode(alias.type)) continue;
-      const { functions, properties } = shapeMembers(alias.type.members, sf);
-      if (functions.length === 0 && properties.length === 0) continue;
+      if (ts.isTypeLiteralNode(alias.type)) {
+        const { functions, properties } = shapeMembers(alias.type.members, sf);
+        if (functions.length === 0 && properties.length === 0) continue;
+        elements.push({
+          type: "TYPEDEF",
+          name,
+          ...(functions.length > 0 ? { functions } : {}),
+          ...(properties.length > 0 ? { properties } : {}),
+          ...deprecatedKey(alias),
+          global: true,
+        });
+        emittedNames.add(name);
+        continue;
+      }
+      // A union has no member list to publish, so its top-level arms are the
+      // only representation of it. Only the namespace lane does this: file
+      // scope carries incidental aliases a published signature merely mentions.
+      if (!scoped) continue;
       elements.push({
         type: "TYPEDEF",
         name,
-        ...(functions.length > 0 ? { functions } : {}),
-        ...(properties.length > 0 ? { properties } : {}),
+        types: unionMemberTexts(alias.type, sf),
         ...deprecatedKey(alias),
         global: true,
       });
       emittedNames.add(name);
       continue;
     }
-    const iface = globalDeclared.interfaces.get(name);
     if (!iface) continue;
-    const typedef = typedefElement(iface, sf);
-    if (!typedef) continue;
-    elements.push({ ...typedef, global: true });
+    const typedef = typedefElement(iface, sf, name);
+    const parents = scoped ? heritageTypeTexts(iface, sf) : [];
+    if (!typedef && parents.length === 0) continue;
+    elements.push({
+      ...(typedef ?? { type: "TYPEDEF", name }),
+      ...(parents.length > 0 ? { extends: parents } : {}),
+      global: true,
+    });
     emittedNames.add(name);
   }
 
@@ -319,7 +350,7 @@ function functionElement(
 
 function collectFunctionReferenceTypes(
   decl: ts.FunctionDeclaration | ts.MethodSignature,
-  out: ts.TypeNode[],
+  out: TypeNodeSink,
 ): void {
   for (const param of decl.parameters) {
     if (param.type) out.push(param.type);
@@ -367,12 +398,13 @@ function shapeMembers(members: readonly ts.TypeElement[], sf: ts.SourceFile): Sh
 function typedefElement(
   iface: ts.InterfaceDeclaration,
   sf: ts.SourceFile,
+  name: string = iface.name.text,
 ): Record<string, unknown> | undefined {
   const { functions, properties } = shapeMembers(iface.members, sf);
   if (functions.length === 0 && properties.length === 0) return undefined;
   return {
     type: "TYPEDEF",
-    name: iface.name.text,
+    name,
     ...(functions.length > 0 ? { functions } : {}),
     ...(properties.length > 0 ? { properties } : {}),
     ...deprecatedKey(iface),
@@ -396,6 +428,96 @@ function typeDeclarationsIn(statements: readonly ts.Statement[]): TypeDeclaratio
 
 function moduleTypeDeclarations(moduleBlock: ts.ModuleBlock): TypeDeclarations {
   return typeDeclarationsIn(moduleBlock.statements);
+}
+
+interface TypeNodeSink {
+  push(node: ts.TypeNode): void;
+}
+
+/** A namespace block's own type declarations under the name it qualifies them with. */
+interface Scope {
+  prefix: string;
+  declared: TypeDeclarations;
+}
+
+interface ScopedTypeNode {
+  node: ts.TypeNode;
+  scopes: readonly Scope[];
+}
+
+interface ReachedShape {
+  name: string;
+  alias?: ts.TypeAliasDeclaration;
+  iface?: ts.InterfaceDeclaration;
+  /** Whether a namespace block declared it, rather than file scope. */
+  scoped: boolean;
+}
+
+/** An interface's `extends` parents as their printed type text. */
+function heritageTypeTexts(iface: ts.InterfaceDeclaration, sf: ts.SourceFile): string[] {
+  const clause = iface.heritageClauses?.find((c) => c.token === ts.SyntaxKind.ExtendsKeyword);
+  return clause ? clause.types.map((type) => oneLineText(type, sf)) : [];
+}
+
+function heritageNames(iface: ts.InterfaceDeclaration): string[] {
+  const clause = iface.heritageClauses?.find((c) => c.token === ts.SyntaxKind.ExtendsKeyword);
+  if (!clause) return [];
+  return clause.types
+    .filter((type) => ts.isIdentifier(type.expression))
+    .map((type) => (type.expression as ts.Identifier).text);
+}
+
+/** A union's top-level arms as type text, or the single type for a non-union. */
+function unionMemberTexts(node: ts.TypeNode, sf: ts.SourceFile): string[] {
+  return ts.isUnionTypeNode(node)
+    ? node.types.map((type) => typeText(type, sf))
+    : [typeText(node, sf)];
+}
+
+/**
+ * Every shape the ambient lane's emitted members reach, in first-reached order.
+ * A reference resolves outwards from the namespace block it was written in, so a
+ * block-local shape shadows a same-named file-scope one and publishes under the
+ * block's prefix; a declaration's own body resolves from where it was declared,
+ * never back into a sibling block the reference came from. An `extends` parent is
+ * not a type reference, so it is followed by name.
+ */
+function reachedGlobalShapes(nodes: readonly ScopedTypeNode[], fileScope: Scope): ReachedShape[] {
+  const reached: ReachedShape[] = [];
+  const seen = new Set<string>();
+
+  const resolve = (name: string, scopes: readonly Scope[]): void => {
+    for (let i = 0; i < scopes.length; i++) {
+      const scope = scopes[i];
+      if (!scope) continue;
+      const alias = scope.declared.aliases.get(name);
+      const iface = scope.declared.interfaces.get(name);
+      if (!alias && !iface) continue;
+      const qualified = scope.prefix ? `${scope.prefix}.${name}` : name;
+      if (seen.has(qualified)) return;
+      seen.add(qualified);
+      reached.push({
+        name: qualified,
+        ...(alias ? { alias } : {}),
+        ...(iface ? { iface } : {}),
+        scoped: scope.prefix !== "",
+      });
+      const outward = scopes.slice(i);
+      if (alias) walk(alias.type, outward);
+      if (iface) for (const parent of heritageNames(iface)) resolve(parent, outward);
+      return;
+    }
+  };
+
+  const walk = (node: ts.Node, scopes: readonly Scope[]): void => {
+    if (ts.isTypeReferenceNode(node) && ts.isIdentifier(node.typeName)) {
+      resolve(node.typeName.text, scopes);
+    }
+    ts.forEachChild(node, (child) => walk(child, scopes));
+  };
+
+  for (const { node, scopes } of nodes) walk(node, [...scopes, fileScope]);
+  return reached;
 }
 
 /**

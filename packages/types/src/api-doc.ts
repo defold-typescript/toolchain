@@ -20,6 +20,10 @@ export interface ApiTypedef {
   name: string;
   functions?: ApiFunction[];
   properties?: ApiVariable[];
+  /** A union alias's top-level arms; a shape with members carries none. */
+  types?: string[];
+  /** The type text of each parent an interface-backed typedef extends. */
+  extends?: string[];
   /** See {@link ApiFunction.global}. */
   global?: true;
 }
@@ -164,10 +168,14 @@ export function parseDefoldApiDoc(input: unknown): ApiModule {
 function parseTypedef(element: Record<string, unknown>): ApiTypedef {
   const functions = parseFunctionList(element.functions);
   const properties = parseVariableList(element.properties);
+  const types = parseStringArray(element.types);
+  const parents = parseStringArray(element.extends);
   return {
     name: stringOr(element.name, ""),
     ...(functions.length > 0 ? { functions } : {}),
     ...(properties.length > 0 ? { properties } : {}),
+    ...(types.length > 0 ? { types } : {}),
+    ...(parents.length > 0 ? { extends: parents } : {}),
     ...globalKey(element),
   };
 }
