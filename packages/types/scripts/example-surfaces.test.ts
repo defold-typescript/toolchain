@@ -3,6 +3,7 @@ import { existsSync } from "node:fs";
 import type { TranslationStore } from "../src/example-store";
 import { loadTranslations } from "./example-store-io";
 import {
+  boundOwnership,
   exampleIdentity,
   exampleSurfaces,
   factoryBoundOwnership,
@@ -274,6 +275,13 @@ describe("module-bound ownership", () => {
     return only.ts;
   }
 
+  function bindSyntheticModules(ts: string, owners: readonly string[]): string[] {
+    const synthetic: TranslationStore = { "synthetic.body": [{ sourceHash: "deadbeef", ts }] };
+    const identity = exampleIdentity("synthetic.body", "deadbeef");
+    const bound = moduleBoundOwnership(synthetic, new Map([[identity, [...owners]]]), surfaces);
+    return (bound.get(identity) ?? []).sort();
+  }
+
   function bindStored(fqn: string): string[] {
     const bound = moduleBoundOwnership(store, ownership, surfaces);
     const identities = (store[fqn] ?? []).map((entry) => exampleIdentity(fqn, entry.sourceHash));
@@ -336,6 +344,64 @@ describe("module-bound ownership", () => {
     expect(referenced).toEqual([]);
   });
 
+  test("a namespace named only inside a comment is not a reference", () => {
+    const referenced = referencedNamespaces(
+      "// render.clear() is what the runtime does here\n/* see tilemap.tiles.iterator */\nconst n = 1;\n",
+      moduleNamespaces(surfaces),
+    );
+    expect(referenced).toEqual([]);
+  });
+
+  test("a dotted receiver resolves to the namespace the surfaces declare, not its head", () => {
+    const namespaces = moduleNamespaces(surfaces);
+    expect(namespaces.has("tilemap.tiles")).toBe(true);
+    expect(namespaces.has("tilemap")).toBe(true);
+
+    const referenced = referencedNamespaces(
+      'const t = editor.get("/level.tilemap", "tilemap.layers");\nfor (const c of tilemap.tiles.iterator(t)) {}\n',
+      namespaces,
+    );
+    expect(referenced).toEqual(["editor", "tilemap.tiles"]);
+  });
+
+  test("a resolved chain contributes its namespace once, without re-adding the head", () => {
+    const referenced = referencedNamespaces(
+      bodyOf("b2d.body.create_chain"),
+      moduleNamespaces(surfaces),
+    );
+    expect(referenced).toContain("b2d.body");
+    expect(referenced).not.toContain("b2d");
+  });
+
+  test("a head the body reaches directly is still a reference of its own", () => {
+    const body = bodyOf("b2d.body.create_fixture");
+    expect(body).toContain("b2d.get_body");
+    const referenced = referencedNamespaces(body, moduleNamespaces(surfaces));
+    expect(referenced).toContain("b2d");
+    expect(referenced).toContain("b2d.body");
+    expect(referenced).toContain("b2d.shape");
+  });
+
+  test("a chain whose receiver is not a plain path still resolves through its inner call", () => {
+    const referenced = referencedNamespaces(
+      "const x = tilemap.tiles.get_tile(t).x;\n",
+      moduleNamespaces(surfaces),
+    );
+    expect(referenced).toEqual(["tilemap.tiles"]);
+  });
+
+  test("a body reading a dotted namespace keeps the surfaces declaring it", () => {
+    const kept = bindSyntheticModules("for (const c of tilemap.tiles.iterator(t)) {}\n", [
+      "defold-1.13.0/kinds/editor-script",
+      "defold-1.13.1/kinds/editor-script",
+    ]);
+    expect(kept).toEqual([
+      "defold-1.13.0/kinds/editor-script",
+      "defold-1.13.1/kinds/editor-script",
+    ]);
+    for (const id of kept) expect(carries(id, "tilemap.tiles")).toBe(true);
+  });
+
   test("a body reaching a restricted namespace keeps only the surfaces carrying it", () => {
     const kept = bindStored("camera.get_cameras");
     expect(kept.length).toBeGreaterThan(0);
@@ -354,8 +420,8 @@ describe("module-bound ownership", () => {
     expect(bindStored("editor.create_resources")).toEqual(owners);
   });
 
-  test("binding empties no owner list on the committed store", () => {
-    const bound = moduleBoundOwnership(store, ownership, surfaces);
+  test("the composed ownership every gate run uses leaves each translation an owner", () => {
+    const bound = boundOwnership(store, surfaces);
     expect(bound.size).toBe(ownership.size);
     const emptied = [...bound.entries()]
       .filter(([, owners]) => owners.length === 0)
