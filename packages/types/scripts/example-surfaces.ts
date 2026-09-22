@@ -20,6 +20,7 @@ import { hashExampleSource, type TranslationStore } from "../src/example-store";
 import { buildVersionedSurfaceFiles, renderMaterializedKindIndex } from "./materialize-version";
 import {
   type ApiTarget,
+  KIND_MODULE_MANIFEST,
   type KindManifestEntry,
   loadApiTargets,
   loadTargetEditorModules,
@@ -345,6 +346,59 @@ export function translationOwnership(
     }
   }
   return owners;
+}
+
+/**
+ * The kind factory names a translation can call, read from the manifest that
+ * renders every kind subpath's export clause — so a kind added there, or a
+ * factory renamed there, reaches the binding below with no second edit.
+ */
+export function kindFactoryNames(): readonly string[] {
+  return KIND_MODULE_MANIFEST.map((entry) => entry.factory);
+}
+
+/**
+ * `translationOwnership`'s result narrowed to the surfaces that can actually
+ * satisfy the body. Ownership answers *which surfaces ship this documentation*;
+ * this answers *which of them export the names the body imports*. A body
+ * calling `defineScript` is script-kind code by construction, so judging it on
+ * `kinds/gui-script` — which exports `defineGuiScript` instead — reports a fact
+ * about the surface, not a defect in the example.
+ *
+ * The match is on the manifest's own factory names at a word boundary, never on
+ * the shape of the resulting diagnostic: excusing `Cannot find name 'define*'`
+ * would also excuse `defineScrpt`, and a misspelled API is exactly what the
+ * gate exists to catch. A near-miss identifier narrows nothing and stays judged
+ * on every surface its documentation reaches.
+ */
+export function factoryBoundOwnership(
+  store: TranslationStore,
+  owners: ReadonlyMap<string, readonly string[]>,
+  surfaces: readonly ExampleSurface[],
+): Map<string, string[]> {
+  const factories = kindFactoryNames();
+  const exportsById = new Map(
+    surfaces.map((surface) => [surface.id, new Set(surface.exports.values)] as const),
+  );
+  const bound = new Map<string, string[]>();
+  for (const [identity, ids] of owners) bound.set(identity, [...ids]);
+  for (const [fqn, entries] of Object.entries(store)) {
+    for (const entry of entries) {
+      const identity = exampleIdentity(fqn, entry.sourceHash);
+      const ids = bound.get(identity);
+      if (ids === undefined) continue;
+      const called = factories.filter((name) => new RegExp(`\\b${name}\\b`).test(entry.ts));
+      if (called.length === 0) continue;
+      bound.set(
+        identity,
+        ids.filter((id) => {
+          const values = exportsById.get(id);
+          return values !== undefined && called.every((name) => values.has(name));
+        }),
+      );
+    }
+  }
+  return bound;
 }
 
 /** Stored translations no shipping surface carries — an authored body nothing emits. */
