@@ -1,0 +1,15 @@
+{
+  "namespace": "tile_raycast",
+  "moduleName": "tile_raycast",
+  "moduleNameMatches": true,
+  "upstreamFunctions": 5,
+  "declaredFunctions": 5,
+  "missingFunctions": [],
+  "phantomFunctions": [],
+  "callableCoverage": 1,
+  "upstreamConstants": 4,
+  "declaredConstants": 4,
+  "missingConstants": [],
+  "phantomConstants": [],
+  "fieldCoverage": 1
+}

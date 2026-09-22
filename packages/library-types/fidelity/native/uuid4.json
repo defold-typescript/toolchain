@@ -1,0 +1,15 @@
+{
+  "namespace": "uuid4",
+  "moduleName": "uuid4",
+  "moduleNameMatches": true,
+  "upstreamFunctions": 1,
+  "declaredFunctions": 1,
+  "missingFunctions": [],
+  "phantomFunctions": [],
+  "callableCoverage": 1,
+  "upstreamConstants": 0,
+  "declaredConstants": 0,
+  "missingConstants": [],
+  "phantomConstants": [],
+  "fieldCoverage": 1
+}

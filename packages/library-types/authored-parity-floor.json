@@ -162,5 +162,21 @@
   "fidelity/authored/zzfx.json": {
     "callable": 1,
     "field": 1
+  },
+  "fidelity/native/daabbcc.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/native/share.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/native/tile_raycast.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/native/uuid4.json": {
+    "callable": 1,
+    "field": 1
   }
 }

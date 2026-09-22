@@ -601,6 +601,10 @@ export interface AuthoredCoverage {
   namespace: string;
   callableCoverage: number;
   fieldCoverage: number;
+  /** Present on a native report only: whether the declared namespace is the module
+   * name the C++ registers. `false` is a regression at any coverage, because every
+   * declared member then sits under a global the runtime never installs. */
+  moduleNameMatches?: boolean;
 }
 
 const AUTHORED_FLOOR_AXES = ["callable", "field"] as const;
@@ -656,25 +660,38 @@ function coverageField(raw: Record<string, unknown>, field: string, path: string
 }
 
 /**
- * Every committed parity artifact, keyed by package-root-relative POSIX path and
- * sorted by that key. Both axes are read under a validating contract, so a renamed
- * or dropped coverage key throws here rather than reaching the ratchet as
- * `undefined` — where every `<` comparison would be false and the gate would pass
- * while comparing nothing.
+ * Every committed parity artifact under `parityDir`, keyed by package-root-relative
+ * POSIX path and sorted by that key. Both axes are read under a validating contract,
+ * so a renamed or dropped coverage key throws here rather than reaching the ratchet
+ * as `undefined` — where every `<` comparison would be false and the gate would pass
+ * while comparing nothing. The native lane (`fidelity/native/`) shares this ratchet
+ * and adds `moduleNameMatches`, read here when present.
  */
-export function collectAuthoredParity(packageRoot: string): Record<string, AuthoredCoverage> {
-  const dir = join(packageRoot, AUTHORED_PARITY_DIR);
+export function collectAuthoredParity(
+  packageRoot: string,
+  parityDir: string = AUTHORED_PARITY_DIR,
+): Record<string, AuthoredCoverage> {
+  const dir = join(packageRoot, parityDir);
   if (!existsSync(dir)) return {};
   const artifacts: Record<string, AuthoredCoverage> = {};
   for (const name of readdirSync(dir).sort()) {
     if (!name.endsWith(".json")) continue;
-    const key = `${AUTHORED_PARITY_DIR}/${name}`;
+    const key = `${parityDir}/${name}`;
     const raw = JSON.parse(readFileSync(join(dir, name), "utf8")) as Record<string, unknown>;
-    artifacts[key] = {
+    const artifact: AuthoredCoverage = {
       namespace: String(raw.namespace),
       callableCoverage: coverageField(raw, "callableCoverage", key),
       fieldCoverage: coverageField(raw, "fieldCoverage", key),
     };
+    if ("moduleNameMatches" in raw) {
+      if (typeof raw.moduleNameMatches !== "boolean") {
+        throw new Error(
+          `${key}: expected a boolean "moduleNameMatches", got ${describe(raw.moduleNameMatches)}`,
+        );
+      }
+      artifact.moduleNameMatches = raw.moduleNameMatches;
+    }
+    artifacts[key] = artifact;
   }
   return artifacts;
 }
@@ -682,7 +699,9 @@ export function collectAuthoredParity(packageRoot: string): Record<string, Autho
 /**
  * Every axis of every artifact that sits below its floor, one message per axis so a
  * drop on one can never be masked by the other holding. An artifact with no floor
- * entry is not reported here — the bijection assertions cover that separately.
+ * entry is not reported here — the bijection assertions cover that separately. A
+ * native artifact whose namespace is not its registered module name is reported
+ * whatever its coverage or floor.
  */
 export function authoredFloorRegressions(
   artifacts: Record<string, AuthoredCoverage>,
@@ -690,6 +709,11 @@ export function authoredFloorRegressions(
 ): string[] {
   const regressions: string[] = [];
   for (const [path, artifact] of Object.entries(artifacts)) {
+    if (artifact.moduleNameMatches === false) {
+      regressions.push(
+        `${artifact.namespace}: the declared namespace is not the module name its C++ registers — correct the declaration`,
+      );
+    }
     const floor = floors[path];
     if (floor === undefined) continue;
     const measured = { callable: artifact.callableCoverage, field: artifact.fieldCoverage };
