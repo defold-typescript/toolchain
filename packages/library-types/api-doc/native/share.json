@@ -1,0 +1,92 @@
+{
+  "info": {
+    "namespace": "share",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "text",
+      "brief": "Share text using a native sharing dialog.",
+      "description": "Share text using a native sharing dialog.",
+      "parameters": [
+        {
+          "name": "text",
+          "doc": "The text to share.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "image",
+      "brief": "Share an image, with optional text, using a native sharing dialog. On",
+      "description": "Share an image, with optional text, using a native sharing dialog. On\nAndroid the image must be decodable by `BitmapFactory.decodeByteArray()`,\non iOS and macOS by `UIImage.initWithData`, and on HTML5 it may be a data\nURI or any format the browser supports.",
+      "parameters": [
+        {
+          "name": "bytes",
+          "doc": "The image bytes to share.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "text",
+          "doc": "Optional text to share.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "file_name",
+          "doc": "Image file name, HTML5 only. Default is `file.png`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "file",
+      "brief": "Share a file, with optional text, using a native sharing dialog. The file",
+      "description": "Share a file, with optional text, using a native sharing dialog. The file\nkeeps its original name and extension.",
+      "parameters": [
+        {
+          "name": "path",
+          "doc": "Full path to the file to share. On HTML5, the file name. Default is `file.txt`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "text",
+          "doc": "Optional text to share. On HTML5, the contents of the file.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "options",
+          "doc": "Extra share details, HTML5 only.",
+          "types": [
+            "FileOptions"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": []
+    }
+  ]
+}

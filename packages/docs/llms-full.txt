@@ -4156,10 +4156,10 @@ the named directory, so a repo-name collision alone writes nothing.
 
 | Extension | Pinned at | Namespace | Confirmed by        |
 | --------- | --------- | --------- | ------------------- |
-| [selimanac/defold-daabbcc](https://github.com/selimanac/defold-daabbcc) | `v3.0.8` | `daabbcc` | `daabbcc/ext.manifest` |
-| [britzl/defold-sharing](https://github.com/britzl/defold-sharing) | `4.7.0` | `share` | `share/ext.manifest` |
-| [selimanac/defold-uuid4](https://github.com/selimanac/defold-uuid4) | `v1.0` | `uuid4` | `uuid4/ext.manifest` |
-| [selimanac/defold-tile-raycast](https://github.com/selimanac/defold-tile-raycast) | `v2.0.1` | `tile_raycast` | `tile-raycast/ext.manifest` |
+| [selimanac/defold-daabbcc](https://github.com/selimanac/defold-daabbcc) | `v3.0.8` | [`daabbcc`](/api/daabbcc) | `daabbcc/ext.manifest` |
+| [britzl/defold-sharing](https://github.com/britzl/defold-sharing) | `4.7.0` | [`share`](/api/share) | `share/ext.manifest` |
+| [selimanac/defold-uuid4](https://github.com/selimanac/defold-uuid4) | `v1.0` | [`uuid4`](/api/uuid4) | `uuid4/ext.manifest` |
+| [selimanac/defold-tile-raycast](https://github.com/selimanac/defold-tile-raycast) | `v2.0.1` | [`tile_raycast`](/api/tile_raycast) | `tile-raycast/ext.manifest` |
 
 The namespace lands in `.defold-types/extensions/` like a `.script_api`
 namespace and needs no import:

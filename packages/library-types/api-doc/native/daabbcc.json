@@ -1,0 +1,861 @@
+{
+  "info": {
+    "namespace": "daabbcc",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "UPDATE_INCREMENTAL",
+      "brief": "No rebuild. Default.",
+      "description": "No rebuild. Default.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "UPDATE_FULLREBUILD",
+      "brief": "Full rebuild.",
+      "description": "Full rebuild.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "UPDATE_PARTIALREBUILD",
+      "brief": "Partial rebuild. Recommended for lots of moving AABBs.",
+      "description": "Partial rebuild. Recommended for lots of moving AABBs.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "new_group",
+      "brief": "New empty group for AABBs. Every group is a separate dynamic tree.",
+      "description": "New empty group for AABBs. Every group is a separate dynamic tree.",
+      "parameters": [
+        {
+          "name": "rebuild_type",
+          "doc": "How the tree is rebuilt after each update of moving game object positions: `UPDATE_INCREMENTAL` (default), `UPDATE_FULLREBUILD` or `UPDATE_PARTIALREBUILD`.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "New group ID.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "remove_group",
+      "brief": "Removes the group and all associated AABBs and game objects.",
+      "description": "Removes the group and all associated AABBs and game objects.",
+      "parameters": [
+        {
+          "name": "group_id",
+          "doc": "Group ID.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "insert_aabb",
+      "brief": "Insert an AABB into the group.",
+      "description": "Insert an AABB into the group.",
+      "parameters": [
+        {
+          "name": "group_id",
+          "doc": "Group ID.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "x",
+          "doc": "X position of the AABB.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "y",
+          "doc": "Y position of the AABB.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "width",
+          "doc": "Width of the AABB.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "height",
+          "doc": "Height of the AABB.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "category_bit",
+          "doc": "Single category bit the AABB belongs to. Default is all.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "New AABB ID.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "insert_gameobject",
+      "brief": "Insert a game object and its associated AABB into a group. Most suitable",
+      "description": "Insert a game object and its associated AABB into a group. Most suitable\nfor constantly moving game objects; use `insert_aabb` for static ones.",
+      "parameters": [
+        {
+          "name": "group_id",
+          "doc": "Group ID.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "go_url",
+          "doc": "The game object.",
+          "types": [
+            "SceneGameObjectAddress | Hash | Url"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "width",
+          "doc": "Width of the AABB.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "height",
+          "doc": "Height of the AABB.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "category_bit",
+          "doc": "Single category bit the AABB belongs to. Default is all.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "get_world_position",
+          "doc": "Use the game object's world position. Default is `false`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "New AABB ID.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update_aabb",
+      "brief": "Updates the AABB position and size. Does not affect game objects, whose",
+      "description": "Updates the AABB position and size. Does not affect game objects, whose\nAABB positions are overwritten by the internal update.",
+      "parameters": [
+        {
+          "name": "group_id",
+          "doc": "Group ID.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "aabb_id",
+          "doc": "AABB ID.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "x",
+          "doc": "X position of the AABB.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "y",
+          "doc": "Y position of the AABB.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "width",
+          "doc": "Width of the AABB.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "height",
+          "doc": "Height of the AABB.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update_gameobject_size",
+      "brief": "Updates the size of a game object's AABB.",
+      "description": "Updates the size of a game object's AABB.",
+      "parameters": [
+        {
+          "name": "group_id",
+          "doc": "Group ID.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "aabb_id",
+          "doc": "AABB ID.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "width",
+          "doc": "Width of the AABB.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "height",
+          "doc": "Height of the AABB.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "remove",
+      "brief": "Removes the AABB and its game object from the group.",
+      "description": "Removes the AABB and its game object from the group.",
+      "parameters": [
+        {
+          "name": "group_id",
+          "doc": "Group ID.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "aabb_id",
+          "doc": "AABB ID.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "query_aabb",
+      "brief": "Query possible overlaps using a raw AABB.",
+      "description": "Query possible overlaps using a raw AABB.",
+      "parameters": [
+        {
+          "name": "group_id",
+          "doc": "Group ID.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "x",
+          "doc": "X position of the AABB.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "y",
+          "doc": "Y position of the AABB.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "width",
+          "doc": "Width of the AABB.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "height",
+          "doc": "Height of the AABB.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "mask_bits",
+          "doc": "Default is all.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "get_manifold",
+          "doc": "Include the collision manifold. Default is `false`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "get_bits",
+          "doc": "Include category bits without manifold generation. Default is `false`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The overlapping AABBs, or `undefined` when there are none, and their count.",
+          "types": [
+            "LuaMultiReturn<[ QueryResult | undefined, number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "query_id",
+      "brief": "Query possible overlaps using an AABB ID.",
+      "description": "Query possible overlaps using an AABB ID.",
+      "parameters": [
+        {
+          "name": "group_id",
+          "doc": "Group ID.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "aabb_id",
+          "doc": "AABB ID.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "mask_bits",
+          "doc": "Default is all.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "get_manifold",
+          "doc": "Include the collision manifold. Default is `false`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "get_bits",
+          "doc": "Include category bits without manifold generation. Default is `false`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The overlapping AABBs, or `undefined` when there are none, and their count.",
+          "types": [
+            "LuaMultiReturn<[ QueryResult | undefined, number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "query_aabb_sort",
+      "brief": "Query possible overlaps using a raw AABB, ordered from closest to farthest.",
+      "description": "Query possible overlaps using a raw AABB, ordered from closest to farthest.",
+      "parameters": [
+        {
+          "name": "group_id",
+          "doc": "Group ID.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "x",
+          "doc": "X position of the AABB.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "y",
+          "doc": "Y position of the AABB.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "width",
+          "doc": "Width of the AABB.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "height",
+          "doc": "Height of the AABB.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "mask_bits",
+          "doc": "Default is all.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "get_manifold",
+          "doc": "Include the collision manifold. Default is `false`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "get_bits",
+          "doc": "Include category bits without manifold generation. Default is `false`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The overlapping AABBs, or `undefined` when there are none, and their count.",
+          "types": [
+            "LuaMultiReturn<[ SortedQueryResult | undefined, number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "query_id_sort",
+      "brief": "Query possible overlaps using an AABB ID, ordered from closest to farthest.",
+      "description": "Query possible overlaps using an AABB ID, ordered from closest to farthest.",
+      "parameters": [
+        {
+          "name": "group_id",
+          "doc": "Group ID.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "aabb_id",
+          "doc": "AABB ID.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "mask_bits",
+          "doc": "Default is all.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "get_manifold",
+          "doc": "Include the collision manifold. Default is `false`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "get_bits",
+          "doc": "Include category bits without manifold generation. Default is `false`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The overlapping AABBs, or `undefined` when there are none, and their count.",
+          "types": [
+            "LuaMultiReturn<[ SortedQueryResult | undefined, number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "raycast",
+      "brief": "Perform a ray cast against the group.",
+      "description": "Perform a ray cast against the group.",
+      "parameters": [
+        {
+          "name": "group_id",
+          "doc": "Group ID.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "start_x",
+          "doc": "Ray start X.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "start_y",
+          "doc": "Ray start Y.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "end_x",
+          "doc": "Ray end X.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "end_y",
+          "doc": "Ray end Y.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "mask_bits",
+          "doc": "Default is all.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "get_manifold",
+          "doc": "Include the collision manifold. Default is `false`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "get_bits",
+          "doc": "Include category bits without manifold generation. Default is `false`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The hit AABBs, or `undefined` when there are none, and their count.",
+          "types": [
+            "LuaMultiReturn<[ QueryResult | undefined, number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "raycast_sort",
+      "brief": "Perform a ray cast against the group, ordered from closest to farthest.",
+      "description": "Perform a ray cast against the group, ordered from closest to farthest.",
+      "parameters": [
+        {
+          "name": "group_id",
+          "doc": "Group ID.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "start_x",
+          "doc": "Ray start X.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "start_y",
+          "doc": "Ray start Y.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "end_x",
+          "doc": "Ray end X.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "end_y",
+          "doc": "Ray end Y.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "mask_bits",
+          "doc": "Default is all.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "get_manifold",
+          "doc": "Include the collision manifold. Default is `false`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "get_bits",
+          "doc": "Include category bits without manifold generation. Default is `false`.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The hit AABBs, or `undefined` when there are none, and their count.",
+          "types": [
+            "LuaMultiReturn<[ SortedQueryResult | undefined, number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "run",
+      "brief": "Pause or resume the internal game object position update. Enabled by",
+      "description": "Pause or resume the internal game object position update. Enabled by\ndefault; it does not iterate when no game objects are registered.",
+      "parameters": [
+        {
+          "name": "state",
+          "doc": "`true` to resume, `false` to pause.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "update_frequency",
+      "brief": "Set an independent frequency for the game object position update. The",
+      "description": "Set an independent frequency for the game object position update. The\ndefault is the project's `display.frequency`.",
+      "parameters": [
+        {
+          "name": "frequency",
+          "doc": "Update frequency.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rebuild",
+      "brief": "Partially or fully rebuild a group.",
+      "description": "Partially or fully rebuild a group.",
+      "parameters": [
+        {
+          "name": "group_id",
+          "doc": "Group ID.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "full_build",
+          "doc": "`true` for a full rebuild, `false` for a partial one.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "rebuild_all",
+      "brief": "Partially or fully rebuild all groups.",
+      "description": "Partially or fully rebuild all groups.\n\nThe runtime reads the flag from the second argument, so pass `undefined`\nfirst.",
+      "parameters": [
+        {
+          "name": "_unused",
+          "doc": "Ignored by the runtime.",
+          "types": [
+            "undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "full_build",
+          "doc": "`true` for a full rebuild, `false` for a partial one.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "reset",
+      "brief": "Removes all AABBs, groups and game objects, resetting to the initial state.",
+      "description": "Removes all AABBs, groups and game objects, resetting to the initial state.\nRecommended when you are done with it, such as when a level ends.",
+      "parameters": [],
+      "returnvalues": []
+    }
+  ]
+}
