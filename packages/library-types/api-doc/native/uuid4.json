@@ -1,0 +1,25 @@
+{
+  "info": {
+    "namespace": "uuid4",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "FUNCTION",
+      "name": "generate",
+      "brief": "Generates a version 4 UUID.",
+      "description": "Generates a version 4 UUID.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The UUID as a string.",
+          "types": [
+            "string"
+          ]
+        }
+      ]
+    }
+  ]
+}

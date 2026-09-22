@@ -136,6 +136,24 @@ function defoldExtensionDocs(
   return docs;
 }
 
+interface NativeTarget {
+  repo: string;
+  ref: string;
+  license: string;
+  namespace: string;
+}
+
+// Curated native extensions from `native-targets.json`: C++ extensions that ship
+// no `.script_api`, typed by a hand-authored global-namespace declaration and
+// rendered from the `api-doc/native/<namespace>.json` lowered from it. An absent
+// file degrades to no native pages.
+function loadNativeTargets(libraryTypesDir: string): Map<string, NativeTarget> {
+  const path = join(libraryTypesDir, "native-targets.json");
+  if (!existsSync(path)) return new Map();
+  const { targets } = JSON.parse(readFileSync(path, "utf8")) as { targets: NativeTarget[] };
+  return new Map(targets.map((t) => [t.namespace, t]));
+}
+
 // The engine loaders take only the types dir; the Defold manifest lives in the
 // sibling `library-types` package, so the engine filter reads it from there and
 // a fixture types dir with no such sibling filters nothing.
@@ -265,6 +283,11 @@ export function libraryOriginByNamespace(libraryTypesDir: string): Map<string, L
     const owner = githubOwner(entry.repo);
     const repo = githubRepo(entry.repo);
     if (owner && repo) origins.set(page, { owner, repo, official: true });
+  }
+  for (const [namespace, target] of loadNativeTargets(libraryTypesDir)) {
+    const owner = githubOwner(target.repo);
+    const repo = githubRepo(target.repo);
+    if (owner && repo) origins.set(namespace, { owner, repo });
   }
   return origins;
 }
@@ -516,9 +539,24 @@ export function loadLibraryProvenance(libraryTypesDir: string): (namespace: stri
 
   const defoldDocs = defoldExtensionDocs(libraryTypesDir);
   const engineNamespaces = engineNamespacesBesideLibraryTypes(libraryTypesDir);
+  const nativeTargets = loadNativeTargets(libraryTypesDir);
 
   const { repo, commit, license } = classification.source;
   return (namespace: string): LibraryMeta => {
+    const native = nativeTargets.get(namespace);
+    if (native) {
+      return {
+        author: "",
+        authorUrl: native.repo,
+        commit: native.ref,
+        sourceUrl: `${native.repo}/tree/${native.ref}`,
+        importString: "",
+        license: native.license,
+        authoredHere: true,
+        usage: "ambient",
+        globalNamespace: native.namespace,
+      };
+    }
     const defold = defoldDocs.get(namespace);
     if (defold) {
       const { entry, doc } = defold;
@@ -624,6 +662,19 @@ function loadLibraryPages(libraryTypesDir: string): ApiPage[] {
   }
   const defoldApiDocDir = join(libraryTypesDir, "defold-extensions", "api-doc");
 
+  // A native namespace is a Lua global, so it shares the same route space and
+  // must not land on a page another lane already owns.
+  const nativeApiDocDir = join(apiDocDir, "native");
+  const nativeTargets = loadNativeTargets(libraryTypesDir);
+  for (const [namespace, target] of nativeTargets) {
+    if (namespaces.includes(namespace)) {
+      throw new Error(
+        `native-targets.json: namespace "${namespace}" from ${target.repo} collides with another library page`,
+      );
+    }
+    namespaces.push(namespace);
+  }
+
   // Modules-per-repo count drives whether the display label keeps its `· <leaf>`
   // distinguisher; a single-module repo drops it. It is the same count the
   // Libraries tree collapses a one-module repo on, resolved from the same
@@ -638,10 +689,13 @@ function loadLibraryPages(libraryTypesDir: string): ApiPage[] {
   const pages: ApiPage[] = [];
   for (const namespace of namespaces) {
     const defold = defoldDocs.get(namespace);
+    const docDir = defold
+      ? defoldApiDocDir
+      : nativeTargets.has(namespace)
+        ? nativeApiDocDir
+        : apiDocDir;
     const module = parseDefoldApiDoc(
-      JSON.parse(
-        readFileSync(join(defold ? defoldApiDocDir : apiDocDir, `${namespace}.json`), "utf8"),
-      ),
+      JSON.parse(readFileSync(join(docDir, `${namespace}.json`), "utf8")),
     );
     const dir = moduleDir.get(namespace);
     if (!module.description && defold?.entry.description) {
