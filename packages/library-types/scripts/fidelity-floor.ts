@@ -13,8 +13,9 @@
  * `fidelity/openapi/nakama.nakama.json` reports `namespace: "nakama"`, and two
  * lanes emitting the same namespace would collide on a namespace key.
  *
- * The walk is universal over `fidelity/` with one carve-out: `fidelity/authored/`
- * holds *surface* parity, not *type-token* coverage. Those reports have no
+ * The walk is universal over `fidelity/` with two carve-outs: `fidelity/authored/`
+ * holds *surface* parity, not *type-token* coverage, and so does `fidelity/native/`,
+ * the native-extension lane's report from `native-parity.ts`. Those reports have no
  * `totalTypeTokens` to be a fraction of, and their coverage means something else —
  * upstream members declared at the right arity, from `authored-parity.ts`. They get
  * their own ratchet in `authored-parity-floor.json`, so folding them in here would
@@ -29,9 +30,11 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 export const FIDELITY_DIR = "fidelity";
-/** Directory name under `fidelity/` the token-coverage walk skips — see the
+/** Directory names under `fidelity/` the token-coverage walk skips — see the
  * module note; ratcheted by `authored-parity-floor.json` instead. */
 export const AUTHORED_PARITY_DIRNAME = "authored";
+export const NATIVE_PARITY_DIRNAME = "native";
+const SURFACE_PARITY_DIRNAMES = new Set([AUTHORED_PARITY_DIRNAME, NATIVE_PARITY_DIRNAME]);
 export const FLOOR_MANIFEST_FILE = "fidelity-floor.json";
 export const FLOOR_RAISE_COMMAND = "bun run --cwd packages/library-types fidelity:floor";
 
@@ -53,7 +56,7 @@ function walkJsonFiles(dir: string, prefix: string, out: string[]): void {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const rel = prefix === "" ? entry.name : `${prefix}/${entry.name}`;
     if (entry.isDirectory()) {
-      if (prefix === "" && entry.name === AUTHORED_PARITY_DIRNAME) continue;
+      if (prefix === "" && SURFACE_PARITY_DIRNAMES.has(entry.name)) continue;
       walkJsonFiles(join(dir, entry.name), rel, out);
     } else if (entry.name.endsWith(".json")) out.push(rel);
   }
