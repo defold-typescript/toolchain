@@ -14,6 +14,7 @@
  * current target and a versioned one at the same time.
  */
 import { basename, dirname, resolve } from "node:path";
+import ts from "typescript";
 import { parseDefoldApiDoc } from "../src/api-doc";
 import { htmlToCodeText } from "../src/doc-comment";
 import { hashExampleSource, type TranslationStore } from "../src/example-store";
@@ -394,6 +395,96 @@ export function factoryBoundOwnership(
         ids.filter((id) => {
           const values = exportsById.get(id);
           return values !== undefined && called.every((name) => values.has(name));
+        }),
+      );
+    }
+  }
+  return bound;
+}
+
+/**
+ * Every module namespace the inventory reaches, with the lane dropped — read
+ * from each surface's own `modules` set, so a target that gains or renames a
+ * namespace reaches the binding below with no second edit.
+ */
+export function moduleNamespaces(surfaces: readonly ExampleSurface[]): ReadonlySet<string> {
+  const namespaces = new Set<string>();
+  for (const surface of surfaces) {
+    for (const key of surface.modules) namespaces.add(key.slice(key.indexOf(":") + 1));
+  }
+  return namespaces;
+}
+
+/**
+ * The module namespaces a body actually reads, as the identifier of each
+ * property access rooted in a known namespace.
+ *
+ * This has to parse rather than scan. `editor.create_resources` carries the
+ * string literal `"go.property('hp', 100)"`; a `\bgo\s*\.` match reads that as a
+ * `go` usage, demands a surface carrying both `go` and `editor`, finds none, and
+ * empties the body's owner list. A walk over property-access expressions reads
+ * it as a string and narrows nothing.
+ */
+export function referencedNamespaces(
+  source: string,
+  known: ReadonlySet<string>,
+): readonly string[] {
+  const parsed = ts.createSourceFile("body.ts", source, ts.ScriptTarget.Latest, true);
+  const found = new Set<string>();
+  const visit = (node: ts.Node): void => {
+    if (
+      ts.isPropertyAccessExpression(node) &&
+      ts.isIdentifier(node.expression) &&
+      known.has(node.expression.text)
+    ) {
+      found.add(node.expression.text);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(parsed);
+  return [...found].sort();
+}
+
+/**
+ * `translationOwnership`'s result narrowed a second way: to the surfaces whose
+ * declarations carry every module namespace the body reads. Ownership answers
+ * *which surfaces ship this documentation*; this answers *which of them can
+ * import the namespaces it reaches*. `camera.get_cameras` is documented by
+ * `camera`, which every kind reaches, but drives `render.set_camera`, which the
+ * script and gui kinds cannot import — so `Cannot find name 'render'` there is a
+ * fact about the surface, and no edit to the body removes it.
+ *
+ * The lane is deliberately not part of the match. `http`, `image`, `json` and
+ * `zlib` name both a runtime namespace and an editor-VM one (`moduleKey`), and
+ * the body text cannot say which it meant, so a surface satisfies a reference
+ * when it carries that namespace in either lane.
+ */
+export function moduleBoundOwnership(
+  store: TranslationStore,
+  owners: ReadonlyMap<string, readonly string[]>,
+  surfaces: readonly ExampleSurface[],
+): Map<string, string[]> {
+  const known = moduleNamespaces(surfaces);
+  const modulesById = new Map(surfaces.map((surface) => [surface.id, surface.modules] as const));
+  const bound = new Map<string, string[]>();
+  for (const [identity, ids] of owners) bound.set(identity, [...ids]);
+  for (const [fqn, entries] of Object.entries(store)) {
+    for (const entry of entries) {
+      const identity = exampleIdentity(fqn, entry.sourceHash);
+      const ids = bound.get(identity);
+      if (ids === undefined) continue;
+      const referenced = referencedNamespaces(entry.ts, known);
+      if (referenced.length === 0) continue;
+      bound.set(
+        identity,
+        ids.filter((id) => {
+          const modules = modulesById.get(id);
+          if (modules === undefined) return false;
+          return referenced.every(
+            (namespace) =>
+              modules.has(moduleKey(namespace, "runtime")) ||
+              modules.has(moduleKey(namespace, "editor")),
+          );
         }),
       );
     }

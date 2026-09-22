@@ -8,7 +8,13 @@
  */
 import { describe, expect, test } from "bun:test";
 import { loadTranslations } from "./example-store-io";
-import { exampleSurfaces, kindFactoryNames } from "./example-surfaces";
+import {
+  exampleSurfaces,
+  kindFactoryNames,
+  moduleKey,
+  moduleNamespaces,
+  referencedNamespaces,
+} from "./example-surfaces";
 import {
   COMPILER_OPTION_OVERRIDES,
   compileSurface,
@@ -277,5 +283,54 @@ describe("factory binding — the pairs the gate never compiles", () => {
     const compiled = new Set(timings.map((timing) => timing.surfaceId));
     expect([...compiled].sort()).toEqual(surfaces.map((surface) => surface.id).sort());
     for (const timing of timings) expect(timing.units).toBeGreaterThan(0);
+  });
+});
+
+describe("module binding — the pairs the gate never compiles", () => {
+  const modulesById = new Map(surfaces.map((s) => [s.id, s.modules] as const));
+  const namespaces = moduleNamespaces(surfaces);
+
+  function carries(surfaceId: string, namespace: string): boolean {
+    const modules = modulesById.get(surfaceId);
+    if (modules === undefined) return false;
+    return (
+      modules.has(moduleKey(namespace, "runtime")) || modules.has(moduleKey(namespace, "editor"))
+    );
+  }
+
+  function splitPin(identity: string): { surfaceId: string; fqn: string; sourceHash: string } {
+    return {
+      surfaceId: identity.slice(0, identity.indexOf(":")),
+      fqn: identity.slice(identity.indexOf(":") + 1, identity.lastIndexOf(":")),
+      sourceHash: identity.slice(identity.lastIndexOf(":") + 1),
+    };
+  }
+
+  test("no pin records a module namespace the surface cannot import", () => {
+    const offenders: string[] = [];
+    for (const [identity, diagnostics] of Object.entries(pins)) {
+      for (const diagnostic of diagnostics) {
+        if (diagnostic.code !== 2304) continue;
+        for (const namespace of namespaces) {
+          if (diagnostic.text === `Cannot find name '${namespace}'.`) {
+            offenders.push(`${identity}: ${diagnostic.text}`);
+          }
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  test("every pinned pair names a surface carrying each namespace its body references", () => {
+    const offenders: string[] = [];
+    for (const identity of Object.keys(pins)) {
+      const { surfaceId, fqn, sourceHash } = splitPin(identity);
+      const entry = (store[fqn] ?? []).find((candidate) => candidate.sourceHash === sourceHash);
+      if (entry === undefined) continue;
+      for (const namespace of referencedNamespaces(entry.ts, namespaces)) {
+        if (!carries(surfaceId, namespace)) offenders.push(`${identity}: ${namespace}`);
+      }
+    }
+    expect(offenders).toEqual([]);
   });
 });
