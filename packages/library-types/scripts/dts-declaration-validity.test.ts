@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { readAuthoredTargets } from "./sync-authored-types";
 import { readLualsTargets } from "./sync-luals-types";
 import { readScriptApiTargets } from "./sync-script-api-types";
 
@@ -22,6 +23,9 @@ const LUALS_GOLDENS = readLualsTargets(PACKAGE_ROOT).map((t) => `generated/${t.n
 // importable `declare module '<moduleId>'` surfaces keyed by moduleId (dotted),
 // so the golden path is read straight from the target rather than reconstructed.
 const SCRIPT_API_GOLDENS = readScriptApiTargets(PACKAGE_ROOT).map((t) => t.generated);
+// Every authored-lane golden, read from authored-targets.json. The fork is hand-written,
+// so this compile is the only check that its declarations are valid at all.
+const AUTHORED_GOLDENS = readAuthoredTargets(PACKAGE_ROOT).map((t) => t.generated);
 
 // Type-check the committed goldens with `skipLibCheck: false` so any invalid
 // declaration in a whole golden — a base/subinterface variance regression (`TS2430`)
@@ -68,6 +72,11 @@ test("every configured luals namespace is a tsconfig.dts-check.json include", ()
 test("every configured script_api golden is a tsconfig.dts-check.json include", () => {
   const include = readDtsCheckInclude();
   expect(missingDtsCheckIncludes(SCRIPT_API_GOLDENS, include)).toEqual([]);
+});
+
+test("every configured authored golden is a tsconfig.dts-check.json include", () => {
+  const include = readDtsCheckInclude();
+  expect(missingDtsCheckIncludes(AUTHORED_GOLDENS, include)).toEqual([]);
 });
 
 test("missingDtsCheckIncludes reports a golden absent from the include", () => {

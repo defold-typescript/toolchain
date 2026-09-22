@@ -1179,12 +1179,12 @@ describe("the six variadic members the corpus was charging as arity gaps", () =>
     expect(report.callableCoverage).toBe(1);
   });
 
-  test("the other thirty-six targets share no variadic member at all", () => {
+  test("the other thirty-eight targets share no variadic member at all", () => {
     const moved = new Set(["deftest", "defmath", "zzfx"]);
     const untouched = authoredParityTargets(PACKAGE_ROOT).filter(
       (entry) => !moved.has(entry.namespace),
     );
-    expect(untouched.length).toBe(36);
+    expect(untouched.length).toBe(38);
     for (const entry of untouched) {
       const report = buildAuthoredParity(PACKAGE_ROOT, entry);
       expect(`${entry.namespace}: ${report.variadicMembers}`).toBe(`${entry.namespace}: 0`);
@@ -1573,11 +1573,13 @@ describe("upstream prose the reader declined is reported, not absent", () => {
       "nakama.session": 1,
       "nakama.socket": 13,
       "nakama.util.log": 1,
+      // The `-- @param` block above `create`, a LuaDoc tag written with a plain `--`.
+      node_repeat: 1,
       persist: 5,
       rendy: 13,
       zzfx: 4,
     });
-    expect(Object.values(refused).reduce<number>((sum, n) => sum + (n as number), 0)).toBe(92);
+    expect(Object.values(refused).reduce<number>((sum, n) => sum + (n as number), 0)).toBe(93);
   });
 
   // The module writes every one of its blocks with a plain `--`, so the reader declines
@@ -1719,6 +1721,7 @@ describe("only a refusal the fork left unanswered is charged", () => {
       "nakama.session",
       "nakama.socket",
       "nakama.util.log",
+      "node_repeat",
       "persist",
       "rendy",
       "zzfx",
@@ -1727,11 +1730,11 @@ describe("only a refusal the fork left unanswered is charged", () => {
 
   // The axis closes: every refused block is now answered by the fork's own words or
   // excused by the ledger, and no target is left charging one. The raw term holding at
-  // 92 is what makes that a closure rather than a target quietly dropping out of the
+  // 93 is what makes that a closure rather than a target quietly dropping out of the
   // pass — a fork brief deleted, or a file un-vendored, moves one of the two.
-  test("no target charges a refusal, while the reader diagnostic still reads 92", () => {
+  test("no target charges a refusal, while the reader diagnostic still reads 93", () => {
     expect(reports.filter((report) => report.refusedDocBlocks > 0)).toEqual([]);
-    expect(reports.reduce((sum, report) => sum + report.refusedDocBlocksTotal, 0)).toBe(92);
+    expect(reports.reduce((sum, report) => sum + report.refusedDocBlocksTotal, 0)).toBe(93);
   });
 
   // The one target whose zero comes entirely from the ledger rather than from authored
@@ -1855,6 +1858,58 @@ describe("checkpoint.checkpoint declares the whole of its upstream module", () =
     expect(report.refusedDocBlocksTotal).toBe(1);
     expect(report.refusedDocBlocks).toBe(0);
     expect(report.importedDocs).toBe(0);
+    expect(report.undocumentedMembers).toBe(0);
+  });
+});
+
+// Built live from the target entries, on the checkpoint precedent. The two modules
+// ship in one repo but are required separately, so each is measured against its own
+// vendored file. `animate`, `stop` and `update` are assigned onto the table `create`
+// returns rather than onto the module, so declaring any of them at module level
+// would read as a phantom here.
+describe("the defold-sprite-repeat modules declare the whole of their upstream modules", () => {
+  for (const [namespace, members, fields, functions] of [
+    ["sprite_repeat", 1, 0, ["create"]],
+    ["node_repeat", 2, 2, ["create", "get_screen_aspect_ratio"]],
+  ] as const) {
+    describe(namespace, () => {
+      const report = buildAuthoredParity(PACKAGE_ROOT, target(namespace));
+
+      test("both axes close, with nothing missing and nothing invented", () => {
+        expect(report.missingMembers).toEqual([]);
+        expect(report.phantomMembers).toEqual([]);
+        expect(report.arityMismatches).toEqual([]);
+        expect(report.missingFields).toEqual([]);
+        expect(report.phantomFields).toEqual([]);
+        expect(report.callableCoverage).toBe(1);
+        expect(report.fieldCoverage).toBe(1);
+      });
+
+      test("the measured surface is upstream's own count, not an empty agreement", () => {
+        expect(report.upstreamMembers).toBe(members);
+        expect(report.declaredMembers).toBe(members);
+        expect(report.upstreamFields).toBe(fields);
+        expect(report.declaredFields).toBe(fields);
+        expect(report.parityExceptions).toEqual([]);
+      });
+
+      test("the handle's methods stay off the module", () => {
+        const declared = new Set(
+          apiDocElements(target(namespace))
+            .filter((element) => element.type === "FUNCTION")
+            .map((element) => element.name),
+        );
+        expect(declared).toEqual(new Set(functions));
+      });
+    });
+  }
+
+  // node_repeat's `-- @param` block above `create` is declined by the reader; the fork
+  // answers it with its own brief, so the narrowed term reads 0.
+  test("node_repeat's one declined block is answered by the fork rather than charged", () => {
+    const report = buildAuthoredParity(PACKAGE_ROOT, target("node_repeat"));
+    expect(report.refusedDocBlocksTotal).toBe(1);
+    expect(report.refusedDocBlocks).toBe(0);
     expect(report.undocumentedMembers).toBe(0);
   });
 });
