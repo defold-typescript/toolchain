@@ -640,8 +640,7 @@ export function apiPageMarkdown(
       continue;
     }
     // Each typedef shape gets its own heading so a signature token naming it has
-    // an anchor to deep-link to; `Types` survives only as the fallback label
-    // `groupTypeSymbols` gives an unprefixed symbol.
+    // an anchor to deep-link to.
     if (kind === "type") {
       for (const typeGroup of groupTypeSymbols(group)) {
         lines.push(`## ${typeGroup.label}`, "");
@@ -675,9 +674,9 @@ export function apiLinkify(pages: ApiPage[]): (text: string) => string {
 // this against the canonical surface, not its own pages. A typedef shape, by
 // contrast, belongs to the page that renders it, so `page`'s own shapes are keyed
 // by bare name to that page's own route — a surface-global bare-name table would
-// mislink the nine shape names declared on more than one page. The fallback
-// `Types` group label names no shape, and a shape called `Opaque` never displaces
-// the global entry. A shape's anchor is deferred to `renderMarkdown` as
+// mislink the nine shape names declared on more than one page. A shape called
+// `Opaque` never displaces the global entry. A shape's anchor is deferred to
+// `renderMarkdown` as
 // `{ route, heading }` rather than fixed here: the heading id is only known once
 // the render has de-duplicated it against every earlier heading on the page.
 export function apiSignatureSymbolLinks(
@@ -689,7 +688,6 @@ export function apiSignatureSymbolLinks(
     for (const group of groupTypeSymbols(
       apiModuleSymbols(page, page.translations).filter((s) => s.kind === "type"),
     )) {
-      if (group.label === "Types") continue;
       links.set(group.label, { route: page.route, heading: group.label });
     }
   }
