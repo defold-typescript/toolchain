@@ -121,6 +121,13 @@ function defoldExtensionPages(): string[] {
   return libraries.flatMap((library) => library.docs.map((doc) => doc.page));
 }
 
+function nativeExtensionPages(): string[] {
+  const { targets } = JSON.parse(
+    readFileSync(join(REAL_LIBRARY_TYPES_DIR, "native-targets.json"), "utf8"),
+  ) as { targets: { namespace: string }[] };
+  return targets.map((target) => target.namespace);
+}
+
 describe("loadApiSurface", () => {
   test("returns one ApiPage per module of the default target (engine then lua-stdlib), globals first then alphabetical", () => {
     const pages = loadApiSurface(FIXTURE_DIR);
@@ -238,10 +245,10 @@ describe("loadApiSurface library pages", () => {
   const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
   const libraryPages = pages.filter((p) => p.category === "library");
 
-  test("adds one default-surface `library` page per vendored library fixture and Defold doc", () => {
+  test("adds one default-surface `library` page per vendored library fixture, Defold doc and native extension", () => {
     expect(modules.length).toBeGreaterThan(0);
     expect(libraryPages.map((p) => p.namespace).sort()).toEqual(
-      [...modules, ...defoldExtensionPages()].sort(),
+      [...modules, ...defoldExtensionPages(), ...nativeExtensionPages()].sort(),
     );
     for (const page of libraryPages) {
       expect(page.route).toBe(`/api/${libraryRouteSlug(page.namespace)}`);
@@ -675,6 +682,19 @@ describe("loadApiSurface library descriptions", () => {
     for (const page of libraryPages) {
       expect(page.module.description.length).toBeGreaterThan(0);
     }
+  });
+
+  test("each curated native extension is a library page with its members and description", () => {
+    for (const namespace of ["daabbcc", "share", "uuid4", "tile_raycast"]) {
+      const page = libraryPages.find((p) => p.route === `/api/${namespace}`);
+      expect(page?.namespace).toBe(namespace);
+      expect(page?.module.description).toBe(descByDir[namespace]);
+      expect(page?.module.functions.length ?? 0).toBeGreaterThan(0);
+    }
+    const cast = libraryPages
+      .find((p) => p.namespace === "tile_raycast")
+      ?.module.functions.find((f) => f.name === "cast");
+    expect(cast).toBeDefined();
   });
 
   // orthographic severed into the authored lane, so it has no classification dir

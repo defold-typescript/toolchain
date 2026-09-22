@@ -282,6 +282,34 @@ describe("loadLibraryProvenance — script_api-sourced libraries", () => {
   });
 });
 
+describe("loadLibraryProvenance — curated native extensions", () => {
+  const { targets } = JSON.parse(
+    readFileSync(join(REAL_LIBRARY_TYPES_DIR, "native-targets.json"), "utf8"),
+  ) as { targets: { repo: string; ref: string; license: string; namespace: string }[] };
+
+  test("attributes each native namespace to its upstream repo at the pin, as a global", () => {
+    expect(targets.map((t) => t.namespace)).toEqual(["daabbcc", "share", "uuid4", "tile_raycast"]);
+    const metaFor = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR);
+    for (const target of targets) {
+      const meta = metaFor(target.namespace);
+      expect(meta.authorUrl).toBe(target.repo);
+      expect(meta.commit).toBe(target.ref);
+      expect(meta.sourceUrl).toBe(`${target.repo}/tree/${target.ref}`);
+      expect(meta.license).toBe(target.license);
+      expect(meta.authoredHere).toBe(true);
+      expect(meta.importString).toBe("");
+      expect(meta.usage).toBe("ambient");
+      expect(meta.globalNamespace).toBe(target.namespace);
+    }
+  });
+
+  test("groups each native namespace under its upstream owner and repo", () => {
+    const origins = libraryOriginByNamespace(REAL_LIBRARY_TYPES_DIR);
+    expect(origins.get("daabbcc")).toEqual({ owner: "selimanac", repo: "defold-daabbcc" });
+    expect(origins.get("share")).toEqual({ owner: "britzl", repo: "defold-sharing" });
+  });
+});
+
 describe("loadLibraryProvenance — authored/forked libraries", () => {
   test("attributes defcon to britzl/defcon as an authored-here forked library", () => {
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("defcon");

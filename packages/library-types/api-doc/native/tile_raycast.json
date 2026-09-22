@@ -1,0 +1,225 @@
+{
+  "info": {
+    "namespace": "tile_raycast",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "LEFT",
+      "brief": "The ray hit the left side of the tile.",
+      "description": "The ray hit the left side of the tile.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "RIGHT",
+      "brief": "The ray hit the right side of the tile.",
+      "description": "The ray hit the right side of the tile.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "TOP",
+      "brief": "The ray hit the top side of the tile.",
+      "description": "The ray hit the top side of the tile.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "BOTTOM",
+      "brief": "The ray hit the bottom side of the tile.",
+      "description": "The ray hit the bottom side of the tile.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "setup",
+      "brief": "Sets up the tile map to cast rays through, replacing any previous one.",
+      "description": "Sets up the tile map to cast rays through, replacing any previous one.",
+      "parameters": [
+        {
+          "name": "tile_width",
+          "doc": "Width of a single tile.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tile_height",
+          "doc": "Height of a single tile.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tilemap_width",
+          "doc": "Number of tiles horizontally in the tile map.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tilemap_height",
+          "doc": "Number of tiles vertically in the tile map.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tiles",
+          "doc": "One-dimensional table of tile IDs, row by row.",
+          "types": [
+            "number[]"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "target_tiles",
+          "doc": "IDs of the tiles a ray stops at, such as walls.",
+          "types": [
+            "number[]"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "cast",
+      "brief": "Casts a ray through the tile map and reports the first target tile it",
+      "description": "Casts a ray through the tile map and reports the first target tile it\nhits. A miss returns `false` alone, so check `hit` before reading the\nother values. Before `setup`, it logs an error and returns nothing.",
+      "parameters": [
+        {
+          "name": "from_x",
+          "doc": "X coordinate of the ray start.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "from_y",
+          "doc": "Y coordinate of the ray start.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "to_x",
+          "doc": "X coordinate of the ray end.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "to_y",
+          "doc": "Y coordinate of the ray end.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "`hit`, then on a hit: `tile_x`, `tile_y`, `array_id` (index in the\ntile table), `tile_id`, `intersection_x`, `intersection_y` and `side`\n(`LEFT`, `RIGHT`, `TOP` or `BOTTOM`).",
+          "types": [
+            "LuaMultiReturn<[ false ] | [ true, number, number, number, number, number, number, number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "set_at",
+      "brief": "Returns the tile ID at a tile coordinate. The extension registers its",
+      "description": "Returns the tile ID at a tile coordinate. The extension registers its\nreader under this name and its writer as {@link tile_raycast.get_at}, the\nreverse of what its documentation describes.",
+      "parameters": [
+        {
+          "name": "tile_x",
+          "doc": "Tile X coordinate.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tile_y",
+          "doc": "Tile Y coordinate.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The tile ID at that coordinate.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_at",
+      "brief": "Sets the tile ID at a tile coordinate. The extension registers its",
+      "description": "Sets the tile ID at a tile coordinate. The extension registers its\nwriter under this name and its reader as {@link tile_raycast.set_at}, the\nreverse of what its documentation describes.",
+      "parameters": [
+        {
+          "name": "tile_x",
+          "doc": "Tile X coordinate.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tile_y",
+          "doc": "Tile Y coordinate.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "tile_id",
+          "doc": "Tile ID to set.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "reset",
+      "brief": "Clears all tile and tile map data.",
+      "description": "Clears all tile and tile map data.",
+      "parameters": [],
+      "returnvalues": []
+    }
+  ]
+}

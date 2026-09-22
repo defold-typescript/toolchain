@@ -2,6 +2,7 @@
   "boom": "Boom is a game framework built on top of Defold",
   "bzAnim": "A Lua/Defold-based animation library for bezier curve animations",
   "checkpoint": "Checkpoint is a library for reading from and writing to files in a Defold game engine project.",
+  "daabbcc": "Dynamic Tree (aka AABB Tree) native extension for Defold Engine",
   "decore": "Defold ECS Data Manager",
   "defcon": "Defold console helpers for in-game debugging and developer overlays.",
   "defmath": "Extra math helpers for Defold: lerps, clamps, easing, and 2D angle utilities.",
@@ -48,8 +49,11 @@
   "richtext.tags": "Rich-text rendering for Defold: styled spans, embedded tags, and per-color text runs.",
   "saver.saver": "Persistent save helpers for Defold: typed tables, versioned slots, and atomic writes.",
   "saver.storage": "Key-value storage over the Defold saver state: typed number, string, and boolean getters and setters.",
+  "share": "Defold native extension to share data from a Defold application using native dialogs",
   "shutter": "Shutter is a library for 2D camera functionality in a Defold game engine project.",
   "sprite_repeat": "Sprite texture repeat (tiling) shader helper: reads a sprite's atlas animation and drives the repeat material's constants.",
   "squid": "Squid is a standalone injectable system for saveable logging of user logs, errors and crashes for Defold.",
+  "tile_raycast": "Ray Casting in tiled worlds using DDA algorithm.",
+  "uuid4": "Defold uuid4 generator native extension",
   "yagames": "YaGames is the Yandex.Games SDK implementation for the Defold game engine."
 }
