@@ -6,7 +6,8 @@
       "license": "MIT",
       "namespace": "daabbcc",
       "manifestDir": "daabbcc",
-      "declaration": "generated/native/daabbcc.d.ts"
+      "declaration": "generated/native/daabbcc.d.ts",
+      "upstreamSource": "fixtures/upstream-native/DAABBCC/daabbcc/src/extension.cpp"
     },
     {
       "repo": "https://github.com/britzl/defold-sharing",
@@ -14,7 +15,8 @@
       "license": "MIT",
       "namespace": "share",
       "manifestDir": "share",
-      "declaration": "generated/native/share.d.ts"
+      "declaration": "generated/native/share.d.ts",
+      "upstreamSource": "fixtures/upstream-native/defold-sharing/share/src/share.cpp"
     },
     {
       "repo": "https://github.com/selimanac/defold-uuid4",
@@ -22,7 +24,8 @@
       "license": "MIT",
       "namespace": "uuid4",
       "manifestDir": "uuid4",
-      "declaration": "generated/native/uuid4.d.ts"
+      "declaration": "generated/native/uuid4.d.ts",
+      "upstreamSource": "fixtures/upstream-native/defold-uuid4/uuid4/src/extension.cpp"
     },
     {
       "repo": "https://github.com/selimanac/defold-tile-raycast",
@@ -30,7 +33,8 @@
       "license": "MIT",
       "namespace": "tile_raycast",
       "manifestDir": "tile-raycast",
-      "declaration": "generated/native/tile_raycast.d.ts"
+      "declaration": "generated/native/tile_raycast.d.ts",
+      "upstreamSource": "fixtures/upstream-native/defold-tile-raycast/tile-raycast/src/tileraycast.cpp"
     }
   ]
 }
