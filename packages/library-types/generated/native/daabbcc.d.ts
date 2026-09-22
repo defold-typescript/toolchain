@@ -314,9 +314,13 @@ declare global {
     /**
      * Partially or fully rebuild all groups.
      *
+     * The runtime reads the flag from the second argument, so pass `undefined`
+     * first.
+     *
+     * @param _unused - Ignored by the runtime.
      * @param full_build - `true` for a full rebuild, `false` for a partial one.
      */
-    function rebuild_all(full_build: boolean): void;
+    function rebuild_all(_unused: undefined, full_build: boolean): void;
 
     /**
      * Removes all AABBs, groups and game objects, resetting to the initial state.

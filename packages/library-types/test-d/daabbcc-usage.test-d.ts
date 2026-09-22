@@ -53,7 +53,12 @@ daabbcc.raycast(group, 0, 0, 10, 10);
 daabbcc.run(false);
 daabbcc.update_frequency(30);
 daabbcc.rebuild(group, true);
-daabbcc.rebuild_all(false);
+daabbcc.rebuild_all(undefined, true);
+daabbcc.rebuild_all(undefined, false);
+// @ts-expect-error the one-argument form puts the flag where the runtime ignores it
+daabbcc.rebuild_all(true);
+// @ts-expect-error the flag is required, so a caller always states full or partial
+daabbcc.rebuild_all(undefined);
 daabbcc.remove_group(group);
 daabbcc.reset();
 
