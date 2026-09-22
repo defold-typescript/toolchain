@@ -115,6 +115,10 @@
     "callable": 1,
     "field": 1
   },
+  "fidelity/authored/node_repeat.json": {
+    "callable": 1,
+    "field": 1
+  },
   "fidelity/authored/orthographic.camera.json": {
     "callable": 1,
     "field": 1
@@ -144,6 +148,10 @@
     "field": 1
   },
   "fidelity/authored/shutter.json": {
+    "callable": 1,
+    "field": 1
+  },
+  "fidelity/authored/sprite_repeat.json": {
     "callable": 1,
     "field": 1
   },
