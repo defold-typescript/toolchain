@@ -54,6 +54,16 @@ export const COMPILER_OPTION_OVERRIDES: readonly CompilerOptionOverride[] = [
     option: "noEmit",
     reason: "the gate reads diagnostics and writes nothing",
   },
+  {
+    option: "baseUrl",
+    reason:
+      "the options are built programmatically and carry no `configFilePath`, so `paths` below has no directory to resolve against unless one is named",
+  },
+  {
+    option: "paths",
+    reason:
+      "a materialized kind subpath re-exports its factory from the installed `@defold-typescript/types/<module>` specifier, which resolves in a consumer's project but not inside the gate's virtual root; mapping it to the package's own `src/*` reproduces what an install provides, and without it the factory is `any` and the surface judges nothing",
+  },
 ];
 
 /**
@@ -74,6 +84,8 @@ export function gateCompilerOptions(): ts.CompilerOptions {
     noImplicitAny: false,
     types: [],
     noEmit: true,
+    baseUrl: PACKAGE_ROOT,
+    paths: { "@defold-typescript/types/*": ["src/*"] },
     declaration: false,
     declarationMap: false,
     sourceMap: false,
@@ -114,8 +126,8 @@ export function diagnosticsEqual(
  * A compiler host that serves an in-memory overlay before falling back to disk.
  * Module and type-reference resolution are routed through the same overlay, so a
  * materialized surface's `import "../b2d"` resolves against bytes that exist
- * nowhere while `@defold-typescript/types/lifecycle` still resolves through the
- * real `node_modules` the virtual root sits inside.
+ * nowhere while `@defold-typescript/types/lifecycle` resolves through the
+ * `paths` mapping to the package's own `src/`.
  */
 function createOverlayHost(
   options: ts.CompilerOptions,
@@ -268,6 +280,26 @@ export function exampleUnit(
 }
 
 /**
+ * The diagnostic codes that say a surface cannot see its own declarations:
+ * unresolved module, non-module target, missing exported member. The entry's
+ * other diagnostics are generated-declaration noise this gate has no verdict on,
+ * so reading them unfiltered would make every surface fail for reasons no
+ * example can fix.
+ */
+const ENTRY_RESOLUTION_CODES = new Set([2305, 2306, 2307]);
+
+export interface SurfaceCompilation {
+  readonly units: Map<string, ExampleDiagnostic[]>;
+  /**
+   * The entry file's own unresolved-module diagnostics. A surface reporting any
+   * is a surface whose declarations resolved to `any`, so every unit judged on
+   * it is judged against nothing — the per-unit map alone cannot say so, because
+   * the error is reported against the entry, which is not a unit.
+   */
+  readonly entry: readonly ExampleDiagnostic[];
+}
+
+/**
  * Compile one surface's units in a single program and return each unit's
  * diagnostics. Syntactic and semantic diagnostics are read per file through the
  * TypeScript API, which is what keeps a syntactically invalid example from
@@ -277,7 +309,7 @@ export function compileSurface(
   surface: ExampleSurface,
   units: readonly ExampleUnit[],
   options: ts.CompilerOptions = gateCompilerOptions(),
-): Map<string, ExampleDiagnostic[]> {
+): SurfaceCompilation {
   const overlay = new Map<string, string>();
   for (const file of surface.virtualFiles) overlay.set(resolve(file.path), file.contents);
   for (const unit of units) overlay.set(resolve(unit.fileName), unit.contents);
@@ -299,7 +331,16 @@ export function compileSurface(
     const semantic = syntactic.length > 0 ? [] : program.getSemanticDiagnostics(source);
     out.set(unit.identity, sortDiagnostics([...syntactic, ...semantic].map(normalizeDiagnostic)));
   }
-  return out;
+
+  const entrySource = program.getSourceFile(surface.entry);
+  if (!entrySource) throw new Error(`surface entry not in program: ${surface.entry}`);
+  const entry = sortDiagnostics(
+    program
+      .getSemanticDiagnostics(entrySource)
+      .filter((diagnostic) => ENTRY_RESOLUTION_CODES.has(diagnostic.code))
+      .map(normalizeDiagnostic),
+  );
+  return { units: out, entry };
 }
 
 export interface SurfaceTiming {
@@ -312,6 +353,8 @@ export interface GateResult {
   /** Every `<surface>:<fqn>:<sourceHash>` pair, whether or not it produced diagnostics. */
   readonly computed: Map<string, ExampleDiagnostic[]>;
   readonly timings: readonly SurfaceTiming[];
+  /** Surface id -> that surface's entry resolution diagnostics, one key per compiled surface. */
+  readonly entries: Map<string, readonly ExampleDiagnostic[]>;
 }
 
 /** Compile every owned translation on every surface that ships it. */
@@ -337,20 +380,23 @@ export function runGate(
 
   const computed = new Map<string, ExampleDiagnostic[]>();
   const timings: SurfaceTiming[] = [];
+  const entries = new Map<string, readonly ExampleDiagnostic[]>();
   for (const surface of surfaces) {
     const units = [...(bySurface.get(surface.id) ?? []), ...(extraUnits.get(surface.id) ?? [])];
     if (units.length === 0) continue;
     const started = performance.now();
-    for (const [identity, diagnostics] of compileSurface(surface, units, options)) {
+    const compilation = compileSurface(surface, units, options);
+    for (const [identity, diagnostics] of compilation.units) {
       computed.set(identity, diagnostics);
     }
+    entries.set(surface.id, compilation.entry);
     timings.push({
       surfaceId: surface.id,
       units: units.length,
       ms: Math.round(performance.now() - started),
     });
   }
-  return { computed, timings };
+  return { computed, timings, entries };
 }
 
 /** Only the identities that produced diagnostics — what the pin file records. */
@@ -427,7 +473,19 @@ if (import.meta.main) {
   const { loadTranslations } = await import("./example-store-io");
   const { exampleSurfaces } = await import("./example-surfaces");
   const surfaces = await exampleSurfaces();
-  const { computed, timings } = runGate(loadTranslations(), surfaces);
+  const { computed, timings, entries } = runGate(loadTranslations(), surfaces);
+  // Pins measured on a surface that cannot see its own declarations record
+  // `any` as agreement, which is how the materialized surfaces stayed silent
+  // through every previous re-pin. Refuse to write rather than record it again.
+  const unresolved = [...entries]
+    .filter(([, diagnostics]) => diagnostics.length > 0)
+    .map(([id, diagnostics]) => `  ${id}: ${render(diagnostics)}`);
+  if (unresolved.length > 0) {
+    process.stderr.write(
+      `refusing to re-pin — ${unresolved.length} surface(s) cannot resolve their own entry:\n${unresolved.join("\n")}\n`,
+    );
+    process.exit(1);
+  }
   const pins = pinsFrom(computed);
   writeFileSync(PINS_PATH, `${JSON.stringify(pins, null, 2)}\n`);
   const total = timings.reduce((sum, timing) => sum + timing.ms, 0);
