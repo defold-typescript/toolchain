@@ -200,6 +200,10 @@ declare global {
      * @returns It returns a list. If missed it returns `nil`. See ray_cast_response for details on the returned values.
      * @example
      * ```ts
+     * function handle_result(hit) {
+     *   // act on the hit (see 'ray_cast_response')
+     * }
+     *
      * // How to perform a ray cast synchronously:
      * export default defineScript({
      *   init(self) {
@@ -208,9 +212,10 @@ declare global {
      *
      *   update(self, dt) {
      *     // request ray cast
-     *     const result = physics.raycast(from, to, self.groups, { all: true });
-     *     if (result !== undefined) {
-     *       // act on the hit (see 'ray_cast_response')
+     *     const from = go.get_world_position();
+     *     const to = vmath.vector3(from.x, from.y - 100, from.z);
+     *     const results = physics.raycast(from, to, self.groups, { all: true });
+     *     if (results !== undefined) {
      *       for (const result of results) {
      *         handle_result(result);
      *       }
@@ -248,6 +253,8 @@ declare global {
      *
      *   update(self, dt) {
      *     // request ray cast
+     *     const my_start = go.get_world_position();
+     *     const my_end = vmath.vector3(my_start.x, my_start.y - 100, my_start.z);
      *     physics.raycast_async(my_start, my_end, self.my_groups);
      *   },
      *

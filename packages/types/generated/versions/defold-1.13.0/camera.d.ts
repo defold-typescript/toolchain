@@ -47,6 +47,7 @@ declare global {
      * @returns a table with all camera URLs
      * @example
      * ```ts
+     * const predicate = render.predicate([hash("my_tag")]);
      * for (const camera_id of camera.get_cameras()) {
      *   render.set_camera(camera_id);
      *   render.draw(predicate);

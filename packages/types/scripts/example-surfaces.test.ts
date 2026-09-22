@@ -365,9 +365,13 @@ describe("module-bound ownership", () => {
   });
 
   test("a resolved chain contributes its namespace once, without re-adding the head", () => {
+    const namespaces = moduleNamespaces(surfaces);
+    expect(namespaces.has("b2d.body")).toBe(true);
+    expect(namespaces.has("b2d")).toBe(true);
+
     const referenced = referencedNamespaces(
-      bodyOf("b2d.body.create_chain"),
-      moduleNamespaces(surfaces),
+      "const [chain, segments] = b2d.body.create_chain(body, { friction: 0.6 });\n",
+      namespaces,
     );
     expect(referenced).toContain("b2d.body");
     expect(referenced).not.toContain("b2d");

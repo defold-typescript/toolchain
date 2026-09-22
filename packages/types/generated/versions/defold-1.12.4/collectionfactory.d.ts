@@ -75,7 +75,9 @@ declare global {
      * });
      *
      * // How to delete a spawned collection:
-     * go.delete(self.enemy_ids);
+     * function delete_enemies(self) {
+     *   go.delete(self.enemy_ids);
+     * }
      * ```
      */
     function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: Record<string | number, unknown>, scale?: number | Vector3): LuaMap<Hash, Hash>;

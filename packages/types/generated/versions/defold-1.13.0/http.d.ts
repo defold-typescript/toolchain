@@ -53,6 +53,10 @@ declare global {
      * - boolean `report_progress`: when it is true, the amount of bytes sent and/or received for a request will be passed into the callback function
      * @example
      * ```ts
+     * function update_my_progress_bar(self, fraction) {
+     *   // draw the progress bar at the given fraction
+     * }
+     *
      * // Basic HTTP-GET request. The callback receives a table with the response
      * // in the fields status, the response (the data) and headers (a table).
      * export default defineScript({

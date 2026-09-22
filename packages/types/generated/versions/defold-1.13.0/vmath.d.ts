@@ -84,6 +84,9 @@ declare global {
      * @returns dot product
      * @example
      * ```ts
+     * const vector1 = vmath.vector3(1, 0, 0);
+     * const vector2 = vmath.vector3(0, 1, 0);
+     *
      * if (vmath.dot(vector1, vector2) === 0) {
      *   // The two vectors are perpendicular (at right-angles to each other)
      *   // ...
@@ -119,12 +122,14 @@ declare global {
      * @returns length
      * @example
      * ```ts
-     * if (vmath.length(self.velocity) < max_velocity) {
-     *   // The speed (velocity vector) is below max.
+     * function below_max_speed(self, max_velocity) {
+     *   if (vmath.length(self.velocity) < max_velocity) {
+     *     // The speed (velocity vector) is below max.
      *
-     *   // TODO: max_velocity can be expressed as squared
-     *   // so we can compare with length_sqr() instead.
-     *   // ...
+     *     // TODO: max_velocity can be expressed as squared
+     *     // so we can compare with length_sqr() instead.
+     *     // ...
+     *   }
      * }
      * ```
      */
@@ -136,6 +141,9 @@ declare global {
      * @returns squared length
      * @example
      * ```ts
+     * const vector1 = vmath.vector3(1, 0, 0);
+     * const vector2 = vmath.vector3(0, 2, 0);
+     *
      * if (vmath.length_sqr(vector1) < vmath.length_sqr(vector2)) {
      *   // Vector 1 has less magnitude than vector 2
      *   // ...

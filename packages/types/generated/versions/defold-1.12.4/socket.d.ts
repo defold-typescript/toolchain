@@ -635,14 +635,17 @@ declare global {
      * @example
      * ```ts
      * // Perform operations on an open socket c:
-     * // create a try function that closes 'c' on error
-     * const try_ = socket.newtry(() => c.close());
-     * // do everything reassured c will be closed
-     * try_(c.send("hello there?\r\n"));
-     * const answer = try_(c.receive());
-     * // ...
-     * try_(c.send("good bye\r\n"));
-     * c.close();
+     * const [c] = socket.connect("localhost", 80);
+     * if (c !== undefined) {
+     *   // create a try function that closes 'c' on error
+     *   const try_ = socket.newtry(() => c.close());
+     *   // do everything reassured c will be closed
+     *   try_(c.send("hello there?\r\n"));
+     *   const answer = try_(c.receive());
+     *   // ...
+     *   try_(c.send("good bye\r\n"));
+     *   c.close();
+     * }
      * ```
      */
     function newtry(finalizer: () => void): (...args: unknown[]) => unknown;
@@ -694,6 +697,8 @@ declare global {
      * @param retN - argument N.
      * @example
      * ```ts
+     * const line = "250 OK";
+     *
      * // Instead of doing the following with dummy variables:
      * // get the status code and separator from SMTP server reply
      * const [dummy1, dummy2, code, sep] = string.find(line, "^(%d%d%d)(.?)");

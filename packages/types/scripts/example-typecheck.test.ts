@@ -135,6 +135,28 @@ describe("pin exactness — what the ratchet refuses", () => {
   });
 });
 
+describe("the undeclared-name class", () => {
+  test("no pin records an undeclared name", () => {
+    const offenders: string[] = [];
+    for (const [identity, diagnostics] of Object.entries(pins)) {
+      for (const diagnostic of diagnostics) {
+        if (diagnostic.code !== 2304 && diagnostic.code !== 2552) continue;
+        offenders.push(`  ${identity} — TS${diagnostic.code} ${diagnostic.text}`);
+      }
+    }
+    if (offenders.length > 0) {
+      throw new Error(
+        "an authored translation uses a name its own body never introduces:\n" +
+          `${offenders.slice(0, 20).join("\n")}${
+            offenders.length > 20 ? `\n  +${offenders.length - 20} more` : ""
+          }\n` +
+          "Declare the name in the example body; never re-pin to absorb it.",
+      );
+    }
+    expect(offenders).toEqual([]);
+  });
+});
+
 describe("what the compile is sensitive to", () => {
   test("a misspelled namespace is not absorbed as fragment context", () => {
     const diagnostics = diagnosticsFor("rendr.clear(new LuaMap());");

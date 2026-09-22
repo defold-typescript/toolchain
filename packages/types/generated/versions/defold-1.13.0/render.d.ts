@@ -52,30 +52,38 @@ declare global {
      * @returns new constant buffer
      * @example
      * ```ts
-     * // Set a "tint" constant in a constant buffer in the render script:
-     * const constants = render.constant_buffer();
-     * constants.tint = vmath.vector4(1, 1, 1, 1);
+     * export default defineRenderScript({
+     *   init() {
+     *     return { my_pred: render.predicate([hash("my_tag")]) };
+     *   },
      *
-     * // Then use the constant buffer when drawing a predicate:
-     * render.draw(self.my_pred, { constants });
+     *   update(self, dt) {
+     *     // Set a "tint" constant in a constant buffer in the render script:
+     *     const constants = render.constant_buffer();
+     *     constants.tint = vmath.vector4(1, 1, 1, 1);
      *
-     * // The constant buffer also supports array values by specifying constants in an array:
-     * const constants2 = render.constant_buffer();
-     * constants2.light_colors = [];
-     * constants2.light_colors[0] = vmath.vector4(1, 0, 0, 1);
-     * constants2.light_colors[1] = vmath.vector4(0, 1, 0, 1);
-     * constants2.light_colors[2] = vmath.vector4(0, 0, 1, 1);
+     *     // Then use the constant buffer when drawing a predicate:
+     *     render.draw(self.my_pred, { constants });
      *
-     * // You can also create the array by passing the vectors directly:
-     * const constants3 = render.constant_buffer();
-     * constants3.light_colors = [
-     *   vmath.vector4(1, 0, 0, 1),
-     *   vmath.vector4(0, 1, 0, 1),
-     *   vmath.vector4(0, 0, 1, 1),
-     * ];
+     *     // The constant buffer also supports array values by specifying constants in an array:
+     *     const constants2 = render.constant_buffer();
+     *     constants2.light_colors = [];
+     *     constants2.light_colors[0] = vmath.vector4(1, 0, 0, 1);
+     *     constants2.light_colors[1] = vmath.vector4(0, 1, 0, 1);
+     *     constants2.light_colors[2] = vmath.vector4(0, 0, 1, 1);
      *
-     * // Add more constants to the array
-     * constants3.light_colors[3] = vmath.vector4(1, 1, 1, 1);
+     *     // You can also create the array by passing the vectors directly:
+     *     const constants3 = render.constant_buffer();
+     *     constants3.light_colors = [
+     *       vmath.vector4(1, 0, 0, 1),
+     *       vmath.vector4(0, 1, 0, 1),
+     *       vmath.vector4(0, 0, 1, 1),
+     *     ];
+     *
+     *     // Add more constants to the array
+     *     constants3.light_colors[3] = vmath.vector4(1, 1, 1, 1);
+     *   },
+     * });
      * ```
      */
     function constant_buffer(): Opaque<"constant_buffer">;
@@ -86,8 +94,16 @@ declare global {
      * @param render_target - render target to delete
      * @example
      * ```ts
-     * // How to delete a render target:
-     * render.delete_render_target(self.my_render_target);
+     * export default defineRenderScript({
+     *   init() {
+     *     return { my_render_target: render.render_target("my_target", {}) };
+     *   },
+     *
+     *   update(self, dt) {
+     *     // How to delete a render target:
+     *     render.delete_render_target(self.my_render_target);
+     *   },
+     * });
      * ```
      */
     function delete_render_target(render_target: Opaque<"render_target">): void;
@@ -98,10 +114,18 @@ declare global {
      *
      * @example
      * ```ts
-     * // Enable material named "glow", then draw my_pred with it.
-     * render.enable_material("glow");
-     * render.draw(self.my_pred);
-     * render.disable_material();
+     * export default defineRenderScript({
+     *   init() {
+     *     return { my_pred: render.predicate([hash("my_tag")]) };
+     *   },
+     *
+     *   update(self, dt) {
+     *     // Enable material named "glow", then draw my_pred with it.
+     *     render.enable_material("glow");
+     *     render.draw(self.my_pred);
+     *     render.disable_material();
+     *   },
+     * });
      * ```
      */
     function disable_material(): void;
@@ -123,9 +147,17 @@ declare global {
      * - `graphics.STATE_POLYGON_OFFSET_FILL`
      * @example
      * ```ts
-     * // Disable face culling when drawing the tile predicate:
-     * render.disable_state(graphics.STATE_CULL_FACE);
-     * render.draw(self.tile_pred);
+     * export default defineRenderScript({
+     *   init() {
+     *     return { tile_pred: render.predicate([hash("tile")]) };
+     *   },
+     *
+     *   update(self, dt) {
+     *     // Disable face culling when drawing the tile predicate:
+     *     render.disable_state(graphics.STATE_CULL_FACE);
+     *     render.draw(self.tile_pred);
+     *   },
+     * });
      * ```
      */
     function disable_state(state: number & { readonly __brand: "graphics.STATE_DEPTH_TEST" } | number & { readonly __brand: "graphics.STATE_STENCIL_TEST" } | number & { readonly __brand: "graphics.STATE_BLEND" } | number & { readonly __brand: "graphics.STATE_ALPHA_TEST" } | number & { readonly __brand: "graphics.STATE_CULL_FACE" } | number & { readonly __brand: "graphics.STATE_POLYGON_OFFSET_FILL" }): void;
@@ -225,21 +257,21 @@ declare global {
      *   update(self, dt) {
      *     // draw everything in the my_pred predicate
      *     render.draw(self.my_pred);
+     *
+     *     // Draw predicate with constants:
+     *     const constants = render.constant_buffer();
+     *     constants.tint = vmath.vector4(1, 1, 1, 1);
+     *     render.draw(self.my_pred, { constants });
+     *
+     *     // Draw with predicate and frustum culling (without near+far planes):
+     *     const frustum = self.proj.mul(self.view);
+     *     render.draw(self.my_pred, { frustum });
+     *
+     *     // Draw with predicate and frustum culling (with near+far planes):
+     *     const frustum2 = self.proj.mul(self.view);
+     *     render.draw(self.my_pred, { frustum: frustum2, frustum_planes: render.FRUSTUM_PLANES_ALL });
      *   },
      * });
-     *
-     * // Draw predicate with constants:
-     * const constants = render.constant_buffer();
-     * constants.tint = vmath.vector4(1, 1, 1, 1);
-     * render.draw(self.my_pred, { constants });
-     *
-     * // Draw with predicate and frustum culling (without near+far planes):
-     * const frustum = self.proj.mul(self.view);
-     * render.draw(self.my_pred, { frustum });
-     *
-     * // Draw with predicate and frustum culling (with near+far planes):
-     * const frustum2 = self.proj.mul(self.view);
-     * render.draw(self.my_pred, { frustum: frustum2, frustum_planes: render.FRUSTUM_PLANES_ALL });
      * ```
      */
     function draw(predicate: number, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<"constant_buffer">; sort_order?: number }): void;
@@ -276,10 +308,18 @@ declare global {
      * @param material_id - material id to enable
      * @example
      * ```ts
-     * // Enable material named "glow", then draw my_pred with it.
-     * render.enable_material("glow");
-     * render.draw(self.my_pred);
-     * render.disable_material();
+     * export default defineRenderScript({
+     *   init() {
+     *     return { my_pred: render.predicate([hash("my_tag")]) };
+     *   },
+     *
+     *   update(self, dt) {
+     *     // Enable material named "glow", then draw my_pred with it.
+     *     render.enable_material("glow");
+     *     render.draw(self.my_pred);
+     *     render.disable_material();
+     *   },
+     * });
      * ```
      */
     function enable_material(material_id: string | Hash): void;
@@ -301,10 +341,18 @@ declare global {
      * - `graphics.STATE_POLYGON_OFFSET_FILL`
      * @example
      * ```ts
-     * // Enable stencil test when drawing the gui predicate, then disable it:
-     * render.enable_state(graphics.STATE_STENCIL_TEST);
-     * render.draw(self.gui_pred);
-     * render.disable_state(graphics.STATE_STENCIL_TEST);
+     * export default defineRenderScript({
+     *   init() {
+     *     return { gui_pred: render.predicate([hash("gui")]) };
+     *   },
+     *
+     *   update(self, dt) {
+     *     // Enable stencil test when drawing the gui predicate, then disable it:
+     *     render.enable_state(graphics.STATE_STENCIL_TEST);
+     *     render.draw(self.gui_pred);
+     *     render.disable_state(graphics.STATE_STENCIL_TEST);
+     *   },
+     * });
      * ```
      */
     function enable_state(state: number & { readonly __brand: "graphics.STATE_DEPTH_TEST" } | number & { readonly __brand: "graphics.STATE_STENCIL_TEST" } | number & { readonly __brand: "graphics.STATE_BLEND" } | number & { readonly __brand: "graphics.STATE_ALPHA_TEST" } | number & { readonly __brand: "graphics.STATE_CULL_FACE" } | number & { readonly __brand: "graphics.STATE_POLYGON_OFFSET_FILL" }): void;
@@ -416,10 +464,18 @@ declare global {
      * @returns the height of the render target buffer texture
      * @example
      * ```ts
-     * // get the height of the render target color buffer
-     * const h = render.get_render_target_height(self.target_right, graphics.BUFFER_TYPE_COLOR0_BIT);
-     * // get the height of a render target resource
-     * const w = render.get_render_target_height("my_rt_resource", graphics.BUFFER_TYPE_COLOR0_BIT);
+     * export default defineRenderScript({
+     *   init() {
+     *     return { target_right: render.render_target("right", {}) };
+     *   },
+     *
+     *   update(self, dt) {
+     *     // get the height of the render target color buffer
+     *     const h = render.get_render_target_height(self.target_right, graphics.BUFFER_TYPE_COLOR0_BIT);
+     *     // get the height of a render target resource
+     *     const w = render.get_render_target_height("my_rt_resource", graphics.BUFFER_TYPE_COLOR0_BIT);
+     *   },
+     * });
      * ```
      */
     function get_render_target_height(render_target: Opaque<"render_target">, buffer_type: number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR0_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR1_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR2_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR3_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_DEPTH_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_STENCIL_BIT" }): number;
@@ -439,10 +495,18 @@ declare global {
      * @returns the width of the render target buffer texture
      * @example
      * ```ts
-     * // get the width of the render target color buffer
-     * const w = render.get_render_target_width(self.target_right, graphics.BUFFER_TYPE_COLOR0_BIT);
-     * // get the width of a render target resource
-     * const w2 = render.get_render_target_width("my_rt_resource", graphics.BUFFER_TYPE_COLOR0_BIT);
+     * export default defineRenderScript({
+     *   init() {
+     *     return { target_right: render.render_target("right", {}) };
+     *   },
+     *
+     *   update(self, dt) {
+     *     // get the width of the render target color buffer
+     *     const w = render.get_render_target_width(self.target_right, graphics.BUFFER_TYPE_COLOR0_BIT);
+     *     // get the width of a render target resource
+     *     const w2 = render.get_render_target_width("my_rt_resource", graphics.BUFFER_TYPE_COLOR0_BIT);
+     *   },
+     * });
      * ```
      */
     function get_render_target_width(render_target: Opaque<"render_target">, buffer_type: number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR0_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR1_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR2_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR3_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_DEPTH_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_STENCIL_BIT" }): number;
@@ -629,17 +693,25 @@ declare global {
      * boolean If true, the renderer will use the cameras view-projection matrix for frustum culling (default: false)
      * @example
      * ```ts
-     * // Set the current camera to be used for rendering
-     * render.set_camera("main:/my_go#camera");
-     * render.draw(self.my_pred);
-     * render.set_camera(undefined);
+     * export default defineRenderScript({
+     *   init() {
+     *     return { my_pred: render.predicate([hash("my_tag")]) };
+     *   },
      *
-     * // Use the camera frustum for frustum culling together with a specific frustum plane option for the draw command
-     * // The camera frustum will take precedence over the frustum plane option in render.draw
-     * render.set_camera("main:/my_go#camera", { use_frustum: true });
-     * // However, we can still customize the frustum planes regardless of the camera option!
-     * render.draw(self.my_pred, { frustum_planes: render.FRUSTUM_PLANES_ALL });
-     * render.set_camera();
+     *   update(self, dt) {
+     *     // Set the current camera to be used for rendering
+     *     render.set_camera("main:/my_go#camera");
+     *     render.draw(self.my_pred);
+     *     render.set_camera(undefined);
+     *
+     *     // Use the camera frustum for frustum culling together with a specific frustum plane option for the draw command
+     *     // The camera frustum will take precedence over the frustum plane option in render.draw
+     *     render.set_camera("main:/my_go#camera", { use_frustum: true });
+     *     // However, we can still customize the frustum planes regardless of the camera option!
+     *     render.draw(self.my_pred, { frustum_planes: render.FRUSTUM_PLANES_ALL });
+     *     render.set_camera();
+     *   },
+     * });
      * ```
      */
     function set_camera(camera?: Url | number, options?: { use_frustum?: boolean }): void;
@@ -666,11 +738,19 @@ declare global {
      * @param compute - compute id to use, or nil to disable
      * @example
      * ```ts
-     * // Enable compute program named "fractals", then dispatch it.
-     * render.set_compute("fractals");
-     * render.enable_texture(0, self.backing_texture);
-     * render.dispatch_compute(128, 128, 1);
-     * render.set_compute();
+     * export default defineRenderScript({
+     *   init() {
+     *     return { backing_texture: "my_texture_resource" };
+     *   },
+     *
+     *   update(self, dt) {
+     *     // Enable compute program named "fractals", then dispatch it.
+     *     render.set_compute("fractals");
+     *     render.enable_texture(0, self.backing_texture);
+     *     render.dispatch_compute(128, 128, 1);
+     *     render.set_compute();
+     *   },
+     * });
      * ```
      */
     function set_compute(compute?: string | Hash): void;
@@ -876,9 +956,17 @@ declare global {
      * @param height - new render target height
      * @example
      * ```ts
-     * // Resize render targets to the current window size:
-     * render.set_render_target_size(self.my_render_target, render.get_window_width(), render.get_window_height());
-     * render.set_render_target_size("my_rt_resource", render.get_window_width(), render.get_window_height());
+     * export default defineRenderScript({
+     *   init() {
+     *     return { my_render_target: render.render_target("my_target", {}) };
+     *   },
+     *
+     *   update(self, dt) {
+     *     // Resize render targets to the current window size:
+     *     render.set_render_target_size(self.my_render_target, render.get_window_width(), render.get_window_height());
+     *     render.set_render_target_size("my_rt_resource", render.get_window_width(), render.get_window_height());
+     *   },
+     * });
      * ```
      */
     function set_render_target_size(render_target: Opaque<"render_target">, width: number, height: number): void;
