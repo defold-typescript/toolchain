@@ -16,6 +16,8 @@ export interface NativeTarget {
   namespace: string;
   manifestDir: string;
   declaration: string;
+  /** The vendored C++ file that registers the module, under `fixtures/upstream-native/`. */
+  upstreamSource: string;
 }
 
 export function readNativeTargets(packageRoot: string): NativeTarget[] {

@@ -9,11 +9,13 @@ import {
   collectAuthoredParity,
   parseAuthoredFloors,
 } from "./authored-parity";
+import { readNativeTargets } from "./sync-native-types";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const PARITY_DIR = "fidelity/authored";
 const FLOOR_MANIFEST = AUTHORED_FLOOR_MANIFEST_FILE;
 const UPSTREAM_DIR = "fixtures/upstream-lua";
+const UPSTREAM_NATIVE_DIR = "fixtures/upstream-native";
 const REGENERATE = "bun run --cwd packages/library-types parity";
 
 const ARTIFACTS = collectAuthoredParity(PACKAGE_ROOT);
@@ -288,5 +290,54 @@ describe("the vendored upstream Lua the parity reports were measured against", (
 
   test("the drift remedy forbids re-baselining, unlike the authored-lane one", () => {
     expect(driftRemedy("fixtures/upstream-lua/x.lua")).toContain("do not re-baseline this digest");
+  });
+});
+
+/** The pinned SHA-256 of every vendored registering C++ file, each taken at the
+ * `ref` its `native-targets.json` entry pins. */
+const UPSTREAM_NATIVE_HASHES: Record<string, string> = {
+  "fixtures/upstream-native/DAABBCC/daabbcc/src/extension.cpp":
+    "f22dd03e273bceb5f761929cc629af76af27e8894041181b57f89ef06a322d1c",
+  "fixtures/upstream-native/defold-sharing/share/src/share.cpp":
+    "1539132ffee8f61b4b115c59011d03616939d58c32e912d97710b7430bf5b1bc",
+  "fixtures/upstream-native/defold-tile-raycast/tile-raycast/src/tileraycast.cpp":
+    "cc7fb70cf75b86a7a2dbef187b2c4ecde2f927dcbd34598bdde9daff862d8c09",
+  "fixtures/upstream-native/defold-uuid4/uuid4/src/extension.cpp":
+    "a2b98177e342dc218db4dd465997ffa72cfc2680802ccb758ca2d84c0ee58045",
+};
+
+describe("the vendored native C++ the registration surface is read from", () => {
+  test("every pinned copy still hashes to its recorded digest", () => {
+    const drifted = Object.entries(UPSTREAM_NATIVE_HASHES)
+      .filter(([path]) => existsSync(join(PACKAGE_ROOT, path)))
+      .filter(([path, digest]) => fixtureDigest(path) !== digest)
+      .map(([path]) => driftRemedy(path));
+    expect(drifted).toEqual([]);
+  });
+
+  test("every pinned path still exists, so a rename reds", () => {
+    expect(Object.keys(UPSTREAM_NATIVE_HASHES).length).toBeGreaterThan(0);
+    expect(
+      Object.keys(UPSTREAM_NATIVE_HASHES).filter((path) => !existsSync(join(PACKAGE_ROOT, path))),
+    ).toEqual([]);
+  });
+
+  test("the pin covers every vendored native file, so none arrives unpinned", () => {
+    const vendored = upstreamFiles(
+      join(PACKAGE_ROOT, UPSTREAM_NATIVE_DIR),
+      UPSTREAM_NATIVE_DIR,
+      [],
+    );
+    expect(vendored.filter((path) => !(path in UPSTREAM_NATIVE_HASHES))).toEqual([]);
+  });
+
+  test("the pin covers every native target's upstreamSource", () => {
+    const targets = readNativeTargets(PACKAGE_ROOT);
+    expect(targets.length).toBeGreaterThan(0);
+    expect(
+      targets
+        .filter((target) => !(target.upstreamSource in UPSTREAM_NATIVE_HASHES))
+        .map((target) => `${target.namespace}: ${target.upstreamSource}`),
+    ).toEqual([]);
   });
 });

@@ -138,6 +138,32 @@ describe("loadVendoredNativeRegistry", () => {
     });
   });
 
+  test("an entry carrying fields the CLI does not read is still projected", () => {
+    const targets = {
+      targets: [
+        {
+          repo: "https://github.com/britzl/defold-sharing",
+          ref: "4.7.0",
+          license: "MIT",
+          namespace: "share",
+          manifestDir: "share",
+          declaration: "generated/native/share.d.ts",
+          upstreamSource: "fixtures/upstream-native/defold-sharing/share/src/share.cpp",
+        },
+      ],
+    };
+    withRoot(JSON.stringify(targets), (root) => {
+      expect(loadVendoredNativeRegistry(root)).toEqual([
+        {
+          sourceId: "defold-sharing",
+          namespace: "share",
+          manifestDir: "share",
+          declarationPath: join(root, "generated/native/share.d.ts"),
+        },
+      ]);
+    });
+  });
+
   test("returns an empty registry for a missing or unparseable native-targets.json", () => {
     withRoot(null, (root) => {
       expect(loadVendoredNativeRegistry(root)).toEqual([]);
