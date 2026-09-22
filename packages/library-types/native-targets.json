@@ -1,0 +1,12 @@
+{
+  "targets": [
+    {
+      "repo": "https://github.com/selimanac/defold-daabbcc",
+      "ref": "v3.0.8",
+      "license": "MIT",
+      "namespace": "daabbcc",
+      "manifestDir": "daabbcc",
+      "declaration": "generated/native/daabbcc.d.ts"
+    }
+  ]
+}

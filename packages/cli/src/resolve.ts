@@ -16,7 +16,7 @@ import {
   extensionCacheDir,
   type ReadExtensionZip,
 } from "./extension-archive";
-import { resolveExtensionDeclarations } from "./extension-declarations";
+import { type ExtensionDeclarations, resolveExtensionDeclarations } from "./extension-declarations";
 import { readExtensionDependencies } from "./extension-deps";
 import {
   ensureExtensionTypesReference,
@@ -24,17 +24,22 @@ import {
 } from "./extension-materialize";
 import { mergeResolvedVersionPins, readExtensionVersionPins } from "./extension-version";
 import { formatJsonLikeBiome } from "./format-json";
-import { matchVendoredLibrary, type VendoredLibrary } from "./library-match";
+import { matchVendoredLibrary, normalizeSourceId, type VendoredLibrary } from "./library-match";
 import { ensureLibraryTypesReference, materializeVendoredLibraries } from "./library-materialize";
-import { loadVendoredLibraryRegistry } from "./library-registry";
+import {
+  loadVendoredLibraryRegistry,
+  loadVendoredNativeRegistry,
+  type VendoredNativeExtension,
+} from "./library-registry";
 import { materializeLibrarySceneSources } from "./library-scene-materialize";
 
 // Which type surface a dependency actually contributed. `assetOnly` cannot
 // express this on its own: a superseded bundle is `assetOnly: false` and still
 // contributes no namespace, and an asset-only archive with no confirmed match
 // contributes neither surface, so calling it an extension would claim
-// declarations it does not have.
-export type ResolvedTypeSurface = "none" | "extension" | "vendored-library";
+// declarations it does not have. `vendored-native` is a native extension whose
+// curated declaration replaced whatever its archive would have emitted.
+export type ResolvedTypeSurface = "none" | "extension" | "vendored-library" | "vendored-native";
 
 export interface ResolvedExtensionReport {
   readonly url: string;
@@ -74,6 +79,9 @@ export interface RunResolveOptions {
   // tests inject a synthetic registry + generatedDir to stay hermetic.
   readonly libraryRegistry?: readonly VendoredLibrary[];
   readonly libraryGeneratedDir?: string | null;
+  // The curated native-extension targets. Defaults to the installed
+  // `@defold-typescript/library-types` `native-targets.json`.
+  readonly nativeRegistry?: readonly VendoredNativeExtension[];
 }
 
 export interface RunResolveResult {
@@ -99,6 +107,43 @@ function readExistingPackageJson(cwd: string): { value: unknown; writable: boole
   } catch {
     return { value: null, writable: false };
   }
+}
+
+// A native target is confirmed only when the archive both matches its source id
+// and ships `<manifestDir>/ext.manifest`: a source-id collision alone is not a
+// match. The confirmed bundle's declarations become the curated file, so the
+// barrel, prune and dedup paths downstream stay untouched and any `.script_api`
+// the archive ships is never written beside it.
+function applyNativeTargets(
+  bundles: readonly ExtensionDeclarations[],
+  registry: readonly VendoredNativeExtension[],
+  superseded: ReadonlySet<string>,
+): { bundles: ExtensionDeclarations[]; confirmedUrls: Set<string> } {
+  const confirmedUrls = new Set<string>();
+  const applied = bundles.map((bundle) => {
+    if (superseded.has(bundle.url)) {
+      return bundle;
+    }
+    const sourceId = normalizeSourceId(bundle.url);
+    const target = registry.find(
+      (entry) => entry.sourceId === sourceId && bundle.manifestDirs.includes(entry.manifestDir),
+    );
+    if (target === undefined || !existsSync(target.declarationPath)) {
+      return bundle;
+    }
+    confirmedUrls.add(bundle.url);
+    return {
+      ...bundle,
+      declarations: [
+        {
+          namespace: target.namespace,
+          contents: readFileSync(target.declarationPath, "utf8"),
+          dropped: [],
+        },
+      ],
+    };
+  });
+  return { bundles: applied, confirmedUrls };
 }
 
 function seedExtensionPins(
@@ -157,7 +202,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     return { ok: true, materializedSurface: null, extensions: [], libraries: [], warnings: [] };
   }
 
-  const bundles = await resolveExtensionDeclarations(deps, {
+  const resolvedBundles = await resolveExtensionDeclarations(deps, {
     cacheDir: opts.cacheDir ?? extensionCacheDir(),
     ...(opts.download ? { download: opts.download } : {}),
     ...(opts.readZip ? { readZip: opts.readZip } : {}),
@@ -181,7 +226,7 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       : (loaded?.generatedDir ?? null);
   const matchedLibraries: { library: VendoredLibrary; url: string; confirmed: string[] }[] = [];
   const confirmedLibraryUrls = new Set<string>();
-  for (const bundle of bundles) {
+  for (const bundle of resolvedBundles) {
     const library = matchVendoredLibrary(bundle.url, libraryRegistry);
     if (library === null) {
       continue;
@@ -199,6 +244,17 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
     }
     matchedLibraries.push({ library, url: bundle.url, confirmed });
   }
+
+  // A confirmed library already superseded its bundle, so it is not a native
+  // candidate.
+  const { bundles, confirmedUrls: confirmedNativeUrls } = applyNativeTargets(
+    resolvedBundles,
+    opts.nativeRegistry ?? loadVendoredNativeRegistry(),
+    confirmedLibraryUrls,
+  );
+  // `scriptApiCount` reports the archive's own docs, which the curated
+  // replacement does not change.
+  const scriptApiCounts = new Map(resolvedBundles.map((b) => [b.url, b.declarations.length]));
 
   // Only the *type* surface is filtered: a superseded bundle stays a declared
   // dependency below, so its scene sources still unpack and its version and pin
@@ -294,10 +350,12 @@ export async function runResolve(opts: RunResolveOptions): Promise<RunResolveRes
       namespaces,
       typeSurface: supersededByLibrary
         ? "vendored-library"
-        : namespaces.length > 0
-          ? "extension"
-          : "none",
-      scriptApiCount: bundle.declarations.length,
+        : confirmedNativeUrls.has(bundle.url)
+          ? "vendored-native"
+          : namespaces.length > 0
+            ? "extension"
+            : "none",
+      scriptApiCount: scriptApiCounts.get(bundle.url) ?? 0,
       assetOnly: bundle.assetOnly,
       resolvedVersion: bundle.resolvedVersion,
       pinStatus,

@@ -81,6 +81,7 @@
     "script-api-targets.json",
     "authored-targets.json",
     "openapi-targets.json",
+    "native-targets.json",
     "NOTICE",
     "!scripts/**/*.test.ts"
   ],

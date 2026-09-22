@@ -4529,6 +4529,38 @@ describe("dispatch resolve", () => {
     expect(out()).not.toContain("asset-only, skipped");
   });
 
+  test("the human path prints a confirmed curated native extension instead of asset-only, skipped", async () => {
+    const { io, out } = captureStreams();
+    const url = "https://github.com/selimanac/defold-daabbcc/archive/refs/tags/v3.0.8.zip";
+    writeProject(`[project]\ndependencies#0 = ${url}\n`);
+    const key = extensionArchiveKey(url);
+
+    const code = await dispatch(["resolve", cwd], io, {
+      resolveInternals: {
+        cacheDir: mkdtempSync(path.join(os.tmpdir(), "defold-typescript-ext-cache-")),
+        libraryRegistry: [],
+        libraryGeneratedDir: null,
+        download: async () => new TextEncoder().encode("z"),
+        readZip: (zipPath: string) => {
+          if (path.basename(path.dirname(zipPath)) !== key) {
+            throw new Error(`no fake archive for ${zipPath}`);
+          }
+          return {
+            entries: () => [
+              "defold-daabbcc-3.0.8/daabbcc/ext.manifest",
+              "defold-daabbcc-3.0.8/daabbcc/annotation.lua",
+            ],
+            read: () => "",
+          };
+        },
+      },
+    });
+
+    expect(code).toBe(0);
+    expect(out()).toContain(`  daabbcc <- ${url} (native extension)\n`);
+    expect(out()).not.toContain("asset-only, skipped");
+  });
+
   test("--json reports an unverified match with verified:false and no modules", async () => {
     const { io, out } = captureStreams();
     const url = "https://github.com/other-owner/mylib/archive/main.zip";

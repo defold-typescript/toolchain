@@ -209,4 +209,44 @@ describe("resolveExtensionDeclarations", () => {
     expect(bundles[0]?.declarations.map((d) => d.namespace)).toEqual(["alpha"]);
     expect(bundles[0]?.luaModules).toEqual(["lua.helper"]);
   });
+  test("records each ext.manifest's directory as manifestDirs, archive wrapper stripped", async () => {
+    const cacheDir = tmp();
+    const url = "https://github.com/selimanac/defold-daabbcc/archive/refs/tags/v3.0.8.zip";
+    const reads: string[] = [];
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(url)]: {
+        entries: [
+          "defold-daabbcc-3.0.8/daabbcc/ext.manifest",
+          "defold-daabbcc-3.0.8/daabbcc/src/extension.cpp",
+          "defold-daabbcc-3.0.8/other/nested/ext.manifest",
+          "defold-daabbcc-3.0.8/game.project",
+        ],
+        contents: { "defold-daabbcc-3.0.8/game.project": "[project]\n" },
+      },
+    };
+    const bundles = await resolveExtensionDeclarations([dep(url)], {
+      cacheDir,
+      download: someBytes,
+      readZip: makeReadZip(byKey, reads),
+    });
+    expect(bundles[0]?.manifestDirs).toEqual(["daabbcc", "other/nested"]);
+  });
+
+  test("an archive with no ext.manifest yields no manifestDirs", async () => {
+    const cacheDir = tmp();
+    const url = "https://github.com/owner/libfoo/archive/main.zip";
+    const reads: string[] = [];
+    const byKey: Record<string, FakeArchive> = {
+      [extensionArchiveKey(url)]: {
+        entries: ["libfoo-main/libfoo/core.lua", "libfoo-main/README.md"],
+        contents: {},
+      },
+    };
+    const bundles = await resolveExtensionDeclarations([dep(url)], {
+      cacheDir,
+      download: someBytes,
+      readZip: makeReadZip(byKey, reads),
+    });
+    expect(bundles[0]?.manifestDirs).toEqual([]);
+  });
 });

@@ -18,6 +18,7 @@ import {
   type LibraryTargets,
   type LualsTargets,
   mergeVendoredLibrariesBySourceId,
+  normalizeSourceId,
   type ScriptApiRegistryTargets,
   type VendoredLibrary,
 } from "./library-match";
@@ -129,6 +130,44 @@ function readAuthoredRegistryEntries(root: string): VendoredLibrary[] {
       targets: targets.map(({ repo, moduleId, namespace }) => ({ repo, moduleId, namespace })),
     };
     return buildAuthoredRegistryEntries(projected);
+  } catch {
+    return [];
+  }
+}
+
+// A native extension ships C++ and no Lua module, so it is matched by source id
+// and confirmed by the `<manifestDir>/ext.manifest` its archive ships rather than
+// by a require path. Its declaration is a curated ambient namespace the resolver
+// writes into the extension surface in place of anything the archive emits.
+export interface VendoredNativeExtension {
+  readonly sourceId: string;
+  readonly namespace: string;
+  readonly manifestDir: string;
+  readonly declarationPath: string;
+}
+
+// Read from `native-targets.json`; a missing or unparseable file degrades to no
+// native targets, mirroring the other lanes.
+export function loadVendoredNativeRegistry(
+  root: string | null = resolveLibraryTypesPackageRoot(),
+): VendoredNativeExtension[] {
+  if (root === null) {
+    return [];
+  }
+  const nativeTargetsPath = path.join(root, "native-targets.json");
+  if (!existsSync(nativeTargetsPath)) {
+    return [];
+  }
+  try {
+    const { targets } = JSON.parse(readFileSync(nativeTargetsPath, "utf8")) as {
+      targets: { repo: string; namespace: string; manifestDir: string; declaration: string }[];
+    };
+    return targets.map(({ repo, namespace, manifestDir, declaration }) => ({
+      sourceId: normalizeSourceId(repo),
+      namespace,
+      manifestDir,
+      declarationPath: path.join(root, declaration),
+    }));
   } catch {
     return [];
   }
