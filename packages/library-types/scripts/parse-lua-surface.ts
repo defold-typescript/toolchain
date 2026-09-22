@@ -46,6 +46,17 @@ export interface LuaSurface {
   members: LuaMember[];
 }
 
+export interface LuaSurfaceOptions {
+  /** The table the members hang off, for a source that never returns it. A LuaLS
+   * annotation file (`---@meta`) declares the module as a bare global and ends on its
+   * last stub, so there is no `return <name>` to derive the name from — and deriving
+   * one is not the reader's job when the caller already knows which namespace it
+   * vendored the file for. Supplying a name the source never assigns to reads an empty
+   * surface rather than throwing: the caller named the table, so an empty result is its
+   * own answer. */
+  moduleLocal?: string;
+}
+
 const RETURN_LINE = /^return\s+([A-Za-z_][A-Za-z0-9_]*)\s*;?\s*$/;
 const RETURN_SETMETATABLE = /^return\s+setmetatable\(\s*([A-Za-z_][A-Za-z0-9_]*)\s*,/;
 const IDENTIFIER = "[A-Za-z_][A-Za-z0-9_]*";
@@ -147,13 +158,14 @@ function readDoc(lines: string[], index: number): Pick<LuaMember, "doc" | "refus
 }
 
 /**
- * The public surface of a Lua module source: the module-local name it returns and
- * every member assigned to it at column 0, in source order. A name defined more
- * than once keeps its first position and its last definition, matching Lua.
+ * The public surface of a Lua module source: the module-local name it returns — or the
+ * one `options.moduleLocal` names — and every member assigned to it at column 0, in
+ * source order. A name defined more than once keeps its first position and its last
+ * definition, matching Lua.
  */
-export function parseLuaSurface(source: string): LuaSurface {
+export function parseLuaSurface(source: string, options: LuaSurfaceOptions = {}): LuaSurface {
   const lines = source.split("\n");
-  const moduleLocal = resolveModuleLocal(lines);
+  const moduleLocal = options.moduleLocal ?? resolveModuleLocal(lines);
   const definition = new RegExp(`^function\\s+${moduleLocal}\\.(${IDENTIFIER})\\s*\\(`);
   const assignment = new RegExp(`^${moduleLocal}\\.(${IDENTIFIER})\\s*=\\s*(.*)$`);
   const assignedFunction = /^function\s*\(/;

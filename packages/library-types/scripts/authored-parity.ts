@@ -605,6 +605,11 @@ export interface AuthoredCoverage {
    * name the C++ registers. `false` is a regression at any coverage, because every
    * declared member then sits under a global the runtime never installs. */
   moduleNameMatches?: boolean;
+  /** Ratcheted against zero rather than against a floor. On the authored lane a
+   * disagreeing member is already uncounted, so coverage carries it; on the native lane
+   * coverage is name-based and would read 1 over a declaration nobody can call with the
+   * arguments it names. Absent where the axis was not measured. */
+  arityMismatches?: { name: string }[];
 }
 
 const AUTHORED_FLOOR_AXES = ["callable", "field"] as const;
@@ -712,6 +717,11 @@ export function authoredFloorRegressions(
     if (artifact.moduleNameMatches === false) {
       regressions.push(
         `${artifact.namespace}: the declared namespace is not the module name its C++ registers — correct the declaration`,
+      );
+    }
+    for (const mismatch of artifact.arityMismatches ?? []) {
+      regressions.push(
+        `${artifact.namespace}.${mismatch.name}: the declared parameter count disagrees with upstream — correct the declaration, or record why upstream is wrong`,
       );
     }
     const floor = floors[path];
