@@ -38,6 +38,7 @@
   "nakama.socket": "Realtime Nakama socket: chat channels, matches, matchmaking, parties, status and their event listeners.",
   "nakama.util.log": "Logging helpers for the Nakama Defold client.",
   "narrator": "The Ink language parser and runtime implementation in Lua",
+  "node_repeat": "GUI box node texture repeat (tiling) shader helper: reads a box node's atlas animation and drives the repeat material's constants.",
   "orthographic.camera": "Orthographic camera functionality for the Defold game engine",
   "panthera": "Panthera Animation Runtime for Defold Game Engine",
   "platypus": "Defold platformer engine",
@@ -48,6 +49,7 @@
   "saver.saver": "Persistent save helpers for Defold: typed tables, versioned slots, and atomic writes.",
   "saver.storage": "Key-value storage over the Defold saver state: typed number, string, and boolean getters and setters.",
   "shutter": "Shutter is a library for 2D camera functionality in a Defold game engine project.",
+  "sprite_repeat": "Sprite texture repeat (tiling) shader helper: reads a sprite's atlas animation and drives the repeat material's constants.",
   "squid": "Squid is a standalone injectable system for saveable logging of user logs, errors and crashes for Defold.",
   "yagames": "YaGames is the Yandex.Games SDK implementation for the Defold game engine."
 }

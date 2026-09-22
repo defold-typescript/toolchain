@@ -9,7 +9,11 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
-## v0.38.1
+## v0.39.0
+
+### Improved
+
+- **[sprite_repeat](/api/sprite_repeat) and [node_repeat](/api/node_repeat)** (`Dragosha/defold-sprite-repeat`, tag `v0.3`) now have types, so [`resolve`](./resolve.md) gives a project that depends on the library typed imports for tiling a sprite or GUI box node texture, including the `animate`, `stop` and `update` calls on the handle `create` returns.
 
 ### Fixed
 
