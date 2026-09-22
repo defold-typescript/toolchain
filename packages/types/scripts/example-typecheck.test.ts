@@ -32,7 +32,7 @@ import {
 const surfaces = await exampleSurfaces();
 const store = loadTranslations();
 const pins = readPins();
-const { computed, timings } = runGate(store, surfaces);
+const { computed, timings, entries } = runGate(store, surfaces);
 
 const found = surfaces.find((surface) => surface.id === "defold-1.13.1/kinds/script");
 if (!found) throw new Error("the default script-kind surface is missing");
@@ -42,7 +42,7 @@ const FIXED = ["render.clear", "zlib.inflate", "factory.create"] as const;
 
 function diagnosticsFor(body: string): ExampleDiagnostic[] {
   const unit = exampleUnit(scriptSurface, "fixture.probe", "0000000000000000", body);
-  return compileSurface(scriptSurface, [unit]).get(unit.identity) ?? [];
+  return compileSurface(scriptSurface, [unit]).units.get(unit.identity) ?? [];
 }
 
 describe("the gate against the committed pins", () => {
@@ -177,7 +177,7 @@ describe("what the compile is sensitive to", () => {
       "0",
       "const n: number = vmath.vector3(1, 2, 3);",
     );
-    const out = compileSurface(scriptSurface, [broken, typed]);
+    const out = compileSurface(scriptSurface, [broken, typed]).units;
     expect((out.get(broken.identity) ?? []).some((d) => d.code === 1487 || d.code === 1488)).toBe(
       true,
     );
@@ -318,6 +318,50 @@ describe("factory binding — the pairs the gate never compiles", () => {
     const compiled = new Set(timings.map((timing) => timing.surfaceId));
     expect([...compiled].sort()).toEqual(surfaces.map((surface) => surface.id).sort());
     for (const timing of timings) expect(timing.units).toBeGreaterThan(0);
+  });
+});
+
+describe("surface entry resolution", () => {
+  test("every surface resolves its own entry", () => {
+    const offenders: string[] = [];
+    for (const surface of surfaces) {
+      const entry = entries.get(surface.id);
+      if (entry === undefined) {
+        offenders.push(`${surface.id} — the gate built no program for this surface`);
+        continue;
+      }
+      for (const diagnostic of entry) {
+        offenders.push(`${surface.id} — TS${diagnostic.code} ${diagnostic.text}`);
+      }
+    }
+    if (offenders.length > 0) {
+      throw new Error(
+        "a surface the gate compiles against cannot resolve its own declarations, so every\n" +
+          "unit judged on it is judged against `any`:\n" +
+          `${offenders.slice(0, 20).join("\n")}${
+            offenders.length > 20 ? `\n  +${offenders.length - 20} more` : ""
+          }`,
+      );
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  test("a hook table the factory rejects fails on every kind surface", () => {
+    const silent: string[] = [];
+    for (const surface of surfaces) {
+      const factory = surface.exports.values.find((name) => kindFactoryNames().includes(name));
+      if (factory === undefined) continue;
+      const unit = exampleUnit(
+        surface,
+        "fixture.rejected-hook-table",
+        "0000000000000000",
+        `export default ${factory}({\n  init() {\n    return { a: 1 };\n  },\n  not_a_hook: 5,\n  update(self: number) {},\n});`,
+      );
+      if ((compileSurface(surface, [unit]).units.get(unit.identity) ?? []).length === 0) {
+        silent.push(surface.id);
+      }
+    }
+    expect(silent).toEqual([]);
   });
 });
 

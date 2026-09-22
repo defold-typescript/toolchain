@@ -35,10 +35,10 @@ import {
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 
 // A materialized surface exists only as bytes, but its module specifiers still
-// resolve like a real one: `@defold-typescript/types/lifecycle` is found by
-// walking up to the package's own `node_modules`. Rooting the virtual tree
-// inside the package is what makes that walk reach the same place the CLI's
-// on-disk `.defold-types/<id>/` does.
+// resolve like a real one: its relative `../<module>` imports reach the sibling
+// virtual files, and `@defold-typescript/types/lifecycle` reaches the package's
+// own `src/` through the gate's `paths` mapping (`example-typecheck.ts`), which
+// stands in for the install the CLI's on-disk `.defold-types/<id>/` sits inside.
 const VIRTUAL_ROOT = resolve(PACKAGE_ROOT, ".example-gate");
 
 export interface SurfaceFile {
