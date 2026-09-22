@@ -18,6 +18,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Fixed
 
+- **The `@example` on 21 [gui](/api/gui) and [render](/api/render) functions called `defineScript`**, a factory a gui script or render script cannot import, so copying the example out of the declaration or the API reference did not build. Each now calls the factory its own script kind exports — `defineGuiScript` or `defineRenderScript`.
 - `watch` no longer repeats "attached to Defold editor" after the machine sleeps or the editor's console connection drops, and no longer repeats the editor version warning with it.
 
 ## v0.38.0

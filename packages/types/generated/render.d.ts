@@ -135,7 +135,7 @@ declare global {
      * @param binding - texture binding, either by texture unit, string or hash that should be disabled
      * @example
      * ```ts
-     * export default defineScript({
+     * export default defineRenderScript({
      *   update(self, dt) {
      *     render.enable_texture(0, self.my_render_target, graphics.BUFFER_TYPE_COLOR0_BIT);
      *     // draw a predicate with the render target available as texture 0 in the predicate
@@ -164,7 +164,7 @@ declare global {
      * constant_buffer optional constants to use while rendering
      * @example
      * ```ts
-     * export default defineScript({
+     * export default defineRenderScript({
      *   init() {
      *     const color_params = {
      *       format: graphics.TEXTURE_FORMAT_RGBA,
@@ -216,7 +216,7 @@ declare global {
      * int How to sort draw order for world-ordered entries. Default uses the renderer's preferred world sorting (back-to-front).
      * @example
      * ```ts
-     * export default defineScript({
+     * export default defineRenderScript({
      *   init() {
      *     // define a predicate matching anything with material tag "my_tag"
      *     return { my_pred: render.predicate([hash("my_tag")]) };
@@ -258,7 +258,7 @@ declare global {
      * - render.FRUSTUM_PLANES_ALL : All sides of the frustum.
      * @example
      * ```ts
-     * export default defineScript({
+     * export default defineRenderScript({
      *   update(self, dt) {
      *     // draw debug visualization
      *     render.draw_debug3d();
@@ -345,7 +345,7 @@ declare global {
      * - `graphics.BUFFER_TYPE_COLOR3_BIT`
      * @example
      * ```ts
-     * export default defineScript({
+     * export default defineRenderScript({
      *   update(self, dt) {
      *     // enable target so all drawing is done to it
      *     render.set_render_target(self.my_render_target);
@@ -364,7 +364,7 @@ declare global {
      * });
      *
      * // Or enable a render target by resource id:
-     * export default defineScript({
+     * export default defineRenderScript({
      *   update(self, dt) {
      *     render.set_render_target("my_rt_resource");
      *     render.draw(self.my_pred);
@@ -378,7 +378,7 @@ declare global {
      * });
      *
      * // Or bind a texture handle directly:
-     * export default defineScript({
+     * export default defineRenderScript({
      *   update(self, dt) {
      *     // bind a texture to the texture unit 0
      *     render.enable_texture(0, self.my_texture_handle);
@@ -760,7 +760,7 @@ declare global {
      * ```ts
      * // Set listener and handle render context events.
      * // custom.render_script
-     * export default defineScript({
+     * export default defineRenderScript({
      *   init() {
      *     render.set_listener((self, event_type) => {
      *       if (event_type === render.CONTEXT_EVENT_CONTEXT_LOST) {
@@ -836,7 +836,7 @@ declare global {
      * ```ts
      * // How to set a render target and draw to it and then switch back to the default render target
      * // The render target defines the depth/stencil buffers as transient, when set_render_target is called the next time the buffers may be invalidated and allow for optimisations depending on driver support
-     * export default defineScript({
+     * export default defineRenderScript({
      *   update(self, dt) {
      *     // set render target so all drawing is done to it
      *     render.set_render_target(self.my_render_target, {
@@ -853,7 +853,7 @@ declare global {
      * });
      *
      * // Or set the render target by a render target resource identifier:
-     * export default defineScript({
+     * export default defineRenderScript({
      *   update(self, dt) {
      *     render.set_render_target("my_rt_resource");
      *
@@ -992,7 +992,7 @@ declare global {
      * ```ts
      * // How to set the view and projection matrices according to
      * // the values supplied by a camera.
-     * export default defineScript({
+     * export default defineRenderScript({
      *   init() {
      *     return {
      *       view: vmath.matrix4(),

@@ -18,7 +18,12 @@ import { relative, resolve } from "node:path";
 import ts from "typescript";
 import type { TranslationStore } from "../src/example-store";
 import { type ExampleDiagnostic, PINS_PATH, type PinFile } from "./example-pins";
-import { type ExampleSurface, exampleIdentity, translationOwnership } from "./example-surfaces";
+import {
+  type ExampleSurface,
+  exampleIdentity,
+  factoryBoundOwnership,
+  translationOwnership,
+} from "./example-surfaces";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const TSCONFIG_PATH = resolve(PACKAGE_ROOT, "tsconfig.json");
@@ -320,7 +325,7 @@ export function runGate(
   surfaces: readonly ExampleSurface[],
   extraUnits: ReadonlyMap<string, readonly ExampleUnit[]> = new Map(),
 ): GateResult {
-  const owners = translationOwnership(store, surfaces);
+  const owners = factoryBoundOwnership(store, translationOwnership(store, surfaces), surfaces);
   const options = gateCompilerOptions();
   const bySurface = new Map<string, ExampleUnit[]>();
   for (const [fqn, entries] of Object.entries(store)) {
@@ -421,16 +426,6 @@ export function gateFailures(
     });
   }
   return failures;
-}
-
-/**
- * The kind factories a body can call. A translation that calls one is script-kind
- * code by construction, and only the surfaces exporting that name can satisfy it
- * — so `Cannot find name '<factory>'` on a sibling kind is a fact about the
- * surface, not a defect in the example.
- */
-export function factoryAbsenceDiagnostic(diagnostic: ExampleDiagnostic): boolean {
-  return diagnostic.code === 2304 && /^Cannot find name 'define[A-Za-z]+'\.$/.test(diagnostic.text);
 }
 
 if (import.meta.main) {

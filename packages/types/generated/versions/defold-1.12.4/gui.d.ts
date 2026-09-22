@@ -536,7 +536,7 @@ declare global {
      *   gui.animate(node, gui.PROP_COLOR, vmath.vector4(0, 0, 0, 0), gui.EASING_OUTQUAD, 0.5, 2.0);
      * }
      *
-     * export default defineScript({
+     * export default defineGuiScript({
      *   init(self) {
      *     // fetch the node we want to animate
      *     const my_node = gui.get_node("my_node");
@@ -548,7 +548,7 @@ declare global {
      * });
      *
      * // How to animate a node's y position using a crazy custom easing curve:
-     * export default defineScript({
+     * export default defineGuiScript({
      *   init(self) {
      *     const values = [
      *       0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -666,7 +666,7 @@ declare global {
      * @param texture - texture id
      * @example
      * ```ts
-     * export default defineScript({
+     * export default defineGuiScript({
      *   init(self) {
      *     // Create a texture.
      *     if (gui.new_texture("temp_tx", 10, 10, "rgb", "\0".repeat(10 * 10 * 3))) {
@@ -886,7 +886,7 @@ declare global {
      * @example
      * ```ts
      * // Get the text metrics for a text
-     * export default defineScript({
+     * export default defineGuiScript({
      *   init(self) {
      *     const node = gui.get_node("name");
      *     const font_name = gui.get_font(node);
@@ -1331,7 +1331,7 @@ declare global {
      * @example
      * ```ts
      * // How to create a texture and apply it to a new box node:
-     * export default defineScript({
+     * export default defineGuiScript({
      *   init(self) {
      *     const w = 200;
      *     const h = 300;
@@ -1507,7 +1507,7 @@ declare global {
      * @returns optional boolean to signal if the input should be consumed (not passed on to others) or not, default is false
      * @example
      * ```ts
-     * export default defineScript({
+     * export default defineGuiScript({
      *   on_input(self, action_id, action) {
      *     // check for input
      *     if (action_id === hash("my_action")) {
@@ -1588,7 +1588,7 @@ declare global {
      *   // Take action after animation has played.
      * }
      *
-     * export default defineScript({
+     * export default defineGuiScript({
      *   init(self) {
      *     // Create a new node and set the texture to a flipbook animation
      *     const node = gui.get_node("button_node");
@@ -1638,7 +1638,7 @@ declare global {
      *   }
      * }
      *
-     * export default defineScript({
+     * export default defineGuiScript({
      *   init(self) {
      *     gui.play_particlefx(gui.get_node("particlefx"), emitter_state_change);
      *   },
@@ -1757,7 +1757,7 @@ declare global {
      * gui.set(node, "tint_array.x", 1, { index: 4 });
      *
      * // Set a named property
-     * export default defineScript({
+     * export default defineGuiScript({
      *   on_message(self, message_id, message) {
      *     if (message_id === hash("set_font")) {
      *       gui.set(msg.url(), "fonts", message.font, { key: "my_font_name" });
@@ -2202,7 +2202,7 @@ declare global {
      * @returns setting the data was successful
      * @example
      * ```ts
-     * export default defineScript({
+     * export default defineGuiScript({
      *   init(self) {
      *     const w = 200;
      *     const h = 300;
