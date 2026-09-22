@@ -15,6 +15,9 @@ interface Element {
   name: string;
   global?: boolean;
   returnvalues?: { types: string[] }[];
+  types?: string[];
+  extends?: string[];
+  properties?: { name: string; is_optional?: string }[];
 }
 
 function target(namespace: string): NativeTarget {
@@ -45,6 +48,26 @@ describe("lowerNativeApiDoc", () => {
     for (const { namespace } of readNativeTargets(PACKAGE_ROOT)) {
       expect(lowered(namespace).elements.filter((e) => e.global)).toEqual([]);
     }
+  });
+
+  test("defines the options shape share.file names", () => {
+    const options = lowered("share").elements.find((e) => e.name === "FileOptions");
+    expect(options?.type).toBe("TYPEDEF");
+    expect(options?.properties?.map((p) => [p.name, p.is_optional])).toEqual([
+      ["type", "True"],
+      ["text", "True"],
+      ["title", "True"],
+      ["url", "True"],
+    ]);
+  });
+
+  test("defines daabbcc's query results and the hit shapes they name", () => {
+    const byName = new Map(lowered("daabbcc").elements.map((e) => [e.name, e]));
+    expect(byName.get("QueryResult")?.types).toEqual(["number[]", "BitsHit[]", "ManifoldHit[]"]);
+    expect(byName.get("SortedQueryResult")?.types).toContain("SortedHit[]");
+    expect(byName.get("ManifoldHit")?.extends).toEqual(["SortedHit"]);
+    expect(byName.get("SortedHit")?.extends).toEqual(["BitsHit"]);
+    expect(byName.get("BitsHit")?.properties?.map((p) => p.name)).toContain("id");
   });
 
   test("keeps tile_raycast.cast's hit-or-miss return union", () => {

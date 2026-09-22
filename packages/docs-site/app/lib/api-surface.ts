@@ -462,23 +462,18 @@ export function groupFunctionSymbols(functions: ApiSymbol[]): ApiSymbolGroup[] {
  * owning shape, in first-appearance order, labeled with the bare shape name.
  * `apiModuleSymbols` projects every typedef member as `<Shape>.<member>`, so the
  * split is at the *first* `.` — a member whose own name carries a dot stays with
- * its shape rather than minting one. Giving each shape a heading is what makes a
- * shape linkable at all: a signature token naming it resolves to that heading's
- * anchor. A name with no `.` owns no shape, so those collect in one trailing
- * `Types` group. Input order is preserved within every group. Presentation-only
- * — does not feed the search index or `apiModuleSymbols`.
+ * its shape rather than minting one. A dotless name is the shape's own definition
+ * symbol and heads that shape's group. Giving each shape a heading is what makes
+ * a shape linkable at all: a signature token naming it resolves to that heading's
+ * anchor. Input order is preserved within every group. Presentation-only — does
+ * not feed the search index or `apiModuleSymbols`.
  */
 export function groupTypeSymbols(types: ApiSymbol[]): ApiSymbolGroup[] {
-  const loose: ApiSymbol[] = [];
   const byShape = new Map<string, ApiSymbol[]>();
 
   for (const type of types) {
     const dot = type.name.indexOf(".");
-    if (dot === -1) {
-      loose.push(type);
-      continue;
-    }
-    const shape = type.name.slice(0, dot);
+    const shape = dot === -1 ? type.name : type.name.slice(0, dot);
     const bucket = byShape.get(shape);
     if (bucket) bucket.push(type);
     else byShape.set(shape, [type]);
@@ -486,7 +481,6 @@ export function groupTypeSymbols(types: ApiSymbol[]): ApiSymbolGroup[] {
 
   const groups: ApiSymbolGroup[] = [];
   for (const [shape, symbols] of byShape) groups.push({ label: shape, symbols });
-  if (loose.length > 0) groups.push({ label: "Types", symbols: loose });
   return groups;
 }
 
@@ -684,10 +678,29 @@ function variableSignature(v: ApiVariable, mapType: MapType = mapDocType): strin
   return `${v.name}${v.isOptional ? "?" : ""}: ${typeList(v.types, mapType)}`;
 }
 
-function memberBearingTypedefs(typedefs: ApiTypedef[]): ApiTypedef[] {
+function renderableTypedefs(typedefs: ApiTypedef[]): ApiTypedef[] {
   return typedefs.filter(
-    (td) => (td.functions?.length ?? 0) > 0 || (td.properties?.length ?? 0) > 0,
+    (td) =>
+      (td.functions?.length ?? 0) > 0 ||
+      (td.properties?.length ?? 0) > 0 ||
+      typedefDefinitionSignature(td) !== undefined,
   );
+}
+
+/**
+ * The line that defines a shape rather than one of its members — a union alias's
+ * arms, or an interface's parents. `undefined` for a typedef that carries
+ * neither, which renders through its members alone.
+ */
+function typedefDefinitionSignature(
+  td: ApiTypedef,
+  mapType: MapType = mapDocType,
+): string | undefined {
+  const arms = normalizeTypes(td.types ?? []).map(mapType);
+  if (arms.length > 0) return `type ${td.name} = ${arms.join(" | ")}`;
+  const parents = normalizeTypes(td.extends ?? []).map(mapType);
+  if (parents.length > 0) return `interface ${td.name} extends ${parents.join(", ")}`;
+  return undefined;
 }
 
 function typeMemberName(typeName: string, memberName: string): string {
@@ -846,11 +859,13 @@ export function apiModuleMarkdown(
     }
   }
 
-  const typedefs = memberBearingTypedefs(m.typedefs);
+  const typedefs = renderableTypedefs(m.typedefs);
   if (typedefs.length > 0) {
     lines.push("## Types", "");
     for (const td of typedefs) {
       lines.push(`### ${td.name}`, "");
+      const definition = typedefDefinitionSignature(td, mapType);
+      if (definition) lines.push(`\`${definition}\``, "");
       for (const fn of td.functions ?? []) {
         lines.push(`#### \`${functionSignature(fn, mapType, isLibrary)}\``, "");
         const doc = htmlToDocText(fn.description || fn.brief);
@@ -1067,7 +1082,19 @@ export function apiModuleSymbols(
     symbols.push(symbol);
   }
 
-  for (const td of memberBearingTypedefs(m.typedefs)) {
+  for (const td of renderableTypedefs(m.typedefs)) {
+    const definition = typedefDefinitionSignature(td, mapType);
+    if (definition) {
+      symbols.push({
+        kind: "type",
+        name: td.name,
+        signature: definition,
+        docMarkdown: "",
+        parameters: [],
+        returnValues: [],
+        ...(td.global ? { global: true } : {}),
+      });
+    }
     for (const fn of td.functions ?? []) {
       const symbol: ApiSymbol = {
         kind: "type",

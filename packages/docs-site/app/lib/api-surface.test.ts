@@ -13,6 +13,7 @@ import {
   symbolIdentityKey,
 } from "@defold-typescript/types";
 import { canonicalApiPages } from "./api-content";
+import { apiSignatureSymbolLinks } from "./api-page-render";
 import {
   type ApiPage,
   type ApiSymbol,
@@ -2733,20 +2734,73 @@ describe("groupTypeSymbols", () => {
     expect(groups).toEqual([{ label: "Config", symbols: [typeSymbol("Config.window.width")] }]);
   });
 
-  test("collects dotless names into a single trailing Types group", () => {
+  test("heads a shape's group with its dotless definition symbol", () => {
     const groups = groupTypeSymbols([
-      typeSymbol("loose"),
+      typeSymbol("Shape"),
       typeSymbol("Shape.member"),
       typeSymbol("other"),
     ]);
     expect(groups).toEqual([
-      { label: "Shape", symbols: [typeSymbol("Shape.member")] },
-      { label: "Types", symbols: [typeSymbol("loose"), typeSymbol("other")] },
+      { label: "Shape", symbols: [typeSymbol("Shape"), typeSymbol("Shape.member")] },
+      { label: "other", symbols: [typeSymbol("other")] },
     ]);
   });
 
   test("yields an empty array for empty input", () => {
     expect(groupTypeSymbols([])).toEqual([]);
+  });
+});
+
+describe("native helper shape definitions", () => {
+  const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+  const page = (namespace: string): ApiPage => {
+    const found = pages.find((p) => p.route === `/api/${namespace}`);
+    if (!found) throw new Error(`no /api/${namespace} page`);
+    return found;
+  };
+  const typeGroups = (namespace: string) =>
+    groupTypeSymbols(
+      apiModuleSymbols(page(namespace), page(namespace).translations).filter(
+        (s) => s.kind === "type",
+      ),
+    );
+  const group = (namespace: string, label: string) =>
+    typeGroups(namespace).find((g) => g.label === label);
+
+  test("heads a union alias's group with a definition naming its arms", () => {
+    const definition = group("daabbcc", "QueryResult")?.symbols[0];
+    expect(definition?.name).toBe("QueryResult");
+    expect(definition?.signature).toContain("BitsHit[]");
+    expect(definition?.signature).toContain("ManifoldHit[]");
+  });
+
+  test("heads an interface's group with a definition naming its parent", () => {
+    const definition = group("daabbcc", "ManifoldHit")?.symbols[0];
+    expect(definition?.name).toBe("ManifoldHit");
+    expect(definition?.signature).toContain("SortedHit");
+  });
+
+  test("keeps a helper interface's members as type symbols", () => {
+    const names = group("daabbcc", "BitsHit")?.symbols.map((s) => s.name) ?? [];
+    expect(names).toContain("BitsHit.id");
+  });
+
+  test("links a signature token to the page that defines the shape", () => {
+    const daabbcc = apiSignatureSymbolLinks(pages, page("daabbcc"));
+    for (const shape of ["QueryResult", "SortedQueryResult", "BitsHit"]) {
+      expect(daabbcc.get(shape)).toMatchObject({ route: "/api/daabbcc" });
+    }
+    expect(apiSignatureSymbolLinks(pages, page("share")).get("FileOptions")).toMatchObject({
+      route: "/api/share",
+    });
+  });
+
+  test("leaves a signature whose union is a return type unchanged", () => {
+    const cast = apiModuleSymbols(page("tile_raycast"), page("tile_raycast").translations).find(
+      (s) => s.name === "cast",
+    );
+    expect(cast?.signature).toContain("[ false ]");
+    expect(cast?.signature).toContain("[ true,");
   });
 });
 
