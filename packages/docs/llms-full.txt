@@ -4157,6 +4157,9 @@ the named directory, so a repo-name collision alone writes nothing.
 | Extension | Pinned at | Namespace | Confirmed by        |
 | --------- | --------- | --------- | ------------------- |
 | [selimanac/defold-daabbcc](https://github.com/selimanac/defold-daabbcc) | `v3.0.8` | `daabbcc` | `daabbcc/ext.manifest` |
+| [britzl/defold-sharing](https://github.com/britzl/defold-sharing) | `4.7.0` | `share` | `share/ext.manifest` |
+| [selimanac/defold-uuid4](https://github.com/selimanac/defold-uuid4) | `v1.0` | `uuid4` | `uuid4/ext.manifest` |
+| [selimanac/defold-tile-raycast](https://github.com/selimanac/defold-tile-raycast) | `v2.0.1` | `tile_raycast` | `tile-raycast/ext.manifest` |
 
 The namespace lands in `.defold-types/extensions/` like a `.script_api`
 namespace and needs no import:
@@ -4170,6 +4173,11 @@ The curated file wins over any `.script_api` the same archive ships, and the
 `--json` report marks the dependency `typeSurface: "vendored-native"`. A project
 that still depends on the old `selimanac/DAABBCC` URL is not matched; point
 the dependency at `selimanac/defold-daabbcc`.
+
+Each namespace types what the extension's C++ actually registers, which can
+differ from its README. `tile_raycast` registers its tile reader as `set_at` and
+its writer as `get_at`, so `tile_raycast.set_at(x, y)` returns the tile ID and
+`tile_raycast.get_at(x, y, tile_id)` sets it.
 
 #### Dependency scene sources
 
