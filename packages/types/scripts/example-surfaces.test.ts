@@ -7,7 +7,11 @@ import {
   exampleSurfaces,
   factoryBoundOwnership,
   kindFactoryNames,
+  moduleBoundOwnership,
+  moduleKey,
+  moduleNamespaces,
   refDocSkippedTargets,
+  referencedNamespaces,
   translationOwnership,
   unownedTranslations,
 } from "./example-surfaces";
@@ -253,6 +257,129 @@ describe("factory-bound ownership", () => {
         }
       }
     }
+  });
+});
+
+describe("module-bound ownership", () => {
+  const surfaceOf = (id: string) => {
+    const surface = surfaces.find((candidate) => candidate.id === id);
+    if (!surface) throw new Error(`no surface ${id}`);
+    return surface;
+  };
+
+  function bodyOf(fqn: string): string {
+    const entries = store[fqn] ?? [];
+    const only = entries.length === 1 ? entries[0] : undefined;
+    if (!only) throw new Error(`${fqn}: expected one stored body, got ${entries.length}`);
+    return only.ts;
+  }
+
+  function bindStored(fqn: string): string[] {
+    const bound = moduleBoundOwnership(store, ownership, surfaces);
+    const identities = (store[fqn] ?? []).map((entry) => exampleIdentity(fqn, entry.sourceHash));
+    return [...new Set(identities.flatMap((identity) => bound.get(identity) ?? []))].sort();
+  }
+
+  function carries(id: string, namespace: string): boolean {
+    const modules = surfaceOf(id).modules;
+    return (
+      modules.has(moduleKey(namespace, "runtime")) || modules.has(moduleKey(namespace, "editor"))
+    );
+  }
+
+  test("the narrowing vocabulary is the surfaces' own module set, not a hand-list", () => {
+    const namespaces = moduleNamespaces(surfaces);
+    expect(namespaces.size).toBeGreaterThan(0);
+
+    // Both directions go through the production key builder, so a test-local
+    // split of `lane:namespace` never stands in for the function under test.
+    const uncovered: string[] = [];
+    for (const surface of surfaces) {
+      for (const key of surface.modules) {
+        const covered = [...namespaces].some(
+          (namespace) =>
+            moduleKey(namespace, "runtime") === key || moduleKey(namespace, "editor") === key,
+        );
+        if (!covered) uncovered.push(`${surface.id}: ${key}`);
+      }
+    }
+    expect(uncovered).toEqual([]);
+
+    const invented = [...namespaces].filter(
+      (namespace) => !surfaces.some((surface) => carries(surface.id, namespace)),
+    );
+    expect(invented).toEqual([]);
+
+    for (const namespace of ["render", "gui", "editor"])
+      expect(namespaces.has(namespace)).toBe(true);
+  });
+
+  test("a body reaching a second namespace reports both", () => {
+    const referenced = referencedNamespaces(
+      bodyOf("camera.get_cameras"),
+      moduleNamespaces(surfaces),
+    );
+    expect([...referenced].sort()).toEqual(["camera", "render"]);
+  });
+
+  test("a namespace named only inside a string literal is not a reference", () => {
+    const body = bodyOf("editor.create_resources");
+    expect(body).toContain("go.property");
+    expect(referencedNamespaces(body, moduleNamespaces(surfaces))).toEqual(["editor"]);
+  });
+
+  test("a namespace name used as a local or a property is not a reference", () => {
+    const referenced = referencedNamespaces(
+      "const render = 1;\nconst n = self.render;\n",
+      moduleNamespaces(surfaces),
+    );
+    expect(referenced).toEqual([]);
+  });
+
+  test("a body reaching a restricted namespace keeps only the surfaces carrying it", () => {
+    const kept = bindStored("camera.get_cameras");
+    expect(kept.length).toBeGreaterThan(0);
+    expect(kept).toContain("defold-1.13.1");
+    expect(kept).toContain("defold-1.13.1/kinds/render-script");
+    // `camera` alone would keep these; the body also calls `render.*`, so a
+    // predicate satisfied by any one referenced namespace fails here.
+    expect(kept).not.toContain("defold-1.13.1/kinds/script");
+    expect(kept).not.toContain("defold-1.13.1/kinds/gui-script");
+    for (const id of kept) expect(carries(id, "render")).toBe(true);
+  });
+
+  test("a namespace carried in the editor lane satisfies a reference to it", () => {
+    const owners = ownersOf("editor.create_resources");
+    expect(owners.length).toBeGreaterThan(0);
+    expect(bindStored("editor.create_resources")).toEqual(owners);
+  });
+
+  test("binding empties no owner list on the committed store", () => {
+    const bound = moduleBoundOwnership(store, ownership, surfaces);
+    expect(bound.size).toBe(ownership.size);
+    const emptied = [...bound.entries()]
+      .filter(([, owners]) => owners.length === 0)
+      .map(([identity]) => identity)
+      .sort();
+    expect(emptied).toEqual([]);
+  });
+
+  test("every surface a bound body keeps carries every namespace that body references", () => {
+    const namespaces = moduleNamespaces(surfaces);
+    const bound = moduleBoundOwnership(store, ownership, surfaces);
+    const offenders: string[] = [];
+    for (const [fqn, entries] of Object.entries(store)) {
+      for (const entry of entries) {
+        const identity = exampleIdentity(fqn, entry.sourceHash);
+        const referenced = referencedNamespaces(entry.ts, namespaces);
+        for (const id of bound.get(identity) ?? []) {
+          for (const namespace of referenced) {
+            if (!carries(id, namespace)) offenders.push(`${identity}: ${namespace} not on ${id}`);
+          }
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
   });
 });
 
