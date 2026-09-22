@@ -105,10 +105,13 @@ declare global {
      * @param definition - the chain definition
      * @example
      * ```ts
-     * const [chain, segments] = b2d.body.create_chain(body, {
-     *   vertices: [vmath.vector3(-64, 0, 0), vmath.vector3(0, 16, 0), vmath.vector3(64, 0, 0)],
-     *   prev_vertex: vmath.vector3(-96, 0, 0), next_vertex: vmath.vector3(96, 0, 0), friction: 0.6,
-     * });
+     * const body = b2d.get_body("#collisionobject");
+     * if (body !== undefined) {
+     *   const [chain, segments] = b2d.body.create_chain(body, {
+     *     vertices: [vmath.vector3(-64, 0, 0), vmath.vector3(0, 16, 0), vmath.vector3(64, 0, 0)],
+     *     prev_vertex: vmath.vector3(-96, 0, 0), next_vertex: vmath.vector3(96, 0, 0), friction: 0.6,
+     *   });
+     * }
      * ```
      */
     function create_chain(body: Opaque<"b2Body">, definition: Record<string | number, unknown>): LuaMultiReturn<[Opaque<"b2Chain">, { shape_id: number }[]]>;

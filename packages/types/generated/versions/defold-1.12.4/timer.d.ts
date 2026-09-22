@@ -20,11 +20,13 @@ declare global {
      * @returns if the timer was active, false if the timer is already cancelled / complete
      * @example
      * ```ts
-     * self.handle = timer.delay(1, true, () => print("print every second"));
-     * // ...
-     * const result = timer.cancel(self.handle);
-     * if (!result) {
-     *   print("the timer is already cancelled");
+     * function cancel_ticking(self) {
+     *   self.handle = timer.delay(1, true, () => print("print every second"));
+     *   // ...
+     *   const result = timer.cancel(self.handle);
+     *   if (!result) {
+     *     print("the timer is already cancelled");
+     *   }
      * }
      * ```
      */
@@ -62,8 +64,10 @@ declare global {
      *   }
      * }
      *
-     * self.counter = 0;
-     * timer.delay(1, true, call_every_second);
+     * function start_counting(self) {
+     *   self.counter = 0;
+     *   timer.delay(1, true, call_every_second);
+     * }
      * ```
      */
     function delay(delay: number, repeating: boolean, callback: (self: unknown, handle: unknown, time_elapsed: unknown) => void): number;
@@ -81,13 +85,15 @@ declare global {
      * boolean true = repeat timer until cancel, false = one-shot timer.
      * @example
      * ```ts
-     * self.handle = timer.delay(1, true, () => print("print every second"));
-     * // ...
-     * const result = timer.get_info(self.handle);
-     * if (!result) {
-     *   print("the timer is already cancelled or complete");
-     * } else {
-     *   pprint(result); // delay, time_remaining, repeating
+     * function report_ticking(self) {
+     *   self.handle = timer.delay(1, true, () => print("print every second"));
+     *   // ...
+     *   const result = timer.get_info(self.handle);
+     *   if (!result) {
+     *     print("the timer is already cancelled or complete");
+     *   } else {
+     *     pprint(result); // delay, time_remaining, repeating
+     *   }
      * }
      * ```
      */
@@ -99,11 +105,13 @@ declare global {
      * @returns if the timer was active, false if the timer is already cancelled / complete
      * @example
      * ```ts
-     * self.handle = timer.delay(1, true, () => print("print every second or manually by timer.trigger"));
-     * // ...
-     * const result = timer.trigger(self.handle);
-     * if (!result) {
-     *   print("the timer is already cancelled or complete");
+     * function trigger_ticking(self) {
+     *   self.handle = timer.delay(1, true, () => print("print every second or manually by timer.trigger"));
+     *   // ...
+     *   const result = timer.trigger(self.handle);
+     *   if (!result) {
+     *     print("the timer is already cancelled or complete");
+     *   }
      * }
      * ```
      */
