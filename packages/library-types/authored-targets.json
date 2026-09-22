@@ -428,6 +428,28 @@
       "generated": "generated/checkpoint.d.ts",
       "apiDoc": "api-doc/checkpoint.json",
       "upstreamLua": ["fixtures/upstream-lua/defold-checkpoint/checkpoint/checkpoint.lua"]
+    },
+    {
+      "repo": "https://github.com/Dragosha/defold-sprite-repeat",
+      "ref": "v0.3",
+      "license": "MIT",
+      "authored": "fixtures/authored/sprite_repeat.sprite_repeat.d.ts",
+      "moduleId": "sprite_repeat.sprite_repeat",
+      "namespace": "sprite_repeat",
+      "generated": "generated/sprite_repeat.d.ts",
+      "apiDoc": "api-doc/sprite_repeat.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-sprite-repeat/sprite_repeat/sprite_repeat.lua"]
+    },
+    {
+      "repo": "https://github.com/Dragosha/defold-sprite-repeat",
+      "ref": "v0.3",
+      "license": "MIT",
+      "authored": "fixtures/authored/node_repeat.node_repeat.d.ts",
+      "moduleId": "node_repeat.node_repeat",
+      "namespace": "node_repeat",
+      "generated": "generated/node_repeat.d.ts",
+      "apiDoc": "api-doc/node_repeat.json",
+      "upstreamLua": ["fixtures/upstream-lua/defold-sprite-repeat/node_repeat/node_repeat.lua"]
     }
   ]
 }

@@ -1,0 +1,215 @@
+{
+  "info": {
+    "namespace": "node_repeat",
+    "brief": "",
+    "description": ""
+  },
+  "elements": [
+    {
+      "type": "VARIABLE",
+      "name": "x_ratio",
+      "brief": "The horizontal stretch of the window relative to the GUI's design size, divided",
+      "description": "The horizontal stretch of the window relative to the GUI's design size, divided\nby the smaller of the two stretches. Starts at `1`; `get_screen_aspect_ratio`\nupdates it.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "VARIABLE",
+      "name": "y_ratio",
+      "brief": "The vertical stretch of the window relative to the GUI's design size, divided by",
+      "description": "The vertical stretch of the window relative to the GUI's design size, divided by\nthe smaller of the two stretches. Starts at `1`; `get_screen_aspect_ratio`\nupdates it.",
+      "types": [
+        "number"
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "create",
+      "brief": "Reads an atlas animation's frames for a GUI box node that uses the repeat",
+      "description": "Reads an atlas animation's frames for a GUI box node that uses the repeat\nmaterial, and returns a handle that applies them. Call it from a GUI script.\nApply the repeat material to the node first, and disable sprite trim mode for\nthe atlas images: every frame must have exactly 8 UV values, or this asserts.\nWalks the atlas animation's frame list, so it needs Defold 1.12.3 or later.",
+      "parameters": [
+        {
+          "name": "node_or_string",
+          "doc": "The box node, or its id.",
+          "types": [
+            "Opaque<\"node\"> | string"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "animation_id",
+          "doc": "The atlas animation to read. Pass `undefined` to use the\nnode's current flipbook.",
+          "types": [
+            "Hash | string | undefined"
+          ],
+          "is_optional": "False"
+        },
+        {
+          "name": "atlas_path",
+          "doc": "The atlas resource path, passed to `resource.get_atlas`. Asserted\npresent.",
+          "types": [
+            "Hash | string"
+          ],
+          "is_optional": "False"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "",
+          "types": [
+            "NodeRepeatAnimation"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "get_screen_aspect_ratio",
+      "brief": "Measures how the window is stretched relative to the GUI's design size, stores",
+      "description": "Measures how the window is stretched relative to the GUI's design size, stores\nthe result in `x_ratio` and `y_ratio`, and returns it. The smaller ratio is\nalways `1`. Call it from a GUI script.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "",
+          "doc": "The horizontal and vertical ratios.",
+          "types": [
+            "LuaMultiReturn<[ number, number ]>"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "NodeRepeatAnimation",
+      "functions": [
+        {
+          "type": "FUNCTION",
+          "name": "animate",
+          "brief": "Applies the first frame and the repeat factors to the node. When the",
+          "description": "Applies the first frame and the repeat factors to the node. When the\nanimation has more than one frame and a non-zero `fps`, starts a repeating\ntimer that steps through the frames.",
+          "parameters": [
+            {
+              "name": "repeat_x",
+              "doc": "How many times the image repeats horizontally.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            },
+            {
+              "name": "repeat_y",
+              "doc": "How many times the image repeats vertically.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "False"
+            }
+          ],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "stop",
+          "brief": "Cancels the playback timer, if one is running.",
+          "description": "Cancels the playback timer, if one is running.",
+          "parameters": [],
+          "returnvalues": []
+        },
+        {
+          "type": "FUNCTION",
+          "name": "update",
+          "brief": "Changes the repeat factors and applies them to the node. A factor left out",
+          "description": "Changes the repeat factors and applies them to the node. A factor left out\nkeeps its current value.",
+          "parameters": [
+            {
+              "name": "repeat_x",
+              "doc": "How many times the image repeats horizontally.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            },
+            {
+              "name": "repeat_y",
+              "doc": "How many times the image repeats vertically.",
+              "types": [
+                "number"
+              ],
+              "is_optional": "True"
+            }
+          ],
+          "returnvalues": []
+        }
+      ],
+      "properties": [
+        {
+          "name": "frames",
+          "brief": "Every frame of the animation, in playback order.",
+          "description": "Every frame of the animation, in playback order.",
+          "types": [
+            "RepeatFrame[]"
+          ]
+        },
+        {
+          "name": "width",
+          "brief": "The animation's width, from the atlas.",
+          "description": "The animation's width, from the atlas.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "height",
+          "brief": "The animation's height, from the atlas.",
+          "description": "The animation's height, from the atlas.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "fps",
+          "brief": "The animation's playback rate, from the atlas.",
+          "description": "The animation's playback rate, from the atlas.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "current_frame",
+          "brief": "The 1-based index of the frame shown next.",
+          "description": "The 1-based index of the frame shown next.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "v",
+          "brief": "The `uv_repeat` value: `x`/`y` the repeat factors, `z`/`w` the current frame's size.",
+          "description": "The `uv_repeat` value: `x`/`y` the repeat factors, `z`/`w` the current frame's size.",
+          "types": [
+            "Vector4"
+          ]
+        },
+        {
+          "name": "node",
+          "brief": "The box node the animation drives.",
+          "description": "The box node the animation drives.",
+          "types": [
+            "Opaque<\"node\">"
+          ]
+        },
+        {
+          "name": "handle",
+          "brief": "The `timer.delay` handle driving playback. Present only while a multi-frame animation plays.",
+          "description": "The `timer.delay` handle driving playback. Present only while a multi-frame animation plays.",
+          "types": [
+            "number"
+          ],
+          "is_optional": "True"
+        }
+      ]
+    }
+  ]
+}

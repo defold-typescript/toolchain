@@ -2120,6 +2120,100 @@ describe("checkpoint.checkpoint type claims upstream states only in its body", (
   });
 });
 
+// Parity sees names and arities only. What `create` hands back, which argument
+// `node_repeat.create` asserts, and the two-value aspect-ratio return are stated
+// by the Lua body alone, so they are held here against the lowered model.
+describe("defold-sprite-repeat type claims upstream states only in its body", () => {
+  type Parameter = { name: string; types: string[]; is_optional?: string | null };
+
+  function element(namespace: string, name: string): Record<string, unknown> {
+    const found = apiDocElements(namespace).find((entry) => entry.name === name);
+    if (!found) throw new Error(`api-doc/${namespace}.json declares no ${name}`);
+    return found;
+  }
+
+  function parameters(namespace: string, name: string): Parameter[] {
+    return (element(namespace, name) as { parameters?: Parameter[] }).parameters ?? [];
+  }
+
+  function returnTypes(namespace: string, name: string): string[] {
+    const { returnvalues } = element(namespace, name) as { returnvalues?: { types: string[] }[] };
+    return (returnvalues ?? []).flatMap((value) => value.types);
+  }
+
+  test("both modules register under their bare folder names at the v0.3 pin", () => {
+    for (const namespace of ["sprite_repeat", "node_repeat"]) {
+      const entry = readAuthoredTargets(PACKAGE_ROOT).find((t) => t.namespace === namespace);
+      expect(entry?.moduleId).toBe(`${namespace}.${namespace}`);
+      expect(entry?.repo).toBe("https://github.com/Dragosha/defold-sprite-repeat");
+      expect(entry?.ref).toBe("v0.3");
+      expect(entry?.license).toBe("MIT");
+      expect(entry?.parityVerdict).toBeUndefined();
+      expect(entry?.upstreamLua).toEqual([
+        `fixtures/upstream-lua/defold-sprite-repeat/${namespace}/${namespace}.lua`,
+      ]);
+    }
+  });
+
+  // `assert(atlas_path, ...)` makes the third argument required, while a nil
+  // `animation_id` falls back to `gui.get_flipbook(node)`.
+  test("node_repeat.create requires the atlas path and accepts a missing animation id", () => {
+    const [node, animation, atlas] = parameters("node_repeat", "create");
+    expect(node).toMatchObject({ name: "node_or_string", types: ['Opaque<"node"> | string'] });
+    expect(animation?.name).toBe("animation_id");
+    expect(animation?.types[0]?.split(" | ")).toContain("undefined");
+    expect(atlas).toMatchObject({
+      name: "atlas_path",
+      types: ["Hash | string"],
+      is_optional: "False",
+    });
+  });
+
+  // A nil `sprite_id` falls back to the sprite's `animation` property, and `self`
+  // is read only when present.
+  test("sprite_repeat.create takes the sprite, then an optional animation and cache", () => {
+    const [url, id, self] = parameters("sprite_repeat", "create");
+    expect(url).toMatchObject({ name: "sprite_url", is_optional: "False" });
+    expect(id).toMatchObject({ name: "sprite_id", is_optional: "True" });
+    expect(self).toMatchObject({ name: "self", is_optional: "True" });
+  });
+
+  test("get_screen_aspect_ratio returns both ratios and the module fields are numbers", () => {
+    expect(returnTypes("node_repeat", "get_screen_aspect_ratio")).toEqual([
+      "LuaMultiReturn<[ number, number ]>",
+    ]);
+    for (const name of ["x_ratio", "y_ratio"]) {
+      expect(element("node_repeat", name)).toMatchObject({ type: "VARIABLE", types: ["number"] });
+    }
+  });
+
+  // `animate`, `stop` and `update` live on the returned table, so they surface on
+  // the handle's TYPEDEF; `update` skips each nil argument.
+  test("each create returns the named handle, which carries the frames and methods", () => {
+    for (const [namespace, handle, methods] of [
+      ["sprite_repeat", "SpriteRepeatAnimation", ["animate", "stop"]],
+      ["node_repeat", "NodeRepeatAnimation", ["animate", "stop", "update"]],
+    ] as const) {
+      expect(returnTypes(namespace, "create")).toEqual([handle]);
+      const typedef = element(namespace, handle) as {
+        type: string;
+        properties: { name: string; types: string[]; is_optional?: string | null }[];
+        functions: { name: string; parameters: Parameter[] }[];
+      };
+      expect(typedef.type).toBe("TYPEDEF");
+      expect(typedef.properties.find((p) => p.name === "frames")?.types).toEqual(["RepeatFrame[]"]);
+      expect(typedef.properties.find((p) => p.name === "handle")?.is_optional).toBe("True");
+      expect(typedef.functions.map((f) => f.name)).toEqual([...methods]);
+    }
+    const update = (
+      element("node_repeat", "NodeRepeatAnimation") as {
+        functions: { name: string; parameters: Parameter[] }[];
+      }
+    ).functions.find((f) => f.name === "update");
+    expect(update?.parameters.map((p) => p.is_optional)).toEqual(["True", "True"]);
+  });
+});
+
 describe("nakama.session type claims upstream states only in its body", () => {
   function element(name: string): Record<string, unknown> {
     const found = apiDocElements("nakama.session").find((entry) => entry.name === name);

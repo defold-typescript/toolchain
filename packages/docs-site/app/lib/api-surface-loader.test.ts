@@ -325,6 +325,20 @@ describe("loadLibraryProvenance — authored/forked libraries", () => {
     expect(meta.sourceUrl).not.toContain("ts-defold/library");
   });
 
+  // One repo, two separately required modules: each namespace carries the same
+  // attribution and pin, but its own import path.
+  test("attributes sprite_repeat and node_repeat to Dragosha/defold-sprite-repeat", () => {
+    for (const namespace of ["sprite_repeat", "node_repeat"]) {
+      const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)(namespace);
+      expect(meta.authoredHere).toBe(true);
+      expect(meta.commit).toBe("v0.3");
+      expect(meta.authorUrl).toBe("https://github.com/Dragosha/defold-sprite-repeat");
+      expect(meta.sourceUrl).toBe("https://github.com/Dragosha/defold-sprite-repeat/tree/v0.3");
+      expect(meta.license).toBe("MIT");
+      expect(meta.importString).toBe(`import * as ${namespace} from "${namespace}.${namespace}"`);
+    }
+  });
+
   test("renders defcon's import with the namespace alias but the moduleId module path", () => {
     const meta = loadLibraryProvenance(REAL_LIBRARY_TYPES_DIR)("defcon");
     expect(meta.importString).toBe('import * as defcon from "defcon.console"');
