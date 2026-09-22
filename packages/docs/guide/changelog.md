@@ -14,6 +14,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Improved
 
 - **[sprite_repeat](/api/sprite_repeat) and [node_repeat](/api/node_repeat)** (`Dragosha/defold-sprite-repeat`, tag `v0.3`) now have types, so [`resolve`](./resolve.md) gives a project that depends on the library typed imports for tiling a sprite or GUI box node texture, including the `animate`, `stop` and `update` calls on the handle `create` returns.
+- **Native extensions that ship no `.script_api` can now be typed**, starting with DAABBCC (`selimanac/defold-daabbcc`, tag `v3.0.8`): [`resolve`](./resolve.md#curated-native-extensions) writes a curated `daabbcc` namespace into `.defold-types/extensions/` once the archive's `daabbcc/ext.manifest` confirms it, and `resolve --json` reports it as `typeSurface: "vendored-native"`.
 
 ### Fixed
 

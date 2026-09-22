@@ -152,6 +152,7 @@ surface that dependency actually contributed:
 | `typeSurface`        | Meaning                                                                    | `namespaces` |
 | -------------------- | -------------------------------------------------------------------------- | ------------ |
 | `"extension"`        | it emitted `.script_api` declarations                                      | its namespaces |
+| `"vendored-native"`  | a [curated native declaration](./resolve.md#curated-native-extensions) replaced anything the archive ships | its curated namespace |
 | `"vendored-library"` | a confirmed corpus match supersedes it; its types are in `libraries[]`     | `[]`         |
 | `"none"`             | asset-only with no confirmed match — it contributes no types at all        | `[]`         |
 
@@ -626,7 +627,7 @@ and `package.json` to exactly the declared set.
       "url": "<archive url>",
       "provenance": "<cache | download>",
       "namespaces": ["<namespace>"],
-      "typeSurface": "<none | extension | vendored-library>",
+      "typeSurface": "<none | extension | vendored-library | vendored-native>",
       "scriptApiCount": 1,
       "assetOnly": false,
       "sceneSources": 0,

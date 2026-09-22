@@ -1,8 +1,13 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { matchVendoredLibrary } from "./library-match";
-import { loadVendoredLibraryRegistry, resolveLibraryTypesPackageRoot } from "./library-registry";
+import {
+  loadVendoredLibraryRegistry,
+  loadVendoredNativeRegistry,
+  resolveLibraryTypesPackageRoot,
+} from "./library-registry";
 
 describe("resolveLibraryTypesPackageRoot", () => {
   test("resolves the installed @defold-typescript/library-types root in this workspace", () => {
@@ -92,6 +97,66 @@ describe("loadVendoredLibraryRegistry", () => {
     // `nakama` while its module id stays dotted — the one entry in the corpus
     // where the two differ.
     expect(nakama[0]?.generatedStems?.["nakama.nakama"]).toBe("nakama");
+  });
+});
+
+describe("loadVendoredNativeRegistry", () => {
+  function withRoot(nativeTargets: string | null, run: (root: string) => void): void {
+    const root = mkdtempSync(join(tmpdir(), "native-registry-"));
+    try {
+      if (nativeTargets !== null) {
+        writeFileSync(join(root, "native-targets.json"), nativeTargets);
+      }
+      run(root);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }
+
+  test("projects each native-targets.json entry to its source id, namespace, manifest dir and declaration", () => {
+    const targets = {
+      targets: [
+        {
+          repo: "https://github.com/selimanac/defold-daabbcc",
+          ref: "v3.0.8",
+          license: "MIT",
+          namespace: "daabbcc",
+          manifestDir: "daabbcc",
+          declaration: "generated/native/daabbcc.d.ts",
+        },
+      ],
+    };
+    withRoot(JSON.stringify(targets), (root) => {
+      expect(loadVendoredNativeRegistry(root)).toEqual([
+        {
+          sourceId: "defold-daabbcc",
+          namespace: "daabbcc",
+          manifestDir: "daabbcc",
+          declarationPath: join(root, "generated/native/daabbcc.d.ts"),
+        },
+      ]);
+    });
+  });
+
+  test("returns an empty registry for a missing or unparseable native-targets.json", () => {
+    withRoot(null, (root) => {
+      expect(loadVendoredNativeRegistry(root)).toEqual([]);
+    });
+    withRoot("{ not json", (root) => {
+      expect(loadVendoredNativeRegistry(root)).toEqual([]);
+    });
+    expect(loadVendoredNativeRegistry(null)).toEqual([]);
+  });
+
+  test("the shipped list carries daabbcc with a declaration file on disk", () => {
+    const registry = loadVendoredNativeRegistry();
+    const daabbcc = registry.find((entry) => entry.namespace === "daabbcc");
+    expect(daabbcc).toBeDefined();
+    expect(daabbcc?.sourceId).toBe("defold-daabbcc");
+    expect(daabbcc?.manifestDir).toBe("daabbcc");
+    for (const entry of registry) {
+      expect(existsSync(entry.declarationPath)).toBe(true);
+    }
   });
 });
 

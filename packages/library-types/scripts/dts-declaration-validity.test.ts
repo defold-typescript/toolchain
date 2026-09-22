@@ -26,6 +26,14 @@ const SCRIPT_API_GOLDENS = readScriptApiTargets(PACKAGE_ROOT).map((t) => t.gener
 // Every authored-lane golden, read from authored-targets.json. The fork is hand-written,
 // so this compile is the only check that its declarations are valid at all.
 const AUTHORED_GOLDENS = readAuthoredTargets(PACKAGE_ROOT).map((t) => t.generated);
+// Every curated native-extension declaration, read from native-targets.json. It
+// is hand-authored and shipped as-is, so like the authored fork this compile is
+// its only validity check.
+const NATIVE_DECLARATIONS = (
+  JSON.parse(readFileSync(resolve(PACKAGE_ROOT, "native-targets.json"), "utf8")) as {
+    targets: { declaration: string }[];
+  }
+).targets.map((t) => t.declaration);
 
 // Type-check the committed goldens with `skipLibCheck: false` so any invalid
 // declaration in a whole golden — a base/subinterface variance regression (`TS2430`)
@@ -77,6 +85,12 @@ test("every configured script_api golden is a tsconfig.dts-check.json include", 
 test("every configured authored golden is a tsconfig.dts-check.json include", () => {
   const include = readDtsCheckInclude();
   expect(missingDtsCheckIncludes(AUTHORED_GOLDENS, include)).toEqual([]);
+});
+
+test("every configured native declaration is a tsconfig.dts-check.json include", () => {
+  const include = readDtsCheckInclude();
+  expect(NATIVE_DECLARATIONS.length).toBeGreaterThan(0);
+  expect(missingDtsCheckIncludes(NATIVE_DECLARATIONS, include)).toEqual([]);
 });
 
 test("missingDtsCheckIncludes reports a golden absent from the include", () => {
