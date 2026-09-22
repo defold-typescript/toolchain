@@ -75,6 +75,19 @@ describe("the gate against the committed pins", () => {
     expect(timings.length).toBe(surfaces.length);
     for (const timing of timings) expect(timing.units).toBeGreaterThan(0);
   });
+
+  test("every stored translation reaches the gate on at least one surface", () => {
+    const stranded: string[] = [];
+    for (const [fqn, entries] of Object.entries(store)) {
+      for (const entry of entries) {
+        const reached = surfaces.some((surface) =>
+          computed.has(pinIdentity(surface.id, fqn, entry.sourceHash)),
+        );
+        if (!reached) stranded.push(`${fqn}:${entry.sourceHash}`);
+      }
+    }
+    expect(stranded.sort()).toEqual([]);
+  });
 });
 
 describe("pin exactness — what the ratchet refuses", () => {

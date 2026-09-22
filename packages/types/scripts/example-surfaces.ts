@@ -432,17 +432,48 @@ export function referencedNamespaces(
   const parsed = ts.createSourceFile("body.ts", source, ts.ScriptTarget.Latest, true);
   const found = new Set<string>();
   const visit = (node: ts.Node): void => {
-    if (
-      ts.isPropertyAccessExpression(node) &&
-      ts.isIdentifier(node.expression) &&
-      known.has(node.expression.text)
-    ) {
-      found.add(node.expression.text);
+    if (ts.isPropertyAccessExpression(node)) {
+      const chain = dottedChain(node.expression);
+      const namespace = chain === undefined ? undefined : longestKnownNamespace(chain, known);
+      if (namespace !== undefined) {
+        found.add(namespace);
+        // The receiver of a resolved chain holds only that namespace's own
+        // prefixes. Descending would resolve `tilemap.tiles` again as bare
+        // `tilemap`, and demand a surface carrying both.
+        return;
+      }
     }
     ts.forEachChild(node, visit);
   };
   visit(parsed);
   return [...found].sort();
+}
+
+/** The receiver's dotted text when it is built only from identifiers and property accesses. */
+function dottedChain(node: ts.Expression): string | undefined {
+  if (ts.isIdentifier(node)) return node.text;
+  if (!ts.isPropertyAccessExpression(node)) return undefined;
+  const head = dottedChain(node.expression);
+  return head === undefined ? undefined : `${head}.${node.name.text}`;
+}
+
+/**
+ * The longest prefix of a dotted receiver that the surfaces declare as a
+ * namespace. `tilemap.tiles` is a namespace of its own, carried only by the
+ * editor-script kinds, and its bare head `tilemap` is a different namespace
+ * neither of them carries — so matching the head would demand a surface that
+ * does not exist and strand the body.
+ */
+export function longestKnownNamespace(
+  chain: string,
+  known: ReadonlySet<string>,
+): string | undefined {
+  const parts = chain.split(".");
+  for (let end = parts.length; end > 0; end -= 1) {
+    const candidate = parts.slice(0, end).join(".");
+    if (known.has(candidate)) return candidate;
+  }
+  return undefined;
 }
 
 /**
@@ -490,6 +521,24 @@ export function moduleBoundOwnership(
     }
   }
   return bound;
+}
+
+/**
+ * The one ownership composition the gate runs: documentation ownership narrowed
+ * by the factory a body calls, then by the namespaces it reads. Extracted so the
+ * no-empty-owner invariant can be asserted against the order and membership
+ * production actually uses, rather than against a re-composition in a test.
+ */
+export function boundOwnership(
+  store: TranslationStore,
+  surfaces: readonly ExampleSurface[],
+  targets: readonly ApiTarget[] = loadApiTargets(),
+): Map<string, string[]> {
+  return moduleBoundOwnership(
+    store,
+    factoryBoundOwnership(store, translationOwnership(store, surfaces, targets), surfaces),
+    surfaces,
+  );
 }
 
 /** Stored translations no shipping surface carries — an authored body nothing emits. */
