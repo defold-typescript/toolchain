@@ -11,5 +11,19 @@
   "declaredConstants": 3,
   "missingConstants": [],
   "phantomConstants": [],
-  "fieldCoverage": 1
+  "fieldCoverage": 1,
+  "arityMeasured": true,
+  "arityMismatches": [],
+  "arityExceptions": [
+    {
+      "name": "rebuild_all",
+      "upstream": 1,
+      "declared": 2,
+      "reason": "src/extension.cpp:786 reads the flag as `lua_toboolean(L, 2)`, so the runtime takes it as the second argument; the one-parameter stub at annotation.lua:153 would put it first, and the declaration follows the C++."
+    }
+  ],
+  "annotationDrift": {
+    "unregistered": [],
+    "undeclared": []
+  }
 }

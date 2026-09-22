@@ -140,6 +140,35 @@ describe("the two-axis ratchet reports each axis on its own", () => {
     expect(authoredFloorRegressions(artifact(0.8, 0.5), floors)).toEqual([]);
   });
 
+  test("an arity mismatch reds at full coverage, naming the member and both remedies", () => {
+    const path = "fidelity/native/x.json";
+    const regressions = authoredFloorRegressions(
+      {
+        [path]: {
+          namespace: "x",
+          callableCoverage: 1,
+          fieldCoverage: 1,
+          arityMismatches: [{ name: "image" }],
+        },
+      },
+      { [path]: { callable: 1, field: 1 } },
+    );
+    expect(regressions.length).toBe(1);
+    expect(regressions[0]).toContain("x.image");
+    expect(regressions[0]).toContain("correct the declaration");
+    expect(regressions[0]).toContain("record why upstream is wrong");
+  });
+
+  test("an unmeasured arity axis reds nothing, an absent list being no claim", () => {
+    const path = "fidelity/native/x.json";
+    expect(
+      authoredFloorRegressions(
+        { [path]: { namespace: "x", callableCoverage: 1, fieldCoverage: 1 } },
+        { [path]: { callable: 1, field: 1 } },
+      ),
+    ).toEqual([]);
+  });
+
   test("a native report whose namespace is not the registered module name reds at full coverage", () => {
     const path = "fidelity/native/uuid.json";
     const regressions = authoredFloorRegressions(
@@ -331,8 +360,12 @@ describe("the vendored upstream Lua the parity reports were measured against", (
 /** The pinned SHA-256 of every vendored registering C++ file, each taken at the
  * `ref` its `native-targets.json` entry pins. */
 const UPSTREAM_NATIVE_HASHES: Record<string, string> = {
+  "fixtures/upstream-native/DAABBCC/daabbcc/annotation.lua":
+    "1e34ced89230e1841155859ff1d3ce3359ddf0c221604ceca8361b47dd4d0d07",
   "fixtures/upstream-native/DAABBCC/daabbcc/src/extension.cpp":
     "f22dd03e273bceb5f761929cc629af76af27e8894041181b57f89ef06a322d1c",
+  "fixtures/upstream-native/defold-sharing/share/api/share.lua":
+    "f441787bb953d0fd836c5981bf2430b525f0c2b9350730ff3bd06ac940be705d",
   "fixtures/upstream-native/defold-sharing/share/src/share.cpp":
     "1539132ffee8f61b4b115c59011d03616939d58c32e912d97710b7430bf5b1bc",
   "fixtures/upstream-native/defold-tile-raycast/tile-raycast/src/tileraycast.cpp":
@@ -364,6 +397,18 @@ describe("the vendored native C++ the registration surface is read from", () => 
       [],
     );
     expect(vendored.filter((path) => !(path in UPSTREAM_NATIVE_HASHES))).toEqual([]);
+  });
+
+  test("the pin covers every annotation a target reads parameter lists from", () => {
+    const annotated = readNativeTargets(PACKAGE_ROOT).filter(
+      (entry) => entry.upstreamAnnotation !== undefined,
+    );
+    expect(annotated.length).toBeGreaterThan(0);
+    expect(
+      annotated
+        .filter((entry) => !((entry.upstreamAnnotation as string) in UPSTREAM_NATIVE_HASHES))
+        .map((entry) => `${entry.namespace}: ${entry.upstreamAnnotation}`),
+    ).toEqual([]);
   });
 
   test("the pin covers every native target's upstreamSource", () => {

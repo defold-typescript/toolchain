@@ -14,6 +14,33 @@ function target(namespace: string): NativeTarget {
   return found;
 }
 
+const roots: string[] = [];
+afterEach(() => {
+  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
+});
+
+/** A package root holding `entry`'s vendored upstream verbatim and `declaration` in
+ * place of the shipped one, so a test can drift one side and measure the other. Every
+ * upstream path the target names is copied — a target whose annotation were left behind
+ * would fail on the read rather than on what the test asserts. */
+function tempRoot(entry: NativeTarget, declaration: string): string {
+  const root = mkdtempSync(join(tmpdir(), "native-parity-"));
+  roots.push(root);
+  for (const relative of [entry.upstreamSource, entry.upstreamAnnotation]) {
+    if (relative === undefined) continue;
+    mkdirSync(dirname(join(root, relative)), { recursive: true });
+    cpSync(join(PACKAGE_ROOT, relative), join(root, relative));
+  }
+  mkdirSync(dirname(join(root, entry.declaration)), { recursive: true });
+  writeFileSync(join(root, entry.declaration), declaration);
+  return root;
+}
+
+/** The shipped declaration of `namespace`, the starting point for a drift. */
+function shippedDeclaration(entry: NativeTarget): string {
+  return readFileSync(join(PACKAGE_ROOT, entry.declaration), "utf8");
+}
+
 describe("buildNativeParity over the shipped declarations", () => {
   const UPSTREAM_COUNTS: Record<string, [functions: number, constants: number]> = {
     daabbcc: [18, 3],
@@ -49,24 +76,9 @@ describe("buildNativeParity over the shipped declarations", () => {
 });
 
 describe("buildNativeParity over a declaration that drifted from its C++", () => {
-  const roots: string[] = [];
-  afterEach(() => {
-    for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
-  });
-
-  function tempRoot(entry: NativeTarget, declaration: string): string {
-    const root = mkdtempSync(join(tmpdir(), "native-parity-"));
-    roots.push(root);
-    mkdirSync(dirname(join(root, entry.declaration)), { recursive: true });
-    writeFileSync(join(root, entry.declaration), declaration);
-    mkdirSync(dirname(join(root, entry.upstreamSource)), { recursive: true });
-    cpSync(join(PACKAGE_ROOT, entry.upstreamSource), join(root, entry.upstreamSource));
-    return root;
-  }
-
   test("a dropped function is missing and an invented one is phantom", () => {
     const entry = target("daabbcc");
-    const shipped = readFileSync(join(PACKAGE_ROOT, entry.declaration), "utf8");
+    const shipped = shippedDeclaration(entry);
     const drifted = shipped.replace("function reset(): void;", "function init(): void;");
     expect(drifted).not.toBe(shipped);
     const report = buildNativeParity(tempRoot(entry, drifted), entry);
@@ -78,7 +90,7 @@ describe("buildNativeParity over a declaration that drifted from its C++", () =>
 
   test("a dropped and an invented constant land on the field axis alone", () => {
     const entry = target("tile_raycast");
-    const shipped = readFileSync(join(PACKAGE_ROOT, entry.declaration), "utf8");
+    const shipped = shippedDeclaration(entry);
     const drifted = shipped.replace(/\bLEFT\b/g, "WEST");
     expect(drifted).not.toBe(shipped);
     const report = buildNativeParity(tempRoot(entry, drifted), entry);
@@ -115,5 +127,95 @@ describe("the committed native parity reports", () => {
         `${nativeParityPath(entry)} is stale — run \`bun run --cwd packages/library-types parity\``,
     );
     expect(drifted).toEqual([]);
+  });
+});
+
+describe("the arity axis, read from the shipped LuaLS annotation", () => {
+  test("a target naming no annotation reports the axis unmeasured, with no lists", () => {
+    for (const namespace of ["uuid4", "tile_raycast"]) {
+      const report = buildNativeParity(PACKAGE_ROOT, target(namespace));
+      expect(report.arityMeasured).toBe(false);
+      expect(report.arityMismatches).toBeUndefined();
+      expect(report.arityExceptions).toBeUndefined();
+      expect(report.annotationDrift).toBeUndefined();
+    }
+  });
+
+  test("share agrees with its annotation on every shared name", () => {
+    const report = buildNativeParity(PACKAGE_ROOT, target("share"));
+    expect(report.arityMeasured).toBe(true);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.arityExceptions).toEqual([]);
+    expect(report.annotationDrift).toEqual({ unregistered: [], undeclared: [] });
+  });
+
+  test("daabbcc charges nothing beyond its one recorded exception", () => {
+    const report = buildNativeParity(PACKAGE_ROOT, target("daabbcc"));
+    expect(report.arityMeasured).toBe(true);
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.annotationDrift).toEqual({ unregistered: [], undeclared: [] });
+    expect(report.arityExceptions).toEqual([
+      {
+        name: "rebuild_all",
+        upstream: 1,
+        declared: 2,
+        reason: (target("daabbcc").annotationArityExceptions ?? [])[0]?.reason as string,
+      },
+    ]);
+  });
+
+  test("a declaration that drops a parameter is charged at the widest shape it offers", () => {
+    const entry = target("share");
+    const shipped = shippedDeclaration(entry);
+    const narrowed = shipped.replace(
+      /function image\([^)]*\)/,
+      "function image(bytes: string): void",
+    );
+    expect(narrowed).not.toBe(shipped);
+    const report = buildNativeParity(tempRoot(entry, narrowed), entry);
+    expect(report.arityMismatches).toEqual([{ name: "image", upstream: 3, declared: 1 }]);
+    expect(report.callableCoverage).toBe(1);
+  });
+
+  test("an exception the declaration no longer needs is refused as stale", () => {
+    const entry = target("daabbcc");
+    const shipped = shippedDeclaration(entry);
+    const conformed = shipped.replace(
+      "function rebuild_all(_unused: undefined, full_build: boolean): void;",
+      "function rebuild_all(full_build: boolean): void;",
+    );
+    expect(conformed).not.toBe(shipped);
+    expect(() => buildNativeParity(tempRoot(entry, conformed), entry)).toThrow(
+      /rebuild_all.*agrees/s,
+    );
+  });
+
+  test("names on only one side are drift, not a coverage or arity charge", () => {
+    const entry = target("share");
+    const root = tempRoot(entry, shippedDeclaration(entry));
+    const annotation = join(root, entry.upstreamAnnotation as string);
+    writeFileSync(
+      annotation,
+      `${readFileSync(annotation, "utf8")}\nfunction share.preview(path) end\n`,
+    );
+    const report = buildNativeParity(root, entry);
+    expect(report.annotationDrift).toEqual({ unregistered: ["preview"], undeclared: [] });
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
+    expect(report.phantomFunctions).toEqual([]);
+  });
+
+  test("a name the C++ registers that the annotation omits is drift on the other side", () => {
+    const entry = target("share");
+    const root = tempRoot(entry, shippedDeclaration(entry));
+    const annotation = join(root, entry.upstreamAnnotation as string);
+    writeFileSync(
+      annotation,
+      readFileSync(annotation, "utf8").replace(/^function share\.file\(.*$/m, ""),
+    );
+    const report = buildNativeParity(root, entry);
+    expect(report.annotationDrift).toEqual({ unregistered: [], undeclared: ["file"] });
+    expect(report.arityMismatches).toEqual([]);
+    expect(report.callableCoverage).toBe(1);
   });
 });
