@@ -358,3 +358,48 @@ describe("a metatable that could delegate members is refused, never parsed short
     expect(thrown).toThrow("invisible");
   });
 });
+
+describe("an annotation stub file, whose module table the source never returns", () => {
+  const annotation = readFileSync(
+    join(PACKAGE_ROOT, "fixtures/upstream-native/DAABBCC/daabbcc/annotation.lua"),
+    "utf8",
+  );
+
+  test("without the option the source is refused, having no trailing `return <name>`", () => {
+    expect(() => parseLuaSurface(annotation)).toThrow("no trailing `return <name>`");
+  });
+
+  test("an explicit module table reads every stub the annotation declares", () => {
+    const surface = parseLuaSurface(annotation, { moduleLocal: "daabbcc" });
+    expect(surface.moduleLocal).toBe("daabbcc");
+    expect(surface.members).toHaveLength(18);
+    expect(byName(surface.members).get("new_group")?.params).toEqual(["rebuild_type"]);
+    expect(byName(surface.members).get("reset")?.params).toEqual([]);
+    expect(byName(surface.members).get("raycast")?.params).toEqual([
+      "group_id",
+      "start_x",
+      "start_y",
+      "end_x",
+      "end_y",
+      "mask_bits",
+      "get_manifold",
+      "get_bits",
+    ]);
+  });
+
+  test("the option names the table, so a wrong name reads an empty surface", () => {
+    expect(parseLuaSurface(annotation, { moduleLocal: "daabb" }).members).toEqual([]);
+  });
+
+  test("the sharing annotation reads too, its stubs sitting under `share`", () => {
+    const share = parseLuaSurface(
+      readFileSync(
+        join(PACKAGE_ROOT, "fixtures/upstream-native/defold-sharing/share/api/share.lua"),
+        "utf8",
+      ),
+      { moduleLocal: "share" },
+    );
+    expect(share.members.map((member) => member.name)).toEqual(["text", "image", "file"]);
+    expect(byName(share.members).get("image")?.params).toEqual(["bytes", "text", "file_name"]);
+  });
+});
