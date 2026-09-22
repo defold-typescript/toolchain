@@ -1,5 +1,14 @@
-import { describe, expect, test } from "bun:test";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { afterEach, describe, expect, test } from "bun:test";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import {
   AUTHORED_FLOOR_MANIFEST_FILE,
@@ -195,6 +204,105 @@ describe("the committed native artifacts carry the module-name verdict", () => {
     );
     expect(native.length).toBe(readNativeTargets(PACKAGE_ROOT).length);
     for (const [, artifact] of native) expect(typeof artifact.moduleNameMatches).toBe("boolean");
+  });
+});
+
+describe("the collector carries the arity axis a measured report declares", () => {
+  const roots: string[] = [];
+  afterEach(() => {
+    for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
+  });
+
+  /** A package root holding one parity report under `dir`, so each case exercises the
+   * collector over the JSON a regenerated report would write rather than over an
+   * artifact the test hands `authoredFloorRegressions` directly. */
+  function reportRoot(dir: string, report: Record<string, unknown>): string {
+    const root = mkdtempSync(join(tmpdir(), "authored-parity-"));
+    roots.push(root);
+    mkdirSync(join(root, dir), { recursive: true });
+    writeFileSync(join(root, dir, "x.json"), JSON.stringify(report));
+    return root;
+  }
+
+  const KEY = `${NATIVE_PARITY_DIR}/x.json`;
+  const FULL_FLOOR = { [KEY]: { callable: 1, field: 1 } };
+
+  function nativeReport(extra: Record<string, unknown>): Record<string, unknown> {
+    return {
+      namespace: "x",
+      callableCoverage: 1,
+      fieldCoverage: 1,
+      moduleNameMatches: true,
+      ...extra,
+    };
+  }
+
+  test("a measured mismatch reaches the ratchet, naming the member", () => {
+    const root = reportRoot(
+      NATIVE_PARITY_DIR,
+      nativeReport({
+        arityMeasured: true,
+        arityMismatches: [{ name: "image", upstream: 3, declared: 1 }],
+      }),
+    );
+    const artifacts = collectAuthoredParity(root, NATIVE_PARITY_DIR);
+    expect(artifacts[KEY]?.arityMismatches).toEqual([{ name: "image" }]);
+
+    const regressions = authoredFloorRegressions(artifacts, FULL_FLOOR);
+    expect(regressions.length).toBe(1);
+    expect(regressions[0]).toContain("x.image");
+  });
+
+  test("an unmeasured axis carries no list, so `false` cannot read as agreement", () => {
+    const root = reportRoot(NATIVE_PARITY_DIR, nativeReport({ arityMeasured: false }));
+    const artifacts = collectAuthoredParity(root, NATIVE_PARITY_DIR);
+    expect(artifacts[KEY]?.arityMismatches).toBeUndefined();
+    expect(authoredFloorRegressions(artifacts, FULL_FLOOR)).toEqual([]);
+  });
+
+  test("a measured axis whose list is absent or malformed throws, naming the artifact", () => {
+    const malformed: Record<string, unknown>[] = [
+      { arityMeasured: "true", arityMismatches: [] },
+      { arityMeasured: true },
+      { arityMeasured: true, arityMismatches: "image" },
+      { arityMeasured: true, arityMismatches: [{ upstream: 3, declared: 1 }] },
+      { arityMeasured: true, arityMismatches: [{ name: "", upstream: 3, declared: 1 }] },
+      { arityMeasured: true, arityMismatches: [null] },
+    ];
+    for (const extra of malformed) {
+      const root = reportRoot(NATIVE_PARITY_DIR, nativeReport(extra));
+      expect(() => collectAuthoredParity(root, NATIVE_PARITY_DIR)).toThrow(
+        /fidelity\/native\/x\.json/,
+      );
+    }
+  });
+
+  test("an authored-lane report declaring no measurement keeps floor-based charging", () => {
+    const key = `${PARITY_DIR}/x.json`;
+    const root = reportRoot(PARITY_DIR, {
+      namespace: "x",
+      callableCoverage: 1,
+      fieldCoverage: 1,
+      arityMismatches: [{ name: "f", upstream: 2, declared: 1 }],
+    });
+    const artifacts = collectAuthoredParity(root, PARITY_DIR);
+    expect(artifacts[key]?.arityMismatches).toBeUndefined();
+    expect(authoredFloorRegressions(artifacts, { [key]: { callable: 1, field: 1 } })).toEqual([]);
+  });
+
+  test("every committed native report declaring the axis is collected with a list", () => {
+    const measured = readdirSync(join(PACKAGE_ROOT, NATIVE_PARITY_DIR))
+      .filter((name) => name.endsWith(".json"))
+      .filter((name) => {
+        const raw = JSON.parse(
+          readFileSync(join(PACKAGE_ROOT, NATIVE_PARITY_DIR, name), "utf8"),
+        ) as Record<string, unknown>;
+        return raw.arityMeasured === true;
+      });
+    expect(measured.length).toBeGreaterThan(0);
+    for (const name of measured) {
+      expect(ARTIFACTS[`${NATIVE_PARITY_DIR}/${name}`]?.arityMismatches).toBeInstanceOf(Array);
+    }
   });
 });
 

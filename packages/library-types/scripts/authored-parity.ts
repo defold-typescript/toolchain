@@ -608,7 +608,9 @@ export interface AuthoredCoverage {
   /** Ratcheted against zero rather than against a floor. On the authored lane a
    * disagreeing member is already uncounted, so coverage carries it; on the native lane
    * coverage is name-based and would read 1 over a declaration nobody can call with the
-   * arguments it names. Absent where the axis was not measured. */
+   * arguments it names. Carried only from a report that declares the axis measured — a
+   * report merely holding an `arityMismatches` key contributes nothing, which is what
+   * keeps the zero ratchet on the native lane. */
   arityMismatches?: { name: string }[];
 }
 
@@ -670,7 +672,8 @@ function coverageField(raw: Record<string, unknown>, field: string, path: string
  * so a renamed or dropped coverage key throws here rather than reaching the ratchet
  * as `undefined` — where every `<` comparison would be false and the gate would pass
  * while comparing nothing. The native lane (`fidelity/native/`) shares this ratchet
- * and adds `moduleNameMatches`, read here when present.
+ * and adds `moduleNameMatches` and the arity axis, each read here when the report
+ * declares it.
  */
 export function collectAuthoredParity(
   packageRoot: string,
@@ -695,6 +698,33 @@ export function collectAuthoredParity(
         );
       }
       artifact.moduleNameMatches = raw.moduleNameMatches;
+    }
+    if ("arityMeasured" in raw) {
+      if (typeof raw.arityMeasured !== "boolean") {
+        throw new Error(
+          `${key}: expected a boolean "arityMeasured", got ${describe(raw.arityMeasured)}`,
+        );
+      }
+      if (raw.arityMeasured) {
+        if (!Array.isArray(raw.arityMismatches)) {
+          throw new Error(
+            `${key}: a measured arity axis must carry an "arityMismatches" array, got ${describe(raw.arityMismatches)}`,
+          );
+        }
+        artifact.arityMismatches = raw.arityMismatches.map((entry) => {
+          if (
+            entry === null ||
+            typeof entry !== "object" ||
+            typeof (entry as Record<string, unknown>).name !== "string" ||
+            (entry as Record<string, unknown>).name === ""
+          ) {
+            throw new Error(
+              `${key}: every "arityMismatches" entry must name a member, got ${describe(entry)}`,
+            );
+          }
+          return { name: (entry as Record<string, unknown>).name as string };
+        });
+      }
     }
     artifacts[key] = artifact;
   }
