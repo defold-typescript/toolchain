@@ -3,6 +3,7 @@ import { join } from "node:path";
 import ts from "typescript";
 import { extractApiDoc } from "./extract-api-doc";
 import { readAuthoredTargets } from "./sync-authored-types";
+import type { DefoldExtensionEntry } from "./sync-defold-extensions";
 import { readLualsTargets } from "./sync-luals-types";
 import { readMarkdownTargets } from "./sync-markdown-types";
 import { readOpenApiTargets } from "./sync-openapi-types";
@@ -268,10 +269,19 @@ export async function checkDrift(
 
 export type DirClassification = "pure-lua" | "native" | "already-vendored" | "covered-by-goal";
 
+/**
+ * Whether a native dir's upstream ships a `.script_api`: `ships` and `none` are
+ * recorded evidence from `defold-extensions.json`, `unknown` means the two
+ * corpora do not join on this dir's name. Only `none` and `unknown` need a
+ * curated declaration — a `ships` dir is already emitted by `resolve`.
+ */
+export type ScriptApiEligibility = "ships" | "none" | "unknown";
+
 export interface ClassificationEntry {
   dir: string;
   classification: DirClassification;
   modules: string[];
+  scriptApi?: ScriptApiEligibility;
 }
 
 // A ts-defold/library `<name>-<version>.d.ts` alias file (e.g. `monarch-5.1.0`,
@@ -333,6 +343,36 @@ export function classifyLibraryDirs(
       return { dir, classification, modules };
     })
     .sort((a, b) => (a.dir < b.dir ? -1 : a.dir > b.dir ? 1 : 0));
+}
+
+/**
+ * Record, per `native` dir, whether its upstream ships a `.script_api`, joining
+ * the classification corpus to `defold-extensions.json` by repo name alone: the
+ * dir must equal the entry's `<repo>` segment under `toLowerCase()`, exact
+ * equality only. A prefix or substring join would bind `extension-videoplayer`
+ * to `extension-videoplayer-native` and a false `ships` silently drops an
+ * eligible extension from the sweep, so an unmatched dir stays `unknown` rather
+ * than reach. Non-native rows keep no eligibility field — the curated lane is a
+ * native-only concern.
+ */
+export function nativeScriptApiEligibility(
+  entries: readonly ClassificationEntry[],
+  libraries: readonly DefoldExtensionEntry[],
+): ClassificationEntry[] {
+  const shipsByRepo = new Map<string, boolean>();
+  for (const library of libraries) {
+    const repo = repoSlug(library.repo).split("/")[1];
+    if (repo === undefined) continue;
+    const key = repo.toLowerCase();
+    shipsByRepo.set(key, (shipsByRepo.get(key) ?? false) || library.docs.length > 0);
+  }
+  return entries.map((entry) => {
+    if (entry.classification !== "native") return entry;
+    const ships = shipsByRepo.get(entry.dir.toLowerCase());
+    const scriptApi: ScriptApiEligibility =
+      ships === undefined ? "unknown" : ships ? "ships" : "none";
+    return { ...entry, scriptApi };
+  });
 }
 
 /**
@@ -459,9 +499,11 @@ export function readMaintainedHereRegistry(packageRoot: string): MaintainedHereR
 
 /**
  * Enumerate every ts-defold/library dir at the pin, drop the dirs severed onto
- * a maintained-here lane, classify each survivor by its module-name shape, and write
- * `library-classification.json`. Filtering happens here, not in
- * `classifyLibraryDirs`, so that pass stays a pure map-and-sort. The `listTree`
+ * a maintained-here lane, classify each survivor by its module-name shape, record
+ * each native survivor's `.script_api` eligibility from the local
+ * `defold-extensions.json`, and write `library-classification.json`. Filtering
+ * happens here, not in `classifyLibraryDirs`, so that pass stays a pure
+ * map-and-sort. The extensions read is local, so the pass stays offline. The `listTree`
  * seam keeps the pass offline-testable; only the CLI wires the real call, and it
  * stays out of CI (mirrors `--check`). The manifest pins the same `source` as
  * `library-targets.json`.
@@ -491,7 +533,13 @@ export async function writeClassification(
       const maintained = maintainedHereModules(modules, registry, liveModules);
       return { dir, modules: modules.filter((m) => !maintained.has(m)) };
     });
-  const entries = classifyLibraryDirs(dirs, { vendoredDirs, coveredByGoalDirs });
+  const { libraries } = JSON.parse(
+    readFileSync(join(packageRoot, "defold-extensions.json"), "utf8"),
+  ) as { libraries: DefoldExtensionEntry[] };
+  const entries = nativeScriptApiEligibility(
+    classifyLibraryDirs(dirs, { vendoredDirs, coveredByGoalDirs }),
+    libraries,
+  );
   writeFileSync(
     join(packageRoot, "library-classification.json"),
     `${JSON.stringify({ source, dirs: entries }, null, 2)}\n`,

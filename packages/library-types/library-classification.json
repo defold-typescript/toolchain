@@ -10,7 +10,8 @@
       "classification": "native",
       "modules": [
         "applovin"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "DAABBCC",
@@ -18,84 +19,96 @@
       "modules": [
         "aabb",
         "daabbcc"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "LuaScriptInstance",
       "classification": "native",
       "modules": [
         "lua_script_instance"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "def-setv",
       "classification": "native",
       "modules": [
         "setv"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "def-windward-jps",
       "classification": "native",
       "modules": [
         "def_windward_jps"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "def_taptic_engine",
       "classification": "native",
       "modules": [
         "taptic_engine"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "defold-apkx",
       "classification": "native",
       "modules": [
         "apkx"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "defold-astar",
       "classification": "native",
       "modules": [
         "astar"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "defold-clipboard",
       "classification": "native",
       "modules": [
         "clipboard"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "defold-coolmathgames-sdk",
       "classification": "native",
       "modules": [
         "coolmath_games"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "defold-extension-unity-ads",
       "classification": "native",
       "modules": [
         "unityads"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "defold-imagepicker",
       "classification": "native",
       "modules": [
         "imagepicker"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "defold-lfs",
       "classification": "native",
       "modules": [
         "lfs"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "defold-lldebugger",
@@ -109,98 +122,112 @@
       "classification": "native",
       "modules": [
         "mraid"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "defold-playdeck",
       "classification": "native",
       "modules": [
         "playdeck"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "defold-prng",
       "classification": "native",
       "modules": [
         "prng"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "defold-random",
       "classification": "native",
       "modules": [
         "rnd"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "defold-scene3d",
       "classification": "native",
       "modules": [
         "scene3d"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "defold-screenshot",
       "classification": "native",
       "modules": [
         "screenshot"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "defold-sharing",
       "classification": "native",
       "modules": [
         "share"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "defold-simplex-noise",
       "classification": "native",
       "modules": [
         "simplex"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "defold-skippy",
       "classification": "native",
       "modules": [
         "skippy"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "defold-splitmix64",
       "classification": "native",
       "modules": [
         "splitmix64"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "defold-textinput",
       "classification": "native",
       "modules": [
         "textinput"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "defold-tile-raycast",
       "classification": "native",
       "modules": [
         "tile_raycast"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "defold-uuid4",
       "classification": "native",
       "modules": [
         "uuid4"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "defold-webgl-memory",
       "classification": "native",
       "modules": [
         "webgl_memory"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "defold-xmath",
@@ -214,203 +241,232 @@
       "classification": "native",
       "modules": [
         "yametrica"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "defold-yoga",
       "classification": "native",
       "modules": [
         "yoga"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "defold-zstd",
       "classification": "native",
       "modules": [
         "zstd"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "defos",
       "classification": "native",
       "modules": [
         "defos"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "drawpixels",
       "classification": "native",
       "modules": [
         "drawpixels"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "extension-adinfo",
       "classification": "native",
       "modules": [
         "adinfo"
-      ]
+      ],
+      "scriptApi": "ships"
     },
     {
       "dir": "extension-admob",
       "classification": "native",
       "modules": [
         "admob"
-      ]
+      ],
+      "scriptApi": "ships"
     },
     {
       "dir": "extension-cas",
       "classification": "native",
       "modules": [
         "cas"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "extension-crypt",
       "classification": "native",
       "modules": [
         "crypt"
-      ]
+      ],
+      "scriptApi": "ships"
     },
     {
       "dir": "extension-facebook",
       "classification": "native",
       "modules": [
         "facebook"
-      ]
+      ],
+      "scriptApi": "ships"
     },
     {
       "dir": "extension-firebase-analytics",
       "classification": "native",
       "modules": [
         "firebase"
-      ]
+      ],
+      "scriptApi": "ships"
     },
     {
       "dir": "extension-googleplayinstant",
       "classification": "native",
       "modules": [
         "instantapp"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "extension-gpgs",
       "classification": "native",
       "modules": [
         "gpgs"
-      ]
+      ],
+      "scriptApi": "ships"
     },
     {
       "dir": "extension-iac",
       "classification": "native",
       "modules": [
         "iac"
-      ]
+      ],
+      "scriptApi": "ships"
     },
     {
       "dir": "extension-iap",
       "classification": "native",
       "modules": [
         "iap"
-      ]
+      ],
+      "scriptApi": "ships"
     },
     {
       "dir": "extension-imgui",
       "classification": "native",
       "modules": [
         "imgui"
-      ]
+      ],
+      "scriptApi": "ships"
     },
     {
       "dir": "extension-ironsource",
       "classification": "native",
       "modules": [
         "ironsource"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "extension-kaiads",
       "classification": "native",
       "modules": [
         "kaiads"
-      ]
+      ],
+      "scriptApi": "ships"
     },
     {
       "dir": "extension-nativetext",
       "classification": "native",
       "modules": [
         "nativetext"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "extension-netimgui",
       "classification": "native",
       "modules": [
         "netimgui"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "extension-pcgrandom",
       "classification": "native",
       "modules": [
         "pcgrandom"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "extension-permissions",
       "classification": "native",
       "modules": [
         "permissions"
-      ]
+      ],
+      "scriptApi": "ships"
     },
     {
       "dir": "extension-poki-sdk",
       "classification": "native",
       "modules": [
         "poki_sdk"
-      ]
+      ],
+      "scriptApi": "ships"
     },
     {
       "dir": "extension-push",
       "classification": "native",
       "modules": [
         "push"
-      ]
+      ],
+      "scriptApi": "ships"
     },
     {
       "dir": "extension-review",
       "classification": "native",
       "modules": [
         "review"
-      ]
+      ],
+      "scriptApi": "ships"
     },
     {
       "dir": "extension-rive",
       "classification": "native",
       "modules": [
         "rive"
-      ]
+      ],
+      "scriptApi": "ships"
     },
     {
       "dir": "extension-safearea",
       "classification": "native",
       "modules": [
         "safearea"
-      ]
+      ],
+      "scriptApi": "ships"
     },
     {
       "dir": "extension-sfmtrandom",
       "classification": "native",
       "modules": [
         "sfmtrandom"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "extension-siwa",
       "classification": "native",
       "modules": [
         "siwa"
-      ]
+      ],
+      "scriptApi": "ships"
     },
     {
       "dir": "extension-spine",
@@ -418,82 +474,94 @@
       "modules": [
         "gui",
         "spine"
-      ]
+      ],
+      "scriptApi": "ships"
     },
     {
       "dir": "extension-steam",
       "classification": "native",
       "modules": [
         "steam"
-      ]
+      ],
+      "scriptApi": "ships"
     },
     {
       "dir": "extension-vibrate",
       "classification": "native",
       "modules": [
         "vibrate"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "extension-videoplayer",
       "classification": "native",
       "modules": [
         "videoplayer"
-      ]
+      ],
+      "scriptApi": "none"
     },
     {
       "dir": "extension-videoplayer-mpeg",
       "classification": "native",
       "modules": [
         "mpeg"
-      ]
+      ],
+      "scriptApi": "ships"
     },
     {
       "dir": "extension-videoplayer-native",
       "classification": "native",
       "modules": [
         "videoplayer"
-      ]
+      ],
+      "scriptApi": "ships"
     },
     {
       "dir": "extension-webrtc",
       "classification": "native",
       "modules": [
         "webrtc"
-      ]
+      ],
+      "scriptApi": "unknown"
     },
     {
       "dir": "extension-websocket",
       "classification": "native",
       "modules": [
         "websocket"
-      ]
+      ],
+      "scriptApi": "ships"
     },
     {
       "dir": "extension-webview",
       "classification": "native",
       "modules": [
         "webview"
-      ]
+      ],
+      "scriptApi": "ships"
     },
     {
       "dir": "extension-zendesk",
       "classification": "native",
       "modules": [
         "zendesk"
-      ]
+      ],
+      "scriptApi": "ships"
     },
     {
       "dir": "gd-defold",
       "classification": "native",
-      "modules": []
+      "modules": [],
+      "scriptApi": "unknown"
     },
     {
       "dir": "jstodef",
       "classification": "native",
       "modules": [
         "jstodef"
-      ]
+      ],
+      "scriptApi": "unknown"
     }
   ]
 }
