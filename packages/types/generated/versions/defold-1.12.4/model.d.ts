@@ -68,6 +68,9 @@ declare global {
      * @returns true if the mesh is visible, false otherwise
      * @example
      * ```ts
+     * // shared weapon data, e.g. required from your own module
+     * const game = { data: { weapons: { Sword: { damage: 10 } } } };
+     *
      * export default defineScript({
      *   init(self) {
      *     if (model.get_mesh_enabled("#model", "Sword")) {
@@ -138,6 +141,8 @@ declare global {
      * ```ts
      * // The following examples assume that the model has id "model".
      * // How to play the "jump" animation followed by the "run" animation:
+     * const url = msg.url("#model");
+     *
      * function anim_done(self, message_id, message, sender) {
      *   if (message_id === hash("model_animation_done")) {
      *     if (message.animation_id === hash("jump")) {
@@ -150,7 +155,6 @@ declare global {
      *
      * export default defineScript({
      *   init(self) {
-     *     const url = msg.url("#model");
      *     const play_properties = { blend_duration: 0.1 };
      *     // first blend during 0.1 sec into the jump, then during 0.2 s into the run animation
      *     model.play_anim(url, "jump", go.PLAYBACK_ONCE_FORWARD, play_properties, anim_done);

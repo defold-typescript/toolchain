@@ -56,11 +56,15 @@ declare global {
      * @example
      * ```ts
      * // How to copy elements (e.g. vertices) from one buffer to another
+     * const element_count = 64;
+     * const srcbuffer = resource.get_buffer("/src.bufferc");
+     * const dstbuffer = resource.get_buffer("/dst.bufferc");
+     *
      * // copy entire buffer
-     * buffer.copy_buffer(dstbuffer, 0, srcbuffer, 0, srcbuffer.length);
+     * buffer.copy_buffer(dstbuffer, 0, srcbuffer, 0, element_count);
      *
      * // copy last 10 elements to the front of another buffer
-     * buffer.copy_buffer(dstbuffer, 0, srcbuffer, srcbuffer.length - 10, 10);
+     * buffer.copy_buffer(dstbuffer, 0, srcbuffer, element_count - 10, 10);
      * ```
      */
     function copy_buffer(dst: Opaque<"buffer">, dstoffset: number, src: Opaque<"buffer">, srcoffset: number, count: number): void;
@@ -77,6 +81,9 @@ declare global {
      * @example
      * ```ts
      * // How to update a texture of a sprite:
+     * const srcbuffer = resource.get_buffer("/src.bufferc");
+     * const dstbuffer = resource.get_buffer("/dst.bufferc");
+     *
      * // copy entire stream
      * const srcstream = buffer.get_stream(srcbuffer, hash("xyz"));
      * const dststream = buffer.get_stream(dstbuffer, hash("xyz"));
@@ -137,6 +144,8 @@ declare global {
      * @example
      * ```ts
      * // How to get a metadata entry from a buffer
+     * const buf = resource.get_buffer("/my.bufferc");
+     *
      * // retrieve a metadata entry named "somefloats" and its numeric type
      * const [values, type] = buffer.get_metadata(buf, hash("somefloats"));
      * if (values) print(`${values.length} values in 'somefloats'`);
@@ -162,6 +171,8 @@ declare global {
      * @example
      * ```ts
      * // How to set a metadata entry on a buffer
+     * const buf = resource.get_buffer("/my.bufferc");
+     *
      * // create a new metadata entry with three floats
      * buffer.set_metadata(buf, hash("somefloats"), [1.5, 3.2, 7.9], buffer.VALUE_TYPE_FLOAT32);
      * // ...

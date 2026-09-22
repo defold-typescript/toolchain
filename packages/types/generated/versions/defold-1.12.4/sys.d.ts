@@ -39,6 +39,7 @@ declare global {
      * @example
      * ```ts
      * // Deserialize a table that was previously serialized:
+     * const my_table = { score: 100, level: 3 };
      * const buffer = sys.serialize(my_table);
      * const table = sys.deserialize(buffer);
      * ```
@@ -53,6 +54,7 @@ declare global {
      * @example
      * ```ts
      * // Load data but return nil if path didn't exist
+     * const path = "/save/game.dat";
      * if (!sys.exists(path)) {
      *   return undefined;
      * }
@@ -259,6 +261,7 @@ declare global {
      * @example
      * ```ts
      * // Save data on the host
+     * const mytable = { score: 100, level: 3 };
      * const host_path = sys.get_host_path("logs/test.txt");
      * sys.save(host_path, mytable);
      *
