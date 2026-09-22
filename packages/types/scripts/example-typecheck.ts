@@ -18,13 +18,7 @@ import { relative, resolve } from "node:path";
 import ts from "typescript";
 import type { TranslationStore } from "../src/example-store";
 import { type ExampleDiagnostic, PINS_PATH, type PinFile } from "./example-pins";
-import {
-  type ExampleSurface,
-  exampleIdentity,
-  factoryBoundOwnership,
-  moduleBoundOwnership,
-  translationOwnership,
-} from "./example-surfaces";
+import { boundOwnership, type ExampleSurface, exampleIdentity } from "./example-surfaces";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const TSCONFIG_PATH = resolve(PACKAGE_ROOT, "tsconfig.json");
@@ -326,11 +320,7 @@ export function runGate(
   surfaces: readonly ExampleSurface[],
   extraUnits: ReadonlyMap<string, readonly ExampleUnit[]> = new Map(),
 ): GateResult {
-  const owners = moduleBoundOwnership(
-    store,
-    factoryBoundOwnership(store, translationOwnership(store, surfaces), surfaces),
-    surfaces,
-  );
+  const owners = boundOwnership(store, surfaces);
   const options = gateCompilerOptions();
   const bySurface = new Map<string, ExampleUnit[]>();
   for (const [fqn, entries] of Object.entries(store)) {
