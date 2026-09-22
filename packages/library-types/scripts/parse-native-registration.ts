@@ -7,7 +7,8 @@
  * `static const luaL_reg <table>[] = { { "name", fn }, ..., {0, 0} }`, followed by
  * constants set on the module table (`SETCONSTANT(NAME)`, or
  * `lua_setfield(L, -2, "NAME")` after a push). Comments are stripped first, so a
- * commented-out entry is never read as registered.
+ * commented-out entry is never read as registered, and a commented-out `#define`
+ * never resolves a module-name identifier.
  *
  * Constants are read only inside the function that makes the `luaL_register`
  * call: the same `lua_setfield(L, -2, "id")` shape builds result tables in the
@@ -26,8 +27,9 @@ export interface NativeRegistration {
 }
 
 export function parseNativeRegistration(source: string, file: string): NativeRegistration {
-  const defines = readStringDefines(source);
-  const code = blankPreprocessorLines(stripComments(source));
+  const live = stripComments(source);
+  const defines = readStringDefines(live);
+  const code = blankPreprocessorLines(live);
   const structure = maskStringContents(code);
 
   const calls = [
@@ -43,11 +45,12 @@ export function parseNativeRegistration(source: string, file: string): NativeReg
       `native registration: ${file} makes ${calls.length} luaL_register calls; this reader measures one module per file.`,
     );
   }
-  const call = calls[0];
+  const call = calls[0] as RegExpExecArray;
   const callIndex = call.index ?? 0;
-  const nameStart = callIndex + call[0].indexOf(call[1]);
-  const nameArgument = code.slice(nameStart, nameStart + call[1].length);
-  const tableName = call[2];
+  const name = call[1] as string;
+  const nameStart = callIndex + call[0].indexOf(name);
+  const nameArgument = code.slice(nameStart, nameStart + name.length);
+  const tableName = call[2] as string;
 
   return {
     moduleName: resolveModuleName(nameArgument, defines, file),
@@ -86,7 +89,7 @@ function readRegisteredFunctions(
   const open = declaration.index + declaration[0].length - 1;
   const close = matchingBrace(structure, open, file);
   const body = code.slice(open + 1, close);
-  return [...body.matchAll(/\{\s*"([^"]+)"\s*,/g)].map((entry) => entry[1]).sort();
+  return [...body.matchAll(/\{\s*"([^"]+)"\s*,/g)].map((entry) => entry[1] as string).sort();
 }
 
 function readConstants(code: string, structure: string, callIndex: number, file: string): string[] {
@@ -98,9 +101,9 @@ function readConstants(code: string, structure: string, callIndex: number, file:
   }
   const body = code.slice(open + 1, matchingBrace(structure, open, file));
   const names = [
-    ...[...body.matchAll(/\bSETCONSTANT\s*\(\s*(\w+)\s*\)/g)].map((match) => match[1]),
+    ...[...body.matchAll(/\bSETCONSTANT\s*\(\s*(\w+)\s*\)/g)].map((match) => match[1] as string),
     ...[...body.matchAll(/\blua_setfield\s*\(\s*\w+\s*,\s*-2\s*,\s*"(\w+)"\s*\)/g)].map(
-      (match) => match[1],
+      (match) => match[1] as string,
     ),
   ];
   return [...new Set(names)].sort();
@@ -109,7 +112,7 @@ function readConstants(code: string, structure: string, callIndex: number, file:
 function readStringDefines(source: string): Map<string, string> {
   const defines = new Map<string, string>();
   for (const match of source.matchAll(/^[ \t]*#[ \t]*define[ \t]+(\w+)[ \t]+"([^"]*)"/gm)) {
-    defines.set(match[1], match[2]);
+    defines.set(match[1] as string, match[2] as string);
   }
   return defines;
 }
