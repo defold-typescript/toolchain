@@ -24,11 +24,12 @@ It reads every `dependencies#N` URL under `[project]` in `game.project`. A
 
 ## Dependency kinds
 
-`resolve` inspects each declared archive and sorts it into one of three kinds:
+`resolve` inspects each declared archive and sorts it into one of four kinds:
 
 | Kind                          | Detected by                                                                                        | What `resolve` produces                                                                                                           |
 | ----------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | **Vendored pure-Lua library** | the repo name matches the `@defold-typescript/library-types` corpus, confirmed against the archive | the committed `.d.ts` materialized into `.defold-types/libraries@<cliVersion>/`, plus that same name on the tsconfig `types` list |
+| **Curated native extension**  | no confirmed library match, the repo name matches a curated native target, and the archive ships that target's `<dir>/ext.manifest` | the curated ambient namespace in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list; any `.script_api` in the same archive is ignored |
 | **Native extension**          | no confirmed library match, and the archive carries one or more `.script_api` docs                 | one ambient namespace per doc in `.defold-types/extensions/`, plus `"extensions"` on the tsconfig `types` list                    |
 | **Asset-only / content**      | no confirmed library match and no `.script_api` — fonts, asset packs, other content archives       | nothing: reported and skipped                                                                                                     |
 
@@ -104,6 +105,31 @@ archive ships none of the vendored library's module paths — it
 keeps its own namespace from its `.script_api`, is not reported as a library at
 all, and raises no warning. Its types came from the archive itself, so nothing
 is missing and a warning would be noise.
+
+## Curated native extensions
+
+A native extension that ships no `.script_api` gives `resolve` nothing to emit:
+its Lua API is registered in C++. For the ones listed below, this toolchain ships
+a hand-written ambient namespace instead. `resolve` uses it when the dependency's
+repo name matches **and** the archive ships the extension's `ext.manifest` in
+the named directory, so a repo-name collision alone writes nothing.
+
+| Extension | Pinned at | Namespace | Confirmed by        |
+| --------- | --------- | --------- | ------------------- |
+| [selimanac/defold-daabbcc](https://github.com/selimanac/defold-daabbcc) | `v3.0.8` | `daabbcc` | `daabbcc/ext.manifest` |
+
+The namespace lands in `.defold-types/extensions/` like a `.script_api`
+namespace and needs no import:
+
+```ts
+const group = daabbcc.new_group(daabbcc.UPDATE_PARTIALREBUILD);
+const [hits, count] = daabbcc.query_aabb(group, 0, 0, 100, 100);
+```
+
+The curated file wins over any `.script_api` the same archive ships, and the
+`--json` report marks the dependency `typeSurface: "vendored-native"`. A project
+that still depends on the old `selimanac/DAABBCC` URL is not matched; point
+the dependency at `selimanac/defold-daabbcc`.
 
 ## Dependency scene sources
 
