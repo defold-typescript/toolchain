@@ -61,6 +61,9 @@
     "generated/sprite_repeat.d.ts",
     "generated/node_repeat.d.ts",
     "generated/native/daabbcc.d.ts",
+    "generated/native/share.d.ts",
+    "generated/native/uuid4.d.ts",
+    "generated/native/tile_raycast.d.ts",
     "test-d/boom-usage.test-d.ts",
     "test-d/defsave-usage.test-d.ts",
     "test-d/bridge-usage.test-d.ts",
@@ -89,6 +92,7 @@
     "test-d/checkpoint-usage.test-d.ts",
     "test-d/sprite-repeat-usage.test-d.ts",
     "test-d/daabbcc-usage.test-d.ts",
+    "test-d/native-extensions-usage.test-d.ts",
     "test-d/fixtures/engine-handle-module.d.ts",
     "test-d/engine-handle-module.test-d.ts",
     "test-d/dts-check-ambient.ts"

@@ -7,6 +7,30 @@
       "namespace": "daabbcc",
       "manifestDir": "daabbcc",
       "declaration": "generated/native/daabbcc.d.ts"
+    },
+    {
+      "repo": "https://github.com/britzl/defold-sharing",
+      "ref": "4.7.0",
+      "license": "MIT",
+      "namespace": "share",
+      "manifestDir": "share",
+      "declaration": "generated/native/share.d.ts"
+    },
+    {
+      "repo": "https://github.com/selimanac/defold-uuid4",
+      "ref": "v1.0",
+      "license": "MIT",
+      "namespace": "uuid4",
+      "manifestDir": "uuid4",
+      "declaration": "generated/native/uuid4.d.ts"
+    },
+    {
+      "repo": "https://github.com/selimanac/defold-tile-raycast",
+      "ref": "v2.0.1",
+      "license": "MIT",
+      "namespace": "tile_raycast",
+      "manifestDir": "tile-raycast",
+      "declaration": "generated/native/tile_raycast.d.ts"
     }
   ]
 }
