@@ -856,6 +856,112 @@
       "description": "Removes all AABBs, groups and game objects, resetting to the initial state.\nRecommended when you are done with it, such as when a level ends.",
       "parameters": [],
       "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "QueryResult",
+      "types": [
+        "number[]",
+        "BitsHit[]",
+        "ManifoldHit[]"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "BitsHit",
+      "properties": [
+        {
+          "name": "id",
+          "brief": "The AABB ID.",
+          "description": "The AABB ID.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "category_bits",
+          "brief": "The category bits the AABB was inserted with.",
+          "description": "The category bits the AABB was inserted with.",
+          "types": [
+            "number"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "ManifoldHit",
+      "properties": [
+        {
+          "name": "depth",
+          "brief": "Penetration depth.",
+          "description": "Penetration depth.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "contact_point_x",
+          "brief": "Contact point X.",
+          "description": "Contact point X.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "contact_point_y",
+          "brief": "Contact point Y.",
+          "description": "Contact point Y.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "normal_x",
+          "brief": "Collision normal X.",
+          "description": "Collision normal X.",
+          "types": [
+            "number"
+          ]
+        },
+        {
+          "name": "normal_y",
+          "brief": "Collision normal Y.",
+          "description": "Collision normal Y.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "extends": [
+        "SortedHit"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "SortedHit",
+      "properties": [
+        {
+          "name": "distance",
+          "brief": "Distance from the query or ray origin.",
+          "description": "Distance from the query or ray origin.",
+          "types": [
+            "number"
+          ]
+        }
+      ],
+      "extends": [
+        "BitsHit"
+      ]
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "SortedQueryResult",
+      "types": [
+        "SortedHit[]",
+        "BitsHit[]",
+        "ManifoldHit[]"
+      ]
     }
   ]
 }

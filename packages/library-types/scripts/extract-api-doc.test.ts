@@ -1214,3 +1214,86 @@ describe("extractApiDoc file-scope ambient declarations", () => {
     expect(elements()[0]).toMatchObject({ type: "FUNCTION", name: "boot" });
   });
 });
+
+// A curated native declaration's shape: every published member sits in a
+// `namespace` nested in `declare global`, and so do the interfaces and aliases
+// its signatures name. `Shadow` is declared at both scopes with distinct members
+// so which one a namespace member's reference resolves to is observable.
+const NESTED_GLOBAL = `/** @noSelfInFile **/
+
+/** File-scope shadow. */
+interface Shadow {
+	/** Only the file-scope one has this. */
+	outer: number;
+}
+
+declare global {
+	namespace ns {
+		/** Base hit. */
+		interface A {
+			/** The id. */
+			x: number;
+		}
+
+		/** Hit with a distance. */
+		interface B extends A {
+			/** How far. */
+			y: number;
+		}
+
+		/** Namespace shadow. */
+		interface Shadow {
+			/** Only the namespace one has this. */
+			inner: number;
+		}
+
+		/** Plain ids, or full hits. */
+		type R = number[] | B[];
+
+		/** Named by nothing published. */
+		interface Unused {
+			/** Never published. */
+			z: number;
+		}
+
+		/** Do the thing. */
+		function f(o?: A, s?: Shadow): R;
+	}
+}
+
+export {};
+`;
+
+describe("extractApiDoc nested-namespace helper shapes", () => {
+  const elements = () =>
+    (extractApiDoc(NESTED_GLOBAL, "ns") as { elements: Array<Record<string, unknown>> }).elements;
+  const only = (name: string) => elements().find((e) => e.type === "TYPEDEF" && e.name === name);
+
+  test("emits a reached namespace interface under its qualified name with its members", () => {
+    expect(only("global.ns.A")).toMatchObject({
+      global: true,
+      properties: [{ name: "x", brief: "The id." }],
+    });
+  });
+
+  test("keeps a namespace interface's extends clause and emits the parent it names", () => {
+    expect(only("global.ns.B")).toMatchObject({
+      extends: ["A"],
+      properties: [{ name: "y" }],
+    });
+    expect(only("global.ns.A")).toBeDefined();
+  });
+
+  test("emits a union alias as its top-level member texts", () => {
+    expect(only("global.ns.R")).toMatchObject({ types: ["number[]", "B[]"] });
+  });
+
+  test("leaves a shape no published signature names unemitted", () => {
+    expect(only("global.ns.Unused")).toBeUndefined();
+  });
+
+  test("resolves a namespace member's reference to the namespace shape, not the file-scope one", () => {
+    expect(only("global.ns.Shadow")).toMatchObject({ properties: [{ name: "inner" }] });
+    expect(only("Shadow")).toBeUndefined();
+  });
+});

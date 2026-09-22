@@ -87,6 +87,48 @@
         }
       ],
       "returnvalues": []
+    },
+    {
+      "type": "TYPEDEF",
+      "name": "FileOptions",
+      "properties": [
+        {
+          "name": "type",
+          "brief": "Data type. Default is `text/plain`.",
+          "description": "Data type. Default is `text/plain`.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "text",
+          "brief": "Text to be shared.",
+          "description": "Text to be shared.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "title",
+          "brief": "Title to be shared. May be ignored by the target.",
+          "description": "Title to be shared. May be ignored by the target.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "url",
+          "brief": "URL to be shared.",
+          "description": "URL to be shared.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ]
     }
   ]
 }
