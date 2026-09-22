@@ -1,22 +1,50 @@
 {
+  "defold-1.12.4/kinds/gui-script:buffer.copy_stream:359ea94639622db5": [
+    {
+      "code": 2339,
+      "text": "Property 'length' does not exist on type 'Opaque<\"bufferstream\"> & { [index: number]: number; }'."
+    }
+  ],
+  "defold-1.12.4/kinds/gui-script:go.delete:63517a8a15d5d030": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'true' is not assignable to parameter of type 'Hash<string> | (string & {}) | Url | (Hash<string> | (string & {}) | Url)[] | undefined'."
+    }
+  ],
   "defold-1.12.4/kinds/gui-script:go.get:7cac2203eda50a5e": [
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 3, '(url: any, property: keyof properties, options?: GoPropertyOptions | undefined): any', gave the following error.     Argument of type '\"material\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: any, property: any, options?: GoPropertyOptions | undefined): any', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | (string & {}) | Url, property: keyof properties, options?: GoPropertyOptions | undefined): number | Vector3 | Quaternion', gave the following error.     Argument of type '\"fonts\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | (string & {}) | Url, property: string | Hash<string>, options?: GoPropertyOptions | undefined): number | boolean | ... 4 more ... | Vector4', gave the following error.     Type 'string' is not assignable to type 'Hash<string>'."
     },
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 3, '(url: any, property: keyof properties, options?: GoPropertyOptions | undefined): any', gave the following error.     Argument of type '\"some_property\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: any, property: any, options?: GoPropertyOptions | undefined): any', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | (string & {}) | Url, property: keyof properties, options?: GoPropertyOptions | undefined): number | Vector3 | Quaternion', gave the following error.     Argument of type '\"material\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | (string & {}) | Url, property: string | Hash<string>, options?: GoPropertyOptions | undefined): number | boolean | ... 4 more ... | Vector4', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | (string & {}) | Url, property: keyof properties, options?: GoPropertyOptions | undefined): number | Vector3 | Quaternion', gave the following error.     Argument of type '\"some_property\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | (string & {}) | Url, property: string | Hash<string>, options?: GoPropertyOptions | undefined): number | boolean | ... 4 more ... | Vector4', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.12.4/kinds/gui-script:go.set:2ca1763ad71c1232": [
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 3, '(url: any, property: keyof properties, value: any, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"material\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: any, property: any, value: any, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | (string & {}) | Url, property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"example\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | (string & {}) | Url, property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type 'Vector4[]' is not assignable to parameter of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4'."
     },
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 3, '(url: any, property: keyof properties, value: any, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"some_property\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: any, property: any, value: any, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | (string & {}) | Url, property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"fonts\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | (string & {}) | Url, property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string' is not assignable to type 'Hash<string>'."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | (string & {}) | Url, property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"material\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | (string & {}) | Url, property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | (string & {}) | Url, property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"some_property\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | (string & {}) | Url, property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   The last overload gave the following error.     Argument of type '(path?: string | undefined) => Hash<string>' is not assignable to parameter of type 'Quaternion'."
     }
   ],
   "defold-1.12.4/kinds/gui-script:gui.animate:afd63fafe7e65e70": [
@@ -29,6 +57,20 @@
       "text": "A module cannot have multiple default exports."
     }
   ],
+  "defold-1.12.4/kinds/gui-script:gui.cancel_animations:ac678b79b816b54d": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'number & { readonly __brand: \"go.EASING_LINEAR\"; }' is not assignable to parameter of type 'Vector | (number & { readonly __brand: \"gui.EASING_INBACK\"; }) | (number & { readonly __brand: \"gui.EASING_INBOUNCE\"; }) | (number & { readonly __brand: \"gui.EASING_INCIRC\"; }) | ... 37 more ... | (number & { ...; })'.   Type 'number & { readonly __brand: \"go.EASING_LINEAR\"; }' is not assignable to type 'number & { readonly __brand: \"gui.EASING_OUTSINE\"; }'.     Type 'number & { readonly __brand: \"go.EASING_LINEAR\"; }' is not assignable to type '{ readonly __brand: \"gui.EASING_OUTSINE\"; }'.       Types of property '__brand' are incompatible.         Type '\"go.EASING_LINEAR\"' is not assignable to type '\"gui.EASING_OUTSINE\"'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'number & { readonly __brand: \"go.EASING_LINEAR\"; }' is not assignable to parameter of type 'Vector | (number & { readonly __brand: \"gui.EASING_INBACK\"; }) | (number & { readonly __brand: \"gui.EASING_INBOUNCE\"; }) | (number & { readonly __brand: \"gui.EASING_INCIRC\"; }) | ... 37 more ... | (number & { ...; })'.   Type 'number & { readonly __brand: \"go.EASING_LINEAR\"; }' is not assignable to type 'number & { readonly __brand: \"gui.EASING_OUTSINE\"; }'.     Type 'number & { readonly __brand: \"go.EASING_LINEAR\"; }' is not assignable to type '{ readonly __brand: \"gui.EASING_OUTSINE\"; }'.       Types of property '__brand' are incompatible.         Type '\"go.EASING_LINEAR\"' is not assignable to type '\"gui.EASING_OUTSINE\"'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'number & { readonly __brand: \"go.EASING_LINEAR\"; }' is not assignable to parameter of type 'Vector | (number & { readonly __brand: \"gui.EASING_INBACK\"; }) | (number & { readonly __brand: \"gui.EASING_INBOUNCE\"; }) | (number & { readonly __brand: \"gui.EASING_INCIRC\"; }) | ... 37 more ... | (number & { ...; })'.   Type 'number & { readonly __brand: \"go.EASING_LINEAR\"; }' is not assignable to type 'number & { readonly __brand: \"gui.EASING_OUTSINE\"; }'.     Type 'number & { readonly __brand: \"go.EASING_LINEAR\"; }' is not assignable to type '{ readonly __brand: \"gui.EASING_OUTSINE\"; }'.       Types of property '__brand' are incompatible.         Type '\"go.EASING_LINEAR\"' is not assignable to type '\"gui.EASING_OUTSINE\"'."
+    }
+  ],
   "defold-1.12.4/kinds/gui-script:gui.new_texture:192ba6f4b864704a": [
     {
       "code": 2345,
@@ -36,6 +78,26 @@
     }
   ],
   "defold-1.12.4/kinds/gui-script:gui.set:d195edde0a9fd170": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'Matrix4' is not assignable to parameter of type 'number | Vector3 | Quaternion | Vector4'.   Type 'Matrix4' is missing the following properties from type 'Vector4': x, y, z, w, and 4 more."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'Matrix4' is not assignable to parameter of type 'number | Vector3 | Quaternion | Vector4'.   Type 'Matrix4' is missing the following properties from type 'Vector4': x, y, z, w, and 4 more."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'unknown' is not assignable to parameter of type 'number | Vector3 | Quaternion | Vector4'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'unknown' is not assignable to parameter of type 'number | Vector3 | Quaternion | Vector4'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'Vector3' is not assignable to parameter of type 'Quaternion | Vector4'.   Property 'w' is missing in type 'Vector3' but required in type 'Vector4'."
+    },
     {
       "code": 18046,
       "text": "'node_position' is of type 'unknown'."
@@ -99,10 +161,28 @@
       "text": "Expected 1 arguments, but got 2."
     }
   ],
+  "defold-1.12.4/kinds/gui-script:on_input:cc835ea429adc693": [
+    {
+      "code": 2339,
+      "text": "Property 'my_value' does not exist on type 'Record<never, never>'."
+    }
+  ],
+  "defold-1.12.4/kinds/gui-script:on_reload:e89fe0d0bd51ed98": [
+    {
+      "code": 2339,
+      "text": "Property 'my_original_color' does not exist on type 'Record<never, never>'."
+    }
+  ],
   "defold-1.12.4/kinds/gui-script:profiler.recorded_frame_count:9d55df4a00c36560": [
     {
       "code": 2559,
       "text": "Type 'number' has no properties in common with type '{ distance?: number; frame?: number; }'."
+    }
+  ],
+  "defold-1.12.4/kinds/gui-script:resource.set:fd3445f93ecdd85e": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
     }
   ],
   "defold-1.12.4/kinds/gui-script:socket.protect:478d4974b491bda9": [
@@ -179,6 +259,12 @@
       "text": "Cannot redeclare block-scoped variable 'host_path'."
     }
   ],
+  "defold-1.12.4/kinds/gui-script:sys.load_buffer:106462121a6dfc78": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'string' is not assignable to parameter of type 'Hash<string>'."
+    }
+  ],
   "defold-1.12.4/kinds/gui-script:sys.save:20939b04814e98af": [
     {
       "code": 2345,
@@ -199,24 +285,118 @@
       "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
     }
   ],
+  "defold-1.12.4/kinds/gui-script:update:f4f87939dbdd5fc3": [
+    {
+      "code": 2339,
+      "text": "Property 'current_score' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'current_score' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'current_score' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'current_score' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'current_score' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'current_score' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'current_score' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'score_node' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'score_node' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'score_update_speed' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'score_update_speed' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'target_score' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'target_score' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'target_score' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'target_score' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'target_score' does not exist on type 'Record<never, never>'."
+    }
+  ],
+  "defold-1.12.4/kinds/render-script:buffer.copy_stream:359ea94639622db5": [
+    {
+      "code": 2339,
+      "text": "Property 'length' does not exist on type 'Opaque<\"bufferstream\"> & { [index: number]: number; }'."
+    }
+  ],
+  "defold-1.12.4/kinds/render-script:go.delete:63517a8a15d5d030": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'true' is not assignable to parameter of type 'Hash<string> | Url | (string & {}) | (Hash<string> | Url | (string & {}))[] | undefined'."
+    }
+  ],
   "defold-1.12.4/kinds/render-script:go.get:7cac2203eda50a5e": [
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 3, '(url: any, property: keyof properties, options?: GoPropertyOptions | undefined): any', gave the following error.     Argument of type '\"material\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: any, property: any, options?: GoPropertyOptions | undefined): any', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, options?: GoPropertyOptions | undefined): number | Vector3 | Quaternion', gave the following error.     Argument of type '\"fonts\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, options?: GoPropertyOptions | undefined): number | boolean | ... 4 more ... | Vector4', gave the following error.     Type 'string' is not assignable to type 'Hash<string>'."
     },
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 3, '(url: any, property: keyof properties, options?: GoPropertyOptions | undefined): any', gave the following error.     Argument of type '\"some_property\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: any, property: any, options?: GoPropertyOptions | undefined): any', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, options?: GoPropertyOptions | undefined): number | Vector3 | Quaternion', gave the following error.     Argument of type '\"material\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, options?: GoPropertyOptions | undefined): number | boolean | ... 4 more ... | Vector4', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, options?: GoPropertyOptions | undefined): number | Vector3 | Quaternion', gave the following error.     Argument of type '\"some_property\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, options?: GoPropertyOptions | undefined): number | boolean | ... 4 more ... | Vector4', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.12.4/kinds/render-script:go.set:2ca1763ad71c1232": [
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 3, '(url: any, property: keyof properties, value: any, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"material\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: any, property: any, value: any, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"example\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type 'Vector4[]' is not assignable to parameter of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4'."
     },
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 3, '(url: any, property: keyof properties, value: any, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"some_property\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: any, property: any, value: any, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"fonts\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string' is not assignable to type 'Hash<string>'."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"material\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"some_property\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   The last overload gave the following error.     Argument of type '(path?: string | undefined) => Hash<string>' is not assignable to parameter of type 'Quaternion'."
     }
   ],
   "defold-1.12.4/kinds/render-script:html5.run:03f87c9fc915512f": [
@@ -261,7 +441,131 @@
       "text": "Type 'number' has no properties in common with type '{ distance?: number; frame?: number; }'."
     }
   ],
+  "defold-1.12.4/kinds/render-script:render.constant_buffer:851cc71b74ec904a": [
+    {
+      "code": 2339,
+      "text": "Property 'light_colors' does not exist on type 'Opaque<\"constant_buffer\">'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'light_colors' does not exist on type 'Opaque<\"constant_buffer\">'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'light_colors' does not exist on type 'Opaque<\"constant_buffer\">'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'light_colors' does not exist on type 'Opaque<\"constant_buffer\">'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'light_colors' does not exist on type 'Opaque<\"constant_buffer\">'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'light_colors' does not exist on type 'Opaque<\"constant_buffer\">'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'tint' does not exist on type 'Opaque<\"constant_buffer\">'."
+    }
+  ],
+  "defold-1.12.4/kinds/render-script:render.disable_texture:77eefc5b608dd2e6": [
+    {
+      "code": 2339,
+      "text": "Property 'my_pred' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_render_target' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'number' is not assignable to parameter of type 'string | Hash<string> | Opaque<\"texture\">'."
+    }
+  ],
+  "defold-1.12.4/kinds/render-script:render.dispatch_compute:af76607a05354da7": [
+    {
+      "code": 2339,
+      "text": "Property 'backing_texture' does not exist on type 'Record<never, never> & { scene_rt: Opaque<\"render_target\">; }'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'tint' does not exist on type 'Opaque<\"constant_buffer\">'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'Opaque<\"render_target\">' is not assignable to parameter of type 'string | Hash<string> | Opaque<\"texture\">'.   Type 'Opaque<\"render_target\">' is not assignable to type 'Opaque<\"texture\">'.     Type '\"render_target\"' is not assignable to type '\"texture\"'."
+    }
+  ],
+  "defold-1.12.4/kinds/render-script:render.draw:47232b75e7b74189": [
+    {
+      "code": 2339,
+      "text": "Property 'proj' does not exist on type 'Record<never, never> & { my_pred: number; }'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'proj' does not exist on type 'Record<never, never> & { my_pred: number; }'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'tint' does not exist on type 'Opaque<\"constant_buffer\">'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'view' does not exist on type 'Record<never, never> & { my_pred: number; }'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'view' does not exist on type 'Record<never, never> & { my_pred: number; }'."
+    }
+  ],
   "defold-1.12.4/kinds/render-script:render.enable_texture:4dd1d2618c062e70": [
+    {
+      "code": 2339,
+      "text": "Property 'my_pred' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_pred' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_pred' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_pred' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_render_target' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_render_target' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_texture_handle' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_texture_handle' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'number & { readonly __brand: \"render.RENDER_TARGET_DEFAULT\"; }' is not assignable to parameter of type 'Opaque<\"render_target\">'.   Property '[OpaqueBrand]' is missing in type 'Number & { readonly __brand: \"render.RENDER_TARGET_DEFAULT\"; }' but required in type 'Opaque<\"render_target\">'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'number & { readonly __brand: \"render.RENDER_TARGET_DEFAULT\"; }' is not assignable to parameter of type 'Opaque<\"render_target\">'.   Property '[OpaqueBrand]' is missing in type 'Number & { readonly __brand: \"render.RENDER_TARGET_DEFAULT\"; }' but required in type 'Opaque<\"render_target\">'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'string' is not assignable to parameter of type 'Opaque<\"render_target\">'."
+    },
     {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
@@ -275,7 +579,27 @@
       "text": "A module cannot have multiple default exports."
     }
   ],
+  "defold-1.12.4/kinds/render-script:render.get_render_target_height:f509a9b954573583": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'string' is not assignable to parameter of type 'Opaque<\"render_target\">'."
+    }
+  ],
+  "defold-1.12.4/kinds/render-script:render.get_render_target_width:25c6d828a4ae3706": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'string' is not assignable to parameter of type 'Opaque<\"render_target\">'."
+    }
+  ],
   "defold-1.12.4/kinds/render-script:render.render_target:766fbfcc7bc21b4b": [
+    {
+      "code": 2339,
+      "text": "Property 'my_pred' does not exist on type 'Record<never, never> & { my_render_target: Opaque<\"render_target\">; }'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_pred' does not exist on type 'Record<never, never> & { my_render_target: Opaque<\"render_target\">; }'."
+    },
     {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
@@ -287,6 +611,16 @@
     {
       "code": 2551,
       "text": "Property 'enable_render_target' does not exist on type 'typeof render'. Did you mean 'delete_render_target'?"
+    }
+  ],
+  "defold-1.12.4/kinds/render-script:render.set_camera:6ee012d07a0487a6": [
+    {
+      "code": 2345,
+      "text": "Argument of type '\"main:/my_go#camera\"' is not assignable to parameter of type 'number | Url | undefined'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type '\"main:/my_go#camera\"' is not assignable to parameter of type 'number | Url | undefined'."
     }
   ],
   "defold-1.12.4/kinds/render-script:render.set_listener:6fc340897eeb1ab9": [
@@ -305,12 +639,58 @@
       "text": "Type '((number & { readonly __brand: \"graphics.BUFFER_TYPE_DEPTH_BIT\"; }) | (number & { readonly __brand: \"graphics.BUFFER_TYPE_STENCIL_BIT\"; }))[]' is not assignable to type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type '((number & { readonly __brand: \"graphics.BUFFER_TYPE_DEPTH_BIT\"; }) | (number & { readonly __brand: \"graphics.BUFFER_TYPE_STENCIL_BIT\"; }))[]'."
     },
     {
+      "code": 2339,
+      "text": "Property 'my_pred' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_pred' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_render_target' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'number & { readonly __brand: \"render.RENDER_TARGET_DEFAULT\"; }' is not assignable to parameter of type 'Opaque<\"render_target\">'.   Property '[OpaqueBrand]' is missing in type 'Number & { readonly __brand: \"render.RENDER_TARGET_DEFAULT\"; }' but required in type 'Opaque<\"render_target\">'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'number & { readonly __brand: \"render.RENDER_TARGET_DEFAULT\"; }' is not assignable to parameter of type 'Opaque<\"render_target\">'.   Property '[OpaqueBrand]' is missing in type 'Number & { readonly __brand: \"render.RENDER_TARGET_DEFAULT\"; }' but required in type 'Opaque<\"render_target\">'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'string' is not assignable to parameter of type 'Opaque<\"render_target\">'."
+    },
+    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
     {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
+    }
+  ],
+  "defold-1.12.4/kinds/render-script:render.set_render_target_size:00274352e6327274": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'string' is not assignable to parameter of type 'Opaque<\"render_target\">'."
+    }
+  ],
+  "defold-1.12.4/kinds/render-script:render.set_view:7a30b4955abb3844": [
+    {
+      "code": 2322,
+      "text": "Type 'unknown' is not assignable to type 'Matrix4'."
+    },
+    {
+      "code": 2322,
+      "text": "Type 'unknown' is not assignable to type 'Matrix4'."
+    }
+  ],
+  "defold-1.12.4/kinds/render-script:resource.set:fd3445f93ecdd85e": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
     }
   ],
   "defold-1.12.4/kinds/render-script:socket.protect:478d4974b491bda9": [
@@ -387,6 +767,12 @@
       "text": "Cannot redeclare block-scoped variable 'host_path'."
     }
   ],
+  "defold-1.12.4/kinds/render-script:sys.load_buffer:106462121a6dfc78": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'string' is not assignable to parameter of type 'Hash<string>'."
+    }
+  ],
   "defold-1.12.4/kinds/render-script:sys.save:20939b04814e98af": [
     {
       "code": 2345,
@@ -407,30 +793,146 @@
       "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
     }
   ],
+  "defold-1.12.4/kinds/script:buffer.copy_stream:359ea94639622db5": [
+    {
+      "code": 2339,
+      "text": "Property 'length' does not exist on type 'Opaque<\"bufferstream\"> & { [index: number]: number; }'."
+    }
+  ],
   "defold-1.12.4/kinds/script:buffer.create:d83315970921bbc7": [
     {
+      "code": 2339,
+      "text": "Property 'b' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'g' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'height' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'image' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'image' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'imagestream' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'imagestream' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'imagestream' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'imagestream' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'r' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'width' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'width' does not exist on type 'Record<never, never>'."
+    },
+    {
       "code": 2559,
-      "text": "Type '{ name: Core.Hash<S>; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: any; type?: any; count?: number; }'."
+      "text": "Type '{ name: Hash<\"rgb\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
+    }
+  ],
+  "defold-1.12.4/kinds/script:camera.screen_to_world:0738c074908495cb": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'number | undefined' is not assignable to parameter of type 'number'.   Type 'undefined' is not assignable to type 'number'."
+    }
+  ],
+  "defold-1.12.4/kinds/script:camera.screen_xy_to_world:ff65335713fc5698": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'number | undefined' is not assignable to parameter of type 'number'.   Type 'undefined' is not assignable to type 'number'."
+    }
+  ],
+  "defold-1.12.4/kinds/script:collectionfactory.create:5a49721288808772": [
+    {
+      "code": 2339,
+      "text": "Property 'enemy_ids' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'enemy_ids' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2464,
+      "text": "A computed property name must be of type 'string', 'number', 'symbol', or 'any'."
+    },
+    {
+      "code": 2464,
+      "text": "A computed property name must be of type 'string', 'number', 'symbol', or 'any'."
+    },
+    {
+      "code": 2464,
+      "text": "A computed property name must be of type 'string', 'number', 'symbol', or 'any'."
+    }
+  ],
+  "defold-1.12.4/kinds/script:final:ebc3cae218af001a": [
+    {
+      "code": 2339,
+      "text": "Property 'some_value' does not exist on type 'Record<never, never>'."
+    }
+  ],
+  "defold-1.12.4/kinds/script:go.delete:63517a8a15d5d030": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'true' is not assignable to parameter of type 'Hash<string> | Url | (string & {}) | (Hash<string> | Url | (string & {}))[] | undefined'."
     }
   ],
   "defold-1.12.4/kinds/script:go.get:7cac2203eda50a5e": [
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 3, '(url: any, property: keyof properties, options?: GoPropertyOptions | undefined): any', gave the following error.     Argument of type '\"material\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: any, property: any, options?: GoPropertyOptions | undefined): any', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, options?: GoPropertyOptions | undefined): number | Vector3 | Quaternion', gave the following error.     Argument of type '\"fonts\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, options?: GoPropertyOptions | undefined): number | boolean | ... 4 more ... | Vector4', gave the following error.     Type 'string' is not assignable to type 'Hash<string>'."
     },
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 3, '(url: any, property: keyof properties, options?: GoPropertyOptions | undefined): any', gave the following error.     Argument of type '\"some_property\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: any, property: any, options?: GoPropertyOptions | undefined): any', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, options?: GoPropertyOptions | undefined): number | Vector3 | Quaternion', gave the following error.     Argument of type '\"material\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, options?: GoPropertyOptions | undefined): number | boolean | ... 4 more ... | Vector4', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, options?: GoPropertyOptions | undefined): number | Vector3 | Quaternion', gave the following error.     Argument of type '\"some_property\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, options?: GoPropertyOptions | undefined): number | boolean | ... 4 more ... | Vector4', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.12.4/kinds/script:go.set:2ca1763ad71c1232": [
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 3, '(url: any, property: keyof properties, value: any, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"material\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: any, property: any, value: any, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"example\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type 'Vector4[]' is not assignable to parameter of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4'."
     },
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 3, '(url: any, property: keyof properties, value: any, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"some_property\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: any, property: any, value: any, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"fonts\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string' is not assignable to type 'Hash<string>'."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"material\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"some_property\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   The last overload gave the following error.     Argument of type '(path?: string | undefined) => Hash<string>' is not assignable to parameter of type 'Quaternion'."
     }
   ],
   "defold-1.12.4/kinds/script:html5.run:03f87c9fc915512f": [
@@ -495,7 +997,23 @@
       "text": "Expected 1 arguments, but got 2."
     }
   ],
+  "defold-1.12.4/kinds/script:model.get_mesh_enabled:b2f9e47a91bc3f12": [
+    {
+      "code": 2339,
+      "text": "Property 'weapon_properties' does not exist on type 'Record<never, never>'."
+    }
+  ],
+  "defold-1.12.4/kinds/script:on_input:86c70cf4ccb7381e": [
+    {
+      "code": 18048,
+      "text": "'action.value' is possibly 'undefined'."
+    }
+  ],
   "defold-1.12.4/kinds/script:on_message:bfed6bd72e3242e2": [
+    {
+      "code": 2339,
+      "text": "Property 'important_value' does not exist on type 'Record<never, never> & { a_url: Url; }'."
+    },
     {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
@@ -503,6 +1021,58 @@
     {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
+    }
+  ],
+  "defold-1.12.4/kinds/script:on_reload:ba39c0b0d5170ccb": [
+    {
+      "code": 18048,
+      "text": "'action.value' is possibly 'undefined'."
+    }
+  ],
+  "defold-1.12.4/kinds/script:physics.get_gravity:b2b339f1ddd89a38": [
+    {
+      "code": 2322,
+      "text": "Type 'number' is not assignable to type 'Vector3'."
+    }
+  ],
+  "defold-1.12.4/kinds/script:physics.raycast:3e0c534d741f0120": [
+    {
+      "code": 2339,
+      "text": "Property 'groups' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'groups' does not exist on type 'Record<never, never>'."
+    }
+  ],
+  "defold-1.12.4/kinds/script:physics.raycast_async:746b7900ebaa1f10": [
+    {
+      "code": 2339,
+      "text": "Property 'my_groups' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_groups' does not exist on type 'Record<never, never>'."
+    }
+  ],
+  "defold-1.12.4/kinds/script:physics.set_hflip:71a627e46d2e651e": [
+    {
+      "code": 2339,
+      "text": "Property 'fliph' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'fliph' does not exist on type 'Record<never, never>'."
+    }
+  ],
+  "defold-1.12.4/kinds/script:physics.set_vflip:7b5832955ec6635c": [
+    {
+      "code": 2339,
+      "text": "Property 'flipv' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'flipv' does not exist on type 'Record<never, never>'."
     }
   ],
   "defold-1.12.4/kinds/script:profiler.recorded_frame_count:9d55df4a00c36560": [
@@ -513,15 +1083,37 @@
   ],
   "defold-1.12.4/kinds/script:resource.atlas:ee6a5c4c09121554": [
     {
+      "code": 2339,
+      "text": "Property 'my_atlas' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_atlas' does not exist on type 'Record<never, never>'."
+    },
+    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
     {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"textures\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string' is not assignable to type 'Hash<string>'."
+    }
+  ],
+  "defold-1.12.4/kinds/script:resource.buffer:4353a4d474ea70b6": [
+    {
+      "code": 2339,
+      "text": "Property 'my_buffer' does not exist on type 'Record<never, never>'."
     }
   ],
   "defold-1.12.4/kinds/script:resource.create_buffer:436c1c10688cba69": [
+    {
+      "code": 2322,
+      "text": "Type 'number | undefined' is not assignable to type 'number'.   Type 'undefined' is not assignable to type 'number'."
+    },
     {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
@@ -532,7 +1124,7 @@
     },
     {
       "code": 2559,
-      "text": "Type '{ name: Core.Hash<S>; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: any; type?: any; count?: number; }'."
+      "text": "Type '{ name: Hash<\"position\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
     }
   ],
   "defold-1.12.4/kinds/script:resource.create_sound_data:19e6f6ab7a317fa1": [
@@ -576,11 +1168,11 @@
     },
     {
       "code": 2559,
-      "text": "Type '{ name: Core.Hash<S>; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: any; type?: any; count?: number; }'."
+      "text": "Type '{ name: Hash<\"rgba\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
     },
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 2, '(receiver: string, message_id: \"add_textures\", message?: Record<string | number, unknown> | undefined): void', gave the following error.     Argument of type 'Hash[]' is not assignable to parameter of type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'Hash[]'.   Overload 2 of 2, '(receiver: any, message_id: Hash, message?: Record<string | number, unknown> | undefined): void', gave the following error.     Argument of type 'Hash[]' is not assignable to parameter of type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'Hash[]'."
+      "text": "No overload matches this call.   Overload 1 of 2, '(receiver: \"@render:\", message_id: \"add_textures\", message?: Record<string | number, unknown> | undefined): void', gave the following error.     Argument of type 'Hash<string>[]' is not assignable to parameter of type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'Hash<string>[]'.   Overload 2 of 2, '(receiver: Hash<string> | Url | (string & {}), message_id: Hash<string>, message?: Record<string | number, unknown> | undefined): void', gave the following error.     Argument of type 'string' is not assignable to parameter of type 'Hash<string>'."
     }
   ],
   "defold-1.12.4/kinds/script:resource.create_texture_async:b90223f19d598eaa": [
@@ -594,21 +1186,43 @@
     },
     {
       "code": 2559,
-      "text": "Type '{ name: Core.Hash<S>; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: any; type?: any; count?: number; }'."
+      "text": "Type '{ name: Hash<\"rgba\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
     },
     {
       "code": 2559,
-      "text": "Type '{ name: Core.Hash<S>; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: any; type?: any; count?: number; }'."
+      "text": "Type '{ name: Hash<\"rgba\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
     }
   ],
   "defold-1.12.4/kinds/script:resource.font:f6d4ca24e4f87bfe": [
     {
+      "code": 2339,
+      "text": "Property 'my_font' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_font' does not exist on type 'Record<never, never>'."
+    },
+    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
     {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"fonts\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string' is not assignable to type 'Hash<string>'."
+    }
+  ],
+  "defold-1.12.4/kinds/script:resource.get_buffer:ed7d361c7f5d2e35": [
+    {
+      "code": 2339,
+      "text": "Property 'length' does not exist on type 'Opaque<\"bufferstream\"> & { [index: number]: number; }'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
     }
   ],
   "defold-1.12.4/kinds/script:resource.get_render_target_info:5e526c539ed8ae25": [
@@ -619,6 +1233,12 @@
     {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
+    }
+  ],
+  "defold-1.12.4/kinds/script:resource.get_text_metrics:d63156dd59513358": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'Hash<string>'.   Type 'number' is not assignable to type 'Hash<string>'."
     }
   ],
   "defold-1.12.4/kinds/script:resource.get_texture_info:4164f100ea5a8c15": [
@@ -633,12 +1253,36 @@
   ],
   "defold-1.12.4/kinds/script:resource.material:5bc0271405b04027": [
     {
+      "code": 2339,
+      "text": "Property 'my_material' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_material' does not exist on type 'Record<never, never>'."
+    },
+    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
     {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"materials\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string' is not assignable to type 'Hash<string>'."
+    }
+  ],
+  "defold-1.12.4/kinds/script:resource.render_target:87231742204d2351": [
+    {
+      "code": 2339,
+      "text": "Property 'my_render_target' does not exist on type 'Record<never, never>'."
+    }
+  ],
+  "defold-1.12.4/kinds/script:resource.set:fd3445f93ecdd85e": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
     }
   ],
   "defold-1.12.4/kinds/script:resource.set_atlas:349576ce8a915179": [
@@ -657,14 +1301,190 @@
   ],
   "defold-1.12.4/kinds/script:resource.set_buffer:a52fd8ac7453f601": [
     {
+      "code": 2345,
+      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
+    },
+    {
       "code": 2559,
-      "text": "Type '{ name: Core.Hash<S>; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: any; type?: any; count?: number; }'."
+      "text": "Type '{ name: Hash<\"position\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
     }
   ],
   "defold-1.12.4/kinds/script:resource.set_texture:48a7f4c2c8433aed": [
     {
       "code": 2339,
+      "text": "Property 'buffer' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'buffer' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'buffer' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'buffer' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'buffer' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'buffer' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'height' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'height' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'height' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'height' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'height' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'height' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'height' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'height' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_buffer' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'stream' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'stream' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'stream' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'stream' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'stream' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'stream' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'stream' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'stream' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
       "text": "Property 'TEXTURE_FORMAT_RGBA32F' does not exist on type 'typeof resource'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'width' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'width' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'width' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'width' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'width' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'width' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'width' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'width' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'width' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'width' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'x' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'x' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'x' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'y' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'y' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'y' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
     },
     {
       "code": 2345,
@@ -688,15 +1508,15 @@
     },
     {
       "code": 2559,
-      "text": "Type '{ name: Core.Hash<S>; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: any; type?: any; count?: number; }'."
+      "text": "Type '{ name: Hash<\"rgb\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
     },
     {
       "code": 2559,
-      "text": "Type '{ name: Core.Hash<S>; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: any; type?: any; count?: number; }'."
+      "text": "Type '{ name: Hash<\"rgb\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
     },
     {
       "code": 2559,
-      "text": "Type '{ name: Core.Hash<S>; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: any; type?: any; count?: number; }'."
+      "text": "Type '{ name: Hash<\"rgba\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
     },
     {
       "code": 18048,
@@ -709,6 +1529,18 @@
     {
       "code": 18048,
       "text": "'buf' is possibly 'undefined'."
+    }
+  ],
+  "defold-1.12.4/kinds/script:resource.texture:8cd63a7393c8a799": [
+    {
+      "code": 2339,
+      "text": "Property 'my_texture' does not exist on type 'Record<never, never>'."
+    }
+  ],
+  "defold-1.12.4/kinds/script:resource.tile_source:517b23c5ce0e56c6": [
+    {
+      "code": 2339,
+      "text": "Property 'my_tile_source' does not exist on type 'Record<never, never>'."
     }
   ],
   "defold-1.12.4/kinds/script:socket.protect:478d4974b491bda9": [
@@ -759,10 +1591,28 @@
       "text": "Cannot redeclare block-scoped variable 'sep'."
     }
   ],
+  "defold-1.12.4/kinds/script:sound.play:fcfbfd341c41ec59": [
+    {
+      "code": 2339,
+      "text": "Property 'countdown_id' does not exist on type 'Record<never, never>'."
+    }
+  ],
   "defold-1.12.4/kinds/script:sprite.play_flipbook:6bac8dc702dfffec": [
     {
       "code": 18046,
       "text": "'message' is of type 'unknown'."
+    }
+  ],
+  "defold-1.12.4/kinds/script:sprite.set_hflip:2d067cdccd1fb269": [
+    {
+      "code": 2339,
+      "text": "Property 'velocity' does not exist on type 'Record<never, never>'."
+    }
+  ],
+  "defold-1.12.4/kinds/script:sprite.set_vflip:89dcc94c14d785e2": [
+    {
+      "code": 2339,
+      "text": "Property 'up_side_down' does not exist on type 'Record<never, never>'."
     }
   ],
   "defold-1.12.4/kinds/script:sys.exists:7e98945102ff1ab7": [
@@ -791,10 +1641,40 @@
       "text": "Cannot redeclare block-scoped variable 'host_path'."
     }
   ],
+  "defold-1.12.4/kinds/script:sys.load_buffer:106462121a6dfc78": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'string' is not assignable to parameter of type 'Hash<string>'."
+    }
+  ],
   "defold-1.12.4/kinds/script:sys.load_buffer_async:6a383bca91cf11eb": [
     {
       "code": 2339,
+      "text": "Property 'first_asset' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'first_asset' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'first_request' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
       "text": "Property 'REQUEST_STATUS_FINISHED' does not exist on type 'typeof resource'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'second_asset' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'second_asset' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'second_request' does not exist on type 'Record<never, never>'."
     },
     {
       "code": 2393,
@@ -823,6 +1703,72 @@
     {
       "code": 2345,
       "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
+    }
+  ],
+  "defold-1.12.4/kinds/script:vmath.lerp:0f4fdfe7a9a39df7": [
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never>'."
+    }
+  ],
+  "defold-1.12.4/kinds/script:vmath.lerp:7cf8c0c1679ab05b": [
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never>'."
+    }
+  ],
+  "defold-1.12.4/kinds/script:vmath.slerp:858acbd524dfe896": [
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never>'."
     }
   ],
   "defold-1.12.4:buffer.copy_stream:359ea94639622db5": [
@@ -1065,42 +2011,70 @@
   ],
   "defold-1.13.0/kinds/gui-script:b2d.shape.set_shape:f31970e9ebb8d446": [
     {
+      "code": 2345,
+      "text": "Argument of type 'Opaque<\"b2Body\">' is not assignable to parameter of type 'Opaque<\"b2Shape\">'.   Type '\"b2Body\"' is not assignable to type '\"b2Shape\"'."
+    },
+    {
       "code": 2554,
       "text": "Expected 1 arguments, but got 2."
     },
     {
       "code": 2554,
       "text": "Expected 3 arguments, but got 4."
-    },
+    }
+  ],
+  "defold-1.13.0/kinds/gui-script:buffer.copy_stream:359ea94639622db5": [
     {
-      "code": 2559,
-      "text": "Type '2' has no properties in common with type '{ type?: number; radius?: number; center?: any; v0?: any; v1?: any; v2?: any; v3?: any; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: any; next_vertex?: any; }'."
+      "code": 2339,
+      "text": "Property 'length' does not exist on type 'Opaque<\"bufferstream\"> & { [index: number]: number; }'."
     }
   ],
   "defold-1.13.0/kinds/gui-script:compute.set_textures:87edc357f8852364": [
     {
       "code": 2353,
-      "text": "Object literal may only specify known properties, and 'my_texture' does not exist in type 'LuaMap<string, Hash>'."
+      "text": "Object literal may only specify known properties, and 'my_texture' does not exist in type 'LuaMap<string, Hash<string>>'."
+    }
+  ],
+  "defold-1.13.0/kinds/gui-script:go.delete:63517a8a15d5d030": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'true' is not assignable to parameter of type 'Hash<string> | Url | (string & {}) | (Hash<string> | Url | (string & {}))[] | undefined'."
     }
   ],
   "defold-1.13.0/kinds/gui-script:go.get:7cac2203eda50a5e": [
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 3, '(url: any, property: keyof properties, options?: GoPropertyOptions | undefined): any', gave the following error.     Argument of type '\"material\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: any, property: any, options?: GoPropertyOptions | undefined): any', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, options?: GoPropertyOptions | undefined): number | Vector3 | Quaternion', gave the following error.     Argument of type '\"fonts\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, options?: GoPropertyOptions | undefined): number | boolean | ... 4 more ... | Vector4', gave the following error.     Type 'string' is not assignable to type 'Hash<string>'."
     },
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 3, '(url: any, property: keyof properties, options?: GoPropertyOptions | undefined): any', gave the following error.     Argument of type '\"some_property\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: any, property: any, options?: GoPropertyOptions | undefined): any', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, options?: GoPropertyOptions | undefined): number | Vector3 | Quaternion', gave the following error.     Argument of type '\"material\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, options?: GoPropertyOptions | undefined): number | boolean | ... 4 more ... | Vector4', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, options?: GoPropertyOptions | undefined): number | Vector3 | Quaternion', gave the following error.     Argument of type '\"some_property\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, options?: GoPropertyOptions | undefined): number | boolean | ... 4 more ... | Vector4', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.13.0/kinds/gui-script:go.set:2ca1763ad71c1232": [
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 3, '(url: any, property: keyof properties, value: any, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"material\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: any, property: any, value: any, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"example\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type 'Vector4[]' is not assignable to parameter of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4'."
     },
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 3, '(url: any, property: keyof properties, value: any, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"some_property\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: any, property: any, value: any, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"fonts\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string' is not assignable to type 'Hash<string>'."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"material\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"some_property\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   The last overload gave the following error.     Argument of type '(path?: string | undefined) => Hash<string>' is not assignable to parameter of type 'Quaternion'."
     }
   ],
   "defold-1.13.0/kinds/gui-script:gui.animate:afd63fafe7e65e70": [
@@ -1113,6 +2087,20 @@
       "text": "A module cannot have multiple default exports."
     }
   ],
+  "defold-1.13.0/kinds/gui-script:gui.cancel_animations:ac678b79b816b54d": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'number & { readonly __brand: \"go.EASING_LINEAR\"; }' is not assignable to parameter of type 'Vector | (number & { readonly __brand: \"gui.EASING_INBACK\"; }) | (number & { readonly __brand: \"gui.EASING_INBOUNCE\"; }) | (number & { readonly __brand: \"gui.EASING_INCIRC\"; }) | ... 37 more ... | (number & { ...; })'.   Type 'number & { readonly __brand: \"go.EASING_LINEAR\"; }' is not assignable to type 'number & { readonly __brand: \"gui.EASING_OUTSINE\"; }'.     Type 'number & { readonly __brand: \"go.EASING_LINEAR\"; }' is not assignable to type '{ readonly __brand: \"gui.EASING_OUTSINE\"; }'.       Types of property '__brand' are incompatible.         Type '\"go.EASING_LINEAR\"' is not assignable to type '\"gui.EASING_OUTSINE\"'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'number & { readonly __brand: \"go.EASING_LINEAR\"; }' is not assignable to parameter of type 'Vector | (number & { readonly __brand: \"gui.EASING_INBACK\"; }) | (number & { readonly __brand: \"gui.EASING_INBOUNCE\"; }) | (number & { readonly __brand: \"gui.EASING_INCIRC\"; }) | ... 37 more ... | (number & { ...; })'.   Type 'number & { readonly __brand: \"go.EASING_LINEAR\"; }' is not assignable to type 'number & { readonly __brand: \"gui.EASING_OUTSINE\"; }'.     Type 'number & { readonly __brand: \"go.EASING_LINEAR\"; }' is not assignable to type '{ readonly __brand: \"gui.EASING_OUTSINE\"; }'.       Types of property '__brand' are incompatible.         Type '\"go.EASING_LINEAR\"' is not assignable to type '\"gui.EASING_OUTSINE\"'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'number & { readonly __brand: \"go.EASING_LINEAR\"; }' is not assignable to parameter of type 'Vector | (number & { readonly __brand: \"gui.EASING_INBACK\"; }) | (number & { readonly __brand: \"gui.EASING_INBOUNCE\"; }) | (number & { readonly __brand: \"gui.EASING_INCIRC\"; }) | ... 37 more ... | (number & { ...; })'.   Type 'number & { readonly __brand: \"go.EASING_LINEAR\"; }' is not assignable to type 'number & { readonly __brand: \"gui.EASING_OUTSINE\"; }'.     Type 'number & { readonly __brand: \"go.EASING_LINEAR\"; }' is not assignable to type '{ readonly __brand: \"gui.EASING_OUTSINE\"; }'.       Types of property '__brand' are incompatible.         Type '\"go.EASING_LINEAR\"' is not assignable to type '\"gui.EASING_OUTSINE\"'."
+    }
+  ],
   "defold-1.13.0/kinds/gui-script:gui.new_texture:192ba6f4b864704a": [
     {
       "code": 2345,
@@ -1120,6 +2108,26 @@
     }
   ],
   "defold-1.13.0/kinds/gui-script:gui.set:d195edde0a9fd170": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'Matrix4' is not assignable to parameter of type 'number | Vector3 | Quaternion | Vector4'.   Type 'Matrix4' is missing the following properties from type 'Vector4': x, y, z, w, and 4 more."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'Matrix4' is not assignable to parameter of type 'number | Vector3 | Quaternion | Vector4'.   Type 'Matrix4' is missing the following properties from type 'Vector4': x, y, z, w, and 4 more."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'unknown' is not assignable to parameter of type 'number | Vector3 | Quaternion | Vector4'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'unknown' is not assignable to parameter of type 'number | Vector3 | Quaternion | Vector4'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'Vector3' is not assignable to parameter of type 'Quaternion | Vector4'.   Property 'w' is missing in type 'Vector3' but required in type 'Vector4'."
+    },
     {
       "code": 18046,
       "text": "'node_position' is of type 'unknown'."
@@ -1186,7 +2194,7 @@
   "defold-1.13.0/kinds/gui-script:material.set_textures:8b7930f275efc915": [
     {
       "code": 2353,
-      "text": "Object literal may only specify known properties, and 'my_texture' does not exist in type 'LuaMap<string, Hash>'."
+      "text": "Object literal may only specify known properties, and 'my_texture' does not exist in type 'LuaMap<string, Hash<string>>'."
     }
   ],
   "defold-1.13.0/kinds/gui-script:material.set_vertex_attributes:a78800caef15ee12": [
@@ -1195,10 +2203,28 @@
       "text": "Property 'SEMANTIC_TYPE_COLOR' does not exist on type 'typeof graphics'."
     }
   ],
+  "defold-1.13.0/kinds/gui-script:on_input:cc835ea429adc693": [
+    {
+      "code": 2339,
+      "text": "Property 'my_value' does not exist on type 'Record<never, never>'."
+    }
+  ],
+  "defold-1.13.0/kinds/gui-script:on_reload:e89fe0d0bd51ed98": [
+    {
+      "code": 2339,
+      "text": "Property 'my_original_color' does not exist on type 'Record<never, never>'."
+    }
+  ],
   "defold-1.13.0/kinds/gui-script:profiler.recorded_frame_count:9d55df4a00c36560": [
     {
       "code": 2559,
       "text": "Type 'number' has no properties in common with type '{ distance?: number; frame?: number; }'."
+    }
+  ],
+  "defold-1.13.0/kinds/gui-script:resource.set:fd3445f93ecdd85e": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
     }
   ],
   "defold-1.13.0/kinds/gui-script:socket.protect:478d4974b491bda9": [
@@ -1275,6 +2301,12 @@
       "text": "Cannot redeclare block-scoped variable 'host_path'."
     }
   ],
+  "defold-1.13.0/kinds/gui-script:sys.load_buffer:106462121a6dfc78": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'string' is not assignable to parameter of type 'Hash<string>'."
+    }
+  ],
   "defold-1.13.0/kinds/gui-script:sys.save:20939b04814e98af": [
     {
       "code": 2345,
@@ -1295,7 +2327,77 @@
       "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
     }
   ],
+  "defold-1.13.0/kinds/gui-script:update:f4f87939dbdd5fc3": [
+    {
+      "code": 2339,
+      "text": "Property 'current_score' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'current_score' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'current_score' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'current_score' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'current_score' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'current_score' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'current_score' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'score_node' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'score_node' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'score_update_speed' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'score_update_speed' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'target_score' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'target_score' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'target_score' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'target_score' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'target_score' does not exist on type 'Record<never, never>'."
+    }
+  ],
   "defold-1.13.0/kinds/render-script:b2d.shape.set_shape:f31970e9ebb8d446": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'Opaque<\"b2Body\">' is not assignable to parameter of type 'Opaque<\"b2Shape\">'.   Type '\"b2Body\"' is not assignable to type '\"b2Shape\"'."
+    },
     {
       "code": 2554,
       "text": "Expected 1 arguments, but got 2."
@@ -1303,36 +2405,60 @@
     {
       "code": 2554,
       "text": "Expected 3 arguments, but got 4."
-    },
+    }
+  ],
+  "defold-1.13.0/kinds/render-script:buffer.copy_stream:359ea94639622db5": [
     {
-      "code": 2559,
-      "text": "Type '2' has no properties in common with type '{ type?: number; radius?: number; center?: any; v0?: any; v1?: any; v2?: any; v3?: any; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: any; next_vertex?: any; }'."
+      "code": 2339,
+      "text": "Property 'length' does not exist on type 'Opaque<\"bufferstream\"> & { [index: number]: number; }'."
     }
   ],
   "defold-1.13.0/kinds/render-script:compute.set_textures:87edc357f8852364": [
     {
       "code": 2353,
-      "text": "Object literal may only specify known properties, and 'my_texture' does not exist in type 'LuaMap<string, Hash>'."
+      "text": "Object literal may only specify known properties, and 'my_texture' does not exist in type 'LuaMap<string, Hash<string>>'."
+    }
+  ],
+  "defold-1.13.0/kinds/render-script:go.delete:63517a8a15d5d030": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'true' is not assignable to parameter of type 'Hash<string> | Url | (string & {}) | (Hash<string> | Url | (string & {}))[] | undefined'."
     }
   ],
   "defold-1.13.0/kinds/render-script:go.get:7cac2203eda50a5e": [
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 3, '(url: any, property: keyof properties, options?: GoPropertyOptions | undefined): any', gave the following error.     Argument of type '\"material\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: any, property: any, options?: GoPropertyOptions | undefined): any', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, options?: GoPropertyOptions | undefined): number | Vector3 | Quaternion', gave the following error.     Argument of type '\"fonts\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, options?: GoPropertyOptions | undefined): number | boolean | ... 4 more ... | Vector4', gave the following error.     Type 'string' is not assignable to type 'Hash<string>'."
     },
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 3, '(url: any, property: keyof properties, options?: GoPropertyOptions | undefined): any', gave the following error.     Argument of type '\"some_property\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: any, property: any, options?: GoPropertyOptions | undefined): any', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, options?: GoPropertyOptions | undefined): number | Vector3 | Quaternion', gave the following error.     Argument of type '\"material\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, options?: GoPropertyOptions | undefined): number | boolean | ... 4 more ... | Vector4', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, options?: GoPropertyOptions | undefined): number | Vector3 | Quaternion', gave the following error.     Argument of type '\"some_property\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, options?: GoPropertyOptions | undefined): number | boolean | ... 4 more ... | Vector4', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.13.0/kinds/render-script:go.set:2ca1763ad71c1232": [
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 3, '(url: any, property: keyof properties, value: any, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"material\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: any, property: any, value: any, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"example\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type 'Vector4[]' is not assignable to parameter of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4'."
     },
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 3, '(url: any, property: keyof properties, value: any, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"some_property\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: any, property: any, value: any, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"fonts\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string' is not assignable to type 'Hash<string>'."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"material\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"some_property\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   The last overload gave the following error.     Argument of type '(path?: string | undefined) => Hash<string>' is not assignable to parameter of type 'Quaternion'."
     }
   ],
   "defold-1.13.0/kinds/render-script:html5.run:03f87c9fc915512f": [
@@ -1374,7 +2500,7 @@
   "defold-1.13.0/kinds/render-script:material.set_textures:8b7930f275efc915": [
     {
       "code": 2353,
-      "text": "Object literal may only specify known properties, and 'my_texture' does not exist in type 'LuaMap<string, Hash>'."
+      "text": "Object literal may only specify known properties, and 'my_texture' does not exist in type 'LuaMap<string, Hash<string>>'."
     }
   ],
   "defold-1.13.0/kinds/render-script:material.set_vertex_attributes:a78800caef15ee12": [
@@ -1389,7 +2515,131 @@
       "text": "Type 'number' has no properties in common with type '{ distance?: number; frame?: number; }'."
     }
   ],
+  "defold-1.13.0/kinds/render-script:render.constant_buffer:851cc71b74ec904a": [
+    {
+      "code": 2339,
+      "text": "Property 'light_colors' does not exist on type 'Opaque<\"constant_buffer\">'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'light_colors' does not exist on type 'Opaque<\"constant_buffer\">'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'light_colors' does not exist on type 'Opaque<\"constant_buffer\">'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'light_colors' does not exist on type 'Opaque<\"constant_buffer\">'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'light_colors' does not exist on type 'Opaque<\"constant_buffer\">'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'light_colors' does not exist on type 'Opaque<\"constant_buffer\">'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'tint' does not exist on type 'Opaque<\"constant_buffer\">'."
+    }
+  ],
+  "defold-1.13.0/kinds/render-script:render.disable_texture:77eefc5b608dd2e6": [
+    {
+      "code": 2339,
+      "text": "Property 'my_pred' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_render_target' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'number' is not assignable to parameter of type 'string | Hash<string> | Opaque<\"texture\">'."
+    }
+  ],
+  "defold-1.13.0/kinds/render-script:render.dispatch_compute:af76607a05354da7": [
+    {
+      "code": 2339,
+      "text": "Property 'backing_texture' does not exist on type 'Record<never, never> & { scene_rt: Opaque<\"render_target\">; }'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'tint' does not exist on type 'Opaque<\"constant_buffer\">'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'Opaque<\"render_target\">' is not assignable to parameter of type 'string | Hash<string> | Opaque<\"texture\">'.   Type 'Opaque<\"render_target\">' is not assignable to type 'Opaque<\"texture\">'.     Type '\"render_target\"' is not assignable to type '\"texture\"'."
+    }
+  ],
+  "defold-1.13.0/kinds/render-script:render.draw:47232b75e7b74189": [
+    {
+      "code": 2339,
+      "text": "Property 'proj' does not exist on type 'Record<never, never> & { my_pred: number; }'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'proj' does not exist on type 'Record<never, never> & { my_pred: number; }'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'tint' does not exist on type 'Opaque<\"constant_buffer\">'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'view' does not exist on type 'Record<never, never> & { my_pred: number; }'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'view' does not exist on type 'Record<never, never> & { my_pred: number; }'."
+    }
+  ],
   "defold-1.13.0/kinds/render-script:render.enable_texture:4dd1d2618c062e70": [
+    {
+      "code": 2339,
+      "text": "Property 'my_pred' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_pred' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_pred' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_pred' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_render_target' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_render_target' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_texture_handle' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_texture_handle' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'number & { readonly __brand: \"render.RENDER_TARGET_DEFAULT\"; }' is not assignable to parameter of type 'Opaque<\"render_target\">'.   Property '[OpaqueBrand]' is missing in type 'Number & { readonly __brand: \"render.RENDER_TARGET_DEFAULT\"; }' but required in type 'Opaque<\"render_target\">'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'number & { readonly __brand: \"render.RENDER_TARGET_DEFAULT\"; }' is not assignable to parameter of type 'Opaque<\"render_target\">'.   Property '[OpaqueBrand]' is missing in type 'Number & { readonly __brand: \"render.RENDER_TARGET_DEFAULT\"; }' but required in type 'Opaque<\"render_target\">'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'string' is not assignable to parameter of type 'Opaque<\"render_target\">'."
+    },
     {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
@@ -1403,7 +2653,27 @@
       "text": "A module cannot have multiple default exports."
     }
   ],
+  "defold-1.13.0/kinds/render-script:render.get_render_target_height:f509a9b954573583": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'string' is not assignable to parameter of type 'Opaque<\"render_target\">'."
+    }
+  ],
+  "defold-1.13.0/kinds/render-script:render.get_render_target_width:25c6d828a4ae3706": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'string' is not assignable to parameter of type 'Opaque<\"render_target\">'."
+    }
+  ],
   "defold-1.13.0/kinds/render-script:render.render_target:608b59338c18571b": [
+    {
+      "code": 2339,
+      "text": "Property 'my_pred' does not exist on type 'Record<never, never> & { my_render_target: Opaque<\"render_target\">; }'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_pred' does not exist on type 'Record<never, never> & { my_render_target: Opaque<\"render_target\">; }'."
+    },
     {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
@@ -1415,6 +2685,16 @@
     {
       "code": 2551,
       "text": "Property 'enable_render_target' does not exist on type 'typeof render'. Did you mean 'delete_render_target'?"
+    }
+  ],
+  "defold-1.13.0/kinds/render-script:render.set_camera:6ee012d07a0487a6": [
+    {
+      "code": 2345,
+      "text": "Argument of type '\"main:/my_go#camera\"' is not assignable to parameter of type 'number | Url | undefined'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type '\"main:/my_go#camera\"' is not assignable to parameter of type 'number | Url | undefined'."
     }
   ],
   "defold-1.13.0/kinds/render-script:render.set_listener:6fc340897eeb1ab9": [
@@ -1433,12 +2713,58 @@
       "text": "Type '((number & { readonly __brand: \"graphics.BUFFER_TYPE_DEPTH_BIT\"; }) | (number & { readonly __brand: \"graphics.BUFFER_TYPE_STENCIL_BIT\"; }))[]' is not assignable to type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type '((number & { readonly __brand: \"graphics.BUFFER_TYPE_DEPTH_BIT\"; }) | (number & { readonly __brand: \"graphics.BUFFER_TYPE_STENCIL_BIT\"; }))[]'."
     },
     {
+      "code": 2339,
+      "text": "Property 'my_pred' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_pred' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_render_target' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'number & { readonly __brand: \"render.RENDER_TARGET_DEFAULT\"; }' is not assignable to parameter of type 'Opaque<\"render_target\">'.   Property '[OpaqueBrand]' is missing in type 'Number & { readonly __brand: \"render.RENDER_TARGET_DEFAULT\"; }' but required in type 'Opaque<\"render_target\">'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'number & { readonly __brand: \"render.RENDER_TARGET_DEFAULT\"; }' is not assignable to parameter of type 'Opaque<\"render_target\">'.   Property '[OpaqueBrand]' is missing in type 'Number & { readonly __brand: \"render.RENDER_TARGET_DEFAULT\"; }' but required in type 'Opaque<\"render_target\">'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'string' is not assignable to parameter of type 'Opaque<\"render_target\">'."
+    },
+    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
     {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
+    }
+  ],
+  "defold-1.13.0/kinds/render-script:render.set_render_target_size:00274352e6327274": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'string' is not assignable to parameter of type 'Opaque<\"render_target\">'."
+    }
+  ],
+  "defold-1.13.0/kinds/render-script:render.set_view:7a30b4955abb3844": [
+    {
+      "code": 2322,
+      "text": "Type 'unknown' is not assignable to type 'Matrix4'."
+    },
+    {
+      "code": 2322,
+      "text": "Type 'unknown' is not assignable to type 'Matrix4'."
+    }
+  ],
+  "defold-1.13.0/kinds/render-script:resource.set:fd3445f93ecdd85e": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
     }
   ],
   "defold-1.13.0/kinds/render-script:socket.protect:478d4974b491bda9": [
@@ -1515,6 +2841,12 @@
       "text": "Cannot redeclare block-scoped variable 'host_path'."
     }
   ],
+  "defold-1.13.0/kinds/render-script:sys.load_buffer:106462121a6dfc78": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'string' is not assignable to parameter of type 'Hash<string>'."
+    }
+  ],
   "defold-1.13.0/kinds/render-script:sys.save:20939b04814e98af": [
     {
       "code": 2345,
@@ -1537,48 +2869,164 @@
   ],
   "defold-1.13.0/kinds/script:b2d.shape.set_shape:f31970e9ebb8d446": [
     {
+      "code": 2345,
+      "text": "Argument of type 'Opaque<\"b2Body\">' is not assignable to parameter of type 'Opaque<\"b2Shape\">'.   Type '\"b2Body\"' is not assignable to type '\"b2Shape\"'."
+    },
+    {
       "code": 2554,
       "text": "Expected 1 arguments, but got 2."
     },
     {
       "code": 2554,
       "text": "Expected 3 arguments, but got 4."
-    },
+    }
+  ],
+  "defold-1.13.0/kinds/script:buffer.copy_stream:359ea94639622db5": [
     {
-      "code": 2559,
-      "text": "Type '2' has no properties in common with type '{ type?: number; radius?: number; center?: any; v0?: any; v1?: any; v2?: any; v3?: any; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: any; next_vertex?: any; }'."
+      "code": 2339,
+      "text": "Property 'length' does not exist on type 'Opaque<\"bufferstream\"> & { [index: number]: number; }'."
     }
   ],
   "defold-1.13.0/kinds/script:buffer.create:d83315970921bbc7": [
     {
+      "code": 2339,
+      "text": "Property 'b' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'g' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'height' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'image' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'image' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'imagestream' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'imagestream' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'imagestream' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'imagestream' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'r' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'width' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'width' does not exist on type 'Record<never, never>'."
+    },
+    {
       "code": 2559,
-      "text": "Type '{ name: Core.Hash<S>; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: any; type?: any; count?: number; }'."
+      "text": "Type '{ name: Hash<\"rgb\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
+    }
+  ],
+  "defold-1.13.0/kinds/script:camera.screen_to_world:0738c074908495cb": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'number | undefined' is not assignable to parameter of type 'number'.   Type 'undefined' is not assignable to type 'number'."
+    }
+  ],
+  "defold-1.13.0/kinds/script:camera.screen_xy_to_world:ff65335713fc5698": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'number | undefined' is not assignable to parameter of type 'number'.   Type 'undefined' is not assignable to type 'number'."
+    }
+  ],
+  "defold-1.13.0/kinds/script:collectionfactory.create:5a49721288808772": [
+    {
+      "code": 2339,
+      "text": "Property 'enemy_ids' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'enemy_ids' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2464,
+      "text": "A computed property name must be of type 'string', 'number', 'symbol', or 'any'."
+    },
+    {
+      "code": 2464,
+      "text": "A computed property name must be of type 'string', 'number', 'symbol', or 'any'."
+    },
+    {
+      "code": 2464,
+      "text": "A computed property name must be of type 'string', 'number', 'symbol', or 'any'."
     }
   ],
   "defold-1.13.0/kinds/script:compute.set_textures:87edc357f8852364": [
     {
       "code": 2353,
-      "text": "Object literal may only specify known properties, and 'my_texture' does not exist in type 'LuaMap<string, Hash>'."
+      "text": "Object literal may only specify known properties, and 'my_texture' does not exist in type 'LuaMap<string, Hash<string>>'."
+    }
+  ],
+  "defold-1.13.0/kinds/script:final:ebc3cae218af001a": [
+    {
+      "code": 2339,
+      "text": "Property 'some_value' does not exist on type 'Record<never, never>'."
+    }
+  ],
+  "defold-1.13.0/kinds/script:go.delete:63517a8a15d5d030": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'true' is not assignable to parameter of type 'Hash<string> | Url | (string & {}) | (Hash<string> | Url | (string & {}))[] | undefined'."
     }
   ],
   "defold-1.13.0/kinds/script:go.get:7cac2203eda50a5e": [
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 3, '(url: any, property: keyof properties, options?: GoPropertyOptions | undefined): any', gave the following error.     Argument of type '\"material\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: any, property: any, options?: GoPropertyOptions | undefined): any', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, options?: GoPropertyOptions | undefined): number | Vector3 | Quaternion', gave the following error.     Argument of type '\"fonts\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, options?: GoPropertyOptions | undefined): number | boolean | ... 4 more ... | Vector4', gave the following error.     Type 'string' is not assignable to type 'Hash<string>'."
     },
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 3, '(url: any, property: keyof properties, options?: GoPropertyOptions | undefined): any', gave the following error.     Argument of type '\"some_property\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: any, property: any, options?: GoPropertyOptions | undefined): any', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, options?: GoPropertyOptions | undefined): number | Vector3 | Quaternion', gave the following error.     Argument of type '\"material\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, options?: GoPropertyOptions | undefined): number | boolean | ... 4 more ... | Vector4', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, options?: GoPropertyOptions | undefined): number | Vector3 | Quaternion', gave the following error.     Argument of type '\"some_property\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, options?: GoPropertyOptions | undefined): number | boolean | ... 4 more ... | Vector4', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.13.0/kinds/script:go.set:2ca1763ad71c1232": [
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 3, '(url: any, property: keyof properties, value: any, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"material\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: any, property: any, value: any, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"example\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type 'Vector4[]' is not assignable to parameter of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4'."
     },
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 3, '(url: any, property: keyof properties, value: any, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"some_property\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: any, property: any, value: any, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"fonts\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string' is not assignable to type 'Hash<string>'."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"material\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"some_property\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string[]' is not assignable to type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'string[]'."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   The last overload gave the following error.     Argument of type '(path?: string | undefined) => Hash<string>' is not assignable to parameter of type 'Quaternion'."
     }
   ],
   "defold-1.13.0/kinds/script:html5.run:03f87c9fc915512f": [
@@ -1646,7 +3094,7 @@
   "defold-1.13.0/kinds/script:material.set_textures:8b7930f275efc915": [
     {
       "code": 2353,
-      "text": "Object literal may only specify known properties, and 'my_texture' does not exist in type 'LuaMap<string, Hash>'."
+      "text": "Object literal may only specify known properties, and 'my_texture' does not exist in type 'LuaMap<string, Hash<string>>'."
     }
   ],
   "defold-1.13.0/kinds/script:material.set_vertex_attributes:a78800caef15ee12": [
@@ -1655,7 +3103,23 @@
       "text": "Property 'SEMANTIC_TYPE_COLOR' does not exist on type 'typeof graphics'."
     }
   ],
+  "defold-1.13.0/kinds/script:model.get_mesh_enabled:b2f9e47a91bc3f12": [
+    {
+      "code": 2339,
+      "text": "Property 'weapon_properties' does not exist on type 'Record<never, never>'."
+    }
+  ],
+  "defold-1.13.0/kinds/script:on_input:86c70cf4ccb7381e": [
+    {
+      "code": 18048,
+      "text": "'action.value' is possibly 'undefined'."
+    }
+  ],
   "defold-1.13.0/kinds/script:on_message:bfed6bd72e3242e2": [
+    {
+      "code": 2339,
+      "text": "Property 'important_value' does not exist on type 'Record<never, never> & { a_url: Url; }'."
+    },
     {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
@@ -1663,6 +3127,58 @@
     {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
+    }
+  ],
+  "defold-1.13.0/kinds/script:on_reload:ba39c0b0d5170ccb": [
+    {
+      "code": 18048,
+      "text": "'action.value' is possibly 'undefined'."
+    }
+  ],
+  "defold-1.13.0/kinds/script:physics.get_gravity:b2b339f1ddd89a38": [
+    {
+      "code": 2322,
+      "text": "Type 'number' is not assignable to type 'Vector3'."
+    }
+  ],
+  "defold-1.13.0/kinds/script:physics.raycast:3e0c534d741f0120": [
+    {
+      "code": 2339,
+      "text": "Property 'groups' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'groups' does not exist on type 'Record<never, never>'."
+    }
+  ],
+  "defold-1.13.0/kinds/script:physics.raycast_async:746b7900ebaa1f10": [
+    {
+      "code": 2339,
+      "text": "Property 'my_groups' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_groups' does not exist on type 'Record<never, never>'."
+    }
+  ],
+  "defold-1.13.0/kinds/script:physics.set_hflip:71a627e46d2e651e": [
+    {
+      "code": 2339,
+      "text": "Property 'fliph' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'fliph' does not exist on type 'Record<never, never>'."
+    }
+  ],
+  "defold-1.13.0/kinds/script:physics.set_vflip:7b5832955ec6635c": [
+    {
+      "code": 2339,
+      "text": "Property 'flipv' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'flipv' does not exist on type 'Record<never, never>'."
     }
   ],
   "defold-1.13.0/kinds/script:profiler.recorded_frame_count:9d55df4a00c36560": [
@@ -1673,15 +3189,37 @@
   ],
   "defold-1.13.0/kinds/script:resource.atlas:ee6a5c4c09121554": [
     {
+      "code": 2339,
+      "text": "Property 'my_atlas' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_atlas' does not exist on type 'Record<never, never>'."
+    },
+    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
     {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"textures\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string' is not assignable to type 'Hash<string>'."
+    }
+  ],
+  "defold-1.13.0/kinds/script:resource.buffer:4353a4d474ea70b6": [
+    {
+      "code": 2339,
+      "text": "Property 'my_buffer' does not exist on type 'Record<never, never>'."
     }
   ],
   "defold-1.13.0/kinds/script:resource.create_buffer:436c1c10688cba69": [
+    {
+      "code": 2322,
+      "text": "Type 'number | undefined' is not assignable to type 'number'.   Type 'undefined' is not assignable to type 'number'."
+    },
     {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
@@ -1692,7 +3230,7 @@
     },
     {
       "code": 2559,
-      "text": "Type '{ name: Core.Hash<S>; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: any; type?: any; count?: number; }'."
+      "text": "Type '{ name: Hash<\"position\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
     }
   ],
   "defold-1.13.0/kinds/script:resource.create_sound_data:19e6f6ab7a317fa1": [
@@ -1736,11 +3274,11 @@
     },
     {
       "code": 2559,
-      "text": "Type '{ name: Core.Hash<S>; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: any; type?: any; count?: number; }'."
+      "text": "Type '{ name: Hash<\"rgba\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
     },
     {
       "code": 2769,
-      "text": "No overload matches this call.   Overload 1 of 2, '(receiver: string, message_id: \"add_textures\", message?: Record<string | number, unknown> | undefined): void', gave the following error.     Argument of type 'Hash[]' is not assignable to parameter of type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'Hash[]'.   Overload 2 of 2, '(receiver: any, message_id: Hash, message?: Record<string | number, unknown> | undefined): void', gave the following error.     Argument of type 'Hash[]' is not assignable to parameter of type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'Hash[]'."
+      "text": "No overload matches this call.   Overload 1 of 2, '(receiver: \"@render:\", message_id: \"add_textures\", message?: Record<string | number, unknown> | undefined): void', gave the following error.     Argument of type 'Hash<string>[]' is not assignable to parameter of type 'Record<string | number, unknown>'.       Index signature for type 'string' is missing in type 'Hash<string>[]'.   Overload 2 of 2, '(receiver: Hash<string> | Url | (string & {}), message_id: Hash<string>, message?: Record<string | number, unknown> | undefined): void', gave the following error.     Argument of type 'string' is not assignable to parameter of type 'Hash<string>'."
     }
   ],
   "defold-1.13.0/kinds/script:resource.create_texture_async:b90223f19d598eaa": [
@@ -1754,21 +3292,43 @@
     },
     {
       "code": 2559,
-      "text": "Type '{ name: Core.Hash<S>; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: any; type?: any; count?: number; }'."
+      "text": "Type '{ name: Hash<\"rgba\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
     },
     {
       "code": 2559,
-      "text": "Type '{ name: Core.Hash<S>; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: any; type?: any; count?: number; }'."
+      "text": "Type '{ name: Hash<\"rgba\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
     }
   ],
   "defold-1.13.0/kinds/script:resource.font:f6d4ca24e4f87bfe": [
     {
+      "code": 2339,
+      "text": "Property 'my_font' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_font' does not exist on type 'Record<never, never>'."
+    },
+    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
     {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"fonts\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string' is not assignable to type 'Hash<string>'."
+    }
+  ],
+  "defold-1.13.0/kinds/script:resource.get_buffer:ed7d361c7f5d2e35": [
+    {
+      "code": 2339,
+      "text": "Property 'length' does not exist on type 'Opaque<\"bufferstream\"> & { [index: number]: number; }'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
     }
   ],
   "defold-1.13.0/kinds/script:resource.get_render_target_info:5e526c539ed8ae25": [
@@ -1779,6 +3339,12 @@
     {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
+    }
+  ],
+  "defold-1.13.0/kinds/script:resource.get_text_metrics:d63156dd59513358": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'Hash<string>'.   Type 'number' is not assignable to type 'Hash<string>'."
     }
   ],
   "defold-1.13.0/kinds/script:resource.get_texture_info:4164f100ea5a8c15": [
@@ -1793,12 +3359,36 @@
   ],
   "defold-1.13.0/kinds/script:resource.material:5bc0271405b04027": [
     {
+      "code": 2339,
+      "text": "Property 'my_material' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_material' does not exist on type 'Record<never, never>'."
+    },
+    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
     {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
+    },
+    {
+      "code": 2769,
+      "text": "No overload matches this call.   Overload 1 of 3, '(url: Hash<string> | Url | (string & {}), property: keyof properties, value: number | Vector3 | Quaternion, options?: GoPropertyOptions | undefined): void', gave the following error.     Argument of type '\"materials\"' is not assignable to parameter of type 'keyof properties'.   Overload 2 of 3, '(url: Hash<string> | Url | (string & {}), property: string | Hash<string>, value: number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4, options?: GoPropertyOptions | undefined): void', gave the following error.     Type 'string' is not assignable to type 'Hash<string>'."
+    }
+  ],
+  "defold-1.13.0/kinds/script:resource.render_target:87231742204d2351": [
+    {
+      "code": 2339,
+      "text": "Property 'my_render_target' does not exist on type 'Record<never, never>'."
+    }
+  ],
+  "defold-1.13.0/kinds/script:resource.set:fd3445f93ecdd85e": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
     }
   ],
   "defold-1.13.0/kinds/script:resource.set_atlas:349576ce8a915179": [
@@ -1817,14 +3407,190 @@
   ],
   "defold-1.13.0/kinds/script:resource.set_buffer:a52fd8ac7453f601": [
     {
+      "code": 2345,
+      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
+    },
+    {
       "code": 2559,
-      "text": "Type '{ name: Core.Hash<S>; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: any; type?: any; count?: number; }'."
+      "text": "Type '{ name: Hash<\"position\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
     }
   ],
   "defold-1.13.0/kinds/script:resource.set_texture:1f7a5108992a12f0": [
     {
       "code": 2339,
+      "text": "Property 'buffer' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'buffer' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'buffer' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'buffer' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'buffer' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'buffer' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'height' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'height' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'height' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'height' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'height' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'height' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'height' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'height' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'my_buffer' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'stream' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'stream' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'stream' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'stream' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'stream' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'stream' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'stream' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'stream' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
       "text": "Property 'TEXTURE_FORMAT_RGBA32F' does not exist on type 'typeof resource'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'width' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'width' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'width' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'width' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'width' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'width' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'width' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'width' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'width' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'width' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'x' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'x' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'x' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'y' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'y' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'y' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
+    },
+    {
+      "code": 2345,
+      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
     },
     {
       "code": 2345,
@@ -1848,15 +3614,15 @@
     },
     {
       "code": 2559,
-      "text": "Type '{ name: Core.Hash<S>; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: any; type?: any; count?: number; }'."
+      "text": "Type '{ name: Hash<\"rgb\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
     },
     {
       "code": 2559,
-      "text": "Type '{ name: Core.Hash<S>; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: any; type?: any; count?: number; }'."
+      "text": "Type '{ name: Hash<\"rgb\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
     },
     {
       "code": 2559,
-      "text": "Type '{ name: Core.Hash<S>; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: any; type?: any; count?: number; }'."
+      "text": "Type '{ name: Hash<\"rgba\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
     },
     {
       "code": 18048,
@@ -1869,6 +3635,18 @@
     {
       "code": 18048,
       "text": "'buf' is possibly 'undefined'."
+    }
+  ],
+  "defold-1.13.0/kinds/script:resource.texture:8cd63a7393c8a799": [
+    {
+      "code": 2339,
+      "text": "Property 'my_texture' does not exist on type 'Record<never, never>'."
+    }
+  ],
+  "defold-1.13.0/kinds/script:resource.tile_source:517b23c5ce0e56c6": [
+    {
+      "code": 2339,
+      "text": "Property 'my_tile_source' does not exist on type 'Record<never, never>'."
     }
   ],
   "defold-1.13.0/kinds/script:socket.protect:478d4974b491bda9": [
@@ -1919,10 +3697,28 @@
       "text": "Cannot redeclare block-scoped variable 'sep'."
     }
   ],
+  "defold-1.13.0/kinds/script:sound.play:fcfbfd341c41ec59": [
+    {
+      "code": 2339,
+      "text": "Property 'countdown_id' does not exist on type 'Record<never, never>'."
+    }
+  ],
   "defold-1.13.0/kinds/script:sprite.play_flipbook:6bac8dc702dfffec": [
     {
       "code": 18046,
       "text": "'message' is of type 'unknown'."
+    }
+  ],
+  "defold-1.13.0/kinds/script:sprite.set_hflip:2d067cdccd1fb269": [
+    {
+      "code": 2339,
+      "text": "Property 'velocity' does not exist on type 'Record<never, never>'."
+    }
+  ],
+  "defold-1.13.0/kinds/script:sprite.set_vflip:89dcc94c14d785e2": [
+    {
+      "code": 2339,
+      "text": "Property 'up_side_down' does not exist on type 'Record<never, never>'."
     }
   ],
   "defold-1.13.0/kinds/script:sys.exists:7e98945102ff1ab7": [
@@ -1951,10 +3747,40 @@
       "text": "Cannot redeclare block-scoped variable 'host_path'."
     }
   ],
+  "defold-1.13.0/kinds/script:sys.load_buffer:106462121a6dfc78": [
+    {
+      "code": 2345,
+      "text": "Argument of type 'string' is not assignable to parameter of type 'Hash<string>'."
+    }
+  ],
   "defold-1.13.0/kinds/script:sys.load_buffer_async:6a383bca91cf11eb": [
     {
       "code": 2339,
+      "text": "Property 'first_asset' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'first_asset' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'first_request' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
       "text": "Property 'REQUEST_STATUS_FINISHED' does not exist on type 'typeof resource'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'second_asset' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'second_asset' does not exist on type 'Record<never, never>'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 'second_request' does not exist on type 'Record<never, never>'."
     },
     {
       "code": 2393,
@@ -1983,6 +3809,72 @@
     {
       "code": 2345,
       "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
+    }
+  ],
+  "defold-1.13.0/kinds/script:vmath.lerp:0f4fdfe7a9a39df7": [
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never>'."
+    }
+  ],
+  "defold-1.13.0/kinds/script:vmath.lerp:7cf8c0c1679ab05b": [
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never>'."
+    }
+  ],
+  "defold-1.13.0/kinds/script:vmath.slerp:858acbd524dfe896": [
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never> & void'."
+    },
+    {
+      "code": 2339,
+      "text": "Property 't' does not exist on type 'Record<never, never>'."
     }
   ],
   "defold-1.13.0:b2d.shape.set_shape:f31970e9ebb8d446": [
