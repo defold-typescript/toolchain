@@ -8,6 +8,7 @@ import {
   type FidelityFloorReport,
   FLOOR_MANIFEST_FILE,
   FLOOR_RAISE_COMMAND,
+  NATIVE_PARITY_DIRNAME,
   parseFloors,
   raiseFloors,
   readFloors,
@@ -32,6 +33,11 @@ describe("fidelity floor gate", () => {
     expect(Object.keys(reports).filter((path) => path.startsWith("fidelity/authored/"))).toEqual(
       [],
     );
+  });
+
+  test("the native surface-parity lane is carved out too", () => {
+    expect(existsSync(join(PACKAGE_ROOT, "fidelity", NATIVE_PARITY_DIRNAME))).toBe(true);
+    expect(Object.keys(reports).filter((path) => path.startsWith("fidelity/native/"))).toEqual([]);
   });
 
   test("every committed fidelity report has a floor entry", () => {

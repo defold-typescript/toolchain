@@ -1,0 +1,15 @@
+{
+  "namespace": "share",
+  "moduleName": "share",
+  "moduleNameMatches": true,
+  "upstreamFunctions": 3,
+  "declaredFunctions": 3,
+  "missingFunctions": [],
+  "phantomFunctions": [],
+  "callableCoverage": 1,
+  "upstreamConstants": 0,
+  "declaredConstants": 0,
+  "missingConstants": [],
+  "phantomConstants": [],
+  "fieldCoverage": 1
+}

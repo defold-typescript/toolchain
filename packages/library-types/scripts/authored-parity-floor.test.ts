@@ -9,6 +9,7 @@ import {
   collectAuthoredParity,
   parseAuthoredFloors,
 } from "./authored-parity";
+import { NATIVE_PARITY_DIR, nativeParityPath } from "./native-parity";
 import { readNativeTargets } from "./sync-native-types";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
@@ -18,7 +19,10 @@ const UPSTREAM_DIR = "fixtures/upstream-lua";
 const UPSTREAM_NATIVE_DIR = "fixtures/upstream-native";
 const REGENERATE = "bun run --cwd packages/library-types parity";
 
-const ARTIFACTS = collectAuthoredParity(PACKAGE_ROOT);
+const ARTIFACTS = {
+  ...collectAuthoredParity(PACKAGE_ROOT),
+  ...collectAuthoredParity(PACKAGE_ROOT, NATIVE_PARITY_DIR),
+};
 const FLOORS = parseAuthoredFloors(
   JSON.parse(readFileSync(join(PACKAGE_ROOT, FLOOR_MANIFEST), "utf8")),
   FLOOR_MANIFEST,
@@ -28,9 +32,10 @@ describe("the authored-lane surface-parity ratchet", () => {
   test("the walk finds the committed artifacts, so the gate cannot pass vacuously", () => {
     expect(Object.keys(ARTIFACTS).length).toBeGreaterThan(0);
     expect(Object.keys(ARTIFACTS)).toEqual(
-      authoredParityTargets(PACKAGE_ROOT)
-        .map((target) => authoredParityPath(target))
-        .sort(),
+      [
+        ...authoredParityTargets(PACKAGE_ROOT).map((target) => authoredParityPath(target)),
+        ...readNativeTargets(PACKAGE_ROOT).map((target) => nativeParityPath(target)),
+      ].sort(),
     );
   });
 
@@ -69,7 +74,9 @@ describe("a floor entry cannot silently cover one axis", () => {
     for (const [key, floor] of Object.entries(FLOORS)) {
       expect(typeof floor.callable).toBe("number");
       expect(typeof floor.field).toBe("number");
-      expect(key.startsWith(`${PARITY_DIR}/`)).toBe(true);
+      expect(key.startsWith(`${PARITY_DIR}/`) || key.startsWith(`${NATIVE_PARITY_DIR}/`)).toBe(
+        true,
+      );
     }
   });
 
@@ -131,6 +138,34 @@ describe("the two-axis ratchet reports each axis on its own", () => {
 
   test("meeting a floor exactly is not a regression", () => {
     expect(authoredFloorRegressions(artifact(0.8, 0.5), floors)).toEqual([]);
+  });
+
+  test("a native report whose namespace is not the registered module name reds at full coverage", () => {
+    const path = "fidelity/native/uuid.json";
+    const regressions = authoredFloorRegressions(
+      {
+        [path]: {
+          namespace: "uuid",
+          callableCoverage: 1,
+          fieldCoverage: 1,
+          moduleNameMatches: false,
+        },
+      },
+      { [path]: { callable: 1, field: 1 } },
+    );
+    expect(regressions.length).toBe(1);
+    expect(regressions[0]).toContain("uuid");
+    expect(regressions[0]).toContain("module name");
+  });
+});
+
+describe("the committed native artifacts carry the module-name verdict", () => {
+  test("a renamed or absent moduleNameMatches cannot read as undefined and pass", () => {
+    const native = Object.entries(ARTIFACTS).filter(([path]) =>
+      path.startsWith(`${NATIVE_PARITY_DIR}/`),
+    );
+    expect(native.length).toBe(readNativeTargets(PACKAGE_ROOT).length);
+    for (const [, artifact] of native) expect(typeof artifact.moduleNameMatches).toBe("boolean");
   });
 });
 
