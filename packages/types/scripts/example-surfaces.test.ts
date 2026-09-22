@@ -1,14 +1,17 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync } from "node:fs";
+import type { TranslationStore } from "../src/example-store";
 import { loadTranslations } from "./example-store-io";
 import {
   exampleIdentity,
   exampleSurfaces,
+  factoryBoundOwnership,
+  kindFactoryNames,
   refDocSkippedTargets,
   translationOwnership,
   unownedTranslations,
 } from "./example-surfaces";
-import { loadApiTargets } from "./regen";
+import { KIND_MODULE_MANIFEST, loadApiTargets } from "./regen";
 
 const surfaces = await exampleSurfaces();
 const store = loadTranslations();
@@ -162,5 +165,125 @@ describe("translation ownership", () => {
   test("the kind set comes from the manifest, so every manifest kind appears in the inventory", () => {
     expect(surfaceIds()).toContain("defold-1.13.1/kinds/editor-script");
     expect(surfaceIds()).toContain("defold-1.12.4/kinds/script");
+  });
+});
+
+describe("factory-bound ownership", () => {
+  const surfaceOf = (id: string) => {
+    const surface = surfaces.find((candidate) => candidate.id === id);
+    if (!surface) throw new Error(`no surface ${id}`);
+    return surface;
+  };
+
+  function bindSynthetic(ts: string, owners: readonly string[]): string[] {
+    const store: TranslationStore = { "synthetic.body": [{ sourceHash: "deadbeef", ts }] };
+    const identity = exampleIdentity("synthetic.body", "deadbeef");
+    const bound = factoryBoundOwnership(store, new Map([[identity, [...owners]]]), surfaces);
+    return (bound.get(identity) ?? []).sort();
+  }
+
+  const everyRuntimeSurface = [
+    "defold-1.13.1",
+    "defold-1.13.0",
+    "defold-1.13.1/kinds/script",
+    "defold-1.13.1/kinds/gui-script",
+    "defold-1.13.1/kinds/render-script",
+  ];
+
+  test("the factory inventory is the manifest's, not a hand-list", () => {
+    expect([...kindFactoryNames()].sort()).toEqual(
+      KIND_MODULE_MANIFEST.map((entry) => entry.factory).sort(),
+    );
+    expect(kindFactoryNames().length).toBe(KIND_MODULE_MANIFEST.length);
+    for (const entry of KIND_MODULE_MANIFEST) {
+      expect(kindFactoryNames()).toContain(entry.factory);
+    }
+  });
+
+  test("a body calling a kind factory keeps only the surfaces exporting that name", () => {
+    const kept = bindSynthetic(
+      "export default defineScript({ init(self) {} });",
+      everyRuntimeSurface,
+    );
+    expect(kept).toEqual(["defold-1.13.1", "defold-1.13.1/kinds/script"]);
+    for (const id of kept) expect(surfaceOf(id).exports.values).toContain("defineScript");
+  });
+
+  test("a body calling no manifest factory keeps every surface ownership gave it", () => {
+    const kept = bindSynthetic('label.set_text("#label", "Hello World!");', everyRuntimeSurface);
+    expect(kept).toEqual([...everyRuntimeSurface].sort());
+  });
+
+  test("a misspelled factory narrows nothing, so it still reds as an unpinned diagnostic", () => {
+    const kept = bindSynthetic(
+      "export default defineScrpt({ init(self) {} });",
+      everyRuntimeSurface,
+    );
+    expect(kept).toEqual([...everyRuntimeSurface].sort());
+  });
+
+  test("a factory named only in a comment still narrows — the stated cost of a token match", () => {
+    const kept = bindSynthetic(
+      "// defineGuiScript is the gui equivalent\nlabel.set_text('#label', 'hi');",
+      everyRuntimeSurface,
+    );
+    expect(kept).toEqual(["defold-1.13.1", "defold-1.13.1/kinds/gui-script"]);
+  });
+
+  test("binding empties no owner list on the committed store", () => {
+    const bound = factoryBoundOwnership(store, ownership, surfaces);
+    expect(bound.size).toBe(ownership.size);
+    const emptied = [...bound.entries()]
+      .filter(([, owners]) => owners.length === 0)
+      .map(([identity]) => identity)
+      .sort();
+    expect(emptied).toEqual([]);
+  });
+
+  test("every surface a bound body keeps exports every factory that body calls", () => {
+    const bound = factoryBoundOwnership(store, ownership, surfaces);
+    const factories = kindFactoryNames();
+    for (const [fqn, entries] of Object.entries(store)) {
+      for (const entry of entries) {
+        const identity = exampleIdentity(fqn, entry.sourceHash);
+        const called = factories.filter((name) => new RegExp(`\\b${name}\\b`).test(entry.ts));
+        if (called.length === 0) continue;
+        for (const id of bound.get(identity) ?? []) {
+          for (const name of called) expect(surfaceOf(id).exports.values).toContain(name);
+        }
+      }
+    }
+  });
+});
+
+describe("authored factory agreement", () => {
+  test("every translation calls the factory its documenting kinds export", () => {
+    // Binding narrows what the gate compiles; it cannot make a body correct.
+    // A `gui.*` example that calls `defineScript` still survives on the
+    // aggregate root, which re-exports every factory — so the body ships in the
+    // declaration a user reads with a factory that kind cannot import.
+    const factories = kindFactoryNames();
+    const exportsById = new Map(
+      surfaces.map((surface) => [surface.id, surface.exports.values] as const),
+    );
+    const offenders: string[] = [];
+    for (const [fqn, entries] of Object.entries(store)) {
+      for (const entry of entries) {
+        const identity = exampleIdentity(fqn, entry.sourceHash);
+        const called = factories.filter((name) => new RegExp(`\\b${name}\\b`).test(entry.ts));
+        if (called.length === 0) continue;
+        const kindOwners = (ownership.get(identity) ?? []).filter((id) => id.includes("/kinds/"));
+        if (kindOwners.length === 0) continue;
+        const available = new Set(
+          kindOwners
+            .flatMap((id) => exportsById.get(id) ?? [])
+            .filter((v) => factories.includes(v)),
+        );
+        for (const name of called) {
+          if (!available.has(name)) offenders.push(`${identity}: ${name} not on ${kindOwners[0]}`);
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
   });
 });

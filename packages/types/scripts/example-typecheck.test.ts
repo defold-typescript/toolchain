@@ -8,13 +8,12 @@
  */
 import { describe, expect, test } from "bun:test";
 import { loadTranslations } from "./example-store-io";
-import { exampleSurfaces } from "./example-surfaces";
+import { exampleSurfaces, kindFactoryNames } from "./example-surfaces";
 import {
   COMPILER_OPTION_OVERRIDES,
   compileSurface,
   type ExampleDiagnostic,
   exampleUnit,
-  factoryAbsenceDiagnostic,
   gateFailures,
   moduleSpecifier,
   type PinFile,
@@ -161,11 +160,7 @@ describe("the three released defects", () => {
         for (const surface of surfaces) {
           const identity = pinIdentity(surface.id, fqn, entry.sourceHash);
           const pinned = pins[identity] ?? [];
-          // The one diagnostic a fixed body may still carry is the surface's own
-          // factory asymmetry: a `defineScript` body has no `defineScript` on the
-          // gui-script surface, exactly as ~90 other lifecycle examples do not.
-          const defects = pinned.filter((d) => !factoryAbsenceDiagnostic(d));
-          if (defects.length > 0) offenders.push(`${identity}: ${JSON.stringify(defects)}`);
+          if (pinned.length > 0) offenders.push(`${identity}: ${JSON.stringify(pinned)}`);
         }
       }
       expect(offenders).toEqual([]);
@@ -183,7 +178,7 @@ describe("the three released defects", () => {
         for (const surface of surfaces) {
           const diagnostics = computed.get(pinIdentity(surface.id, fqn, entry.sourceHash));
           if (diagnostics === undefined) continue;
-          expect(diagnostics.filter((d) => !factoryAbsenceDiagnostic(d))).toEqual([]);
+          expect(diagnostics).toEqual([]);
         }
       }
     }
@@ -235,5 +230,52 @@ describe("gate maintenance", () => {
       1,
     );
     expect(gateFailures(new Map([["new:fqn:hash", []]]), {})).toEqual([]);
+  });
+});
+
+describe("factory binding — the pairs the gate never compiles", () => {
+  const exportsById = new Map(surfaces.map((s) => [s.id, new Set(s.exports.values)] as const));
+
+  function factoriesCalled(ts: string): string[] {
+    return kindFactoryNames().filter((name) => new RegExp(`\\b${name}\\b`).test(ts));
+  }
+
+  test("no pin records a kind factory the surface does not export", () => {
+    const offenders: string[] = [];
+    for (const [identity, diagnostics] of Object.entries(pins)) {
+      for (const diagnostic of diagnostics) {
+        if (diagnostic.code !== 2304) continue;
+        for (const name of kindFactoryNames()) {
+          if (diagnostic.text === `Cannot find name '${name}'.`) {
+            offenders.push(`${identity}: ${diagnostic.text}`);
+          }
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  test("every pinned pair names a surface exporting each factory its body calls", () => {
+    const offenders: string[] = [];
+    for (const identity of Object.keys(pins)) {
+      const [surfaceId, fqn, sourceHash] = [
+        identity.slice(0, identity.indexOf(":")),
+        identity.slice(identity.indexOf(":") + 1, identity.lastIndexOf(":")),
+        identity.slice(identity.lastIndexOf(":") + 1),
+      ];
+      const entry = (store[fqn] ?? []).find((candidate) => candidate.sourceHash === sourceHash);
+      if (entry === undefined) continue;
+      const values = exportsById.get(surfaceId);
+      for (const name of factoriesCalled(entry.ts)) {
+        if (values === undefined || !values.has(name)) offenders.push(`${identity}: ${name}`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  test("binding empties no surface — every surface still compiles at least one unit", () => {
+    const compiled = new Set(timings.map((timing) => timing.surfaceId));
+    expect([...compiled].sort()).toEqual(surfaces.map((surface) => surface.id).sort());
+    for (const timing of timings) expect(timing.units).toBeGreaterThan(0);
   });
 });
