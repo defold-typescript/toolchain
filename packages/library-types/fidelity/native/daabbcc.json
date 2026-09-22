@@ -1,0 +1,15 @@
+{
+  "namespace": "daabbcc",
+  "moduleName": "daabbcc",
+  "moduleNameMatches": true,
+  "upstreamFunctions": 18,
+  "declaredFunctions": 18,
+  "missingFunctions": [],
+  "phantomFunctions": [],
+  "callableCoverage": 1,
+  "upstreamConstants": 3,
+  "declaredConstants": 3,
+  "missingConstants": [],
+  "phantomConstants": [],
+  "fieldCoverage": 1
+}
