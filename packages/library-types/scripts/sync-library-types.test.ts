@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { readAuthoredTargets } from "./sync-authored-types";
+import type { DefoldExtensionDoc, DefoldExtensionEntry } from "./sync-defold-extensions";
 import {
   type ClassificationEntry,
   checkDescriptions,
@@ -18,6 +19,7 @@ import {
   libraryModulesFromTree,
   maintainedHereModules,
   mergeLibraryDescriptions,
+  nativeScriptApiEligibility,
   rawUrl,
   readMaintainedHereRegistry,
   repoSlug,
@@ -360,6 +362,98 @@ describe("classifyLibraryDirs", () => {
   });
 });
 
+describe("nativeScriptApiEligibility", () => {
+  const extension = (repo: string, docs: DefoldExtensionDoc[]): DefoldExtensionEntry => ({
+    repo: `https://github.com/defold/${repo}`,
+    ref: "1.0.0",
+    refKind: "release",
+    license: "MIT",
+    description: "",
+    docs,
+  });
+  const doc = (namespace: string): DefoldExtensionDoc => ({
+    path: `${namespace}/api/${namespace}.script_api`,
+    namespace,
+    page: `${namespace}.md`,
+  });
+  const native = (dir: string): ClassificationEntry => ({
+    dir,
+    classification: "native",
+    modules: [dir.toLowerCase()],
+  });
+
+  test("a matched entry shipping a .script_api doc resolves to ships", () => {
+    const [entry] = nativeScriptApiEligibility(
+      [native("extension-iap")],
+      [extension("extension-iap", [doc("iap")])],
+    );
+    expect(entry?.scriptApi).toBe("ships");
+  });
+
+  test("a matched entry with no docs resolves to none", () => {
+    const [entry] = nativeScriptApiEligibility(
+      [native("extension-videoplayer")],
+      [extension("extension-videoplayer", [])],
+    );
+    expect(entry?.scriptApi).toBe("none");
+  });
+
+  test("an unmatched dir resolves to unknown", () => {
+    const [entry] = nativeScriptApiEligibility(
+      [native("drawpixels")],
+      [extension("extension-iap", [doc("iap")])],
+    );
+    expect(entry?.scriptApi).toBe("unknown");
+  });
+
+  test("a dir that is only a prefix of longer repo names stays unknown", () => {
+    const [entry] = nativeScriptApiEligibility(
+      [native("extension-videoplayer")],
+      [
+        extension("extension-videoplayer-native", [doc("videoplayer")]),
+        extension("extension-videoplayer-mpeg", []),
+      ],
+    );
+    expect(entry?.scriptApi).toBe("unknown");
+  });
+
+  test("matching folds case but does not strip a defold- prefix", () => {
+    const folded = nativeScriptApiEligibility(
+      [native("DAABBCC")],
+      [extension("DaAbBcC", [doc("daabbcc")])],
+    );
+    expect(folded[0]?.scriptApi).toBe("ships");
+    const stripped = nativeScriptApiEligibility(
+      [native("DAABBCC")],
+      [extension("defold-daabbcc", [doc("daabbcc")])],
+    );
+    expect(stripped[0]?.scriptApi).toBe("unknown");
+  });
+
+  test("only native entries carry the field", () => {
+    const entries = nativeScriptApiEligibility(
+      [
+        { dir: "monarch", classification: "pure-lua", modules: ["monarch.monarch"] },
+        { dir: "defold-richtext", classification: "already-vendored", modules: ["richtext"] },
+        { dir: "defold-xmath", classification: "covered-by-goal", modules: ["xmath"] },
+        native("extension-iap"),
+      ],
+      [
+        extension("monarch", [doc("monarch")]),
+        extension("defold-richtext", []),
+        extension("defold-xmath", [doc("xmath")]),
+        extension("extension-iap", [doc("iap")]),
+      ],
+    );
+    for (const dir of ["monarch", "defold-richtext", "defold-xmath"]) {
+      const entry = entries.find((e) => e.dir === dir);
+      expect(entry).toBeDefined();
+      expect(entry && "scriptApi" in entry).toBe(false);
+    }
+    expect(entries.find((e) => e.dir === "extension-iap")?.scriptApi).toBe("ships");
+  });
+});
+
 interface ClassificationManifest {
   source: LibrarySource;
   dirs: ClassificationEntry[];
@@ -387,6 +481,18 @@ describe("library-classification.json coverage", () => {
       if (!vendoredDirs.has(e.dir) && !coveredByGoalDirs.has(e.dir)) {
         const pure = e.modules.length > 0 && e.modules.every((m) => m.includes("."));
         expect(e.classification).toBe(pure ? "pure-lua" : "native");
+      }
+    }
+  });
+
+  test("every native entry records a script_api verdict, and only native entries do", () => {
+    const VERDICTS = new Set(["ships", "none", "unknown"]);
+    expect(manifest.dirs.some((e) => e.classification === "native")).toBe(true);
+    for (const e of manifest.dirs) {
+      if (e.classification === "native") {
+        expect(VERDICTS.has(e.scriptApi ?? "")).toBe(true);
+      } else {
+        expect("scriptApi" in e).toBe(false);
       }
     }
   });
@@ -548,8 +654,13 @@ describe("writeClassification", () => {
     scriptApiNamespaces?: string[];
     openApiNamespaces?: string[];
     markdownNamespaces?: string[];
+    extensions?: DefoldExtensionEntry[];
   }): string {
     const root = mkdtempSync(join(tmpdir(), "library-types-classify-"));
+    writeFileSync(
+      join(root, "defold-extensions.json"),
+      JSON.stringify({ libraries: opts.extensions ?? [] }),
+    );
     const lane = (namespaces: string[] | undefined, extra: Record<string, string>) =>
       JSON.stringify({
         targets: (namespaces ?? []).map((namespace) => ({
@@ -636,6 +747,16 @@ describe("writeClassification", () => {
       // what severs the dir.
       openApiNamespaces: ["nakama"],
       markdownNamespaces: ["orthographic"],
+      extensions: [
+        {
+          repo: "https://github.com/defold/DAABBCC",
+          ref: "1.0.0",
+          refKind: "release",
+          license: "MIT",
+          description: "",
+          docs: [{ path: "daabbcc/api/daabbcc.script_api", namespace: "daabbcc", page: "d.md" }],
+        },
+      ],
     });
     const listTree: ListTree = async () => [
       "packages/monarch/monarch.monarch.d.ts",
@@ -675,10 +796,11 @@ describe("writeClassification", () => {
     expect(byDir.get("DAABBCC")?.classification).toBe("native");
     expect(byDir.get("defold-richtext")?.classification).toBe("pure-lua");
     expect(byDir.get("defold-lldebugger")?.classification).toBe("covered-by-goal");
+    expect(byDir.get("DAABBCC")?.scriptApi).toBe("ships");
 
     // Literal exclusion list, never recomputed from the production predicate — a
     // recomputed filter stays green under an inverted `every`/`some`.
-    const expected = classifyLibraryDirs(
+    const classified = classifyLibraryDirs(
       [...libraryModulesFromTree(await listTree(source))]
         .filter(
           ([dir]) =>
@@ -695,6 +817,16 @@ describe("writeClassification", () => {
         coveredByGoalDirs: new Set(["defold-lldebugger", "defold-xmath"]),
       },
     );
+    const expected = nativeScriptApiEligibility(classified, [
+      {
+        repo: "https://github.com/defold/DAABBCC",
+        ref: "1.0.0",
+        refKind: "release",
+        license: "MIT",
+        description: "",
+        docs: [{ path: "daabbcc/api/daabbcc.script_api", namespace: "daabbcc", page: "d.md" }],
+      },
+    ]);
     expect(written.dirs).toEqual(expected);
   });
 
