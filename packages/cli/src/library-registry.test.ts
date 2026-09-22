@@ -148,12 +148,17 @@ describe("loadVendoredNativeRegistry", () => {
     expect(loadVendoredNativeRegistry(null)).toEqual([]);
   });
 
-  test("the shipped list carries daabbcc with a declaration file on disk", () => {
+  test("the shipped list carries every curated native target with a declaration file on disk", () => {
     const registry = loadVendoredNativeRegistry();
-    const daabbcc = registry.find((entry) => entry.namespace === "daabbcc");
-    expect(daabbcc).toBeDefined();
-    expect(daabbcc?.sourceId).toBe("defold-daabbcc");
-    expect(daabbcc?.manifestDir).toBe("daabbcc");
+    const projected = registry
+      .map(({ sourceId, namespace, manifestDir }) => ({ sourceId, namespace, manifestDir }))
+      .sort((a, b) => a.namespace.localeCompare(b.namespace));
+    expect(projected).toEqual([
+      { sourceId: "defold-daabbcc", namespace: "daabbcc", manifestDir: "daabbcc" },
+      { sourceId: "defold-sharing", namespace: "share", manifestDir: "share" },
+      { sourceId: "defold-tile-raycast", namespace: "tile_raycast", manifestDir: "tile-raycast" },
+      { sourceId: "defold-uuid4", namespace: "uuid4", manifestDir: "uuid4" },
+    ]);
     for (const entry of registry) {
       expect(existsSync(entry.declarationPath)).toBe(true);
     }
