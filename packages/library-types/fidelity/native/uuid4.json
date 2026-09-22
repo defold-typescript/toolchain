@@ -11,5 +11,6 @@
   "declaredConstants": 0,
   "missingConstants": [],
   "phantomConstants": [],
-  "fieldCoverage": 1
+  "fieldCoverage": 1,
+  "arityMeasured": false
 }

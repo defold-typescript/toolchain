@@ -9,6 +9,15 @@ import { extractApiDoc } from "./extract-api-doc";
  * ambient, and `resolve` copies it into a project verbatim. The only artifact
  * derived here is the `api-doc/native/<namespace>.json` the docs-site renders.
  */
+/** Why the declaration is right to disagree with the annotation about a member's
+ * parameter count. `reason` cites upstream's own file and line — the C++ that reads the
+ * argument and the stub that mis-declares it — so the entry can be re-checked against
+ * the pin rather than taken on trust. */
+export interface NativeArityExceptionEntry {
+  name: string;
+  reason: string;
+}
+
 export interface NativeTarget {
   repo: string;
   ref: string;
@@ -18,6 +27,16 @@ export interface NativeTarget {
   declaration: string;
   /** The vendored C++ file that registers the module, under `fixtures/upstream-native/`. */
   upstreamSource: string;
+  /** The vendored LuaLS annotation upstream ships, under `fixtures/upstream-native/`.
+   * The registration table carries names only, so parameter lists come from here.
+   * Absent where upstream ships no annotation, or ships one in a form this reader does
+   * not accept — in which case the target's arity axis reads as unmeasured rather than
+   * as agreeing. */
+  upstreamAnnotation?: string;
+  /** Members whose annotation stub contradicts the C++ that runs. Kept on the target
+   * rather than in a manifest of its own: an entry is meaningless away from the pin
+   * pair it reconciles, and both paths are named right here. */
+  annotationArityExceptions?: NativeArityExceptionEntry[];
 }
 
 export function readNativeTargets(packageRoot: string): NativeTarget[] {

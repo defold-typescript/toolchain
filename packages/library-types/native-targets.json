@@ -7,7 +7,14 @@
       "namespace": "daabbcc",
       "manifestDir": "daabbcc",
       "declaration": "generated/native/daabbcc.d.ts",
-      "upstreamSource": "fixtures/upstream-native/DAABBCC/daabbcc/src/extension.cpp"
+      "upstreamSource": "fixtures/upstream-native/DAABBCC/daabbcc/src/extension.cpp",
+      "upstreamAnnotation": "fixtures/upstream-native/DAABBCC/daabbcc/annotation.lua",
+      "annotationArityExceptions": [
+        {
+          "name": "rebuild_all",
+          "reason": "src/extension.cpp:786 reads the flag as `lua_toboolean(L, 2)`, so the runtime takes it as the second argument; the one-parameter stub at annotation.lua:153 would put it first, and the declaration follows the C++."
+        }
+      ]
     },
     {
       "repo": "https://github.com/britzl/defold-sharing",
@@ -16,7 +23,8 @@
       "namespace": "share",
       "manifestDir": "share",
       "declaration": "generated/native/share.d.ts",
-      "upstreamSource": "fixtures/upstream-native/defold-sharing/share/src/share.cpp"
+      "upstreamSource": "fixtures/upstream-native/defold-sharing/share/src/share.cpp",
+      "upstreamAnnotation": "fixtures/upstream-native/defold-sharing/share/api/share.lua"
     },
     {
       "repo": "https://github.com/selimanac/defold-uuid4",
