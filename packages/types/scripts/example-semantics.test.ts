@@ -76,6 +76,24 @@ resource.set_texture(t, { type, width, height, page, format }, buf);
     ]);
   });
 
+  test("page zero is held by a creation declaring no page_count", () => {
+    const body = `${TEXTURE_SPEC_BINDINGS}const page = 0;
+const t = resource.create_texture("/t.texturec", { type, width, height, format });
+resource.set_texture(t, { type, width, height, page, format }, buf);
+`;
+    expect(unbackedTexturePageDefects(body)).toEqual([]);
+  });
+
+  test("a page_count declared as zero is read as written, not widened to one", () => {
+    const body = `${TEXTURE_SPEC_BINDINGS}const page = 0;
+const t = resource.create_texture("/t.texturec", { type, width, height, page_count: 0, format });
+resource.set_texture(t, { type, width, height, page, format }, buf);
+`;
+    expect(unbackedTexturePageDefects(body)).toEqual([
+      'resource.set_texture writes page 0 of "t", created with page_count: 0',
+    ]);
+  });
+
   test("an attachment held by a binding is tested against an inline specification", () => {
     const body = `const color = graphics.BUFFER_TYPE_COLOR0_BIT;
 const rt = render.render_target("shadow", { [graphics.BUFFER_TYPE_DEPTH_BIT]: depth_params });

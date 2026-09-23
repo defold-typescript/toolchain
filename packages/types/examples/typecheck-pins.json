@@ -3521,10 +3521,6 @@
       "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
     },
     {
-      "code": 2345,
-      "text": "Argument of type 'string | undefined' is not assignable to parameter of type 'string'.   Type 'undefined' is not assignable to type 'string'."
-    },
-    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
@@ -3551,26 +3547,6 @@
     {
       "code": 2559,
       "text": "Type '{ name: Hash<\"rgba\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
-    },
-    {
-      "code": 18048,
-      "text": "'buf' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'buf' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'buf' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'buf' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'buf' is possibly 'undefined'."
     }
   ],
   "defold-1.13.0/kinds/script:resource.texture:8cd63a7393c8a799": [
@@ -5675,10 +5651,6 @@
       "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
     },
     {
-      "code": 2345,
-      "text": "Argument of type 'string | undefined' is not assignable to parameter of type 'string'.   Type 'undefined' is not assignable to type 'string'."
-    },
-    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
@@ -5705,26 +5677,6 @@
     {
       "code": 2559,
       "text": "Type '{ name: Hash<\"rgba\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
-    },
-    {
-      "code": 18048,
-      "text": "'buf' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'buf' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'buf' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'buf' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'buf' is possibly 'undefined'."
     }
   ],
   "defold-1.13.1/kinds/script:resource.texture:8cd63a7393c8a799": [
@@ -7041,10 +6993,6 @@
       "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
     },
     {
-      "code": 2345,
-      "text": "Argument of type 'string | undefined' is not assignable to parameter of type 'string'.   Type 'undefined' is not assignable to type 'string'."
-    },
-    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
@@ -7071,26 +7019,6 @@
     {
       "code": 2559,
       "text": "Type '{ name: Hash<\"rgba\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
-    },
-    {
-      "code": 18048,
-      "text": "'buf' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'buf' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'buf' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'buf' is possibly 'undefined'."
-    },
-    {
-      "code": 18048,
-      "text": "'buf' is possibly 'undefined'."
     }
   ],
   "defold-1.13.1:resource.texture:8cd63a7393c8a799": [

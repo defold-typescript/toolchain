@@ -309,6 +309,39 @@ export function implicitAnyOffenders(
   return diagnostics.filter((diagnostic) => IMPLICIT_ANY_CODES.has(diagnostic.code));
 }
 
+/**
+ * The diagnostic codes for a value read without narrowing away the `undefined`
+ * or `null` a load can return: the identifier shapes (`18047`, `18048`, `18049`)
+ * and the object shapes (`2531`, `2532`, `2533`). Of these the pins hold only
+ * `18048`; the rest are the same class reported against a different expression
+ * shape, so refusing them costs nothing and catches the shape a re-authored
+ * body happens to take.
+ */
+const OPTIONAL_LOAD_CODES = new Set([2531, 2532, 2533, 18047, 18048, 18049]);
+
+/**
+ * An assignability failure whose cause is the optionality itself. `TS2345`
+ * carries 223 pins and `TS2322` more, nearly all of them unrelated to loading,
+ * so the code cannot decide this one — only the text saying the optional half
+ * of the type is what does not fit.
+ */
+const OPTIONAL_ASSIGNMENT_TEXT = /Type '(undefined|null)' is not assignable/;
+
+/**
+ * The diagnostics an example's body carries that the optional-load class
+ * refuses: a load's result dereferenced or passed on with its `undefined` still
+ * in the type. Both the compiled-gate closure and the probe judge through this
+ * one predicate, so neither can drift from the other.
+ */
+export function optionalLoadOffenders(
+  diagnostics: readonly ExampleDiagnostic[],
+): ExampleDiagnostic[] {
+  return diagnostics.filter(
+    (diagnostic) =>
+      OPTIONAL_LOAD_CODES.has(diagnostic.code) || OPTIONAL_ASSIGNMENT_TEXT.test(diagnostic.text),
+  );
+}
+
 export interface SurfaceCompilation {
   readonly units: Map<string, ExampleDiagnostic[]>;
   /**
