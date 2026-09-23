@@ -54,6 +54,38 @@ export const HISTORICAL_ONLY_SYMBOL = "gone.thing";
 export const TYPEDEF_SHAPE_NAME = "Functions";
 export const TYPEDEF_SHAPE_CONSUMER = "demo.configure";
 
+// `constantUnionAlias` gives `demo` the emitter-minted constant-union alias
+// `demo.Easing`, the two constants it unions, and a consumer typed by both the
+// alias and the canonical `Opaque` brand. That one page makes the versioned
+// route's two link sources observable at once: the alias must resolve against
+// the windowed collection (so its href carries this version's prefix) while the
+// brand must resolve against the canonical one (so it keeps its single home).
+// The alias needs no ref-doc element — it is minted from an `api-signatures.json`
+// key alone — so the fixture declares it exactly as the emitter does. Off by
+// default, so every existing caller sees an unchanged registry.
+const ALIAS_LOCAL_NAME = "Easing";
+export const CONSTANT_UNION_ALIAS = `demo.${ALIAS_LOCAL_NAME}`;
+const ALIAS_MEMBERS = ["demo.EASING_LINEAR", "demo.EASING_OUTSINE"];
+export const CONSTANT_UNION_ALIAS_SIGNATURE = `type ${ALIAS_LOCAL_NAME} = ${ALIAS_MEMBERS.map(
+  (member) => `typeof ${member}`,
+).join(" | ")}`;
+export const CONSTANT_UNION_ALIAS_CONSUMER = "demo.tween";
+
+// The brand source for the canonical half of the route's link map:
+// `loadVersionIndependentPages` parses this file out of `<typesDir>/src`, and
+// `Opaque` is in the value-type allowlist, so writing it gives the surface an
+// `/api/Opaque` page.
+const OPAQUE_CORE_TYPES = `declare const OpaqueBrand: unique symbol;
+
+/**
+ * An opaque engine handle. The engine hands these back; TypeScript keeps them
+ * apart by name rather than letting you look inside.
+ */
+export interface Opaque<Name extends string> {
+  readonly [OpaqueBrand]: Name;
+}
+`;
+
 export const versionId = (bare: string): string => `defold-${bare}`;
 
 const param = (name: string, types: string[]) => ({
@@ -95,6 +127,27 @@ const shapeTypedef = {
   properties: [{ name: "count", types: ["number"] }],
 };
 
+// The alias members, as real page symbols: the entry's union arms name them, so
+// a reader following an alias link lands on a page that actually declares them.
+const aliasConstants = ALIAS_MEMBERS.map((name) => ({ type: "CONSTANT", name }));
+
+// The alias consumer. Its two parameter types are the whole point of the
+// fixture: one resolves through the windowed collection, the other through the
+// canonical one.
+const aliasConsumer = fn(CONSTANT_UNION_ALIAS_CONSUMER, [
+  param("node", ['Opaque<"node">']),
+  param("easing", [CONSTANT_UNION_ALIAS]),
+]);
+
+// The alias' own `api-signatures.json` key, shaped exactly as the emitter writes
+// it: a `TYPEDEF` identity with an empty signature, which is what
+// `buildCombinedSurface` scans for when it mints alias entries no ref-doc
+// accumulator declares.
+const aliasSignatureEntry = (): [string, string] => [
+  symbolIdentityKey({ namespace: "demo", kind: "TYPEDEF", name: ALIAS_LOCAL_NAME, signature: "" }),
+  `${CONSTANT_UNION_ALIAS_SIGNATURE};`,
+];
+
 const demoFunctions: Record<string, unknown[]> = {
   [NEWEST]: [fn("demo.always"), fn("demo.added_in_two"), fn("demo.newest_only"), evolving],
   [MIDDLE]: [fn("demo.always"), fn("demo.added_in_two"), evolving],
@@ -124,6 +177,9 @@ function declarationFor(name: string, version: string): string {
   if (name === TYPEDEF_SHAPE_CONSUMER) {
     return `function ${name}(opts: ${TYPEDEF_SHAPE_NAME}): void;`;
   }
+  if (name === CONSTANT_UNION_ALIAS_CONSUMER) {
+    return `function ${name}(node: Opaque<"node">, easing: ${CONSTANT_UNION_ALIAS}): void;`;
+  }
   return flatDeclaration(name);
 }
 
@@ -145,10 +201,16 @@ export interface WindowedTypesDirOptions {
   deprecationWidened?: boolean;
   /** Give `demo` the slug-colliding typedef shape described above. */
   typedefShape?: boolean;
+  /** Give `demo` the constant-union alias and its consumer described above. */
+  constantUnionAlias?: boolean;
 }
 
 export function makeWindowedTypesDir(options: WindowedTypesDirOptions = {}): string {
   const dir = mkdtempSync(join(tmpdir(), "version-window-routes-"));
+  if (options.constantUnionAlias) {
+    mkdirSync(join(dir, "src"), { recursive: true });
+    writeFileSync(join(dir, "src", "core-types.ts"), OPAQUE_CORE_TYPES);
+  }
   const signatureVersions: Record<string, Record<string, string>> = {};
   let heldIdentity: unknown;
 
@@ -159,9 +221,11 @@ export function makeWindowedTypesDir(options: WindowedTypesDirOptions = {}): str
 
     const demoElements = [...(demoFunctions[bare] as unknown[])];
     if (options.typedefShape) demoElements.push(shapeConsumer, shapeTypedef);
+    if (options.constantUnionAlias) demoElements.push(aliasConsumer, ...aliasConstants);
     const demoRaw = doc("demo", demoElements);
     writeFileSync(join(dir, fixturesDir, "demo_doc.json"), demoRaw);
     entries.push(...signaturesFor("demo", parseDefoldApiDoc(JSON.parse(demoRaw)), bare));
+    if (options.constantUnionAlias) entries.push(aliasSignatureEntry());
 
     const modules = [{ namespace: "demo", fixture: "demo_doc.json" }];
     if (options.deprecationWidened && bare === NEWEST) {
