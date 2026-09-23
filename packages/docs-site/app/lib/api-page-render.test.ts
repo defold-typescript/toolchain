@@ -31,6 +31,7 @@ import {
   loadCombinedSurface,
 } from "./api-surface-loader";
 import type { BadgeCountTable } from "./api-surface-pref";
+import { API_TYPE_CODE_CLOSE, API_TYPE_CODE_OPEN } from "./api-type-links";
 import {
   buildCombinedSurface,
   combinedNamespaceToApiPage,
@@ -40,8 +41,17 @@ import { slugify } from "./headings";
 import { renderMarkdown } from "./markdown";
 import type { LibraryListing } from "./nav";
 import { LIBRARY_API_KIND_SENTENCE } from "./no-typed-api-icon";
+import { escapeAttr } from "./signature-brand-links";
 import { buildSymbolIndex } from "./symbol-index";
 import type { VersionWindow } from "./version-window";
+
+// The type half of a name/type label: raw `api-type` code whose text is escaped
+// so `linkApiTypeTokens` can find the run without a `<` splitting it. Composed
+// from the production constants rather than spelled out, so a structural change
+// reaches every assertion below on the same edit.
+function typeCode(types: string): string {
+  return `${API_TYPE_CODE_OPEN}${escapeAttr(types)}${API_TYPE_CODE_CLOSE}`;
+}
 
 const FIXTURE_DIR = join(import.meta.dir, "__fixtures__/api-surface");
 const MISSING_VERSION_FIXTURE_DIR = join(
@@ -340,7 +350,7 @@ describe("apiPageMarkdown", () => {
     expect(md).not.toContain("## Types");
     expect(md).toContain("### `LoggerInstance.info(message: string)`");
     expect(md).toContain("Writes an info message.");
-    expect(md).toContain("- `message`: `string` — message text");
+    expect(md).toContain(`- \`message\`: ${typeCode("string")} — message text`);
     expect(md).toContain("### `LoggerInstance.level: number`");
     expect(md).toContain("Current log level.");
   });
@@ -367,11 +377,11 @@ describe("apiPageMarkdown field tree", () => {
   test("renders a parameter's fields as an indented nested list, one indent per depth", () => {
     const md = apiPageMarkdown(fieldsPage(), (t) => t);
     expect(md).toContain(
-      `- \`options\`?:${G}\`{ lerp?: number; nested?: { deep?: boolean; }; }\` — the options`,
+      `- \`options\`?:${G}${typeCode("{ lerp?: number; nested?: { deep?: boolean; }; }")} — the options`,
     );
-    expect(md).toContain(`  - \`lerp\`?:${G}\`number\` — Lerp factor.`);
-    expect(md).toContain(`  - \`nested\`?:${G}\`{ deep?: boolean; }\` — Nested config.`);
-    expect(md).toContain(`    - \`deep\`?:${G}\`boolean\` — Deep flag.`);
+    expect(md).toContain(`  - \`lerp\`?:${G}${typeCode("number")} — Lerp factor.`);
+    expect(md).toContain(`  - \`nested\`?:${G}${typeCode("{ deep?: boolean; }")} — Nested config.`);
+    expect(md).toContain(`    - \`deep\`?:${G}${typeCode("boolean")} — Deep flag.`);
   });
 
   test("a parameter without fields renders no sub-list", () => {
@@ -2356,5 +2366,279 @@ describe("constant union alias entries", () => {
     };
     const links = apiSignatureSymbolLinks([page], page);
     expect(links.get("node")).toEqual({ route: "/api/gui", heading: "node" });
+  });
+});
+
+// Alias-link fixtures shared by the canonical and versioned groups below. The
+// two groups differ only in the routes their pages carry, so the surface is
+// built once and re-routed rather than restated.
+const ALIAS_EASING_SIG = "type Easing = typeof gui.EASING_LINEAR | typeof gui.EASING_OUTSINE";
+const ALIAS_STATE_SIG =
+  "type State = typeof graphics.STATE_BLEND | typeof graphics.STATE_DEPTH_TEST";
+const NAME_TYPE_GAP = " ";
+
+function aliasTypedefKey(namespace: string, name: string): string {
+  return symbolIdentityKey({ namespace, kind: "TYPEDEF", name, signature: "" });
+}
+
+const ALIAS_ANIMATE: ApiFunction = {
+  name: "gui.animate",
+  brief: "",
+  description: "Animates a node.",
+  parameters: [
+    { name: "node", doc: "", types: ['Opaque<"node">'], isOptional: false },
+    { name: "easing", doc: "", types: ["gui.Easing", "Vector"], isOptional: false },
+    { name: "unknown", doc: "", types: ["gui.Nowhere"], isOptional: true },
+    {
+      name: "opts",
+      doc: "",
+      types: ["table"],
+      isOptional: true,
+      fields: [{ name: "inner", doc: "", types: ["gui.Easing"], isOptional: true }],
+    },
+  ],
+  returnValues: [{ name: "state", doc: "", types: ["graphics.State"], isOptional: false }],
+};
+
+function guiAliasPage(route: string): ApiPage {
+  return {
+    namespace: "gui",
+    route,
+    brief: "",
+    module: {
+      namespace: "gui",
+      brief: "",
+      description: "GUI API.",
+      functions: [ALIAS_ANIMATE],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [{ name: "node", types: ["userdata"] }],
+    },
+    translations: {},
+    signatures: {},
+    category: "engine",
+    authoritativeSignatures: new Map([
+      [aliasTypedefKey("gui", "Easing"), `${ALIAS_EASING_SIG};`],
+      [
+        symbolIdentityKey({
+          namespace: "gui",
+          kind: "FUNCTION",
+          name: "gui.animate",
+          signature: normalizedFunctionSignature(ALIAS_ANIMATE),
+        }),
+        'gui.animate(node: Opaque<"node">, easing: gui.Easing): graphics.State',
+      ],
+    ]),
+  };
+}
+
+function graphicsAliasPage(route: string): ApiPage {
+  return {
+    namespace: "graphics",
+    route,
+    brief: "",
+    module: {
+      namespace: "graphics",
+      brief: "",
+      description: "Graphics API.",
+      functions: [],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    },
+    translations: {},
+    signatures: {},
+    category: "engine",
+    authoritativeSignatures: new Map([
+      [aliasTypedefKey("graphics", "State"), `${ALIAS_STATE_SIG};`],
+    ]),
+  };
+}
+
+function opaqueBrandPage(): ApiPage {
+  return {
+    namespace: "Opaque",
+    route: "/api/Opaque",
+    brief: "",
+    module: {
+      namespace: "Opaque",
+      brief: "",
+      description: "Engine handle brand.",
+      functions: [],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    },
+    translations: {},
+    signatures: {},
+    category: "engine",
+    authoritativeSignatures: new Map(),
+  };
+}
+
+function renderAliasSurface(
+  pages: ApiPage[],
+  page: ApiPage,
+  aliasPages: ApiPage[] = pages,
+): Promise<string> {
+  return renderMarkdown(
+    apiPageMarkdown(page, (text) => text),
+    {
+      highlightSignatureHeadings: true,
+      signatureSymbolLinks: apiSignatureSymbolLinks(pages, page, aliasPages),
+    },
+  );
+}
+
+// The `<li>` whose name half is `name`, so an assertion names one slot rather
+// than the whole document.
+function slotBullet(html: string, name: string): string {
+  const at = html.indexOf(`<code>${name}</code>`);
+  expect(at).toBeGreaterThan(-1);
+  return html.slice(html.lastIndexOf("<li>", at), html.indexOf("</li>", at));
+}
+
+function mintedAnchorIds(html: string): Set<string> {
+  return new Set([...html.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1] as string));
+}
+
+function nestedAnchor(html: string): boolean {
+  let depth = 0;
+  for (const m of html.matchAll(/<a\b[^>]*>|<\/a>/g)) {
+    if (m[0] === "</a>") depth--;
+    else if (++depth > 1) return true;
+  }
+  return false;
+}
+
+function typeLinkHrefs(html: string): string[] {
+  return [...html.matchAll(/<a class="api-type-link" href="([^"]+)"/g)].map((m) => m[1] as string);
+}
+
+describe("constant union alias links in parameter, return and field types", () => {
+  const surface = () => [
+    guiAliasPage("/api/gui"),
+    graphicsAliasPage("/api/graphics"),
+    opaqueBrandPage(),
+  ];
+
+  test("a parameter type links its alias to an anchor the same page minted", async () => {
+    const pages = surface();
+    const html = await renderAliasSurface(pages, pages[0] as ApiPage);
+    const href = slotBullet(html, "easing").match(
+      /<a class="api-type-link" href="([^"]+)">gui\.Easing<\/a>/,
+    )?.[1];
+    expect(href).toBeString();
+    const [route, anchor] = (href as string).split("#");
+    expect(route).toBe("/api/gui");
+    expect(anchor).toBe(slugify(ALIAS_EASING_SIG));
+    expect(mintedAnchorIds(html).has(anchor as string)).toBe(true);
+  });
+
+  test("the other union arm, the separator and the name/type gap survive", async () => {
+    const pages = surface();
+    const html = await renderAliasSurface(pages, pages[0] as ApiPage);
+    const easing = slotBullet(html, "easing");
+    expect(easing).toContain(`<code>easing</code>:${NAME_TYPE_GAP}`);
+    expect(easing).toContain(" | Vector");
+    expect(easing).not.toContain(">Vector</a>");
+    expect(nestedAnchor(html)).toBe(false);
+  });
+
+  test("a return value and a nested object-literal field link the same way", async () => {
+    const pages = surface();
+    const html = await renderAliasSurface(pages, pages[0] as ApiPage);
+    expect(slotBullet(html, "state")).toContain(
+      `<a class="api-type-link" href="/api/graphics#${slugify(ALIAS_STATE_SIG)}">graphics.State</a>`,
+    );
+    expect(slotBullet(html, "inner")).toContain(
+      `<a class="api-type-link" href="/api/gui#${slugify(ALIAS_EASING_SIG)}">gui.Easing</a>`,
+    );
+  });
+
+  test('a parameter typed Opaque<"node"> links neither the brand nor the shape name', async () => {
+    const pages = surface();
+    const html = await renderAliasSurface(pages, pages[0] as ApiPage);
+    const node = slotBullet(html, "node");
+    expect(node).not.toContain("api-type-link");
+    expect(node).not.toContain("/api/Opaque");
+  });
+
+  test("a type carrying angle brackets and quotes renders escaped and unbroken", async () => {
+    const pages = surface();
+    const html = await renderAliasSurface(pages, pages[0] as ApiPage);
+    const node = slotBullet(html, "node");
+    expect(node).toContain("Opaque&lt;");
+    expect(node).toContain("&gt;");
+    expect(node).not.toContain('Opaque<"node">');
+    expect((node.match(/<code class="api-type">/g) ?? []).length).toBe(1);
+  });
+
+  test("an alias the surface does not render stays plain code", async () => {
+    const pages = surface();
+    const html = await renderAliasSurface(pages, pages[0] as ApiPage);
+    const unknown = slotBullet(html, "unknown");
+    expect(unknown).toContain("gui.Nowhere");
+    expect(unknown).not.toContain("api-type-link");
+  });
+});
+
+describe("versioned alias link targets", () => {
+  const PREFIX = "/api/defold-1.12.4";
+  const versionedSurface = () => [
+    guiAliasPage(`${PREFIX}/gui`),
+    graphicsAliasPage(`${PREFIX}/graphics`),
+  ];
+
+  test("every alias link on a versioned page stays inside that version", async () => {
+    const pages = versionedSurface();
+    const html = await renderAliasSurface([opaqueBrandPage()], pages[0] as ApiPage, pages);
+    const hrefs = typeLinkHrefs(html);
+    expect(hrefs.length).toBeGreaterThan(0);
+    for (const href of hrefs) expect(href.startsWith(`${PREFIX}/`)).toBe(true);
+    const ids = mintedAnchorIds(html);
+    for (const href of hrefs) {
+      const [route, anchor] = href.split("#");
+      if (route === `${PREFIX}/gui`) expect(ids.has(anchor as string)).toBe(true);
+    }
+  });
+
+  test("a signature heading on a versioned page links its alias to that version too", async () => {
+    const pages = versionedSurface();
+    const html = await renderAliasSurface([opaqueBrandPage()], pages[0] as ApiPage, pages);
+    const signature = [...html.matchAll(/<a class="signature-symbol-link" href="([^"]+)"/g)].map(
+      (m) => m[1] as string,
+    );
+    expect(signature.length).toBeGreaterThan(0);
+    for (const href of signature) {
+      if (href === "/api/Opaque") continue;
+      expect(href.startsWith(`${PREFIX}/`)).toBe(true);
+    }
+  });
+
+  test("a cross-namespace alias resolves to that version's owning namespace", async () => {
+    const pages = versionedSurface();
+    const html = await renderAliasSurface([opaqueBrandPage()], pages[0] as ApiPage, pages);
+    expect(slotBullet(html, "state")).toContain(
+      `href="${PREFIX}/graphics#${slugify(ALIAS_STATE_SIG)}"`,
+    );
+  });
+
+  test("the version-independent Opaque brand keeps its canonical route", async () => {
+    const pages = versionedSurface();
+    const html = await renderAliasSurface([opaqueBrandPage()], pages[0] as ApiPage, pages);
+    expect(html).toContain('href="/api/Opaque"');
+    expect(html).not.toContain(`${PREFIX}/Opaque`);
+  });
+
+  test("the canonical surface renders alias hrefs identical to the default call", async () => {
+    const pages = [guiAliasPage("/api/gui"), graphicsAliasPage("/api/graphics"), opaqueBrandPage()];
+    const explicit = await renderAliasSurface(pages, pages[0] as ApiPage, pages);
+    const defaulted = await renderAliasSurface(pages, pages[0] as ApiPage);
+    expect(typeLinkHrefs(explicit)).toEqual(typeLinkHrefs(defaulted));
+    expect(explicit).toBe(defaulted);
   });
 });

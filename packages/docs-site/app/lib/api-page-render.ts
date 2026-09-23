@@ -20,11 +20,12 @@ import {
 } from "./api-surface";
 import { type ApiVersion, versionsWithDiskFixtures } from "./api-surface-loader";
 import type { BadgeCountTable } from "./api-surface-pref";
+import { API_TYPE_CODE_CLOSE, API_TYPE_CODE_OPEN } from "./api-type-links";
 import { type NamespaceBadgeCounts, reachableBadgeCounts } from "./combined-surface";
 import type { LibraryListing } from "./nav";
 import { LIBRARY_API_KIND_SENTENCE } from "./no-typed-api-icon";
 import { platformDocText } from "./platform-icons";
-import type { SignatureSymbolTarget } from "./signature-brand-links";
+import { escapeAttr, type SignatureSymbolTarget } from "./signature-brand-links";
 import { buildSymbolIndex } from "./symbol-index";
 import { symbolLinkifier } from "./symbol-linkify";
 import { symbolNote } from "./symbol-notes";
@@ -47,11 +48,19 @@ const NAME_TYPE_GAP = "\u2002";
 // bullets, so name/type separation is uniform everywhere. An anonymous slot (an
 // unnamed return value) is just its `` `type` `` with no colon; a typeless named
 // slot is the name alone.
+//
+// The type half is raw `<code class="api-type">` rather than a markdown code
+// span, because `linkApiTypeTokens` needs a class to find it by — a markdown
+// span renders as an unmarked `<code>` indistinguishable from every other
+// inline code on the page. Emitting HTML means escaping here: the span's inner
+// text is the only thing markdown-it will not escape for us, and a raw `<` in a
+// type (`Opaque<"node">`) would otherwise split the element.
 function nameTypeLabel(name: string, isOptional: boolean, types: string): string {
   const optional = isOptional ? "?" : "";
-  if (!name) return types ? `\`${types}\`` : "";
+  const typeCode = types ? `${API_TYPE_CODE_OPEN}${escapeAttr(types)}${API_TYPE_CODE_CLOSE}` : "";
+  if (!name) return typeCode;
   if (!types) return `\`${name}\`${optional}`;
-  return `\`${name}\`${optional}:${NAME_TYPE_GAP}\`${types}\``;
+  return `\`${name}\`${optional}:${NAME_TYPE_GAP}${typeCode}`;
 }
 
 // An object-literal member and its subtree, indented two spaces per depth so
@@ -682,6 +691,7 @@ export function apiLinkify(pages: ApiPage[]): (text: string) => string {
 export function apiSignatureSymbolLinks(
   pages: ApiPage[],
   page?: ApiPage,
+  aliasPages: ApiPage[] = pages,
 ): Map<string, SignatureSymbolTarget> {
   const links = new Map<string, SignatureSymbolTarget>();
   if (page) {
@@ -696,10 +706,18 @@ export function apiSignatureSymbolLinks(
   // (`gui.Easing`, `graphics.State`), which is also how the symbol index keys it.
   // Keying the qualified name off the index rather than the current page is what
   // lets a `render` signature reach the `graphics` entry that lists the members.
-  for (const p of pages) {
+  //
+  // The aliases come from `aliasPages` — the surface the reader is on — not from
+  // `pages`, which the versioned route sets to the canonical collection for the
+  // sake of `Opaque` below. Every route in a windowed collection already carries
+  // its version prefix, so scoping the source keeps an alias link inside the
+  // release the reader opened without any per-call prefixing. On the canonical
+  // route the two collections are the same object.
+  const aliasIndex = aliasPages === pages ? index : buildSymbolIndex(aliasPages);
+  for (const p of aliasPages) {
     for (const symbol of apiModuleSymbols(p, p.translations).filter((s) => s.kind === "type")) {
       const qualified = `${p.namespace}.${symbol.name}`;
-      const entry = index[qualified];
+      const entry = aliasIndex[qualified];
       if (entry) links.set(qualified, entry.route);
     }
   }
