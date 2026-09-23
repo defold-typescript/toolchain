@@ -96,6 +96,42 @@ describe("htmlToDocText", () => {
     expect(out).toBe("ends with *\\/ here\n\n```lua\nlocal x = 1\n```");
     expect(out.endsWith("\n```")).toBe(true);
   });
+
+  test("welds a stranded list marker", () => {
+    expect(htmlToDocText("<ul><li>\ntexture</li></ul>")).toBe("- texture");
+    const out = htmlToDocText(
+      '<ul>\n<li>\n<dl>\n<dt><code>texture</code></dt>\n<dd><span class="type">string</span> the path</dd>\n</dl>\n</li>\n</ul>',
+    );
+    expect(out).toBe("- `texture`\nstring the path");
+    expect(out).not.toMatch(/^-$/m);
+  });
+
+  test("a marker stranded by a blank line takes the next non-blank line", () => {
+    const out = htmlToDocText(
+      "<ul>\n<li>\n\n<dl>\n<dt>name</dt>\n<dd>the value</dd>\n</dl>\n</li>\n</ul>",
+    );
+    expect(out).toBe("- name\nthe value");
+  });
+
+  test("a welded item keeps its continuation lines unindented", () => {
+    const out = htmlToDocText("<ul>\n<li>\nfirst\nsecond\nthird</li>\n<li>next</li>\n</ul>");
+    expect(out).toBe("- first\nsecond\nthird\n\n- next");
+  });
+
+  test("an empty list item is dropped rather than emitting a bare marker", () => {
+    expect(htmlToDocText("<ul>\n<li></li>\n<li>real</li>\n</ul>")).toBe("- real");
+    expect(htmlToDocText("<ul>\n<li>only</li>\n<li>\n</li>\n</ul>")).toBe("- only");
+  });
+
+  test("ordinary list items are unchanged", () => {
+    expect(htmlToDocText("<ul><li>one</li><li>two</li></ul>")).toBe("- one\n- two");
+    expect(htmlToDocText("lead in:\n<ul><li>one</li></ul>")).toBe("lead in:\n\n- one");
+  });
+
+  test("a bare marker inside a fenced region is left alone", () => {
+    const out = htmlToDocText("```lua\n-\nlocal x = 1\n```\n<ul><li>after</li></ul>");
+    expect(out).toBe("```lua\n-\nlocal x = 1\n```\n\n- after");
+  });
 });
 
 describe("htmlToCodeText", () => {

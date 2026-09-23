@@ -17,6 +17,47 @@ function decodeEntities(text: string): string {
 }
 
 /**
+ * Join a list marker left alone on its line back onto the item's first content
+ * line. Upstream prose puts a newline between `<li>` and the item's first word,
+ * which the whitespace pass preserves, dropping the value out of the list. The
+ * item's remaining lines stay where they are: Markdown's lazy continuation
+ * already keeps an unindented line inside the item's paragraph.
+ */
+function weldStrandedListMarkers(text: string): string {
+  const lines = text.split("\n");
+  const out: string[] = [];
+  let inFence = false;
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index] ?? "";
+    if (line.startsWith("```")) {
+      inFence = !inFence;
+      out.push(line);
+      continue;
+    }
+    if (inFence || line !== "-") {
+      out.push(line);
+      continue;
+    }
+    let ahead = index + 1;
+    while (ahead < lines.length && lines[ahead] === "") ahead += 1;
+    const content = lines[ahead];
+    if (
+      content === undefined ||
+      content === "-" ||
+      content.startsWith("- ") ||
+      content.startsWith("```")
+    ) {
+      // No value to weld onto — drop the marker and the blank run behind it.
+      index = ahead - 1;
+      continue;
+    }
+    out.push(`- ${content}`);
+    index = ahead;
+  }
+  return out.join("\n").trim();
+}
+
+/**
  * Convert a ref-doc HTML fragment to clean Markdown/plain text suitable for a
  * JSDoc comment body. Pure and free of any `ApiModule` dependency so the emit
  * slices and any future surface can reuse it.
@@ -44,6 +85,8 @@ export function htmlToDocText(html: string): string {
     .replace(/ *\n */g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+
+  text = weldStrandedListMarkers(text);
 
   // Upstream prose can open a fence and end mid-body; left open it swallows the
   // rest of the JSDoc block and everything after it on the rendered page.
