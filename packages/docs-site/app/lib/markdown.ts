@@ -10,6 +10,7 @@ import footnotePlugin from "markdown-it-footnote";
 import { type BundledLanguage, createHighlighter, type Highlighter } from "shiki";
 import { Badge } from "../components/ui/badge";
 import { TooltipTrigger } from "../components/ui/tooltip";
+import { linkApiTypeTokens } from "./api-type-links";
 import { withBase } from "./base";
 import { glyphSvg } from "./glyph";
 import { slugify } from "./headings";
@@ -639,6 +640,15 @@ export async function renderMarkdown(
       if (id) resolved.set(name, `${target.route}#${id}`);
     }
     html = splitSignatureBrandLinks(html, resolved);
+    // The same targets again, now inside the `api-type` code spans a parameter,
+    // return or field bullet renders, so the breakdown under a signature links
+    // where the signature itself does. Only qualified (dotted) keys carry over:
+    // the map also holds `Opaque` and the page's own bare shape names, and a
+    // bare key matches inside the escaped literal of `Opaque<"node">`, which
+    // would turn a string literal into a link. Filtering here rather than at the
+    // producer is what keeps both passes reading one map.
+    const qualified = new Map([...resolved].filter(([name]) => name.includes(".")));
+    html = linkApiTypeTokens(html, qualified);
   }
   return html;
 }

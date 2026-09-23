@@ -42,7 +42,7 @@ const SIGNATURE_ANCHOR_RE = new RegExp(
 // emits the code inner as an adjacent run of these; TEXT never contains `<`.
 const SPAN_RE = /<span style="([^"]*)">([^<]*)<\/span>/g;
 
-function escapeAttr(text: string): string {
+export function escapeAttr(text: string): string {
   return text
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -51,8 +51,10 @@ function escapeAttr(text: string): string {
 }
 
 // Whole-word matcher for the brand names, `$`/`_`/alnum boundaries so
-// `opaqueThing` and `MyOpaqueX` are left alone.
-function brandWordRegex(names: readonly string[]): RegExp {
+// `opaqueThing` and `MyOpaqueX` are left alone. Shared with the parameter/return
+// type pass so a token linked in a signature and the same token linked in the
+// Parameters breakdown cannot disagree about where a name begins and ends.
+export function brandWordRegex(names: readonly string[]): RegExp {
   const alt = names.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
   return new RegExp(`(?<![A-Za-z0-9_$])(?:${alt})(?![A-Za-z0-9_$])`, "g");
 }
