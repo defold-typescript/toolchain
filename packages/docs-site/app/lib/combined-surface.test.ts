@@ -7,6 +7,7 @@ import {
   type ApiSymbolIdentity,
   normalizedFunctionSignature,
   symbolIdentityKey,
+  type TranslationStore,
 } from "@defold-typescript/types";
 import { type AvailabilityLookup, badgeCategoryFromLabel } from "./api-surface";
 import {
@@ -872,5 +873,53 @@ describe("reachableBadgeCounts", () => {
 
   test("an empty row reaches nothing", () => {
     expect(reachableBadgeCounts({})).toEqual({ new: 0, changed: 0, deprecated: 0 });
+  });
+});
+
+describe("Combined example-translation store", () => {
+  const translationStore: TranslationStore = {
+    "go.get_position": [{ sourceHash: "0123456789abcdef", ts: "const p = go.get_position(id);" }],
+  };
+  const withStore = () =>
+    buildCombinedSurface({ surfaces: [v113, v112], signatures, translationStore });
+  const withoutStore = () => buildCombinedSurface({ surfaces: [v113, v112], signatures });
+
+  test("carries the store onto the surface and onto every namespace", () => {
+    const combined = withStore();
+    expect(combined.translationStore).toBe(translationStore);
+    expect(combined.namespaces.length).toBeGreaterThan(0);
+    for (const ns of combined.namespaces) {
+      expect(ns.translationStore).toBe(translationStore);
+    }
+  });
+
+  test("omits the field entirely when no store is given", () => {
+    const combined = withoutStore();
+    expect("translationStore" in combined).toBe(false);
+    for (const ns of combined.namespaces) {
+      expect("translationStore" in ns).toBe(false);
+    }
+  });
+
+  test("combinedNamespaceToApiPage projects the namespace store as `translations`", () => {
+    const ns = withStore().namespaces.find((n) => n.namespace === "go");
+    expect(ns).toBeDefined();
+    if (!ns) return;
+    expect(combinedNamespaceToApiPage(ns).translations).toBe(translationStore);
+  });
+
+  test("combinedNamespaceToApiPage projects `{}` for a namespace carrying no store", () => {
+    const ns = withoutStore().namespaces[0];
+    expect(ns).toBeDefined();
+    if (!ns) return;
+    expect(combinedNamespaceToApiPage(ns).translations).toEqual({});
+  });
+
+  test("loadCombinedSurface reads the committed store onto the canonical pages", () => {
+    const surface = loadCombinedSurface(REAL_TYPES_DIR);
+    expect(Object.keys(surface.translationStore ?? {}).length).toBeGreaterThan(0);
+    for (const ns of surface.namespaces) {
+      expect(Object.keys(combinedNamespaceToApiPage(ns).translations).length).toBeGreaterThan(0);
+    }
   });
 });

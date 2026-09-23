@@ -968,6 +968,7 @@ export function loadCombinedSurface(typesDir: string): CombinedSurface {
   const overlay = loadAvailability(typesDir);
   const signatures = loadSignaturesArtifact(typesDir);
   const signatureStore = loadSignatureStore(typesDir);
+  const translationStore = loadTranslationStore(typesDir);
   const surfaces = versionsWithDiskFixtures(typesDir).map((version) => ({
     version: bareVersion(version.id),
     modules: loadApiSurfaceForVersion(typesDir, version.id)
@@ -978,6 +979,7 @@ export function loadCombinedSurface(typesDir: string): CombinedSurface {
     surfaces,
     signatures,
     signatureStore,
+    translationStore,
     ...(overlay ? { overlay } : {}),
   });
 }
