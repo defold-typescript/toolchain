@@ -41,11 +41,6 @@ export interface CompilerOptionOverride {
  */
 export const COMPILER_OPTION_OVERRIDES: readonly CompilerOptionOverride[] = [
   {
-    option: "noImplicitAny",
-    reason:
-      "a translation is a fragment inside a doc comment: `self` is contextually typed by `defineScript` in real code, and the surrounding prose introduces locals the excerpt never declares",
-  },
-  {
     option: "types",
     reason:
       'the package\'s `types: ["bun"]` is build tooling, not a surface a Defold example compiles against; leaving it in would resolve `Bun`, `process` and `console` on a surface that declares none of them',
@@ -86,7 +81,6 @@ export function gateCompilerOptions(): ts.CompilerOptions {
   if (!parsed) throw new Error(`could not parse ${TSCONFIG_PATH}`);
   return {
     ...parsed.options,
-    noImplicitAny: false,
     types: [],
     noEmit: true,
     baseUrl: PACKAGE_ROOT,

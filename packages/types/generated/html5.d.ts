@@ -34,7 +34,7 @@ declare global {
      * object The calling script
      * @example
      * ```ts
-     * function on_interaction(self) {
+     * function on_interaction(self: unknown) {
      *   print("on_interaction called");
      *   html5.set_interaction_listener(undefined);
      * }

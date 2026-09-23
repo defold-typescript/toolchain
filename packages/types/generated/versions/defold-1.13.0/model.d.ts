@@ -158,9 +158,10 @@ declare global {
      * // How to play the "jump" animation followed by the "run" animation:
      * const url = msg.url("#model");
      *
-     * function anim_done(self, message_id, message, sender) {
+     * function anim_done(self: unknown, message_id: unknown, message: unknown, sender: unknown) {
      *   if (message_id === hash("model_animation_done")) {
-     *     if (message.animation_id === hash("jump")) {
+     *     const { animation_id } = message as { animation_id: Hash };
+     *     if (animation_id === hash("jump")) {
      *       // open animation done, chain with "run"
      *       const properties = { blend_duration: 0.2 };
      *       model.play_anim(url, "run", go.PLAYBACK_LOOP_FORWARD, properties, anim_done);

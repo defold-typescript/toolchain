@@ -193,9 +193,10 @@ declare global {
      * sound.play("#sound", { delay: 1, gain: 0.9, pan: -1.0 });
      *
      * // Using the callback argument, you can chain several sounds together:
-     * function sound_done(self, message_id, message, sender) {
+     * function sound_done(self: unknown, message_id: unknown, message: unknown, sender: unknown) {
      *   // play 'boom' sound fx when the countdown has completed
-     *   if (message_id === hash("sound_done") && message.play_id === self.countdown_id) {
+     *   const { play_id } = message as { play_id: number };
+     *   if (message_id === hash("sound_done") && play_id === (self as { countdown_id: number }).countdown_id) {
      *     sound.play("#boom", undefined, sound_done);
      *   }
      * }
