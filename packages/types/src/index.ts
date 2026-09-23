@@ -35,10 +35,12 @@ export {
 } from "./core-types";
 export {
   type DocCommentParts,
+  type ExampleSegment,
   examplesHtmlToMarkdown,
   htmlToCodeText,
   htmlToDocText,
   renderDocComment,
+  splitExampleSources,
 } from "./doc-comment";
 export {
   defineEditorScript,
@@ -56,6 +58,7 @@ export {
 } from "./emit-dts";
 export {
   hashExampleSource,
+  lookupExampleTranslations,
   lookupTranslation,
   type Translation,
   type TranslationStore,

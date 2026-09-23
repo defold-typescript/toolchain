@@ -10,6 +10,7 @@ import {
   parseDefoldApiDoc,
   type SignatureStore,
   signatureTransitionNames,
+  splitExampleSources,
   symbolIdentityKey,
 } from "@defold-typescript/types";
 import { canonicalApiPages } from "./api-content";
@@ -2565,6 +2566,35 @@ describe("exampleMarkdownFor", () => {
       returnValues: [],
     };
     expect(exampleMarkdownFor(noExamples, {})).toBeUndefined();
+  });
+
+  const twoBlocks = `${luaExample}Then:<br>${luaExample.replace("run", "stop")}`;
+  const twoFn: ApiFunction = { ...fn, name: "demo.pair", examples: twoBlocks };
+  const segmentHashes = splitExampleSources(twoBlocks).map((segment) =>
+    hashExampleSource(segment.code),
+  );
+
+  test("an element whose segments all resolve renders one ```ts fence per example", () => {
+    expect(segmentHashes).toHaveLength(2);
+    const md = exampleMarkdownFor(twoFn, {
+      "demo.pair": [
+        { sourceHash: segmentHashes[0] ?? "", ts: "demo.run(); // first" },
+        { sourceHash: segmentHashes[1] ?? "", ts: "demo.stop(); // second" },
+      ],
+    });
+    expect(md?.match(/```ts/g)).toHaveLength(2);
+    expect(md).toContain("demo.run(); // first");
+    expect(md).toContain("demo.stop(); // second");
+    expect(md).not.toContain("```lua");
+  });
+
+  test("an element whose segments resolve only partly falls back to one block", () => {
+    const md = exampleMarkdownFor(twoFn, {
+      "demo.pair": [{ sourceHash: segmentHashes[0] ?? "", ts: "demo.run(); // first" }],
+    });
+    expect(md?.match(/```ts/g) ?? []).toHaveLength(0);
+    expect(md).toContain("```lua");
+    expect(md).not.toContain("demo.run(); // first");
   });
 });
 

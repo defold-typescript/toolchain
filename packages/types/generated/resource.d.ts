@@ -27,7 +27,9 @@ declare global {
      *     go.set("#sprite", "image", self.my_atlas);
      *   },
      * });
-     *
+     * ```
+     * @example
+     * ```ts
      * // Load an atlas and set it to a gui:
      * go.property("my_atlas", resource.atlas("/atlas.atlas"));
      *
@@ -293,7 +295,9 @@ declare global {
      *     go.set("/go#mesh", "vertices", my_buffer);
      *   },
      * });
-     *
+     * ```
+     * @example
+     * ```ts
      * // Create a buffer resource from existing resource
      * export default defineScript({
      *   init() {
@@ -464,7 +468,9 @@ declare global {
      *     go.set("#model", "texture0", my_texture_id);
      *   },
      * });
-     *
+     * ```
+     * @example
+     * ```ts
      * // How to create an 128x128 floating point texture (RGBA32F) resource from a buffer object
      * export default defineScript({
      *   init() {
@@ -498,7 +504,9 @@ declare global {
      *     go.set("#model", "texture0", my_texture_id);
      *   },
      * });
-     *
+     * ```
+     * @example
+     * ```ts
      * // How to create a 32x32x32 floating point 3D texture that can be used to generate volumetric data in a compute shader
      * export default defineScript({
      *   init() {
@@ -515,7 +523,9 @@ declare global {
      *     msg.post("@render:", "add_textures", [t_volume]);
      *   },
      * });
-     *
+     * ```
+     * @example
+     * ```ts
      * // How to create 512x512 texture array with 5 pages.
      * const new_tex = resource.create_texture("/runtime/example_array.texturec", {
      *   type: graphics.TEXTURE_TYPE_2D_ARRAY,
@@ -680,7 +690,9 @@ declare global {
      *     go.set("#model", "texture0", tpath);
      *   },
      * });
-     *
+     * ```
+     * @example
+     * ```ts
      * // Create a texture resource asyncronously without a callback
      * export default defineScript({
      *   init() {
@@ -737,7 +749,9 @@ declare global {
      *     go.set("#label", "font", self.my_font);
      *   },
      * });
-     *
+     * ```
+     * @example
+     * ```ts
      * // Load a font and set it to a gui:
      * go.property("my_font", resource.font("/font.font"));
      *
@@ -847,7 +861,9 @@ declare global {
      *     const info_attachment_1 = resource.get_texture_info(info.attachments[0]!.handle);
      *   },
      * });
-     *
+     * ```
+     * @example
+     * ```ts
      * // Get a texture attachment from a render target and set it on a model component
      * export default defineScript({
      *   init() {
@@ -960,7 +976,9 @@ declare global {
      *     // }
      *   },
      * });
-     *
+     * ```
+     * @example
+     * ```ts
      * // Get the meta data from an atlas resource
      * export default defineScript({
      *   init() {
@@ -1013,7 +1031,9 @@ declare global {
      *     go.set("#sprite", "material", self.my_material);
      *   },
      * });
-     *
+     * ```
+     * @example
+     * ```ts
      * // Load a material resource and update a named material with the resource:
      * go.property("my_material", resource.material("/material.material"));
      *
@@ -1180,7 +1200,9 @@ declare global {
      *     resource.set_atlas("/main/my_atlas.a.texturesetc", data);
      *   },
      * });
-     *
+     * ```
+     * @example
+     * ```ts
      * // Sets atlas data for a 256x256 texture with a single animation being rendered as a quad
      * export default defineScript({
      *   init() {
@@ -1374,7 +1396,9 @@ declare global {
      *     resource.set_texture(resource_path, args, self.buffer);
      *   },
      * });
-     *
+     * ```
+     * @example
+     * ```ts
      * // How to update a specific region of an atlas by using the x,y values. Assumes the already set atlas is a 128x128 texture.
      * export default defineScript({
      *   init(self) {
@@ -1399,7 +1423,9 @@ declare global {
      *     resource.set_texture(resource_path, args, self.buffer);
      *   },
      * });
-     *
+     * ```
+     * @example
+     * ```ts
      * // Update a texture from a buffer resource
      * go.property("my_buffer", resource.buffer("/my_default_buffer.buffer"));
      *
@@ -1419,7 +1445,9 @@ declare global {
      *     resource.set_texture(resource_path, args, resource.get_buffer(self.my_buffer));
      *   },
      * });
-     *
+     * ```
+     * @example
+     * ```ts
      * // Update an existing 3D texture from a buffer
      * export default defineScript({
      *   init() {
@@ -1455,7 +1483,9 @@ declare global {
      *     resource.set_texture("/my_3d_texture.texturec", t_args, tbuffer);
      *   },
      * });
-     *
+     * ```
+     * @example
+     * ```ts
      * // Update texture 2nd array page with loaded texture from png
      * const tex_path = "/bundle_resources/page_02.png";
      * const [data] = sys.load_resource(tex_path);

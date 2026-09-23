@@ -51,3 +51,29 @@ export function lookupTranslation(
   const match = entries.find((entry) => entry.sourceHash === sourceHash);
   return match ? match.ts : null;
 }
+
+/**
+ * The stored bodies for a blob's segment hashes, in the order given, or `null`
+ * the moment one of them does not resolve.
+ *
+ * All-or-nothing on purpose: an element whose blob carries several examples is
+ * emitted as several `@example` blocks only when every one of them has an
+ * authored body. A partial resolve would document some of the element's
+ * examples and silently drop the rest, so the caller falls back to the
+ * whole-blob body instead. An empty hash list is a miss for the same reason —
+ * it would otherwise report success while documenting nothing.
+ */
+export function lookupExampleTranslations(
+  store: TranslationStore,
+  fqn: string,
+  sourceHashes: readonly string[],
+): string[] | null {
+  if (sourceHashes.length === 0) return null;
+  const bodies: string[] = [];
+  for (const sourceHash of sourceHashes) {
+    const ts = lookupTranslation(store, fqn, sourceHash);
+    if (ts === null) return null;
+    bodies.push(ts);
+  }
+  return bodies;
+}
