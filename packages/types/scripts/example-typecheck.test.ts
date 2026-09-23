@@ -27,6 +27,7 @@ import {
   gateFailures,
   implicitAnyOffenders,
   moduleSpecifier,
+  optionalLoadOffenders,
   type PinFile,
   pinIdentity,
   readPins,
@@ -231,6 +232,59 @@ describe("the implicit-any class", () => {
       );
     }
     expect(offenders).toEqual([]);
+  });
+});
+
+describe("the optional-load class", () => {
+  const GUARDED_FQN = "resource.set_texture";
+
+  function identitiesFor(fqn: string): string[] {
+    return [...computed.keys()].filter((identity) => identity.split(":")[1] === fqn);
+  }
+
+  test("no variant of the array-texture example dereferences an unnarrowed load", () => {
+    const identities = identitiesFor(GUARDED_FQN);
+    if (identities.length === 0) {
+      throw new Error(
+        `no identity in the gate's computed map has the FQN ${GUARDED_FQN}; the closure below ` +
+          "would pass over nothing. Re-point it at the element the array-texture example ships under.",
+      );
+    }
+    const offenders: string[] = [];
+    for (const identity of identities.sort()) {
+      for (const diagnostic of optionalLoadOffenders(computed.get(identity) ?? [])) {
+        offenders.push(`  ${identity} — TS${diagnostic.code} ${diagnostic.text}`);
+      }
+    }
+    if (offenders.length > 0) {
+      throw new Error(
+        `a ${GUARDED_FQN} translation reads a loaded resource it has not narrowed:\n` +
+          `${offenders.slice(0, 20).join("\n")}${
+            offenders.length > 20 ? `\n  +${offenders.length - 20} more` : ""
+          }\n` +
+          "Guard the load in the example body; never re-pin to absorb it.",
+      );
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  test("an unnarrowed load compiles to a diagnostic the closure refuses", () => {
+    const body = `const data = sys.load_resource("/array.png");
+const buf = image.load_buffer(data);
+const w = buf.width;
+`;
+    const diagnostics = diagnosticsFor(body);
+    const offenders = optionalLoadOffenders(diagnostics);
+    if (offenders.length === 0) {
+      throw new Error(
+        "an unnarrowed load compiles to no diagnostic the optional-load closure refuses; the " +
+          `compiler reported ${
+            diagnostics.length > 0
+              ? diagnostics.map((d) => `TS${d.code} ${d.text}`).join(", ")
+              : "nothing at all"
+          }. Widen OPTIONAL_LOAD_CODES, or the closure no longer covers the class.`,
+      );
+    }
   });
 });
 
