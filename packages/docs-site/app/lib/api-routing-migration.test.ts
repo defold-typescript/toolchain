@@ -12,6 +12,9 @@ import { createVersionedApiNamespaceRoute } from "../routes/api/[version]/[names
 import combinedNamespaceRoute from "../routes/api/combined/[namespace]";
 import {
   AXIS,
+  CONSTANT_UNION_ALIAS,
+  CONSTANT_UNION_ALIAS_CONSUMER,
+  CONSTANT_UNION_ALIAS_SIGNATURE,
   HISTORICAL_ONLY_NAMESPACE,
   MIDDLE,
   makeWindowedTypesDir,
@@ -872,6 +875,75 @@ describe("api routing migration — the rendered namespace page carries its shap
 
       const href = symbolLinks(html).get(TYPEDEF_SHAPE_NAME);
       expect(href).toBe(`/api/${versionId(NEWEST)}/demo#${id}`);
+    });
+  });
+
+  // The alias half of the same one-line risk, and the only place it is
+  // observable. `apiSignatureSymbolLinks` takes the alias source as its third
+  // argument and the brand source as its first, and the versioned route is the
+  // one caller that passes two different collections there. Every other alias
+  // assertion in the suite calls the helper directly over hand-built pages, so
+  // both wirings stay green when the route stops passing them.
+  describe("the versioned route, over a fixture surface that carries a constant-union alias", () => {
+    let dir = "";
+    let status = 0;
+    let html = "";
+    const prefix = `/api/${versionId(NEWEST)}`;
+
+    beforeAll(async () => {
+      dir = makeWindowedTypesDir({ constantUnionAlias: true });
+      const app = new Hono();
+      app.get(
+        "/api/:version/:namespace",
+        ...createVersionedApiNamespaceRoute({ typesDir: dir, libraryTypesDir: dir }),
+      );
+      const res = await app.request(`${prefix}/demo`);
+      status = res.status;
+      html = await res.text();
+    });
+    afterAll(() => {
+      if (dir) rmSync(dir, { recursive: true, force: true });
+    });
+
+    // The consumer is the last function the page renders, so its own slot
+    // bullets run from its signature to the alias entry that follows them.
+    const consumerSlots = (): string => {
+      const at = html.indexOf(CONSTANT_UNION_ALIAS_CONSUMER);
+      expect(at).toBeGreaterThan(-1);
+      return html.slice(at);
+    };
+
+    const typeLinks = (fragment: string): [string, string][] =>
+      [...fragment.matchAll(/<a class="api-type-link" href="([^"]+)">([^<]+)<\/a>/g)].map((m) => [
+        m[2] as string,
+        m[1] as string,
+      ]);
+
+    test("a signature heading links its alias to the entry this version minted", () => {
+      expect(status).toBe(200);
+      const id = headingId(html, CONSTANT_UNION_ALIAS_SIGNATURE);
+      expect(id).toBeDefined();
+      expect(symbolLinks(html).get(CONSTANT_UNION_ALIAS)).toBe(`${prefix}/demo#${id}`);
+    });
+
+    test("the parameter breakdown links the same alias to the same entry", () => {
+      const id = headingId(html, CONSTANT_UNION_ALIAS_SIGNATURE);
+      const aliasHrefs = typeLinks(consumerSlots())
+        .filter(([name]) => name === CONSTANT_UNION_ALIAS)
+        .map(([, href]) => href);
+      expect(aliasHrefs.length).toBeGreaterThan(0);
+      for (const href of aliasHrefs) expect(href).toBe(`${prefix}/demo#${id}`);
+    });
+
+    test("the version-independent Opaque brand keeps its canonical page", () => {
+      expect(symbolLinks(html).get("Opaque")).toBe("/api/Opaque");
+      expect(html).not.toContain(`${prefix}/Opaque`);
+    });
+
+    test("every type link the page renders stays inside the requested version", () => {
+      const hrefs = typeLinks(html).map(([, href]) => href);
+      expect(hrefs.length).toBeGreaterThan(0);
+      for (const href of hrefs) expect(href.startsWith(`${prefix}/`)).toBe(true);
     });
   });
 });
