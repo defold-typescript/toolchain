@@ -107,33 +107,25 @@ function scanExampleRegions(html: string): { matched: boolean; regions: ExampleR
 
 /**
  * Convert a ref-doc `examples` HTML fragment — prose interleaved with one or
- * more `<div class="codehilite">…</div>` syntax-highlight blocks — into Markdown:
- * prose runs become `htmlToDocText`, each highlight block becomes a fence via
- * `htmlToCodeText`. The fence language comes from a `class="language-X"` on the
- * block's `<code>` (as converted extension `.script_api` examples carry), else
- * `lua`, since engine ref-doc blocks carry no language class. A fragment with no
- * `codehilite` block is wrapped whole as a single ` ```lua ` fence (back-compat
- * for plain-code examples). Returns `""` for empty / whitespace-only input.
+ * more `<div class="codehilite">…</div>` syntax-highlight blocks — into Markdown,
+ * one fence per example that `segmentExampleRegions` carves out. Each segment
+ * emits its leading prose then a fence in its own language: `class="language-X"`
+ * on the block's `<code>` (as converted extension `.script_api` examples carry)
+ * or an inner ` ```X ` opener, else `lua`, since engine ref-doc blocks carry no
+ * language class. Prose trailing the last example is emitted last, and a
+ * fragment with no `codehilite` block is wrapped whole as a single ` ```lua `
+ * fence (back-compat for plain-code examples). Returns `""` for empty /
+ * whitespace-only input.
  */
 export function examplesHtmlToMarkdown(html: string): string {
-  if (html.trim() === "") return "";
-
-  const { matched, regions } = scanExampleRegions(html);
-  if (!matched) {
-    const code = htmlToCodeText(html);
-    return code === "" ? "" : `\`\`\`lua\n${code}\n\`\`\``;
-  }
+  const { segments, trailingProse } = segmentExampleRegions(html);
 
   const parts: string[] = [];
-  for (const region of regions) {
-    if (region.kind === "prose") {
-      const prose = htmlToDocText(region.html);
-      if (prose !== "") parts.push(prose);
-      continue;
-    }
-    const code = htmlToCodeText(region.html);
-    if (code !== "") parts.push(`\`\`\`${region.lang}\n${code}\n\`\`\``);
+  for (const segment of segments) {
+    if (segment.prose !== "") parts.push(segment.prose);
+    parts.push(`\`\`\`${segment.lang}\n${segment.code}\n\`\`\``);
   }
+  if (trailingProse !== "") parts.push(trailingProse);
 
   return parts.join("\n\n");
 }
@@ -150,6 +142,13 @@ export interface ExampleSegment {
 // upstream welded onto the fence.
 const FENCE_OPENER = /^```([A-Za-z0-9_+-]+)$/;
 
+/** The examples a fragment carries, plus any prose left over after the last one. */
+export interface ExampleSegmentation {
+  segments: ExampleSegment[];
+  /** Prose following the final code run, which belongs to no segment. */
+  trailingProse: string;
+}
+
 /**
  * Carve an `examples` HTML fragment into one segment per example it carries.
  *
@@ -160,13 +159,12 @@ const FENCE_OPENER = /^```([A-Za-z0-9_+-]+)$/;
  * several blocks, and as its own Markdown fences inside one block — so both
  * signals are read.
  *
- * A fragment that yields at most one segment returns the whole-blob
- * `htmlToCodeText` verbatim, prose lines included. That is the string every
- * stored translation is pinned against today, so a single-example element keeps
- * its identity and cannot be re-keyed by this walk.
+ * This is the walk alone: no whole-blob fallback, so a caller sees the real
+ * segments even where there is only one. `splitExampleSources` adds the
+ * stability post-pass that keys stored translations.
  */
-export function splitExampleSources(html: string): ExampleSegment[] {
-  if (html.trim() === "") return [];
+export function segmentExampleRegions(html: string): ExampleSegmentation {
+  if (html.trim() === "") return { segments: [], trailingProse: "" };
 
   const { regions } = scanExampleRegions(html);
   const segments: ExampleSegment[] = [];
@@ -186,6 +184,8 @@ export function splitExampleSources(html: string): ExampleSegment[] {
     const text = region.kind === "code" ? htmlToCodeText(region.html) : htmlToDocText(region.html);
     let inCode = region.kind === "code";
     if (region.kind === "code") lang = region.lang;
+    // Prose surviving an empty code run keeps its paragraph break from the next.
+    if (region.kind === "prose" && text !== "" && proseLines.length > 0) proseLines.push("");
     for (const line of text === "" ? [] : text.split("\n")) {
       const trimmed = line.trim();
       if (!trimmed.startsWith("```")) {
@@ -207,7 +207,20 @@ export function splitExampleSources(html: string): ExampleSegment[] {
     flush();
   }
 
+  return { segments, trailingProse: trimBlankEdges(proseLines).join("\n") };
+}
+
+/**
+ * `segmentExampleRegions` plus the stability post-pass: a fragment that yields
+ * at most one segment returns the whole-blob `htmlToCodeText` verbatim, prose
+ * lines included. That is the string every stored translation is pinned
+ * against, so a single-example element keeps its identity and cannot be re-keyed
+ * by this walk.
+ */
+export function splitExampleSources(html: string): ExampleSegment[] {
+  const { segments } = segmentExampleRegions(html);
   if (segments.length > 1) return segments;
+  if (html.trim() === "") return [];
   const whole = htmlToCodeText(html);
   if (whole === "") return [];
   return [{ prose: "", code: whole, lang: segments[0]?.lang ?? "lua" }];
