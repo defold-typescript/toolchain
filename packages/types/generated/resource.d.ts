@@ -1459,27 +1459,31 @@ declare global {
      * // Update texture 2nd array page with loaded texture from png
      * const tex_path = "/bundle_resources/page_02.png";
      * const [data] = sys.load_resource(tex_path);
-     * const buf = image.load_buffer(data);
-     * // new_tex is the resource handle of a texture created via resource.create_texture
-     * const new_tex = resource.create_texture("/my_array_texture.texturec", {
-     *   type: graphics.TEXTURE_TYPE_2D_ARRAY,
-     *   width: buf.width,
-     *   height: buf.height,
-     *   page_count: 2,
-     *   format: graphics.TEXTURE_FORMAT_RGB,
-     * });
-     * resource.set_texture(
-     *   new_tex,
-     *   {
-     *     type: graphics.TEXTURE_TYPE_2D_ARRAY,
-     *     width: buf.width,
-     *     height: buf.height,
-     *     page: 1,
-     *     format: graphics.TEXTURE_FORMAT_RGB,
-     *   },
-     *   buf.buffer,
-     * );
-     * go.set("#mesh", "texture0", new_tex);
+     * if (data !== undefined) {
+     *   const buf = image.load_buffer(data);
+     *   if (buf !== undefined) {
+     *     // new_tex is the resource handle of a texture created via resource.create_texture
+     *     const new_tex = resource.create_texture("/my_array_texture.texturec", {
+     *       type: graphics.TEXTURE_TYPE_2D_ARRAY,
+     *       width: buf.width,
+     *       height: buf.height,
+     *       page_count: 2,
+     *       format: graphics.TEXTURE_FORMAT_RGB,
+     *     });
+     *     resource.set_texture(
+     *       new_tex,
+     *       {
+     *         type: graphics.TEXTURE_TYPE_2D_ARRAY,
+     *         width: buf.width,
+     *         height: buf.height,
+     *         page: 1,
+     *         format: graphics.TEXTURE_FORMAT_RGB,
+     *       },
+     *       buf.buffer,
+     *     );
+     *     go.set("#mesh", "texture0", new_tex);
+     *   }
+     * }
      * ```
      */
     function set_texture(path: Hash | string, table: { type?: number; width?: number; height?: number; format?: number; x?: number; y?: number; z?: number; page?: number; mipmap?: number; compression_type?: number }, buffer: Opaque<"buffer">): void;
