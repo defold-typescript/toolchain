@@ -12,7 +12,7 @@
  */
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { resolve, sep } from "node:path";
 import { type ExampleSurface, exampleSurfaces } from "../scripts/example-surfaces";
 import { compileSurface, exampleUnit } from "../scripts/example-typecheck";
 
@@ -49,7 +49,7 @@ const surfaces = await exampleSurfaces();
 function shippedSurface(kind: string): ExampleSurface {
   const found = surfaces.filter(
     (surface) =>
-      surface.id.endsWith(`/kinds/${kind}`) && surface.entry.startsWith(`${GENERATED_ROOT}/`),
+      surface.id.endsWith(`/kinds/${kind}`) && surface.entry.startsWith(`${GENERATED_ROOT}${sep}`),
   );
   expect(found, `one shipped ${kind} surface`).toHaveLength(1);
   return found[0] as ExampleSurface;
