@@ -330,7 +330,7 @@ export function unbackedTexturePageDefects(body: string): readonly string[] {
   const bindings = collectBindings(source);
   for (const write of resolvedPageWrites(source, bindings)) {
     const pageCount = numericProperty(write.creation, "page_count", bindings);
-    if (pageCount !== undefined && pageCount > write.page) continue;
+    if ((pageCount ?? 1) > write.page) continue;
     const declared = pageCount === undefined ? "no page_count" : `page_count: ${pageCount}`;
     defects.push(
       `resource.set_texture writes page ${write.page} of "${write.handle}", created with ${declared}`,
