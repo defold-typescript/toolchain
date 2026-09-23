@@ -25,6 +25,7 @@ import {
   exampleUnit,
   gateCompilerOptions,
   gateFailures,
+  implicitAnyOffenders,
   moduleSpecifier,
   type PinFile,
   pinIdentity,
@@ -190,13 +191,33 @@ describe("the undeclared-name class", () => {
 });
 
 describe("the implicit-any class", () => {
-  const IMPLICIT_ANY_CODES = new Set([7005, 7006, 7008, 7031, 7034]);
+  const UNTYPED_PARAMETER_SHAPES = [
+    ["an ordinary parameter", "function probe(value) { return value; }"],
+    ["a destructured parameter", "function probe({ value }) { return value; }"],
+    ["a rest parameter", "function probe(...values) { return values; }"],
+  ] as const;
+
+  test("every untyped parameter shape the scaffold rejects is one the closure refuses", () => {
+    for (const [shape, body] of UNTYPED_PARAMETER_SHAPES) {
+      const diagnostics = diagnosticsFor(body);
+      const offenders = implicitAnyOffenders(diagnostics);
+      if (offenders.length === 0) {
+        throw new Error(
+          `${shape} compiles to no diagnostic the implicit-any closure refuses; the compiler reported ` +
+            `${
+              diagnostics.length > 0
+                ? diagnostics.map((d) => `TS${d.code} ${d.text}`).join(", ")
+                : "nothing at all"
+            }. Add the code the shape now carries to IMPLICIT_ANY_CODES, or the closure no longer covers it.`,
+        );
+      }
+    }
+  });
 
   test("no pin records an implicitly-any parameter", () => {
     const offenders: string[] = [];
     for (const [identity, diagnostics] of Object.entries(pins)) {
-      for (const diagnostic of diagnostics) {
-        if (!IMPLICIT_ANY_CODES.has(diagnostic.code)) continue;
+      for (const diagnostic of implicitAnyOffenders(diagnostics)) {
         offenders.push(`  ${identity} — TS${diagnostic.code} ${diagnostic.text}`);
       }
     }
