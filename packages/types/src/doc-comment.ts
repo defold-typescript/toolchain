@@ -247,8 +247,10 @@ export interface DocCommentParts {
   returns?: string;
   // One entry per example the element documents, each rendered as its own
   // `@example` block. An element whose ref-doc blob holds several examples
-  // carries several entries; a blank body is dropped.
-  examples?: { text: string; lang: "lua" | "ts" }[];
+  // carries several entries; a blank body is dropped. `prose` is the sentence
+  // introducing that example, rendered above its fence; blank or absent leaves
+  // the block byte-identical to a prose-less one.
+  examples?: { text: string; lang: "lua" | "ts"; prose?: string }[];
 }
 
 /**
@@ -306,6 +308,11 @@ export function renderDocComment(parts: DocCommentParts): string[] {
   }
   for (const entry of examples) {
     lines.push(" * @example");
+    if (entry.prose !== undefined && entry.prose.trim() !== "") {
+      for (const line of entry.prose.split("\n")) {
+        lines.push(line === "" ? " *" : ` * ${line}`);
+      }
+    }
     lines.push(` * \`\`\`${entry.lang}`);
     for (const line of entry.text.split("\n")) {
       lines.push(line === "" ? " *" : ` * ${line}`);

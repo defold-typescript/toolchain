@@ -253,26 +253,46 @@
   ],
   "go.animate": [
     {
-      "sourceHash": "ec6a31d150125e06",
-      "ts": "// Animate the position of a game object to x = 10 during 1 second, then\n// y = 20 during 1 second:\ngo.animate(go.get_id(), \"position.x\", go.PLAYBACK_ONCE_FORWARD, 10, go.EASING_LINEAR, 1, 0, () => {\n  go.animate(go.get_id(), \"position.y\", go.PLAYBACK_ONCE_FORWARD, 20, go.EASING_LINEAR, 1);\n});\n\n// Animate the y position of a game object using a crazy custom easing curve:\nconst values = [\n  0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,\n  0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,\n  0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,\n  0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,\n];\nconst vec = vmath.vector(values);\ngo.animate(\"go\", \"position.y\", go.PLAYBACK_LOOP_PINGPONG, 100, vec, 2.0);"
+      "sourceHash": "c4fc72e0b8812778",
+      "ts": "go.animate(go.get_id(), \"position.x\", go.PLAYBACK_ONCE_FORWARD, 10, go.EASING_LINEAR, 1, 0, () => {\n  go.animate(go.get_id(), \"position.y\", go.PLAYBACK_ONCE_FORWARD, 20, go.EASING_LINEAR, 1);\n});"
+    },
+    {
+      "sourceHash": "97218eef909de34f",
+      "ts": "const values = [\n  0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,\n  0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,\n  0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,\n  0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,\n];\nconst vec = vmath.vector(values);\ngo.animate(\"go\", \"position.y\", go.PLAYBACK_LOOP_PINGPONG, 100, vec, 2.0);"
     }
   ],
   "go.cancel_animations": [
     {
-      "sourceHash": "4f012d6eb3d73ce9",
-      "ts": "// Cancel the animation of the position of a game object:\ngo.cancel_animations(go.get_id(), \"position\");\n\n// Cancel all property animations of the current game object:\ngo.cancel_animations(\".\");\n\n// Cancel all property animations of the sprite component of the current game object:\ngo.cancel_animations(\"#sprite\");"
+      "sourceHash": "86ed1a1a22f1883a",
+      "ts": "go.cancel_animations(go.get_id(), \"position\");"
+    },
+    {
+      "sourceHash": "a56dbdf46c4ad3b2",
+      "ts": "go.cancel_animations(\".\");"
+    },
+    {
+      "sourceHash": "997c90a6a68b8f88",
+      "ts": "go.cancel_animations(\"#sprite\");"
     }
   ],
   "go.delete": [
     {
-      "sourceHash": "63517a8a15d5d030",
-      "ts": "// This example demonstrates how to delete game objects:\n// Delete the script's own game object.\ngo.delete();\n// Delete a game object with the id \"my_game_object\".\nconst id = go.get_id(\"my_game_object\");\ngo.delete(id);\n// Delete a list of game objects.\nconst ids = [hash(\"/my_object_1\"), hash(\"/my_object_2\"), hash(\"/my_object_3\")];\ngo.delete(ids);\n\n// This example demonstrates how to delete game objects and their children\n// (child-to-parent order):\n// Delete the script's own game object and its children.\ngo.delete(true);\n// Delete a game object with the id \"my_game_object\" and its children.\nconst id2 = go.get_id(\"my_game_object\");\ngo.delete(id2, true);\n// Delete a list of game objects and their children.\nconst ids2 = [hash(\"/my_object_1\"), hash(\"/my_object_2\"), hash(\"/my_object_3\")];\ngo.delete(ids2, true);"
+      "sourceHash": "eb1a20098678b7b1",
+      "ts": "// Delete the script's own game object.\ngo.delete();\n// Delete a game object with the id \"my_game_object\".\nconst id = go.get_id(\"my_game_object\");\ngo.delete(id);\n// Delete a list of game objects.\nconst ids = [hash(\"/my_object_1\"), hash(\"/my_object_2\"), hash(\"/my_object_3\")];\ngo.delete(ids);"
+    },
+    {
+      "sourceHash": "15be7513485334cf",
+      "ts": "// Delete the script's own game object and its children.\ngo.delete(true);\n// Delete a game object with the id \"my_game_object\" and its children.\nconst id = go.get_id(\"my_game_object\");\ngo.delete(id, true);\n// Delete a list of game objects and their children.\nconst ids = [hash(\"/my_object_1\"), hash(\"/my_object_2\"), hash(\"/my_object_3\")];\ngo.delete(ids, true);"
     }
   ],
   "go.exists": [
     {
-      "sourceHash": "377b4eb5d71df398",
-      "ts": "// Check if game object \"my_game_object\" exists in the current collection:\ngo.exists(\"/my_game_object\");\n\n// Check if game object exists in another collection:\ngo.exists(\"other_collection:/my_game_object\");"
+      "sourceHash": "610b20b7cdbe9792",
+      "ts": "go.exists(\"/my_game_object\");"
+    },
+    {
+      "sourceHash": "902851e29bcce669",
+      "ts": "go.exists(\"other_collection:/my_game_object\");"
     }
   ],
   "go.get": [
@@ -289,62 +309,102 @@
   ],
   "go.get_parent": [
     {
-      "sourceHash": "6e98305fd4cd8f14",
-      "ts": "// Get parent of the instance containing the calling script:\nconst parent_id = go.get_parent();\n\n// Get parent of the instance with id \"x\":\nconst parent_id2 = go.get_parent(\"x\");"
+      "sourceHash": "434d482e8248704d",
+      "ts": "const parent_id = go.get_parent();"
+    },
+    {
+      "sourceHash": "668765191be47af9",
+      "ts": "const parent_id = go.get_parent(\"x\");"
     }
   ],
   "go.get_position": [
     {
-      "sourceHash": "958a14823ca50504",
-      "ts": "// Get the position of the game object the script is attached to:\nconst p = go.get_position();\n\n// Get the position of another game object \"my_gameobject\":\nconst pos = go.get_position(\"my_gameobject\");"
+      "sourceHash": "37ab8f7b8b14f4ea",
+      "ts": "const p = go.get_position();"
+    },
+    {
+      "sourceHash": "75d15265b5277990",
+      "ts": "const pos = go.get_position(\"my_gameobject\");"
     }
   ],
   "go.get_rotation": [
     {
-      "sourceHash": "46e4f7ff790322c3",
-      "ts": "// Get the rotation of the game object the script is attached to:\nconst r = go.get_rotation();\n\n// Get the rotation of another game object with id \"x\":\nconst r2 = go.get_rotation(\"x\");"
+      "sourceHash": "9789a55fd1d86205",
+      "ts": "const r = go.get_rotation();"
+    },
+    {
+      "sourceHash": "871aa52a5ec2b871",
+      "ts": "const r = go.get_rotation(\"x\");"
     }
   ],
   "go.get_scale": [
     {
-      "sourceHash": "b6a9bd9d19741cdd",
-      "ts": "// Get the scale of the game object the script is attached to:\nconst s = go.get_scale();\n\n// Get the scale of another game object with id \"x\":\nconst s2 = go.get_scale(\"x\");"
+      "sourceHash": "e213e818ecd4cb1c",
+      "ts": "const s = go.get_scale();"
+    },
+    {
+      "sourceHash": "d91ff62c48d3223a",
+      "ts": "const s = go.get_scale(\"x\");"
     }
   ],
   "go.get_scale_uniform": [
     {
-      "sourceHash": "0add83a46d3434c3",
-      "ts": "// Get the uniform scale of the game object the script is attached to:\nconst s = go.get_scale_uniform();\n\n// Get the uniform scale of another game object with id \"x\":\nconst s2 = go.get_scale_uniform(\"x\");"
+      "sourceHash": "d63cb41c211275d3",
+      "ts": "const s = go.get_scale_uniform();"
+    },
+    {
+      "sourceHash": "99ee7b666f1b339b",
+      "ts": "const s = go.get_scale_uniform(\"x\");"
     }
   ],
   "go.get_world_position": [
     {
-      "sourceHash": "ab804a5cdcfd4f7d",
-      "ts": "// Get the world position of the game object the script is attached to:\nconst p = go.get_world_position();\n\n// Reach a sibling game object by its id — relative addressing, no socket prefix:\nconst p2 = go.get_world_position(\"x\");"
+      "sourceHash": "6e33af505543920b",
+      "ts": "const p = go.get_world_position();"
+    },
+    {
+      "sourceHash": "147cd749a9dc03d3",
+      "ts": "// Relative addressing by id — no socket prefix:\nconst p = go.get_world_position(\"x\");"
     }
   ],
   "go.get_world_rotation": [
     {
-      "sourceHash": "05c7e59676f614f9",
-      "ts": "// Get the world rotation of the game object the script is attached to:\nconst r = go.get_world_rotation();\n\n// Get the world rotation of another game object with id \"x\":\nconst r2 = go.get_world_rotation(\"x\");"
+      "sourceHash": "034bc38d83c5bbec",
+      "ts": "const r = go.get_world_rotation();"
+    },
+    {
+      "sourceHash": "ca4f41fe8d61dd4a",
+      "ts": "const r = go.get_world_rotation(\"x\");"
     }
   ],
   "go.get_world_scale": [
     {
-      "sourceHash": "bbbe0d3b0c6a9153",
-      "ts": "// Get the world 3D scale of the game object the script is attached to:\nconst s = go.get_world_scale();\n\n// Get the world scale of another game object \"x\":\nconst s2 = go.get_world_scale(\"x\");"
+      "sourceHash": "5966d75fdfac664f",
+      "ts": "const s = go.get_world_scale();"
+    },
+    {
+      "sourceHash": "7f93e96d6c6d567f",
+      "ts": "const s = go.get_world_scale(\"x\");"
     }
   ],
   "go.get_world_scale_uniform": [
     {
-      "sourceHash": "14162dd238db34dd",
-      "ts": "// Get the world uniform scale of the game object the script is attached to:\nconst s = go.get_world_scale_uniform();\n\n// Get the world uniform scale of another game object with id \"x\":\nconst s2 = go.get_world_scale_uniform(\"x\");"
+      "sourceHash": "22473e9aa97e88ec",
+      "ts": "const s = go.get_world_scale_uniform();"
+    },
+    {
+      "sourceHash": "5d546c291638cc4a",
+      "ts": "const s = go.get_world_scale_uniform(\"x\");"
     }
   ],
   "go.get_world_transform": [
     {
-      "sourceHash": "832de2e98a73e953",
-      "ts": "// Get the world transform of the game object the script is attached to:\nconst m = go.get_world_transform();\n\n// Get the world transform of another game object with id \"x\":\nconst m2 = go.get_world_transform(\"x\");"
+      "sourceHash": "2839422dc878a66f",
+      "ts": "const m = go.get_world_transform();"
+    },
+    {
+      "sourceHash": "50412f3fb6a3e39f",
+      "ts": "const m = go.get_world_transform(\"x\");"
     }
   ],
   "go.property": [
@@ -361,38 +421,66 @@
   ],
   "go.set_parent": [
     {
-      "sourceHash": "2822e1839ed2a321",
-      "ts": "// Attach myself to another instance \"my_parent\":\ngo.set_parent(go.get_id(), go.get_id(\"my_parent\"));\n\n// Attach an instance \"my_instance\" to another instance \"my_parent\":\ngo.set_parent(go.get_id(\"my_instance\"), go.get_id(\"my_parent\"));\n\n// Detach an instance \"my_instance\" from its parent (if any):\ngo.set_parent(go.get_id(\"my_instance\"));"
+      "sourceHash": "6b1747286d3ffe0e",
+      "ts": "go.set_parent(go.get_id(), go.get_id(\"my_parent\"));"
+    },
+    {
+      "sourceHash": "bd49a2fdce4a6b26",
+      "ts": "go.set_parent(go.get_id(\"my_instance\"), go.get_id(\"my_parent\"));"
+    },
+    {
+      "sourceHash": "d16a1b6edf422448",
+      "ts": "go.set_parent(go.get_id(\"my_instance\"));"
     }
   ],
   "go.set_position": [
     {
-      "sourceHash": "ad83d0274d776e8f",
-      "ts": "// `p` is the desired position (a Vector3).\nconst p = vmath.vector3();\n\n// Set the position of the game object the script is attached to:\ngo.set_position(p);\n\n// Reach a sibling game object by its id — relative addressing, no socket prefix:\ngo.set_position(p, \"x\");"
+      "sourceHash": "ecc2445f2b8dc35c",
+      "ts": "// `p` is the desired position (a Vector3).\nconst p = vmath.vector3();\ngo.set_position(p);"
+    },
+    {
+      "sourceHash": "53b1e5cd24447416",
+      "ts": "// `p` is the desired position (a Vector3).\nconst p = vmath.vector3();\n\n// Relative addressing by id — no socket prefix:\ngo.set_position(p, \"x\");"
     }
   ],
   "go.set_rotation": [
     {
-      "sourceHash": "782b2092fc7f641f",
-      "ts": "// `r` is the desired rotation (a Quaternion).\nconst r = vmath.quat();\n\n// Set the rotation of the game object the script is attached to:\ngo.set_rotation(r);\n\n// Set the rotation of another game object with id \"x\":\ngo.set_rotation(r, \"x\");"
+      "sourceHash": "82ce8a803b606397",
+      "ts": "// `r` is the desired rotation (a Quaternion).\nconst r = vmath.quat();\ngo.set_rotation(r);"
+    },
+    {
+      "sourceHash": "e83143a6f2e2aafb",
+      "ts": "// `r` is the desired rotation (a Quaternion).\nconst r = vmath.quat();\ngo.set_rotation(r, \"x\");"
     }
   ],
   "go.set_scale": [
     {
-      "sourceHash": "456df524622a534f",
-      "ts": "// Set the scale of the game object the script is attached to:\nconst s = vmath.vector3(2.0, 1.0, 1.0);\ngo.set_scale(s);\n\n// Set the scale of another game object with id \"obj_id\":\nconst s2 = 1.2;\ngo.set_scale(s2, \"obj_id\");"
+      "sourceHash": "60c5ef571b15ad1c",
+      "ts": "const s = vmath.vector3(2.0, 1.0, 1.0);\ngo.set_scale(s);"
+    },
+    {
+      "sourceHash": "fe995a14ec731da3",
+      "ts": "const s = 1.2;\ngo.set_scale(s, \"obj_id\");"
     }
   ],
   "go.set_scale_xy": [
     {
-      "sourceHash": "6d23b1a65292cf1f",
-      "ts": "// Set the scale of the game object the script is attached to:\nconst s = vmath.vector3(2.0, 1.0, 5.0);\ngo.set_scale_xy(s); // z will not be set here, only x and y\n\n// Set the scale of another game object with id \"obj_id\":\nconst s2 = 1.2;\ngo.set_scale_xy(s2, \"obj_id\"); // z will not be set here, only x and y"
+      "sourceHash": "1b80e34a394c163a",
+      "ts": "const s = vmath.vector3(2.0, 1.0, 5.0);\ngo.set_scale_xy(s); // z will not be set here, only x and y"
+    },
+    {
+      "sourceHash": "6afb14c6bf68e351",
+      "ts": "const s = 1.2;\ngo.set_scale_xy(s, \"obj_id\"); // z will not be set here, only x and y"
     }
   ],
   "go.update_world_transform": [
     {
-      "sourceHash": "0c189fdea4a6d715",
-      "ts": "// Update this game object's world transform:\ngo.update_world_transform();\n\n// Update another game object's world transform:\ngo.update_world_transform(\"/other\");"
+      "sourceHash": "ce32b76e7d8c835d",
+      "ts": "go.update_world_transform();"
+    },
+    {
+      "sourceHash": "190e7045e4302208",
+      "ts": "go.update_world_transform(\"/other\");"
     }
   ],
   "go.world_to_local_position": [
