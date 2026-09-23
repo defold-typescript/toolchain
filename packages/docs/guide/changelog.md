@@ -14,6 +14,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Improved
 
 - **[sprite_repeat](/api/sprite_repeat) and [node_repeat](/api/node_repeat)** (`Dragosha/defold-sprite-repeat`, tag `v0.3`) now have types, so [`resolve`](./resolve.md) gives a project that depends on the library typed imports for tiling a sprite or GUI box node texture, including the `animate`, `stop` and `update` calls on the handle `create` returns.
+- **[`resource.create_texture`](/api/resource) accepts `page_count`**, the array-texture page count the engine reads and upstream's own example passes, so creating a texture array type-checks without a cast. The reference's own `<dl>` omits the field; every documented field it lists stays as the reference declares it.
 - **Native extensions that ship no `.script_api` can now be typed**: [`resolve`](./resolve.md#curated-native-extensions) writes a curated namespace into `.defold-types/extensions/` for DAABBCC ([daabbcc](/api/daabbcc)), defold-sharing ([share](/api/share)), defold-uuid4 ([uuid4](/api/uuid4)) and defold-tile-raycast ([tile_raycast](/api/tile_raycast)) once the archive's `ext.manifest` confirms the match, `resolve --json` reports each as `typeSurface: "vendored-native"`, and each `/api` page defines the result and option shapes its signatures name. Where an extension's bundled annotations disagree with its C++ source, the types follow the C++, so `daabbcc.rebuild_all(undefined, full)` passes the flag in the second position the runtime reads.
 
 ### Fixed

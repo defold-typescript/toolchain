@@ -35,6 +35,7 @@ import urlParameterTable from "../url-parameters.json" with { type: "json" };
 import { type ApiFunction, type ApiModule, type ApiParameter, parseDefoldApiDoc } from "./api-doc";
 import {
   ARBITRARY_TABLE_SLOTS,
+  applyFieldAdditions,
   applyFieldOptionalityCorrections,
   applyNestedFieldCurations,
   buildTableDocResolver,
@@ -51,6 +52,7 @@ import {
   recoverCallbackSignature,
   SLOT_LEVEL_LIST_PROSE,
   TABLE_SLOT_CURATIONS,
+  TABLE_SLOT_FIELD_ADDITIONS,
   type TableField,
 } from "./emit-dts";
 import type { UrlParameterTable } from "./url-parameters";
@@ -4087,5 +4089,30 @@ describe("return-side optionality corrections", () => {
   test("a return correction leaves every sibling b2d return alone", () => {
     const out = emitDeclarations(b2d);
     expect(signatureLine(out, "function get_world(")).not.toContain("undefined");
+  });
+});
+
+describe("TABLE_SLOT_FIELD_ADDITIONS", () => {
+  test("holds exactly the runtime fields upstream omits from a slot it otherwise documents", () => {
+    // The exact ordered addition keys. Each entry's own evidence is pinned on
+    // the entry; this guards that no addition is silently added, removed, or
+    // reordered — the shape the sibling TABLE_SLOT_CURATIONS suite asserts.
+    expect([...TABLE_SLOT_FIELD_ADDITIONS.keys()]).toEqual(["resource.create_texture:param:table"]);
+  });
+
+  test("emits page_count beside the fields the ref-doc documents, addition last", () => {
+    const out = emitDeclarations(parseDefoldApiDoc(resourceDoc));
+    expect(out).toContain(
+      'function create_texture(path: string, table: { type?: number; width?: number; height?: number; depth?: number; format?: number; flags?: number; max_mipmaps?: number; compression_type?: number; page_count?: number }, buffer?: Opaque<"buffer">): Hash;',
+    );
+  });
+
+  test("throws when the parse already recovered the field an addition supplies", () => {
+    expect(() =>
+      applyFieldAdditions("resource.create_texture", "param", "table", [
+        { name: "width", types: ["number"] },
+        { name: "page_count", types: ["number"] },
+      ]),
+    ).toThrow("resource.create_texture:param:table:page_count");
   });
 });
