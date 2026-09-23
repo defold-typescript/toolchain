@@ -39,7 +39,9 @@ import {
   applyFieldOptionalityCorrections,
   applyNestedFieldCurations,
   buildTableDocResolver,
+  CONSTANT_UNION_ALIASES,
   collectHandleMethodGroups,
+  constantUnionAlias,
   emitDeclarations,
   emitSymbolSignatures,
   HOMOGENEOUS_ARRAY_SLOTS,
@@ -2603,11 +2605,15 @@ describe("TABLE_SLOT_CURATIONS", () => {
         ]),
       },
     );
-    const brand = (fqn: string): string => `number & { readonly __brand: "${fqn}" }`;
+    // The three documented keys reach the signature under their alias, so the
+    // key set stays asserted through the declaration the same surface emits.
     expect(out).toContain(
-      `function clear(buffers: LuaMap<${brand("graphics.BUFFER_TYPE_COLOR0_BIT")} | ${brand(
-        "graphics.BUFFER_TYPE_DEPTH_BIT",
-      )} | ${brand("graphics.BUFFER_TYPE_STENCIL_BIT")}, number | Vector4>): void;`,
+      "type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT" +
+        " | typeof graphics.BUFFER_TYPE_DEPTH_BIT" +
+        " | typeof graphics.BUFFER_TYPE_STENCIL_BIT;",
+    );
+    expect(out).toContain(
+      "function clear(buffers: LuaMap<render.ClearBufferKey, number | Vector4>): void;",
     );
     expect(out).not.toContain("Record<string | number, unknown>");
   });
@@ -3739,17 +3745,14 @@ describe("per-slot rendered types", () => {
   test("a curated mapping slot reports the recovered LuaMap, not the opaque record", () => {
     const entry = slotsOf(renderDoc, "render.clear", { knownConstantFqns: renderConstants });
     const buffers = entry.slotTypes["param:0:buffers"];
-    expect(buffers).toContain("LuaMap<");
-    expect(buffers).toContain('__brand: "graphics.BUFFER_TYPE_COLOR0_BIT"');
-    expect(buffers).toContain("number | Vector4");
+    expect(buffers).toBe("LuaMap<render.ClearBufferKey, number | Vector4>");
     expect(buffers).not.toContain("Record<string | number, unknown>");
   });
 
   test("a documented-constant slot reports the brand union, not Opaque", () => {
     const entry = slotsOf(renderDoc, "render.enable_state", { knownConstantFqns: renderConstants });
     const state = entry.slotTypes["param:0:state"];
-    expect(state).toContain('__brand: "graphics.STATE_DEPTH_TEST"');
-    expect(state).toContain('__brand: "graphics.STATE_POLYGON_OFFSET_FILL"');
+    expect(state).toBe("graphics.State");
     expect(state).not.toContain('Opaque<"constant">');
   });
 
@@ -3876,7 +3879,19 @@ describe("component property type fidelity", () => {
 
 describe("documented constant slot expansion", () => {
   const brand = (fqn: string): string => `number & { readonly __brand: "${fqn}" }`;
-  const union = (fqns: readonly string[]): string => fqns.map(brand).join(" | ");
+
+  // The text a slot expanding to exactly `fqns` renders as. A set with an alias
+  // row renders as the alias name, so the constants it expands to are only
+  // visible in the alias declaration — which this asserts, in order, against the
+  // same surface. Every caller keeps its full ordered FQN list either way.
+  const union = (fqns: readonly string[], out?: string): string => {
+    const alias = constantUnionAlias(fqns);
+    if (alias === undefined) return fqns.map(brand).join(" | ");
+    expect(out ?? guiOut).toContain(
+      `type ${alias.name} = ${fqns.map((fqn) => `typeof ${fqn}`).join(" | ")};`,
+    );
+    return `${alias.home}.${alias.name}`;
+  };
 
   function signatureLine(out: string, marker: string): string {
     const line = out.split("\n").find((candidate) => candidate.includes(marker));
@@ -3989,13 +4004,14 @@ describe("documented constant slot expansion", () => {
 
   test("a family entry types a slot whose prose names nothing but whose example does", () => {
     const buffer = parseDefoldApiDoc(bufferDoc);
+    const out = emitDeclarations(buffer);
     const valueTypes = union(
       buffer.constants
         .map((c) => c.name)
         .filter((name) => name.startsWith("buffer.VALUE_TYPE_"))
         .sort(),
+      out,
     );
-    const out = emitDeclarations(buffer);
     expect(signatureLine(out, "function set_metadata(")).toEndWith(
       `value_type: ${valueTypes}): void;`,
     );
@@ -4017,7 +4033,7 @@ describe("documented constant slot expansion", () => {
   test("the signature ledger carries the same expansion", () => {
     const ledger = emitSymbolSignatures(gui);
     const entry = ledger.find((candidate) => candidate.identity.name === "gui.set_blend_mode");
-    expect(entry?.tsSignature).toContain(brand("gui.BLEND_SCREEN"));
+    expect(entry?.tsSignature).toContain("blend_mode: gui.BlendMode");
     expect(entry?.tsSignature).toBe(signatureLine(guiOut, "function set_blend_mode("));
   });
 });
@@ -4114,5 +4130,129 @@ describe("TABLE_SLOT_FIELD_ADDITIONS", () => {
         { name: "page_count", types: ["number"] },
       ]),
     ).toThrow("resource.create_texture:param:table:page_count");
+  });
+});
+
+describe("CONSTANT_UNION_ALIASES", () => {
+  // The emitted line carrying `needle`, so an assertion about one signature
+  // cannot be satisfied by text from another.
+  function lineWith(out: string, needle: string): string {
+    const line = out.split("\n").find((l) => l.includes(needle));
+    if (line === undefined) throw new Error(`no emitted line contains ${needle}`);
+    return line;
+  }
+
+  function aliasRow(home: string, name: string) {
+    const row = CONSTANT_UNION_ALIASES.find((r) => r.home === home && r.name === name);
+    if (row === undefined) throw new Error(`no alias row ${home}.${name}`);
+    return row;
+  }
+
+  test("every row carries a unique qualified name and a member set no other row repeats", () => {
+    const names = CONSTANT_UNION_ALIASES.map((r) => `${r.home}.${r.name}`);
+    expect(new Set(names).size).toBe(names.length);
+    const sets = CONSTANT_UNION_ALIASES.map((r) => [...r.members].sort().join(","));
+    expect(new Set(sets).size).toBe(sets.length);
+    for (const row of CONSTANT_UNION_ALIASES) {
+      expect(row.members.length).toBeGreaterThanOrEqual(2);
+      expect(new Set(row.members).size).toBe(row.members.length);
+    }
+  });
+
+  test("a slot whose member set matches a row emits the alias in place of the arms", () => {
+    const out = emitDeclarations(parseDefoldApiDoc(guiDoc));
+    const animate = lineWith(out, "function animate(");
+    expect(animate).toContain("easing: gui.Easing | Vector");
+    expect(animate).not.toContain('__brand: "gui.EASING_');
+  });
+
+  test("the alias is declared once in its home namespace, in the row's member order", () => {
+    const out = emitDeclarations(parseDefoldApiDoc(guiDoc));
+    const row = aliasRow("gui", "Easing");
+    const expected = `  type Easing = ${row.members.map((m) => `typeof ${m}`).join(" | ")};`;
+    expect(out.split("\n").filter((l) => l.trimStart().startsWith("type Easing ="))).toEqual([
+      expected,
+    ]);
+  });
+
+  test("a member set matching no row keeps the inline brand spelling", () => {
+    const module: ApiModule = {
+      namespace: "ns",
+      brief: "",
+      description: "",
+      functions: [
+        {
+          name: "ns.play",
+          brief: "",
+          description: "",
+          parameters: [{ name: "mode", doc: "", types: ["ns.FOO", "ns.BAR"], isOptional: false }],
+          returnValues: [],
+        },
+      ],
+      variables: [],
+      constants: [
+        { name: "ns.FOO", brief: "", description: "" },
+        { name: "ns.BAR", brief: "", description: "" },
+      ],
+      properties: [],
+      typedefs: [],
+    };
+    const out = emitDeclarations(module);
+    expect(out).toContain(
+      'function play(mode: number & { readonly __brand: "ns.FOO" } | number & { readonly __brand: "ns.BAR" }): void;',
+    );
+    expect(out).not.toContain("type Mode =");
+  });
+
+  test("two rows sharing a prefix but differing in members each resolve to their own", () => {
+    const out = emitDeclarations(parseDefoldApiDoc(guiDoc));
+    expect(lineWith(out, "function get_xanchor(")).toContain("): gui.XAnchor;");
+    expect(lineWith(out, "function get_yanchor(")).toContain("): gui.YAnchor;");
+    expect(lineWith(out, "function set_xanchor(")).toContain("anchor: gui.XAnchor)");
+    expect(lineWith(out, "function set_yanchor(")).toContain("anchor: gui.YAnchor)");
+    const xRow = aliasRow("gui", "XAnchor");
+    const yRow = aliasRow("gui", "YAnchor");
+    expect([...xRow.members].sort()).not.toEqual([...yRow.members].sort());
+  });
+
+  test("a row whose home differs from its constants' namespace emits into the home", () => {
+    const renderConstantFqns = new Set(parseDefoldApiDoc(graphicsDoc).constants.map((c) => c.name));
+    const out = emitDeclarations(parseDefoldApiDoc(renderDoc), {
+      knownConstantFqns: renderConstantFqns,
+    });
+    const row = aliasRow("render", "ClearBufferKey");
+    expect(row.members.every((m) => m.startsWith("graphics."))).toBe(true);
+    expect(out).toContain(
+      `type ClearBufferKey = ${row.members.map((m) => `typeof ${m}`).join(" | ")};`,
+    );
+    expect(lineWith(out, "function clear(")).toContain("LuaMap<render.ClearBufferKey,");
+  });
+
+  test("each row also reaches the signature ledger as a TYPEDEF entry", () => {
+    const ledger = emitSymbolSignatures(parseDefoldApiDoc(guiDoc));
+    const row = aliasRow("gui", "Easing");
+    const entry = ledger.find(
+      (candidate) => candidate.identity.kind === "TYPEDEF" && candidate.identity.name === "Easing",
+    );
+    expect(entry?.identity.namespace).toBe("gui");
+    expect(entry?.tsSignature).toBe(
+      `type Easing = ${row.members.map((m) => `typeof ${m}`).join(" | ")};`,
+    );
+  });
+
+  test("a graphics-homed row referenced from render emits into graphics, qualified at the use", () => {
+    const graphicsConstantFqns = new Set(
+      parseDefoldApiDoc(graphicsDoc).constants.map((c) => c.name),
+    );
+    const renderOut = emitDeclarations(parseDefoldApiDoc(renderDoc), {
+      knownConstantFqns: graphicsConstantFqns,
+    });
+    expect(lineWith(renderOut, "function enable_state(")).toContain("state: graphics.State)");
+    expect(renderOut).not.toContain("type State =");
+    const graphicsOut = emitDeclarations(parseDefoldApiDoc(graphicsDoc));
+    const row = aliasRow("graphics", "State");
+    expect(graphicsOut).toContain(
+      `type State = ${row.members.map((m) => `typeof ${m}`).join(" | ")};`,
+    );
   });
 });

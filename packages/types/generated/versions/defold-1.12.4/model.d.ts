@@ -163,7 +163,7 @@ declare global {
      * });
      * ```
      */
-    function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: number & { readonly __brand: "go.PLAYBACK_ONCE_FORWARD" } | number & { readonly __brand: "go.PLAYBACK_ONCE_BACKWARD" } | number & { readonly __brand: "go.PLAYBACK_ONCE_PINGPONG" } | number & { readonly __brand: "go.PLAYBACK_LOOP_FORWARD" } | number & { readonly __brand: "go.PLAYBACK_LOOP_BACKWARD" } | number & { readonly __brand: "go.PLAYBACK_LOOP_PINGPONG" }, play_properties?: { blend_duration?: number; offset?: number; playback_rate?: number }, complete_function?: (self: unknown, message_id: unknown, message: unknown, sender: unknown) => void): void;
+    function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: go.Playback, play_properties?: { blend_duration?: number; offset?: number; playback_rate?: number }, complete_function?: (self: unknown, message_id: unknown, message: unknown, sender: unknown) => void): void;
     /**
      * Enable or disable visibility of a mesh
      *
