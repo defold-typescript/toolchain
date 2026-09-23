@@ -75,7 +75,7 @@ declare global {
      * });
      *
      * // How to delete a spawned collection:
-     * function delete_enemies(self) {
+     * function delete_enemies(self: { enemy_ids: Hash[] }) {
      *   go.delete(self.enemy_ids);
      * }
      * ```

@@ -53,7 +53,7 @@ declare global {
      * - boolean `report_progress`: when it is true, the amount of bytes sent and/or received for a request will be passed into the callback function
      * @example
      * ```ts
-     * function update_my_progress_bar(self, fraction) {
+     * function update_my_progress_bar(self: unknown, fraction: number) {
      *   // draw the progress bar at the given fraction
      * }
      *

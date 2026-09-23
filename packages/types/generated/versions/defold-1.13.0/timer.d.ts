@@ -20,7 +20,7 @@ declare global {
      * @returns if the timer was active, false if the timer is already cancelled / complete
      * @example
      * ```ts
-     * function cancel_ticking(self) {
+     * function cancel_ticking(self: { handle: number }) {
      *   self.handle = timer.delay(1, true, () => print("print every second"));
      *   // ...
      *   const result = timer.cancel(self.handle);
@@ -56,15 +56,16 @@ declare global {
      * timer.delay(1, false, () => print("print in one second"));
      *
      * // Repetitive timer which canceled after 10 calls
-     * function call_every_second(self, handle, time_elapsed) {
-     *   self.counter = self.counter + 1;
-     *   print("Call #", self.counter);
-     *   if (self.counter === 10) {
-     *     timer.cancel(handle); // cancel timer after 10 calls
+     * function call_every_second(self: unknown, handle: unknown, time_elapsed: unknown) {
+     *   const state = self as { counter: number };
+     *   state.counter = state.counter + 1;
+     *   print("Call #", state.counter);
+     *   if (state.counter === 10) {
+     *     timer.cancel(handle as number); // cancel timer after 10 calls
      *   }
      * }
      *
-     * function start_counting(self) {
+     * function start_counting(self: { counter: number }) {
      *   self.counter = 0;
      *   timer.delay(1, true, call_every_second);
      * }
@@ -85,7 +86,7 @@ declare global {
      * boolean true = repeat timer until cancel, false = one-shot timer.
      * @example
      * ```ts
-     * function report_ticking(self) {
+     * function report_ticking(self: { handle: number }) {
      *   self.handle = timer.delay(1, true, () => print("print every second"));
      *   // ...
      *   const result = timer.get_info(self.handle);
@@ -105,7 +106,7 @@ declare global {
      * @returns if the timer was active, false if the timer is already cancelled / complete
      * @example
      * ```ts
-     * function trigger_ticking(self) {
+     * function trigger_ticking(self: { handle: number }) {
      *   self.handle = timer.delay(1, true, () => print("print every second or manually by timer.trigger"));
      *   // ...
      *   const result = timer.trigger(self.handle);

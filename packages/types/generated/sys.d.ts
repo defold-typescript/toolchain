@@ -1,5 +1,5 @@
 /** @noSelfInFile */
-import type { Opaque } from "../src/core-types";
+import type { Hash, Opaque } from "../src/core-types";
 
 declare global {
   /**
@@ -446,21 +446,23 @@ declare global {
      * @example
      * ```ts
      * // Load binary data from a custom project resource and update a texture resource:
-     * function my_callback(self, request_id, result) {
-     *   if (result.status === resource.REQUEST_STATUS_FINISHED) {
-     *     resource.set_texture("/my_texture", {}, result.buf); // texture args
+     * function my_callback(self: unknown, request_id: unknown, result: unknown) {
+     *   const { status, buf } = result as { status: number; buf: Opaque<"buffer"> };
+     *   if (status === resource.REQUEST_STATUS_FINISHED) {
+     *     resource.set_texture("/my_texture", {}, buf); // texture args
      *   }
      * }
      *
      * const my_request = sys.load_buffer_async("/assets/my_level_data.bin", my_callback);
      *
      * // Load binary data from non-custom resource files on disk:
-     * function my_callback(self, request_id, result) {
-     *   if (result.status !== sys.REQUEST_STATUS_FINISHED) {
+     * function my_callback(self: unknown, request_id: unknown, result: unknown) {
+     *   const { first_asset, second_asset } = self as { first_asset: Hash; second_asset: Hash };
+     *   if ((result as { status: number }).status !== sys.REQUEST_STATUS_FINISHED) {
      *     // uh oh! File could not be found, do something graceful
-     *   } else if (request_id === self.first_asset) {
+     *   } else if (request_id === first_asset) {
      *     // result.buffer contains data from my_level_asset.bin
-     *   } else if (request_id === self.second_asset) {
+     *   } else if (request_id === second_asset) {
      *     // result.buffer contains data from 'my_level.bin'
      *   }
      * }
@@ -626,7 +628,7 @@ declare global {
      * @example
      * ```ts
      * // Install error handler that just prints the errors
-     * function my_error_handler(source, message, traceback) {
+     * function my_error_handler(source: unknown, message: unknown, traceback: unknown) {
      *   print(source); //> lua
      *   print(message); //> main/my.script:10: attempt to perform arithmetic on a string value
      *   print(traceback); //> stack traceback:

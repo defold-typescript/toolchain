@@ -32,7 +32,7 @@ declare global {
      * collection was not excluded.
      * @example
      * ```ts
-     * function print_resources(self, cproxy) {
+     * function print_resources(self: unknown, cproxy: Url) {
      *   const resources = collectionproxy.get_resources(cproxy);
      *   for (const v of resources) {
      *     print(`Resource: ${v}`);
