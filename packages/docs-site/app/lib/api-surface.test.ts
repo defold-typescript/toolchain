@@ -3765,3 +3765,49 @@ describe("canonical /api pages render every resolvable authored translation", ()
     );
   });
 });
+
+describe("rendered /api pages keep every symbol heading outside a code fence", () => {
+  // Walk the render the way a Markdown parser does: a line opening a fence puts
+  // everything after it inside the block until the matching close.
+  const fenceScan = (md: string): { trapped: string[]; endsOpen: boolean } => {
+    const trapped: string[] = [];
+    let open = false;
+    for (const line of md.split("\n")) {
+      if (line.startsWith("```")) {
+        open = !open;
+        continue;
+      }
+      if (open && line.startsWith("### ")) trapped.push(line);
+    }
+    return { trapped, endsOpen: open };
+  };
+
+  const surfaces: { label: string; pages: ApiPage[] }[] = [
+    { label: "canonical", pages: canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR) },
+    ...versionsWithDiskFixtures(REAL_TYPES_DIR).map((version) => ({
+      label: version.id,
+      pages: loadApiSurfaceForVersion(REAL_TYPES_DIR, version.id),
+    })),
+  ];
+
+  test.each(
+    surfaces.map((surface) => [surface.label, surface] as const),
+  )("%s: no symbol heading is swallowed by a fence", (_label, surface) => {
+    const offenders: string[] = [];
+    for (const page of surface.pages) {
+      for (const heading of fenceScan(apiModuleMarkdown(page, page.translations)).trapped) {
+        offenders.push(`${page.route}: ${heading}`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  test.each(
+    surfaces.map((surface) => [surface.label, surface] as const),
+  )("%s: no page render ends with a fence still open", (_label, surface) => {
+    const offenders = surface.pages
+      .filter((page) => fenceScan(apiModuleMarkdown(page, page.translations)).endsOpen)
+      .map((page) => page.route);
+    expect(offenders).toEqual([]);
+  });
+});

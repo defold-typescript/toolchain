@@ -453,6 +453,7 @@ declare global {
      * if graphics.TEXTURE_TYPE_3D ~= nil then
      * -- Device and graphics adapter support 3D textures
      * end
+     * ```
      * @example
      * ```ts
      * // How to create an 128x128 RGBA texture resource and assign it to a model
@@ -1372,6 +1373,7 @@ declare global {
      * if graphics.TEXTURE_TYPE_3D ~= nil then
      * -- Device and graphics adapter support 3D textures
      * end
+     * ```
      * @example
      * ```ts
      * // How to set all pixels of an atlas
