@@ -60,6 +60,11 @@ export const COMPILER_OPTION_OVERRIDES: readonly CompilerOptionOverride[] = [
       "the options are built programmatically and carry no `configFilePath`, so `paths` below has no directory to resolve against unless one is named",
   },
   {
+    option: "skipLibCheck",
+    reason:
+      "every surface entry is a declaration file, so the inherited `skipLibCheck` short-circuits `getSemanticDiagnostics` for it and the entry-resolution guard can never fire",
+  },
+  {
     option: "paths",
     reason:
       "a materialized kind subpath re-exports its factory from the installed `@defold-typescript/types/<module>` specifier, which resolves in a consumer's project but not inside the gate's virtual root; mapping it to the package's own `src/*` reproduces what an install provides, and without it the factory is `any` and the surface judges nothing",
@@ -86,6 +91,7 @@ export function gateCompilerOptions(): ts.CompilerOptions {
     noEmit: true,
     baseUrl: PACKAGE_ROOT,
     paths: { "@defold-typescript/types/*": ["src/*"] },
+    skipLibCheck: false,
     declaration: false,
     declarationMap: false,
     sourceMap: false,

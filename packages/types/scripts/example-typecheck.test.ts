@@ -7,8 +7,10 @@
  * ships it. It does not prove the example is correct Defold code.
  */
 import { describe, expect, test } from "bun:test";
+import { resolve } from "node:path";
 import { loadTranslations } from "./example-store-io";
 import {
+  type ExampleSurface,
   exampleSurfaces,
   kindFactoryNames,
   moduleKey,
@@ -344,6 +346,40 @@ describe("surface entry resolution", () => {
       );
     }
     expect(offenders).toEqual([]);
+  });
+
+  test("a surface that cannot resolve its entry is reported", () => {
+    const unresolvableSurface = (id: string, entryContents: string): ExampleSurface => {
+      const entry = resolve(import.meta.dir, "..", ".example-gate", id, "index.d.ts");
+      return {
+        id,
+        targetId: id,
+        kind: null,
+        origin: "materialized",
+        entry,
+        virtualFiles: [{ path: entry, contents: entryContents }],
+        modules: new Set<string>(),
+        exports: { values: [], types: [] },
+      };
+    };
+
+    const missingModule = unresolvableSurface(
+      "fixture-missing-module",
+      'export * from "@nope/missing";\n',
+    );
+    const missingMember = unresolvableSurface(
+      "fixture-missing-member",
+      'export { notAnExport } from "@defold-typescript/types/lifecycle";\n',
+    );
+
+    for (const [surface, code] of [
+      [missingModule, 2307],
+      [missingMember, 2305],
+    ] as const) {
+      const unit = exampleUnit(surface, "fixture.entry", "0000000000000000", "export {};");
+      const { entry } = compileSurface(surface, [unit]);
+      expect(entry.map((diagnostic) => diagnostic.code)).toContain(code);
+    }
   });
 
   test("a hook table the factory rejects fails on every kind surface", () => {
