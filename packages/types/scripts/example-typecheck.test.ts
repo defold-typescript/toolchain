@@ -1,12 +1,13 @@
 /**
- * What this gate proves, and what it does not. With `noImplicitAny` off — which
- * a doc-comment fragment requires, since `self` is contextually typed by
- * `defineScript` in real code and the surrounding prose introduces locals the
- * excerpt never declares — a call on an `any`-typed value goes unchecked. The
- * gate proves an example parses and misuses no *typed* API on a surface that
- * ships it. It does not prove the example is correct Defold code.
+ * What this gate proves, and what it does not. Every example compiles at the
+ * strictness `defold-typescript init` writes into a user's project, so a helper
+ * parameter an example declares is typed or the gate says so. A call on a value
+ * the declarations type as `unknown` still goes unchecked once an example casts
+ * it, so the gate proves an example parses and misuses no *typed* API on a
+ * surface that ships it. It does not prove the example is correct Defold code.
  */
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { loadTranslations } from "./example-store-io";
 import {
@@ -22,6 +23,7 @@ import {
   compileSurface,
   type ExampleDiagnostic,
   exampleUnit,
+  gateCompilerOptions,
   gateFailures,
   moduleSpecifier,
   type PinFile,
@@ -41,6 +43,34 @@ if (!found) throw new Error("the default script-kind surface is missing");
 const scriptSurface = found;
 
 const FIXED = ["render.clear", "zlib.inflate", "factory.create"] as const;
+
+/**
+ * The compiler options `defold-typescript init` writes into a user's project.
+ * Read from the CLI's own scaffold data rather than restated, so the gate and
+ * the scaffold move together; every package sets a `rootDir` that forbids
+ * importing a sibling package's source, which is why this crosses as data.
+ */
+const SCAFFOLD_TSCONFIG_PATH = resolve(import.meta.dir, "../../cli/src/scaffold-tsconfig.json");
+
+function effectiveImplicitAny(options: {
+  noImplicitAny?: boolean | undefined;
+  strict?: boolean | undefined;
+}): boolean {
+  return options.noImplicitAny ?? options.strict ?? false;
+}
+
+function scaffoldImplicitAny(): boolean {
+  return effectiveImplicitAny(
+    JSON.parse(readFileSync(SCAFFOLD_TSCONFIG_PATH, "utf8")) as {
+      noImplicitAny?: boolean;
+      strict?: boolean;
+    },
+  );
+}
+
+function gateImplicitAny(): boolean {
+  return effectiveImplicitAny(gateCompilerOptions());
+}
 
 function diagnosticsFor(body: string): ExampleDiagnostic[] {
   const unit = exampleUnit(scriptSurface, "fixture.probe", "0000000000000000", body);
@@ -159,6 +189,30 @@ describe("the undeclared-name class", () => {
   });
 });
 
+describe("the implicit-any class", () => {
+  const IMPLICIT_ANY_CODES = new Set([7005, 7006, 7008, 7031, 7034]);
+
+  test("no pin records an implicitly-any parameter", () => {
+    const offenders: string[] = [];
+    for (const [identity, diagnostics] of Object.entries(pins)) {
+      for (const diagnostic of diagnostics) {
+        if (!IMPLICIT_ANY_CODES.has(diagnostic.code)) continue;
+        offenders.push(`  ${identity} — TS${diagnostic.code} ${diagnostic.text}`);
+      }
+    }
+    if (offenders.length > 0) {
+      throw new Error(
+        "an authored translation declares a parameter the scaffold's own strictness rejects:\n" +
+          `${offenders.slice(0, 20).join("\n")}${
+            offenders.length > 20 ? `\n  +${offenders.length - 20} more` : ""
+          }\n` +
+          "Type the parameter in the example body; never re-pin to absorb it.",
+      );
+    }
+    expect(offenders).toEqual([]);
+  });
+});
+
 describe("what the compile is sensitive to", () => {
   test("a misspelled namespace is not absorbed as fragment context", () => {
     const diagnostics = diagnosticsFor("rendr.clear(new LuaMap());");
@@ -266,6 +320,14 @@ describe("gate maintenance", () => {
       expect(override.option).not.toBe("");
       expect(override.reason.length).toBeGreaterThan(20);
     }
+  });
+
+  test("the gate compiles at the scaffold's own strictness", () => {
+    expect(scaffoldImplicitAny()).toBe(true);
+    expect(gateImplicitAny()).toBe(scaffoldImplicitAny());
+    expect(COMPILER_OPTION_OVERRIDES.map((override) => override.option)).not.toContain(
+      "noImplicitAny",
+    );
   });
 
   test("a newly authored translation has no pin, so the gate cannot go green by omission", () => {

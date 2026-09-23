@@ -140,7 +140,7 @@ declare global {
      * - number `height`: The height of a resize event. nil otherwise.
      * @example
      * ```ts
-     * function window_callback(self, event, data) {
+     * function window_callback(self: unknown, event: unknown, data: Record<string | number, unknown>) {
      *   if (event === window.WINDOW_EVENT_FOCUS_LOST) {
      *     print("window.WINDOW_EVENT_FOCUS_LOST");
      *   } else if (event === window.WINDOW_EVENT_FOCUS_GAINED) {

@@ -18,8 +18,10 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Fixed
 
-- **The `@example` on 21 [gui](/api/gui) and [render](/api/render) functions called `defineScript`**, a factory a gui script or render script cannot import, so copying the example out of the declaration or the API reference did not build. Each now calls the factory its own script kind exports — `defineGuiScript` or `defineRenderScript`.
-- **The `@example` on 49 functions used names the example itself never introduced**, so copying one out of a hover or the API reference left `srcbuffer`, `url` or `self` undefined. Each body now declares every ordinary local with the real API that produces it, and gets `self` the way real code does — from the script factory its own kind exports, or as a parameter where the example is documented across several kinds.
+- **The `@example` shipped on each declaration now builds when you copy it out of a hover or the API reference.**
+  - **Wrong script factory** — 21 [gui](/api/gui) and [render](/api/render) functions called `defineScript`, which a gui script or render script cannot import. Each now calls the factory its own script kind exports, `defineGuiScript` or `defineRenderScript`.
+  - **Undeclared names** — 49 functions used names the example itself never introduced, leaving `srcbuffer`, `url` or `self` undefined. Each body now declares every ordinary local with the real API that produces it, and gets `self` the way real code does — from the script factory its own kind exports, or as a parameter where the example is documented across several kinds.
+  - **Untyped helper parameters** — a helper in 16 examples left its parameters untyped, which the `strict: true` project [`init`](./init.md) scaffolds rejects with `TS7006`. Every parameter now carries the type the API it is passed to declares, or the `self` fields the body reads.
 - `watch` no longer repeats "attached to Defold editor" after the machine sleeps or the editor's console connection drops, and no longer repeats the editor version warning with it.
 
 ## v0.38.0

@@ -200,7 +200,7 @@ declare global {
      * @returns It returns a list. If missed it returns `nil`. See ray_cast_response for details on the returned values.
      * @example
      * ```ts
-     * function handle_result(hit) {
+     * function handle_result(hit: { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash; request_id: number }) {
      *   // act on the hit (see 'ray_cast_response')
      * }
      *
@@ -294,8 +294,8 @@ declare global {
      * table The callback value data is a table that contains event-related data. See the documentation for details on the messages.
      * @example
      * ```ts
-     * function physics_world_listener(self, events) {
-     *   for (const event of events) {
+     * function physics_world_listener(self: unknown, events: unknown) {
+     *   for (const event of events as Record<string, unknown>[]) {
      *     const event_type = event["type"];
      *     if (event_type === hash("contact_point_event")) {
      *       pprint(event);
@@ -321,7 +321,7 @@ declare global {
      *       //    relative_velocity = vmath.vector3(0, 0, 0),
      *       //  },
      *       // }
-     *     } else if (event === hash("collision_event")) {
+     *     } else if (event_type === hash("collision_event")) {
      *       pprint(event);
      *       // {
      *       //  a = {
@@ -335,7 +335,7 @@ declare global {
      *       //          id = hash: [/go2]
      *       //      }
      *       // }
-     *     } else if (event === hash("trigger_event")) {
+     *     } else if (event_type === hash("trigger_event")) {
      *       pprint(event);
      *       // {
      *       //  enter = true,
@@ -348,7 +348,7 @@ declare global {
      *       //      id = hash: [/go1]
      *       //  }
      *       // },
-     *     } else if (event === hash("ray_cast_response")) {
+     *     } else if (event_type === hash("ray_cast_response")) {
      *       pprint(event);
      *       // {
      *       //  group = hash: [default],
@@ -358,7 +358,7 @@ declare global {
      *       //  normal = vmath.vector3(0, 1, 0),
      *       //  id = hash: [/go]
      *       // }
-     *     } else if (event === hash("ray_cast_missed")) {
+     *     } else if (event_type === hash("ray_cast_missed")) {
      *       pprint(event);
      *       // {
      *       //  request_id = 0
