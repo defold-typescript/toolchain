@@ -3680,34 +3680,69 @@ describe("canonical /api pages render every resolvable authored translation", ()
     return lua !== "" && lookupTranslation(store, fn.name, hashExampleSource(lua)) !== null;
   };
 
-  const partition = () => {
-    const resolvable: string[] = [];
-    const unresolved: string[] = [];
+  // One row per example-bearing function, with `resolvable` decided by the
+  // resolver's own partition *before* the render, so a row never leaves the
+  // partition because the render it is about to be judged on changed.
+  type ExampleRow = { name: string; resolvable: boolean; md: string | undefined };
+
+  const rowsFor = (storeOf: (page: ApiPage) => TranslationStore): ExampleRow[] => {
+    const rows: ExampleRow[] = [];
     for (const page of pages) {
+      const store = storeOf(page);
       for (const fn of page.module.functions) {
         if (!fn.examples) continue;
-        const md = exampleMarkdownFor(fn, page.translations);
-        if (md === undefined) continue;
-        (resolvesToStored(fn, page.translations) ? resolvable : unresolved).push(
-          `${fn.name}: ${md.slice(0, 40)}`,
-        );
+        rows.push({
+          name: fn.name,
+          resolvable: resolvesToStored(fn, store),
+          md: exampleMarkdownFor(fn, store),
+        });
       }
     }
-    return { resolvable, unresolved };
+    return rows;
   };
 
-  test("a function whose stored hash resolves renders a TypeScript fence", () => {
-    const { resolvable } = partition();
-    expect(resolvable.filter((entry) => !entry.includes("```ts"))).toEqual([]);
+  // Every stored body kept under its own FQN with its own text, re-pinned to a
+  // hash no ref-doc source produces: the drift the `sourceHash` pin exists to
+  // catch, over the real corpus rather than an empty store.
+  const misKeyedStore = (store: TranslationStore): TranslationStore =>
+    Object.fromEntries(
+      Object.entries(store).map(([fqn, entries]) => [
+        fqn,
+        entries.map((entry) => ({
+          ...entry,
+          sourceHash: hashExampleSource(`drifted:${entry.sourceHash}`),
+        })),
+      ]),
+    );
+
+  const rows = rowsFor((page) => page.translations);
+  const misKeyedRows = rowsFor((page) => misKeyedStore(page.translations));
+
+  test("every example-bearing function renders markdown", () => {
+    expect(rows.filter((row) => row.md === undefined).map((row) => row.name)).toEqual([]);
   });
 
-  test("a function with no resolving stored hash renders no TypeScript", () => {
-    const { unresolved } = partition();
-    expect(unresolved.filter((entry) => entry.includes("```ts"))).toEqual([]);
+  test("a function whose stored hash resolves renders TypeScript throughout", () => {
+    const resolvable = rows.filter((row) => row.resolvable);
+    expect(
+      resolvable
+        .filter((row) => !row.md?.startsWith("```ts") || row.md.includes("```lua"))
+        .map((row) => row.name),
+    ).toEqual([]);
+  });
+
+  test("a mis-keyed store renders every example as Lua and none as TypeScript", () => {
+    expect(misKeyedRows.filter((row) => row.md === undefined).map((row) => row.name)).toEqual([]);
+    expect(
+      misKeyedRows.filter((row) => !row.md?.includes("```lua")).map((row) => row.name),
+    ).toEqual([]);
+    expect(misKeyedRows.filter((row) => row.md?.includes("```ts")).map((row) => row.name)).toEqual(
+      [],
+    );
   });
 
   test("the resolvable set is non-trivial", () => {
-    expect(partition().resolvable.length).toBeGreaterThan(200);
+    expect(rows.filter((row) => row.resolvable).length).toBeGreaterThan(200);
   });
 
   test("resource.set_texture renders on /api/resource what the versioned page renders", () => {
