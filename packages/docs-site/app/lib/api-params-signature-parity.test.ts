@@ -143,14 +143,28 @@ describe("rendered slot types agree with the signature above them", () => {
     if (!render) throw new Error("render namespace missing from the combined surface");
     const symbols = apiModuleSymbols(combinedNamespaceToApiPage(render));
 
+    // Both slots resolve to a constant union with an alias row, so the Parameters
+    // table renders the alias — the same short form the signature above it
+    // carries. The members stay readable through the alias's own page entry,
+    // which is what the alias-entry tests in api-page-render cover.
     const clear = symbols.find((s) => s.name === "render.clear");
-    expect(clear?.parameters[0]?.types[0]).toContain("LuaMap<");
-    expect(clear?.parameters[0]?.types[0]).toContain('__brand: "graphics.BUFFER_TYPE_COLOR0_BIT"');
+    expect(clear?.parameters[0]?.types[0]).toBe("LuaMap<render.ClearBufferKey, number | Vector4>");
     expect(clear?.parameters[0]?.types[0]).not.toContain("Record<string | number, unknown>");
 
     const enableState = symbols.find((s) => s.name === "render.enable_state");
-    expect(enableState?.parameters[0]?.types[0]).toContain('__brand: "graphics.STATE_DEPTH_TEST"');
+    expect(enableState?.parameters[0]?.types[0]).toBe("graphics.State");
     expect(enableState?.parameters[0]?.types[0]).not.toContain('Opaque<"constant">');
+
+    // The alias each of them names is a symbol on its home page, so neither row
+    // is a dead end: `ClearBufferKey` is render's own, `State` is graphics'.
+    const renderTypes = symbols.filter((s) => s.kind === "type").map((s) => s.name);
+    expect(renderTypes).toContain("ClearBufferKey");
+    const graphics = combined.namespaces.find((ns) => ns.namespace === "graphics");
+    if (!graphics) throw new Error("graphics namespace missing from the combined surface");
+    const graphicsTypes = apiModuleSymbols(combinedNamespaceToApiPage(graphics))
+      .filter((s) => s.kind === "type")
+      .map((s) => s.name);
+    expect(graphicsTypes).toContain("State");
   });
 
   test("a lua-stdlib page the artifact never covers still renders its slot types", () => {

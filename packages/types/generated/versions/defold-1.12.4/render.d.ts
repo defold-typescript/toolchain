@@ -17,6 +17,7 @@ declare global {
     type constant_buffer = Opaque<"constant_buffer">;
     type render_target = Opaque<"render_target">;
     type texture = Opaque<"texture">;
+    type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;
     const FRUSTUM_PLANES_ALL: number & { readonly __brand: "render.FRUSTUM_PLANES_ALL" };
     const FRUSTUM_PLANES_SIDES: number & { readonly __brand: "render.FRUSTUM_PLANES_SIDES" };
     const RENDER_TARGET_DEFAULT: number & { readonly __brand: "render.RENDER_TARGET_DEFAULT" };
@@ -52,7 +53,7 @@ declare global {
      * render.clear(buffers);
      * ```
      */
-    function clear(buffers: LuaMap<number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR0_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_DEPTH_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_STENCIL_BIT" }, number | Vector4>): void;
+    function clear(buffers: LuaMap<render.ClearBufferKey, number | Vector4>): void;
     /**
      * Constant buffers are used to set shader program variables and are optionally passed to the `render.draw()` function.
      * The buffer's constant elements can be indexed like an ordinary Lua table, but you can't iterate over them with pairs() or ipairs().
@@ -168,7 +169,7 @@ declare global {
      * });
      * ```
      */
-    function disable_state(state: number & { readonly __brand: "graphics.STATE_DEPTH_TEST" } | number & { readonly __brand: "graphics.STATE_STENCIL_TEST" } | number & { readonly __brand: "graphics.STATE_BLEND" } | number & { readonly __brand: "graphics.STATE_ALPHA_TEST" } | number & { readonly __brand: "graphics.STATE_CULL_FACE" } | number & { readonly __brand: "graphics.STATE_POLYGON_OFFSET_FILL" }): void;
+    function disable_state(state: graphics.State): void;
     /**
      * Disables a texture that has previourly been enabled.
      *
@@ -363,7 +364,7 @@ declare global {
      * });
      * ```
      */
-    function enable_state(state: number & { readonly __brand: "graphics.STATE_DEPTH_TEST" } | number & { readonly __brand: "graphics.STATE_STENCIL_TEST" } | number & { readonly __brand: "graphics.STATE_BLEND" } | number & { readonly __brand: "graphics.STATE_ALPHA_TEST" } | number & { readonly __brand: "graphics.STATE_CULL_FACE" } | number & { readonly __brand: "graphics.STATE_POLYGON_OFFSET_FILL" }): void;
+    function enable_state(state: graphics.State): void;
     /**
      * Sets the specified texture handle for a render target attachment or a regular texture
      * that should be used for rendering. The texture can be bound to either a texture unit
@@ -448,7 +449,7 @@ declare global {
      * });
      * ```
      */
-    function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<"texture"> | string | Hash, buffer_type?: number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR0_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR1_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR2_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR3_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_DEPTH_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_STENCIL_BIT" }): void;
+    function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<"texture"> | string | Hash, buffer_type?: graphics.BufferType): void;
     /**
      * Returns the logical window height that is set in the "game.project" settings.
      * Note that the actual window pixel size can change, either by device constraints
@@ -504,7 +505,7 @@ declare global {
      * });
      * ```
      */
-    function get_render_target_height(render_target: Opaque<"render_target">, buffer_type: number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR0_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR1_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR2_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR3_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_DEPTH_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_STENCIL_BIT" }): number;
+    function get_render_target_height(render_target: Opaque<"render_target">, buffer_type: graphics.BufferType): number;
     /**
      * Returns the specified buffer width from a render target.
      *
@@ -549,7 +550,7 @@ declare global {
      * });
      * ```
      */
-    function get_render_target_width(render_target: Opaque<"render_target">, buffer_type: number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR0_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR1_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR2_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_COLOR3_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_DEPTH_BIT" } | number & { readonly __brand: "graphics.BUFFER_TYPE_STENCIL_BIT" }): number;
+    function get_render_target_width(render_target: Opaque<"render_target">, buffer_type: graphics.BufferType): number;
     /**
      * Returns the logical window width that is set in the "game.project" settings.
      * Note that the actual window pixel size can change, either by device constraints

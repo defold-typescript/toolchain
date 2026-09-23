@@ -416,6 +416,377 @@ export const CONSTANT_SLOT_RESOLUTIONS: ReadonlyMap<string, ConstantSlotResoluti
   ],
 ]);
 
+export interface ConstantUnionAlias {
+  // The namespace the alias is declared in. It is the namespace the union
+  // *means*, which is not always the one its constants live in: the three
+  // buffer keys `render.clear` accepts are `graphics.BUFFER_TYPE_*` constants,
+  // but the name that reads right at the call site is `render.ClearBufferKey`.
+  readonly home: string;
+  readonly name: string;
+  // In documentation order, which is the order the arms are emitted in today.
+  readonly members: readonly string[];
+}
+
+// A documented constant union gets a public name so a caller can spell the type
+// their own wrapper takes. Identity is the *member set*, never a name prefix:
+// `gui.ANCHOR_*` splits into two rows because the x and y slots accept
+// different thirds of it, and `graphics.BUFFER_TYPE_*` splits because
+// `render.clear` accepts three of the six.
+//
+// The table is the only thing the emitter reads, and every name in it has been
+// reviewed: a longest-common-prefix rule proposes, a human disposes. A union
+// with no row keeps its inline spelling, which the coverage gate in
+// `packages/types/test/constant-union-alias-coverage.test.ts` turns into a
+// failure naming the row to review.
+export const CONSTANT_UNION_ALIASES: readonly ConstantUnionAlias[] = [
+  {
+    home: "buffer",
+    name: "ValueType",
+    members: [
+      "buffer.VALUE_TYPE_FLOAT32",
+      "buffer.VALUE_TYPE_INT16",
+      "buffer.VALUE_TYPE_INT32",
+      "buffer.VALUE_TYPE_INT64",
+      "buffer.VALUE_TYPE_INT8",
+      "buffer.VALUE_TYPE_UINT16",
+      "buffer.VALUE_TYPE_UINT32",
+      "buffer.VALUE_TYPE_UINT64",
+      "buffer.VALUE_TYPE_UINT8",
+    ],
+  },
+  {
+    home: "collectionfactory",
+    name: "Status",
+    members: [
+      "collectionfactory.STATUS_UNLOADED",
+      "collectionfactory.STATUS_LOADING",
+      "collectionfactory.STATUS_LOADED",
+    ],
+  },
+  {
+    home: "factory",
+    name: "Status",
+    members: ["factory.STATUS_UNLOADED", "factory.STATUS_LOADING", "factory.STATUS_LOADED"],
+  },
+  {
+    home: "go",
+    name: "Easing",
+    members: [
+      "go.EASING_INBACK",
+      "go.EASING_INBOUNCE",
+      "go.EASING_INCIRC",
+      "go.EASING_INCUBIC",
+      "go.EASING_INELASTIC",
+      "go.EASING_INEXPO",
+      "go.EASING_INOUTBACK",
+      "go.EASING_INOUTBOUNCE",
+      "go.EASING_INOUTCIRC",
+      "go.EASING_INOUTCUBIC",
+      "go.EASING_INOUTELASTIC",
+      "go.EASING_INOUTEXPO",
+      "go.EASING_INOUTQUAD",
+      "go.EASING_INOUTQUART",
+      "go.EASING_INOUTQUINT",
+      "go.EASING_INOUTSINE",
+      "go.EASING_INQUAD",
+      "go.EASING_INQUART",
+      "go.EASING_INQUINT",
+      "go.EASING_INSINE",
+      "go.EASING_LINEAR",
+      "go.EASING_OUTBACK",
+      "go.EASING_OUTBOUNCE",
+      "go.EASING_OUTCIRC",
+      "go.EASING_OUTCUBIC",
+      "go.EASING_OUTELASTIC",
+      "go.EASING_OUTEXPO",
+      "go.EASING_OUTINBACK",
+      "go.EASING_OUTINBOUNCE",
+      "go.EASING_OUTINCIRC",
+      "go.EASING_OUTINCUBIC",
+      "go.EASING_OUTINELASTIC",
+      "go.EASING_OUTINEXPO",
+      "go.EASING_OUTINQUAD",
+      "go.EASING_OUTINQUART",
+      "go.EASING_OUTINQUINT",
+      "go.EASING_OUTINSINE",
+      "go.EASING_OUTQUAD",
+      "go.EASING_OUTQUART",
+      "go.EASING_OUTQUINT",
+      "go.EASING_OUTSINE",
+    ],
+  },
+  {
+    home: "go",
+    name: "Playback",
+    members: [
+      "go.PLAYBACK_ONCE_FORWARD",
+      "go.PLAYBACK_ONCE_BACKWARD",
+      "go.PLAYBACK_ONCE_PINGPONG",
+      "go.PLAYBACK_LOOP_FORWARD",
+      "go.PLAYBACK_LOOP_BACKWARD",
+      "go.PLAYBACK_LOOP_PINGPONG",
+    ],
+  },
+  {
+    home: "graphics",
+    name: "BufferType",
+    members: [
+      "graphics.BUFFER_TYPE_COLOR0_BIT",
+      "graphics.BUFFER_TYPE_COLOR1_BIT",
+      "graphics.BUFFER_TYPE_COLOR2_BIT",
+      "graphics.BUFFER_TYPE_COLOR3_BIT",
+      "graphics.BUFFER_TYPE_DEPTH_BIT",
+      "graphics.BUFFER_TYPE_STENCIL_BIT",
+    ],
+  },
+  {
+    home: "graphics",
+    name: "State",
+    members: [
+      "graphics.STATE_DEPTH_TEST",
+      "graphics.STATE_STENCIL_TEST",
+      "graphics.STATE_BLEND",
+      "graphics.STATE_ALPHA_TEST",
+      "graphics.STATE_CULL_FACE",
+      "graphics.STATE_POLYGON_OFFSET_FILL",
+    ],
+  },
+  {
+    home: "gui",
+    name: "AdjustMode",
+    members: ["gui.ADJUST_FIT", "gui.ADJUST_ZOOM", "gui.ADJUST_STRETCH"],
+  },
+  {
+    home: "gui",
+    name: "BlendMode",
+    members: [
+      "gui.BLEND_ALPHA",
+      "gui.BLEND_ADD",
+      "gui.BLEND_ADD_ALPHA",
+      "gui.BLEND_MULT",
+      "gui.BLEND_SCREEN",
+    ],
+  },
+  {
+    home: "gui",
+    name: "ClippingMode",
+    members: ["gui.CLIPPING_MODE_NONE", "gui.CLIPPING_MODE_STENCIL"],
+  },
+  {
+    home: "gui",
+    name: "Easing",
+    members: [
+      "gui.EASING_INBACK",
+      "gui.EASING_INBOUNCE",
+      "gui.EASING_INCIRC",
+      "gui.EASING_INCUBIC",
+      "gui.EASING_INELASTIC",
+      "gui.EASING_INEXPO",
+      "gui.EASING_INOUTBACK",
+      "gui.EASING_INOUTBOUNCE",
+      "gui.EASING_INOUTCIRC",
+      "gui.EASING_INOUTCUBIC",
+      "gui.EASING_INOUTELASTIC",
+      "gui.EASING_INOUTEXPO",
+      "gui.EASING_INOUTQUAD",
+      "gui.EASING_INOUTQUART",
+      "gui.EASING_INOUTQUINT",
+      "gui.EASING_INOUTSINE",
+      "gui.EASING_INQUAD",
+      "gui.EASING_INQUART",
+      "gui.EASING_INQUINT",
+      "gui.EASING_INSINE",
+      "gui.EASING_LINEAR",
+      "gui.EASING_OUTBACK",
+      "gui.EASING_OUTBOUNCE",
+      "gui.EASING_OUTCIRC",
+      "gui.EASING_OUTCUBIC",
+      "gui.EASING_OUTELASTIC",
+      "gui.EASING_OUTEXPO",
+      "gui.EASING_OUTINBACK",
+      "gui.EASING_OUTINBOUNCE",
+      "gui.EASING_OUTINCIRC",
+      "gui.EASING_OUTINCUBIC",
+      "gui.EASING_OUTINELASTIC",
+      "gui.EASING_OUTINEXPO",
+      "gui.EASING_OUTINQUAD",
+      "gui.EASING_OUTINQUART",
+      "gui.EASING_OUTINQUINT",
+      "gui.EASING_OUTINSINE",
+      "gui.EASING_OUTQUAD",
+      "gui.EASING_OUTQUART",
+      "gui.EASING_OUTQUINT",
+      "gui.EASING_OUTSINE",
+    ],
+  },
+  {
+    home: "gui",
+    name: "KeyboardType",
+    members: [
+      "gui.KEYBOARD_TYPE_DEFAULT",
+      "gui.KEYBOARD_TYPE_EMAIL",
+      "gui.KEYBOARD_TYPE_NUMBER_PAD",
+      "gui.KEYBOARD_TYPE_PASSWORD",
+    ],
+  },
+  {
+    home: "gui",
+    name: "NodeType",
+    members: [
+      "gui.TYPE_BOX",
+      "gui.TYPE_TEXT",
+      "gui.TYPE_PIE",
+      "gui.TYPE_PARTICLEFX",
+      "gui.TYPE_CUSTOM",
+    ],
+  },
+  {
+    home: "gui",
+    name: "PieBounds",
+    members: ["gui.PIEBOUNDS_RECTANGLE", "gui.PIEBOUNDS_ELLIPSE"],
+  },
+  {
+    home: "gui",
+    name: "Pivot",
+    members: [
+      "gui.PIVOT_CENTER",
+      "gui.PIVOT_N",
+      "gui.PIVOT_NE",
+      "gui.PIVOT_E",
+      "gui.PIVOT_SE",
+      "gui.PIVOT_S",
+      "gui.PIVOT_SW",
+      "gui.PIVOT_W",
+      "gui.PIVOT_NW",
+    ],
+  },
+  {
+    home: "gui",
+    name: "Playback",
+    members: [
+      "gui.PLAYBACK_ONCE_FORWARD",
+      "gui.PLAYBACK_ONCE_BACKWARD",
+      "gui.PLAYBACK_ONCE_PINGPONG",
+      "gui.PLAYBACK_LOOP_FORWARD",
+      "gui.PLAYBACK_LOOP_BACKWARD",
+      "gui.PLAYBACK_LOOP_PINGPONG",
+    ],
+  },
+  {
+    home: "gui",
+    name: "Property",
+    members: [
+      "gui.PROP_POSITION",
+      "gui.PROP_ROTATION",
+      "gui.PROP_EULER",
+      "gui.PROP_SCALE",
+      "gui.PROP_COLOR",
+      "gui.PROP_OUTLINE",
+      "gui.PROP_SHADOW",
+      "gui.PROP_SIZE",
+      "gui.PROP_FILL_ANGLE",
+      "gui.PROP_INNER_RADIUS",
+      "gui.PROP_LEADING",
+      "gui.PROP_TRACKING",
+      "gui.PROP_SLICE9",
+    ],
+  },
+  {
+    home: "gui",
+    name: "SafeAreaMode",
+    members: [
+      "gui.SAFE_AREA_NONE",
+      "gui.SAFE_AREA_LONG",
+      "gui.SAFE_AREA_SHORT",
+      "gui.SAFE_AREA_BOTH",
+    ],
+  },
+  {
+    home: "gui",
+    name: "SizeMode",
+    members: ["gui.SIZE_MODE_MANUAL", "gui.SIZE_MODE_AUTO"],
+  },
+  {
+    home: "gui",
+    name: "XAnchor",
+    members: ["gui.ANCHOR_NONE", "gui.ANCHOR_LEFT", "gui.ANCHOR_RIGHT"],
+  },
+  {
+    home: "gui",
+    name: "YAnchor",
+    members: ["gui.ANCHOR_NONE", "gui.ANCHOR_TOP", "gui.ANCHOR_BOTTOM"],
+  },
+  {
+    home: "profiler",
+    name: "Mode",
+    members: [
+      "profiler.MODE_RUN",
+      "profiler.MODE_PAUSE",
+      "profiler.MODE_SHOW_PEAK_FRAME",
+      "profiler.MODE_RECORD",
+    ],
+  },
+  {
+    home: "profiler",
+    name: "ViewMode",
+    members: ["profiler.VIEW_MODE_FULL", "profiler.VIEW_MODE_MINIMIZED"],
+  },
+  {
+    home: "render",
+    name: "ClearBufferKey",
+    members: [
+      "graphics.BUFFER_TYPE_COLOR0_BIT",
+      "graphics.BUFFER_TYPE_DEPTH_BIT",
+      "graphics.BUFFER_TYPE_STENCIL_BIT",
+    ],
+  },
+  {
+    home: "sys",
+    name: "NetworkConnectivity",
+    members: [
+      "sys.NETWORK_DISCONNECTED",
+      "sys.NETWORK_CONNECTED_CELLULAR",
+      "sys.NETWORK_CONNECTED",
+    ],
+  },
+  {
+    home: "window",
+    name: "DimModeState",
+    members: ["window.DIMMING_UNKNOWN", "window.DIMMING_ON", "window.DIMMING_OFF"],
+  },
+  {
+    home: "window",
+    name: "DimModeStateSettable",
+    members: ["window.DIMMING_ON", "window.DIMMING_OFF"],
+  },
+];
+
+const CONSTANT_UNION_ALIAS_BY_MEMBERS: ReadonlyMap<string, ConstantUnionAlias> = new Map(
+  CONSTANT_UNION_ALIASES.map((row) => [constantUnionAliasKey(row.members), row] as const),
+);
+
+function constantUnionAliasKey(members: readonly string[]): string {
+  return [...new Set(members)].sort().join("\u0000");
+}
+
+// The alias naming exactly these constants, or undefined when no row does. A
+// single constant is never aliased: it already has a name.
+export function constantUnionAlias(fqns: readonly string[]): ConstantUnionAlias | undefined {
+  if (fqns.length < 2) return undefined;
+  return CONSTANT_UNION_ALIAS_BY_MEMBERS.get(constantUnionAliasKey(fqns));
+}
+
+// The alias declarations a module owns, in name order. A row is declared in its
+// home whether or not that module references it, so a cross-namespace row is
+// reachable from the module whose signatures spell it.
+export function constantUnionAliasDeclarations(namespace: string): string[] {
+  return CONSTANT_UNION_ALIASES.filter((row) => row.home === namespace)
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map(
+      (row) => `type ${row.name} = ${row.members.map((member) => `typeof ${member}`).join(" | ")};`,
+    );
+}
+
 const DOC_CONSTANT_TOKEN =
   /(?<![A-Za-z0-9_.])([a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*\.[A-Z][A-Z0-9_]*)(\*)?/g;
 
@@ -907,8 +1278,8 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   // names as keys to their clear value: vector4 for the color buffer, number for
   // depth/stencil. Both sides are union tokens the mapping string branch splits,
   // so the key emits the three branded constants and the value `number | Vector4`.
-  // The key is branded rather than `number`, which is the narrowing users migrate
-  // to via the authored `render.ClearBufferKey` alias.
+  // The key set is a CONSTANT_UNION_ALIASES row, so the signature carries the
+  // `render.ClearBufferKey` alias rather than the three branded arms.
   [
     "render.clear:param:buffers",
     {
@@ -1998,6 +2369,9 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
     if (handleGroups.has(t.name)) continue;
     lines.push(`${INDENT}${decl}type ${t.name} = Opaque<"${t.name}">;`);
   }
+  for (const aliasDecl of constantUnionAliasDeclarations(module.namespace)) {
+    lines.push(`${INDENT}${decl}${aliasDecl}`);
+  }
   const handleIndent = `${INDENT}${INDENT}`;
   for (const receiver of handleReceivers) {
     const group = handleGroups.get(receiver) ?? [];
@@ -2281,6 +2655,19 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
     out.push({
       identity: { namespace: module.namespace, kind: "TYPEDEF", name: t.name, signature: "" },
       tsSignature: `type ${t.name} = Opaque<"${t.name}">;`,
+      slotTypes: NO_SLOTS,
+    });
+  }
+
+  // The module's constant-union aliases travel as typedefs too: a signature that
+  // names one carries no member list of its own, so the docs read the members
+  // from here rather than from the emitter's table.
+  for (const row of CONSTANT_UNION_ALIASES.filter((r) => r.home === module.namespace)) {
+    out.push({
+      identity: { namespace: module.namespace, kind: "TYPEDEF", name: row.name, signature: "" },
+      tsSignature: `type ${row.name} = ${row.members
+        .map((member) => `typeof ${member}`)
+        .join(" | ")};`,
       slotTypes: NO_SLOTS,
     });
   }
@@ -3015,7 +3402,7 @@ function mapSlotUnion(
   // every other union member, so collapse to exactly `unknown` rather than emit
   // a redundant `T | unknown` or `unknown | undefined`.
   if (mapped.includes("unknown")) return "unknown";
-  return mapped.join(" | ");
+  return joinUnionArms(mapped);
 }
 
 function tableSlotKey(elementName: string, slotKind: "param" | "return", slotName: string): string {
@@ -3105,7 +3492,36 @@ function unionFromTokens(tokens: readonly string[], mapType: (t: string) => stri
     seen.add(ts);
     mapped.push(ts);
   }
-  return mapped.join(" | ");
+  return joinUnionArms(mapped);
+}
+
+const BRAND_ARM = /^number & \{ readonly __brand: "([^"]+)" \}$/;
+
+// Joins already-mapped arms, collapsing the branded ones to their alias when
+// they are exactly a `CONSTANT_UNION_ALIASES` member set. The alias takes the
+// position of the first branded arm, so a mixed union keeps its reading order
+// (`gui.Easing | Vector`). Arms that are not constants are untouched, and a set
+// with no row keeps every arm inline.
+function joinUnionArms(mapped: readonly string[]): string {
+  const branded: string[] = [];
+  for (const arm of mapped) {
+    const match = BRAND_ARM.exec(arm);
+    if (match !== null) branded.push(match[1] as string);
+  }
+  const alias = constantUnionAlias(branded);
+  if (alias === undefined) return mapped.join(" | ");
+  const out: string[] = [];
+  let placed = false;
+  for (const arm of mapped) {
+    if (BRAND_ARM.test(arm)) {
+      if (placed) continue;
+      out.push(`${alias.home}.${alias.name}`);
+      placed = true;
+      continue;
+    }
+    out.push(arm);
+  }
+  return out.join(" | ");
 }
 
 export function isKnownDefoldTypeToken(token: string): boolean {
