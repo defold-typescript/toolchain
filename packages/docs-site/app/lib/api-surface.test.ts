@@ -2591,13 +2591,22 @@ describe("exampleMarkdownFor", () => {
     expect(md).not.toContain("```lua");
   });
 
-  test("an element whose segments resolve only partly falls back to one block", () => {
+  const wholeBlobFallback = "```lua\ndemo.run()\n```\n\nThen:\n\n```lua\ndemo.stop()\n```";
+
+  test("an element whose segments resolve only partly falls back to the complete Lua rendering", () => {
     const md = exampleMarkdownFor(twoFn, {
       "demo.pair": [{ sourceHash: segmentHashes[0] ?? "", ts: "demo.run(); // first" }],
     });
-    expect(md?.match(/```ts/g) ?? []).toHaveLength(0);
-    expect(md).toContain("```lua");
+    expect(md).toBe(wholeBlobFallback);
     expect(md).not.toContain("demo.run(); // first");
+  });
+
+  test("an element whose trailing segment alone resolves falls back to the same complete rendering", () => {
+    const md = exampleMarkdownFor(twoFn, {
+      "demo.pair": [{ sourceHash: segmentHashes[1] ?? "", ts: "demo.stop(); // second" }],
+    });
+    expect(md).toBe(wholeBlobFallback);
+    expect(md).not.toContain("demo.stop(); // second");
   });
 
   test("each resolved segment's prose renders as a paragraph above its fence", () => {
