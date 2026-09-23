@@ -758,7 +758,14 @@ export function exampleMarkdownFor(
           segments.map((segment) => hashExampleSource(segment.code)),
         )
       : null;
-  if (perSegment !== null) return perSegment.map(tsFence).join("\n\n");
+  if (perSegment !== null) {
+    return perSegment
+      .map((body, index) => {
+        const prose = segments[index]?.prose ?? "";
+        return prose === "" ? tsFence(body) : `${prose}\n\n${tsFence(body)}`;
+      })
+      .join("\n\n");
+  }
   const lua = htmlToCodeText(fn.examples);
   const ts = lua === "" ? null : lookupTranslation(translations, fn.name, hashExampleSource(lua));
   if (ts !== null) return tsFence(ts);

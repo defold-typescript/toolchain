@@ -2605,7 +2605,13 @@ function functionDocLines(
   const ts = lua === "" ? null : lookupTranslation(translations, fn.name, hashExampleSource(lua));
   const exampleParts: Pick<DocCommentParts, "examples"> =
     perSegment !== null
-      ? { examples: perSegment.map((text) => ({ text, lang: "ts" as const })) }
+      ? {
+          examples: perSegment.map((text, index) => ({
+            text,
+            lang: "ts" as const,
+            ...(segments[index]?.prose ? { prose: segments[index]?.prose } : {}),
+          })),
+        }
       : ts !== null
         ? { examples: [{ text: ts, lang: "ts" }] }
         : lua !== ""

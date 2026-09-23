@@ -945,6 +945,8 @@ declare global {
      *
      * - `graphics.BUFFER_TYPE_STENCIL_BIT`
      * @example
+     * How to set a render target and draw to it and then switch back to the default render target
+     * The render target defines the depth/stencil buffers as transient, when set_render_target is called the next time the buffers may be invalidated and allow for optimisations depending on driver support
      * ```ts
      * // How to set a render target and draw to it and then switch back to the default render target
      * // The render target defines the depth/stencil buffers as transient, when set_render_target is called the next time the buffers may be invalidated and allow for optimisations depending on driver support
