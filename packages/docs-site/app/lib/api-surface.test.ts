@@ -6,12 +6,15 @@ import {
   type ApiFunction,
   hashExampleSource,
   htmlToCodeText,
+  lookupExampleTranslations,
+  lookupTranslation,
   normalizedFunctionSignature,
   parseDefoldApiDoc,
   type SignatureStore,
   signatureTransitionNames,
   splitExampleSources,
   symbolIdentityKey,
+  type TranslationStore,
 } from "@defold-typescript/types";
 import { canonicalApiPages } from "./api-content";
 import { apiSignatureSymbolLinks } from "./api-page-render";
@@ -3649,5 +3652,81 @@ describe("rendered /api examples keep fence markers on block boundaries", () => 
     }
     expect(examined).toBeGreaterThan(200);
     expect(offenders).toEqual([]);
+  });
+});
+
+describe("canonical /api pages render every resolvable authored translation", () => {
+  const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR).filter(
+    (page) => page.category === "engine",
+  );
+
+  // The partition the resolver itself keys on, rebuilt from the same production
+  // hashing primitives: a blob resolves when its segment hashes all resolve, or
+  // when its whole-blob hash does.
+  const resolvesToStored = (fn: ApiFunction, store: TranslationStore): boolean => {
+    if (!fn.examples) return false;
+    const segments = splitExampleSources(fn.examples);
+    if (
+      segments.length > 1 &&
+      lookupExampleTranslations(
+        store,
+        fn.name,
+        segments.map((segment) => hashExampleSource(segment.code)),
+      ) !== null
+    ) {
+      return true;
+    }
+    const lua = htmlToCodeText(fn.examples);
+    return lua !== "" && lookupTranslation(store, fn.name, hashExampleSource(lua)) !== null;
+  };
+
+  const partition = () => {
+    const resolvable: string[] = [];
+    const unresolved: string[] = [];
+    for (const page of pages) {
+      for (const fn of page.module.functions) {
+        if (!fn.examples) continue;
+        const md = exampleMarkdownFor(fn, page.translations);
+        if (md === undefined) continue;
+        (resolvesToStored(fn, page.translations) ? resolvable : unresolved).push(
+          `${fn.name}: ${md.slice(0, 40)}`,
+        );
+      }
+    }
+    return { resolvable, unresolved };
+  };
+
+  test("a function whose stored hash resolves renders a TypeScript fence", () => {
+    const { resolvable } = partition();
+    expect(resolvable.filter((entry) => !entry.includes("```ts"))).toEqual([]);
+  });
+
+  test("a function with no resolving stored hash renders no TypeScript", () => {
+    const { unresolved } = partition();
+    expect(unresolved.filter((entry) => entry.includes("```ts"))).toEqual([]);
+  });
+
+  test("the resolvable set is non-trivial", () => {
+    expect(partition().resolvable.length).toBeGreaterThan(200);
+  });
+
+  test("resource.set_texture renders on /api/resource what the versioned page renders", () => {
+    const canonical = pages.find((page) => page.route === "/api/resource");
+    const versioned = loadApiSurfaceForVersion(REAL_TYPES_DIR, "defold-1.13.1").find(
+      (page) => page.namespace === "resource",
+    );
+    expect(canonical).toBeDefined();
+    expect(versioned).toBeDefined();
+    if (!canonical || !versioned) return;
+    const fnOf = (page: ApiPage) =>
+      page.module.functions.find((fn) => fn.name === "resource.set_texture");
+    const canonicalFn = fnOf(canonical);
+    const versionedFn = fnOf(versioned);
+    expect(canonicalFn).toBeDefined();
+    expect(versionedFn).toBeDefined();
+    if (!canonicalFn || !versionedFn) return;
+    expect(exampleMarkdownFor(canonicalFn, canonical.translations)).toBe(
+      exampleMarkdownFor(versionedFn, versioned.translations),
+    );
   });
 });
