@@ -169,6 +169,48 @@ describe("example translation drift guard", () => {
     expect(lost).toEqual([]);
   });
 
+  // `go.get` and `go.set` document cases whose Lua the segmenter leaves inside a
+  // prose region rather than lifting into its own segment, so their final
+  // segment's prose carries welded sentences and inline Lua. Splitting them
+  // would render that prose above the fence and drop the authored TypeScript for
+  // the swallowed cases, so they keep their whole-blob body until the segmenter
+  // separates those regions. Membership is pinned both ways: a third element
+  // reaching the fallback reds the first assertion, and either of these two
+  // becoming splittable reds the second.
+  const WELDED_PROSE_FQNS = ["go.get", "go.set"];
+
+  test("every multi-example go element outside the welded-prose pair resolves a translation per example", () => {
+    const store = loadTranslations();
+    const onFallback: string[] = [];
+    let multi = 0;
+    for (const element of exampleElements()) {
+      if (!element.fqn.startsWith("go.")) continue;
+      if (element.segmentHashes.length < 2) continue;
+      if (WELDED_PROSE_FQNS.includes(element.fqn)) continue;
+      multi += 1;
+      if (lookupExampleTranslations(store, element.fqn, element.segmentHashes) === null) {
+        onFallback.push(`${element.fqn}:${element.wholeHash}`);
+      }
+    }
+    expect(multi).toBe(20);
+    if (onFallback.length > 0) {
+      throw new Error(
+        `these go elements still resolve through the whole-blob arm — split every segment: ${onFallback.join(", ")}`,
+      );
+    }
+    expect(onFallback).toEqual([]);
+  });
+
+  test("the welded-prose pair still documents every example through its whole-blob body", () => {
+    const store = loadTranslations();
+    for (const fqn of WELDED_PROSE_FQNS) {
+      const element = exampleElements().find((candidate) => candidate.fqn === fqn);
+      expect(element?.segmentHashes.length ?? 0).toBeGreaterThan(1);
+      expect(lookupTranslation(store, fqn, element?.wholeHash ?? "")).not.toBeNull();
+      expect(lookupExampleTranslations(store, fqn, element?.segmentHashes ?? [])).toBeNull();
+    }
+  });
+
   test("the per-element untranslated set matches the committed examples/untranslated.json snapshot", () => {
     const untranslated = untranslatedElements();
     const committed = JSON.parse(

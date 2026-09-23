@@ -524,6 +524,7 @@ declare global {
      *
      * - `gui.PLAYBACK_LOOP_PINGPONG`
      * @example
+     * How to start a simple color animation, where the node fades in to white during 0.5 seconds:
      * ```ts
      * // How to start a simple color animation, where the node fades in to white during 0.5 seconds:
      * const node = gui.get_node("my_node");
@@ -531,6 +532,7 @@ declare global {
      * gui.animate(node, gui.PROP_COLOR, vmath.vector4(1, 1, 1, 1), gui.EASING_INOUTQUAD, 0.5); // start animation
      * ```
      * @example
+     * How to start a sequenced animation where the node fades in to white during 0.5 seconds, stays visible for 2 seconds and then fades out:
      * ```ts
      * // How to start a sequenced animation where the node fades in to white during 0.5
      * // seconds, stays visible for 2 seconds and then fades out:
@@ -551,6 +553,7 @@ declare global {
      * });
      * ```
      * @example
+     * How to animate a node's y position using a crazy custom easing curve:
      * ```ts
      * // How to animate a node's y position using a crazy custom easing curve:
      * export default defineGuiScript({

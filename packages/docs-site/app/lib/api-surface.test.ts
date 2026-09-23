@@ -2599,6 +2599,20 @@ describe("exampleMarkdownFor", () => {
     expect(md).toContain("```lua");
     expect(md).not.toContain("demo.run(); // first");
   });
+
+  test("each resolved segment's prose renders as a paragraph above its fence", () => {
+    const segments = splitExampleSources(twoBlocks);
+    expect(segments.map((segment) => segment.prose)).toEqual(["", "Then:"]);
+    const md = exampleMarkdownFor(twoFn, {
+      "demo.pair": [
+        { sourceHash: segmentHashes[0] ?? "", ts: "demo.run(); // first" },
+        { sourceHash: segmentHashes[1] ?? "", ts: "demo.stop(); // second" },
+      ],
+    });
+    expect(md).toBe(
+      "```ts\ndemo.run(); // first\n```\n\nThen:\n\n```ts\ndemo.stop(); // second\n```",
+    );
+  });
 });
 
 describe("Defold library page examples", () => {
@@ -3722,11 +3736,19 @@ describe("canonical /api pages render every resolvable authored translation", ()
     expect(rows.filter((row) => row.md === undefined).map((row) => row.name)).toEqual([]);
   });
 
+  // A per-segment rendering opens with the prose introducing its first example,
+  // so the fence languages are the invariant, not the first line.
+  const fenceLangs = (md: string | undefined): string[] =>
+    [...(md ?? "").matchAll(/^```(\w+)/gm)].map((m) => m[1] ?? "");
+
   test("a function whose stored hash resolves renders TypeScript throughout", () => {
     const resolvable = rows.filter((row) => row.resolvable);
     expect(
       resolvable
-        .filter((row) => !row.md?.startsWith("```ts") || row.md.includes("```lua"))
+        .filter((row) => {
+          const langs = fenceLangs(row.md);
+          return langs.length === 0 || langs.some((lang) => lang !== "ts");
+        })
         .map((row) => row.name),
     ).toEqual([]);
   });

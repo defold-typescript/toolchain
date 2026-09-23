@@ -336,6 +336,80 @@ describe("renderDocComment", () => {
     ]);
   });
 
+  test("each example's prose renders between its @example tag and its fence", () => {
+    expect(
+      renderDocComment({
+        summary: "S.",
+        examples: [
+          { text: "const a = 1;", lang: "ts", prose: "Get the first thing." },
+          { text: "const b = 2;", lang: "ts", prose: "Get the second thing." },
+        ],
+      }),
+    ).toEqual([
+      "/**",
+      " * S.",
+      " *",
+      " * @example",
+      " * Get the first thing.",
+      " * ```ts",
+      " * const a = 1;",
+      " * ```",
+      " * @example",
+      " * Get the second thing.",
+      " * ```ts",
+      " * const b = 2;",
+      " * ```",
+      " */",
+    ]);
+  });
+
+  test("absent or blank prose renders the bare tag-then-fence form", () => {
+    const bare = [
+      "/**",
+      " * S.",
+      " *",
+      " * @example",
+      " * ```ts",
+      " * const a = 1;",
+      " * ```",
+      " */",
+    ];
+    expect(
+      renderDocComment({ summary: "S.", examples: [{ text: "const a = 1;", lang: "ts" }] }),
+    ).toEqual(bare);
+    expect(
+      renderDocComment({
+        summary: "S.",
+        examples: [{ text: "const a = 1;", lang: "ts", prose: "" }],
+      }),
+    ).toEqual(bare);
+    expect(
+      renderDocComment({
+        summary: "S.",
+        examples: [{ text: "const a = 1;", lang: "ts", prose: "   " }],
+      }),
+    ).toEqual(bare);
+  });
+
+  test("a paragraph break inside prose renders as a bare ` *`", () => {
+    expect(
+      renderDocComment({
+        summary: "",
+        examples: [{ text: "const a = 1;", lang: "ts", prose: "First.\n\nSecond." }],
+      }),
+    ).toEqual([
+      "/**",
+      " * @example",
+      " * First.",
+      " *",
+      " * Second.",
+      " * ```ts",
+      " * const a = 1;",
+      " * ```",
+      " */",
+    ]);
+  });
+
   test("a blank body is dropped from the list, and dropping them all renders nothing", () => {
     expect(
       renderDocComment({
