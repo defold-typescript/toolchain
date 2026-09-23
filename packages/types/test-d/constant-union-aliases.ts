@@ -1,9 +1,17 @@
 /// <reference path="../index.d.ts" />
 
-// Every constant union with a public name: each member is assignable to the
-// alias, and a constant from a sibling group is not. The compiler is the judge,
-// so an alias emitted as `number`, or over the wrong group, fails here even
-// while the text-level gates stay green.
+// Every constant union with a public name: representative members of the group
+// are assignable to the alias, and a constant from a sibling group is not. The
+// compiler is the judge, so an alias emitted as `number`, or over the wrong
+// group, fails here even while the text-level gates stay green.
+//
+// What this file does not hold is the exhaustive member set of any alias — a
+// group's members are sampled here, not enumerated. Two other gates own that:
+// `test/constant-union-alias-coverage.test.ts` scans the generated declarations
+// for a brand union left unnamed, so a group the alias table does not cover is
+// caught; `test/constant-slot-expansion-drift.test.ts` resolves each documented
+// slot from the reference documentation and expands the alias through the
+// emitted `type ... = ...` declaration, never through the table it guards.
 
 // buffer
 const _bufferValueType: buffer.ValueType = buffer.VALUE_TYPE_FLOAT32;
