@@ -691,7 +691,19 @@ export function apiSignatureSymbolLinks(
       links.set(group.label, { route: page.route, heading: group.label });
     }
   }
-  const route = buildSymbolIndex(pages).Opaque?.route;
+  const index = buildSymbolIndex(pages);
+  // A constant-union alias is spelled qualified in every signature that takes it
+  // (`gui.Easing`, `graphics.State`), which is also how the symbol index keys it.
+  // Keying the qualified name off the index rather than the current page is what
+  // lets a `render` signature reach the `graphics` entry that lists the members.
+  for (const p of pages) {
+    for (const symbol of apiModuleSymbols(p, p.translations).filter((s) => s.kind === "type")) {
+      const qualified = `${p.namespace}.${symbol.name}`;
+      const entry = index[qualified];
+      if (entry) links.set(qualified, entry.route);
+    }
+  }
+  const route = index.Opaque?.route;
   if (route) links.set("Opaque", route);
   return links;
 }

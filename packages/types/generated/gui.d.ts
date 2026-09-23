@@ -6,6 +6,20 @@ declare global {
    * GUI API documentation
    */
   namespace gui {
+    type AdjustMode = typeof gui.ADJUST_FIT | typeof gui.ADJUST_ZOOM | typeof gui.ADJUST_STRETCH;
+    type BlendMode = typeof gui.BLEND_ALPHA | typeof gui.BLEND_ADD | typeof gui.BLEND_ADD_ALPHA | typeof gui.BLEND_MULT | typeof gui.BLEND_SCREEN;
+    type ClippingMode = typeof gui.CLIPPING_MODE_NONE | typeof gui.CLIPPING_MODE_STENCIL;
+    type Easing = typeof gui.EASING_INBACK | typeof gui.EASING_INBOUNCE | typeof gui.EASING_INCIRC | typeof gui.EASING_INCUBIC | typeof gui.EASING_INELASTIC | typeof gui.EASING_INEXPO | typeof gui.EASING_INOUTBACK | typeof gui.EASING_INOUTBOUNCE | typeof gui.EASING_INOUTCIRC | typeof gui.EASING_INOUTCUBIC | typeof gui.EASING_INOUTELASTIC | typeof gui.EASING_INOUTEXPO | typeof gui.EASING_INOUTQUAD | typeof gui.EASING_INOUTQUART | typeof gui.EASING_INOUTQUINT | typeof gui.EASING_INOUTSINE | typeof gui.EASING_INQUAD | typeof gui.EASING_INQUART | typeof gui.EASING_INQUINT | typeof gui.EASING_INSINE | typeof gui.EASING_LINEAR | typeof gui.EASING_OUTBACK | typeof gui.EASING_OUTBOUNCE | typeof gui.EASING_OUTCIRC | typeof gui.EASING_OUTCUBIC | typeof gui.EASING_OUTELASTIC | typeof gui.EASING_OUTEXPO | typeof gui.EASING_OUTINBACK | typeof gui.EASING_OUTINBOUNCE | typeof gui.EASING_OUTINCIRC | typeof gui.EASING_OUTINCUBIC | typeof gui.EASING_OUTINELASTIC | typeof gui.EASING_OUTINEXPO | typeof gui.EASING_OUTINQUAD | typeof gui.EASING_OUTINQUART | typeof gui.EASING_OUTINQUINT | typeof gui.EASING_OUTINSINE | typeof gui.EASING_OUTQUAD | typeof gui.EASING_OUTQUART | typeof gui.EASING_OUTQUINT | typeof gui.EASING_OUTSINE;
+    type KeyboardType = typeof gui.KEYBOARD_TYPE_DEFAULT | typeof gui.KEYBOARD_TYPE_EMAIL | typeof gui.KEYBOARD_TYPE_NUMBER_PAD | typeof gui.KEYBOARD_TYPE_PASSWORD;
+    type NodeType = typeof gui.TYPE_BOX | typeof gui.TYPE_TEXT | typeof gui.TYPE_PIE | typeof gui.TYPE_PARTICLEFX | typeof gui.TYPE_CUSTOM;
+    type PieBounds = typeof gui.PIEBOUNDS_RECTANGLE | typeof gui.PIEBOUNDS_ELLIPSE;
+    type Pivot = typeof gui.PIVOT_CENTER | typeof gui.PIVOT_N | typeof gui.PIVOT_NE | typeof gui.PIVOT_E | typeof gui.PIVOT_SE | typeof gui.PIVOT_S | typeof gui.PIVOT_SW | typeof gui.PIVOT_W | typeof gui.PIVOT_NW;
+    type Playback = typeof gui.PLAYBACK_ONCE_FORWARD | typeof gui.PLAYBACK_ONCE_BACKWARD | typeof gui.PLAYBACK_ONCE_PINGPONG | typeof gui.PLAYBACK_LOOP_FORWARD | typeof gui.PLAYBACK_LOOP_BACKWARD | typeof gui.PLAYBACK_LOOP_PINGPONG;
+    type Property = typeof gui.PROP_POSITION | typeof gui.PROP_ROTATION | typeof gui.PROP_EULER | typeof gui.PROP_SCALE | typeof gui.PROP_COLOR | typeof gui.PROP_OUTLINE | typeof gui.PROP_SHADOW | typeof gui.PROP_SIZE | typeof gui.PROP_FILL_ANGLE | typeof gui.PROP_INNER_RADIUS | typeof gui.PROP_LEADING | typeof gui.PROP_TRACKING | typeof gui.PROP_SLICE9;
+    type SafeAreaMode = typeof gui.SAFE_AREA_NONE | typeof gui.SAFE_AREA_LONG | typeof gui.SAFE_AREA_SHORT | typeof gui.SAFE_AREA_BOTH;
+    type SizeMode = typeof gui.SIZE_MODE_MANUAL | typeof gui.SIZE_MODE_AUTO;
+    type XAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_LEFT | typeof gui.ANCHOR_RIGHT;
+    type YAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_TOP | typeof gui.ANCHOR_BOTTOM;
     /**
      * Adjust mode is used when the screen resolution differs from the project settings.
      * The fit mode ensures that the entire node is visible in the adjusted gui scene.
@@ -569,7 +583,7 @@ declare global {
      * });
      * ```
      */
-    function animate(node: Opaque<"node">, property: string | number & { readonly __brand: "gui.PROP_POSITION" } | number & { readonly __brand: "gui.PROP_ROTATION" } | number & { readonly __brand: "gui.PROP_EULER" } | number & { readonly __brand: "gui.PROP_SCALE" } | number & { readonly __brand: "gui.PROP_COLOR" } | number & { readonly __brand: "gui.PROP_OUTLINE" } | number & { readonly __brand: "gui.PROP_SHADOW" } | number & { readonly __brand: "gui.PROP_SIZE" } | number & { readonly __brand: "gui.PROP_FILL_ANGLE" } | number & { readonly __brand: "gui.PROP_INNER_RADIUS" } | number & { readonly __brand: "gui.PROP_LEADING" } | number & { readonly __brand: "gui.PROP_TRACKING" } | number & { readonly __brand: "gui.PROP_SLICE9" }, to: number | Vector3 | Vector4 | Quaternion, easing: number & { readonly __brand: "gui.EASING_INBACK" } | number & { readonly __brand: "gui.EASING_INBOUNCE" } | number & { readonly __brand: "gui.EASING_INCIRC" } | number & { readonly __brand: "gui.EASING_INCUBIC" } | number & { readonly __brand: "gui.EASING_INELASTIC" } | number & { readonly __brand: "gui.EASING_INEXPO" } | number & { readonly __brand: "gui.EASING_INOUTBACK" } | number & { readonly __brand: "gui.EASING_INOUTBOUNCE" } | number & { readonly __brand: "gui.EASING_INOUTCIRC" } | number & { readonly __brand: "gui.EASING_INOUTCUBIC" } | number & { readonly __brand: "gui.EASING_INOUTELASTIC" } | number & { readonly __brand: "gui.EASING_INOUTEXPO" } | number & { readonly __brand: "gui.EASING_INOUTQUAD" } | number & { readonly __brand: "gui.EASING_INOUTQUART" } | number & { readonly __brand: "gui.EASING_INOUTQUINT" } | number & { readonly __brand: "gui.EASING_INOUTSINE" } | number & { readonly __brand: "gui.EASING_INQUAD" } | number & { readonly __brand: "gui.EASING_INQUART" } | number & { readonly __brand: "gui.EASING_INQUINT" } | number & { readonly __brand: "gui.EASING_INSINE" } | number & { readonly __brand: "gui.EASING_LINEAR" } | number & { readonly __brand: "gui.EASING_OUTBACK" } | number & { readonly __brand: "gui.EASING_OUTBOUNCE" } | number & { readonly __brand: "gui.EASING_OUTCIRC" } | number & { readonly __brand: "gui.EASING_OUTCUBIC" } | number & { readonly __brand: "gui.EASING_OUTELASTIC" } | number & { readonly __brand: "gui.EASING_OUTEXPO" } | number & { readonly __brand: "gui.EASING_OUTINBACK" } | number & { readonly __brand: "gui.EASING_OUTINBOUNCE" } | number & { readonly __brand: "gui.EASING_OUTINCIRC" } | number & { readonly __brand: "gui.EASING_OUTINCUBIC" } | number & { readonly __brand: "gui.EASING_OUTINELASTIC" } | number & { readonly __brand: "gui.EASING_OUTINEXPO" } | number & { readonly __brand: "gui.EASING_OUTINQUAD" } | number & { readonly __brand: "gui.EASING_OUTINQUART" } | number & { readonly __brand: "gui.EASING_OUTINQUINT" } | number & { readonly __brand: "gui.EASING_OUTINSINE" } | number & { readonly __brand: "gui.EASING_OUTQUAD" } | number & { readonly __brand: "gui.EASING_OUTQUART" } | number & { readonly __brand: "gui.EASING_OUTQUINT" } | number & { readonly __brand: "gui.EASING_OUTSINE" } | Vector, duration: number, delay?: number, complete_function?: (self: unknown, node: unknown) => void, playback?: number & { readonly __brand: "gui.PLAYBACK_ONCE_FORWARD" } | number & { readonly __brand: "gui.PLAYBACK_ONCE_BACKWARD" } | number & { readonly __brand: "gui.PLAYBACK_ONCE_PINGPONG" } | number & { readonly __brand: "gui.PLAYBACK_LOOP_FORWARD" } | number & { readonly __brand: "gui.PLAYBACK_LOOP_BACKWARD" } | number & { readonly __brand: "gui.PLAYBACK_LOOP_PINGPONG" }): void;
+    function animate(node: Opaque<"node">, property: string | gui.Property, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay?: number, complete_function?: (self: unknown, node: unknown) => void, playback?: gui.Playback): void;
     /**
      * If one or more animations of the specified node is currently running (started by `gui.animate`), they will immediately be canceled.
      *
@@ -622,7 +636,7 @@ declare global {
      * gui.cancel_animations(node);
      * ```
      */
-    function cancel_animations(node: Opaque<"node">, property?: string | number & { readonly __brand: "gui.PROP_POSITION" } | number & { readonly __brand: "gui.PROP_ROTATION" } | number & { readonly __brand: "gui.PROP_EULER" } | number & { readonly __brand: "gui.PROP_SCALE" } | number & { readonly __brand: "gui.PROP_COLOR" } | number & { readonly __brand: "gui.PROP_OUTLINE" } | number & { readonly __brand: "gui.PROP_SHADOW" } | number & { readonly __brand: "gui.PROP_SIZE" } | number & { readonly __brand: "gui.PROP_FILL_ANGLE" } | number & { readonly __brand: "gui.PROP_INNER_RADIUS" } | number & { readonly __brand: "gui.PROP_LEADING" } | number & { readonly __brand: "gui.PROP_TRACKING" } | number & { readonly __brand: "gui.PROP_SLICE9" }): void;
+    function cancel_animations(node: Opaque<"node">, property?: string | gui.Property): void;
     /**
      * Cancels any running flipbook animation on the specified node.
      *
@@ -752,7 +766,7 @@ declare global {
      * const node_position = gui.get(node, "position");
      * ```
      */
-    function get(node: Opaque<"node">, property: string | Hash | number & { readonly __brand: "gui.PROP_POSITION" } | number & { readonly __brand: "gui.PROP_ROTATION" } | number & { readonly __brand: "gui.PROP_EULER" } | number & { readonly __brand: "gui.PROP_SCALE" } | number & { readonly __brand: "gui.PROP_COLOR" } | number & { readonly __brand: "gui.PROP_OUTLINE" } | number & { readonly __brand: "gui.PROP_SHADOW" } | number & { readonly __brand: "gui.PROP_SIZE" } | number & { readonly __brand: "gui.PROP_FILL_ANGLE" } | number & { readonly __brand: "gui.PROP_INNER_RADIUS" } | number & { readonly __brand: "gui.PROP_LEADING" } | number & { readonly __brand: "gui.PROP_TRACKING" } | number & { readonly __brand: "gui.PROP_SLICE9" }, options?: { index?: number }): unknown;
+    function get(node: Opaque<"node">, property: string | Hash | gui.Property, options?: { index?: number }): unknown;
     /**
      * Returns the adjust mode of a node.
      * The adjust mode defines how the node will adjust itself to screen
@@ -767,7 +781,7 @@ declare global {
      *
      * - `gui.ADJUST_STRETCH`
      */
-    function get_adjust_mode(node: Opaque<"node">): number & { readonly __brand: "gui.ADJUST_FIT" } | number & { readonly __brand: "gui.ADJUST_ZOOM" } | number & { readonly __brand: "gui.ADJUST_STRETCH" };
+    function get_adjust_mode(node: Opaque<"node">): gui.AdjustMode;
     /**
      * gets the node alpha
      *
@@ -792,7 +806,7 @@ declare global {
      *
      * - `gui.BLEND_SCREEN`
      */
-    function get_blend_mode(node: Opaque<"node">): number & { readonly __brand: "gui.BLEND_ALPHA" } | number & { readonly __brand: "gui.BLEND_ADD" } | number & { readonly __brand: "gui.BLEND_ADD_ALPHA" } | number & { readonly __brand: "gui.BLEND_MULT" } | number & { readonly __brand: "gui.BLEND_SCREEN" };
+    function get_blend_mode(node: Opaque<"node">): gui.BlendMode;
     /**
      * If node is set as an inverted clipping node, it will clip anything inside as opposed to outside.
      *
@@ -810,7 +824,7 @@ declare global {
      *
      * - `gui.CLIPPING_MODE_STENCIL`
      */
-    function get_clipping_mode(node: Opaque<"node">): number & { readonly __brand: "gui.CLIPPING_MODE_NONE" } | number & { readonly __brand: "gui.CLIPPING_MODE_STENCIL" };
+    function get_clipping_mode(node: Opaque<"node">): gui.ClippingMode;
     /**
      * If node is set as visible clipping node, it will be shown as well as clipping. Otherwise, it will only clip but not show visually.
      *
@@ -1036,7 +1050,7 @@ declare global {
      *
      * - `gui.PIEBOUNDS_ELLIPSE`
      */
-    function get_outer_bounds(node: Opaque<"node">): number & { readonly __brand: "gui.PIEBOUNDS_RECTANGLE" } | number & { readonly __brand: "gui.PIEBOUNDS_ELLIPSE" };
+    function get_outer_bounds(node: Opaque<"node">): gui.PieBounds;
     /**
      * Returns the outline color of the supplied node.
      * See gui.get_color for info how vectors encode color values.
@@ -1092,7 +1106,7 @@ declare global {
      *
      * - `gui.PIVOT_NW`
      */
-    function get_pivot(node: Opaque<"node">): number & { readonly __brand: "gui.PIVOT_CENTER" } | number & { readonly __brand: "gui.PIVOT_N" } | number & { readonly __brand: "gui.PIVOT_NE" } | number & { readonly __brand: "gui.PIVOT_E" } | number & { readonly __brand: "gui.PIVOT_SE" } | number & { readonly __brand: "gui.PIVOT_S" } | number & { readonly __brand: "gui.PIVOT_SW" } | number & { readonly __brand: "gui.PIVOT_W" } | number & { readonly __brand: "gui.PIVOT_NW" };
+    function get_pivot(node: Opaque<"node">): gui.Pivot;
     /**
      * Returns the position of the supplied node.
      *
@@ -1154,7 +1168,7 @@ declare global {
      *
      * - `gui.SIZE_MODE_AUTO`
      */
-    function get_size_mode(node: Opaque<"node">): number & { readonly __brand: "gui.SIZE_MODE_MANUAL" } | number & { readonly __brand: "gui.SIZE_MODE_AUTO" };
+    function get_size_mode(node: Opaque<"node">): gui.SizeMode;
     /**
      * Returns the slice9 configuration values for the node.
      *
@@ -1197,7 +1211,7 @@ declare global {
      *
      * @param node - node from which to get the type
      */
-    function get_type(node: Opaque<"node">): LuaMultiReturn<[number & { readonly __brand: "gui.TYPE_BOX" } | number & { readonly __brand: "gui.TYPE_TEXT" } | number & { readonly __brand: "gui.TYPE_PIE" } | number & { readonly __brand: "gui.TYPE_PARTICLEFX" } | number & { readonly __brand: "gui.TYPE_CUSTOM" }, number | undefined]>;
+    function get_type(node: Opaque<"node">): LuaMultiReturn<[gui.NodeType, number | undefined]>;
     /**
      * Returns `true` if a node is visible and `false` if it's not.
      * Invisible nodes are not rendered.
@@ -1224,7 +1238,7 @@ declare global {
      *
      * - `gui.ANCHOR_RIGHT`
      */
-    function get_xanchor(node: Opaque<"node">): number & { readonly __brand: "gui.ANCHOR_NONE" } | number & { readonly __brand: "gui.ANCHOR_LEFT" } | number & { readonly __brand: "gui.ANCHOR_RIGHT" };
+    function get_xanchor(node: Opaque<"node">): gui.XAnchor;
     /**
      * The y-anchor specifies how the node is moved when the game is run in a different resolution.
      *
@@ -1237,7 +1251,7 @@ declare global {
      *
      * - `gui.ANCHOR_BOTTOM`
      */
-    function get_yanchor(node: Opaque<"node">): number & { readonly __brand: "gui.ANCHOR_NONE" } | number & { readonly __brand: "gui.ANCHOR_TOP" } | number & { readonly __brand: "gui.ANCHOR_BOTTOM" };
+    function get_yanchor(node: Opaque<"node">): gui.YAnchor;
     /**
      * Hides the on-display touch keyboard on the device.
      */
@@ -1809,7 +1823,7 @@ declare global {
      * resource.release(atlas_id);
      * ```
      */
-    function set(node: Opaque<"node"> | Url, property: string | Hash | number & { readonly __brand: "gui.PROP_POSITION" } | number & { readonly __brand: "gui.PROP_ROTATION" } | number & { readonly __brand: "gui.PROP_EULER" } | number & { readonly __brand: "gui.PROP_SCALE" } | number & { readonly __brand: "gui.PROP_COLOR" } | number & { readonly __brand: "gui.PROP_OUTLINE" } | number & { readonly __brand: "gui.PROP_SHADOW" } | number & { readonly __brand: "gui.PROP_SIZE" } | number & { readonly __brand: "gui.PROP_FILL_ANGLE" } | number & { readonly __brand: "gui.PROP_INNER_RADIUS" } | number & { readonly __brand: "gui.PROP_LEADING" } | number & { readonly __brand: "gui.PROP_TRACKING" } | number & { readonly __brand: "gui.PROP_SLICE9" }, value?: number | Vector4 | Vector3 | Quaternion, options?: { index?: number; key?: Hash }): void;
+    function set(node: Opaque<"node"> | Url, property: string | Hash | gui.Property, value?: number | Vector4 | Vector3 | Quaternion, options?: { index?: number; key?: Hash }): void;
     /**
      * Sets the adjust mode on a node.
      * The adjust mode defines how the node will adjust itself to screen
@@ -1824,7 +1838,7 @@ declare global {
      *
      * - `gui.ADJUST_STRETCH`
      */
-    function set_adjust_mode(node: Opaque<"node">, adjust_mode: number & { readonly __brand: "gui.ADJUST_FIT" } | number & { readonly __brand: "gui.ADJUST_ZOOM" } | number & { readonly __brand: "gui.ADJUST_STRETCH" }): void;
+    function set_adjust_mode(node: Opaque<"node">, adjust_mode: gui.AdjustMode): void;
     /**
      * sets the node alpha
      *
@@ -1849,7 +1863,7 @@ declare global {
      *
      * - `gui.BLEND_SCREEN`
      */
-    function set_blend_mode(node: Opaque<"node">, blend_mode: number & { readonly __brand: "gui.BLEND_ALPHA" } | number & { readonly __brand: "gui.BLEND_ADD" } | number & { readonly __brand: "gui.BLEND_ADD_ALPHA" } | number & { readonly __brand: "gui.BLEND_MULT" } | number & { readonly __brand: "gui.BLEND_SCREEN" }): void;
+    function set_blend_mode(node: Opaque<"node">, blend_mode: gui.BlendMode): void;
     /**
      * If node is set as an inverted clipping node, it will clip anything inside as opposed to outside.
      *
@@ -1867,7 +1881,7 @@ declare global {
      *
      * - `gui.CLIPPING_MODE_STENCIL`
      */
-    function set_clipping_mode(node: Opaque<"node">, clipping_mode: number & { readonly __brand: "gui.CLIPPING_MODE_NONE" } | number & { readonly __brand: "gui.CLIPPING_MODE_STENCIL" }): void;
+    function set_clipping_mode(node: Opaque<"node">, clipping_mode: gui.ClippingMode): void;
     /**
      * If node is set as an visible clipping node, it will be shown as well as clipping. Otherwise, it will only clip but not show visually.
      *
@@ -2035,7 +2049,7 @@ declare global {
      *
      * - `gui.PIEBOUNDS_ELLIPSE`
      */
-    function set_outer_bounds(node: Opaque<"node">, bounds_mode: number & { readonly __brand: "gui.PIEBOUNDS_RECTANGLE" } | number & { readonly __brand: "gui.PIEBOUNDS_ELLIPSE" }): void;
+    function set_outer_bounds(node: Opaque<"node">, bounds_mode: gui.PieBounds): void;
     /**
      * Sets the outline color of the supplied node.
      * See gui.set_color for info how vectors encode color values.
@@ -2090,7 +2104,7 @@ declare global {
      *
      * - `gui.PIVOT_NW`
      */
-    function set_pivot(node: Opaque<"node">, pivot: number & { readonly __brand: "gui.PIVOT_CENTER" } | number & { readonly __brand: "gui.PIVOT_N" } | number & { readonly __brand: "gui.PIVOT_NE" } | number & { readonly __brand: "gui.PIVOT_E" } | number & { readonly __brand: "gui.PIVOT_SE" } | number & { readonly __brand: "gui.PIVOT_S" } | number & { readonly __brand: "gui.PIVOT_SW" } | number & { readonly __brand: "gui.PIVOT_W" } | number & { readonly __brand: "gui.PIVOT_NW" }): void;
+    function set_pivot(node: Opaque<"node">, pivot: gui.Pivot): void;
     /**
      * Sets the position of the supplied node.
      *
@@ -2129,7 +2143,7 @@ declare global {
      *
      * - `gui.SAFE_AREA_BOTH`
      */
-    function set_safe_area_mode(mode: number & { readonly __brand: "gui.SAFE_AREA_NONE" } | number & { readonly __brand: "gui.SAFE_AREA_LONG" } | number & { readonly __brand: "gui.SAFE_AREA_SHORT" } | number & { readonly __brand: "gui.SAFE_AREA_BOTH" }): void;
+    function set_safe_area_mode(mode: gui.SafeAreaMode): void;
     /**
      * Sets the scaling of the supplied node.
      *
@@ -2175,7 +2189,7 @@ declare global {
      *
      * - `gui.SIZE_MODE_AUTO`
      */
-    function set_size_mode(node: Opaque<"node">, size_mode: number & { readonly __brand: "gui.SIZE_MODE_MANUAL" } | number & { readonly __brand: "gui.SIZE_MODE_AUTO" }): void;
+    function set_size_mode(node: Opaque<"node">, size_mode: gui.SizeMode): void;
     /**
      * Set the slice9 configuration values for the node.
      *
@@ -2295,7 +2309,7 @@ declare global {
      *
      * - `gui.ANCHOR_RIGHT`
      */
-    function set_xanchor(node: Opaque<"node">, anchor: number & { readonly __brand: "gui.ANCHOR_NONE" } | number & { readonly __brand: "gui.ANCHOR_LEFT" } | number & { readonly __brand: "gui.ANCHOR_RIGHT" }): void;
+    function set_xanchor(node: Opaque<"node">, anchor: gui.XAnchor): void;
     /**
      * The y-anchor specifies how the node is moved when the game is run in a different resolution.
      *
@@ -2308,7 +2322,7 @@ declare global {
      *
      * - `gui.ANCHOR_BOTTOM`
      */
-    function set_yanchor(node: Opaque<"node">, anchor: number & { readonly __brand: "gui.ANCHOR_NONE" } | number & { readonly __brand: "gui.ANCHOR_TOP" } | number & { readonly __brand: "gui.ANCHOR_BOTTOM" }): void;
+    function set_yanchor(node: Opaque<"node">, anchor: gui.YAnchor): void;
     /**
      * Shows the on-display touch keyboard.
      * The specified type of keyboard is displayed if it is available on
@@ -2326,7 +2340,7 @@ declare global {
      * - `gui.KEYBOARD_TYPE_PASSWORD`
      * @param autoclose - if the keyboard should automatically close when clicking outside
      */
-    function show_keyboard(type: number & { readonly __brand: "gui.KEYBOARD_TYPE_DEFAULT" } | number & { readonly __brand: "gui.KEYBOARD_TYPE_EMAIL" } | number & { readonly __brand: "gui.KEYBOARD_TYPE_NUMBER_PAD" } | number & { readonly __brand: "gui.KEYBOARD_TYPE_PASSWORD" }, autoclose: boolean): void;
+    function show_keyboard(type: gui.KeyboardType, autoclose: boolean): void;
     /**
      * Stops the particle fx for a gui node
      *

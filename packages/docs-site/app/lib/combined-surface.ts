@@ -683,6 +683,31 @@ export function buildCombinedSurface(input: BuildCombinedSurfaceInput): Combined
       ...typedefs.map((t) => memberIdentity(ns, "TYPEDEF", t.name)),
     ];
 
+    // A constant-union alias is a TYPEDEF the emitter mints, so no ref-doc
+    // accumulator holds it and it carries no presence record. It joins `entries`
+    // — which is what puts its definition in the page's authoritative map — but
+    // stays out of the availability walk below, where an empty presence would
+    // read as "available in no version" and mint a false badge.
+    const declared = new Set(identities.map(symbolIdentityKey));
+    const aliasIdentities: ApiSymbolIdentity[] = [];
+    for (const key of Object.keys(input.signatures.versions[versions[0] ?? ""] ?? {})) {
+      const parts = key.split("\u0000");
+      if (parts[0] !== ns || parts[1] !== "TYPEDEF" || parts[3] !== "") continue;
+      const name = parts[2];
+      if (name === undefined) continue;
+      const identity = memberIdentity(ns, "TYPEDEF", name);
+      if (declared.has(symbolIdentityKey(identity))) continue;
+      // Presence comes from the ledger itself: the alias exists in exactly the
+      // versions whose signature store declares it, which is what keeps its
+      // authoritative signature resolvable and its badge honest.
+      for (const version of versions) {
+        if (input.signatures.versions[version]?.[key] !== undefined) {
+          seePresence(identity, version);
+        }
+      }
+      aliasIdentities.push(identity);
+    }
+
     const records = new Map<string, ApiAvailability>();
     for (const identity of identities) {
       const key = symbolIdentityKey(identity);
@@ -711,7 +736,7 @@ export function buildCombinedSurface(input: BuildCombinedSurfaceInput): Combined
         typedefs,
       },
       availability: { versions, records, transitions: transitionNames },
-      entries: identities.map(entryFor),
+      entries: [...identities, ...aliasIdentities].map(entryFor),
       ...(input.signatureStore ? { signatureStore: input.signatureStore } : {}),
       ...(input.translationStore ? { translationStore: input.translationStore } : {}),
     });

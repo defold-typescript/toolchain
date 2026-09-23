@@ -70,6 +70,46 @@ const surfaces: Surface[] = [
   };
 });
 
+// The `type <Name> = typeof <fqn> | ...;` aliases each surface declares, keyed
+// per target by the qualified name a signature spells. A row is declared in its
+// home module, which is not always the module that references it, so the map is
+// built across every surface of a target before any signature is read.
+const aliasMembersByTarget = new Map<string, ReadonlyMap<string, readonly string[]>>();
+for (const surface of surfaces) {
+  const declared =
+    (aliasMembersByTarget.get(surface.target) as Map<string, readonly string[]> | undefined) ??
+    new Map<string, readonly string[]>();
+  for (const match of surface.contents.matchAll(
+    /^\s*(?:export )?type ([A-Za-z0-9_]+) = (typeof [A-Za-z0-9_.]+(?: \| typeof [A-Za-z0-9_.]+)+);$/gm,
+  )) {
+    const members = (match[2] as string).split(" | ").map((arm) => arm.slice("typeof ".length));
+    declared.set(`${surface.module.namespace}.${match[1] as string}`, members);
+  }
+  aliasMembersByTarget.set(surface.target, declared);
+}
+
+// Every constant FQN a signature carries: the arms it brands inline, plus the
+// members of every alias it names. The indirection is the only thing this
+// resolves — an alias whose declaration drops a constant is still missing it.
+function effectiveBrands(surface: Surface, signature: string): ReadonlySet<string> {
+  const out = new Set<string>();
+  for (const match of signature.matchAll(/__brand: "([^"]+)"/g)) out.add(match[1] as string);
+  const declared = aliasMembersByTarget.get(surface.target);
+  if (declared !== undefined) {
+    for (const [qualified, members] of declared) {
+      if (
+        !new RegExp(`(?<![A-Za-z0-9_.])${qualified.replace(".", "\\.")}(?![A-Za-z0-9_])`).test(
+          signature,
+        )
+      ) {
+        continue;
+      }
+      for (const member of members) out.add(member);
+    }
+  }
+  return out;
+}
+
 const slots: ConstantSlot[] = surfaces.flatMap((surface) =>
   surface.module.functions.flatMap((fn) => [
     ...fn.parameters
@@ -135,8 +175,9 @@ describe("documented constant slots reach both shipped surfaces", () => {
       if (!surface.contents.includes(signature)) {
         missing.push(`${surface.target}: ${key} ledger signature is not in the declaration`);
       }
+      const branded = effectiveBrands(surface, signature);
       for (const fqn of resolveConstantSlotTokens(surface.module, key, surface.universe)) {
-        if (!signature.includes(`__brand: "${fqn}"`)) {
+        if (!branded.has(fqn)) {
           missing.push(`${surface.target}: ${key} does not brand ${fqn}`);
         }
       }
@@ -202,8 +243,9 @@ describe("documented constant slots reach both shipped surfaces", () => {
         missing.push(`${surface.target}: ${key} has no ledger signature`);
         continue;
       }
+      const branded = effectiveBrands(surface, signature);
       for (const fqn of documentedConstantKeyTokens(doc, surface.universe)) {
-        if (!signature.includes(`__brand: "${fqn}"`)) {
+        if (!branded.has(fqn)) {
           missing.push(`${surface.target}: ${key} does not brand its documented key ${fqn}`);
         }
       }

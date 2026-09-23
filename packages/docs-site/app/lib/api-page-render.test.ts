@@ -2238,3 +2238,123 @@ describe("listingPageMarkdown", () => {
     });
   }
 });
+
+describe("constant union alias entries", () => {
+  const EASING_SIG =
+    "type Easing = typeof gui.EASING_LINEAR | typeof gui.EASING_INOUTQUAD | typeof gui.EASING_OUTSINE";
+  const STATE_SIG = "type State = typeof graphics.STATE_BLEND | typeof graphics.STATE_DEPTH_TEST";
+
+  function aliasKey(namespace: string, name: string): string {
+    return symbolIdentityKey({ namespace, kind: "TYPEDEF", name, signature: "" });
+  }
+
+  function guiPage(): ApiPage {
+    return {
+      namespace: "gui",
+      route: "/api/gui",
+      brief: "",
+      module: {
+        namespace: "gui",
+        brief: "",
+        description: "GUI API.",
+        functions: [
+          {
+            name: "gui.animate",
+            brief: "",
+            description: "Animates a node.",
+            parameters: [{ name: "easing", doc: "", types: ["constant"], isOptional: false }],
+            returnValues: [],
+          },
+        ],
+        variables: [],
+        constants: [],
+        properties: [],
+        typedefs: [],
+      },
+      translations: {},
+      signatures: {},
+      category: "engine",
+      authoritativeSignatures: new Map([
+        [aliasKey("gui", "Easing"), `${EASING_SIG};`],
+        [
+          symbolIdentityKey({
+            namespace: "gui",
+            kind: "FUNCTION",
+            name: "gui.animate",
+            signature: normalizedFunctionSignature({
+              name: "gui.animate",
+              brief: "",
+              description: "",
+              parameters: [{ name: "easing", doc: "", types: ["constant"], isOptional: false }],
+              returnValues: [],
+            }),
+          }),
+          "gui.animate(easing: gui.Easing): void",
+        ],
+      ]),
+    };
+  }
+
+  function graphicsPage(): ApiPage {
+    return {
+      namespace: "graphics",
+      route: "/api/graphics",
+      brief: "",
+      module: {
+        namespace: "graphics",
+        brief: "",
+        description: "Graphics API.",
+        functions: [],
+        variables: [],
+        constants: [],
+        properties: [],
+        typedefs: [],
+      },
+      translations: {},
+      signatures: {},
+      category: "engine",
+      authoritativeSignatures: new Map([[aliasKey("graphics", "State"), `${STATE_SIG};`]]),
+    };
+  }
+
+  test("an alias typedef with no ref-doc entry still becomes a page type symbol", () => {
+    const symbols = apiModuleSymbols(guiPage());
+    const easing = symbols.find((s) => s.kind === "type" && s.name === "Easing");
+    expect(easing?.signature).toBe(EASING_SIG);
+  });
+
+  test("the alias renders a symbol entry whose body lists its members", () => {
+    const md = apiPageMarkdown(guiPage(), (text) => text);
+    expect(md).toContain(`### \`${EASING_SIG}\``);
+    for (const member of ["gui.EASING_LINEAR", "gui.EASING_INOUTQUAD", "gui.EASING_OUTSINE"]) {
+      expect(md).toContain(member);
+    }
+  });
+
+  test("a signature naming the alias links to that entry's own anchor", () => {
+    const page = guiPage();
+    const links = apiSignatureSymbolLinks([page, graphicsPage()], page);
+    const target = links.get("gui.Easing");
+    expect(target).toBe(`/api/gui#${slugify(EASING_SIG)}`);
+    const md = apiPageMarkdown(page, (text) => text);
+    expect(md).toContain(`### \`${EASING_SIG}\``);
+  });
+
+  test("a cross-namespace alias links to its home page, not the referencing one", () => {
+    const page = guiPage();
+    const links = apiSignatureSymbolLinks([page, graphicsPage()], page);
+    expect(links.get("graphics.State")).toBe(`/api/graphics#${slugify(STATE_SIG)}`);
+  });
+
+  test("page-local typedef shapes keep their existing bare-name heading target", () => {
+    const page: ApiPage = {
+      ...guiPage(),
+      module: {
+        ...guiPage().module,
+        typedefs: [{ name: "node", types: ["userdata"] }],
+      },
+    };
+    const links = apiSignatureSymbolLinks([page], page);
+    expect(links.get("node")).toEqual({ route: "/api/gui", heading: "node" });
+  });
+});
