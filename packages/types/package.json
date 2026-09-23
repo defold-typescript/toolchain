@@ -70,6 +70,7 @@
     "!scripts/fidelity-audit.ts",
     "!scripts/augmentation-namespaces.ts",
     "!scripts/example-pins.ts",
+    "!scripts/example-semantics.ts",
     "!scripts/example-surfaces.ts",
     "!scripts/example-typecheck.ts"
   ],

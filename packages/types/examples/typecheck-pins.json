@@ -1475,6 +1475,10 @@
       "text": "Argument of type 'string | undefined' is not assignable to parameter of type 'string'.   Type 'undefined' is not assignable to type 'string'."
     },
     {
+      "code": 2353,
+      "text": "Object literal may only specify known properties, and 'page_count' does not exist in type '{ type?: number; width?: number; height?: number; depth?: number; format?: number; flags?: number; max_mipmaps?: number; compression_type?: number; }'."
+    },
+    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
@@ -1501,6 +1505,14 @@
     {
       "code": 2559,
       "text": "Type '{ name: Hash<\"rgba\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
+    },
+    {
+      "code": 18048,
+      "text": "'buf' is possibly 'undefined'."
+    },
+    {
+      "code": 18048,
+      "text": "'buf' is possibly 'undefined'."
     },
     {
       "code": 18048,
@@ -3549,6 +3561,10 @@
       "text": "Argument of type 'string | undefined' is not assignable to parameter of type 'string'.   Type 'undefined' is not assignable to type 'string'."
     },
     {
+      "code": 2353,
+      "text": "Object literal may only specify known properties, and 'page_count' does not exist in type '{ type?: number; width?: number; height?: number; depth?: number; format?: number; flags?: number; max_mipmaps?: number; compression_type?: number; }'."
+    },
+    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
@@ -3575,6 +3591,14 @@
     {
       "code": 2559,
       "text": "Type '{ name: Hash<\"rgba\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
+    },
+    {
+      "code": 18048,
+      "text": "'buf' is possibly 'undefined'."
+    },
+    {
+      "code": 18048,
+      "text": "'buf' is possibly 'undefined'."
     },
     {
       "code": 18048,
@@ -5699,6 +5723,10 @@
       "text": "Argument of type 'string | undefined' is not assignable to parameter of type 'string'.   Type 'undefined' is not assignable to type 'string'."
     },
     {
+      "code": 2353,
+      "text": "Object literal may only specify known properties, and 'page_count' does not exist in type '{ type?: number; width?: number; height?: number; depth?: number; format?: number; flags?: number; max_mipmaps?: number; compression_type?: number; }'."
+    },
+    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
@@ -5725,6 +5753,14 @@
     {
       "code": 2559,
       "text": "Type '{ name: Hash<\"rgba\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
+    },
+    {
+      "code": 18048,
+      "text": "'buf' is possibly 'undefined'."
+    },
+    {
+      "code": 18048,
+      "text": "'buf' is possibly 'undefined'."
     },
     {
       "code": 18048,
@@ -7061,6 +7097,10 @@
       "text": "Argument of type 'string | undefined' is not assignable to parameter of type 'string'.   Type 'undefined' is not assignable to type 'string'."
     },
     {
+      "code": 2353,
+      "text": "Object literal may only specify known properties, and 'page_count' does not exist in type '{ type?: number; width?: number; height?: number; depth?: number; format?: number; flags?: number; max_mipmaps?: number; compression_type?: number; }'."
+    },
+    {
       "code": 2528,
       "text": "A module cannot have multiple default exports."
     },
@@ -7087,6 +7127,14 @@
     {
       "code": 2559,
       "text": "Type '{ name: Hash<\"rgba\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
+    },
+    {
+      "code": 18048,
+      "text": "'buf' is possibly 'undefined'."
+    },
+    {
+      "code": 18048,
+      "text": "'buf' is possibly 'undefined'."
     },
     {
       "code": 18048,

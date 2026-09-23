@@ -107,7 +107,7 @@ declare global {
      *     return { my_render_target: render.render_target("my_target", {}) };
      *   },
      *
-     *   update(self, dt) {
+     *   final(self) {
      *     // How to delete a render target:
      *     render.delete_render_target(self.my_render_target);
      *   },
@@ -474,7 +474,21 @@ declare global {
      * ```ts
      * export default defineRenderScript({
      *   init() {
-     *     return { target_right: render.render_target("right", {}) };
+     *     // render target buffer parameters
+     *     const color_params = {
+     *       format: graphics.TEXTURE_FORMAT_RGBA,
+     *       width: render.get_window_width(),
+     *       height: render.get_window_height(),
+     *       min_filter: graphics.TEXTURE_FILTER_LINEAR,
+     *       mag_filter: graphics.TEXTURE_FILTER_LINEAR,
+     *       u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,
+     *       v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,
+     *     };
+     *     return {
+     *       target_right: render.render_target("right", {
+     *         [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params,
+     *       }),
+     *     };
      *   },
      *
      *   update(self, dt) {
@@ -505,7 +519,21 @@ declare global {
      * ```ts
      * export default defineRenderScript({
      *   init() {
-     *     return { target_right: render.render_target("right", {}) };
+     *     // render target buffer parameters
+     *     const color_params = {
+     *       format: graphics.TEXTURE_FORMAT_RGBA,
+     *       width: render.get_window_width(),
+     *       height: render.get_window_height(),
+     *       min_filter: graphics.TEXTURE_FILTER_LINEAR,
+     *       mag_filter: graphics.TEXTURE_FILTER_LINEAR,
+     *       u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,
+     *       v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,
+     *     };
+     *     return {
+     *       target_right: render.render_target("right", {
+     *         [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params,
+     *       }),
+     *     };
      *   },
      *
      *   update(self, dt) {
