@@ -65,6 +65,37 @@ describe("htmlToDocText", () => {
     expect(htmlToDocText("")).toBe("");
     expect(htmlToDocText("   \n\t ")).toBe("");
   });
+
+  test("closes a truncated fence", () => {
+    const out = htmlToDocText(
+      "To check if your device supports 3D textures, use:\n```lua\nif graphics.TEXTURE_TYPE_3D ~= nil then\nreturn true\nend",
+    );
+    expect(out).toBe(
+      "To check if your device supports 3D textures, use:\n```lua\nif graphics.TEXTURE_TYPE_3D ~= nil then\nreturn true\nend\n```",
+    );
+  });
+
+  test("a balanced fence gains no closing fence", () => {
+    const out = htmlToDocText("before\n```lua\nlocal x = 1\n```\nafter");
+    expect(out).toBe("before\n```lua\nlocal x = 1\n```\nafter");
+  });
+
+  test("prose carrying no fence is unchanged", () => {
+    expect(htmlToDocText("<p>A</p><p>B</p>")).toBe("A\n\nB");
+  });
+
+  test("three fence markers gain exactly one closing fence", () => {
+    const out = htmlToDocText("```lua\na\n```\nmiddle\n```lua\nb");
+    expect(out).toBe("```lua\na\n```\nmiddle\n```lua\nb\n```");
+    expect(out.match(/^```/gm)).toHaveLength(4);
+  });
+
+  test("the appended fence survives */ escaping and blank-run folding", () => {
+    const out = htmlToDocText("<p>ends with */ here</p>\n\n\n```lua\nlocal x = 1");
+    expect(out).not.toContain("*/");
+    expect(out).toBe("ends with *\\/ here\n\n```lua\nlocal x = 1\n```");
+    expect(out.endsWith("\n```")).toBe(true);
+  });
 });
 
 describe("htmlToCodeText", () => {
