@@ -4,6 +4,7 @@ import {
   htmlToCodeText,
   htmlToDocText,
   renderDocComment,
+  splitExampleSources,
 } from "./doc-comment";
 
 describe("htmlToDocText", () => {
@@ -211,7 +212,10 @@ describe("renderDocComment", () => {
 
   test("an example emits an @example line, a ```lua fence, the body, and a closing fence", () => {
     expect(
-      renderDocComment({ summary: "Does a thing.", example: "local x = 1\nlocal y = 2" }),
+      renderDocComment({
+        summary: "Does a thing.",
+        examples: [{ text: "local x = 1\nlocal y = 2", lang: "lua" }],
+      }),
     ).toEqual([
       "/**",
       " * Does a thing.",
@@ -226,7 +230,7 @@ describe("renderDocComment", () => {
   });
 
   test("example body blank lines render as a bare ` *`", () => {
-    expect(renderDocComment({ summary: "", example: "a\n\nb" })).toEqual([
+    expect(renderDocComment({ summary: "", examples: [{ text: "a\n\nb", lang: "lua" }] })).toEqual([
       "/**",
       " * @example",
       " * ```lua",
@@ -240,7 +244,10 @@ describe("renderDocComment", () => {
 
   test("exampleLang ts emits a ```ts fence and the body", () => {
     expect(
-      renderDocComment({ summary: "Does a thing.", example: "const x = 1;", exampleLang: "ts" }),
+      renderDocComment({
+        summary: "Does a thing.",
+        examples: [{ text: "const x = 1;", lang: "ts" }],
+      }),
     ).toEqual([
       "/**",
       " * Does a thing.",
@@ -253,16 +260,71 @@ describe("renderDocComment", () => {
     ]);
   });
 
-  test("exampleLang lua (or absent) emits a ```lua fence — today's behavior", () => {
-    const lua = renderDocComment({ summary: "S.", example: "local x = 1", exampleLang: "lua" });
-    const absent = renderDocComment({ summary: "S.", example: "local x = 1" });
-    expect(lua).toEqual(absent);
+  test("lang lua emits a ```lua fence and never a ```ts one", () => {
+    const lua = renderDocComment({
+      summary: "S.",
+      examples: [{ text: "local x = 1", lang: "lua" }],
+    });
     expect(lua).toContain(" * ```lua");
     expect(lua).not.toContain(" * ```ts");
   });
 
+  test("an empty examples list renders no @example block", () => {
+    expect(renderDocComment({ summary: "Only.", examples: [] })).toEqual([
+      "/**",
+      " * Only.",
+      " */",
+    ]);
+  });
+
+  test("two examples emit two @example blocks, each with its own fence language", () => {
+    expect(
+      renderDocComment({
+        summary: "S.",
+        returns: "r out",
+        examples: [
+          { text: "const a = 1;", lang: "ts" },
+          { text: "local b = 2", lang: "lua" },
+        ],
+      }),
+    ).toEqual([
+      "/**",
+      " * S.",
+      " *",
+      " * @returns r out",
+      " * @example",
+      " * ```ts",
+      " * const a = 1;",
+      " * ```",
+      " * @example",
+      " * ```lua",
+      " * local b = 2",
+      " * ```",
+      " */",
+    ]);
+  });
+
+  test("a blank body is dropped from the list, and dropping them all renders nothing", () => {
+    expect(
+      renderDocComment({
+        summary: "S.",
+        examples: [
+          { text: "   ", lang: "ts" },
+          { text: "kept()", lang: "ts" },
+        ],
+      }),
+    ).toEqual(["/**", " * S.", " *", " * @example", " * ```ts", " * kept()", " * ```", " */"]);
+    expect(renderDocComment({ summary: "", examples: [{ text: "  ", lang: "ts" }] })).toEqual([]);
+  });
+
   test("example follows @returns", () => {
-    expect(renderDocComment({ summary: "S.", returns: "r out", example: "call()" })).toEqual([
+    expect(
+      renderDocComment({
+        summary: "S.",
+        returns: "r out",
+        examples: [{ text: "call()", lang: "lua" }],
+      }),
+    ).toEqual([
       "/**",
       " * S.",
       " *",
@@ -276,11 +338,9 @@ describe("renderDocComment", () => {
   });
 
   test("a blank example does not render an @example block", () => {
-    expect(renderDocComment({ summary: "Only.", example: "   " })).toEqual([
-      "/**",
-      " * Only.",
-      " */",
-    ]);
+    expect(
+      renderDocComment({ summary: "Only.", examples: [{ text: "   ", lang: "lua" }] }),
+    ).toEqual(["/**", " * Only.", " */"]);
   });
 
   test("a multi-line @param doc prefixes every continuation line with ` * `", () => {
@@ -409,7 +469,7 @@ describe("renderDocComment", () => {
         summary: "Sum.",
         params: [{ name: "a", doc: "an a" }],
         returns: "the result",
-        example: "local x = 1",
+        examples: [{ text: "local x = 1", lang: "lua" }],
       }),
     ).toEqual([
       "/**",
@@ -424,5 +484,77 @@ describe("renderDocComment", () => {
       " */",
     ]);
     expect(renderDocComment({ summary: "" })).toEqual([]);
+  });
+});
+
+describe("splitExampleSources", () => {
+  const block = (inner: string) => `<div class="codehilite"><pre><code>${inner}</code></pre></div>`;
+
+  test("two codehilite divs with prose between them yield two segments, prose on the second", () => {
+    const html = `${block("local a = 1")}Then update it:<br>${block("local b = 2")}`;
+    const segments = splitExampleSources(html);
+    expect(segments).toHaveLength(2);
+    expect(segments[0]?.code).toBe("local a = 1");
+    expect(segments[0]?.prose).toBe("");
+    expect(segments[1]?.code).toBe("local b = 2");
+    expect(segments[1]?.prose).toBe("Then update it:");
+    expect(segments[0]?.code).not.toContain("Then update it:");
+    expect(segments[1]?.code).not.toContain("Then update it:");
+  });
+
+  test("a closing fence welded to prose inside one div splits it, and no fence survives into code", () => {
+    const html = block(
+      "local a = 1\n```Update a texture from a buffer resource\n```lua\nlocal b = 2",
+    );
+    const segments = splitExampleSources(html);
+    expect(segments).toHaveLength(2);
+    expect(segments[0]?.code).toBe("local a = 1");
+    expect(segments[1]?.prose).toBe("Update a texture from a buffer resource");
+    expect(segments[1]?.code).toBe("local b = 2");
+    for (const segment of segments) expect(segment.code).not.toContain("```");
+  });
+
+  test("a ```lua opener reached while already in code closes the run and opens the next", () => {
+    const html = block("local a = 1\n```lua\nlocal b = 2");
+    const segments = splitExampleSources(html);
+    expect(segments).toHaveLength(2);
+    expect(segments[0]?.code).toBe("local a = 1");
+    expect(segments[1]?.code).toBe("local b = 2");
+    expect(segments[1]?.lang).toBe("lua");
+  });
+
+  test("a fence inside a prose region contributes a code segment of its own", () => {
+    const html = `${block("local a = 1")}More:<br>\`\`\`lua<br>local trailing = 3<br>\`\`\``;
+    const segments = splitExampleSources(html);
+    expect(segments).toHaveLength(2);
+    expect(segments[1]?.code).toBe("local trailing = 3");
+    expect(segments[1]?.prose).toBe("More:");
+  });
+
+  test("a one-segment blob returns code byte-identical to htmlToCodeText, prose included", () => {
+    const html = `Query a position:<br>${block("go.get(&quot;player&quot;, &quot;position&quot;)")}`;
+    const segments = splitExampleSources(html);
+    expect(segments).toHaveLength(1);
+    expect(segments[0]?.code).toBe(htmlToCodeText(html));
+    expect(segments[0]?.prose).toBe("");
+  });
+
+  test("a blob with no code block at all still returns the whole-blob htmlToCodeText", () => {
+    const html = "local only = 1<br>local more = 2";
+    const segments = splitExampleSources(html);
+    expect(segments).toHaveLength(1);
+    expect(segments[0]?.code).toBe(htmlToCodeText(html));
+  });
+
+  test("empty / whitespace-only input yields no segments", () => {
+    expect(splitExampleSources("")).toEqual([]);
+    expect(splitExampleSources("   \n\t ")).toEqual([]);
+  });
+
+  test("examplesHtmlToMarkdown is unchanged for one div plus prose, language class included", () => {
+    const html = `Query a position:<br>${block("go.get(&quot;x&quot;)")}`;
+    expect(examplesHtmlToMarkdown(html)).toBe('Query a position:\n\n```lua\ngo.get("x")\n```');
+    const json = `<div class="codehilite"><pre><code class="language-json">{ &quot;a&quot;: 1 }</code></pre></div>`;
+    expect(examplesHtmlToMarkdown(json)).toBe('```json\n{ "a": 1 }\n```');
   });
 });

@@ -790,7 +790,9 @@ declare global {
      *     msg.post("b#script", "my_data", { important_value: 1 });
      *   },
      * });
-     *
+     * ```
+     * @example
+     * ```ts
      * // b.script — Script of instance "b":
      * export default defineScript({
      *   init() {

@@ -102,7 +102,8 @@ library" link leads to `/api/base`; the per-namespace page leads with a
 
 ## Where ts-defold-types is arguably cleaner
 
-One deliberate trade-off runs the other way. The `@defold-typescript/types`
+One deliberate trade-off runs the other way, on the elements
+`@defold-typescript/types` has no hand-authored TypeScript body for. There its
 `@example` block extracts the ref-doc `examples` field verbatim into a single
 ```` ```lua ```` fence — including the example's leading prose sentence (e.g.
 *"How to create and initialize a buffer"*), which then sits **inside** the code
@@ -110,10 +111,16 @@ fence and is not valid Lua. `ts-defold-types` keeps the fence pure by putting th
 prose on the `@example` line itself.
 
 This is the documented slice-4 decision: the ref-doc ships the prose and the code
-as one `examples` HTML blob, and splitting prose from code reliably is brittle, so
-`@defold-typescript/types` keeps the sample intact and accepts a prose line inside
-the fence. Hover still renders the sample; the prose reads as a leading comment.
-Reversing this is explicitly out of scope for the parity work.
+as one `examples` HTML blob, so the untranslated path keeps the sample intact and
+accepts a prose line inside the fence. Hover still renders the sample; the prose
+reads as a leading comment. Reversing it for that path is out of scope for the
+parity work.
+
+A translated element does not take that path. Its blob is split into the
+examples it actually holds, each emitted as its own `@example` with a
+```` ```ts ```` fence and the prose between them left outside the code — so an
+element documenting three examples ships three blocks you can copy one at a
+time.
 
 ## Which surface fits your project
 

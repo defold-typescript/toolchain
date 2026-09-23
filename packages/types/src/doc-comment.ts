@@ -70,6 +70,41 @@ export function htmlToCodeText(html: string): string {
   return collapsed.split("*/").join("*\\/");
 }
 
+// One run of the `examples` fragment: the inner markup of a `<div
+// class="codehilite">` block, or the markup between two of them. `lang` is
+// meaningful on a code region only.
+interface ExampleRegion {
+  kind: "code" | "prose";
+  html: string;
+  lang: string;
+}
+
+// The one `codehilite` walk. Both the markdown lane (`examplesHtmlToMarkdown`)
+// and the store lane (`splitExampleSources`) read their regions from here, so
+// the two cannot disagree about where an example begins. `matched` is false for
+// a fragment carrying no block at all, which both lanes treat as one whole-blob
+// code run.
+function scanExampleRegions(html: string): { matched: boolean; regions: ExampleRegion[] } {
+  const regions: ExampleRegion[] = [];
+  const blocks = /<div class="codehilite">([\s\S]*?)<\/div>/gi;
+  let lastIndex = 0;
+  let matched = false;
+  for (let match = blocks.exec(html); match !== null; match = blocks.exec(html)) {
+    matched = true;
+    regions.push({ kind: "prose", html: html.slice(lastIndex, match.index), lang: "lua" });
+    const inner = match[1] ?? "";
+    regions.push({
+      kind: "code",
+      html: inner,
+      lang: /<code\b[^>]*\bclass="language-([^"\s]+)"/i.exec(inner)?.[1] ?? "lua",
+    });
+    lastIndex = match.index + match[0].length;
+  }
+  if (!matched) return { matched: false, regions: [{ kind: "code", html, lang: "lua" }] };
+  regions.push({ kind: "prose", html: html.slice(lastIndex), lang: "lua" });
+  return { matched: true, regions };
+}
+
 /**
  * Convert a ref-doc `examples` HTML fragment — prose interleaved with one or
  * more `<div class="codehilite">…</div>` syntax-highlight blocks — into Markdown:
@@ -83,30 +118,106 @@ export function htmlToCodeText(html: string): string {
 export function examplesHtmlToMarkdown(html: string): string {
   if (html.trim() === "") return "";
 
-  const parts: string[] = [];
-  const blocks = /<div class="codehilite">([\s\S]*?)<\/div>/gi;
-  let lastIndex = 0;
-  let matched = false;
-  for (let match = blocks.exec(html); match !== null; match = blocks.exec(html)) {
-    matched = true;
-    const prose = htmlToDocText(html.slice(lastIndex, match.index));
-    if (prose !== "") parts.push(prose);
-    const inner = match[1] ?? "";
-    const lang = /<code\b[^>]*\bclass="language-([^"\s]+)"/i.exec(inner)?.[1] ?? "lua";
-    const code = htmlToCodeText(inner);
-    if (code !== "") parts.push(`\`\`\`${lang}\n${code}\n\`\`\``);
-    lastIndex = match.index + match[0].length;
-  }
-
+  const { matched, regions } = scanExampleRegions(html);
   if (!matched) {
     const code = htmlToCodeText(html);
     return code === "" ? "" : `\`\`\`lua\n${code}\n\`\`\``;
   }
 
-  const trailing = htmlToDocText(html.slice(lastIndex));
-  if (trailing !== "") parts.push(trailing);
+  const parts: string[] = [];
+  for (const region of regions) {
+    if (region.kind === "prose") {
+      const prose = htmlToDocText(region.html);
+      if (prose !== "") parts.push(prose);
+      continue;
+    }
+    const code = htmlToCodeText(region.html);
+    if (code !== "") parts.push(`\`\`\`${region.lang}\n${code}\n\`\`\``);
+  }
 
   return parts.join("\n\n");
+}
+
+/** One example carved out of an `examples` fragment, with the prose leading it. */
+export interface ExampleSegment {
+  prose: string;
+  code: string;
+  lang: string;
+}
+
+// A line that opens a code run: ``` followed by a bare language token and
+// nothing else. Any other ``` line closes the run, its remainder being prose
+// upstream welded onto the fence.
+const FENCE_OPENER = /^```([A-Za-z0-9_+-]+)$/;
+
+/**
+ * Carve an `examples` HTML fragment into one segment per example it carries.
+ *
+ * A `<div class="codehilite">` block is a code region and the markup between
+ * two of them is a prose region; inside either, a ` ``` ` line switches between
+ * code and prose, and an opener reached while already in code ends the running
+ * example and starts the next. Upstream writes several examples both ways — as
+ * several blocks, and as its own Markdown fences inside one block — so both
+ * signals are read.
+ *
+ * A fragment that yields at most one segment returns the whole-blob
+ * `htmlToCodeText` verbatim, prose lines included. That is the string every
+ * stored translation is pinned against today, so a single-example element keeps
+ * its identity and cannot be re-keyed by this walk.
+ */
+export function splitExampleSources(html: string): ExampleSegment[] {
+  if (html.trim() === "") return [];
+
+  const { regions } = scanExampleRegions(html);
+  const segments: ExampleSegment[] = [];
+  let codeLines: string[] = [];
+  let proseLines: string[] = [];
+  let lang = "lua";
+
+  const flush = () => {
+    const code = trimBlankEdges(codeLines).join("\n");
+    codeLines = [];
+    if (code === "") return;
+    segments.push({ prose: trimBlankEdges(proseLines).join("\n"), code, lang });
+    proseLines = [];
+  };
+
+  for (const region of regions) {
+    const text = region.kind === "code" ? htmlToCodeText(region.html) : htmlToDocText(region.html);
+    let inCode = region.kind === "code";
+    if (region.kind === "code") lang = region.lang;
+    for (const line of text === "" ? [] : text.split("\n")) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith("```")) {
+        (inCode ? codeLines : proseLines).push(line);
+        continue;
+      }
+      const opener = FENCE_OPENER.exec(trimmed);
+      if (opener) {
+        if (inCode) flush();
+        inCode = true;
+        lang = opener[1] ?? lang;
+        continue;
+      }
+      flush();
+      inCode = false;
+      const remainder = trimmed.slice(3).trim();
+      if (remainder !== "") proseLines.push(remainder);
+    }
+    flush();
+  }
+
+  if (segments.length > 1) return segments;
+  const whole = htmlToCodeText(html);
+  if (whole === "") return [];
+  return [{ prose: "", code: whole, lang: segments[0]?.lang ?? "lua" }];
+}
+
+function trimBlankEdges(lines: readonly string[]): string[] {
+  const out = [...lines];
+  while (out.length > 0 && out[0]?.trim() === "") out.shift();
+  while (out.length > 0 && out[out.length - 1]?.trim() === "") out.pop();
+  return out;
 }
 
 export interface DocCommentParts {
@@ -117,8 +228,10 @@ export interface DocCommentParts {
   deprecated?: string;
   params?: { name: string; doc: string }[];
   returns?: string;
-  example?: string;
-  exampleLang?: "lua" | "ts";
+  // One entry per example the element documents, each rendered as its own
+  // `@example` block. An element whose ref-doc blob holds several examples
+  // carries several entries; a blank body is dropped.
+  examples?: { text: string; lang: "lua" | "ts" }[];
 }
 
 /**
@@ -129,14 +242,14 @@ export function renderDocComment(parts: DocCommentParts): string[] {
   const summaryLines = parts.summary.trim() === "" ? [] : parts.summary.split("\n");
   const params = (parts.params ?? []).filter((p) => p.doc.trim() !== "");
   const returns = parts.returns?.trim() ? parts.returns : "";
-  const example = parts.example?.trim() ? parts.example : "";
+  const examples = (parts.examples ?? []).filter((entry) => entry.text.trim() !== "");
   const deprecated = parts.deprecated;
 
   if (
     summaryLines.length === 0 &&
     params.length === 0 &&
     returns === "" &&
-    example === "" &&
+    examples.length === 0 &&
     deprecated === undefined
   ) {
     return [];
@@ -147,7 +260,8 @@ export function renderDocComment(parts: DocCommentParts): string[] {
     lines.push(line === "" ? " *" : ` * ${line}`);
   }
 
-  const hasTags = deprecated !== undefined || params.length > 0 || returns !== "" || example !== "";
+  const hasTags =
+    deprecated !== undefined || params.length > 0 || returns !== "" || examples.length > 0;
   if (summaryLines.length > 0 && hasTags) {
     lines.push(" *");
   }
@@ -173,10 +287,10 @@ export function renderDocComment(parts: DocCommentParts): string[] {
       lines.push(line === "" ? " *" : ` * ${line}`);
     }
   }
-  if (example !== "") {
+  for (const entry of examples) {
     lines.push(" * @example");
-    lines.push(` * \`\`\`${parts.exampleLang ?? "lua"}`);
-    for (const line of example.split("\n")) {
+    lines.push(` * \`\`\`${entry.lang}`);
+    for (const line of entry.text.split("\n")) {
       lines.push(line === "" ? " *" : ` * ${line}`);
     }
     lines.push(" * ```");
