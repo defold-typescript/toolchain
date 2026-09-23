@@ -918,6 +918,25 @@ export function apiModuleMarkdown(
  * exampleMarkdown }` records the API route lays out as prose-left / code-right
  * rows. `apiModuleMarkdown` stays the flat search/index projection.
  */
+// The `TYPEDEF` ledger entries a module owns that no ref-doc typedef declares:
+// the constant-union aliases. Returned as `[bare name, definition]` with the
+// trailing `;` dropped, so the signature reads like every other type symbol's.
+function authoritativeConstantUnionAliases(
+  authoritative: ReadonlyMap<string, string> | undefined,
+  module: ApiModule,
+): [string, string][] {
+  if (authoritative === undefined) return [];
+  const declared = new Set(module.typedefs.map((td) => td.name));
+  const out: [string, string][] = [];
+  for (const [key, signature] of authoritative) {
+    const [namespace, kind, name, rest] = key.split("\u0000");
+    if (namespace !== module.namespace || kind !== "TYPEDEF" || rest !== "") continue;
+    if (name === undefined || declared.has(name)) continue;
+    out.push([name, signature.replace(/;$/, "")]);
+  }
+  return out.sort((a, b) => a[0].localeCompare(b[0]));
+}
+
 export function apiModuleSymbols(
   page: Pick<
     ApiPage,
@@ -1103,6 +1122,21 @@ export function apiModuleSymbols(
     const av = joinAvailability(page.availability, m.namespace, "PROPERTY", prop.name, "");
     if (av) symbol.availability = av;
     symbols.push(symbol);
+  }
+
+  // A constant-union alias has no ref-doc typedef behind it — the emitter mints
+  // it — so its members reach the page only through the authoritative ledger.
+  // Rendering it as an ordinary type symbol is what gives the members a home
+  // once the signatures that used to spell them inline carry the name instead.
+  for (const [name, signature] of authoritativeConstantUnionAliases(authoritative, m)) {
+    symbols.push({
+      kind: "type",
+      name,
+      signature,
+      docMarkdown: "",
+      parameters: [],
+      returnValues: [],
+    });
   }
 
   for (const td of renderableTypedefs(m.typedefs)) {
