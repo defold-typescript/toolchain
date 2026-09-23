@@ -18,7 +18,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Fixed
 
-- **The `@example` shipped on each declaration now builds when you copy it out of a hover or the API reference.**
+- **Three defect classes are cleared from the `@example` shipped on each declaration, so many more of them compile when you copy one out of a hover or the API reference.** Examples outside these classes still carry type errors, mostly wrong property and argument types.
   - **Wrong script factory** — 21 [gui](/api/gui) and [render](/api/render) functions called `defineScript`, which a gui script or render script cannot import. Each now calls the factory its own script kind exports, `defineGuiScript` or `defineRenderScript`.
   - **Undeclared names** — 49 functions used names the example itself never introduced, leaving `srcbuffer`, `url` or `self` undefined. Each body now declares every ordinary local with the real API that produces it, and gets `self` the way real code does — from the script factory its own kind exports, or as a parameter where the example is documented across several kinds.
   - **Untyped helper parameters** — a helper in 16 examples left its parameters untyped, which the `strict: true` project [`init`](./init.md) scaffolds rejects with `TS7006`. Every parameter now carries the type the API it is passed to declares, or the `self` fields the body reads.
