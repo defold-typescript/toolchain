@@ -12,6 +12,7 @@ import {
   signatureTransitionNames,
   symbolIdentityKey,
   symbolNameKey,
+  type TranslationStore,
 } from "@defold-typescript/types";
 import {
   type ApiPage,
@@ -64,6 +65,15 @@ export interface BuildCombinedSurfaceInput {
    */
   readonly signatureStore?: SignatureStore;
   /**
+   * The merged `examples/translations.json` store. Combined carries it so the
+   * canonical `/api/<ns>` page renders the authored TypeScript wherever a stored
+   * hash resolves against the blob it is about to render; the accumulator takes
+   * one concrete version's `examples` blob verbatim, so the hash it is keyed by
+   * is that version's, and a blob resolving to no stored hash keeps its Lua
+   * fallback.
+   */
+  readonly translationStore?: TranslationStore;
+  /**
    * The committed `api-availability.json` lookup, consulted only for curated
    * facts (deprecation, replacement, Box2D backend) that the ref-doc snapshots
    * do not carry. Presence/`availableIn` is always recomputed from `surfaces`,
@@ -109,6 +119,8 @@ export interface CombinedNamespace {
   readonly entries: readonly CombinedEntry[];
   /** The authored override store this namespace's page renders its arms from. */
   readonly signatureStore?: SignatureStore;
+  /** The authored example store this namespace's page resolves its bodies from. */
+  readonly translationStore?: TranslationStore;
 }
 
 export interface CombinedSurface {
@@ -116,6 +128,8 @@ export interface CombinedSurface {
   readonly namespaces: readonly CombinedNamespace[];
   /** The merged authored override store every namespace above carries. */
   readonly signatureStore?: SignatureStore;
+  /** The merged authored example store every namespace above carries. */
+  readonly translationStore?: TranslationStore;
   /**
    * Set only on a {@link windowCombinedSurface} result: the `[from, to]` bounds
    * the membership was narrowed to. `versions` stays the full tracked axis
@@ -129,10 +143,11 @@ export interface CombinedSurface {
  * search machinery: an `engine` page routed at the canonical `/api/<namespace>`,
  * carrying the union `module` and the synthetic availability lookup. Combined is
  * the canonical unprefixed surface, so the projection owns the canonical route at
- * its source — no consumer re-maps it afterward. Combined omits example
- * translations (they render as their Lua fallback) but carries the authored
- * signature override store, so every hand-authored overload arm renders as its
- * own row. Pure
+ * its source — no consumer re-maps it afterward. Combined carries both authored
+ * stores: the example translation store, so a blob whose stored hash resolves
+ * renders its authored TypeScript and one that resolves to nothing renders its
+ * Lua fallback, and the signature override store, so every hand-authored overload
+ * arm renders as its own row. Pure
  * — the node-free counterpart the canonical `/api` routes, the search index, and
  * the symbol index all reuse so none re-walks the raw per-version surfaces.
  */
@@ -142,7 +157,7 @@ export function combinedNamespaceToApiPage(ns: CombinedNamespace): ApiPage {
     route: `/api/${ns.namespace}`,
     brief: ns.module.brief,
     module: ns.module,
-    translations: {},
+    translations: ns.translationStore ?? {},
     signatures: ns.signatureStore ?? {},
     category: "engine",
     availability: ns.availability,
@@ -698,6 +713,7 @@ export function buildCombinedSurface(input: BuildCombinedSurfaceInput): Combined
       availability: { versions, records, transitions: transitionNames },
       entries: identities.map(entryFor),
       ...(input.signatureStore ? { signatureStore: input.signatureStore } : {}),
+      ...(input.translationStore ? { translationStore: input.translationStore } : {}),
     });
   }
   result.sort((a, b) => a.namespace.localeCompare(b.namespace));
@@ -706,5 +722,6 @@ export function buildCombinedSurface(input: BuildCombinedSurfaceInput): Combined
     versions,
     namespaces: result,
     ...(input.signatureStore ? { signatureStore: input.signatureStore } : {}),
+    ...(input.translationStore ? { translationStore: input.translationStore } : {}),
   };
 }
