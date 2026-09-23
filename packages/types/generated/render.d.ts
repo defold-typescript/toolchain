@@ -410,7 +410,9 @@ declare global {
      *     render.draw(self.my_pred);
      *   },
      * });
-     *
+     * ```
+     * @example
+     * ```ts
      * // Or enable a render target by resource id:
      * export default defineRenderScript({
      *   update(self, dt) {
@@ -424,7 +426,9 @@ declare global {
      *     render.draw(self.my_pred);
      *   },
      * });
-     *
+     * ```
+     * @example
+     * ```ts
      * // Or bind a texture handle directly:
      * export default defineRenderScript({
      *   update(self, dt) {
@@ -959,7 +963,9 @@ declare global {
      *     render.set_render_target(render.RENDER_TARGET_DEFAULT);
      *   },
      * });
-     *
+     * ```
+     * @example
+     * ```ts
      * // Or set the render target by a render target resource identifier:
      * export default defineRenderScript({
      *   update(self, dt) {

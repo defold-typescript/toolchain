@@ -9,8 +9,12 @@ import {
   VERSIONED_MODULE_MANIFEST,
 } from "../scripts/regen";
 import { parseDefoldApiDoc } from "../src/api-doc";
-import { htmlToCodeText } from "../src/doc-comment";
-import { hashExampleSource, lookupTranslation } from "../src/example-store";
+import { htmlToCodeText, splitExampleSources } from "../src/doc-comment";
+import {
+  hashExampleSource,
+  lookupExampleTranslations,
+  lookupTranslation,
+} from "../src/example-store";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const EXAMPLES_DIR = resolve(PACKAGE_ROOT, "examples");
@@ -29,12 +33,14 @@ function allGeneratedSurfaces(): { id: string; dir: string }[] {
     .filter((surface) => existsSync(surface.dir));
 }
 
-// FQN -> every distinct post-htmlToCodeText example body carried by an element
-// with that name (overloads can carry differing bodies under one FQN). Spans the
-// editor manifest too: its emitted members carry translations, so their stored
-// source hashes need a fixture body to match against or they read as stale.
-// Spans the demoted surfaces for the same reason: a translation pinned to the
-// body an older target still ships is live for that target, not stale.
+// FQN -> every source a stored translation may legitimately be pinned to: an
+// element's whole-blob post-htmlToCodeText body, and — when its blob carries
+// several examples — each segment's body. Overloads can carry differing bodies
+// under one FQN, so this is a set per name. Spans the editor manifest too: its
+// emitted members carry translations, so their stored source hashes need a
+// fixture body to match against or they read as stale. Spans the demoted
+// surfaces for the same reason: a translation pinned to the body an older target
+// still ships is live for that target, not stale.
 function exampleSourcesByFqn(): Map<string, Set<string>> {
   const byFqn = new Map<string, Set<string>>();
   for (const entry of [
@@ -47,15 +53,50 @@ function exampleSourcesByFqn(): Map<string, Set<string>> {
       if (lua === "") continue;
       const set = byFqn.get(fn.name) ?? new Set<string>();
       set.add(lua);
+      const segments = splitExampleSources(fn.examples ?? "");
+      if (segments.length > 1) for (const segment of segments) set.add(segment.code);
       byFqn.set(fn.name, set);
     }
   }
   return byFqn;
 }
 
-// Every example-bearing element, identified `<fqn>:<sourceHash>`, that no stored
-// translation matches. Per element (not per FQN), so an overload-shadowed body
-// under an already-translated FQN is still visible.
+// Every example-bearing element across every manifest, with the hashes the emit
+// ladder consults for it: the whole-blob hash, and the per-segment hashes when
+// its blob carries several examples.
+function exampleElements(): { fqn: string; wholeHash: string; segmentHashes: string[] }[] {
+  const out: { fqn: string; wholeHash: string; segmentHashes: string[] }[] = [];
+  const seen = new Set<string>();
+  for (const entry of [
+    ...MODULE_MANIFEST,
+    ...EDITOR_MODULE_MANIFEST,
+    ...VERSIONED_MODULE_MANIFEST,
+  ]) {
+    for (const fn of parseDefoldApiDoc(entry.doc).functions) {
+      const lua = htmlToCodeText(fn.examples ?? "");
+      if (lua === "") continue;
+      const wholeHash = hashExampleSource(lua);
+      const key = `${fn.name}:${wholeHash}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const segments = splitExampleSources(fn.examples ?? "");
+      out.push({
+        fqn: fn.name,
+        wholeHash,
+        segmentHashes:
+          segments.length > 1 ? segments.map((segment) => hashExampleSource(segment.code)) : [],
+      });
+    }
+  }
+  return out;
+}
+
+// Every example-bearing element, identified `<fqn>:<sourceHash>` by its
+// whole-blob hash, that the emit ladder resolves to no authored body. Per
+// element (not per FQN), so an overload-shadowed body under an already-
+// translated FQN is still visible. Reads the ladder's own precedence, so an
+// element documented by per-segment entries counts as translated even though no
+// entry carries its whole-blob hash.
 function untranslatedElements(): string[] {
   const store = loadTranslations();
   const out: string[] = [];
@@ -65,6 +106,16 @@ function untranslatedElements(): string[] {
       const lua = htmlToCodeText(fn.examples ?? "");
       if (lua === "") continue;
       const sourceHash = hashExampleSource(lua);
+      const segments = splitExampleSources(fn.examples ?? "");
+      const perSegment =
+        segments.length > 1
+          ? lookupExampleTranslations(
+              store,
+              fn.name,
+              segments.map((segment) => hashExampleSource(segment.code)),
+            )
+          : null;
+      if (perSegment !== null) continue;
       if (lookupTranslation(store, fn.name, sourceHash) !== null) continue;
       const key = `${fn.name}:${sourceHash}`;
       if (seen.has(key)) continue;
@@ -92,6 +143,30 @@ describe("example translation drift guard", () => {
       );
     }
     expect(stale).toEqual([]);
+  });
+
+  test("no element that resolves to an authored body today loses one to segment re-keying", () => {
+    const store = loadTranslations();
+    const lost: string[] = [];
+    for (const element of exampleElements()) {
+      const perSegment = lookupExampleTranslations(store, element.fqn, element.segmentHashes);
+      const whole = lookupTranslation(store, element.fqn, element.wholeHash);
+      // The emit ladder's own precedence: per-segment when every segment
+      // resolves, else the whole-blob body. An element with neither is one the
+      // backfill goal still owns and ships its Lua fallback, as it does today.
+      if (perSegment === null && whole === null && element.segmentHashes.length > 0) {
+        const anySegment = element.segmentHashes.some(
+          (hash) => lookupTranslation(store, element.fqn, hash) !== null,
+        );
+        if (anySegment) lost.push(`${element.fqn}:${element.wholeHash}`);
+      }
+    }
+    if (lost.length > 0) {
+      throw new Error(
+        `these elements hold a segment translation but resolve to no complete body — split every segment or keep the whole-blob entry: ${lost.join(", ")}`,
+      );
+    }
+    expect(lost).toEqual([]);
   });
 
   test("the per-element untranslated set matches the committed examples/untranslated.json snapshot", () => {

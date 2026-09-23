@@ -13,9 +13,10 @@ import {
   htmlToCodeText,
   htmlToDocText,
   renderDocComment,
+  splitExampleSources,
 } from "./doc-comment";
 import type { TranslationStore } from "./example-store";
-import { hashExampleSource, lookupTranslation } from "./example-store";
+import { hashExampleSource, lookupExampleTranslations, lookupTranslation } from "./example-store";
 import { classifyUrlParameter, type UrlParameterTable } from "./url-parameters";
 
 export interface EmitOptions {
@@ -2587,11 +2588,29 @@ function functionDocLines(
   }));
   const onlyReturn = fn.returnValues.length === 1 ? fn.returnValues[0] : undefined;
   const lua = htmlToCodeText(fn.examples ?? "");
-  // A hand-authored TS translation pinned to this exact Lua flips the fence to
-  // ```ts; any hash mismatch (or absent translation) keeps the Lua fallback.
+  // A blob carrying several examples documents them as several, but only when
+  // every segment has an authored body: a partial resolve would drop the rest.
+  // Otherwise the whole-blob ladder stands — a hand-authored TS translation
+  // pinned to this exact Lua flips the fence to ```ts; any hash mismatch (or
+  // absent translation) keeps the Lua fallback.
+  const segments = splitExampleSources(fn.examples ?? "");
+  const perSegment =
+    segments.length > 1
+      ? lookupExampleTranslations(
+          translations,
+          fn.name,
+          segments.map((segment) => hashExampleSource(segment.code)),
+        )
+      : null;
   const ts = lua === "" ? null : lookupTranslation(translations, fn.name, hashExampleSource(lua));
-  const exampleParts: Pick<DocCommentParts, "example" | "exampleLang"> =
-    ts !== null ? { example: ts, exampleLang: "ts" } : lua !== "" ? { example: lua } : {};
+  const exampleParts: Pick<DocCommentParts, "examples"> =
+    perSegment !== null
+      ? { examples: perSegment.map((text) => ({ text, lang: "ts" as const })) }
+      : ts !== null
+        ? { examples: [{ text: ts, lang: "ts" }] }
+        : lua !== ""
+          ? { examples: [{ text: lua, lang: "lua" }] }
+          : {};
   const parts: DocCommentParts = {
     summary: htmlToDocText(summaryFor(fn.brief, fn.description)),
     params,

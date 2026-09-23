@@ -1,7 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { loadTranslations } from "../scripts/example-store-io";
 import { htmlToCodeText } from "./doc-comment";
-import { hashExampleSource, lookupTranslation, type TranslationStore } from "./example-store";
+import {
+  hashExampleSource,
+  lookupExampleTranslations,
+  lookupTranslation,
+  type TranslationStore,
+} from "./example-store";
 
 describe("hashExampleSource", () => {
   test("is stable for the same input", () => {
@@ -82,5 +87,32 @@ describe("translations.json array migration", () => {
         expect(lookupTranslation(store, fqn, translation.sourceHash)).toBe(translation.ts);
       }
     }
+  });
+});
+
+describe("lookupExampleTranslations", () => {
+  const store: TranslationStore = {
+    "resource.set_texture": [
+      { sourceHash: "s1", ts: "const a = 1;" },
+      { sourceHash: "s2", ts: "const b = 2;" },
+      { sourceHash: "s3", ts: "const c = 3;" },
+    ],
+  };
+
+  test("returns the bodies in the order the hashes are given, not store order", () => {
+    expect(lookupExampleTranslations(store, "resource.set_texture", ["s3", "s1"])).toEqual([
+      "const c = 3;",
+      "const a = 1;",
+    ]);
+  });
+
+  test("returns null when any one hash is missing, so a partial split never half-emits", () => {
+    expect(lookupExampleTranslations(store, "resource.set_texture", ["s1", "nope"])).toBeNull();
+    expect(lookupExampleTranslations(store, "resource.set_texture", ["nope"])).toBeNull();
+  });
+
+  test("returns null for an unknown FQN and for an empty hash list", () => {
+    expect(lookupExampleTranslations(store, "no.such", ["s1"])).toBeNull();
+    expect(lookupExampleTranslations(store, "resource.set_texture", [])).toBeNull();
   });
 });
