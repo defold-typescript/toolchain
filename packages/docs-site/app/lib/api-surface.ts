@@ -11,12 +11,14 @@ import {
   hashExampleSource,
   htmlToCodeText,
   htmlToDocText,
+  lookupExampleTranslations,
   lookupSignature,
   lookupTranslation,
   luaMultiReturn,
   normalizedFunctionSignature,
   type SignatureStore,
   type SlotTypes,
+  splitExampleSources,
   symbolIdentityKey,
   symbolNameKey,
   type TranslationStore,
@@ -747,11 +749,25 @@ export function exampleMarkdownFor(
   translations: TranslationStore = {},
 ): string | undefined {
   if (!fn.examples) return undefined;
+  const segments = splitExampleSources(fn.examples);
+  const perSegment =
+    segments.length > 1
+      ? lookupExampleTranslations(
+          translations,
+          fn.name,
+          segments.map((segment) => hashExampleSource(segment.code)),
+        )
+      : null;
+  if (perSegment !== null) return perSegment.map(tsFence).join("\n\n");
   const lua = htmlToCodeText(fn.examples);
   const ts = lua === "" ? null : lookupTranslation(translations, fn.name, hashExampleSource(lua));
-  if (ts !== null) return `\`\`\`ts\n${ts.replace(/\n+$/, "")}\n\`\`\``;
+  if (ts !== null) return tsFence(ts);
   const converted = examplesHtmlToMarkdown(fn.examples);
   return converted === "" ? undefined : converted;
+}
+
+function tsFence(body: string): string {
+  return `\`\`\`ts\n${body.replace(/\n+$/, "")}\n\`\`\``;
 }
 
 export function apiModuleMarkdown(

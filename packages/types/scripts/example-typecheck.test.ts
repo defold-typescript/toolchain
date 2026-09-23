@@ -110,6 +110,23 @@ describe("the gate against the committed pins", () => {
     for (const timing of timings) expect(timing.units).toBeGreaterThan(0);
   });
 
+  test("no translation declares two default exports, on any surface", () => {
+    const offenders: string[] = [];
+    for (const [identity, diagnostics] of computed) {
+      if (diagnostics.some((diagnostic) => diagnostic.code === 2528)) offenders.push(identity);
+    }
+    if (offenders.length > 0) {
+      throw new Error(
+        "these translations stack several `export default` in one body — an element whose ref-doc blob carries several examples is stored as one entry per example, not one concatenation:\n" +
+          `${offenders
+            .slice(0, 20)
+            .map((identity) => `  ${identity}`)
+            .join("\n")}${offenders.length > 20 ? `\n  +${offenders.length - 20} more` : ""}`,
+      );
+    }
+    expect(offenders).toEqual([]);
+  });
+
   test("every stored translation reaches the gate on at least one surface", () => {
     const stranded: string[] = [];
     for (const [fqn, entries] of Object.entries(store)) {

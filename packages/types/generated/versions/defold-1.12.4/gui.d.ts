@@ -529,7 +529,9 @@ declare global {
      * const node = gui.get_node("my_node");
      * gui.set_color(node, vmath.vector4(0, 0, 0, 0)); // node is fully transparent
      * gui.animate(node, gui.PROP_COLOR, vmath.vector4(1, 1, 1, 1), gui.EASING_INOUTQUAD, 0.5); // start animation
-     *
+     * ```
+     * @example
+     * ```ts
      * // How to start a sequenced animation where the node fades in to white during 0.5
      * // seconds, stays visible for 2 seconds and then fades out:
      * function on_animation_done(self: unknown, node: unknown) {
@@ -547,7 +549,9 @@ declare global {
      *     gui.animate(my_node, gui.PROP_COLOR, vmath.vector4(1, 1, 1, 1), gui.EASING_INOUTQUAD, 0.5, 0.0, on_animation_done);
      *   },
      * });
-     *
+     * ```
+     * @example
+     * ```ts
      * // How to animate a node's y position using a crazy custom easing curve:
      * export default defineGuiScript({
      *   init(self) {
