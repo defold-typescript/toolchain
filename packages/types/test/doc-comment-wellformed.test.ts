@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync } from "node:fs";
 import { resolve } from "node:path";
-import { offGridLines, unbalancedFenceBlocks } from "./jsdoc-wellformed";
+import { bareListMarkerLines, offGridLines, unbalancedFenceBlocks } from "./jsdoc-wellformed";
 
 const GENERATED = resolve(import.meta.dir, "..", "generated");
 
@@ -48,6 +48,23 @@ describe("generated JSDoc well-formedness", () => {
         .join("\n");
       throw new Error(
         `${offending.length} JSDoc block(s) leave a fence open — run \`bun run regen\`:\n${sample}`,
+      );
+    }
+    expect(offending).toEqual([]);
+  });
+
+  test.each(
+    collectDts(GENERATED).map((path) => [path.slice(GENERATED.length + 1), path] as const),
+  )("%s: no /** */ line holds a list marker without its value", async (_label, path) => {
+    const content = await Bun.file(path).text();
+    const offending = bareListMarkerLines(content);
+    if (offending.length > 0) {
+      const sample = offending
+        .slice(0, 5)
+        .map((o) => `  line ${o.line}: ${JSON.stringify(o.text)}`)
+        .join("\n");
+      throw new Error(
+        `${offending.length} JSDoc list marker(s) left without a value — run \`bun run regen\`:\n${sample}`,
       );
     }
     expect(offending).toEqual([]);

@@ -82,109 +82,67 @@ declare global {
      * @param path - The path to the resource.
      * @param table - A table containing info about how to create the atlas. Supported entries:
      *
-     * -
-     *
-     * `texture`
+     * - `texture`
      * string | hash the path to the texture resource, e.g "/main/my_texture.texturec"
      *
-     * -
-     *
-     * `animations`
+     * - `animations`
      * table a list of the animations in the atlas. Supports the following fields:
      *
-     * -
-     *
-     * `id`
+     * - `id`
      * string the id of the animation, used in e.g sprite.play_animation
      *
-     * -
-     *
-     * `width`
+     * - `width`
      * number the width of the animation
      *
-     * -
-     *
-     * `height`
+     * - `height`
      * number the height of the animation
      *
-     * -
-     *
-     * `frame_start`
+     * - `frame_start`
      * number index to the first geometry of the animation. Indices are lua based and must be in the range of 1 .. in atlas.
      *
-     * -
-     *
-     * `frame_end`
+     * - `frame_end`
      * number index to the last geometry of the animation (non-inclusive). Indices are lua based and must be in the range of 1 .. in atlas.
      *
-     * -
-     *
-     * `playback`
+     * - `playback`
      * constant optional playback mode of the animation, the default value is go.PLAYBACK_ONCE_FORWARD
      *
-     * -
-     *
-     * `fps`
+     * - `fps`
      * number optional fps of the animation, the default value is 30
      *
-     * -
-     *
-     * `flip_vertical`
+     * - `flip_vertical`
      * boolean optional flip the animation vertically, the default value is false
      *
-     * -
-     *
-     * `flip_horizontal`
+     * - `flip_horizontal`
      * boolean optional flip the animation horizontally, the default value is false
      *
-     * -
-     *
-     * `geometries`
+     * - `geometries`
      * table A list of the geometries that should map to the texture data. Supports the following fields:
      *
-     * -
-     *
-     * `id`
+     * - `id`
      * string The name of the geometry. Used when matching animations between multiple atlases
      *
-     * -
-     *
-     * `width`
+     * - `width`
      * number The width of the image the sprite geometry represents
      *
-     * -
-     *
-     * `height`
+     * - `height`
      * number The height of the image the sprite geometry represents
      *
-     * -
-     *
-     * `pivot_x`
+     * - `pivot_x`
      * number The pivot x value of the image in unit coords. (0,0) is upper left corner, (1,1) is bottom right. Default is 0.5.
      *
-     * -
-     *
-     * `pivot_y`
+     * - `pivot_y`
      * number The pivot y value of the image in unit coords. (0,0) is upper left corner, (1,1) is bottom right. Default is 0.5.
      *
-     * -
-     *
-     * `rotated`
+     * - `rotated`
      * boolean Whether the image is rotated 90 degrees counter-clockwise in the atlas. This affects UV coordinate generation for proper rendering. Default is false.
      *
-     * -
-     *
-     * `vertices`
+     * - `vertices`
      * table a list of the vertices in image space of the geometry in the form {px0, py0, px1, py1, ..., pxn, pyn}
      *
-     * -
-     *
-     * `uvs`
+     * - `uvs`
      * table a list of the uv coordinates in image space of the geometry in the form of {u0, v0, u1, v1, ..., un, vn}.
      *
-     * -
-     *
-     * `indices`
+     * - `indices`
      * table a list of the indices of the geometry in the form {i0, i1, i2, ..., in}. Each tripe in the list represents a triangle.
      * @returns Returns the atlas resource path
      * @example
@@ -251,14 +209,10 @@ declare global {
      * @param path - The path to the resource.
      * @param table - A table containing info about how to create the buffer. Supported entries:
      *
-     * -
-     *
-     * `buffer`
+     * - `buffer`
      * buffer the buffer to bind to this resource
      *
-     * -
-     *
-     * `transfer_ownership`
+     * - `transfer_ownership`
      * boolean optional flag to determine whether or not the resource should take over ownership of the buffer object (default true)
      * @returns Returns the buffer resource path
      * @example
@@ -855,12 +809,9 @@ declare global {
      *
      * - `resource.BUFFER_TYPE_DEPTH`
      *
-     * -
-     * `resource.BUFFER_TYPE_STENCIL`
+     * - `resource.BUFFER_TYPE_STENCIL`
      *
-     * -
-     *
-     * `texture`
+     * - `texture`
      * hash The hashed path to the attachment texture resource. This field is only available if the render target passed in is a resource.
      * @example
      * Get the metadata from a render target resource
@@ -1126,79 +1077,49 @@ declare global {
      * @param path - The path to the atlas resource
      * @param table - A table containing info about the atlas. Supported entries:
      *
-     * -
-     *
-     * `texture`
+     * - `texture`
      * string | hash the path to the texture resource, e.g "/main/my_texture.texturec"
      *
-     * -
-     *
-     * `animations`
+     * - `animations`
      * table a list of the animations in the atlas. Supports the following fields:
      *
-     * -
-     *
-     * `id`
+     * - `id`
      * string the id of the animation, used in e.g sprite.play_animation
      *
-     * -
-     *
-     * `width`
+     * - `width`
      * number the width of the animation
      *
-     * -
-     *
-     * `height`
+     * - `height`
      * number the height of the animation
      *
-     * -
-     *
-     * `frame_start`
+     * - `frame_start`
      * number index to the first geometry of the animation. Indices are lua based and must be in the range of 1 .. in atlas.
      *
-     * -
-     *
-     * `frame_end`
+     * - `frame_end`
      * number index to the last geometry of the animation (non-inclusive). Indices are lua based and must be in the range of 1 .. in atlas.
      *
-     * -
-     *
-     * `playback`
+     * - `playback`
      * constant optional playback mode of the animation, the default value is go.PLAYBACK_ONCE_FORWARD
      *
-     * -
-     *
-     * `fps`
+     * - `fps`
      * number optional fps of the animation, the default value is 30
      *
-     * -
-     *
-     * `flip_vertical`
+     * - `flip_vertical`
      * boolean optional flip the animation vertically, the default value is false
      *
-     * -
-     *
-     * `flip_horizontal`
+     * - `flip_horizontal`
      * boolean optional flip the animation horizontally, the default value is false
      *
-     * -
-     *
-     * `geometries`
+     * - `geometries`
      * table A list of the geometries that should map to the texture data. Supports the following fields:
      *
-     * -
-     *
-     * `vertices`
+     * - `vertices`
      * table a list of the vertices in texture space of the geometry in the form {px0, py0, px1, py1, ..., pxn, pyn}
      *
-     * -
-     *
-     * `uvs`
+     * - `uvs`
      * table a list of the uv coordinates in texture space of the geometry in the form of {u0, v0, u1, v1, ..., un, vn}
      *
-     * -
-     *
-     * `indices`
+     * - `indices`
      * table a list of the indices of the geometry in the form {i0, i1, i2, ..., in}. Each tripe in the list represents a triangle.
      * @example
      * Add a new animation to an existing atlas
@@ -1264,9 +1185,7 @@ declare global {
      * @param buffer - The resource buffer
      * @param table - A table containing info about how to set the buffer. Supported entries:
      *
-     * -
-     *
-     * `transfer_ownership`
+     * - `transfer_ownership`
      * boolean optional flag to determine whether or not the resource should take over ownership of the buffer object (default false)
      * @example
      * ```ts
