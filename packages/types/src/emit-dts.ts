@@ -1427,6 +1427,35 @@ export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
   ["material.get_vertex_attributes:return:table:value", ATTRIBUTE_VALUE_TS],
 ]);
 
+// A field the engine accepts on an option bag whose `<dl>` upstream otherwise
+// documents in full. Every other authored table here retypes, marks optional or
+// suppresses a slot the parser already recovered; this one supplies a member
+// upstream omits, leaving the documented fields parser-authoritative so an
+// upstream edit to any of them lands without a hand-maintained restatement.
+//
+// `evidence` pins where upstream itself shows the field. applyFieldAdditions
+// throws once the parse recovers it, so upstream documenting the field reds
+// here and the entry is deleted rather than re-pinned.
+//
+// Keyed `<element>:<kind>:<slot>`, the TABLE_SLOT_CURATIONS shape.
+export interface TableFieldAddition {
+  readonly field: TableField;
+  readonly evidence: readonly string[];
+}
+
+export const TABLE_SLOT_FIELD_ADDITIONS: ReadonlyMap<string, TableFieldAddition> = new Map([
+  [
+    "resource.create_texture:param:table",
+    {
+      field: { name: "page_count", types: ["number"], optional: true },
+      evidence: [
+        "the array-texture example on this element creates with `page_count = 5`",
+        "resource.get_texture_info documents `page_count` as the texture array's page count",
+      ],
+    },
+  ],
+]);
+
 // A return-slot field upstream documents as platform-gated or nil-valued while
 // declaring it like any other. Lua removes a key assigned `nil`, so "might be
 // nil if not available" and "only available on iOS and Android" describe the
@@ -1514,6 +1543,26 @@ export function applyFieldOptionalityCorrections(
     );
   }
   return corrected;
+}
+
+// Append the member TABLE_SLOT_FIELD_ADDITIONS supplies for this slot, after
+// every field the parser recovered. Throws on an addition whose field the parse
+// already produced: upstream has documented it, and the entry is stale.
+// Returns a new array; never mutates the parser's result.
+export function applyFieldAdditions(
+  elementName: string,
+  slotKind: "param" | "return" | undefined,
+  slotName: string | undefined,
+  fields: readonly TableField[],
+): TableField[] {
+  if (slotKind === undefined || slotName === undefined) return [...fields];
+  const key = tableSlotKey(elementName, slotKind, slotName);
+  const addition = TABLE_SLOT_FIELD_ADDITIONS.get(key);
+  if (addition === undefined) return [...fields];
+  if (fields.some((field) => field.name === addition.field.name)) {
+    throw new Error(`field addition names a recovered field: ${key}:${addition.field.name}`);
+  }
+  return [...fields, addition.field];
 }
 
 // Pin a parser-recovered field's TS type from TABLE_FIELD_TYPE_OVERRIDES,
@@ -2911,7 +2960,8 @@ function mapSlotUnion(
       } else {
         const parsed = parseTableFields(doc, resolver, slotName);
         if (parsed !== null) {
-          const nested = applyNestedFieldCurations(elementName, slotKind, slotName, parsed);
+          const added = applyFieldAdditions(elementName, slotKind, slotName, parsed);
+          const nested = applyNestedFieldCurations(elementName, slotKind, slotName, added);
           const typed = applyFieldTypeOverrides(elementName, slotKind, slotName, nested);
           const fields = applyFieldOptionalityCorrections(elementName, slotKind, slotName, typed);
           const object = inlineTableType(fields, mapType, optionalFields);
