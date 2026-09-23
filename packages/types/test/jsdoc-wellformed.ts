@@ -26,6 +26,33 @@ export function unbalancedFenceBlocks(content: string): { line: number; markers:
   return offending;
 }
 
+/**
+ * `/** *\/` lines holding a list marker with no value beside it, keyed by line.
+ * An editor hover renders such a line as an empty bullet and shows the value it
+ * lost as loose prose below the list. Lines inside a fence are left alone.
+ */
+export function bareListMarkerLines(content: string): { line: number; text: string }[] {
+  const offending: { line: number; text: string }[] = [];
+  const lines = content.split("\n");
+  let inBlock = false;
+  let inFence = false;
+  lines.forEach((raw, index) => {
+    const trimmed = raw.trimStart();
+    if (!inBlock) {
+      if (trimmed.startsWith("/**")) {
+        inBlock = !raw.includes("*/");
+        inFence = false;
+      }
+      return;
+    }
+    const body = trimmed.replace(/^\*+\s?/, "").trim();
+    if (body.startsWith("```")) inFence = !inFence;
+    else if (!inFence && body === "-") offending.push({ line: index + 1, text: raw });
+    if (raw.includes("*/")) inBlock = false;
+  });
+  return offending;
+}
+
 export function offGridLines(content: string): { line: number; text: string }[] {
   const offending: { line: number; text: string }[] = [];
   const lines = content.split("\n");

@@ -3842,3 +3842,40 @@ describe("rendered /api pages keep every symbol heading outside a code fence", (
     expect(offenders).toEqual([]);
   });
 });
+
+describe("rendered /api pages keep every list marker beside its value", () => {
+  // A marker alone on its line renders as an empty bullet and drops the value
+  // it described out of the list. Lines inside a fence are sample source.
+  const strandedMarkers = (md: string): number[] => {
+    const lines: number[] = [];
+    let open = false;
+    md.split("\n").forEach((line, index) => {
+      if (line.startsWith("```")) {
+        open = !open;
+        return;
+      }
+      if (!open && line.trim() === "-") lines.push(index + 1);
+    });
+    return lines;
+  };
+
+  const surfaces: { label: string; pages: ApiPage[] }[] = [
+    { label: "canonical", pages: canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR) },
+    ...versionsWithDiskFixtures(REAL_TYPES_DIR).map((version) => ({
+      label: version.id,
+      pages: loadApiSurfaceForVersion(REAL_TYPES_DIR, version.id),
+    })),
+  ];
+
+  test.each(
+    surfaces.map((surface) => [surface.label, surface] as const),
+  )("%s: no rendered list marker is left without a value", (_label, surface) => {
+    const offenders: string[] = [];
+    for (const page of surface.pages) {
+      for (const line of strandedMarkers(apiModuleMarkdown(page, page.translations))) {
+        offenders.push(`${page.route}:${line}`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+});
