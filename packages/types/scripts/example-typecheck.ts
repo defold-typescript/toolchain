@@ -288,6 +288,27 @@ export function exampleUnit(
  */
 const ENTRY_RESOLUTION_CODES = new Set([2305, 2306, 2307]);
 
+/**
+ * The diagnostic codes for a binding the scaffold's own strictness leaves
+ * implicitly `any`: the three parameter shapes (ordinary `7006`, destructured
+ * `7031`, rest `7019`) plus the variable and member shapes (`7005`, `7008`,
+ * `7034`). Return and accessor shapes (`7010`, `7011`, `7032`) stay out — the
+ * pins hold no `70xx` diagnostic, so widening the set would take on territory
+ * no measurement supports.
+ */
+export const IMPLICIT_ANY_CODES = new Set([7005, 7006, 7008, 7019, 7031, 7034]);
+
+/**
+ * The diagnostics an example's body carries that the implicit-any class
+ * refuses. Both the committed-pin closure and the compiled parameter-shape
+ * probes judge through this one predicate, so neither can drift from the set.
+ */
+export function implicitAnyOffenders(
+  diagnostics: readonly ExampleDiagnostic[],
+): ExampleDiagnostic[] {
+  return diagnostics.filter((diagnostic) => IMPLICIT_ANY_CODES.has(diagnostic.code));
+}
+
 export interface SurfaceCompilation {
   readonly units: Map<string, ExampleDiagnostic[]>;
   /**
