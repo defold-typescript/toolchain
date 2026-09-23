@@ -18,6 +18,7 @@ declare global {
      * @param path - optional resource path string to the resource
      * @returns a path hash to the binary version of the resource
      * @example
+     * Load an atlas and set it to a sprite:
      * ```ts
      * // Load an atlas and set it to a sprite:
      * go.property("my_atlas", resource.atlas("/atlas.atlas"));
@@ -29,6 +30,7 @@ declare global {
      * });
      * ```
      * @example
+     * Load an atlas and set it to a gui:
      * ```ts
      * // Load an atlas and set it to a gui:
      * go.property("my_atlas", resource.atlas("/atlas.atlas"));
@@ -260,6 +262,7 @@ declare global {
      * boolean optional flag to determine whether or not the resource should take over ownership of the buffer object (default true)
      * @returns Returns the buffer resource path
      * @example
+     * Create a buffer object and bind it to a buffer resource
      * ```ts
      * // Create a buffer object and bind it to a buffer resource
      * export default defineScript({
@@ -297,6 +300,7 @@ declare global {
      * });
      * ```
      * @example
+     * Create a buffer resource from existing resource
      * ```ts
      * // Create a buffer resource from existing resource
      * export default defineScript({
@@ -455,6 +459,7 @@ declare global {
      * end
      * ```
      * @example
+     * How to create an 128x128 RGBA texture resource and assign it to a model
      * ```ts
      * // How to create an 128x128 RGBA texture resource and assign it to a model
      * export default defineScript({
@@ -471,6 +476,7 @@ declare global {
      * });
      * ```
      * @example
+     * How to create an 128x128 floating point texture (RGBA32F) resource from a buffer object
      * ```ts
      * // How to create an 128x128 floating point texture (RGBA32F) resource from a buffer object
      * export default defineScript({
@@ -507,6 +513,7 @@ declare global {
      * });
      * ```
      * @example
+     * How to create a 32x32x32 floating point 3D texture that can be used to generate volumetric data in a compute shader
      * ```ts
      * // How to create a 32x32x32 floating point 3D texture that can be used to generate volumetric data in a compute shader
      * export default defineScript({
@@ -526,6 +533,7 @@ declare global {
      * });
      * ```
      * @example
+     * How to create 512x512 texture array with 5 pages.
      * ```ts
      * // How to create 512x512 texture array with 5 pages.
      * const new_tex = resource.create_texture("/runtime/example_array.texturec", {
@@ -650,6 +658,7 @@ declare global {
      * @param buffer - optional buffer of precreated pixel data
      * @param callback - callback function when texture is created (self, request_id, resource)
      * @example
+     * Create a texture resource asyncronously with a buffer and a callback
      * ```ts
      * // Create a texture resource asyncronously with a buffer and a callback
      * function callback(self: unknown, request_id: unknown, texture_path: unknown) {
@@ -693,6 +702,7 @@ declare global {
      * });
      * ```
      * @example
+     * Create a texture resource asyncronously without a callback
      * ```ts
      * // Create a texture resource asyncronously without a callback
      * export default defineScript({
@@ -741,6 +751,7 @@ declare global {
      * @param path - optional resource path string to the resource
      * @returns a path hash to the binary version of the resource
      * @example
+     * Load a font and set it to a label:
      * ```ts
      * // Load a font and set it to a label:
      * go.property("my_font", resource.font("/font.font"));
@@ -752,6 +763,7 @@ declare global {
      * });
      * ```
      * @example
+     * Load a font and set it to a gui:
      * ```ts
      * // Load a font and set it to a gui:
      * go.property("my_font", resource.font("/font.font"));
@@ -851,6 +863,7 @@ declare global {
      * `texture`
      * hash The hashed path to the attachment texture resource. This field is only available if the render target passed in is a resource.
      * @example
+     * Get the metadata from a render target resource
      * ```ts
      * // Get the metadata from a render target resource
      * export default defineScript({
@@ -864,6 +877,7 @@ declare global {
      * });
      * ```
      * @example
+     * Get a texture attachment from a render target and set it on a model component
      * ```ts
      * // Get a texture attachment from a render target and set it on a model component
      * export default defineScript({
@@ -949,6 +963,7 @@ declare global {
      *
      * - `graphics.TEXTURE_TYPE_CUBE_MAP`
      * @example
+     * Create a new texture and get the metadata from it
      * ```ts
      * // Create a new texture and get the metadata from it
      * export default defineScript({
@@ -979,6 +994,7 @@ declare global {
      * });
      * ```
      * @example
+     * Get the meta data from an atlas resource
      * ```ts
      * // Get the meta data from an atlas resource
      * export default defineScript({
@@ -1023,6 +1039,7 @@ declare global {
      * @param path - optional resource path string to the resource
      * @returns a path hash to the binary version of the resource
      * @example
+     * Load a material and set it to a sprite:
      * ```ts
      * // Load a material and set it to a sprite:
      * go.property("my_material", resource.material("/material.material"));
@@ -1034,6 +1051,7 @@ declare global {
      * });
      * ```
      * @example
+     * Load a material resource and update a named material with the resource:
      * ```ts
      * // Load a material resource and update a named material with the resource:
      * go.property("my_material", resource.material("/material.material"));
@@ -1183,6 +1201,7 @@ declare global {
      * `indices`
      * table a list of the indices of the geometry in the form {i0, i1, i2, ..., in}. Each tripe in the list represents a triangle.
      * @example
+     * Add a new animation to an existing atlas
      * ```ts
      * // Add a new animation to an existing atlas
      * export default defineScript({
@@ -1203,6 +1222,7 @@ declare global {
      * });
      * ```
      * @example
+     * Sets atlas data for a 256x256 texture with a single animation being rendered as a quad
      * ```ts
      * // Sets atlas data for a 256x256 texture with a single animation being rendered as a quad
      * export default defineScript({
@@ -1375,6 +1395,7 @@ declare global {
      * end
      * ```
      * @example
+     * How to set all pixels of an atlas
      * ```ts
      * // How to set all pixels of an atlas
      * export default defineScript({
@@ -1400,6 +1421,7 @@ declare global {
      * });
      * ```
      * @example
+     * How to update a specific region of an atlas by using the x,y values. Assumes the already set atlas is a 128x128 texture.
      * ```ts
      * // How to update a specific region of an atlas by using the x,y values. Assumes the already set atlas is a 128x128 texture.
      * export default defineScript({
@@ -1427,6 +1449,7 @@ declare global {
      * });
      * ```
      * @example
+     * Update a texture from a buffer resource
      * ```ts
      * // Update a texture from a buffer resource
      * go.property("my_buffer", resource.buffer("/my_default_buffer.buffer"));
@@ -1449,6 +1472,7 @@ declare global {
      * });
      * ```
      * @example
+     * Update an existing 3D texture from a lua buffer
      * ```ts
      * // Update an existing 3D texture from a buffer
      * export default defineScript({

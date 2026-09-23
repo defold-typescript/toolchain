@@ -5,7 +5,7 @@
       "text": "Property 'length' does not exist on type 'Opaque<\"bufferstream\"> & { [index: number]: number; }'."
     }
   ],
-  "defold-1.12.4/kinds/gui-script:go.delete:63517a8a15d5d030": [
+  "defold-1.12.4/kinds/gui-script:go.delete:15be7513485334cf": [
     {
       "code": 2345,
       "text": "Argument of type 'true' is not assignable to parameter of type 'Hash<string> | (string & {}) | Url | (Hash<string> | (string & {}) | Url)[] | undefined'."
@@ -339,7 +339,7 @@
       "text": "Property 'length' does not exist on type 'Opaque<\"bufferstream\"> & { [index: number]: number; }'."
     }
   ],
-  "defold-1.12.4/kinds/render-script:go.delete:63517a8a15d5d030": [
+  "defold-1.12.4/kinds/render-script:go.delete:15be7513485334cf": [
     {
       "code": 2345,
       "text": "Argument of type 'true' is not assignable to parameter of type 'Hash<string> | Url | (string & {}) | (Hash<string> | Url | (string & {}))[] | undefined'."
@@ -847,7 +847,7 @@
       "text": "Property 'some_value' does not exist on type 'Record<never, never>'."
     }
   ],
-  "defold-1.12.4/kinds/script:go.delete:63517a8a15d5d030": [
+  "defold-1.12.4/kinds/script:go.delete:15be7513485334cf": [
     {
       "code": 2345,
       "text": "Argument of type 'true' is not assignable to parameter of type 'Hash<string> | Url | (string & {}) | (Hash<string> | Url | (string & {}))[] | undefined'."
@@ -1615,7 +1615,7 @@
       "text": "Property 'length' does not exist on type 'Opaque<\"bufferstream\"> & { [index: number]: number; }'."
     }
   ],
-  "defold-1.12.4:go.delete:63517a8a15d5d030": [
+  "defold-1.12.4:go.delete:15be7513485334cf": [
     {
       "code": 2345,
       "text": "Argument of type 'true' is not assignable to parameter of type 'Hash<string> | Url | (string & {}) | (Hash<string> | Url | (string & {}))[] | undefined'."
@@ -1865,7 +1865,7 @@
       "text": "Object literal may only specify known properties, and 'my_texture' does not exist in type 'LuaMap<string, Hash<string>>'."
     }
   ],
-  "defold-1.13.0/kinds/gui-script:go.delete:63517a8a15d5d030": [
+  "defold-1.13.0/kinds/gui-script:go.delete:15be7513485334cf": [
     {
       "code": 2345,
       "text": "Argument of type 'true' is not assignable to parameter of type 'Hash<string> | Url | (string & {}) | (Hash<string> | Url | (string & {}))[] | undefined'."
@@ -2231,7 +2231,7 @@
       "text": "Object literal may only specify known properties, and 'my_texture' does not exist in type 'LuaMap<string, Hash<string>>'."
     }
   ],
-  "defold-1.13.0/kinds/render-script:go.delete:63517a8a15d5d030": [
+  "defold-1.13.0/kinds/render-script:go.delete:15be7513485334cf": [
     {
       "code": 2345,
       "text": "Argument of type 'true' is not assignable to parameter of type 'Hash<string> | Url | (string & {}) | (Hash<string> | Url | (string & {}))[] | undefined'."
@@ -2771,7 +2771,7 @@
       "text": "Property 'some_value' does not exist on type 'Record<never, never>'."
     }
   ],
-  "defold-1.13.0/kinds/script:go.delete:63517a8a15d5d030": [
+  "defold-1.13.0/kinds/script:go.delete:15be7513485334cf": [
     {
       "code": 2345,
       "text": "Argument of type 'true' is not assignable to parameter of type 'Hash<string> | Url | (string & {}) | (Hash<string> | Url | (string & {}))[] | undefined'."
@@ -3571,7 +3571,7 @@
       "text": "Object literal may only specify known properties, and 'my_texture' does not exist in type 'LuaMap<string, Hash<string>>'."
     }
   ],
-  "defold-1.13.0:go.delete:63517a8a15d5d030": [
+  "defold-1.13.0:go.delete:15be7513485334cf": [
     {
       "code": 2345,
       "text": "Argument of type 'true' is not assignable to parameter of type 'Hash<string> | Url | (string & {}) | (Hash<string> | Url | (string & {}))[] | undefined'."
@@ -3843,7 +3843,7 @@
       "text": "Object literal may only specify known properties, and 'my_texture' does not exist in type 'LuaMap<string, Hash<string>>'."
     }
   ],
-  "defold-1.13.1/kinds/gui-script:go.delete:63517a8a15d5d030": [
+  "defold-1.13.1/kinds/gui-script:go.delete:15be7513485334cf": [
     {
       "code": 2345,
       "text": "Argument of type 'true' is not assignable to parameter of type 'Hash<string> | Url | (string & {}) | (Hash<string> | Url | (string & {}))[] | undefined'."
@@ -4233,7 +4233,7 @@
       "text": "Object literal may only specify known properties, and 'my_texture' does not exist in type 'LuaMap<string, Hash<string>>'."
     }
   ],
-  "defold-1.13.1/kinds/render-script:go.delete:63517a8a15d5d030": [
+  "defold-1.13.1/kinds/render-script:go.delete:15be7513485334cf": [
     {
       "code": 2345,
       "text": "Argument of type 'true' is not assignable to parameter of type 'Hash<string> | Url | (string & {}) | (Hash<string> | Url | (string & {}))[] | undefined'."
@@ -4783,7 +4783,7 @@
       "text": "Property 'some_value' does not exist on type 'Record<never, never>'."
     }
   ],
-  "defold-1.13.1/kinds/script:go.delete:63517a8a15d5d030": [
+  "defold-1.13.1/kinds/script:go.delete:15be7513485334cf": [
     {
       "code": 2345,
       "text": "Argument of type 'true' is not assignable to parameter of type 'Hash<string> | Url | (string & {}) | (Hash<string> | Url | (string & {}))[] | undefined'."
@@ -5687,7 +5687,7 @@
       "text": "Property 'some_value' does not exist on type 'Record<never, never>'."
     }
   ],
-  "defold-1.13.1:go.delete:63517a8a15d5d030": [
+  "defold-1.13.1:go.delete:15be7513485334cf": [
     {
       "code": 2345,
       "text": "Argument of type 'true' is not assignable to parameter of type 'Hash<string> | Url | (string & {}) | (Hash<string> | Url | (string & {}))[] | undefined'."
