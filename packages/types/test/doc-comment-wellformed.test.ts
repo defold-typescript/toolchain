@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readdirSync } from "node:fs";
 import { resolve } from "node:path";
-import { offGridLines } from "./jsdoc-wellformed";
+import { offGridLines, unbalancedFenceBlocks } from "./jsdoc-wellformed";
 
 const GENERATED = resolve(import.meta.dir, "..", "generated");
 
@@ -31,6 +31,23 @@ describe("generated JSDoc well-formedness", () => {
         .join("\n");
       throw new Error(
         `${offending.length} JSDoc continuation line(s) off-grid — run \`bun run regen\`:\n${sample}`,
+      );
+    }
+    expect(offending).toEqual([]);
+  });
+
+  test.each(
+    collectDts(GENERATED).map((path) => [path.slice(GENERATED.length + 1), path] as const),
+  )("%s: every /** */ block closes every fence it opens", async (_label, path) => {
+    const content = await Bun.file(path).text();
+    const offending = unbalancedFenceBlocks(content);
+    if (offending.length > 0) {
+      const sample = offending
+        .slice(0, 5)
+        .map((o) => `  block at line ${o.line}: ${o.markers} fence marker(s)`)
+        .join("\n");
+      throw new Error(
+        `${offending.length} JSDoc block(s) leave a fence open — run \`bun run regen\`:\n${sample}`,
       );
     }
     expect(offending).toEqual([]);

@@ -45,6 +45,10 @@ export function htmlToDocText(html: string): string {
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 
+  // Upstream prose can open a fence and end mid-body; left open it swallows the
+  // rest of the JSDoc block and everything after it on the rendered page.
+  if ((text.match(/^```/gm) ?? []).length % 2 === 1) text += "\n```";
+
   // A literal `*/` would close the JSDoc comment early; escape it.
   return text.split("*/").join("*\\/");
 }
