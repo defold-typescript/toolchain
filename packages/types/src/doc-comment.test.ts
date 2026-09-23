@@ -4,6 +4,7 @@ import {
   htmlToCodeText,
   htmlToDocText,
   renderDocComment,
+  segmentExampleRegions,
   splitExampleSources,
 } from "./doc-comment";
 
@@ -556,5 +557,101 @@ describe("splitExampleSources", () => {
     expect(examplesHtmlToMarkdown(html)).toBe('Query a position:\n\n```lua\ngo.get("x")\n```');
     const json = `<div class="codehilite"><pre><code class="language-json">{ &quot;a&quot;: 1 }</code></pre></div>`;
     expect(examplesHtmlToMarkdown(json)).toBe('```json\n{ "a": 1 }\n```');
+  });
+});
+
+describe("segmentExampleRegions", () => {
+  const inner = "<pre><code>go.get(&quot;x&quot;)</code></pre>";
+  const div = (markup: string) => `<div class="codehilite">${markup}</div>`;
+  const block = (code: string) => div(`<pre><code>${code}</code></pre>`);
+
+  test("a one-div fragment segments to the div's own text; splitExampleSources keeps the whole blob", () => {
+    const html = `Query a position:<br>${div(inner)}`;
+    const { segments } = segmentExampleRegions(html);
+    expect(segments).toHaveLength(1);
+    expect(segments[0]?.code).toBe(htmlToCodeText(inner));
+    expect(segments[0]?.code).not.toBe(htmlToCodeText(html));
+    expect(segments[0]?.prose).toBe("Query a position:");
+
+    const stored = splitExampleSources(html);
+    expect(stored).toHaveLength(1);
+    expect(stored[0]?.code).toBe(htmlToCodeText(html));
+  });
+
+  test("both functions agree once the walk yields more than one segment", () => {
+    const html = block("local a = 1\n```lua\nlocal b = 2");
+    const { segments } = segmentExampleRegions(html);
+    expect(segments).toHaveLength(2);
+    expect(segments).toEqual(splitExampleSources(html));
+  });
+
+  test("prose after the last code run is returned as the trailing remainder", () => {
+    const { segments, trailingProse } = segmentExampleRegions(
+      `${block("local a = 1")}Afterwards, reload the script.`,
+    );
+    expect(segments).toHaveLength(1);
+    expect(trailingProse).toBe("Afterwards, reload the script.");
+  });
+
+  test("empty / whitespace-only input yields no segments and no trailing prose", () => {
+    expect(segmentExampleRegions("")).toEqual({ segments: [], trailingProse: "" });
+    expect(segmentExampleRegions("   \n\t ")).toEqual({ segments: [], trailingProse: "" });
+  });
+});
+
+/** Every line of `markdown` that sits strictly inside a fenced block. */
+function interiorLines(markdown: string): string[] {
+  const out: string[] = [];
+  let inBlock = false;
+  for (const line of markdown.split("\n")) {
+    if (!inBlock) {
+      if (line.startsWith("```")) inBlock = true;
+      continue;
+    }
+    if (line.trim() === "```") {
+      inBlock = false;
+      continue;
+    }
+    out.push(line);
+  }
+  return out;
+}
+
+describe("examplesHtmlToMarkdown fence segmentation", () => {
+  const block = (inner: string) => `<div class="codehilite"><pre><code>${inner}</code></pre></div>`;
+
+  test("an upstream fence welded into one div renders as two blocks with the heading between", () => {
+    const html = block(
+      "local a = 1\n```Update a texture from a buffer resource\n```lua\nlocal b = 2",
+    );
+    expect(examplesHtmlToMarkdown(html)).toBe(
+      "```lua\nlocal a = 1\n```\n\nUpdate a texture from a buffer resource\n\n```lua\nlocal b = 2\n```",
+    );
+  });
+
+  test("no line interior to a rendered block carries a fence marker", () => {
+    const html = block("local a = 1\n```lua\nlocal b = 2");
+    for (const line of interiorLines(examplesHtmlToMarkdown(html))) {
+      expect(line.trimStart().startsWith("```")).toBe(false);
+    }
+  });
+
+  test("one-div renders are byte-identical with and without leading prose", () => {
+    expect(examplesHtmlToMarkdown(`Query a position:<br>${block("go.get(&quot;x&quot;)")}`)).toBe(
+      'Query a position:\n\n```lua\ngo.get("x")\n```',
+    );
+    expect(examplesHtmlToMarkdown(block("local solo = 1"))).toBe("```lua\nlocal solo = 1\n```");
+  });
+
+  test("prose following the last code block is still rendered", () => {
+    expect(examplesHtmlToMarkdown(`${block("local a = 1")}See the manual.`)).toBe(
+      "```lua\nlocal a = 1\n```\n\nSee the manual.",
+    );
+  });
+
+  test("a blob that is entirely prose survives as a single lua fence", () => {
+    expect(examplesHtmlToMarkdown("No code here, just words.")).toBe(
+      "```lua\nNo code here, just words.\n```",
+    );
   });
 });
