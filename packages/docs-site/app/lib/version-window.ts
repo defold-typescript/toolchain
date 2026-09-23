@@ -146,6 +146,7 @@ function windowNamespace(
       return { ...rest, ...windowedSignature(entry, signatures, inSlice) };
     }),
     ...(ns.signatureStore ? { signatureStore: ns.signatureStore } : {}),
+    ...(ns.translationStore ? { translationStore: ns.translationStore } : {}),
   };
 }
 
@@ -178,6 +179,7 @@ export function windowCombinedSurface(
     namespaces,
     window,
     ...(combined.signatureStore ? { signatureStore: combined.signatureStore } : {}),
+    ...(combined.translationStore ? { translationStore: combined.translationStore } : {}),
   };
 }
 
