@@ -61,10 +61,15 @@ export function createVersionedApiNamespaceRoute(dirs: ApiSurfaceDirs = {}) {
       // the canonical `/api/Opaque` page, not per version — so resolve the
       // signature deep-links against the canonical surface, not this version's. A
       // typedef shape is the opposite: it belongs to the page rendering it, so the
-      // windowed page contributes its own shapes at its own versioned route.
+      // windowed page contributes its own shapes at its own versioned route. A
+      // constant-union alias is the same again: its entry lists the members for
+      // *this* release, so the third argument re-sources the qualified aliases
+      // from the windowed collection and every alias link keeps the reader in the
+      // version they opened.
       const signatureSymbolLinks = apiSignatureSymbolLinks(
         canonicalApiPages(dirs.typesDir, dirs.libraryTypesDir),
         page,
+        pages,
       );
       // A windowed page *is* a union across versions, so the availability marker
       // layer is meaningful here exactly as it is on the canonical route — and the
