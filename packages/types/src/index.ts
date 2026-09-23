@@ -36,10 +36,12 @@ export {
 export {
   type DocCommentParts,
   type ExampleSegment,
+  type ExampleSegmentation,
   examplesHtmlToMarkdown,
   htmlToCodeText,
   htmlToDocText,
   renderDocComment,
+  segmentExampleRegions,
   splitExampleSources,
 } from "./doc-comment";
 export {

@@ -3612,3 +3612,42 @@ describe("complete release snapshots", () => {
     expect(versionLabel("defold-1.12.4")).toBe("Defold 1.12.4");
   });
 });
+
+describe("rendered /api examples keep fence markers on block boundaries", () => {
+  // Every line of `markdown` sitting strictly inside a fenced block.
+  function interiorLines(markdown: string): string[] {
+    const out: string[] = [];
+    let inBlock = false;
+    for (const line of markdown.split("\n")) {
+      if (!inBlock) {
+        if (line.startsWith("```")) inBlock = true;
+        continue;
+      }
+      if (line.trim() === "```") {
+        inBlock = false;
+        continue;
+      }
+      out.push(line);
+    }
+    return out;
+  }
+
+  test("no example-bearing function renders a fence marker inside a code block", () => {
+    const pages = canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
+    const offenders: string[] = [];
+    let examined = 0;
+    for (const page of pages) {
+      for (const fn of page.module.functions) {
+        if (!fn.examples) continue;
+        const md = exampleMarkdownFor(fn);
+        if (md === undefined) continue;
+        examined += 1;
+        if (interiorLines(md).some((line) => line.trimStart().startsWith("```"))) {
+          offenders.push(fn.name);
+        }
+      }
+    }
+    expect(examined).toBeGreaterThan(200);
+    expect(offenders).toEqual([]);
+  });
+});
