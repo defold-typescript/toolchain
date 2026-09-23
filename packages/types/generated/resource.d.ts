@@ -641,12 +641,12 @@ declare global {
      * @example
      * ```ts
      * // Create a texture resource asyncronously with a buffer and a callback
-     * function callback(self, request_id, resource) {
+     * function callback(self: unknown, request_id: unknown, texture_path: unknown) {
      *   // The resource has been updated with a new texture,
      *   // so we can update other systems with the new handle,
      *   // or update components to use the resource if we want
-     *   const tinfo = resource.get_texture_info(resource);
-     *   msg.post("@render:", "set_backing_texture", tinfo.handle);
+     *   const tinfo = resource.get_texture_info(texture_path as Hash);
+     *   msg.post("@render:", "set_backing_texture", { handle: tinfo.handle });
      * }
      *
      * export default defineScript({
@@ -1228,9 +1228,9 @@ declare global {
      * @example
      * ```ts
      * // How to set the data from a buffer
-     * function fill_stream(stream, verts) {
+     * function fill_stream(stream: { [index: number]: number }, verts: number[]) {
      *   verts.forEach((value, key) => {
-     *     stream[key] = verts[key];
+     *     stream[key] = value;
      *   });
      * }
      *

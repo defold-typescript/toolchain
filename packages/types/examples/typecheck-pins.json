@@ -268,21 +268,13 @@
   "defold-1.12.4/kinds/gui-script:sys.save:20939b04814e98af": [
     {
       "code": 2345,
-      "text": "Argument of type '\"my_value\"' is not assignable to parameter of type 'never'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
+      "text": "Argument of type 'string[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.12.4/kinds/gui-script:sys.serialize:74b6fd38d9f6ea16": [
     {
       "code": 2345,
-      "text": "Argument of type '\"my_value\"' is not assignable to parameter of type 'never'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
+      "text": "Argument of type 'string[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.12.4/kinds/gui-script:update:f4f87939dbdd5fc3": [
@@ -776,21 +768,13 @@
   "defold-1.12.4/kinds/render-script:sys.save:20939b04814e98af": [
     {
       "code": 2345,
-      "text": "Argument of type '\"my_value\"' is not assignable to parameter of type 'never'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
+      "text": "Argument of type 'string[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.12.4/kinds/render-script:sys.serialize:74b6fd38d9f6ea16": [
     {
       "code": 2345,
-      "text": "Argument of type '\"my_value\"' is not assignable to parameter of type 'never'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
+      "text": "Argument of type 'string[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.12.4/kinds/script:buffer.copy_stream:359ea94639622db5": [
@@ -1688,21 +1672,13 @@
   "defold-1.12.4/kinds/script:sys.save:20939b04814e98af": [
     {
       "code": 2345,
-      "text": "Argument of type '\"my_value\"' is not assignable to parameter of type 'never'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
+      "text": "Argument of type 'string[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.12.4/kinds/script:sys.serialize:74b6fd38d9f6ea16": [
     {
       "code": 2345,
-      "text": "Argument of type '\"my_value\"' is not assignable to parameter of type 'never'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
+      "text": "Argument of type 'string[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.12.4/kinds/script:vmath.lerp:0f4fdfe7a9a39df7": [
@@ -1986,21 +1962,13 @@
   "defold-1.12.4:sys.save:20939b04814e98af": [
     {
       "code": 2345,
-      "text": "Argument of type '\"my_value\"' is not assignable to parameter of type 'never'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
+      "text": "Argument of type 'string[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.12.4:sys.serialize:74b6fd38d9f6ea16": [
     {
       "code": 2345,
-      "text": "Argument of type '\"my_value\"' is not assignable to parameter of type 'never'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
+      "text": "Argument of type 'string[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.13.0/kinds/editor-script:editor.command:41caebab7bdd6774": [
@@ -2310,21 +2278,13 @@
   "defold-1.13.0/kinds/gui-script:sys.save:20939b04814e98af": [
     {
       "code": 2345,
-      "text": "Argument of type '\"my_value\"' is not assignable to parameter of type 'never'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
+      "text": "Argument of type 'string[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.13.0/kinds/gui-script:sys.serialize:74b6fd38d9f6ea16": [
     {
       "code": 2345,
-      "text": "Argument of type '\"my_value\"' is not assignable to parameter of type 'never'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
+      "text": "Argument of type 'string[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.13.0/kinds/gui-script:update:f4f87939dbdd5fc3": [
@@ -2850,21 +2810,13 @@
   "defold-1.13.0/kinds/render-script:sys.save:20939b04814e98af": [
     {
       "code": 2345,
-      "text": "Argument of type '\"my_value\"' is not assignable to parameter of type 'never'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
+      "text": "Argument of type 'string[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.13.0/kinds/render-script:sys.serialize:74b6fd38d9f6ea16": [
     {
       "code": 2345,
-      "text": "Argument of type '\"my_value\"' is not assignable to parameter of type 'never'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
+      "text": "Argument of type 'string[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.13.0/kinds/script:b2d.shape.set_shape:f31970e9ebb8d446": [
@@ -3794,21 +3746,13 @@
   "defold-1.13.0/kinds/script:sys.save:20939b04814e98af": [
     {
       "code": 2345,
-      "text": "Argument of type '\"my_value\"' is not assignable to parameter of type 'never'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
+      "text": "Argument of type 'string[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.13.0/kinds/script:sys.serialize:74b6fd38d9f6ea16": [
     {
       "code": 2345,
-      "text": "Argument of type '\"my_value\"' is not assignable to parameter of type 'never'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
+      "text": "Argument of type 'string[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.13.0/kinds/script:vmath.lerp:0f4fdfe7a9a39df7": [
@@ -4124,21 +4068,13 @@
   "defold-1.13.0:sys.save:20939b04814e98af": [
     {
       "code": 2345,
-      "text": "Argument of type '\"my_value\"' is not assignable to parameter of type 'never'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
+      "text": "Argument of type 'string[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.13.0:sys.serialize:74b6fd38d9f6ea16": [
     {
       "code": 2345,
-      "text": "Argument of type '\"my_value\"' is not assignable to parameter of type 'never'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
+      "text": "Argument of type 'string[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.13.1/kinds/editor-script:editor.command:41caebab7bdd6774": [
@@ -4472,21 +4408,13 @@
   "defold-1.13.1/kinds/gui-script:sys.save:20939b04814e98af": [
     {
       "code": 2345,
-      "text": "Argument of type '\"my_value\"' is not assignable to parameter of type 'never'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
+      "text": "Argument of type 'string[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.13.1/kinds/gui-script:sys.serialize:74b6fd38d9f6ea16": [
     {
       "code": 2345,
-      "text": "Argument of type '\"my_value\"' is not assignable to parameter of type 'never'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
+      "text": "Argument of type 'string[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.13.1/kinds/gui-script:update:f4f87939dbdd5fc3": [
@@ -5022,21 +4950,13 @@
   "defold-1.13.1/kinds/render-script:sys.save:20939b04814e98af": [
     {
       "code": 2345,
-      "text": "Argument of type '\"my_value\"' is not assignable to parameter of type 'never'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
+      "text": "Argument of type 'string[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.13.1/kinds/render-script:sys.serialize:74b6fd38d9f6ea16": [
     {
       "code": 2345,
-      "text": "Argument of type '\"my_value\"' is not assignable to parameter of type 'never'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
+      "text": "Argument of type 'string[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.13.1/kinds/script:b2d.shape.set_shape:f31970e9ebb8d446": [
@@ -5976,21 +5896,13 @@
   "defold-1.13.1/kinds/script:sys.save:20939b04814e98af": [
     {
       "code": 2345,
-      "text": "Argument of type '\"my_value\"' is not assignable to parameter of type 'never'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
+      "text": "Argument of type 'string[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.13.1/kinds/script:sys.serialize:74b6fd38d9f6ea16": [
     {
       "code": 2345,
-      "text": "Argument of type '\"my_value\"' is not assignable to parameter of type 'never'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
+      "text": "Argument of type 'string[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.13.1/kinds/script:vmath.lerp:0f4fdfe7a9a39df7": [
@@ -7346,21 +7258,13 @@
   "defold-1.13.1:sys.save:20939b04814e98af": [
     {
       "code": 2345,
-      "text": "Argument of type '\"my_value\"' is not assignable to parameter of type 'never'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
+      "text": "Argument of type 'string[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.13.1:sys.serialize:74b6fd38d9f6ea16": [
     {
       "code": 2345,
-      "text": "Argument of type '\"my_value\"' is not assignable to parameter of type 'never'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'never[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'never[]'."
+      "text": "Argument of type 'string[]' is not assignable to parameter of type 'Record<string | number, unknown>'.   Index signature for type 'string' is missing in type 'string[]'."
     }
   ],
   "defold-1.13.1:update:f4f87939dbdd5fc3": [

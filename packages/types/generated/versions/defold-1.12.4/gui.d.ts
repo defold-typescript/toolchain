@@ -532,9 +532,9 @@ declare global {
      *
      * // How to start a sequenced animation where the node fades in to white during 0.5
      * // seconds, stays visible for 2 seconds and then fades out:
-     * function on_animation_done(self, node) {
+     * function on_animation_done(self: unknown, node: unknown) {
      *   // fade out node, but wait 2 seconds before the animation starts
-     *   gui.animate(node, gui.PROP_COLOR, vmath.vector4(0, 0, 0, 0), gui.EASING_OUTQUAD, 0.5, 2.0);
+     *   gui.animate(node as Opaque<"node">, gui.PROP_COLOR, vmath.vector4(0, 0, 0, 0), gui.EASING_OUTQUAD, 0.5, 2.0);
      * }
      *
      * export default defineGuiScript({
@@ -1587,7 +1587,7 @@ declare global {
      * @example
      * ```ts
      * // Set the texture of a node to a flipbook animation from an atlas:
-     * function anim_callback(self, node) {
+     * function anim_callback(self: unknown, node: unknown) {
      *   // Take action after animation has played.
      * }
      *
@@ -1635,7 +1635,7 @@ declare global {
      * // How to play a particle fx when a gui node is created.
      * // The callback receives the gui node, the hash of the id
      * // of the emitter, and the new state of the emitter as particlefx.EMITTER_STATE_.
-     * function emitter_state_change(self, node, emitter, state) {
+     * function emitter_state_change(self: unknown, node: unknown, emitter: unknown, state: unknown) {
      *   if (emitter === hash("exhaust") && state === particlefx.EMITTER_STATE_POSTSPAWN) {
      *     // exhaust is done spawning particles...
      *   }

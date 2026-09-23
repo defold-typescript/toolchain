@@ -55,7 +55,7 @@ declare global {
      * @returns index of the tile
      * @example
      * ```ts
-     * function tile_under_player(self) {
+     * function tile_under_player(self: { player_x: number; player_y: number }) {
      *   // get the tile under the player.
      *   const tileno = tilemap.get_tile("/level#tilemap", "foreground", self.player_x, self.player_y);
      * }
@@ -76,7 +76,7 @@ declare global {
      * @returns index of the tile
      * @example
      * ```ts
-     * function tile_info_under_player(self) {
+     * function tile_info_under_player(self: { player_x: number; player_y: number }) {
      *   // get the tile under the player.
      *   const tile_info = tilemap.get_tile_info("/level#tilemap", "foreground", self.player_x, self.player_y);
      *   pprint(tile_info);
@@ -107,7 +107,7 @@ declare global {
      * let count = 0;
      * for (let row_index = bottom; row_index <= bottom + rows_count - 1; row_index++) {
      *   for (let column_index = left; column_index <= left + columns_count - 1; column_index++) {
-     *     tile = tiles[row_index][column_index];
+     *     tile = tiles.get(row_index)?.get(column_index) ?? 0;
      *     count = count + 1;
      *   }
      * }
@@ -159,7 +159,7 @@ declare global {
      * @param transform_bitmask - optional flip and/or rotation should be applied to the tile
      * @example
      * ```ts
-     * function set_tiles(self, x, y) {
+     * function set_tiles(self: { player_x: number; player_y: number }, x: number, y: number) {
      *   // Clear the tile under the player.
      *   tilemap.set_tile("/level#tilemap", "foreground", self.player_x, self.player_y, 0);
      *

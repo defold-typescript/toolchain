@@ -18,6 +18,7 @@ import { formatJsonLikeBiome } from "./format-json";
 import { runInitAgents } from "./init-agents";
 import { mergeMiseToml } from "./mise-scaffold";
 import { hasGeneratedBanner } from "./orphan-scan";
+import TSCONFIG_COMPILER_OPTIONS from "./scaffold-tsconfig.json";
 import { SCENE_ADDRESSES_DECLARATION } from "./scene-types-command";
 import { DEFAULT_TYPES_ENTRYPOINT } from "./script-kind";
 import { writeVscodeLaunch } from "./vscode-debug-scaffold";
@@ -44,14 +45,11 @@ export interface RunInitResult {
 
 const CONFLICTING_TS_CONFIGS = ["tsconfig.json"];
 
-const TSCONFIG_COMPILER_OPTIONS = {
-  target: "ES2022",
-  module: "ESNext",
-  moduleResolution: "Bundler",
-  lib: ["ES2022"],
-  strict: true,
-  skipLibCheck: true,
-};
+// The scaffold's strictness lives in `scaffold-tsconfig.json` rather than inline
+// because the example-typecheck gate in `packages/types` must compile authored
+// examples at exactly this strictness, and every package here sets a `rootDir`
+// that forbids importing a sibling package's source. Data is the only channel
+// the two can share, so the gate reads that file instead of restating it.
 
 // The component globs carry the `.ts.` infix no hand-authored Defold path has,
 // so they need no folder to be correct and hold for any `include`. Generated

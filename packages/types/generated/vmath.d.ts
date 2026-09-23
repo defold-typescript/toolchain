@@ -122,7 +122,7 @@ declare global {
      * @returns length
      * @example
      * ```ts
-     * function below_max_speed(self, max_velocity) {
+     * function below_max_speed(self: { velocity: Vector3 }, max_velocity: number) {
      *   if (vmath.length(self.velocity) < max_velocity) {
      *     // The speed (velocity vector) is below max.
      *
