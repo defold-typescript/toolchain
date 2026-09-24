@@ -90,13 +90,17 @@ function withDeployBase(href: string): string {
   return href.startsWith("/") && !href.startsWith("//") ? withBase(href) : href;
 }
 
-function imageMaxWidthFromSrc(src: string): { src: string; maxWidth?: string } {
+// Image src fragments carry render hints the site strips before emitting the
+// URL: `max-width=420` caps the rendered width and a valueless `inline` asks for
+// the SVG markup itself rather than an `<img>` (see the inline-svg-figures rule).
+function imageParamsFromSrc(src: string): { src: string; maxWidth?: string; inline?: true } {
   const hash = src.indexOf("#");
   if (hash === -1) return { src };
   const base = src.slice(0, hash);
   const params = src.slice(hash + 1).split("&");
   const rest: string[] = [];
   let maxWidth: string | undefined;
+  let inline = false;
   for (const param of params) {
     const [rawKey, rawValue = ""] = param.split("=");
     const key = decodeURIComponent(rawKey ?? "");
@@ -104,12 +108,22 @@ function imageMaxWidthFromSrc(src: string): { src: string; maxWidth?: string } {
     if (key === "max-width" || key === "maxWidth" || key === "mw") {
       const normalized = /^\d+(?:\.\d+)?$/.test(value) ? `${value}px` : value;
       if (/^\d+(?:\.\d+)?(?:px|rem|em|ch|%|vw)$/.test(normalized)) maxWidth = normalized;
+    } else if (param === "inline") {
+      inline = true;
     } else {
       rest.push(param);
     }
   }
   const cleanSrc = `${base}${rest.length > 0 ? `#${rest.join("&")}` : ""}`;
-  return maxWidth ? { src: cleanSrc, maxWidth } : { src: cleanSrc };
+  return {
+    src: cleanSrc,
+    ...(maxWidth ? { maxWidth } : {}),
+    ...(inline ? { inline: true as const } : {}),
+  };
+}
+
+function imageMaxWidthStyle(maxWidth: string): string {
+  return `max-width: min(100%, ${maxWidth})`;
 }
 
 // A fence info string carries the language in its first token; Shiki reads only
@@ -247,6 +261,7 @@ export async function renderMarkdown(
     firstHeading?: string;
     highlightSignatureHeadings?: boolean;
     signatureSymbolLinks?: ReadonlyMap<string, SignatureSymbolTarget>;
+    readInlineSvg?: (src: string) => string | undefined;
   } = {},
 ): Promise<string> {
   const source = opts.firstHeading ? replaceFirstHeading(markdown, opts.firstHeading) : markdown;
@@ -305,6 +320,45 @@ export async function renderMarkdown(
       inline.children.push(close);
     }
   });
+  // A paragraph holding only an `![caption](….svg#inline)` image becomes a
+  // `<figure>` carrying the SVG markup itself, so the drawing takes the page
+  // font and the theme's `--fig-*` colours; the alt text is both its accessible
+  // name and its caption. Without a resolver the image stays an `<img>`, which is
+  // how surfaces that never read the guide directory render it.
+  const readInlineSvg = opts.readInlineSvg;
+  if (readInlineSvg) {
+    md.core.ruler.push("inline-svg-figures", (state) => {
+      const tokens = state.tokens;
+      for (let i = 0; i + 2 < tokens.length; i++) {
+        const open = tokens[i];
+        const inline = tokens[i + 1];
+        const close = tokens[i + 2];
+        if (open?.type !== "paragraph_open" || close?.type !== "paragraph_close") continue;
+        const image = inline?.type === "inline" ? inline.children : null;
+        if (image?.length !== 1 || image[0]?.type !== "image") continue;
+        const params = imageParamsFromSrc(image[0].attrGet("src") ?? "");
+        if (!params.inline) continue;
+        const svg = readInlineSvg(params.src)?.trim();
+        if (!svg?.startsWith("<svg")) {
+          throw new Error(`inline SVG figure has no SVG markup to inline: ${params.src}`);
+        }
+        const caption = escapeAttr(
+          state.md.renderer.renderInlineAsText(
+            image[0].children ?? [],
+            state.md.options,
+            state.env,
+          ),
+        );
+        const style = params.maxWidth ? ` style="${imageMaxWidthStyle(params.maxWidth)}"` : "";
+        const figure = new state.Token("html_block", "", 0);
+        figure.content =
+          `<figure class="figure-svg"${style}><div class="figure-svg-frame">` +
+          `<svg role="img" aria-label="${caption}"${svg.slice("<svg".length)}</div>` +
+          `<figcaption>${caption}</figcaption></figure>\n`;
+        tokens.splice(i, 3, figure);
+      }
+    });
+  }
   // Rewrite relative `.md` cross-links to their site routes (see rewriteGuideHref).
   md.core.ruler.push("rewrite-md-links", (state) => {
     for (const token of state.tokens) {
@@ -339,10 +393,10 @@ export async function renderMarkdown(
         } else if (child.type === "image") {
           const src = child.attrGet("src");
           if (src) {
-            const image = imageMaxWidthFromSrc(src);
+            const image = imageParamsFromSrc(src);
             child.attrSet("src", withDeployBase(image.src));
             if (image.maxWidth) {
-              const style = `max-width: min(100%, ${image.maxWidth})`;
+              const style = imageMaxWidthStyle(image.maxWidth);
               const existing = child.attrGet("style");
               child.attrSet("style", existing ? `${existing}; ${style}` : style);
             }

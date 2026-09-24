@@ -1,0 +1,64 @@
+<svg viewBox="0 0 504 200" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd">
+  <g transform="scale(1,-1) translate(0,-200)">
+    <g>
+      <rect x="0" y="0" width="240" height="195" rx="8" ry="8" style="stroke: var(--fig-border, #e2e8f0); stroke-linecap: butt; stroke-width: 0.8; fill: var(--fig-panel, #f8fafc); fill-rule: evenodd;"/>
+      <rect x="264" y="0" width="240" height="195" rx="8" ry="8" style="stroke: var(--fig-border, #e2e8f0); stroke-linecap: butt; stroke-width: 0.8; fill: var(--fig-panel, #f8fafc); fill-rule: evenodd;"/>
+      <text x="120" y="176" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9.5px;fill: var(--fig-pos, #2563eb); stroke:none;" transform="translate(0,352) scale(1,-1)" text-anchor="middle">POSITION = a place (a dot)</text>
+      <path d="M 20,20 L 20,160 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 40,20 L 40,160 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 60,20 L 60,160 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 80,20 L 80,160 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 100,20 L 100,160 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 120,20 L 120,160 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 140,20 L 140,160 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 160,20 L 160,160 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 180,20 L 180,160 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 200,20 L 200,160 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 220,20 L 220,160 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 20,20 L 220,20 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 20,40 L 220,40 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 20,60 L 220,60 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 20,80 L 220,80 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 20,100 L 220,100 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 20,120 L 220,120 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 20,140 L 220,140 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 20,160 L 220,160 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <circle cx="60" cy="60" r="5" style="stroke: var(--fig-bg, #ffffff); stroke-linecap: butt; stroke-width: 1.2; fill: var(--fig-pos, #2563eb); fill-rule: evenodd;"/>
+      <text x="60" y="45" style="font-family: var(--font-sans, sans-serif); font-size: 8px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,90) scale(1,-1)" text-anchor="middle">ship (40, 40)</text>
+      <circle cx="160" cy="120" r="5" style="stroke: var(--fig-bg, #ffffff); stroke-linecap: butt; stroke-width: 1.2; fill: var(--fig-pos, #2563eb); fill-rule: evenodd;"/>
+      <text x="160" y="105" style="font-family: var(--font-sans, sans-serif); font-size: 8px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,210) scale(1,-1)" text-anchor="middle">coin (140, 100)</text>
+      <circle cx="170" cy="45" r="5" style="stroke: var(--fig-bg, #ffffff); stroke-linecap: butt; stroke-width: 1.2; fill: var(--fig-pos, #2563eb); fill-rule: evenodd;"/>
+      <text x="170" y="30" style="font-family: var(--font-sans, sans-serif); font-size: 8px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,60) scale(1,-1)" text-anchor="middle">rock (150, 25)</text>
+      <text x="120" y="6" style="font-family: var(--font-sans, sans-serif); font-size: 8.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,12) scale(1,-1)" text-anchor="middle">“Where is it?”</text>
+      <text x="384" y="176" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9.5px;fill: var(--fig-vec, #ea580c); stroke:none;" transform="translate(0,352) scale(1,-1)" text-anchor="middle">VECTOR = a change (an arrow)</text>
+      <path d="M 284,20 L 284,160 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 304,20 L 304,160 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 324,20 L 324,160 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 344,20 L 344,160 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 364,20 L 364,160 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 384,20 L 384,160 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 404,20 L 404,160 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 424,20 L 424,160 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 444,20 L 444,160 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 464,20 L 464,160 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 484,20 L 484,160 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 284,20 L 484,20 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 284,40 L 484,40 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 284,60 L 484,60 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 284,80 L 484,80 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 284,100 L 484,100 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 284,120 L 484,120 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 284,140 L 484,140 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 284,160 L 484,160 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 300,130 L 352.74,147.58 Z" style="stroke: var(--fig-vec, #ea580c); stroke-linecap: round; stroke-width: 2.4;"/>
+      <polygon points="360 150, 352.88 142.88, 350.04 151.42" style="stroke: var(--fig-vec, #ea580c); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-vec, #ea580c); fill-rule: evenodd;"/>
+      <path d="M 340,60 L 392.74,77.58 Z" style="stroke: var(--fig-vec, #ea580c); stroke-linecap: round; stroke-width: 2.4;"/>
+      <polygon points="400 80, 392.88 72.88, 390.04 81.42" style="stroke: var(--fig-vec, #ea580c); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-vec, #ea580c); fill-rule: evenodd;"/>
+      <path d="M 400,105 L 452.74,122.58 Z" style="stroke: var(--fig-vec, #ea580c); stroke-linecap: round; stroke-width: 2.4;"/>
+      <polygon points="460 125, 452.88 117.88, 450.04 126.42" style="stroke: var(--fig-vec, #ea580c); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-vec, #ea580c); fill-rule: evenodd;"/>
+      <text x="384" y="36" style="font-family: var(--font-sans, sans-serif); font-size: 8px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,72) scale(1,-1)" text-anchor="middle">same arrow drawn 3 times:</text>
+      <text x="384" y="24" style="font-family: var(--font-mono, monospace); font-size: 8px;fill: var(--fig-vec, #ea580c); stroke:none;" transform="translate(0,48) scale(1,-1)" text-anchor="middle">vmath.vector3(60, 20, 0)</text>
+      <text x="384" y="6" style="font-family: var(--font-sans, sans-serif); font-size: 8.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,12) scale(1,-1)" text-anchor="middle">“60 right, 20 up” – from anywhere</text>
+    </g>
+  </g>
+</svg>

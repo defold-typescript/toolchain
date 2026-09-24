@@ -1,0 +1,34 @@
+<svg viewBox="0 0 504 200" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd">
+  <g transform="scale(1,-1) translate(0,-200)">
+    <g>
+      <rect x="0" y="0" width="504" height="195" rx="8" ry="8" style="stroke: var(--fig-border, #e2e8f0); stroke-linecap: butt; stroke-width: 0.8; fill: var(--fig-panel, #f8fafc); fill-rule: evenodd;"/>
+      <polyline points="40 40, 44.2 40, 48.4 40, 52.6 40, 56.8 40, 61 40, 65.2 40, 69.4 40, 73.6 40, 77.8 40, 82 40, 86.2 40, 90.4 40, 94.6 40, 98.8 40, 103 40, 107.2 40, 111.4 40, 115.6 40, 119.8 40, 124 40, 128.2 40, 132.4 40, 136.6 40, 140.8 40, 145 40, 149.2 40, 153.4 40, 157.6 40, 161.8 40, 166 40, 170.2 40.1, 174.39 40.29, 178.58 40.57, 182.77 40.95, 186.94 41.43, 191.1 42, 195.25 42.66, 199.38 43.42, 203.49 44.27, 207.59 45.22, 211.65 46.25, 215.7 47.38, 219.72 48.6, 223.71 49.92, 227.67 51.32, 231.59 52.81, 235.49 54.39, 239.34 56.06, 243.16 57.81, 246.93 59.65, 250.66 61.58, 254.35 63.59, 257.99 65.68, 261.58 67.86, 265.13 70.12, 268.62 72.45, 272.05 74.87, 275.43 77.36, 278.76 79.93, 282.02 82.57, 285.22 85.29, 288.36 88.08, 291.44 90.94, 294.45 93.86, 297.4 96.86, 300.34 99.86, 303.28 102.85, 306.23 105.85, 309.17 108.84, 312.11 111.84, 315.06 114.83, 318 117.83, 320.95 120.83, 323.89 123.82, 326.83 126.82, 329.78 129.81, 332.72 132.81, 335.67 135.8, 338.61 138.8, 341.55 141.79, 344.5 144.79, 347.44 147.79, 350.38 150.78, 353.33 153.78, 356.27 156.77" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 1.2; fill: None; fill-rule: evenodd; stroke-dasharray: 4, 3;"/>
+      <polygon points="55.2 40, 36.5 46.82, 39.8 40, 36.5 33.18" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd; fill-opacity: 0.35; stroke-opacity: 0.35;"/>
+      <path d="M 44.2,40 L 72.25,40 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 1.8;"/>
+      <polygon points="78.2 40, 71.2 36.5, 71.2 43.5" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;"/>
+      <polygon points="130.8 40, 112.1 46.82, 115.4 40, 112.1 33.18" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd; fill-opacity: 0.35; stroke-opacity: 0.35;"/>
+      <path d="M 119.8,40 L 147.85,40 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 1.8;"/>
+      <polygon points="153.8 40, 146.8 36.5, 146.8 43.5" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;"/>
+      <polygon points="197.87 42.67, 178.52 47.33, 182.57 40.93, 180.06 33.78" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd; fill-opacity: 0.35; stroke-opacity: 0.35;"/>
+      <path d="M 186.94,41.43 L 214.81,44.6 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 1.8;"/>
+      <polygon points="220.72 45.28, 214.16 41.01, 213.37 47.96" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;"/>
+      <polygon points="245.68 58.53, 225.79 57.81, 231.41 52.73, 230.92 45.17" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd; fill-opacity: 0.35; stroke-opacity: 0.35;"/>
+      <path d="M 235.49,54.39 L 261.47,64.94 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 1.8;"/>
+      <polygon points="266.99 67.18, 261.82 61.3, 259.18 67.79" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;"/>
+      <polygon points="287.46 86.66, 268.49 80.62, 275.27 77.24, 276.83 69.82" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd; fill-opacity: 0.35; stroke-opacity: 0.35;"/>
+      <path d="M 278.76,79.93 L 300.95,97.08 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 1.8;"/>
+      <polygon points="305.66 100.72, 302.26 93.67, 297.98 99.21" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;"/>
+      <polygon points="322.77 122.68, 304.8 114.12, 311.97 111.7, 314.53 104.56" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd; fill-opacity: 0.35; stroke-opacity: 0.35;"/>
+      <path d="M 315.06,114.83 L 334.72,134.84 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 1.8;"/>
+      <polygon points="338.89 139.08, 336.48 131.64, 331.49 136.54" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;"/>
+      <polygon points="363.98 164.62, 346.01 156.06, 353.19 153.63, 355.74 146.5" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;"/>
+      <path d="M 356.27,156.77 L 375.93,176.78 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 1.8;"/>
+      <polygon points="380.1 181.02, 377.69 173.58, 372.7 178.48" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;"/>
+      <text x="110" y="22" style="font-family: var(--font-sans, sans-serif); font-size: 8px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,44) scale(1,-1)" text-anchor="middle">holding THRUST</text>
+      <text x="420" y="80" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,160) scale(1,-1)" text-anchor="middle">holding THRUST + LEFT</text>
+      <text x="420" y="68" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,136) scale(1,-1)" text-anchor="middle">angle grows → direction swings</text>
+      <text x="420" y="57" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,114) scale(1,-1)" text-anchor="middle">→ path curves</text>
+      <text x="16" y="176" style="font-family: var(--font-sans, sans-serif); font-size: 8px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,352) scale(1,-1)">green = forward direction each frame</text>
+    </g>
+  </g>
+</svg>
