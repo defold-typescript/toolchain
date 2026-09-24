@@ -9,6 +9,12 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.40.0
+
+### Improved
+
+- **[Vectors and rotations](./vectors-tutorial.md) is a new tutorial on the math behind movement** — positions, vectors, speed, dt, rotation, the dot product and local versus world space, one game problem per lesson, ending in Asteroids-style ship physics. Its fifteen figures follow the site font and the light/dark theme, and every TypeScript snippet on the page type-checks against the shipped declarations.
+
 ## v0.39.0
 
 ### Improved

@@ -38,9 +38,10 @@ The sections below mirror the top navigation; each lists the pages in its left-s
 
 ## Guides
 
-### Tutorial
+### Tutorials
 
 - [Build Tetris](./tetris-tutorial.md) — build a complete Tetris game from scratch: write TypeScript, compile it to Lua, and wire the scene in the Defold editor, seeing the whole workflow end to end.
+- [Vectors and rotations](./vectors-tutorial.md) — the math behind movement, one game problem at a time: positions, vectors, speed, dt, rotation, the dot product, and local versus world space, ending in Asteroids-style ship physics.
 
 ### TypeScript
 
