@@ -13,9 +13,9 @@ export interface GuideGroup {
 export const GUIDE_GROUPS: GuideGroup[] = [
   {
     id: "tutorial",
-    label: "Tutorial",
-    subtitle: "Build a complete game to see the whole workflow end to end.",
-    slugs: ["tetris-tutorial"],
+    label: "Tutorials",
+    subtitle: "Build complete games and learn the ideas behind them.",
+    slugs: ["tetris-tutorial", "vectors-tutorial"],
   },
   {
     id: "typescript",

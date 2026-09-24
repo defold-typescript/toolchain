@@ -366,7 +366,7 @@ describe("buildNav", () => {
     });
     const guides = nav.find((c) => c.id === "guides");
     expect(guides?.links.map((l) => l.label)).toEqual([
-      "Tutorial",
+      "Tutorials",
       "TypeScript",
       "Core concepts",
       "CLI",
@@ -380,7 +380,10 @@ describe("buildNav", () => {
       expect(header.children?.length).toBeGreaterThan(0);
     }
     const byLabel = (label: string) => guides?.links.find((l) => l.label === label);
-    expect(byLabel("Tutorial")?.children?.map((c) => c.route)).toEqual(["/tetris-tutorial"]);
+    expect(byLabel("Tutorials")?.children?.map((c) => c.route)).toEqual([
+      "/tetris-tutorial",
+      "/vectors-tutorial",
+    ]);
     expect(byLabel("TypeScript")?.children?.map((c) => c.route)).toEqual([
       "/typescript-vs-lua",
       "/typescript-gotchas",

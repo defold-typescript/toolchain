@@ -678,3 +678,57 @@ describe("renderMarkdown platform markers", () => {
     expect(html).not.toContain("tooltip-trigger");
   });
 });
+
+describe("renderMarkdown inline SVG figures", () => {
+  const svg = '<svg viewBox="0 0 10 10"><circle cx="5" cy="5" r="4"/></svg>';
+  const readInlineSvg = (src: string) => (src === "img/vectors/a.svg" ? svg : undefined);
+
+  test("inlines a lone #inline image as a captioned figure", async () => {
+    const html = await renderMarkdown("![Figure 1 — Cap](img/vectors/a.svg#inline)\n", {
+      readInlineSvg,
+    });
+    expect(html).toContain('<figure class="figure-svg">');
+    expect(html).toContain(
+      '<svg role="img" aria-label="Figure 1 — Cap" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4"/></svg>',
+    );
+    expect(html).toContain("<figcaption>Figure 1 — Cap</figcaption>");
+    expect(html).not.toContain("<img");
+    expect(html).not.toContain("<p>");
+  });
+
+  test("escapes the alt text in the label and the caption", async () => {
+    const html = await renderMarkdown('![a < b & "c"](img/vectors/a.svg#inline)\n', {
+      readInlineSvg,
+    });
+    expect(html).toContain('aria-label="a &lt; b &amp; &quot;c&quot;"');
+    expect(html).toContain("<figcaption>a &lt; b &amp; &quot;c&quot;</figcaption>");
+  });
+
+  test("leaves an image without #inline as an <img>", async () => {
+    const html = await renderMarkdown("![Figure 1 — Cap](img/vectors/a.svg)\n", { readInlineSvg });
+    expect(html).toContain('<img src="img/vectors/a.svg" alt="Figure 1 — Cap">');
+    expect(html).not.toContain("figure-svg");
+  });
+
+  test("honours max-width alongside #inline", async () => {
+    const html = await renderMarkdown("![Cap](img/vectors/a.svg#inline&max-width=300)\n", {
+      readInlineSvg,
+    });
+    expect(html).toContain('<figure class="figure-svg" style="max-width: min(100%, 300px)">');
+    expect(html).not.toContain("<img");
+  });
+
+  test("keeps an #inline image sharing its paragraph with text as an <img>", async () => {
+    const html = await renderMarkdown("See ![Cap](img/vectors/a.svg#inline) here.\n", {
+      readInlineSvg,
+    });
+    expect(html).not.toContain("figure-svg");
+    expect(html).toContain('<img src="img/vectors/a.svg"');
+  });
+
+  test("throws naming the src when the resolver has no SVG for it", async () => {
+    await expect(
+      renderMarkdown("![Cap](img/vectors/missing.svg#inline)\n", { readInlineSvg }),
+    ).rejects.toThrow("img/vectors/missing.svg");
+  });
+});
