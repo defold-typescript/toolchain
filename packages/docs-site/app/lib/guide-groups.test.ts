@@ -7,7 +7,7 @@ import { listGuidePages } from "./guide-loader";
 const GUIDE_DIR = join(import.meta.dir, "../../../../packages/docs/guide");
 
 describe("GUIDE_GROUPS", () => {
-  test("declares the learning-ordered groups with labels and subtitles, Tutorial first", () => {
+  test("declares the learning-ordered groups with labels and subtitles, Tutorials first", () => {
     expect(GUIDE_GROUPS.map((g) => g.id)).toEqual([
       "tutorial",
       "typescript",
@@ -19,7 +19,7 @@ describe("GUIDE_GROUPS", () => {
       "releases",
     ]);
     expect(GUIDE_GROUPS.map((g) => g.label)).toEqual([
-      "Tutorial",
+      "Tutorials",
       "TypeScript",
       "Core concepts",
       "CLI",

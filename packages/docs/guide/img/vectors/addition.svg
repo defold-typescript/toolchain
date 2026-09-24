@@ -1,0 +1,58 @@
+<svg viewBox="0 0 504 215" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd">
+  <g transform="scale(1,-1) translate(0,-215)">
+    <g>
+      <path d="M 40,30 L 40,180 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 70,30 L 70,180 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 100,30 L 100,180 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 130,30 L 130,180 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 160,30 L 160,180 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 190,30 L 190,180 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 220,30 L 220,180 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 40,30 L 238,30 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 40,60 L 238,60 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 40,90 L 238,90 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 40,120 L 238,120 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 40,150 L 238,150 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 40,180 L 238,180 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
+      <path d="M 40,30 L 242.35,30 Z" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: round; stroke-width: 1.3;"/>
+      <polygon points="250 30, 241 25.5, 241 34.5" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-axis, #94a3b8); fill-rule: evenodd;"/>
+      <path d="M 40,30 L 40,184.35 Z" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: round; stroke-width: 1.3;"/>
+      <polygon points="40 192, 44.5 183, 35.5 183" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-axis, #94a3b8); fill-rule: evenodd;"/>
+      <text x="40.0" y="18" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,36) scale(1,-1)" text-anchor="middle">0</text>
+      <text x="100.0" y="18" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,36) scale(1,-1)" text-anchor="middle">100</text>
+      <text x="160.0" y="18" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,36) scale(1,-1)" text-anchor="middle">200</text>
+      <text x="220.0" y="18" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,36) scale(1,-1)" text-anchor="middle">300</text>
+      <text x="35" y="87.0" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,174) scale(1,-1)" text-anchor="end">100</text>
+      <text x="35" y="147.0" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,294) scale(1,-1)" text-anchor="end">200</text>
+      <path d="M 100,90 L 190,90 Z" style="stroke: var(--fig-vec, #ea580c); stroke-linecap: butt; stroke-width: 1; stroke-dasharray: 3, 3;"/>
+      <path d="M 190,90 L 190,120 Z" style="stroke: var(--fig-vec, #ea580c); stroke-linecap: butt; stroke-width: 1; stroke-dasharray: 3, 3;"/>
+      <text x="145.0" y="78.0" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-vec, #ea580c); stroke:none;" transform="translate(0,156) scale(1,-1)" text-anchor="middle">+150 in X</text>
+      <text x="194.0" y="102.0" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-vec, #ea580c); stroke:none;" transform="translate(0,204) scale(1,-1)">+50 in Y</text>
+      <path d="M 100,90 L 182.74,117.58 Z" style="stroke: var(--fig-vec, #ea580c); stroke-linecap: round; stroke-width: 2.6;"/>
+      <polygon points="190 120, 182.88 112.88, 180.04 121.42" style="stroke: var(--fig-vec, #ea580c); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-vec, #ea580c); fill-rule: evenodd;"/>
+      <polygon points="109 90, 93.7 95.58, 96.4 90, 93.7 84.42" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd; fill-opacity: 0.35; stroke-opacity: 0.35;"/>
+      <circle cx="100.0" cy="90.0" r="4.5" style="stroke: var(--fig-bg, #ffffff); stroke-linecap: butt; stroke-width: 1.2; fill: var(--fig-pos, #2563eb); fill-rule: evenodd;"/>
+      <polygon points="199 120, 183.7 125.58, 186.4 120, 183.7 114.42" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;"/>
+      <circle cx="190.0" cy="120.0" r="4.5" style="stroke: var(--fig-bg, #ffffff); stroke-linecap: butt; stroke-width: 1.2; fill: var(--fig-pos, #2563eb); fill-rule: evenodd;"/>
+      <text x="96.0" y="102.0" style="font-family: var(--font-sans, sans-serif); font-size: 8px;fill: var(--fig-pos, #2563eb); stroke:none;" transform="translate(0,204) scale(1,-1)" text-anchor="end">before (100, 100)</text>
+      <text x="184.0" y="132.0" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8px;fill: var(--fig-pos, #2563eb); stroke:none;" transform="translate(0,264) scale(1,-1)" text-anchor="middle">after (250, 150)</text>
+      <text x="137.0" y="117.0" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8.5px;fill: var(--fig-vec, #ea580c); stroke:none;" transform="translate(0,234) scale(1,-1)" text-anchor="end">movement</text>
+      <rect x="280" y="40" width="224" height="150" rx="8" ry="8" style="stroke: var(--fig-border, #e2e8f0); stroke-linecap: butt; stroke-width: 0.8; fill: var(--fig-panel, #f8fafc); fill-rule: evenodd;"/>
+      <text x="392" y="170" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,340) scale(1,-1)" text-anchor="middle">Add each part separately</text>
+      <text x="300" y="145" style="font-family: var(--font-sans, sans-serif); font-size: 9px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,290) scale(1,-1)"></text>
+      <text x="440" y="145" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,290) scale(1,-1)" text-anchor="end">X</text>
+      <text x="485" y="145" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,290) scale(1,-1)" text-anchor="end">Y</text>
+      <text x="300" y="121" style="font-family: var(--font-sans, sans-serif); font-size: 9px;fill: var(--fig-pos, #2563eb); stroke:none;" transform="translate(0,242) scale(1,-1)">position</text>
+      <text x="440" y="121" style="font-family: var(--font-mono, monospace); font-size: 9px;fill: var(--fig-pos, #2563eb); stroke:none;" transform="translate(0,242) scale(1,-1)" text-anchor="end">100</text>
+      <text x="485" y="121" style="font-family: var(--font-mono, monospace); font-size: 9px;fill: var(--fig-pos, #2563eb); stroke:none;" transform="translate(0,242) scale(1,-1)" text-anchor="end">100</text>
+      <text x="300" y="97" style="font-family: var(--font-sans, sans-serif); font-size: 9px;fill: var(--fig-vec, #ea580c); stroke:none;" transform="translate(0,194) scale(1,-1)">+ movement</text>
+      <text x="440" y="97" style="font-family: var(--font-mono, monospace); font-size: 9px;fill: var(--fig-vec, #ea580c); stroke:none;" transform="translate(0,194) scale(1,-1)" text-anchor="end">150</text>
+      <text x="485" y="97" style="font-family: var(--font-mono, monospace); font-size: 9px;fill: var(--fig-vec, #ea580c); stroke:none;" transform="translate(0,194) scale(1,-1)" text-anchor="end">50</text>
+      <path d="M 300,90 L 490,90 Z" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 0.8;"/>
+      <text x="300" y="73" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9px;fill: var(--fig-pos, #2563eb); stroke:none;" transform="translate(0,146) scale(1,-1)">= new position</text>
+      <text x="440" y="73" style="font-family: var(--font-mono, monospace); font-size: 9px;fill: var(--fig-pos, #2563eb); stroke:none;" transform="translate(0,146) scale(1,-1)" text-anchor="end">250</text>
+      <text x="485" y="73" style="font-family: var(--font-mono, monospace); font-size: 9px;fill: var(--fig-pos, #2563eb); stroke:none;" transform="translate(0,146) scale(1,-1)" text-anchor="end">150</text>
+      <text x="392" y="50" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,100) scale(1,-1)" text-anchor="middle">the tail sits on the dot; the tip is the answer</text>
+    </g>
+  </g>
+</svg>

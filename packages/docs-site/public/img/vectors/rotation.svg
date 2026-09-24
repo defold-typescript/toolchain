@@ -1,0 +1,45 @@
+<svg viewBox="0 0 504 215" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd">
+  <g transform="scale(1,-1) translate(0,-215)">
+    <g>
+      <rect x="0" y="0" width="250" height="210" rx="8" ry="8" style="stroke: var(--fig-border, #e2e8f0); stroke-linecap: butt; stroke-width: 0.8; fill: var(--fig-panel, #f8fafc); fill-rule: evenodd;"/>
+      <rect x="264" y="0" width="240" height="210" rx="8" ry="8" style="stroke: var(--fig-border, #e2e8f0); stroke-linecap: butt; stroke-width: 0.8; fill: var(--fig-panel, #f8fafc); fill-rule: evenodd;"/>
+      <circle cx="118" cy="102" r="58" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 0.9; fill: none; fill-rule: evenodd;"/>
+      <circle cx="176.0" cy="102.0" r="2.5" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;"/>
+      <text x="182.0" y="106.0" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,212) scale(1,-1)">0°</text>
+      <text x="182.0" y="95.0" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,190) scale(1,-1)">0</text>
+      <circle cx="118.0" cy="160.0" r="2.5" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;"/>
+      <text x="125.0" y="162.0" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,324) scale(1,-1)">90°</text>
+      <text x="125.0" y="151.0" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,302) scale(1,-1)">1.57 (π/2)</text>
+      <circle cx="60.0" cy="102.0" r="2.5" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;"/>
+      <text x="54.0" y="106.0" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,212) scale(1,-1)" text-anchor="end">180°</text>
+      <text x="54.0" y="95.0" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,190) scale(1,-1)" text-anchor="end">3.14 (π)</text>
+      <circle cx="118" cy="44.0" r="2.5" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;"/>
+      <text x="125" y="46.0" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,92) scale(1,-1)">270°</text>
+      <text x="125" y="35.0" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,70) scale(1,-1)">4.71 (3π/2)</text>
+      <polyline points="146 102, 145.95 103.65, 145.81 105.29, 145.56 106.92, 145.23 108.54, 144.79 110.13, 144.27 111.69, 143.65 113.22, 142.95 114.71, 142.16 116.16, 141.28 117.56, 140.32 118.9, 139.29 120.18, 138.18 121.41, 137.01 122.56, 135.76 123.64, 134.46 124.65, 133.1 125.58, 131.68 126.43, 130.22 127.19, 128.72 127.87, 127.17 128.45, 125.6 128.95, 124 129.35, 122.38 129.66, 120.74 129.87, 119.1 129.98, 117.45 129.99, 115.8 129.91, 114.16 129.74, 112.54 129.46, 110.93 129.09, 109.35 128.63, 107.79 128.07, 106.28 127.43, 104.8 126.69, 103.37 125.87, 101.99 124.97, 100.67 123.99, 99.4 122.93, 98.2 121.8" style="stroke: var(--fig-rot, #db2777); stroke-linecap: round; stroke-width: 1.8; fill: None; fill-rule: evenodd;"/>
+      <path d="M 101.03,124.63 L 98.63,122.23 Z" style="stroke: var(--fig-rot, #db2777); stroke-linecap: round; stroke-width: 1.8;"/>
+      <polygon points="97.14 120.74, 98.02 123.36, 99.77 121.61" style="stroke: var(--fig-rot, #db2777); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-rot, #db2777); fill-rule: evenodd;"/>
+      <path d="M 118,102 L 90.6,129.4 Z" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1.6;"/>
+      <polygon points="85.19 134.81, 94.74 131.63, 88.37 125.26" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;"/>
+      <path d="M 118,102 L 164.4,102 Z" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 1; stroke-dasharray: 3, 2;"/>
+      <text x="136" y="132" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,264) scale(1,-1)">135°</text>
+      <text x="125" y="192" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,384) scale(1,-1)" text-anchor="middle">degrees  vs  radians</text>
+      <text x="125" y="8" style="font-family: var(--font-sans, sans-serif); font-size: 8px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,16) scale(1,-1)" text-anchor="middle">positive = counter-clockwise</text>
+      <text x="384" y="192" style="font-family: var(--font-mono, monospace); font-size: 9px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,384) scale(1,-1)" text-anchor="middle">vmath.quat_rotation_z(angle)</text>
+      <polygon points="315 110, 289.5 119.3, 294 110, 289.5 100.7" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;"/>
+      <text x="300" y="70" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,140) scale(1,-1)" text-anchor="middle">0°</text>
+      <text x="300" y="58" style="font-family: var(--font-sans, sans-serif); font-size: 8px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,116) scale(1,-1)" text-anchor="middle">0.00</text>
+      <polygon points="370.61 120.61, 346 109.15, 355.76 105.76, 359.15 96" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;"/>
+      <text x="360" y="70" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,140) scale(1,-1)" text-anchor="middle">45°</text>
+      <text x="360" y="58" style="font-family: var(--font-sans, sans-serif); font-size: 8px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,116) scale(1,-1)" text-anchor="middle">0.79</text>
+      <polygon points="420 125, 410.7 99.5, 420 104, 429.3 99.5" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;"/>
+      <text x="420" y="70" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,140) scale(1,-1)" text-anchor="middle">90°</text>
+      <text x="420" y="58" style="font-family: var(--font-sans, sans-serif); font-size: 8px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,116) scale(1,-1)" text-anchor="middle">1.57</text>
+      <polygon points="463 110, 488.5 100.7, 484 110, 488.5 119.3" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;"/>
+      <text x="478" y="70" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,140) scale(1,-1)" text-anchor="middle">180°</text>
+      <text x="478" y="58" style="font-family: var(--font-sans, sans-serif); font-size: 8px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,116) scale(1,-1)" text-anchor="middle">3.14</text>
+      <text x="270" y="58" style="font-family: var(--font-sans, sans-serif); font-size: 7px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,116) scale(1,-1)">rad</text>
+      <text x="384" y="8" style="font-family: var(--font-sans, sans-serif); font-size: 8px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,16) scale(1,-1)" text-anchor="middle">same ship, different rotations</text>
+    </g>
+  </g>
+</svg>
