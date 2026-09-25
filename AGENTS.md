@@ -25,6 +25,11 @@ This repo is designed to be driven by AI agents (clankers) as well as humans. Tr
 - `packages/cli` — the only package that exposes a binary (`defold-typescript`).
 - New packages go under `packages/`; do not create siblings at the repo root.
 
+## Branch Naming
+
+- Issue work → `<type>/<N>-<slug>`, where `<type>` is `fix`, `feat`, `chore` or `docs`, `<N>` is the GitHub issue number, and `<slug>` is a short kebab-case summary (e.g. `chore/1-nakama-v3-41-0`).
+- Planned steps without an issue → `step/<step-slug>`.
+
 ## Testing
 
 - A test must be able to fail from a production change: assertions on authored prose, and test-local inventories or parsers standing in for a production source, do not qualify. The one exception is a content-hash pin over an input a recorded verdict or measurement was derived from — an *upstream vendored* copy (`markdown-fidelity-gate.test.ts`, `authored-parity-floor.test.ts`) or the *authored-lane* fork a severed library's verdict resolves against (`markdown-fidelity-gate.test.ts`) — which defends the input rather than the code. An upstream digest is never re-baselined; an authored-lane digest is re-pinned in the same commit as the deliberate edit, once the verdicts reading it have been re-checked. `property-correction-provenance.test.ts` and `return-correction-provenance.test.ts` pin the same way at token rather than file granularity — a red there means upstream fixed the span it names, so the matching `PROPERTY_TYPE_CORRECTIONS`, `RETURN_FIELD_OPTIONALITY_CORRECTIONS` or `RETURN_TYPE_CORRECTIONS` entry is deleted, never re-pinned; the two return-side verdicts are keyed per retained generated target, so a fix in one target is recorded against that target and deletion is due only once no retained target still shows the defect. The two return-side verdicts also red when upstream *retypes* a pinned span rather than fixing it; such a red is re-pinned to the new upstream type or the entry re-justified — never deleted as resolved and never recorded as already-documented.
