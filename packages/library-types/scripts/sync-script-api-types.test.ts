@@ -3,6 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import {
+  applyOmittableSlots,
   buildScriptApiFidelity,
   computeScriptApiFidelity,
   emitScriptApiDeclaration,
@@ -12,6 +13,7 @@ import {
   lowerScriptApiApiDoc,
   readScriptApiTargets,
   type ScriptApiDoc,
+  type ScriptApiDocElement,
   type ScriptApiTarget,
 } from "./sync-script-api-types";
 
@@ -48,7 +50,7 @@ describe("readScriptApiTargets", () => {
     expect(bridge).toBeDefined();
     expect(bridge?.namespace).toBe("bridge");
     expect(bridge?.repo).toBe("https://github.com/Playgama/bridge-defold");
-    expect(bridge?.ref).toBe("v2.1.0");
+    expect(bridge?.ref).toBe("v2.2.0");
     expect(bridge?.scriptApi).toBe("bridge/api/bridge.script_api");
     expect(bridge?.generated).toBe("generated/bridge.d.ts");
     expect(bridge?.apiDoc).toBe("api-doc/bridge.json");
@@ -66,6 +68,19 @@ describe("readScriptApiTargets", () => {
     const root = writeConfig({ targets: [missingModuleId] });
     expect(() => readScriptApiTargets(root)).toThrow(/moduleId/);
     expect(() => readScriptApiTargets(root)).toThrow(/0/);
+  });
+
+  test("rejects an omittableSlots entry missing its element, slot or evidence", () => {
+    const complete = { element: "bridge.social.create_post", slot: "payload", evidence: "e" };
+    for (const field of ["element", "slot", "evidence"] as const) {
+      const { [field]: _drop, ...partial } = complete;
+      const root = writeConfig({ targets: [{ ...BRIDGE, omittableSlots: [partial] }] });
+      expect(() => readScriptApiTargets(root)).toThrow(new RegExp(field));
+    }
+    const blank = writeConfig({
+      targets: [{ ...BRIDGE, omittableSlots: [{ ...complete, evidence: "  " }] }],
+    });
+    expect(() => readScriptApiTargets(blank)).toThrow(/evidence/);
   });
 
   test("defaults fidelity to fidelity/<namespace>.json and license to '' when omitted", () => {
@@ -139,6 +154,52 @@ describe("emitScriptApiDeclaration", () => {
   });
 });
 
+describe("applyOmittableSlots", () => {
+  const post: ScriptApiDocElement = {
+    type: "FUNCTION",
+    name: "bridge.social.create_post",
+    description: "create a post",
+    parameters: [
+      { name: "options", types: ["table", "string"] },
+      { name: "payload", types: ["string"] },
+      { name: "on_success", types: ["function"] },
+      { name: "on_failure", types: ["function"] },
+    ],
+    returnvalues: [],
+  };
+  const share: ScriptApiDocElement = { ...post, name: "bridge.social.share" };
+  const doc: ScriptApiDoc = { info: { namespace: "bridge" }, elements: [post, share] };
+  const payload = { element: "bridge.social.create_post", slot: "payload", evidence: "e" };
+
+  test("follows the element with a same-named copy that omits the declared slot", () => {
+    const expanded = applyOmittableSlots(doc, [payload]);
+    expect(expanded.elements.map((e) => e.name)).toEqual([
+      "bridge.social.create_post",
+      "bridge.social.create_post",
+      "bridge.social.share",
+    ]);
+    expect(expanded.elements[0]).toEqual(post);
+    expect(expanded.elements[1]?.parameters.map((p) => p.name)).toEqual([
+      "options",
+      "on_success",
+      "on_failure",
+    ]);
+    expect(expanded.elements[2]).toEqual(share);
+  });
+
+  test("throws naming the element and slot when the slot is gone upstream", () => {
+    const stale = { ...payload, slot: "seed" };
+    expect(() => applyOmittableSlots(doc, [stale])).toThrow(/bridge\.social\.create_post/);
+    expect(() => applyOmittableSlots(doc, [stale])).toThrow(/seed/);
+  });
+
+  test("throws naming the element and slot when the element is gone upstream", () => {
+    const stale = { ...payload, element: "bridge.social.make_post" };
+    expect(() => applyOmittableSlots(doc, [stale])).toThrow(/bridge\.social\.make_post/);
+    expect(() => applyOmittableSlots(doc, [stale])).toThrow(/payload/);
+  });
+});
+
 describe("script_api goldens regenerate byte-for-byte", () => {
   test("each target's .d.ts matches its committed generated golden", async () => {
     for (const target of readScriptApiTargets(PACKAGE_ROOT)) {
@@ -166,14 +227,14 @@ describe("script_api fidelity", () => {
     }
   });
 
-  // A pipe-separated `.script_api` `type:` now parses into its tokens, so
-  // bridge's five `string | nil` returns count as two resolved tokens each
-  // rather than one unmapped union — 139 tokens becomes 144, all resolved.
+  // A pipe-separated or list-valued `.script_api` `type:` parses into its tokens,
+  // so bridge's `string | nil` returns and `[table, string]` options count one
+  // resolved token per alternative rather than one unmapped union or none at all.
   test("bridge fidelity reflects the real emitter: coverage 1, no unmapped tokens", async () => {
     const report = await buildScriptApiFidelity(PACKAGE_ROOT, BRIDGE);
     expect(report.namespace).toBe("bridge");
-    expect(report.totalMembers).toBe(85);
-    expect(report.totalTypeTokens).toBe(144);
+    expect(report.totalMembers).toBe(89);
+    expect(report.totalTypeTokens).toBe(154);
     expect(report.unknownFallbacks).toBe(0);
     expect(report.unknownTokens).toEqual([]);
     expect(report.undocumentedMembers).toBe(0);
@@ -197,6 +258,26 @@ describe("script_api fidelity", () => {
     expect(report.unknownFallbacks).toBe(1);
     expect(report.unknownTokens).toEqual(["NopeType"]);
     expect(report.totalTypeTokens).toBe(2);
+    expect(report.coverage).toBe(0.5);
+  });
+
+  test("computeScriptApiFidelity counts a slot with no type token as an unknown fallback", () => {
+    const doc: ScriptApiDoc = {
+      info: { namespace: "x" },
+      elements: [
+        {
+          type: "FUNCTION",
+          name: "x.f",
+          description: "d",
+          parameters: [{ types: [] }, { types: ["string"] }],
+          returnvalues: [],
+        },
+      ],
+    };
+    const report = computeScriptApiFidelity("x", doc, { resolves: (t) => t === "string" });
+    expect(report.totalTypeTokens).toBe(2);
+    expect(report.unknownFallbacks).toBe(1);
+    expect(report.unknownTokens).toEqual(["(untyped)"]);
     expect(report.coverage).toBe(0.5);
   });
 

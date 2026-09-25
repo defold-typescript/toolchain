@@ -253,6 +253,10 @@ declare module 'bridge.bridge' {
     }
     namespace platform {
       /**
+       * Everything the launch carries - the parameters the platform passed to the game and, when it was opened from one of the game's own posts, postId - the id of that post's config entry.
+       */
+      function data(): Record<string | number, unknown>;
+      /**
        * Server Time
        *
        * @param on_success - function(_, time)
@@ -279,6 +283,10 @@ declare module 'bridge.bridge' {
        * Get the language set by the user on the platform or the browser language if not provided by the platform, to localize game content.
        */
       function language(): string;
+      /**
+       * Where the game was opened from - "notification" or "post" (one of the game's own posts, see bridge.social.create_post). nil when the platform did not say.
+       */
+      function launch_source(): string | undefined;
       /**
        * State changed events.
        *
@@ -380,17 +388,35 @@ declare module 'bridge.bridge' {
       /**
        * Use this to let players create posts about their achievements or updates directly from the game.
        *
+       * @param options - A table with the content, or the id of a social.posts entry declared in playgama-bridge-config.json.
        * @param on_success - function(_)
        * @param on_failure - function(_)
        */
-      function create_post(options: Record<string | number, unknown>, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
+      function create_post(options: Record<string | number, unknown> | string, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
+      /**
+       * Use this to let players create posts about their achievements or updates directly from the game.
+       *
+       * @param options - A table with the content, or the id of a social.posts entry declared in playgama-bridge-config.json.
+       * @param payload - Optional. The game's own string for this one post - a level, a seed, a challenge - handed back as bridge.platform.payload() when someone opens it. May be omitted, the callbacks then follow options.
+       * @param on_success - function(_)
+       * @param on_failure - function(_)
+       */
+      function create_post(options: Record<string | number, unknown> | string, payload: string, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
+      /**
+       * Everything the player has coming from posts right now - the reward for the post the game was opened from and what the author earned from the players who came through their posts. Resolves to an empty array when there is nothing, so grant what you get and stay quiet otherwise. Each reward has the shape { id, amount, type }, where type is "visit" or "author".
+       *
+       * @param on_success - function(_, rewards)
+       * @param on_failure - function(_, error)
+       */
+      function get_post_reward(on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
       /**
        * Allow players to invite their friends to play the game, helping to grow your player base organically.
        *
+       * @param options - A table with the content, or the id of a social.invites entry declared in playgama-bridge-config.json.
        * @param on_success - function(_)
        * @param on_failure - function(_)
        */
-      function invite_friends(options: Record<string | number, unknown>, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
+      function invite_friends(options: Record<string | number, unknown> | string, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
       /**
        * Check if the add to favorites functionality is supported on the platform.
        */
@@ -411,6 +437,10 @@ declare module 'bridge.bridge' {
        * Check if the join community functionality is supported on the platform.
        */
       function is_join_community_supported(): boolean;
+      /**
+       * Check if rewards around posts created with create_post are supported on the platform.
+       */
+      function is_post_reward_supported(): boolean;
       /**
        * Check if the rate game functionality is supported on the platform.
        */
@@ -436,10 +466,11 @@ declare module 'bridge.bridge' {
       /**
        * Use this to allow players to share game content or achievements on social media platforms.
        *
+       * @param options - A table with the content, or the id of a social.shares entry declared in playgama-bridge-config.json.
        * @param on_success - function(_)
        * @param on_failure - function(_)
        */
-      function share(options: Record<string | number, unknown>, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
+      function share(options: Record<string | number, unknown> | string, on_success: (...args: unknown[]) => unknown, on_failure: (...args: unknown[]) => unknown): void;
     }
     namespace storage {
       /**
