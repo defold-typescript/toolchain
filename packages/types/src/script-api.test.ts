@@ -440,6 +440,42 @@ describe("scriptApiToRefDoc pipe-separated types", () => {
   });
 });
 
+const LIST_TYPES = `
+- name: l
+  type: table
+  desc: list-typed slots
+  members:
+  - name: share
+    type: function
+    desc: share content
+    parameters:
+    - name: options
+      type: [table, string]
+      desc: a table or a config entry id
+    - name: mixed
+      type: [string | nil, number]
+      desc: a list entry spelling a union
+    - name: plain
+      type: string
+      desc: a scalar type
+`;
+
+describe("parseScriptApi list-valued types", () => {
+  const share = functionElements(parseScriptApi(LIST_TYPES)).find((e) => e.name === "l.share");
+
+  it("reads a YAML list type as one token per entry", () => {
+    expect(share?.parameters[0]?.types).toEqual(["table", "string"]);
+  });
+
+  it("still splits a pipe union inside a list entry", () => {
+    expect(share?.parameters[1]?.types).toEqual(["string", "nil", "number"]);
+  });
+
+  it("leaves a scalar type unchanged", () => {
+    expect(share?.parameters[2]?.types).toEqual(["string"]);
+  });
+});
+
 const NESTED = `
 - name: ads
   type: table

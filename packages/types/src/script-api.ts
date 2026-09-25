@@ -49,8 +49,10 @@ function stringOr(value: unknown, fallback: string): string {
 
 // A `.script_api` `type:` may spell a union inline (`string | nil`), where the
 // core ref-doc format carries one token per alternative. Splitting here keeps the
-// downstream emitter and fidelity resolver working in single tokens.
+// downstream emitter and fidelity resolver working in single tokens. A `type:`
+// may also be a YAML list (`[table, string]`), one alternative per entry.
 function splitTypeTokens(type: unknown): string[] {
+  if (Array.isArray(type)) return type.flatMap(splitTypeTokens);
   if (typeof type !== "string") return [];
   return type
     .split("|")

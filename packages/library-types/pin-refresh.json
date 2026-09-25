@@ -214,18 +214,22 @@
     {
       "lane": "script-api",
       "moduleId": "bridge.bridge",
-      "fromRef": "v2.0.0",
-      "toRef": "v2.1.0",
+      "fromRef": "v2.1.0",
+      "toRef": "v2.2.0",
       "addedMembers": [
-        "bridge.notifications.cancel",
-        "bridge.notifications.cancel_all",
-        "bridge.notifications.is_supported",
-        "bridge.notifications.schedule"
+        "bridge.platform.data",
+        "bridge.platform.launch_source",
+        "bridge.social.get_post_reward",
+        "bridge.social.is_post_reward_supported"
       ],
       "removedMembers": [],
-      "changedMembers": [],
+      "changedMembers": [
+        "bridge.social.create_post",
+        "bridge.social.invite_friends",
+        "bridge.social.share"
+      ],
       "staged": false,
-      "notes": "One minor (v2.0.0 -> v2.1.0), purely additive: 81 members -> 85, none withdrawn, and the emitted bridge.d.ts diff has zero deleted lines, so no existing declaration changed and changedMembers is empty. The whole delta is one new sub-namespace, bridge.notifications, wrapping the platform's leave-the-game notification API: is_supported, schedule (a { id, title, description, delaySeconds, image, callToAction, payload } table whose launch payload is read back through the existing bridge.platform.payload), cancel by id, and cancel_all. Bridge is the only script_api target and the only refreshed library with a published `exports` entry (`./bridge.bridge`), so these names reach a consumer who imports the declarations directly rather than through resolve alone; nothing they already import moved. The `scriptApi` source path bridge/api/bridge.script_api was re-verified at v2.1.0 before fetching -- fetchScriptApiFixture writes whatever the raw URL returns, so a moved path would have written a 404 body into the fixture instead of failing. The nested-namespace flatten hazard did not fire: emitScriptApiDeclaration keeps one level of sub-namespace, and the release adds a 14th sibling at the existing depth rather than a second nesting level, so nothing collapsed silently. Fidelity coverage stays 1 (0 unknown, 81 -> 85 members and 135 -> 144 type tokens, undocumentedMembers still 0), so fidelity-floor.json is unchanged and no new type token needed a resolver mapping. The script_api lane has a single target, so --fetch moved only this fixture and there is no sibling pin to confirm byte-stable. staged=false: the fixtures are snapshots rather than a replayable history, so an intermediate fetch would add work without an isolation point. What this guard can witness is directional: a removedMembers name still emitted, or an addedMembers name not emitted at all. changedMembers and these notes are unchecked prose -- the committed guard reads addedMembers and removedMembers only."
+      "notes": "One minor (v2.1.0 -> v2.2.0): 85 members -> 89, none withdrawn. Added: platform.launch_source (\"notification\" or \"post\", nil when unknown) and platform.data (the launch parameters table), plus the post-reward pair social.is_post_reward_supported and social.get_post_reward. Changed: share, invite_friends and create_post type options as the YAML list [table, string], so options also accepts the id of a config entry; parseScriptApi read only a string type and would have emitted these three slots as unknown, so it now reads a list as one token per entry and the fidelity pass counts a token-less slot as an unknown fallback. create_post also gains an interior payload: string that upstream's prose says may be omitted with the callbacks shifting left; emitted positionally it would reject every existing create_post(options, on_success, on_failure) call, so script-api-targets.json declares it under omittableSlots and the declaration carries both arities as overloads. Consumer impact: additive -- every call that compiled against v2.1.0 still compiles. The scriptApi path bridge/api/bridge.script_api is unchanged at v2.2.0. Fidelity coverage stays 1 (0 unknown, 85 -> 89 members, 144 -> 154 type tokens, undocumentedMembers 0), so fidelity-floor.json is unchanged; the omittable-slot overload is applied to the emit only, so it is not counted twice. staged=false: a single minor. What this guard can witness is directional: a removedMembers name still emitted, or an addedMembers name not emitted at all. changedMembers and these notes are unchecked prose -- the committed guard reads addedMembers and removedMembers only."
     }
   ],
   "deliberatelyUnmoved": [
