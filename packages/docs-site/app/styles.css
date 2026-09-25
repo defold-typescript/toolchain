@@ -122,7 +122,7 @@
   --fig-rot: #db2777;
   --fig-dt: #0891b2;
   --fig-vec: #ea580c;
-  --fig-enemy: #dc2626;
+  --fig-other: #dc2626;
 }
 
 [data-theme="dark"] {
@@ -140,7 +140,7 @@
   --fig-rot: #f472b6;
   --fig-dt: #22d3ee;
   --fig-vec: #fb923c;
-  --fig-enemy: #f87171;
+  --fig-other: #f87171;
 }
 
 @layer base {
@@ -652,11 +652,22 @@
      be non-zero: `.prose blockquote` out-specifies the `.prose > * + *` owl, so
      a zero top would leave the blockquote butted against the element above it
      (most visibly after an image, which has no bottom margin of its own). */
+  /* A plain quote shares the admonition box, in a neutral gray tint. */
   .prose blockquote {
     margin: 1.4em 0;
-    padding: 0.4em 1em;
+    padding: 0.8em 1em;
     border-left: 3px solid var(--color-border-strong);
-    color: var(--color-text-muted);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-text);
+  }
+
+  .prose blockquote > :first-child {
+    margin-top: 0;
+  }
+
+  .prose blockquote > :last-child {
+    margin-bottom: 0;
   }
 
   .prose .admonition {
@@ -939,20 +950,69 @@
     border-radius: 8px;
   }
 
-  /* An inlined `![caption](….svg#inline)` figure. Below 30rem the drawing
-     scrolls inside its frame instead of shrinking its labels past legibility. */
+  /* An inlined `![caption](….svg#inline)` figure (see SvgFigure), capped so it
+     stops growing on a wide page. Each panel is its own `<svg>` sized by its
+     viewBox width `--w`, so the panels of one figure share a row at one common
+     scale. Below 38rem a row would shrink the smallest labels under ~9px, so
+     there the panels stack, each as wide as the page allows but never past the
+     1.33px-per-unit scale a full-width row reaches, so a small panel stays
+     small. A figure with a single panel
+     cannot stack, so there it scrolls inside its frame instead of shrinking its
+     labels past legibility. */
   .prose .figure-svg {
     margin: 1.5em auto;
+    max-width: 42rem;
+    container-type: inline-size;
   }
 
-  .prose .figure-svg-frame {
+  .prose .figure-svg-panels {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .prose .figure-svg-panels svg {
+    display: block;
+    height: auto;
+    min-width: 0;
+    flex: var(--w) 1 0;
+  }
+
+  /* A figure drawn twice (see SvgFigure) shows its wide drawing in a row-sized
+     figure and its narrow one wherever the panels of other figures stack. */
+  .prose .figure-svg-panels svg[data-layout="narrow"] {
+    display: none;
+  }
+
+  @container (width < 38rem) {
+    .prose .figure-svg-panels svg[data-layout="wide"] {
+      display: none;
+    }
+
+    .prose .figure-svg-panels svg[data-layout="narrow"] {
+      display: block;
+    }
+
+    .prose .figure-svg-panels {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .prose .figure-svg-panels svg {
+      flex: none;
+      width: 100%;
+      max-width: calc(var(--w) * 1.33px);
+    }
+  }
+
+  .prose .figure-svg--single .figure-svg-panels {
+    display: block;
     overflow-x: auto;
   }
 
-  .prose .figure-svg svg {
-    display: block;
+  .prose .figure-svg--single .figure-svg-panels svg {
     width: 100%;
-    height: auto;
     min-width: 30rem;
   }
 
@@ -962,9 +1022,10 @@
   }
 
   .prose .figure-svg figcaption {
-    margin-top: 0.5rem;
+    margin-top: 0.75rem;
     text-align: center;
-    font-size: var(--prose-code-title-size);
+    font-size: 0.9em;
+    line-height: 1.5;
     color: var(--color-text-muted);
   }
 

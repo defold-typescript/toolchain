@@ -1,42 +1,53 @@
-<svg viewBox="0 0 504 190" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd">
-  <g transform="scale(1,-1) translate(0,-190)">
-    <g>
-      <rect x="0" y="0" width="160" height="185" rx="8" ry="8" style="stroke: var(--fig-border, #e2e8f0); stroke-linecap: butt; stroke-width: 0.8; fill: var(--fig-panel, #f8fafc); fill-rule: evenodd;"/>
-      <circle cx="80" cy="92" r="52" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 1; fill: none; fill-rule: evenodd;"/>
-      <path d="M 80,92 L 124.35,92 Z" style="stroke: var(--fig-muted, #64748b); stroke-linecap: round; stroke-width: 1.4; stroke-opacity: 0.45; stroke-dasharray: 3, 2;"/>
-      <polygon points="132 92, 123 87.5, 123 96.5" style="stroke: var(--fig-muted, #64748b); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-muted, #64748b); fill-rule: evenodd; fill-opacity: 0.45; stroke-opacity: 0.45;"/>
-      <polygon points="93 92, 70.9 100.06, 74.8 92, 70.9 83.94" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;"/>
-      <path d="M 80,92 L 124.35,92 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 2.6;"/>
-      <polygon points="132 92, 123 87.5, 123 96.5" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;"/>
-      <text x="80" y="166" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9.5px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,332) scale(1,-1)" text-anchor="middle">rotation 0°</text>
-      <text x="80" y="22" style="font-family: var(--font-mono, monospace); font-size: 8.5px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,44) scale(1,-1)" text-anchor="middle">direction = (1, 0)</text>
-      <text x="80" y="9" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,18) scale(1,-1)" text-anchor="middle">length is still 1</text>
-      <rect x="172" y="0" width="160" height="185" rx="8" ry="8" style="stroke: var(--fig-border, #e2e8f0); stroke-linecap: butt; stroke-width: 0.8; fill: var(--fig-panel, #f8fafc); fill-rule: evenodd;"/>
-      <circle cx="252" cy="92" r="52" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 1; fill: none; fill-rule: evenodd;"/>
-      <path d="M 252,92 L 296.35,92 Z" style="stroke: var(--fig-muted, #64748b); stroke-linecap: round; stroke-width: 1.4; stroke-opacity: 0.45; stroke-dasharray: 3, 2;"/>
-      <polygon points="304 92, 295 87.5, 295 96.5" style="stroke: var(--fig-muted, #64748b); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-muted, #64748b); fill-rule: evenodd; fill-opacity: 0.45; stroke-opacity: 0.45;"/>
-      <polyline points="272 92, 271.98 92.79, 271.94 93.57, 271.86 94.35, 271.75 95.13, 271.62 95.9, 271.45 96.67, 271.25 97.43, 271.02 98.18, 270.76 98.92, 270.48 99.65, 270.16 100.37, 269.82 101.08, 269.45 101.77, 269.05 102.45, 268.63 103.11, 268.18 103.76, 267.71 104.38, 267.21 104.99, 266.69 105.58, 266.14 106.14, 265.58 106.69, 264.99 107.21, 264.38 107.71, 263.76 108.18, 263.11 108.63, 262.45 109.05, 261.77 109.45, 261.08 109.82, 260.37 110.16, 259.65 110.48, 258.92 110.76, 258.18 111.02, 257.43 111.25, 256.67 111.45, 255.9 111.62, 255.13 111.75, 254.35 111.86, 253.57 111.94, 252.79 111.98, 252 112" style="stroke: var(--fig-rot, #db2777); stroke-linecap: round; stroke-width: 1.6; fill: None; fill-rule: evenodd;"/>
-      <path d="M 256,112 L 252.6,112 Z" style="stroke: var(--fig-rot, #db2777); stroke-linecap: round; stroke-width: 1.6;"/>
-      <polygon points="250.5 112, 252.97 113.24, 252.97 110.76" style="stroke: var(--fig-rot, #db2777); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-rot, #db2777); fill-rule: evenodd;"/>
-      <polygon points="252 105, 243.94 82.9, 252 86.8, 260.06 82.9" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;"/>
-      <path d="M 252,92 L 252,136.35 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 2.6;"/>
-      <polygon points="252 144, 256.5 135, 247.5 135" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;"/>
-      <text x="252" y="166" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9.5px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,332) scale(1,-1)" text-anchor="middle">rotation 90°</text>
-      <text x="252" y="22" style="font-family: var(--font-mono, monospace); font-size: 8.5px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,44) scale(1,-1)" text-anchor="middle">direction = (0, 1)</text>
-      <text x="252" y="9" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,18) scale(1,-1)" text-anchor="middle">length is still 1</text>
-      <rect x="344" y="0" width="160" height="185" rx="8" ry="8" style="stroke: var(--fig-border, #e2e8f0); stroke-linecap: butt; stroke-width: 0.8; fill: var(--fig-panel, #f8fafc); fill-rule: evenodd;"/>
-      <circle cx="424" cy="92" r="52" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 1; fill: none; fill-rule: evenodd;"/>
-      <path d="M 424,92 L 468.35,92 Z" style="stroke: var(--fig-muted, #64748b); stroke-linecap: round; stroke-width: 1.4; stroke-opacity: 0.45; stroke-dasharray: 3, 2;"/>
-      <polygon points="476 92, 467 87.5, 467 96.5" style="stroke: var(--fig-muted, #64748b); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-muted, #64748b); fill-rule: evenodd; fill-opacity: 0.45; stroke-opacity: 0.45;"/>
-      <polyline points="444 92, 443.97 93.18, 443.86 94.35, 443.69 95.52, 443.45 96.67, 443.14 97.81, 442.76 98.92, 442.32 100.02, 441.82 101.08, 441.25 102.11, 440.63 103.11, 439.95 104.07, 439.21 104.99, 438.42 105.86, 437.58 106.69, 436.69 107.46, 435.76 108.18, 434.78 108.84, 433.77 109.45, 432.73 110, 431.65 110.48, 430.55 110.9, 429.43 111.25, 428.29 111.54, 427.13 111.75, 425.96 111.9, 424.79 111.98, 423.61 112, 422.43 111.94, 421.26 111.81, 420.1 111.62, 418.95 111.35, 417.82 111.02, 416.71 110.62, 415.63 110.16, 414.57 109.64, 413.55 109.05, 412.56 108.41, 411.62 107.71, 410.71 106.95, 409.86 106.14" style="stroke: var(--fig-rot, #db2777); stroke-linecap: round; stroke-width: 1.6; fill: None; fill-rule: evenodd;"/>
-      <path d="M 412.69,108.97 L 410.28,106.57 Z" style="stroke: var(--fig-rot, #db2777); stroke-linecap: round; stroke-width: 1.6;"/>
-      <polygon points="408.8 105.08, 409.67 107.71, 411.42 105.96" style="stroke: var(--fig-rot, #db2777); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-rot, #db2777); fill-rule: evenodd;"/>
-      <polygon points="414.81 101.19, 424.74 79.87, 427.68 88.32, 436.13 91.26" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;"/>
-      <path d="M 424,92 L 392.64,123.36 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 2.6;"/>
-      <polygon points="387.23 128.77, 396.78 125.59, 390.41 119.22" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;"/>
-      <text x="424" y="166" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9.5px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,332) scale(1,-1)" text-anchor="middle">rotation 135°</text>
-      <text x="424" y="22" style="font-family: var(--font-mono, monospace); font-size: 8.5px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,44) scale(1,-1)" text-anchor="middle">direction = (−0.71, 0.71)</text>
-      <text x="424" y="9" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,18) scale(1,-1)" text-anchor="middle">length is still 1</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 504 190" fill-rule="evenodd">
+  <svg class="fig-panel" x="0" y="0" width="160" height="190" viewBox="0 0 160 190">
+    <g transform="scale(1,-1) translate(0,-190)">
+      <rect x="0" y="0" width="160" height="185" rx="8" ry="8" style="stroke: var(--fig-border, #e2e8f0); stroke-linecap: butt; stroke-width: 0.8; fill: var(--fig-panel, #f8fafc); fill-rule: evenodd;" />
+      <circle cx="80" cy="92" r="52" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 1; fill: none; fill-rule: evenodd;" />
+      <path d="M 80,92 L 124.35,92 Z" style="stroke: var(--fig-muted, #64748b); stroke-linecap: round; stroke-width: 1.4; stroke-opacity: 0.45; stroke-dasharray: 3, 2;" />
+      <polygon points="132 92, 123 87.5, 123 96.5" style="stroke: var(--fig-muted, #64748b); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-muted, #64748b); fill-rule: evenodd; fill-opacity: 0.45; stroke-opacity: 0.45;" />
+      <polygon points="93 92, 70.9 100.06, 74.8 92, 70.9 83.94" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;" />
+      <path d="M 80,92 L 124.35,92 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 2.6;" />
+      <polygon points="132 92, 123 87.5, 123 96.5" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;" />
+      <text x="80" y="166" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.6px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,332) scale(1,-1)" text-anchor="middle">rotation 0°</text>
+      <text x="80" y="33" style="font-family: var(--font-mono, monospace); font-size: 9.5px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,66) scale(1,-1)" text-anchor="middle">direction =</text>
+      <text x="80" y="21" style="font-family: var(--font-mono, monospace); font-size: 9.5px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,42) scale(1,-1)" text-anchor="middle">(1, 0, 0)</text>
+      <text x="80" y="9" style="font-family: var(--font-sans, sans-serif); font-size: 10px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,18) scale(1,-1)" text-anchor="middle">length is still 1</text>
     </g>
-  </g>
+  </svg>
+  <svg class="fig-panel" x="172" y="0" width="160" height="190" viewBox="172 0 160 190">
+    <g transform="scale(1,-1) translate(0,-190)">
+      <rect x="172" y="0" width="160" height="185" rx="8" ry="8" style="stroke: var(--fig-border, #e2e8f0); stroke-linecap: butt; stroke-width: 0.8; fill: var(--fig-panel, #f8fafc); fill-rule: evenodd;" />
+      <circle cx="252" cy="92" r="52" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 1; fill: none; fill-rule: evenodd;" />
+      <path d="M 252,92 L 296.35,92 Z" style="stroke: var(--fig-muted, #64748b); stroke-linecap: round; stroke-width: 1.4; stroke-opacity: 0.45; stroke-dasharray: 3, 2;" />
+      <polygon points="304 92, 295 87.5, 295 96.5" style="stroke: var(--fig-muted, #64748b); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-muted, #64748b); fill-rule: evenodd; fill-opacity: 0.45; stroke-opacity: 0.45;" />
+      <polyline points="272 92, 271.98 92.79, 271.94 93.57, 271.86 94.35, 271.75 95.13, 271.62 95.9, 271.45 96.67, 271.25 97.43, 271.02 98.18, 270.76 98.92, 270.48 99.65, 270.16 100.37, 269.82 101.08, 269.45 101.77, 269.05 102.45, 268.63 103.11, 268.18 103.76, 267.71 104.38, 267.21 104.99, 266.69 105.58, 266.14 106.14, 265.58 106.69, 264.99 107.21, 264.38 107.71, 263.76 108.18, 263.11 108.63, 262.45 109.05, 261.77 109.45, 261.08 109.82, 260.37 110.16, 259.65 110.48, 258.92 110.76, 258.18 111.02, 257.43 111.25, 256.67 111.45, 255.9 111.62, 255.13 111.75, 254.35 111.86, 253.57 111.94, 252.79 111.98, 252 112" style="stroke: var(--fig-rot, #db2777); stroke-linecap: round; stroke-width: 1.6; fill: None; fill-rule: evenodd;" />
+      <path d="M 256,112 L 252.6,112 Z" style="stroke: var(--fig-rot, #db2777); stroke-linecap: round; stroke-width: 1.6;" />
+      <polygon points="250.5 112, 252.97 113.24, 252.97 110.76" style="stroke: var(--fig-rot, #db2777); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-rot, #db2777); fill-rule: evenodd;" />
+      <polygon points="252 105, 243.94 82.9, 252 86.8, 260.06 82.9" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;" />
+      <path d="M 252,92 L 252,136.35 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 2.6;" />
+      <polygon points="252 144, 256.5 135, 247.5 135" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;" />
+      <text x="252" y="166" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.6px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,332) scale(1,-1)" text-anchor="middle">rotation 90°</text>
+      <text x="252" y="33" style="font-family: var(--font-mono, monospace); font-size: 9.5px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,66) scale(1,-1)" text-anchor="middle">direction =</text>
+      <text x="252" y="21" style="font-family: var(--font-mono, monospace); font-size: 9.5px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,42) scale(1,-1)" text-anchor="middle">(0, 1, 0)</text>
+      <text x="252" y="9" style="font-family: var(--font-sans, sans-serif); font-size: 10px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,18) scale(1,-1)" text-anchor="middle">length is still 1</text>
+    </g>
+  </svg>
+  <svg class="fig-panel" x="344" y="0" width="160" height="190" viewBox="344 0 160 190">
+    <g transform="scale(1,-1) translate(0,-190)">
+      <rect x="344" y="0" width="160" height="185" rx="8" ry="8" style="stroke: var(--fig-border, #e2e8f0); stroke-linecap: butt; stroke-width: 0.8; fill: var(--fig-panel, #f8fafc); fill-rule: evenodd;" />
+      <circle cx="424" cy="92" r="52" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 1; fill: none; fill-rule: evenodd;" />
+      <path d="M 424,92 L 468.35,92 Z" style="stroke: var(--fig-muted, #64748b); stroke-linecap: round; stroke-width: 1.4; stroke-opacity: 0.45; stroke-dasharray: 3, 2;" />
+      <polygon points="476 92, 467 87.5, 467 96.5" style="stroke: var(--fig-muted, #64748b); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-muted, #64748b); fill-rule: evenodd; fill-opacity: 0.45; stroke-opacity: 0.45;" />
+      <polyline points="444 92, 443.97 93.18, 443.86 94.35, 443.69 95.52, 443.45 96.67, 443.14 97.81, 442.76 98.92, 442.32 100.02, 441.82 101.08, 441.25 102.11, 440.63 103.11, 439.95 104.07, 439.21 104.99, 438.42 105.86, 437.58 106.69, 436.69 107.46, 435.76 108.18, 434.78 108.84, 433.77 109.45, 432.73 110, 431.65 110.48, 430.55 110.9, 429.43 111.25, 428.29 111.54, 427.13 111.75, 425.96 111.9, 424.79 111.98, 423.61 112, 422.43 111.94, 421.26 111.81, 420.1 111.62, 418.95 111.35, 417.82 111.02, 416.71 110.62, 415.63 110.16, 414.57 109.64, 413.55 109.05, 412.56 108.41, 411.62 107.71, 410.71 106.95, 409.86 106.14" style="stroke: var(--fig-rot, #db2777); stroke-linecap: round; stroke-width: 1.6; fill: None; fill-rule: evenodd;" />
+      <path d="M 412.69,108.97 L 410.28,106.57 Z" style="stroke: var(--fig-rot, #db2777); stroke-linecap: round; stroke-width: 1.6;" />
+      <polygon points="408.8 105.08, 409.67 107.71, 411.42 105.96" style="stroke: var(--fig-rot, #db2777); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-rot, #db2777); fill-rule: evenodd;" />
+      <polygon points="414.81 101.19, 424.74 79.87, 427.68 88.32, 436.13 91.26" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;" />
+      <path d="M 424,92 L 392.64,123.36 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 2.6;" />
+      <polygon points="387.23 128.77, 396.78 125.59, 390.41 119.22" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;" />
+      <text x="424" y="166" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.6px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,332) scale(1,-1)" text-anchor="middle">rotation 135°</text>
+      <text x="424" y="33" style="font-family: var(--font-mono, monospace); font-size: 9.5px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,66) scale(1,-1)" text-anchor="middle">direction =</text>
+      <text x="424" y="21" style="font-family: var(--font-mono, monospace); font-size: 9.5px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,42) scale(1,-1)" text-anchor="middle">(−0.71, 0.71, 0)</text>
+      <text x="424" y="9" style="font-family: var(--font-sans, sans-serif); font-size: 10px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,18) scale(1,-1)" text-anchor="middle">length is still 1</text>
+    </g>
+  </svg>
 </svg>

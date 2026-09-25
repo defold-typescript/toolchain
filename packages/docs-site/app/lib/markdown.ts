@@ -9,6 +9,7 @@ import MarkdownIt from "markdown-it";
 import footnotePlugin from "markdown-it-footnote";
 import { type BundledLanguage, createHighlighter, type Highlighter } from "shiki";
 import { Badge } from "../components/ui/badge";
+import { SvgFigure } from "../components/ui/svg-figure";
 import { TooltipTrigger } from "../components/ui/tooltip";
 import { linkApiTypeTokens } from "./api-type-links";
 import { withBase } from "./base";
@@ -338,23 +339,24 @@ export async function renderMarkdown(
         if (image?.length !== 1 || image[0]?.type !== "image") continue;
         const params = imageParamsFromSrc(image[0].attrGet("src") ?? "");
         if (!params.inline) continue;
-        const svg = readInlineSvg(params.src)?.trim();
-        if (!svg?.startsWith("<svg")) {
+        const svg = readInlineSvg(params.src);
+        if (svg === undefined) {
           throw new Error(`inline SVG figure has no SVG markup to inline: ${params.src}`);
         }
-        const caption = escapeAttr(
-          state.md.renderer.renderInlineAsText(
-            image[0].children ?? [],
-            state.md.options,
-            state.env,
-          ),
+        const caption = state.md.renderer.renderInlineAsText(
+          image[0].children ?? [],
+          state.md.options,
+          state.env,
         );
-        const style = params.maxWidth ? ` style="${imageMaxWidthStyle(params.maxWidth)}"` : "";
         const figure = new state.Token("html_block", "", 0);
-        figure.content =
-          `<figure class="figure-svg"${style}><div class="figure-svg-frame">` +
-          `<svg role="img" aria-label="${caption}"${svg.slice("<svg".length)}</div>` +
-          `<figcaption>${caption}</figcaption></figure>\n`;
+        figure.content = `${String(
+          SvgFigure({
+            svg,
+            caption,
+            src: params.src,
+            ...(params.maxWidth ? { maxWidth: params.maxWidth } : {}),
+          }),
+        )}\n`;
         tokens.splice(i, 3, figure);
       }
     });

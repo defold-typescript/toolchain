@@ -1,80 +1,84 @@
-<svg viewBox="0 0 504 235" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd">
-  <g transform="scale(1,-1) translate(0,-235)">
-    <g>
-      <rect x="0" y="30" width="300" height="200" rx="8" ry="8" style="stroke: var(--fig-border, #e2e8f0); stroke-linecap: butt; stroke-width: 0.8; fill: var(--fig-panel, #f8fafc); fill-rule: evenodd;"/>
-      <path d="M 150,125 L 150,201 A 76,76 0 1 0 150,49 L 150,125 Z" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.1;"/>
-      <path d="M 150,125 L 150,49 A 76,76 0 1 0 150,201 L 150,125 Z" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-enemy, #dc2626); fill-rule: evenodd; fill-opacity: 0.08;"/>
-      <path d="M 150,49 L 150,201 Z" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 1; stroke-dasharray: 3, 3;"/>
-      <text x="222" y="55" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,110) scale(1,-1)" text-anchor="end">IN FRONT</text>
-      <text x="78" y="55" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8px;fill: var(--fig-enemy, #dc2626); stroke:none;" transform="translate(0,110) scale(1,-1)">BEHIND</text>
-      <polygon points="164 125, 140.2 133.68, 144.4 125, 140.2 116.32" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;"/>
-      <path d="M 150,125 L 187.35,125 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 2.4;"/>
-      <polygon points="195 125, 186 120.5, 186 129.5" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;"/>
-      <text x="176" y="111" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,222) scale(1,-1)" text-anchor="middle">forward</text>
-      <circle cx="222.0" cy="125.0" r="6" style="stroke: var(--fig-bg, #ffffff); stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;"/>
-      <text x="236.0" y="122.0" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8.5px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,244) scale(1,-1)">+1</text>
-      <circle cx="200.91" cy="175.91" r="6" style="stroke: var(--fig-bg, #ffffff); stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;"/>
-      <text x="210.81" y="182.81" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8.5px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,365) scale(1,-1)">+0.71</text>
-      <circle cx="150.0" cy="197.0" r="6" style="stroke: var(--fig-bg, #ffffff); stroke-linecap: butt; stroke-width: 1; fill: var(--fig-spd, #ca8a04); fill-rule: evenodd;"/>
-      <text x="150.0" y="208.0" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8.5px;fill: var(--fig-spd, #ca8a04); stroke:none;" transform="translate(0,416) scale(1,-1)" text-anchor="middle">0</text>
-      <circle cx="87.65" cy="161.0" r="6" style="stroke: var(--fig-bg, #ffffff); stroke-linecap: butt; stroke-width: 1; fill: var(--fig-enemy, #dc2626); fill-rule: evenodd;"/>
-      <text x="75.52" y="165.0" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8.5px;fill: var(--fig-enemy, #dc2626); stroke:none;" transform="translate(0,330) scale(1,-1)" text-anchor="end">−0.87</text>
-      <circle cx="78.0" cy="125" r="6" style="stroke: var(--fig-bg, #ffffff); stroke-linecap: butt; stroke-width: 1; fill: var(--fig-enemy, #dc2626); fill-rule: evenodd;"/>
-      <text x="64.0" y="122" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8.5px;fill: var(--fig-enemy, #dc2626); stroke:none;" transform="translate(0,244) scale(1,-1)" text-anchor="end">−1</text>
-      <text x="150" y="38" style="font-family: var(--font-mono, monospace); font-size: 8.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,76) scale(1,-1)" text-anchor="middle">vmath.dot(forward, directionToTarget)</text>
-      <text x="412" y="205" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,410) scale(1,-1)" text-anchor="middle">Reading the number</text>
-      <rect x="330.0" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-enemy, #dc2626); fill-rule: evenodd; fill-opacity: 0.85;"/>
-      <rect x="334.1" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-enemy, #dc2626); fill-rule: evenodd; fill-opacity: 0.81;"/>
-      <rect x="338.2" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-enemy, #dc2626); fill-rule: evenodd; fill-opacity: 0.78;"/>
-      <rect x="342.3" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-enemy, #dc2626); fill-rule: evenodd; fill-opacity: 0.74;"/>
-      <rect x="346.4" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-enemy, #dc2626); fill-rule: evenodd; fill-opacity: 0.71;"/>
-      <rect x="350.5" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-enemy, #dc2626); fill-rule: evenodd; fill-opacity: 0.67;"/>
-      <rect x="354.6" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-enemy, #dc2626); fill-rule: evenodd; fill-opacity: 0.63;"/>
-      <rect x="358.7" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-enemy, #dc2626); fill-rule: evenodd; fill-opacity: 0.6;"/>
-      <rect x="362.8" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-enemy, #dc2626); fill-rule: evenodd; fill-opacity: 0.56;"/>
-      <rect x="366.9" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-enemy, #dc2626); fill-rule: evenodd; fill-opacity: 0.53;"/>
-      <rect x="371.0" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-enemy, #dc2626); fill-rule: evenodd; fill-opacity: 0.49;"/>
-      <rect x="375.1" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-enemy, #dc2626); fill-rule: evenodd; fill-opacity: 0.46;"/>
-      <rect x="379.2" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-enemy, #dc2626); fill-rule: evenodd; fill-opacity: 0.42;"/>
-      <rect x="383.3" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-enemy, #dc2626); fill-rule: evenodd; fill-opacity: 0.38;"/>
-      <rect x="387.4" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-enemy, #dc2626); fill-rule: evenodd; fill-opacity: 0.35;"/>
-      <rect x="391.5" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-enemy, #dc2626); fill-rule: evenodd; fill-opacity: 0.31;"/>
-      <rect x="395.6" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-enemy, #dc2626); fill-rule: evenodd; fill-opacity: 0.28;"/>
-      <rect x="399.7" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-enemy, #dc2626); fill-rule: evenodd; fill-opacity: 0.24;"/>
-      <rect x="403.8" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-enemy, #dc2626); fill-rule: evenodd; fill-opacity: 0.2;"/>
-      <rect x="407.9" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-enemy, #dc2626); fill-rule: evenodd; fill-opacity: 0.17;"/>
-      <rect x="412.0" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.17;"/>
-      <rect x="416.1" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.2;"/>
-      <rect x="420.2" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.24;"/>
-      <rect x="424.3" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.28;"/>
-      <rect x="428.4" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.31;"/>
-      <rect x="432.5" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.35;"/>
-      <rect x="436.6" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.38;"/>
-      <rect x="440.7" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.42;"/>
-      <rect x="444.8" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.46;"/>
-      <rect x="448.9" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.49;"/>
-      <rect x="453.0" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.53;"/>
-      <rect x="457.1" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.56;"/>
-      <rect x="461.2" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.6;"/>
-      <rect x="465.3" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.63;"/>
-      <rect x="469.4" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.67;"/>
-      <rect x="473.5" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.71;"/>
-      <rect x="477.6" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.74;"/>
-      <rect x="481.7" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.78;"/>
-      <rect x="485.8" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.81;"/>
-      <rect x="489.9" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.85;"/>
-      <path d="M 330,146 L 330,166 Z" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: butt; stroke-width: 0.8;"/>
-      <text x="330.0" y="134" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10px;fill: var(--fig-enemy, #dc2626); stroke:none;" transform="translate(0,268) scale(1,-1)" text-anchor="middle">−1</text>
-      <path d="M 412,146 L 412,166 Z" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: butt; stroke-width: 0.8;"/>
-      <text x="412.0" y="134" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10px;fill: var(--fig-spd, #ca8a04); stroke:none;" transform="translate(0,268) scale(1,-1)" text-anchor="middle">0</text>
-      <path d="M 494,146 L 494,166 Z" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: butt; stroke-width: 0.8;"/>
-      <text x="494.0" y="134" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,268) scale(1,-1)" text-anchor="middle">+1</text>
-      <text x="330" y="172" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-enemy, #dc2626); stroke:none;" transform="translate(0,344) scale(1,-1)">opposite</text>
-      <text x="412.0" y="172" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-spd, #ca8a04); stroke:none;" transform="translate(0,344) scale(1,-1)" text-anchor="middle">sideways</text>
-      <text x="494" y="172" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,344) scale(1,-1)" text-anchor="end">same way</text>
-      <text x="332" y="100" style="font-family: var(--font-mono, monospace); font-size: 8.5px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,200) scale(1,-1)">&gt; 0   target is in front</text>
-      <text x="332" y="84" style="font-family: var(--font-mono, monospace); font-size: 8.5px;fill: var(--fig-spd, #ca8a04); stroke:none;" transform="translate(0,168) scale(1,-1)">= 0   exactly beside</text>
-      <text x="332" y="68" style="font-family: var(--font-mono, monospace); font-size: 8.5px;fill: var(--fig-enemy, #dc2626); stroke:none;" transform="translate(0,136) scale(1,-1)">&lt; 0   target is behind</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 504 235" fill-rule="evenodd">
+  <svg class="fig-panel" x="0" y="0" width="300" height="235" viewBox="0 0 300 235">
+    <g transform="scale(1,-1) translate(0,-235)">
+      <rect x="0" y="30" width="300" height="200" rx="8" ry="8" style="stroke: var(--fig-border, #e2e8f0); stroke-linecap: butt; stroke-width: 0.8; fill: var(--fig-panel, #f8fafc); fill-rule: evenodd;" />
+      <path d="M 150,125 L 150,201 A 76,76 0 1 0 150,49 L 150,125 Z" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.1;" />
+      <path d="M 150,125 L 150,49 A 76,76 0 1 0 150,201 L 150,125 Z" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-other, #dc2626); fill-rule: evenodd; fill-opacity: 0.08;" />
+      <path d="M 150,49 L 150,201 Z" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 1; stroke-dasharray: 3, 3;" />
+      <text x="222" y="55" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.4px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,110) scale(1,-1)" text-anchor="end">IN FRONT</text>
+      <text x="78" y="55" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.4px;fill: var(--fig-other, #dc2626); stroke:none;" transform="translate(0,110) scale(1,-1)">BEHIND</text>
+      <polygon points="164 125, 140.2 133.68, 144.4 125, 140.2 116.32" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;" />
+      <path d="M 150,125 L 187.35,125 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 2.4;" />
+      <polygon points="195 125, 186 120.5, 186 129.5" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;" />
+      <text x="176" y="111" style="font-family: var(--font-sans, sans-serif); font-size: 10px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,222) scale(1,-1)" text-anchor="middle">forward</text>
+      <circle cx="222.0" cy="125.0" r="6" style="stroke: var(--fig-bg, #ffffff); stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;" />
+      <text x="236.0" y="122.0" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.8px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,244) scale(1,-1)">+1</text>
+      <circle cx="200.91" cy="175.91" r="6" style="stroke: var(--fig-bg, #ffffff); stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;" />
+      <text x="210.81" y="182.81" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.8px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,365) scale(1,-1)">+0.71</text>
+      <circle cx="150.0" cy="197.0" r="6" style="stroke: var(--fig-bg, #ffffff); stroke-linecap: butt; stroke-width: 1; fill: var(--fig-spd, #ca8a04); fill-rule: evenodd;" />
+      <text x="150.0" y="208.0" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.8px;fill: var(--fig-spd, #ca8a04); stroke:none;" transform="translate(0,416) scale(1,-1)" text-anchor="middle">0</text>
+      <circle cx="87.65" cy="161.0" r="6" style="stroke: var(--fig-bg, #ffffff); stroke-linecap: butt; stroke-width: 1; fill: var(--fig-other, #dc2626); fill-rule: evenodd;" />
+      <text x="75.52" y="165.0" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.8px;fill: var(--fig-other, #dc2626); stroke:none;" transform="translate(0,330) scale(1,-1)" text-anchor="end">−0.87</text>
+      <circle cx="78.0" cy="125" r="6" style="stroke: var(--fig-bg, #ffffff); stroke-linecap: butt; stroke-width: 1; fill: var(--fig-other, #dc2626); fill-rule: evenodd;" />
+      <text x="64.0" y="122" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.8px;fill: var(--fig-other, #dc2626); stroke:none;" transform="translate(0,244) scale(1,-1)" text-anchor="end">−1</text>
+      <text x="150" y="38" style="font-family: var(--font-mono, monospace); font-size: 10.8px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,76) scale(1,-1)" text-anchor="middle">vmath.dot(forward, directionToTarget)</text>
     </g>
-  </g>
+  </svg>
+  <svg class="fig-panel" x="310" y="0" width="194" height="235" viewBox="310 0 194 235">
+    <g transform="scale(1,-1) translate(0,-235)">
+      <text x="412" y="205" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.6px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,410) scale(1,-1)" text-anchor="middle">Reading the number</text>
+      <rect x="330.0" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-other, #dc2626); fill-rule: evenodd; fill-opacity: 0.85;" />
+      <rect x="334.1" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-other, #dc2626); fill-rule: evenodd; fill-opacity: 0.81;" />
+      <rect x="338.2" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-other, #dc2626); fill-rule: evenodd; fill-opacity: 0.78;" />
+      <rect x="342.3" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-other, #dc2626); fill-rule: evenodd; fill-opacity: 0.74;" />
+      <rect x="346.4" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-other, #dc2626); fill-rule: evenodd; fill-opacity: 0.71;" />
+      <rect x="350.5" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-other, #dc2626); fill-rule: evenodd; fill-opacity: 0.67;" />
+      <rect x="354.6" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-other, #dc2626); fill-rule: evenodd; fill-opacity: 0.63;" />
+      <rect x="358.7" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-other, #dc2626); fill-rule: evenodd; fill-opacity: 0.6;" />
+      <rect x="362.8" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-other, #dc2626); fill-rule: evenodd; fill-opacity: 0.56;" />
+      <rect x="366.9" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-other, #dc2626); fill-rule: evenodd; fill-opacity: 0.53;" />
+      <rect x="371.0" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-other, #dc2626); fill-rule: evenodd; fill-opacity: 0.49;" />
+      <rect x="375.1" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-other, #dc2626); fill-rule: evenodd; fill-opacity: 0.46;" />
+      <rect x="379.2" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-other, #dc2626); fill-rule: evenodd; fill-opacity: 0.42;" />
+      <rect x="383.3" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-other, #dc2626); fill-rule: evenodd; fill-opacity: 0.38;" />
+      <rect x="387.4" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-other, #dc2626); fill-rule: evenodd; fill-opacity: 0.35;" />
+      <rect x="391.5" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-other, #dc2626); fill-rule: evenodd; fill-opacity: 0.31;" />
+      <rect x="395.6" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-other, #dc2626); fill-rule: evenodd; fill-opacity: 0.28;" />
+      <rect x="399.7" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-other, #dc2626); fill-rule: evenodd; fill-opacity: 0.24;" />
+      <rect x="403.8" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-other, #dc2626); fill-rule: evenodd; fill-opacity: 0.2;" />
+      <rect x="407.9" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-other, #dc2626); fill-rule: evenodd; fill-opacity: 0.17;" />
+      <rect x="412.0" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.17;" />
+      <rect x="416.1" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.2;" />
+      <rect x="420.2" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.24;" />
+      <rect x="424.3" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.28;" />
+      <rect x="428.4" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.31;" />
+      <rect x="432.5" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.35;" />
+      <rect x="436.6" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.38;" />
+      <rect x="440.7" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.42;" />
+      <rect x="444.8" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.46;" />
+      <rect x="448.9" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.49;" />
+      <rect x="453.0" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.53;" />
+      <rect x="457.1" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.56;" />
+      <rect x="461.2" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.6;" />
+      <rect x="465.3" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.63;" />
+      <rect x="469.4" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.67;" />
+      <rect x="473.5" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.71;" />
+      <rect x="477.6" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.74;" />
+      <rect x="481.7" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.78;" />
+      <rect x="485.8" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.81;" />
+      <rect x="489.9" y="150" width="4.6" height="12" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.85;" />
+      <path d="M 330,146 L 330,166 Z" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: butt; stroke-width: 0.8;" />
+      <text x="330.0" y="134" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 12px;fill: var(--fig-other, #dc2626); stroke:none;" transform="translate(0,268) scale(1,-1)" text-anchor="middle">−1</text>
+      <path d="M 412,146 L 412,166 Z" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: butt; stroke-width: 0.8;" />
+      <text x="412.0" y="134" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 12px;fill: var(--fig-spd, #ca8a04); stroke:none;" transform="translate(0,268) scale(1,-1)" text-anchor="middle">0</text>
+      <path d="M 494,146 L 494,166 Z" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: butt; stroke-width: 0.8;" />
+      <text x="494.0" y="134" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 12px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,268) scale(1,-1)" text-anchor="middle">+1</text>
+      <text x="330" y="172" style="font-family: var(--font-sans, sans-serif); font-size: 10px;fill: var(--fig-other, #dc2626); stroke:none;" transform="translate(0,344) scale(1,-1)">opposite</text>
+      <text x="412.0" y="172" style="font-family: var(--font-sans, sans-serif); font-size: 10px;fill: var(--fig-spd, #ca8a04); stroke:none;" transform="translate(0,344) scale(1,-1)" text-anchor="middle">sideways</text>
+      <text x="494" y="172" style="font-family: var(--font-sans, sans-serif); font-size: 10px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,344) scale(1,-1)" text-anchor="end">same way</text>
+      <text x="332" y="100" style="font-family: var(--font-mono, monospace); font-size: 10.8px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,200) scale(1,-1)">&gt; 0   target is in front</text>
+      <text x="332" y="84" style="font-family: var(--font-mono, monospace); font-size: 10.8px;fill: var(--fig-spd, #ca8a04); stroke:none;" transform="translate(0,168) scale(1,-1)">= 0   exactly beside</text>
+      <text x="332" y="68" style="font-family: var(--font-mono, monospace); font-size: 10.8px;fill: var(--fig-other, #dc2626); stroke:none;" transform="translate(0,136) scale(1,-1)">&lt; 0   target is behind</text>
+    </g>
+  </svg>
 </svg>

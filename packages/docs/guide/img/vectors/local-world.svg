@@ -1,67 +1,72 @@
-<svg viewBox="0 0 504 250" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd">
-  <g transform="scale(1,-1) translate(0,-250)">
-    <g>
-      <path d="M 26,30 L 26,219 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
-      <path d="M 48.5,30 L 48.5,219 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
-      <path d="M 71,30 L 71,219 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
-      <path d="M 93.5,30 L 93.5,219 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
-      <path d="M 116,30 L 116,219 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
-      <path d="M 138.5,30 L 138.5,219 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
-      <path d="M 161,30 L 161,219 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
-      <path d="M 183.5,30 L 183.5,219 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
-      <path d="M 206,30 L 206,219 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
-      <path d="M 26,30 L 224,30 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
-      <path d="M 26,52.5 L 224,52.5 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
-      <path d="M 26,75 L 224,75 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
-      <path d="M 26,97.5 L 224,97.5 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
-      <path d="M 26,120 L 224,120 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
-      <path d="M 26,142.5 L 224,142.5 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
-      <path d="M 26,165 L 224,165 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
-      <path d="M 26,187.5 L 224,187.5 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
-      <path d="M 26,210 L 224,210 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;"/>
-      <path d="M 26,30 L 226.35,30 Z" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: round; stroke-width: 1.2;"/>
-      <polygon points="234 30, 225 25.5, 225 34.5" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-axis, #94a3b8); fill-rule: evenodd;"/>
-      <path d="M 26,30 L 26,221.35 Z" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: round; stroke-width: 1.2;"/>
-      <polygon points="26 229, 30.5 220, 21.5 220" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-axis, #94a3b8); fill-rule: evenodd;"/>
-      <text x="26.0" y="18" style="font-family: var(--font-sans, sans-serif); font-size: 7px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,36) scale(1,-1)" text-anchor="middle">0</text>
-      <text x="71.0" y="18" style="font-family: var(--font-sans, sans-serif); font-size: 7px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,36) scale(1,-1)" text-anchor="middle">100</text>
-      <text x="116.0" y="18" style="font-family: var(--font-sans, sans-serif); font-size: 7px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,36) scale(1,-1)" text-anchor="middle">200</text>
-      <text x="161.0" y="18" style="font-family: var(--font-sans, sans-serif); font-size: 7px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,36) scale(1,-1)" text-anchor="middle">300</text>
-      <text x="206.0" y="18" style="font-family: var(--font-sans, sans-serif); font-size: 7px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,36) scale(1,-1)" text-anchor="middle">400</text>
-      <text x="22" y="72.0" style="font-family: var(--font-sans, sans-serif); font-size: 7px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,144) scale(1,-1)" text-anchor="end">100</text>
-      <text x="22" y="117.0" style="font-family: var(--font-sans, sans-serif); font-size: 7px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,234) scale(1,-1)" text-anchor="end">200</text>
-      <text x="22" y="162.0" style="font-family: var(--font-sans, sans-serif); font-size: 7px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,324) scale(1,-1)" text-anchor="end">300</text>
-      <text x="22" y="207.0" style="font-family: var(--font-sans, sans-serif); font-size: 7px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,414) scale(1,-1)" text-anchor="end">400</text>
-      <circle cx="26" cy="30" r="3.5" style="stroke: var(--fig-bg, #ffffff); stroke-linecap: butt; stroke-width: 1.2; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;"/>
-      <text x="31" y="36" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 7px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,72) scale(1,-1)">world origin</text>
-      <path d="M 138.5,97.5 L 190.33,127.42 Z" style="stroke: var(--fig-rot, #db2777); stroke-linecap: round; stroke-width: 1.4; stroke-dasharray: 4, 2;"/>
-      <polygon points="196.96 131.25, 191.41 122.85, 186.91 130.65" style="stroke: var(--fig-rot, #db2777); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-rot, #db2777); fill-rule: evenodd;"/>
-      <path d="M 138.5,97.5 L 118.7,131.79 Z" style="stroke: var(--fig-rot, #db2777); stroke-linecap: round; stroke-width: 1.4; stroke-dasharray: 4, 2;"/>
-      <polygon points="114.88 138.42, 123.27 132.88, 115.48 128.38" style="stroke: var(--fig-rot, #db2777); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-rot, #db2777); fill-rule: evenodd;"/>
-      <text x="203.88" y="132.25" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 7.5px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,264) scale(1,-1)">ship's X</text>
-      <text x="110.88" y="142.42" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 7.5px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,284) scale(1,-1)" text-anchor="end">ship's Y</text>
-      <path d="M 26,30 L 131.94,93.56 Z" style="stroke: var(--fig-pos, #2563eb); stroke-linecap: round; stroke-width: 1.2; stroke-opacity: 0.45; stroke-dasharray: 3, 2;"/>
-      <polygon points="138.5 97.5, 133.1 89.01, 128.47 96.73" style="stroke: var(--fig-pos, #2563eb); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-pos, #2563eb); fill-rule: evenodd; fill-opacity: 0.45; stroke-opacity: 0.45;"/>
-      <polygon points="149.76 104, 126.59 99.93, 134 94.9, 134.65 85.97" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;"/>
-      <text x="142.5" y="75.5" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,151) scale(1,-1)" text-anchor="middle">ship (parent)</text>
-      <text x="142.5" y="65.5" style="font-family: var(--font-sans, sans-serif); font-size: 7px;fill: var(--fig-pos, #2563eb); stroke:none;" transform="translate(0,131) scale(1,-1)" text-anchor="middle">world (250, 150), turned 30°</text>
-      <circle cx="169.68" cy="115.5" r="6" style="stroke: var(--fig-bg, #ffffff); stroke-linecap: butt; stroke-width: 1.2; fill: var(--fig-vec, #ea580c); fill-rule: evenodd;"/>
-      <text x="178.68" y="111.5" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8px;fill: var(--fig-vec, #ea580c); stroke:none;" transform="translate(0,223) scale(1,-1)">turret (child)</text>
-      <text x="178.68" y="101.5" style="font-family: var(--font-mono, monospace); font-size: 7px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,203) scale(1,-1)">local (80, 0)</text>
-      <text x="178.68" y="91.5" style="font-family: var(--font-mono, monospace); font-size: 7px;fill: var(--fig-pos, #2563eb); stroke:none;" transform="translate(0,183) scale(1,-1)">world ≈ (319, 190)</text>
-      <rect x="268" y="26" width="236" height="210" rx="8" ry="8" style="stroke: var(--fig-border, #e2e8f0); stroke-linecap: butt; stroke-width: 0.8; fill: var(--fig-panel, #f8fafc); fill-rule: evenodd;"/>
-      <text x="386" y="218" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,436) scale(1,-1)" text-anchor="middle">Same point, two addresses</text>
-      <rect x="282" y="154" width="208" height="44" rx="6" ry="6" style="stroke: var(--fig-rot, #db2777); stroke-linecap: butt; stroke-width: 1; fill: var(--fig-rot, #db2777); fill-rule: evenodd; fill-opacity: 0.1;"/>
-      <text x="292" y="182" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,364) scale(1,-1)">LOCAL</text>
-      <text x="292" y="170" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,340) scale(1,-1)">relative to the parent</text>
-      <text x="292" y="159" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,318) scale(1,-1)">80 along the ship's X</text>
-      <rect x="282" y="92" width="208" height="44" rx="6" ry="6" style="stroke: var(--fig-pos, #2563eb); stroke-linecap: butt; stroke-width: 1; fill: var(--fig-pos, #2563eb); fill-rule: evenodd; fill-opacity: 0.1;"/>
-      <text x="292" y="120" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9px;fill: var(--fig-pos, #2563eb); stroke:none;" transform="translate(0,240) scale(1,-1)">WORLD</text>
-      <text x="292" y="108" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,216) scale(1,-1)">relative to the world origin</text>
-      <text x="292" y="97" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,194) scale(1,-1)">≈ 319 right, 190 up</text>
-      <text x="386" y="64" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,128) scale(1,-1)" text-anchor="middle">“seat 3 on the bus”  vs  “GPS coordinates”</text>
-      <text x="386" y="46" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,92) scale(1,-1)" text-anchor="middle">When the bus moves, the seat number</text>
-      <text x="386" y="36" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,72) scale(1,-1)" text-anchor="middle">stays the same — the GPS changes.</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 526 250" fill-rule="evenodd">
+  <svg class="fig-panel" x="0" y="0" width="284" height="250" viewBox="0 0 284 250">
+    <g transform="scale(1,-1) translate(0,-250)">
+      <path d="M 26,30 L 26,219 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 48.5,30 L 48.5,219 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 71,30 L 71,219 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 93.5,30 L 93.5,219 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 116,30 L 116,219 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 138.5,30 L 138.5,219 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 161,30 L 161,219 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 183.5,30 L 183.5,219 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 206,30 L 206,219 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 26,30 L 224,30 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 26,52.5 L 224,52.5 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 26,75 L 224,75 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 26,97.5 L 224,97.5 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 26,120 L 224,120 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 26,142.5 L 224,142.5 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 26,165 L 224,165 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 26,187.5 L 224,187.5 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 26,210 L 224,210 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 26,30 L 226.35,30 Z" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: round; stroke-width: 1.2;" />
+      <polygon points="234 30, 225 25.5, 225 34.5" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-axis, #94a3b8); fill-rule: evenodd;" />
+      <path d="M 26,30 L 26,221.35 Z" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: round; stroke-width: 1.2;" />
+      <polygon points="26 229, 30.5 220, 21.5 220" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-axis, #94a3b8); fill-rule: evenodd;" />
+      <text x="26.0" y="18" style="font-family: var(--font-sans, sans-serif); font-size: 9.7px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,36) scale(1,-1)" text-anchor="middle">0</text>
+      <text x="71.0" y="18" style="font-family: var(--font-sans, sans-serif); font-size: 9.7px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,36) scale(1,-1)" text-anchor="middle">100</text>
+      <text x="116.0" y="18" style="font-family: var(--font-sans, sans-serif); font-size: 9.7px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,36) scale(1,-1)" text-anchor="middle">200</text>
+      <text x="161.0" y="18" style="font-family: var(--font-sans, sans-serif); font-size: 9.7px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,36) scale(1,-1)" text-anchor="middle">300</text>
+      <text x="206.0" y="18" style="font-family: var(--font-sans, sans-serif); font-size: 9.7px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,36) scale(1,-1)" text-anchor="middle">400</text>
+      <text x="22" y="72.0" style="font-family: var(--font-sans, sans-serif); font-size: 9.7px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,144) scale(1,-1)" text-anchor="end">100</text>
+      <text x="22" y="117.0" style="font-family: var(--font-sans, sans-serif); font-size: 9.7px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,234) scale(1,-1)" text-anchor="end">200</text>
+      <text x="22" y="162.0" style="font-family: var(--font-sans, sans-serif); font-size: 9.7px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,324) scale(1,-1)" text-anchor="end">300</text>
+      <text x="22" y="207.0" style="font-family: var(--font-sans, sans-serif); font-size: 9.7px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,414) scale(1,-1)" text-anchor="end">400</text>
+      <circle cx="26" cy="30" r="3.5" style="stroke: var(--fig-bg, #ffffff); stroke-linecap: butt; stroke-width: 1.2; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;" />
+      <text x="31" y="36" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9.7px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,72) scale(1,-1)">world origin</text>
+      <path d="M 138.5,97.5 L 190.33,127.42 Z" style="stroke: var(--fig-rot, #db2777); stroke-linecap: round; stroke-width: 1.4; stroke-dasharray: 4, 2;" />
+      <polygon points="196.96 131.25, 191.41 122.85, 186.91 130.65" style="stroke: var(--fig-rot, #db2777); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-rot, #db2777); fill-rule: evenodd;" />
+      <path d="M 138.5,97.5 L 118.7,131.79 Z" style="stroke: var(--fig-rot, #db2777); stroke-linecap: round; stroke-width: 1.4; stroke-dasharray: 4, 2;" />
+      <polygon points="114.88 138.42, 123.27 132.88, 115.48 128.38" style="stroke: var(--fig-rot, #db2777); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-rot, #db2777); fill-rule: evenodd;" />
+      <text x="203.88" y="132.25" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,264) scale(1,-1)">ship's X</text>
+      <text x="110.88" y="142.42" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,284) scale(1,-1)" text-anchor="end">ship's Y</text>
+      <path d="M 26,30 L 131.94,93.56 Z" style="stroke: var(--fig-pos, #2563eb); stroke-linecap: round; stroke-width: 1.2; stroke-opacity: 0.45; stroke-dasharray: 3, 2;" />
+      <polygon points="138.5 97.5, 133.1 89.01, 128.47 96.73" style="stroke: var(--fig-pos, #2563eb); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-pos, #2563eb); fill-rule: evenodd; fill-opacity: 0.45; stroke-opacity: 0.45;" />
+      <polygon points="149.76 104, 126.59 99.93, 134 94.9, 134.65 85.97" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;" />
+      <text x="142.5" y="75.5" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.4px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,151) scale(1,-1)" text-anchor="middle">ship (parent)</text>
+      <text x="142.5" y="65.5" style="font-family: var(--font-sans, sans-serif); font-size: 9.7px;fill: var(--fig-pos, #2563eb); stroke:none;" transform="translate(0,131) scale(1,-1)" text-anchor="middle">world (250, 150, 0), turned 30°</text>
+      <circle cx="169.68" cy="115.5" r="6" style="stroke: var(--fig-bg, #ffffff); stroke-linecap: butt; stroke-width: 1.2; fill: var(--fig-vec, #ea580c); fill-rule: evenodd;" />
+      <text x="178.68" y="111.5" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.4px;fill: var(--fig-vec, #ea580c); stroke:none;" transform="translate(0,223) scale(1,-1)">arm (child)</text>
+      <text x="178.68" y="101.5" style="font-family: var(--font-mono, monospace); font-size: 9.5px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,203) scale(1,-1)">local (80, 0, 0)</text>
+      <text x="178.68" y="91.5" style="font-family: var(--font-mono, monospace); font-size: 9.5px;fill: var(--fig-pos, #2563eb); stroke:none;" transform="translate(0,183) scale(1,-1)">world ≈</text>
+      <text x="178.68" y="81.5" style="font-family: var(--font-mono, monospace); font-size: 9.5px;fill: var(--fig-pos, #2563eb); stroke:none;" transform="translate(0,163) scale(1,-1)">(319, 190, 0)</text>
     </g>
-  </g>
+  </svg>
+  <svg class="fig-panel" x="288" y="0" width="238" height="250" viewBox="266 0 238 250">
+    <g transform="scale(1,-1) translate(0,-250)">
+      <rect x="268" y="26" width="236" height="210" rx="8" ry="8" style="stroke: var(--fig-border, #e2e8f0); stroke-linecap: butt; stroke-width: 0.8; fill: var(--fig-panel, #f8fafc); fill-rule: evenodd;" />
+      <text x="386" y="218" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.6px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,436) scale(1,-1)" text-anchor="middle">Same point, two addresses</text>
+      <rect x="282" y="154" width="208" height="44" rx="6" ry="6" style="stroke: var(--fig-rot, #db2777); stroke-linecap: butt; stroke-width: 1; fill: var(--fig-rot, #db2777); fill-rule: evenodd; fill-opacity: 0.1;" />
+      <text x="292" y="182" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.2px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,364) scale(1,-1)">LOCAL</text>
+      <text x="292" y="170" style="font-family: var(--font-sans, sans-serif); font-size: 10px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,340) scale(1,-1)">relative to the parent</text>
+      <text x="292" y="159" style="font-family: var(--font-sans, sans-serif); font-size: 10px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,318) scale(1,-1)">80 along the ship's X</text>
+      <rect x="282" y="92" width="208" height="44" rx="6" ry="6" style="stroke: var(--fig-pos, #2563eb); stroke-linecap: butt; stroke-width: 1; fill: var(--fig-pos, #2563eb); fill-rule: evenodd; fill-opacity: 0.1;" />
+      <text x="292" y="120" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.2px;fill: var(--fig-pos, #2563eb); stroke:none;" transform="translate(0,240) scale(1,-1)">WORLD</text>
+      <text x="292" y="108" style="font-family: var(--font-sans, sans-serif); font-size: 10px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,216) scale(1,-1)">relative to the world origin</text>
+      <text x="292" y="97" style="font-family: var(--font-sans, sans-serif); font-size: 10px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,194) scale(1,-1)">≈ 319 right, 190 up</text>
+      <text x="386" y="64" style="font-family: var(--font-sans, sans-serif); font-size: 10px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,128) scale(1,-1)" text-anchor="middle">“seat 3 on the bus”  vs  “GPS coordinates”</text>
+      <text x="386" y="46" style="font-family: var(--font-sans, sans-serif); font-size: 10px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,92) scale(1,-1)" text-anchor="middle">When the bus moves, the seat number</text>
+      <text x="386" y="36" style="font-family: var(--font-sans, sans-serif); font-size: 10px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,72) scale(1,-1)" text-anchor="middle">stays the same, but the GPS changes.</text>
+    </g>
+  </svg>
 </svg>

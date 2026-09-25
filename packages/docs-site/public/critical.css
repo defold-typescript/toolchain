@@ -411,9 +411,17 @@ header.topbar-critical .logo-mark {
    out-specifies the `.prose > * + *` owl. Mirror of the layered rule. */
 .prose blockquote {
   margin: 1.4em 0;
-  padding: 0.4em 1em;
+  padding: 0.8em 1em;
   border-left: 3px solid var(--color-border-strong);
-  color: var(--color-text-muted);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+.prose blockquote > :first-child {
+  margin-top: 0;
+}
+.prose blockquote > :last-child {
+  margin-bottom: 0;
 }
 .prose hr {
   border: 0;

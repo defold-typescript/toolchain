@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 504 225" fill-rule="evenodd">
+  <svg class="fig-panel" x="0" y="0" width="280" height="225" viewBox="0 0 280 225">
+    <g transform="scale(1,-1) translate(0,-225)">
+      <path d="M 30,25 L 30,205 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 55,25 L 55,205 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 80,25 L 80,205 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 105,25 L 105,205 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 130,25 L 130,205 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 155,25 L 155,205 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 180,25 L 180,205 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 205,25 L 205,205 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 230,25 L 230,205 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 255,25 L 255,205 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 30,25 L 260,25 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 30,50 L 260,50 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 30,75 L 260,75 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 30,100 L 260,100 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 30,125 L 260,125 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 30,150 L 260,150 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 30,175 L 260,175 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 30,200 L 260,200 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: butt; stroke-width: 0.6;" />
+      <path d="M 30,25 L 262.35,25 Z" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: round; stroke-width: 1.2;" />
+      <polygon points="270 25, 261 20.5, 261 29.5" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-axis, #94a3b8); fill-rule: evenodd;" />
+      <path d="M 30,25 L 30,207.35 Z" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: round; stroke-width: 1.2;" />
+      <polygon points="30 215, 34.5 206, 25.5 206" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-axis, #94a3b8); fill-rule: evenodd;" />
+      <path d="M 30,25 L 74.59,69.59 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: round; stroke-width: 1.3; stroke-opacity: 0.45; stroke-dasharray: 3, 2;" />
+      <polygon points="80 75, 76.82 65.45, 70.45 71.82" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-other, #dc2626); fill-rule: evenodd; fill-opacity: 0.45; stroke-opacity: 0.45;" />
+      <path d="M 30,25 L 223.88,170.41 Z" style="stroke: var(--fig-pos, #2563eb); stroke-linecap: round; stroke-width: 1.3; stroke-opacity: 0.45; stroke-dasharray: 3, 2;" />
+      <polygon points="230 175, 225.5 166, 220.1 173.2" style="stroke: var(--fig-pos, #2563eb); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-pos, #2563eb); fill-rule: evenodd; fill-opacity: 0.45; stroke-opacity: 0.45;" />
+      <path d="M 80,75 L 223.63,170.76 Z" style="stroke: var(--fig-vec, #ea580c); stroke-linecap: round; stroke-width: 2.6;" />
+      <polygon points="230 175, 225.01 166.26, 220.02 173.75" style="stroke: var(--fig-vec, #ea580c); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-vec, #ea580c); fill-rule: evenodd;" />
+      <path d="M 80,75 L 106.92,92.94 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 3.2;" />
+      <polygon points="113.28 97.19, 108.29 88.45, 103.3 95.94" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;" />
+      <circle cx="80.0" cy="75.0" r="8" style="stroke: var(--fig-bg, #ffffff); stroke-linecap: butt; stroke-width: 1.2; fill: var(--fig-other, #dc2626); fill-rule: evenodd;" />
+      <polygon points="239.15 181.1, 219.81 176.4, 226.34 172.56, 227.38 165.05" style="stroke: var(--fig-pos, #2563eb); stroke-linecap: round; stroke-width: 1; fill: var(--fig-pos, #2563eb); fill-rule: evenodd;" />
+      <text x="84.0" y="59.0" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.4px;fill: var(--fig-other, #dc2626); stroke:none;" transform="translate(0,118) scale(1,-1)" text-anchor="middle">buddy (100, 100, 0)</text>
+      <text x="224.0" y="187.0" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.4px;fill: var(--fig-pos, #2563eb); stroke:none;" transform="translate(0,374) scale(1,-1)" text-anchor="end">player (400, 300, 0)</text>
+      <text x="177.0" y="103.0" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.4px;fill: var(--fig-vec, #ea580c); stroke:none;" transform="translate(0,206) scale(1,-1)">toTarget =</text>
+      <text x="177.0" y="91" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.4px;fill: var(--fig-vec, #ea580c); stroke:none;" transform="translate(0,182) scale(1,-1)">(300, 200, 0)</text>
+      <text x="177.0" y="79" style="font-family: var(--font-sans, sans-serif); font-size: 10px;fill: var(--fig-vec, #ea580c); stroke:none;" transform="translate(0,158) scale(1,-1)">length ≈ 360.6</text>
+      <text x="177.0" y="67" style="font-family: var(--font-sans, sans-serif); font-size: 10px;fill: var(--fig-vec, #ea580c); stroke:none;" transform="translate(0,134) scale(1,-1)">(the distance)</text>
+      <text x="110.0" y="111.0" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.4px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,222) scale(1,-1)" text-anchor="end">direction</text>
+    </g>
+  </svg>
+  <svg class="fig-panel" x="288" y="0" width="216" height="225" viewBox="288 0 216 225">
+    <g transform="scale(1,-1) translate(0,-225)">
+      <rect x="290" y="40" width="214" height="160" rx="8" ry="8" style="stroke: var(--fig-border, #e2e8f0); stroke-linecap: butt; stroke-width: 0.8; fill: var(--fig-panel, #f8fafc); fill-rule: evenodd;" />
+      <text x="397" y="180" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.6px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,360) scale(1,-1)" text-anchor="middle">“destination minus start”</text>
+      <text x="305" y="152" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.2px;fill: var(--fig-pos, #2563eb); stroke:none;" transform="translate(0,304) scale(1,-1)">player</text>
+      <text x="490" y="152" style="font-family: var(--font-mono, monospace); font-size: 11.2px;fill: var(--fig-pos, #2563eb); stroke:none;" transform="translate(0,304) scale(1,-1)" text-anchor="end">(400, 300, 0)</text>
+      <text x="305" y="128" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.2px;fill: var(--fig-other, #dc2626); stroke:none;" transform="translate(0,256) scale(1,-1)">− buddy</text>
+      <text x="490" y="128" style="font-family: var(--font-mono, monospace); font-size: 11.2px;fill: var(--fig-other, #dc2626); stroke:none;" transform="translate(0,256) scale(1,-1)" text-anchor="end">(100, 100, 0)</text>
+      <text x="305" y="104" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.2px;fill: var(--fig-vec, #ea580c); stroke:none;" transform="translate(0,208) scale(1,-1)">= toTarget</text>
+      <text x="490" y="104" style="font-family: var(--font-mono, monospace); font-size: 11.2px;fill: var(--fig-vec, #ea580c); stroke:none;" transform="translate(0,208) scale(1,-1)" text-anchor="end">(300, 200, 0)</text>
+      <path d="M 305,124 L 490,124 Z" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 0.8;" />
+      <text x="397" y="86" style="font-family: var(--font-mono, monospace); font-size: 9.5px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,172) scale(1,-1)" text-anchor="middle">normalize(toTarget)</text>
+      <text x="397" y="74" style="font-family: var(--font-mono, monospace); font-size: 9.5px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,148) scale(1,-1)" text-anchor="middle">≈ (0.83, 0.55, 0)</text>
+      <text x="397" y="58" style="font-family: var(--font-sans, sans-serif); font-size: 10px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,116) scale(1,-1)" text-anchor="middle">the arrow's length is how far;</text>
+      <text x="397" y="47" style="font-family: var(--font-sans, sans-serif); font-size: 10px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,94) scale(1,-1)" text-anchor="middle">its normalized version is which way</text>
+    </g>
+  </svg>
+</svg>

@@ -1,30 +1,36 @@
-<svg viewBox="0 0 504 175" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd">
-  <g transform="scale(1,-1) translate(0,-175)">
-    <g>
-      <rect x="0" y="0" width="504" height="170" rx="8" ry="8" style="stroke: var(--fig-border, #e2e8f0); stroke-linecap: butt; stroke-width: 0.8; fill: var(--fig-panel, #f8fafc); fill-rule: evenodd;"/>
-      <polygon points="150 96, 140.08 68.8, 150 73.6, 159.92 68.8" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;"/>
-      <path d="M 150,80 L 150,132.35 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 2.4;"/>
-      <polygon points="150 140, 154.5 131, 145.5 131" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;"/>
-      <text x="156" y="138" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,276) scale(1,-1)">facing (direction)</text>
-      <path d="M 150,80 L 232.4,89.16 Z" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: round; stroke-width: 2.6;"/>
-      <polygon points="240 90, 231.55 84.53, 230.56 93.48" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-vel, #9333ea); fill-rule: evenodd;"/>
-      <text x="244" y="86" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8px;fill: var(--fig-vel, #9333ea); stroke:none;" transform="translate(0,172) scale(1,-1)">moving (velocity)</text>
-      <polygon points="131.37 85.94, 120.47 73.85, 126.65 74.26, 130.81 69.67" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd; fill-opacity: 0.21; stroke-opacity: 0.21;"/>
-      <polygon points="112.25 81.67, 97.61 74.54, 103.5 72.61, 105.64 66.79" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd; fill-opacity: 0.18; stroke-opacity: 0.18;"/>
-      <polygon points="92.22 76.46, 75.98 75.34, 80.71 71.34, 80.51 65.14" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd; fill-opacity: 0.15; stroke-opacity: 0.15;"/>
-      <polygon points="70.99 70.71, 55.51 75.76, 58.4 70.27, 55.9 64.6" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd; fill-opacity: 0.12; stroke-opacity: 0.12;"/>
-      <text x="110" y="20" style="font-family: var(--font-sans, sans-serif); font-size: 8px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,40) scale(1,-1)" text-anchor="middle">the ship turned, but it keeps sliding the old way</text>
-      <text x="390" y="140" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,280) scale(1,-1)" text-anchor="middle">thrust adds a little</text>
-      <text x="390" y="128" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,256) scale(1,-1)" text-anchor="middle">direction to velocity each frame</text>
-      <path d="M 340,60 L 422.4,69.16 Z" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: round; stroke-width: 2.2;"/>
-      <polygon points="430 70, 421.55 64.53, 420.56 73.48" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-vel, #9333ea); fill-rule: evenodd;"/>
-      <path d="M 430,70 L 430,97.35 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 2.2;"/>
-      <polygon points="430 105, 434.5 96, 425.5 96" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;"/>
-      <path d="M 340,60 L 423.16,101.58 Z" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: round; stroke-width: 2.0; stroke-opacity: 0.6; stroke-dasharray: 4, 2;"/>
-      <polygon points="430 105, 423.96 96.95, 419.94 105" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-vel, #9333ea); fill-rule: evenodd; fill-opacity: 0.6; stroke-opacity: 0.6;"/>
-      <text x="380" y="54" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-vel, #9333ea); stroke:none;" transform="translate(0,108) scale(1,-1)" text-anchor="middle">old velocity</text>
-      <text x="434" y="86" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,172) scale(1,-1)">+ thrust × dt</text>
-      <text x="350" y="98" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-vel, #9333ea); stroke:none;" transform="translate(0,196) scale(1,-1)">new velocity</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 504 175" fill-rule="evenodd">
+  <svg class="fig-panel" x="0" y="0" width="316" height="175" viewBox="0 0 316 175">
+    <g transform="scale(1,-1) translate(0,-175)">
+      <rect x="0" y="0" width="316" height="170" rx="8" ry="8" style="stroke: var(--fig-border, #e2e8f0); stroke-linecap: butt; stroke-width: 0.8; fill: var(--fig-panel, #f8fafc); fill-rule: evenodd;" />
+      <polygon points="150 96, 140.08 68.8, 150 73.6, 159.92 68.8" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;" />
+      <path d="M 150,80 L 150,132.35 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 2.4;" />
+      <polygon points="150 140, 154.5 131, 145.5 131" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;" />
+      <text x="156" y="138" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.4px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,276) scale(1,-1)">facing (direction)</text>
+      <path d="M 150,80 L 232.4,89.16 Z" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: round; stroke-width: 2.6;" />
+      <polygon points="240 90, 231.55 84.53, 230.56 93.48" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-vel, #9333ea); fill-rule: evenodd;" />
+      <text x="312" y="69" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.4px;fill: var(--fig-vel, #9333ea); stroke:none;" transform="translate(0,138) scale(1,-1)" text-anchor="end">moving (velocity)</text>
+      <polygon points="131.37 85.94, 120.47 73.85, 126.65 74.26, 130.81 69.67" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd; fill-opacity: 0.21; stroke-opacity: 0.21;" />
+      <polygon points="112.25 81.67, 97.61 74.54, 103.5 72.61, 105.64 66.79" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd; fill-opacity: 0.18; stroke-opacity: 0.18;" />
+      <polygon points="92.22 76.46, 75.98 75.34, 80.71 71.34, 80.51 65.14" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd; fill-opacity: 0.15; stroke-opacity: 0.15;" />
+      <polygon points="70.99 70.71, 55.51 75.76, 58.4 70.27, 55.9 64.6" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd; fill-opacity: 0.12; stroke-opacity: 0.12;" />
+      <text x="158" y="20" style="font-family: var(--font-sans, sans-serif); font-size: 10.4px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,40) scale(1,-1)" text-anchor="middle">the ship turned, but it keeps sliding the old way</text>
     </g>
-  </g>
+  </svg>
+  <svg class="fig-panel" x="322" y="0" width="182" height="175" viewBox="322 0 182 175">
+    <g transform="scale(1,-1) translate(0,-175)">
+      <rect x="322" y="0" width="182" height="170" rx="8" ry="8" style="stroke: var(--fig-border, #e2e8f0); stroke-linecap: butt; stroke-width: 0.8; fill: var(--fig-panel, #f8fafc); fill-rule: evenodd;" />
+      <text x="413" y="146" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.8px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,292) scale(1,-1)" text-anchor="middle">thrust adds a little</text>
+      <text x="413" y="134" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.8px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,268) scale(1,-1)" text-anchor="middle">direction to velocity</text>
+      <text x="413" y="122" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.8px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,244) scale(1,-1)" text-anchor="middle">each frame</text>
+      <path d="M 340,60 L 422.4,69.16 Z" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: round; stroke-width: 2.2;" />
+      <polygon points="430 70, 421.55 64.53, 420.56 73.48" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-vel, #9333ea); fill-rule: evenodd;" />
+      <path d="M 430,70 L 430,97.35 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 2.2;" />
+      <polygon points="430 105, 434.5 96, 425.5 96" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;" />
+      <path d="M 340,60 L 423.16,101.58 Z" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: round; stroke-width: 2.0; stroke-opacity: 0.6; stroke-dasharray: 4, 2;" />
+      <polygon points="430 105, 423.96 96.95, 419.94 105" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-vel, #9333ea); fill-rule: evenodd; fill-opacity: 0.6; stroke-opacity: 0.6;" />
+      <text x="380" y="54" style="font-family: var(--font-sans, sans-serif); font-size: 10px;fill: var(--fig-vel, #9333ea); stroke:none;" transform="translate(0,108) scale(1,-1)" text-anchor="middle">old velocity</text>
+      <text x="434" y="86" style="font-family: var(--font-sans, sans-serif); font-size: 10px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,172) scale(1,-1)">+ thrust × dt</text>
+      <text x="350" y="98" style="font-family: var(--font-sans, sans-serif); font-size: 10px;fill: var(--fig-vel, #9333ea); stroke:none;" transform="translate(0,196) scale(1,-1)">new velocity</text>
+    </g>
+  </svg>
 </svg>
