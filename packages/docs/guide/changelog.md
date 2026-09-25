@@ -15,7 +15,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 - **[Vectors and rotations](./vectors-tutorial.md) is a new tutorial on the math behind movement** — positions, vectors, speed, dt, rotation, the dot product and local versus world space, one game problem per lesson, ending with a ship that drifts through space. Its fifteen figures follow the site font and the light/dark theme and stack their side-by-side panels on a phone, and every TypeScript snippet on the page type-checks against the shipped declarations.
 - **[bridge](/api/bridge) moves from `v2.1.0` to `v2.2.0`**, adding `platform.launch_source`, `platform.data` and the post-reward pair `social.is_post_reward_supported` / `social.get_post_reward`. `share`, `invite_friends` and `create_post` also accept a config-entry id as `options`, and `create_post` takes an optional `payload` string before its callbacks; every existing call still compiles.
-- **The Nakama server spec that [nakama](/api/nakama) is checked against moves from `v3.40.0` to `v3.41.0`.** The `nakama` types you import are unchanged.
+- **The Nakama server API spec (`heroiclabs/nakama`) that [nakama](/api/nakama) is checked against moves from `v3.40.0` to `v3.41.0`.** The client types you import still come from `heroiclabs/nakama-defold` `v3.4.0` and are unchanged.
 
 ### Fixed
 
