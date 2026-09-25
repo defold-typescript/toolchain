@@ -60,8 +60,7 @@ function keysByFirstChar(links: Map<string, string>): Map<string, string[]> {
 function linkifyRegion(
   region: string,
   keyBuckets: Map<string, string[]>,
-  links: Map<string, string>,
-  applyBase: (route: string) => string,
+  hrefs: Map<string, string>,
 ): string {
   let result = "";
   let i = 0;
@@ -75,9 +74,9 @@ function linkifyRegion(
         result += region[i];
         i++;
       } else {
-        const route = links.get(key);
-        if (route !== undefined) {
-          result += `<a href="${escapeAttr(applyBase(route))}" class="symbol-xref">${escapeText(key)}</a>`;
+        const href = hrefs.get(key);
+        if (href !== undefined) {
+          result += `<a href="${escapeAttr(href)}" class="symbol-xref">${escapeText(key)}</a>`;
         } else {
           result += key;
         }
@@ -110,14 +109,14 @@ export function symbolLinkifier(
 ): (text: string) => string {
   if (links.size === 0) return (text) => text;
   const keyBuckets = keysByFirstChar(links);
-  return (text) => linkifyText(text, keyBuckets, links, applyBase);
+  const hrefs = new Map([...links].map(([key, route]) => [key, applyBase(route)]));
+  return (text) => linkifyText(text, keyBuckets, hrefs);
 }
 
 function linkifyText(
   text: string,
   keyBuckets: Map<string, string[]>,
-  links: Map<string, string>,
-  applyBase: (route: string) => string,
+  hrefs: Map<string, string>,
 ): string {
   let result = "";
   let i = 0;
@@ -135,7 +134,7 @@ function linkifyText(
     }
     const next = text.indexOf("`", i);
     const end = next === -1 ? text.length : next;
-    result += linkifyRegion(text.slice(i, end), keyBuckets, links, applyBase);
+    result += linkifyRegion(text.slice(i, end), keyBuckets, hrefs);
     i = end;
   }
   return result;

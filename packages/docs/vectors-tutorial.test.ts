@@ -14,11 +14,11 @@ interface Fence {
   source: string;
 }
 
-const PRELUDE_OPEN = "<!-- prelude:";
+const PRELUDE = /^<!-- prelude:(.*)-->\s*$/;
 
 /**
  * Every ```ts fence on the page, each prefixed with the body of a
- * `<!-- prelude: ... -->` comment that ends on the line directly above it. The
+ * one-line `<!-- prelude: ... -->` comment on the line directly above it. The
  * prelude is how a fragment gets the names it uses without printing them.
  */
 function tsFences(markdown: string): Fence[] {
@@ -42,20 +42,8 @@ function tsFences(markdown: string): Fence[] {
 }
 
 function preludeAbove(lines: string[], fenceIndex: number): string {
-  const above = lines[fenceIndex - 1] ?? "";
-  if (!above.trimEnd().endsWith("-->")) return "";
-  let open = fenceIndex - 1;
-  while (open >= 0 && !(lines[open] ?? "").includes(PRELUDE_OPEN)) {
-    if (open < fenceIndex - 1 && (lines[open] ?? "").includes("-->")) return "";
-    open--;
-  }
-  if (open < 0) return "";
-  const comment = lines.slice(open, fenceIndex).join("\n");
-  const inner = comment.slice(
-    comment.indexOf(PRELUDE_OPEN) + PRELUDE_OPEN.length,
-    comment.lastIndexOf("-->"),
-  );
-  return `${inner.trim()}\n`;
+  const inner = PRELUDE.exec(lines[fenceIndex - 1] ?? "")?.[1];
+  return inner === undefined ? "" : `${inner.trim()}\n`;
 }
 
 /**

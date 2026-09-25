@@ -2,20 +2,19 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { renderGuidePage } from "./content";
+import { parseTokenBlock } from "./design-tokens";
 import { listGuidePages } from "./guide-loader";
 
 const GUIDE_DIR = join(import.meta.dir, "../../../docs/guide");
 const STYLES = readFileSync(join(import.meta.dir, "../styles.css"), "utf8");
 
-function tokensDeclaredUnder(selector: string): Set<string> {
-  const names = new Set<string>();
+function tokensDeclaredUnder(selector: string): Map<string, string> {
+  const tokens = new Map<string, string>();
   const escaped = selector.replace(/[[\]"]/g, "\\$&");
   for (const block of STYLES.matchAll(new RegExp(`(?:^|\\n)${escaped}\\s*\\{([^}]*)\\}`, "g"))) {
-    for (const decl of (block[1] ?? "").matchAll(/(--fig-[a-z-]+)\s*:/g)) {
-      if (decl[1]) names.add(decl[1]);
-    }
+    for (const [name, value] of parseTokenBlock(block[1] ?? "")) tokens.set(name, value);
   }
-  return names;
+  return tokens;
 }
 
 const page = listGuidePages(GUIDE_DIR).find((p) => p.slug === "vectors-tutorial");
@@ -48,14 +47,17 @@ describe("vectors-tutorial inline figures", () => {
     }
   });
 
-  test("every --fig-* token a figure uses has a light and a dark value", () => {
+  test("every --fig-* token a figure uses has a light value and, unless it aliases a theme token, a dark one", () => {
     const used = new Set(
       figures.flatMap((f) => [...f.matchAll(/var\((--fig-[a-z-]+)/g)].map((m) => m[1])),
     );
     expect(used.size).toBeGreaterThan(0);
     const light = tokensDeclaredUnder(":root");
     const dark = tokensDeclaredUnder('[data-theme="dark"]');
-    const missing = [...used].filter((name) => !name || !light.has(name) || !dark.has(name));
+    const followsTheme = (name: string) => light.get(name)?.startsWith("var(--color-") ?? false;
+    const missing = [...used].filter(
+      (name) => !name || !light.has(name) || !(dark.has(name) || followsTheme(name)),
+    );
     expect(missing).toEqual([]);
   });
 });

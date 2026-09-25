@@ -374,15 +374,19 @@ export async function evaluateLibraryDrift(
 export function describeReport(report: LibraryUpstreamReport): string {
   const who = `${report.repo} (${report.dependents.length} module(s))`;
   const marker = report.internal ? " (internal)" : "";
+  return `  ${who} — ${reportDetail(report)}${marker}\n`;
+}
+
+function reportDetail(report: LibraryUpstreamReport): string {
   switch (report.reason) {
     case "newer-tag":
-      return `  ${who} — pinned ${report.pinned}, upstream tags ${report.upstream}${marker}\n`;
+      return `pinned ${report.pinned}, upstream tags ${report.upstream}`;
     case "behind-head":
-      return `  ${who} — pinned ${report.pinned} is ${report.commitsBehind} commit(s) behind ${report.upstream}${report.actionable ? "" : " (no consumed path touched)"}${marker}\n`;
+      return `pinned ${report.pinned} is ${report.commitsBehind} commit(s) behind ${report.upstream}${report.actionable ? "" : " (no consumed path touched)"}`;
     case "current":
-      return `  ${who} — pinned ${report.pinned} is current${marker}\n`;
+      return `pinned ${report.pinned} is current`;
     case "unknown":
-      return `  ${who} — pinned ${report.pinned} could not be compared: ${report.error}${marker}\n`;
+      return `pinned ${report.pinned} could not be compared: ${report.error}`;
   }
 }
 
