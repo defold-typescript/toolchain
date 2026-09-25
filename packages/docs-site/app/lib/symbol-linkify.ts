@@ -1,10 +1,12 @@
 /**
  * Rewrite bare mentions of known API symbols in plain text to local
- * `/api/<namespace>` links. The function operates on text already produced by
+ * `/api/<namespace>` links whose href carries the deploy base. The function operates on text already produced by
  * `htmlToDocText` (which strips upstream Defold cross-references) and re-attaches
  * them as local links, longest-match-first with word-boundary checks, while
  * skipping backtick-fenced code spans.
  */
+
+import { withBase } from "./base";
 
 const WORD_CHAR = /[A-Za-z0-9_]/;
 
@@ -59,6 +61,7 @@ function linkifyRegion(
   region: string,
   keyBuckets: Map<string, string[]>,
   links: Map<string, string>,
+  applyBase: (route: string) => string,
 ): string {
   let result = "";
   let i = 0;
@@ -74,7 +77,7 @@ function linkifyRegion(
       } else {
         const route = links.get(key);
         if (route !== undefined) {
-          result += `<a href="${escapeAttr(route)}" class="symbol-xref">${escapeText(key)}</a>`;
+          result += `<a href="${escapeAttr(applyBase(route))}" class="symbol-xref">${escapeText(key)}</a>`;
         } else {
           result += key;
         }
@@ -91,22 +94,30 @@ function linkifyRegion(
   return result;
 }
 
-export function linkifySymbolMentions(text: string, links: Map<string, string>): string {
-  return symbolLinkifier(links)(text);
+export function linkifySymbolMentions(
+  text: string,
+  links: Map<string, string>,
+  applyBase: (route: string) => string = withBase,
+): string {
+  return symbolLinkifier(links, applyBase)(text);
 }
 
 // Prepares `links` once for many texts, such as every doc comment on a page. The
 // map must not change after this call.
-export function symbolLinkifier(links: Map<string, string>): (text: string) => string {
+export function symbolLinkifier(
+  links: Map<string, string>,
+  applyBase: (route: string) => string = withBase,
+): (text: string) => string {
   if (links.size === 0) return (text) => text;
   const keyBuckets = keysByFirstChar(links);
-  return (text) => linkifyText(text, keyBuckets, links);
+  return (text) => linkifyText(text, keyBuckets, links, applyBase);
 }
 
 function linkifyText(
   text: string,
   keyBuckets: Map<string, string[]>,
   links: Map<string, string>,
+  applyBase: (route: string) => string,
 ): string {
   let result = "";
   let i = 0;
@@ -124,7 +135,7 @@ function linkifyText(
     }
     const next = text.indexOf("`", i);
     const end = next === -1 ? text.length : next;
-    result += linkifyRegion(text.slice(i, end), keyBuckets, links);
+    result += linkifyRegion(text.slice(i, end), keyBuckets, links, applyBase);
     i = end;
   }
   return result;
