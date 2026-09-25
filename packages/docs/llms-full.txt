@@ -8382,8 +8382,9 @@ bun run upstream:library-check --json   # one object, for tooling
 
 The **Library upstream pin check** workflow
 (`.github/workflows/library-upstream-check.yml`) runs it weekly and opens one
-issue per stale repo, titled by repo slug and upstream version so a rerun before
-the bump lands finds its own issue rather than minting a second one. It is also
+issue per stale repo, titled by repo slug, upstream version and internal marker
+so a rerun before the bump lands finds its own issue rather than minting a second
+one. It is also
 `workflow_dispatch`-able, which matters because GitHub disables a `schedule:`
 trigger after 60 days of repository inactivity.
 
@@ -8397,6 +8398,12 @@ Two things about the report are worth knowing before you act on it:
   repo reads.** The registries already record which upstream files each target
   consumes, so a README-only commit on a pinned repo's default branch reports as
   `behind-head` without asking you to do anything.
+- **A pin that feeds only the fidelity comparison is marked internal.** When
+  every dependent is a markdown or OpenAPI target whose `decision` is not `go`,
+  no user receives its output, so the report sets `internal`, the prose line and
+  the issue title end in `(internal)`, and the issue says the bump needs no
+  changelog bullet. It is still actionable: a stale spec hides upstream movement
+  from the go/no-go comparison.
 
 A repo the check could not read at all is reported as `unknown` and exits the
 command non-zero. That is deliberate: a renamed or deleted upstream must not look
@@ -8488,7 +8495,7 @@ skip it.
 - **The generated docs artifacts.** `packages/docs/llms.txt`,
   `packages/docs/llms-full.txt`, and the docs-site search and symbol indexes are
   committed, not built on demand. Regenerate them with
-  `bun --cwd packages/docs-site run build-indexes` whenever the API-doc model
+  `bun run --cwd packages/docs-site build-indexes` whenever the API-doc model
   changed.
 
 #### What a re-pin does not touch
