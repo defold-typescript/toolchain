@@ -22,6 +22,14 @@ declare module 'nakama.nakama' {
      */
     function add_group_users(groupId: string, userIds?: Record<string | number, unknown>): Record<string | number, unknown>;
     /**
+     * Authenticate a user with a runtime-registered provider against the server.
+     *
+     * @param account - The provider account details.
+     * @param create - Register the account if the user does not already exist.
+     * @param username - Set the username on the account at register. Must be unique.
+     */
+    function authenticate(account: Record<string | number, unknown>, create?: boolean, username?: string): Record<string | number, unknown>;
+    /**
      * Authenticate a user with an Apple ID against the server.
      *
      * @param account - The Apple account details.
@@ -112,7 +120,7 @@ declare module 'nakama.nakama' {
     /**
      * A user with additional account details. Always the current user.
      */
-    function create_api_account(user?: Record<string | number, unknown>, wallet?: string, email?: string, devices?: Record<string | number, unknown>, customId?: string, verifyTime?: string, disableTime?: string): Record<string | number, unknown>;
+    function create_api_account(user?: Record<string | number, unknown>, wallet?: string, email?: string, devices?: Record<string | number, unknown>, customId?: string, verifyTime?: string, disableTime?: string, providers?: Record<string | number, unknown>): Record<string | number, unknown>;
     /**
      * Send a Apple Sign In token to the server. Used with authenticate/link/unlink.
      */
@@ -148,6 +156,14 @@ declare module 'nakama.nakama' {
      */
     function create_api_account_google(token?: string, vars?: Record<string | number, unknown>): Record<string | number, unknown>;
     /**
+     * Send credentials for a runtime-registered authentication provider. Used with authenticate/link/unlink.
+     */
+    function create_api_account_provider(provider?: string, payload?: Record<string | number, unknown>, vars?: Record<string | number, unknown>): Record<string | number, unknown>;
+    /**
+     * A provider identity linked to a user's account.
+     */
+    function create_api_account_provider_identity(provider?: string, providerUserId?: string): Record<string | number, unknown>;
+    /**
      * Send a Steam token to the server. Used with authenticate/link/unlink.
      */
     function create_api_account_steam(token?: string, vars?: Record<string | number, unknown>): Record<string | number, unknown>;
@@ -171,10 +187,6 @@ declare module 'nakama.nakama' {
      * Batch delete storage objects.
      */
     function create_api_delete_storage_objects_request(objectIds?: Record<string | number, unknown>): Record<string | number, unknown>;
-    /**
-     * Represents an event to be passed through the server to registered event handlers.
-     */
-    function create_api_event(name?: string, properties?: Record<string | number, unknown>, timestamp?: string, external?: boolean): Record<string | number, unknown>;
     /**
      * A friend of a user.
      */
@@ -322,6 +334,10 @@ declare module 'nakama.nakama' {
      * Validate IAP response.
      */
     function create_api_validate_purchase_response(validatedPurchases?: Record<string | number, unknown>): Record<string | number, unknown>;
+    /**
+     * Samsung IAP Purchase validation request.
+     */
+    function create_api_validate_purchase_samsung_request(purchaseId?: string, persist?: boolean): Record<string | number, unknown>;
     function create_api_validate_subscription_apple_request(receipt?: string, persist?: boolean): Record<string | number, unknown>;
     function create_api_validate_subscription_google_request(receipt?: string, persist?: boolean): Record<string | number, unknown>;
     /**
@@ -376,6 +392,14 @@ declare module 'nakama.nakama' {
     function create_matchmaker_matched_message(ticket: string, match_id: string | undefined, token: string | undefined, users: Record<string | number, unknown>, self: Record<string | number, unknown>): void;
     function create_matchmaker_remove_message(ticket: string): void;
     function create_matchmaker_ticket_message(ticket: string): void;
+    /**
+     * Represents an event to be passed through the server to registered event handlers.
+     */
+    function create_nakama_api_event(name?: string, properties?: Record<string | number, unknown>, timestamp?: string, external?: boolean): Record<string | number, unknown>;
+    /**
+     * Update fields in a given group.
+     */
+    function create_nakama_update_group_body(name?: string, description?: string, langTag?: string, avatarUrl?: string, open?: boolean): Record<string | number, unknown>;
     function create_notifications_message(notifications: Record<string | number, unknown>): void;
     function create_party_accept_message(party_id: string, presence: Record<string | number, unknown>): void;
     function create_party_close_message(party_id: string): void;
@@ -540,6 +564,12 @@ declare module 'nakama.nakama' {
      */
     function leave_group(groupId: string): Record<string | number, unknown>;
     /**
+     * Add an authentication provider identity to the current user's account.
+     *
+     * @param body - Send credentials for a runtime-registered authentication provider. Used with authenticate/link/unlink.
+     */
+    function link(body: Record<string | number, unknown>): Record<string | number, unknown>;
+    /**
      * Add an Apple ID to the social profiles on the current user's account.
      *
      * @param body - Send a Apple Sign In token to the server. Used with authenticate/link/unlink.
@@ -608,7 +638,7 @@ declare module 'nakama.nakama' {
     /**
      * List all friends for the current user.
      *
-     * @param limit - Max number of records to return. Between 1 and 100.
+     * @param limit - Max number of records to return. Between 1 and 1000.
      * @param state - The friend state to list.
      * @param cursor - An optional next page cursor.
      */
@@ -799,6 +829,12 @@ declare module 'nakama.nakama' {
      */
     function session_refresh(body: Record<string | number, unknown>): Record<string | number, unknown>;
     /**
+     * Remove an authentication provider identity from the current user's account.
+     *
+     * @param body - Send credentials for a runtime-registered authentication provider. Used with authenticate/link/unlink.
+     */
+    function unlink(body: Record<string | number, unknown>): Record<string | number, unknown>;
+    /**
      * Remove the Apple ID from the social profiles on the current user's account.
      *
      * @param body - Send a Apple Sign In token to the server. Used with authenticate/link/unlink.
@@ -882,6 +918,12 @@ declare module 'nakama.nakama' {
      * Validate Huawei IAP Receipt
      */
     function validate_purchase_huawei(body: Record<string | number, unknown>): Record<string | number, unknown>;
+    /**
+     * Validate Samsung Galaxy Store IAP Receipt
+     *
+     * @param body - Samsung IAP Purchase validation request.
+     */
+    function validate_purchase_samsung(body: Record<string | number, unknown>): Record<string | number, unknown>;
     /**
      * Validate Apple Subscription Receipt
      */

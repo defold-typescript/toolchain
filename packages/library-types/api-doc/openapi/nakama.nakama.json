@@ -395,6 +395,45 @@
     },
     {
       "type": "FUNCTION",
+      "name": "nakama.authenticate",
+      "description": "Authenticate a user with a runtime-registered provider against the server.",
+      "parameters": [
+        {
+          "name": "account",
+          "doc": "The provider account details.",
+          "types": [
+            "table"
+          ]
+        },
+        {
+          "name": "create",
+          "doc": "Register the account if the user does not already exist.",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "username",
+          "doc": "Set the username on the account at register. Must be unique.",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
       "name": "nakama.authenticate_steam",
       "description": "Authenticate a user with Steam against the server.",
       "parameters": [
@@ -617,6 +656,29 @@
         {
           "name": "body",
           "doc": "Send a Google token to the server. Used with authenticate/link/unlink.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.link",
+      "description": "Add an authentication provider identity to the current user's account.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Send credentials for a runtime-registered authentication provider. Used with authenticate/link/unlink.",
           "types": [
             "table"
           ]
@@ -864,6 +926,29 @@
     },
     {
       "type": "FUNCTION",
+      "name": "nakama.unlink",
+      "description": "Remove an authentication provider identity from the current user's account.",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Send credentials for a runtime-registered authentication provider. Used with authenticate/link/unlink.",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
       "name": "nakama.unlink_steam",
       "description": "Remove Steam from the social profiles on the current user's account.",
       "parameters": [
@@ -962,7 +1047,7 @@
       "parameters": [
         {
           "name": "limit",
-          "doc": "Max number of records to return. Between 1 and 100.",
+          "doc": "Max number of records to return. Between 1 and 1000.",
           "types": [
             "number"
           ],
@@ -1658,6 +1743,29 @@
         {
           "name": "body",
           "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.validate_purchase_samsung",
+      "description": "Validate Samsung Galaxy Store IAP Receipt",
+      "parameters": [
+        {
+          "name": "body",
+          "doc": "Samsung IAP Purchase validation request.",
           "types": [
             "table"
           ]
@@ -2804,6 +2912,62 @@
     },
     {
       "type": "FUNCTION",
+      "name": "nakama.create_nakama_update_group_body",
+      "description": "Update fields in a given group.",
+      "parameters": [
+        {
+          "name": "name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "description",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "langTag",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "avatarUrl",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "open",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
       "name": "nakama.create_user_group_list_user_group",
       "description": "A single group-role pair.",
       "parameters": [
@@ -2988,6 +3152,14 @@
           "doc": "",
           "types": [
             "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "providers",
+          "doc": "",
+          "types": [
+            "table"
           ],
           "is_optional": "True"
         }
@@ -3292,6 +3464,78 @@
           "doc": "",
           "types": [
             "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_account_provider",
+      "description": "Send credentials for a runtime-registered authentication provider. Used with authenticate/link/unlink.",
+      "parameters": [
+        {
+          "name": "provider",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "payload",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "vars",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_api_account_provider_identity",
+      "description": "A provider identity linked to a user's account.",
+      "parameters": [
+        {
+          "name": "provider",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "providerUserId",
+          "doc": "",
+          "types": [
+            "string"
           ],
           "is_optional": "True"
         }
@@ -3620,54 +3864,6 @@
           "doc": "",
           "types": [
             "table"
-          ],
-          "is_optional": "True"
-        }
-      ],
-      "returnvalues": [
-        {
-          "name": "result",
-          "doc": "",
-          "types": [
-            "table"
-          ]
-        }
-      ]
-    },
-    {
-      "type": "FUNCTION",
-      "name": "nakama.create_api_event",
-      "description": "Represents an event to be passed through the server to registered event handlers.",
-      "parameters": [
-        {
-          "name": "name",
-          "doc": "",
-          "types": [
-            "string"
-          ],
-          "is_optional": "True"
-        },
-        {
-          "name": "properties",
-          "doc": "",
-          "types": [
-            "table"
-          ],
-          "is_optional": "True"
-        },
-        {
-          "name": "timestamp",
-          "doc": "",
-          "types": [
-            "string"
-          ],
-          "is_optional": "True"
-        },
-        {
-          "name": "external",
-          "doc": "",
-          "types": [
-            "boolean"
           ],
           "is_optional": "True"
         }
@@ -5748,6 +5944,38 @@
     },
     {
       "type": "FUNCTION",
+      "name": "nakama.create_api_validate_purchase_samsung_request",
+      "description": "Samsung IAP Purchase validation request.",
+      "parameters": [
+        {
+          "name": "purchaseId",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "persist",
+          "doc": "",
+          "types": [
+            "boolean"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
       "name": "nakama.create_api_validate_subscription_apple_request",
       "description": "",
       "parameters": [
@@ -6132,6 +6360,54 @@
           "doc": "",
           "types": [
             "table"
+          ],
+          "is_optional": "True"
+        }
+      ],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "nakama.create_nakama_api_event",
+      "description": "Represents an event to be passed through the server to registered event handlers.",
+      "parameters": [
+        {
+          "name": "name",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "properties",
+          "doc": "",
+          "types": [
+            "table"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "timestamp",
+          "doc": "",
+          "types": [
+            "string"
+          ],
+          "is_optional": "True"
+        },
+        {
+          "name": "external",
+          "doc": "",
+          "types": [
+            "boolean"
           ],
           "is_optional": "True"
         }
