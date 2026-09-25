@@ -1,6 +1,8 @@
 /** @jsxImportSource hono/jsx */
 // Pins the JSX dialect for root `bun test`, which reads no JSX config from the root tsconfig.
 
+import { imageMaxWidthStyle } from "../../lib/image-style";
+
 // An inlined guide figure. The component, not the SVG, owns the size: it caps
 // the figure on a wide page and lays each panel out as its own `<svg>`, so side-
 // by-side panels share a row while they fit and stack full width on a narrow
@@ -26,17 +28,14 @@ export type SvgFigureProps = {
 const FIG_PANEL = /<svg\b([^>]*\bclass="fig-panel"[^>]*)>([\s\S]*?)<\/svg>/g;
 const FIG_LAYOUT = /<svg\b([^>]*\bclass="fig-layout"[^>]*)>([\s\S]*?)<\/svg>/g;
 
-export type SvgFigureKind = "panels" | "single" | "layouts";
+type SvgFigureKind = "panels" | "single" | "layouts";
 
 /**
  * One `<svg>` per panel or layout, each carrying its viewBox width as `--w`: the
  * stylesheet sizes every panel by that width, so panels in one row keep one
  * common scale. A layout keeps its `data-layout` so the stylesheet can pick it.
  */
-export function svgFigurePanels(
-  svg: string,
-  src: string,
-): { kind: SvgFigureKind; panels: string[] } {
+function svgFigurePanels(svg: string, src: string): { kind: SvgFigureKind; panels: string[] } {
   const root = /^\s*<svg\b([^>]*)>/.exec(svg);
   if (!root) throw new Error(`inline SVG figure has no SVG markup to inline: ${src}`);
   const rootAttrs = root[1] ?? "";
@@ -46,10 +45,15 @@ export function svgFigurePanels(
     [...body.matchAll(pattern)].map((m) => ({ attrs: m[1] ?? "", inner: m[2] ?? "" }));
   const layouts = nested(FIG_LAYOUT);
   const panels = nested(FIG_PANEL);
-  const kind: SvgFigureKind =
-    layouts.length > 0 ? "layouts" : panels.length > 0 ? "panels" : "single";
-  const parts =
-    kind === "layouts" ? layouts : kind === "panels" ? panels : [{ attrs: rootAttrs, inner: body }];
+  let kind: SvgFigureKind = "single";
+  let parts = [{ attrs: rootAttrs, inner: body }];
+  if (layouts.length > 0) {
+    kind = "layouts";
+    parts = layouts;
+  } else if (panels.length > 0) {
+    kind = "panels";
+    parts = panels;
+  }
   return {
     kind,
     panels: parts.map(({ attrs, inner }) => {
@@ -71,17 +75,12 @@ export function svgFigurePanels(
 
 export function SvgFigure({ svg, caption, src, maxWidth }: SvgFigureProps) {
   const { kind, panels } = svgFigurePanels(svg, src);
-  const className =
-    kind === "single"
-      ? "figure-svg figure-svg--single"
-      : kind === "layouts"
-        ? "figure-svg figure-svg--layouts"
-        : "figure-svg";
+  const className = kind === "panels" ? "figure-svg" : `figure-svg figure-svg--${kind}`;
   return (
     <figure
       data-slot="svg-figure"
       class={className}
-      style={maxWidth ? `max-width: min(100%, ${maxWidth})` : undefined}
+      style={maxWidth ? imageMaxWidthStyle(maxWidth) : undefined}
     >
       <div
         data-slot="svg-figure-panels"

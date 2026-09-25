@@ -362,15 +362,9 @@ export function computeScriptApiFidelity(
     totalMembers++;
     if ((element.description ?? "").trim() === "") undocumentedMembers++;
     for (const slot of [...element.parameters, ...element.returnvalues]) {
-      if (slot.types.length === 0) {
+      for (const token of slot.types.length > 0 ? slot.types : [UNTYPED_SLOT]) {
         totalTypeTokens++;
-        unknownFallbacks++;
-        unknownTokens.add(UNTYPED_SLOT);
-        continue;
-      }
-      for (const token of slot.types) {
-        totalTypeTokens++;
-        if (!resolver.resolves(token)) {
+        if (token === UNTYPED_SLOT || !resolver.resolves(token)) {
           unknownFallbacks++;
           unknownTokens.add(token);
         }

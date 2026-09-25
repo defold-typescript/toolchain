@@ -15,6 +15,7 @@ import { linkApiTypeTokens } from "./api-type-links";
 import { withBase } from "./base";
 import { glyphSvg } from "./glyph";
 import { slugify } from "./headings";
+import { imageMaxWidthStyle } from "./image-style";
 import { phosphorDuotone } from "./phosphor";
 import { type Glyph, PLATFORM_MARKER, platformIcon } from "./platform-icons";
 import { type SignatureSymbolTarget, splitSignatureBrandLinks } from "./signature-brand-links";
@@ -121,10 +122,6 @@ function imageParamsFromSrc(src: string): { src: string; maxWidth?: string; inli
     ...(maxWidth ? { maxWidth } : {}),
     ...(inline ? { inline: true as const } : {}),
   };
-}
-
-function imageMaxWidthStyle(maxWidth: string): string {
-  return `max-width: min(100%, ${maxWidth})`;
 }
 
 // A fence info string carries the language in its first token; Shiki reads only

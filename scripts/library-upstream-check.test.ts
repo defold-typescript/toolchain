@@ -242,22 +242,8 @@ describe("issue identity", () => {
 describe("groupPinnedTargets", () => {
   test("one repo pinned at two refs stays two groups", () => {
     const groups = groupPinnedTargets([
-      {
-        lane: "luals",
-        repo: "https://github.com/acme/widget",
-        ref: "1",
-        moduleId: "a",
-        paths: [],
-        internal: false,
-      },
-      {
-        lane: "authored",
-        repo: "https://github.com/acme/widget",
-        ref: "2",
-        moduleId: "b",
-        paths: [],
-        internal: false,
-      },
+      target({ lane: "luals", ref: "1", moduleId: "a" }),
+      target({ lane: "authored", ref: "2", moduleId: "b" }),
     ]);
     expect(groups).toHaveLength(2);
     expect(groups.map((g) => g.ref).sort()).toEqual(["1", "2"]);
@@ -265,22 +251,8 @@ describe("groupPinnedTargets", () => {
 
   test("one repo+ref backing several modules stays one group carrying every dependent", () => {
     const groups = groupPinnedTargets([
-      {
-        lane: "authored",
-        repo: "https://github.com/acme/widget",
-        ref: "1",
-        moduleId: "a",
-        paths: ["a.lua"],
-        internal: false,
-      },
-      {
-        lane: "authored",
-        repo: "https://github.com/acme/widget",
-        ref: "1",
-        moduleId: "b",
-        paths: ["b.lua"],
-        internal: false,
-      },
+      target({ lane: "authored", moduleId: "a", paths: ["a.lua"] }),
+      target({ lane: "authored", moduleId: "b", paths: ["b.lua"] }),
     ]);
     expect(groups).toHaveLength(1);
     expect(groups[0]?.dependents).toEqual(["authored:a", "authored:b"]);
@@ -289,22 +261,13 @@ describe("groupPinnedTargets", () => {
 
   test("a 40-hex ref is a SHA pin and anything else is a tag pin", () => {
     const groups = groupPinnedTargets([
-      {
+      target({
         lane: "authored",
         repo: "https://github.com/acme/a",
         ref: "b72ee2419f2cd5e1a2281e1eed5cc4081b5cbcc3",
         moduleId: "a",
-        paths: [],
-        internal: false,
-      },
-      {
-        lane: "luals",
-        repo: "https://github.com/acme/b",
-        ref: "runtime.8",
-        moduleId: "b",
-        paths: [],
-        internal: false,
-      },
+      }),
+      target({ lane: "luals", repo: "https://github.com/acme/b", ref: "runtime.8", moduleId: "b" }),
     ]);
     expect(groups.map((g) => g.pinKind).sort()).toEqual(["sha", "tag"]);
   });
