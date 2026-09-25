@@ -74,7 +74,11 @@ describe("nakama openapi-vs-ts-defold fidelity gate", () => {
   // comparison's missing set beside the six lifecycle names. Only the name set can
   // move: `compareFidelityToTsDefold`'s signature, downgrade and optionality
   // predicates each return early unless both sides hold the name as a function.
-  test("what remains missing is the client-lifecycle surface and the 12 enum constants", async () => {
+  //
+  // `create_api_event` joined the set at `v3.41.0`: upstream renamed the swagger's
+  // `apiEvent` definition to `nakamaApiEvent`, so the spec side now emits
+  // `create_nakama_api_event` while the fork keeps the `nakama-defold` name.
+  test("what remains missing is the client-lifecycle surface, create_api_event and the 12 enum constants", async () => {
     const { missingMembers, decision } = await comparison();
     expect([...missingMembers].sort()).toEqual([
       "APIOPERATOR_BEST",
@@ -91,6 +95,7 @@ describe("nakama openapi-vs-ts-defold fidelity gate", () => {
       "APISTOREPROVIDER_HUAWEI_APP_GALLERY",
       "cancel",
       "cancellation_token",
+      "create_api_event",
       "create_client",
       "create_socket",
       "set_bearer_token",
