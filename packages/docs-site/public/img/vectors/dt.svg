@@ -1,111 +1,111 @@
 <svg viewBox="0 0 504 250" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd">
   <g transform="scale(1,-1) translate(0,-250)">
     <g>
-      <text x="10" y="232" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9.5px;fill: var(--fig-enemy, #dc2626); stroke:none;" transform="translate(0,464) scale(1,-1)">✗  Without dt — position.add(velocity) with velocity = 5 px per FRAME</text>
-      <text x="10" y="205" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,410) scale(1,-1)">60 FPS</text>
+      <text x="10" y="232" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.6px;fill: var(--fig-other, #dc2626); stroke:none;" transform="translate(0,464) scale(1,-1)">✗  Without dt: position.add(velocity) with velocity = 5 px per FRAME</text>
+      <text x="10" y="205" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.8px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,410) scale(1,-1)">60 FPS</text>
       <path d="M 120,208 L 450,208 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: round; stroke-width: 5;"/>
-      <path d="M 120,204 L 120,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 125,204 L 125,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 130,204 L 130,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 135,204 L 135,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 140,204 L 140,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 145,204 L 145,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 150,204 L 150,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 155,204 L 155,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 160,204 L 160,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 165,204 L 165,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 170,204 L 170,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 175,204 L 175,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 180,204 L 180,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 185,204 L 185,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 190,204 L 190,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 195,204 L 195,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 200,204 L 200,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 205,204 L 205,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 210,204 L 210,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 215,204 L 215,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 220,204 L 220,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 225,204 L 225,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 230,204 L 230,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 235,204 L 235,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 240,204 L 240,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 245,204 L 245,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 250,204 L 250,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 255,204 L 255,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 260,204 L 260,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 265,204 L 265,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 270,204 L 270,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 275,204 L 275,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 280,204 L 280,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 285,204 L 285,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 290,204 L 290,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 295,204 L 295,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 300,204 L 300,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 305,204 L 305,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 310,204 L 310,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 315,204 L 315,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 320,204 L 320,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 325,204 L 325,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 330,204 L 330,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 335,204 L 335,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 340,204 L 340,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 345,204 L 345,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 350,204 L 350,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 355,204 L 355,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 360,204 L 360,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 365,204 L 365,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 370,204 L 370,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 375,204 L 375,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 380,204 L 380,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 385,204 L 385,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 390,204 L 390,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 395,204 L 395,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 400,204 L 400,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 405,204 L 405,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 410,204 L 410,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 415,204 L 415,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 420,204 L 420,212 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <polygon points="427 208, 415.1 212.34, 417.2 208, 415.1 203.66" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: round; stroke-width: 1; fill: var(--fig-enemy, #dc2626); fill-rule: evenodd;"/>
-      <text x="432.0" y="205" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8px;fill: var(--fig-enemy, #dc2626); stroke:none;" transform="translate(0,410) scale(1,-1)">300 px</text>
-      <text x="10" y="177" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,354) scale(1,-1)">30 FPS</text>
+      <path d="M 120,204 L 120,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 125,204 L 125,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 130,204 L 130,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 135,204 L 135,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 140,204 L 140,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 145,204 L 145,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 150,204 L 150,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 155,204 L 155,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 160,204 L 160,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 165,204 L 165,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 170,204 L 170,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 175,204 L 175,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 180,204 L 180,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 185,204 L 185,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 190,204 L 190,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 195,204 L 195,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 200,204 L 200,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 205,204 L 205,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 210,204 L 210,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 215,204 L 215,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 220,204 L 220,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 225,204 L 225,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 230,204 L 230,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 235,204 L 235,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 240,204 L 240,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 245,204 L 245,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 250,204 L 250,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 255,204 L 255,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 260,204 L 260,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 265,204 L 265,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 270,204 L 270,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 275,204 L 275,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 280,204 L 280,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 285,204 L 285,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 290,204 L 290,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 295,204 L 295,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 300,204 L 300,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 305,204 L 305,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 310,204 L 310,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 315,204 L 315,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 320,204 L 320,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 325,204 L 325,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 330,204 L 330,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 335,204 L 335,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 340,204 L 340,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 345,204 L 345,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 350,204 L 350,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 355,204 L 355,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 360,204 L 360,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 365,204 L 365,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 370,204 L 370,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 375,204 L 375,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 380,204 L 380,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 385,204 L 385,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 390,204 L 390,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 395,204 L 395,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 400,204 L 400,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 405,204 L 405,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 410,204 L 410,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 415,204 L 415,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 420,204 L 420,212 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <polygon points="427 208, 415.1 212.34, 417.2 208, 415.1 203.66" style="stroke: var(--fig-other, #dc2626); stroke-linecap: round; stroke-width: 1; fill: var(--fig-other, #dc2626); fill-rule: evenodd;"/>
+      <text x="432.0" y="205" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.4px;fill: var(--fig-other, #dc2626); stroke:none;" transform="translate(0,410) scale(1,-1)">300 px</text>
+      <text x="10" y="177" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.8px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,354) scale(1,-1)">30 FPS</text>
       <path d="M 120,180 L 450,180 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: round; stroke-width: 5;"/>
-      <path d="M 120,176 L 120,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 125,176 L 125,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 130,176 L 130,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 135,176 L 135,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 140,176 L 140,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 145,176 L 145,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 150,176 L 150,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 155,176 L 155,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 160,176 L 160,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 165,176 L 165,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 170,176 L 170,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 175,176 L 175,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 180,176 L 180,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 185,176 L 185,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 190,176 L 190,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 195,176 L 195,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 200,176 L 200,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 205,176 L 205,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 210,176 L 210,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 215,176 L 215,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 220,176 L 220,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 225,176 L 225,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 230,176 L 230,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 235,176 L 235,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 240,176 L 240,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 245,176 L 245,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 250,176 L 250,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 255,176 L 255,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 260,176 L 260,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 265,176 L 265,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <path d="M 270,176 L 270,184 Z" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
-      <polygon points="277 180, 265.1 184.34, 267.2 180, 265.1 175.66" style="stroke: var(--fig-enemy, #dc2626); stroke-linecap: round; stroke-width: 1; fill: var(--fig-enemy, #dc2626); fill-rule: evenodd;"/>
-      <text x="282.0" y="177" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8px;fill: var(--fig-enemy, #dc2626); stroke:none;" transform="translate(0,354) scale(1,-1)">150 px</text>
-      <text x="120" y="158" style="font-family: var(--font-sans, sans-serif); font-size: 8px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,316) scale(1,-1)">Same code, same second of real time — the fast computer travels twice as far.</text>
+      <path d="M 120,176 L 120,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 125,176 L 125,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 130,176 L 130,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 135,176 L 135,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 140,176 L 140,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 145,176 L 145,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 150,176 L 150,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 155,176 L 155,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 160,176 L 160,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 165,176 L 165,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 170,176 L 170,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 175,176 L 175,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 180,176 L 180,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 185,176 L 185,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 190,176 L 190,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 195,176 L 195,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 200,176 L 200,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 205,176 L 205,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 210,176 L 210,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 215,176 L 215,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 220,176 L 220,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 225,176 L 225,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 230,176 L 230,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 235,176 L 235,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 240,176 L 240,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 245,176 L 245,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 250,176 L 250,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 255,176 L 255,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 260,176 L 260,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 265,176 L 265,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <path d="M 270,176 L 270,184 Z" style="stroke: var(--fig-other, #dc2626); stroke-linecap: butt; stroke-width: 0.7;"/>
+      <polygon points="277 180, 265.1 184.34, 267.2 180, 265.1 175.66" style="stroke: var(--fig-other, #dc2626); stroke-linecap: round; stroke-width: 1; fill: var(--fig-other, #dc2626); fill-rule: evenodd;"/>
+      <text x="282.0" y="177" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.4px;fill: var(--fig-other, #dc2626); stroke:none;" transform="translate(0,354) scale(1,-1)">150 px</text>
+      <text x="120" y="158" style="font-family: var(--font-sans, sans-serif); font-size: 10.4px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,316) scale(1,-1)">Same code, same second of real time, but the fast computer travels twice as far.</text>
       <path d="M 10,145 L 494,145 Z" style="stroke: var(--fig-border, #e2e8f0); stroke-linecap: butt; stroke-width: 0.8;"/>
-      <text x="10" y="126" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9.5px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,252) scale(1,-1)">✓  With dt — position.add(velocity.mul(dt)) with velocity = 200 px per SECOND</text>
-      <text x="10" y="99" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,198) scale(1,-1)">60 FPS</text>
+      <text x="10" y="126" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.6px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,252) scale(1,-1)">✓  With dt: position.add(velocity.mul(dt)) with velocity = 200 px per SECOND</text>
+      <text x="10" y="99" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.8px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,198) scale(1,-1)">60 FPS</text>
       <path d="M 120,102 L 450,102 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: round; stroke-width: 5;"/>
       <path d="M 120,98 L 120,106 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.7;"/>
       <path d="M 123.33,98 L 123.33,106 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.7;"/>
@@ -169,8 +169,8 @@
       <path d="M 316.67,98 L 316.67,106 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.7;"/>
       <path d="M 320,98 L 320,106 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.7;"/>
       <polygon points="327 102, 315.1 106.34, 317.2 102, 315.1 97.66" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;"/>
-      <text x="332.0" y="99" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,198) scale(1,-1)">200 px</text>
-      <text x="10" y="71" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,142) scale(1,-1)">30 FPS</text>
+      <text x="332.0" y="99" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.4px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,198) scale(1,-1)">200 px</text>
+      <text x="10" y="71" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.8px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,142) scale(1,-1)">30 FPS</text>
       <path d="M 120,74 L 450,74 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: round; stroke-width: 5;"/>
       <path d="M 120,70 L 120,78 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.7;"/>
       <path d="M 126.67,70 L 126.67,78 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.7;"/>
@@ -204,8 +204,8 @@
       <path d="M 313.33,70 L 313.33,78 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.7;"/>
       <path d="M 320,70 L 320,78 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.7;"/>
       <polygon points="327 74, 315.1 78.34, 317.2 74, 315.1 69.66" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;"/>
-      <text x="332.0" y="71" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,142) scale(1,-1)">200 px</text>
-      <text x="10" y="43" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,86) scale(1,-1)">144 FPS</text>
+      <text x="332.0" y="71" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.4px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,142) scale(1,-1)">200 px</text>
+      <text x="10" y="43" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.8px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,86) scale(1,-1)">144 FPS</text>
       <path d="M 120,46 L 450,46 Z" style="stroke: var(--fig-grid, #e5e9f0); stroke-linecap: round; stroke-width: 5;"/>
       <path d="M 120,42 L 120,50 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.7;"/>
       <path d="M 121.39,42 L 121.39,50 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.7;"/>
@@ -353,8 +353,8 @@
       <path d="M 318.61,42 L 318.61,50 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.7;"/>
       <path d="M 320,42 L 320,50 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.7;"/>
       <polygon points="327 46, 315.1 50.34, 317.2 46, 315.1 41.66" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 1; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;"/>
-      <text x="332.0" y="43" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,86) scale(1,-1)">200 px</text>
-      <text x="120" y="22" style="font-family: var(--font-sans, sans-serif); font-size: 8px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,44) scale(1,-1)">Each tick is one frame. More frames → smaller steps. Same distance after 1 second.</text>
+      <text x="332.0" y="43" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.4px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,86) scale(1,-1)">200 px</text>
+      <text x="120" y="22" style="font-family: var(--font-sans, sans-serif); font-size: 10.4px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,44) scale(1,-1)">Each tick is one frame. More frames → smaller steps. Same distance after 1 second.</text>
     </g>
   </g>
 </svg>

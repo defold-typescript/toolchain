@@ -1,32 +1,36 @@
-<svg viewBox="0 0 504 180" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd">
-  <g transform="scale(1,-1) translate(0,-180)">
-    <g>
-      <rect x="0" y="0" width="240" height="175" rx="8" ry="8" style="stroke: var(--fig-border, #e2e8f0); stroke-linecap: butt; stroke-width: 0.8; fill: var(--fig-panel, #f8fafc); fill-rule: evenodd;"/>
-      <rect x="264" y="0" width="240" height="175" rx="8" ry="8" style="stroke: var(--fig-border, #e2e8f0); stroke-linecap: butt; stroke-width: 0.8; fill: var(--fig-panel, #f8fafc); fill-rule: evenodd;"/>
-      <text x="120" y="156" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,312) scale(1,-1)" text-anchor="middle">Same DIRECTION, different SPEED</text>
-      <path d="M 30,118 L 74.61,130.01 Z" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: round; stroke-width: 2.4;"/>
-      <polygon points="82 132, 74.48 125.31, 72.14 134.01" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-vel, #9333ea); fill-rule: evenodd;"/>
-      <text x="90.0" y="129.0" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8.5px;fill: var(--fig-spd, #ca8a04); stroke:none;" transform="translate(0,258) scale(1,-1)">speed 100</text>
-      <path d="M 30,80 L 126.61,106.01 Z" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: round; stroke-width: 2.4;"/>
-      <polygon points="134 108, 126.48 101.31, 124.14 110.01" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-vel, #9333ea); fill-rule: evenodd;"/>
-      <text x="142.0" y="105.0" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8.5px;fill: var(--fig-spd, #ca8a04); stroke:none;" transform="translate(0,210) scale(1,-1)">speed 200</text>
-      <path d="M 30,42 L 178.61,82.01 Z" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: round; stroke-width: 2.4;"/>
-      <polygon points="186 84, 178.48 77.31, 176.14 86.01" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-vel, #9333ea); fill-rule: evenodd;"/>
-      <text x="194.0" y="81.0" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8.5px;fill: var(--fig-spd, #ca8a04); stroke:none;" transform="translate(0,162) scale(1,-1)">speed 300</text>
-      <text x="120" y="12" style="font-family: var(--font-sans, sans-serif); font-size: 8.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,24) scale(1,-1)" text-anchor="middle">longer arrow = faster</text>
-      <text x="384" y="156" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,312) scale(1,-1)" text-anchor="middle">Same SPEED, different DIRECTION</text>
-      <path d="M 384,80 L 431.35,80 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 2.2;"/>
-      <polygon points="439 80, 430 75.5, 430 84.5" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;"/>
-      <path d="M 384,80 L 414.44,116.27 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 2.2;"/>
-      <polygon points="419.35 122.13, 417.02 112.35, 410.12 118.13" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;"/>
-      <path d="M 384,80 L 353.56,116.27 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 2.2;"/>
-      <polygon points="348.65 122.13, 357.88 118.13, 350.98 112.35" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;"/>
-      <path d="M 384,80 L 339.51,63.81 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 2.2;"/>
-      <polygon points="332.32 61.19, 339.24 68.5, 342.31 60.04" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;"/>
-      <path d="M 384,80 L 400.19,35.51 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 2.2;"/>
-      <polygon points="402.81 28.32, 395.5 35.24, 403.96 38.31" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;"/>
-      <circle cx="384" cy="80" r="3" style="stroke: var(--fig-bg, #ffffff); stroke-linecap: butt; stroke-width: 1.2; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;"/>
-      <text x="384" y="12" style="font-family: var(--font-sans, sans-serif); font-size: 8.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,24) scale(1,-1)" text-anchor="middle">every arrow has the same length</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 504 180" fill-rule="evenodd">
+  <svg class="fig-panel" x="0" y="0" width="240" height="180" viewBox="0 0 240 180">
+    <g transform="scale(1,-1) translate(0,-180)">
+      <rect x="0" y="0" width="240" height="175" rx="8" ry="8" style="stroke: var(--fig-border, #e2e8f0); stroke-linecap: butt; stroke-width: 0.8; fill: var(--fig-panel, #f8fafc); fill-rule: evenodd;" />
+      <text x="120" y="156" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.6px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,312) scale(1,-1)" text-anchor="middle">Same DIRECTION, different SPEED</text>
+      <path d="M 30,118 L 74.61,130.01 Z" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: round; stroke-width: 2.4;" />
+      <polygon points="82 132, 74.48 125.31, 72.14 134.01" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-vel, #9333ea); fill-rule: evenodd;" />
+      <text x="86" y="141" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.8px;fill: var(--fig-spd, #ca8a04); stroke:none;" transform="translate(0,282) scale(1,-1)" text-anchor="end">speed 100</text>
+      <path d="M 30,80 L 126.61,106.01 Z" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: round; stroke-width: 2.4;" />
+      <polygon points="134 108, 126.48 101.31, 124.14 110.01" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-vel, #9333ea); fill-rule: evenodd;" />
+      <text x="138" y="117" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.8px;fill: var(--fig-spd, #ca8a04); stroke:none;" transform="translate(0,234) scale(1,-1)" text-anchor="end">speed 200</text>
+      <path d="M 30,42 L 178.61,82.01 Z" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: round; stroke-width: 2.4;" />
+      <polygon points="186 84, 178.48 77.31, 176.14 86.01" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-vel, #9333ea); fill-rule: evenodd;" />
+      <text x="190" y="93" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.8px;fill: var(--fig-spd, #ca8a04); stroke:none;" transform="translate(0,186) scale(1,-1)" text-anchor="end">speed 300</text>
+      <text x="120" y="12" style="font-family: var(--font-sans, sans-serif); font-size: 10.8px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,24) scale(1,-1)" text-anchor="middle">longer arrow = faster</text>
     </g>
-  </g>
+  </svg>
+  <svg class="fig-panel" x="264" y="0" width="240" height="180" viewBox="264 0 240 180">
+    <g transform="scale(1,-1) translate(0,-180)">
+      <rect x="264" y="0" width="240" height="175" rx="8" ry="8" style="stroke: var(--fig-border, #e2e8f0); stroke-linecap: butt; stroke-width: 0.8; fill: var(--fig-panel, #f8fafc); fill-rule: evenodd;" />
+      <text x="384" y="156" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.6px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,312) scale(1,-1)" text-anchor="middle">Same SPEED, different DIRECTION</text>
+      <path d="M 384,80 L 431.35,80 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 2.2;" />
+      <polygon points="439 80, 430 75.5, 430 84.5" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;" />
+      <path d="M 384,80 L 414.44,116.27 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 2.2;" />
+      <polygon points="419.35 122.13, 417.02 112.35, 410.12 118.13" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;" />
+      <path d="M 384,80 L 353.56,116.27 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 2.2;" />
+      <polygon points="348.65 122.13, 357.88 118.13, 350.98 112.35" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;" />
+      <path d="M 384,80 L 339.51,63.81 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 2.2;" />
+      <polygon points="332.32 61.19, 339.24 68.5, 342.31 60.04" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;" />
+      <path d="M 384,80 L 400.19,35.51 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 2.2;" />
+      <polygon points="402.81 28.32, 395.5 35.24, 403.96 38.31" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;" />
+      <circle cx="384" cy="80" r="3" style="stroke: var(--fig-bg, #ffffff); stroke-linecap: butt; stroke-width: 1.2; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;" />
+      <text x="384" y="12" style="font-family: var(--font-sans, sans-serif); font-size: 10.8px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,24) scale(1,-1)" text-anchor="middle">every arrow has the same length</text>
+    </g>
+  </svg>
 </svg>

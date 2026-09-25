@@ -22,9 +22,9 @@ const page = listGuidePages(GUIDE_DIR).find((p) => p.slug === "vectors-tutorial"
 if (!page) throw new Error("guide page vectors-tutorial not found");
 const source = readFileSync(join(GUIDE_DIR, page.file), "utf8");
 const html = await renderGuidePage(GUIDE_DIR, page);
-const figures = [...html.matchAll(/<figure class="figure-svg"[^>]*>([\s\S]*?)<\/figure>/g)].map(
-  (m) => m[1] ?? "",
-);
+const figures = [
+  ...html.matchAll(/<figure\b[^>]*data-slot="svg-figure"[^>]*>([\s\S]*?)<\/figure>/g),
+].map((m) => m[1] ?? "");
 
 describe("vectors-tutorial inline figures", () => {
   test("inlines every .svg#inline reference as a figure", () => {

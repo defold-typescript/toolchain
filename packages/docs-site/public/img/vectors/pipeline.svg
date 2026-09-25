@@ -1,36 +1,72 @@
-<svg viewBox="0 0 504 150" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd">
-  <g transform="scale(1,-1) translate(0,-150)">
-    <g>
-      <rect x="0" y="60" width="84" height="50" rx="7" ry="7" style="stroke: var(--fig-rot, #db2777); stroke-linecap: butt; stroke-width: 1.4; fill: var(--fig-rot, #db2777); fill-rule: evenodd; fill-opacity: 0.12;"/>
-      <text x="42.0" y="90" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,180) scale(1,-1)" text-anchor="middle">ROTATION</text>
-      <text x="42.0" y="75" style="font-family: var(--font-sans, sans-serif); font-size: 7.2px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,150) scale(1,-1)" text-anchor="middle">angle → quat</text>
-      <path d="M 86,85 L 97.05,85 Z" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: round; stroke-width: 1.6;"/>
-      <polygon points="103 85, 96 81.5, 96 88.5" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-axis, #94a3b8); fill-rule: evenodd;"/>
-      <rect x="105" y="60" width="84" height="50" rx="7" ry="7" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 1.4; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.12;"/>
-      <text x="147.0" y="90" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,180) scale(1,-1)" text-anchor="middle">DIRECTION</text>
-      <text x="147.0" y="75" style="font-family: var(--font-sans, sans-serif); font-size: 7.2px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,150) scale(1,-1)" text-anchor="middle">rotated forward</text>
-      <path d="M 191,85 L 202.05,85 Z" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: round; stroke-width: 1.6;"/>
-      <polygon points="208 85, 201 81.5, 201 88.5" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-axis, #94a3b8); fill-rule: evenodd;"/>
-      <rect x="210" y="60" width="84" height="50" rx="7" ry="7" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: butt; stroke-width: 1.4; fill: var(--fig-vel, #9333ea); fill-rule: evenodd; fill-opacity: 0.12;"/>
-      <text x="252.0" y="90" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9px;fill: var(--fig-vel, #9333ea); stroke:none;" transform="translate(0,180) scale(1,-1)" text-anchor="middle">VELOCITY</text>
-      <text x="252.0" y="75" style="font-family: var(--font-sans, sans-serif); font-size: 7.2px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,150) scale(1,-1)" text-anchor="middle">direction × speed</text>
-      <path d="M 296,85 L 307.05,85 Z" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: round; stroke-width: 1.6;"/>
-      <polygon points="313 85, 306 81.5, 306 88.5" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-axis, #94a3b8); fill-rule: evenodd;"/>
-      <rect x="315" y="60" width="84" height="50" rx="7" ry="7" style="stroke: var(--fig-dt, #0891b2); stroke-linecap: butt; stroke-width: 1.4; fill: var(--fig-dt, #0891b2); fill-rule: evenodd; fill-opacity: 0.12;"/>
-      <text x="357.0" y="90" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9px;fill: var(--fig-dt, #0891b2); stroke:none;" transform="translate(0,180) scale(1,-1)" text-anchor="middle">STEP</text>
-      <text x="357.0" y="75" style="font-family: var(--font-sans, sans-serif); font-size: 7.2px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,150) scale(1,-1)" text-anchor="middle">velocity × dt</text>
-      <path d="M 401,85 L 412.05,85 Z" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: round; stroke-width: 1.6;"/>
-      <polygon points="418 85, 411 81.5, 411 88.5" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-axis, #94a3b8); fill-rule: evenodd;"/>
-      <rect x="420" y="60" width="84" height="50" rx="7" ry="7" style="stroke: var(--fig-pos, #2563eb); stroke-linecap: butt; stroke-width: 1.4; fill: var(--fig-pos, #2563eb); fill-rule: evenodd; fill-opacity: 0.12;"/>
-      <text x="462.0" y="90" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9px;fill: var(--fig-pos, #2563eb); stroke:none;" transform="translate(0,180) scale(1,-1)" text-anchor="middle">POSITION</text>
-      <text x="462.0" y="75" style="font-family: var(--font-sans, sans-serif); font-size: 7.2px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,150) scale(1,-1)" text-anchor="middle">position + step</text>
-      <text x="42.0" y="44" style="font-family: var(--font-mono, monospace); font-size: 7.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,88) scale(1,-1)" text-anchor="middle">quat_rotation_z</text>
-      <text x="147.0" y="44" style="font-family: var(--font-mono, monospace); font-size: 7.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,88) scale(1,-1)" text-anchor="middle">vmath.rotate</text>
-      <text x="252.0" y="44" style="font-family: var(--font-mono, monospace); font-size: 7.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,88) scale(1,-1)" text-anchor="middle">.mul(speed)</text>
-      <text x="357.0" y="44" style="font-family: var(--font-mono, monospace); font-size: 7.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,88) scale(1,-1)" text-anchor="middle">.mul(dt)</text>
-      <text x="462.0" y="44" style="font-family: var(--font-mono, monospace); font-size: 7.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,88) scale(1,-1)" text-anchor="middle">.add(step)</text>
-      <text x="252.0" y="132" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,264) scale(1,-1)" text-anchor="middle">Every frame, the ship's orientation flows all the way down to its position</text>
-      <text x="252.0" y="18" style="font-family: var(--font-sans, sans-serif); font-size: 8.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,36) scale(1,-1)" text-anchor="middle">Change the angle and everything downstream changes with it.</text>
+<svg viewBox="-8 0 520 150" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd">
+  <svg class="fig-layout" data-layout="wide" x="-8" y="0" width="520" height="150" viewBox="-8 0 520 150">
+    <g transform="scale(1,-1) translate(0,-150)">
+      <g>
+        <rect x="0" y="60" width="84" height="50" rx="7" ry="7" style="stroke: var(--fig-rot, #db2777); stroke-linecap: butt; stroke-width: 1.4; fill: var(--fig-rot, #db2777); fill-rule: evenodd; fill-opacity: 0.12;"/>
+        <text x="42.0" y="90" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.2px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,180) scale(1,-1)" text-anchor="middle">ROTATION</text>
+        <text x="42.0" y="75" style="font-family: var(--font-sans, sans-serif); font-size: 9.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,150) scale(1,-1)" text-anchor="middle">angle → quat</text>
+        <path d="M 86,85 L 97.05,85 Z" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: round; stroke-width: 1.6;"/>
+        <polygon points="103 85, 96 81.5, 96 88.5" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-axis, #94a3b8); fill-rule: evenodd;"/>
+        <rect x="105" y="60" width="84" height="50" rx="7" ry="7" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 1.4; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.12;"/>
+        <text x="147.0" y="90" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.2px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,180) scale(1,-1)" text-anchor="middle">DIRECTION</text>
+        <text x="147.0" y="75" style="font-family: var(--font-sans, sans-serif); font-size: 9.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,150) scale(1,-1)" text-anchor="middle">rotated forward</text>
+        <path d="M 191,85 L 202.05,85 Z" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: round; stroke-width: 1.6;"/>
+        <polygon points="208 85, 201 81.5, 201 88.5" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-axis, #94a3b8); fill-rule: evenodd;"/>
+        <rect x="210" y="60" width="84" height="50" rx="7" ry="7" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: butt; stroke-width: 1.4; fill: var(--fig-vel, #9333ea); fill-rule: evenodd; fill-opacity: 0.12;"/>
+        <text x="252.0" y="90" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.2px;fill: var(--fig-vel, #9333ea); stroke:none;" transform="translate(0,180) scale(1,-1)" text-anchor="middle">VELOCITY</text>
+        <text x="252.0" y="75" style="font-family: var(--font-sans, sans-serif); font-size: 9.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,150) scale(1,-1)" text-anchor="middle">direction × speed</text>
+        <path d="M 296,85 L 307.05,85 Z" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: round; stroke-width: 1.6;"/>
+        <polygon points="313 85, 306 81.5, 306 88.5" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-axis, #94a3b8); fill-rule: evenodd;"/>
+        <rect x="315" y="60" width="84" height="50" rx="7" ry="7" style="stroke: var(--fig-dt, #0891b2); stroke-linecap: butt; stroke-width: 1.4; fill: var(--fig-dt, #0891b2); fill-rule: evenodd; fill-opacity: 0.12;"/>
+        <text x="357.0" y="90" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.2px;fill: var(--fig-dt, #0891b2); stroke:none;" transform="translate(0,180) scale(1,-1)" text-anchor="middle">STEP</text>
+        <text x="357.0" y="75" style="font-family: var(--font-sans, sans-serif); font-size: 9.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,150) scale(1,-1)" text-anchor="middle">velocity × dt</text>
+        <path d="M 401,85 L 412.05,85 Z" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: round; stroke-width: 1.6;"/>
+        <polygon points="418 85, 411 81.5, 411 88.5" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-axis, #94a3b8); fill-rule: evenodd;"/>
+        <rect x="420" y="60" width="84" height="50" rx="7" ry="7" style="stroke: var(--fig-pos, #2563eb); stroke-linecap: butt; stroke-width: 1.4; fill: var(--fig-pos, #2563eb); fill-rule: evenodd; fill-opacity: 0.12;"/>
+        <text x="462.0" y="90" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.2px;fill: var(--fig-pos, #2563eb); stroke:none;" transform="translate(0,180) scale(1,-1)" text-anchor="middle">POSITION</text>
+        <text x="462.0" y="75" style="font-family: var(--font-sans, sans-serif); font-size: 9.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,150) scale(1,-1)" text-anchor="middle">position + step</text>
+        <text x="42.0" y="44" style="font-family: var(--font-mono, monospace); font-size: 9.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,88) scale(1,-1)" text-anchor="middle">quat_rotation_z</text>
+        <text x="147.0" y="44" style="font-family: var(--font-mono, monospace); font-size: 9.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,88) scale(1,-1)" text-anchor="middle">vmath.rotate</text>
+        <text x="252.0" y="44" style="font-family: var(--font-mono, monospace); font-size: 9.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,88) scale(1,-1)" text-anchor="middle">.mul(speed)</text>
+        <text x="357.0" y="44" style="font-family: var(--font-mono, monospace); font-size: 9.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,88) scale(1,-1)" text-anchor="middle">.mul(dt)</text>
+        <text x="462.0" y="44" style="font-family: var(--font-mono, monospace); font-size: 9.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,88) scale(1,-1)" text-anchor="middle">.add(step)</text>
+        <text x="252.0" y="132" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.2px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,264) scale(1,-1)" text-anchor="middle">Every frame, the ship's orientation flows all the way down to its position</text>
+        <text x="252.0" y="18" style="font-family: var(--font-sans, sans-serif); font-size: 10.8px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,36) scale(1,-1)" text-anchor="middle">Change the angle and everything downstream changes with it.</text>
+      </g>
     </g>
-  </g>
+  </svg>
+  <svg class="fig-layout" data-layout="narrow" x="-8" y="150" width="260" height="438" viewBox="0 0 260 438">
+    <text x="130" y="18" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.2px;fill: var(--fig-ink, #1e293b); stroke:none;" text-anchor="middle">Every frame, the ship's orientation</text>
+    <text x="130" y="34" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.2px;fill: var(--fig-ink, #1e293b); stroke:none;" text-anchor="middle">flows all the way down to its position</text>
+    <rect x="20" y="54" width="100" height="50" rx="7" ry="7" style="stroke: var(--fig-rot, #db2777); stroke-linecap: butt; stroke-width: 1.4; fill: var(--fig-rot, #db2777); fill-rule: evenodd; fill-opacity: 0.12;"/>
+    <text x="70" y="76" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.2px;fill: var(--fig-rot, #db2777); stroke:none;" text-anchor="middle">ROTATION</text>
+    <text x="70" y="92" style="font-family: var(--font-sans, sans-serif); font-size: 9.5px;fill: var(--fig-ink, #1e293b); stroke:none;" text-anchor="middle">angle → quat</text>
+    <text x="134" y="83" style="font-family: var(--font-mono, monospace); font-size: 9.5px;fill: var(--fig-muted, #64748b); stroke:none;">quat_rotation_z</text>
+    <path d="M 70,106 L 70,116 Z" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: round; stroke-width: 1.6;"/>
+    <polygon points="70 122, 66.5 115, 73.5 115" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-axis, #94a3b8); fill-rule: evenodd;"/>
+    <rect x="20" y="124" width="100" height="50" rx="7" ry="7" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 1.4; fill: var(--fig-dir, #16a34a); fill-rule: evenodd; fill-opacity: 0.12;"/>
+    <text x="70" y="146" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.2px;fill: var(--fig-dir, #16a34a); stroke:none;" text-anchor="middle">DIRECTION</text>
+    <text x="70" y="162" style="font-family: var(--font-sans, sans-serif); font-size: 9.5px;fill: var(--fig-ink, #1e293b); stroke:none;" text-anchor="middle">rotated forward</text>
+    <text x="134" y="153" style="font-family: var(--font-mono, monospace); font-size: 9.5px;fill: var(--fig-muted, #64748b); stroke:none;">vmath.rotate</text>
+    <path d="M 70,176 L 70,186 Z" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: round; stroke-width: 1.6;"/>
+    <polygon points="70 192, 66.5 185, 73.5 185" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-axis, #94a3b8); fill-rule: evenodd;"/>
+    <rect x="20" y="194" width="100" height="50" rx="7" ry="7" style="stroke: var(--fig-vel, #9333ea); stroke-linecap: butt; stroke-width: 1.4; fill: var(--fig-vel, #9333ea); fill-rule: evenodd; fill-opacity: 0.12;"/>
+    <text x="70" y="216" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.2px;fill: var(--fig-vel, #9333ea); stroke:none;" text-anchor="middle">VELOCITY</text>
+    <text x="70" y="232" style="font-family: var(--font-sans, sans-serif); font-size: 9.5px;fill: var(--fig-ink, #1e293b); stroke:none;" text-anchor="middle">direction × speed</text>
+    <text x="134" y="223" style="font-family: var(--font-mono, monospace); font-size: 9.5px;fill: var(--fig-muted, #64748b); stroke:none;">.mul(speed)</text>
+    <path d="M 70,246 L 70,256 Z" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: round; stroke-width: 1.6;"/>
+    <polygon points="70 262, 66.5 255, 73.5 255" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-axis, #94a3b8); fill-rule: evenodd;"/>
+    <rect x="20" y="264" width="100" height="50" rx="7" ry="7" style="stroke: var(--fig-dt, #0891b2); stroke-linecap: butt; stroke-width: 1.4; fill: var(--fig-dt, #0891b2); fill-rule: evenodd; fill-opacity: 0.12;"/>
+    <text x="70" y="286" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.2px;fill: var(--fig-dt, #0891b2); stroke:none;" text-anchor="middle">STEP</text>
+    <text x="70" y="302" style="font-family: var(--font-sans, sans-serif); font-size: 9.5px;fill: var(--fig-ink, #1e293b); stroke:none;" text-anchor="middle">velocity × dt</text>
+    <text x="134" y="293" style="font-family: var(--font-mono, monospace); font-size: 9.5px;fill: var(--fig-muted, #64748b); stroke:none;">.mul(dt)</text>
+    <path d="M 70,316 L 70,326 Z" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: round; stroke-width: 1.6;"/>
+    <polygon points="70 332, 66.5 325, 73.5 325" style="stroke: var(--fig-axis, #94a3b8); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-axis, #94a3b8); fill-rule: evenodd;"/>
+    <rect x="20" y="334" width="100" height="50" rx="7" ry="7" style="stroke: var(--fig-pos, #2563eb); stroke-linecap: butt; stroke-width: 1.4; fill: var(--fig-pos, #2563eb); fill-rule: evenodd; fill-opacity: 0.12;"/>
+    <text x="70" y="356" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.2px;fill: var(--fig-pos, #2563eb); stroke:none;" text-anchor="middle">POSITION</text>
+    <text x="70" y="372" style="font-family: var(--font-sans, sans-serif); font-size: 9.5px;fill: var(--fig-ink, #1e293b); stroke:none;" text-anchor="middle">position + step</text>
+    <text x="134" y="363" style="font-family: var(--font-mono, monospace); font-size: 9.5px;fill: var(--fig-muted, #64748b); stroke:none;">.add(step)</text>
+    <text x="130" y="412" style="font-family: var(--font-sans, sans-serif); font-size: 10.8px;fill: var(--fig-muted, #64748b); stroke:none;" text-anchor="middle">Change the angle and everything</text>
+    <text x="130" y="428" style="font-family: var(--font-sans, sans-serif); font-size: 10.8px;fill: var(--fig-muted, #64748b); stroke:none;" text-anchor="middle">downstream changes with it.</text>
+  </svg>
 </svg>

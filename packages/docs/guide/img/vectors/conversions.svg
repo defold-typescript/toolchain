@@ -2,19 +2,21 @@
   <g transform="scale(1,-1) translate(0,-150)">
     <g>
       <rect x="10" y="45" width="140" height="60" rx="8" ry="8" style="stroke: var(--fig-rot, #db2777); stroke-linecap: butt; stroke-width: 1.4; fill: var(--fig-rot, #db2777); fill-rule: evenodd; fill-opacity: 0.1;"/>
-      <text x="80.0" y="81" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9.5px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,162) scale(1,-1)" text-anchor="middle">LOCAL SPACE</text>
-      <text x="80.0" y="63" style="font-family: var(--font-mono, monospace); font-size: 6.8px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,126) scale(1,-1)" text-anchor="middle">get_position / set_position</text>
+      <text x="80.0" y="81" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.6px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,162) scale(1,-1)" text-anchor="middle">LOCAL SPACE</text>
+      <text x="80.0" y="65" style="font-family: var(--font-mono, monospace); font-size: 9.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,130) scale(1,-1)" text-anchor="middle">get_position</text>
+      <text x="80.0" y="54" style="font-family: var(--font-mono, monospace); font-size: 9.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,108) scale(1,-1)" text-anchor="middle">set_position</text>
       <rect x="354" y="45" width="140" height="60" rx="8" ry="8" style="stroke: var(--fig-pos, #2563eb); stroke-linecap: butt; stroke-width: 1.4; fill: var(--fig-pos, #2563eb); fill-rule: evenodd; fill-opacity: 0.1;"/>
-      <text x="424.0" y="81" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9.5px;fill: var(--fig-pos, #2563eb); stroke:none;" transform="translate(0,162) scale(1,-1)" text-anchor="middle">WORLD SPACE</text>
-      <text x="424.0" y="63" style="font-family: var(--font-mono, monospace); font-size: 6.8px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,126) scale(1,-1)" text-anchor="middle">go.get_world_position()</text>
+      <text x="424.0" y="81" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.6px;fill: var(--fig-pos, #2563eb); stroke:none;" transform="translate(0,162) scale(1,-1)" text-anchor="middle">WORLD SPACE</text>
+      <text x="424.0" y="63" style="font-family: var(--font-mono, monospace); font-size: 9.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,126) scale(1,-1)" text-anchor="middle">go.get_world_position()</text>
       <path d="M 156,89 L 340.35,89 Z" style="stroke: var(--fig-vec, #ea580c); stroke-linecap: round; stroke-width: 2;"/>
       <polygon points="348 89, 339 84.5, 339 93.5" style="stroke: var(--fig-vec, #ea580c); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-vec, #ea580c); fill-rule: evenodd;"/>
-      <text x="252.0" y="95" style="font-family: var(--font-mono, monospace); font-size: 6.8px;fill: var(--fig-vec, #ea580c); stroke:none;" transform="translate(0,190) scale(1,-1)" text-anchor="middle">get_world_transform().mul(vector4(p, 1))</text>
+      <text x="252.0" y="106" style="font-family: var(--font-mono, monospace); font-size: 9.5px;fill: var(--fig-vec, #ea580c); stroke:none;" transform="translate(0,212) scale(1,-1)" text-anchor="middle">get_world_transform()</text>
+      <text x="252.0" y="95" style="font-family: var(--font-mono, monospace); font-size: 9.5px;fill: var(--fig-vec, #ea580c); stroke:none;" transform="translate(0,190) scale(1,-1)" text-anchor="middle">.mul(vector4(p, 1))</text>
       <path d="M 348,59 L 163.65,59 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 2;"/>
       <polygon points="156 59, 165 63.5, 165 54.5" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;"/>
-      <text x="252.0" y="48" style="font-family: var(--font-mono, monospace); font-size: 6.8px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,96) scale(1,-1)" text-anchor="middle">world_to_local_position(p, parent)</text>
-      <text x="252.0" y="128" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 9.5px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,256) scale(1,-1)" text-anchor="middle">Converting points between the two spaces</text>
-      <text x="252.0" y="16" style="font-family: var(--font-sans, sans-serif); font-size: 7.8px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,32) scale(1,-1)" text-anchor="middle">Directions need rotation only: vmath.rotate(go.get_world_rotation(), forward)</text>
+      <text x="252.0" y="48" style="font-family: var(--font-mono, monospace); font-size: 9px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,96) scale(1,-1)" text-anchor="middle">world_to_local_position(p, parent)</text>
+      <text x="252.0" y="128" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 11.6px;fill: var(--fig-ink, #1e293b); stroke:none;" transform="translate(0,256) scale(1,-1)" text-anchor="middle">Converting points between the two spaces</text>
+      <text x="252.0" y="16" style="font-family: var(--font-sans, sans-serif); font-size: 10.3px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,32) scale(1,-1)" text-anchor="middle">Directions need rotation only: vmath.rotate(go.get_world_rotation(), forward)</text>
     </g>
   </g>
 </svg>

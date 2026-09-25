@@ -24,11 +24,11 @@
       <polygon points="363.98 164.62, 346.01 156.06, 353.19 153.63, 355.74 146.5" style="stroke: var(--fig-ink, #1e293b); stroke-linecap: round; stroke-width: 1; fill: var(--fig-ink, #1e293b); fill-rule: evenodd;"/>
       <path d="M 356.27,156.77 L 375.93,176.78 Z" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: round; stroke-width: 1.8;"/>
       <polygon points="380.1 181.02, 377.69 173.58, 372.7 178.48" style="stroke: var(--fig-dir, #16a34a); stroke-linecap: butt; stroke-width: 0.5; fill: var(--fig-dir, #16a34a); fill-rule: evenodd;"/>
-      <text x="110" y="22" style="font-family: var(--font-sans, sans-serif); font-size: 8px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,44) scale(1,-1)" text-anchor="middle">holding THRUST</text>
-      <text x="420" y="80" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 8px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,160) scale(1,-1)" text-anchor="middle">holding THRUST + LEFT</text>
-      <text x="420" y="68" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,136) scale(1,-1)" text-anchor="middle">angle grows → direction swings</text>
-      <text x="420" y="57" style="font-family: var(--font-sans, sans-serif); font-size: 7.5px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,114) scale(1,-1)" text-anchor="middle">→ path curves</text>
-      <text x="16" y="176" style="font-family: var(--font-sans, sans-serif); font-size: 8px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,352) scale(1,-1)">green = forward direction each frame</text>
+      <text x="110" y="22" style="font-family: var(--font-sans, sans-serif); font-size: 10.4px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,44) scale(1,-1)" text-anchor="middle">holding THRUST</text>
+      <text x="420" y="80" style="font-family: var(--font-sans, sans-serif); font-weight: 700; font-size: 10.4px;fill: var(--fig-rot, #db2777); stroke:none;" transform="translate(0,160) scale(1,-1)" text-anchor="middle">holding THRUST + LEFT</text>
+      <text x="420" y="68" style="font-family: var(--font-sans, sans-serif); font-size: 10px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,136) scale(1,-1)" text-anchor="middle">angle grows → direction swings</text>
+      <text x="420" y="57" style="font-family: var(--font-sans, sans-serif); font-size: 10px;fill: var(--fig-muted, #64748b); stroke:none;" transform="translate(0,114) scale(1,-1)" text-anchor="middle">→ path curves</text>
+      <text x="16" y="176" style="font-family: var(--font-sans, sans-serif); font-size: 10.4px;fill: var(--fig-dir, #16a34a); stroke:none;" transform="translate(0,352) scale(1,-1)">green = forward direction each frame</text>
     </g>
   </g>
 </svg>

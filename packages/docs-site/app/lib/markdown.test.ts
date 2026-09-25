@@ -687,11 +687,14 @@ describe("renderMarkdown inline SVG figures", () => {
     const html = await renderMarkdown("![Figure 1 — Cap](img/vectors/a.svg#inline)\n", {
       readInlineSvg,
     });
-    expect(html).toContain('<figure class="figure-svg">');
+    const figure = parseHtml(html).querySelector('[data-slot="svg-figure"]');
+    const panels = figure?.querySelector('[data-slot="svg-figure-panels"]');
+    expect(panels?.getAttribute("role")).toBe("img");
+    expect(panels?.getAttribute("aria-label")).toBe("Figure 1 — Cap");
     expect(html).toContain(
-      '<svg role="img" aria-label="Figure 1 — Cap" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4"/></svg>',
+      '<svg viewBox="0 0 10 10" style="--w: 10" aria-hidden="true" focusable="false"><circle cx="5" cy="5" r="4"/></svg>',
     );
-    expect(html).toContain("<figcaption>Figure 1 — Cap</figcaption>");
+    expect(figure?.querySelector("figcaption")?.textContent).toBe("Figure 1 — Cap");
     expect(html).not.toContain("<img");
     expect(html).not.toContain("<p>");
   });
@@ -714,7 +717,8 @@ describe("renderMarkdown inline SVG figures", () => {
     const html = await renderMarkdown("![Cap](img/vectors/a.svg#inline&max-width=300)\n", {
       readInlineSvg,
     });
-    expect(html).toContain('<figure class="figure-svg" style="max-width: min(100%, 300px)">');
+    const figure = parseHtml(html).querySelector('[data-slot="svg-figure"]');
+    expect(figure?.getAttribute("style")).toBe("max-width: min(100%, 300px)");
     expect(html).not.toContain("<img");
   });
 
