@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { linkifySymbolMentions } from "./symbol-linkify";
+import { linkifySymbolMentions, symbolLinkifier } from "./symbol-linkify";
 
 describe("linkifySymbolMentions", () => {
   test("longest match wins: links go.set_position, leaves the bare 'go' substring inside the longer key alone", () => {
@@ -77,5 +77,37 @@ describe("linkifySymbolMentions", () => {
     const links = new Map([["go.set_position", "/api/go"]]);
     const out = linkifySymbolMentions("use go.set_position", links);
     expect(out).toBe('use <a href="/api/go" class="symbol-xref">go.set_position</a>');
+  });
+});
+
+describe("deploy base", () => {
+  const repoBase = (route: string) => `/repo${route}`;
+
+  test("the xref href carries the injected deploy base", () => {
+    const links = new Map([["go.set_position", "/api/go#go-set-position"]]);
+    const out = symbolLinkifier(links, repoBase)("use go.set_position to move it");
+    expect(out).toContain('href="/repo/api/go#go-set-position"');
+    expect(out).not.toContain('href="/api/go#go-set-position"');
+  });
+
+  test("every mention carries the base and the link count is unchanged", () => {
+    const links = new Map([
+      ["go.set_position", "/api/go#go-set-position"],
+      ["gui.set_text", "/api/gui#gui-set-text"],
+    ]);
+    const out = symbolLinkifier(links, repoBase)("go.set_position and gui.set_text");
+    expect(out).toBe(
+      '<a href="/repo/api/go#go-set-position" class="symbol-xref">go.set_position</a> and ' +
+        '<a href="/repo/api/gui#gui-set-text" class="symbol-xref">gui.set_text</a>',
+    );
+    expect(out.match(/class="symbol-xref"/g)).toHaveLength(2);
+  });
+
+  test("linkifySymbolMentions forwards the deploy base", () => {
+    const links = new Map([["go.set_position", "/api/go#go-set-position"]]);
+    const out = linkifySymbolMentions("use go.set_position", links, repoBase);
+    expect(out).toBe(
+      'use <a href="/repo/api/go#go-set-position" class="symbol-xref">go.set_position</a>',
+    );
   });
 });

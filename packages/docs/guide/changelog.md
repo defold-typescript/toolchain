@@ -20,6 +20,7 @@ What changed in each published `defold-typescript` toolchain release.
 ### Fixed
 
 - An extension whose `.script_api` writes a type as a list (`type: [table, string]`) is typed as that union by [resolve](./resolve.md) instead of `unknown`.
+- Symbol names mentioned in API reference prose link to their reference on the published site instead of opening a missing page.
 
 ## v0.39.0
 
