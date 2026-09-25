@@ -92,6 +92,37 @@
     },
     {
       "type": "FUNCTION",
+      "name": "bridge.platform.launch_source",
+      "description": "Where the game was opened from - \"notification\" or \"post\" (one of the game's own posts, see bridge.social.create_post). nil when the platform did not say.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "string",
+            "nil"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.platform.data",
+      "description": "Everything the launch carries - the parameters the platform passed to the game and, when it was opened from one of the game's own posts, postId - the id of that post's config entry.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "table"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
       "name": "bridge.platform.send_message",
       "description": "Send predefined messages to the platform to trigger specific actions or events, such as signaling that the game is ready.",
       "parameters": [
@@ -790,9 +821,10 @@
       "parameters": [
         {
           "name": "options",
-          "doc": "",
+          "doc": "A table with the content, or the id of a social.shares entry declared in playgama-bridge-config.json.",
           "types": [
-            "table"
+            "table",
+            "string"
           ]
         },
         {
@@ -878,9 +910,10 @@
       "parameters": [
         {
           "name": "options",
-          "doc": "",
+          "doc": "A table with the content, or the id of a social.invites entry declared in playgama-bridge-config.json.",
           "types": [
-            "table"
+            "table",
+            "string"
           ]
         },
         {
@@ -922,9 +955,17 @@
       "parameters": [
         {
           "name": "options",
-          "doc": "",
+          "doc": "A table with the content, or the id of a social.posts entry declared in playgama-bridge-config.json.",
           "types": [
-            "table"
+            "table",
+            "string"
+          ]
+        },
+        {
+          "name": "payload",
+          "doc": "Optional. The game's own string for this one post - a level, a seed, a challenge - handed back as bridge.platform.payload() when someone opens it. May be omitted, the callbacks then follow options.",
+          "types": [
+            "string"
           ]
         },
         {
@@ -1048,6 +1089,43 @@
         {
           "name": "on_failure",
           "doc": "function(_)",
+          "types": [
+            "function"
+          ]
+        }
+      ],
+      "returnvalues": []
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.social.is_post_reward_supported",
+      "description": "Check if rewards around posts created with create_post are supported on the platform.",
+      "parameters": [],
+      "returnvalues": [
+        {
+          "name": "result",
+          "doc": "",
+          "types": [
+            "boolean"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "FUNCTION",
+      "name": "bridge.social.get_post_reward",
+      "description": "Everything the player has coming from posts right now - the reward for the post the game was opened from and what the author earned from the players who came through their posts. Resolves to an empty array when there is nothing, so grant what you get and stay quiet otherwise. Each reward has the shape { id, amount, type }, where type is \"visit\" or \"author\".",
+      "parameters": [
+        {
+          "name": "on_success",
+          "doc": "function(_, rewards)",
+          "types": [
+            "function"
+          ]
+        },
+        {
+          "name": "on_failure",
+          "doc": "function(_, error)",
           "types": [
             "function"
           ]

@@ -298,9 +298,9 @@ bun scripts/sync-script-api-types.ts --api-doc     # lower the pinned api-doc/<.
 bun scripts/sync-script-api-types.ts --fidelity    # build the pinned fidelity/<...>.json
 ```
 
-The first migrated target is **`Playgama/bridge-defold`** (pinned `v2.1.0`),
+The first migrated target is **`Playgama/bridge-defold`** (pinned `v2.2.0`),
 maintained entirely from its `.script_api` — its former ts-defold binding is
-gone. Two things are specific to a script_api target and worth knowing:
+gone. Three things are specific to a script_api target and worth knowing:
 
 - **Output paths are pinned explicitly and named for the single-segment
   `namespace`.** Like the LuaLS libraries, a migrated script_api library is the
@@ -312,6 +312,15 @@ gone. Two things are specific to a script_api target and worth knowing:
 - **Fidelity mirrors the emitter, so an unmapped token counts against coverage.**
   The report is computed over the ref-doc doc with the emitter's own type map: a
   token the emitter renders as `unknown` is counted in `unknownFallbacks` and
-  listed in `unknownTokens` rather than hidden. A pipe-separated `type:` is split
-  into one token per alternative before that check, so bridge's `string | nil`
-  returns resolve to `string | undefined` and bridge lands at `coverage` `1`.
+  listed in `unknownTokens` rather than hidden. A pipe-separated `type:` or a YAML
+  list (`type: [table, string]`) is split into one token per alternative before
+  that check, so bridge's `string | nil` returns resolve to `string | undefined`
+  and bridge lands at `coverage` `1`. A slot left with no token at all counts as
+  one unknown fallback, listed as `(untyped)`, so it cannot pass as covered.
+- **An omittable interior parameter is declared, not inferred.** The
+  `.script_api` format cannot say that a middle parameter may be left out with
+  the later ones shifting left. A target lists such a slot under
+  `omittableSlots` (`element`, `slot`, and the upstream `evidence` that allows
+  it), and the emitted declaration carries two overloads, with and without it.
+  The api-doc page and the fidelity report stay as upstream wrote them. A slot
+  the fixture no longer has fails the emit, so the entry cannot go stale.
