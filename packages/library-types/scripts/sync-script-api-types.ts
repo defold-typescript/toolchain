@@ -31,6 +31,21 @@ export interface ScriptApiTarget {
   // SPDX-style license id, surfaced by the docs-site provenance block. Optional
   // in the config; defaults to "".
   license?: string;
+  // Interior slots upstream documents as omittable, emitted as a second overload.
+  omittableSlots?: OmittableSlot[];
+}
+
+/**
+ * An interior parameter upstream's prose says may be left out, with the later
+ * arguments shifting left into its place. The `.script_api` format has no way to
+ * say so (a trailing `optional: true` cannot express the shift), so the emitted
+ * declaration carries one overload with the slot and one without. `element` is
+ * the parsed element name; `evidence` quotes the upstream text that allows it.
+ */
+export interface OmittableSlot {
+  element: string;
+  slot: string;
+  evidence: string;
 }
 
 export interface ScriptApiTargets {
@@ -68,6 +83,17 @@ export function readScriptApiTargets(packageRoot: string): ScriptApiTarget[] {
       }
     }
     const moduleId = entry.moduleId as string;
+    const omittableSlots = (entry.omittableSlots ?? []).map((slot, slotIndex) => {
+      for (const field of ["element", "slot", "evidence"] as const) {
+        const value = (slot as Partial<OmittableSlot>)[field];
+        if (typeof value !== "string" || value.trim() === "") {
+          throw new Error(
+            `script-api-targets.json: entry ${label} omittableSlots[${slotIndex}] needs a non-empty "${field}".`,
+          );
+        }
+      }
+      return slot;
+    });
     return {
       repo: entry.repo as string,
       ref: entry.ref as string,
@@ -78,6 +104,7 @@ export function readScriptApiTargets(packageRoot: string): ScriptApiTarget[] {
       apiDoc: entry.apiDoc as string,
       fidelity: entry.fidelity ?? `fidelity/${entry.namespace as string}.json`,
       license: entry.license ?? "",
+      ...(omittableSlots.length > 0 ? { omittableSlots } : {}),
     };
   });
 }
@@ -122,6 +149,7 @@ export async function fetchScriptApiFixture(
 
 /** A single ref-doc `doc` type slot — a parameter or a return value. */
 export interface ScriptApiDocSlot {
+  name?: string;
   types: string[];
 }
 
@@ -234,6 +262,36 @@ export async function committedScriptApiDoc(
 }
 
 /**
+ * Follow each element named by an omittable slot with a same-named copy that
+ * lacks that slot; the emitter renders the pair as two TypeScript overloads.
+ * Throws when the element or slot is no longer in the doc, so a correction cannot
+ * outlive the upstream shape it was written for.
+ */
+export function applyOmittableSlots(
+  doc: ScriptApiDoc,
+  slots: readonly OmittableSlot[],
+): ScriptApiDoc {
+  for (const { element, slot } of slots) {
+    const found = doc.elements.find((e) => e.name === element);
+    if (!found?.parameters.some((p) => p.name === slot)) {
+      throw new Error(
+        `omittableSlots: ${element} has no parameter "${slot}" in the fixture; remove or update the entry.`,
+      );
+    }
+  }
+  const elements = doc.elements.flatMap((element) => {
+    const variants = slots
+      .filter((s) => s.element === element.name)
+      .map((s) => ({
+        ...element,
+        parameters: element.parameters.filter((p) => p.name !== s.slot),
+      }));
+    return [element, ...variants];
+  });
+  return { ...doc, elements };
+}
+
+/**
  * `.script_api` -> `scriptApiToFixtureJson` -> `generateModuleDeclaration`. Returns
  * an importable module keyed by `moduleId` (`declare module '<moduleId>'`), with
  * one-level nested sub-namespaces intact per the nested-namespace parser slice.
@@ -243,7 +301,10 @@ export async function emitScriptApiDeclaration(
   target: ScriptApiTarget,
 ): Promise<string> {
   const { scriptApiToFixtureJson, generateModuleDeclaration } = await loadTypesModules(packageRoot);
-  const doc = parseFixtureDoc(packageRoot, target, scriptApiToFixtureJson);
+  const doc = applyOmittableSlots(
+    parseFixtureDoc(packageRoot, target, scriptApiToFixtureJson),
+    target.omittableSlots ?? [],
+  );
   const { contents } = generateModuleDeclaration({
     namespace: target.namespace,
     doc,
@@ -273,13 +334,17 @@ function round3(value: number): number {
   return Math.round(value * 1000) / 1000;
 }
 
+const UNTYPED_SLOT = "(untyped)";
+
 /**
  * Build the `FidelityReport` (same shape as the LuaLS `fidelity/<ns>.json`) over a
  * parsed ref-doc `doc`. Every function element's param/return type tokens are run
  * through `resolver`; a token the emitter cannot map (`resolver.resolves` false)
  * is counted in `unknownFallbacks` and surfaced in `unknownTokens` rather than
- * hidden behind the coverage number. `undocumentedMembers` counts function
- * elements with an empty description. Deterministic; no I/O.
+ * hidden behind the coverage number. A slot the parser left with no token at all
+ * would otherwise contribute nothing and read as fully covered, so it counts as
+ * one unknown fallback listed as `UNTYPED_SLOT`. `undocumentedMembers` counts
+ * function elements with an empty description. Deterministic; no I/O.
  */
 export function computeScriptApiFidelity(
   namespace: string,
@@ -297,6 +362,12 @@ export function computeScriptApiFidelity(
     totalMembers++;
     if ((element.description ?? "").trim() === "") undocumentedMembers++;
     for (const slot of [...element.parameters, ...element.returnvalues]) {
+      if (slot.types.length === 0) {
+        totalTypeTokens++;
+        unknownFallbacks++;
+        unknownTokens.add(UNTYPED_SLOT);
+        continue;
+      }
       for (const token of slot.types) {
         totalTypeTokens++;
         if (!resolver.resolves(token)) {

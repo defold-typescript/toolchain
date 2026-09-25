@@ -2,14 +2,21 @@
   "targets": [
     {
       "repo": "https://github.com/Playgama/bridge-defold",
-      "ref": "v2.1.0",
+      "ref": "v2.2.0",
       "license": "MIT",
       "scriptApi": "bridge/api/bridge.script_api",
       "moduleId": "bridge.bridge",
       "namespace": "bridge",
       "generated": "generated/bridge.d.ts",
       "apiDoc": "api-doc/bridge.json",
-      "fidelity": "fidelity/bridge.json"
+      "fidelity": "fidelity/bridge.json",
+      "omittableSlots": [
+        {
+          "element": "bridge.social.create_post",
+          "slot": "payload",
+          "evidence": "Optional. The game's own string for this one post [...] May be omitted, the callbacks then follow options."
+        }
+      ]
     }
   ]
 }
