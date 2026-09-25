@@ -1,4 +1,6 @@
-import { describe, expect, test } from "bun:test";
+import { afterAll, describe, expect, test } from "bun:test";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { readAuthoredTargets } from "../packages/library-types/scripts/sync-authored-types.ts";
 import { readLualsTargets } from "../packages/library-types/scripts/sync-luals-types.ts";
@@ -7,12 +9,15 @@ import { readOpenApiTargets } from "../packages/library-types/scripts/sync-opena
 import { readScriptApiTargets } from "../packages/library-types/scripts/sync-script-api-types.ts";
 import {
   collectPinnedTargets,
+  describeReport,
   evaluateLibraryDrift,
   groupPinnedTargets,
   issueTitleFor,
   type LibraryCheckIo,
   type LibraryUpstreamRun,
   type PinnedGroup,
+  type PinnedTarget,
+  readPinnedTargets,
   runLibraryCheckCli,
 } from "./library-upstream-check.ts";
 
@@ -26,6 +31,19 @@ function group(overrides: Partial<PinnedGroup> = {}): PinnedGroup {
     pinKind: "tag",
     dependents: ["luals:widget.widget"],
     consumedPaths: ["widget/widget.lua"],
+    internal: false,
+    ...overrides,
+  };
+}
+
+function target(overrides: Partial<PinnedTarget> = {}): PinnedTarget {
+  return {
+    lane: "markdown",
+    repo: "https://github.com/acme/widget",
+    ref: "1",
+    moduleId: "a",
+    paths: [],
+    internal: false,
     ...overrides,
   };
 }
@@ -197,14 +215,16 @@ describe("evaluateLibraryDrift — unreadable upstream", () => {
 });
 
 describe("issue identity", () => {
-  test("the title is a function of the repo slug and the upstream version alone", async () => {
-    const report = await evaluateLibraryDrift(group(), taggedIo());
-    expect(report.issueTitle).toBe(issueTitleFor("acme/widget", "2"));
-    // A rerun from a different pin of the same repo reproduces the same title,
-    // which is what makes the workflow's `gh issue list --json title` lookup a
-    // no-op until the bump lands.
-    const other = await evaluateLibraryDrift(group({ ref: "1.1.0" }), taggedIo());
-    expect(other.issueTitle).toBe(report.issueTitle);
+  test("the title is a function of the repo slug, the upstream version and the internal flag", async () => {
+    for (const internal of [false, true]) {
+      const report = await evaluateLibraryDrift(group({ internal }), taggedIo());
+      expect(report.issueTitle).toBe(issueTitleFor("acme/widget", "2", internal));
+      // A rerun from a different pin of the same repo reproduces the same title,
+      // which is what makes the workflow's `gh issue list --json title` lookup a
+      // no-op until the bump lands.
+      const other = await evaluateLibraryDrift(group({ ref: "1.1.0", internal }), taggedIo());
+      expect(other.issueTitle).toBe(report.issueTitle);
+    }
   });
 
   test("the body names the pin, the upstream version, the dependents and the playbook", async () => {
@@ -222,13 +242,21 @@ describe("issue identity", () => {
 describe("groupPinnedTargets", () => {
   test("one repo pinned at two refs stays two groups", () => {
     const groups = groupPinnedTargets([
-      { lane: "luals", repo: "https://github.com/acme/widget", ref: "1", moduleId: "a", paths: [] },
+      {
+        lane: "luals",
+        repo: "https://github.com/acme/widget",
+        ref: "1",
+        moduleId: "a",
+        paths: [],
+        internal: false,
+      },
       {
         lane: "authored",
         repo: "https://github.com/acme/widget",
         ref: "2",
         moduleId: "b",
         paths: [],
+        internal: false,
       },
     ]);
     expect(groups).toHaveLength(2);
@@ -243,6 +271,7 @@ describe("groupPinnedTargets", () => {
         ref: "1",
         moduleId: "a",
         paths: ["a.lua"],
+        internal: false,
       },
       {
         lane: "authored",
@@ -250,6 +279,7 @@ describe("groupPinnedTargets", () => {
         ref: "1",
         moduleId: "b",
         paths: ["b.lua"],
+        internal: false,
       },
     ]);
     expect(groups).toHaveLength(1);
@@ -265,6 +295,7 @@ describe("groupPinnedTargets", () => {
         ref: "b72ee2419f2cd5e1a2281e1eed5cc4081b5cbcc3",
         moduleId: "a",
         paths: [],
+        internal: false,
       },
       {
         lane: "luals",
@@ -272,9 +303,152 @@ describe("groupPinnedTargets", () => {
         ref: "runtime.8",
         moduleId: "b",
         paths: [],
+        internal: false,
       },
     ]);
     expect(groups.map((g) => g.pinKind).sort()).toEqual(["sha", "tag"]);
+  });
+});
+
+describe("groupPinnedTargets — internal flag", () => {
+  test("a pin whose every dependent is internal is internal", () => {
+    const groups = groupPinnedTargets([
+      target({ moduleId: "a", internal: true }),
+      target({ lane: "openapi", moduleId: "b", internal: true }),
+    ]);
+    expect(groups).toHaveLength(1);
+    expect(groups[0]?.internal).toBe(true);
+  });
+
+  test("one user-facing dependent makes the pin user-facing, in either order", () => {
+    const internal = target({ moduleId: "a", internal: true });
+    const userFacing = target({ lane: "luals", moduleId: "b", internal: false });
+    expect(groupPinnedTargets([internal, userFacing])[0]?.internal).toBe(false);
+    expect(groupPinnedTargets([userFacing, internal])[0]?.internal).toBe(false);
+  });
+});
+
+describe("readPinnedTargets — internal flag", () => {
+  // The committed markdown and openapi targets all carry an explicit `no-go`, so
+  // they cannot tell `!== "go"` from `=== "no-go"` or from a hard-coded `true`.
+  // A synthetic registry covers all three decision states in both lanes.
+  const root = mkdtempSync(join(tmpdir(), "library-upstream-check-"));
+  afterAll(() => rmSync(root, { recursive: true, force: true }));
+  const decisions = { go: "go", noGo: "no-go", absent: undefined } as const;
+  const common = (moduleId: string) => ({
+    repo: `https://github.com/acme/${moduleId}`,
+    ref: "1",
+    moduleId,
+    namespace: moduleId,
+    generated: `${moduleId}.d.ts`,
+    apiDoc: `${moduleId}.md`,
+  });
+  const entries = (extra: Record<string, string>) =>
+    Object.entries(decisions).map(([moduleId, decision]) => ({
+      ...common(moduleId),
+      ...extra,
+      ...(decision === undefined ? {} : { decision }),
+    }));
+  const write = (file: string, targets: unknown[]) =>
+    writeFileSync(join(root, file), JSON.stringify({ targets }));
+  write("authored-targets.json", []);
+  write("luals-targets.json", []);
+  write("script-api-targets.json", []);
+  write("markdown-targets.json", entries({ markdown: "api.md" }));
+  write("openapi-targets.json", entries({ swagger: "api.swagger.json", proto: "api.proto" }));
+
+  for (const lane of ["markdown", "openapi"] as const) {
+    test(`${lane}: only a go decision is user-facing; no-go and a missing decision are internal`, () => {
+      const flags = Object.fromEntries(
+        readPinnedTargets(root)
+          .filter((t) => t.lane === lane)
+          .map((t) => [t.moduleId, t.internal]),
+      );
+      expect(flags).toEqual({ go: false, noGo: true, absent: true });
+    });
+  }
+
+  test("over the committed registries, markdown and openapi follow the decision and every other lane is user-facing", () => {
+    const decisionOf = new Map<string, string | undefined>();
+    for (const t of readMarkdownTargets(PACKAGE_ROOT))
+      decisionOf.set(`markdown:${t.moduleId}`, t.decision);
+    for (const t of readOpenApiTargets(PACKAGE_ROOT))
+      decisionOf.set(`openapi:${t.moduleId}`, t.decision);
+    const targets = readPinnedTargets(PACKAGE_ROOT);
+    expect(targets.some((t) => t.lane === "authored" || t.lane === "luals")).toBe(true);
+    for (const t of targets) {
+      const expected =
+        t.lane === "markdown" || t.lane === "openapi"
+          ? decisionOf.get(`${t.lane}:${t.moduleId}`) !== "go"
+          : false;
+      expect({ target: `${t.lane}:${t.moduleId}`, internal: t.internal }).toEqual({
+        target: `${t.lane}:${t.moduleId}`,
+        internal: expected,
+      });
+    }
+  });
+});
+
+describe("internal pins in the report and the issue", () => {
+  const internal = group({ internal: true, dependents: ["markdown:widget.widget"] });
+  const sha = {
+    ref: "b72ee2419f2cd5e1a2281e1eed5cc4081b5cbcc3",
+    pinKind: "sha" as const,
+    consumedPaths: ["widget/widget.lua"],
+  };
+  const shaIo = () =>
+    io({
+      readRepo: async () => ({ defaultBranch: "main" }),
+      compareRefs: async () => ({ aheadBy: 2, files: ["widget/widget.lua"] }),
+    });
+
+  test("an internal tag pin reports internal and marks its title", async () => {
+    const report = await evaluateLibraryDrift(internal, taggedIo());
+    expect(report.internal).toBe(true);
+    expect(report.issueTitle).toBe(issueTitleFor("acme/widget", "2", true));
+    expect(report.issueTitle).toContain("(internal)");
+  });
+
+  test("an internal SHA pin reports internal and marks its title", async () => {
+    const report = await evaluateLibraryDrift({ ...internal, ...sha }, shaIo());
+    expect(report.internal).toBe(true);
+    expect(report.issueTitle).toBe(issueTitleFor("acme/widget", "main", true));
+  });
+
+  test("a user-facing pin carries an unmarked title", async () => {
+    const report = await evaluateLibraryDrift(group(), taggedIo());
+    expect(report.internal).toBe(false);
+    expect(report.issueTitle).toBe(issueTitleFor("acme/widget", "2", false));
+    expect(report.issueTitle).not.toContain("(internal)");
+    const shaReport = await evaluateLibraryDrift(group(sha), shaIo());
+    expect(shaReport.issueTitle).not.toContain("(internal)");
+  });
+
+  test("an unreadable internal pin still carries the flag", async () => {
+    const report = await evaluateLibraryDrift(internal, io());
+    expect(report.reason).toBe("unknown");
+    expect(report.internal).toBe(true);
+  });
+
+  test("only an internal issue body waives the changelog bullet", async () => {
+    const internalReport = await evaluateLibraryDrift(internal, taggedIo());
+    const userReport = await evaluateLibraryDrift(group(), taggedIo());
+    expect(internalReport.issueBody).toContain("no changelog bullet");
+    expect(userReport.issueBody).not.toContain("no changelog bullet");
+  });
+
+  test("the text report marks an internal pin and leaves a user-facing one bare", async () => {
+    const internalLine = describeReport(await evaluateLibraryDrift(internal, taggedIo()));
+    const userLine = describeReport(await evaluateLibraryDrift(group(), taggedIo()));
+    expect(internalLine.trimEnd().endsWith("(internal)")).toBe(true);
+    expect(userLine).not.toContain("(internal)");
+  });
+
+  test("--json carries the flag on each report", async () => {
+    const seam = taggedIo();
+    await runLibraryCheckCli(["--json"], seam, [internal, group()]);
+    const run = JSON.parse(seam.out.join("")) as LibraryUpstreamRun;
+    expect(run.reports.map((r) => r.internal)).toEqual([true, false]);
   });
 });
 
@@ -370,7 +544,7 @@ describe("runLibraryCheckCli", () => {
     expect(run.command).toBe("upstream:library-check");
     expect(run.actionable).toBe(true);
     expect(run.reports).toHaveLength(1);
-    expect(run.reports[0]?.issueTitle).toBe(issueTitleFor("acme/widget", "2"));
+    expect(run.reports[0]?.issueTitle).toBe(issueTitleFor("acme/widget", "2", false));
   });
 
   test("a quiet corpus exits 0 with nothing actionable", async () => {

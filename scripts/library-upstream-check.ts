@@ -28,6 +28,8 @@ export interface PinnedTarget {
   readonly moduleId: string;
   /** Upstream-repo-relative paths (or globs) this target reads. */
   readonly paths: readonly string[];
+  /** Feeds only the go/no-go fidelity comparison; no user receives it. */
+  readonly internal: boolean;
 }
 
 /** Every target sharing one `repo` + `ref` pin — one unit of re-pin work. */
@@ -38,6 +40,8 @@ export interface PinnedGroup {
   readonly pinKind: "tag" | "sha";
   readonly dependents: readonly string[];
   readonly consumedPaths: readonly string[];
+  /** True only when every dependent is internal. */
+  readonly internal: boolean;
 }
 
 export interface LibraryUpstreamReport {
@@ -48,6 +52,7 @@ export interface LibraryUpstreamReport {
   readonly actionable: boolean;
   readonly reason: LibraryDriftReason;
   readonly dependents: readonly string[];
+  readonly internal: boolean;
   readonly intervening?: readonly string[];
   readonly commitsBehind?: number;
   readonly error?: string;
@@ -109,6 +114,7 @@ export function readPinnedTargets(packageRoot: string = PACKAGE_ROOT): PinnedTar
       ref: t.ref,
       moduleId: t.moduleId,
       paths: t.upstreamLua.map((path) => upstreamPathFromFixture(t.repo, path)),
+      internal: false,
     });
   }
   for (const t of readLualsTargets(packageRoot)) {
@@ -118,6 +124,7 @@ export function readPinnedTargets(packageRoot: string = PACKAGE_ROOT): PinnedTar
       ref: t.ref,
       moduleId: t.moduleId,
       paths: t.sourceGlobs,
+      internal: false,
     });
   }
   for (const t of readMarkdownTargets(packageRoot)) {
@@ -127,6 +134,7 @@ export function readPinnedTargets(packageRoot: string = PACKAGE_ROOT): PinnedTar
       ref: t.ref,
       moduleId: t.moduleId,
       paths: [t.markdown],
+      internal: t.decision !== "go",
     });
   }
   for (const t of readOpenApiTargets(packageRoot)) {
@@ -136,6 +144,7 @@ export function readPinnedTargets(packageRoot: string = PACKAGE_ROOT): PinnedTar
       ref: t.ref,
       moduleId: t.moduleId,
       paths: [t.swagger, t.proto],
+      internal: t.decision !== "go",
     });
   }
   for (const t of readScriptApiTargets(packageRoot)) {
@@ -145,6 +154,7 @@ export function readPinnedTargets(packageRoot: string = PACKAGE_ROOT): PinnedTar
       ref: t.ref,
       moduleId: t.moduleId,
       paths: [t.scriptApi],
+      internal: false,
     });
   }
   return targets;
@@ -170,6 +180,7 @@ export function groupPinnedTargets(targets: readonly PinnedTarget[]): PinnedGrou
           pinKind: SHA_REF.test(target.ref) ? "sha" : "tag",
           dependents: [dependent],
           consumedPaths: [],
+          internal: target.internal,
         },
         paths: new Set(target.paths),
       });
@@ -181,6 +192,7 @@ export function groupPinnedTargets(targets: readonly PinnedTarget[]): PinnedGrou
         dependents: [...existing.group.dependents, dependent],
       };
     }
+    if (!target.internal) existing.group = { ...existing.group, internal: false };
     for (const path of target.paths) existing.paths.add(path);
   }
   return [...groups.values()].map(({ group, paths }) => ({ ...group, consumedPaths: [...paths] }));
@@ -190,11 +202,13 @@ export function collectPinnedTargets(packageRoot: string = PACKAGE_ROOT): Pinned
   return groupPinnedTargets(readPinnedTargets(packageRoot));
 }
 
-// Keyed on the repo slug and the upstream version alone so a rerun before the
-// bump lands finds the issue it opened last time; folding the pinned version in
-// would mint a second issue the moment anything else rotated the pin.
-export function issueTitleFor(slug: string, upstream: string): string {
-  return `${slug} moved to ${upstream} — refresh the pinned library types`;
+// Keyed on the repo slug, the upstream version and the internal flag so a rerun
+// before the bump lands finds the issue it opened last time; folding the pinned
+// version in would mint a second issue the moment anything else rotated the pin.
+// A go/no-go decision flip does mint a new issue, because the work it asks for
+// differs.
+export function issueTitleFor(slug: string, upstream: string, internal: boolean): string {
+  return `${slug} moved to ${upstream} — refresh the pinned library types${internal ? " (internal)" : ""}`;
 }
 
 function issueBodyFor(
@@ -212,11 +226,20 @@ function issueBodyFor(
           "",
           `Tags released since the pin: ${report.intervening.map((t) => `\`${t}\``).join(", ")}.`,
         ];
+  const internal = group.internal
+    ? [
+        "",
+        "Internal comparison input only: these modules feed the go/no-go fidelity",
+        "comparison and reach no user, so the bump has no user-visible change and needs",
+        "no changelog bullet (commit with the gate's `--no-verify` exception).",
+      ]
+    : [];
   return [
     moved,
     "",
     "Dependent modules:",
     ...group.dependents.map((dependent) => `- \`${dependent}\``),
+    ...internal,
     ...intervening,
     "",
     "Re-pinning is not a find-and-replace: the lanes differ in cost, and a bump",
@@ -291,7 +314,7 @@ async function evaluateTagPin(
     actionable: true,
     reason: "newer-tag" as const,
     intervening: newer.map((tag) => tag.name),
-    issueTitle: issueTitleFor(group.slug, head.name),
+    issueTitle: issueTitleFor(group.slug, head.name, group.internal),
   };
   return { ...report, issueBody: issueBodyFor(group, report) };
 }
@@ -318,7 +341,7 @@ async function evaluateShaPin(
   const report = {
     ...behind,
     actionable: true,
-    issueTitle: issueTitleFor(group.slug, defaultBranch),
+    issueTitle: issueTitleFor(group.slug, defaultBranch, group.internal),
   };
   return { ...report, issueBody: issueBodyFor(group, report) };
 }
@@ -337,6 +360,7 @@ export async function evaluateLibraryDrift(
     repo: group.slug,
     pinned: group.ref,
     dependents: group.dependents,
+    internal: group.internal,
   } as const;
   try {
     return group.pinKind === "sha"
@@ -349,15 +373,16 @@ export async function evaluateLibraryDrift(
 
 export function describeReport(report: LibraryUpstreamReport): string {
   const who = `${report.repo} (${report.dependents.length} module(s))`;
+  const marker = report.internal ? " (internal)" : "";
   switch (report.reason) {
     case "newer-tag":
-      return `  ${who} — pinned ${report.pinned}, upstream tags ${report.upstream}\n`;
+      return `  ${who} — pinned ${report.pinned}, upstream tags ${report.upstream}${marker}\n`;
     case "behind-head":
-      return `  ${who} — pinned ${report.pinned} is ${report.commitsBehind} commit(s) behind ${report.upstream}${report.actionable ? "" : " (no consumed path touched)"}\n`;
+      return `  ${who} — pinned ${report.pinned} is ${report.commitsBehind} commit(s) behind ${report.upstream}${report.actionable ? "" : " (no consumed path touched)"}${marker}\n`;
     case "current":
-      return `  ${who} — pinned ${report.pinned} is current\n`;
+      return `  ${who} — pinned ${report.pinned} is current${marker}\n`;
     case "unknown":
-      return `  ${who} — pinned ${report.pinned} could not be compared: ${report.error}\n`;
+      return `  ${who} — pinned ${report.pinned} could not be compared: ${report.error}${marker}\n`;
   }
 }
 
