@@ -11,7 +11,7 @@ interface SymbolTooltipProps {
 
 type ActiveTip = {
   brief: string;
-  route: string;
+  href: string;
   top: number;
   left: number;
   maxHeight: number;
@@ -79,7 +79,7 @@ export default function SymbolTooltip({ versionIds }: SymbolTooltipProps) {
         // symbol's own signature heading (filtered structurally below), and a
         // self-reference — a mention of the symbol whose own body it sits in,
         // whose popup would point the reader back to where they already are.
-        const bind = (el: HTMLElement, brief: string, route: string, isLink: boolean) => {
+        const bind = (el: HTMLElement, brief: string, href: string, isLink: boolean) => {
           if (!isLink) {
             el.classList.add("symbol-link");
             el.setAttribute("tabindex", "0");
@@ -93,7 +93,7 @@ export default function SymbolTooltip({ versionIds }: SymbolTooltipProps) {
               innerWidth: window.innerWidth,
               innerHeight: window.innerHeight,
             });
-            setTip({ brief, route, top, left, maxHeight });
+            setTip({ brief, href, top, left, maxHeight });
           };
           el.addEventListener("pointerenter", show);
           el.addEventListener("focus", show);
@@ -133,20 +133,22 @@ export default function SymbolTooltip({ versionIds }: SymbolTooltipProps) {
             markSelf(code);
             continue;
           }
-          bind(code, entry.brief, entry.route, false);
+          bind(code, entry.brief, withBase(entry.route), false);
         }
 
         const xrefs = document.querySelectorAll<HTMLAnchorElement>("a.symbol-xref");
         for (const link of xrefs) {
           const key = normalizeSymbolKey(link.textContent ?? "");
           const entry = index[key];
-          const route = entry?.route ?? link.getAttribute("href") ?? "";
-          if (!route) continue;
+          // The anchor's own href already carries the deploy base; only an
+          // index route still needs it.
+          const href = entry ? withBase(entry.route) : (link.getAttribute("href") ?? "");
+          if (!href) continue;
           if (isSelfReference(key, ownerSignature(link))) {
             markSelf(link);
             continue;
           }
-          bind(link, entry?.brief ?? "", route, true);
+          bind(link, entry?.brief ?? "", href, true);
         }
       } catch (err) {
         // Without this catch, any rejection (network, MIME, JSON parse) is
@@ -176,10 +178,7 @@ export default function SymbolTooltip({ versionIds }: SymbolTooltipProps) {
           class="fixed z-50 flex max-w-xs flex-col rounded-md border border-border-strong bg-surface px-3 py-2 text-sm leading-relaxed text-text shadow-lg"
           style={{ top: `${tip.top}px`, left: `${tip.left}px`, maxHeight: `${tip.maxHeight}px` }}
         >
-          <a
-            href={withBase(tip.route)}
-            class="block shrink-0 font-medium text-accent hover:underline"
-          >
+          <a href={tip.href} class="block shrink-0 font-medium text-accent hover:underline">
             View reference →
           </a>
           {tip.brief ? (
