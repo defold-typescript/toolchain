@@ -10125,7 +10125,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function tohostname(address: string): LuaMultiReturn<[string | undefined, Record<string | number, unknown> | string]>;
 - function toip(address: string): LuaMultiReturn<[string | undefined, Record<string | number, unknown> | string]>;
 - function gettime(): number;
-- function newtry(finalizer?: () => void): { <T>(result: LuaMultiReturn<[T | undefined, ...unknown[]]>): T; <T>(value: T | undefined, ...rest: unknown[]): T };
+- function newtry(finalizer?: () => void): <T>(value: T | undefined, ...rest: T extends { readonly __tstlMultiReturn: unknown } ? [boxedMultiReturn: never] : unknown[]) => T;
 - function protect(func: (...args: unknown[]) => unknown): (...args: unknown[]) => LuaMultiReturn<[unknown, string | undefined]>;
 - function select(recvt: (client | master | unconnected)[], sendt: (client | master | unconnected)[], timeout?: number): LuaMultiReturn<[(client | master | unconnected)[], (client | master | unconnected)[], string | undefined]>;
 - function skip(d: number, ret1?: unknown, ret2?: unknown, retN?: unknown): LuaMultiReturn<[unknown, unknown, unknown]>;

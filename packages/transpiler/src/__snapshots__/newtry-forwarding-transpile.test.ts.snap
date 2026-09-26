@@ -1,0 +1,38 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`newtry multi-return forwarding socket.newtry examples forward each multi-return value as its own argument 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local c = socket.connect("localhost", 80)
+if c ~= nil then
+    local try_ = socket.newtry(function() return c:close() end)
+    local sent, sendError, lastByte = c:send("hello there?\\r\\n")
+    try_(sent, sendError, lastByte)
+    local line, receiveError, partial = c:receive()
+    local answer = try_(line, receiveError, partial)
+    local byeSent, byeError, byeLastByte = c:send("good bye\\r\\n")
+    try_(byeSent, byeError, byeLastByte)
+    c:close()
+end
+return ____exports
+"
+`;
+
+exports[`newtry multi-return forwarding socket.protect examples forward each multi-return value as its own argument 1`] = `
+"--[[ Generated with https://github.com/TypeScriptToLua/TypeScriptToLua ]]
+local ____exports = {}
+local dostuff = socket.protect(function()
+    local try_ = socket.newtry()
+    local conn, connectError = socket.connect("myserver.com", 80)
+    local c = try_(conn, connectError)
+    try_ = socket.newtry(function() return c:close() end)
+    local sent, sendError, lastByte = c:send("hello?\\r\\n")
+    try_(sent, sendError, lastByte)
+    local line, receiveError, partial = c:receive()
+    local answer = try_(line, receiveError, partial)
+    c:close()
+end)
+local n, ____error = dostuff()
+return ____exports
+"
+`;
