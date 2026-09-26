@@ -95,6 +95,54 @@ declare global {
     const FACE_TYPE_BACK: number & { readonly __brand: "graphics.FACE_TYPE_BACK" };
     const FACE_TYPE_FRONT: number & { readonly __brand: "graphics.FACE_TYPE_FRONT" };
     const FACE_TYPE_FRONT_AND_BACK: number & { readonly __brand: "graphics.FACE_TYPE_FRONT_AND_BACK" };
+    /**
+     * Vertex attribute semantic type, for `material.set_vertex_attributes`.
+     */
+    const SEMANTIC_TYPE_BONE_INDICES: number & { readonly __brand: "graphics.SEMANTIC_TYPE_BONE_INDICES" };
+    /**
+     * Vertex attribute semantic type, for `material.set_vertex_attributes`.
+     */
+    const SEMANTIC_TYPE_BONE_WEIGHTS: number & { readonly __brand: "graphics.SEMANTIC_TYPE_BONE_WEIGHTS" };
+    /**
+     * Vertex attribute semantic type, for `material.set_vertex_attributes`.
+     */
+    const SEMANTIC_TYPE_COLOR: number & { readonly __brand: "graphics.SEMANTIC_TYPE_COLOR" };
+    /**
+     * Vertex attribute semantic type, for `material.set_vertex_attributes`.
+     */
+    const SEMANTIC_TYPE_NONE: number & { readonly __brand: "graphics.SEMANTIC_TYPE_NONE" };
+    /**
+     * Vertex attribute semantic type, for `material.set_vertex_attributes`.
+     */
+    const SEMANTIC_TYPE_NORMAL: number & { readonly __brand: "graphics.SEMANTIC_TYPE_NORMAL" };
+    /**
+     * Vertex attribute semantic type, for `material.set_vertex_attributes`.
+     */
+    const SEMANTIC_TYPE_NORMAL_MATRIX: number & { readonly __brand: "graphics.SEMANTIC_TYPE_NORMAL_MATRIX" };
+    /**
+     * Vertex attribute semantic type, for `material.set_vertex_attributes`.
+     */
+    const SEMANTIC_TYPE_PAGE_INDEX: number & { readonly __brand: "graphics.SEMANTIC_TYPE_PAGE_INDEX" };
+    /**
+     * Vertex attribute semantic type, for `material.set_vertex_attributes`.
+     */
+    const SEMANTIC_TYPE_POSITION: number & { readonly __brand: "graphics.SEMANTIC_TYPE_POSITION" };
+    /**
+     * Vertex attribute semantic type, for `material.set_vertex_attributes`.
+     */
+    const SEMANTIC_TYPE_TANGENT: number & { readonly __brand: "graphics.SEMANTIC_TYPE_TANGENT" };
+    /**
+     * Vertex attribute semantic type, for `material.set_vertex_attributes`.
+     */
+    const SEMANTIC_TYPE_TEXCOORD: number & { readonly __brand: "graphics.SEMANTIC_TYPE_TEXCOORD" };
+    /**
+     * Vertex attribute semantic type, for `material.set_vertex_attributes`.
+     */
+    const SEMANTIC_TYPE_TEXTURE_TRANSFORM_2D: number & { readonly __brand: "graphics.SEMANTIC_TYPE_TEXTURE_TRANSFORM_2D" };
+    /**
+     * Vertex attribute semantic type, for `material.set_vertex_attributes`.
+     */
+    const SEMANTIC_TYPE_WORLD_MATRIX: number & { readonly __brand: "graphics.SEMANTIC_TYPE_WORLD_MATRIX" };
     const STATE_ALPHA_TEST: number & { readonly __brand: "graphics.STATE_ALPHA_TEST" };
     const STATE_ALPHA_TEST_SUPPORTED: number & { readonly __brand: "graphics.STATE_ALPHA_TEST_SUPPORTED" };
     const STATE_BLEND: number & { readonly __brand: "graphics.STATE_BLEND" };

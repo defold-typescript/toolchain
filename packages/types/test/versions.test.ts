@@ -150,11 +150,53 @@ describe("versioned API surface — consumer tsconfig proof", () => {
       });
       const tsconfigPath = writeProofConfig(
         root,
-        `export {};\nconst _fov: number = camera.get_fov();\nvoid _fov;\n// @ts-expect-error get_orthographic_auto_zoom is new in 1.13.0\ncamera.get_orthographic_auto_zoom();\n`,
+        `export {};\nconst _fov: number = camera.get_fov();\nvoid _fov;\n// @ts-expect-error get_orthographic_auto_zoom is new in 1.13.0\ncamera.get_orthographic_auto_zoom();\n// @ts-expect-error vertex attribute semantic types are undocumented before 1.13.0\nvoid graphics.SEMANTIC_TYPE_COLOR;\n`,
         "defold-1.12.4",
       );
       const { exitCode, output } = typecheck(tsconfigPath);
       if (exitCode !== 0) throw new Error(`defold-1.12.4 proof failed:\n${output}`);
+      expect(exitCode).toBe(0);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("defold-1.13.0 declares the branded semantic types it documents, without morph target weights", async () => {
+    const target = loadApiTargets().find((candidate) => candidate.id === "defold-1.13.0");
+    if (!target) throw new Error("no defold-1.13.0 target");
+    const root = mkdtempSync(resolve(PACKAGE_ROOT, "mat-proof-"));
+    try {
+      await materializeVersionedSurface(target, {
+        destDir: resolve(root, "versions", "defold-1.13.0"),
+      });
+      const tsconfigPath = writeProofConfig(
+        root,
+        `export {};\nconst _color: typeof graphics.SEMANTIC_TYPE_COLOR = graphics.SEMANTIC_TYPE_COLOR;\nvoid _color;\n// @ts-expect-error a plain number is not a branded semantic type\nconst _plain: typeof graphics.SEMANTIC_TYPE_COLOR = 4;\nvoid _plain;\n// @ts-expect-error SEMANTIC_TYPE_MORPH_TARGET_WEIGHTS is first documented in 1.13.1\nvoid graphics.SEMANTIC_TYPE_MORPH_TARGET_WEIGHTS;\n`,
+        "defold-1.13.0",
+      );
+      const { exitCode, output } = typecheck(tsconfigPath);
+      if (exitCode !== 0) throw new Error(`defold-1.13.0 proof failed:\n${output}`);
+      expect(exitCode).toBe(0);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("the current surface declares morph target weights", async () => {
+    const target = loadApiTargets().find((candidate) => candidate.default === true);
+    if (!target) throw new Error("no default target");
+    const root = mkdtempSync(resolve(PACKAGE_ROOT, "mat-proof-"));
+    try {
+      await materializeVersionedSurface(target, {
+        destDir: resolve(root, "versions", target.id),
+      });
+      const tsconfigPath = writeProofConfig(
+        root,
+        `export {};\nconst _morph: typeof graphics.SEMANTIC_TYPE_MORPH_TARGET_WEIGHTS = graphics.SEMANTIC_TYPE_MORPH_TARGET_WEIGHTS;\nvoid _morph;\n`,
+        target.id,
+      );
+      const { exitCode, output } = typecheck(tsconfigPath);
+      if (exitCode !== 0) throw new Error(`${target.id} proof failed:\n${output}`);
       expect(exitCode).toBe(0);
     } finally {
       rmSync(root, { recursive: true, force: true });

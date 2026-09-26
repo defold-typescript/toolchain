@@ -27,7 +27,6 @@ import "./generated/go";
 import "./src/go-overloads";
 import "./src/component-properties";
 import "./generated/graphics";
-import "./src/graphics-constants";
 import "./generated/gui";
 import "./generated/html5";
 import "./generated/http";
