@@ -11,6 +11,10 @@ What changed in each published `defold-typescript` toolchain release.
 
 ## v0.40.0
 
+### Breaking
+
+- **`options.index` is 0-based at [`go.get` / `go.set`](/api/go) and [`gui.get` / `gui.set`](/api/gui)**: `{ index: 0 }` now addresses the first element of an array property, and the transpiler emits Defold's 1-based value. Subtract 1 from every existing `index` at these calls; see [Engine array properties](./typescript-vs-lua.md#engine-array-properties-optionsindex).
+
 ### Improved
 
 - **[Vectors and rotations](./vectors-tutorial.md) is a new tutorial on the math behind movement** — positions, vectors, speed, dt, rotation, the dot product and local versus world space, one game problem per lesson, ending with a ship that drifts through space. Its fifteen figures follow the site font and the light/dark theme and stack their side-by-side panels on a phone, and every TypeScript snippet on the page type-checks against the shipped declarations.

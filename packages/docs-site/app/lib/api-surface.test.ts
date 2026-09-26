@@ -9,6 +9,7 @@ import {
   lookupExampleTranslations,
   lookupTranslation,
   normalizedFunctionSignature,
+  PARAM_DOC_REWRITES,
   parseDefoldApiDoc,
   type SignatureStore,
   signatureTransitionNames,
@@ -2306,6 +2307,24 @@ describe("apiModuleSymbols", () => {
     expect(symbols.filter((s) => s.name === "go.get")[1]?.returnValues.map((r) => r.name)).toEqual([
       "value",
     ]);
+  });
+
+  test("the array-property APIs document a zero-based options.index", () => {
+    for (const [fixture, store] of [
+      ["go", committedStore("go")],
+      ["gui", {}],
+    ] as const) {
+      const page = fixturePage(fixture);
+      const optionDocs = apiModuleSymbols(page, {}, store)
+        .filter((s) => PARAM_DOC_REWRITES.has(`${s.name}:param:options`))
+        .flatMap((s) => s.parameters.filter((p) => p.name === "options").map((p) => p.doc));
+      expect(optionDocs.length).toBeGreaterThan(0);
+      for (const doc of optionDocs) {
+        expect(doc).toContain(PARAM_DOC_REWRITES.get("go.get:param:options")?.to ?? "");
+        expect(doc).not.toContain("(1 based)");
+      }
+      expect(apiModuleMarkdown(page)).not.toContain("(1 based)");
+    }
   });
 
   test("no rendered zero-argument row on any real page carries a parameter table", () => {
