@@ -1,8 +1,20 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
+import { join } from "node:path";
 import { type MiniElement, parseHtml } from "./__fixtures__/mini-dom";
-import { pageHeadings } from "./headings";
+import { apiPageMarkdown } from "./api-page-render";
+import {
+  type ApiSymbol,
+  apiModuleSymbols,
+  groupOverloadForms,
+  overloadFormCodes,
+  overloadHeading,
+  splitCallForm,
+} from "./api-surface";
+import { loadCombinedSurface } from "./api-surface-loader";
+import { combinedNamespaceToApiPage } from "./combined-surface";
+import { allPageHeadings, pageHeadings, slugify } from "./headings";
 import { renderMarkdown } from "./markdown";
 
 describe("renderMarkdown", () => {
@@ -734,5 +746,199 @@ describe("renderMarkdown inline SVG figures", () => {
     await expect(
       renderMarkdown("![Cap](img/vectors/missing.svg#inline)\n", { readInlineSvg }),
     ).rejects.toThrow("img/vectors/missing.svg");
+  });
+});
+
+// The visible characters of a highlighted code span, each with the
+// `--shiki-light` color it renders in. The overload count badge is left out:
+// it is not signature text.
+function coloredChars(html: string): { text: string; colors: string[] } {
+  const stack: (string | null)[] = [];
+  let text = "";
+  const colors: string[] = [];
+  for (const match of html.matchAll(/<span([^>]*)>|<\/span>|<[^>]+>|([^<]+)/g)) {
+    if (match[0] === "</span>") stack.pop();
+    else if (match[1] !== undefined) {
+      const inherited = stack[stack.length - 1] ?? "";
+      if (match[1].includes("api-overload-count")) stack.push(null);
+      else stack.push(match[1].match(/--shiki-light:([^;"]+)/)?.[1] ?? inherited);
+    } else if (match[2] !== undefined && stack[stack.length - 1] !== null) {
+      const decoded = match[2]
+        .replace(/&#x([0-9a-f]+);/gi, (_, hex: string) => String.fromCodePoint(parseInt(hex, 16)))
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&amp;/g, "&");
+      for (const ch of decoded) {
+        text += ch;
+        colors.push(stack[stack.length - 1] ?? "");
+      }
+    }
+  }
+  return { text, colors };
+}
+
+const SIGNATURE_CODE_RE = /<code class="api-signature shiki">([\s\S]*?)<\/code>/g;
+
+describe("overload block headings and form lines (committed artifacts)", () => {
+  const pages = loadCombinedSurface(join(import.meta.dir, "../../../types")).namespaces.map(
+    combinedNamespaceToApiPage,
+  );
+  const rendered = ["b2d.shape", "vmath"].map((namespace) => {
+    const page = pages.find((p) => p.namespace === namespace);
+    if (!page) throw new Error(`namespace ${namespace} missing from the Combined surface`);
+    const rows = apiModuleSymbols(page, page.translations, page.signatures).filter(
+      (s) => s.kind === "function",
+    );
+    return { page, groups: groupOverloadForms(rows) };
+  });
+  const htmlOf = new Map<string, Promise<string>>();
+  const render = (namespace: string, markdown: () => string): Promise<string> => {
+    let html = htmlOf.get(namespace);
+    if (html === undefined) {
+      html = renderMarkdown(markdown(), { highlightSignatureHeadings: true });
+      htmlOf.set(namespace, html);
+    }
+    return html;
+  };
+  const pageHtml = (page: (typeof rendered)[number]["page"]) =>
+    render(page.namespace, () => apiPageMarkdown(page, (t) => t, { combinedMarkers: true }));
+  // The colors a lone signature heading gives each character: the reference a
+  // fragment of that signature must match wherever it renders on its own.
+  const signatureColors = async (signature: string) => {
+    const html = await renderMarkdown(`### \`${signature}\`\n`, {
+      highlightSignatureHeadings: true,
+    });
+    const code = [...html.matchAll(SIGNATURE_CODE_RE)][0]?.[1] ?? "";
+    return coloredChars(code);
+  };
+  const h3Of = (html: string, id: string): string => {
+    const start = html.indexOf(`<h3 id="${id}"`);
+    if (start < 0) throw new Error(`no h3 with id ${id}`);
+    return html.slice(start, html.indexOf("</h3>", start));
+  };
+  const multi = (groups: ApiSymbol[][]) => groups.filter((g) => g.length > 1);
+
+  test("each overload heading splices its count badge into the colored signature", async () => {
+    let checked = 0;
+    for (const { page, groups } of rendered) {
+      const html = await pageHtml(page);
+      for (const group of multi(groups)) {
+        const [head] = group;
+        if (head === undefined) continue;
+        const heading = overloadHeading(group);
+        const h3 = h3Of(html, slugify(heading));
+        const codes = [...h3.matchAll(SIGNATURE_CODE_RE)].map((m) => m[1] ?? "");
+        expect({ name: head.name, codes: codes.length }).toEqual({ name: head.name, codes: 1 });
+        const code = codes[0] ?? "";
+        expect({ name: head.name, text: coloredChars(code).text }).toEqual({
+          name: head.name,
+          text: heading.replace("(...)", "()"),
+        });
+        const badge = code.match(
+          /<span class="api-overload-count" data-toc-text="\.\.\.">(\d+) overloads<\/span>/,
+        );
+        expect({ name: head.name, count: badge?.[1] }).toEqual({
+          name: head.name,
+          count: String(group.length),
+        });
+        const [before, after] = code.split(badge?.[0] ?? "\u0000");
+        expect({ name: head.name, before: coloredChars(before ?? "").text }).toEqual({
+          name: head.name,
+          before: `${head.name}(`,
+        });
+        expect(coloredChars(after ?? "").text.startsWith(")")).toBe(true);
+        checked += 1;
+      }
+    }
+    expect(checked).toBeGreaterThan(10);
+  });
+
+  test("form lines, overview items and the heading color each character as the full signature does", async () => {
+    let checked = 0;
+    for (const { page, groups } of rendered) {
+      const html = await pageHtml(page);
+      const overview = html.slice(
+        html.indexOf('<div class="api-overview"'),
+        html.indexOf("</div>", html.indexOf('<div class="api-overview"')),
+      );
+      const overviewCodes = [...overview.matchAll(SIGNATURE_CODE_RE)].map((m) => m[1] ?? "");
+      let cursor = 0;
+      for (const group of groups) {
+        const [head] = group;
+        if (head === undefined) continue;
+        cursor += 1;
+        if (group.length === 1) continue;
+        const codes = overloadFormCodes(group);
+        const h3 = h3Of(html, slugify(overloadHeading(group)));
+        const blockStart = html.indexOf(h3);
+        const block = html.slice(blockStart, html.indexOf("</ol>", blockStart));
+        const formLines = block
+          .split('<li class="api-overload">')
+          .slice(1)
+          .map((item) => [...item.matchAll(SIGNATURE_CODE_RE)][0]?.[1]);
+        const children = overviewCodes.slice(cursor, cursor + codes.length);
+        cursor += codes.length;
+        for (const [index, code] of codes.entries()) {
+          const expected = await signatureColors(`${head.name}${code}`);
+          const want = {
+            text: expected.text.slice(head.name.length),
+            colors: expected.colors.slice(head.name.length),
+          };
+          for (const [where, got] of [
+            ["form line", formLines[index]],
+            ["overview item", children[index]],
+          ] as const) {
+            expect({ name: head.name, where, index, ...coloredChars(got ?? "") }).toEqual({
+              name: head.name,
+              where,
+              index,
+              ...want,
+            });
+          }
+        }
+        // A generic head (`vmath.lerp<T ...>`) makes Shiki read the name as a
+        // plain identifier; the heading drops it, so it matches a plain call form.
+        const plain = group.find((s) => splitCallForm(s).params.startsWith("(")) ?? head;
+        const full = await signatureColors(plain.signature);
+        const heading = coloredChars([...h3.matchAll(SIGNATURE_CODE_RE)][0]?.[1] ?? "");
+        const returns = overloadHeading(group).slice(`${head.name}(...)`.length);
+        const n = head.name.length;
+        expect({ name: head.name, colors: heading.colors.slice(0, n) }).toEqual({
+          name: head.name,
+          colors: full.colors.slice(0, n),
+        });
+        if (returns) {
+          expect({ name: head.name, colors: heading.colors.slice(-returns.length) }).toEqual({
+            name: head.name,
+            colors: full.colors.slice(-returns.length),
+          });
+        }
+        checked += 1;
+      }
+      expect({ namespace: page.namespace, cursor }).toEqual({
+        namespace: page.namespace,
+        cursor: overviewCodes.length,
+      });
+    }
+    expect(checked).toBeGreaterThan(10);
+  });
+
+  test("the outline reads each overload heading as its heading text", async () => {
+    let checked = 0;
+    for (const { page, groups } of rendered) {
+      // The version-dot glyphs every Combined heading ends with are not in scope.
+      const html = (await pageHtml(page)).replace(
+        /<span class="api-badge-dot[^"]*"[^>]*>[^<]*<\/span>/g,
+        "",
+      );
+      const headings = allPageHeadings(html);
+      for (const group of multi(groups)) {
+        const id = slugify(overloadHeading(group));
+        expect(headings.find((h) => h.id === id)?.text).toBe(overloadHeading(group));
+        checked += 1;
+      }
+    }
+    expect(checked).toBeGreaterThan(10);
   });
 });

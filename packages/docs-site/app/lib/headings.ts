@@ -28,6 +28,9 @@ export interface Heading extends AnyHeading {
 
 const HEADING_RE = /<h([1-6])(\s+[^>]*)?>([\s\S]*?)<\/h\1>/gi;
 const TAG_RE = /<[^>]+>/g;
+// An element standing in for other text in the outline (an overload block's
+// `N overloads` badge reads as the `...` it replaces).
+const TOC_TEXT_RE = /<(\w+)\b[^>]*\sdata-toc-text="([^"]*)"[^>]*>[\s\S]*?<\/\1>/g;
 const ID_RE = /\sid="([^"]+)"/i;
 const NAMED_ENTITY: Record<string, string> = {
   "&lt;": "<",
@@ -67,7 +70,7 @@ export function allPageHeadings(html: string): AnyHeading[] {
     const rawAttrs = match[2] ?? "";
     const inner = match[3] ?? "";
     const idMatch = rawAttrs.match(ID_RE);
-    const text = decodeEntities(inner.replace(TAG_RE, "")).trim();
+    const text = decodeEntities(inner.replace(TOC_TEXT_RE, "$2").replace(TAG_RE, "")).trim();
     if (!text) continue;
     out.push({
       text,

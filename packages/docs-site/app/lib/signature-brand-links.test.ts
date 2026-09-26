@@ -58,6 +58,25 @@ describe("splitSignatureBrandLinks", () => {
     expect(hasNestedAnchor(out)).toBe(false);
   });
 
+  test("a non-token span inside the code (an overload count badge) stays in its fragment", () => {
+    const badge = '<span class="api-overload-count" data-toc-text="...">2 overloads</span>';
+    const input = `${HEADING_OPEN}${code(
+      span(IDENT, "factory.") +
+        span(FN, "create") +
+        span(IDENT, "(") +
+        badge +
+        span(IDENT, "): Opaque"),
+    )}${ICON}</a>`;
+    const out = splitSignatureBrandLinks(input, OPAQUE_LINKS);
+    expect(out).toBe(
+      '<span class="signature-split">' +
+        `${HEADING_OPEN}${code(span(IDENT, "factory.") + span(FN, "create") + span(IDENT, "(") + badge + span(IDENT, "): "))}</a>` +
+        BRAND_ANCHOR +
+        `${HEADING_OPEN}${code("")}${ICON}</a>` +
+        "</span>",
+    );
+  });
+
   test("overview wrapper: brand links as a sibling, fragments stay wrapped in the #anchor link", () => {
     const out = splitSignatureBrandLinks(overviewInput, OPAQUE_LINKS);
     const expected =

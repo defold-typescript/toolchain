@@ -42,8 +42,9 @@ function callForm(signature: string): string {
 }
 
 // Every call form the page renders, in order: a `### \`<signature>\`` heading's
-// own, or, under an overload block's `### \`<fqn>(...)\`` heading, each listed
-// form's. The trailing availability dots are not part of the signature.
+// own, or, under an overload block's `### \`<fqn>(...)<returns>\`` heading, each
+// listed form's. The trailing count badge and availability dots are not part of
+// the signature.
 function renderedCallForms(markdown: string): string[] {
   const out: string[] = [];
   const lines = markdown.split("\n");
@@ -51,7 +52,8 @@ function renderedCallForms(markdown: string): string[] {
   for (const [index, line] of lines.entries()) {
     const heading = line.match(/^### `(.+?)`(?: .*)?$/)?.[1];
     if (heading !== undefined) {
-      group = heading.endsWith("(...)") ? heading.slice(0, -"(...)".length) : null;
+      const dots = heading.indexOf("(...)");
+      group = dots < 0 ? null : heading.slice(0, dots);
       if (group === null) out.push(callForm(heading));
       continue;
     }
