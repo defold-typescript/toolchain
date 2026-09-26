@@ -149,6 +149,46 @@ describe("array index option lowering", () => {
     `);
   });
 
+  test("offsets only the effective index when a spread's index is shadowed", () => {
+    const result = transpile(
+      source([
+        "declare const maybe: number | undefined;",
+        "declare const w: { key: string };",
+        'go.set(url, "tint", tint, { ...{ index: maybe }, index: 0 });',
+        'go.set(url, "tint", tint, { ...{ index: 5 }, index: 0 });',
+        'go.set(url, "tint", tint, { ...w, index: 0, ...{ key: "x" } });',
+      ]),
+    );
+    expect(result.diagnostics).toEqual([]);
+    expect(result.lua).toMatchInlineSnapshot(`
+      "local ____lualib = require("lualib_bundle")
+      local __TS__ObjectAssign = ____lualib.__TS__ObjectAssign
+      local ____exports = {}
+      local tint = vmath.vector4(1, 0, 0, 1)
+      local node = gui.get_node("box")
+      go.set(
+          url,
+          "tint",
+          tint,
+          __TS__ObjectAssign({index = maybe}, {index = 1})
+      )
+      go.set(
+          url,
+          "tint",
+          tint,
+          __TS__ObjectAssign({index = 5}, {index = 1})
+      )
+      go.set(
+          url,
+          "tint",
+          tint,
+          __TS__ObjectAssign({}, w, {index = 1}, {key = "x"})
+      )
+      return ____exports
+      "
+    `);
+  });
+
   test("rejects an options value the lowering cannot see into", () => {
     const cases: [string, string][] = [
       [
