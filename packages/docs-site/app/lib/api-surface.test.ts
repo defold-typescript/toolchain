@@ -3948,6 +3948,50 @@ describe("rendered /api pages keep every list marker beside its value", () => {
   });
 });
 
+describe("rendered /api pages print characters, not entity source, inside code", () => {
+  // Markdown decodes an entity in prose but prints it verbatim inside a code
+  // span or a fence, so an undecoded one there reaches the reader as `&#x22C5;`.
+  const ENTITY = /&(?:#[xX][0-9a-fA-F]+|#\d+|[a-zA-Z][a-zA-Z0-9]*);/;
+  const entityCode = (md: string): string[] => {
+    const found: string[] = [];
+    let open = false;
+    for (const line of md.split("\n")) {
+      if (line.startsWith("```")) {
+        open = !open;
+        continue;
+      }
+      if (open) {
+        if (ENTITY.test(line)) found.push(line);
+        continue;
+      }
+      for (const [span] of line.matchAll(/`[^`]+`/g)) {
+        if (ENTITY.test(span)) found.push(span);
+      }
+    }
+    return found;
+  };
+
+  const surfaces: { label: string; pages: ApiPage[] }[] = [
+    { label: "canonical", pages: canonicalApiPages(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR) },
+    ...versionsWithDiskFixtures(REAL_TYPES_DIR).map((version) => ({
+      label: version.id,
+      pages: loadApiSurfaceForVersion(REAL_TYPES_DIR, version.id),
+    })),
+  ];
+
+  test.each(
+    surfaces.map((surface) => [surface.label, surface] as const),
+  )("%s: no code span or fence holds an undecoded HTML entity", (_label, surface) => {
+    const offenders: string[] = [];
+    for (const page of surface.pages) {
+      for (const code of entityCode(apiModuleMarkdown(page, page.translations))) {
+        offenders.push(`${page.route}: ${code}`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+});
+
 describe("overload grouping (committed artifacts)", () => {
   const combinedPages = loadCombinedSurface(REAL_TYPES_DIR).namespaces.map(
     combinedNamespaceToApiPage,

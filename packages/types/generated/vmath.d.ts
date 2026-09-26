@@ -49,7 +49,7 @@ declare global {
     function conj(q1: Quaternion): Quaternion;
     /**
      * Given two linearly independent vectors P and Q, the cross product,
-     * P &#x00D7; Q, is a vector that is perpendicular to both P and Q and
+     * P × Q, is a vector that is perpendicular to both P and Q and
      * therefore normal to the plane containing them.
      * If the two vectors have the same direction (or have the exact
      * opposite direction from one another, i.e. are not linearly independent)
@@ -70,8 +70,8 @@ declare global {
     function cross(v1: Vector3, v2: Vector3): Vector3;
     /**
      * The returned value is a scalar defined as:
-     * `P &#x22C5; Q = |P| |Q| cos &#x03B8;`
-     * where &#x03B8; is the angle between the vectors P and Q.
+     * `P ⋅ Q = |P| |Q| cos θ`
+     * where θ is the angle between the vectors P and Q.
      *
      * - If the dot product is positive then the angle between the vectors is below 90 degrees.
      *
@@ -437,8 +437,8 @@ declare global {
     /**
      * Calculates the extent the projection of the first vector onto the second.
      * The returned value is a scalar p defined as:
-     * `p = |P| cos &#x03B8; / |Q|`
-     * where &#x03B8; is the angle between the vectors P and Q.
+     * `p = |P| cos θ / |Q|`
+     * where θ is the angle between the vectors P and Q.
      *
      * @param v1 - vector to be projected on the second
      * @param v2 - vector onto which the first will be projected, must not have zero length

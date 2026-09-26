@@ -55,6 +55,40 @@ describe("htmlToDocText", () => {
     expect(htmlToDocText("&lt;a&gt; &amp; &#39;b&#39; &quot;c&quot;")).toBe("<a> & 'b' \"c\"");
   });
 
+  test("decodes a hex entity inside a code span", () => {
+    expect(htmlToDocText("<code>P &#x22C5; Q = |P| |Q| cos &#x03B8;</code>")).toBe(
+      "`P ⋅ Q = |P| |Q| cos θ`",
+    );
+  });
+
+  test("hex decoding ignores the case of the x and the digits", () => {
+    expect(htmlToDocText("&#X3b8;")).toBe("θ");
+    expect(htmlToDocText("&#x03B8;")).toBe("θ");
+  });
+
+  test("decodes an astral code point", () => {
+    expect(htmlToDocText("&#x1F600; &#128512;")).toBe("\u{1F600} \u{1F600}");
+  });
+
+  test("named entities decode in prose and inside a code span", () => {
+    expect(htmlToDocText("2 &times; 3 &copy;")).toBe("2 × 3 ©");
+    expect(htmlToDocText("<code>2 &times; 3 &copy;</code>")).toBe("`2 × 3 ©`");
+  });
+
+  test("double-encoded text is decoded once", () => {
+    expect(htmlToDocText("&amp;times;")).toBe("&times;");
+    expect(htmlToDocText("&amp;#x22C5;")).toBe("&#x22C5;");
+    expect(htmlToDocText("&#38;amp;")).toBe("&amp;");
+  });
+
+  test("an unknown named entity is left unchanged", () => {
+    expect(htmlToDocText("&notarealentity;")).toBe("&notarealentity;");
+  });
+
+  test("a decoded character cannot close the comment", () => {
+    expect(htmlToDocText("&#x2A;/")).toBe("*\\/");
+  });
+
   test("a literal */ is escaped so it cannot close a JSDoc comment", () => {
     const out = htmlToDocText("ends with */ here");
     expect(out).not.toContain("*/");
@@ -146,6 +180,10 @@ describe("htmlToCodeText", () => {
 
   test("decodes HTML entities in code", () => {
     expect(htmlToCodeText('<code><span class="s2">&quot;id&quot;</span></code>')).toBe('"id"');
+  });
+
+  test("decodes hex and named entities in code", () => {
+    expect(htmlToCodeText("a &#x22C5; b &times; c")).toBe("a ⋅ b × c");
   });
 
   test("a literal */ inside code is escaped", () => {
