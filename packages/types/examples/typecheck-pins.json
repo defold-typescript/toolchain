@@ -37,12 +37,6 @@
       "text": "Type 'number' has no properties in common with type '{ distance?: number; frame?: number; }'."
     }
   ],
-  "defold-1.12.4/kinds/gui-script:resource.set:fd3445f93ecdd85e": [
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    }
-  ],
   "defold-1.12.4/kinds/gui-script:socket.protect:478d4974b491bda9": [
     {
       "code": 2488,
@@ -149,12 +143,6 @@
     {
       "code": 2322,
       "text": "Type 'unknown' is not assignable to type 'Matrix4'."
-    }
-  ],
-  "defold-1.12.4/kinds/render-script:resource.set:fd3445f93ecdd85e": [
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
     }
   ],
   "defold-1.12.4/kinds/render-script:socket.protect:478d4974b491bda9": [
@@ -329,18 +317,6 @@
       "text": "Type '{ name: Hash<\"rgba\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
     }
   ],
-  "defold-1.12.4/kinds/script:resource.get_buffer:ed7d361c7f5d2e35": [
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    }
-  ],
-  "defold-1.12.4/kinds/script:resource.set:fd3445f93ecdd85e": [
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    }
-  ],
   "defold-1.12.4/kinds/script:resource.set_atlas:58ec7c40c31875a4": [
     {
       "code": 2345,
@@ -349,22 +325,8 @@
   ],
   "defold-1.12.4/kinds/script:resource.set_buffer:a52fd8ac7453f601": [
     {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    },
-    {
       "code": 2559,
       "text": "Type '{ name: Hash<\"position\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
-    }
-  ],
-  "defold-1.12.4/kinds/script:resource.set_texture:02d7f2ec29971bf1": [
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
     }
   ],
   "defold-1.12.4/kinds/script:resource.set_texture:34dce6f8362c0e92": [
@@ -375,19 +337,11 @@
   ],
   "defold-1.12.4/kinds/script:resource.set_texture:b4098f0f37b9c1d0": [
     {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    },
-    {
       "code": 2559,
       "text": "Type '{ name: Hash<\"rgb\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
     }
   ],
   "defold-1.12.4/kinds/script:resource.set_texture:fe312c35ef2ab0f4": [
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    },
     {
       "code": 2559,
       "text": "Type '{ name: Hash<\"rgb\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
@@ -499,12 +453,6 @@
     {
       "code": 2559,
       "text": "Type 'number' has no properties in common with type '{ distance?: number; frame?: number; }'."
-    }
-  ],
-  "defold-1.12.4:resource.set:fd3445f93ecdd85e": [
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
     }
   ],
   "defold-1.12.4:socket.protect:478d4974b491bda9": [
@@ -639,12 +587,6 @@
       "text": "Type 'number' has no properties in common with type '{ distance?: number; frame?: number; }'."
     }
   ],
-  "defold-1.13.0/kinds/gui-script:resource.set:fd3445f93ecdd85e": [
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    }
-  ],
   "defold-1.13.0/kinds/gui-script:socket.protect:478d4974b491bda9": [
     {
       "code": 2488,
@@ -777,12 +719,6 @@
     {
       "code": 2322,
       "text": "Type 'unknown' is not assignable to type 'Matrix4'."
-    }
-  ],
-  "defold-1.13.0/kinds/render-script:resource.set:fd3445f93ecdd85e": [
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
     }
   ],
   "defold-1.13.0/kinds/render-script:socket.protect:478d4974b491bda9": [
@@ -983,18 +919,6 @@
       "text": "Type '{ name: Hash<\"rgba\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
     }
   ],
-  "defold-1.13.0/kinds/script:resource.get_buffer:ed7d361c7f5d2e35": [
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    }
-  ],
-  "defold-1.13.0/kinds/script:resource.set:fd3445f93ecdd85e": [
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    }
-  ],
   "defold-1.13.0/kinds/script:resource.set_atlas:58ec7c40c31875a4": [
     {
       "code": 2345,
@@ -1003,22 +927,8 @@
   ],
   "defold-1.13.0/kinds/script:resource.set_buffer:a52fd8ac7453f601": [
     {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    },
-    {
       "code": 2559,
       "text": "Type '{ name: Hash<\"position\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
-    }
-  ],
-  "defold-1.13.0/kinds/script:resource.set_texture:02d7f2ec29971bf1": [
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
     }
   ],
   "defold-1.13.0/kinds/script:resource.set_texture:15829bfe1b186bc3": [
@@ -1029,19 +939,11 @@
   ],
   "defold-1.13.0/kinds/script:resource.set_texture:b4098f0f37b9c1d0": [
     {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    },
-    {
       "code": 2559,
       "text": "Type '{ name: Hash<\"rgb\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
     }
   ],
   "defold-1.13.0/kinds/script:resource.set_texture:fe312c35ef2ab0f4": [
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    },
     {
       "code": 2559,
       "text": "Type '{ name: Hash<\"rgb\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
@@ -1179,12 +1081,6 @@
     {
       "code": 2559,
       "text": "Type 'number' has no properties in common with type '{ distance?: number; frame?: number; }'."
-    }
-  ],
-  "defold-1.13.0:resource.set:fd3445f93ecdd85e": [
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
     }
   ],
   "defold-1.13.0:socket.protect:478d4974b491bda9": [
@@ -1337,12 +1233,6 @@
       "text": "Type 'number' has no properties in common with type '{ distance?: number; frame?: number; }'."
     }
   ],
-  "defold-1.13.1/kinds/gui-script:resource.set:fd3445f93ecdd85e": [
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    }
-  ],
   "defold-1.13.1/kinds/gui-script:socket.protect:478d4974b491bda9": [
     {
       "code": 2488,
@@ -1485,12 +1375,6 @@
     {
       "code": 2322,
       "text": "Type 'unknown' is not assignable to type 'Matrix4'."
-    }
-  ],
-  "defold-1.13.1/kinds/render-script:resource.set:fd3445f93ecdd85e": [
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
     }
   ],
   "defold-1.13.1/kinds/render-script:socket.protect:478d4974b491bda9": [
@@ -1701,18 +1585,6 @@
       "text": "Type '{ name: Hash<\"rgba\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
     }
   ],
-  "defold-1.13.1/kinds/script:resource.get_buffer:ed7d361c7f5d2e35": [
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    }
-  ],
-  "defold-1.13.1/kinds/script:resource.set:fd3445f93ecdd85e": [
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    }
-  ],
   "defold-1.13.1/kinds/script:resource.set_atlas:58ec7c40c31875a4": [
     {
       "code": 2345,
@@ -1721,22 +1593,8 @@
   ],
   "defold-1.13.1/kinds/script:resource.set_buffer:a52fd8ac7453f601": [
     {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    },
-    {
       "code": 2559,
       "text": "Type '{ name: Hash<\"position\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
-    }
-  ],
-  "defold-1.13.1/kinds/script:resource.set_texture:02d7f2ec29971bf1": [
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
     }
   ],
   "defold-1.13.1/kinds/script:resource.set_texture:15829bfe1b186bc3": [
@@ -1747,19 +1605,11 @@
   ],
   "defold-1.13.1/kinds/script:resource.set_texture:b4098f0f37b9c1d0": [
     {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    },
-    {
       "code": 2559,
       "text": "Type '{ name: Hash<\"rgb\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
     }
   ],
   "defold-1.13.1/kinds/script:resource.set_texture:fe312c35ef2ab0f4": [
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    },
     {
       "code": 2559,
       "text": "Type '{ name: Hash<\"rgb\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
@@ -2039,18 +1889,6 @@
       "text": "Type '{ name: Hash<\"rgba\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
     }
   ],
-  "defold-1.13.1:resource.get_buffer:ed7d361c7f5d2e35": [
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    }
-  ],
-  "defold-1.13.1:resource.set:fd3445f93ecdd85e": [
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    }
-  ],
   "defold-1.13.1:resource.set_atlas:58ec7c40c31875a4": [
     {
       "code": 2345,
@@ -2059,22 +1897,8 @@
   ],
   "defold-1.13.1:resource.set_buffer:a52fd8ac7453f601": [
     {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    },
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    },
-    {
       "code": 2559,
       "text": "Type '{ name: Hash<\"position\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_FLOAT32\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
-    }
-  ],
-  "defold-1.13.1:resource.set_texture:02d7f2ec29971bf1": [
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
     }
   ],
   "defold-1.13.1:resource.set_texture:15829bfe1b186bc3": [
@@ -2085,19 +1909,11 @@
   ],
   "defold-1.13.1:resource.set_texture:b4098f0f37b9c1d0": [
     {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    },
-    {
       "code": 2559,
       "text": "Type '{ name: Hash<\"rgb\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."
     }
   ],
   "defold-1.13.1:resource.set_texture:fe312c35ef2ab0f4": [
-    {
-      "code": 2345,
-      "text": "Argument of type 'number | boolean | Hash<string> | Url | Vector3 | Quaternion | Vector4' is not assignable to parameter of type 'string | Hash<string>'.   Type 'number' is not assignable to type 'string | Hash<string>'."
-    },
     {
       "code": 2559,
       "text": "Type '{ name: Hash<\"rgb\">; type: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\"; }; count: number; }[]' has no properties in common with type '{ name?: string | Hash<string>; type?: Opaque<\"constant\">; count?: number; }'."

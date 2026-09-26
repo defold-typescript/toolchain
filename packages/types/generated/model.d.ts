@@ -244,7 +244,7 @@ declare global {
       /**
        * The texture hash id of the model. Used for getting/setting model texture for unit 0-7
        */
-      textureN: Hash;
+      [key: `texture${number}`]: Hash;
     }
   }
 }

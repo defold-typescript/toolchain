@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import apiTargets from "../api-targets.json" with { type: "json" };
-import { PROPERTY_TYPE_CORRECTIONS } from "./emit-dts";
+import { PROPERTY_KEY_PATTERNS, PROPERTY_TYPE_CORRECTIONS } from "./emit-dts";
 
 const PKG = resolve(import.meta.dir, "..");
 
@@ -34,6 +34,7 @@ function upstreamToken(element: RefDocElement): string | undefined {
 interface Sighting {
   readonly target: string;
   readonly token: string | undefined;
+  readonly brief: string;
 }
 
 // Every place a corrected property is declared across the vendored ref-docs the
@@ -52,7 +53,7 @@ function sightings(key: string): Sighting[] {
       const doc = JSON.parse(readFileSync(path, "utf8")) as { elements?: RefDocElement[] };
       for (const element of doc.elements ?? []) {
         if (element.type !== "PROPERTY" || element.name !== property) continue;
-        out.push({ target: target.id, token: upstreamToken(element) });
+        out.push({ target: target.id, token: upstreamToken(element), brief: element.brief ?? "" });
       }
     }
   }
@@ -87,5 +88,27 @@ describe("property-type correction provenance", () => {
       .filter(([, correction]) => correction.reason.trim().length === 0)
       .map(([key]) => key);
     expect(unexplained).toEqual([]);
+  });
+});
+
+describe("property key pattern provenance", () => {
+  const entries = [...PROPERTY_KEY_PATTERNS.entries()];
+
+  test("the pattern set is non-empty and every entry resolves to a real ref-doc property", () => {
+    expect(entries.length).toBeGreaterThan(0);
+    const unresolved = entries.filter(([key]) => sightings(key).length === 0).map(([key]) => key);
+    expect(unresolved).toEqual([]);
+  });
+
+  test("every vendored ref-doc still states the range the pattern stands for", () => {
+    const drifted: string[] = [];
+    for (const [key, entry] of entries) {
+      for (const sighting of sightings(key)) {
+        if (!sighting.brief.includes(entry.evidence)) {
+          drifted.push(`${key} in ${sighting.target}: brief no longer says "${entry.evidence}"`);
+        }
+      }
+    }
+    expect(drifted).toEqual([]);
   });
 });

@@ -40,6 +40,7 @@ import "../types";
 import "../vmath";
 import "../window";
 import "../zlib";
+import "../../src/component-properties";
 import "../../src/custom-messages";
 import "../../src/engine-globals";
 import "../../src/go-overloads";
