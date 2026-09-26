@@ -673,6 +673,29 @@ function projectParams(
 
 /**
  * Argument count of the outermost call list in a rendered signature, or `null`
+ * when the text is not a call at all. See {@link outerCallParams}.
+ */
+export function outerCallArity(signature: string): number | null {
+  return outerCallParams(signature)?.length ?? null;
+}
+
+/** One slot of a rendered signature's outer call list. */
+export interface CallSlot {
+  name: string;
+  isOptional: boolean;
+  type: string;
+}
+
+/**
+ * Parameter names of the outermost call list in a rendered signature, or `null`
+ * when the text is not a call at all. See {@link outerCallSlots}.
+ */
+export function outerCallParams(signature: string): string[] | null {
+  return outerCallSlots(signature)?.map((slot) => slot.name) ?? null;
+}
+
+/**
+ * Slots of the outermost call list in a rendered signature, or `null`
  * when the text is not a call at all. A `: ` before any `(` or `<` marks a
  * property annotation, so a function-typed value is never read as a call list;
  * only the first parenthesized list is read, so a curried return type
@@ -680,7 +703,7 @@ function projectParams(
  * rather than the arity of the function it returns. This is a property of the
  * rendered signature text, not of the ref-doc model.
  */
-export function outerCallArity(signature: string): number | null {
+export function outerCallSlots(signature: string): CallSlot[] | null {
   let i = 0;
   for (; i < signature.length; i++) {
     const ch = signature[i];
@@ -706,8 +729,9 @@ export function outerCallArity(signature: string): number | null {
   if (signature[i] !== "(") return null;
 
   let depth = 0;
-  let commas = 0;
+  let start = i + 1;
   let hasArguments = false;
+  const segments: string[] = [];
   for (; i < signature.length; i++) {
     const ch = signature[i] as string;
     if (ch === "=" && signature[i + 1] === ">") {
@@ -715,9 +739,20 @@ export function outerCallArity(signature: string): number | null {
     } else if (ch === "(" || ch === "<" || ch === "[" || ch === "{") {
       depth++;
     } else if (ch === ")" || ch === ">" || ch === "]" || ch === "}") {
-      if (--depth === 0) return hasArguments ? commas + 1 : 0;
+      if (--depth === 0) {
+        if (hasArguments) segments.push(signature.slice(start, i));
+        return segments.map((segment) => {
+          const slot = segment.trim().match(/^(?:\.\.\.)?([\w$]*)(\??)\s*(?::([\s\S]*))?$/);
+          return {
+            name: slot?.[1] ?? "",
+            isOptional: slot?.[2] === "?",
+            type: slot?.[3]?.trim() ?? "",
+          };
+        });
+      }
     } else if (depth === 1 && ch === ",") {
-      commas++;
+      segments.push(signature.slice(start, i));
+      start = i + 1;
     } else if (!/\s/.test(ch)) {
       hasArguments = true;
     }
@@ -727,18 +762,29 @@ export function outerCallArity(signature: string): number | null {
 
 /**
  * Pair each authored override row with the ref-doc entry its call shape selects,
- * or `null` when the shapes cannot pick one out unambiguously — pairwise-distinct
+ * or `null` when the shapes cannot pick one out unambiguously. Parameter names
+ * decide first: `vmath.lerp`/`vmath.slerp` entries are arity-identical but name
+ * their slots apart (`v1`/`q1`/`n1`). Otherwise arity decides — pairwise-distinct
  * entry arities, and every row's arity equal to exactly one entry's. Rows may
  * outnumber entries: `msg.url`'s receiver-typed forms share the arity, and so the
- * entry, of the plain form they mirror. `vmath.lerp`/`vmath.slerp` fail the
- * distinctness test (their entries are arity-identical), so they keep the
- * entry-0 projection.
+ * entry, of the plain form they mirror.
  */
 function pairFixtureEntries(
   entries: readonly ApiFunction[],
   rowSignatures: readonly string[],
 ): readonly ApiFunction[] | null {
   if (entries.length > rowSignatures.length) return null;
+  const byNames = rowSignatures.map((signature) => {
+    const names = outerCallParams(signature);
+    const hits = entries.filter(
+      (e) =>
+        names !== null &&
+        e.parameters.length === names.length &&
+        e.parameters.every((p, index) => p.name === names[index]),
+    );
+    return hits.length === 1 ? hits[0] : undefined;
+  });
+  if (byNames.every((entry) => entry !== undefined)) return byNames;
   const byArity = new Map(entries.map((e) => [e.parameters.length, e] as const));
   if (byArity.size !== entries.length) return null;
   const paired: ApiFunction[] = [];
@@ -1125,6 +1171,14 @@ export function apiModuleSymbols(
       return entry ? platformDocText(entry.description || entry.brief) : fixtureDoc;
     };
     const primaryEntry = rowEntry(0);
+    // A paired row carries its own entry's example. The first row to reach an
+    // entry takes it, so rows sharing one (`msg.url`) never repeat it; unpaired,
+    // the example stays on the primary row.
+    const rowExample = (i: number): string | undefined => {
+      const entry = paired?.[i];
+      if (entry === undefined) return i === 0 ? exampleMarkdownFor(fn, translations) : undefined;
+      return paired?.indexOf(entry) === i ? exampleMarkdownFor(entry, translations) : undefined;
+    };
     // Slots resolve through the same exact identity the authoritative signature
     // does, and are used only on a row that actually renders that signature. A row
     // whose signature fell back to the token render keeps token-derived slots too,
@@ -1144,7 +1198,7 @@ export function apiModuleSymbols(
         ? projectParams(primaryEntry.returnValues, mapType, primarySlots, "return")
         : [],
     };
-    const example = exampleMarkdownFor(fn, translations);
+    const example = rowExample(0);
     if (example) symbol.exampleMarkdown = example;
     // Deprecation is a fact about the symbol, not about one overload identity,
     // so every authored-override row below carries it too.
@@ -1165,8 +1219,8 @@ export function apiModuleSymbols(
     // Each remaining authored overload renders as its own row, reusing the
     // distinct-row overload pattern: its own `docs[k+1]` prose (else its paired
     // ref-doc description), and the parameter/return tables only when an entry
-    // is paired to it or the primary row's call shape could not hold them. The
-    // example stays on the primary row.
+    // is paired to it or the primary row's call shape could not hold them. Its
+    // example follows the same pairing (`rowExample`).
     // A generated declaration's further arms render as their own rows: shared
     // prose, the declaration's own availability, and no tables unless a curated
     // first-slot alternative names the arm's leading arguments. The arguments
@@ -1206,6 +1260,7 @@ export function apiModuleSymbols(
       overrideEmitted.add(fn.name);
       for (const [k, signature] of ov.signatures.slice(1).entries()) {
         const entry = rowEntry(k + 1);
+        const example = rowExample(k + 1);
         symbols.push({
           kind: "function",
           name: fn.name,
@@ -1215,6 +1270,7 @@ export function apiModuleSymbols(
             ? projectParams(entry.parameters, mapType, undefined, "param", fn.name)
             : [],
           returnValues: entry ? projectParams(entry.returnValues, mapType) : [],
+          ...(example ? { exampleMarkdown: example } : {}),
           ...(fn.deprecated !== undefined ? { deprecated: fn.deprecated } : {}),
           ...(fn.global ? { global: true } : {}),
           ...(fn.docSource ? { docSource: fn.docSource } : {}),

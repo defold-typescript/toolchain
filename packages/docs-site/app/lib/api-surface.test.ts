@@ -34,6 +34,8 @@ import {
   groupTypeSymbols,
   mapDocType,
   outerCallArity,
+  outerCallParams,
+  outerCallSlots,
   overloadFormCodes,
   overloadHeading,
   splitCallForm,
@@ -2071,11 +2073,50 @@ describe("apiModuleSymbols", () => {
     expect(lerp[0]?.signature).toBe(
       "vmath.lerp<T extends Vector3 | Vector4>(t: number, v1: T, v2: T): T",
     );
-    expect(lerp[0]?.parameters.length).toBeGreaterThan(0);
-    for (const row of lerp.slice(1)) {
-      expect(row.parameters).toEqual([]);
-      expect(row.returnValues).toEqual([]);
-    }
+  });
+
+  test("arity-identical override rows pair with the ref-doc entry their parameter names select", () => {
+    const symbols = apiModuleSymbols(vmathPage(), {}, VMATH_OVERRIDES);
+    const tables = (name: string) =>
+      symbols
+        .filter((s) => s.name === name)
+        .map((s) => ({
+          parameters: s.parameters.map((p) => p.name),
+          returns: s.returnValues.map((r) => r.name),
+        }));
+    expect(tables("vmath.lerp")).toEqual([
+      { parameters: ["t", "v1", "v2"], returns: ["v"] },
+      { parameters: ["t", "q1", "q2"], returns: ["q"] },
+      { parameters: ["t", "n1", "n2"], returns: ["n"] },
+    ]);
+    expect(tables("vmath.slerp")).toEqual([
+      { parameters: ["t", "v1", "v2"], returns: ["v"] },
+      { parameters: ["t", "q1", "q2"], returns: ["q"] },
+    ]);
+    const examples = symbols.filter((s) => s.name === "vmath.lerp").map((s) => s.exampleMarkdown);
+    expect(examples.every((e) => e !== undefined)).toBe(true);
+    expect(new Set(examples).size).toBe(3);
+    expect(examples[1]).toContain("vmath.quat");
+  });
+
+  test("outerCallParams names the outer call's parameters", () => {
+    expect(
+      outerCallParams("vmath.lerp<T extends Vector3 | Vector4>(t: number, v1: T, v2: T): T"),
+    ).toEqual(["t", "v1", "v2"]);
+    expect(outerCallParams("msg.url(): Url")).toEqual([]);
+    expect(
+      outerCallParams("demo.f(a?: { x: number; y: number }, ...rest: string[]): void"),
+    ).toEqual(["a", "rest"]);
+    expect(outerCallParams("demo.v: (a: number) => void")).toBeNull();
+  });
+
+  test("outerCallSlots reads each slot's optionality and type text", () => {
+    expect(outerCallSlots("demo.f(a?: { x: number; y: number }, ...rest: string[]): void")).toEqual(
+      [
+        { name: "a", isOptional: true, type: "{ x: number; y: number }" },
+        { name: "rest", isOptional: false, type: "string[]" },
+      ],
+    );
   });
 
   test("single-signature vmath overrides each render exactly once as their generic form", () => {
@@ -2137,26 +2178,29 @@ describe("apiModuleSymbols", () => {
     expect(lerp[2]?.docMarkdown).not.toBe(fixtureLerpVectorDoc);
   });
 
-  test("an override without a docs key renders every row with the fixture description", () => {
+  test("an override without a docs key renders each row with its paired entry's description", () => {
     const lerp = apiModuleSymbols(vmathPage(), {}, VMATH_OVERRIDES).filter(
       (s) => s.name === "vmath.lerp",
     );
     expect(lerp).toHaveLength(3);
-    for (const row of lerp) expect(row.docMarkdown).toBe(fixtureLerpVectorDoc);
+    expect(lerp[0]?.docMarkdown).toBe(fixtureLerpVectorDoc);
+    expect(lerp[1]?.docMarkdown).toStartWith("Linearly interpolate between two quaternions.");
+    expect(lerp[2]?.docMarkdown).toStartWith("Linearly interpolate between two values.");
   });
 
   test("a short or null docs entry falls back to the fixture description for that row only", () => {
     const store: SignatureStore = {
       ...VMATH_OVERRIDES,
       // authored primary, explicit null secondary, and a third row absent (array
-      // shorter than `signatures`) — both untyped rows fall back to the fixture.
+      // shorter than `signatures`) — both untyped rows fall back to their paired
+      // fixture entry's description.
       "vmath.lerp": { signatures: VMATH_LERP, docs: ["Interpolate two vectors.", null] },
     };
     const lerp = apiModuleSymbols(vmathPage(), {}, store).filter((s) => s.name === "vmath.lerp");
     expect(lerp).toHaveLength(3);
     expect(lerp[0]?.docMarkdown).toBe("Interpolate two vectors.");
-    expect(lerp[1]?.docMarkdown).toBe(fixtureLerpVectorDoc);
-    expect(lerp[2]?.docMarkdown).toBe(fixtureLerpVectorDoc);
+    expect(lerp[1]?.docMarkdown).toStartWith("Linearly interpolate between two quaternions.");
+    expect(lerp[2]?.docMarkdown).toStartWith("Linearly interpolate between two values.");
   });
 
   // The committed override files, read the way `loadSignatureStore` reads them,
