@@ -406,6 +406,13 @@ header.topbar-critical .logo-mark {
   list-style: none;
   padding-left: 0;
 }
+/* The /api availability list leads each item with a category chip instead of a
+   bullet. Must live here (unlayered): the styles.css mirror is in @layer
+   components and loses to the `.prose ul` rule above. */
+.prose .api-availability ul {
+  list-style: none;
+  padding-left: 0;
+}
 /* Symmetric block margin like hr / admonition; a zero top would leave the
    blockquote butted against the element above it, because `.prose blockquote`
    out-specifies the `.prose > * + *` owl. Mirror of the layered rule. */
