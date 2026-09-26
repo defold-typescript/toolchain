@@ -27,11 +27,15 @@ const _builtinPayload: Exact<
 void _builtinPayload;
 
 // An id in neither catalog keeps the open payload — the escape hatch every
-// ad-hoc `msg.post` compiles through today.
-const _openPayload: Exact<MessagePayload<"spawn_wave">, Record<string | number, unknown>> = true;
+// ad-hoc `msg.post` compiles through today — a record or a Lua sequence.
+const _openPayload: Exact<
+  MessagePayload<"spawn_wave">,
+  Record<string | number, unknown> | readonly unknown[]
+> = true;
 void _openPayload;
 
 msg.post(_url, "spawn_wave", { count: 3, boss: true });
+msg.post(_url, "spawn_wave", [_hash]);
 
 // An id only known at runtime still compiles against the open payload, so the
 // completion-only `(string & {})` term never turns a `string` into an error.

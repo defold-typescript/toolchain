@@ -41,14 +41,15 @@ declare global {
   // diagnostic at the call site rather than the declaration.
   /**
    * The payload declared for a message id: its `BuiltinMessages` entry, else
-   * its `CustomMessages` entry, else the open record an undeclared id keeps.
-   * An id declared in both resolves to the built-in payload.
+   * its `CustomMessages` entry, else the open table an undeclared id keeps: a
+   * record or a Lua sequence. An id declared in both resolves to the built-in
+   * payload.
    */
   type MessagePayload<K> = K extends BuiltinMessageId
     ? BuiltinMessages[K]
     : K extends keyof CustomMessages
       ? CustomMessages[K]
-      : Record<string | number, unknown>;
+      : Record<string | number, unknown> | readonly unknown[];
 }
 
 export {};
