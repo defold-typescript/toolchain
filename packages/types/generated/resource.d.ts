@@ -767,7 +767,7 @@ declare global {
      * // How to get the data from a buffer
      * export default defineScript({
      *   init() {
-     *     const res_path = go.get("#mesh", "vertices");
+     *     const res_path = go.get<mesh.properties>()("#mesh", "vertices");
      *     const buf = resource.get_buffer(res_path);
      *     const stream_positions = buffer.get_stream(buf, "position");
      *
@@ -1073,7 +1073,7 @@ declare global {
      * // Assuming the folder "/res" is added to the project custom resources:
      * // load a texture resource and set it on a sprite
      * const buffer = resource.load("/res/new.texturec");
-     * resource.set(go.get("#sprite", "texture0"), buffer);
+     * resource.set(go.get<sprite.properties>()("#sprite", "texture0"), buffer);
      * ```
      */
     function set(path: string | Hash, buffer: Opaque<"buffer">): void;
@@ -1214,7 +1214,7 @@ declare global {
      *
      * export default defineScript({
      *   init() {
-     *     const res_path = go.get("#mesh", "vertices");
+     *     const res_path = go.get<mesh.properties>()("#mesh", "vertices");
      *
      *     const positions = [
      *       1, -1, 0,
@@ -1349,7 +1349,7 @@ declare global {
      *       }
      *     }
      *
-     *     const resource_path = go.get("#model", "texture0");
+     *     const resource_path = go.get<model.properties>()("#model", "texture0");
      *     const args = { width, height, type: graphics.TEXTURE_TYPE_2D, format: graphics.TEXTURE_FORMAT_RGB, num_mip_maps: 1 };
      *     resource.set_texture(resource_path, args, buf);
      *     return { buffer: buf, stream };
@@ -1378,7 +1378,7 @@ declare global {
      *       }
      *     }
      *
-     *     const resource_path = go.get("#model", "texture0");
+     *     const resource_path = go.get<model.properties>()("#model", "texture0");
      *     const args = { width, height, x, y, type: graphics.TEXTURE_TYPE_2D, format: graphics.TEXTURE_FORMAT_RGB, num_mip_maps: 1 };
      *     resource.set_texture(resource_path, args, buf);
      *     return { buffer: buf, stream };
@@ -1395,7 +1395,7 @@ declare global {
      *   properties: { my_buffer: resource.buffer("/my_default_buffer.buffer") },
      *
      *   init(self) {
-     *     const resource_path = go.get("#model", "texture0");
+     *     const resource_path = go.get<model.properties>()("#model", "texture0");
      *     // the "my_buffer" resource is expected to hold 128 * 128 * 3 bytes!
      *     const args = {
      *       width: 128,

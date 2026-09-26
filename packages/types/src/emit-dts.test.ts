@@ -3936,6 +3936,25 @@ describe("component property type fidelity", () => {
     };
     expect(emitDeclarations(module)).toContain("    frame_count: Hash;");
   });
+
+  test("a curated placeholder property emits a template-literal key instead of its literal name", () => {
+    const placeholder = (namespace: string): ApiModule => ({
+      namespace,
+      brief: "",
+      description: "",
+      functions: [],
+      variables: [],
+      constants: [],
+      properties: [{ name: "textureN", types: ["hash"], brief: "", description: "" }],
+      typedefs: [],
+    });
+    const model = emitDeclarations(placeholder("model"));
+    expect(model).toContain(`    [key: \`texture\${number}\`]: Hash;`);
+    expect(model).not.toContain("textureN:");
+    const other = emitDeclarations(placeholder("label"));
+    expect(other).toContain("    textureN: Hash;");
+    expect(other).not.toContain("[key:");
+  });
 });
 
 describe("documented constant slot expansion", () => {

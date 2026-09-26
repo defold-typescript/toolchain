@@ -37,3 +37,23 @@ void _framesAsHash;
 // An uncorrected sibling in the same catalog keeps the type upstream declares.
 const _image: Hash = go.get<sprite.properties>()("#sprite", "image");
 void _image;
+
+// `model.textureN` is upstream's placeholder for the eight texture slots, so the
+// catalog keys the whole numbered family and rejects the placeholder itself.
+const _modelTexture0: Hash = go.get<model.properties>()("#model", "texture0");
+const _modelTexture7: Hash = go.get<model.properties>()("#model", "texture7");
+void _modelTexture0;
+void _modelTexture7;
+
+// @ts-expect-error textureN is the placeholder, not a key the engine accepts
+go.get<model.properties>()("#model", "textureN");
+
+// Hand-written keys the ref-docs omit but upstream examples read.
+const _spriteTexture: Hash = go.get<sprite.properties>()("#sprite", "texture0");
+void _spriteTexture;
+
+const _meshVertices: Hash = go.get<mesh.properties>()("#mesh", "vertices");
+void _meshVertices;
+
+// @ts-expect-error the mesh catalog declares only the evidenced key
+go.get<mesh.properties>()("#mesh", "indices");
