@@ -21,9 +21,11 @@ declare global {
      * Load an atlas and set it to a sprite:
      * ```ts
      * // Load an atlas and set it to a sprite:
-     * go.property("my_atlas", resource.atlas("/atlas.atlas"));
-     *
      * export default defineScript({
+     *   // Never call `go.property` yourself: the transpiler emits the chunk-scope
+     *   // registration from this field, and only this field types the property onto `self`.
+     *   properties: { my_atlas: resource.atlas("/atlas.atlas") },
+     *
      *   init(self) {
      *     go.set("#sprite", "image", self.my_atlas);
      *   },
@@ -33,9 +35,11 @@ declare global {
      * Load an atlas and set it to a gui:
      * ```ts
      * // Load an atlas and set it to a gui:
-     * go.property("my_atlas", resource.atlas("/atlas.atlas"));
-     *
      * export default defineScript({
+     *   // Never call `go.property` yourself: the transpiler emits the chunk-scope
+     *   // registration from this field, and only this field types the property onto `self`.
+     *   properties: { my_atlas: resource.atlas("/atlas.atlas") },
+     *
      *   init(self) {
      *     go.set("#gui", "textures", self.my_atlas, { key: "my_atlas" });
      *   },
@@ -57,9 +61,11 @@ declare global {
      * @example
      * ```ts
      * // Set a unique buffer it to a sprite:
-     * go.property("my_buffer", resource.buffer("/cube.buffer"));
-     *
      * export default defineScript({
+     *   // Never call `go.property` yourself: the transpiler emits the chunk-scope
+     *   // registration from this field, and only this field types the property onto `self`.
+     *   properties: { my_buffer: resource.buffer("/cube.buffer") },
+     *
      *   init(self) {
      *     go.set("#mesh", "vertices", self.my_buffer);
      *   },
@@ -708,9 +714,11 @@ declare global {
      * Load a font and set it to a label:
      * ```ts
      * // Load a font and set it to a label:
-     * go.property("my_font", resource.font("/font.font"));
-     *
      * export default defineScript({
+     *   // Never call `go.property` yourself: the transpiler emits the chunk-scope
+     *   // registration from this field, and only this field types the property onto `self`.
+     *   properties: { my_font: resource.font("/font.font") },
+     *
      *   init(self) {
      *     go.set("#label", "font", self.my_font);
      *   },
@@ -720,9 +728,11 @@ declare global {
      * Load a font and set it to a gui:
      * ```ts
      * // Load a font and set it to a gui:
-     * go.property("my_font", resource.font("/font.font"));
-     *
      * export default defineScript({
+     *   // Never call `go.property` yourself: the transpiler emits the chunk-scope
+     *   // registration from this field, and only this field types the property onto `self`.
+     *   properties: { my_font: resource.font("/font.font") },
+     *
      *   init(self) {
      *     go.set("#gui", "fonts", self.my_font, { key: "my_font" });
      *   },
@@ -993,9 +1003,11 @@ declare global {
      * Load a material and set it to a sprite:
      * ```ts
      * // Load a material and set it to a sprite:
-     * go.property("my_material", resource.material("/material.material"));
-     *
      * export default defineScript({
+     *   // Never call `go.property` yourself: the transpiler emits the chunk-scope
+     *   // registration from this field, and only this field types the property onto `self`.
+     *   properties: { my_material: resource.material("/material.material") },
+     *
      *   init(self) {
      *     go.set("#sprite", "material", self.my_material);
      *   },
@@ -1005,9 +1017,11 @@ declare global {
      * Load a material resource and update a named material with the resource:
      * ```ts
      * // Load a material resource and update a named material with the resource:
-     * go.property("my_material", resource.material("/material.material"));
-     *
      * export default defineScript({
+     *   // Never call `go.property` yourself: the transpiler emits the chunk-scope
+     *   // registration from this field, and only this field types the property onto `self`.
+     *   properties: { my_material: resource.material("/material.material") },
+     *
      *   init(self) {
      *     go.set("#gui", "materials", self.my_material, { key: "my_material" });
      *   },
@@ -1036,9 +1050,11 @@ declare global {
      * @example
      * ```ts
      * // Set a render target color attachment as a model texture:
-     * go.property("my_render_target", resource.render_target("/rt.render_target"));
-     *
      * export default defineScript({
+     *   // Never call `go.property` yourself: the transpiler emits the chunk-scope
+     *   // registration from this field, and only this field types the property onto `self`.
+     *   properties: { my_render_target: resource.render_target("/rt.render_target") },
+     *
      *   init(self) {
      *     const rt_info = resource.get_render_target_info(self.my_render_target);
      *     go.set("#model", "texture0", rt_info.attachments[0]!.texture!);
@@ -1318,24 +1334,25 @@ declare global {
      * ```ts
      * // How to set all pixels of an atlas
      * export default defineScript({
-     *   init(self) {
-     *     self.height = 128;
-     *     self.width = 128;
-     *     self.buffer = buffer.create(self.width * self.height, [{ name: hash("rgb"), type: buffer.VALUE_TYPE_UINT8, count: 3 }]);
-     *     self.stream = buffer.get_stream(self.buffer, hash("rgb"));
+     *   init() {
+     *     const height = 128;
+     *     const width = 128;
+     *     const buf = buffer.create(width * height, [{ name: hash("rgb"), type: buffer.VALUE_TYPE_UINT8, count: 3 }]);
+     *     const stream = buffer.get_stream(buf, hash("rgb"));
      *
-     *     for (let y = 0; y < self.height; y++) {
-     *       for (let x = 0; x < self.width; x++) {
-     *         const index = y * self.width * 3 + x * 3;
-     *         self.stream[index + 0] = 0xff;
-     *         self.stream[index + 1] = 0x80;
-     *         self.stream[index + 2] = 0x10;
+     *     for (let y = 0; y < height; y++) {
+     *       for (let x = 0; x < width; x++) {
+     *         const index = y * width * 3 + x * 3;
+     *         stream[index + 0] = 0xff;
+     *         stream[index + 1] = 0x80;
+     *         stream[index + 2] = 0x10;
      *       }
      *     }
      *
      *     const resource_path = go.get("#model", "texture0");
-     *     const args = { width: self.width, height: self.height, type: graphics.TEXTURE_TYPE_2D, format: graphics.TEXTURE_FORMAT_RGB, num_mip_maps: 1 };
-     *     resource.set_texture(resource_path, args, self.buffer);
+     *     const args = { width, height, type: graphics.TEXTURE_TYPE_2D, format: graphics.TEXTURE_FORMAT_RGB, num_mip_maps: 1 };
+     *     resource.set_texture(resource_path, args, buf);
+     *     return { buffer: buf, stream };
      *   },
      * });
      * ```
@@ -1344,26 +1361,27 @@ declare global {
      * ```ts
      * // How to update a specific region of an atlas by using the x,y values. Assumes the already set atlas is a 128x128 texture.
      * export default defineScript({
-     *   init(self) {
-     *     self.x = 16;
-     *     self.y = 16;
-     *     self.height = 128 - self.x * 2;
-     *     self.width = 128 - self.y * 2;
-     *     self.buffer = buffer.create(self.width * self.height, [{ name: hash("rgb"), type: buffer.VALUE_TYPE_UINT8, count: 3 }]);
-     *     self.stream = buffer.get_stream(self.buffer, hash("rgb"));
+     *   init() {
+     *     const x = 16;
+     *     const y = 16;
+     *     const height = 128 - x * 2;
+     *     const width = 128 - y * 2;
+     *     const buf = buffer.create(width * height, [{ name: hash("rgb"), type: buffer.VALUE_TYPE_UINT8, count: 3 }]);
+     *     const stream = buffer.get_stream(buf, hash("rgb"));
      *
-     *     for (let y = 0; y < self.height; y++) {
-     *       for (let x = 0; x < self.width; x++) {
-     *         const index = y * self.width * 3 + x * 3;
-     *         self.stream[index + 0] = 0xff;
-     *         self.stream[index + 1] = 0x80;
-     *         self.stream[index + 2] = 0x10;
+     *     for (let row = 0; row < height; row++) {
+     *       for (let col = 0; col < width; col++) {
+     *         const index = row * width * 3 + col * 3;
+     *         stream[index + 0] = 0xff;
+     *         stream[index + 1] = 0x80;
+     *         stream[index + 2] = 0x10;
      *       }
      *     }
      *
      *     const resource_path = go.get("#model", "texture0");
-     *     const args = { width: self.width, height: self.height, x: self.x, y: self.y, type: graphics.TEXTURE_TYPE_2D, format: graphics.TEXTURE_FORMAT_RGB, num_mip_maps: 1 };
-     *     resource.set_texture(resource_path, args, self.buffer);
+     *     const args = { width, height, x, y, type: graphics.TEXTURE_TYPE_2D, format: graphics.TEXTURE_FORMAT_RGB, num_mip_maps: 1 };
+     *     resource.set_texture(resource_path, args, buf);
+     *     return { buffer: buf, stream };
      *   },
      * });
      * ```
@@ -1371,9 +1389,11 @@ declare global {
      * Update a texture from a buffer resource
      * ```ts
      * // Update a texture from a buffer resource
-     * go.property("my_buffer", resource.buffer("/my_default_buffer.buffer"));
-     *
      * export default defineScript({
+     *   // Never call `go.property` yourself: the transpiler emits the chunk-scope
+     *   // registration from this field, and only this field types the property onto `self`.
+     *   properties: { my_buffer: resource.buffer("/my_default_buffer.buffer") },
+     *
      *   init(self) {
      *     const resource_path = go.get("#model", "texture0");
      *     // the "my_buffer" resource is expected to hold 128 * 128 * 3 bytes!
@@ -1476,9 +1496,11 @@ declare global {
      * @example
      * ```ts
      * // Load a texture and set it to a model:
-     * go.property("my_texture", resource.texture("/texture.png"));
-     *
      * export default defineScript({
+     *   // Never call `go.property` yourself: the transpiler emits the chunk-scope
+     *   // registration from this field, and only this field types the property onto `self`.
+     *   properties: { my_texture: resource.texture("/texture.png") },
+     *
      *   init(self) {
      *     go.set("#model", "texture0", self.my_texture);
      *   },
@@ -1500,9 +1522,11 @@ declare global {
      * @example
      * ```ts
      * // Load tile source and set it to a tile map:
-     * go.property("my_tile_source", resource.tile_source("/tilesource.tilesource"));
-     *
      * export default defineScript({
+     *   // Never call `go.property` yourself: the transpiler emits the chunk-scope
+     *   // registration from this field, and only this field types the property onto `self`.
+     *   properties: { my_tile_source: resource.tile_source("/tilesource.tilesource") },
+     *
      *   init(self) {
      *     go.set("#tilemap", "tile_source", self.my_tile_source);
      *   },

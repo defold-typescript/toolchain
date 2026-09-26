@@ -72,11 +72,12 @@ declare global {
      * const game = { data: { weapons: { Sword: { damage: 10 } } } };
      *
      * export default defineScript({
-     *   init(self) {
+     *   init() {
      *     if (model.get_mesh_enabled("#model", "Sword")) {
      *       // set properties specific for the sword
-     *       self.weapon_properties = game.data.weapons["Sword"];
+     *       return { weapon_properties: game.data.weapons["Sword"] };
      *     }
+     *     return { weapon_properties: undefined };
      *   },
      * });
      * ```

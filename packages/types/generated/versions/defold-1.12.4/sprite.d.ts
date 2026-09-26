@@ -65,6 +65,10 @@ declare global {
      * // How to flip a sprite so it faces the horizontal movement (it is assumed that
      * // the sprite component has id "sprite" and the original animation faces right):
      * export default defineScript({
+     *   init() {
+     *     return { velocity: vmath.vector3() };
+     *   },
+     *
      *   update(self, dt) {
      *     // calculate self.velocity somehow
      *     sprite.set_hflip("#sprite", self.velocity.x < 0);
@@ -86,6 +90,10 @@ declare global {
      * // assumed that the sprite component has id "sprite" and the original animation
      * // is up-right):
      * export default defineScript({
+     *   init() {
+     *     return { up_side_down: false };
+     *   },
+     *
      *   update(self, dt) {
      *     // calculate self.up_side_down somehow, then:
      *     sprite.set_vflip("#sprite", self.up_side_down);

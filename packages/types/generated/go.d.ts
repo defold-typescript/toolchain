@@ -349,6 +349,10 @@ declare global {
      * @example
      * ```ts
      * export default defineScript({
+     *   init() {
+     *     return { some_value: 0 };
+     *   },
+     *
      *   final(self) {
      *     // report finalization
      *     msg.post("my_friend_instance", "im_dead", { my_stats: self.some_value });
@@ -833,12 +837,12 @@ declare global {
      *   init() {
      *     // store the url of instance "a" for later use, by specifying undefined as socket we
      *     // automatically use our own socket
-     *     return { a_url: msg.url(undefined, go.get_id("a"), "script") };
+     *     return { a_url: msg.url(undefined, go.get_id("a"), "script"), important_value: 0 };
      *   },
      *
      *   on_message(self, message_id, message, sender) {
      *     // check message and sender
-     *     if (message_id === hash("my_data") && sender === self.a_url) {
+     *     if (message_id === hash("my_data") && sender === self.a_url && typeof message.important_value === "number") {
      *       // use the data in some way
      *       self.important_value = message.important_value;
      *     }
