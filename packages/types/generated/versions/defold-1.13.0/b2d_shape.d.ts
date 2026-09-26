@@ -47,6 +47,7 @@ declare global {
      * @returns true if contact events are enabled
      */
     function are_contact_events_enabled(shape_id: Opaque<"b2Shape">): boolean;
+    function are_contact_events_enabled(body: Opaque<"b2Body">, shape_index: number): boolean;
     /**
      * Check if hit events are enabled for a shape.
      *
@@ -54,6 +55,7 @@ declare global {
      * @returns true if hit events are enabled
      */
     function are_hit_events_enabled(shape_id: Opaque<"b2Shape">): boolean;
+    function are_hit_events_enabled(body: Opaque<"b2Body">, shape_index: number): boolean;
     /**
      * Check if pre-solve events are enabled for a shape.
      *
@@ -61,6 +63,7 @@ declare global {
      * @returns true if pre-solve events are enabled
      */
     function are_pre_solve_events_enabled(shape_id: Opaque<"b2Shape">): boolean;
+    function are_pre_solve_events_enabled(body: Opaque<"b2Body">, shape_index: number): boolean;
     /**
      * Check if sensor events are enabled for a shape.
      *
@@ -68,6 +71,7 @@ declare global {
      * @returns true if sensor events are enabled
      */
     function are_sensor_events_enabled(shape_id: Opaque<"b2Shape">): boolean;
+    function are_sensor_events_enabled(body: Opaque<"b2Body">, shape_index: number): boolean;
     /**
      * Enable or disable contact events for a shape.
      *
@@ -75,6 +79,7 @@ declare global {
      * @param enable - true to enable contact events
      */
     function enable_contact_events(shape_id: Opaque<"b2Shape">, enable: boolean): void;
+    function enable_contact_events(body: Opaque<"b2Body">, shape_index: number, enable: boolean): void;
     /**
      * Enable or disable hit events for a shape.
      *
@@ -82,6 +87,7 @@ declare global {
      * @param enable - true to enable hit events
      */
     function enable_hit_events(shape_id: Opaque<"b2Shape">, enable: boolean): void;
+    function enable_hit_events(body: Opaque<"b2Body">, shape_index: number, enable: boolean): void;
     /**
      * Enable or disable pre-solve events for a shape.
      *
@@ -89,6 +95,7 @@ declare global {
      * @param enable - true to enable pre-solve events
      */
     function enable_pre_solve_events(shape_id: Opaque<"b2Shape">, enable: boolean): void;
+    function enable_pre_solve_events(body: Opaque<"b2Body">, shape_index: number, enable: boolean): void;
     /**
      * Enable or disable sensor events for a shape.
      *
@@ -96,6 +103,7 @@ declare global {
      * @param enable - true to enable sensor events
      */
     function enable_sensor_events(shape_id: Opaque<"b2Shape">, enable: boolean): void;
+    function enable_sensor_events(body: Opaque<"b2Body">, shape_index: number, enable: boolean): void;
     /**
      * Get the body owning a shape.
      *
@@ -103,6 +111,7 @@ declare global {
      * @returns owning body
      */
     function get_body(shape_id: Opaque<"b2Shape">): Opaque<"b2Body">;
+    function get_body(body: Opaque<"b2Body">, shape_index: number): Opaque<"b2Body">;
     /**
      * Get the closest point on a shape.
      *
@@ -111,6 +120,7 @@ declare global {
      * @returns closest world point on the shape
      */
     function get_closest_point(shape_id: Opaque<"b2Shape">, target: Vector3): Vector3;
+    function get_closest_point(body: Opaque<"b2Body">, shape_index: number, target: Vector3): Vector3;
     /**
      * Get shape contact capacity.
      *
@@ -118,6 +128,7 @@ declare global {
      * @returns maximum contact data count
      */
     function get_contact_capacity(shape_id: Opaque<"b2Shape">): number;
+    function get_contact_capacity(body: Opaque<"b2Body">, shape_index: number): number;
     /**
      * Get touching contact data for a shape.
      *
@@ -125,6 +136,7 @@ declare global {
      * @returns array of contact tables
      */
     function get_contact_data(shape_id: Opaque<"b2Shape">): Record<string | number, unknown>;
+    function get_contact_data(body: Opaque<"b2Body">, shape_index: number): Record<string | number, unknown>;
     /**
      * Get mass data for a shape.
      *
@@ -132,6 +144,7 @@ declare global {
      * @returns table with `mass`, `center`, and `inertia`
      */
     function get_mass_data(shape_id: Opaque<"b2Shape">): { mass: number; center: Vector3; inertia: number };
+    function get_mass_data(body: Opaque<"b2Body">, shape_index: number): { mass: number; center: Vector3; inertia: number };
     /**
      * Get shape material id.
      *
@@ -139,6 +152,7 @@ declare global {
      * @returns shape material id
      */
     function get_material(shape_id: Opaque<"b2Shape">): number;
+    function get_material(body: Opaque<"b2Body">, shape_index: number): number;
     /**
      * Get sensor overlap capacity.
      *
@@ -146,6 +160,7 @@ declare global {
      * @returns maximum sensor overlap count
      */
     function get_sensor_capacity(shape_id: Opaque<"b2Shape">): number;
+    function get_sensor_capacity(body: Opaque<"b2Body">, shape_index: number): number;
     /**
      * Get sensor overlaps.
      *
@@ -153,6 +168,7 @@ declare global {
      * @returns array of shape info tables
      */
     function get_sensor_overlaps(shape_id: Opaque<"b2Shape">): { shape_id: number }[];
+    function get_sensor_overlaps(body: Opaque<"b2Body">, shape_index: number): { shape_id: number }[];
     /**
      * Get a shape's geometry.
      *
@@ -160,6 +176,7 @@ declare global {
      * @returns shape table with numeric `type` from `b2d.shape.SHAPE_TYPE_*`
      */
     function get_shape(shape_id: Opaque<"b2Shape">): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 };
+    function get_shape(body: Opaque<"b2Body">, shape_index: number): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 };
     /**
      * Get the world owning a shape.
      *
@@ -167,6 +184,7 @@ declare global {
      * @returns owning world
      */
     function get_world(shape_id: Opaque<"b2Shape">): Opaque<"b2World">;
+    function get_world(body: Opaque<"b2Body">, shape_index: number): Opaque<"b2World">;
     /**
      * Validate a shape handle.
      *
@@ -174,6 +192,7 @@ declare global {
      * @returns true if the shape handle still refers to a live Box2D shape
      */
     function is_valid(shape_id: Opaque<"b2Shape">): boolean;
+    function is_valid(body: Opaque<"b2Body">, shape_index: number): boolean;
     /**
      * Ray cast a shape directly.
      *
@@ -184,6 +203,7 @@ declare global {
      * @returns hit table with `point`, `normal`, `fraction`, and `iterations`, or nil
      */
     function ray_cast(shape_id: Opaque<"b2Shape">, origin: Vector3, translation: Vector3, max_fraction?: number): { point: Vector3; normal: Vector3; fraction: number; iterations: number };
+    function ray_cast(body: Opaque<"b2Body">, shape_index: number, origin: Vector3, translation: Vector3, max_fraction?: number): { point: Vector3; normal: Vector3; fraction: number; iterations: number };
     /**
      * Set shape material id.
      *
@@ -191,6 +211,7 @@ declare global {
      * @param material - shape material id
      */
     function set_material(shape_id: Opaque<"b2Shape">, material: number): void;
+    function set_material(body: Opaque<"b2Body">, shape_index: number, material: number): void;
     /**
      * This updates the shape geometry using the same table format as
      * `b2d.body.create_shape` and `b2d.shape.get_shape`. The body mass is not
@@ -210,7 +231,8 @@ declare global {
      * }
      * ```
      */
-    function set_shape(shape_id: Opaque<"b2Shape">, definition: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, update_mass: boolean): void;
+    function set_shape(shape_id: Opaque<"b2Shape">, definition: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, update_mass?: boolean): void;
+    function set_shape(body: Opaque<"b2Body">, shape_index: number, definition: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, update_mass?: boolean): void;
   }
 }
 

@@ -509,6 +509,10 @@ export const OPTIONAL_SLOT_CORRECTIONS: ReadonlyMap<string, string> = new Map([
     '2 of 3 examples omit it; "The body mass is not updated unless update_mass is true"',
   ],
   [
+    "b2d.shape.set_shape:param:update_mass",
+    '1 of 3 examples omits it; "The body mass is not updated unless update_mass is true"',
+  ],
+  [
     "b2d.shape.ray_cast:param:max_fraction",
     '"optional maximum translation fraction, defaults to 1"',
   ],
@@ -533,6 +537,59 @@ export const OPTIONAL_SLOT_CORRECTIONS: ReadonlyMap<string, string> = new Map([
       [`b2d.joint.${name}:param:definition`, '"optional definition"'] as readonly [string, string],
   ),
 ]);
+
+// A first slot upstream documents as standing in for a second argument list:
+// every `b2d.shape` function takes a shape handle "or pass `body, shape_index`".
+// The element keeps its declared signature and gains an overload with
+// `parameters` in that slot's place. Keyed `<namespace>:param:<slot>`, so only a
+// curated entry adds an overload: a reworded doc cannot add or drop one, and the
+// same prose in another namespace adds nothing.
+//
+// `evidence` is the upstream slot-doc fragment that names the alternative. The
+// emitter throws once a curated slot stops carrying it, so upstream dropping the
+// alternative reds here rather than shipping an overload nothing documents.
+export interface FirstSlotAlternative {
+  readonly parameters: readonly ApiParameter[];
+  readonly evidence: string;
+}
+
+export const FIRST_SLOT_ALTERNATIVES: ReadonlyMap<string, FirstSlotAlternative> = new Map([
+  [
+    "b2d.shape:param:shape_id",
+    {
+      parameters: [
+        { name: "body", doc: "", types: ["b2Body"], isOptional: false },
+        { name: "shape_index", doc: "", types: ["number"], isOptional: false },
+      ],
+      evidence: "or pass <code>body, shape_index</code>",
+    },
+  ],
+]);
+
+// The alternative signature FIRST_SLOT_ALTERNATIVES gives `fn`, or null when
+// its first slot is not curated. Shared with the fidelity audit so the arity it
+// measures is the arity the emitter declares.
+export function firstSlotAlternativeOf(fn: ApiFunction, namespace: string): ApiFunction | null {
+  const [first, ...rest] = fn.parameters;
+  if (first === undefined) return null;
+  const key = `${namespace}:param:${first.name}`;
+  const alternative = FIRST_SLOT_ALTERNATIVES.get(key);
+  if (alternative === undefined) return null;
+  if (!first.doc.includes(alternative.evidence)) {
+    throw new Error(
+      `first-slot alternative ${key}: ${fn.name} no longer documents "${alternative.evidence}"`,
+    );
+  }
+  return { ...fn, parameters: [...alternative.parameters, ...rest] };
+}
+
+function firstSlotAlternative(
+  prepared: PreparedFunction,
+  namespace: string,
+): PreparedFunction | null {
+  const original = firstSlotAlternativeOf(prepared.original, namespace);
+  return original === null ? null : { ...prepared, original };
+}
 
 export type ConstantSlotResolution =
   | { readonly borrow: string }
@@ -1940,7 +1997,12 @@ export const NESTED_FIELD_CURATIONS: ReadonlyMap<string, readonly TableField[]> 
 // parser recovers every other field faithfully but leaves that `table` token as
 // a bare `Record`; this pins only the `value` field's TS type to the documented
 // array union while every sibling field stays parser-authoritative. Keyed by
-// `<element>:<kind>:<slot>:<field>`, mirroring NESTED_FIELD_CURATIONS.
+// `<element>:<kind>:<slot>:<field>`, mirroring NESTED_FIELD_CURATIONS; a field
+// one level down is `<field>.<member>`, or `<field>[].<member>` inside a list.
+//
+// The atlas animation `playback` field is documented as `constant` with the
+// prose "the default value is go.PLAYBACK_ONCE_FORWARD", which names the enum
+// the bare token cannot.
 const CONSTANT_VALUE_TS = "Vector4 | Vector3 | Matrix4 | number | (Vector4 | Matrix4)[]";
 const ATTRIBUTE_VALUE_TS = "Vector4 | Vector3 | Matrix4 | number | number[]";
 export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
@@ -1948,6 +2010,9 @@ export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
   ["material.set_constants:param:constants:value", CONSTANT_VALUE_TS],
   ["material.set_vertex_attributes:param:attributes:value", ATTRIBUTE_VALUE_TS],
   ["material.get_vertex_attributes:return:table:value", ATTRIBUTE_VALUE_TS],
+  ["resource.set_atlas:param:table:animations[].playback", "go.Playback"],
+  ["resource.create_atlas:param:table:animations[].playback", "go.Playback"],
+  ["resource.get_atlas:return:data:animations[].playback", "go.Playback"],
 ]);
 
 // A field the engine accepts on an option bag whose `<dl>` upstream otherwise
@@ -2100,11 +2165,17 @@ export function applyFieldTypeOverrides(
   fields: readonly TableField[],
 ): TableField[] {
   if (slotKind === undefined || slotName === undefined) return [...fields];
-  return fields.map((field) => {
-    const override = TABLE_FIELD_TYPE_OVERRIDES.get(
-      `${elementName}:${slotKind}:${slotName}:${field.name}`,
-    );
+  const prefix = `${tableSlotKey(elementName, slotKind, slotName)}:`;
+  const typed = (field: TableField, path: string): TableField => {
+    const override = TABLE_FIELD_TYPE_OVERRIDES.get(`${prefix}${path}`);
     return override === undefined ? field : { ...field, tsType: override };
+  };
+  return fields.map((field) => {
+    const own = typed(field, field.name);
+    if (own.fields === undefined) return own;
+    const parent = `${field.name}${field.isList === true ? "[]" : ""}`;
+    const nested = own.fields.map((child) => typed(child, `${parent}.${child.name}`));
+    return nested.every((child, i) => child === own.fields?.[i]) ? own : { ...own, fields: nested };
   });
 }
 
@@ -2573,6 +2644,18 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
     for (const docLine of functionDocLines(fn.original, translations)) lines.push(docLine);
     const line = emitFunction(fn, emitName, mapType, resolver, constantTokens, urlParameters);
     lines.push(`${INDENT}${reserved ? "" : decl}${line}`);
+    const alternative = firstSlotAlternative(fn, module.namespace);
+    if (alternative !== null) {
+      const overload = emitFunction(
+        alternative,
+        emitName,
+        mapType,
+        resolver,
+        constantTokens,
+        urlParameters,
+      );
+      lines.push(`${INDENT}${reserved ? "" : decl}${overload}`);
+    }
   }
 
   for (const alias of [...aliases].sort((a, b) => a.public.localeCompare(b.public))) {

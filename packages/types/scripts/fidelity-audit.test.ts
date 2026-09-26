@@ -21,6 +21,7 @@ import {
   FIDELITY_BASELINE_MANIFEST as MODULE_MANIFEST,
   OPTIONALITY_EVIDENCE_EXEMPTIONS,
   residualKey,
+  UNATTRIBUTED_OPTIONAL_CORRECTIONS,
   unexplainedInexpressibleCalls,
   unmarkedOptionalSlots,
 } from "./fidelity-audit";
@@ -376,8 +377,24 @@ describe("optionality evidence — slots upstream leaves unmarked", () => {
     const evidenced = new Set(
       MODULE_MANIFEST.flatMap((entry) => evidencedOptionalSlots(entry).map((slot) => slot.key)),
     );
-    const unevidenced = [...OPTIONAL_SLOT_CORRECTIONS.keys()].filter((key) => !evidenced.has(key));
+    const unevidenced = [...OPTIONAL_SLOT_CORRECTIONS.keys()].filter(
+      (key) => !evidenced.has(key) && !UNATTRIBUTED_OPTIONAL_CORRECTIONS.has(key),
+    );
     expect(unevidenced).toEqual([]);
+  });
+
+  test("every unattributed correction is a live correction the evidence misses, with a stated reason", () => {
+    const evidenced = new Set(
+      MODULE_MANIFEST.flatMap((entry) => evidencedOptionalSlots(entry).map((slot) => slot.key)),
+    );
+    const stale = [...UNATTRIBUTED_OPTIONAL_CORRECTIONS.keys()].filter(
+      (key) => evidenced.has(key) || !OPTIONAL_SLOT_CORRECTIONS.has(key),
+    );
+    expect(stale).toEqual([]);
+    const unexplained = [...UNATTRIBUTED_OPTIONAL_CORRECTIONS]
+      .filter(([, reason]) => reason.trim().length === 0)
+      .map(([key]) => key);
+    expect(unexplained).toEqual([]);
   });
 });
 
