@@ -46,24 +46,24 @@ describe("authored symbol notes", () => {
     }
   });
 
-  test("a note leads its symbol's section on the canonical page", () => {
+  test("a note precedes its symbol's example on the canonical page", () => {
     const page = canonical.find((p) => p.module.namespace === "go");
     if (!page) throw new Error("no /api/go page");
     const section = sectionFor(markdownFor(canonical, "go"), "go.property(");
     const note = SYMBOL_NOTES["go.property"] ?? "";
     expect(note).not.toBe("");
     expect(section).toContain(note);
-    // Ahead of the description it qualifies — a warning printed after the Lua
-    // example would arrive too late to stop the copy-paste. The description is
-    // read from the rendered symbol rather than named as prose, because which
-    // text that row carries depends on whether an authored overload doc covers
-    // it, and the ordering guarantee holds either way.
-    const row = apiModuleSymbols(page, page.translations, page.signatures).find(
-      (s) => s.name === "go.property",
-    );
-    expect(row?.docMarkdown).toBeTruthy();
-    expect(section).toContain(row?.docMarkdown ?? "");
-    expect(section.indexOf(note)).toBeLessThan(section.indexOf(row?.docMarkdown ?? ""));
+    // Ahead of the example it warns about — a warning printed after the Lua
+    // example would arrive too late to stop the copy-paste. The example is read
+    // from the rendered symbol rather than named as code, because which text that
+    // row carries depends on the upstream doc and its translation, and the
+    // ordering guarantee holds either way.
+    const example = apiModuleSymbols(page, page.translations, page.signatures).find(
+      (s) => s.name === "go.property" && s.exampleMarkdown,
+    )?.exampleMarkdown;
+    expect(example).toBeTruthy();
+    expect(section).toContain(example ?? "");
+    expect(section.indexOf(note)).toBeLessThan(section.indexOf(example ?? ""));
   });
 
   test("an overload set carries the note once, not once per row", () => {
