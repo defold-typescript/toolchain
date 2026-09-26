@@ -941,4 +941,43 @@ describe("overload block headings and form lines (committed artifacts)", () => {
     }
     expect(checked).toBeGreaterThan(10);
   });
+
+  test("the outline carries each overload heading's badge over its `...`, and no other heading has one", async () => {
+    let checked = 0;
+    let plain = 0;
+    for (const { page, groups } of rendered) {
+      const headings = pageHeadings(await pageHtml(page));
+      const overloadIds = new Set<string>();
+      for (const group of multi(groups)) {
+        const [head] = group;
+        if (head === undefined) continue;
+        const id = slugify(overloadHeading(group));
+        overloadIds.add(id);
+        const heading = headings.find((h) => h.id === id);
+        const badge = heading?.badge;
+        expect({
+          name: head.name,
+          covers: badge && heading?.text.slice(badge.start, badge.end),
+          start: badge?.start,
+          label: badge?.label,
+        }).toEqual({
+          name: head.name,
+          covers: "...",
+          start: head.name.length + 1,
+          label: `${group.length} overloads`,
+        });
+        checked += 1;
+      }
+      for (const heading of headings) {
+        if (overloadIds.has(heading.id)) continue;
+        expect({ id: heading.id, badge: "badge" in heading }).toEqual({
+          id: heading.id,
+          badge: false,
+        });
+        plain += 1;
+      }
+    }
+    expect(checked).toBeGreaterThan(10);
+    expect(plain).toBeGreaterThan(10);
+  });
 });

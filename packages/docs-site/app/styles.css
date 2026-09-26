@@ -67,9 +67,10 @@
   --color-badge-deprecated: #cf222e;
   --color-badge-global: #6639ba;
   --color-badge-upstream: #0969da;
-  /* The `N overloads` count an overload block heading carries in place of its
-   * call list: the deprecated red, so it reads apart from the syntax colors. */
-  --color-overload-count: #cf222e;
+  /* The `N overloads` count an overload block heading and its outline entry carry
+   * in place of the call list: a count, not a warning, so a teal that reads apart
+   * from the syntax colors and the lifecycle badges. */
+  --color-overload-count: #0f766e;
 
   /* Caution tone shared by the `> [!WARNING]` callout and the attention marker
    * badge (`bg-warning/15`), so the two read as the same signal. */
@@ -100,7 +101,7 @@
   --color-badge-deprecated: #f85149;
   --color-badge-global: #a371f7;
   --color-badge-upstream: #58a6ff;
-  --color-overload-count: #f85149;
+  --color-overload-count: #2dd4bf;
 
   --color-warning: #d29922;
 }
@@ -1159,8 +1160,9 @@
 
   /* An overload block's `N overloads` count, set inside its colored signature
    * where the call list would be. The Shiki span rules skip it, so it keeps its
-   * own color in both themes. */
-  .prose .api-overload-count {
+   * own color in both themes. Unscoped so the outline entry, outside `.prose`,
+   * shows the same badge; `em` sizing follows the outline's smaller text. */
+  .api-overload-count {
     display: inline-block;
     margin: 0 0.15em;
     padding: 0 0.45em;
