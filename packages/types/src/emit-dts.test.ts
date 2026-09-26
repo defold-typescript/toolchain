@@ -3939,7 +3939,7 @@ describe("component property type fidelity", () => {
     expect(emitDeclarations(module)).toContain("    frame_count: Hash;");
   });
 
-  test("a curated placeholder property emits a template-literal key instead of its literal name", () => {
+  test("a curated placeholder property expands to its bounded key set instead of its literal name", () => {
     const placeholder = (namespace: string): ApiModule => ({
       namespace,
       brief: "",
@@ -3951,11 +3951,16 @@ describe("component property type fidelity", () => {
       typedefs: [],
     });
     const model = emitDeclarations(placeholder("model"));
-    expect(model).toContain(`    [key: \`texture\${number}\`]: Hash;`);
+    for (let unit = 0; unit <= 7; unit++) {
+      expect(model).toContain(`    texture${unit}: Hash;`);
+    }
+    expect(model).not.toContain("texture8:");
+    expect(model).not.toContain("[key:");
     expect(model).not.toContain("textureN:");
     const other = emitDeclarations(placeholder("label"));
     expect(other).toContain("    textureN: Hash;");
     expect(other).not.toContain("[key:");
+    expect(other).not.toContain("texture0:");
   });
 });
 

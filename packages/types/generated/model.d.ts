@@ -244,7 +244,35 @@ declare global {
       /**
        * The texture hash id of the model. Used for getting/setting model texture for unit 0-7
        */
-      [key: `texture${number}`]: Hash;
+      texture0: Hash;
+      /**
+       * The texture hash id of the model. Used for getting/setting model texture for unit 0-7
+       */
+      texture1: Hash;
+      /**
+       * The texture hash id of the model. Used for getting/setting model texture for unit 0-7
+       */
+      texture2: Hash;
+      /**
+       * The texture hash id of the model. Used for getting/setting model texture for unit 0-7
+       */
+      texture3: Hash;
+      /**
+       * The texture hash id of the model. Used for getting/setting model texture for unit 0-7
+       */
+      texture4: Hash;
+      /**
+       * The texture hash id of the model. Used for getting/setting model texture for unit 0-7
+       */
+      texture5: Hash;
+      /**
+       * The texture hash id of the model. Used for getting/setting model texture for unit 0-7
+       */
+      texture6: Hash;
+      /**
+       * The texture hash id of the model. Used for getting/setting model texture for unit 0-7
+       */
+      texture7: Hash;
     }
   }
 }

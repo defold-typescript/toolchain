@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import apiTargets from "../api-targets.json" with { type: "json" };
-import { PROPERTY_KEY_PATTERNS, PROPERTY_TYPE_CORRECTIONS } from "./emit-dts";
+import { PROPERTY_KEY_RANGES, PROPERTY_TYPE_CORRECTIONS } from "./emit-dts";
 
 const PKG = resolve(import.meta.dir, "..");
 
@@ -91,16 +91,25 @@ describe("property-type correction provenance", () => {
   });
 });
 
-describe("property key pattern provenance", () => {
-  const entries = [...PROPERTY_KEY_PATTERNS.entries()];
+describe("property key range provenance", () => {
+  const entries = [...PROPERTY_KEY_RANGES.entries()];
 
-  test("the pattern set is non-empty and every entry resolves to a real ref-doc property", () => {
+  test("the range set is non-empty and every entry resolves to a real ref-doc property", () => {
     expect(entries.length).toBeGreaterThan(0);
     const unresolved = entries.filter(([key]) => sightings(key).length === 0).map(([key]) => key);
     expect(unresolved).toEqual([]);
   });
 
-  test("every vendored ref-doc still states the range the pattern stands for", () => {
+  test("every entry's evidence states the exact range it expands to", () => {
+    const unstated = entries
+      .filter(([, entry]) => !entry.evidence.includes(`${entry.first}-${entry.last}`))
+      .map(
+        ([key, entry]) => `${key}: "${entry.evidence}" does not state ${entry.first}-${entry.last}`,
+      );
+    expect(unstated).toEqual([]);
+  });
+
+  test("every vendored ref-doc still states the range the entry stands for", () => {
     const drifted: string[] = [];
     for (const [key, entry] of entries) {
       for (const sighting of sightings(key)) {
