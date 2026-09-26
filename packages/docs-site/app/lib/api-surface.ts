@@ -587,7 +587,8 @@ export function splitCallForm(symbol: ApiSymbol): { params: string; returns: str
  * Compact per-group function index for the top of an `/api/<namespace>` page:
  * a bulleted list with one card per function name. A single-form function links
  * its full `signature` (parameter and return types included); an overloaded one
- * links its {@link overloadHeading} and nests one item per form under it, each
+ * links its {@link overloadHeading} with the same `N overloads` count badge its
+ * block heading carries, and nests one item per form under it, each
  * linking the same block with that form's {@link overloadFormCodes} entry. Each
  * points down to the detailed block (anchor = `slugify(functionAnchorText(group))`,
  * matching the `slugify-headings` markdown-it rule). Presentation-only — no new
@@ -605,7 +606,9 @@ export function functionOverviewCards(
   const rows = groupOverloadForms(symbols).flatMap((group) => {
     const text = functionAnchorText(group);
     const anchor = slugify(text);
-    const row = `- [\`${text}\`](#${anchor})${markerFor ? markerFor(group) : ""}`;
+    const count =
+      group.length > 1 ? ` <span class="api-overload-count">${group.length} overloads</span>` : "";
+    const row = `- [\`${text}\`${count}](#${anchor})${markerFor ? markerFor(group) : ""}`;
     if (group.length === 1) return [row];
     return [row, ...overloadFormCodes(group).map((code) => `  - [\`${code}\`](#${anchor})`)];
   });
