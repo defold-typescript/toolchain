@@ -2885,7 +2885,11 @@ describe("grouped overload blocks (committed artifacts)", () => {
       for (const group of groupOverloadForms(functionRows(page))) {
         const [head] = group;
         if (group.length < 2 || head === undefined) continue;
-        const card = overview.findIndex((l) => l.startsWith(`- [\`${overloadHeading(group)}\`]`));
+        const card = overview.findIndex((l) =>
+          l.startsWith(
+            `- [\`${overloadHeading(group)}\` <span class="api-overload-count">${group.length} overloads</span>](#`,
+          ),
+        );
         expect({ name: head.name, card: card >= 0 }).toEqual({ name: head.name, card: true });
         const children: string[] = [];
         for (const line of overview.slice(card + 1)) {

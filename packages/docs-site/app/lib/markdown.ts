@@ -6,6 +6,7 @@ import {
   transformerNotationHighlight,
 } from "@shikijs/transformers";
 import MarkdownIt from "markdown-it";
+import type Token from "markdown-it/lib/token.mjs";
 import footnotePlugin from "markdown-it-footnote";
 import { type BundledLanguage, createHighlighter, type Highlighter } from "shiki";
 import { Badge } from "../components/ui/badge";
@@ -663,6 +664,29 @@ export async function renderMarkdown(
   // the detail headings. Runs after the rules above so the slug is already
   // computed from the original heading text; the API route opts in, guide
   // rendering stays plain.
+  // An overload block's `N overloads` count badge, which follows the signature's
+  // code span in the same heading or link, moves into the signature over the
+  // `...` of its call list. `data-toc-text` keeps the outline reading `(...)`.
+  const spliceOverloadBadge = (
+    children: Token[],
+    idx: number,
+  ): { start: number; end: number; html: string } | undefined => {
+    const end = children.findIndex((c, i) => i > idx && c.type === "link_close");
+    const badge = children.findIndex(
+      (c, i) =>
+        i > idx &&
+        (end < 0 || i < end) &&
+        c.type === "html_inline" &&
+        c.content.startsWith('<span class="api-overload-count"'),
+    );
+    const dots = (children[idx]?.content.indexOf("(...)") ?? -1) + 1;
+    if (badge < 0 || dots === 0 || children[badge + 2]?.content !== "</span>") return undefined;
+    const open = (children[badge]?.content ?? "").replace(/>$/, ' data-toc-text="...">');
+    const label = md.utils.escapeHtml(children[badge + 1]?.content ?? "");
+    const space = children[badge - 1]?.type === "text" && !children[badge - 1]?.content.trim();
+    children.splice(space ? badge - 1 : badge, space ? 4 : 3);
+    return { start: dots, end: dots + 3, html: `${open}${label}</span>` };
+  };
   if (opts.highlightSignatureHeadings) {
     md.core.ruler.push("highlight-signature-headings", (state) => {
       // The function an overload block's form lines belong to, read from the
@@ -688,23 +712,7 @@ export async function renderMarkdown(
         const child = children[idx];
         if (!child) continue;
         name = signatureName(child.content);
-        // An overload block's `N overloads` count badge moves into the signature,
-        // over the `...` of its call list. `data-toc-text` keeps the outline
-        // reading `(...)`.
-        const badge = children.findIndex(
-          (c) =>
-            c.type === "html_inline" && c.content.startsWith('<span class="api-overload-count"'),
-        );
-        const dots = child.content.indexOf("(...)") + 1;
-        let replace: { start: number; end: number; html: string } | undefined;
-        if (badge > idx && dots > 0 && children[badge + 2]?.content === "</span>") {
-          const open = (children[badge]?.content ?? "").replace(/>$/, ' data-toc-text="...">');
-          const label = md.utils.escapeHtml(children[badge + 1]?.content ?? "");
-          replace = { start: dots, end: dots + 3, html: `${open}${label}</span>` };
-          const space =
-            children[badge - 1]?.type === "text" && !children[badge - 1]?.content.trim();
-          children.splice(space ? badge - 1 : badge, space ? 4 : 3);
-        }
+        const replace = spliceOverloadBadge(children, idx);
         const replacement = new state.Token("html_inline", "", 0);
         replacement.content = signatureCodeHtml(child.content, replace && { replace });
         children[idx] = replacement;
@@ -715,7 +723,8 @@ export async function renderMarkdown(
     // `…/route#anchor` hrefs, so a bare `#` href uniquely marks a signature
     // link; recolor its code span the same way as the heading. An item nested
     // under a signature item is one of its overload forms, so it colors as part
-    // of that function's full signature.
+    // of that function's full signature. An overloaded function's item has its
+    // count badge spliced into the signature like the heading's.
     md.core.ruler.push("highlight-signature-links", (state) => {
       const names: (string | null)[] = [];
       for (const token of state.tokens) {
@@ -732,10 +741,11 @@ export async function renderMarkdown(
           if (names.length > 0 && names[names.length - 1] === null) {
             names[names.length - 1] = signatureName(code.content);
           }
+          const replace = spliceOverloadBadge(children, i + 1);
           const replacement = new state.Token("html_inline", "", 0);
           replacement.content = signatureCodeHtml(
             code.content,
-            parent === null ? undefined : { prefix: parent },
+            parent === null ? replace && { replace } : { prefix: parent },
           );
           children[i + 1] = replacement;
         }

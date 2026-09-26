@@ -3962,7 +3962,7 @@ describe("overload grouping (committed artifacts)", () => {
         const splits = group.map(splitCallForm);
         const sameReturns = new Set(splits.map((s) => s.returns)).size === 1;
         return [
-          `- [\`${overloadHeading(group)}\`](#${anchor})`,
+          `- [\`${overloadHeading(group)}\` <span class="api-overload-count">${group.length} overloads</span>](#${anchor})`,
           ...splits.map(
             (s) =>
               `  - [\`${sameReturns ? s.params : `${s.params}${s.returns ?? ""}`}\`](#${anchor})`,
@@ -4025,7 +4025,7 @@ describe("functionOverviewCards over overload groups", () => {
     const heading = `${shape}(...): Info`;
     expect(overloadHeading(forms)).toBe(heading);
     expect(cards.split("\n").filter((line) => /^\s*- /.test(line))).toEqual([
-      `- [\`${heading}\`](#${slugify(heading)})`,
+      `- [\`${heading}\` <span class="api-overload-count">2 overloads</span>](#${slugify(heading)})`,
       `  - [\`(shape_id: number)\`](#${slugify(heading)})`,
       `  - [\`(body: Opaque<"b2Body">, shape_index: number)\`](#${slugify(heading)})`,
       ...functionOverviewCards([single])
