@@ -52,7 +52,6 @@ import type { LibraryListing } from "./nav";
 import { LIBRARY_API_KIND_SENTENCE } from "./no-typed-api-icon";
 import { escapeAttr } from "./signature-brand-links";
 import { buildSymbolIndex } from "./symbol-index";
-import { symbolNote } from "./symbol-notes";
 import type { VersionWindow } from "./version-window";
 
 // The type half of a name/type label: raw `api-type` code whose text is escaped
@@ -2844,9 +2843,8 @@ describe("grouped overload blocks (committed artifacts)", () => {
     expect(counts.shared).toBeGreaterThan(0);
   });
 
-  test("an overload block heads with its count badge and lists its forms before anything but a note", () => {
+  test("an overload block heads with its count badge and lists its forms before anything else", () => {
     let checked = 0;
-    let noted = 0;
     for (const page of pages) {
       const md = render(page);
       expect({ namespace: page.namespace, labels: md.match(/^\*\*\d+ overloads\*\*$/gm) }).toEqual({
@@ -2864,14 +2862,9 @@ describe("grouped overload blocks (committed artifacts)", () => {
           ),
         }).toEqual({ name: head.name, heading: true });
         const body = lines.indexOf('<div class="api-symbol-body">');
-        const rest = lines
+        const first = lines
           .slice(body + 1)
           .join("\n")
-          .trimStart();
-        // An authored note qualifies every form's prose, so it alone sits above them.
-        const note = symbolNote(head.name);
-        if (note) noted += 1;
-        const first = (note && rest.startsWith(note) ? rest.slice(note.length) : rest)
           .trimStart()
           .split("\n")[0];
         expect({ name: head.name, first }).toEqual({
@@ -2882,7 +2875,6 @@ describe("grouped overload blocks (committed artifacts)", () => {
       }
     }
     expect(checked).toBeGreaterThan(10);
-    expect(noted).toBeGreaterThan(0);
   });
 
   test("the overview nests the same form codes the block lists", () => {

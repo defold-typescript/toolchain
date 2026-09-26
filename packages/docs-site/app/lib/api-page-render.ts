@@ -773,11 +773,11 @@ export function apiPageMarkdown(
       }
       return ['<li class="api-overload">', "", parts.join("\n\n"), "", "</li>"].join("\n");
     });
-    // The forms lead the block. Only an authored note goes above them: it
-    // qualifies every form's upstream prose, the per-form descriptions included.
+    // The forms lead the block. An authored note follows them, still ahead of the
+    // shared example it warns about.
+    const body = [['<ol class="api-overloads">', ...items, "</ol>"].join("\n")];
     const note = noteFor(head.name);
-    const body = note ? [note] : [];
-    body.push(['<ol class="api-overloads">', ...items, "</ol>"].join("\n"));
+    if (note) body.push(note);
     if (sameBadges && badges[0]) body.push(badges[0]);
     if (sameDoc && linked[0]?.docMarkdown) body.push(linked[0].docMarkdown);
     if (sameExample && head.exampleMarkdown) body.push(head.exampleMarkdown);
