@@ -27,6 +27,8 @@ What changed in each published `defold-typescript` toolchain release.
   - **[`render.constant_buffer()`](/api/render)** — the buffer takes named constants, single or array, as in `constants.tint = vmath.vector4(1, 1, 1, 1)`.
   - **[Render targets and textures](/api/render)** — `render.set_render_target`, `get_render_target_width` / `_height`, `set_render_target_size` and `enable_texture` take a render target resource by name, and `set_render_target` takes `render.RENDER_TARGET_DEFAULT`. `enable_texture` binds a render target or a numeric texture handle, `disable_texture` takes a texture unit, and `set_camera` takes a camera URL string.
   - **[`gui.set`](/api/gui)** — takes a `vmath.matrix4` material constant and a hash such as a runtime texture; `gui.set_rotation` takes Euler angles as a `vmath.vector3`.
+  - **[`b2d.shape`](/api/b2d.shape)** — every function that takes a shape handle also takes `body, shape_index`, as in `b2d.shape.get_shape(body, 1)`, and `set_shape` may omit `update_mass`.
+  - **[Atlas animations](/api/resource)** — `playback` in `resource.set_atlas`, `create_atlas` and `get_atlas` is a `go.Playback`, so it takes `go.PLAYBACK_LOOP_PINGPONG` instead of rejecting every constant.
   - **[`sys.save` / `sys.serialize`](/api/sys)** — take a Lua sequence such as `["my_value"]`.
   - **[Buffer streams](/api/buffer)** — `stream.length()` returns the element count and compiles to Lua's `#stream`, and `buffer.get_bytes` takes the stream name as a string.
   - **[`msg.post`](/api/msg)** — a message id with no declared payload also accepts a Lua sequence, such as `[t_volume]`.

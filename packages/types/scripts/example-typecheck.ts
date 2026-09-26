@@ -366,6 +366,27 @@ export function undeclaredStateOffenders(
   );
 }
 
+/**
+ * A property read the declared type does not carry (`TS2339`), an argument its
+ * parameter does not accept (`TS2345`), and a call no overload accepts
+ * (`TS2769`). Each code names the class on its own, so no message text decides
+ * membership.
+ */
+const PROPERTY_ARGUMENT_CODES: ReadonlySet<number> = new Set([2339, 2345, 2769]);
+
+/**
+ * The diagnostics an example's body carries that the property and
+ * argument-type class refuses: a translation that contradicts a declared type,
+ * or a declaration that contradicts upstream's own example. Both the
+ * committed-pin closure and the compiled probes judge through this one
+ * predicate, so neither can drift from the other.
+ */
+export function propertyArgumentOffenders(
+  diagnostics: readonly ExampleDiagnostic[],
+): ExampleDiagnostic[] {
+  return diagnostics.filter((diagnostic) => PROPERTY_ARGUMENT_CODES.has(diagnostic.code));
+}
+
 export interface SurfaceCompilation {
   readonly units: Map<string, ExampleDiagnostic[]>;
   /**

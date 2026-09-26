@@ -201,7 +201,7 @@ declare global {
      * });
      * ```
      */
-    function create_atlas(path: string, table: { texture?: string | Hash; animations?: { id?: string; width?: number; height?: number; frame_start?: number; frame_end?: number; playback?: Opaque<"constant">; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean }[]; geometries?: { id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean }[]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;
+    function create_atlas(path: string, table: { texture?: string | Hash; animations?: { id?: string; width?: number; height?: number; frame_start?: number; frame_end?: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean }[]; geometries?: { id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean }[]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;
     /**
      * This function creates a new buffer resource that can be used in the same way as any buffer created during build time.
      * The function requires a valid buffer created from either buffer.create or another pre-existing buffer resource.
@@ -756,7 +756,7 @@ declare global {
      * `geometries`, preserving the frame-to-geometry mapping used by the atlas.
      * See resource.set_atlas for a detailed description of each field
      */
-    function get_atlas(path: Hash | string): { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: Opaque<"constant">; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] };
+    function get_atlas(path: Hash | string): { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: go.Playback; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] };
     /**
      * gets the buffer from a resource
      *
@@ -1152,6 +1152,8 @@ declare global {
      *       frame_end: 6,
      *       playback: go.PLAYBACK_LOOP_PINGPONG,
      *       fps: 8,
+     *       flip_vertical: false,
+     *       flip_horizontal: false,
      *     };
      *     data.animations.push(my_animation);
      *     resource.set_atlas("/main/my_atlas.a.texturesetc", data);
@@ -1187,7 +1189,7 @@ declare global {
      * });
      * ```
      */
-    function set_atlas(path: Hash | string, table: { texture?: string | Hash; animations?: { id?: string; width?: number; height?: number; frame_start?: number; frame_end?: number; playback?: Opaque<"constant">; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean }[]; geometries?: { vertices?: number[]; uvs?: number[]; indices?: number[] }[]; vertices?: number[]; uvs?: number[]; indices?: number[] }): void;
+    function set_atlas(path: Hash | string, table: { texture?: string | Hash; animations?: { id?: string; width?: number; height?: number; frame_start?: number; frame_end?: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean }[]; geometries?: { vertices?: number[]; uvs?: number[]; indices?: number[] }[]; vertices?: number[]; uvs?: number[]; indices?: number[] }): void;
     /**
      * Sets the buffer of a resource. By default, setting the resource buffer will either copy the data from the incoming buffer object
      * to the buffer stored in the destination resource, or make a new buffer object if the sizes between the source buffer and the destination buffer

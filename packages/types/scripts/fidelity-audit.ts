@@ -8,6 +8,7 @@ import {
   applyFieldTypeOverrides,
   applyNestedFieldCurations,
   buildTableDocResolver,
+  firstSlotAlternativeOf,
   HANDLE_METHOD_LOCAL,
   HOMOGENEOUS_ARRAY_SLOTS,
   isDocOptional,
@@ -299,6 +300,19 @@ export const OPTIONALITY_EVIDENCE: Readonly<
 // exemption is a decision someone can re-check rather than a silent skip.
 export const OPTIONALITY_EVIDENCE_EXEMPTIONS: ReadonlyMap<string, string> = new Map([]);
 
+// OPTIONAL_SLOT_CORRECTIONS entries whose evidence the axes above cannot
+// attribute, keyed and reasoned the same way. The audit tells same-named
+// declarations apart by argument count alone, so an omission is invisible when
+// the shorter call also fits another declaration in full.
+export const UNATTRIBUTED_OPTIONAL_CORRECTIONS: ReadonlyMap<string, string> = new Map([
+  [
+    "b2d.shape.set_shape:param:update_mass",
+    "the example `b2d.shape.set_shape(body, 2, { ... })` omits update_mass from the " +
+      "`body, shape_index` form, but three arguments is also the full `shape_id` form, so " +
+      "the count cannot say which declaration the call omits from.",
+  ],
+]);
+
 export interface EvidencedSlot {
   readonly key: string;
   readonly emittedRequired: boolean;
@@ -421,7 +435,12 @@ export function declaredArities(
       result.set(fn.name, authored.get(fn.name) ?? []);
       continue;
     }
-    result.set(fn.name, [...(result.get(fn.name) ?? []), declaredArity(fn)]);
+    const alternative = firstSlotAlternativeOf(fn, entry.namespace);
+    result.set(fn.name, [
+      ...(result.get(fn.name) ?? []),
+      declaredArity(fn),
+      ...(alternative === null ? [] : [declaredArity(alternative)]),
+    ]);
   }
   return result;
 }
@@ -432,16 +451,7 @@ export function declaredArities(
 // because each reason explains one argument count: a second unsupported arity
 // on the same function is new evidence, not something an existing entry covers.
 // Empty is the goal state, not a gap: the gate below asserts both directions.
-export const INEXPRESSIBLE_EXAMPLE_RESIDUALS: ReadonlyMap<string, string> = new Map([
-  [
-    "b2d.shape.set_shape:4",
-    "upstream documents an alternative call form inside one slot — the `shape_id` " +
-      'parameter reads "shape handle from a shape info table, or pass body, shape_index" ' +
-      "— so the four-argument example has one more argument than any parameter list " +
-      "upstream declares. Expressing it needs a hand-authored b2d.shape overload pair, " +
-      "which changes the shipped surface and is its own piece of work.",
-  ],
-]);
+export const INEXPRESSIBLE_EXAMPLE_RESIDUALS: ReadonlyMap<string, string> = new Map([]);
 
 export interface InexpressibleCall {
   readonly fqn: string;

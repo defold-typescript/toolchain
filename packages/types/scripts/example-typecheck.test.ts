@@ -30,6 +30,7 @@ import {
   optionalLoadOffenders,
   type PinFile,
   pinIdentity,
+  propertyArgumentOffenders,
   readPins,
   runGate,
   sortDiagnostics,
@@ -358,6 +359,49 @@ describe("the script-state class", () => {
             offenders.length > 20 ? `\n  +${offenders.length - 20} more` : ""
           }\n` +
           "Return the field from `init` in the example body; never re-pin to absorb it.",
+      );
+    }
+    expect(offenders).toEqual([]);
+  });
+});
+
+describe("the property and argument-type class", () => {
+  const PROPERTY_ARGUMENT_SHAPES = [
+    ["an undeclared property of a declared type", "const w = vmath.vector3(1, 2, 3).w;", 2339],
+    ["a string passed where a Hash is declared", 'const hex = hash_to_hex("my_id");', 2345],
+    ["a call no overload of a declared function accepts", 'const v = vmath.vector3("x");', 2769],
+  ] as const;
+
+  test("a misused property or argument compiles to a diagnostic the closure refuses", () => {
+    for (const [shape, body, code] of PROPERTY_ARGUMENT_SHAPES) {
+      const diagnostics = diagnosticsFor(body);
+      if (!propertyArgumentOffenders(diagnostics).some((d) => d.code === code)) {
+        throw new Error(
+          `${shape} compiles to no TS${code} the property and argument-type closure refuses; the compiler reported ` +
+            `${
+              diagnostics.length > 0
+                ? diagnostics.map((d) => `TS${d.code} ${d.text}`).join(", ")
+                : "nothing at all"
+            }. Re-point PROPERTY_ARGUMENT_CODES at the code the shape now carries, or the closure no longer covers it.`,
+        );
+      }
+    }
+  });
+
+  test("no pin records a property or argument-type diagnostic", () => {
+    const offenders: string[] = [];
+    for (const [identity, diagnostics] of Object.entries(pins)) {
+      for (const diagnostic of propertyArgumentOffenders(diagnostics)) {
+        offenders.push(`  ${identity} — TS${diagnostic.code} ${diagnostic.text}`);
+      }
+    }
+    if (offenders.length > 0) {
+      throw new Error(
+        "an authored translation misuses a declared property or argument type:\n" +
+          `${offenders.slice(0, 20).join("\n")}${
+            offenders.length > 20 ? `\n  +${offenders.length - 20} more` : ""
+          }\n` +
+          "Correct the translation, or the declaration it contradicts; never re-pin to absorb it.",
       );
     }
     expect(offenders).toEqual([]);
