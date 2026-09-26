@@ -44,7 +44,6 @@ import "../../src/component-properties";
 import "../../src/custom-messages";
 import "../../src/engine-globals";
 import "../../src/go-overloads";
-import "../../src/graphics-constants";
 import "../../src/message-guard";
 import "../../src/msg-overloads";
 import "../../src/scene-addresses";

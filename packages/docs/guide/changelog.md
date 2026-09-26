@@ -32,7 +32,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **[`sys.save` / `sys.serialize`](/api/sys)** — take a Lua sequence such as `["my_value"]`.
   - **[Buffer streams](/api/buffer)** — `stream.length()` returns the element count and compiles to Lua's `#stream`, and `buffer.get_bytes` takes the stream name as a string.
   - **[`msg.post`](/api/msg)** — a message id with no declared payload also accepts a Lua sequence, such as `[t_volume]`.
-  - **[`render.CONTEXT_EVENT_CONTEXT_LOST` / `_RESTORED`](/api/render) and [`graphics.SEMANTIC_TYPE_*`](/api/graphics)** — declared; the engine defines them, but the reference names them only in prose.
+  - **[`render.CONTEXT_EVENT_CONTEXT_LOST` / `_RESTORED`](/api/render) and [`graphics.SEMANTIC_TYPE_*`](/api/graphics)** — declared; the engine defines them, but the reference names them only in prose. The `SEMANTIC_TYPE_*` constants follow each release's own list: none on 1.12.4, twelve on 1.13.0, and `SEMANTIC_TYPE_MORPH_TARGET_WEIGHTS` from 1.13.1.
 - Three more kinds of type error are fixed in hover and API reference examples: 43 that kept script state on `self` (such as [`render.draw`](/api/render) and [`vmath.lerp`](/api/vmath)) return it from `init` or declare it in `properties`, others check a value that can be missing before using it ([`image.load`](/api/image), [`camera.screen_to_world`](/api/camera), `action.value` in `on_input`), and others use the constant the declarations export ([`gui.EASING_LINEAR`](/api/gui), [`graphics.TEXTURE_*`](/api/graphics), [`sys.REQUEST_STATUS_FINISHED`](/api/sys)). Some of these examples still carry other type errors.
 
 ## v0.39.0

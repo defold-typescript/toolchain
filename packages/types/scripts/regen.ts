@@ -26,6 +26,7 @@ import {
   resolveRefDoc,
 } from "./doc-source";
 import { loadTranslations } from "./example-store-io";
+import { synthesizeProseConstants } from "./prose-constants";
 import { type readZip, SYNC_MANIFEST, type SyncManifestEntry } from "./sync-api-docs";
 
 export interface ApiTargetModule {
@@ -99,7 +100,7 @@ export function loadTargetModules(
   target: ApiTarget,
   packageRoot: string = PACKAGE_ROOT,
 ): ModuleManifestEntry[] {
-  return target.modules.map((module) => {
+  const modules = target.modules.map((module) => {
     const path = resolve(packageRoot, target.fixturesDir, module.fixture);
     let raw: string;
     try {
@@ -117,6 +118,7 @@ export function loadTargetModules(
     };
     return module.skipFunctions ? { ...entry, skipFunctions: module.skipFunctions } : entry;
   });
+  return synthesizeProseConstants(modules);
 }
 
 export interface ModuleManifestEntry {
@@ -168,7 +170,7 @@ export async function resolveTargetModules(
     ...(opts.fetchChannelInfo ? { fetchChannelInfo: opts.fetchChannelInfo } : {}),
   });
   const syncManifest = opts.syncManifest ?? SYNC_MANIFEST;
-  return target.modules.map((module) => {
+  const modules = target.modules.map((module) => {
     const sync = syncManifest.find((s) => s.namespace === module.namespace);
     if (!sync) {
       throw new Error(
@@ -184,6 +186,7 @@ export async function resolveTargetModules(
     };
     return module.skipFunctions ? { ...entry, skipFunctions: module.skipFunctions } : entry;
   });
+  return synthesizeProseConstants(modules);
 }
 
 const API_TARGETS = loadApiTargets();
@@ -557,7 +560,6 @@ const UNIVERSAL_EXTRA_IMPORTS: readonly UniversalExtraImport[] = [
   { specifier: "../../src/scene-addresses" },
   { specifier: "../../src/go-overloads" },
   { specifier: "../../src/component-properties" },
-  { specifier: "../../src/graphics-constants" },
   { specifier: "../../src/render-overloads", restrictedTo: "render" },
   { specifier: "../../src/vmath-overloads" },
 ];
