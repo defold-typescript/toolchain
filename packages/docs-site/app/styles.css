@@ -1122,13 +1122,13 @@
   /* Availability category layer — one compact labeled chip per active category
    * on a symbol heading, carrying a visible `N`/`C`/`D` glyph so the category is
    * legible without color, additive over the accessible `aria-label`/`title`. */
-  .prose .api-badge-dot {
+  .prose .api-badge-dot,
+  .prose .api-availability-mark {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     min-width: 1.15em;
     height: 1.15em;
-    margin-left: 0.3em;
     padding: 0 0.25em;
     border-radius: 0.3em;
     font-size: 0.7em;
@@ -1138,16 +1138,35 @@
     vertical-align: middle;
   }
 
-  .prose .api-badge-dot--new {
+  .prose .api-badge-dot {
+    margin-left: 0.3em;
+  }
+
+  .prose .api-badge-dot--new,
+  .prose .api-availability-mark--new {
     background: var(--color-badge-new);
   }
 
-  .prose .api-badge-dot--changed {
+  .prose .api-badge-dot--changed,
+  .prose .api-availability-mark--changed {
     background: var(--color-badge-changed);
   }
 
-  .prose .api-badge-dot--deprecated {
+  .prose .api-badge-dot--deprecated,
+  .prose .api-availability-mark--deprecated {
     background: var(--color-badge-deprecated);
+  }
+
+  /* The availability list swaps its bullets for the same chips, so each fact
+   * reads with the category its heading shows. A fact with no category keeps an
+   * empty chip-sized slot, so every label starts at the same column. */
+  .prose .api-availability ul {
+    list-style: none;
+    padding-left: 0;
+  }
+
+  .prose .api-availability-mark {
+    margin-right: 0.45em;
   }
 
   .prose .api-badge-dot--global {

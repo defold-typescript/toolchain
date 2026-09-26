@@ -4,9 +4,10 @@ import {
   type ApiPage,
   type ApiSymbol,
   type ApiSymbolParam,
+  type AvailabilityItem,
   type AvailabilityLookup,
   apiModuleSymbols,
-  availabilityLabels,
+  availabilityItems,
   type BadgeCategory,
   badgeCategory,
   badgeCategoryFromLabel,
@@ -157,22 +158,33 @@ function availabilityBadges(
         ? "Deprecated"
         : `Deprecated — ${tagText}`
       : undefined;
-  if (!av) return tagLine === undefined ? "" : availabilityList([tagLine]);
-  const items = availabilityLabels(av, availability);
-  if (tagLine !== undefined) items.unshift(tagLine);
+  const tagItem: AvailabilityItem | undefined =
+    tagLine === undefined ? undefined : { label: tagLine, category: "deprecated" };
+  if (!av) return tagItem === undefined ? "" : availabilityList([tagItem]);
+  const items = availabilityItems(av, availability);
+  if (tagItem !== undefined) items.unshift(tagItem);
   if (av.replacement) {
     const route = resolveReplacement(av.replacement) ?? indexRoute;
-    items.push(`Replaced by [${av.replacement.name}](${route})`);
+    items.push({ label: `Replaced by [${av.replacement.name}](${route})` });
   }
   if (items.length === 0) return "";
   return availabilityList(items);
 }
 
-function availabilityList(items: readonly string[]): string {
+// Each item leads with the `N`/`C`/`D` chip its heading would show, in place of
+// the list bullet; a fact with no category keeps a neutral, glyph-less chip so
+// the labels stay aligned. The class deliberately avoids `api-badge-dot`: the
+// window filter toggles every `api-badge-dot--*` inside an overload form, and a
+// list chip must stay beside its text whatever window is selected.
+function availabilityList(items: readonly AvailabilityItem[]): string {
   return [
     '<div class="api-availability" aria-label="Availability">',
     "",
-    ...items.map((item) => `- ${item}`),
+    ...items.map((item) => {
+      const kind = item.category ?? "none";
+      const glyph = BADGE_KINDS.find((b) => b.kind === item.category)?.glyph ?? "";
+      return `- <span class="api-availability-mark api-availability-mark--${kind}" aria-hidden="true">${glyph}</span> ${item.label}`;
+    }),
     "",
     "</div>",
   ].join("\n");
