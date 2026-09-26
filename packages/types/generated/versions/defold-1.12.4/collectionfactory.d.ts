@@ -51,11 +51,10 @@ declare global {
      *     const pos = vmath.vector3(100, 12.5, 0);
      *     const rot = vmath.quat_rotation_z(Math.PI / 2);
      *     const scale = 0.5;
-     *     const props = {
-     *       [hash("/enemy_leader")]: { health: 1000.0 },
-     *       [hash("/enemy_1")]: { health: 200.0 },
-     *       [hash("/enemy_2")]: { health: 400.0, color: hash("green") },
-     *     };
+     *     const props = new LuaMap<Hash, Record<string, unknown>>();
+     *     props.set(hash("/enemy_leader"), { health: 1000.0 });
+     *     props.set(hash("/enemy_1"), { health: 200.0 });
+     *     props.set(hash("/enemy_2"), { health: 400.0, color: hash("green") });
      *
      *     const enemy_ids = collectionfactory.create("#enemyfactory", pos, rot, props, scale);
      *     // enemy_ids now map to the spawned instance ids:
@@ -84,7 +83,7 @@ declare global {
      * }
      * ```
      */
-    function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: Record<string | number, unknown>, scale?: number | Vector3): LuaMap<Hash, Hash>;
+    function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaMap<Hash, Hash>;
     /**
      * This returns status of the collection factory.
      * Calling this function when the factory is not marked as dynamic loading always returns COMP_COLLECTION_FACTORY_STATUS_LOADED.

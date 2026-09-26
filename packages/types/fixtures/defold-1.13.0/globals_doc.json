@@ -29,7 +29,7 @@
       "name": "pprint",
       "brief": "pretty printing",
       "description": "Pretty printing of Lua values. This function prints Lua values in a manner similar to +print()+, but will also recurse into tables and pretty print their contents.",
-      "parameters": [{ "name": "v", "doc": "value to print", "types": ["any"] }],
+      "parameters": [{ "name": "...args", "doc": "values to print", "types": ["any"] }],
       "returnvalues": []
     }
   ]
