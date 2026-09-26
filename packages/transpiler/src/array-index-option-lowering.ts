@@ -169,10 +169,14 @@ function plusOne(value: Expression): Expression {
   );
 }
 
-function offsetIndexFields(table: TableExpression): void {
-  for (const field of table.fields) {
+// `rejectOptions` guarantees the last `index` field is the effective one: a
+// spread carrying `index` after it is rejected. Every earlier one is shadowed
+// and keeps its source value.
+function offsetEffectiveIndexField(tables: readonly TableExpression[]): void {
+  for (const field of tables.flatMap((table) => table.fields).reverse()) {
     if (field.key !== undefined && isStringLiteral(field.key) && field.key.value === INDEX_KEY) {
       field.value = plusOne(field.value);
+      return;
     }
   }
 }
@@ -198,9 +202,9 @@ export const arrayIndexOptionLoweringPlugin: Plugin = {
       const result = context.superTransformExpression(node);
       if (!loweredLiterals.has(node)) return result;
       if (isTableExpression(result)) {
-        offsetIndexFields(result);
+        offsetEffectiveIndexField([result]);
       } else if (isCallExpression(result)) {
-        for (const param of result.params) if (isTableExpression(param)) offsetIndexFields(param);
+        offsetEffectiveIndexField(result.params.filter(isTableExpression));
       }
       return result;
     },
