@@ -21,7 +21,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 - An extension whose `.script_api` writes a type as a list (`type: [table, string]`) is typed as that union by [resolve](./resolve.md) instead of `unknown`.
 - Symbol names mentioned in API reference prose link to their reference on the published site instead of opening a missing page.
-- Hover and API reference examples that kept script state on `self` (43 of them, such as `render.draw`, `vmath.lerp` and `resource.atlas`) now return it from `init` or declare it in `properties`, so they type-check when pasted into a script.
+- Hover and API reference examples that kept script state on `self` (43 of them, such as `render.draw`, `vmath.lerp` and `resource.atlas`) now return it from `init` or declare it in `properties`, so a pasted example no longer fails on an undeclared `self` field.
 
 ## v0.39.0
 
