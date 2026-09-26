@@ -370,7 +370,7 @@ Time between double taps. Default: 0.4
 
 <div class="api-symbol-body">
 
-Scale added on touch hover (default style). Default: <a href="/api/defold-1.13.1/vmath#vmathvector3" class="symbol-xref">vmath.vector3</a>(0.08, 0.08, 1)
+Scale added on touch hover (default style). Default: <a href="/api/defold-1.13.1/vmath#vmathvector3-vector3" class="symbol-xref">vmath.vector3</a>(0.08, 0.08, 1)
 
 </div>
 
@@ -378,7 +378,7 @@ Scale added on touch hover (default style). Default: <a href="/api/defold-1.13.1
 
 <div class="api-symbol-body">
 
-Scale added on mouse hover (default style). Default: <a href="/api/defold-1.13.1/vmath#vmathvector3" class="symbol-xref">vmath.vector3</a>(0.04, 0.04, 1)
+Scale added on mouse hover (default style). Default: <a href="/api/defold-1.13.1/vmath#vmathvector3-vector3" class="symbol-xref">vmath.vector3</a>(0.04, 0.04, 1)
 
 </div>
 
@@ -394,7 +394,7 @@ Hover scale animation time. Default: 0.05
 
 <div class="api-symbol-body">
 
-Scale punch on click (default style). Default: <a href="/api/defold-1.13.1/vmath#vmathvector3" class="symbol-xref">vmath.vector3</a>(0.12, 0.12, 1)
+Scale punch on click (default style). Default: <a href="/api/defold-1.13.1/vmath#vmathvector3-vector3" class="symbol-xref">vmath.vector3</a>(0.12, 0.12, 1)
 
 </div>
 
@@ -418,7 +418,7 @@ Sound id played on disabled click. Default: "click"
 
 <div class="api-symbol-body">
 
-Color applied when disabled via style. Default: <a href="/api/defold-1.13.1/vmath#vmathvector4" class="symbol-xref">vmath.vector4</a>(0, 0, 0, 1)
+Color applied when disabled via style. Default: <a href="/api/defold-1.13.1/vmath#vmathvector4-vector4" class="symbol-xref">vmath.vector4</a>(0, 0, 0, 1)
 
 </div>
 
@@ -426,7 +426,7 @@ Color applied when disabled via style. Default: <a href="/api/defold-1.13.1/vmat
 
 <div class="api-symbol-body">
 
-Color applied when enabled via style. Default: <a href="/api/defold-1.13.1/vmath#vmathvector4" class="symbol-xref">vmath.vector4</a>(1)
+Color applied when enabled via style. Default: <a href="/api/defold-1.13.1/vmath#vmathvector4-vector4" class="symbol-xref">vmath.vector4</a>(1)
 
 </div>
 

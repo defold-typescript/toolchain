@@ -91,6 +91,12 @@ describe("allPageHeadings", () => {
     ]);
   });
 
+  test("an element carrying data-toc-text contributes that value instead of its text", () => {
+    const html =
+      '<h3 id="fx"><code><span>f(</span><span class="api-overload-count" data-toc-text="...">2 overloads</span><span>): number</span></code></h3>';
+    expect(allPageHeadings(html)).toEqual([{ text: "f(...): number", id: "fx", level: 3 }]);
+  });
+
   test("pageHeadings over the same html keeps the h2..h4 table-of-contents bound", () => {
     expect(pageHeadings(fullDepthHtml)).toEqual([
       { text: "Defold 1.13.1", id: "defold-1131", level: 2 },
