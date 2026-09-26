@@ -762,7 +762,7 @@ declare global {
      * @param node - node to get the property for
      * @param property - the property to retrieve
      * @param options - optional options table (only applicable for material constants)
-     * - `index` number index into array property (1 based)
+     * - `index` number zero-based index into array property; the transpiler emits Defold's 1-based index
      * @example
      * ```ts
      * // Get properties on existing nodes:
@@ -1759,7 +1759,7 @@ declare global {
      * @param property - the property to set
      * @param value - the property to set
      * @param options - optional options table (only applicable for material constants)
-     * - `index` number index into array property (1 based)
+     * - `index` number zero-based index into array property; the transpiler emits Defold's 1-based index
      * - `key` hash name of internal property
      * @example
      * ```ts
@@ -1782,15 +1782,15 @@ declare global {
      * // matrix4 is also supported
      * gui.set(node, "light_matrix", vmath.matrix4());
      * // update a constant in an array at position 4. the array is specified in the shader as:
-     * // uniform vec4 tint_array[4]; // lua is 1 based, shader is 0 based
-     * gui.set(node, "tint_array", vmath.vector4(1, 0, 0, 1), { index: 4 });
+     * // uniform vec4 tint_array[4]; // TypeScript and the shader are both 0 based
+     * gui.set(node, "tint_array", vmath.vector4(1, 0, 0, 1), { index: 3 });
      * // update a matrix constant in an array at position 4. the array is specified in the shader as:
      * // uniform mat4 light_matrix_array[4];
-     * gui.set(node, "light_matrix_array", vmath.matrix4(), { index: 4 });
+     * gui.set(node, "light_matrix_array", vmath.matrix4(), { index: 3 });
      * // update a sub-element in a constant
      * gui.set(node, "tint.x", 1);
      * // update a sub-element in an array constant at position 4
-     * gui.set(node, "tint_array.x", 1, { index: 4 });
+     * gui.set(node, "tint_array.x", 1, { index: 3 });
      *
      * // Set a named property
      * export default defineGuiScript({

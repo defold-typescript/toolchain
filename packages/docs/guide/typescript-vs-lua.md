@@ -80,6 +80,32 @@ Beyond these three, TypeScript also gives you `Set`, `WeakMap`, `WeakSet`, and
 what is built in, what each lowers to, its `lualib` cost, and what to reach for
 when something is missing, see [Data structures](./data-structures.md).
 
+### Engine array properties: `options.index`
+
+`go.get`, `go.set`, `gui.get` and `gui.set` take an `options.index` that picks
+one element of an array property, such as a material constant array. Lua passes
+it 1-based. In TypeScript you write it 0-based, like any other array index, and
+the transpiler adds 1:
+
+```ts
+declare const url: Url;
+// the first element: tint_array[0] in the shader
+go.set(url, "tint_array", vmath.vector4(1, 0, 0, 1), { index: 0 });
+```
+
+- A literal is converted: `{ index: 0 }` emits `{index = 1}`.
+- Any other value is evaluated once, plus 1: `{ index: i }` emits `{index = i + 1}`.
+- Leaving `index` out passes the options through unchanged.
+- Aliases (`const set = go.set`), destructuring (`const { get } = gui`) and the
+  curried `go.get<P>()(…)` are converted too.
+- An options variable whose type has `index`, a spread that carries `index` with
+  no explicit `index` after it, and an `index` that may be `undefined` are
+  errors. Write the options object inline at the call.
+- A call made through `any` is not converted.
+- Hand-written `.lua` files are not touched and keep 1-based indices.
+
+When upgrading, subtract 1 from every existing `index` at these four calls.
+
 ## Modules: `require` vs `import`
 
 Lua wires files together with `require` and a returned table. TypeScript uses
