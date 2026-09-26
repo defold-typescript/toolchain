@@ -52,7 +52,7 @@ declare global {
      * });
      * ```
      */
-    function play_flipbook(url: string | Hash | Url, id: string | Hash, complete_function?: (self: unknown, message_id: unknown, message: unknown, sender: unknown) => void, play_properties?: { offset?: number; playback_rate?: number }): void;
+    function play_flipbook(url: string | Hash | Url, id: string | Hash, complete_function?: (self: unknown, message_id: Hash, message: { current_tile: number; id: Hash }, sender: Url) => void, play_properties?: { offset?: number; playback_rate?: number }): void;
     /**
      * Sets horizontal flipping of the provided sprite's animations.
      * The sprite is identified by its URL.

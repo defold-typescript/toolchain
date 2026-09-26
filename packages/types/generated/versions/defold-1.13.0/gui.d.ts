@@ -1765,7 +1765,7 @@ declare global {
      * ```ts
      * // Updates the position property on an existing node:
      * const node = gui.get_node("my_box_node");
-     * const node_position = gui.get(node, "position");
+     * const node_position = gui.get(node, "position") as Vector3;
      * gui.set(node, "position.x", node_position.x + 128);
      *
      * // Updates the rotation property on an existing node:
@@ -1807,7 +1807,7 @@ declare global {
      * });
      * ```
      */
-    function set(node: Opaque<"node"> | Url, property: string | Hash | gui.Property, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: { index?: number; key?: Hash }): void;
+    function set(node: Opaque<"node"> | Url, property: string | Hash | gui.Property, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: { index?: number; key?: string | Hash }): void;
     /**
      * Sets the adjust mode on a node.
      * The adjust mode defines how the node will adjust itself to screen
