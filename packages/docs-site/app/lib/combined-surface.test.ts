@@ -6,6 +6,7 @@ import {
   type ApiModule,
   type ApiParameter,
   type ApiSymbolIdentity,
+  firstSlotAlternativeOf,
   normalizedFunctionSignature,
   symbolIdentityKey,
   type TranslationStore,
@@ -354,6 +355,40 @@ describe("loadCombinedSurface (committed artifacts)", () => {
       expect(
         named.filter((s) => s.signature.includes('(body: Opaque<"b2Body">, shape_index: number')),
       ).toHaveLength(1);
+    }
+  });
+
+  test("the b2d.shape body, shape_index row documents the arguments that form takes", () => {
+    const shapeNs = surface.namespaces.find((n) => n.namespace === "b2d.shape");
+    if (!shapeNs) throw new Error("b2d.shape missing from the committed Combined surface");
+    const page = combinedNamespaceToApiPage(shapeNs);
+    const rows = apiModuleSymbols(page, page.translations, page.signatures).filter(
+      (s) => s.kind === "function",
+    );
+    const alternated = shapeNs.module.functions.flatMap((fn) => {
+      const alternative = firstSlotAlternativeOf(fn, "b2d.shape");
+      return alternative === null ? [] : [alternative];
+    });
+    expect(alternated.length).toBeGreaterThan(0);
+    for (const alternative of alternated) {
+      const named = rows.filter((s) => s.name === alternative.name);
+      const arm = named.find((s) => s.signature.includes('(body: Opaque<"b2Body">'));
+      const primary = named.find((s) => s.declarationIdentity !== undefined);
+      expect({
+        name: alternative.name,
+        params: arm?.parameters.map((p) => p.name),
+        returns: arm?.returnValues.map((r) => r.name),
+      }).toEqual({
+        name: alternative.name,
+        params: alternative.parameters.map((p) => p.name),
+        returns: primary?.returnValues.map((r) => r.name),
+      });
+      const body = arm?.parameters.find((p) => p.name === "body");
+      const shapeIndex = arm?.parameters.find((p) => p.name === "shape_index");
+      expect(body?.types).toEqual(['Opaque<"b2Body">']);
+      expect(shapeIndex?.types).toEqual(["number"]);
+      expect(body?.doc).not.toBe("");
+      expect(shapeIndex?.doc).not.toBe("");
     }
   });
 });

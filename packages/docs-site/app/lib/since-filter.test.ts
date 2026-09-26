@@ -747,3 +747,66 @@ describe("a category reachable only by narrowing is already in the markup", () =
     expect(labelsFor(root, "gapped")).toEqual(serverLabels({ new: 0, changed: 1, deprecated: 0 }));
   });
 });
+
+describe("overload forms with differing spans", () => {
+  // Two forms of one name: the one-argument form stopped at the oldest version,
+  // the two-argument form arrived after it.
+  const retiredForm: ApiFunction = {
+    ...fn("demo.shift"),
+    parameters: [{ name: "a", doc: "", types: ["number"], isOptional: false }],
+  };
+  const currentForm: ApiFunction = {
+    ...fn("demo.shift"),
+    parameters: [
+      { name: "a", doc: "", types: ["number"], isOptional: false },
+      { name: "b", doc: "", types: ["number"], isOptional: false },
+    ],
+  };
+  const formIdentity = (f: ApiFunction): ApiSymbolIdentity => ({
+    namespace: "demo",
+    kind: "FUNCTION",
+    name: f.name,
+    signature: normalizedFunctionSignature(f),
+  });
+  const page = (): ApiPage => {
+    const base = demoPage();
+    const records = new Map(
+      (
+        [
+          [retiredForm, [OLDEST]],
+          [currentForm, [NEWEST, MIDDLE]],
+        ] as const
+      ).map(([f, availableIn]) => [
+        symbolIdentityKey(formIdentity(f)),
+        { identity: formIdentity(f), availableIn: [...availableIn] },
+      ]),
+    );
+    return {
+      ...base,
+      module: { ...base.module, functions: [retiredForm, currentForm] },
+      availability: { versions: [...AXIS], records, transitions: new Set<string>() },
+    };
+  };
+  const render = async (): Promise<MiniElement> =>
+    parseHtml(
+      `<main id="content">${await renderMarkdown(
+        apiPageMarkdown(page(), (t) => t, { combinedMarkers: true }),
+        { highlightSignatureHeadings: true },
+      )}</main>`,
+    );
+  const forms = (root: MiniElement) => root.querySelectorAll("li.api-overload");
+
+  test("narrowing hides the form it excludes and keeps the block", async () => {
+    const root = await render();
+    expect(forms(root)).toHaveLength(2);
+    applySinceFilter(root, { from: MIDDLE, to: PAGE_TO }, AXIS_CONFIG);
+    const heading = headingFor(root, "demo.shift(...)");
+    expect(visible(heading)).toBe(true);
+    expect(visible(bodyAfter(heading))).toBe(true);
+    expect(visible(root.querySelector("main"))).toBe(true);
+    expect(forms(root).map((li) => visible(li))).toEqual([false, true]);
+
+    applySinceFilter(root, { from: OLDEST, to: PAGE_TO }, AXIS_CONFIG);
+    expect(forms(root).map((li) => visible(li))).toEqual([true, true]);
+  });
+});
