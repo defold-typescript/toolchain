@@ -27,11 +27,15 @@ import {
   apiModuleSymbols,
   badgeCategory,
   exampleMarkdownFor,
+  functionAnchorText,
   functionOverviewCards,
   groupFunctionSymbols,
+  groupOverloadForms,
   groupTypeSymbols,
   mapDocType,
   outerCallArity,
+  overloadHeading,
+  splitCallForm,
   windowedBadgeCategory,
 } from "./api-surface";
 import {
@@ -45,7 +49,7 @@ import {
   versionsWithDiskFixtures,
 } from "./api-surface-loader";
 import { combinedNamespaceToApiPage } from "./combined-surface";
-import { pageHeadings } from "./headings";
+import { pageHeadings, slugify } from "./headings";
 import { renderMarkdown } from "./markdown";
 import { versionLabel } from "./version-switch";
 
@@ -3184,7 +3188,7 @@ describe("functionOverviewCards", () => {
         fnSymbol("go.get_position", { signature: "go.get_position(): vector3" }),
         fnSymbol("go.set_position", { signature: "go.set_position(position: vector3): void" }),
       ],
-      (s) => `<i data-mark="${s.name}"></i>`,
+      (group) => `<i data-mark="${group[0]?.name}"></i>`,
     );
     expect(list).toContain(
       '- [`go.get_position(): vector3`](#goget_position-vector3)<i data-mark="go.get_position"></i>',
@@ -3896,5 +3900,88 @@ describe("rendered /api pages keep every list marker beside its value", () => {
       }
     }
     expect(offenders).toEqual([]);
+  });
+});
+
+describe("overload grouping (committed artifacts)", () => {
+  const combinedPages = loadCombinedSurface(REAL_TYPES_DIR).namespaces.map(
+    combinedNamespaceToApiPage,
+  );
+  const functionRows = (page: ApiPage): ApiSymbol[] =>
+    apiModuleSymbols(page, page.translations, page.signatures).filter((s) => s.kind === "function");
+
+  test("groupOverloadForms keeps first-appearance order and every form in input order", () => {
+    let grouped = 0;
+    for (const page of combinedPages) {
+      const rows = functionRows(page);
+      const groups = groupOverloadForms(rows);
+      expect(groups.flat()).toEqual(rows);
+      expect(groups.map((g) => g[0]?.name)).toEqual([...new Set(rows.map((r) => r.name))]);
+      for (const group of groups) expect(new Set(group.map((s) => s.name)).size).toBe(1);
+      grouped += groups.filter((g) => g.length > 1).length;
+    }
+    expect(grouped).toBeGreaterThan(0);
+  });
+
+  test("splitCallForm round-trips every function signature and keeps a generic head in params", () => {
+    const pages = [...combinedPages, ...loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR)];
+    let split = 0;
+    let generic = 0;
+    for (const page of pages) {
+      for (const row of functionRows(page)) {
+        const { params, returns } = splitCallForm(row);
+        const call = /^[<(]/.test(row.signature.slice(row.name.length));
+        if (!row.signature.startsWith(row.name) || !call) {
+          expect({ params, returns }).toEqual({ params: row.signature, returns: null });
+          continue;
+        }
+        expect(row.name + params + (returns ?? "")).toBe(row.signature);
+        expect(params.endsWith(")")).toBe(true);
+        if (row.signature[row.name.length] === "<") {
+          expect(params.startsWith("<")).toBe(true);
+          generic += 1;
+        }
+        split += 1;
+      }
+    }
+    expect(split).toBeGreaterThan(1000);
+    expect(generic).toBeGreaterThan(0);
+  });
+
+  test("a curried generic splits at the outer call list", () => {
+    const row = fnSymbol("go.get", {
+      signature: "go.get<P>(): <K extends keyof P>(url: Url, property: K) => P[K]",
+    });
+    expect(splitCallForm(row)).toEqual({
+      params: "<P>()",
+      returns: ": <K extends keyof P>(url: Url, property: K) => P[K]",
+    });
+  });
+});
+
+describe("functionOverviewCards over overload groups", () => {
+  test("renders one card per grouped name, linking to the group heading", () => {
+    const shape = "b2d.shape.get_shape";
+    const single = fnSymbol("go.get_position", { signature: "go.get_position(): vector3" });
+    const cards = functionOverviewCards([
+      fnSymbol(shape, { signature: `${shape}(shape_id: number): Info` }),
+      fnSymbol(shape, { signature: `${shape}(body: Opaque<"b2Body">, shape_index: number): Info` }),
+      single,
+    ]);
+    expect(overloadHeading(shape)).toBe(`${shape}(...)`);
+    expect(cards.split("\n").filter((line) => line.startsWith("- "))).toEqual([
+      `- [\`${shape}(...)\`](#${slugify(overloadHeading(shape))})`,
+      ...functionOverviewCards([single])
+        .split("\n")
+        .filter((line) => line.startsWith("- ")),
+    ]);
+  });
+
+  test("the anchor text is the single form's signature or the overload heading", () => {
+    const one = fnSymbol("go.get_position", { signature: "go.get_position(): vector3" });
+    expect(functionAnchorText([one])).toBe(one.signature);
+    expect(
+      functionAnchorText([one, { ...one, signature: "go.get_position(id: Hash): vector3" }]),
+    ).toBe(overloadHeading("go.get_position"));
   });
 });

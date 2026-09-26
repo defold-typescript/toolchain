@@ -24,7 +24,15 @@ import {
   navNamespaceBadges,
   versionedApiParams,
 } from "./api-page-render";
-import { type ApiPage, type AvailabilityLookup, apiModuleSymbols } from "./api-surface";
+import {
+  type ApiPage,
+  type AvailabilityLookup,
+  apiModuleSymbols,
+  availabilityLabels,
+  groupOverloadForms,
+  overloadHeading,
+  splitCallForm,
+} from "./api-surface";
 import {
   loadApiSurface,
   loadApiSurfaceForVersion,
@@ -268,7 +276,7 @@ describe("apiPageMarkdown", () => {
     )?.signature;
     expect(thin).toBeDefined();
     const md = apiPageMarkdown(str, apiLinkify(pages));
-    expect(md).toContain("string.byte(s: string, i?: number): number");
+    expect(blockOf(md, overloadHeading("string.byte"))).toContain("`(s: string, i?: number)");
     expect(md).not.toContain(`\`${thin}\``);
   });
 
@@ -280,8 +288,9 @@ describe("apiPageMarkdown", () => {
     const thin = apiModuleSymbols(os, os.translations).find((s) => s.name === "os.date")?.signature;
     expect(thin).toBeDefined();
     const md = apiPageMarkdown(os, apiLinkify(pages));
-    expect(md).toContain("os.date(format?: string, time?: number): string");
-    expect(md).toContain('os.date(format: "*t", time?: number): LuaDateInfoResult');
+    const date = blockOf(md, overloadHeading("os.date"));
+    expect(date).toContain("`(format?: string, time?: number)");
+    expect(date).toContain('`(format: "*t", time?: number)');
     expect(md).not.toContain(`\`${thin}\``);
   });
 
@@ -323,8 +332,9 @@ describe("apiPageMarkdown", () => {
     )?.signature;
     expect(thin).toBeDefined();
     const md = apiPageMarkdown(base, apiLinkify(pages));
-    expect(md).toContain("select<T>(index: number, ...args: T[]): LuaMultiReturn<T[]>");
-    expect(md).toContain('select<T>(index: "#", ...args: T[]): number');
+    const select = blockOf(md, overloadHeading("select"));
+    expect(select).toContain("`<T>(index: number, ...args: T[])");
+    expect(select).toContain('`<T>(index: "#", ...args: T[])');
     expect(md).not.toContain(`\`${thin}\``);
   });
 
@@ -1563,15 +1573,15 @@ describe("Combined page authoritative render + markers", () => {
     expect(md).toContain(`(#${slugify(authoritative)})`);
   });
 
-  test("both liveupdate.add_mount arms render distinctly and adjacently, oldest-first", () => {
+  test("both liveupdate.add_mount arms render as distinct forms of one block, oldest-first", () => {
     const md = apiPageMarkdown(combinedPage("liveupdate"), noLink, { combinedMarkers: true });
-    const headings = md
+    const forms = blockOf(md, overloadHeading("liveupdate.add_mount"))
       .split("\n")
-      .filter((l) => l.startsWith("### `") && l.includes("liveupdate.add_mount("));
-    expect(headings).toHaveLength(2);
-    expect(headings[0]).not.toBe(headings[1]);
+      .filter((l) => l.startsWith("`("));
+    expect(forms).toHaveLength(2);
+    expect(forms[0]).not.toBe(forms[1]);
     // Oldest arm (fewer params) leads.
-    expect((headings[0] as string).length).toBeLessThan((headings[1] as string).length);
+    expect((forms[0] as string).length).toBeLessThan((forms[1] as string).length);
   });
 
   test("the authoritative-signature heading id drops the marker glyph and matches the overview anchor", async () => {
@@ -2640,5 +2650,126 @@ describe("versioned alias link targets", () => {
     const defaulted = await renderAliasSurface(pages, pages[0] as ApiPage);
     expect(typeLinkHrefs(explicit)).toEqual(typeLinkHrefs(defaulted));
     expect(explicit).toBe(defaulted);
+  });
+});
+
+// The markdown of one symbol block: its `###` line through the line before the
+// next section or symbol heading.
+function blockOf(md: string, heading: string): string {
+  const lines = md.split("\n");
+  const start = lines.findIndex((l) => l.startsWith(`### \`${heading}\``));
+  if (start < 0) throw new Error(`no block headed ${heading}`);
+  const end = lines.findIndex((l, i) => i > start && /^#{2,3} /.test(l));
+  return lines.slice(start, end < 0 ? undefined : end).join("\n");
+}
+
+function occurrences(text: string, needle: string): number {
+  return text.split(needle).length - 1;
+}
+
+describe("grouped overload blocks (committed artifacts)", () => {
+  const pages = loadCombinedSurface(REAL_TYPES_DIR).namespaces.map(combinedNamespaceToApiPage);
+  const pageFor = (namespace: string): ApiPage => {
+    const page = pages.find((p) => p.namespace === namespace);
+    if (!page) throw new Error(`namespace ${namespace} missing from the Combined surface`);
+    return page;
+  };
+  const render = (page: ApiPage): string =>
+    apiPageMarkdown(page, (t) => t, { combinedMarkers: true });
+  const functionRows = (page: ApiPage) =>
+    apiModuleSymbols(page, page.translations, page.signatures).filter((s) => s.kind === "function");
+
+  test("b2d.shape.get_shape renders one heading, both forms, and its return type once", () => {
+    const page = pageFor("b2d.shape");
+    const md = render(page);
+    const name = "b2d.shape.get_shape";
+    const headings = md.split("\n").filter((l) => l.startsWith(`### \`${name}`));
+    expect(headings).toHaveLength(1);
+    expect(headings[0]?.startsWith(`### \`${overloadHeading(name)}\``)).toBe(true);
+    const block = blockOf(md, overloadHeading(name));
+    const forms = functionRows(page)
+      .filter((s) => s.name === name)
+      .map(splitCallForm);
+    expect(forms).toHaveLength(2);
+    for (const form of forms) {
+      expect(block.split("\n").filter((l) => l.startsWith(`\`${form.params}`))).toHaveLength(1);
+    }
+    const returnType = (forms[0]?.returns ?? "").replace(/^:\s*/, "");
+    expect(returnType).not.toBe("");
+    const escaped = escapeAttr(returnType);
+    expect(
+      occurrences(block, returnType) + (escaped === returnType ? 0 : occurrences(block, escaped)),
+    ).toBe(1);
+  });
+
+  test("b2d.shape.set_shape splits its parameters into one-of branches around the shared tail", () => {
+    const block = blockOf(render(pageFor("b2d.shape")), overloadHeading("b2d.shape.set_shape"));
+    const params = block.slice(block.indexOf("**Parameters**")).split("\n");
+    const at = (indent: string, name: string) =>
+      params.findIndex((l) => l.startsWith(`${indent}- \`${name}\``));
+    const oneOf = params.indexOf("- _one of_");
+    const or = params.findIndex((l) => l.trim() === "_or_");
+    expect(oneOf).toBeGreaterThan(-1);
+    expect(at("  ", "shape_id")).toBeGreaterThan(oneOf);
+    expect(at("  ", "shape_id")).toBeLessThan(or);
+    expect(at("  ", "body")).toBeGreaterThan(or);
+    expect(at("  ", "shape_index")).toBeGreaterThan(at("  ", "body"));
+    expect(at("", "definition")).toBeGreaterThan(at("  ", "shape_index"));
+    expect(at("", "update_mass")).toBeGreaterThan(at("", "definition"));
+    for (const name of ["definition", "update_mass"]) {
+      expect(params.filter((l) => l.startsWith(`- \`${name}\``))).toHaveLength(1);
+    }
+  });
+
+  test("msg.url keeps each form's own description exactly once", () => {
+    const page = pageFor("msg");
+    const rows = functionRows(page).filter((s) => s.name === "msg.url");
+    expect(rows.length).toBeGreaterThan(1);
+    const docs = [...new Set(rows.map((r) => r.docMarkdown).filter((d) => d !== ""))];
+    expect(docs.length).toBeGreaterThan(1);
+    const block = blockOf(render(page), overloadHeading("msg.url"));
+    for (const doc of docs) expect(occurrences(block, doc)).toBe(1);
+  });
+
+  test("a group whose forms differ in availability keeps every form's badge text", () => {
+    let checked = 0;
+    for (const page of pages) {
+      const md = render(page);
+      for (const group of groupOverloadForms(functionRows(page))) {
+        if (group.length < 2) continue;
+        const spans = group.map((s) => JSON.stringify(s.availability ?? null));
+        if (new Set(spans).size < 2) continue;
+        const block = blockOf(md, overloadHeading(group[0]?.name ?? ""));
+        for (const form of group) {
+          if (!form.availability) continue;
+          for (const label of availabilityLabels(form.availability, page.availability)) {
+            expect({ name: form.name, label, found: block.includes(`- ${label}\n`) }).toEqual({
+              name: form.name,
+              label,
+              found: true,
+            });
+          }
+        }
+        checked += 1;
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
+  });
+
+  test("single-form functions keep their signature heading and every grouped form is listed", () => {
+    let grouped = 0;
+    for (const page of pages) {
+      const md = render(page);
+      for (const group of groupOverloadForms(functionRows(page))) {
+        const [only] = group;
+        if (group.length === 1 && only) {
+          expect(md).toContain(`### \`${only.signature}\``);
+          continue;
+        }
+        grouped += 1;
+        for (const form of group) expect(md).toContain(`\`${splitCallForm(form).params}`);
+      }
+    }
+    expect(grouped).toBeGreaterThan(10);
   });
 });

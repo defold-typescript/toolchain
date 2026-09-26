@@ -73,8 +73,12 @@ describe("authored symbol notes", () => {
     expect(version).toBeDefined();
     const pages = loadApiSurfaceForVersion(REAL_TYPES_DIR, version?.id ?? "");
     const markdown = markdownFor(pages, "go");
-    const rows = markdown.split("### `go.property(").length - 1;
-    expect(rows).toBeGreaterThan(1);
+    const go = pages.find((p) => p.namespace === "go");
+    if (!go) throw new Error("no go page");
+    const rows = apiModuleSymbols(go, go.translations, go.signatures).filter(
+      (s) => s.name === "go.property",
+    );
+    expect(rows.length).toBeGreaterThan(1);
     expect(markdown.split("[!WARNING]").length - 1).toBe(1);
   });
 

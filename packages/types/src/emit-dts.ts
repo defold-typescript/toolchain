@@ -596,8 +596,18 @@ export const FIRST_SLOT_ALTERNATIVES: ReadonlyMap<string, FirstSlotAlternative> 
     "b2d.shape:param:shape_id",
     {
       parameters: [
-        { name: "body", doc: "", types: ["b2Body"], isOptional: false },
-        { name: "shape_index", doc: "", types: ["number"], isOptional: false },
+        {
+          name: "body",
+          doc: "The body that owns the shape.",
+          types: ["b2Body"],
+          isOptional: false,
+        },
+        {
+          name: "shape_index",
+          doc: "The shape's 1-based index on that body, as <code>b2d.body.get_shapes</code> lists them.",
+          types: ["number"],
+          isOptional: false,
+        },
       ],
       evidence: "or pass <code>body, shape_index</code>",
     },

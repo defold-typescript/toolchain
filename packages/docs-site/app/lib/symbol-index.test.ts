@@ -2,9 +2,12 @@ import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import type { ApiModule } from "@defold-typescript/types";
 import { apiPages } from "./api-content";
+import { apiPageMarkdown } from "./api-page-render";
 import type { ApiPage } from "./api-surface";
 import { type ApiVersion, loadCombinedSurface } from "./api-surface-loader";
 import { combinedApiPages } from "./combined-surface";
+import { allPageHeadings } from "./headings";
+import { renderMarkdown } from "./markdown";
 import {
   buildSymbolIndex,
   combinedSymbolIndexRecords,
@@ -270,5 +273,29 @@ describe("buildSymbolIndex — platform markers", () => {
       }),
     ]);
     expect(index["sys.open_url"]?.brief).toBe("Opens a URL. Not on HTML5.");
+  });
+});
+
+describe("buildSymbolIndex anchors (committed Combined pages)", () => {
+  test("every member route's anchor is a heading id its page renders", async () => {
+    const pages = combinedApiPages(loadCombinedSurface(REAL_TYPES_DIR));
+    const index = buildSymbolIndex(pages);
+    const missing: string[] = [];
+    let checked = 0;
+    for (const page of pages) {
+      const html = await renderMarkdown(
+        apiPageMarkdown(page, (text) => text, { combinedMarkers: true }),
+        { highlightSignatureHeadings: true },
+      );
+      const ids = new Set(allPageHeadings(html).map((h) => h.id));
+      for (const [key, entry] of Object.entries(index)) {
+        const [route, anchor] = entry.route.split("#");
+        if (route !== page.route || anchor === undefined) continue;
+        checked += 1;
+        if (!ids.has(anchor)) missing.push(`${key} -> #${anchor}`);
+      }
+    }
+    expect(checked).toBeGreaterThan(1000);
+    expect(missing).toEqual([]);
   });
 });

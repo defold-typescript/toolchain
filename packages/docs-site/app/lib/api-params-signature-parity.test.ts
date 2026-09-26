@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { lookupSignature } from "@defold-typescript/types";
+import { firstSlotAlternativeOf, lookupSignature } from "@defold-typescript/types";
 import { type ApiSymbolParam, apiModuleSymbols, mapDocType } from "./api-surface";
 import { loadApiSurface, loadCombinedSurface } from "./api-surface-loader";
 import { combinedNamespaceToApiPage } from "./combined-surface";
@@ -23,6 +23,8 @@ interface Slot {
   readonly sharedFqn: boolean;
   /** The FQN is covered by an authored override in the production signature store. */
   readonly overrideCovered: boolean;
+  /** The FQN's declaration gains a curated first-slot alternative arm. */
+  readonly alternativeCovered: boolean;
 }
 
 // Every top-level Parameters/Returns entry the `/api` pages render, paired with
@@ -49,6 +51,9 @@ function walkSlots(): Slot[] {
       const sharedFqn = emitted.has(symbol.name);
       emitted.add(symbol.name);
       const overrideCovered = lookupSignature(page.signatures, symbol.name) !== null;
+      const alternativeCovered = ns.module.functions.some(
+        (fn) => fn.name === symbol.name && firstSlotAlternativeOf(fn, ns.namespace) !== null,
+      );
       const collect = (list: readonly ApiSymbolParam[], kind: "param" | "return"): void => {
         for (const [index, p] of list.entries()) {
           out.push({
@@ -62,6 +67,7 @@ function walkSlots(): Slot[] {
             unidentified: identity === undefined,
             sharedFqn,
             overrideCovered,
+            alternativeCovered,
           });
         }
       };
@@ -93,9 +99,10 @@ describe("rendered slot types agree with the signature above them", () => {
     expect(new Set(unidentified.map((s) => `${s.namespace}:${s.signature}`)).size).toBeGreaterThan(
       0,
     );
-    // An unidentified row must be an authored-override arm. An ordinary overload
-    // losing its identity would land here with no override behind it.
-    expect(unidentified.filter((s) => !s.overrideCovered)).toEqual([]);
+    // An unidentified row must be an authored-override arm or a curated first-slot
+    // alternative arm. An ordinary overload losing its identity would land here
+    // with neither behind it.
+    expect(unidentified.filter((s) => !s.overrideCovered && !s.alternativeCovered)).toEqual([]);
     // Arm rows render `.d.ts` text no single declaration produced, so none of
     // their slots may claim artifact backing.
     expect(unidentified.filter((s) => s.backed)).toEqual([]);
