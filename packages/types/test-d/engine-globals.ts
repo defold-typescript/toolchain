@@ -11,6 +11,7 @@ const _eg_u: Url = msg.url();
 const _eg_n: Opaque<"node"> = gui.get_node("foo");
 const _eg_hex: string = hash_to_hex(hash("player"));
 pprint({ a: 1 });
+pprint("MOUNTS", liveupdate.get_mounts());
 
 void _eg_v;
 void _eg_v4;

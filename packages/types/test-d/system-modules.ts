@@ -33,7 +33,7 @@ const _headers: LuaMap<string, string> = {} as LuaMap<string, string>;
 http.request("https://example.com", "GET", () => {}, _headers, "", {});
 
 // One representative call per remaining namespace, no deep coverage.
-const _buf = buffer.create(1, {});
+const _buf = buffer.create(1, [{ name: "rgb", type: buffer.VALUE_TYPE_UINT8, count: 3 }]);
 // Recovered multi-return: get_metadata now returns a LuaMultiReturn tuple, so
 // both values destructure. Before recovery it collapsed to the first value and
 // could not be destructured at all.

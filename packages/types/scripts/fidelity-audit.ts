@@ -623,10 +623,16 @@ function auditEntry(
           // (render.clear's three graphics.BUFFER_TYPE_* keys, its
           // `number | vector4` value); split on `|` exactly as the emit branch
           // does so each token is checked individually and a single token is
-          // unaffected.
+          // unaffected. A `table` value on an ARBITRARY_TABLE_SLOTS element
+          // (collectionfactory.create's per-instance property tables) inherits
+          // the element's arbitrary flag, as parsed fields do below.
           const keyTokens = unionTokens(tableSlotCuration.key);
           if (typeof tableSlotCuration.value === "string") {
-            considerTypes([...keyTokens, ...unionTokens(tableSlotCuration.value)]);
+            considerTypes(
+              [...keyTokens, ...unionTokens(tableSlotCuration.value)],
+              undefined,
+              arbitraryTable,
+            );
           } else if (Array.isArray(tableSlotCuration.value)) {
             considerTypes(keyTokens);
             for (const field of tableSlotCuration.value) {

@@ -2239,6 +2239,8 @@ describe("TABLE_SLOT_CURATIONS", () => {
     // spot-checked structurally below, one per curation kind the promoted 1.13.0
     // surface introduced.
     expect([...TABLE_SLOT_CURATIONS.keys()]).toEqual([
+      "buffer.create:param:declaration",
+      "collectionfactory.create:param:properties",
       "collectionfactory.create:return:ids",
       "font.get_info:return:info",
       "iap.finish:param:transaction",
@@ -2465,16 +2467,56 @@ describe("TABLE_SLOT_CURATIONS", () => {
     expect(out).toContain("{ node_visits: number; leaf_visits: number }");
   });
 
-  test("collectionfactory.create recovers only the ids return", () => {
+  test("collectionfactory.create keys its properties by instance id hash or takes an object literal", () => {
     const module = parseDefoldApiDoc(collectionfactoryDoc);
     const out = emitDeclarations({
       ...module,
       functions: [requireFunction(module, "collectionfactory.create")],
     });
-    expect(out).toContain("properties?: Record<string | number, unknown>");
+    const properties =
+      "LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>";
     expect(out).toContain(
-      "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: Record<string | number, unknown>, scale?: number | Vector3): LuaMap<Hash, Hash>;",
+      `function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: ${properties}, scale?: number | Vector3): LuaMap<Hash, Hash>;`,
     );
+  });
+
+  test("buffer.create declares its streams as an array of stream records", () => {
+    const module = parseDefoldApiDoc(bufferDoc);
+    const out = emitDeclarations({
+      ...module,
+      functions: [requireFunction(module, "buffer.create")],
+    });
+    expect(out).toContain(
+      'function create(element_count: number, declaration: { name?: Hash | string; type?: buffer.ValueType; count?: number }[]): Opaque<"buffer">;',
+    );
+  });
+
+  test("render.set_render_target takes its transient buffers as a list of buffer types", () => {
+    const module = parseDefoldApiDoc(renderDoc);
+    const out = emitDeclarations({
+      ...module,
+      functions: [requireFunction(module, "render.set_render_target")],
+    });
+    expect(out).toContain("options?: { transient?: graphics.BufferType[] }");
+  });
+
+  test("a string-keyed mapping parameter also accepts a plain object", () => {
+    const module = parseDefoldApiDoc(computeDoc);
+    const out = emitDeclarations({
+      ...module,
+      functions: [requireFunction(module, "compute.set_textures")],
+    });
+    expect(out).toContain(
+      "function set_textures(path: Hash | string, textures: LuaMap<string, Hash> | Record<string, Hash>): void;",
+    );
+    // A mapping without a `string` key cannot take an object literal's keys,
+    // so it stays `LuaMap` alone.
+    const tilemapModule = parseDefoldApiDoc(tilemapDoc);
+    const tilemapOut = emitDeclarations({
+      ...tilemapModule,
+      functions: [requireFunction(tilemapModule, "tilemap.get_tiles")],
+    });
+    expect(tilemapOut).not.toContain("Record<");
   });
 
   test("physics raycast groups recover and raycast result recovers the ray_cast_response array-object", () => {
