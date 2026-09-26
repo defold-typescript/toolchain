@@ -103,14 +103,42 @@ export function availabilityLabels(
   av: ApiAvailability,
   availability: AvailabilityLookup | undefined,
 ): string[] {
-  const labels: string[] = [];
+  return availabilityItems(av, availability).map((item) => item.label);
+}
+
+export type AvailabilityItemCategory = "new" | "changed" | "deprecated";
+
+export interface AvailabilityItem {
+  readonly label: string;
+  readonly category?: AvailabilityItemCategory;
+}
+
+/**
+ * The {@link availabilityLabels} facts, each paired with the color category its
+ * list chip shows. The span's category comes from {@link badgeCategoryFromLabel},
+ * so a list item and the heading chip for the same span always agree; the
+ * deprecation line is `deprecated` and the Box2D backend fact carries none.
+ */
+export function availabilityItems(
+  av: ApiAvailability,
+  availability: AvailabilityLookup | undefined,
+): AvailabilityItem[] {
+  const items: AvailabilityItem[] = [];
   const span = availabilityLabel(av.availableIn, availability?.versions ?? [], {
     transition: availability?.transitions.has(symbolNameKey(av.identity)) ?? false,
   });
-  if (span.kind !== "all") labels.push(span.label);
-  if (av.deprecatedSince) labels.push(`Deprecated since ${av.deprecatedSince}`);
-  if (av.box2d && av.box2d.length > 0) labels.push(`Box2D: ${av.box2d.join(", ")}`);
-  return labels;
+  if (span.kind !== "all") {
+    const category = badgeCategoryFromLabel(span.kind, false);
+    items.push({
+      label: span.label,
+      ...(category.isNew ? { category: "new" } : category.isChanged ? { category: "changed" } : {}),
+    });
+  }
+  if (av.deprecatedSince) {
+    items.push({ label: `Deprecated since ${av.deprecatedSince}`, category: "deprecated" });
+  }
+  if (av.box2d && av.box2d.length > 0) items.push({ label: `Box2D: ${av.box2d.join(", ")}` });
+  return items;
 }
 
 /**

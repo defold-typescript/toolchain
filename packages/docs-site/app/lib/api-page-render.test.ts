@@ -889,6 +889,29 @@ describe("isKnownVersionId", () => {
   });
 });
 
+// One rendered availability list line, split into the chip that leads it and the
+// label text after it. A line with no leading chip keeps its whole text.
+function parseAvailabilityItem(line: string) {
+  const mark = /^- <span ([^>]*)>([^<]*)<\/span> /.exec(line);
+  const attrs = mark?.[1] ?? "";
+  return {
+    attrs,
+    kind: /api-availability-mark--(\w+)/.exec(attrs)?.[1],
+    glyph: mark?.[2],
+    text: mark ? line.slice(mark[0].length) : line.replace(/^- /, ""),
+  };
+}
+
+// The availability list item carrying `label`, found by its text rather than by
+// the list-marker prefix the chip sits behind.
+function availabilityItem(md: string, label: string) {
+  const line = md
+    .split("\n")
+    .find((l) => l.startsWith("- ") && parseAvailabilityItem(l).text.includes(label));
+  if (!line) throw new Error(`no availability item for ${label}`);
+  return parseAvailabilityItem(line);
+}
+
 describe("availability badges", () => {
   const setTexture: ApiFunction = {
     name: "model.set_texture",
@@ -1102,6 +1125,79 @@ describe("availability badges", () => {
     page.availability = { versions: VERSIONS, records: new Map(), transitions: new Set() };
     const md = apiPageMarkdown(page, noLink);
     expect(md).not.toContain('aria-label="Availability"');
+  });
+
+  test("leads a since span's item with the New chip", () => {
+    const md = apiPageMarkdown(modelPage(setTexture, { availableIn: ["1.13.0"] }), noLink);
+    const item = availabilityItem(md, "Since Defold 1.13.0");
+    expect({ kind: item.kind, glyph: item.glyph, text: item.text }).toEqual({
+      kind: "new",
+      glyph: "N",
+      text: "Since Defold 1.13.0",
+    });
+  });
+
+  test("leads a removal and a signature change with the Changed chip", () => {
+    const removed = apiPageMarkdown(modelPage(material, { availableIn: ["1.12.4"] }), noLink);
+    const transition = apiPageMarkdown(
+      modelPage(material, { availableIn: ["1.12.4"] }, "/api/model", [newMaterialArm]),
+      noLink,
+    );
+    for (const item of [
+      availabilityItem(removed, "Removed in Defold 1.13.0"),
+      availabilityItem(transition, "Signature changed in Defold 1.13.0"),
+    ]) {
+      expect({ kind: item.kind, glyph: item.glyph }).toEqual({ kind: "changed", glyph: "C" });
+    }
+  });
+
+  test("leads a deprecated-since line with the Deprecated chip", () => {
+    const md = apiPageMarkdown(
+      modelPage(material, { availableIn: ["1.12.4"], deprecatedSince: "1.12.0" }),
+      noLink,
+    );
+    const item = availabilityItem(md, "Deprecated since 1.12.0");
+    expect({ kind: item.kind, glyph: item.glyph }).toEqual({ kind: "deprecated", glyph: "D" });
+  });
+
+  test("leads Replaced by and Box2D items with an empty neutral chip", () => {
+    const md = apiPageMarkdown(
+      modelPage(material, { availableIn: VERSIONS, box2d: ["v2", "v3"], replacement }),
+      noLink,
+      { resolveReplacement: () => undefined },
+    );
+    for (const label of ["Replaced by", "Box2D: v2, v3"]) {
+      const item = availabilityItem(md, label);
+      expect({ label, kind: item.kind, glyph: item.glyph }).toEqual({
+        label,
+        kind: "none",
+        glyph: "",
+      });
+    }
+  });
+
+  test("every chip is decorative and never carries the heading-dot class", () => {
+    const md = apiPageMarkdown(
+      modelPage(material, {
+        availableIn: ["1.12.4"],
+        deprecatedSince: "1.12.0",
+        box2d: ["v2"],
+        replacement,
+      }),
+      noLink,
+      { resolveReplacement: () => undefined },
+    );
+    const start = md.indexOf('<div class="api-availability"');
+    const block = md.slice(start, md.indexOf("</div>", start));
+    const items = block
+      .split("\n")
+      .filter((l) => l.startsWith("- "))
+      .map(parseAvailabilityItem);
+    expect(items.map((i) => i.kind)).toEqual(["changed", "deprecated", "none", "none"]);
+    for (const item of items) {
+      expect(item.attrs).toContain('aria-hidden="true"');
+      expect(item.attrs).not.toContain("api-badge-dot");
+    }
   });
 
   const headingLineOf = (md: string, prefix: string) =>
@@ -1922,14 +2018,28 @@ describe("apiPageMarkdown deprecation from the api-doc tag", () => {
       noLink,
     );
     expect(md).toContain('aria-label="Availability"');
-    expect(md).toContain("- Deprecated — Use `player_get_unique_id` instead.");
+    expect(availabilityItem(md, "Deprecated —").text).toBe(
+      "Deprecated — Use `player_get_unique_id` instead.",
+    );
   });
 
   test("renders a bare tag as the label alone, with no dash", () => {
     const md = apiPageMarkdown(libraryPage({ name: "old_thing", deprecated: "" }), noLink);
     expect(md).toContain('aria-label="Availability"');
-    expect(md).toContain("- Deprecated\n");
+    expect(availabilityItem(md, "Deprecated").text).toBe("Deprecated");
     expect(md).not.toContain("Deprecated —");
+  });
+
+  test("leads a source deprecation tag with the Deprecated chip", () => {
+    for (const deprecated of ["Use `player_get_unique_id` instead.", ""]) {
+      const md = apiPageMarkdown(libraryPage({ name: "player_get_id", deprecated }), noLink);
+      const item = availabilityItem(md, "Deprecated");
+      expect({ deprecated, kind: item.kind, glyph: item.glyph }).toEqual({
+        deprecated,
+        kind: "deprecated",
+        glyph: "D",
+      });
+    }
   });
 
   test("folds a wrapped tag onto one list item so a continuation cannot break the list", () => {
@@ -1940,8 +2050,8 @@ describe("apiPageMarkdown deprecation from the api-doc tag", () => {
       }),
       noLink,
     );
-    expect(md).toContain(
-      "- Deprecated — The leaderboards subsystem no longer needs initializing; - the others work.",
+    expect(availabilityItem(md, "Deprecated —").text).toBe(
+      "Deprecated — The leaderboards subsystem no longer needs initializing; - the others work.",
     );
   });
 
@@ -2000,8 +2110,8 @@ describe("apiPageMarkdown deprecation from the api-doc tag", () => {
 
     const block = md.slice(md.indexOf('aria-label="Availability"'));
     expect(md.match(/aria-label="Availability"/g)).toHaveLength(1);
-    const tagAt = block.indexOf("- Deprecated — Use `player_get_unique_id` instead.");
-    const spanAt = block.indexOf("- Since Defold 1.13.0");
+    const tagAt = block.indexOf("Deprecated — Use `player_get_unique_id` instead.");
+    const spanAt = block.indexOf("Since Defold 1.13.0");
     expect(tagAt).toBeGreaterThanOrEqual(0);
     expect(spanAt).toBeGreaterThanOrEqual(0);
     expect(tagAt).toBeLessThan(spanAt);
@@ -2018,7 +2128,10 @@ describe("apiPageMarkdown deprecation from the api-doc tag", () => {
 
     expect(md).toContain("Deprecated since 1.12.0");
     expect(md).not.toContain("Deprecated — Use `player_get_unique_id` instead.");
-    expect(md.match(/- Deprecated/g)).toHaveLength(1);
+    const deprecationItems = md
+      .split("\n")
+      .filter((l) => l.startsWith("- ") && parseAvailabilityItem(l).text.startsWith("Deprecated"));
+    expect(deprecationItems).toHaveLength(1);
   });
 });
 
@@ -2865,7 +2978,10 @@ describe("grouped overload blocks (committed artifacts)", () => {
         for (const form of group) {
           if (!form.availability) continue;
           for (const label of availabilityLabels(form.availability, page.availability)) {
-            expect({ name: form.name, label, found: block.includes(`- ${label}\n`) }).toEqual({
+            const found = block
+              .split("\n")
+              .some((l) => l.startsWith("- ") && parseAvailabilityItem(l).text === label);
+            expect({ name: form.name, label, found }).toEqual({
               name: form.name,
               label,
               found: true,
