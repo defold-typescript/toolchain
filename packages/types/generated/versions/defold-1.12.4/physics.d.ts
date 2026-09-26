@@ -72,7 +72,7 @@ declare global {
      *   init(self) {
      *     let gravity = physics.get_gravity();
      *     // Inverse gravity!
-     *     gravity = -gravity;
+     *     gravity = vmath.vector3(-gravity.x, -gravity.y, -gravity.z);
      *     physics.set_gravity(gravity);
      *   },
      * });
