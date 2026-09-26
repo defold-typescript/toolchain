@@ -795,7 +795,7 @@ declare global {
      *         self.velocity = vmath.vector3();
      *       } else {
      *         // update velocity
-     *         self.velocity = vmath.vector3(action.value * self.max_speed, 0, 0);
+     *         self.velocity = vmath.vector3((action.value ?? 0) * self.max_speed, 0, 0);
      *       }
      *     }
      *   },
@@ -884,7 +884,7 @@ declare global {
      *         self.velocity = vmath.vector3();
      *       } else {
      *         // update velocity
-     *         self.velocity = vmath.vector3(action.value * self.max_speed, 0, 0);
+     *         self.velocity = vmath.vector3((action.value ?? 0) * self.max_speed, 0, 0);
      *       }
      *     }
      *   },
