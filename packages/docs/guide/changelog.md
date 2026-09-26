@@ -26,6 +26,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 - An extension whose `.script_api` writes a type as a list (`type: [table, string]`) is typed as that union by [resolve](./resolve.md) instead of `unknown`.
 - Symbol names mentioned in API reference prose link to their reference on the published site instead of opening a missing page.
+- Math symbols and other special characters in the engine reference show as characters in editor hovers and on API reference pages, such as `P ⋅ Q = |P| |Q| cos θ` for [`vmath.dot`](/api/vmath), instead of entity source like `&#x22C5;`.
 - **Declarations that the engine's own examples or descriptions contradict are corrected**, so code written the way the reference shows it type-checks:
   - **[`go.get` / `go.set`](/api/go)** — the `key` option accepts a string as well as a hash, `keys` takes an array of hashes or strings, and `go.set` accepts an array of `vmath.vector4` to set a material property array. `go.delete(true)` deletes the calling object and its children.
   - **Component property keys** — `go.get<model.properties>()` reads `"texture0"` through `"texture7"` instead of the `textureN` placeholder from the [model](/api/model) reference, [sprite](/api/sprite) adds `"texture0"`, and a new `mesh.properties` catalog declares `"vertices"`, all typed `Hash`.
