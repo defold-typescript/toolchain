@@ -1,5 +1,5 @@
 /** @noSelfInFile */
-import type { Hash, Opaque, Quaternion, Url, Vector, Vector3, Vector4 } from "../src/core-types";
+import type { Hash, Matrix4, Opaque, Quaternion, Url, Vector, Vector3, Vector4 } from "../src/core-types";
 
 declare global {
   /**
@@ -1842,7 +1842,7 @@ declare global {
      * resource.release(atlas_id);
      * ```
      */
-    function set(node: Opaque<"node"> | Url, property: string | Hash | gui.Property, value?: number | Vector4 | Vector3 | Quaternion, options?: { index?: number; key?: Hash }): void;
+    function set(node: Opaque<"node"> | Url, property: string | Hash | gui.Property, value?: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: { index?: number; key?: Hash }): void;
     /**
      * Sets the adjust mode on a node.
      * The adjust mode defines how the node will adjust itself to screen
@@ -2148,7 +2148,7 @@ declare global {
      * @param node - node to set the rotation for
      * @param rotation - new rotation
      */
-    function set_rotation(node: Opaque<"node">, rotation: Quaternion | Vector4): void;
+    function set_rotation(node: Opaque<"node">, rotation: Quaternion | Vector4 | Vector3): void;
     /**
      * Sets how the safe area is applied to this gui scene.
      *

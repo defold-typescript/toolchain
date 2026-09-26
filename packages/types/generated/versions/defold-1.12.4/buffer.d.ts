@@ -139,7 +139,7 @@ declare global {
      * @param stream_name - the name of the stream
      * @returns the buffer data as a Lua string
      */
-    function get_bytes(buffer: Opaque<"buffer">, stream_name: Hash): string;
+    function get_bytes(buffer: Opaque<"buffer">, stream_name: Hash | string): string;
     /**
      * Get a named metadata entry from a buffer along with its type.
      *

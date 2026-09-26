@@ -320,7 +320,7 @@
       "buffer\u0000FUNCTION\u0000buffer.copy_buffer\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_buffer(dst: Opaque<\"buffer\">, dstoffset: number, src: Opaque<\"buffer\">, srcoffset: number, count: number): void;",
       "buffer\u0000FUNCTION\u0000buffer.copy_stream\u0000[{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_stream(dst: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, dstoffset: number, src: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, srcoffset: number, count: number): void;",
       "buffer\u0000FUNCTION\u0000buffer.create\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"buffer\"],\"isOptional\":false}]": "function create(element_count: number, declaration: { name?: Hash | string; type?: Opaque<\"constant\">; count?: number }): Opaque<\"buffer\">;",
-      "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_bytes(buffer: Opaque<\"buffer\">, stream_name: Hash): string;",
+      "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_bytes(buffer: Opaque<\"buffer\">, stream_name: Hash | string): string;",
       "buffer\u0000FUNCTION\u0000buffer.get_metadata\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"constant\",\"nil\"],\"isOptional\":false}]": "function get_metadata(buf: Opaque<\"buffer\">, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.ValueType | undefined]>;",
       "buffer\u0000FUNCTION\u0000buffer.get_stream\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"bufferstream\"],\"isOptional\":false}]": "function get_stream(buffer: Opaque<\"buffer\">, stream_name: Hash | string): Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> };",
       "buffer\u0000FUNCTION\u0000buffer.set_metadata\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function set_metadata(buf: Opaque<\"buffer\">, metadata_name: Hash | string, values: number[], value_type: buffer.ValueType): void;",
@@ -468,7 +468,7 @@
       "go\u0000FUNCTION\u0000fixed_update\u0000[{\"types\":[\"userdata\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function fixed_update(self: Opaque<\"userdata\">, dt: number): void;",
       "go\u0000FUNCTION\u0000go.animate\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"go.PLAYBACK_LOOP_BACKWARD\",\"go.PLAYBACK_LOOP_FORWARD\",\"go.PLAYBACK_LOOP_PINGPONG\",\"go.PLAYBACK_ONCE_BACKWARD\",\"go.PLAYBACK_ONCE_FORWARD\",\"go.PLAYBACK_ONCE_PINGPONG\"],\"isOptional\":false},{\"types\":[\"number\",\"quaternion\",\"vector3\",\"vector4\"],\"isOptional\":false},{\"types\":[\"go.EASING_INBACK\",\"go.EASING_INBOUNCE\",\"go.EASING_INCIRC\",\"go.EASING_INCUBIC\",\"go.EASING_INELASTIC\",\"go.EASING_INEXPO\",\"go.EASING_INOUTBACK\",\"go.EASING_INOUTBOUNCE\",\"go.EASING_INOUTCIRC\",\"go.EASING_INOUTCUBIC\",\"go.EASING_INOUTELASTIC\",\"go.EASING_INOUTEXPO\",\"go.EASING_INOUTQUAD\",\"go.EASING_INOUTQUART\",\"go.EASING_INOUTQUINT\",\"go.EASING_INOUTSINE\",\"go.EASING_INQUAD\",\"go.EASING_INQUART\",\"go.EASING_INQUINT\",\"go.EASING_INSINE\",\"go.EASING_LINEAR\",\"go.EASING_OUTBACK\",\"go.EASING_OUTBOUNCE\",\"go.EASING_OUTCIRC\",\"go.EASING_OUTCUBIC\",\"go.EASING_OUTELASTIC\",\"go.EASING_OUTEXPO\",\"go.EASING_OUTINBACK\",\"go.EASING_OUTINBOUNCE\",\"go.EASING_OUTINCIRC\",\"go.EASING_OUTINCUBIC\",\"go.EASING_OUTINELASTIC\",\"go.EASING_OUTINEXPO\",\"go.EASING_OUTINQUAD\",\"go.EASING_OUTINQUART\",\"go.EASING_OUTINQUINT\",\"go.EASING_OUTINSINE\",\"go.EASING_OUTQUAD\",\"go.EASING_OUTQUART\",\"go.EASING_OUTQUINT\",\"go.EASING_OUTSINE\",\"vector\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function(self, url, property)\"],\"isOptional\":true}]->[]": "function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.Playback, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.Easing, duration: number, delay?: number, complete_function?: (self: unknown, url: unknown, property: unknown) => void): void;",
       "go\u0000FUNCTION\u0000go.cancel_animations\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(url: SceneAddress | Hash | Url, property?: string | Hash): void;",
-      "go\u0000FUNCTION\u0000go.delete\u0000[{\"types\":[\"hash\",\"string\",\"table\",\"url\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[], recursive?: boolean): void;",
+      "go\u0000FUNCTION\u0000go.delete\u0000[{\"types\":[\"hash\",\"string\",\"table\",\"url\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | boolean, recursive?: boolean): void;",
       "go\u0000FUNCTION\u0000go.exists\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function exists(url: SceneGameObjectAddress | Hash | Url): boolean;",
       "go\u0000FUNCTION\u0000go.get\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"boolean\",\"hash\",\"number\",\"quaternion\",\"resource\",\"url\",\"vector3\",\"vector4\"],\"isOptional\":false}]": "go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]\ngo.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions): go.properties[K]\ngo.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion",
       "go\u0000FUNCTION\u0000go.get_id\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"hash\"],\"isOptional\":false}]": "function get_id(path?: string): Hash;",
@@ -808,7 +808,7 @@
       "gui\u0000FUNCTION\u0000gui.reset_material\u0000[{\"types\":[\"node\"],\"isOptional\":false}]->[]": "function reset_material(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.reset_nodes\u0000[]->[]": "function reset_nodes(): void;",
       "gui\u0000FUNCTION\u0000gui.screen_to_local\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":false}]->[{\"types\":[\"vector3\"],\"isOptional\":false}]": "function screen_to_local(node: Opaque<\"node\">, screen_position: Vector3): Vector3;",
-      "gui\u0000FUNCTION\u0000gui.set\u0000[{\"types\":[\"node\",\"url\"],\"isOptional\":false},{\"types\":[\"constant\",\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\",\"quaternion\",\"vector3\",\"vector4\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set(node: Opaque<\"node\"> | Url, property: string | Hash | gui.Property, value?: number | Vector4 | Vector3 | Quaternion, options?: { index?: number; key?: Hash }): void;",
+      "gui\u0000FUNCTION\u0000gui.set\u0000[{\"types\":[\"node\",\"url\"],\"isOptional\":false},{\"types\":[\"constant\",\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\",\"quaternion\",\"vector3\",\"vector4\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set(node: Opaque<\"node\"> | Url, property: string | Hash | gui.Property, value?: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: { index?: number; key?: Hash }): void;",
       "gui\u0000FUNCTION\u0000gui.set_adjust_mode\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function set_adjust_mode(node: Opaque<\"node\">, adjust_mode: gui.AdjustMode): void;",
       "gui\u0000FUNCTION\u0000gui.set_alpha\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_alpha(node: Opaque<\"node\">, alpha: number): void;",
       "gui\u0000FUNCTION\u0000gui.set_blend_mode\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function set_blend_mode(node: Opaque<\"node\">, blend_mode: gui.BlendMode): void;",
@@ -838,7 +838,7 @@
       "gui\u0000FUNCTION\u0000gui.set_pivot\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function set_pivot(node: Opaque<\"node\">, pivot: gui.Pivot): void;",
       "gui\u0000FUNCTION\u0000gui.set_position\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"vector3\",\"vector4\"],\"isOptional\":false}]->[]": "function set_position(node: Opaque<\"node\">, position: Vector3 | Vector4): void;",
       "gui\u0000FUNCTION\u0000gui.set_render_order\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_render_order(order: number): void;",
-      "gui\u0000FUNCTION\u0000gui.set_rotation\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"quaternion\",\"vector4\"],\"isOptional\":false}]->[]": "function set_rotation(node: Opaque<\"node\">, rotation: Quaternion | Vector4): void;",
+      "gui\u0000FUNCTION\u0000gui.set_rotation\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"quaternion\",\"vector4\"],\"isOptional\":false}]->[]": "function set_rotation(node: Opaque<\"node\">, rotation: Quaternion | Vector4 | Vector3): void;",
       "gui\u0000FUNCTION\u0000gui.set_safe_area_mode\u0000[{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function set_safe_area_mode(mode: gui.SafeAreaMode): void;",
       "gui\u0000FUNCTION\u0000gui.set_scale\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"vector3\",\"vector4\"],\"isOptional\":false}]->[]": "function set_scale(node: Opaque<\"node\">, scale: Vector3 | Vector4): void;",
       "gui\u0000FUNCTION\u0000gui.set_screen_position\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":false}]->[]": "function set_screen_position(node: Opaque<\"node\">, screen_position: Vector3): void;",
@@ -1025,16 +1025,16 @@
       "render\u0000FUNCTION\u0000render.delete_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false}]->[]": "function delete_render_target(render_target: Opaque<\"render_target\">): void;",
       "render\u0000FUNCTION\u0000render.disable_material\u0000[]->[]": "function disable_material(): void;",
       "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function disable_state(state: graphics.State): void;",
-      "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"hash\",\"string\",\"texture\"],\"isOptional\":false}]->[]": "function disable_texture(binding: Opaque<\"texture\"> | string | Hash): void;",
+      "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"hash\",\"string\",\"texture\"],\"isOptional\":false}]->[]": "function disable_texture(binding: Opaque<\"texture\"> | string | Hash | number): void;",
       "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] } }): void;",
       "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: number, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }; sort_order?: number }): void;",
       "render\u0000FUNCTION\u0000render.draw_debug3d\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw_debug3d(options?: { frustum?: Matrix4; frustum_planes?: number }): void;",
       "render\u0000FUNCTION\u0000render.enable_material\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[]": "function enable_material(material_id: string | Hash): void;",
       "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function enable_state(state: graphics.State): void;",
-      "render\u0000FUNCTION\u0000render.enable_texture\u0000[{\"types\":[\"hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\",\"texture\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":true}]->[]": "function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<\"texture\"> | string | Hash, buffer_type?: graphics.BufferType): void;",
+      "render\u0000FUNCTION\u0000render.enable_texture\u0000[{\"types\":[\"hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\",\"texture\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":true}]->[]": "function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<\"texture\"> | string | Hash | Opaque<\"render_target\"> | number, buffer_type?: graphics.BufferType): void;",
       "render\u0000FUNCTION\u0000render.get_height\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_height(): number;",
-      "render\u0000FUNCTION\u0000render.get_render_target_height\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_render_target_height(render_target: Opaque<\"render_target\">, buffer_type: graphics.BufferType): number;",
-      "render\u0000FUNCTION\u0000render.get_render_target_width\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_render_target_width(render_target: Opaque<\"render_target\">, buffer_type: graphics.BufferType): number;",
+      "render\u0000FUNCTION\u0000render.get_render_target_height\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_render_target_height(render_target: Opaque<\"render_target\"> | string | Hash, buffer_type: graphics.BufferType): number;",
+      "render\u0000FUNCTION\u0000render.get_render_target_width\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_render_target_width(render_target: Opaque<\"render_target\"> | string | Hash, buffer_type: graphics.BufferType): number;",
       "render\u0000FUNCTION\u0000render.get_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_width(): number;",
       "render\u0000FUNCTION\u0000render.get_window_height\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_window_height(): number;",
       "render\u0000FUNCTION\u0000render.get_window_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_window_width(): number;",
@@ -1043,7 +1043,7 @@
       "render\u0000FUNCTION\u0000render.set_blend_equation_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_equation_separate(equation_color: number, equation_alpha: number): void;",
       "render\u0000FUNCTION\u0000render.set_blend_func\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_func(source_factor: number, destination_factor: number): void;",
       "render\u0000FUNCTION\u0000render.set_blend_func_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_func_separate(source_factor_color: number, destination_factor_color: number, source_factor_alpha: number, destination_factor_alpha: number): void;",
-      "render\u0000FUNCTION\u0000render.set_camera\u0000[{\"types\":[\"nil\",\"number\",\"url\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_camera(camera?: Url | number, options?: { use_frustum?: boolean }): void;",
+      "render\u0000FUNCTION\u0000render.set_camera\u0000[{\"types\":[\"nil\",\"number\",\"url\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_camera(camera?: Url | number | string, options?: { use_frustum?: boolean }): void;",
       "render\u0000FUNCTION\u0000render.set_color_mask\u0000[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_color_mask(red: boolean, green: boolean, blue: boolean, alpha: boolean): void;",
       "render\u0000FUNCTION\u0000render.set_compute\u0000[{\"types\":[\"hash\",\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_compute(compute?: string | Hash): void;",
       "render\u0000FUNCTION\u0000render.set_cull_face\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_cull_face(face_type: number): void;",
@@ -1052,8 +1052,8 @@
       "render\u0000FUNCTION\u0000render.set_listener\u0000[{\"types\":[\"function(self, event_type)\",\"nil\"],\"isOptional\":false}]->[]": "function set_listener(callback?: (self: unknown, event_type: unknown) => void): void;",
       "render\u0000FUNCTION\u0000render.set_polygon_offset\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_polygon_offset(factor: number, units: number): void;",
       "render\u0000FUNCTION\u0000render.set_projection\u0000[{\"types\":[\"matrix4\"],\"isOptional\":false}]->[]": "function set_projection(matrix: Matrix4): void;",
-      "render\u0000FUNCTION\u0000render.set_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_render_target(render_target: Opaque<\"render_target\">, options?: { transient?: Record<string | number, unknown> }): void;",
-      "render\u0000FUNCTION\u0000render.set_render_target_size\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_render_target_size(render_target: Opaque<\"render_target\">, width: number, height: number): void;",
+      "render\u0000FUNCTION\u0000render.set_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_render_target(render_target: Opaque<\"render_target\"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT, options?: { transient?: Record<string | number, unknown> }): void;",
+      "render\u0000FUNCTION\u0000render.set_render_target_size\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_render_target_size(render_target: Opaque<\"render_target\"> | string | Hash, width: number, height: number): void;",
       "render\u0000FUNCTION\u0000render.set_stencil_func\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_stencil_func(func: number, ref: number, mask: number): void;",
       "render\u0000FUNCTION\u0000render.set_stencil_mask\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_stencil_mask(mask: number): void;",
       "render\u0000FUNCTION\u0000render.set_stencil_op\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_stencil_op(sfail: number, dpfail: number, dppass: number): void;",
@@ -1217,8 +1217,8 @@
       "sys\u0000FUNCTION\u0000sys.load_resource\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function load_resource(filename: string): LuaMultiReturn<[string | undefined, string | undefined]>;",
       "sys\u0000FUNCTION\u0000sys.open_url\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function open_url(url: string, attributes?: { target?: string }): boolean;",
       "sys\u0000FUNCTION\u0000sys.reboot\u0000[{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[]": "function reboot(arg1?: string, arg2?: string, arg3?: string, arg4?: string, arg5?: string, arg6?: string): void;",
-      "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function save(filename: string, table: Record<string | number, unknown>): void;",
-      "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function serialize(table: Record<string | number, unknown>): string;",
+      "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function save(filename: string, table: Record<string | number, unknown> | readonly unknown[]): void;",
+      "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function serialize(table: Record<string | number, unknown> | readonly unknown[]): string;",
       "sys\u0000FUNCTION\u0000sys.set_connectivity_host\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[]": "function set_connectivity_host(host: string): void;",
       "sys\u0000FUNCTION\u0000sys.set_engine_throttle\u0000[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_engine_throttle(enable: boolean, cooldown?: number): void;",
       "sys\u0000FUNCTION\u0000sys.set_error_handler\u0000[{\"types\":[\"function(source, message, traceback)\"],\"isOptional\":false}]->[]": "function set_error_handler(error_handler: (source: unknown, message: unknown, traceback: unknown) => void): void;",
@@ -1650,7 +1650,7 @@
       "buffer\u0000FUNCTION\u0000buffer.copy_buffer\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_buffer(dst: Opaque<\"buffer\">, dstoffset: number, src: Opaque<\"buffer\">, srcoffset: number, count: number): void;",
       "buffer\u0000FUNCTION\u0000buffer.copy_stream\u0000[{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_stream(dst: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, dstoffset: number, src: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, srcoffset: number, count: number): void;",
       "buffer\u0000FUNCTION\u0000buffer.create\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"buffer\"],\"isOptional\":false}]": "function create(element_count: number, declaration: { name?: Hash | string; type?: Opaque<\"constant\">; count?: number }): Opaque<\"buffer\">;",
-      "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_bytes(buffer: Opaque<\"buffer\">, stream_name: Hash): string;",
+      "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_bytes(buffer: Opaque<\"buffer\">, stream_name: Hash | string): string;",
       "buffer\u0000FUNCTION\u0000buffer.get_metadata\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"constant\",\"nil\"],\"isOptional\":false}]": "function get_metadata(buf: Opaque<\"buffer\">, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.ValueType | undefined]>;",
       "buffer\u0000FUNCTION\u0000buffer.get_stream\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"bufferstream\"],\"isOptional\":false}]": "function get_stream(buffer: Opaque<\"buffer\">, stream_name: Hash | string): Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> };",
       "buffer\u0000FUNCTION\u0000buffer.set_metadata\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function set_metadata(buf: Opaque<\"buffer\">, metadata_name: Hash | string, values: number[], value_type: buffer.ValueType): void;",
@@ -1797,7 +1797,7 @@
       "go\u0000FUNCTION\u0000fixed_update\u0000[{\"types\":[\"userdata\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function fixed_update(self: Opaque<\"userdata\">, dt: number): void;",
       "go\u0000FUNCTION\u0000go.animate\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"go.PLAYBACK_LOOP_BACKWARD\",\"go.PLAYBACK_LOOP_FORWARD\",\"go.PLAYBACK_LOOP_PINGPONG\",\"go.PLAYBACK_ONCE_BACKWARD\",\"go.PLAYBACK_ONCE_FORWARD\",\"go.PLAYBACK_ONCE_PINGPONG\"],\"isOptional\":false},{\"types\":[\"number\",\"quaternion\",\"vector3\",\"vector4\"],\"isOptional\":false},{\"types\":[\"go.EASING_INBACK\",\"go.EASING_INBOUNCE\",\"go.EASING_INCIRC\",\"go.EASING_INCUBIC\",\"go.EASING_INELASTIC\",\"go.EASING_INEXPO\",\"go.EASING_INOUTBACK\",\"go.EASING_INOUTBOUNCE\",\"go.EASING_INOUTCIRC\",\"go.EASING_INOUTCUBIC\",\"go.EASING_INOUTELASTIC\",\"go.EASING_INOUTEXPO\",\"go.EASING_INOUTQUAD\",\"go.EASING_INOUTQUART\",\"go.EASING_INOUTQUINT\",\"go.EASING_INOUTSINE\",\"go.EASING_INQUAD\",\"go.EASING_INQUART\",\"go.EASING_INQUINT\",\"go.EASING_INSINE\",\"go.EASING_LINEAR\",\"go.EASING_OUTBACK\",\"go.EASING_OUTBOUNCE\",\"go.EASING_OUTCIRC\",\"go.EASING_OUTCUBIC\",\"go.EASING_OUTELASTIC\",\"go.EASING_OUTEXPO\",\"go.EASING_OUTINBACK\",\"go.EASING_OUTINBOUNCE\",\"go.EASING_OUTINCIRC\",\"go.EASING_OUTINCUBIC\",\"go.EASING_OUTINELASTIC\",\"go.EASING_OUTINEXPO\",\"go.EASING_OUTINQUAD\",\"go.EASING_OUTINQUART\",\"go.EASING_OUTINQUINT\",\"go.EASING_OUTINSINE\",\"go.EASING_OUTQUAD\",\"go.EASING_OUTQUART\",\"go.EASING_OUTQUINT\",\"go.EASING_OUTSINE\",\"vector\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function(self, url, property)\"],\"isOptional\":true}]->[]": "function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.Playback, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.Easing, duration: number, delay?: number, complete_function?: (self: unknown, url: unknown, property: unknown) => void): void;",
       "go\u0000FUNCTION\u0000go.cancel_animations\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(url: SceneAddress | Hash | Url, property?: string | Hash): void;",
-      "go\u0000FUNCTION\u0000go.delete\u0000[{\"types\":[\"hash\",\"string\",\"table\",\"url\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[], recursive?: boolean): void;",
+      "go\u0000FUNCTION\u0000go.delete\u0000[{\"types\":[\"hash\",\"string\",\"table\",\"url\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | boolean, recursive?: boolean): void;",
       "go\u0000FUNCTION\u0000go.exists\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function exists(url: SceneGameObjectAddress | Hash | Url): boolean;",
       "go\u0000FUNCTION\u0000go.get\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"boolean\",\"hash\",\"number\",\"quaternion\",\"resource\",\"url\",\"vector3\",\"vector4\"],\"isOptional\":false}]": "go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]\ngo.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions): go.properties[K]\ngo.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion",
       "go\u0000FUNCTION\u0000go.get_id\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"hash\"],\"isOptional\":false}]": "function get_id(path?: string): Hash;",
@@ -2137,7 +2137,7 @@
       "gui\u0000FUNCTION\u0000gui.reset_material\u0000[{\"types\":[\"node\"],\"isOptional\":false}]->[]": "function reset_material(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.reset_nodes\u0000[]->[]": "function reset_nodes(): void;",
       "gui\u0000FUNCTION\u0000gui.screen_to_local\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":false}]->[{\"types\":[\"vector3\"],\"isOptional\":false}]": "function screen_to_local(node: Opaque<\"node\">, screen_position: Vector3): Vector3;",
-      "gui\u0000FUNCTION\u0000gui.set\u0000[{\"types\":[\"node\",\"url\"],\"isOptional\":false},{\"types\":[\"constant\",\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\",\"quaternion\",\"vector3\",\"vector4\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set(node: Opaque<\"node\"> | Url, property: string | Hash | gui.Property, value: number | Vector4 | Vector3 | Quaternion, options?: { index?: number; key?: Hash }): void;",
+      "gui\u0000FUNCTION\u0000gui.set\u0000[{\"types\":[\"node\",\"url\"],\"isOptional\":false},{\"types\":[\"constant\",\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\",\"quaternion\",\"vector3\",\"vector4\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set(node: Opaque<\"node\"> | Url, property: string | Hash | gui.Property, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: { index?: number; key?: Hash }): void;",
       "gui\u0000FUNCTION\u0000gui.set_adjust_mode\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function set_adjust_mode(node: Opaque<\"node\">, adjust_mode: gui.AdjustMode): void;",
       "gui\u0000FUNCTION\u0000gui.set_alpha\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_alpha(node: Opaque<\"node\">, alpha: number): void;",
       "gui\u0000FUNCTION\u0000gui.set_blend_mode\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function set_blend_mode(node: Opaque<\"node\">, blend_mode: gui.BlendMode): void;",
@@ -2167,7 +2167,7 @@
       "gui\u0000FUNCTION\u0000gui.set_pivot\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function set_pivot(node: Opaque<\"node\">, pivot: gui.Pivot): void;",
       "gui\u0000FUNCTION\u0000gui.set_position\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"vector3\",\"vector4\"],\"isOptional\":false}]->[]": "function set_position(node: Opaque<\"node\">, position: Vector3 | Vector4): void;",
       "gui\u0000FUNCTION\u0000gui.set_render_order\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_render_order(order: number): void;",
-      "gui\u0000FUNCTION\u0000gui.set_rotation\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"quaternion\",\"vector4\"],\"isOptional\":false}]->[]": "function set_rotation(node: Opaque<\"node\">, rotation: Quaternion | Vector4): void;",
+      "gui\u0000FUNCTION\u0000gui.set_rotation\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"quaternion\",\"vector4\"],\"isOptional\":false}]->[]": "function set_rotation(node: Opaque<\"node\">, rotation: Quaternion | Vector4 | Vector3): void;",
       "gui\u0000FUNCTION\u0000gui.set_safe_area_mode\u0000[{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function set_safe_area_mode(mode: gui.SafeAreaMode): void;",
       "gui\u0000FUNCTION\u0000gui.set_scale\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"vector3\",\"vector4\"],\"isOptional\":false}]->[]": "function set_scale(node: Opaque<\"node\">, scale: Vector3 | Vector4): void;",
       "gui\u0000FUNCTION\u0000gui.set_screen_position\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":false}]->[]": "function set_screen_position(node: Opaque<\"node\">, screen_position: Vector3): void;",
@@ -2354,16 +2354,16 @@
       "render\u0000FUNCTION\u0000render.delete_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false}]->[]": "function delete_render_target(render_target: Opaque<\"render_target\">): void;",
       "render\u0000FUNCTION\u0000render.disable_material\u0000[]->[]": "function disable_material(): void;",
       "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function disable_state(state: graphics.State): void;",
-      "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"hash\",\"string\",\"texture\"],\"isOptional\":false}]->[]": "function disable_texture(binding: Opaque<\"texture\"> | string | Hash): void;",
+      "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"hash\",\"string\",\"texture\"],\"isOptional\":false}]->[]": "function disable_texture(binding: Opaque<\"texture\"> | string | Hash | number): void;",
       "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] } }): void;",
       "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: number, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }; sort_order?: number }): void;",
       "render\u0000FUNCTION\u0000render.draw_debug3d\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw_debug3d(options?: { frustum?: Matrix4; frustum_planes?: number }): void;",
       "render\u0000FUNCTION\u0000render.enable_material\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[]": "function enable_material(material_id: string | Hash): void;",
       "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function enable_state(state: graphics.State): void;",
-      "render\u0000FUNCTION\u0000render.enable_texture\u0000[{\"types\":[\"hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\",\"texture\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":true}]->[]": "function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<\"texture\"> | string | Hash, buffer_type?: graphics.BufferType): void;",
+      "render\u0000FUNCTION\u0000render.enable_texture\u0000[{\"types\":[\"hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\",\"texture\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":true}]->[]": "function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<\"texture\"> | string | Hash | Opaque<\"render_target\"> | number, buffer_type?: graphics.BufferType): void;",
       "render\u0000FUNCTION\u0000render.get_height\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_height(): number;",
-      "render\u0000FUNCTION\u0000render.get_render_target_height\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_render_target_height(render_target: Opaque<\"render_target\">, buffer_type: graphics.BufferType): number;",
-      "render\u0000FUNCTION\u0000render.get_render_target_width\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_render_target_width(render_target: Opaque<\"render_target\">, buffer_type: graphics.BufferType): number;",
+      "render\u0000FUNCTION\u0000render.get_render_target_height\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_render_target_height(render_target: Opaque<\"render_target\"> | string | Hash, buffer_type: graphics.BufferType): number;",
+      "render\u0000FUNCTION\u0000render.get_render_target_width\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_render_target_width(render_target: Opaque<\"render_target\"> | string | Hash, buffer_type: graphics.BufferType): number;",
       "render\u0000FUNCTION\u0000render.get_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_width(): number;",
       "render\u0000FUNCTION\u0000render.get_window_height\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_window_height(): number;",
       "render\u0000FUNCTION\u0000render.get_window_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_window_width(): number;",
@@ -2372,7 +2372,7 @@
       "render\u0000FUNCTION\u0000render.set_blend_equation_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_equation_separate(equation_color: number, equation_alpha: number): void;",
       "render\u0000FUNCTION\u0000render.set_blend_func\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_func(source_factor: number, destination_factor: number): void;",
       "render\u0000FUNCTION\u0000render.set_blend_func_separate\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_func_separate(source_factor_color: number, destination_factor_color: number, source_factor_alpha: number, destination_factor_alpha: number): void;",
-      "render\u0000FUNCTION\u0000render.set_camera\u0000[{\"types\":[\"nil\",\"number\",\"url\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_camera(camera?: Url | number, options?: { use_frustum?: boolean }): void;",
+      "render\u0000FUNCTION\u0000render.set_camera\u0000[{\"types\":[\"nil\",\"number\",\"url\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_camera(camera?: Url | number | string, options?: { use_frustum?: boolean }): void;",
       "render\u0000FUNCTION\u0000render.set_color_mask\u0000[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_color_mask(red: boolean, green: boolean, blue: boolean, alpha: boolean): void;",
       "render\u0000FUNCTION\u0000render.set_compute\u0000[{\"types\":[\"hash\",\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_compute(compute?: string | Hash): void;",
       "render\u0000FUNCTION\u0000render.set_cull_face\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_cull_face(face_type: number): void;",
@@ -2381,8 +2381,8 @@
       "render\u0000FUNCTION\u0000render.set_listener\u0000[{\"types\":[\"function(self, event_type)\",\"nil\"],\"isOptional\":false}]->[]": "function set_listener(callback?: (self: unknown, event_type: unknown) => void): void;",
       "render\u0000FUNCTION\u0000render.set_polygon_offset\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_polygon_offset(factor: number, units: number): void;",
       "render\u0000FUNCTION\u0000render.set_projection\u0000[{\"types\":[\"matrix4\"],\"isOptional\":false}]->[]": "function set_projection(matrix: Matrix4): void;",
-      "render\u0000FUNCTION\u0000render.set_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_render_target(render_target: Opaque<\"render_target\">, options?: { transient?: Record<string | number, unknown> }): void;",
-      "render\u0000FUNCTION\u0000render.set_render_target_size\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_render_target_size(render_target: Opaque<\"render_target\">, width: number, height: number): void;",
+      "render\u0000FUNCTION\u0000render.set_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_render_target(render_target: Opaque<\"render_target\"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT, options?: { transient?: Record<string | number, unknown> }): void;",
+      "render\u0000FUNCTION\u0000render.set_render_target_size\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_render_target_size(render_target: Opaque<\"render_target\"> | string | Hash, width: number, height: number): void;",
       "render\u0000FUNCTION\u0000render.set_stencil_func\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_stencil_func(func: number, ref: number, mask: number): void;",
       "render\u0000FUNCTION\u0000render.set_stencil_mask\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_stencil_mask(mask: number): void;",
       "render\u0000FUNCTION\u0000render.set_stencil_op\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_stencil_op(sfail: number, dpfail: number, dppass: number): void;",
@@ -2546,8 +2546,8 @@
       "sys\u0000FUNCTION\u0000sys.load_resource\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function load_resource(filename: string): LuaMultiReturn<[string | undefined, string | undefined]>;",
       "sys\u0000FUNCTION\u0000sys.open_url\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function open_url(url: string, attributes?: { target?: string }): boolean;",
       "sys\u0000FUNCTION\u0000sys.reboot\u0000[{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[]": "function reboot(arg1?: string, arg2?: string, arg3?: string, arg4?: string, arg5?: string, arg6?: string): void;",
-      "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function save(filename: string, table: Record<string | number, unknown>): void;",
-      "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function serialize(table: Record<string | number, unknown>): string;",
+      "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function save(filename: string, table: Record<string | number, unknown> | readonly unknown[]): void;",
+      "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function serialize(table: Record<string | number, unknown> | readonly unknown[]): string;",
       "sys\u0000FUNCTION\u0000sys.set_connectivity_host\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[]": "function set_connectivity_host(host: string): void;",
       "sys\u0000FUNCTION\u0000sys.set_engine_throttle\u0000[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_engine_throttle(enable: boolean, cooldown?: number): void;",
       "sys\u0000FUNCTION\u0000sys.set_error_handler\u0000[{\"types\":[\"function(source, message, traceback)\"],\"isOptional\":false}]->[]": "function set_error_handler(error_handler: (source: unknown, message: unknown, traceback: unknown) => void): void;",
@@ -2723,7 +2723,7 @@
       "buffer\u0000FUNCTION\u0000buffer.copy_buffer\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_buffer(dst: Opaque<\"buffer\">, dstoffset: number, src: Opaque<\"buffer\">, srcoffset: number, count: number): void;",
       "buffer\u0000FUNCTION\u0000buffer.copy_stream\u0000[{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_stream(dst: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, dstoffset: number, src: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, srcoffset: number, count: number): void;",
       "buffer\u0000FUNCTION\u0000buffer.create\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"buffer\"],\"isOptional\":false}]": "function create(element_count: number, declaration: { name?: Hash | string; type?: Opaque<\"constant\">; count?: number }): Opaque<\"buffer\">;",
-      "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_bytes(buffer: Opaque<\"buffer\">, stream_name: Hash): string;",
+      "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_bytes(buffer: Opaque<\"buffer\">, stream_name: Hash | string): string;",
       "buffer\u0000FUNCTION\u0000buffer.get_metadata\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"constant\",\"nil\"],\"isOptional\":false}]": "function get_metadata(buf: Opaque<\"buffer\">, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.ValueType | undefined]>;",
       "buffer\u0000FUNCTION\u0000buffer.get_stream\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"bufferstream\"],\"isOptional\":false}]": "function get_stream(buffer: Opaque<\"buffer\">, stream_name: Hash | string): Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> };",
       "buffer\u0000FUNCTION\u0000buffer.set_metadata\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function set_metadata(buf: Opaque<\"buffer\">, metadata_name: Hash | string, values: number[], value_type: buffer.ValueType): void;",
@@ -2855,7 +2855,7 @@
       "go\u0000FUNCTION\u0000fixed_update\u0000[{\"types\":[\"userdata\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function fixed_update(self: Opaque<\"userdata\">, dt: number): void;",
       "go\u0000FUNCTION\u0000go.animate\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"go.PLAYBACK_LOOP_BACKWARD\",\"go.PLAYBACK_LOOP_FORWARD\",\"go.PLAYBACK_LOOP_PINGPONG\",\"go.PLAYBACK_ONCE_BACKWARD\",\"go.PLAYBACK_ONCE_FORWARD\",\"go.PLAYBACK_ONCE_PINGPONG\"],\"isOptional\":false},{\"types\":[\"number\",\"quaternion\",\"vector3\",\"vector4\"],\"isOptional\":false},{\"types\":[\"go.EASING_INBACK\",\"go.EASING_INBOUNCE\",\"go.EASING_INCIRC\",\"go.EASING_INCUBIC\",\"go.EASING_INELASTIC\",\"go.EASING_INEXPO\",\"go.EASING_INOUTBACK\",\"go.EASING_INOUTBOUNCE\",\"go.EASING_INOUTCIRC\",\"go.EASING_INOUTCUBIC\",\"go.EASING_INOUTELASTIC\",\"go.EASING_INOUTEXPO\",\"go.EASING_INOUTQUAD\",\"go.EASING_INOUTQUART\",\"go.EASING_INOUTQUINT\",\"go.EASING_INOUTSINE\",\"go.EASING_INQUAD\",\"go.EASING_INQUART\",\"go.EASING_INQUINT\",\"go.EASING_INSINE\",\"go.EASING_LINEAR\",\"go.EASING_OUTBACK\",\"go.EASING_OUTBOUNCE\",\"go.EASING_OUTCIRC\",\"go.EASING_OUTCUBIC\",\"go.EASING_OUTELASTIC\",\"go.EASING_OUTEXPO\",\"go.EASING_OUTINBACK\",\"go.EASING_OUTINBOUNCE\",\"go.EASING_OUTINCIRC\",\"go.EASING_OUTINCUBIC\",\"go.EASING_OUTINELASTIC\",\"go.EASING_OUTINEXPO\",\"go.EASING_OUTINQUAD\",\"go.EASING_OUTINQUART\",\"go.EASING_OUTINQUINT\",\"go.EASING_OUTINSINE\",\"go.EASING_OUTQUAD\",\"go.EASING_OUTQUART\",\"go.EASING_OUTQUINT\",\"go.EASING_OUTSINE\",\"vector\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":true},{\"types\":[\"function(self, url, property)\"],\"isOptional\":true}]->[]": "function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.Playback, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.Easing, duration: number, delay?: number, complete_function?: (self: unknown, url: unknown, property: unknown) => void): void;",
       "go\u0000FUNCTION\u0000go.cancel_animations\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":true}]->[]": "function cancel_animations(url: SceneAddress | Hash | Url, property?: string | Hash): void;",
-      "go\u0000FUNCTION\u0000go.delete\u0000[{\"types\":[\"hash\",\"string\",\"table\",\"url\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[], recursive?: boolean): void;",
+      "go\u0000FUNCTION\u0000go.delete\u0000[{\"types\":[\"hash\",\"string\",\"table\",\"url\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | boolean, recursive?: boolean): void;",
       "go\u0000FUNCTION\u0000go.exists\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function exists(url: SceneGameObjectAddress | Hash | Url): boolean;",
       "go\u0000FUNCTION\u0000go.get\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"boolean\",\"hash\",\"number\",\"quaternion\",\"resource\",\"url\",\"vector3\",\"vector4\"],\"isOptional\":false}]": "go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]\ngo.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions): go.properties[K]\ngo.get(url: SceneAddress | Hash | Url, property: string | Hash, options?: GoPropertyOptions): number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion",
       "go\u0000FUNCTION\u0000go.get_id\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"hash\"],\"isOptional\":false}]": "function get_id(path?: string): Hash;",
@@ -3179,7 +3179,7 @@
       "gui\u0000FUNCTION\u0000gui.reset_material\u0000[{\"types\":[\"node\"],\"isOptional\":false}]->[]": "function reset_material(node: Opaque<\"node\">): void;",
       "gui\u0000FUNCTION\u0000gui.reset_nodes\u0000[]->[]": "function reset_nodes(): void;",
       "gui\u0000FUNCTION\u0000gui.screen_to_local\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":false}]->[{\"types\":[\"vector3\"],\"isOptional\":false}]": "function screen_to_local(node: Opaque<\"node\">, screen_position: Vector3): Vector3;",
-      "gui\u0000FUNCTION\u0000gui.set\u0000[{\"types\":[\"node\",\"url\"],\"isOptional\":false},{\"types\":[\"constant\",\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\",\"quaternion\",\"vector3\",\"vector4\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set(node: Opaque<\"node\"> | Url, property: string | Hash | gui.Property, value: number | Vector4 | Vector3 | Quaternion, options?: { index?: number; key?: Hash }): void;",
+      "gui\u0000FUNCTION\u0000gui.set\u0000[{\"types\":[\"node\",\"url\"],\"isOptional\":false},{\"types\":[\"constant\",\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\",\"quaternion\",\"vector3\",\"vector4\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set(node: Opaque<\"node\"> | Url, property: string | Hash | gui.Property, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: { index?: number; key?: Hash }): void;",
       "gui\u0000FUNCTION\u0000gui.set_adjust_mode\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function set_adjust_mode(node: Opaque<\"node\">, adjust_mode: gui.AdjustMode): void;",
       "gui\u0000FUNCTION\u0000gui.set_alpha\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_alpha(node: Opaque<\"node\">, alpha: number): void;",
       "gui\u0000FUNCTION\u0000gui.set_blend_mode\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function set_blend_mode(node: Opaque<\"node\">, blend_mode: gui.BlendMode): void;",
@@ -3209,7 +3209,7 @@
       "gui\u0000FUNCTION\u0000gui.set_pivot\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function set_pivot(node: Opaque<\"node\">, pivot: gui.Pivot): void;",
       "gui\u0000FUNCTION\u0000gui.set_position\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"vector3\",\"vector4\"],\"isOptional\":false}]->[]": "function set_position(node: Opaque<\"node\">, position: Vector3 | Vector4): void;",
       "gui\u0000FUNCTION\u0000gui.set_render_order\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_render_order(order: number): void;",
-      "gui\u0000FUNCTION\u0000gui.set_rotation\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"quaternion\",\"vector4\"],\"isOptional\":false}]->[]": "function set_rotation(node: Opaque<\"node\">, rotation: Quaternion | Vector4): void;",
+      "gui\u0000FUNCTION\u0000gui.set_rotation\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"quaternion\",\"vector4\"],\"isOptional\":false}]->[]": "function set_rotation(node: Opaque<\"node\">, rotation: Quaternion | Vector4 | Vector3): void;",
       "gui\u0000FUNCTION\u0000gui.set_safe_area_mode\u0000[{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function set_safe_area_mode(mode: gui.SafeAreaMode): void;",
       "gui\u0000FUNCTION\u0000gui.set_scale\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"vector3\",\"vector4\"],\"isOptional\":false}]->[]": "function set_scale(node: Opaque<\"node\">, scale: Vector3 | Vector4): void;",
       "gui\u0000FUNCTION\u0000gui.set_screen_position\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":false}]->[]": "function set_screen_position(node: Opaque<\"node\">, screen_position: Vector3): void;",
@@ -3385,23 +3385,23 @@
       "render\u0000FUNCTION\u0000render.delete_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false}]->[]": "function delete_render_target(render_target: Opaque<\"render_target\">): void;",
       "render\u0000FUNCTION\u0000render.disable_material\u0000[]->[]": "function disable_material(): void;",
       "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function disable_state(state: graphics.State): void;",
-      "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"hash\",\"string\",\"texture\"],\"isOptional\":false}]->[]": "function disable_texture(binding: Opaque<\"texture\"> | string | Hash): void;",
+      "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"hash\",\"string\",\"texture\"],\"isOptional\":false}]->[]": "function disable_texture(binding: Opaque<\"texture\"> | string | Hash | number): void;",
       "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] } }): void;",
       "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: number, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }; sort_order?: number }): void;",
       "render\u0000FUNCTION\u0000render.draw_debug3d\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw_debug3d(options?: { frustum?: Matrix4; frustum_planes?: number }): void;",
       "render\u0000FUNCTION\u0000render.enable_material\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[]": "function enable_material(material_id: string | Hash): void;",
       "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function enable_state(state: graphics.State): void;",
-      "render\u0000FUNCTION\u0000render.enable_texture\u0000[{\"types\":[\"hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\",\"texture\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":true}]->[]": "function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<\"texture\"> | string | Hash, buffer_type?: graphics.BufferType): void;",
+      "render\u0000FUNCTION\u0000render.enable_texture\u0000[{\"types\":[\"hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\",\"texture\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":true}]->[]": "function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<\"texture\"> | string | Hash | Opaque<\"render_target\"> | number, buffer_type?: graphics.BufferType): void;",
       "render\u0000FUNCTION\u0000render.get_height\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_height(): number;",
-      "render\u0000FUNCTION\u0000render.get_render_target_height\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_render_target_height(render_target: Opaque<\"render_target\">, buffer_type: graphics.BufferType): number;",
-      "render\u0000FUNCTION\u0000render.get_render_target_width\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_render_target_width(render_target: Opaque<\"render_target\">, buffer_type: graphics.BufferType): number;",
+      "render\u0000FUNCTION\u0000render.get_render_target_height\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_render_target_height(render_target: Opaque<\"render_target\"> | string | Hash, buffer_type: graphics.BufferType): number;",
+      "render\u0000FUNCTION\u0000render.get_render_target_width\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_render_target_width(render_target: Opaque<\"render_target\"> | string | Hash, buffer_type: graphics.BufferType): number;",
       "render\u0000FUNCTION\u0000render.get_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_width(): number;",
       "render\u0000FUNCTION\u0000render.get_window_height\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_window_height(): number;",
       "render\u0000FUNCTION\u0000render.get_window_width\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_window_width(): number;",
       "render\u0000FUNCTION\u0000render.predicate\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function predicate(tags: (string | Hash)[]): number;",
       "render\u0000FUNCTION\u0000render.render_target\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"render_target\"],\"isOptional\":false}]": "render.render_target(parameters: Record<string | number, unknown>): Opaque<\"render_target\">\nrender.render_target(name: string, parameters: Record<string | number, unknown>): Opaque<\"render_target\">",
       "render\u0000FUNCTION\u0000render.set_blend_func\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_blend_func(source_factor: number, destination_factor: number): void;",
-      "render\u0000FUNCTION\u0000render.set_camera\u0000[{\"types\":[\"nil\",\"number\",\"url\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_camera(camera?: Url | number, options?: { use_frustum?: boolean }): void;",
+      "render\u0000FUNCTION\u0000render.set_camera\u0000[{\"types\":[\"nil\",\"number\",\"url\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_camera(camera?: Url | number | string, options?: { use_frustum?: boolean }): void;",
       "render\u0000FUNCTION\u0000render.set_color_mask\u0000[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": "function set_color_mask(red: boolean, green: boolean, blue: boolean, alpha: boolean): void;",
       "render\u0000FUNCTION\u0000render.set_compute\u0000[{\"types\":[\"hash\",\"nil\",\"string\"],\"isOptional\":false}]->[]": "function set_compute(compute?: string | Hash): void;",
       "render\u0000FUNCTION\u0000render.set_cull_face\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_cull_face(face_type: number): void;",
@@ -3410,8 +3410,8 @@
       "render\u0000FUNCTION\u0000render.set_listener\u0000[{\"types\":[\"function(self, event_type)\",\"nil\"],\"isOptional\":false}]->[]": "function set_listener(callback?: (self: unknown, event_type: unknown) => void): void;",
       "render\u0000FUNCTION\u0000render.set_polygon_offset\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_polygon_offset(factor: number, units: number): void;",
       "render\u0000FUNCTION\u0000render.set_projection\u0000[{\"types\":[\"matrix4\"],\"isOptional\":false}]->[]": "function set_projection(matrix: Matrix4): void;",
-      "render\u0000FUNCTION\u0000render.set_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_render_target(render_target: Opaque<\"render_target\">, options?: { transient?: Record<string | number, unknown> }): void;",
-      "render\u0000FUNCTION\u0000render.set_render_target_size\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_render_target_size(render_target: Opaque<\"render_target\">, width: number, height: number): void;",
+      "render\u0000FUNCTION\u0000render.set_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_render_target(render_target: Opaque<\"render_target\"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT, options?: { transient?: Record<string | number, unknown> }): void;",
+      "render\u0000FUNCTION\u0000render.set_render_target_size\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_render_target_size(render_target: Opaque<\"render_target\"> | string | Hash, width: number, height: number): void;",
       "render\u0000FUNCTION\u0000render.set_stencil_func\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_stencil_func(func: number, ref: number, mask: number): void;",
       "render\u0000FUNCTION\u0000render.set_stencil_mask\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_stencil_mask(mask: number): void;",
       "render\u0000FUNCTION\u0000render.set_stencil_op\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_stencil_op(sfail: number, dpfail: number, dppass: number): void;",
@@ -3574,8 +3574,8 @@
       "sys\u0000FUNCTION\u0000sys.load_resource\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"string\"],\"isOptional\":false}]": "function load_resource(filename: string): LuaMultiReturn<[string | undefined, string | undefined]>;",
       "sys\u0000FUNCTION\u0000sys.open_url\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": "function open_url(url: string, attributes?: { target?: string }): boolean;",
       "sys\u0000FUNCTION\u0000sys.reboot\u0000[{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true}]->[]": "function reboot(arg1?: string, arg2?: string, arg3?: string, arg4?: string, arg5?: string, arg6?: string): void;",
-      "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function save(filename: string, table: Record<string | number, unknown>): void;",
-      "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function serialize(table: Record<string | number, unknown>): string;",
+      "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function save(filename: string, table: Record<string | number, unknown> | readonly unknown[]): void;",
+      "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function serialize(table: Record<string | number, unknown> | readonly unknown[]): string;",
       "sys\u0000FUNCTION\u0000sys.set_connectivity_host\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[]": "function set_connectivity_host(host: string): void;",
       "sys\u0000FUNCTION\u0000sys.set_engine_throttle\u0000[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_engine_throttle(enable: boolean, cooldown?: number): void;",
       "sys\u0000FUNCTION\u0000sys.set_error_handler\u0000[{\"types\":[\"function(source, message, traceback)\"],\"isOptional\":false}]->[]": "function set_error_handler(error_handler: (source: unknown, message: unknown, traceback: unknown) => void): void;",
@@ -4913,7 +4913,7 @@
       },
       "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
         "param:0:buffer": "Opaque<\"buffer\">",
-        "param:1:stream_name": "Hash",
+        "param:1:stream_name": "Hash | string",
         "return:0:data": "string"
       },
       "buffer\u0000FUNCTION\u0000buffer.get_metadata\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"constant\",\"nil\"],\"isOptional\":false}]": {
@@ -5188,7 +5188,7 @@
         "param:1:property": "string | Hash"
       },
       "go\u0000FUNCTION\u0000go.delete\u0000[{\"types\":[\"hash\",\"string\",\"table\",\"url\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": {
-        "param:0:id": "SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[]",
+        "param:0:id": "SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | boolean",
         "param:1:recursive": "boolean"
       },
       "go\u0000FUNCTION\u0000go.exists\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": {
@@ -5607,7 +5607,7 @@
       "gui\u0000FUNCTION\u0000gui.set\u0000[{\"types\":[\"node\",\"url\"],\"isOptional\":false},{\"types\":[\"constant\",\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"nil\",\"number\",\"quaternion\",\"vector3\",\"vector4\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:node": "Opaque<\"node\"> | Url",
         "param:1:property": "string | Hash | gui.Property",
-        "param:2:value": "number | Vector4 | Vector3 | Quaternion",
+        "param:2:value": "number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash",
         "param:3:options": "{ index?: number; key?: Hash }"
       },
       "gui\u0000FUNCTION\u0000gui.set_adjust_mode\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"constant\"],\"isOptional\":false}]->[]": {
@@ -5728,7 +5728,7 @@
       },
       "gui\u0000FUNCTION\u0000gui.set_rotation\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"quaternion\",\"vector4\"],\"isOptional\":false}]->[]": {
         "param:0:node": "Opaque<\"node\">",
-        "param:1:rotation": "Quaternion | Vector4"
+        "param:1:rotation": "Quaternion | Vector4 | Vector3"
       },
       "gui\u0000FUNCTION\u0000gui.set_safe_area_mode\u0000[{\"types\":[\"constant\"],\"isOptional\":false}]->[]": {
         "param:0:mode": "gui.SafeAreaMode"
@@ -6123,7 +6123,7 @@
         "param:0:state": "graphics.State"
       },
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"hash\",\"string\",\"texture\"],\"isOptional\":false}]->[]": {
-        "param:0:binding": "Opaque<\"texture\"> | string | Hash"
+        "param:0:binding": "Opaque<\"texture\"> | string | Hash | number"
       },
       "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:x": "number",
@@ -6146,19 +6146,19 @@
       },
       "render\u0000FUNCTION\u0000render.enable_texture\u0000[{\"types\":[\"hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\",\"texture\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":true}]->[]": {
         "param:0:binding": "number | string | Hash",
-        "param:1:handle_or_name": "Opaque<\"texture\"> | string | Hash",
+        "param:1:handle_or_name": "Opaque<\"texture\"> | string | Hash | Opaque<\"render_target\"> | number",
         "param:2:buffer_type": "graphics.BufferType"
       },
       "render\u0000FUNCTION\u0000render.get_height\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "return:0:height": "number"
       },
       "render\u0000FUNCTION\u0000render.get_render_target_height\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
-        "param:0:render_target": "Opaque<\"render_target\">",
+        "param:0:render_target": "Opaque<\"render_target\"> | string | Hash",
         "param:1:buffer_type": "graphics.BufferType",
         "return:0:height": "number"
       },
       "render\u0000FUNCTION\u0000render.get_render_target_width\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
-        "param:0:render_target": "Opaque<\"render_target\">",
+        "param:0:render_target": "Opaque<\"render_target\"> | string | Hash",
         "param:1:buffer_type": "graphics.BufferType",
         "return:0:width": "number"
       },
@@ -6190,7 +6190,7 @@
         "param:3:destination_factor_alpha": "number"
       },
       "render\u0000FUNCTION\u0000render.set_camera\u0000[{\"types\":[\"nil\",\"number\",\"url\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
-        "param:0:camera": "Url | number",
+        "param:0:camera": "Url | number | string",
         "param:1:options": "{ use_frustum?: boolean }"
       },
       "render\u0000FUNCTION\u0000render.set_color_mask\u0000[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": {
@@ -6222,11 +6222,11 @@
         "param:0:matrix": "Matrix4"
       },
       "render\u0000FUNCTION\u0000render.set_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
-        "param:0:render_target": "Opaque<\"render_target\">",
+        "param:0:render_target": "Opaque<\"render_target\"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT",
         "param:1:options": "{ transient?: Record<string | number, unknown> }"
       },
       "render\u0000FUNCTION\u0000render.set_render_target_size\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:render_target": "Opaque<\"render_target\">",
+        "param:0:render_target": "Opaque<\"render_target\"> | string | Hash",
         "param:1:width": "number",
         "param:2:height": "number"
       },
@@ -6827,10 +6827,10 @@
       },
       "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": {
         "param:0:filename": "string",
-        "param:1:table": "Record<string | number, unknown>"
+        "param:1:table": "Record<string | number, unknown> | readonly unknown[]"
       },
       "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
-        "param:0:table": "Record<string | number, unknown>",
+        "param:0:table": "Record<string | number, unknown> | readonly unknown[]",
         "return:0:buffer": "string"
       },
       "sys\u0000FUNCTION\u0000sys.set_connectivity_host\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[]": {
@@ -8418,7 +8418,7 @@
       },
       "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
         "param:0:buffer": "Opaque<\"buffer\">",
-        "param:1:stream_name": "Hash",
+        "param:1:stream_name": "Hash | string",
         "return:0:data": "string"
       },
       "buffer\u0000FUNCTION\u0000buffer.get_metadata\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"constant\",\"nil\"],\"isOptional\":false}]": {
@@ -8688,7 +8688,7 @@
         "param:1:property": "string | Hash"
       },
       "go\u0000FUNCTION\u0000go.delete\u0000[{\"types\":[\"hash\",\"string\",\"table\",\"url\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": {
-        "param:0:id": "SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[]",
+        "param:0:id": "SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | boolean",
         "param:1:recursive": "boolean"
       },
       "go\u0000FUNCTION\u0000go.exists\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": {
@@ -9107,7 +9107,7 @@
       "gui\u0000FUNCTION\u0000gui.set\u0000[{\"types\":[\"node\",\"url\"],\"isOptional\":false},{\"types\":[\"constant\",\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\",\"quaternion\",\"vector3\",\"vector4\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:node": "Opaque<\"node\"> | Url",
         "param:1:property": "string | Hash | gui.Property",
-        "param:2:value": "number | Vector4 | Vector3 | Quaternion",
+        "param:2:value": "number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash",
         "param:3:options": "{ index?: number; key?: Hash }"
       },
       "gui\u0000FUNCTION\u0000gui.set_adjust_mode\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"constant\"],\"isOptional\":false}]->[]": {
@@ -9228,7 +9228,7 @@
       },
       "gui\u0000FUNCTION\u0000gui.set_rotation\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"quaternion\",\"vector4\"],\"isOptional\":false}]->[]": {
         "param:0:node": "Opaque<\"node\">",
-        "param:1:rotation": "Quaternion | Vector4"
+        "param:1:rotation": "Quaternion | Vector4 | Vector3"
       },
       "gui\u0000FUNCTION\u0000gui.set_safe_area_mode\u0000[{\"types\":[\"constant\"],\"isOptional\":false}]->[]": {
         "param:0:mode": "gui.SafeAreaMode"
@@ -9623,7 +9623,7 @@
         "param:0:state": "graphics.State"
       },
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"hash\",\"string\",\"texture\"],\"isOptional\":false}]->[]": {
-        "param:0:binding": "Opaque<\"texture\"> | string | Hash"
+        "param:0:binding": "Opaque<\"texture\"> | string | Hash | number"
       },
       "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:x": "number",
@@ -9646,19 +9646,19 @@
       },
       "render\u0000FUNCTION\u0000render.enable_texture\u0000[{\"types\":[\"hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\",\"texture\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":true}]->[]": {
         "param:0:binding": "number | string | Hash",
-        "param:1:handle_or_name": "Opaque<\"texture\"> | string | Hash",
+        "param:1:handle_or_name": "Opaque<\"texture\"> | string | Hash | Opaque<\"render_target\"> | number",
         "param:2:buffer_type": "graphics.BufferType"
       },
       "render\u0000FUNCTION\u0000render.get_height\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "return:0:height": "number"
       },
       "render\u0000FUNCTION\u0000render.get_render_target_height\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
-        "param:0:render_target": "Opaque<\"render_target\">",
+        "param:0:render_target": "Opaque<\"render_target\"> | string | Hash",
         "param:1:buffer_type": "graphics.BufferType",
         "return:0:height": "number"
       },
       "render\u0000FUNCTION\u0000render.get_render_target_width\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
-        "param:0:render_target": "Opaque<\"render_target\">",
+        "param:0:render_target": "Opaque<\"render_target\"> | string | Hash",
         "param:1:buffer_type": "graphics.BufferType",
         "return:0:width": "number"
       },
@@ -9690,7 +9690,7 @@
         "param:3:destination_factor_alpha": "number"
       },
       "render\u0000FUNCTION\u0000render.set_camera\u0000[{\"types\":[\"nil\",\"number\",\"url\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
-        "param:0:camera": "Url | number",
+        "param:0:camera": "Url | number | string",
         "param:1:options": "{ use_frustum?: boolean }"
       },
       "render\u0000FUNCTION\u0000render.set_color_mask\u0000[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": {
@@ -9722,11 +9722,11 @@
         "param:0:matrix": "Matrix4"
       },
       "render\u0000FUNCTION\u0000render.set_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
-        "param:0:render_target": "Opaque<\"render_target\">",
+        "param:0:render_target": "Opaque<\"render_target\"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT",
         "param:1:options": "{ transient?: Record<string | number, unknown> }"
       },
       "render\u0000FUNCTION\u0000render.set_render_target_size\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:render_target": "Opaque<\"render_target\">",
+        "param:0:render_target": "Opaque<\"render_target\"> | string | Hash",
         "param:1:width": "number",
         "param:2:height": "number"
       },
@@ -10327,10 +10327,10 @@
       },
       "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": {
         "param:0:filename": "string",
-        "param:1:table": "Record<string | number, unknown>"
+        "param:1:table": "Record<string | number, unknown> | readonly unknown[]"
       },
       "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
-        "param:0:table": "Record<string | number, unknown>",
+        "param:0:table": "Record<string | number, unknown> | readonly unknown[]",
         "return:0:buffer": "string"
       },
       "sys\u0000FUNCTION\u0000sys.set_connectivity_host\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[]": {
@@ -10898,7 +10898,7 @@
       },
       "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
         "param:0:buffer": "Opaque<\"buffer\">",
-        "param:1:stream_name": "Hash",
+        "param:1:stream_name": "Hash | string",
         "return:0:data": "string"
       },
       "buffer\u0000FUNCTION\u0000buffer.get_metadata\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"constant\",\"nil\"],\"isOptional\":false}]": {
@@ -11140,7 +11140,7 @@
         "param:1:property": "string | Hash"
       },
       "go\u0000FUNCTION\u0000go.delete\u0000[{\"types\":[\"hash\",\"string\",\"table\",\"url\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": {
-        "param:0:id": "SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[]",
+        "param:0:id": "SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | boolean",
         "param:1:recursive": "boolean"
       },
       "go\u0000FUNCTION\u0000go.exists\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false}]->[{\"types\":[\"boolean\"],\"isOptional\":false}]": {
@@ -11553,7 +11553,7 @@
       "gui\u0000FUNCTION\u0000gui.set\u0000[{\"types\":[\"node\",\"url\"],\"isOptional\":false},{\"types\":[\"constant\",\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"number\",\"quaternion\",\"vector3\",\"vector4\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:node": "Opaque<\"node\"> | Url",
         "param:1:property": "string | Hash | gui.Property",
-        "param:2:value": "number | Vector4 | Vector3 | Quaternion",
+        "param:2:value": "number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash",
         "param:3:options": "{ index?: number; key?: Hash }"
       },
       "gui\u0000FUNCTION\u0000gui.set_adjust_mode\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"constant\"],\"isOptional\":false}]->[]": {
@@ -11674,7 +11674,7 @@
       },
       "gui\u0000FUNCTION\u0000gui.set_rotation\u0000[{\"types\":[\"node\"],\"isOptional\":false},{\"types\":[\"quaternion\",\"vector4\"],\"isOptional\":false}]->[]": {
         "param:0:node": "Opaque<\"node\">",
-        "param:1:rotation": "Quaternion | Vector4"
+        "param:1:rotation": "Quaternion | Vector4 | Vector3"
       },
       "gui\u0000FUNCTION\u0000gui.set_safe_area_mode\u0000[{\"types\":[\"constant\"],\"isOptional\":false}]->[]": {
         "param:0:mode": "gui.SafeAreaMode"
@@ -12022,7 +12022,7 @@
         "param:0:state": "graphics.State"
       },
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"hash\",\"string\",\"texture\"],\"isOptional\":false}]->[]": {
-        "param:0:binding": "Opaque<\"texture\"> | string | Hash"
+        "param:0:binding": "Opaque<\"texture\"> | string | Hash | number"
       },
       "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:x": "number",
@@ -12045,19 +12045,19 @@
       },
       "render\u0000FUNCTION\u0000render.enable_texture\u0000[{\"types\":[\"hash\",\"number\",\"string\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\",\"texture\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":true}]->[]": {
         "param:0:binding": "number | string | Hash",
-        "param:1:handle_or_name": "Opaque<\"texture\"> | string | Hash",
+        "param:1:handle_or_name": "Opaque<\"texture\"> | string | Hash | Opaque<\"render_target\"> | number",
         "param:2:buffer_type": "graphics.BufferType"
       },
       "render\u0000FUNCTION\u0000render.get_height\u0000[]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
         "return:0:height": "number"
       },
       "render\u0000FUNCTION\u0000render.get_render_target_height\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
-        "param:0:render_target": "Opaque<\"render_target\">",
+        "param:0:render_target": "Opaque<\"render_target\"> | string | Hash",
         "param:1:buffer_type": "graphics.BufferType",
         "return:0:height": "number"
       },
       "render\u0000FUNCTION\u0000render.get_render_target_width\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"graphics.BUFFER_TYPE_COLOR0_BIT\",\"graphics.BUFFER_TYPE_COLOR1_BIT\",\"graphics.BUFFER_TYPE_COLOR2_BIT\",\"graphics.BUFFER_TYPE_COLOR3_BIT\",\"graphics.BUFFER_TYPE_DEPTH_BIT\",\"graphics.BUFFER_TYPE_STENCIL_BIT\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]": {
-        "param:0:render_target": "Opaque<\"render_target\">",
+        "param:0:render_target": "Opaque<\"render_target\"> | string | Hash",
         "param:1:buffer_type": "graphics.BufferType",
         "return:0:width": "number"
       },
@@ -12079,7 +12079,7 @@
         "param:1:destination_factor": "number"
       },
       "render\u0000FUNCTION\u0000render.set_camera\u0000[{\"types\":[\"nil\",\"number\",\"url\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
-        "param:0:camera": "Url | number",
+        "param:0:camera": "Url | number | string",
         "param:1:options": "{ use_frustum?: boolean }"
       },
       "render\u0000FUNCTION\u0000render.set_color_mask\u0000[{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false},{\"types\":[\"boolean\"],\"isOptional\":false}]->[]": {
@@ -12111,11 +12111,11 @@
         "param:0:matrix": "Matrix4"
       },
       "render\u0000FUNCTION\u0000render.set_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
-        "param:0:render_target": "Opaque<\"render_target\">",
+        "param:0:render_target": "Opaque<\"render_target\"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT",
         "param:1:options": "{ transient?: Record<string | number, unknown> }"
       },
       "render\u0000FUNCTION\u0000render.set_render_target_size\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:render_target": "Opaque<\"render_target\">",
+        "param:0:render_target": "Opaque<\"render_target\"> | string | Hash",
         "param:1:width": "number",
         "param:2:height": "number"
       },
@@ -12712,10 +12712,10 @@
       },
       "sys\u0000FUNCTION\u0000sys.save\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": {
         "param:0:filename": "string",
-        "param:1:table": "Record<string | number, unknown>"
+        "param:1:table": "Record<string | number, unknown> | readonly unknown[]"
       },
       "sys\u0000FUNCTION\u0000sys.serialize\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
-        "param:0:table": "Record<string | number, unknown>",
+        "param:0:table": "Record<string | number, unknown> | readonly unknown[]",
         "return:0:buffer": "string"
       },
       "sys\u0000FUNCTION\u0000sys.set_connectivity_host\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[]": {
