@@ -53,6 +53,7 @@ export {
   type EmitOptions,
   emitDeclarations,
   emitSymbolSignatures,
+  firstSlotAlternativeOf,
   PARAM_DOC_REWRITES,
   type ParamDocRewrite,
   rewriteParamDoc,

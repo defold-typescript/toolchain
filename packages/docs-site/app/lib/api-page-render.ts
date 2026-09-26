@@ -14,8 +14,11 @@ import {
   type CategoryWindow,
   functionOverviewCards,
   groupFunctionSymbols,
+  groupOverloadForms,
   groupTypeSymbols,
   type LibraryMeta,
+  overloadHeading,
+  splitCallForm,
   windowedBadgeCategory,
 } from "./api-surface";
 import { type ApiVersion, versionsWithDiskFixtures } from "./api-surface-loader";
@@ -90,6 +93,56 @@ function paramBullet(p: ApiSymbolParam): string {
 
 function paramSection(label: string, params: ApiSymbolParam[]): string {
   return [`**${label}**`, "", ...params.map(paramBullet)].join("\n");
+}
+
+function sameSlot(a: ApiSymbolParam | undefined, b: ApiSymbolParam | undefined): boolean {
+  return (
+    a !== undefined &&
+    b !== undefined &&
+    a.name === b.name &&
+    a.isOptional === b.isOptional &&
+    a.types.join(" | ") === b.types.join(" | ")
+  );
+}
+
+// The overload forms' parameter tables as one list: the leading and trailing runs
+// every form shares (by name, types and optionality) render once around a `one of`
+// group holding each form's own parameters. `null` when a form has no table or
+// the tables differ only in prose, since then there is nothing to branch on.
+function splitParamSection(tables: readonly ApiSymbolParam[][]): string | null {
+  const [first] = tables;
+  if (first === undefined || tables.some((t) => t.length === 0)) return null;
+  const shortest = Math.min(...tables.map((t) => t.length));
+  let prefix = 0;
+  while (prefix < shortest && tables.every((t) => sameSlot(t[prefix], first[prefix]))) prefix++;
+  let suffix = 0;
+  while (
+    suffix < shortest - prefix &&
+    tables.every((t) => sameSlot(t[t.length - 1 - suffix], first[first.length - 1 - suffix]))
+  ) {
+    suffix++;
+  }
+  const branches = tables.map((t) => t.slice(prefix, t.length - suffix));
+  const [lead] = branches;
+  if (
+    lead !== undefined &&
+    branches.every((b) => b.length === lead.length && b.every((p, i) => sameSlot(p, lead[i])))
+  ) {
+    return null;
+  }
+  const nested = (p: ApiSymbolParam): string =>
+    paramBullet(p)
+      .split("\n")
+      .map((line) => `  ${line}`)
+      .join("\n");
+  const lines = ["**Parameters**", "", ...first.slice(0, prefix).map(paramBullet), "- _one of_"];
+  for (const [index, branch] of branches.entries()) {
+    if (index > 0) lines.push("", "  _or_", "");
+    if (branch.length === 0) lines.push("  - no arguments");
+    else lines.push(...branch.map(nested));
+  }
+  lines.push(...first.slice(first.length - suffix).map(paramBullet));
+  return lines.join("\n");
 }
 
 /**
@@ -254,11 +307,9 @@ function upstreamDot(symbol: ApiSymbol): string {
 // whole axis — because a symbol the filter cannot read a span for is a symbol it
 // cannot hide.
 function symbolSpanMarker(
-  av: ApiAvailability | undefined,
-  versions: readonly string[],
+  present: readonly string[],
   categories: readonly BadgeCategory[],
 ): string {
-  const present = av?.availableIn?.length ? av.availableIn : versions;
   const newest = present[0];
   const oldest = present[present.length - 1];
   if (!newest || !oldest) return "";
@@ -546,7 +597,9 @@ export function apiPageMarkdown(
   // One resolver for both marker sites (symbol heading and function-overview
   // card) so they cannot answer for different ranges. `emitted` is every category
   // any selectable `from` reaches; `active` is the one this render shows.
-  const symbolDots = (symbol: ApiSymbol): string => {
+  const symbolCategories = (
+    symbol: ApiSymbol,
+  ): { active: BadgeCategory; reachable: BadgeCategory[] } => {
     const availableIn = symbol.availability?.availableIn ?? [];
     const deprecatedSince = symbol.availability?.deprecatedSince;
     // `badgeCategory` stays the no-window entry point, so a caller that states no
@@ -557,7 +610,46 @@ export function apiPageMarkdown(
       ? windowedBadgeCategory(availableIn, deprecatedSince, pageAxis, window)
       : badgeCategory(symbol.availability, pageAxis);
     const reachable = spanCategories(availableIn, deprecatedSince, pageAxis, activeWindow);
-    return badgeDots(active, unionCategory(reachable));
+    return { active, reachable };
+  };
+  // An overload group's markers are the union of its forms': a category any form
+  // shows or can reach is one the group heading and its overview card show too.
+  // A group of one answers exactly as its only form does.
+  const groupDots = (forms: readonly ApiSymbol[]): string => {
+    const categories = forms.map(symbolCategories);
+    return badgeDots(
+      unionCategory(categories.map((c) => c.active)),
+      unionCategory(categories.flatMap((c) => c.reachable)),
+    );
+  };
+  const symbolDots = (symbol: ApiSymbol): string => groupDots([symbol]);
+  // Only the engine surface is version-tracked, so only it gets a presence
+  // span. A `library` symbol is pinned to an upstream commit and a
+  // `global-type` / `lua-stdlib` symbol to no version at all; stamping a Defold
+  // range on either would state a fact that does not hold for it.
+  const spanTracked = page.category === "engine" && pageAxis.length > 0;
+  const presentIn = (symbol: ApiSymbol): readonly string[] =>
+    symbol.availability?.availableIn?.length ? symbol.availability.availableIn : pageAxis;
+  const formCategories = (symbol: ApiSymbol): BadgeCategory[] =>
+    spanCategories(
+      symbol.availability?.availableIn ?? [],
+      symbol.availability?.deprecatedSince,
+      pageAxis,
+      activeWindow,
+    );
+  // A group's span covers every version any form is present in, so the `?since=`
+  // filter hides the block only once every form is out of the window.
+  const groupSpan = (forms: readonly ApiSymbol[]): string => {
+    if (!spanTracked) return "";
+    const axis = pageAxis.map(bareId);
+    const present = [...new Set(forms.flatMap(presentIn))].sort(
+      (a, b) => axis.indexOf(bareId(a)) - axis.indexOf(bareId(b)),
+    );
+    const perForm = forms.map(formCategories);
+    const categories = pageAxis.map((_, index) =>
+      unionCategory(perForm.flatMap((c) => (c[index] ? [c[index]] : []))),
+    );
+    return symbolSpanMarker(present, categories);
   };
   const m = page.module;
   const indexRoute = apiIndexRoute(page.route);
@@ -593,46 +685,123 @@ export function apiPageMarkdown(
     ...(p.fields ? { fields: p.fields.map(linkifyParam) } : {}),
   });
   const noted = new Set<string>();
-  const emitSymbol = (symbol: ApiSymbol) => {
-    const linkified: ApiSymbol = {
-      ...symbol,
-      docMarkdown: linkify(symbol.docMarkdown),
-      parameters: symbol.parameters.map(linkifyParam),
-      returnValues: symbol.returnValues.map(linkifyParam),
-    };
-    const badges = availabilityBadges(
+  // Once per FQN: a note repeated down every form of an overload set reads as
+  // noise rather than emphasis.
+  const noteFor = (name: string): string => {
+    const note = noted.has(name) ? "" : (symbolNote(name) ?? "");
+    if (note) noted.add(name);
+    return note;
+  };
+  const linkifySymbol = (symbol: ApiSymbol): ApiSymbol => ({
+    ...symbol,
+    docMarkdown: linkify(symbol.docMarkdown),
+    parameters: symbol.parameters.map(linkifyParam),
+    returnValues: symbol.returnValues.map(linkifyParam),
+  });
+  const badgesFor = (symbol: ApiSymbol): string =>
+    availabilityBadges(
       symbol.availability,
       page.availability,
       resolveReplacement,
       indexRoute,
       symbol.deprecated,
     );
-    // Only the engine surface is version-tracked, so only it gets a presence
-    // span. A `library` symbol is pinned to an upstream commit and a
-    // `global-type` / `lua-stdlib` symbol to no version at all; stamping a Defold
-    // range on either would state a fact that does not hold for it.
-    const spanTracked = page.category === "engine" && pageAxis.length > 0;
+  const emitSymbol = (symbol: ApiSymbol) => {
     const dots =
       (combinedMarkers ? symbolDots(symbol) : "") +
       globalDot(symbol) +
       upstreamDot(symbol) +
-      (spanTracked
-        ? symbolSpanMarker(
-            symbol.availability,
-            pageAxis,
-            spanCategories(
-              symbol.availability?.availableIn ?? [],
-              symbol.availability?.deprecatedSince,
-              pageAxis,
-              activeWindow,
-            ),
-          )
-        : "");
-    // Once per FQN: an overload set renders a row per authored signature, and a
-    // note repeated down every row reads as noise rather than emphasis.
-    const note = noted.has(symbol.name) ? "" : (symbolNote(symbol.name) ?? "");
-    if (note) noted.add(symbol.name);
-    lines.push(symbolBlock(linkified, badges, dots, note), "");
+      (spanTracked ? symbolSpanMarker(presentIn(symbol), formCategories(symbol)) : "");
+    lines.push(
+      symbolBlock(linkifySymbol(symbol), badgesFor(symbol), dots, noteFor(symbol.name)),
+      "",
+    );
+  };
+  // An overloaded function renders as one block: every form listed under the
+  // group heading, each fact the forms share stated once for the block, and each
+  // fact that differs kept under the form it belongs to.
+  const emitOverloads = (forms: ApiSymbol[]) => {
+    const [head] = forms;
+    if (head === undefined) return;
+    const linked = forms.map(linkifySymbol);
+    const badges = forms.map(badgesFor);
+    const shared = <T>(values: readonly T[]): boolean =>
+      values.every((v) => JSON.stringify(v) === JSON.stringify(values[0]));
+    const sameAvailability = shared(forms.map((s) => s.availability ?? null));
+    const sameBadges = shared(badges);
+    const sameDoc = shared(linked.map((s) => s.docMarkdown));
+    // `apiModuleSymbols` keeps a function's example on its primary row alone, so an
+    // example only the first form carries belongs to the whole block.
+    const sameExample =
+      shared(forms.map((s) => s.exampleMarkdown ?? "")) ||
+      forms.slice(1).every((s) => s.exampleMarkdown === undefined);
+    const sameParams = shared(linked.map((s) => s.parameters));
+    const sameReturnTables = shared(linked.map((s) => s.returnValues));
+    const splits = forms.map(splitCallForm);
+    const returns = splits.map((s) => s.returns);
+    const sameReturns = shared(returns);
+    const splitParams = sameParams ? null : splitParamSection(linked.map((s) => s.parameters));
+    const sharedReturnTable = sameReturnTables && (linked[0]?.returnValues.length ?? 0) > 0;
+
+    const dots =
+      (combinedMarkers ? groupDots(forms) : "") +
+      globalDot(forms.find((s) => s.global) ?? head) +
+      upstreamDot(forms.find((s) => s.docSource) ?? head) +
+      groupSpan(forms);
+    const heading = `### \`${overloadHeading(head.name)}\``;
+    const body: string[] = [];
+    if (sameBadges && badges[0]) body.push(badges[0]);
+    const note = noteFor(head.name);
+    if (note) body.push(note);
+    if (sameDoc && linked[0]?.docMarkdown) body.push(linked[0].docMarkdown);
+    if (sameExample && head.exampleMarkdown) body.push(head.exampleMarkdown);
+    body.push(`**${forms.length} overloads**`);
+    const items = linked.map((symbol, index) => {
+      const split = splits[index] ?? { params: symbol.signature, returns: null };
+      const code = sameReturns ? split.params : `${split.params}${split.returns ?? ""}`;
+      const markers = sameAvailability
+        ? ""
+        : (combinedMarkers ? symbolDots(symbol) : "") +
+          (spanTracked ? symbolSpanMarker(presentIn(symbol), formCategories(symbol)) : "");
+      const parts = [markers ? `\`${code}\` ${markers}` : `\`${code}\``];
+      if (!sameBadges && badges[index]) parts.push(badges[index]);
+      if (!sameDoc && symbol.docMarkdown) {
+        // Forms can share prose without every form sharing it (`msg.url`'s typed
+        // receiver forms restate the untyped ones), so a repeat points back to
+        // the first form that carries it instead of printing it again.
+        const first = linked.findIndex((s) => s.docMarkdown === symbol.docMarkdown);
+        parts.push(first < index ? `_Same description as form ${first + 1}._` : symbol.docMarkdown);
+      }
+      if (!sameExample && symbol.exampleMarkdown) parts.push(symbol.exampleMarkdown);
+      if (!sameParams && splitParams === null && symbol.parameters.length > 0) {
+        parts.push(paramSection("Parameters", symbol.parameters));
+      }
+      if (!sameReturnTables && symbol.returnValues.length > 0) {
+        parts.push(paramSection("Returns", symbol.returnValues));
+      }
+      return ['<li class="api-overload">', "", parts.join("\n\n"), "", "</li>"].join("\n");
+    });
+    body.push(['<ol class="api-overloads">', ...items, "</ol>"].join("\n"));
+    const sharedReturn = sameReturns ? returns[0] : null;
+    if (sharedReturn && !sharedReturnTable) {
+      body.push(`→ \`${sharedReturn.replace(/^:\s*/, "")}\``);
+    }
+    if (sameParams && (linked[0]?.parameters.length ?? 0) > 0) {
+      body.push(paramSection("Parameters", linked[0]?.parameters ?? []));
+    } else if (splitParams !== null) {
+      body.push(splitParams);
+    }
+    if (sharedReturnTable) body.push(paramSection("Returns", linked[0]?.returnValues ?? []));
+    lines.push(
+      `${heading} ${dots}`.trimEnd(),
+      "",
+      '<div class="api-symbol-body">',
+      "",
+      body.join("\n\n"),
+      "",
+      "</div>",
+      "",
+    );
   };
   for (const { kind, label } of KIND_SECTIONS) {
     const group = symbols.filter((s) => s.kind === kind);
@@ -640,11 +809,15 @@ export function apiPageMarkdown(
     // Colon-named handle methods (`file:read`, `client:send`) get their own
     // `<receiver> methods` heading so they read apart from the module table.
     if (kind === "function") {
-      const overviewMarker = combinedMarkers ? symbolDots : undefined;
+      const overviewMarker = combinedMarkers ? groupDots : undefined;
       for (const fnGroup of groupFunctionSymbols(group)) {
         lines.push(`## ${fnGroup.label}`, "");
         lines.push(functionOverviewCards(fnGroup.symbols, overviewMarker), "");
-        for (const symbol of fnGroup.symbols) emitSymbol(symbol);
+        for (const forms of groupOverloadForms(fnGroup.symbols)) {
+          const [only] = forms;
+          if (forms.length === 1 && only) emitSymbol(only);
+          else emitOverloads(forms);
+        }
       }
       continue;
     }
