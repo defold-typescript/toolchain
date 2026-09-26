@@ -53,6 +53,26 @@ export function bareListMarkerLines(content: string): { line: number; text: stri
   return offending;
 }
 
+/**
+ * `/** *\/` lines holding an undecoded HTML entity (`&#x22C5;`, `&#952;`,
+ * `&times;`), keyed by line. An editor hover shows the entity source verbatim
+ * rather than the character it names.
+ */
+export function htmlEntityLines(content: string): { line: number; text: string }[] {
+  const offending: { line: number; text: string }[] = [];
+  const lines = content.split("\n");
+  let inBlock = false;
+  lines.forEach((raw, index) => {
+    const opens = !inBlock && raw.trimStart().startsWith("/**");
+    if (!inBlock && !opens) return;
+    if (/&(?:#[xX][0-9a-fA-F]+|#\d+|[a-zA-Z][a-zA-Z0-9]*);/.test(raw)) {
+      offending.push({ line: index + 1, text: raw });
+    }
+    inBlock = !raw.includes("*/");
+  });
+  return offending;
+}
+
 export function offGridLines(content: string): { line: number; text: string }[] {
   const offending: { line: number; text: string }[] = [];
   const lines = content.split("\n");
