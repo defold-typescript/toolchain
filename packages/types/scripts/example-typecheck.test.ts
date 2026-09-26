@@ -254,33 +254,20 @@ describe("the implicit-any class", () => {
 });
 
 describe("the optional-load class", () => {
-  const GUARDED_FQN = "resource.set_texture";
-
-  function identitiesFor(fqn: string): string[] {
-    return [...computed.keys()].filter((identity) => identity.split(":")[1] === fqn);
-  }
-
-  test("no variant of the array-texture example dereferences an unnarrowed load", () => {
-    const identities = identitiesFor(GUARDED_FQN);
-    if (identities.length === 0) {
-      throw new Error(
-        `no identity in the gate's computed map has the FQN ${GUARDED_FQN}; the closure below ` +
-          "would pass over nothing. Re-point it at the element the array-texture example ships under.",
-      );
-    }
+  test("no pin dereferences an unnarrowed load", () => {
     const offenders: string[] = [];
-    for (const identity of identities.sort()) {
-      for (const diagnostic of optionalLoadOffenders(computed.get(identity) ?? [])) {
+    for (const [identity, diagnostics] of Object.entries(pins)) {
+      for (const diagnostic of optionalLoadOffenders(diagnostics)) {
         offenders.push(`  ${identity} — TS${diagnostic.code} ${diagnostic.text}`);
       }
     }
     if (offenders.length > 0) {
       throw new Error(
-        `a ${GUARDED_FQN} translation reads a loaded resource it has not narrowed:\n` +
+        "an authored translation reads an optional value it has not narrowed:\n" +
           `${offenders.slice(0, 20).join("\n")}${
             offenders.length > 20 ? `\n  +${offenders.length - 20} more` : ""
           }\n` +
-          "Guard the load in the example body; never re-pin to absorb it.",
+          "Narrow the value in the example body; never re-pin to absorb it.",
       );
     }
     expect(offenders).toEqual([]);

@@ -97,7 +97,7 @@ declare global {
      * ```ts
      * // Check if twitter is installed:
      * const sysinfo = sys.get_sys_info();
-     * let twitter = {};
+     * let twitter: { installed?: boolean } = {};
      *
      * if (sysinfo.system_name === "Android") {
      *   twitter = sys.get_application_info("com.twitter.android");
@@ -449,7 +449,7 @@ declare global {
      * // Load binary data from a custom project resource and update a texture resource:
      * function my_callback(self: unknown, request_id: unknown, result: unknown) {
      *   const { status, buf } = result as { status: number; buf: Opaque<"buffer"> };
-     *   if (status === resource.REQUEST_STATUS_FINISHED) {
+     *   if (status === sys.REQUEST_STATUS_FINISHED) {
      *     resource.set_texture("/my_texture", {}, buf); // texture args
      *   }
      * }

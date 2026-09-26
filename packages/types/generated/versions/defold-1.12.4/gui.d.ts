@@ -624,15 +624,15 @@ declare global {
      * const node = gui.get_node("my_node");
      * // animate to new position
      * const pos = vmath.vector3(100, 100, 0);
-     * gui.animate(node, "position", pos, go.EASING_LINEAR, 2);
+     * gui.animate(node, "position", pos, gui.EASING_LINEAR, 2);
      * // ...
      * // cancel animation of the x component.
      * gui.cancel_animations(node, "position.x");
      *
      * // Cancels all property animations on a node in a single call:
      * // animate to new position and scale
-     * gui.animate(node, "position", vmath.vector3(100, 100, 0), go.EASING_LINEAR, 5);
-     * gui.animate(node, "scale", vmath.vector3(0.5), go.EASING_LINEAR, 5);
+     * gui.animate(node, "position", vmath.vector3(100, 100, 0), gui.EASING_LINEAR, 5);
+     * gui.animate(node, "scale", vmath.vector3(0.5), gui.EASING_LINEAR, 5);
      * // ...
      * // cancel positioning and scaling at once
      * gui.cancel_animations(node);
@@ -1386,12 +1386,14 @@ declare global {
      * const size = 4;
      * const pos = vmath.vector3(200, 200, 0);
      * const path = "/assets/images/logo_4x4.astc";
-     * const buffer = sys.load_resource(path);
-     * const n = gui.new_box_node(pos, vmath.vector3(size, size, 0));
-     * // size is read from the .astc buffer
-     * // flip is not supported
-     * gui.new_texture(path, 0, 0, "astc", buffer, false);
-     * gui.set_texture(n, path);
+     * const [data] = sys.load_resource(path);
+     * if (data !== undefined) {
+     *   const n = gui.new_box_node(pos, vmath.vector3(size, size, 0));
+     *   // size is read from the .astc buffer
+     *   // flip is not supported
+     *   gui.new_texture(path, 0, 0, "astc", data, false);
+     *   gui.set_texture(n, path);
+     * }
      * ```
      */
     function new_texture(texture_id: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string, flip?: boolean): LuaMultiReturn<[boolean, number]>;
@@ -1795,10 +1797,10 @@ declare global {
      * // Set a named property
      * export default defineGuiScript({
      *   on_message(self, message_id, message) {
-     *     if (message_id === hash("set_font")) {
+     *     if (message_id === hash("set_font") && types.is_hash(message.font)) {
      *       gui.set(msg.url(), "fonts", message.font, { key: "my_font_name" });
      *       gui.set_font(gui.get_node("text"), "my_font_name");
-     *     } else if (message_id === hash("set_texture")) {
+     *     } else if (message_id === hash("set_texture") && types.is_hash(message.texture)) {
      *       gui.set(msg.url(), "textures", message.texture, { key: "my_texture" });
      *       gui.set_texture(gui.get_node("box"), "my_texture");
      *       gui.play_flipbook(gui.get_node("box"), "logo_256");
