@@ -369,7 +369,7 @@ declare global {
      * material.set_textures(resource.material("/my_material.materialc"), { my_texture: resource.texture() });
      * ```
      */
-    function set_textures(path: Hash | string, textures: LuaMap<string, Hash>): void;
+    function set_textures(path: Hash | string, textures: LuaMap<string, Hash> | Record<string, Hash>): void;
     /**
      * Sets vertex attributes in a material, if the vertex attributes exist.
      *

@@ -12,8 +12,8 @@ declare global {
   function hash<S extends string>(s: S): Core.Hash<S>;
   /** Render a `Hash` handle as its hexadecimal string. */
   function hash_to_hex(h: Core.Hash): string;
-  /** Pretty-print any value to the console for debugging. */
-  function pprint(v: unknown): void;
+  /** Pretty-print any values to the console for debugging. */
+  function pprint(...args: unknown[]): void;
   /**
    * A typed handle to a resource the engine owns — a GUI node, a texture, a
    * render target, a physics body, a socket, and so on. You get one back from an

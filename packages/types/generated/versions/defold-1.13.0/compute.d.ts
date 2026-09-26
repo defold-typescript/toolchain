@@ -299,7 +299,7 @@ declare global {
      * compute.set_textures("/my_compute.computec", { my_texture: resource.texture() });
      * ```
      */
-    function set_textures(path: Hash | string, textures: LuaMap<string, Hash>): void;
+    function set_textures(path: Hash | string, textures: LuaMap<string, Hash> | Record<string, Hash>): void;
   }
 }
 
