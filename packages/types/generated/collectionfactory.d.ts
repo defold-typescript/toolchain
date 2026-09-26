@@ -46,7 +46,7 @@ declare global {
      * ```ts
      * // How to spawn a collection of game objects:
      * export default defineScript({
-     *   init(self) {
+     *   init() {
      *     // Spawn a small group of enemies.
      *     const pos = vmath.vector3(100, 12.5, 0);
      *     const rot = vmath.quat_rotation_z(Math.PI / 2);
@@ -57,7 +57,7 @@ declare global {
      *       [hash("/enemy_2")]: { health: 400.0, color: hash("green") },
      *     };
      *
-     *     self.enemy_ids = collectionfactory.create("#enemyfactory", pos, rot, props, scale);
+     *     const enemy_ids = collectionfactory.create("#enemyfactory", pos, rot, props, scale);
      *     // enemy_ids now map to the spawned instance ids:
      *     //
      *     // pprint(self.enemy_ids)
@@ -70,8 +70,11 @@ declare global {
      *     // }
      *
      *     // Send "attack" message to the leader. First look up its instance id.
-     *     const leader_id = self.enemy_ids[hash("/enemy_leader")];
-     *     msg.post(leader_id, "attack");
+     *     const leader_id = enemy_ids.get(hash("/enemy_leader"));
+     *     if (leader_id !== undefined) {
+     *       msg.post(leader_id, "attack");
+     *     }
+     *     return { enemy_ids };
      *   },
      * });
      *
