@@ -2558,6 +2558,123 @@
     {
       "identity": {
         "namespace": "graphics",
+        "kind": "CONSTANT",
+        "name": "graphics.SEMANTIC_TYPE_BONE_INDICES",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "graphics",
+        "kind": "CONSTANT",
+        "name": "graphics.SEMANTIC_TYPE_BONE_WEIGHTS",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "graphics",
+        "kind": "CONSTANT",
+        "name": "graphics.SEMANTIC_TYPE_COLOR",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "graphics",
+        "kind": "CONSTANT",
+        "name": "graphics.SEMANTIC_TYPE_MORPH_TARGET_WEIGHTS",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1"]
+    },
+    {
+      "identity": {
+        "namespace": "graphics",
+        "kind": "CONSTANT",
+        "name": "graphics.SEMANTIC_TYPE_NONE",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "graphics",
+        "kind": "CONSTANT",
+        "name": "graphics.SEMANTIC_TYPE_NORMAL",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "graphics",
+        "kind": "CONSTANT",
+        "name": "graphics.SEMANTIC_TYPE_NORMAL_MATRIX",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "graphics",
+        "kind": "CONSTANT",
+        "name": "graphics.SEMANTIC_TYPE_PAGE_INDEX",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "graphics",
+        "kind": "CONSTANT",
+        "name": "graphics.SEMANTIC_TYPE_POSITION",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "graphics",
+        "kind": "CONSTANT",
+        "name": "graphics.SEMANTIC_TYPE_TANGENT",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "graphics",
+        "kind": "CONSTANT",
+        "name": "graphics.SEMANTIC_TYPE_TEXCOORD",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "graphics",
+        "kind": "CONSTANT",
+        "name": "graphics.SEMANTIC_TYPE_TEXTURE_TRANSFORM_2D",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "graphics",
+        "kind": "CONSTANT",
+        "name": "graphics.SEMANTIC_TYPE_WORLD_MATRIX",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "graphics",
         "kind": "FUNCTION",
         "name": "graphics.get_adapter_info",
         "signature": "[]->[{\"types\":[\"table\"],\"isOptional\":false}]"

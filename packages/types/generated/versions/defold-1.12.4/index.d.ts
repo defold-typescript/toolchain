@@ -43,7 +43,6 @@ import "../../../src/window-event-guard";
 import "../../../src/scene-addresses";
 import "../../../src/go-overloads";
 import "../../../src/component-properties";
-import "../../../src/graphics-constants";
 import "../../../src/render-overloads";
 import "../../../src/vmath-overloads";
 

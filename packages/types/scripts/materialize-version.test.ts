@@ -404,6 +404,29 @@ function committedTarget(id: string): ApiTarget {
   return target;
 }
 
+describe("buildVersionedSurfaceFiles graphics semantic types", () => {
+  const semanticNames = (contents: string) =>
+    [...contents.matchAll(/const (SEMANTIC_TYPE_\w+)/g)].map((m) => m[1]).sort();
+
+  for (const id of ["defold-1.12.4", "defold-1.13.0", "default"]) {
+    test(`${id} synthesizes them into graphics.d.ts exactly as the committed surface does`, async () => {
+      const target = loadApiTargets().find((t) =>
+        id === "default" ? t.default === true : t.id === id,
+      );
+      if (!target) throw new Error(`no ${id} target`);
+      const files = await buildVersionedSurfaceFiles(target);
+      expect(files.map((f) => f.path)).not.toContain("graphics-constants.d.ts");
+      const graphics = files.find((f) => f.path === "graphics.d.ts");
+      if (!graphics) throw new Error(`${id} materialized no graphics.d.ts`);
+      const committed = readFileSync(
+        resolve(PACKAGE_ROOT, target.generatedDir, "graphics.d.ts"),
+        "utf8",
+      );
+      expect(semanticNames(graphics.contents)).toEqual(semanticNames(committed));
+    });
+  }
+});
+
 describe("buildVersionedSurfaceFiles src augmentation carry", () => {
   test("SRC_AUGMENTATION_MODULES is the kind manifest's src set, not a second list", () => {
     // The union over every runtime kind index: an augmentation restricted to a
