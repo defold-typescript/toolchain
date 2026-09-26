@@ -33,6 +33,7 @@ import {
   readPins,
   runGate,
   sortDiagnostics,
+  undeclaredStateOffenders,
 } from "./example-typecheck";
 
 const surfaces = await exampleSurfaces();
@@ -302,6 +303,77 @@ const w = buf.width;
           }. Widen OPTIONAL_LOAD_CODES, or the closure no longer covers the class.`,
       );
     }
+  });
+});
+
+describe("the script-state class", () => {
+  const UNDECLARED_STATE_SHAPES = [
+    [
+      "a field assigned in init(self)",
+      `export default defineScript({
+  init(self) {
+    self.t = 0;
+  },
+});
+`,
+    ],
+    [
+      "a field no hook sets, read in update",
+      `export default defineScript({
+  update(self, dt) {
+    go.set_position(self.velocity);
+  },
+});
+`,
+    ],
+  ] as const;
+
+  test("a hook reading a field init never returned compiles to a diagnostic the closure refuses", () => {
+    for (const [shape, body] of UNDECLARED_STATE_SHAPES) {
+      const diagnostics = diagnosticsFor(body);
+      if (undeclaredStateOffenders(diagnostics).length === 0) {
+        throw new Error(
+          `${shape} compiles to no diagnostic the script-state closure refuses; the compiler reported ` +
+            `${
+              diagnostics.length > 0
+                ? diagnostics.map((d) => `TS${d.code} ${d.text}`).join(", ")
+                : "nothing at all"
+            }. Re-point UNDECLARED_STATE_TEXT at the text the shape now carries, or the closure no longer covers it.`,
+        );
+      }
+    }
+  });
+
+  test("state returned from init compiles to no offender", () => {
+    const diagnostics = diagnosticsFor(`export default defineScript({
+  init() {
+    return { t: 0 };
+  },
+  update(self, dt) {
+    self.t = self.t + dt;
+  },
+});
+`);
+    expect(undeclaredStateOffenders(diagnostics)).toEqual([]);
+  });
+
+  test("no pin records undeclared script state", () => {
+    const offenders: string[] = [];
+    for (const [identity, diagnostics] of Object.entries(pins)) {
+      for (const diagnostic of undeclaredStateOffenders(diagnostics)) {
+        offenders.push(`  ${identity} — TS${diagnostic.code} ${diagnostic.text}`);
+      }
+    }
+    if (offenders.length > 0) {
+      throw new Error(
+        "an authored translation keeps script state on `self` that its `init` never returns:\n" +
+          `${offenders.slice(0, 20).join("\n")}${
+            offenders.length > 20 ? `\n  +${offenders.length - 20} more` : ""
+          }\n` +
+          "Return the field from `init` in the example body; never re-pin to absorb it.",
+      );
+    }
+    expect(offenders).toEqual([]);
   });
 });
 

@@ -169,6 +169,18 @@ declare global {
      * @example
      * ```ts
      * export default defineRenderScript({
+     *   init() {
+     *     const color_params = {
+     *       format: graphics.TEXTURE_FORMAT_RGBA,
+     *       width: render.get_window_width(),
+     *       height: render.get_window_height(),
+     *     };
+     *     return {
+     *       my_render_target: render.render_target({ [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params }),
+     *       my_pred: render.predicate([hash("my_tag")]),
+     *     };
+     *   },
+     *
      *   update(self, dt) {
      *     render.enable_texture(0, self.my_render_target, graphics.BUFFER_TYPE_COLOR0_BIT);
      *     // draw a predicate with the render target available as texture 0 in the predicate
@@ -205,6 +217,7 @@ declare global {
      *       height: render.get_window_height(),
      *     };
      *     return {
+     *       backing_texture: resource.get_texture_info("/main/backing.texturec").handle,
      *       scene_rt: render.render_target({ [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params }),
      *     };
      *   },
@@ -251,8 +264,12 @@ declare global {
      * ```ts
      * export default defineRenderScript({
      *   init() {
-     *     // define a predicate matching anything with material tag "my_tag"
-     *     return { my_pred: render.predicate([hash("my_tag")]) };
+     *     return {
+     *       // define a predicate matching anything with material tag "my_tag"
+     *       my_pred: render.predicate([hash("my_tag")]),
+     *       proj: vmath.matrix4_perspective(math.rad(45), render.get_window_width() / render.get_window_height(), 0.1, 1000),
+     *       view: vmath.matrix4_look_at(vmath.vector3(0, 0, 10), vmath.vector3(0, 0, 0), vmath.vector3(0, 1, 0)),
+     *     };
      *   },
      *
      *   update(self, dt) {
@@ -395,6 +412,18 @@ declare global {
      * @example
      * ```ts
      * export default defineRenderScript({
+     *   init() {
+     *     const color_params = {
+     *       format: graphics.TEXTURE_FORMAT_RGBA,
+     *       width: render.get_window_width(),
+     *       height: render.get_window_height(),
+     *     };
+     *     return {
+     *       my_render_target: render.render_target({ [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params }),
+     *       my_pred: render.predicate([hash("my_tag")]),
+     *     };
+     *   },
+     *
      *   update(self, dt) {
      *     // enable target so all drawing is done to it
      *     render.set_render_target(self.my_render_target);
@@ -416,6 +445,10 @@ declare global {
      * ```ts
      * // Or enable a render target by resource id:
      * export default defineRenderScript({
+     *   init() {
+     *     return { my_pred: render.predicate([hash("my_tag")]) };
+     *   },
+     *
      *   update(self, dt) {
      *     render.set_render_target("my_rt_resource");
      *     render.draw(self.my_pred);
@@ -432,6 +465,10 @@ declare global {
      * ```ts
      * // Or bind a texture handle directly:
      * export default defineRenderScript({
+     *   init() {
+     *     return { my_texture_handle: resource.get_texture_info("/main/my_texture.texturec").handle };
+     *   },
+     *
      *   update(self, dt) {
      *     // bind a texture to the texture unit 0
      *     render.enable_texture(0, self.my_texture_handle);
@@ -952,6 +989,18 @@ declare global {
      * // How to set a render target and draw to it and then switch back to the default render target
      * // The render target defines the depth/stencil buffers as transient, when set_render_target is called the next time the buffers may be invalidated and allow for optimisations depending on driver support
      * export default defineRenderScript({
+     *   init() {
+     *     const color_params = {
+     *       format: graphics.TEXTURE_FORMAT_RGBA,
+     *       width: render.get_window_width(),
+     *       height: render.get_window_height(),
+     *     };
+     *     return {
+     *       my_render_target: render.render_target({ [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params }),
+     *       my_pred: render.predicate([hash("my_tag")]),
+     *     };
+     *   },
+     *
      *   update(self, dt) {
      *     // set render target so all drawing is done to it
      *     render.set_render_target(self.my_render_target, {
@@ -971,6 +1020,10 @@ declare global {
      * ```ts
      * // Or set the render target by a render target resource identifier:
      * export default defineRenderScript({
+     *   init() {
+     *     return { my_pred: render.predicate([hash("my_tag")]) };
+     *   },
+     *
      *   update(self, dt) {
      *     render.set_render_target("my_rt_resource");
      *

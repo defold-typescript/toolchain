@@ -202,8 +202,8 @@ declare global {
      * }
      *
      * export default defineScript({
-     *   init(self) {
-     *     self.countdown_id = sound.play("#countdown", undefined, sound_done);
+     *   init() {
+     *     return { countdown_id: sound.play("#countdown", undefined, sound_done) };
      *   },
      * });
      * ```

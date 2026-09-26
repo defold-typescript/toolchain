@@ -208,8 +208,8 @@ declare global {
      *
      * // How to perform a ray cast synchronously:
      * export default defineScript({
-     *   init(self) {
-     *     self.groups = [hash("world"), hash("enemy")];
+     *   init() {
+     *     return { groups: [hash("world"), hash("enemy")] };
      *   },
      *
      *   update(self, dt) {
@@ -249,8 +249,8 @@ declare global {
      * ```ts
      * // How to perform a ray cast asynchronously:
      * export default defineScript({
-     *   init(self) {
-     *     self.my_groups = [hash("my_group1"), hash("my_group2")];
+     *   init() {
+     *     return { my_groups: [hash("my_group1"), hash("my_group2")] };
      *   },
      *
      *   update(self, dt) {
@@ -416,9 +416,10 @@ declare global {
      * @example
      * ```ts
      * export default defineScript({
-     *   init(self) {
-     *     self.fliph = true; // set on some condition
-     *     physics.set_hflip("#collisionobject", self.fliph);
+     *   init() {
+     *     const fliph = true; // set on some condition
+     *     physics.set_hflip("#collisionobject", fliph);
+     *     return { fliph };
      *   },
      * });
      * ```
@@ -490,9 +491,10 @@ declare global {
      * @example
      * ```ts
      * export default defineScript({
-     *   init(self) {
-     *     self.flipv = true; // set on some condition
-     *     physics.set_vflip("#collisionobject", self.flipv);
+     *   init() {
+     *     const flipv = true; // set on some condition
+     *     physics.set_vflip("#collisionobject", flipv);
+     *     return { flipv };
      *   },
      * });
      * ```

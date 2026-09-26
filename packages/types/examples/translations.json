@@ -38,7 +38,7 @@
   "buffer.create": [
     {
       "sourceHash": "d83315970921bbc7",
-      "ts": "// How to create and initialize a buffer\nexport default defineScript({\n  init(self) {\n    const size = 128;\n    self.image = buffer.create(size * size, [{ name: hash(\"rgb\"), type: buffer.VALUE_TYPE_UINT8, count: 3 }]);\n    self.imagestream = buffer.get_stream(self.image, hash(\"rgb\"));\n\n    for (let y = 0; y < self.height; y++) {\n      for (let x = 0; x < self.width; x++) {\n        const index = y * self.width * 3 + x * 3;\n        self.imagestream[index + 0] = self.r;\n        self.imagestream[index + 1] = self.g;\n        self.imagestream[index + 2] = self.b;\n      }\n    }\n  },\n});"
+      "ts": "// How to create and initialize a buffer\nexport default defineScript({\n  init() {\n    const size = 128;\n    const [width, height] = [size, size];\n    const [r, g, b] = [0xff, 0x80, 0x10];\n    const image = buffer.create(size * size, [{ name: hash(\"rgb\"), type: buffer.VALUE_TYPE_UINT8, count: 3 }]);\n    const imagestream = buffer.get_stream(image, hash(\"rgb\"));\n\n    for (let y = 0; y < height; y++) {\n      for (let x = 0; x < width; x++) {\n        const index = y * width * 3 + x * 3;\n        imagestream[index + 0] = r;\n        imagestream[index + 1] = g;\n        imagestream[index + 2] = b;\n      }\n    }\n    return { image, imagestream };\n  },\n});"
     }
   ],
   "buffer.get_metadata": [
@@ -80,7 +80,7 @@
   "collectionfactory.create": [
     {
       "sourceHash": "5a49721288808772",
-      "ts": "// How to spawn a collection of game objects:\nexport default defineScript({\n  init(self) {\n    // Spawn a small group of enemies.\n    const pos = vmath.vector3(100, 12.5, 0);\n    const rot = vmath.quat_rotation_z(Math.PI / 2);\n    const scale = 0.5;\n    const props = {\n      [hash(\"/enemy_leader\")]: { health: 1000.0 },\n      [hash(\"/enemy_1\")]: { health: 200.0 },\n      [hash(\"/enemy_2\")]: { health: 400.0, color: hash(\"green\") },\n    };\n\n    self.enemy_ids = collectionfactory.create(\"#enemyfactory\", pos, rot, props, scale);\n    // enemy_ids now map to the spawned instance ids:\n    //\n    // pprint(self.enemy_ids)\n    //\n    // DEBUG:SCRIPT:\n    // {\n    //   hash: [/enemy_leader] = hash: [/collection0/enemy_leader],\n    //   hash: [/enemy_1] = hash: [/collection0/enemy_1],\n    //   hash: [/enemy_2] = hash: [/collection0/enemy_2]\n    // }\n\n    // Send \"attack\" message to the leader. First look up its instance id.\n    const leader_id = self.enemy_ids[hash(\"/enemy_leader\")];\n    msg.post(leader_id, \"attack\");\n  },\n});\n\n// How to delete a spawned collection:\nfunction delete_enemies(self: { enemy_ids: Hash[] }) {\n  go.delete(self.enemy_ids);\n}"
+      "ts": "// How to spawn a collection of game objects:\nexport default defineScript({\n  init() {\n    // Spawn a small group of enemies.\n    const pos = vmath.vector3(100, 12.5, 0);\n    const rot = vmath.quat_rotation_z(Math.PI / 2);\n    const scale = 0.5;\n    const props = {\n      [hash(\"/enemy_leader\")]: { health: 1000.0 },\n      [hash(\"/enemy_1\")]: { health: 200.0 },\n      [hash(\"/enemy_2\")]: { health: 400.0, color: hash(\"green\") },\n    };\n\n    const enemy_ids = collectionfactory.create(\"#enemyfactory\", pos, rot, props, scale);\n    // enemy_ids now map to the spawned instance ids:\n    //\n    // pprint(self.enemy_ids)\n    //\n    // DEBUG:SCRIPT:\n    // {\n    //   hash: [/enemy_leader] = hash: [/collection0/enemy_leader],\n    //   hash: [/enemy_1] = hash: [/collection0/enemy_1],\n    //   hash: [/enemy_2] = hash: [/collection0/enemy_2]\n    // }\n\n    // Send \"attack\" message to the leader. First look up its instance id.\n    const leader_id = enemy_ids.get(hash(\"/enemy_leader\"));\n    if (leader_id !== undefined) {\n      msg.post(leader_id, \"attack\");\n    }\n    return { enemy_ids };\n  },\n});\n\n// How to delete a spawned collection:\nfunction delete_enemies(self: { enemy_ids: Hash[] }) {\n  go.delete(self.enemy_ids);\n}"
     }
   ],
   "collectionfactory.load": [
@@ -230,7 +230,7 @@
   "final": [
     {
       "sourceHash": "ebc3cae218af001a",
-      "ts": "export default defineScript({\n  final(self) {\n    // report finalization\n    msg.post(\"my_friend_instance\", \"im_dead\", { my_stats: self.some_value });\n  },\n});"
+      "ts": "export default defineScript({\n  init() {\n    return { some_value: 0 };\n  },\n\n  final(self) {\n    // report finalization\n    msg.post(\"my_friend_instance\", \"im_dead\", { my_stats: self.some_value });\n  },\n});"
     }
   ],
   "font.add_font": [
@@ -806,7 +806,7 @@
   "model.get_mesh_enabled": [
     {
       "sourceHash": "b2f9e47a91bc3f12",
-      "ts": "// shared weapon data, e.g. required from your own module\nconst game = { data: { weapons: { Sword: { damage: 10 } } } };\n\nexport default defineScript({\n  init(self) {\n    if (model.get_mesh_enabled(\"#model\", \"Sword\")) {\n      // set properties specific for the sword\n      self.weapon_properties = game.data.weapons[\"Sword\"];\n    }\n  },\n});"
+      "ts": "// shared weapon data, e.g. required from your own module\nconst game = { data: { weapons: { Sword: { damage: 10 } } } };\n\nexport default defineScript({\n  init() {\n    if (model.get_mesh_enabled(\"#model\", \"Sword\")) {\n      // set properties specific for the sword\n      return { weapon_properties: game.data.weapons[\"Sword\"] };\n    }\n    return { weapon_properties: undefined };\n  },\n});"
     }
   ],
   "model.play_anim": [
@@ -860,7 +860,7 @@
     },
     {
       "sourceHash": "cc835ea429adc693",
-      "ts": "export default defineGuiScript({\n  on_input(self, action_id, action) {\n    // check for input\n    if (action_id === hash(\"my_action\")) {\n      // take appropriate action\n      self.my_value = action.value;\n    }\n    // consume input\n    return true;\n  },\n});"
+      "ts": "export default defineGuiScript({\n  init(): { my_value: number | undefined } {\n    return { my_value: undefined };\n  },\n\n  on_input(self, action_id, action) {\n    // check for input\n    if (action_id === hash(\"my_action\")) {\n      // take appropriate action\n      self.my_value = action.value;\n    }\n    // consume input\n    return true;\n  },\n});"
     }
   ],
   "on_message": [
@@ -870,7 +870,7 @@
     },
     {
       "sourceHash": "9f37896589565629",
-      "ts": "// b.script — Script of instance \"b\":\nexport default defineScript({\n  init() {\n    // store the url of instance \"a\" for later use, by specifying undefined as socket we\n    // automatically use our own socket\n    return { a_url: msg.url(undefined, go.get_id(\"a\"), \"script\") };\n  },\n\n  on_message(self, message_id, message, sender) {\n    // check message and sender\n    if (message_id === hash(\"my_data\") && sender === self.a_url) {\n      // use the data in some way\n      self.important_value = message.important_value;\n    }\n  },\n});"
+      "ts": "// b.script — Script of instance \"b\":\nexport default defineScript({\n  init() {\n    // store the url of instance \"a\" for later use, by specifying undefined as socket we\n    // automatically use our own socket\n    return { a_url: msg.url(undefined, go.get_id(\"a\"), \"script\"), important_value: 0 };\n  },\n\n  on_message(self, message_id, message, sender) {\n    // check message and sender\n    if (message_id === hash(\"my_data\") && sender === self.a_url && typeof message.important_value === \"number\") {\n      // use the data in some way\n      self.important_value = message.important_value;\n    }\n  },\n});"
     }
   ],
   "on_reload": [
@@ -880,7 +880,7 @@
     },
     {
       "sourceHash": "e89fe0d0bd51ed98",
-      "ts": "export default defineGuiScript({\n  on_reload(self) {\n    // restore some color (or similar)\n    gui.set_color(gui.get_node(\"my_node\"), self.my_original_color);\n  },\n});"
+      "ts": "export default defineGuiScript({\n  init() {\n    return { my_original_color: gui.get_color(gui.get_node(\"my_node\")) };\n  },\n\n  on_reload(self) {\n    // restore some color (or similar)\n    gui.set_color(gui.get_node(\"my_node\"), self.my_original_color);\n  },\n});"
     }
   ],
   "particlefx.play": [
@@ -916,13 +916,13 @@
   "physics.raycast": [
     {
       "sourceHash": "3e0c534d741f0120",
-      "ts": "function handle_result(hit: { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash; request_id: number }) {\n  // act on the hit (see 'ray_cast_response')\n}\n\n// How to perform a ray cast synchronously:\nexport default defineScript({\n  init(self) {\n    self.groups = [hash(\"world\"), hash(\"enemy\")];\n  },\n\n  update(self, dt) {\n    // request ray cast\n    const from = go.get_world_position();\n    const to = vmath.vector3(from.x, from.y - 100, from.z);\n    const results = physics.raycast(from, to, self.groups, { all: true });\n    if (results !== undefined) {\n      for (const result of results) {\n        handle_result(result);\n      }\n    }\n  },\n});"
+      "ts": "function handle_result(hit: { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash; request_id: number }) {\n  // act on the hit (see 'ray_cast_response')\n}\n\n// How to perform a ray cast synchronously:\nexport default defineScript({\n  init() {\n    return { groups: [hash(\"world\"), hash(\"enemy\")] };\n  },\n\n  update(self, dt) {\n    // request ray cast\n    const from = go.get_world_position();\n    const to = vmath.vector3(from.x, from.y - 100, from.z);\n    const results = physics.raycast(from, to, self.groups, { all: true });\n    if (results !== undefined) {\n      for (const result of results) {\n        handle_result(result);\n      }\n    }\n  },\n});"
     }
   ],
   "physics.raycast_async": [
     {
       "sourceHash": "746b7900ebaa1f10",
-      "ts": "// How to perform a ray cast asynchronously:\nexport default defineScript({\n  init(self) {\n    self.my_groups = [hash(\"my_group1\"), hash(\"my_group2\")];\n  },\n\n  update(self, dt) {\n    // request ray cast\n    const my_start = go.get_world_position();\n    const my_end = vmath.vector3(my_start.x, my_start.y - 100, my_start.z);\n    physics.raycast_async(my_start, my_end, self.my_groups);\n  },\n\n  on_message(self, message_id, message, sender) {\n    // check for the response\n    if (message_id === hash(\"ray_cast_response\")) {\n      // act on the hit\n    } else if (message_id === hash(\"ray_cast_missed\")) {\n      // act on the miss\n    }\n  },\n});"
+      "ts": "// How to perform a ray cast asynchronously:\nexport default defineScript({\n  init() {\n    return { my_groups: [hash(\"my_group1\"), hash(\"my_group2\")] };\n  },\n\n  update(self, dt) {\n    // request ray cast\n    const my_start = go.get_world_position();\n    const my_end = vmath.vector3(my_start.x, my_start.y - 100, my_start.z);\n    physics.raycast_async(my_start, my_end, self.my_groups);\n  },\n\n  on_message(self, message_id, message, sender) {\n    // check for the response\n    if (message_id === hash(\"ray_cast_response\")) {\n      // act on the hit\n    } else if (message_id === hash(\"ray_cast_missed\")) {\n      // act on the miss\n    }\n  },\n});"
     }
   ],
   "physics.set_event_listener": [
@@ -944,13 +944,13 @@
   "physics.set_hflip": [
     {
       "sourceHash": "71a627e46d2e651e",
-      "ts": "export default defineScript({\n  init(self) {\n    self.fliph = true; // set on some condition\n    physics.set_hflip(\"#collisionobject\", self.fliph);\n  },\n});"
+      "ts": "export default defineScript({\n  init() {\n    const fliph = true; // set on some condition\n    physics.set_hflip(\"#collisionobject\", fliph);\n    return { fliph };\n  },\n});"
     }
   ],
   "physics.set_vflip": [
     {
       "sourceHash": "7b5832955ec6635c",
-      "ts": "export default defineScript({\n  init(self) {\n    self.flipv = true; // set on some condition\n    physics.set_vflip(\"#collisionobject\", self.flipv);\n  },\n});"
+      "ts": "export default defineScript({\n  init() {\n    const flipv = true; // set on some condition\n    physics.set_vflip(\"#collisionobject\", flipv);\n    return { flipv };\n  },\n});"
     }
   ],
   "physics.update_mass": [
@@ -1058,19 +1058,19 @@
   "render.disable_texture": [
     {
       "sourceHash": "77eefc5b608dd2e6",
-      "ts": "export default defineRenderScript({\n  update(self, dt) {\n    render.enable_texture(0, self.my_render_target, graphics.BUFFER_TYPE_COLOR0_BIT);\n    // draw a predicate with the render target available as texture 0 in the predicate\n    // material shader.\n    render.draw(self.my_pred);\n    // done, disable the texture\n    render.disable_texture(0);\n  },\n});"
+      "ts": "export default defineRenderScript({\n  init() {\n    const color_params = {\n      format: graphics.TEXTURE_FORMAT_RGBA,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n    };\n    return {\n      my_render_target: render.render_target({ [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params }),\n      my_pred: render.predicate([hash(\"my_tag\")]),\n    };\n  },\n\n  update(self, dt) {\n    render.enable_texture(0, self.my_render_target, graphics.BUFFER_TYPE_COLOR0_BIT);\n    // draw a predicate with the render target available as texture 0 in the predicate\n    // material shader.\n    render.draw(self.my_pred);\n    // done, disable the texture\n    render.disable_texture(0);\n  },\n});"
     }
   ],
   "render.dispatch_compute": [
     {
       "sourceHash": "af76607a05354da7",
-      "ts": "export default defineRenderScript({\n  init() {\n    const color_params = {\n      format: graphics.TEXTURE_FORMAT_RGBA,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n    };\n    return {\n      scene_rt: render.render_target({ [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params }),\n    };\n  },\n\n  update(self, dt) {\n    render.set_compute(\"bloom\");\n    render.enable_texture(0, self.backing_texture);\n    render.enable_texture(1, self.scene_rt);\n    render.dispatch_compute(128, 128, 1);\n    render.set_compute();\n  },\n});\n\n// Dispatch a compute program with a constant buffer:\nconst constants = render.constant_buffer();\nconstants.tint = vmath.vector4(1, 1, 1, 1);\nrender.dispatch_compute(32, 32, 32, { constants });"
+      "ts": "export default defineRenderScript({\n  init() {\n    const color_params = {\n      format: graphics.TEXTURE_FORMAT_RGBA,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n    };\n    return {\n      backing_texture: resource.get_texture_info(\"/main/backing.texturec\").handle,\n      scene_rt: render.render_target({ [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params }),\n    };\n  },\n\n  update(self, dt) {\n    render.set_compute(\"bloom\");\n    render.enable_texture(0, self.backing_texture);\n    render.enable_texture(1, self.scene_rt);\n    render.dispatch_compute(128, 128, 1);\n    render.set_compute();\n  },\n});\n\n// Dispatch a compute program with a constant buffer:\nconst constants = render.constant_buffer();\nconstants.tint = vmath.vector4(1, 1, 1, 1);\nrender.dispatch_compute(32, 32, 32, { constants });"
     }
   ],
   "render.draw": [
     {
       "sourceHash": "47232b75e7b74189",
-      "ts": "export default defineRenderScript({\n  init() {\n    // define a predicate matching anything with material tag \"my_tag\"\n    return { my_pred: render.predicate([hash(\"my_tag\")]) };\n  },\n\n  update(self, dt) {\n    // draw everything in the my_pred predicate\n    render.draw(self.my_pred);\n\n    // Draw predicate with constants:\n    const constants = render.constant_buffer();\n    constants.tint = vmath.vector4(1, 1, 1, 1);\n    render.draw(self.my_pred, { constants });\n\n    // Draw with predicate and frustum culling (without near+far planes):\n    const frustum = self.proj.mul(self.view);\n    render.draw(self.my_pred, { frustum });\n\n    // Draw with predicate and frustum culling (with near+far planes):\n    const frustum2 = self.proj.mul(self.view);\n    render.draw(self.my_pred, { frustum: frustum2, frustum_planes: render.FRUSTUM_PLANES_ALL });\n  },\n});"
+      "ts": "export default defineRenderScript({\n  init() {\n    return {\n      // define a predicate matching anything with material tag \"my_tag\"\n      my_pred: render.predicate([hash(\"my_tag\")]),\n      proj: vmath.matrix4_perspective(math.rad(45), render.get_window_width() / render.get_window_height(), 0.1, 1000),\n      view: vmath.matrix4_look_at(vmath.vector3(0, 0, 10), vmath.vector3(0, 0, 0), vmath.vector3(0, 1, 0)),\n    };\n  },\n\n  update(self, dt) {\n    // draw everything in the my_pred predicate\n    render.draw(self.my_pred);\n\n    // Draw predicate with constants:\n    const constants = render.constant_buffer();\n    constants.tint = vmath.vector4(1, 1, 1, 1);\n    render.draw(self.my_pred, { constants });\n\n    // Draw with predicate and frustum culling (without near+far planes):\n    const frustum = self.proj.mul(self.view);\n    render.draw(self.my_pred, { frustum });\n\n    // Draw with predicate and frustum culling (with near+far planes):\n    const frustum2 = self.proj.mul(self.view);\n    render.draw(self.my_pred, { frustum: frustum2, frustum_planes: render.FRUSTUM_PLANES_ALL });\n  },\n});"
     }
   ],
   "render.draw_debug3d": [
@@ -1094,15 +1094,15 @@
   "render.enable_texture": [
     {
       "sourceHash": "410c8dd98e44842a",
-      "ts": "export default defineRenderScript({\n  update(self, dt) {\n    // enable target so all drawing is done to it\n    render.set_render_target(self.my_render_target);\n\n    // draw a predicate to the render target\n    render.draw(self.my_pred);\n\n    // disable target\n    render.set_render_target(render.RENDER_TARGET_DEFAULT);\n\n    render.enable_texture(0, self.my_render_target, graphics.BUFFER_TYPE_COLOR0_BIT);\n    // draw a predicate with the render target available as texture 0 in the predicate\n    // material shader.\n    render.draw(self.my_pred);\n  },\n});"
+      "ts": "export default defineRenderScript({\n  init() {\n    const color_params = {\n      format: graphics.TEXTURE_FORMAT_RGBA,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n    };\n    return {\n      my_render_target: render.render_target({ [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params }),\n      my_pred: render.predicate([hash(\"my_tag\")]),\n    };\n  },\n\n  update(self, dt) {\n    // enable target so all drawing is done to it\n    render.set_render_target(self.my_render_target);\n\n    // draw a predicate to the render target\n    render.draw(self.my_pred);\n\n    // disable target\n    render.set_render_target(render.RENDER_TARGET_DEFAULT);\n\n    render.enable_texture(0, self.my_render_target, graphics.BUFFER_TYPE_COLOR0_BIT);\n    // draw a predicate with the render target available as texture 0 in the predicate\n    // material shader.\n    render.draw(self.my_pred);\n  },\n});"
     },
     {
       "sourceHash": "dc0ea083dbea5fe1",
-      "ts": "// Or enable a render target by resource id:\nexport default defineRenderScript({\n  update(self, dt) {\n    render.set_render_target(\"my_rt_resource\");\n    render.draw(self.my_pred);\n    render.set_render_target(render.RENDER_TARGET_DEFAULT);\n\n    render.enable_texture(0, \"my_rt_resource\", graphics.BUFFER_TYPE_COLOR0_BIT);\n    // draw a predicate with the render target available as texture 0 in the predicate\n    // material shader.\n    render.draw(self.my_pred);\n  },\n});"
+      "ts": "// Or enable a render target by resource id:\nexport default defineRenderScript({\n  init() {\n    return { my_pred: render.predicate([hash(\"my_tag\")]) };\n  },\n\n  update(self, dt) {\n    render.set_render_target(\"my_rt_resource\");\n    render.draw(self.my_pred);\n    render.set_render_target(render.RENDER_TARGET_DEFAULT);\n\n    render.enable_texture(0, \"my_rt_resource\", graphics.BUFFER_TYPE_COLOR0_BIT);\n    // draw a predicate with the render target available as texture 0 in the predicate\n    // material shader.\n    render.draw(self.my_pred);\n  },\n});"
     },
     {
       "sourceHash": "49503c29f0de95f3",
-      "ts": "// Or bind a texture handle directly:\nexport default defineRenderScript({\n  update(self, dt) {\n    // bind a texture to the texture unit 0\n    render.enable_texture(0, self.my_texture_handle);\n    // bind the same texture to a named sampler\n    render.enable_texture(\"my_texture_sampler\", self.my_texture_handle);\n  },\n});"
+      "ts": "// Or bind a texture handle directly:\nexport default defineRenderScript({\n  init() {\n    return { my_texture_handle: resource.get_texture_info(\"/main/my_texture.texturec\").handle };\n  },\n\n  update(self, dt) {\n    // bind a texture to the texture unit 0\n    render.enable_texture(0, self.my_texture_handle);\n    // bind the same texture to a named sampler\n    render.enable_texture(\"my_texture_sampler\", self.my_texture_handle);\n  },\n});"
     }
   ],
   "render.get_height": [
@@ -1150,15 +1150,15 @@
   "render.render_target": [
     {
       "sourceHash": "0c72f5142a3a57da",
-      "ts": "// How to create a new render target and draw to it:\nexport default defineRenderScript({\n  init() {\n    // render target buffer parameters\n    const color_params = {\n      format: graphics.TEXTURE_FORMAT_RGBA,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n      min_filter: graphics.TEXTURE_FILTER_LINEAR,\n      mag_filter: graphics.TEXTURE_FILTER_LINEAR,\n      u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n      v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n    };\n    const depth_params = {\n      format: graphics.TEXTURE_FORMAT_DEPTH,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n      u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n      v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n    };\n    return {\n      my_render_target: render.render_target({\n        [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params,\n        [graphics.BUFFER_TYPE_DEPTH_BIT]: depth_params,\n      }),\n    };\n  },\n\n  update(self, dt) {\n    // enable target so all drawing is done to it\n    render.set_render_target(self.my_render_target);\n\n    // draw a predicate to the render target\n    render.draw(self.my_pred);\n  },\n});"
+      "ts": "// How to create a new render target and draw to it:\nexport default defineRenderScript({\n  init() {\n    // render target buffer parameters\n    const color_params = {\n      format: graphics.TEXTURE_FORMAT_RGBA,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n      min_filter: graphics.TEXTURE_FILTER_LINEAR,\n      mag_filter: graphics.TEXTURE_FILTER_LINEAR,\n      u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n      v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n    };\n    const depth_params = {\n      format: graphics.TEXTURE_FORMAT_DEPTH,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n      u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n      v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n    };\n    return {\n      my_render_target: render.render_target({\n        [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params,\n        [graphics.BUFFER_TYPE_DEPTH_BIT]: depth_params,\n      }),\n      my_pred: render.predicate([hash(\"my_tag\")]),\n    };\n  },\n\n  update(self, dt) {\n    // enable target so all drawing is done to it\n    render.set_render_target(self.my_render_target);\n\n    // draw a predicate to the render target\n    render.draw(self.my_pred);\n  },\n});"
     },
     {
       "sourceHash": "271ca31f05e103b5",
-      "ts": "// How to create a render target with multiple outputs:\nexport default defineRenderScript({\n  init() {\n    // render target buffer parameters\n    const color_params_rgba = {\n      format: graphics.TEXTURE_FORMAT_RGBA,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n      min_filter: graphics.TEXTURE_FILTER_LINEAR,\n      mag_filter: graphics.TEXTURE_FILTER_LINEAR,\n      u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n      v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n    };\n    const color_params_float = {\n      format: graphics.TEXTURE_FORMAT_RG32F,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n      min_filter: graphics.TEXTURE_FILTER_LINEAR,\n      mag_filter: graphics.TEXTURE_FILTER_LINEAR,\n      u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n      v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n    };\n\n    // Create a render target with three color attachments\n    // Note: No depth buffer is attached here\n    return {\n      my_render_target: render.render_target({\n        [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params_rgba,\n        [graphics.BUFFER_TYPE_COLOR1_BIT]: color_params_rgba,\n        [graphics.BUFFER_TYPE_COLOR2_BIT]: color_params_float,\n      }),\n    };\n  },\n\n  update(self, dt) {\n    // enable target so all drawing is done to it\n    render.enable_render_target(self.my_render_target);\n\n    // draw a predicate to the render target\n    render.draw(self.my_pred);\n  },\n});"
+      "ts": "// How to create a render target with multiple outputs:\nexport default defineRenderScript({\n  init() {\n    // render target buffer parameters\n    const color_params_rgba = {\n      format: graphics.TEXTURE_FORMAT_RGBA,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n      min_filter: graphics.TEXTURE_FILTER_LINEAR,\n      mag_filter: graphics.TEXTURE_FILTER_LINEAR,\n      u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n      v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n    };\n    const color_params_float = {\n      format: graphics.TEXTURE_FORMAT_RG32F,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n      min_filter: graphics.TEXTURE_FILTER_LINEAR,\n      mag_filter: graphics.TEXTURE_FILTER_LINEAR,\n      u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n      v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n    };\n\n    // Create a render target with three color attachments\n    // Note: No depth buffer is attached here\n    return {\n      my_render_target: render.render_target({\n        [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params_rgba,\n        [graphics.BUFFER_TYPE_COLOR1_BIT]: color_params_rgba,\n        [graphics.BUFFER_TYPE_COLOR2_BIT]: color_params_float,\n      }),\n      my_pred: render.predicate([hash(\"my_tag\")]),\n    };\n  },\n\n  update(self, dt) {\n    // enable target so all drawing is done to it\n    render.enable_render_target(self.my_render_target);\n\n    // draw a predicate to the render target\n    render.draw(self.my_pred);\n  },\n});"
     },
     {
       "sourceHash": "e39f13af5d65d01d",
-      "ts": "// How to create a render target with multiple outputs:\nexport default defineRenderScript({\n  init() {\n    // render target buffer parameters\n    const color_params_rgba = {\n      format: graphics.TEXTURE_FORMAT_RGBA,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n      min_filter: graphics.TEXTURE_FILTER_LINEAR,\n      mag_filter: graphics.TEXTURE_FILTER_LINEAR,\n      u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n      v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n    };\n    const color_params_float = {\n      format: graphics.TEXTURE_FORMAT_RG32F,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n      min_filter: graphics.TEXTURE_FILTER_LINEAR,\n      mag_filter: graphics.TEXTURE_FILTER_LINEAR,\n      u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n      v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n    };\n\n    // Create a render target with three color attachments\n    // Note: No depth buffer is attached here\n    return {\n      my_render_target: render.render_target({\n        [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params_rgba,\n        [graphics.BUFFER_TYPE_COLOR1_BIT]: color_params_rgba,\n        [graphics.BUFFER_TYPE_COLOR2_BIT]: color_params_float,\n      }),\n    };\n  },\n\n  update(self, dt) {\n    // enable target so all drawing is done to it\n    render.enable_render_target(self.my_render_target);\n\n    // draw a predicate to the render target\n    render.draw(self.my_pred);\n  },\n});"
+      "ts": "// How to create a render target with multiple outputs:\nexport default defineRenderScript({\n  init() {\n    // render target buffer parameters\n    const color_params_rgba = {\n      format: graphics.TEXTURE_FORMAT_RGBA,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n      min_filter: graphics.TEXTURE_FILTER_LINEAR,\n      mag_filter: graphics.TEXTURE_FILTER_LINEAR,\n      u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n      v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n    };\n    const color_params_float = {\n      format: graphics.TEXTURE_FORMAT_RG32F,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n      min_filter: graphics.TEXTURE_FILTER_LINEAR,\n      mag_filter: graphics.TEXTURE_FILTER_LINEAR,\n      u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n      v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n    };\n\n    // Create a render target with three color attachments\n    // Note: No depth buffer is attached here\n    return {\n      my_render_target: render.render_target({\n        [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params_rgba,\n        [graphics.BUFFER_TYPE_COLOR1_BIT]: color_params_rgba,\n        [graphics.BUFFER_TYPE_COLOR2_BIT]: color_params_float,\n      }),\n      my_pred: render.predicate([hash(\"my_tag\")]),\n    };\n  },\n\n  update(self, dt) {\n    // enable target so all drawing is done to it\n    render.enable_render_target(self.my_render_target);\n\n    // draw a predicate to the render target\n    render.draw(self.my_pred);\n  },\n});"
     }
   ],
   "render.set_blend_equation_separate": [
@@ -1236,11 +1236,11 @@
   "render.set_render_target": [
     {
       "sourceHash": "c6e25f5038d19bee",
-      "ts": "// How to set a render target and draw to it and then switch back to the default render target\n// The render target defines the depth/stencil buffers as transient, when set_render_target is called the next time the buffers may be invalidated and allow for optimisations depending on driver support\nexport default defineRenderScript({\n  update(self, dt) {\n    // set render target so all drawing is done to it\n    render.set_render_target(self.my_render_target, {\n      transient: [graphics.BUFFER_TYPE_DEPTH_BIT, graphics.BUFFER_TYPE_STENCIL_BIT],\n    });\n\n    // draw a predicate to the render target\n    render.draw(self.my_pred);\n\n    // set default render target. This also invalidates the depth and stencil buffers of the current target (self.my_render_target)\n    //  which can be an optimisation on some hardware\n    render.set_render_target(render.RENDER_TARGET_DEFAULT);\n  },\n});"
+      "ts": "// How to set a render target and draw to it and then switch back to the default render target\n// The render target defines the depth/stencil buffers as transient, when set_render_target is called the next time the buffers may be invalidated and allow for optimisations depending on driver support\nexport default defineRenderScript({\n  init() {\n    const color_params = {\n      format: graphics.TEXTURE_FORMAT_RGBA,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n    };\n    return {\n      my_render_target: render.render_target({ [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params }),\n      my_pred: render.predicate([hash(\"my_tag\")]),\n    };\n  },\n\n  update(self, dt) {\n    // set render target so all drawing is done to it\n    render.set_render_target(self.my_render_target, {\n      transient: [graphics.BUFFER_TYPE_DEPTH_BIT, graphics.BUFFER_TYPE_STENCIL_BIT],\n    });\n\n    // draw a predicate to the render target\n    render.draw(self.my_pred);\n\n    // set default render target. This also invalidates the depth and stencil buffers of the current target (self.my_render_target)\n    //  which can be an optimisation on some hardware\n    render.set_render_target(render.RENDER_TARGET_DEFAULT);\n  },\n});"
     },
     {
       "sourceHash": "bb08db5e232c5b5e",
-      "ts": "// Or set the render target by a render target resource identifier:\nexport default defineRenderScript({\n  update(self, dt) {\n    render.set_render_target(\"my_rt_resource\");\n\n    // draw a predicate to the render target\n    render.draw(self.my_pred);\n\n    // reset the render target to the default backbuffer\n    render.set_render_target(render.RENDER_TARGET_DEFAULT);\n  },\n});"
+      "ts": "// Or set the render target by a render target resource identifier:\nexport default defineRenderScript({\n  init() {\n    return { my_pred: render.predicate([hash(\"my_tag\")]) };\n  },\n\n  update(self, dt) {\n    render.set_render_target(\"my_rt_resource\");\n\n    // draw a predicate to the render target\n    render.draw(self.my_pred);\n\n    // reset the render target to the default backbuffer\n    render.set_render_target(render.RENDER_TARGET_DEFAULT);\n  },\n});"
     }
   ],
   "render.set_render_target_size": [
@@ -1282,17 +1282,17 @@
   "resource.atlas": [
     {
       "sourceHash": "10e8e4948751ccc8",
-      "ts": "// Load an atlas and set it to a sprite:\ngo.property(\"my_atlas\", resource.atlas(\"/atlas.atlas\"));\n\nexport default defineScript({\n  init(self) {\n    go.set(\"#sprite\", \"image\", self.my_atlas);\n  },\n});"
+      "ts": "// Load an atlas and set it to a sprite:\nexport default defineScript({\n  // Never call `go.property` yourself: the transpiler emits the chunk-scope\n  // registration from this field, and only this field types the property onto `self`.\n  properties: { my_atlas: resource.atlas(\"/atlas.atlas\") },\n\n  init(self) {\n    go.set(\"#sprite\", \"image\", self.my_atlas);\n  },\n});"
     },
     {
       "sourceHash": "46638db8e246e1ed",
-      "ts": "// Load an atlas and set it to a gui:\ngo.property(\"my_atlas\", resource.atlas(\"/atlas.atlas\"));\n\nexport default defineScript({\n  init(self) {\n    go.set(\"#gui\", \"textures\", self.my_atlas, { key: \"my_atlas\" });\n  },\n});"
+      "ts": "// Load an atlas and set it to a gui:\nexport default defineScript({\n  // Never call `go.property` yourself: the transpiler emits the chunk-scope\n  // registration from this field, and only this field types the property onto `self`.\n  properties: { my_atlas: resource.atlas(\"/atlas.atlas\") },\n\n  init(self) {\n    go.set(\"#gui\", \"textures\", self.my_atlas, { key: \"my_atlas\" });\n  },\n});"
     }
   ],
   "resource.buffer": [
     {
       "sourceHash": "4353a4d474ea70b6",
-      "ts": "// Set a unique buffer it to a sprite:\ngo.property(\"my_buffer\", resource.buffer(\"/cube.buffer\"));\n\nexport default defineScript({\n  init(self) {\n    go.set(\"#mesh\", \"vertices\", self.my_buffer);\n  },\n});"
+      "ts": "// Set a unique buffer it to a sprite:\nexport default defineScript({\n  // Never call `go.property` yourself: the transpiler emits the chunk-scope\n  // registration from this field, and only this field types the property onto `self`.\n  properties: { my_buffer: resource.buffer(\"/cube.buffer\") },\n\n  init(self) {\n    go.set(\"#mesh\", \"vertices\", self.my_buffer);\n  },\n});"
     }
   ],
   "resource.create_atlas": [
@@ -1352,11 +1352,11 @@
   "resource.font": [
     {
       "sourceHash": "3e41babc3620a985",
-      "ts": "// Load a font and set it to a label:\ngo.property(\"my_font\", resource.font(\"/font.font\"));\n\nexport default defineScript({\n  init(self) {\n    go.set(\"#label\", \"font\", self.my_font);\n  },\n});"
+      "ts": "// Load a font and set it to a label:\nexport default defineScript({\n  // Never call `go.property` yourself: the transpiler emits the chunk-scope\n  // registration from this field, and only this field types the property onto `self`.\n  properties: { my_font: resource.font(\"/font.font\") },\n\n  init(self) {\n    go.set(\"#label\", \"font\", self.my_font);\n  },\n});"
     },
     {
       "sourceHash": "8eb5018038b320d3",
-      "ts": "// Load a font and set it to a gui:\ngo.property(\"my_font\", resource.font(\"/font.font\"));\n\nexport default defineScript({\n  init(self) {\n    go.set(\"#gui\", \"fonts\", self.my_font, { key: \"my_font\" });\n  },\n});"
+      "ts": "// Load a font and set it to a gui:\nexport default defineScript({\n  // Never call `go.property` yourself: the transpiler emits the chunk-scope\n  // registration from this field, and only this field types the property onto `self`.\n  properties: { my_font: resource.font(\"/font.font\") },\n\n  init(self) {\n    go.set(\"#gui\", \"fonts\", self.my_font, { key: \"my_font\" });\n  },\n});"
     }
   ],
   "resource.get_buffer": [
@@ -1400,17 +1400,17 @@
   "resource.material": [
     {
       "sourceHash": "444ac3e37fe7401e",
-      "ts": "// Load a material and set it to a sprite:\ngo.property(\"my_material\", resource.material(\"/material.material\"));\n\nexport default defineScript({\n  init(self) {\n    go.set(\"#sprite\", \"material\", self.my_material);\n  },\n});"
+      "ts": "// Load a material and set it to a sprite:\nexport default defineScript({\n  // Never call `go.property` yourself: the transpiler emits the chunk-scope\n  // registration from this field, and only this field types the property onto `self`.\n  properties: { my_material: resource.material(\"/material.material\") },\n\n  init(self) {\n    go.set(\"#sprite\", \"material\", self.my_material);\n  },\n});"
     },
     {
       "sourceHash": "7de09b2a13f4e657",
-      "ts": "// Load a material resource and update a named material with the resource:\ngo.property(\"my_material\", resource.material(\"/material.material\"));\n\nexport default defineScript({\n  init(self) {\n    go.set(\"#gui\", \"materials\", self.my_material, { key: \"my_material\" });\n  },\n});"
+      "ts": "// Load a material resource and update a named material with the resource:\nexport default defineScript({\n  // Never call `go.property` yourself: the transpiler emits the chunk-scope\n  // registration from this field, and only this field types the property onto `self`.\n  properties: { my_material: resource.material(\"/material.material\") },\n\n  init(self) {\n    go.set(\"#gui\", \"materials\", self.my_material, { key: \"my_material\" });\n  },\n});"
     }
   ],
   "resource.render_target": [
     {
       "sourceHash": "87231742204d2351",
-      "ts": "// Set a render target color attachment as a model texture:\ngo.property(\"my_render_target\", resource.render_target(\"/rt.render_target\"));\n\nexport default defineScript({\n  init(self) {\n    const rt_info = resource.get_render_target_info(self.my_render_target);\n    go.set(\"#model\", \"texture0\", rt_info.attachments[0]!.texture!);\n  },\n});"
+      "ts": "// Set a render target color attachment as a model texture:\nexport default defineScript({\n  // Never call `go.property` yourself: the transpiler emits the chunk-scope\n  // registration from this field, and only this field types the property onto `self`.\n  properties: { my_render_target: resource.render_target(\"/rt.render_target\") },\n\n  init(self) {\n    const rt_info = resource.get_render_target_info(self.my_render_target);\n    go.set(\"#model\", \"texture0\", rt_info.attachments[0]!.texture!);\n  },\n});"
     }
   ],
   "resource.set": [
@@ -1438,15 +1438,15 @@
   "resource.set_texture": [
     {
       "sourceHash": "fe312c35ef2ab0f4",
-      "ts": "// How to set all pixels of an atlas\nexport default defineScript({\n  init(self) {\n    self.height = 128;\n    self.width = 128;\n    self.buffer = buffer.create(self.width * self.height, [{ name: hash(\"rgb\"), type: buffer.VALUE_TYPE_UINT8, count: 3 }]);\n    self.stream = buffer.get_stream(self.buffer, hash(\"rgb\"));\n\n    for (let y = 0; y < self.height; y++) {\n      for (let x = 0; x < self.width; x++) {\n        const index = y * self.width * 3 + x * 3;\n        self.stream[index + 0] = 0xff;\n        self.stream[index + 1] = 0x80;\n        self.stream[index + 2] = 0x10;\n      }\n    }\n\n    const resource_path = go.get(\"#model\", \"texture0\");\n    const args = { width: self.width, height: self.height, type: graphics.TEXTURE_TYPE_2D, format: graphics.TEXTURE_FORMAT_RGB, num_mip_maps: 1 };\n    resource.set_texture(resource_path, args, self.buffer);\n  },\n});"
+      "ts": "// How to set all pixels of an atlas\nexport default defineScript({\n  init() {\n    const height = 128;\n    const width = 128;\n    const buf = buffer.create(width * height, [{ name: hash(\"rgb\"), type: buffer.VALUE_TYPE_UINT8, count: 3 }]);\n    const stream = buffer.get_stream(buf, hash(\"rgb\"));\n\n    for (let y = 0; y < height; y++) {\n      for (let x = 0; x < width; x++) {\n        const index = y * width * 3 + x * 3;\n        stream[index + 0] = 0xff;\n        stream[index + 1] = 0x80;\n        stream[index + 2] = 0x10;\n      }\n    }\n\n    const resource_path = go.get(\"#model\", \"texture0\");\n    const args = { width, height, type: graphics.TEXTURE_TYPE_2D, format: graphics.TEXTURE_FORMAT_RGB, num_mip_maps: 1 };\n    resource.set_texture(resource_path, args, buf);\n    return { buffer: buf, stream };\n  },\n});"
     },
     {
       "sourceHash": "b4098f0f37b9c1d0",
-      "ts": "// How to update a specific region of an atlas by using the x,y values. Assumes the already set atlas is a 128x128 texture.\nexport default defineScript({\n  init(self) {\n    self.x = 16;\n    self.y = 16;\n    self.height = 128 - self.x * 2;\n    self.width = 128 - self.y * 2;\n    self.buffer = buffer.create(self.width * self.height, [{ name: hash(\"rgb\"), type: buffer.VALUE_TYPE_UINT8, count: 3 }]);\n    self.stream = buffer.get_stream(self.buffer, hash(\"rgb\"));\n\n    for (let y = 0; y < self.height; y++) {\n      for (let x = 0; x < self.width; x++) {\n        const index = y * self.width * 3 + x * 3;\n        self.stream[index + 0] = 0xff;\n        self.stream[index + 1] = 0x80;\n        self.stream[index + 2] = 0x10;\n      }\n    }\n\n    const resource_path = go.get(\"#model\", \"texture0\");\n    const args = { width: self.width, height: self.height, x: self.x, y: self.y, type: graphics.TEXTURE_TYPE_2D, format: graphics.TEXTURE_FORMAT_RGB, num_mip_maps: 1 };\n    resource.set_texture(resource_path, args, self.buffer);\n  },\n});"
+      "ts": "// How to update a specific region of an atlas by using the x,y values. Assumes the already set atlas is a 128x128 texture.\nexport default defineScript({\n  init() {\n    const x = 16;\n    const y = 16;\n    const height = 128 - x * 2;\n    const width = 128 - y * 2;\n    const buf = buffer.create(width * height, [{ name: hash(\"rgb\"), type: buffer.VALUE_TYPE_UINT8, count: 3 }]);\n    const stream = buffer.get_stream(buf, hash(\"rgb\"));\n\n    for (let row = 0; row < height; row++) {\n      for (let col = 0; col < width; col++) {\n        const index = row * width * 3 + col * 3;\n        stream[index + 0] = 0xff;\n        stream[index + 1] = 0x80;\n        stream[index + 2] = 0x10;\n      }\n    }\n\n    const resource_path = go.get(\"#model\", \"texture0\");\n    const args = { width, height, x, y, type: graphics.TEXTURE_TYPE_2D, format: graphics.TEXTURE_FORMAT_RGB, num_mip_maps: 1 };\n    resource.set_texture(resource_path, args, buf);\n    return { buffer: buf, stream };\n  },\n});"
     },
     {
       "sourceHash": "02d7f2ec29971bf1",
-      "ts": "// Update a texture from a buffer resource\ngo.property(\"my_buffer\", resource.buffer(\"/my_default_buffer.buffer\"));\n\nexport default defineScript({\n  init(self) {\n    const resource_path = go.get(\"#model\", \"texture0\");\n    // the \"my_buffer\" resource is expected to hold 128 * 128 * 3 bytes!\n    const args = {\n      width: 128,\n      height: 128,\n      type: graphics.TEXTURE_TYPE_2D,\n      format: graphics.TEXTURE_FORMAT_RGB,\n    };\n    // Note that the extra resource.get_buffer call is a requirement here\n    // since the \"self.my_buffer\" is just pointing to a buffer resource path\n    // and not an actual buffer object or buffer resource.\n    resource.set_texture(resource_path, args, resource.get_buffer(self.my_buffer));\n  },\n});"
+      "ts": "// Update a texture from a buffer resource\nexport default defineScript({\n  // Never call `go.property` yourself: the transpiler emits the chunk-scope\n  // registration from this field, and only this field types the property onto `self`.\n  properties: { my_buffer: resource.buffer(\"/my_default_buffer.buffer\") },\n\n  init(self) {\n    const resource_path = go.get(\"#model\", \"texture0\");\n    // the \"my_buffer\" resource is expected to hold 128 * 128 * 3 bytes!\n    const args = {\n      width: 128,\n      height: 128,\n      type: graphics.TEXTURE_TYPE_2D,\n      format: graphics.TEXTURE_FORMAT_RGB,\n    };\n    // Note that the extra resource.get_buffer call is a requirement here\n    // since the \"self.my_buffer\" is just pointing to a buffer resource path\n    // and not an actual buffer object or buffer resource.\n    resource.set_texture(resource_path, args, resource.get_buffer(self.my_buffer));\n  },\n});"
     },
     {
       "sourceHash": "15829bfe1b186bc3",
@@ -1464,13 +1464,13 @@
   "resource.texture": [
     {
       "sourceHash": "8cd63a7393c8a799",
-      "ts": "// Load a texture and set it to a model:\ngo.property(\"my_texture\", resource.texture(\"/texture.png\"));\n\nexport default defineScript({\n  init(self) {\n    go.set(\"#model\", \"texture0\", self.my_texture);\n  },\n});"
+      "ts": "// Load a texture and set it to a model:\nexport default defineScript({\n  // Never call `go.property` yourself: the transpiler emits the chunk-scope\n  // registration from this field, and only this field types the property onto `self`.\n  properties: { my_texture: resource.texture(\"/texture.png\") },\n\n  init(self) {\n    go.set(\"#model\", \"texture0\", self.my_texture);\n  },\n});"
     }
   ],
   "resource.tile_source": [
     {
       "sourceHash": "517b23c5ce0e56c6",
-      "ts": "// Load tile source and set it to a tile map:\ngo.property(\"my_tile_source\", resource.tile_source(\"/tilesource.tilesource\"));\n\nexport default defineScript({\n  init(self) {\n    go.set(\"#tilemap\", \"tile_source\", self.my_tile_source);\n  },\n});"
+      "ts": "// Load tile source and set it to a tile map:\nexport default defineScript({\n  // Never call `go.property` yourself: the transpiler emits the chunk-scope\n  // registration from this field, and only this field types the property onto `self`.\n  properties: { my_tile_source: resource.tile_source(\"/tilesource.tilesource\") },\n\n  init(self) {\n    go.set(\"#tilemap\", \"tile_source\", self.my_tile_source);\n  },\n});"
     }
   ],
   "socket.gettime": [
@@ -1548,7 +1548,7 @@
   "sound.play": [
     {
       "sourceHash": "fcfbfd341c41ec59",
-      "ts": "// Assuming the script belongs to an instance with a sound-component with id\n// \"sound\", this will make the component play its sound after 1 second:\nsound.play(\"#sound\", { delay: 1, gain: 0.9, pan: -1.0 });\n\n// Using the callback argument, you can chain several sounds together:\nfunction sound_done(self: unknown, message_id: unknown, message: unknown, sender: unknown) {\n  // play 'boom' sound fx when the countdown has completed\n  const { play_id } = message as { play_id: number };\n  if (message_id === hash(\"sound_done\") && play_id === (self as { countdown_id: number }).countdown_id) {\n    sound.play(\"#boom\", undefined, sound_done);\n  }\n}\n\nexport default defineScript({\n  init(self) {\n    self.countdown_id = sound.play(\"#countdown\", undefined, sound_done);\n  },\n});"
+      "ts": "// Assuming the script belongs to an instance with a sound-component with id\n// \"sound\", this will make the component play its sound after 1 second:\nsound.play(\"#sound\", { delay: 1, gain: 0.9, pan: -1.0 });\n\n// Using the callback argument, you can chain several sounds together:\nfunction sound_done(self: unknown, message_id: unknown, message: unknown, sender: unknown) {\n  // play 'boom' sound fx when the countdown has completed\n  const { play_id } = message as { play_id: number };\n  if (message_id === hash(\"sound_done\") && play_id === (self as { countdown_id: number }).countdown_id) {\n    sound.play(\"#boom\", undefined, sound_done);\n  }\n}\n\nexport default defineScript({\n  init() {\n    return { countdown_id: sound.play(\"#countdown\", undefined, sound_done) };\n  },\n});"
     }
   ],
   "sound.set_gain": [
@@ -1590,13 +1590,13 @@
   "sprite.set_hflip": [
     {
       "sourceHash": "2d067cdccd1fb269",
-      "ts": "// How to flip a sprite so it faces the horizontal movement (it is assumed that\n// the sprite component has id \"sprite\" and the original animation faces right):\nexport default defineScript({\n  update(self, dt) {\n    // calculate self.velocity somehow\n    sprite.set_hflip(\"#sprite\", self.velocity.x < 0);\n  },\n});"
+      "ts": "// How to flip a sprite so it faces the horizontal movement (it is assumed that\n// the sprite component has id \"sprite\" and the original animation faces right):\nexport default defineScript({\n  init() {\n    return { velocity: vmath.vector3() };\n  },\n\n  update(self, dt) {\n    // calculate self.velocity somehow\n    sprite.set_hflip(\"#sprite\", self.velocity.x < 0);\n  },\n});"
     }
   ],
   "sprite.set_vflip": [
     {
       "sourceHash": "89dcc94c14d785e2",
-      "ts": "// How to flip a sprite in a game which negates gravity as a game mechanic (it is\n// assumed that the sprite component has id \"sprite\" and the original animation\n// is up-right):\nexport default defineScript({\n  update(self, dt) {\n    // calculate self.up_side_down somehow, then:\n    sprite.set_vflip(\"#sprite\", self.up_side_down);\n  },\n});"
+      "ts": "// How to flip a sprite in a game which negates gravity as a game mechanic (it is\n// assumed that the sprite component has id \"sprite\" and the original animation\n// is up-right):\nexport default defineScript({\n  init() {\n    return { up_side_down: false };\n  },\n\n  update(self, dt) {\n    // calculate self.up_side_down somehow, then:\n    sprite.set_vflip(\"#sprite\", self.up_side_down);\n  },\n});"
     }
   ],
   "sys.deserialize": [
@@ -1704,7 +1704,7 @@
   "sys.load_buffer_async": [
     {
       "sourceHash": "6a383bca91cf11eb",
-      "ts": "// Load binary data from a custom project resource and update a texture resource:\nfunction my_callback(self: unknown, request_id: unknown, result: unknown) {\n  const { status, buf } = result as { status: number; buf: Opaque<\"buffer\"> };\n  if (status === resource.REQUEST_STATUS_FINISHED) {\n    resource.set_texture(\"/my_texture\", {}, buf); // texture args\n  }\n}\n\nconst my_request = sys.load_buffer_async(\"/assets/my_level_data.bin\", my_callback);\n\n// Load binary data from non-custom resource files on disk:\nfunction my_callback(self: unknown, request_id: unknown, result: unknown) {\n  const { first_asset, second_asset } = self as { first_asset: Hash; second_asset: Hash };\n  if ((result as { status: number }).status !== sys.REQUEST_STATUS_FINISHED) {\n    // uh oh! File could not be found, do something graceful\n  } else if (request_id === first_asset) {\n    // result.buffer contains data from my_level_asset.bin\n  } else if (request_id === second_asset) {\n    // result.buffer contains data from 'my_level.bin'\n  }\n}\n\nexport default defineScript({\n  init(self) {\n    self.first_asset = hash(\"folder_next_to_binary/my_level_asset.bin\");\n    self.second_asset = hash(\"/some_absolute_path/my_level.bin\");\n    self.first_request = sys.load_buffer_async(self.first_asset, my_callback);\n    self.second_request = sys.load_buffer_async(self.second_asset, my_callback);\n  },\n});"
+      "ts": "// Load binary data from a custom project resource and update a texture resource:\nfunction my_callback(self: unknown, request_id: unknown, result: unknown) {\n  const { status, buf } = result as { status: number; buf: Opaque<\"buffer\"> };\n  if (status === resource.REQUEST_STATUS_FINISHED) {\n    resource.set_texture(\"/my_texture\", {}, buf); // texture args\n  }\n}\n\nconst my_request = sys.load_buffer_async(\"/assets/my_level_data.bin\", my_callback);\n\n// Load binary data from non-custom resource files on disk:\nfunction my_callback(self: unknown, request_id: unknown, result: unknown) {\n  const { first_asset, second_asset } = self as { first_asset: Hash; second_asset: Hash };\n  if ((result as { status: number }).status !== sys.REQUEST_STATUS_FINISHED) {\n    // uh oh! File could not be found, do something graceful\n  } else if (request_id === first_asset) {\n    // result.buffer contains data from my_level_asset.bin\n  } else if (request_id === second_asset) {\n    // result.buffer contains data from 'my_level.bin'\n  }\n}\n\nexport default defineScript({\n  init() {\n    const first_path = \"folder_next_to_binary/my_level_asset.bin\";\n    const second_path = \"/some_absolute_path/my_level.bin\";\n    return {\n      first_asset: hash(first_path),\n      second_asset: hash(second_path),\n      first_request: sys.load_buffer_async(first_path, my_callback),\n      second_request: sys.load_buffer_async(second_path, my_callback),\n    };\n  },\n});"
     }
   ],
   "sys.load_resource": [
@@ -1846,7 +1846,7 @@
     },
     {
       "sourceHash": "f4f87939dbdd5fc3",
-      "ts": "// This example demonstrates how to update a text node that displays game score\n// in a counting fashion. It is assumed that the gui component receives messages\n// from the game when a new score is to be shown.\nexport default defineGuiScript({\n  init(self) {\n    // fetch the score text node for later use (assumes it is called \"score\")\n    self.score_node = gui.get_node(\"score\");\n    // keep track of the current score counted up so far\n    self.current_score = 0;\n    // keep track of the target score we should count up to\n    self.target_score = 0;\n    // how fast we will update the score, in score/second\n    self.score_update_speed = 1;\n  },\n\n  update(self, dt) {\n    // check if target score is more than current score\n    if (self.current_score < self.target_score) {\n      // increment current score according to the speed\n      self.current_score = self.current_score + dt * self.score_update_speed;\n      // check if we went past the target score, clamp current score in that case\n      if (self.current_score > self.target_score) {\n        self.current_score = self.target_score;\n      }\n      // update the score text node\n      gui.set_text(self.score_node, \"\" + math.floor(self.current_score));\n    }\n  },\n\n  on_message(self, message_id, message) {\n    // check the message\n    if (message_id === hash(\"set_score\")) {\n      self.target_score = message.score;\n    }\n  },\n});"
+      "ts": "// This example demonstrates how to update a text node that displays game score\n// in a counting fashion. It is assumed that the gui component receives messages\n// from the game when a new score is to be shown.\nexport default defineGuiScript({\n  init() {\n    return {\n      // fetch the score text node for later use (assumes it is called \"score\")\n      score_node: gui.get_node(\"score\"),\n      // keep track of the current score counted up so far\n      current_score: 0,\n      // keep track of the target score we should count up to\n      target_score: 0,\n      // how fast we will update the score, in score/second\n      score_update_speed: 1,\n    };\n  },\n\n  update(self, dt) {\n    // check if target score is more than current score\n    if (self.current_score < self.target_score) {\n      // increment current score according to the speed\n      self.current_score = self.current_score + dt * self.score_update_speed;\n      // check if we went past the target score, clamp current score in that case\n      if (self.current_score > self.target_score) {\n        self.current_score = self.target_score;\n      }\n      // update the score text node\n      gui.set_text(self.score_node, \"\" + math.floor(self.current_score));\n    }\n  },\n\n  on_message(self, message_id, message) {\n    // check the message\n    if (message_id === hash(\"set_score\") && typeof message.score === \"number\") {\n      self.target_score = message.score;\n    }\n  },\n});"
     }
   ],
   "vmath.clamp": [
@@ -1904,11 +1904,11 @@
     },
     {
       "sourceHash": "7cf8c0c1679ab05b",
-      "ts": "export default defineScript({\n  init(self) {\n    self.t = 0;\n  },\n\n  update(self, dt) {\n    self.t = self.t + dt;\n    if (self.t <= 1) {\n      const startrot = vmath.quat_rotation_z(0);\n      const endrot = vmath.quat_rotation_z(3.141592653);\n      const rot = vmath.lerp(self.t, startrot, endrot);\n      go.set_rotation(rot, \"go\");\n    }\n  },\n});"
+      "ts": "export default defineScript({\n  init() {\n    return { t: 0 };\n  },\n\n  update(self, dt) {\n    self.t = self.t + dt;\n    if (self.t <= 1) {\n      const startrot = vmath.quat_rotation_z(0);\n      const endrot = vmath.quat_rotation_z(3.141592653);\n      const rot = vmath.lerp(self.t, startrot, endrot);\n      go.set_rotation(rot, \"go\");\n    }\n  },\n});"
     },
     {
       "sourceHash": "0f4fdfe7a9a39df7",
-      "ts": "export default defineScript({\n  init(self) {\n    self.t = 0;\n  },\n\n  update(self, dt) {\n    self.t = self.t + dt;\n    if (self.t <= 1) {\n      const startx = 0;\n      const endx = 600;\n      const x = vmath.lerp(self.t, startx, endx);\n      go.set_position(vmath.vector3(x, 100, 0), \"go\");\n    }\n  },\n});"
+      "ts": "export default defineScript({\n  init() {\n    return { t: 0 };\n  },\n\n  update(self, dt) {\n    self.t = self.t + dt;\n    if (self.t <= 1) {\n      const startx = 0;\n      const endx = 600;\n      const x = vmath.lerp(self.t, startx, endx);\n      go.set_position(vmath.vector3(x, 100, 0), \"go\");\n    }\n  },\n});"
     }
   ],
   "vmath.matrix4": [
@@ -2094,7 +2094,7 @@
     },
     {
       "sourceHash": "858acbd524dfe896",
-      "ts": "export default defineScript({\n  init(self) {\n    self.t = 0;\n  },\n\n  update(self, dt) {\n    self.t = self.t + dt;\n    if (self.t <= 1) {\n      const startrot = vmath.quat_rotation_z(0);\n      const endrot = vmath.quat_rotation_z(3.141592653);\n      const rot = vmath.slerp(self.t, startrot, endrot);\n      go.set_rotation(rot, \"go\");\n    }\n  },\n});"
+      "ts": "export default defineScript({\n  init() {\n    return { t: 0 };\n  },\n\n  update(self, dt) {\n    self.t = self.t + dt;\n    if (self.t <= 1) {\n      const startrot = vmath.quat_rotation_z(0);\n      const endrot = vmath.quat_rotation_z(3.141592653);\n      const rot = vmath.slerp(self.t, startrot, endrot);\n      go.set_rotation(rot, \"go\");\n    }\n  },\n});"
     }
   ],
   "vmath.vector": [
