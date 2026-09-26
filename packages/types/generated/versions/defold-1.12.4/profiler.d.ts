@@ -129,7 +129,7 @@ declare global {
      * ```ts
      * // Show the last recorded frame
      * const recorded_frame_count = profiler.recorded_frame_count();
-     * profiler.view_recorded_frame(recorded_frame_count);
+     * profiler.view_recorded_frame({ frame: recorded_frame_count });
      * ```
      */
     function recorded_frame_count(): number;
