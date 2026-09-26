@@ -21,7 +21,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 - An extension whose `.script_api` writes a type as a list (`type: [table, string]`) is typed as that union by [resolve](./resolve.md) instead of `unknown`.
 - Symbol names mentioned in API reference prose link to their reference on the published site instead of opening a missing page.
-- More hover and API reference examples compile when pasted: 43 that kept script state on `self` (such as `render.draw` and `vmath.lerp`) return it from `init` or declare it in `properties`, and others check a value that can be missing before using it (`image.load`, `camera.screen_to_world`, `action.value` in `on_input`) or use the constant the declarations export (`gui.EASING_LINEAR`, `graphics.TEXTURE_*`, `sys.REQUEST_STATUS_FINISHED`).
+- Three more kinds of type error are fixed in hover and API reference examples: 43 that kept script state on `self` (such as [`render.draw`](/api/render) and [`vmath.lerp`](/api/vmath)) return it from `init` or declare it in `properties`, others check a value that can be missing before using it ([`image.load`](/api/image), [`camera.screen_to_world`](/api/camera), `action.value` in `on_input`), and others use the constant the declarations export ([`gui.EASING_LINEAR`](/api/gui), [`graphics.TEXTURE_*`](/api/graphics), [`sys.REQUEST_STATUS_FINISHED`](/api/sys)). Some of these examples still carry other type errors.
 
 ## v0.39.0
 
