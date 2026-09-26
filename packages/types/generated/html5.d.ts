@@ -18,7 +18,9 @@ declare global {
      * const res = html5.run("10 + 20"); // returns the string "30"
      * print(res);
      * const res_num = tonumber(res); // convert to number
-     * print(res_num - 20); // prints 10
+     * if (res_num !== undefined) {
+     *   print(res_num - 20); // prints 10
+     * }
      * ```
      */
     function run(code: string): string;

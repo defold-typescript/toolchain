@@ -137,7 +137,7 @@ declare global {
      * export default defineScript({
      *   on_input(self, action_id, action) {
      *     if (action_id === hash("touch")) {
-     *       if (action.pressed) {
+     *       if (action.pressed && action.screen_x !== undefined && action.screen_y !== undefined) {
      *         const perspective_camera = msg.url("#perspective_camera");
      *         const random_z = math.random(
      *           camera.get_near_z(perspective_camera) + 0.01,
@@ -169,7 +169,7 @@ declare global {
      * export default defineScript({
      *   on_input(self, action_id, action) {
      *     if (action_id === hash("touch")) {
-     *       if (action.pressed) {
+     *       if (action.pressed && action.screen_x !== undefined && action.screen_y !== undefined) {
      *         const world_position = camera.screen_xy_to_world(action.screen_x, action.screen_y);
      *         go.set_position(world_position, "/go1");
      *       }

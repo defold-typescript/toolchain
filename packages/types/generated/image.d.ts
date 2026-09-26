@@ -43,8 +43,10 @@ declare global {
      * ```ts
      * // How to get the block size and dimensions from a .astc file
      * const [s] = sys.load_resource("/assets/cat.astc");
-     * const header = image.get_astc_header(s);
-     * pprint(s);
+     * if (s !== undefined) {
+     *   const header = image.get_astc_header(s);
+     *   pprint(s);
+     * }
      * ```
      */
     function get_astc_header(buffer: string): { width: number; height: number; depth: number; block_size_x: number; block_size_y: number; block_size_z: number } | undefined;
@@ -81,7 +83,9 @@ declare global {
      * const imgurl = "http://www.site.com/image.png";
      * http.request(imgurl, "GET", (self, id, response) => {
      *   const img = image.load(response.response);
-     *   const tx = gui.new_texture("image_node", img.width, img.height, img.type, img.buffer);
+     *   if (img !== undefined) {
+     *     const tx = gui.new_texture("image_node", img.width, img.height, img.type, img.buffer);
+     *   }
      * });
      * ```
      */
@@ -119,16 +123,18 @@ declare global {
      * const imgurl = "http://www.site.com/image.png";
      * http.request(imgurl, "GET", (self, id, response) => {
      *   const img = image.load_buffer(response.response, { flip_vertically: true });
-     *   const tparams = {
-     *     width: img.width,
-     *     height: img.height,
-     *     type: graphics.TEXTURE_TYPE_2D,
-     *     format: graphics.TEXTURE_FORMAT_RGBA,
-     *   };
+     *   if (img !== undefined) {
+     *     const tparams = {
+     *       width: img.width,
+     *       height: img.height,
+     *       type: graphics.TEXTURE_TYPE_2D,
+     *       format: graphics.TEXTURE_FORMAT_RGBA,
+     *     };
      *
-     *   const my_texture_id = resource.create_texture("/my_custom_texture.texturec", tparams, img.buffer);
-     *   // Apply the texture to a model
-     *   go.set("/go1#model", "texture0", my_texture_id);
+     *     const my_texture_id = resource.create_texture("/my_custom_texture.texturec", tparams, img.buffer);
+     *     // Apply the texture to a model
+     *     go.set("/go1#model", "texture0", my_texture_id);
+     *   }
      * });
      * ```
      */
