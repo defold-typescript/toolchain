@@ -262,8 +262,10 @@ export const RETURN_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
 // safe function "returns nil followed by an error message", and
 // `socket.newtry`'s try function returns its first argument when it is truthy
 // and throws otherwise, the LuaSocket contract its example relies on to unwrap
-// `socket.connect`'s `client, err` pair. `reason` quotes the slot prose the
-// provenance test searches for, as for the `nil` entries.
+// `socket.connect`'s `client, err` pair. The try function takes that pair
+// destructured into separate arguments; a boxed `LuaMultiReturn` is rejected
+// because TSTL passes it as one table, which is always truthy. `reason` quotes
+// the slot prose the provenance test searches for, as for the `nil` entries.
 export interface ReturnTypeCorrection {
   readonly ts: string;
   readonly upstream: readonly string[];
@@ -291,7 +293,7 @@ export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> 
   [
     "socket.newtry",
     {
-      ts: "{ <T>(result: LuaMultiReturn<[T | undefined, ...unknown[]]>): T; <T>(value: T | undefined, ...rest: unknown[]): T }",
+      ts: "<T>(value: T | undefined, ...rest: T extends { readonly __tstlMultiReturn: unknown } ? [boxedMultiReturn: never] : unknown[]) => T",
       upstream: ["function"],
       reason: "the customized try function.",
     },

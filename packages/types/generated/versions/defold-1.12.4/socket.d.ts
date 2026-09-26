@@ -640,15 +640,18 @@ declare global {
      *   // create a try function that closes 'c' on error
      *   const try_ = socket.newtry(() => c.close());
      *   // do everything reassured c will be closed
-     *   try_(c.send("hello there?\r\n"));
-     *   const answer = try_(c.receive());
+     *   const [sent, sendError, lastByte] = c.send("hello there?\r\n");
+     *   try_(sent, sendError, lastByte);
+     *   const [line, receiveError, partial] = c.receive();
+     *   const answer = try_(line, receiveError, partial);
      *   // ...
-     *   try_(c.send("good bye\r\n"));
+     *   const [byeSent, byeError, byeLastByte] = c.send("good bye\r\n");
+     *   try_(byeSent, byeError, byeLastByte);
      *   c.close();
      * }
      * ```
      */
-    function newtry(finalizer?: () => void): { <T>(result: LuaMultiReturn<[T | undefined, ...unknown[]]>): T; <T>(value: T | undefined, ...rest: unknown[]): T };
+    function newtry(finalizer?: () => void): <T>(value: T | undefined, ...rest: T extends { readonly __tstlMultiReturn: unknown } ? [boxedMultiReturn: never] : unknown[]) => T;
     /**
      * Converts a function that throws exceptions into a safe function. This function only catches exceptions thrown by try functions. It does not catch normal Lua errors.
      * Beware that if your function performs some illegal operation that raises an error, the protected function will catch the error and return it as a string. This is because try functions uses errors as the mechanism to throw exceptions.
@@ -659,10 +662,13 @@ declare global {
      * ```ts
      * const dostuff = socket.protect(() => {
      *   let try_ = socket.newtry();
-     *   const c = try_(socket.connect("myserver.com", 80));
+     *   const [conn, connectError] = socket.connect("myserver.com", 80);
+     *   const c = try_(conn, connectError);
      *   try_ = socket.newtry(() => c.close());
-     *   try_(c.send("hello?\r\n"));
-     *   const answer = try_(c.receive());
+     *   const [sent, sendError, lastByte] = c.send("hello?\r\n");
+     *   try_(sent, sendError, lastByte);
+     *   const [line, receiveError, partial] = c.receive();
+     *   const answer = try_(line, receiveError, partial);
      *   c.close();
      * });
      *

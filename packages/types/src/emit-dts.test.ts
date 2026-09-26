@@ -4552,9 +4552,9 @@ describe("signatures upstream documents in prose", () => {
     );
   });
 
-  test("socket.newtry returns a try function that unwraps its first argument, and takes no finalizer", () => {
+  test("socket.newtry returns a try function that unwraps its first argument, rejects a boxed multi-return, and takes no finalizer", () => {
     expect(emittedLine(socketDoc, "function newtry(").trim()).toBe(
-      "function newtry(finalizer?: () => void): { <T>(result: LuaMultiReturn<[T | undefined, ...unknown[]]>): T; <T>(value: T | undefined, ...rest: unknown[]): T };",
+      "function newtry(finalizer?: () => void): <T>(value: T | undefined, ...rest: T extends { readonly __tstlMultiReturn: unknown } ? [boxedMultiReturn: never] : unknown[]) => T;",
     );
   });
 
