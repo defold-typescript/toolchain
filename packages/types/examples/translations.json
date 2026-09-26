@@ -1482,13 +1482,13 @@
   "socket.newtry": [
     {
       "sourceHash": "38a669dbf612b327",
-      "ts": "// Perform operations on an open socket c:\nconst [c] = socket.connect(\"localhost\", 80);\nif (c !== undefined) {\n  // create a try function that closes 'c' on error\n  const try_ = socket.newtry(() => c.close());\n  // do everything reassured c will be closed\n  try_(c.send(\"hello there?\\r\\n\"));\n  const answer = try_(c.receive());\n  // ...\n  try_(c.send(\"good bye\\r\\n\"));\n  c.close();\n}"
+      "ts": "// Perform operations on an open socket c:\nconst [c] = socket.connect(\"localhost\", 80);\nif (c !== undefined) {\n  // create a try function that closes 'c' on error\n  const try_ = socket.newtry(() => c.close());\n  // do everything reassured c will be closed\n  const [sent, sendError, lastByte] = c.send(\"hello there?\\r\\n\");\n  try_(sent, sendError, lastByte);\n  const [line, receiveError, partial] = c.receive();\n  const answer = try_(line, receiveError, partial);\n  // ...\n  const [byeSent, byeError, byeLastByte] = c.send(\"good bye\\r\\n\");\n  try_(byeSent, byeError, byeLastByte);\n  c.close();\n}"
     }
   ],
   "socket.protect": [
     {
       "sourceHash": "478d4974b491bda9",
-      "ts": "const dostuff = socket.protect(() => {\n  let try_ = socket.newtry();\n  const c = try_(socket.connect(\"myserver.com\", 80));\n  try_ = socket.newtry(() => c.close());\n  try_(c.send(\"hello?\\r\\n\"));\n  const answer = try_(c.receive());\n  c.close();\n});\n\nconst [n, error] = dostuff();"
+      "ts": "const dostuff = socket.protect(() => {\n  let try_ = socket.newtry();\n  const [conn, connectError] = socket.connect(\"myserver.com\", 80);\n  const c = try_(conn, connectError);\n  try_ = socket.newtry(() => c.close());\n  const [sent, sendError, lastByte] = c.send(\"hello?\\r\\n\");\n  try_(sent, sendError, lastByte);\n  const [line, receiveError, partial] = c.receive();\n  const answer = try_(line, receiveError, partial);\n  c.close();\n});\n\nconst [n, error] = dostuff();"
     }
   ],
   "socket.skip": [

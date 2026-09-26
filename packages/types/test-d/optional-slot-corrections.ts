@@ -61,10 +61,20 @@ const weld = b2d.joint.create_weld(body, body);
 void weld;
 
 // socket.newtry — socket.protect's example creates a try function with no
-// finalizer, and that try unwraps the `client, err` pair socket.connect returns.
+// finalizer, and that try unwraps the `client, err` pair socket.connect returns
+// once it is destructured into separate arguments.
 const try_ = socket.newtry();
-const client: socket.client = try_(socket.connect("myserver.com", 80));
+const [conn, connectError] = socket.connect("myserver.com", 80);
+const client: socket.client = try_(conn, connectError);
 void client;
+const plain: string = try_("ok");
+void plain;
+
+// @ts-expect-error a boxed multi-return reaches Lua as one table, which is always truthy.
+try_(socket.connect("myserver.com", 80));
+
+// @ts-expect-error rejected in statement position too, where the result is discarded.
+try_(client.send("hello"));
 
 // Polarity: a genuinely required slot in front of a corrected one stays
 // required, so the correction is a slot promotion and not a slide to
