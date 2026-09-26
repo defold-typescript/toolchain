@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   type ApiFunction,
@@ -9,7 +10,7 @@ import {
   symbolIdentityKey,
   type TranslationStore,
 } from "@defold-typescript/types";
-import { type AvailabilityLookup, badgeCategoryFromLabel } from "./api-surface";
+import { type AvailabilityLookup, apiModuleSymbols, badgeCategoryFromLabel } from "./api-surface";
 import {
   loadCombinedSurface,
   loadSignaturesArtifact,
@@ -318,6 +319,41 @@ describe("loadCombinedSurface (committed artifacts)", () => {
           signatures.versions[newest as string]?.[symbolIdentityKey(entry.identity)];
         expect(entry.authoritativeSignature).toBe(authoritative as string);
       }
+    }
+  });
+
+  test("no Combined page's authoritative signature spans more than one line", () => {
+    const multiLine = surface.namespaces.flatMap((ns) =>
+      [...(combinedNamespaceToApiPage(ns).authoritativeSignatures ?? new Map()).entries()]
+        .filter(([, signature]) => signature.includes("\n"))
+        .map(([key]) => key),
+    );
+    expect(multiLine).toEqual([]);
+  });
+
+  test("the b2d.shape page renders one row per arm the shipped b2d_shape.d.ts declares", () => {
+    const declared = readFileSync(join(REAL_TYPES_DIR, "generated", "b2d_shape.d.ts"), "utf8")
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.startsWith("function "));
+    const shapeNs = surface.namespaces.find((n) => n.namespace === "b2d.shape");
+    if (!shapeNs) throw new Error("b2d.shape missing from the committed Combined surface");
+    const page = combinedNamespaceToApiPage(shapeNs);
+    const rows = apiModuleSymbols(page, page.translations, page.signatures).filter(
+      (s) => s.kind === "function",
+    );
+    const names = [...new Set(rows.map((s) => s.name))];
+    expect(names.length).toBeGreaterThan(0);
+    for (const name of names) {
+      const short = name.slice("b2d.shape.".length);
+      const named = rows.filter((s) => s.name === name);
+      expect({ name, rows: named.length }).toEqual({
+        name,
+        rows: declared.filter((line) => line.startsWith(`function ${short}(`)).length,
+      });
+      expect(
+        named.filter((s) => s.signature.includes('(body: Opaque<"b2Body">, shape_index: number')),
+      ).toHaveLength(1);
     }
   });
 });

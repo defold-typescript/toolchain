@@ -9072,27 +9072,49 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### b2d.shape
 
 - function are_contact_events_enabled(shape_id: Opaque<"b2Shape">): boolean; [since 1.13.0]
+- function are_contact_events_enabled(body: Opaque<"b2Body">, shape_index: number): boolean;
 - function are_hit_events_enabled(shape_id: Opaque<"b2Shape">): boolean; [since 1.13.0]
+- function are_hit_events_enabled(body: Opaque<"b2Body">, shape_index: number): boolean;
 - function are_pre_solve_events_enabled(shape_id: Opaque<"b2Shape">): boolean; [since 1.13.0]
+- function are_pre_solve_events_enabled(body: Opaque<"b2Body">, shape_index: number): boolean;
 - function are_sensor_events_enabled(shape_id: Opaque<"b2Shape">): boolean; [since 1.13.0]
+- function are_sensor_events_enabled(body: Opaque<"b2Body">, shape_index: number): boolean;
 - function enable_contact_events(shape_id: Opaque<"b2Shape">, enable: boolean): void; [since 1.13.0]
+- function enable_contact_events(body: Opaque<"b2Body">, shape_index: number, enable: boolean): void;
 - function enable_hit_events(shape_id: Opaque<"b2Shape">, enable: boolean): void; [since 1.13.0]
+- function enable_hit_events(body: Opaque<"b2Body">, shape_index: number, enable: boolean): void;
 - function enable_pre_solve_events(shape_id: Opaque<"b2Shape">, enable: boolean): void; [since 1.13.0]
+- function enable_pre_solve_events(body: Opaque<"b2Body">, shape_index: number, enable: boolean): void;
 - function enable_sensor_events(shape_id: Opaque<"b2Shape">, enable: boolean): void; [since 1.13.0]
+- function enable_sensor_events(body: Opaque<"b2Body">, shape_index: number, enable: boolean): void;
 - function get_body(shape_id: Opaque<"b2Shape">): Opaque<"b2Body">; [since 1.13.0]
+- function get_body(body: Opaque<"b2Body">, shape_index: number): Opaque<"b2Body">;
 - function get_closest_point(shape_id: Opaque<"b2Shape">, target: Vector3): Vector3; [since 1.13.0]
+- function get_closest_point(body: Opaque<"b2Body">, shape_index: number, target: Vector3): Vector3;
 - function get_contact_capacity(shape_id: Opaque<"b2Shape">): number; [since 1.13.0]
+- function get_contact_capacity(body: Opaque<"b2Body">, shape_index: number): number;
 - function get_contact_data(shape_id: Opaque<"b2Shape">): Record<string | number, unknown>; [since 1.13.0]
+- function get_contact_data(body: Opaque<"b2Body">, shape_index: number): Record<string | number, unknown>;
 - function get_mass_data(shape_id: Opaque<"b2Shape">): { mass: number; center: Vector3; inertia: number }; [since 1.13.0]
+- function get_mass_data(body: Opaque<"b2Body">, shape_index: number): { mass: number; center: Vector3; inertia: number };
 - function get_material(shape_id: Opaque<"b2Shape">): number; [since 1.13.0]
+- function get_material(body: Opaque<"b2Body">, shape_index: number): number;
 - function get_sensor_capacity(shape_id: Opaque<"b2Shape">): number; [since 1.13.0]
+- function get_sensor_capacity(body: Opaque<"b2Body">, shape_index: number): number;
 - function get_sensor_overlaps(shape_id: Opaque<"b2Shape">): { shape_id: number }[]; [since 1.13.0]
+- function get_sensor_overlaps(body: Opaque<"b2Body">, shape_index: number): { shape_id: number }[];
 - function get_shape(shape_id: Opaque<"b2Shape">): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; [since 1.13.0]
+- function get_shape(body: Opaque<"b2Body">, shape_index: number): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 };
 - function get_world(shape_id: Opaque<"b2Shape">): Opaque<"b2World">; [since 1.13.0]
+- function get_world(body: Opaque<"b2Body">, shape_index: number): Opaque<"b2World">;
 - function is_valid(shape_id: Opaque<"b2Shape">): boolean; [since 1.13.0]
+- function is_valid(body: Opaque<"b2Body">, shape_index: number): boolean;
 - function ray_cast(shape_id: Opaque<"b2Shape">, origin: Vector3, translation: Vector3, max_fraction?: number): { point: Vector3; normal: Vector3; fraction: number; iterations: number }; [since 1.13.0]
+- function ray_cast(body: Opaque<"b2Body">, shape_index: number, origin: Vector3, translation: Vector3, max_fraction?: number): { point: Vector3; normal: Vector3; fraction: number; iterations: number };
 - function set_material(shape_id: Opaque<"b2Shape">, material: number): void; [since 1.13.0]
+- function set_material(body: Opaque<"b2Body">, shape_index: number, material: number): void;
 - function set_shape(shape_id: Opaque<"b2Shape">, definition: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, update_mass?: boolean): void; [since 1.13.0]
+- function set_shape(body: Opaque<"b2Body">, shape_index: number, definition: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, update_mass?: boolean): void;
 - b2d.shape.SHAPE_TYPE_BOX: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_BOX" } [since 1.13.0]
 - b2d.shape.SHAPE_TYPE_CAPSULE: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_CAPSULE" } [since 1.13.0]
 - b2d.shape.SHAPE_TYPE_CHAIN: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_CHAIN" } [since 1.13.0]

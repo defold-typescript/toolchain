@@ -329,6 +329,13 @@ export interface ApiPage {
    */
   authoritativeSlotTypes?: ReadonlyMap<string, SlotTypes>;
   /**
+   * The further arms of a generated declaration that declares several overloads
+   * (the `b2d.shape` `body, shape_index` alternative), keyed by the same exact
+   * identity as {@link authoritativeSignatures}, which carries the first arm.
+   * Present only on Combined pages; each arm renders as its own row.
+   */
+  authoritativeArms?: ReadonlyMap<string, readonly string[]>;
+  /**
    * `engine` for Defold-engine namespaces emitted from `api-targets.json` `modules`
    * and the synthetic globals page; `lua-stdlib` for pure-Lua / LuaJIT surfaces
    * (currently `base`, `bit`) sourced from `target.luaStdlib` and rendered under
@@ -940,7 +947,12 @@ function authoritativeConstantUnionAliases(
 export function apiModuleSymbols(
   page: Pick<
     ApiPage,
-    "module" | "category" | "availability" | "authoritativeSignatures" | "authoritativeSlotTypes"
+    | "module"
+    | "category"
+    | "availability"
+    | "authoritativeSignatures"
+    | "authoritativeSlotTypes"
+    | "authoritativeArms"
   >,
   translations: TranslationStore = {},
   signatures: SignatureStore = {},
@@ -1053,6 +1065,23 @@ export function apiModuleSymbols(
     // ref-doc description), and the parameter/return tables only when an entry
     // is paired to it or the primary row's call shape could not hold them. The
     // example stays on the primary row.
+    // A generated declaration's further arms render as their own rows, like
+    // unpaired authored arms: shared prose, no tables, no badge of their own.
+    if (ov === null && authSig !== undefined) {
+      for (const signature of page.authoritativeArms?.get(identity) ?? []) {
+        symbols.push({
+          kind: "function",
+          name: fn.name,
+          signature,
+          docMarkdown: fixtureDoc,
+          parameters: [],
+          returnValues: [],
+          ...(fn.deprecated !== undefined ? { deprecated: fn.deprecated } : {}),
+          ...(fn.global ? { global: true } : {}),
+          ...(fn.docSource ? { docSource: fn.docSource } : {}),
+        });
+      }
+    }
     if (ov !== null) {
       overrideEmitted.add(fn.name);
       for (const [k, signature] of ov.signatures.slice(1).entries()) {
