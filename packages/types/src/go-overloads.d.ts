@@ -9,6 +9,7 @@ interface ScriptProperty<TValue> {
 declare global {
   namespace go {
     interface GoPropertyOptions {
+      /** Zero-based element index into an array property; the transpiler emits Defold's 1-based index. */
       index?: number;
       key?: Hash | string;
       keys?: (Hash | string)[];
@@ -20,7 +21,7 @@ declare global {
      * @param url - url of the game object or component having the property
      * @param property - id of the property to retrieve
      * @param options - optional options table
-     * - index number index into array property (1 based)
+     * - index number zero-based index into array property; the transpiler emits Defold's 1-based index
      * - key hash or string name of internal property
      * - keys array of hashes or strings identifying internal component resources (e.g. a particle fx emitter, see examples below)
      * @returns the value of the specified property
@@ -54,7 +55,7 @@ declare global {
      * @param property - id of the property to set
      * @param value - the value to set, or an array of vector4 to set a material property array
      * @param options - optional options table
-     * - index integer index into array property (1 based)
+     * - index integer zero-based index into array property; the transpiler emits Defold's 1-based index
      * - key hash or string name of internal property
      * - keys array of hashes or strings identifying internal component resources (e.g. a particle fx emitter, see examples below)
      * @example
