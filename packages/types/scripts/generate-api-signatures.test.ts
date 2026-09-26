@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import committed from "../api-signatures.json" with { type: "json" };
 import { OVERLOAD_COVERED_SKIPS } from "../src/emit-dts";
@@ -20,11 +20,14 @@ const SIGNATURES_PATH = resolve(PACKAGE_ROOT, "api-signatures.json");
 const COMPLETE_TARGETS = selectCompleteVersionSurfaces(loadApiTargets());
 const CURRENT_VERSION = (COMPLETE_TARGETS.find((t) => t.default)?.id ?? "").replace(/^defold-/, "");
 
+function committedDtsDir(version: string): string {
+  return version === CURRENT_VERSION
+    ? resolve(PACKAGE_ROOT, "generated")
+    : resolve(PACKAGE_ROOT, "generated", "versions", `defold-${version}`);
+}
+
 function committedDtsBlob(version: string): string {
-  const dir =
-    version === CURRENT_VERSION
-      ? resolve(PACKAGE_ROOT, "generated")
-      : resolve(PACKAGE_ROOT, "generated", "versions", `defold-${version}`);
+  const dir = committedDtsDir(version);
   return readdirSync(dir)
     .filter((file) => file.endsWith(".d.ts"))
     .map((file) => readFileSync(resolve(dir, file), "utf8"))
@@ -65,12 +68,39 @@ describe("authoritative signature artifact", () => {
       const folded = foldedKeysFor(target);
       const blob = committedDtsBlob(version);
       const missing = Object.entries(perSymbol).filter(
-        ([key, signature]) => !folded.has(key) && !blob.includes(signature),
+        ([key, signature]) =>
+          !folded.has(key) && !signature.split("\n").every((arm) => blob.includes(arm)),
       );
       expect(missing).toEqual([]);
       // The exclusion must not swallow the whole assertion.
       expect(Object.keys(perSymbol).length).toBeGreaterThan(folded.size * 10);
     }
+  });
+
+  test("every b2d.shape function lists each arm its version's committed b2d_shape.d.ts declares", () => {
+    let checked = 0;
+    for (const target of COMPLETE_TARGETS) {
+      const version = target.id.replace(/^defold-/, "");
+      const file = resolve(committedDtsDir(version), "b2d_shape.d.ts");
+      if (!existsSync(file)) continue;
+      const declared = readFileSync(file, "utf8")
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line.startsWith("function "));
+      const perSymbol = artifact.versions[version] as Record<string, string>;
+      const entries = Object.entries(perSymbol).filter(([key]) => {
+        const [ns, kind] = key.split("\0");
+        return ns === "b2d.shape" && kind === "FUNCTION";
+      });
+      expect(entries.length).toBeGreaterThan(0);
+      for (const [key, signature] of entries) {
+        const name = (key.split("\0")[2] ?? "").slice("b2d.shape.".length);
+        const arms = declared.filter((line) => line.startsWith(`function ${name}(`));
+        expect({ key, arms: signature.split("\n") }).toEqual({ key, arms });
+        checked++;
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
   });
 
   test("the audited drift cases resolve to their curated declaration-backed shapes", () => {

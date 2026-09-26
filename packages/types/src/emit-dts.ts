@@ -2767,7 +2767,10 @@ export interface SymbolSignature {
  * {@link collectNestedGroups} tree the declaration emitter walks, so neither
  * surface can decide on its own which members are nested or how deep they go.
  * The caller applies the same `skipFunctions` filter the `.d.ts` generation
- * does, so a dropped member never yields a signature.
+ * does, so a dropped member never yields a signature. A top-level function the
+ * declaration emits with a first-slot alternative overload carries one arm per
+ * line, primary first, the same convention as the authored fold; its
+ * `slotTypes` describe the primary arm only.
  */
 export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): SymbolSignature[] {
   const prefix = `${module.namespace}.`;
@@ -2807,19 +2810,28 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
     const prepared = prepareFunction(fn, prefix);
     if (prepared === null) continue;
     const slotTypes: Record<string, string> = {};
-    out.push({
-      identity: fnIdentity(fn),
-      tsSignature: emitFunction(
-        prepared,
-        emitName(prepared.name),
-        mapType,
-        resolver,
-        constantTokens,
-        urlParameters,
-        slotTypes,
-      ),
+    const primary = emitFunction(
+      prepared,
+      emitName(prepared.name),
+      mapType,
+      resolver,
+      constantTokens,
+      urlParameters,
       slotTypes,
-    });
+    );
+    const alternative = firstSlotAlternative(prepared, module.namespace);
+    const tsSignature =
+      alternative === null
+        ? primary
+        : `${primary}\n${emitFunction(
+            alternative,
+            emitName(prepared.name),
+            mapType,
+            resolver,
+            constantTokens,
+            urlParameters,
+          )}`;
+    out.push({ identity: fnIdentity(fn), tsSignature, slotTypes });
   }
 
   const nested = flattenNestedGroups(collectNestedGroups(module, prefix));

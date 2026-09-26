@@ -163,6 +163,7 @@ export function combinedNamespaceToApiPage(ns: CombinedNamespace): ApiPage {
     availability: ns.availability,
     authoritativeSignatures: combinedAuthoritativeSignatures(ns),
     authoritativeSlotTypes: combinedAuthoritativeSlotTypes(ns),
+    authoritativeArms: combinedAuthoritativeArms(ns),
   };
 }
 
@@ -205,10 +206,9 @@ function innerRenderSignature(identity: ApiSymbolIdentity, declaration: string):
           ? first
           : "";
       }
-      const body = decl.replace(/^function /, "").replace(/;\s*$/, "");
-      const paren = body.indexOf("(");
-      if (paren === -1) return "";
-      return `${identity.name}${body.slice(paren)}`;
+      // A generated multi-arm declaration carries one arm per line; the map
+      // keeps arm 0, and `combinedAuthoritativeArms` carries the rest.
+      return innerFunctionArm(identity, decl.split("\n")[0] ?? "");
     }
     case "CONSTANT":
     case "VARIABLE":
@@ -224,6 +224,40 @@ function innerRenderSignature(identity: ApiSymbolIdentity, declaration: string):
     default:
       return "";
   }
+}
+
+function innerFunctionArm(identity: ApiSymbolIdentity, arm: string): string {
+  const body = arm
+    .trim()
+    .replace(/^function /, "")
+    .replace(/;\s*$/, "");
+  const paren = body.indexOf("(");
+  if (paren === -1) return "";
+  return `${identity.name}${body.slice(paren)}`;
+}
+
+/**
+ * The inner render forms of arms 1..n of every generated `function `
+ * declaration that declares more than one arm, keyed by the same exact identity
+ * as {@link combinedAuthoritativeSignatures} (which carries arm 0). An authored
+ * fold is excluded: its arms 1..n already render from the signature store.
+ */
+export function combinedAuthoritativeArms(
+  ns: CombinedNamespace,
+): ReadonlyMap<string, readonly string[]> {
+  const map = new Map<string, readonly string[]>();
+  for (const entry of ns.entries) {
+    if (entry.identity.kind !== "FUNCTION") continue;
+    const decl = entry.authoritativeSignature.trim();
+    if (!decl.startsWith("function ")) continue;
+    const arms = decl
+      .split("\n")
+      .slice(1)
+      .map((arm) => innerFunctionArm(entry.identity, arm))
+      .filter((arm) => arm !== "");
+    if (arms.length > 0) map.set(symbolIdentityKey(entry.identity), arms);
+  }
+  return map;
 }
 
 /**

@@ -4383,6 +4383,21 @@ describe("the body, shape_index alternative arity", () => {
     }
   });
 
+  test("the signature entry carries one line per declared arm, in declaration order", () => {
+    const module = parseDefoldApiDoc(b2dShapeDoc);
+    const out = emitDeclarations(module);
+    const entries = emitSymbolSignatures(module);
+    const shapeSlotted = module.functions.filter((fn) => fn.parameters[0]?.name === "shape_id");
+    expect(shapeSlotted.length).toBeGreaterThan(0);
+    for (const fn of shapeSlotted) {
+      const name = fn.name.slice("b2d.shape.".length);
+      const entry = entries.find(
+        (e) => e.identity.kind === "FUNCTION" && e.identity.name === fn.name,
+      );
+      expect(entry?.tsSignature.split("\n")).toEqual(signaturesOf(out, name));
+    }
+  });
+
   test("an element outside the curated set emits one signature, whatever its prose says", () => {
     const outside = parseDefoldApiDoc(
       JSON.parse(JSON.stringify(b2dShapeDoc).replaceAll("b2d.shape", "b2d.outside")),
@@ -4392,6 +4407,10 @@ describe("the body, shape_index alternative arity", () => {
       functions: [requireFunction(outside, "b2d.outside.set_shape")],
     });
     expect(signaturesOf(out, "set_shape")).toHaveLength(1);
+    const entry = emitSymbolSignatures(outside).find(
+      (e) => e.identity.name === "b2d.outside.set_shape",
+    );
+    expect(entry?.tsSignature.split("\n")).toHaveLength(1);
   });
 
   test("a curated slot whose upstream prose no longer offers the alternative throws", () => {
