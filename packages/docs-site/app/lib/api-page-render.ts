@@ -802,12 +802,15 @@ export function apiPageMarkdown(
       }
       return ['<li class="api-overload">', "", parts.join("\n\n"), "", "</li>"].join("\n");
     });
-    // The forms lead the block. An authored note follows them, still ahead of the
-    // shared example it warns about.
-    const body = [['<ol class="api-overloads">', ...items, "</ol>"].join("\n")];
+    // An availability note every form shares heads the block, since it qualifies
+    // all of them; otherwise the forms lead, each carrying its own note under its
+    // signature. An authored note follows the forms, still ahead of the shared
+    // example it warns about.
+    const body: string[] = [];
+    if (sameBadges && badges[0]) body.push(badges[0]);
+    body.push(['<ol class="api-overloads">', ...items, "</ol>"].join("\n"));
     const note = noteFor(head.name);
     if (note) body.push(note);
-    if (sameBadges && badges[0]) body.push(badges[0]);
     if (sameDoc && linked[0]?.docMarkdown) body.push(linked[0].docMarkdown);
     if (blockExample) body.push(blockExample);
     if (sameParams && (tableForm?.parameters.length ?? 0) > 0) {

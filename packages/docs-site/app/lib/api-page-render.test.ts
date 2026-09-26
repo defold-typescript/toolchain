@@ -1200,6 +1200,40 @@ describe("availability badges", () => {
     }
   });
 
+  // Both arms of `model.material` on one page, so they render as one overload
+  // block; each arm's span is the only thing the two cases vary.
+  function overloadPage(oldSpan: string[], newSpan: string[]): ApiPage {
+    const page = modelPage(material, { availableIn: oldSpan }, "/api/model", [
+      { ...newMaterialArm, availableIn: newSpan },
+    ]);
+    page.module.functions.push(materialWithOptions);
+    return page;
+  }
+
+  test("a note every overload form shares sits once above the forms", () => {
+    const md = apiPageMarkdown(overloadPage(["1.13.0"], ["1.13.0"]), noLink);
+    const block = blockOf(md, "### `model.material");
+    const note = block.indexOf('<div class="api-availability"');
+    expect(note).toBeGreaterThan(-1);
+    expect(note).toBeLessThan(block.indexOf('<ol class="api-overloads">'));
+    expect(block.match(/class="api-availability"/g)).toHaveLength(1);
+  });
+
+  test("a note one form carries alone sits right under that form's signature", () => {
+    const md = apiPageMarkdown(overloadPage(["1.12.4"], ["1.13.0"]), noLink);
+    const block = blockOf(md, "### `model.material");
+    expect(block.indexOf('<div class="api-availability"')).toBeGreaterThan(
+      block.indexOf('<ol class="api-overloads">'),
+    );
+    const forms = block.split('<li class="api-overload">').slice(1);
+    expect(forms).toHaveLength(2);
+    for (const form of forms) {
+      const parts = form.trim().split("\n\n");
+      expect(parts[0]?.startsWith("`")).toBe(true);
+      expect(parts[1]?.startsWith('<div class="api-availability"')).toBe(true);
+    }
+  });
+
   const headingLineOf = (md: string, prefix: string) =>
     md.split("\n").find((line) => line.startsWith(prefix));
 
@@ -3066,15 +3100,26 @@ describe("grouped overload blocks (committed artifacts)", () => {
           ),
         }).toEqual({ name: head.name, heading: true });
         const body = lines.indexOf('<div class="api-symbol-body">');
-        const first = lines
+        const rest = lines
           .slice(body + 1)
           .join("\n")
-          .trimStart()
-          .split("\n")[0];
-        expect({ name: head.name, first }).toEqual({
+          .trimStart();
+        // An availability note every form shares is the one thing allowed above
+        // the forms, stated once for the block.
+        const note = rest.startsWith('<div class="api-availability"')
+          ? rest.slice(0, rest.indexOf("</div>") + "</div>".length)
+          : "";
+        const afterNote = rest.slice(note.length).trimStart();
+        expect({ name: head.name, first: afterNote.split("\n")[0] }).toEqual({
           name: head.name,
           first: '<ol class="api-overloads">',
         });
+        if (note) {
+          expect({
+            name: head.name,
+            repeated: afterNote.includes('class="api-availability"'),
+          }).toEqual({ name: head.name, repeated: false });
+        }
         checked += 1;
       }
     }
