@@ -1159,7 +1159,9 @@
 
   /* The availability list swaps its bullets for the same chips, so each fact
    * reads with the category its heading shows. A fact with no category keeps an
-   * empty chip-sized slot, so every label starts at the same column. */
+   * empty chip-sized slot, so every label starts at the same column. The list
+   * rule's authoritative copy is the unlayered mirror in critical.css, since
+   * this layered one loses to that file's `.prose ul`. */
   .prose .api-availability ul {
     list-style: none;
     padding-left: 0;
@@ -1167,6 +1169,8 @@
 
   .prose .api-availability-mark {
     margin-right: 0.45em;
+    position: relative;
+    top: -2px;
   }
 
   .prose .api-badge-dot--global {
