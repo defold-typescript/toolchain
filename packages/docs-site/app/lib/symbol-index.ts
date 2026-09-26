@@ -1,5 +1,10 @@
 import { htmlToDocText } from "@defold-typescript/types";
-import { type ApiPage, apiModuleSymbols } from "./api-surface";
+import {
+  type ApiPage,
+  apiModuleSymbols,
+  functionAnchorText,
+  groupOverloadForms,
+} from "./api-surface";
 import { type CombinedSurface, combinedApiPages } from "./combined-surface";
 import { slugify } from "./headings";
 import { stripPlatformMarkers } from "./platform-icons";
@@ -40,9 +45,20 @@ export function buildSymbolIndex(pages: ApiPage[]): Record<string, SymbolEntry> 
       brief: stripPlatformMarkers(htmlToDocText(module.description || module.brief)),
       route,
     };
-    for (const symbol of apiModuleSymbols(page, page.translations, page.signatures)) {
+    const symbols = apiModuleSymbols(page, page.translations, page.signatures);
+    // A function member anchors at its overload group's heading, which is the
+    // only heading an overloaded name renders.
+    const functionAnchors = new Map(
+      groupOverloadForms(symbols.filter((s) => s.kind === "function")).map(
+        (group) => [group[0]?.name, functionAnchorText(group)] as const,
+      ),
+    );
+    for (const symbol of symbols) {
       const key = qualify(namespace, symbol.name);
-      const anchor = slugify(symbol.signature);
+      const anchor = slugify(
+        (symbol.kind === "function" ? functionAnchors.get(symbol.name) : undefined) ??
+          symbol.signature,
+      );
       index[key] = {
         brief: stripPlatformMarkers(symbol.docMarkdown),
         route: `${route}#${anchor}`,

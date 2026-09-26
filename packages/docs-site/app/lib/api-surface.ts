@@ -8,6 +8,7 @@ import {
   availabilityLabel,
   DEFOLD_TYPE_MAP,
   examplesHtmlToMarkdown,
+  firstSlotAlternativeOf,
   hashExampleSource,
   htmlToCodeText,
   htmlToDocText,
@@ -495,26 +496,97 @@ export function groupTypeSymbols(types: ApiSymbol[]): ApiSymbolGroup[] {
 }
 
 /**
+ * Partition function rows into overload groups: one group per `name`, in
+ * first-appearance order, each keeping its forms in input order. A group of one
+ * is an ordinary function; a larger group renders as one `/api` block.
+ * Presentation-only, like {@link groupFunctionSymbols} — `apiModuleSymbols` keeps
+ * one row per form for the search text and `llms-full.txt`.
+ */
+export function groupOverloadForms(symbols: ApiSymbol[]): ApiSymbol[][] {
+  const byName = new Map<string, ApiSymbol[]>();
+  for (const symbol of symbols) {
+    const group = byName.get(symbol.name);
+    if (group) group.push(symbol);
+    else byName.set(symbol.name, [symbol]);
+  }
+  return [...byName.values()];
+}
+
+/** The heading text of an overload group: `` `<fqn>(...)` `` without the backticks. */
+export function overloadHeading(name: string): string {
+  return `${name}(...)`;
+}
+
+/**
+ * The heading text a function group renders under, and so the text its anchor
+ * slugs from: a single form keeps its full signature, a group takes
+ * {@link overloadHeading}.
+ */
+export function functionAnchorText(group: readonly ApiSymbol[]): string {
+  const [first] = group;
+  if (first === undefined) return "";
+  return group.length === 1 ? first.signature : overloadHeading(first.name);
+}
+
+// The index of the bracket closing the one opened at `start`. String literal
+// types are skipped whole, and an arrow's `>` closes nothing.
+function closingBracket(text: string, start: number, open: string, close: string): number {
+  let depth = 0;
+  let quote: string | null = null;
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+    if (quote !== null) {
+      if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === "`") quote = ch;
+    else if (ch === ">" && text[i - 1] === "=") continue;
+    else if (ch === open) depth++;
+    else if (ch === close && --depth === 0) return i;
+  }
+  return text.length - 1;
+}
+
+/**
+ * One form's signature with its qualified name dropped: `params` runs from any
+ * `<...>` generic head through the `)` closing the outer call list, `returns` is
+ * the rest (`: <type>`), or `null` when nothing follows. A signature that does not
+ * start with its name, or is not a call (`package.path: string`), comes back
+ * whole as `params`.
+ */
+export function splitCallForm(symbol: ApiSymbol): { params: string; returns: string | null } {
+  const { name, signature } = symbol;
+  if (!signature.startsWith(name)) return { params: signature, returns: null };
+  let open = name.length;
+  if (signature[open] === "<") open = closingBracket(signature, open, "<", ">") + 1;
+  if (signature[open] !== "(") return { params: signature, returns: null };
+  const close = closingBracket(signature, open, "(", ")");
+  const tail = signature.slice(close + 1);
+  return { params: signature.slice(name.length, close + 1), returns: tail === "" ? null : tail };
+}
+
+/**
  * Compact per-group function index for the top of an `/api/<namespace>` page:
- * a bulleted list whose links use each function's full `signature` (parameter
- * and return types included) and point down to the detailed `### \`signature\``
- * block (anchor = `slugify(signature)`, matching the `slugify-headings`
- * markdown-it rule). Linking the whole signature — not the bare name — keeps
- * overloads (two `mul` arms) distinct and surfaces the types at a glance.
- * Presentation-only — no new heading, so the "On this page" TOC is unchanged.
- * Returns `""` for an empty list so the caller emits nothing.
+ * a bulleted list with one card per function name. A single-form function links
+ * its full `signature` (parameter and return types included); an overloaded one
+ * links its {@link overloadHeading}. Each points down to the detailed block
+ * (anchor = `slugify(functionAnchorText(group))`, matching the
+ * `slugify-headings` markdown-it rule). Presentation-only — no new heading, so
+ * the "On this page" TOC is unchanged. Returns `""` for an empty list so the
+ * caller emits nothing.
  */
 export function functionOverviewCards(
   symbols: ApiSymbol[],
-  // Optional per-symbol marker HTML appended after the signature link in the same
+  // Optional per-group marker HTML appended after the signature link in the same
   // list item (Combined pages pass the `badgeDots` category glyphs). An empty
   // return — and the default of no callback — leaves the row byte-unchanged.
-  markerFor?: (symbol: ApiSymbol) => string,
+  markerFor?: (group: ApiSymbol[]) => string,
 ): string {
   if (symbols.length === 0) return "";
-  const rows = symbols.map(
-    (s) => `- [\`${s.signature}\`](#${slugify(s.signature)})${markerFor ? markerFor(s) : ""}`,
-  );
+  const rows = groupOverloadForms(symbols).map((group) => {
+    const text = functionAnchorText(group);
+    return `- [\`${text}\`](#${slugify(text)})${markerFor ? markerFor(group) : ""}`;
+  });
   return [
     '<div class="api-overview" aria-label="Function overview">',
     "",
@@ -1070,17 +1142,35 @@ export function apiModuleSymbols(
     // ref-doc description), and the parameter/return tables only when an entry
     // is paired to it or the primary row's call shape could not hold them. The
     // example stays on the primary row.
-    // A generated declaration's further arms render as their own rows, like
-    // unpaired authored arms: shared prose, no tables, no badge of their own.
+    // A generated declaration's further arms render as their own rows: shared
+    // prose, the declaration's own availability, and no tables unless a curated
+    // first-slot alternative names the arm's leading arguments. The arguments
+    // after them are the primary's, so they keep its emitted slot types.
     if (ov === null && authSig !== undefined) {
+      const alternative = firstSlotAlternativeOf(fn, m.namespace);
+      const leading = (alternative?.parameters.length ?? 0) - (fn.parameters.length - 1);
+      const alternativeHead = `${fn.name}(${alternative?.parameters[0]?.name}:`;
       for (const signature of page.authoritativeArms?.get(identity) ?? []) {
+        const armAlternative = signature.startsWith(alternativeHead) ? alternative : null;
         symbols.push({
           kind: "function",
           name: fn.name,
           signature,
           docMarkdown: fixtureDoc,
-          parameters: [],
-          returnValues: [],
+          parameters: armAlternative
+            ? [
+                ...projectParams(
+                  armAlternative.parameters.slice(0, leading),
+                  mapType,
+                  undefined,
+                  "param",
+                  fn.name,
+                ),
+                ...symbol.parameters.slice(1),
+              ]
+            : [],
+          returnValues: armAlternative ? symbol.returnValues : [],
+          ...(av ? { availability: av } : {}),
           ...(fn.deprecated !== undefined ? { deprecated: fn.deprecated } : {}),
           ...(fn.global ? { global: true } : {}),
           ...(fn.docSource ? { docSource: fn.docSource } : {}),

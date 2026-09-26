@@ -105,15 +105,32 @@ export function applySinceFilter(
     const marker = markers[i];
     if (!marker) continue;
     // Walk out of the heading anchor the slugger wraps every heading child in,
-    // up to the heading element itself — the one that carries the slug id.
+    // up to the heading element itself — the one that carries the slug id. A
+    // marker on one form of an overload block stops at that form's list item
+    // instead: the form hides on its own, and the block heading answers for the
+    // group through its own marker.
     let heading: SinceFilterElement | null = marker.parentElement;
-    while (heading && !heading.getAttribute("id")) heading = heading.parentElement;
+    let form = false;
+    while (heading && !heading.getAttribute("id")) {
+      if (` ${heading.className || ""} `.indexOf(" api-overload ") >= 0) {
+        form = true;
+        break;
+      }
+      heading = heading.parentElement;
+    }
     if (!heading) continue;
 
     const newest = marker.getAttribute("data-span-newest") || "";
     const newestIndex = axis.indexOf(bare(newest));
     const out = newestIndex < 0 ? false : newestIndex > fromIndex;
     heading.style.display = out ? "none" : "";
+    if (form) {
+      if (!out) {
+        const formFields = (marker.getAttribute("data-span-cats") || "").split("|");
+        applyLetters(heading, formFields[fromIndex] || "-");
+      }
+      continue;
+    }
     const body = heading.nextElementSibling;
     if (body && body.className.indexOf("api-symbol-body") >= 0) {
       body.style.display = out ? "none" : "";

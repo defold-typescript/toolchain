@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { SignatureStore } from "@defold-typescript/types";
 import { apiLinkify, apiPageMarkdown } from "./api-page-render";
+import { type ApiSymbol, splitCallForm } from "./api-surface";
 import { loadCombinedSurface, loadSignaturesArtifact } from "./api-surface-loader";
 import {
   type CombinedNamespace,
@@ -24,13 +25,39 @@ function markdownFor(ns: CombinedNamespace): string {
   return apiPageMarkdown(combinedNamespaceToApiPage(ns), linkify);
 }
 
-// Every `### \`<signature>\`` heading the page renders, in order. The trailing
-// availability dots are not part of the signature.
-function signatureHeadings(markdown: string): string[] {
+// A signature's call form: its name through the `)` closing its call list, with
+// the return type dropped. An overload block states a return type every form
+// shares once for the block, so a rendered form and its arm compare on this.
+function callForm(signature: string): string {
+  const name = /^[^(<]+/.exec(signature)?.[0] ?? "";
+  const symbol: ApiSymbol = {
+    kind: "function",
+    name,
+    signature,
+    docMarkdown: "",
+    parameters: [],
+    returnValues: [],
+  };
+  return name + splitCallForm(symbol).params;
+}
+
+// Every call form the page renders, in order: a `### \`<signature>\`` heading's
+// own, or, under an overload block's `### \`<fqn>(...)\`` heading, each listed
+// form's. The trailing availability dots are not part of the signature.
+function renderedCallForms(markdown: string): string[] {
   const out: string[] = [];
-  for (const line of markdown.split("\n")) {
-    const m = line.match(/^### `(.+?)`(?: .*)?$/);
-    if (m?.[1]) out.push(m[1]);
+  const lines = markdown.split("\n");
+  let group: string | null = null;
+  for (const [index, line] of lines.entries()) {
+    const heading = line.match(/^### `(.+?)`(?: .*)?$/)?.[1];
+    if (heading !== undefined) {
+      group = heading.endsWith("(...)") ? heading.slice(0, -"(...)".length) : null;
+      if (group === null) out.push(callForm(heading));
+      continue;
+    }
+    if (group === null || line !== '<li class="api-overload">') continue;
+    const form = lines[index + 2]?.match(/^`(.+?)`(?: .*)?$/)?.[1];
+    if (form !== undefined) out.push(callForm(`${group}${form}`));
   }
   return out;
 }
@@ -63,12 +90,12 @@ describe("canonical pages render every authored overload arm", () => {
     for (const ns of combined.namespaces) {
       const store = storeFor(ns.namespace);
       if (!store) continue;
-      const headings = signatureHeadings(markdownFor(ns));
+      const headings = renderedCallForms(markdownFor(ns));
       const declared = new Set(ns.module.functions.map((fn) => fn.name));
       for (const [fqn, override] of Object.entries(store)) {
         if (!declared.has(fqn)) continue;
         for (const arm of override.signatures) {
-          const count = headings.filter((h) => h === arm).length;
+          const count = headings.filter((h) => h === callForm(arm)).length;
           if (count !== 1) missing.push(`${ns.namespace}: ${arm} rendered ${count}x`);
         }
       }
@@ -77,21 +104,25 @@ describe("canonical pages render every authored overload arm", () => {
   });
 
   it("renders both render.render_target arities on /api/render", () => {
-    const headings = signatureHeadings(markdownFor(namespaceByName("render")));
+    const headings = renderedCallForms(markdownFor(namespaceByName("render")));
     expect(headings).toContain(
-      'render.render_target(parameters: Record<string | number, unknown>): Opaque<"render_target">',
+      callForm(
+        'render.render_target(parameters: Record<string | number, unknown>): Opaque<"render_target">',
+      ),
     );
     expect(headings).toContain(
-      'render.render_target(name: string, parameters: Record<string | number, unknown>): Opaque<"render_target">',
+      callForm(
+        'render.render_target(name: string, parameters: Record<string | number, unknown>): Opaque<"render_target">',
+      ),
     );
   });
 
   it("renders the authored vmath.euler_to_quat arms and not the generated union", () => {
-    const headings = signatureHeadings(markdownFor(namespaceByName("vmath")));
+    const headings = renderedCallForms(markdownFor(namespaceByName("vmath")));
     const authored = storeFor("vmath")?.["vmath.euler_to_quat"]?.signatures ?? [];
     expect(authored.length).toBeGreaterThan(1);
-    for (const arm of authored) expect(headings).toContain(arm);
-    expect(armsOf(headings, "vmath.euler_to_quat")).toEqual([...authored]);
+    for (const arm of authored) expect(headings).toContain(callForm(arm));
+    expect(armsOf(headings, "vmath.euler_to_quat")).toEqual(authored.map(callForm));
   });
 
   it("accepts every folded artifact value whose namespace is an engine page", () => {
@@ -118,19 +149,19 @@ describe("canonical pages render every authored overload arm", () => {
   });
 
   it("collapses a multi-identity FQN to one arm set per page", () => {
-    const msg = signatureHeadings(markdownFor(namespaceByName("msg")));
+    const msg = renderedCallForms(markdownFor(namespaceByName("msg")));
     const msgUrlArms = storeFor("msg")?.["msg.url"]?.signatures ?? [];
     expect(msgUrlArms.length).toBe(6);
-    expect(armsOf(msg, "msg.url")).toEqual([...msgUrlArms]);
+    expect(armsOf(msg, "msg.url")).toEqual(msgUrlArms.map(callForm));
 
-    const vmath = signatureHeadings(markdownFor(namespaceByName("vmath")));
+    const vmath = renderedCallForms(markdownFor(namespaceByName("vmath")));
     const lerpArms = storeFor("vmath")?.["vmath.lerp"]?.signatures ?? [];
     expect(lerpArms.length).toBe(3);
-    expect(armsOf(vmath, "vmath.lerp")).toEqual([...lerpArms]);
+    expect(armsOf(vmath, "vmath.lerp")).toEqual(lerpArms.map(callForm));
   });
 
   it("leaves a generated symbol on the same page untouched", () => {
-    const headings = signatureHeadings(markdownFor(namespaceByName("render")));
+    const headings = renderedCallForms(markdownFor(namespaceByName("render")));
     expect(headings.some((h) => h.startsWith("render.get_render_target_width("))).toBe(true);
   });
 
@@ -144,9 +175,9 @@ describe("canonical pages render every authored overload arm", () => {
     );
     const ns = windowed.namespaces.find((n) => n.namespace === "render");
     if (!ns) throw new Error("no windowed render namespace");
-    const headings = signatureHeadings(markdownFor(ns));
+    const headings = renderedCallForms(markdownFor(ns));
     for (const arm of storeFor("render")?.["render.render_target"]?.signatures ?? []) {
-      expect(headings).toContain(arm);
+      expect(headings).toContain(callForm(arm));
     }
   });
 });
