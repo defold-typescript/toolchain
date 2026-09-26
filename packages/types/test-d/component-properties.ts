@@ -47,6 +47,12 @@ void _modelTexture7;
 
 // @ts-expect-error textureN is the placeholder, not a key the engine accepts
 go.get<model.properties>()("#model", "textureN");
+// @ts-expect-error the ref-doc bounds the units to 0-7
+go.get<model.properties>()("#model", "texture8");
+// @ts-expect-error a unit is never negative
+go.get<model.properties>()("#model", "texture-1");
+// @ts-expect-error a unit is never fractional
+go.get<model.properties>()("#model", "texture1.5");
 
 // Hand-written keys the ref-docs omit but upstream examples read.
 const _spriteTexture: Hash = go.get<sprite.properties>()("#sprite", "texture0");
