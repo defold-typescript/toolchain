@@ -2487,7 +2487,7 @@ Set text to text field
 
 <div class="api-availability" aria-label="Availability">
 
-- Deprecated — Use set_text instead
+- <span class="api-availability-mark api-availability-mark--deprecated" aria-hidden="true">D</span> Deprecated — Use set_text instead
 
 </div>
 
@@ -4504,7 +4504,7 @@ Setup raw text to lang_text component. This will clear any locale settings.
 
 <div class="api-availability" aria-label="Availability">
 
-- Deprecated — Use set_text instead
+- <span class="api-availability-mark api-availability-mark--deprecated" aria-hidden="true">D</span> Deprecated — Use set_text instead
 
 </div>
 
@@ -5036,7 +5036,7 @@ Instant fill progress bar to value
 
 <div class="api-availability" aria-label="Availability">
 
-- Deprecated — Use set_value instead
+- <span class="api-availability-mark api-availability-mark--deprecated" aria-hidden="true">D</span> Deprecated — Use set_value instead
 
 </div>
 
@@ -5484,7 +5484,7 @@ Set the timer to a specific value
 
 <div class="api-availability" aria-label="Availability">
 
-- Deprecated — Use set_value instead
+- <span class="api-availability-mark api-availability-mark--deprecated" aria-hidden="true">D</span> Deprecated — Use set_value instead
 
 </div>
 
