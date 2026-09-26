@@ -55,11 +55,12 @@ declare global {
      * @example
      * ```ts
      * // Load data but return nil if path didn't exist
-     * const path = "/save/game.dat";
-     * if (!sys.exists(path)) {
-     *   return undefined;
+     * function load_data(path: string) {
+     *   if (!sys.exists(path)) {
+     *     return undefined;
+     *   }
+     *   return sys.load(path); // returns {} if it failed
      * }
-     * return sys.load(path); // returns {} if it failed
      * ```
      */
     function exists(path: string): boolean;
@@ -262,13 +263,17 @@ declare global {
      * @example
      * ```ts
      * // Save data on the host
-     * const mytable = { score: 100, level: 3 };
-     * const host_path = sys.get_host_path("logs/test.txt");
-     * sys.save(host_path, mytable);
+     * {
+     *   const mytable = { score: 100, level: 3 };
+     *   const host_path = sys.get_host_path("logs/test.txt");
+     *   sys.save(host_path, mytable);
+     * }
      *
      * // Load data from the host
-     * const host_path = sys.get_host_path("logs/test.txt");
-     * const table = sys.load(host_path);
+     * {
+     *   const host_path = sys.get_host_path("logs/test.txt");
+     *   const table = sys.load(host_path);
+     * }
      * ```
      */
     function get_host_path(filename: string): string;
@@ -447,14 +452,16 @@ declare global {
      * @example
      * ```ts
      * // Load binary data from a custom project resource and update a texture resource:
-     * function my_callback(self: unknown, request_id: unknown, result: unknown) {
-     *   const { status, buf } = result as { status: number; buf: Opaque<"buffer"> };
-     *   if (status === sys.REQUEST_STATUS_FINISHED) {
-     *     resource.set_texture("/my_texture", {}, buf); // texture args
+     * {
+     *   function my_callback(self: unknown, request_id: unknown, result: unknown) {
+     *     const { status, buf } = result as { status: number; buf: Opaque<"buffer"> };
+     *     if (status === sys.REQUEST_STATUS_FINISHED) {
+     *       resource.set_texture("/my_texture", {}, buf); // texture args
+     *     }
      *   }
-     * }
      *
-     * const my_request = sys.load_buffer_async("/assets/my_level_data.bin", my_callback);
+     *   const my_request = sys.load_buffer_async("/assets/my_level_data.bin", my_callback);
+     * }
      *
      * // Load binary data from non-custom resource files on disk:
      * function my_callback(self: unknown, request_id: unknown, result: unknown) {

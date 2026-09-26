@@ -294,6 +294,11 @@ declare global {
      * export default defineScript({
      *   init() {
      *     // create a new sound resource, given the initial chunk of the file
+     *     const [data] = sys.load_resource("/sounds/music_header.oggc");
+     *     if (data === undefined) {
+     *       return;
+     *     }
+     *     const filesize = 1048576;
      *     const relative_path = "/a/unique/resource/name.oggc";
      *     const hash = resource.create_sound_data(relative_path, { data, filesize, partial: true });
      *     go.set("#music", "sound", hash); // override the previous sound resource
