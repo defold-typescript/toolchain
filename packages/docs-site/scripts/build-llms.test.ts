@@ -320,6 +320,27 @@ describe("llms-full ## API serializes the Combined projection", () => {
     // Function lines keep their full `function …;` declaration verbatim.
     expect(api).toMatch(/^- function [^\n]*;/m);
   });
+
+  test("lists every arm the shipped b2d_shape.d.ts declares under ### b2d.shape", () => {
+    const declared = readFileSync(join(TYPES_DIR, "generated", "b2d_shape.d.ts"), "utf8")
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.startsWith("function "));
+    expect(declared.length).toBeGreaterThan(0);
+    const full = section(buildLlmsFull(PACKAGE_TARGET), "## API");
+    const start = full.indexOf("### b2d.shape\n");
+    expect(start).toBeGreaterThan(-1);
+    const end = full.indexOf("\n### ", start + 1);
+    const items = full
+      .slice(start, end === -1 ? undefined : end)
+      .split("\n")
+      .filter((line) => line.startsWith("- "))
+      .map((line) => line.slice(2));
+    const missing = declared.filter(
+      (arm) => !items.some((item) => item === arm || item.startsWith(`${arm} [`)),
+    );
+    expect(missing).toEqual([]);
+  });
 });
 
 describe("llms.txt ## API engine links come from the Combined surface", () => {

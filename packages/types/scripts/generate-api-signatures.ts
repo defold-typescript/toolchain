@@ -14,7 +14,8 @@ const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const SIGNATURES_PATH = resolve(PACKAGE_ROOT, "api-signatures.json");
 
 export interface SignaturesArtifact {
-  // version -> symbolIdentityKey -> authoritative TS signature text
+  // version -> symbolIdentityKey -> authoritative TS signature text; a symbol
+  // with several declared arms carries one arm per line, primary first
   readonly versions: Record<string, Record<string, string>>;
   // The same axis and keys, carrying each documented slot's rendered type. Kept
   // parallel rather than folded into `versions` because three consumers
