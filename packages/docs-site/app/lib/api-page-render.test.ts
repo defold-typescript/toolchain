@@ -2674,8 +2674,15 @@ describe("grouped overload blocks (committed artifacts)", () => {
     if (!page) throw new Error(`namespace ${namespace} missing from the Combined surface`);
     return page;
   };
-  const render = (page: ApiPage): string =>
-    apiPageMarkdown(page, (t) => t, { combinedMarkers: true });
+  const rendered = new Map<ApiPage, string>();
+  const render = (page: ApiPage): string => {
+    let md = rendered.get(page);
+    if (md === undefined) {
+      md = apiPageMarkdown(page, (t) => t, { combinedMarkers: true });
+      rendered.set(page, md);
+    }
+    return md;
+  };
   const functionRows = (page: ApiPage) =>
     apiModuleSymbols(page, page.translations, page.signatures).filter((s) => s.kind === "function");
 
@@ -2771,5 +2778,49 @@ describe("grouped overload blocks (committed artifacts)", () => {
       }
     }
     expect(grouped).toBeGreaterThan(10);
+  });
+
+  test("each form states its own return type unless every form shares it", () => {
+    const counts = { differing: 0, arrowShared: 0, tableShared: 0 };
+    let lerpReturns = 0;
+    for (const page of pages) {
+      const md = render(page);
+      for (const group of groupOverloadForms(functionRows(page))) {
+        const [head] = group;
+        if (group.length < 2 || head === undefined) continue;
+        const lines = blockOf(md, overloadHeading(head.name)).split("\n");
+        const formLines = lines.flatMap((line, index) =>
+          line === '<li class="api-overload">'
+            ? [lines[index + 2]?.match(/^`(.+?)`(?: .*)?$/)?.[1] ?? ""]
+            : [],
+        );
+        const splits = group.map(splitCallForm);
+        const returns = splits.map((s) => s.returns);
+        const sameReturns = new Set(returns).size === 1;
+        const expected = splits.map((s) =>
+          sameReturns ? s.params : `${s.params}${s.returns ?? ""}`,
+        );
+        expect({ name: head.name, forms: formLines }).toEqual({ name: head.name, forms: expected });
+
+        const tables = group.map((s) => JSON.stringify(s.returnValues));
+        const sharedTable = new Set(tables).size === 1 && head.returnValues.length > 0;
+        const sharedReturn = sameReturns ? returns[0] : null;
+        const arrows =
+          sharedReturn && !sharedTable ? [`→ \`${sharedReturn.replace(/^:\s*/, "")}\``] : [];
+        expect({ name: head.name, arrows: lines.filter((l) => l.startsWith("→ ")) }).toEqual({
+          name: head.name,
+          arrows,
+        });
+
+        if (!sameReturns) counts.differing += 1;
+        else if (sharedTable) counts.tableShared += 1;
+        else if (sharedReturn) counts.arrowShared += 1;
+        if (head.name === "vmath.lerp") lerpReturns = sameReturns ? 1 : new Set(returns).size;
+      }
+    }
+    expect(lerpReturns).toBe(3);
+    expect(counts.differing).toBeGreaterThan(0);
+    expect(counts.arrowShared).toBeGreaterThan(0);
+    expect(counts.tableShared).toBeGreaterThan(0);
   });
 });
