@@ -303,13 +303,20 @@ export const OPTIONALITY_EVIDENCE_EXEMPTIONS: ReadonlyMap<string, string> = new 
 // OPTIONAL_SLOT_CORRECTIONS entries whose evidence the axes above cannot
 // attribute, keyed and reasoned the same way. The audit tells same-named
 // declarations apart by argument count alone, so an omission is invisible when
-// the shorter call also fits another declaration in full.
+// the shorter call also fits another declaration in full. The axes also read
+// only an element's own examples, so an omission shown in a sibling element's
+// example is invisible too.
 export const UNATTRIBUTED_OPTIONAL_CORRECTIONS: ReadonlyMap<string, string> = new Map([
   [
     "b2d.shape.set_shape:param:update_mass",
     "the example `b2d.shape.set_shape(body, 2, { ... })` omits update_mass from the " +
       "`body, shape_index` form, but three arguments is also the full `shape_id` form, so " +
       "the count cannot say which declaration the call omits from.",
+  ],
+  [
+    "socket.newtry:param:finalizer",
+    "the call `socket.newtry()` appears in socket.protect's example, not newtry's own, so " +
+      "the example-arity axis never sees it.",
   ],
 ]);
 

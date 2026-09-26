@@ -1,4 +1,6 @@
 /** @noSelfInFile */
+import type { Hash } from "../../../src/core-types";
+
 declare global {
   /**
    * Functions for performing HTTP and HTTPS requests.
@@ -65,7 +67,7 @@ declare global {
      *       "http://www.google.com",
      *       "GET",
      *       (self, _id, response) => {
-     *         if (response.bytes_total !== undefined) {
+     *         if (response.bytes_received !== undefined && response.bytes_total !== undefined) {
      *           update_my_progress_bar(self, response.bytes_received / response.bytes_total);
      *         } else {
      *           print(response.status);
@@ -81,7 +83,7 @@ declare global {
      * });
      * ```
      */
-    function request(url: string, method: string, callback: (self: unknown, id: unknown, response: unknown) => void, headers?: LuaMap<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean }): void;
+    function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void, headers?: LuaMap<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean }): void;
   }
 }
 
