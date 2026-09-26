@@ -19,6 +19,17 @@ export interface AnyHeading {
   id: string;
   /** Heading level (1 through 6). */
   level: HeadingLevel;
+  /**
+   * The element that stands in for other text in the outline: `text.slice(start,
+   * end)` is the text it replaces, and `label` is what the element itself reads.
+   */
+  badge?: HeadingBadge;
+}
+
+export interface HeadingBadge {
+  start: number;
+  end: number;
+  label: string;
 }
 
 /** A heading inside the table of contents' depth window. */
@@ -30,7 +41,8 @@ const HEADING_RE = /<h([1-6])(\s+[^>]*)?>([\s\S]*?)<\/h\1>/gi;
 const TAG_RE = /<[^>]+>/g;
 // An element standing in for other text in the outline (an overload block's
 // `N overloads` badge reads as the `...` it replaces).
-const TOC_TEXT_RE = /<(\w+)\b[^>]*\sdata-toc-text="([^"]*)"[^>]*>[\s\S]*?<\/\1>/g;
+const TOC_TEXT_RE = /<(\w+)\b[^>]*\sdata-toc-text="([^"]*)"[^>]*>([\s\S]*?)<\/\1>/g;
+const FIRST_TOC_TEXT_RE = new RegExp(TOC_TEXT_RE.source);
 const ID_RE = /\sid="([^"]+)"/i;
 const NAMED_ENTITY: Record<string, string> = {
   "&lt;": "<",
@@ -63,6 +75,25 @@ function decodeEntities(s: string): string {
   return out;
 }
 
+function outlineText(html: string): string {
+  return decodeEntities(html.replace(TOC_TEXT_RE, "$2").replace(TAG_RE, ""));
+}
+
+// Offsets are measured on the decoded, tag-stripped text so they index into the
+// heading's `text`; the split sits on a tag boundary, so decoding the prefix
+// alone yields the same characters as decoding the whole heading.
+function badgeOf(inner: string, untrimmed: string): HeadingBadge | undefined {
+  const match = inner.match(FIRST_TOC_TEXT_RE);
+  if (match?.index === undefined) return undefined;
+  const leading = untrimmed.length - untrimmed.trimStart().length;
+  const start = outlineText(inner.slice(0, match.index)).length - leading;
+  return {
+    start,
+    end: start + decodeEntities(match[2] ?? "").length,
+    label: decodeEntities((match[3] ?? "").replace(TAG_RE, "")).trim(),
+  };
+}
+
 export function allPageHeadings(html: string): AnyHeading[] {
   const out: AnyHeading[] = [];
   for (const match of html.matchAll(HEADING_RE)) {
@@ -70,13 +101,17 @@ export function allPageHeadings(html: string): AnyHeading[] {
     const rawAttrs = match[2] ?? "";
     const inner = match[3] ?? "";
     const idMatch = rawAttrs.match(ID_RE);
-    const text = decodeEntities(inner.replace(TOC_TEXT_RE, "$2").replace(TAG_RE, "")).trim();
+    const untrimmed = outlineText(inner);
+    const text = untrimmed.trim();
     if (!text) continue;
-    out.push({
+    const heading: AnyHeading = {
       text,
       id: idMatch?.[1] ?? slugify(text),
       level,
-    });
+    };
+    const badge = badgeOf(inner, untrimmed);
+    if (badge) heading.badge = badge;
+    out.push(heading);
   }
   return out;
 }
