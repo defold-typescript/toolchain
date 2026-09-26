@@ -250,9 +250,9 @@ declare global {
      *     const stream = buffer.get_stream(buffer_handle, hash("position"));
      *
      *     // transfer vertex data to buffer
-     *     for (let k = 0; k < positions.length; k++) {
-     *       stream[k] = positions[k];
-     *     }
+     *     positions.forEach((value, k) => {
+     *       stream[k] = value;
+     *     });
      *
      *     const my_buffer = resource.create_buffer("/my_buffer.bufferc", { buffer: buffer_handle });
      *     go.set("/go#mesh", "vertices", my_buffer);
@@ -483,8 +483,8 @@ declare global {
      *       width: 32,
      *       height: 32,
      *       depth: 32,
-     *       format: resource.TEXTURE_FORMAT_RGBA32F,
-     *       flags: resource.TEXTURE_USAGE_FLAG_STORAGE + resource.TEXTURE_USAGE_FLAG_SAMPLE,
+     *       format: graphics.TEXTURE_FORMAT_RGBA32F,
+     *       flags: graphics.TEXTURE_USAGE_FLAG_STORAGE + graphics.TEXTURE_USAGE_FLAG_SAMPLE,
      *     });
      *
      *     // pass the backing texture to the render script
@@ -881,7 +881,7 @@ declare global {
      * ```ts
      * export default defineScript({
      *   init() {
-     *     const font = go.get("#label", "font");
+     *     const font = go.get<label.properties>()("#label", "font");
      *     const metrics = resource.get_text_metrics(font, "The quick brown fox\n jumps over the lazy dog");
      *     pprint(metrics);
      *   },
@@ -1439,7 +1439,7 @@ declare global {
      *       width: 8,
      *       height: 8,
      *       depth: 8,
-     *       format: resource.TEXTURE_FORMAT_RGBA32F,
+     *       format: graphics.TEXTURE_FORMAT_RGBA32F,
      *     };
      *
      *     // This expects that the texture resource "/my_3d_texture.texturec" already exists
