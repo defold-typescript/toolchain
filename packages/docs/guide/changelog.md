@@ -21,6 +21,12 @@ What changed in each published `defold-typescript` toolchain release.
 
 - An extension whose `.script_api` writes a type as a list (`type: [table, string]`) is typed as that union by [resolve](./resolve.md) instead of `unknown`.
 - Symbol names mentioned in API reference prose link to their reference on the published site instead of opening a missing page.
+- **Declarations that the engine's own examples contradict are corrected**, so code written the way the reference shows it type-checks, and so do the hover and API reference examples that use it:
+  - **[`go.get` / `go.set`](/api/go)** — the `key` option accepts a string as well as a hash, `keys` takes an array of hashes or strings, and `go.set` accepts an array of `vmath.vector4` to set a material property array.
+  - **[`render.constant_buffer()`](/api/render)** — the buffer takes named constants, single or array, as in `constants.tint = vmath.vector4(1, 1, 1, 1)`.
+  - **[Buffer streams](/api/buffer)** — `stream.length()` returns the element count and compiles to Lua's `#stream`.
+  - **[`msg.post`](/api/msg)** — a message id with no declared payload also accepts a Lua sequence, such as `[t_volume]`.
+  - **[`render.CONTEXT_EVENT_CONTEXT_LOST` / `_RESTORED`](/api/render) and [`graphics.SEMANTIC_TYPE_*`](/api/graphics)** — declared; the engine defines them, but the reference names them only in prose.
 - Three more kinds of type error are fixed in hover and API reference examples: 43 that kept script state on `self` (such as [`render.draw`](/api/render) and [`vmath.lerp`](/api/vmath)) return it from `init` or declare it in `properties`, others check a value that can be missing before using it ([`image.load`](/api/image), [`camera.screen_to_world`](/api/camera), `action.value` in `on_input`), and others use the constant the declarations export ([`gui.EASING_LINEAR`](/api/gui), [`graphics.TEXTURE_*`](/api/graphics), [`sys.REQUEST_STATUS_FINISHED`](/api/sys)). Some of these examples still carry other type errors.
 
 ## v0.39.0

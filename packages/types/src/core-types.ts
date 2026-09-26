@@ -214,9 +214,11 @@ export const DEFOLD_TYPE_MAP: Readonly<Record<string, string>> = {
   texture: 'Opaque<"texture">',
   render_target: 'Opaque<"render_target">',
   constant: 'Opaque<"constant">',
-  constant_buffer: 'Opaque<"constant_buffer">',
+  constant_buffer:
+    'Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }',
   buffer: 'Opaque<"buffer">',
-  bufferstream: 'Opaque<"bufferstream"> & { [index: number]: number }',
+  bufferstream:
+    'Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> }',
   userdata: 'Opaque<"userdata">',
   // Vocabulary, not a shipped brand: no current ref-doc fixture types a slot
   // `resource`, so nothing hand-written may name `Opaque<"resource">`. Kept so a

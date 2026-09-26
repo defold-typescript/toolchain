@@ -32,7 +32,7 @@
   "buffer.copy_stream": [
     {
       "sourceHash": "359ea94639622db5",
-      "ts": "// How to update a texture of a sprite:\nconst srcbuffer = resource.get_buffer(\"/src.bufferc\");\nconst dstbuffer = resource.get_buffer(\"/dst.bufferc\");\n\n// copy entire stream\nconst srcstream = buffer.get_stream(srcbuffer, hash(\"xyz\"));\nconst dststream = buffer.get_stream(dstbuffer, hash(\"xyz\"));\nbuffer.copy_stream(dststream, 0, srcstream, 0, srcstream.length);"
+      "ts": "// How to update a texture of a sprite:\nconst srcbuffer = resource.get_buffer(\"/src.bufferc\");\nconst dstbuffer = resource.get_buffer(\"/dst.bufferc\");\n\n// copy entire stream\nconst srcstream = buffer.get_stream(srcbuffer, hash(\"xyz\"));\nconst dststream = buffer.get_stream(dstbuffer, hash(\"xyz\"));\nbuffer.copy_stream(dststream, 0, srcstream, 0, srcstream.length());"
     }
   ],
   "buffer.create": [
@@ -1362,7 +1362,7 @@
   "resource.get_buffer": [
     {
       "sourceHash": "ed7d361c7f5d2e35",
-      "ts": "// How to get the data from a buffer\nexport default defineScript({\n  init() {\n    const res_path = go.get(\"#mesh\", \"vertices\");\n    const buf = resource.get_buffer(res_path);\n    const stream_positions = buffer.get_stream(buf, \"position\");\n\n    for (let i = 0; i < stream_positions.length; i++) {\n      print(i, stream_positions[i]);\n    }\n  },\n});"
+      "ts": "// How to get the data from a buffer\nexport default defineScript({\n  init() {\n    const res_path = go.get(\"#mesh\", \"vertices\");\n    const buf = resource.get_buffer(res_path);\n    const stream_positions = buffer.get_stream(buf, \"position\");\n\n    for (let i = 0; i < stream_positions.length(); i++) {\n      print(i, stream_positions[i]);\n    }\n  },\n});"
     }
   ],
   "resource.get_render_target_info": [

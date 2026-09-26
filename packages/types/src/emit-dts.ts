@@ -2285,6 +2285,15 @@ function groupFlattenedTableFields(fields: readonly TableField[]): TableField[] 
   return grouped;
 }
 
+// A handle the type map widens (`constant_buffer` takes named constants) keeps
+// that shape, so annotating with the alias loses nothing the handle-returning
+// function yields.
+function typedefAlias(name: string, mapType: (token: string) => string): string {
+  const brand = `Opaque<"${name}">`;
+  const mapped = mapType(name);
+  return `type ${name} = ${mapped.startsWith(brand) ? mapped : brand};`;
+}
+
 export function emitDeclarations(module: ApiModule, options?: EmitOptions): string {
   const prefix = `${module.namespace}.`;
 
@@ -2367,7 +2376,7 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
     // A typedef that also has colon methods is emitted as a method-bearing
     // interface below, not an opaque brand alias.
     if (handleGroups.has(t.name)) continue;
-    lines.push(`${INDENT}${decl}type ${t.name} = Opaque<"${t.name}">;`);
+    lines.push(`${INDENT}${decl}${typedefAlias(t.name, baseMapType)}`);
   }
   for (const aliasDecl of constantUnionAliasDeclarations(module.namespace)) {
     lines.push(`${INDENT}${decl}${aliasDecl}`);
@@ -2654,7 +2663,7 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
     if (!TS_IDENTIFIER.test(t.name) || handleGroups.has(t.name)) continue;
     out.push({
       identity: { namespace: module.namespace, kind: "TYPEDEF", name: t.name, signature: "" },
-      tsSignature: `type ${t.name} = Opaque<"${t.name}">;`,
+      tsSignature: typedefAlias(t.name, baseMapType),
       slotTypes: NO_SLOTS,
     });
   }

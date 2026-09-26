@@ -318,11 +318,11 @@
       "buffer\u0000CONSTANT\u0000buffer.VALUE_TYPE_UINT64\u0000": "const VALUE_TYPE_UINT64: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT64\" };",
       "buffer\u0000CONSTANT\u0000buffer.VALUE_TYPE_UINT8\u0000": "const VALUE_TYPE_UINT8: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\" };",
       "buffer\u0000FUNCTION\u0000buffer.copy_buffer\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_buffer(dst: Opaque<\"buffer\">, dstoffset: number, src: Opaque<\"buffer\">, srcoffset: number, count: number): void;",
-      "buffer\u0000FUNCTION\u0000buffer.copy_stream\u0000[{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_stream(dst: Opaque<\"bufferstream\"> & { [index: number]: number }, dstoffset: number, src: Opaque<\"bufferstream\"> & { [index: number]: number }, srcoffset: number, count: number): void;",
+      "buffer\u0000FUNCTION\u0000buffer.copy_stream\u0000[{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_stream(dst: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, dstoffset: number, src: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, srcoffset: number, count: number): void;",
       "buffer\u0000FUNCTION\u0000buffer.create\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"buffer\"],\"isOptional\":false}]": "function create(element_count: number, declaration: { name?: Hash | string; type?: Opaque<\"constant\">; count?: number }): Opaque<\"buffer\">;",
       "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_bytes(buffer: Opaque<\"buffer\">, stream_name: Hash): string;",
       "buffer\u0000FUNCTION\u0000buffer.get_metadata\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"constant\",\"nil\"],\"isOptional\":false}]": "function get_metadata(buf: Opaque<\"buffer\">, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.ValueType | undefined]>;",
-      "buffer\u0000FUNCTION\u0000buffer.get_stream\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"bufferstream\"],\"isOptional\":false}]": "function get_stream(buffer: Opaque<\"buffer\">, stream_name: Hash | string): Opaque<\"bufferstream\"> & { [index: number]: number };",
+      "buffer\u0000FUNCTION\u0000buffer.get_stream\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"bufferstream\"],\"isOptional\":false}]": "function get_stream(buffer: Opaque<\"buffer\">, stream_name: Hash | string): Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> };",
       "buffer\u0000FUNCTION\u0000buffer.set_metadata\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function set_metadata(buf: Opaque<\"buffer\">, metadata_name: Hash | string, values: number[], value_type: buffer.ValueType): void;",
       "buffer\u0000TYPEDEF\u0000ValueType\u0000": "type ValueType = typeof buffer.VALUE_TYPE_FLOAT32 | typeof buffer.VALUE_TYPE_INT16 | typeof buffer.VALUE_TYPE_INT32 | typeof buffer.VALUE_TYPE_INT64 | typeof buffer.VALUE_TYPE_INT8 | typeof buffer.VALUE_TYPE_UINT16 | typeof buffer.VALUE_TYPE_UINT32 | typeof buffer.VALUE_TYPE_UINT64 | typeof buffer.VALUE_TYPE_UINT8;",
       "camera\u0000CONSTANT\u0000camera.ORTHO_MODE_AUTO_COVER\u0000": "const ORTHO_MODE_AUTO_COVER: number & { readonly __brand: \"camera.ORTHO_MODE_AUTO_COVER\" };",
@@ -483,7 +483,7 @@
       "go\u0000FUNCTION\u0000go.get_world_scale_uniform\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_world_scale_uniform(id?: SceneGameObjectAddress | Hash | Url): number;",
       "go\u0000FUNCTION\u0000go.get_world_transform\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true}]->[{\"types\":[\"matrix4\"],\"isOptional\":false}]": "function get_world_transform(id?: SceneGameObjectAddress | Hash | Url): Matrix4;",
       "go\u0000FUNCTION\u0000go.property\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"boolean\",\"hash\",\"number\",\"quaternion\",\"resource\",\"url\",\"vector3\",\"vector4\"],\"isOptional\":false}]->[]": "go.property(name: string, value: number): ScriptProperty<number>\ngo.property(name: string, value: boolean): ScriptProperty<boolean>\ngo.property(name: string, value: Hash): ScriptProperty<Hash>\ngo.property(name: string, value: Url): ScriptProperty<Url>\ngo.property(name: string, value: Vector3): ScriptProperty<Vector3>\ngo.property(name: string, value: Vector4): ScriptProperty<Vector4>\ngo.property(name: string, value: Quaternion): ScriptProperty<Quaternion>",
-      "go\u0000FUNCTION\u0000go.set\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\",\"hash\",\"number\",\"quaternion\",\"resource\",\"url\",\"vector3\",\"vector4\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "go.set<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void\ngo.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void\ngo.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion, options?: GoPropertyOptions): void",
+      "go\u0000FUNCTION\u0000go.set\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\",\"hash\",\"number\",\"quaternion\",\"resource\",\"url\",\"vector3\",\"vector4\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "go.set<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void\ngo.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void\ngo.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion | Vector4[], options?: GoPropertyOptions): void",
       "go\u0000FUNCTION\u0000go.set_parent\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true},{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function set_parent(id?: SceneGameObjectAddress | Hash | Url, parent_id?: SceneGameObjectAddress | Hash | Url, keep_world_transform?: boolean): void;",
       "go\u0000FUNCTION\u0000go.set_position\u0000[{\"types\":[\"vector3\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true}]->[]": "function set_position(position: Vector3, id?: SceneGameObjectAddress | Hash | Url): void;",
       "go\u0000FUNCTION\u0000go.set_rotation\u0000[{\"types\":[\"quaternion\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true}]->[]": "function set_rotation(rotation: Quaternion, id?: SceneGameObjectAddress | Hash | Url): void;",
@@ -1021,13 +1021,13 @@
       "render\u0000CONSTANT\u0000render.SORT_FRONT_TO_BACK\u0000": "const SORT_FRONT_TO_BACK: number & { readonly __brand: \"render.SORT_FRONT_TO_BACK\" };",
       "render\u0000CONSTANT\u0000render.SORT_NONE\u0000": "const SORT_NONE: number & { readonly __brand: \"render.SORT_NONE\" };",
       "render\u0000FUNCTION\u0000render.clear\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function clear(buffers: LuaMap<render.ClearBufferKey, number | Vector4>): void;",
-      "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"constant_buffer\"],\"isOptional\":false}]": "function constant_buffer(): Opaque<\"constant_buffer\">;",
+      "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"constant_buffer\"],\"isOptional\":false}]": "function constant_buffer(): Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };",
       "render\u0000FUNCTION\u0000render.delete_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false}]->[]": "function delete_render_target(render_target: Opaque<\"render_target\">): void;",
       "render\u0000FUNCTION\u0000render.disable_material\u0000[]->[]": "function disable_material(): void;",
       "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function disable_state(state: graphics.State): void;",
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"hash\",\"string\",\"texture\"],\"isOptional\":false}]->[]": "function disable_texture(binding: Opaque<\"texture\"> | string | Hash): void;",
-      "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<\"constant_buffer\"> }): void;",
-      "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: number, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\">; sort_order?: number }): void;",
+      "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] } }): void;",
+      "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: number, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }; sort_order?: number }): void;",
       "render\u0000FUNCTION\u0000render.draw_debug3d\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw_debug3d(options?: { frustum?: Matrix4; frustum_planes?: number }): void;",
       "render\u0000FUNCTION\u0000render.enable_material\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[]": "function enable_material(material_id: string | Hash): void;",
       "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function enable_state(state: graphics.State): void;",
@@ -1060,7 +1060,7 @@
       "render\u0000FUNCTION\u0000render.set_view\u0000[{\"types\":[\"matrix4\"],\"isOptional\":false}]->[]": "function set_view(matrix: Matrix4): void;",
       "render\u0000FUNCTION\u0000render.set_viewport\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_viewport(x: number, y: number, width: number, height: number): void;",
       "render\u0000TYPEDEF\u0000ClearBufferKey\u0000": "type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;",
-      "render\u0000TYPEDEF\u0000constant_buffer\u0000": "type constant_buffer = Opaque<\"constant_buffer\">;",
+      "render\u0000TYPEDEF\u0000constant_buffer\u0000": "type constant_buffer = Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };",
       "render\u0000TYPEDEF\u0000render_target\u0000": "type render_target = Opaque<\"render_target\">;",
       "render\u0000TYPEDEF\u0000texture\u0000": "type texture = Opaque<\"texture\">;",
       "resource\u0000FUNCTION\u0000resource.atlas\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"hash\"],\"isOptional\":false}]": "function atlas(path?: string): Hash;",
@@ -1648,11 +1648,11 @@
       "buffer\u0000CONSTANT\u0000buffer.VALUE_TYPE_UINT64\u0000": "const VALUE_TYPE_UINT64: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT64\" };",
       "buffer\u0000CONSTANT\u0000buffer.VALUE_TYPE_UINT8\u0000": "const VALUE_TYPE_UINT8: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\" };",
       "buffer\u0000FUNCTION\u0000buffer.copy_buffer\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_buffer(dst: Opaque<\"buffer\">, dstoffset: number, src: Opaque<\"buffer\">, srcoffset: number, count: number): void;",
-      "buffer\u0000FUNCTION\u0000buffer.copy_stream\u0000[{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_stream(dst: Opaque<\"bufferstream\"> & { [index: number]: number }, dstoffset: number, src: Opaque<\"bufferstream\"> & { [index: number]: number }, srcoffset: number, count: number): void;",
+      "buffer\u0000FUNCTION\u0000buffer.copy_stream\u0000[{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_stream(dst: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, dstoffset: number, src: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, srcoffset: number, count: number): void;",
       "buffer\u0000FUNCTION\u0000buffer.create\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"buffer\"],\"isOptional\":false}]": "function create(element_count: number, declaration: { name?: Hash | string; type?: Opaque<\"constant\">; count?: number }): Opaque<\"buffer\">;",
       "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_bytes(buffer: Opaque<\"buffer\">, stream_name: Hash): string;",
       "buffer\u0000FUNCTION\u0000buffer.get_metadata\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"constant\",\"nil\"],\"isOptional\":false}]": "function get_metadata(buf: Opaque<\"buffer\">, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.ValueType | undefined]>;",
-      "buffer\u0000FUNCTION\u0000buffer.get_stream\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"bufferstream\"],\"isOptional\":false}]": "function get_stream(buffer: Opaque<\"buffer\">, stream_name: Hash | string): Opaque<\"bufferstream\"> & { [index: number]: number };",
+      "buffer\u0000FUNCTION\u0000buffer.get_stream\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"bufferstream\"],\"isOptional\":false}]": "function get_stream(buffer: Opaque<\"buffer\">, stream_name: Hash | string): Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> };",
       "buffer\u0000FUNCTION\u0000buffer.set_metadata\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function set_metadata(buf: Opaque<\"buffer\">, metadata_name: Hash | string, values: number[], value_type: buffer.ValueType): void;",
       "buffer\u0000TYPEDEF\u0000ValueType\u0000": "type ValueType = typeof buffer.VALUE_TYPE_FLOAT32 | typeof buffer.VALUE_TYPE_INT16 | typeof buffer.VALUE_TYPE_INT32 | typeof buffer.VALUE_TYPE_INT64 | typeof buffer.VALUE_TYPE_INT8 | typeof buffer.VALUE_TYPE_UINT16 | typeof buffer.VALUE_TYPE_UINT32 | typeof buffer.VALUE_TYPE_UINT64 | typeof buffer.VALUE_TYPE_UINT8;",
       "camera\u0000CONSTANT\u0000camera.ORTHO_MODE_AUTO_COVER\u0000": "const ORTHO_MODE_AUTO_COVER: number & { readonly __brand: \"camera.ORTHO_MODE_AUTO_COVER\" };",
@@ -1812,7 +1812,7 @@
       "go\u0000FUNCTION\u0000go.get_world_scale_uniform\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_world_scale_uniform(id?: SceneGameObjectAddress | Hash | Url): number;",
       "go\u0000FUNCTION\u0000go.get_world_transform\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true}]->[{\"types\":[\"matrix4\"],\"isOptional\":false}]": "function get_world_transform(id?: SceneGameObjectAddress | Hash | Url): Matrix4;",
       "go\u0000FUNCTION\u0000go.property\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"boolean\",\"hash\",\"number\",\"quaternion\",\"resource\",\"url\",\"vector3\",\"vector4\"],\"isOptional\":false}]->[]": "go.property(name: string, value: number): ScriptProperty<number>\ngo.property(name: string, value: boolean): ScriptProperty<boolean>\ngo.property(name: string, value: Hash): ScriptProperty<Hash>\ngo.property(name: string, value: Url): ScriptProperty<Url>\ngo.property(name: string, value: Vector3): ScriptProperty<Vector3>\ngo.property(name: string, value: Vector4): ScriptProperty<Vector4>\ngo.property(name: string, value: Quaternion): ScriptProperty<Quaternion>",
-      "go\u0000FUNCTION\u0000go.set\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\",\"hash\",\"number\",\"quaternion\",\"resource\",\"url\",\"vector3\",\"vector4\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "go.set<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void\ngo.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void\ngo.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion, options?: GoPropertyOptions): void",
+      "go\u0000FUNCTION\u0000go.set\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\",\"hash\",\"number\",\"quaternion\",\"resource\",\"url\",\"vector3\",\"vector4\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "go.set<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void\ngo.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void\ngo.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion | Vector4[], options?: GoPropertyOptions): void",
       "go\u0000FUNCTION\u0000go.set_parent\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true},{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function set_parent(id?: SceneGameObjectAddress | Hash | Url, parent_id?: SceneGameObjectAddress | Hash | Url, keep_world_transform?: boolean): void;",
       "go\u0000FUNCTION\u0000go.set_position\u0000[{\"types\":[\"vector3\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true}]->[]": "function set_position(position: Vector3, id?: SceneGameObjectAddress | Hash | Url): void;",
       "go\u0000FUNCTION\u0000go.set_rotation\u0000[{\"types\":[\"quaternion\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true}]->[]": "function set_rotation(rotation: Quaternion, id?: SceneGameObjectAddress | Hash | Url): void;",
@@ -2350,13 +2350,13 @@
       "render\u0000CONSTANT\u0000render.SORT_FRONT_TO_BACK\u0000": "const SORT_FRONT_TO_BACK: number & { readonly __brand: \"render.SORT_FRONT_TO_BACK\" };",
       "render\u0000CONSTANT\u0000render.SORT_NONE\u0000": "const SORT_NONE: number & { readonly __brand: \"render.SORT_NONE\" };",
       "render\u0000FUNCTION\u0000render.clear\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function clear(buffers: LuaMap<render.ClearBufferKey, number | Vector4>): void;",
-      "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"constant_buffer\"],\"isOptional\":false}]": "function constant_buffer(): Opaque<\"constant_buffer\">;",
+      "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"constant_buffer\"],\"isOptional\":false}]": "function constant_buffer(): Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };",
       "render\u0000FUNCTION\u0000render.delete_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false}]->[]": "function delete_render_target(render_target: Opaque<\"render_target\">): void;",
       "render\u0000FUNCTION\u0000render.disable_material\u0000[]->[]": "function disable_material(): void;",
       "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function disable_state(state: graphics.State): void;",
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"hash\",\"string\",\"texture\"],\"isOptional\":false}]->[]": "function disable_texture(binding: Opaque<\"texture\"> | string | Hash): void;",
-      "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<\"constant_buffer\"> }): void;",
-      "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: number, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\">; sort_order?: number }): void;",
+      "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] } }): void;",
+      "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: number, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }; sort_order?: number }): void;",
       "render\u0000FUNCTION\u0000render.draw_debug3d\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw_debug3d(options?: { frustum?: Matrix4; frustum_planes?: number }): void;",
       "render\u0000FUNCTION\u0000render.enable_material\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[]": "function enable_material(material_id: string | Hash): void;",
       "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function enable_state(state: graphics.State): void;",
@@ -2389,7 +2389,7 @@
       "render\u0000FUNCTION\u0000render.set_view\u0000[{\"types\":[\"matrix4\"],\"isOptional\":false}]->[]": "function set_view(matrix: Matrix4): void;",
       "render\u0000FUNCTION\u0000render.set_viewport\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_viewport(x: number, y: number, width: number, height: number): void;",
       "render\u0000TYPEDEF\u0000ClearBufferKey\u0000": "type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;",
-      "render\u0000TYPEDEF\u0000constant_buffer\u0000": "type constant_buffer = Opaque<\"constant_buffer\">;",
+      "render\u0000TYPEDEF\u0000constant_buffer\u0000": "type constant_buffer = Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };",
       "render\u0000TYPEDEF\u0000render_target\u0000": "type render_target = Opaque<\"render_target\">;",
       "render\u0000TYPEDEF\u0000texture\u0000": "type texture = Opaque<\"texture\">;",
       "resource\u0000FUNCTION\u0000resource.atlas\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"hash\"],\"isOptional\":false}]": "function atlas(path?: string): Hash;",
@@ -2721,11 +2721,11 @@
       "buffer\u0000CONSTANT\u0000buffer.VALUE_TYPE_UINT64\u0000": "const VALUE_TYPE_UINT64: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT64\" };",
       "buffer\u0000CONSTANT\u0000buffer.VALUE_TYPE_UINT8\u0000": "const VALUE_TYPE_UINT8: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\" };",
       "buffer\u0000FUNCTION\u0000buffer.copy_buffer\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_buffer(dst: Opaque<\"buffer\">, dstoffset: number, src: Opaque<\"buffer\">, srcoffset: number, count: number): void;",
-      "buffer\u0000FUNCTION\u0000buffer.copy_stream\u0000[{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_stream(dst: Opaque<\"bufferstream\"> & { [index: number]: number }, dstoffset: number, src: Opaque<\"bufferstream\"> & { [index: number]: number }, srcoffset: number, count: number): void;",
+      "buffer\u0000FUNCTION\u0000buffer.copy_stream\u0000[{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_stream(dst: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, dstoffset: number, src: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, srcoffset: number, count: number): void;",
       "buffer\u0000FUNCTION\u0000buffer.create\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"buffer\"],\"isOptional\":false}]": "function create(element_count: number, declaration: { name?: Hash | string; type?: Opaque<\"constant\">; count?: number }): Opaque<\"buffer\">;",
       "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_bytes(buffer: Opaque<\"buffer\">, stream_name: Hash): string;",
       "buffer\u0000FUNCTION\u0000buffer.get_metadata\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"constant\",\"nil\"],\"isOptional\":false}]": "function get_metadata(buf: Opaque<\"buffer\">, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.ValueType | undefined]>;",
-      "buffer\u0000FUNCTION\u0000buffer.get_stream\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"bufferstream\"],\"isOptional\":false}]": "function get_stream(buffer: Opaque<\"buffer\">, stream_name: Hash | string): Opaque<\"bufferstream\"> & { [index: number]: number };",
+      "buffer\u0000FUNCTION\u0000buffer.get_stream\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"bufferstream\"],\"isOptional\":false}]": "function get_stream(buffer: Opaque<\"buffer\">, stream_name: Hash | string): Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> };",
       "buffer\u0000FUNCTION\u0000buffer.set_metadata\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function set_metadata(buf: Opaque<\"buffer\">, metadata_name: Hash | string, values: number[], value_type: buffer.ValueType): void;",
       "buffer\u0000TYPEDEF\u0000ValueType\u0000": "type ValueType = typeof buffer.VALUE_TYPE_FLOAT32 | typeof buffer.VALUE_TYPE_INT16 | typeof buffer.VALUE_TYPE_INT32 | typeof buffer.VALUE_TYPE_INT64 | typeof buffer.VALUE_TYPE_INT8 | typeof buffer.VALUE_TYPE_UINT16 | typeof buffer.VALUE_TYPE_UINT32 | typeof buffer.VALUE_TYPE_UINT64 | typeof buffer.VALUE_TYPE_UINT8;",
       "camera\u0000CONSTANT\u0000camera.ORTHO_MODE_AUTO_COVER\u0000": "const ORTHO_MODE_AUTO_COVER: number & { readonly __brand: \"camera.ORTHO_MODE_AUTO_COVER\" };",
@@ -2870,7 +2870,7 @@
       "go\u0000FUNCTION\u0000go.get_world_scale_uniform\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true}]->[{\"types\":[\"number\"],\"isOptional\":false}]": "function get_world_scale_uniform(id?: SceneGameObjectAddress | Hash | Url): number;",
       "go\u0000FUNCTION\u0000go.get_world_transform\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true}]->[{\"types\":[\"matrix4\"],\"isOptional\":false}]": "function get_world_transform(id?: SceneGameObjectAddress | Hash | Url): Matrix4;",
       "go\u0000FUNCTION\u0000go.property\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"boolean\",\"hash\",\"number\",\"quaternion\",\"resource\",\"url\",\"vector3\",\"vector4\"],\"isOptional\":false}]->[]": "go.property(name: string, value: number): ScriptProperty<number>\ngo.property(name: string, value: boolean): ScriptProperty<boolean>\ngo.property(name: string, value: Hash): ScriptProperty<Hash>\ngo.property(name: string, value: Url): ScriptProperty<Url>\ngo.property(name: string, value: Vector3): ScriptProperty<Vector3>\ngo.property(name: string, value: Vector4): ScriptProperty<Vector4>\ngo.property(name: string, value: Quaternion): ScriptProperty<Quaternion>",
-      "go\u0000FUNCTION\u0000go.set\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\",\"hash\",\"number\",\"quaternion\",\"resource\",\"url\",\"vector3\",\"vector4\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "go.set<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void\ngo.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void\ngo.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion, options?: GoPropertyOptions): void",
+      "go\u0000FUNCTION\u0000go.set\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"boolean\",\"hash\",\"number\",\"quaternion\",\"resource\",\"url\",\"vector3\",\"vector4\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "go.set<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void\ngo.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void\ngo.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion | Vector4[], options?: GoPropertyOptions): void",
       "go\u0000FUNCTION\u0000go.set_parent\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true},{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true},{\"types\":[\"boolean\"],\"isOptional\":true}]->[]": "function set_parent(id?: SceneGameObjectAddress | Hash | Url, parent_id?: SceneGameObjectAddress | Hash | Url, keep_world_transform?: boolean): void;",
       "go\u0000FUNCTION\u0000go.set_position\u0000[{\"types\":[\"vector3\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true}]->[]": "function set_position(position: Vector3, id?: SceneGameObjectAddress | Hash | Url): void;",
       "go\u0000FUNCTION\u0000go.set_rotation\u0000[{\"types\":[\"quaternion\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true}]->[]": "function set_rotation(rotation: Quaternion, id?: SceneGameObjectAddress | Hash | Url): void;",
@@ -3381,13 +3381,13 @@
       "render\u0000CONSTANT\u0000render.SORT_FRONT_TO_BACK\u0000": "const SORT_FRONT_TO_BACK: number & { readonly __brand: \"render.SORT_FRONT_TO_BACK\" };",
       "render\u0000CONSTANT\u0000render.SORT_NONE\u0000": "const SORT_NONE: number & { readonly __brand: \"render.SORT_NONE\" };",
       "render\u0000FUNCTION\u0000render.clear\u0000[{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function clear(buffers: LuaMap<render.ClearBufferKey, number | Vector4>): void;",
-      "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"constant_buffer\"],\"isOptional\":false}]": "function constant_buffer(): Opaque<\"constant_buffer\">;",
+      "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"constant_buffer\"],\"isOptional\":false}]": "function constant_buffer(): Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };",
       "render\u0000FUNCTION\u0000render.delete_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false}]->[]": "function delete_render_target(render_target: Opaque<\"render_target\">): void;",
       "render\u0000FUNCTION\u0000render.disable_material\u0000[]->[]": "function disable_material(): void;",
       "render\u0000FUNCTION\u0000render.disable_state\u0000[{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function disable_state(state: graphics.State): void;",
       "render\u0000FUNCTION\u0000render.disable_texture\u0000[{\"types\":[\"hash\",\"string\",\"texture\"],\"isOptional\":false}]->[]": "function disable_texture(binding: Opaque<\"texture\"> | string | Hash): void;",
-      "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<\"constant_buffer\"> }): void;",
-      "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: number, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\">; sort_order?: number }): void;",
+      "render\u0000FUNCTION\u0000render.dispatch_compute\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] } }): void;",
+      "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw(predicate: number, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }; sort_order?: number }): void;",
       "render\u0000FUNCTION\u0000render.draw_debug3d\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function draw_debug3d(options?: { frustum?: Matrix4; frustum_planes?: number }): void;",
       "render\u0000FUNCTION\u0000render.enable_material\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[]": "function enable_material(material_id: string | Hash): void;",
       "render\u0000FUNCTION\u0000render.enable_state\u0000[{\"types\":[\"constant\"],\"isOptional\":false}]->[]": "function enable_state(state: graphics.State): void;",
@@ -3418,7 +3418,7 @@
       "render\u0000FUNCTION\u0000render.set_view\u0000[{\"types\":[\"matrix4\"],\"isOptional\":false}]->[]": "function set_view(matrix: Matrix4): void;",
       "render\u0000FUNCTION\u0000render.set_viewport\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_viewport(x: number, y: number, width: number, height: number): void;",
       "render\u0000TYPEDEF\u0000ClearBufferKey\u0000": "type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;",
-      "render\u0000TYPEDEF\u0000constant_buffer\u0000": "type constant_buffer = Opaque<\"constant_buffer\">;",
+      "render\u0000TYPEDEF\u0000constant_buffer\u0000": "type constant_buffer = Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };",
       "render\u0000TYPEDEF\u0000render_target\u0000": "type render_target = Opaque<\"render_target\">;",
       "render\u0000TYPEDEF\u0000texture\u0000": "type texture = Opaque<\"texture\">;",
       "resource\u0000FUNCTION\u0000resource.atlas\u0000[{\"types\":[\"string\"],\"isOptional\":true}]->[{\"types\":[\"hash\"],\"isOptional\":false}]": "function atlas(path?: string): Hash;",
@@ -4900,9 +4900,9 @@
         "param:4:count": "number"
       },
       "buffer\u0000FUNCTION\u0000buffer.copy_stream\u0000[{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:dst": "Opaque<\"bufferstream\"> & { [index: number]: number }",
+        "param:0:dst": "Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }",
         "param:1:dstoffset": "number",
-        "param:2:src": "Opaque<\"bufferstream\"> & { [index: number]: number }",
+        "param:2:src": "Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }",
         "param:3:srcoffset": "number",
         "param:4:count": "number"
       },
@@ -4925,7 +4925,7 @@
       "buffer\u0000FUNCTION\u0000buffer.get_stream\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"bufferstream\"],\"isOptional\":false}]": {
         "param:0:buffer": "Opaque<\"buffer\">",
         "param:1:stream_name": "Hash | string",
-        "return:0:stream": "Opaque<\"bufferstream\"> & { [index: number]: number }"
+        "return:0:stream": "Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }"
       },
       "buffer\u0000FUNCTION\u0000buffer.set_metadata\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"constant\"],\"isOptional\":false}]->[]": {
         "param:0:buf": "Opaque<\"buffer\">",
@@ -6114,7 +6114,7 @@
         "param:0:buffers": "LuaMap<render.ClearBufferKey, number | Vector4>"
       },
       "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"constant_buffer\"],\"isOptional\":false}]": {
-        "return:0:buffer": "Opaque<\"constant_buffer\">"
+        "return:0:buffer": "Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }"
       },
       "render\u0000FUNCTION\u0000render.delete_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false}]->[]": {
         "param:0:render_target": "Opaque<\"render_target\">"
@@ -6129,11 +6129,11 @@
         "param:0:x": "number",
         "param:1:y": "number",
         "param:2:z": "number",
-        "param:3:options": "{ constants?: Opaque<\"constant_buffer\"> }"
+        "param:3:options": "{ constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] } }"
       },
       "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:predicate": "number",
-        "param:1:options": "{ frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\">; sort_order?: number }"
+        "param:1:options": "{ frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }; sort_order?: number }"
       },
       "render\u0000FUNCTION\u0000render.draw_debug3d\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:options": "{ frustum?: Matrix4; frustum_planes?: number }"
@@ -8405,9 +8405,9 @@
         "param:4:count": "number"
       },
       "buffer\u0000FUNCTION\u0000buffer.copy_stream\u0000[{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:dst": "Opaque<\"bufferstream\"> & { [index: number]: number }",
+        "param:0:dst": "Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }",
         "param:1:dstoffset": "number",
-        "param:2:src": "Opaque<\"bufferstream\"> & { [index: number]: number }",
+        "param:2:src": "Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }",
         "param:3:srcoffset": "number",
         "param:4:count": "number"
       },
@@ -8430,7 +8430,7 @@
       "buffer\u0000FUNCTION\u0000buffer.get_stream\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"bufferstream\"],\"isOptional\":false}]": {
         "param:0:buffer": "Opaque<\"buffer\">",
         "param:1:stream_name": "Hash | string",
-        "return:0:stream": "Opaque<\"bufferstream\"> & { [index: number]: number }"
+        "return:0:stream": "Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }"
       },
       "buffer\u0000FUNCTION\u0000buffer.set_metadata\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"constant\"],\"isOptional\":false}]->[]": {
         "param:0:buf": "Opaque<\"buffer\">",
@@ -9614,7 +9614,7 @@
         "param:0:buffers": "LuaMap<render.ClearBufferKey, number | Vector4>"
       },
       "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"constant_buffer\"],\"isOptional\":false}]": {
-        "return:0:buffer": "Opaque<\"constant_buffer\">"
+        "return:0:buffer": "Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }"
       },
       "render\u0000FUNCTION\u0000render.delete_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false}]->[]": {
         "param:0:render_target": "Opaque<\"render_target\">"
@@ -9629,11 +9629,11 @@
         "param:0:x": "number",
         "param:1:y": "number",
         "param:2:z": "number",
-        "param:3:options": "{ constants?: Opaque<\"constant_buffer\"> }"
+        "param:3:options": "{ constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] } }"
       },
       "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:predicate": "number",
-        "param:1:options": "{ frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\">; sort_order?: number }"
+        "param:1:options": "{ frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }; sort_order?: number }"
       },
       "render\u0000FUNCTION\u0000render.draw_debug3d\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:options": "{ frustum?: Matrix4; frustum_planes?: number }"
@@ -10885,9 +10885,9 @@
         "param:4:count": "number"
       },
       "buffer\u0000FUNCTION\u0000buffer.copy_stream\u0000[{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
-        "param:0:dst": "Opaque<\"bufferstream\"> & { [index: number]: number }",
+        "param:0:dst": "Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }",
         "param:1:dstoffset": "number",
-        "param:2:src": "Opaque<\"bufferstream\"> & { [index: number]: number }",
+        "param:2:src": "Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }",
         "param:3:srcoffset": "number",
         "param:4:count": "number"
       },
@@ -10910,7 +10910,7 @@
       "buffer\u0000FUNCTION\u0000buffer.get_stream\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"bufferstream\"],\"isOptional\":false}]": {
         "param:0:buffer": "Opaque<\"buffer\">",
         "param:1:stream_name": "Hash | string",
-        "return:0:stream": "Opaque<\"bufferstream\"> & { [index: number]: number }"
+        "return:0:stream": "Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }"
       },
       "buffer\u0000FUNCTION\u0000buffer.set_metadata\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false},{\"types\":[\"constant\"],\"isOptional\":false}]->[]": {
         "param:0:buf": "Opaque<\"buffer\">",
@@ -12013,7 +12013,7 @@
         "param:0:buffers": "LuaMap<render.ClearBufferKey, number | Vector4>"
       },
       "render\u0000FUNCTION\u0000render.constant_buffer\u0000[]->[{\"types\":[\"constant_buffer\"],\"isOptional\":false}]": {
-        "return:0:buffer": "Opaque<\"constant_buffer\">"
+        "return:0:buffer": "Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }"
       },
       "render\u0000FUNCTION\u0000render.delete_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false}]->[]": {
         "param:0:render_target": "Opaque<\"render_target\">"
@@ -12028,11 +12028,11 @@
         "param:0:x": "number",
         "param:1:y": "number",
         "param:2:z": "number",
-        "param:3:options": "{ constants?: Opaque<\"constant_buffer\"> }"
+        "param:3:options": "{ constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] } }"
       },
       "render\u0000FUNCTION\u0000render.draw\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:predicate": "number",
-        "param:1:options": "{ frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\">; sort_order?: number }"
+        "param:1:options": "{ frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<\"constant_buffer\"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }; sort_order?: number }"
       },
       "render\u0000FUNCTION\u0000render.draw_debug3d\u0000[{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:options": "{ frustum?: Matrix4; frustum_planes?: number }"

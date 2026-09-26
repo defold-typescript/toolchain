@@ -33,6 +33,7 @@ import vmathDoc from "../fixtures/vmath_doc.json" with { type: "json" };
 import windowDoc from "../fixtures/window_doc.json" with { type: "json" };
 import urlParameterTable from "../url-parameters.json" with { type: "json" };
 import { type ApiFunction, type ApiModule, type ApiParameter, parseDefoldApiDoc } from "./api-doc";
+import { DEFOLD_TYPE_MAP } from "./core-types";
 import {
   ARBITRARY_TABLE_SLOTS,
   applyFieldAdditions,
@@ -914,7 +915,7 @@ describe("emitDeclarations", () => {
     };
     const out = emitDeclarations(module);
     expect(out).toContain('  type render_target = Opaque<"render_target">;');
-    expect(out).toContain('  type constant_buffer = Opaque<"constant_buffer">;');
+    expect(out).toContain(`  type constant_buffer = ${DEFOLD_TYPE_MAP.constant_buffer};`);
     expect(out.indexOf("constant_buffer")).toBeLessThan(out.indexOf("render_target"));
   });
 
