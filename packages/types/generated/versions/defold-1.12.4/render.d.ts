@@ -1020,7 +1020,7 @@ declare global {
      * });
      * ```
      */
-    function set_render_target(render_target: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT, options?: { transient?: Record<string | number, unknown> }): void;
+    function set_render_target(render_target: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT, options?: { transient?: graphics.BufferType[] }): void;
     /**
      * Sets the render target size for a render target created from
      * either a render script, or from a render target resource.

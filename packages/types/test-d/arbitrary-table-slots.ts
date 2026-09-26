@@ -37,11 +37,24 @@ const arbTableSpawned: Hash = factory.create(
   { hp: 3, name: "hero" },
   1,
 );
+// collectionfactory.create keys the same per-object tables by instance id hash,
+// either as a LuaMap or as an object literal.
+const arbTableSpawnedProps = new LuaMap<Hash, Record<string, unknown>>();
+arbTableSpawnedProps.set(hash("/enemy"), { speed: 2 });
 const arbTableSpawnedSet: LuaMap<Hash, Hash> = collectionfactory.create(
   "#collectionfactory",
   undefined,
   undefined,
-  { speed: 2 },
+  arbTableSpawnedProps,
 );
+const arbTableSpawnedLiteral: LuaMap<Hash, Hash> = collectionfactory.create(
+  "#collectionfactory",
+  undefined,
+  undefined,
+  { "/enemy": { speed: 2 } },
+);
+// @ts-expect-error the top level is keyed by instance id, not property name
+collectionfactory.create("#collectionfactory", undefined, undefined, { speed: 2 });
 void arbTableSpawned;
 void arbTableSpawnedSet;
+void arbTableSpawnedLiteral;

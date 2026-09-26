@@ -319,7 +319,7 @@
       "buffer\u0000CONSTANT\u0000buffer.VALUE_TYPE_UINT8\u0000": "const VALUE_TYPE_UINT8: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\" };",
       "buffer\u0000FUNCTION\u0000buffer.copy_buffer\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_buffer(dst: Opaque<\"buffer\">, dstoffset: number, src: Opaque<\"buffer\">, srcoffset: number, count: number): void;",
       "buffer\u0000FUNCTION\u0000buffer.copy_stream\u0000[{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_stream(dst: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, dstoffset: number, src: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, srcoffset: number, count: number): void;",
-      "buffer\u0000FUNCTION\u0000buffer.create\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"buffer\"],\"isOptional\":false}]": "function create(element_count: number, declaration: { name?: Hash | string; type?: Opaque<\"constant\">; count?: number }): Opaque<\"buffer\">;",
+      "buffer\u0000FUNCTION\u0000buffer.create\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"buffer\"],\"isOptional\":false}]": "function create(element_count: number, declaration: { name?: Hash | string; type?: buffer.ValueType; count?: number }[]): Opaque<\"buffer\">;",
       "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_bytes(buffer: Opaque<\"buffer\">, stream_name: Hash | string): string;",
       "buffer\u0000FUNCTION\u0000buffer.get_metadata\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"constant\",\"nil\"],\"isOptional\":false}]": "function get_metadata(buf: Opaque<\"buffer\">, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.ValueType | undefined]>;",
       "buffer\u0000FUNCTION\u0000buffer.get_stream\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"bufferstream\"],\"isOptional\":false}]": "function get_stream(buffer: Opaque<\"buffer\">, stream_name: Hash | string): Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> };",
@@ -361,7 +361,7 @@
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"collectionfactory.STATUS_LOADED\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"collectionfactory.STATUS_LOADING\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"collectionfactory.STATUS_UNLOADED\" };",
-      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":true},{\"types\":[\"quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"number\",\"vector3\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: Record<string | number, unknown>, scale?: number | Vector3): LuaMap<Hash, Hash>;",
+      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":true},{\"types\":[\"quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"number\",\"vector3\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaMap<Hash, Hash>;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true}]->[{\"types\":[\"constant\"],\"isOptional\":false}]": "function get_status(url?: string | Hash | Url): collectionfactory.Status;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true},{\"types\":[\"function(self, url, result)\"],\"isOptional\":true}]->[]": "function load(url?: string | Hash | Url, complete_function?: (self: unknown, url: unknown, result: unknown) => void): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.set_prototype\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true},{\"types\":[\"nil\",\"string\"],\"isOptional\":true}]->[]": "function set_prototype(url?: string | Hash | Url, prototype?: string): void;",
@@ -378,7 +378,7 @@
       "compute\u0000FUNCTION\u0000compute.get_textures\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_textures(path: Hash | string): { path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number }[];",
       "compute\u0000FUNCTION\u0000compute.set_constants\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_constants(path: Hash | string, constants: Record<string, { type?: number; value?: Vector4 | Vector3 | Matrix4 | number | (Vector4 | Matrix4)[] }>): void;",
       "compute\u0000FUNCTION\u0000compute.set_samplers\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_samplers(path: Hash | string, samplers: Record<string, { u_wrap?: number; v_wrap?: number; min_filter?: number; mag_filter?: number; max_anisotropy?: number }>): void;",
-      "compute\u0000FUNCTION\u0000compute.set_textures\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_textures(path: Hash | string, textures: LuaMap<string, Hash>): void;",
+      "compute\u0000FUNCTION\u0000compute.set_textures\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_textures(path: Hash | string, textures: LuaMap<string, Hash> | Record<string, Hash>): void;",
       "crash\u0000CONSTANT\u0000crash.SYSFIELD_ANDROID_BUILD_FINGERPRINT\u0000": "const SYSFIELD_ANDROID_BUILD_FINGERPRINT: number & { readonly __brand: \"crash.SYSFIELD_ANDROID_BUILD_FINGERPRINT\" };",
       "crash\u0000CONSTANT\u0000crash.SYSFIELD_DEVICE_LANGUAGE\u0000": "const SYSFIELD_DEVICE_LANGUAGE: number & { readonly __brand: \"crash.SYSFIELD_DEVICE_LANGUAGE\" };",
       "crash\u0000CONSTANT\u0000crash.SYSFIELD_DEVICE_MODEL\u0000": "const SYSFIELD_DEVICE_MODEL: number & { readonly __brand: \"crash.SYSFIELD_DEVICE_MODEL\" };",
@@ -893,7 +893,7 @@
       "gui\u0000TYPEDEF\u0000YAnchor\u0000": "type YAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_TOP | typeof gui.ANCHOR_BOTTOM;",
       "html5\u0000FUNCTION\u0000html5.run\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function run(code: string): string;",
       "html5\u0000FUNCTION\u0000html5.set_interaction_listener\u0000[{\"types\":[\"function(self)\",\"nil\"],\"isOptional\":false}]->[]": "function set_interaction_listener(callback?: (self: unknown) => void): void;",
-      "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function(self, id, response)\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void, headers?: LuaMap<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean }): void;",
+      "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function(self, id, response)\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean }): void;",
       "image\u0000CONSTANT\u0000image.TYPE_LUMINANCE\u0000": "const TYPE_LUMINANCE: number & { readonly __brand: \"image.TYPE_LUMINANCE\" };",
       "image\u0000CONSTANT\u0000image.TYPE_LUMINANCE_ALPHA\u0000": "const TYPE_LUMINANCE_ALPHA: number & { readonly __brand: \"image.TYPE_LUMINANCE_ALPHA\" };",
       "image\u0000CONSTANT\u0000image.TYPE_RGB\u0000": "const TYPE_RGB: number & { readonly __brand: \"image.TYPE_RGB\" };",
@@ -939,7 +939,7 @@
       "material\u0000FUNCTION\u0000material.get_vertex_attributes\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_vertex_attributes(path: Hash | string): { name: Hash; value: Vector4 | Vector3 | Matrix4 | number | number[]; normalize: boolean; data_type: number; coordinate_space: number; semantic_type: number }[];",
       "material\u0000FUNCTION\u0000material.set_constants\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_constants(path: Hash | string, constants: Record<string, { type?: number; value?: Vector4 | Vector3 | Matrix4 | number | (Vector4 | Matrix4)[] }>): void;",
       "material\u0000FUNCTION\u0000material.set_samplers\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_samplers(path: Hash | string, samplers: Record<string, { u_wrap?: number; v_wrap?: number; min_filter?: number; mag_filter?: number; max_anisotropy?: number }>): void;",
-      "material\u0000FUNCTION\u0000material.set_textures\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_textures(path: Hash | string, textures: LuaMap<string, Hash>): void;",
+      "material\u0000FUNCTION\u0000material.set_textures\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_textures(path: Hash | string, textures: LuaMap<string, Hash> | Record<string, Hash>): void;",
       "material\u0000FUNCTION\u0000material.set_vertex_attributes\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_vertex_attributes(path: Hash | string, attributes: Record<string, { value?: Vector4 | Vector3 | Matrix4 | number | number[]; normalize?: boolean; data_type?: number; coordinate_space?: number; semantic_type?: number }>): void;",
       "model\u0000FUNCTION\u0000model.cancel\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false}]->[]": "function cancel(url: string | Hash | Url): void;",
       "model\u0000FUNCTION\u0000model.get_aabb\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_aabb(url: string | Hash | Url): { min: Vector3; max: Vector3 };",
@@ -1065,7 +1065,7 @@
       "render\u0000FUNCTION\u0000render.set_listener\u0000[{\"types\":[\"function(self, event_type)\",\"nil\"],\"isOptional\":false}]->[]": "function set_listener(callback?: (self: unknown, event_type: unknown) => void): void;",
       "render\u0000FUNCTION\u0000render.set_polygon_offset\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_polygon_offset(factor: number, units: number): void;",
       "render\u0000FUNCTION\u0000render.set_projection\u0000[{\"types\":[\"matrix4\"],\"isOptional\":false}]->[]": "function set_projection(matrix: Matrix4): void;",
-      "render\u0000FUNCTION\u0000render.set_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_render_target(render_target: Opaque<\"render_target\"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT, options?: { transient?: Record<string | number, unknown> }): void;",
+      "render\u0000FUNCTION\u0000render.set_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_render_target(render_target: Opaque<\"render_target\"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT, options?: { transient?: graphics.BufferType[] }): void;",
       "render\u0000FUNCTION\u0000render.set_render_target_size\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_render_target_size(render_target: Opaque<\"render_target\"> | string | Hash, width: number, height: number): void;",
       "render\u0000FUNCTION\u0000render.set_stencil_func\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_stencil_func(func: number, ref: number, mask: number): void;",
       "render\u0000FUNCTION\u0000render.set_stencil_mask\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_stencil_mask(mask: number): void;",
@@ -1662,7 +1662,7 @@
       "buffer\u0000CONSTANT\u0000buffer.VALUE_TYPE_UINT8\u0000": "const VALUE_TYPE_UINT8: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\" };",
       "buffer\u0000FUNCTION\u0000buffer.copy_buffer\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_buffer(dst: Opaque<\"buffer\">, dstoffset: number, src: Opaque<\"buffer\">, srcoffset: number, count: number): void;",
       "buffer\u0000FUNCTION\u0000buffer.copy_stream\u0000[{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_stream(dst: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, dstoffset: number, src: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, srcoffset: number, count: number): void;",
-      "buffer\u0000FUNCTION\u0000buffer.create\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"buffer\"],\"isOptional\":false}]": "function create(element_count: number, declaration: { name?: Hash | string; type?: Opaque<\"constant\">; count?: number }): Opaque<\"buffer\">;",
+      "buffer\u0000FUNCTION\u0000buffer.create\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"buffer\"],\"isOptional\":false}]": "function create(element_count: number, declaration: { name?: Hash | string; type?: buffer.ValueType; count?: number }[]): Opaque<\"buffer\">;",
       "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_bytes(buffer: Opaque<\"buffer\">, stream_name: Hash | string): string;",
       "buffer\u0000FUNCTION\u0000buffer.get_metadata\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"constant\",\"nil\"],\"isOptional\":false}]": "function get_metadata(buf: Opaque<\"buffer\">, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.ValueType | undefined]>;",
       "buffer\u0000FUNCTION\u0000buffer.get_stream\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"bufferstream\"],\"isOptional\":false}]": "function get_stream(buffer: Opaque<\"buffer\">, stream_name: Hash | string): Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> };",
@@ -1704,7 +1704,7 @@
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"collectionfactory.STATUS_LOADED\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"collectionfactory.STATUS_LOADING\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"collectionfactory.STATUS_UNLOADED\" };",
-      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":true},{\"types\":[\"quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"number\",\"vector3\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: Record<string | number, unknown>, scale?: number | Vector3): LuaMap<Hash, Hash>;",
+      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":true},{\"types\":[\"quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"number\",\"vector3\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaMap<Hash, Hash>;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true}]->[{\"types\":[\"constant\"],\"isOptional\":false}]": "function get_status(url?: string | Hash | Url): collectionfactory.Status;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true},{\"types\":[\"function(self, url, result)\"],\"isOptional\":true}]->[]": "function load(url?: string | Hash | Url, complete_function?: (self: unknown, url: unknown, result: unknown) => void): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.set_prototype\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true},{\"types\":[\"nil\",\"string\"],\"isOptional\":true}]->[]": "function set_prototype(url?: string | Hash | Url, prototype?: string): void;",
@@ -1720,7 +1720,7 @@
       "compute\u0000FUNCTION\u0000compute.get_textures\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_textures(path: Hash | string): { path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number }[];",
       "compute\u0000FUNCTION\u0000compute.set_constants\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_constants(path: Hash | string, constants: Record<string, { type?: number; value?: Vector4 | Vector3 | Matrix4 | number | (Vector4 | Matrix4)[] }>): void;",
       "compute\u0000FUNCTION\u0000compute.set_samplers\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_samplers(path: Hash | string, samplers: Record<string, { u_wrap?: number; v_wrap?: number; min_filter?: number; mag_filter?: number; max_anisotropy?: number }>): void;",
-      "compute\u0000FUNCTION\u0000compute.set_textures\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_textures(path: Hash | string, textures: LuaMap<string, Hash>): void;",
+      "compute\u0000FUNCTION\u0000compute.set_textures\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_textures(path: Hash | string, textures: LuaMap<string, Hash> | Record<string, Hash>): void;",
       "crash\u0000CONSTANT\u0000crash.SYSFIELD_ANDROID_BUILD_FINGERPRINT\u0000": "const SYSFIELD_ANDROID_BUILD_FINGERPRINT: number & { readonly __brand: \"crash.SYSFIELD_ANDROID_BUILD_FINGERPRINT\" };",
       "crash\u0000CONSTANT\u0000crash.SYSFIELD_DEVICE_LANGUAGE\u0000": "const SYSFIELD_DEVICE_LANGUAGE: number & { readonly __brand: \"crash.SYSFIELD_DEVICE_LANGUAGE\" };",
       "crash\u0000CONSTANT\u0000crash.SYSFIELD_DEVICE_MODEL\u0000": "const SYSFIELD_DEVICE_MODEL: number & { readonly __brand: \"crash.SYSFIELD_DEVICE_MODEL\" };",
@@ -2234,7 +2234,7 @@
       "gui\u0000TYPEDEF\u0000YAnchor\u0000": "type YAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_TOP | typeof gui.ANCHOR_BOTTOM;",
       "html5\u0000FUNCTION\u0000html5.run\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function run(code: string): string;",
       "html5\u0000FUNCTION\u0000html5.set_interaction_listener\u0000[{\"types\":[\"function(self)\",\"nil\"],\"isOptional\":false}]->[]": "function set_interaction_listener(callback?: (self: unknown) => void): void;",
-      "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function(self, id, response)\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void, headers?: LuaMap<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean }): void;",
+      "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function(self, id, response)\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean }): void;",
       "image\u0000CONSTANT\u0000image.TYPE_LUMINANCE\u0000": "const TYPE_LUMINANCE: number & { readonly __brand: \"image.TYPE_LUMINANCE\" };",
       "image\u0000CONSTANT\u0000image.TYPE_LUMINANCE_ALPHA\u0000": "const TYPE_LUMINANCE_ALPHA: number & { readonly __brand: \"image.TYPE_LUMINANCE_ALPHA\" };",
       "image\u0000CONSTANT\u0000image.TYPE_RGB\u0000": "const TYPE_RGB: number & { readonly __brand: \"image.TYPE_RGB\" };",
@@ -2280,7 +2280,7 @@
       "material\u0000FUNCTION\u0000material.get_vertex_attributes\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_vertex_attributes(path: Hash | string): { name: Hash; value: Vector4 | Vector3 | Matrix4 | number | number[]; normalize: boolean; data_type: number; coordinate_space: number; semantic_type: number }[];",
       "material\u0000FUNCTION\u0000material.set_constants\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_constants(path: Hash | string, constants: Record<string, { type?: number; value?: Vector4 | Vector3 | Matrix4 | number | (Vector4 | Matrix4)[] }>): void;",
       "material\u0000FUNCTION\u0000material.set_samplers\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_samplers(path: Hash | string, samplers: Record<string, { u_wrap?: number; v_wrap?: number; min_filter?: number; mag_filter?: number; max_anisotropy?: number }>): void;",
-      "material\u0000FUNCTION\u0000material.set_textures\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_textures(path: Hash | string, textures: LuaMap<string, Hash>): void;",
+      "material\u0000FUNCTION\u0000material.set_textures\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_textures(path: Hash | string, textures: LuaMap<string, Hash> | Record<string, Hash>): void;",
       "material\u0000FUNCTION\u0000material.set_vertex_attributes\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": "function set_vertex_attributes(path: Hash | string, attributes: Record<string, { value?: Vector4 | Vector3 | Matrix4 | number | number[]; normalize?: boolean; data_type?: number; coordinate_space?: number; semantic_type?: number }>): void;",
       "model\u0000FUNCTION\u0000model.cancel\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false}]->[]": "function cancel(url: string | Hash | Url): void;",
       "model\u0000FUNCTION\u0000model.get_aabb\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function get_aabb(url: string | Hash | Url): { min: Vector3; max: Vector3 };",
@@ -2406,7 +2406,7 @@
       "render\u0000FUNCTION\u0000render.set_listener\u0000[{\"types\":[\"function(self, event_type)\",\"nil\"],\"isOptional\":false}]->[]": "function set_listener(callback?: (self: unknown, event_type: unknown) => void): void;",
       "render\u0000FUNCTION\u0000render.set_polygon_offset\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_polygon_offset(factor: number, units: number): void;",
       "render\u0000FUNCTION\u0000render.set_projection\u0000[{\"types\":[\"matrix4\"],\"isOptional\":false}]->[]": "function set_projection(matrix: Matrix4): void;",
-      "render\u0000FUNCTION\u0000render.set_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_render_target(render_target: Opaque<\"render_target\"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT, options?: { transient?: Record<string | number, unknown> }): void;",
+      "render\u0000FUNCTION\u0000render.set_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_render_target(render_target: Opaque<\"render_target\"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT, options?: { transient?: graphics.BufferType[] }): void;",
       "render\u0000FUNCTION\u0000render.set_render_target_size\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_render_target_size(render_target: Opaque<\"render_target\"> | string | Hash, width: number, height: number): void;",
       "render\u0000FUNCTION\u0000render.set_stencil_func\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_stencil_func(func: number, ref: number, mask: number): void;",
       "render\u0000FUNCTION\u0000render.set_stencil_mask\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_stencil_mask(mask: number): void;",
@@ -2747,7 +2747,7 @@
       "buffer\u0000CONSTANT\u0000buffer.VALUE_TYPE_UINT8\u0000": "const VALUE_TYPE_UINT8: number & { readonly __brand: \"buffer.VALUE_TYPE_UINT8\" };",
       "buffer\u0000FUNCTION\u0000buffer.copy_buffer\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_buffer(dst: Opaque<\"buffer\">, dstoffset: number, src: Opaque<\"buffer\">, srcoffset: number, count: number): void;",
       "buffer\u0000FUNCTION\u0000buffer.copy_stream\u0000[{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"bufferstream\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function copy_stream(dst: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, dstoffset: number, src: Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> }, srcoffset: number, count: number): void;",
-      "buffer\u0000FUNCTION\u0000buffer.create\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"buffer\"],\"isOptional\":false}]": "function create(element_count: number, declaration: { name?: Hash | string; type?: Opaque<\"constant\">; count?: number }): Opaque<\"buffer\">;",
+      "buffer\u0000FUNCTION\u0000buffer.create\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"buffer\"],\"isOptional\":false}]": "function create(element_count: number, declaration: { name?: Hash | string; type?: buffer.ValueType; count?: number }[]): Opaque<\"buffer\">;",
       "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function get_bytes(buffer: Opaque<\"buffer\">, stream_name: Hash | string): string;",
       "buffer\u0000FUNCTION\u0000buffer.get_metadata\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"nil\",\"table\"],\"isOptional\":false},{\"types\":[\"constant\",\"nil\"],\"isOptional\":false}]": "function get_metadata(buf: Opaque<\"buffer\">, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.ValueType | undefined]>;",
       "buffer\u0000FUNCTION\u0000buffer.get_stream\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\",\"string\"],\"isOptional\":false}]->[{\"types\":[\"bufferstream\"],\"isOptional\":false}]": "function get_stream(buffer: Opaque<\"buffer\">, stream_name: Hash | string): Opaque<\"bufferstream\"> & { [index: number]: number; length: LuaLengthMethod<number> };",
@@ -2780,7 +2780,7 @@
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADED\u0000": "const STATUS_LOADED: number & { readonly __brand: \"collectionfactory.STATUS_LOADED\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_LOADING\u0000": "const STATUS_LOADING: number & { readonly __brand: \"collectionfactory.STATUS_LOADING\" };",
       "collectionfactory\u0000CONSTANT\u0000collectionfactory.STATUS_UNLOADED\u0000": "const STATUS_UNLOADED: number & { readonly __brand: \"collectionfactory.STATUS_UNLOADED\" };",
-      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":true},{\"types\":[\"quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"number\",\"vector3\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: Record<string | number, unknown>, scale?: number | Vector3): LuaMap<Hash, Hash>;",
+      "collectionfactory\u0000FUNCTION\u0000collectionfactory.create\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":false},{\"types\":[\"vector3\"],\"isOptional\":true},{\"types\":[\"quaternion\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"number\",\"vector3\"],\"isOptional\":true}]->[{\"types\":[\"table\"],\"isOptional\":false}]": "function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaMap<Hash, Hash>;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.get_status\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true}]->[{\"types\":[\"constant\"],\"isOptional\":false}]": "function get_status(url?: string | Hash | Url): collectionfactory.Status;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.load\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true},{\"types\":[\"function(self, url, result)\"],\"isOptional\":true}]->[]": "function load(url?: string | Hash | Url, complete_function?: (self: unknown, url: unknown, result: unknown) => void): void;",
       "collectionfactory\u0000FUNCTION\u0000collectionfactory.set_prototype\u0000[{\"types\":[\"hash\",\"string\",\"url\"],\"isOptional\":true},{\"types\":[\"nil\",\"string\"],\"isOptional\":true}]->[]": "function set_prototype(url?: string | Hash | Url, prototype?: string): void;",
@@ -3276,7 +3276,7 @@
       "gui\u0000TYPEDEF\u0000YAnchor\u0000": "type YAnchor = typeof gui.ANCHOR_NONE | typeof gui.ANCHOR_TOP | typeof gui.ANCHOR_BOTTOM;",
       "html5\u0000FUNCTION\u0000html5.run\u0000[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": "function run(code: string): string;",
       "html5\u0000FUNCTION\u0000html5.set_interaction_listener\u0000[{\"types\":[\"function(self)\",\"nil\"],\"isOptional\":false}]->[]": "function set_interaction_listener(callback?: (self: unknown) => void): void;",
-      "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function(self, id, response)\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void, headers?: LuaMap<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean }): void;",
+      "http\u0000FUNCTION\u0000http.request\u0000[{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"string\"],\"isOptional\":false},{\"types\":[\"function(self, id, response)\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true},{\"types\":[\"string\"],\"isOptional\":true},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean }): void;",
       "image\u0000CONSTANT\u0000image.TYPE_LUMINANCE\u0000": "const TYPE_LUMINANCE: number & { readonly __brand: \"image.TYPE_LUMINANCE\" };",
       "image\u0000CONSTANT\u0000image.TYPE_LUMINANCE_ALPHA\u0000": "const TYPE_LUMINANCE_ALPHA: number & { readonly __brand: \"image.TYPE_LUMINANCE_ALPHA\" };",
       "image\u0000CONSTANT\u0000image.TYPE_RGB\u0000": "const TYPE_RGB: number & { readonly __brand: \"image.TYPE_RGB\" };",
@@ -3435,7 +3435,7 @@
       "render\u0000FUNCTION\u0000render.set_listener\u0000[{\"types\":[\"function(self, event_type)\",\"nil\"],\"isOptional\":false}]->[]": "function set_listener(callback?: (self: unknown, event_type: unknown) => void): void;",
       "render\u0000FUNCTION\u0000render.set_polygon_offset\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_polygon_offset(factor: number, units: number): void;",
       "render\u0000FUNCTION\u0000render.set_projection\u0000[{\"types\":[\"matrix4\"],\"isOptional\":false}]->[]": "function set_projection(matrix: Matrix4): void;",
-      "render\u0000FUNCTION\u0000render.set_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_render_target(render_target: Opaque<\"render_target\"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT, options?: { transient?: Record<string | number, unknown> }): void;",
+      "render\u0000FUNCTION\u0000render.set_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": "function set_render_target(render_target: Opaque<\"render_target\"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT, options?: { transient?: graphics.BufferType[] }): void;",
       "render\u0000FUNCTION\u0000render.set_render_target_size\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_render_target_size(render_target: Opaque<\"render_target\"> | string | Hash, width: number, height: number): void;",
       "render\u0000FUNCTION\u0000render.set_stencil_func\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_stencil_func(func: number, ref: number, mask: number): void;",
       "render\u0000FUNCTION\u0000render.set_stencil_mask\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[]": "function set_stencil_mask(mask: number): void;",
@@ -4933,7 +4933,7 @@
       },
       "buffer\u0000FUNCTION\u0000buffer.create\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"buffer\"],\"isOptional\":false}]": {
         "param:0:element_count": "number",
-        "param:1:declaration": "{ name?: Hash | string; type?: Opaque<\"constant\">; count?: number }",
+        "param:1:declaration": "{ name?: Hash | string; type?: buffer.ValueType; count?: number }[]",
         "return:0:buffer": "Opaque<\"buffer\">"
       },
       "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
@@ -5053,7 +5053,7 @@
         "param:0:url": "string | Hash | Url",
         "param:1:position": "Vector3",
         "param:2:rotation": "Quaternion",
-        "param:3:properties": "Record<string | number, unknown>",
+        "param:3:properties": "LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>",
         "param:4:scale": "number | Vector3",
         "return:0:ids": "LuaMap<Hash, Hash>"
       },
@@ -5109,7 +5109,7 @@
       },
       "compute\u0000FUNCTION\u0000compute.set_textures\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": {
         "param:0:path": "Hash | string",
-        "param:1:textures": "LuaMap<string, Hash>"
+        "param:1:textures": "LuaMap<string, Hash> | Record<string, Hash>"
       },
       "crash\u0000FUNCTION\u0000crash.get_backtrace\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:handle": "number",
@@ -5855,7 +5855,7 @@
         "param:0:url": "string",
         "param:1:method": "string",
         "param:2:callback": "(self: unknown, id: Hash, response: { status: number; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void",
-        "param:3:headers": "LuaMap<string, string>",
+        "param:3:headers": "LuaMap<string, string> | Record<string, string>",
         "param:4:post_data": "string",
         "param:5:options": "{ timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean }"
       },
@@ -5934,7 +5934,7 @@
       },
       "material\u0000FUNCTION\u0000material.set_textures\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": {
         "param:0:path": "Hash | string",
-        "param:1:textures": "LuaMap<string, Hash>"
+        "param:1:textures": "LuaMap<string, Hash> | Record<string, Hash>"
       },
       "material\u0000FUNCTION\u0000material.set_vertex_attributes\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": {
         "param:0:path": "Hash | string",
@@ -6248,7 +6248,7 @@
       },
       "render\u0000FUNCTION\u0000render.set_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:render_target": "Opaque<\"render_target\"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT",
-        "param:1:options": "{ transient?: Record<string | number, unknown> }"
+        "param:1:options": "{ transient?: graphics.BufferType[] }"
       },
       "render\u0000FUNCTION\u0000render.set_render_target_size\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
         "param:0:render_target": "Opaque<\"render_target\"> | string | Hash",
@@ -8438,7 +8438,7 @@
       },
       "buffer\u0000FUNCTION\u0000buffer.create\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"buffer\"],\"isOptional\":false}]": {
         "param:0:element_count": "number",
-        "param:1:declaration": "{ name?: Hash | string; type?: Opaque<\"constant\">; count?: number }",
+        "param:1:declaration": "{ name?: Hash | string; type?: buffer.ValueType; count?: number }[]",
         "return:0:buffer": "Opaque<\"buffer\">"
       },
       "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
@@ -8558,7 +8558,7 @@
         "param:0:url": "string | Hash | Url",
         "param:1:position": "Vector3",
         "param:2:rotation": "Quaternion",
-        "param:3:properties": "Record<string | number, unknown>",
+        "param:3:properties": "LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>",
         "param:4:scale": "number | Vector3",
         "return:0:ids": "LuaMap<Hash, Hash>"
       },
@@ -8609,7 +8609,7 @@
       },
       "compute\u0000FUNCTION\u0000compute.set_textures\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": {
         "param:0:path": "Hash | string",
-        "param:1:textures": "LuaMap<string, Hash>"
+        "param:1:textures": "LuaMap<string, Hash> | Record<string, Hash>"
       },
       "crash\u0000FUNCTION\u0000crash.get_backtrace\u0000[{\"types\":[\"number\"],\"isOptional\":false}]->[{\"types\":[\"table\"],\"isOptional\":false}]": {
         "param:0:handle": "number",
@@ -9355,7 +9355,7 @@
         "param:0:url": "string",
         "param:1:method": "string",
         "param:2:callback": "(self: unknown, id: Hash, response: { status: number; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void",
-        "param:3:headers": "LuaMap<string, string>",
+        "param:3:headers": "LuaMap<string, string> | Record<string, string>",
         "param:4:post_data": "string",
         "param:5:options": "{ timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean }"
       },
@@ -9434,7 +9434,7 @@
       },
       "material\u0000FUNCTION\u0000material.set_textures\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": {
         "param:0:path": "Hash | string",
-        "param:1:textures": "LuaMap<string, Hash>"
+        "param:1:textures": "LuaMap<string, Hash> | Record<string, Hash>"
       },
       "material\u0000FUNCTION\u0000material.set_vertex_attributes\u0000[{\"types\":[\"hash\",\"string\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[]": {
         "param:0:path": "Hash | string",
@@ -9748,7 +9748,7 @@
       },
       "render\u0000FUNCTION\u0000render.set_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:render_target": "Opaque<\"render_target\"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT",
-        "param:1:options": "{ transient?: Record<string | number, unknown> }"
+        "param:1:options": "{ transient?: graphics.BufferType[] }"
       },
       "render\u0000FUNCTION\u0000render.set_render_target_size\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
         "param:0:render_target": "Opaque<\"render_target\"> | string | Hash",
@@ -10918,7 +10918,7 @@
       },
       "buffer\u0000FUNCTION\u0000buffer.create\u0000[{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":false}]->[{\"types\":[\"buffer\"],\"isOptional\":false}]": {
         "param:0:element_count": "number",
-        "param:1:declaration": "{ name?: Hash | string; type?: Opaque<\"constant\">; count?: number }",
+        "param:1:declaration": "{ name?: Hash | string; type?: buffer.ValueType; count?: number }[]",
         "return:0:buffer": "Opaque<\"buffer\">"
       },
       "buffer\u0000FUNCTION\u0000buffer.get_bytes\u0000[{\"types\":[\"buffer\"],\"isOptional\":false},{\"types\":[\"hash\"],\"isOptional\":false}]->[{\"types\":[\"string\"],\"isOptional\":false}]": {
@@ -11034,7 +11034,7 @@
         "param:0:url": "string | Hash | Url",
         "param:1:position": "Vector3",
         "param:2:rotation": "Quaternion",
-        "param:3:properties": "Record<string | number, unknown>",
+        "param:3:properties": "LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>",
         "param:4:scale": "number | Vector3",
         "return:0:ids": "LuaMap<Hash, Hash>"
       },
@@ -11801,7 +11801,7 @@
         "param:0:url": "string",
         "param:1:method": "string",
         "param:2:callback": "(self: unknown, id: Hash, response: { status: number; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void",
-        "param:3:headers": "LuaMap<string, string>",
+        "param:3:headers": "LuaMap<string, string> | Record<string, string>",
         "param:4:post_data": "string",
         "param:5:options": "{ timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean }"
       },
@@ -12137,7 +12137,7 @@
       },
       "render\u0000FUNCTION\u0000render.set_render_target\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"table\"],\"isOptional\":true}]->[]": {
         "param:0:render_target": "Opaque<\"render_target\"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT",
-        "param:1:options": "{ transient?: Record<string | number, unknown> }"
+        "param:1:options": "{ transient?: graphics.BufferType[] }"
       },
       "render\u0000FUNCTION\u0000render.set_render_target_size\u0000[{\"types\":[\"render_target\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false},{\"types\":[\"number\"],\"isOptional\":false}]->[]": {
         "param:0:render_target": "Opaque<\"render_target\"> | string | Hash",

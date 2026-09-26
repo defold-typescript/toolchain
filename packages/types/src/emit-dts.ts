@@ -131,6 +131,8 @@ export const ARBITRARY_TABLE_SLOTS = new Set([
   // names; bare `on_message`'s receive `message` is the pre-hashed, user-routed
   // payload (mitigated for authored code by isMessage/onMessage). No static shape
   // exists, so `Record<string | number, unknown>` is faithful, not a loss.
+  // collectionfactory.create curates the instance-id layer of `properties` as a
+  // mapping; each per-instance property table stays that faithful `Record`.
   "factory.create",
   "collectionfactory.create",
   "on_message",
@@ -1328,6 +1330,27 @@ const PHYSICS_SHAPE_TABLE_FIELDS: readonly TableField[] = [
 ];
 
 export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new Map([
+  // buffer.create's `declaration` is "a table where each entry (table) describes
+  // a stream", and upstream's example passes a list of stream records whose
+  // `type` is a buffer.VALUE_TYPE_* constant.
+  [
+    "buffer.create:param:declaration",
+    {
+      kind: "array-object",
+      fields: [
+        { name: "name", types: ["hash", "string"] },
+        { name: "type", types: ["constant"], tsType: "buffer.ValueType" },
+        { name: "count", types: ["number"] },
+      ],
+    },
+  ],
+  // collectionfactory.create's `properties` is keyed by "game object ids (hash)",
+  // which upstream's example builds with `hash("/go")`. The `string` key keeps
+  // the object-literal form this slot accepted as a bare `table`.
+  [
+    "collectionfactory.create:param:properties",
+    { kind: "mapping", key: "hash | string", value: "table" },
+  ],
   ["collectionfactory.create:return:ids", { kind: "mapping", key: "hash", value: "hash" }],
   // font.get_info's `info` return is a `<dl>` with `path: hash` and a nested
   // `fonts` field whose `<dd>` is itself a `<dl>` (`path: string`, `path_hash:
@@ -2101,6 +2124,10 @@ export const NESTED_FIELD_CURATIONS: ReadonlyMap<string, readonly TableField[]> 
 //
 // `gui.set`'s `options.key` is documented as `hash`, while upstream's own
 // example sets a named font with `{ key = "my_font_name" }`.
+//
+// `render.set_render_target`'s `options.transient` is documented as `table`
+// with the prose "a list of buffer types", and upstream's example passes
+// graphics.BUFFER_TYPE_* constants.
 const CONSTANT_VALUE_TS = "Vector4 | Vector3 | Matrix4 | number | (Vector4 | Matrix4)[]";
 const ATTRIBUTE_VALUE_TS = "Vector4 | Vector3 | Matrix4 | number | number[]";
 export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
@@ -2112,6 +2139,7 @@ export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
   ["resource.create_atlas:param:table:animations[].playback", "go.Playback"],
   ["resource.get_atlas:return:data:animations[].playback", "go.Playback"],
   ["gui.set:param:options:key", "string | Hash"],
+  ["render.set_render_target:param:options:transient", "graphics.BufferType[]"],
 ]);
 
 // A field the engine accepts on an option bag whose `<dl>` upstream otherwise
@@ -3711,11 +3739,21 @@ function mapSlotUnion(
         // A mapping key may be a `A | B` union token too (render.clear's three
         // documented graphics.BUFFER_TYPE_* constants); split it the same way
         // the value above is split. A single-token key (no `|`) is unaffected.
-        const key = unionFromTokens(
-          mapping.key.split("|").map((token) => token.trim()),
-          mapType,
-        );
-        ts = `LuaMap<${key}, ${value}>`;
+        const keyTokens = mapping.key.split("|").map((token) => token.trim());
+        if (slotKind === "param" && keyTokens.includes("string")) {
+          // A caller builds a string-keyed parameter table as an object literal,
+          // which `LuaMap` rejects; the `Record` arm admits it and TSTL lowers
+          // both to the same Lua table. The `Record` arm carries the string keys,
+          // so `LuaMap` keeps only the other key tokens: `LuaMap`'s key is
+          // invariant, and a `LuaMap<Hash | string, V>` would reject the
+          // `LuaMap<Hash, V>` a caller builds. A string-only key keeps its
+          // `LuaMap` arm so an existing `LuaMap` caller stays valid.
+          const otherKeys = keyTokens.filter((token) => token !== "string");
+          const key = unionFromTokens(otherKeys.length > 0 ? otherKeys : keyTokens, mapType);
+          ts = `LuaMap<${key}, ${value}> | Record<string, ${value}>`;
+        } else {
+          ts = `LuaMap<${unionFromTokens(keyTokens, mapType)}, ${value}>`;
+        }
       } else if (element !== undefined) {
         ts = arrayTypeFromTokens(element, mapType);
       } else if (curation?.kind === "object" || curation?.kind === "array-object") {

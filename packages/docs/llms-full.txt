@@ -9196,7 +9196,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 - function copy_buffer(dst: Opaque<"buffer">, dstoffset: number, src: Opaque<"buffer">, srcoffset: number, count: number): void;
 - function copy_stream(dst: Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> }, dstoffset: number, src: Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> }, srcoffset: number, count: number): void;
-- function create(element_count: number, declaration: { name?: Hash | string; type?: Opaque<"constant">; count?: number }): Opaque<"buffer">;
+- function create(element_count: number, declaration: { name?: Hash | string; type?: buffer.ValueType; count?: number }[]): Opaque<"buffer">;
 - function get_bytes(buffer: Opaque<"buffer">, stream_name: Hash | string): string;
 - function get_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.ValueType | undefined]>;
 - function get_stream(buffer: Opaque<"buffer">, stream_name: Hash | string): Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> };
@@ -9250,7 +9250,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### collectionfactory
 
-- function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: Record<string | number, unknown>, scale?: number | Vector3): LuaMap<Hash, Hash>;
+- function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaMap<Hash, Hash>;
 - function get_status(url?: string | Hash | Url): collectionfactory.Status;
 - function load(url?: string | Hash | Url, complete_function?: (self: unknown, url: unknown, result: unknown) => void): void;
 - function set_prototype(url?: string | Hash | Url, prototype?: string): void;
@@ -9276,7 +9276,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_textures(path: Hash | string): { path: Hash; handle: Hash; width: number; height: number; depth: number; mipmaps: number; type: number; flags: number }[]; [since 1.13.0]
 - function set_constants(path: Hash | string, constants: Record<string, { type?: number; value?: Vector4 | Vector3 | Matrix4 | number | (Vector4 | Matrix4)[] }>): void; [since 1.13.0]
 - function set_samplers(path: Hash | string, samplers: Record<string, { u_wrap?: number; v_wrap?: number; min_filter?: number; mag_filter?: number; max_anisotropy?: number }>): void; [since 1.13.0]
-- function set_textures(path: Hash | string, textures: LuaMap<string, Hash>): void; [since 1.13.0]
+- function set_textures(path: Hash | string, textures: LuaMap<string, Hash> | Record<string, Hash>): void; [since 1.13.0]
 
 ### crash
 
@@ -9328,7 +9328,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 - hash(s: string): Hash
 - hash_to_hex(h: Hash): string
-- pprint(v: unknown)
+- pprint(...args: unknown)
 
 ### go
 
@@ -9819,7 +9819,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### http
 
-- function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void, headers?: LuaMap<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean }): void;
+- function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void, headers?: LuaMap<string, string> | Record<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean }): void;
 
 ### image
 
@@ -9882,7 +9882,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_vertex_attributes(path: Hash | string): { name: Hash; value: Vector4 | Vector3 | Matrix4 | number | number[]; normalize: boolean; data_type: number; coordinate_space: number; semantic_type: number }[]; [since 1.13.0]
 - function set_constants(path: Hash | string, constants: Record<string, { type?: number; value?: Vector4 | Vector3 | Matrix4 | number | (Vector4 | Matrix4)[] }>): void; [since 1.13.0]
 - function set_samplers(path: Hash | string, samplers: Record<string, { u_wrap?: number; v_wrap?: number; min_filter?: number; mag_filter?: number; max_anisotropy?: number }>): void; [since 1.13.0]
-- function set_textures(path: Hash | string, textures: LuaMap<string, Hash>): void; [since 1.13.0]
+- function set_textures(path: Hash | string, textures: LuaMap<string, Hash> | Record<string, Hash>): void; [since 1.13.0]
 - function set_vertex_attributes(path: Hash | string, attributes: Record<string, { value?: Vector4 | Vector3 | Matrix4 | number | number[]; normalize?: boolean; data_type?: number; coordinate_space?: number; semantic_type?: number }>): void; [since 1.13.0]
 
 ### model
@@ -10026,7 +10026,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_listener(callback?: (self: unknown, event_type: unknown) => void): void;
 - function set_polygon_offset(factor: number, units: number): void;
 - function set_projection(matrix: Matrix4): void;
-- function set_render_target(render_target: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT, options?: { transient?: Record<string | number, unknown> }): void;
+- function set_render_target(render_target: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT, options?: { transient?: graphics.BufferType[] }): void;
 - function set_render_target_size(render_target: Opaque<"render_target"> | string | Hash, width: number, height: number): void;
 - function set_stencil_func(func: number, ref: number, mask: number): void;
 - function set_stencil_mask(mask: number): void;
