@@ -456,19 +456,23 @@ export const PROPERTY_TYPE_CORRECTIONS: ReadonlyMap<string, PropertyTypeCorrecti
 ]);
 
 // A property upstream names with a placeholder standing for a numbered family of
-// keys, so its literal name is not a key the engine accepts. The emitted member
-// becomes a template-literal index signature over the whole family. `evidence`
-// is the brief phrase that defines the range; `property-correction-provenance.test.ts`
-// reds when a vendored ref-doc stops saying it. Curated rather than matched on a
-// trailing `N`, so each new upstream placeholder is a deliberate addition.
-export interface PropertyKeyPattern {
-  readonly pattern: string;
+// keys, so its literal name is not a key the engine accepts. The emitted members
+// are one literal key per number in `first..last`, each typed like the
+// placeholder. `evidence` is the brief phrase that defines the range;
+// `property-correction-provenance.test.ts` reds when a vendored ref-doc stops
+// saying it, or when the phrase stops stating `first-last`. Curated rather than
+// matched on a trailing `N`, so each new upstream placeholder is a deliberate
+// addition.
+export interface PropertyKeyRange {
+  readonly prefix: string;
+  readonly first: number;
+  readonly last: number;
   readonly evidence: string;
 }
 
 // Keyed `<namespace>.<property>`, mirroring PROPERTY_TYPE_CORRECTIONS.
-export const PROPERTY_KEY_PATTERNS: ReadonlyMap<string, PropertyKeyPattern> = new Map([
-  ["model.textureN", { pattern: `texture\${number}`, evidence: "textureN where N is 0-7" }],
+export const PROPERTY_KEY_RANGES: ReadonlyMap<string, PropertyKeyRange> = new Map([
+  ["model.textureN", { prefix: "texture", first: 0, last: 7, evidence: "textureN where N is 0-7" }],
 ]);
 
 // A parameter the ref-doc metadata marks required while the same element's prose
@@ -2718,10 +2722,12 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
     const members = [...module.properties].sort((a, b) => a.name.localeCompare(b.name));
     lines.push(`${INDENT}${decl}interface properties {`);
     for (const p of members) {
-      for (const docLine of summaryDocLines(p.brief, p.description, `${INDENT}${INDENT}`)) {
-        lines.push(docLine);
+      for (const member of emitPropertyMembers(p, mapType, module.namespace)) {
+        for (const docLine of summaryDocLines(p.brief, p.description, `${INDENT}${INDENT}`)) {
+          lines.push(docLine);
+        }
+        lines.push(`${INDENT}${INDENT}${member}`);
       }
-      lines.push(`${INDENT}${INDENT}${emitPropertyMember(p, mapType, module.namespace)}`);
     }
     lines.push(`${INDENT}}`);
   }
@@ -2885,10 +2891,14 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
     });
   }
 
+  // A key-range property emits several members that share one type; its entry
+  // carries the first, which is verbatim in the `.d.ts` and is what the `/api`
+  // render layer reduces to `<placeholder>: <type>`.
   for (const p of module.properties) {
+    const [firstMember = ""] = emitPropertyMembers(p, mapType, module.namespace);
     out.push({
       identity: { namespace: module.namespace, kind: "PROPERTY", name: p.name, signature: "" },
-      tsSignature: emitPropertyMember(p, mapType, module.namespace),
+      tsSignature: firstMember,
       slotTypes: NO_SLOTS,
     });
   }
@@ -3509,18 +3519,19 @@ function emitReturn(
   return { type: ts, trailing: "", slots: [{ position: 0, name: first.name, ts }] };
 }
 
-function emitPropertyMember(
+function emitPropertyMembers(
   p: ApiProperty,
   mapType: (t: string) => string,
   namespace: string,
-): string {
-  const keyPattern = PROPERTY_KEY_PATTERNS.get(`${namespace}.${p.name}`);
-  const key =
-    keyPattern !== undefined
-      ? `[key: \`${keyPattern.pattern}\`]`
-      : TS_IDENTIFIER.test(p.name)
-        ? p.name
-        : JSON.stringify(p.name);
+): readonly string[] {
+  const keyRange = PROPERTY_KEY_RANGES.get(`${namespace}.${p.name}`);
+  const keys: string[] = [];
+  if (keyRange !== undefined) {
+    for (let unit = keyRange.first; unit <= keyRange.last; unit++)
+      keys.push(`${keyRange.prefix}${unit}`);
+  } else {
+    keys.push(TS_IDENTIFIER.test(p.name) ? p.name : JSON.stringify(p.name));
+  }
   const correction = PROPERTY_TYPE_CORRECTIONS.get(`${namespace}.${p.name}`);
   const ts =
     correction !== undefined
@@ -3528,7 +3539,7 @@ function emitPropertyMember(
       : p.types.length > 0
         ? unionFromTokens(p.types, mapType)
         : "unknown";
-  return `${key}: ${ts};`;
+  return keys.map((key) => `${key}: ${ts};`);
 }
 
 // Like `unionFromTokens`, but a `table` token whose slot doc carries a parseable
