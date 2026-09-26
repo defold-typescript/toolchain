@@ -700,12 +700,16 @@ declare global {
      * const line = "250 OK";
      *
      * // Instead of doing the following with dummy variables:
-     * // get the status code and separator from SMTP server reply
-     * const [dummy1, dummy2, code, sep] = string.find(line, "^(%d%d%d)(.?)");
+     * {
+     *   // get the status code and separator from SMTP server reply
+     *   const [dummy1, dummy2, code, sep] = string.find(line, "^(%d%d%d)(.?)");
+     * }
      *
      * // You can skip a number of variables:
-     * // get the status code and separator from SMTP server reply
-     * const [code, sep] = socket.skip(2, string.find(line, "^(%d%d%d)(.?)"));
+     * {
+     *   // get the status code and separator from SMTP server reply
+     *   const [code, sep] = socket.skip(2, string.find(line, "^(%d%d%d)(.?)"));
+     * }
      * ```
      */
     function skip(d: number, ret1?: unknown, ret2?: unknown, retN?: unknown): LuaMultiReturn<[unknown, unknown, unknown]>;

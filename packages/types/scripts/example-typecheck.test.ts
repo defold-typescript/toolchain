@@ -103,6 +103,22 @@ describe("the gate against the committed pins", () => {
     expect(failures).toEqual([]);
   });
 
+  test("the pin file is empty", () => {
+    const offenders = Object.entries(pins).flatMap(([identity, diagnostics]) =>
+      diagnostics.map((diagnostic) => `  ${identity} — TS${diagnostic.code} ${diagnostic.text}`),
+    );
+    if (offenders.length > 0) {
+      throw new Error(
+        "examples/typecheck-pins.json records diagnostics, so a shipped translation does not compile:\n" +
+          `${offenders.slice(0, 20).join("\n")}${
+            offenders.length > 20 ? `\n  +${offenders.length - 20} more` : ""
+          }\n` +
+          "Fix the translation, or the declaration it contradicts; never pin.",
+      );
+    }
+    expect(Object.keys(pins)).toEqual([]);
+  });
+
   test("every pin identity still exists in the store, so no pin rots into a ghost", () => {
     const live = new Set(
       Object.entries(store).flatMap(([fqn, entries]) =>

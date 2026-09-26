@@ -910,7 +910,7 @@
   "physics.get_gravity": [
     {
       "sourceHash": "b2b339f1ddd89a38",
-      "ts": "export default defineScript({\n  init(self) {\n    let gravity = physics.get_gravity();\n    // Inverse gravity!\n    gravity = -gravity;\n    physics.set_gravity(gravity);\n  },\n});"
+      "ts": "export default defineScript({\n  init(self) {\n    let gravity = physics.get_gravity();\n    // Inverse gravity!\n    gravity = vmath.vector3(-gravity.x, -gravity.y, -gravity.z);\n    physics.set_gravity(gravity);\n  },\n});"
     }
   ],
   "physics.raycast": [
@@ -992,7 +992,7 @@
   "profiler.recorded_frame_count": [
     {
       "sourceHash": "9d55df4a00c36560",
-      "ts": "// Show the last recorded frame\nconst recorded_frame_count = profiler.recorded_frame_count();\nprofiler.view_recorded_frame(recorded_frame_count);"
+      "ts": "// Show the last recorded frame\nconst recorded_frame_count = profiler.recorded_frame_count();\nprofiler.view_recorded_frame({ frame: recorded_frame_count });"
     }
   ],
   "profiler.scope_begin": [
@@ -1154,11 +1154,11 @@
     },
     {
       "sourceHash": "271ca31f05e103b5",
-      "ts": "// How to create a render target with multiple outputs:\nexport default defineRenderScript({\n  init() {\n    // render target buffer parameters\n    const color_params_rgba = {\n      format: graphics.TEXTURE_FORMAT_RGBA,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n      min_filter: graphics.TEXTURE_FILTER_LINEAR,\n      mag_filter: graphics.TEXTURE_FILTER_LINEAR,\n      u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n      v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n    };\n    const color_params_float = {\n      format: graphics.TEXTURE_FORMAT_RG32F,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n      min_filter: graphics.TEXTURE_FILTER_LINEAR,\n      mag_filter: graphics.TEXTURE_FILTER_LINEAR,\n      u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n      v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n    };\n\n    // Create a render target with three color attachments\n    // Note: No depth buffer is attached here\n    return {\n      my_render_target: render.render_target({\n        [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params_rgba,\n        [graphics.BUFFER_TYPE_COLOR1_BIT]: color_params_rgba,\n        [graphics.BUFFER_TYPE_COLOR2_BIT]: color_params_float,\n      }),\n      my_pred: render.predicate([hash(\"my_tag\")]),\n    };\n  },\n\n  update(self, dt) {\n    // enable target so all drawing is done to it\n    render.enable_render_target(self.my_render_target);\n\n    // draw a predicate to the render target\n    render.draw(self.my_pred);\n  },\n});"
+      "ts": "// How to create a render target with multiple outputs:\nexport default defineRenderScript({\n  init() {\n    // render target buffer parameters\n    const color_params_rgba = {\n      format: graphics.TEXTURE_FORMAT_RGBA,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n      min_filter: graphics.TEXTURE_FILTER_LINEAR,\n      mag_filter: graphics.TEXTURE_FILTER_LINEAR,\n      u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n      v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n    };\n    const color_params_float = {\n      format: graphics.TEXTURE_FORMAT_RG32F,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n      min_filter: graphics.TEXTURE_FILTER_LINEAR,\n      mag_filter: graphics.TEXTURE_FILTER_LINEAR,\n      u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n      v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n    };\n\n    // Create a render target with three color attachments\n    // Note: No depth buffer is attached here\n    return {\n      my_render_target: render.render_target({\n        [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params_rgba,\n        [graphics.BUFFER_TYPE_COLOR1_BIT]: color_params_rgba,\n        [graphics.BUFFER_TYPE_COLOR2_BIT]: color_params_float,\n      }),\n      my_pred: render.predicate([hash(\"my_tag\")]),\n    };\n  },\n\n  update(self, dt) {\n    // enable target so all drawing is done to it\n    render.set_render_target(self.my_render_target);\n\n    // draw a predicate to the render target\n    render.draw(self.my_pred);\n  },\n});"
     },
     {
       "sourceHash": "e39f13af5d65d01d",
-      "ts": "// How to create a render target with multiple outputs:\nexport default defineRenderScript({\n  init() {\n    // render target buffer parameters\n    const color_params_rgba = {\n      format: graphics.TEXTURE_FORMAT_RGBA,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n      min_filter: graphics.TEXTURE_FILTER_LINEAR,\n      mag_filter: graphics.TEXTURE_FILTER_LINEAR,\n      u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n      v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n    };\n    const color_params_float = {\n      format: graphics.TEXTURE_FORMAT_RG32F,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n      min_filter: graphics.TEXTURE_FILTER_LINEAR,\n      mag_filter: graphics.TEXTURE_FILTER_LINEAR,\n      u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n      v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n    };\n\n    // Create a render target with three color attachments\n    // Note: No depth buffer is attached here\n    return {\n      my_render_target: render.render_target({\n        [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params_rgba,\n        [graphics.BUFFER_TYPE_COLOR1_BIT]: color_params_rgba,\n        [graphics.BUFFER_TYPE_COLOR2_BIT]: color_params_float,\n      }),\n      my_pred: render.predicate([hash(\"my_tag\")]),\n    };\n  },\n\n  update(self, dt) {\n    // enable target so all drawing is done to it\n    render.enable_render_target(self.my_render_target);\n\n    // draw a predicate to the render target\n    render.draw(self.my_pred);\n  },\n});"
+      "ts": "// How to create a render target with multiple outputs:\nexport default defineRenderScript({\n  init() {\n    // render target buffer parameters\n    const color_params_rgba = {\n      format: graphics.TEXTURE_FORMAT_RGBA,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n      min_filter: graphics.TEXTURE_FILTER_LINEAR,\n      mag_filter: graphics.TEXTURE_FILTER_LINEAR,\n      u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n      v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n    };\n    const color_params_float = {\n      format: graphics.TEXTURE_FORMAT_RG32F,\n      width: render.get_window_width(),\n      height: render.get_window_height(),\n      min_filter: graphics.TEXTURE_FILTER_LINEAR,\n      mag_filter: graphics.TEXTURE_FILTER_LINEAR,\n      u_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n      v_wrap: graphics.TEXTURE_WRAP_CLAMP_TO_EDGE,\n    };\n\n    // Create a render target with three color attachments\n    // Note: No depth buffer is attached here\n    return {\n      my_render_target: render.render_target({\n        [graphics.BUFFER_TYPE_COLOR0_BIT]: color_params_rgba,\n        [graphics.BUFFER_TYPE_COLOR1_BIT]: color_params_rgba,\n        [graphics.BUFFER_TYPE_COLOR2_BIT]: color_params_float,\n      }),\n      my_pred: render.predicate([hash(\"my_tag\")]),\n    };\n  },\n\n  update(self, dt) {\n    // enable target so all drawing is done to it\n    render.set_render_target(self.my_render_target);\n\n    // draw a predicate to the render target\n    render.draw(self.my_pred);\n  },\n});"
     }
   ],
   "render.set_blend_equation_separate": [
@@ -1314,7 +1314,7 @@
   "resource.create_sound_data": [
     {
       "sourceHash": "19e6f6ab7a317fa1",
-      "ts": "export default defineScript({\n  init() {\n    // create a new sound resource, given the initial chunk of the file\n    const relative_path = \"/a/unique/resource/name.oggc\";\n    const hash = resource.create_sound_data(relative_path, { data, filesize, partial: true });\n    go.set(\"#music\", \"sound\", hash); // override the previous sound resource\n    sound.play(\"#music\"); // start the playing\n  },\n});"
+      "ts": "export default defineScript({\n  init() {\n    // create a new sound resource, given the initial chunk of the file\n    const [data] = sys.load_resource(\"/sounds/music_header.oggc\");\n    if (data === undefined) {\n      return;\n    }\n    const filesize = 1048576;\n    const relative_path = \"/a/unique/resource/name.oggc\";\n    const hash = resource.create_sound_data(relative_path, { data, filesize, partial: true });\n    go.set(\"#music\", \"sound\", hash); // override the previous sound resource\n    sound.play(\"#music\"); // start the playing\n  },\n});"
     }
   ],
   "resource.create_texture": [
@@ -1494,7 +1494,7 @@
   "socket.skip": [
     {
       "sourceHash": "3a75c35a80c48e9e",
-      "ts": "const line = \"250 OK\";\n\n// Instead of doing the following with dummy variables:\n// get the status code and separator from SMTP server reply\nconst [dummy1, dummy2, code, sep] = string.find(line, \"^(%d%d%d)(.?)\");\n\n// You can skip a number of variables:\n// get the status code and separator from SMTP server reply\nconst [code, sep] = socket.skip(2, string.find(line, \"^(%d%d%d)(.?)\"));"
+      "ts": "const line = \"250 OK\";\n\n// Instead of doing the following with dummy variables:\n{\n  // get the status code and separator from SMTP server reply\n  const [dummy1, dummy2, code, sep] = string.find(line, \"^(%d%d%d)(.?)\");\n}\n\n// You can skip a number of variables:\n{\n  // get the status code and separator from SMTP server reply\n  const [code, sep] = socket.skip(2, string.find(line, \"^(%d%d%d)(.?)\"));\n}"
     }
   ],
   "sound.get_group_gain": [
@@ -1608,7 +1608,7 @@
   "sys.exists": [
     {
       "sourceHash": "7e98945102ff1ab7",
-      "ts": "// Load data but return nil if path didn't exist\nconst path = \"/save/game.dat\";\nif (!sys.exists(path)) {\n  return undefined;\n}\nreturn sys.load(path); // returns {} if it failed"
+      "ts": "// Load data but return nil if path didn't exist\nfunction load_data(path: string) {\n  if (!sys.exists(path)) {\n    return undefined;\n  }\n  return sys.load(path); // returns {} if it failed\n}"
     }
   ],
   "sys.exit": [
@@ -1668,7 +1668,7 @@
   "sys.get_host_path": [
     {
       "sourceHash": "a059ecb3d55d5c22",
-      "ts": "// Save data on the host\nconst mytable = { score: 100, level: 3 };\nconst host_path = sys.get_host_path(\"logs/test.txt\");\nsys.save(host_path, mytable);\n\n// Load data from the host\nconst host_path = sys.get_host_path(\"logs/test.txt\");\nconst table = sys.load(host_path);"
+      "ts": "// Save data on the host\n{\n  const mytable = { score: 100, level: 3 };\n  const host_path = sys.get_host_path(\"logs/test.txt\");\n  sys.save(host_path, mytable);\n}\n\n// Load data from the host\n{\n  const host_path = sys.get_host_path(\"logs/test.txt\");\n  const table = sys.load(host_path);\n}"
     }
   ],
   "sys.get_ifaddrs": [
@@ -1704,7 +1704,7 @@
   "sys.load_buffer_async": [
     {
       "sourceHash": "6a383bca91cf11eb",
-      "ts": "// Load binary data from a custom project resource and update a texture resource:\nfunction my_callback(self: unknown, request_id: unknown, result: unknown) {\n  const { status, buf } = result as { status: number; buf: Opaque<\"buffer\"> };\n  if (status === sys.REQUEST_STATUS_FINISHED) {\n    resource.set_texture(\"/my_texture\", {}, buf); // texture args\n  }\n}\n\nconst my_request = sys.load_buffer_async(\"/assets/my_level_data.bin\", my_callback);\n\n// Load binary data from non-custom resource files on disk:\nfunction my_callback(self: unknown, request_id: unknown, result: unknown) {\n  const { first_asset, second_asset } = self as { first_asset: Hash; second_asset: Hash };\n  if ((result as { status: number }).status !== sys.REQUEST_STATUS_FINISHED) {\n    // uh oh! File could not be found, do something graceful\n  } else if (request_id === first_asset) {\n    // result.buffer contains data from my_level_asset.bin\n  } else if (request_id === second_asset) {\n    // result.buffer contains data from 'my_level.bin'\n  }\n}\n\nexport default defineScript({\n  init() {\n    const first_path = \"folder_next_to_binary/my_level_asset.bin\";\n    const second_path = \"/some_absolute_path/my_level.bin\";\n    return {\n      first_asset: hash(first_path),\n      second_asset: hash(second_path),\n      first_request: sys.load_buffer_async(first_path, my_callback),\n      second_request: sys.load_buffer_async(second_path, my_callback),\n    };\n  },\n});"
+      "ts": "// Load binary data from a custom project resource and update a texture resource:\n{\n  function my_callback(self: unknown, request_id: unknown, result: unknown) {\n    const { status, buf } = result as { status: number; buf: Opaque<\"buffer\"> };\n    if (status === sys.REQUEST_STATUS_FINISHED) {\n      resource.set_texture(\"/my_texture\", {}, buf); // texture args\n    }\n  }\n\n  const my_request = sys.load_buffer_async(\"/assets/my_level_data.bin\", my_callback);\n}\n\n// Load binary data from non-custom resource files on disk:\nfunction my_callback(self: unknown, request_id: unknown, result: unknown) {\n  const { first_asset, second_asset } = self as { first_asset: Hash; second_asset: Hash };\n  if ((result as { status: number }).status !== sys.REQUEST_STATUS_FINISHED) {\n    // uh oh! File could not be found, do something graceful\n  } else if (request_id === first_asset) {\n    // result.buffer contains data from my_level_asset.bin\n  } else if (request_id === second_asset) {\n    // result.buffer contains data from 'my_level.bin'\n  }\n}\n\nexport default defineScript({\n  init() {\n    const first_path = \"folder_next_to_binary/my_level_asset.bin\";\n    const second_path = \"/some_absolute_path/my_level.bin\";\n    return {\n      first_asset: hash(first_path),\n      second_asset: hash(second_path),\n      first_request: sys.load_buffer_async(first_path, my_callback),\n      second_request: sys.load_buffer_async(second_path, my_callback),\n    };\n  },\n});"
     }
   ],
   "sys.load_resource": [
