@@ -272,6 +272,141 @@ export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> 
   ],
 ]);
 
+// A parameter whose declared `types` reject what the same element's prose, or
+// an upstream example, demonstrably passes — a render target by resource name,
+// a texture unit, a Lua sequence where `table` is declared. Admission rule: only
+// a slot upstream's own prose or example contradicts; a slot that is merely
+// imprecise is not a candidate. Every such slot is too narrow, never wrong, so
+// `adds` is appended to the mapped union rather than replacing it: the URL
+// address alias, array curation and constant mapping stay live, and optionality
+// stays with `isDocOptional`. Each entry records the upstream tokens it
+// contradicts and `param-correction-provenance.test.ts` pins them against every
+// retained vendored ref-doc. Once no retained target still declares those
+// tokens the entry is deleted, never re-pinned.
+export interface ParamTypeCorrection {
+  readonly adds: string;
+  readonly upstream: readonly string[];
+  readonly reason: string;
+}
+
+// Keyed `<element>:param:<slot>` like OPTIONAL_SLOT_CORRECTIONS, so a
+// same-named slot on another element is untouched.
+export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = new Map([
+  [
+    "render.set_render_target:param:render_target",
+    {
+      adds: "string | Hash | typeof render.RENDER_TARGET_DEFAULT",
+      upstream: ["render_target"],
+      reason:
+        "\"render.RENDER_TARGET_DEFAULT to set the default render target\"; example `render.set_render_target('my_rt_resource')`",
+    },
+  ],
+  [
+    "render.get_render_target_width:param:render_target",
+    {
+      adds: "string | Hash",
+      upstream: ["render_target"],
+      reason:
+        "example `render.get_render_target_width('my_rt_resource', graphics.BUFFER_TYPE_COLOR0_BIT)`",
+    },
+  ],
+  [
+    "render.get_render_target_height:param:render_target",
+    {
+      adds: "string | Hash",
+      upstream: ["render_target"],
+      reason:
+        "example `render.get_render_target_height('my_rt_resource', graphics.BUFFER_TYPE_COLOR0_BIT)`",
+    },
+  ],
+  [
+    "render.set_render_target_size:param:render_target",
+    {
+      adds: "string | Hash",
+      upstream: ["render_target"],
+      reason:
+        "\"a render target created from either a render script, or from a render target resource\"; example `render.set_render_target_size('my_rt_resource', ...)`",
+    },
+  ],
+  [
+    "render.enable_texture:param:handle_or_name",
+    {
+      adds: 'Opaque<"render_target"> | number',
+      upstream: ["texture", "string", "hash"],
+      reason:
+        "\"render target or texture handle that should be bound, or a named resource\"; examples `render.enable_texture(0, self.my_render_target, ...)` and `render.enable_texture(0, 'my_rt_resource', ...)`; `resource.get_texture_info` returns the handle as a number",
+    },
+  ],
+  [
+    "render.disable_texture:param:binding",
+    {
+      adds: "number",
+      upstream: ["texture", "string", "hash"],
+      reason:
+        '"texture binding, either by texture unit, string or hash"; example `render.disable_texture(0)`',
+    },
+  ],
+  [
+    "render.set_camera:param:camera",
+    {
+      adds: "string",
+      upstream: ["url", "number", "nil"],
+      reason: 'example `render.set_camera("main:/my_go#camera")`',
+    },
+  ],
+  [
+    "go.delete:param:id",
+    {
+      adds: "boolean",
+      upstream: ["string", "hash", "url", "table"],
+      reason: "example `go.delete(true)` deletes the script game object and its children",
+    },
+  ],
+  [
+    "buffer.get_bytes:param:stream_name",
+    {
+      adds: "string",
+      upstream: ["hash"],
+      reason: 'sys.load_buffer example `buffer.get_bytes(my_buffer, "data")`',
+    },
+  ],
+  [
+    "gui.set:param:value",
+    {
+      adds: "Matrix4 | Hash",
+      upstream: ["number", "vector4", "vector3", "quaternion"],
+      reason:
+        'example `gui.set(node, "light_matrix", vmath.matrix4())` ("matrix4 is also supported"); example `gui.set(msg.url(), "textures", atlas_id, {key = "runtime_texture"})` passes the hash `resource.create_atlas` returns',
+    },
+  ],
+  [
+    "gui.set_rotation:param:rotation",
+    {
+      adds: "Vector3",
+      upstream: ["quaternion", "vector4"],
+      reason: "gui.set example `gui.set_rotation(node, vmath.vector3(0,0,45))`",
+    },
+  ],
+  [
+    "sys.save:param:table",
+    {
+      adds: "readonly unknown[]",
+      upstream: ["table"],
+      reason:
+        'example builds `my_table` with `table.insert(my_table, "my_value")` and passes it to `sys.save`',
+    },
+  ],
+  [
+    "sys.serialize:param:table",
+    {
+      adds: "readonly unknown[]",
+      upstream: ["table"],
+      reason:
+        'example builds `my_table` with `table.insert(my_table, "my_value")` and passes it to `sys.serialize`',
+    },
+  ],
+]);
+
 // A property whose upstream `<span class="type">` states a type the engine does
 // not use. Unlike every other override here, which fills a gap upstream left
 // empty, these contradict a token upstream explicitly declares — so each entry
@@ -3111,19 +3246,22 @@ function parameterType(
   // `safeParamName` fallback.
   const alias = SCENE_ADDRESS_ALIASES[classifyUrlParameter(urlParameters, elementName, p.name)];
   const slotMapType = alias === undefined ? mapType : addressMapType(mapType, alias);
-  return concrete.length > 0
-    ? mapSlotUnion(
-        concrete,
-        p.doc,
-        slotMapType,
-        true,
-        resolver,
-        constantTokens,
-        elementName,
-        "param",
-        p.name,
-      )
-    : "unknown";
+  const mapped =
+    concrete.length > 0
+      ? mapSlotUnion(
+          concrete,
+          p.doc,
+          slotMapType,
+          true,
+          resolver,
+          constantTokens,
+          elementName,
+          "param",
+          p.name,
+        )
+      : "unknown";
+  const correction = PARAM_TYPE_CORRECTIONS.get(tableSlotKey(elementName, "param", p.name));
+  return correction === undefined ? mapped : `${mapped} | ${correction.adds}`;
 }
 
 const VARARG_PREFIX = "...";

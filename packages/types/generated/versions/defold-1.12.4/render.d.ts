@@ -200,7 +200,7 @@ declare global {
      * });
      * ```
      */
-    function disable_texture(binding: Opaque<"texture"> | string | Hash): void;
+    function disable_texture(binding: Opaque<"texture"> | string | Hash | number): void;
     /**
      * Dispatches the currently enabled compute program. The dispatch call takes three arguments x,y,z which constitutes
      * the 'global working group' of the compute dispatch. Together with the 'local working group' specified in the compute shader
@@ -486,7 +486,7 @@ declare global {
      * });
      * ```
      */
-    function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<"texture"> | string | Hash, buffer_type?: graphics.BufferType): void;
+    function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<"texture"> | string | Hash | Opaque<"render_target"> | number, buffer_type?: graphics.BufferType): void;
     /**
      * Returns the logical window height that is set in the "game.project" settings.
      * Note that the actual window pixel size can change, either by device constraints
@@ -542,7 +542,7 @@ declare global {
      * });
      * ```
      */
-    function get_render_target_height(render_target: Opaque<"render_target">, buffer_type: graphics.BufferType): number;
+    function get_render_target_height(render_target: Opaque<"render_target"> | string | Hash, buffer_type: graphics.BufferType): number;
     /**
      * Returns the specified buffer width from a render target.
      *
@@ -587,7 +587,7 @@ declare global {
      * });
      * ```
      */
-    function get_render_target_width(render_target: Opaque<"render_target">, buffer_type: graphics.BufferType): number;
+    function get_render_target_width(render_target: Opaque<"render_target"> | string | Hash, buffer_type: graphics.BufferType): number;
     /**
      * Returns the logical window width that is set in the "game.project" settings.
      * Note that the actual window pixel size can change, either by device constraints
@@ -768,7 +768,7 @@ declare global {
      * });
      * ```
      */
-    function set_camera(camera?: Url | number, options?: { use_frustum?: boolean }): void;
+    function set_camera(camera?: Url | number | string, options?: { use_frustum?: boolean }): void;
     /**
      * Specifies whether the individual color components in the frame buffer is enabled for writing (`true`) or disabled (`false`). For example, if `blue` is `false`, nothing is written to the blue component of any pixel in any of the color buffers, regardless of the drawing operation attempted. Note that writing are either enabled or disabled for entire color components, not the individual bits of a component.
      * The component masks are all initially `true`.
@@ -1020,7 +1020,7 @@ declare global {
      * });
      * ```
      */
-    function set_render_target(render_target: Opaque<"render_target">, options?: { transient?: Record<string | number, unknown> }): void;
+    function set_render_target(render_target: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT, options?: { transient?: Record<string | number, unknown> }): void;
     /**
      * Sets the render target size for a render target created from
      * either a render script, or from a render target resource.
@@ -1043,7 +1043,7 @@ declare global {
      * });
      * ```
      */
-    function set_render_target_size(render_target: Opaque<"render_target">, width: number, height: number): void;
+    function set_render_target_size(render_target: Opaque<"render_target"> | string | Hash, width: number, height: number): void;
     /**
      * Stenciling is similar to depth-buffering as it enables and disables drawing on a
      * per-pixel basis. First, GL drawing primitives are drawn into the stencil planes.

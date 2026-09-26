@@ -51,6 +51,7 @@ import {
   NESTED_FIELD_CURATIONS,
   OPTIONAL_SLOT_CORRECTIONS,
   OVERLOAD_COVERED_SKIPS,
+  PARAM_TYPE_CORRECTIONS,
   parseTableFields,
   recoverCallbackSignature,
   SLOT_LEVEL_LIST_PROSE,
@@ -706,6 +707,65 @@ describe("emitDeclarations", () => {
     });
   });
 
+  describe("a slot PARAM_TYPE_CORRECTIONS names", () => {
+    // Driven off the production table, like the optional-slot cases above, and
+    // fed the entry's own upstream tokens so the fixture is the contradicted slot.
+    const [correctedKey, correction] = [...PARAM_TYPE_CORRECTIONS.entries()][0] ?? [];
+    if (correctedKey === undefined || correction === undefined) {
+      throw new Error("PARAM_TYPE_CORRECTIONS is empty");
+    }
+    const [elementName, slotKind, slotName] = correctedKey.split(":");
+    if (elementName === undefined || slotName === undefined || slotKind !== "param") {
+      throw new Error(`PARAM_TYPE_CORRECTIONS: malformed key ${correctedKey}`);
+    }
+    const namespace = elementName.slice(0, elementName.lastIndexOf("."));
+    const localName = elementName.slice(elementName.lastIndexOf(".") + 1);
+
+    const moduleWith = (name: string, parameters: ApiParameter[]): ApiModule => ({
+      namespace,
+      brief: "",
+      description: "",
+      functions: [{ name, brief: "", description: "", parameters, returnValues: [] }],
+      variables: [],
+      constants: [],
+      properties: [],
+      typedefs: [],
+    });
+
+    const slot = (isOptional: boolean): ApiParameter => ({
+      name: slotName,
+      doc: "",
+      types: [...correction.upstream],
+      isOptional,
+    });
+    const lead: ApiParameter = { name: "lead", doc: "", types: ["number"], isOptional: false };
+
+    // The same slot on an element the table does not name: what the upstream
+    // tokens map to without the entry.
+    const mapped = new RegExp(`function not_${localName}\\(${slotName}: (.+)\\): void;`).exec(
+      emitDeclarations(moduleWith(`${namespace}.not_${localName}`, [slot(false)])),
+    )?.[1];
+
+    test("leaves the same slot name on another element on its mapped type", () => {
+      expect(mapped).toBeDefined();
+      expect(mapped).not.toContain(correction.adds);
+    });
+
+    test("appends the entry's members and keeps a trailing optional ?", () => {
+      const out = emitDeclarations(moduleWith(elementName, [lead, slot(true)]));
+      expect(out).toContain(
+        `function ${localName}(lead: number, ${slotName}?: ${mapped} | ${correction.adds}): void;`,
+      );
+    });
+
+    test("appends the entry's members and keeps a required slot required", () => {
+      const out = emitDeclarations(moduleWith(elementName, [slot(false), lead]));
+      expect(out).toContain(
+        `function ${localName}(${slotName}: ${mapped} | ${correction.adds}, lead: number): void;`,
+      );
+    });
+  });
+
   test("consecutive trailing optionals all emit ?", () => {
     const module: ApiModule = {
       namespace: "ns",
@@ -1207,7 +1267,7 @@ describe("emitDeclarations", () => {
           name: "go.delete",
           brief: "",
           description: "",
-          parameters: [{ name: "id", doc: "", types: ["string"], isOptional: true }],
+          parameters: [{ name: "target", doc: "", types: ["string"], isOptional: true }],
           returnValues: [],
         },
       ],
@@ -1217,7 +1277,7 @@ describe("emitDeclarations", () => {
       typedefs: [],
     };
     const out = emitDeclarations(module);
-    expect(out).toContain("function _delete(id?: string): void;");
+    expect(out).toContain("function _delete(target?: string): void;");
     expect(out).toContain("export { _delete as delete };");
     expect(out).not.toContain("function delete(");
   });
