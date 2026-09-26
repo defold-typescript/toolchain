@@ -17,8 +17,11 @@ import {
   groupOverloadForms,
   groupTypeSymbols,
   type LibraryMeta,
+  outerCallParams,
+  outerCallSlots,
   overloadFormCodes,
   overloadHeading,
+  splitCallForm,
   windowedBadgeCategory,
 } from "./api-surface";
 import { type ApiVersion, versionsWithDiskFixtures } from "./api-surface-loader";
@@ -95,54 +98,26 @@ function paramSection(label: string, params: ApiSymbolParam[]): string {
   return [`**${label}**`, "", ...params.map(paramBullet)].join("\n");
 }
 
-function sameSlot(a: ApiSymbolParam | undefined, b: ApiSymbolParam | undefined): boolean {
-  return (
-    a !== undefined &&
-    b !== undefined &&
-    a.name === b.name &&
-    a.isOptional === b.isOptional &&
-    a.types.join(" | ") === b.types.join(" | ")
-  );
-}
-
-// The overload forms' parameter tables as one list: the leading and trailing runs
-// every form shares (by name, types and optionality) render once around a `one of`
-// group holding each form's own parameters. `null` when a form has no table or
-// the tables differ only in prose, since then there is nothing to branch on.
-function splitParamSection(tables: readonly ApiSymbolParam[][]): string | null {
-  const [first] = tables;
-  if (first === undefined || tables.some((t) => t.length === 0)) return null;
-  const shortest = Math.min(...tables.map((t) => t.length));
-  let prefix = 0;
-  while (prefix < shortest && tables.every((t) => sameSlot(t[prefix], first[prefix]))) prefix++;
-  let suffix = 0;
-  while (
-    suffix < shortest - prefix &&
-    tables.every((t) => sameSlot(t[t.length - 1 - suffix], first[first.length - 1 - suffix]))
-  ) {
-    suffix++;
-  }
-  const branches = tables.map((t) => t.slice(prefix, t.length - suffix));
-  const [lead] = branches;
-  if (
-    lead !== undefined &&
-    branches.every((b) => b.length === lead.length && b.every((p, i) => sameSlot(p, lead[i])))
-  ) {
-    return null;
-  }
-  const nested = (p: ApiSymbolParam): string =>
-    paramBullet(p)
-      .split("\n")
-      .map((line) => `  ${line}`)
-      .join("\n");
-  const lines = ["**Parameters**", "", ...first.slice(0, prefix).map(paramBullet), "- _one of_"];
-  for (const [index, branch] of branches.entries()) {
-    if (index > 0) lines.push("", "  _or_", "");
-    if (branch.length === 0) lines.push("  - no arguments");
-    else lines.push(...branch.map(nested));
-  }
-  lines.push(...first.slice(first.length - suffix).map(paramBullet));
-  return lines.join("\n");
+// A table moved onto a form it did not land on takes every slot's type and
+// optionality, and a lone return's type, from that form's own signature: its
+// source entry can describe several forms at once (`x: number | vector3`).
+function tableForForm(
+  table: Pick<ApiSymbol, "parameters" | "returnValues">,
+  form: ApiSymbol,
+): Pick<ApiSymbol, "parameters" | "returnValues"> {
+  const slots = outerCallSlots(form.signature) ?? [];
+  const returns = splitCallForm(form).returns?.replace(/^:\s*/, "");
+  const [only] = table.returnValues;
+  return {
+    parameters: table.parameters.map((p, index) => {
+      const slot = slots[index];
+      return slot?.type ? { ...p, isOptional: slot.isOptional, types: [slot.type] } : p;
+    }),
+    returnValues:
+      returns && only && table.returnValues.length === 1
+        ? [{ ...only, types: [returns] }]
+        : table.returnValues,
+  };
 }
 
 /**
@@ -730,16 +705,57 @@ export function apiPageMarkdown(
     const sameAvailability = shared(forms.map((s) => s.availability ?? null));
     const sameBadges = shared(badges);
     const sameDoc = shared(linked.map((s) => s.docMarkdown));
-    // `apiModuleSymbols` keeps a function's example on its primary row alone, so an
-    // example only the first form carries belongs to the whole block.
+    // `apiModuleSymbols` keeps an unpaired function's example on its primary row
+    // alone, so an example only the first form carries belongs to the whole block.
     const sameExample =
       shared(forms.map((s) => s.exampleMarkdown ?? "")) ||
       forms.slice(1).every((s) => s.exampleMarkdown === undefined);
-    const sameParams = shared(linked.map((s) => s.parameters));
-    const sameReturnTables = shared(linked.map((s) => s.returnValues));
+    // Forms that never share a version are one function's signature across
+    // Defold releases, not overloads a caller picks between, so their examples
+    // are revisions of one example: the newest form's stands for the block.
+    const axis = pageAxis.map(bareId);
+    const spans = forms.map((s) => (s.availability?.availableIn ?? []).map(bareId));
+    const versionsSeen = spans.flat();
+    const newestForm = (): ApiSymbol => {
+      const newestAt = (index: number) =>
+        Math.min(...(spans[index] ?? []).map((v) => axis.indexOf(v)));
+      let best = 0;
+      for (let i = 1; i < forms.length; i++) if (newestAt(i) < newestAt(best)) best = i;
+      return forms[best] ?? head;
+    };
+    const blockExample = sameExample
+      ? head.exampleMarkdown
+      : spanTracked &&
+          spans.every((s) => s.length > 0) &&
+          new Set(versionsSeen).size === versionsSeen.length
+        ? newestForm().exampleMarkdown
+        : undefined;
+    const formExamples = blockExample === undefined && !sameExample;
+    // One ref-doc entry can land its tables on a form they do not describe
+    // (`vmath.euler_to_quat`'s `x, y, z` table on the `(v: Vector3)` form). A
+    // table only one form carries moves to every form whose parameters it names,
+    // and stays where it landed when it names none; once every form carries it,
+    // it is shared and renders once for the block.
+    const tabled = linked.filter((s) => s.parameters.length > 0 || s.returnValues.length > 0);
+    const lone = tabled.length === 1 ? tabled[0] : undefined;
+    const loneNames = lone?.parameters.map((p) => p.name).join(", ");
+    const named = forms.map(
+      (s) =>
+        (lone?.parameters.length ?? 0) > 0 &&
+        outerCallParams(s.signature)?.join(", ") === loneNames,
+    );
+    const tables: Pick<ApiSymbol, "parameters" | "returnValues">[] = linked.map((s, index) =>
+      lone === undefined || !named.some(Boolean)
+        ? s
+        : named[index]
+          ? tableForForm(lone, s)
+          : { parameters: [], returnValues: [] },
+    );
+    const tableForm = tables[0];
+    const sameParams = shared(tables.map((t) => t.parameters));
+    const sameReturnTables = shared(tables.map((t) => t.returnValues));
     const codes = overloadFormCodes(forms);
-    const splitParams = sameParams ? null : splitParamSection(linked.map((s) => s.parameters));
-    const sharedReturnTable = sameReturnTables && (linked[0]?.returnValues.length ?? 0) > 0;
+    const sharedReturnTable = sameReturnTables && (tableForm?.returnValues.length ?? 0) > 0;
 
     const dots =
       (combinedMarkers ? groupDots(forms) : "") +
@@ -764,12 +780,13 @@ export function apiPageMarkdown(
         const first = linked.findIndex((s) => s.docMarkdown === symbol.docMarkdown);
         parts.push(first < index ? `_Same description as form ${first + 1}._` : symbol.docMarkdown);
       }
-      if (!sameExample && symbol.exampleMarkdown) parts.push(symbol.exampleMarkdown);
-      if (!sameParams && splitParams === null && symbol.parameters.length > 0) {
-        parts.push(paramSection("Parameters", symbol.parameters));
+      if (formExamples && symbol.exampleMarkdown) parts.push(symbol.exampleMarkdown);
+      const table = tables[index] ?? symbol;
+      if (!sameParams && table.parameters.length > 0) {
+        parts.push(paramSection("Parameters", table.parameters));
       }
-      if (!sameReturnTables && symbol.returnValues.length > 0) {
-        parts.push(paramSection("Returns", symbol.returnValues));
+      if (!sameReturnTables && table.returnValues.length > 0) {
+        parts.push(paramSection("Returns", table.returnValues));
       }
       return ['<li class="api-overload">', "", parts.join("\n\n"), "", "</li>"].join("\n");
     });
@@ -780,13 +797,11 @@ export function apiPageMarkdown(
     if (note) body.push(note);
     if (sameBadges && badges[0]) body.push(badges[0]);
     if (sameDoc && linked[0]?.docMarkdown) body.push(linked[0].docMarkdown);
-    if (sameExample && head.exampleMarkdown) body.push(head.exampleMarkdown);
-    if (sameParams && (linked[0]?.parameters.length ?? 0) > 0) {
-      body.push(paramSection("Parameters", linked[0]?.parameters ?? []));
-    } else if (splitParams !== null) {
-      body.push(splitParams);
+    if (blockExample) body.push(blockExample);
+    if (sameParams && (tableForm?.parameters.length ?? 0) > 0) {
+      body.push(paramSection("Parameters", tableForm?.parameters ?? []));
     }
-    if (sharedReturnTable) body.push(paramSection("Returns", linked[0]?.returnValues ?? []));
+    if (sharedReturnTable) body.push(paramSection("Returns", tableForm?.returnValues ?? []));
     lines.push(
       `${heading} ${dots}`.trimEnd(),
       "",

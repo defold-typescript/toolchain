@@ -30,6 +30,7 @@ import {
   type AvailabilityLookup,
   apiModuleSymbols,
   availabilityLabels,
+  bareId,
   groupOverloadForms,
   overloadHeading,
   splitCallForm,
@@ -2733,26 +2734,22 @@ describe("grouped overload blocks (committed artifacts)", () => {
     expect(occurrences(block.slice(0, block.indexOf("**Returns**")), returnType)).toBe(1);
   });
 
-  test("b2d.shape.set_shape splits its parameters into one-of branches around the shared tail", () => {
-    const block = blockOf(
-      render(pageFor("b2d.shape")),
-      overloadHeading(groupFor(pageFor("b2d.shape"), "b2d.shape.set_shape")),
-    );
-    const params = block.slice(block.indexOf("**Parameters**")).split("\n");
-    const at = (indent: string, name: string) =>
-      params.findIndex((l) => l.startsWith(`${indent}- \`${name}\``));
-    const oneOf = params.indexOf("- _one of_");
-    const or = params.findIndex((l) => l.trim() === "_or_");
-    expect(oneOf).toBeGreaterThan(-1);
-    expect(at("  ", "shape_id")).toBeGreaterThan(oneOf);
-    expect(at("  ", "shape_id")).toBeLessThan(or);
-    expect(at("  ", "body")).toBeGreaterThan(or);
-    expect(at("  ", "shape_index")).toBeGreaterThan(at("  ", "body"));
-    expect(at("", "definition")).toBeGreaterThan(at("  ", "shape_index"));
-    expect(at("", "update_mass")).toBeGreaterThan(at("", "definition"));
-    for (const name of ["definition", "update_mass"]) {
-      expect(params.filter((l) => l.startsWith(`- \`${name}\``))).toHaveLength(1);
-    }
+  test("forms whose parameters differ each list their own full Parameters table", () => {
+    const page = pageFor("b2d.shape");
+    const block = blockOf(render(page), overloadHeading(groupFor(page, "b2d.shape.set_shape")));
+    expect(block).not.toContain("_one of_");
+    const tables = block
+      .split('<li class="api-overload">')
+      .slice(1)
+      .map((item) => {
+        const params = item.slice(item.indexOf("**Parameters**")).split("\n");
+        return params.flatMap((l) => l.match(/^- `(\w+)`/)?.[1] ?? []);
+      });
+    expect(tables).toEqual([
+      ["shape_id", "definition", "update_mass"],
+      ["body", "shape_index", "definition", "update_mass"],
+    ]);
+    expect(block.slice(block.indexOf("</ol>"))).not.toContain("**Parameters**");
   });
 
   test("msg.url keeps each form's own description exactly once", () => {
@@ -2763,6 +2760,97 @@ describe("grouped overload blocks (committed artifacts)", () => {
     expect(docs.length).toBeGreaterThan(1);
     const block = blockOf(render(page), overloadHeading(groupFor(page, "msg.url")));
     for (const doc of docs) expect(occurrences(block, doc)).toBe(1);
+  });
+
+  test("forms that never share a version state the newest form's example once, for the block", () => {
+    const axis = (pages[0]?.availability?.versions ?? []).map(bareId);
+    const newestIndex = (s: ApiSymbol) =>
+      Math.min(...(s.availability?.availableIn ?? []).map((v) => axis.indexOf(bareId(v))));
+    let checked = 0;
+    let guiSet = false;
+    for (const page of pages) {
+      const md = render(page);
+      for (const group of groupOverloadForms(functionRows(page))) {
+        const [head] = group;
+        if (group.length < 2 || head === undefined) continue;
+        const spans = group.map((s) => (s.availability?.availableIn ?? []).map(bareId));
+        if (spans.some((s) => s.length === 0)) continue;
+        const seen = spans.flat();
+        if (new Set(seen).size !== seen.length) continue;
+        if (new Set(group.map((s) => s.exampleMarkdown ?? "")).size < 2) continue;
+        const newest = [...group].sort((a, b) => newestIndex(a) - newestIndex(b))[0];
+        const block = blockOf(md, overloadHeading(group));
+        const forms = block.slice(block.indexOf("<ol"), block.indexOf("</ol>"));
+        expect({ name: head.name, formFences: occurrences(forms, "```") }).toEqual({
+          name: head.name,
+          formFences: 0,
+        });
+        expect({
+          name: head.name,
+          once: occurrences(block, newest?.exampleMarkdown ?? "-"),
+        }).toEqual({
+          name: head.name,
+          once: 1,
+        });
+        if (head.name === "gui.set") guiSet = true;
+        checked += 1;
+      }
+    }
+    expect(guiSet).toBe(true);
+    expect(checked).toBeGreaterThan(0);
+  });
+
+  test("a table only one form carries lands under each form whose parameters it names", () => {
+    const placement = (namespace: string, name: string) => {
+      const page = pageFor(namespace);
+      const block = blockOf(render(page), overloadHeading(groupFor(page, name)));
+      return {
+        forms: block
+          .split('<li class="api-overload">')
+          .slice(1)
+          .map((item) => item.includes("**Parameters**")),
+        block: block.slice(block.indexOf("</ol>")).includes("**Parameters**"),
+      };
+    };
+    expect(placement("go", "go.get")).toEqual({ forms: [false, true, true], block: false });
+    expect(placement("go", "go.set")).toEqual({ forms: [false, true, true], block: false });
+    expect(placement("render", "render.render_target")).toEqual({
+      forms: [false, true],
+      block: false,
+    });
+    expect(placement("vmath", "vmath.euler_to_quat")).toEqual({
+      forms: [false, true],
+      block: false,
+    });
+  });
+
+  test("a moved table takes each slot's type from the form it lands under", () => {
+    const G = " ";
+    const page = pageFor("vmath");
+    const block = blockOf(render(page), overloadHeading(groupFor(page, "vmath.euler_to_quat")));
+    const xyz = block.split('<li class="api-overload">')[2] ?? "";
+    const params = xyz.slice(xyz.indexOf("**Parameters**"), xyz.indexOf("**Returns**"));
+    for (const name of ["x", "y", "z"]) {
+      expect(params).toContain(`- \`${name}\`:${G}${typeCode("number")}`);
+    }
+    expect(params).not.toContain("Vector3</code>");
+    const go = pageFor("go");
+    const get = blockOf(render(go), overloadHeading(groupFor(go, "go.get")));
+    const typed = get.split('<li class="api-overload">')[2] ?? "";
+    expect(typed).toContain(`- \`options\`?:${G}${typeCode("GoPropertyOptions")}`);
+    expect(typed).toContain(`${G}${typeCode("go.properties[K]")}`);
+  });
+
+  test("overloads that coexist keep each form's own example under that form", () => {
+    const page = pageFor("vmath");
+    const group = groupFor(page, "vmath.vector3");
+    const block = blockOf(render(page), overloadHeading(group));
+    const items = block.split('<li class="api-overload">').slice(1);
+    expect(items).toHaveLength(group.length);
+    for (const [index, form] of group.entries()) {
+      expect(form.exampleMarkdown).toBeDefined();
+      expect(occurrences(items[index] ?? "", form.exampleMarkdown ?? "-")).toBe(1);
+    }
   });
 
   test("a group whose forms differ in availability keeps every form's badge text", () => {
