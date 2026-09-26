@@ -17,8 +17,8 @@ import {
   groupOverloadForms,
   groupTypeSymbols,
   type LibraryMeta,
+  overloadFormCodes,
   overloadHeading,
-  splitCallForm,
   windowedBadgeCategory,
 } from "./api-surface";
 import { type ApiVersion, versionsWithDiskFixtures } from "./api-surface-loader";
@@ -737,9 +737,7 @@ export function apiPageMarkdown(
       forms.slice(1).every((s) => s.exampleMarkdown === undefined);
     const sameParams = shared(linked.map((s) => s.parameters));
     const sameReturnTables = shared(linked.map((s) => s.returnValues));
-    const splits = forms.map(splitCallForm);
-    const returns = splits.map((s) => s.returns);
-    const sameReturns = shared(returns);
+    const codes = overloadFormCodes(forms);
     const splitParams = sameParams ? null : splitParamSection(linked.map((s) => s.parameters));
     const sharedReturnTable = sameReturnTables && (linked[0]?.returnValues.length ?? 0) > 0;
 
@@ -748,17 +746,11 @@ export function apiPageMarkdown(
       globalDot(forms.find((s) => s.global) ?? head) +
       upstreamDot(forms.find((s) => s.docSource) ?? head) +
       groupSpan(forms);
-    const heading = `### \`${overloadHeading(head.name)}\``;
-    const body: string[] = [];
-    if (sameBadges && badges[0]) body.push(badges[0]);
-    const note = noteFor(head.name);
-    if (note) body.push(note);
-    if (sameDoc && linked[0]?.docMarkdown) body.push(linked[0].docMarkdown);
-    if (sameExample && head.exampleMarkdown) body.push(head.exampleMarkdown);
-    body.push(`**${forms.length} overloads**`);
+    // The count badge stands where the heading reads `...`; the markdown renderer
+    // splices it into the colored signature and keeps it out of the anchor.
+    const heading = `### \`${overloadHeading(forms)}\` <span class="api-overload-count">${forms.length} overloads</span>`;
     const items = linked.map((symbol, index) => {
-      const split = splits[index] ?? { params: symbol.signature, returns: null };
-      const code = sameReturns ? split.params : `${split.params}${split.returns ?? ""}`;
+      const code = codes[index] ?? symbol.signature;
       const markers = sameAvailability
         ? ""
         : (combinedMarkers ? symbolDots(symbol) : "") +
@@ -781,11 +773,14 @@ export function apiPageMarkdown(
       }
       return ['<li class="api-overload">', "", parts.join("\n\n"), "", "</li>"].join("\n");
     });
+    // The forms lead the block. Only an authored note goes above them: it
+    // qualifies every form's upstream prose, the per-form descriptions included.
+    const note = noteFor(head.name);
+    const body = note ? [note] : [];
     body.push(['<ol class="api-overloads">', ...items, "</ol>"].join("\n"));
-    const sharedReturn = sameReturns ? returns[0] : null;
-    if (sharedReturn && !sharedReturnTable) {
-      body.push(`→ \`${sharedReturn.replace(/^:\s*/, "")}\``);
-    }
+    if (sameBadges && badges[0]) body.push(badges[0]);
+    if (sameDoc && linked[0]?.docMarkdown) body.push(linked[0].docMarkdown);
+    if (sameExample && head.exampleMarkdown) body.push(head.exampleMarkdown);
     if (sameParams && (linked[0]?.parameters.length ?? 0) > 0) {
       body.push(paramSection("Parameters", linked[0]?.parameters ?? []));
     } else if (splitParams !== null) {

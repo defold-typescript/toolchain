@@ -26,6 +26,7 @@ import {
 } from "./api-page-render";
 import {
   type ApiPage,
+  type ApiSymbol,
   type AvailabilityLookup,
   apiModuleSymbols,
   availabilityLabels,
@@ -51,6 +52,7 @@ import type { LibraryListing } from "./nav";
 import { LIBRARY_API_KIND_SENTENCE } from "./no-typed-api-icon";
 import { escapeAttr } from "./signature-brand-links";
 import { buildSymbolIndex } from "./symbol-index";
+import { symbolNote } from "./symbol-notes";
 import type { VersionWindow } from "./version-window";
 
 // The type half of a name/type label: raw `api-type` code whose text is escaped
@@ -276,7 +278,9 @@ describe("apiPageMarkdown", () => {
     )?.signature;
     expect(thin).toBeDefined();
     const md = apiPageMarkdown(str, apiLinkify(pages));
-    expect(blockOf(md, overloadHeading("string.byte"))).toContain("`(s: string, i?: number)");
+    expect(blockOf(md, overloadHeading(groupFor(str, "string.byte")))).toContain(
+      "`(s: string, i?: number)",
+    );
     expect(md).not.toContain(`\`${thin}\``);
   });
 
@@ -288,7 +292,7 @@ describe("apiPageMarkdown", () => {
     const thin = apiModuleSymbols(os, os.translations).find((s) => s.name === "os.date")?.signature;
     expect(thin).toBeDefined();
     const md = apiPageMarkdown(os, apiLinkify(pages));
-    const date = blockOf(md, overloadHeading("os.date"));
+    const date = blockOf(md, overloadHeading(groupFor(os, "os.date")));
     expect(date).toContain("`(format?: string, time?: number)");
     expect(date).toContain('`(format: "*t", time?: number)');
     expect(md).not.toContain(`\`${thin}\``);
@@ -332,7 +336,7 @@ describe("apiPageMarkdown", () => {
     )?.signature;
     expect(thin).toBeDefined();
     const md = apiPageMarkdown(base, apiLinkify(pages));
-    const select = blockOf(md, overloadHeading("select"));
+    const select = blockOf(md, overloadHeading(groupFor(base, "select")));
     expect(select).toContain("`<T>(index: number, ...args: T[])");
     expect(select).toContain('`<T>(index: "#", ...args: T[])');
     expect(md).not.toContain(`\`${thin}\``);
@@ -1574,8 +1578,9 @@ describe("Combined page authoritative render + markers", () => {
   });
 
   test("both liveupdate.add_mount arms render as distinct forms of one block, oldest-first", () => {
-    const md = apiPageMarkdown(combinedPage("liveupdate"), noLink, { combinedMarkers: true });
-    const forms = blockOf(md, overloadHeading("liveupdate.add_mount"))
+    const page = combinedPage("liveupdate");
+    const md = apiPageMarkdown(page, noLink, { combinedMarkers: true });
+    const forms = blockOf(md, overloadHeading(groupFor(page, "liveupdate.add_mount")))
       .split("\n")
       .filter((l) => l.startsWith("`("));
     expect(forms).toHaveLength(2);
@@ -2663,6 +2668,27 @@ function blockOf(md: string, heading: string): string {
   return lines.slice(start, end < 0 ? undefined : end).join("\n");
 }
 
+// The overload group `apiPageMarkdown` heads under `name`, gathered the way the
+// renderer gathers it.
+function groupFor(page: ApiPage, name: string): ApiSymbol[] {
+  const rows = apiModuleSymbols(page, page.translations, page.signatures).filter(
+    (s) => s.kind === "function",
+  );
+  const group = groupOverloadForms(rows).find((g) => g[0]?.name === name);
+  if (!group) throw new Error(`no function ${name} on ${page.namespace}`);
+  return group;
+}
+
+// The code of each form line in one overload block, in list order.
+function formLineCodes(block: string): string[] {
+  const lines = block.split("\n");
+  return lines.flatMap((line, index) =>
+    line === '<li class="api-overload">'
+      ? [lines[index + 2]?.match(/^`(.+?)`(?: .*)?$/)?.[1] ?? ""]
+      : [],
+  );
+}
+
 function occurrences(text: string, needle: string): number {
   return text.split(needle).length - 1;
 }
@@ -2686,31 +2712,33 @@ describe("grouped overload blocks (committed artifacts)", () => {
   const functionRows = (page: ApiPage) =>
     apiModuleSymbols(page, page.translations, page.signatures).filter((s) => s.kind === "function");
 
-  test("b2d.shape.get_shape renders one heading, both forms, and its return type once", () => {
+  test("b2d.shape.get_shape renders one heading, both forms, and its return type in the heading alone", () => {
     const page = pageFor("b2d.shape");
     const md = render(page);
     const name = "b2d.shape.get_shape";
+    const group = groupFor(page, name);
     const headings = md.split("\n").filter((l) => l.startsWith(`### \`${name}`));
     expect(headings).toHaveLength(1);
-    expect(headings[0]?.startsWith(`### \`${overloadHeading(name)}\``)).toBe(true);
-    const block = blockOf(md, overloadHeading(name));
-    const forms = functionRows(page)
-      .filter((s) => s.name === name)
-      .map(splitCallForm);
+    expect(headings[0]?.startsWith(`### \`${overloadHeading(group)}\``)).toBe(true);
+    const block = blockOf(md, overloadHeading(group));
+    const forms = group.map(splitCallForm);
     expect(forms).toHaveLength(2);
     for (const form of forms) {
-      expect(block.split("\n").filter((l) => l.startsWith(`\`${form.params}`))).toHaveLength(1);
+      expect(block.split("\n").filter((l) => l.startsWith(`\`${form.params}\``))).toHaveLength(1);
     }
     const returnType = (forms[0]?.returns ?? "").replace(/^:\s*/, "");
     expect(returnType).not.toBe("");
-    const escaped = escapeAttr(returnType);
-    expect(
-      occurrences(block, returnType) + (escaped === returnType ? 0 : occurrences(block, escaped)),
-    ).toBe(1);
+    expect(overloadHeading(group).endsWith(returnType)).toBe(true);
+    // Once above the shared Returns table: in the heading, never on a form line.
+    expect(block).toContain("**Returns**");
+    expect(occurrences(block.slice(0, block.indexOf("**Returns**")), returnType)).toBe(1);
   });
 
   test("b2d.shape.set_shape splits its parameters into one-of branches around the shared tail", () => {
-    const block = blockOf(render(pageFor("b2d.shape")), overloadHeading("b2d.shape.set_shape"));
+    const block = blockOf(
+      render(pageFor("b2d.shape")),
+      overloadHeading(groupFor(pageFor("b2d.shape"), "b2d.shape.set_shape")),
+    );
     const params = block.slice(block.indexOf("**Parameters**")).split("\n");
     const at = (indent: string, name: string) =>
       params.findIndex((l) => l.startsWith(`${indent}- \`${name}\``));
@@ -2734,7 +2762,7 @@ describe("grouped overload blocks (committed artifacts)", () => {
     expect(rows.length).toBeGreaterThan(1);
     const docs = [...new Set(rows.map((r) => r.docMarkdown).filter((d) => d !== ""))];
     expect(docs.length).toBeGreaterThan(1);
-    const block = blockOf(render(page), overloadHeading("msg.url"));
+    const block = blockOf(render(page), overloadHeading(groupFor(page, "msg.url")));
     for (const doc of docs) expect(occurrences(block, doc)).toBe(1);
   });
 
@@ -2746,7 +2774,7 @@ describe("grouped overload blocks (committed artifacts)", () => {
         if (group.length < 2) continue;
         const spans = group.map((s) => JSON.stringify(s.availability ?? null));
         if (new Set(spans).size < 2) continue;
-        const block = blockOf(md, overloadHeading(group[0]?.name ?? ""));
+        const block = blockOf(md, overloadHeading(group));
         for (const form of group) {
           if (!form.availability) continue;
           for (const label of availabilityLabels(form.availability, page.availability)) {
@@ -2781,46 +2809,105 @@ describe("grouped overload blocks (committed artifacts)", () => {
   });
 
   test("each form states its own return type unless every form shares it", () => {
-    const counts = { differing: 0, arrowShared: 0, tableShared: 0 };
+    const counts = { differing: 0, shared: 0 };
     let lerpReturns = 0;
     for (const page of pages) {
       const md = render(page);
       for (const group of groupOverloadForms(functionRows(page))) {
         const [head] = group;
         if (group.length < 2 || head === undefined) continue;
-        const lines = blockOf(md, overloadHeading(head.name)).split("\n");
-        const formLines = lines.flatMap((line, index) =>
-          line === '<li class="api-overload">'
-            ? [lines[index + 2]?.match(/^`(.+?)`(?: .*)?$/)?.[1] ?? ""]
-            : [],
-        );
+        const block = blockOf(md, overloadHeading(group));
         const splits = group.map(splitCallForm);
         const returns = splits.map((s) => s.returns);
         const sameReturns = new Set(returns).size === 1;
         const expected = splits.map((s) =>
           sameReturns ? s.params : `${s.params}${s.returns ?? ""}`,
         );
-        expect({ name: head.name, forms: formLines }).toEqual({ name: head.name, forms: expected });
-
-        const tables = group.map((s) => JSON.stringify(s.returnValues));
-        const sharedTable = new Set(tables).size === 1 && head.returnValues.length > 0;
-        const sharedReturn = sameReturns ? returns[0] : null;
-        const arrows =
-          sharedReturn && !sharedTable ? [`→ \`${sharedReturn.replace(/^:\s*/, "")}\``] : [];
-        expect({ name: head.name, arrows: lines.filter((l) => l.startsWith("→ ")) }).toEqual({
+        expect({ name: head.name, forms: formLineCodes(block) }).toEqual({
           name: head.name,
-          arrows,
+          forms: expected,
         });
-
+        expect({
+          name: head.name,
+          arrows: block.split("\n").filter((l) => l.startsWith("→ ")),
+        }).toEqual({
+          name: head.name,
+          arrows: [],
+        });
         if (!sameReturns) counts.differing += 1;
-        else if (sharedTable) counts.tableShared += 1;
-        else if (sharedReturn) counts.arrowShared += 1;
+        else if (returns[0]) counts.shared += 1;
         if (head.name === "vmath.lerp") lerpReturns = sameReturns ? 1 : new Set(returns).size;
       }
     }
     expect(lerpReturns).toBe(3);
     expect(counts.differing).toBeGreaterThan(0);
-    expect(counts.arrowShared).toBeGreaterThan(0);
-    expect(counts.tableShared).toBeGreaterThan(0);
+    expect(counts.shared).toBeGreaterThan(0);
+  });
+
+  test("an overload block heads with its count badge and lists its forms before anything but a note", () => {
+    let checked = 0;
+    let noted = 0;
+    for (const page of pages) {
+      const md = render(page);
+      expect({ namespace: page.namespace, labels: md.match(/^\*\*\d+ overloads\*\*$/gm) }).toEqual({
+        namespace: page.namespace,
+        labels: null,
+      });
+      for (const group of groupOverloadForms(functionRows(page))) {
+        const [head] = group;
+        if (group.length < 2 || head === undefined) continue;
+        const lines = blockOf(md, overloadHeading(group)).split("\n");
+        expect({
+          name: head.name,
+          heading: lines[0]?.startsWith(
+            `### \`${overloadHeading(group)}\` <span class="api-overload-count">${group.length} overloads</span>`,
+          ),
+        }).toEqual({ name: head.name, heading: true });
+        const body = lines.indexOf('<div class="api-symbol-body">');
+        const rest = lines
+          .slice(body + 1)
+          .join("\n")
+          .trimStart();
+        // An authored note qualifies every form's prose, so it alone sits above them.
+        const note = symbolNote(head.name);
+        if (note) noted += 1;
+        const first = (note && rest.startsWith(note) ? rest.slice(note.length) : rest)
+          .trimStart()
+          .split("\n")[0];
+        expect({ name: head.name, first }).toEqual({
+          name: head.name,
+          first: '<ol class="api-overloads">',
+        });
+        checked += 1;
+      }
+    }
+    expect(checked).toBeGreaterThan(10);
+    expect(noted).toBeGreaterThan(0);
+  });
+
+  test("the overview nests the same form codes the block lists", () => {
+    let checked = 0;
+    for (const page of pages) {
+      const md = render(page);
+      const overview = md.split("\n");
+      for (const group of groupOverloadForms(functionRows(page))) {
+        const [head] = group;
+        if (group.length < 2 || head === undefined) continue;
+        const card = overview.findIndex((l) => l.startsWith(`- [\`${overloadHeading(group)}\`]`));
+        expect({ name: head.name, card: card >= 0 }).toEqual({ name: head.name, card: true });
+        const children: string[] = [];
+        for (const line of overview.slice(card + 1)) {
+          const code = line.match(/^ {2}- \[`(.+)`\]\(#/)?.[1];
+          if (code === undefined) break;
+          children.push(code);
+        }
+        expect({ name: head.name, children }).toEqual({
+          name: head.name,
+          children: formLineCodes(blockOf(md, overloadHeading(group))),
+        });
+        checked += 1;
+      }
+    }
+    expect(checked).toBeGreaterThan(10);
   });
 });

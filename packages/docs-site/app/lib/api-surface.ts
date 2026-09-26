@@ -512,9 +512,27 @@ export function groupOverloadForms(symbols: ApiSymbol[]): ApiSymbol[][] {
   return [...byName.values()];
 }
 
-/** The heading text of an overload group: `` `<fqn>(...)` `` without the backticks. */
-export function overloadHeading(name: string): string {
-  return `${name}(...)`;
+/**
+ * The heading text of an overload group, without the backticks: `<fqn>(...)`
+ * followed by the return type when every form returns the same one. Forms whose
+ * returns differ, or that return nothing, keep theirs on each form line instead.
+ */
+export function overloadHeading(group: readonly ApiSymbol[]): string {
+  const [first] = group;
+  if (first === undefined) return "";
+  const returns = group.map((symbol) => splitCallForm(symbol).returns);
+  const [shared] = returns;
+  return `${first.name}(...)${shared != null && returns.every((r) => r === shared) ? shared : ""}`;
+}
+
+/**
+ * The code each form of an overload group lists under its heading: the form's
+ * parameter list, plus its return type unless every form returns the same one.
+ */
+export function overloadFormCodes(group: readonly ApiSymbol[]): string[] {
+  const splits = group.map(splitCallForm);
+  const sameReturns = splits.every((s) => s.returns === splits[0]?.returns);
+  return splits.map((s) => (sameReturns ? s.params : `${s.params}${s.returns ?? ""}`));
 }
 
 /**
@@ -525,7 +543,7 @@ export function overloadHeading(name: string): string {
 export function functionAnchorText(group: readonly ApiSymbol[]): string {
   const [first] = group;
   if (first === undefined) return "";
-  return group.length === 1 ? first.signature : overloadHeading(first.name);
+  return group.length === 1 ? first.signature : overloadHeading(group);
 }
 
 // The index of the bracket closing the one opened at `start`. String literal
@@ -569,11 +587,12 @@ export function splitCallForm(symbol: ApiSymbol): { params: string; returns: str
  * Compact per-group function index for the top of an `/api/<namespace>` page:
  * a bulleted list with one card per function name. A single-form function links
  * its full `signature` (parameter and return types included); an overloaded one
- * links its {@link overloadHeading}. Each points down to the detailed block
- * (anchor = `slugify(functionAnchorText(group))`, matching the
- * `slugify-headings` markdown-it rule). Presentation-only — no new heading, so
- * the "On this page" TOC is unchanged. Returns `""` for an empty list so the
- * caller emits nothing.
+ * links its {@link overloadHeading} and nests one item per form under it, each
+ * linking the same block with that form's {@link overloadFormCodes} entry. Each
+ * points down to the detailed block (anchor = `slugify(functionAnchorText(group))`,
+ * matching the `slugify-headings` markdown-it rule). Presentation-only — no new
+ * heading, so the "On this page" TOC is unchanged. Returns `""` for an empty list
+ * so the caller emits nothing.
  */
 export function functionOverviewCards(
   symbols: ApiSymbol[],
@@ -583,9 +602,12 @@ export function functionOverviewCards(
   markerFor?: (group: ApiSymbol[]) => string,
 ): string {
   if (symbols.length === 0) return "";
-  const rows = groupOverloadForms(symbols).map((group) => {
+  const rows = groupOverloadForms(symbols).flatMap((group) => {
     const text = functionAnchorText(group);
-    return `- [\`${text}\`](#${slugify(text)})${markerFor ? markerFor(group) : ""}`;
+    const anchor = slugify(text);
+    const row = `- [\`${text}\`](#${anchor})${markerFor ? markerFor(group) : ""}`;
+    if (group.length === 1) return [row];
+    return [row, ...overloadFormCodes(group).map((code) => `  - [\`${code}\`](#${anchor})`)];
   });
   return [
     '<div class="api-overview" aria-label="Function overview">',

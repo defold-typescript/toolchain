@@ -298,11 +298,13 @@ export async function renderMarkdown(
       // the permalink label stay the bare signature and keep matching the
       // function-overview anchors. The `api-badge-dot` marker now carries a
       // visible `N`/`C`/`D` glyph, so it is stripped by class regardless of
-      // content; any other empty decorative span is stripped too. A generic
+      // content; any other empty decorative span is stripped too, and so is an
+      // overload block's `N overloads` count badge. A generic
       // `<...>` inside a code span is neither, so signatures like `Opaque<"node">`
       // are untouched.
       const text = inline.content
         .replace(/\s*<span class="api-badge-dot[^"]*"[^>]*>[^<]*<\/span>/g, "")
+        .replace(/\s*<span class="api-overload-count"[^>]*>[^<]*<\/span>/g, "")
         .replace(/\s*<span\b[^>]*><\/span>/g, "");
       const base = slugify(text);
       const n = slugCounts.get(base) ?? 0;
@@ -579,15 +581,81 @@ export async function renderMarkdown(
   });
   // Shiki-recolor one inline signature code span with the same dual-theme
   // machinery as fenced blocks, but emit inline spans (no `<pre>`) so it stays
-  // one wrapping line.
-  const signatureCodeHtml = (content: string): string => {
-    const spans = highlighter.codeToHtml(content, {
+  // one wrapping line. A `prefix` is tokenized ahead of `content` and left out of
+  // the output, so a fragment such as `(shape_id: number)` colors as it does in
+  // its full signature; `replace` emits its `html` in place of that character
+  // range of `content`.
+  const signatureCodeHtml = (
+    content: string,
+    opts?: { prefix?: string; replace?: { start: number; end: number; html: string } },
+  ): string => {
+    const themes = { light: LIGHT_THEME, dark: DARK_THEME };
+    if (!opts) {
+      const spans = highlighter.codeToHtml(content, {
+        lang: "ts",
+        themes,
+        defaultColor: false,
+        structure: "inline",
+      });
+      return `<code class="api-signature shiki">${spans}</code>`;
+    }
+    const prefix = opts.prefix ?? "";
+    const { replace } = opts;
+    const { tokens } = highlighter.codeToTokens(prefix + content, {
       lang: "ts",
-      themes: { light: LIGHT_THEME, dark: DARK_THEME },
+      themes,
       defaultColor: false,
-      structure: "inline",
     });
+    // `codeToHtml` folds a whitespace-only token into the token after it; do the
+    // same so a fragment's spaces carry the colors its full signature gives them.
+    const flat = tokens.flat();
+    const merged: typeof flat = [];
+    let carry = "";
+    for (const [index, token] of flat.entries()) {
+      if (/^\s+$/.test(token.content) && index < flat.length - 1) carry += token.content;
+      else {
+        merged.push(carry ? { ...token, content: carry + token.content } : token);
+        carry = "";
+      }
+    }
+    let spans = "";
+    let replaced = false;
+    let end = -prefix.length;
+    for (const token of merged) {
+      const start = end;
+      end += token.content.length;
+      const style = Object.entries(token.htmlStyle ?? {})
+        .map(([key, value]) => `${key}:${value}`)
+        .join(";");
+      const emit = (from: number, to: number) => {
+        const a = Math.max(from, start, 0);
+        const b = Math.min(to, end);
+        // Escaped as Shiki's own HTML output escapes text, so both paths emit
+        // the same bytes for the same token.
+        const text = token.content
+          .slice(a - start, b - start)
+          .replace(/&/g, "&#x26;")
+          .replace(/</g, "&#x3C;");
+        if (a < b) spans += `<span style="${style}">${text}</span>`;
+      };
+      if (!replace) {
+        emit(0, end);
+        continue;
+      }
+      emit(0, replace.start);
+      if (!replaced && end > replace.start) {
+        spans += replace.html;
+        replaced = true;
+      }
+      emit(replace.end, end);
+    }
+    if (replace && !replaced) spans += replace.html;
     return `<code class="api-signature shiki">${spans}</code>`;
+  };
+  // The function name a signature starts with: its text up to the call list.
+  const signatureName = (code: string): string => {
+    const call = code.search(/[(<]/);
+    return call < 0 ? code : code.slice(0, call);
   };
   // API-page signatures appear both as h3 inline-code (`### `ns.fn(...)``) and,
   // linked, in each namespace's overview list (`[`ns.fn(...)`](#anchor)`).
@@ -597,34 +665,78 @@ export async function renderMarkdown(
   // rendering stays plain.
   if (opts.highlightSignatureHeadings) {
     md.core.ruler.push("highlight-signature-headings", (state) => {
+      // The function an overload block's form lines belong to, read from the
+      // block's heading so each form line colors as part of its full signature.
+      let name = "";
       for (let i = 0; i < state.tokens.length; i++) {
         const token = state.tokens[i];
+        if (token?.type === "html_block" && token.content.includes('<li class="api-overload">')) {
+          const children = state.tokens[i + 2]?.children;
+          const idx = children?.findIndex((c) => c.type === "code_inline") ?? -1;
+          const code = children?.[idx];
+          if (!children || !code) continue;
+          const replacement = new state.Token("html_inline", "", 0);
+          replacement.content = signatureCodeHtml(code.content, { prefix: name });
+          children[idx] = replacement;
+          continue;
+        }
         if (token?.type !== "heading_open" || token.tag !== "h3") continue;
         const inline = state.tokens[i + 1];
         if (inline?.type !== "inline" || !inline.children) continue;
-        const idx = inline.children.findIndex((c) => c.type === "code_inline");
-        const child = inline.children[idx];
+        const children = inline.children;
+        const idx = children.findIndex((c) => c.type === "code_inline");
+        const child = children[idx];
         if (!child) continue;
+        name = signatureName(child.content);
+        // An overload block's `N overloads` count badge moves into the signature,
+        // over the `...` of its call list. `data-toc-text` keeps the outline
+        // reading `(...)`.
+        const badge = children.findIndex(
+          (c) =>
+            c.type === "html_inline" && c.content.startsWith('<span class="api-overload-count"'),
+        );
+        const dots = child.content.indexOf("(...)") + 1;
+        let replace: { start: number; end: number; html: string } | undefined;
+        if (badge > idx && dots > 0 && children[badge + 2]?.content === "</span>") {
+          const open = (children[badge]?.content ?? "").replace(/>$/, ' data-toc-text="...">');
+          const label = md.utils.escapeHtml(children[badge + 1]?.content ?? "");
+          replace = { start: dots, end: dots + 3, html: `${open}${label}</span>` };
+          const space =
+            children[badge - 1]?.type === "text" && !children[badge - 1]?.content.trim();
+          children.splice(space ? badge - 1 : badge, space ? 4 : 3);
+        }
         const replacement = new state.Token("html_inline", "", 0);
-        replacement.content = signatureCodeHtml(child.content);
-        inline.children[idx] = replacement;
+        replacement.content = signatureCodeHtml(child.content, replace && { replace });
+        children[idx] = replacement;
       }
     });
     // Overview-list items link the full signature as inline code inside a
     // fragment link (`[`sig`](#anchor)`). Same-page cross-links use absolute
     // `…/route#anchor` hrefs, so a bare `#` href uniquely marks a signature
-    // link; recolor its code span the same way as the heading.
+    // link; recolor its code span the same way as the heading. An item nested
+    // under a signature item is one of its overload forms, so it colors as part
+    // of that function's full signature.
     md.core.ruler.push("highlight-signature-links", (state) => {
+      const names: (string | null)[] = [];
       for (const token of state.tokens) {
+        if (token.type === "list_item_open") names.push(null);
+        else if (token.type === "list_item_close") names.pop();
         if (token.type !== "inline" || !token.children) continue;
         const children = token.children;
+        const parent = names[names.length - 2] ?? null;
         for (let i = 0; i < children.length - 1; i++) {
           if (children[i]?.type !== "link_open") continue;
           if (!children[i]?.attrGet("href")?.startsWith("#")) continue;
           const code = children[i + 1];
           if (code?.type !== "code_inline") continue;
+          if (names.length > 0 && names[names.length - 1] === null) {
+            names[names.length - 1] = signatureName(code.content);
+          }
           const replacement = new state.Token("html_inline", "", 0);
-          replacement.content = signatureCodeHtml(code.content);
+          replacement.content = signatureCodeHtml(
+            code.content,
+            parent === null ? undefined : { prefix: parent },
+          );
           children[i + 1] = replacement;
         }
       }

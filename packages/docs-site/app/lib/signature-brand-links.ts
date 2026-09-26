@@ -39,8 +39,9 @@ const SIGNATURE_ANCHOR_RE = new RegExp(
 );
 
 // A flat `<span style="…">TEXT</span>` unit inside the recolored code. Shiki
-// emits the code inner as an adjacent run of these; TEXT never contains `<`.
-const SPAN_RE = /<span style="([^"]*)">([^<]*)<\/span>/g;
+// emits the code inner as an adjacent run of these; TEXT never contains `<`. Any
+// other flat span (an overload block's count badge) is carried through whole.
+const SPAN_RE = /<span style="([^"]*)">([^<]*)<\/span>|(<span\b[^>]*>[^<]*<\/span>)/g;
 
 export function escapeAttr(text: string): string {
   return text
@@ -59,10 +60,12 @@ export function brandWordRegex(names: readonly string[]): RegExp {
   return new RegExp(`(?<![A-Za-z0-9_$])(?:${alt})(?![A-Za-z0-9_$])`, "g");
 }
 
-type Span = { style: string; text: string };
+type Span = { style: string; text: string } | { raw: string };
 
 function renderSpans(spans: readonly Span[]): string {
-  return spans.map((s) => `<span style="${s.style}">${s.text}</span>`).join("");
+  return spans
+    .map((s) => ("raw" in s ? s.raw : `<span style="${s.style}">${s.text}</span>`))
+    .join("");
 }
 
 export function splitSignatureBrandLinks(
@@ -79,7 +82,7 @@ export function splitSignatureBrandLinks(
       const inner = codeBlock.slice(CODE_OPEN.length, codeBlock.length - CODE_CLOSE.length);
       const spans: Span[] = [];
       for (const m of inner.matchAll(SPAN_RE)) {
-        spans.push({ style: m[1] as string, text: m[2] as string });
+        spans.push(m[3] ? { raw: m[3] } : { style: m[1] as string, text: m[2] as string });
       }
 
       const outerFragment = (frag: readonly Span[], trailing: string): string =>
@@ -91,6 +94,10 @@ export function splitSignatureBrandLinks(
       let pre: Span[] = [];
       let found = false;
       for (const span of spans) {
+        if ("raw" in span) {
+          pre.push(span);
+          continue;
+        }
         brandRe.lastIndex = 0;
         let last = 0;
         let m: RegExpExecArray | null;

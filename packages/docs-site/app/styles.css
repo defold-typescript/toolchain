@@ -67,6 +67,9 @@
   --color-badge-deprecated: #cf222e;
   --color-badge-global: #6639ba;
   --color-badge-upstream: #0969da;
+  /* The `N overloads` count an overload block heading carries in place of its
+   * call list: the deprecated red, so it reads apart from the syntax colors. */
+  --color-overload-count: #cf222e;
 
   /* Caution tone shared by the `> [!WARNING]` callout and the attention marker
    * badge (`bg-warning/15`), so the two read as the same signal. */
@@ -97,6 +100,7 @@
   --color-badge-deprecated: #f85149;
   --color-badge-global: #a371f7;
   --color-badge-upstream: #58a6ff;
+  --color-overload-count: #f85149;
 
   --color-warning: #d29922;
 }
@@ -207,11 +211,11 @@
  * `.prose pre { background: var(--color-code-bg) }`.
  */
 @layer base {
-  .shiki span:not(.line) {
+  .shiki span:not(.line):not(.api-overload-count) {
     color: var(--shiki-light, currentColor);
     background-color: transparent;
   }
-  html[data-theme="dark"] .shiki span:not(.line) {
+  html[data-theme="dark"] .shiki span:not(.line):not(.api-overload-count) {
     color: var(--shiki-dark, currentColor);
     background-color: transparent;
   }
@@ -1151,6 +1155,25 @@
 
   .prose .api-badge-dot--upstream {
     background: var(--color-badge-upstream);
+  }
+
+  /* An overload block's `N overloads` count, set inside its colored signature
+   * where the call list would be. The Shiki span rules skip it, so it keeps its
+   * own color in both themes. */
+  .prose .api-overload-count {
+    display: inline-block;
+    margin: 0 0.15em;
+    padding: 0 0.45em;
+    border: 1px solid color-mix(in srgb, var(--color-overload-count) 45%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-overload-count) 12%, transparent);
+    color: var(--color-overload-count);
+    font-family: var(--font-sans);
+    font-size: 0.75em;
+    font-weight: 600;
+    line-height: 1.45;
+    vertical-align: 0.1em;
+    white-space: nowrap;
   }
 
   /* Namespace-title count pills: one per non-zero category. Inline-flex so the
