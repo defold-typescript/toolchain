@@ -1,19 +1,42 @@
 const NAMED_ENTITIES: Record<string, string> = {
-  "&lt;": "<",
-  "&gt;": ">",
-  "&quot;": '"',
-  "&#39;": "'",
-  "&apos;": "'",
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  apos: "'",
+  // A non-breaking space in JSDoc is invisible noise; a plain space reads the same.
+  nbsp: " ",
+  times: "×",
+  copy: "©",
+  mdash: "—",
+  ndash: "–",
+  hellip: "…",
+  middot: "·",
+  deg: "°",
+  plusmn: "±",
+  le: "≤",
+  ge: "≥",
+  ne: "≠",
+  rarr: "→",
+  larr: "←",
+  lsquo: "‘",
+  rsquo: "’",
+  ldquo: "“",
+  rdquo: "”",
 };
 
+// One pass over the text, so a character an entity decodes to (`&amp;` -> `&`)
+// is never read as the start of another entity.
 function decodeEntities(text: string): string {
-  let out = text;
-  for (const [entity, char] of Object.entries(NAMED_ENTITIES)) {
-    out = out.split(entity).join(char);
-  }
-  out = out.replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)));
-  // `&amp;` last so an already-decoded `&` is never re-interpreted.
-  return out.split("&amp;").join("&");
+  return text.replace(/&(?:#[xX]([0-9a-fA-F]+)|#(\d+)|([a-zA-Z]+));/g, (entity, hex, dec, name) => {
+    if (hex !== undefined) return codePointOr(Number.parseInt(hex, 16), entity);
+    if (dec !== undefined) return codePointOr(Number(dec), entity);
+    return Object.hasOwn(NAMED_ENTITIES, name) ? (NAMED_ENTITIES[name] ?? entity) : entity;
+  });
+}
+
+function codePointOr(code: number, fallback: string): string {
+  return code <= 0x10ffff ? String.fromCodePoint(code) : fallback;
 }
 
 /**
