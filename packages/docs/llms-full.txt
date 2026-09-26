@@ -9147,7 +9147,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function copy_buffer(dst: Opaque<"buffer">, dstoffset: number, src: Opaque<"buffer">, srcoffset: number, count: number): void;
 - function copy_stream(dst: Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> }, dstoffset: number, src: Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> }, srcoffset: number, count: number): void;
 - function create(element_count: number, declaration: { name?: Hash | string; type?: Opaque<"constant">; count?: number }): Opaque<"buffer">;
-- function get_bytes(buffer: Opaque<"buffer">, stream_name: Hash): string;
+- function get_bytes(buffer: Opaque<"buffer">, stream_name: Hash | string): string;
 - function get_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.ValueType | undefined]>;
 - function get_stream(buffer: Opaque<"buffer">, stream_name: Hash | string): Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> };
 - function set_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string, values: number[], value_type: buffer.ValueType): void;
@@ -9286,7 +9286,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function fixed_update(self: Opaque<"userdata">, dt: number): void;
 - function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.Playback, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.Easing, duration: number, delay?: number, complete_function?: (self: unknown, url: unknown, property: unknown) => void): void;
 - function cancel_animations(url: SceneAddress | Hash | Url, property?: string | Hash): void;
-- function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[], recursive?: boolean): void;
+- function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | boolean, recursive?: boolean): void;
 - function exists(url: SceneGameObjectAddress | Hash | Url): boolean;
 - go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]
 - go.get<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions): go.properties[K]
@@ -9586,8 +9586,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function reset_material(node: Opaque<"node">): void;
 - function reset_nodes(): void;
 - function screen_to_local(node: Opaque<"node">, screen_position: Vector3): Vector3;
-- function set(node: Opaque<"node"> | Url, property: string | Hash | gui.Property, value: number | Vector4 | Vector3 | Quaternion, options?: { index?: number; key?: Hash }): void; [through 1.13.0] [signature transition]
-- function set(node: Opaque<"node"> | Url, property: string | Hash | gui.Property, value?: number | Vector4 | Vector3 | Quaternion, options?: { index?: number; key?: Hash }): void; [since 1.13.1] [signature transition]
+- function set(node: Opaque<"node"> | Url, property: string | Hash | gui.Property, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: { index?: number; key?: Hash }): void; [through 1.13.0] [signature transition]
+- function set(node: Opaque<"node"> | Url, property: string | Hash | gui.Property, value?: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: { index?: number; key?: Hash }): void; [since 1.13.1] [signature transition]
 - function set_adjust_mode(node: Opaque<"node">, adjust_mode: gui.AdjustMode): void;
 - function set_alpha(node: Opaque<"node">, alpha: number): void;
 - function set_blend_mode(node: Opaque<"node">, blend_mode: gui.BlendMode): void;
@@ -9617,7 +9617,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_pivot(node: Opaque<"node">, pivot: gui.Pivot): void;
 - function set_position(node: Opaque<"node">, position: Vector3 | Vector4): void;
 - function set_render_order(order: number): void;
-- function set_rotation(node: Opaque<"node">, rotation: Quaternion | Vector4): void;
+- function set_rotation(node: Opaque<"node">, rotation: Quaternion | Vector4 | Vector3): void;
 - function set_safe_area_mode(mode: gui.SafeAreaMode): void;
 - function set_scale(node: Opaque<"node">, scale: Vector3 | Vector4): void;
 - function set_screen_position(node: Opaque<"node">, screen_position: Vector3): void;
@@ -9948,16 +9948,16 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function delete_render_target(render_target: Opaque<"render_target">): void;
 - function disable_material(): void;
 - function disable_state(state: graphics.State): void;
-- function disable_texture(binding: Opaque<"texture"> | string | Hash): void;
+- function disable_texture(binding: Opaque<"texture"> | string | Hash | number): void;
 - function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] } }): void;
 - function draw(predicate: number, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }; sort_order?: number }): void;
 - function draw_debug3d(options?: { frustum?: Matrix4; frustum_planes?: number }): void;
 - function enable_material(material_id: string | Hash): void;
 - function enable_state(state: graphics.State): void;
-- function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<"texture"> | string | Hash, buffer_type?: graphics.BufferType): void;
+- function enable_texture(binding: number | string | Hash, handle_or_name: Opaque<"texture"> | string | Hash | Opaque<"render_target"> | number, buffer_type?: graphics.BufferType): void;
 - function get_height(): number;
-- function get_render_target_height(render_target: Opaque<"render_target">, buffer_type: graphics.BufferType): number;
-- function get_render_target_width(render_target: Opaque<"render_target">, buffer_type: graphics.BufferType): number;
+- function get_render_target_height(render_target: Opaque<"render_target"> | string | Hash, buffer_type: graphics.BufferType): number;
+- function get_render_target_width(render_target: Opaque<"render_target"> | string | Hash, buffer_type: graphics.BufferType): number;
 - function get_width(): number;
 - function get_window_height(): number;
 - function get_window_width(): number;
@@ -9967,7 +9967,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_blend_equation_separate(equation_color: number, equation_alpha: number): void; [since 1.13.0]
 - function set_blend_func(source_factor: number, destination_factor: number): void;
 - function set_blend_func_separate(source_factor_color: number, destination_factor_color: number, source_factor_alpha: number, destination_factor_alpha: number): void; [since 1.13.0]
-- function set_camera(camera?: Url | number, options?: { use_frustum?: boolean }): void;
+- function set_camera(camera?: Url | number | string, options?: { use_frustum?: boolean }): void;
 - function set_color_mask(red: boolean, green: boolean, blue: boolean, alpha: boolean): void;
 - function set_compute(compute?: string | Hash): void;
 - function set_cull_face(face_type: number): void;
@@ -9976,8 +9976,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_listener(callback?: (self: unknown, event_type: unknown) => void): void;
 - function set_polygon_offset(factor: number, units: number): void;
 - function set_projection(matrix: Matrix4): void;
-- function set_render_target(render_target: Opaque<"render_target">, options?: { transient?: Record<string | number, unknown> }): void;
-- function set_render_target_size(render_target: Opaque<"render_target">, width: number, height: number): void;
+- function set_render_target(render_target: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT, options?: { transient?: Record<string | number, unknown> }): void;
+- function set_render_target_size(render_target: Opaque<"render_target"> | string | Hash, width: number, height: number): void;
 - function set_stencil_func(func: number, ref: number, mask: number): void;
 - function set_stencil_mask(mask: number): void;
 - function set_stencil_op(sfail: number, dpfail: number, dppass: number): void;
@@ -10156,8 +10156,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function load_resource(filename: string): LuaMultiReturn<[string | undefined, string | undefined]>;
 - function open_url(url: string, attributes?: { target?: string }): boolean;
 - function reboot(arg1?: string, arg2?: string, arg3?: string, arg4?: string, arg5?: string, arg6?: string): void;
-- function save(filename: string, table: Record<string | number, unknown>): void;
-- function serialize(table: Record<string | number, unknown>): string;
+- function save(filename: string, table: Record<string | number, unknown> | readonly unknown[]): void;
+- function serialize(table: Record<string | number, unknown> | readonly unknown[]): string;
 - function set_connectivity_host(host: string): void;
 - function set_engine_throttle(enable: boolean, cooldown?: number): void;
 - function set_error_handler(error_handler: (source: unknown, message: unknown, traceback: unknown) => void): void;

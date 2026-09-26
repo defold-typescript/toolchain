@@ -576,7 +576,7 @@ declare global {
      * sys.save(my_file_path, my_table);
      * ```
      */
-    function save(filename: string, table: Record<string | number, unknown>): void;
+    function save(filename: string, table: Record<string | number, unknown> | readonly unknown[]): void;
     /**
      * The buffer can later deserialized by `sys.deserialize`.
      * This function has all the same limitations as `sys.save`.
@@ -592,7 +592,7 @@ declare global {
      * const buffer = sys.serialize(my_table);
      * ```
      */
-    function serialize(table: Record<string | number, unknown>): string;
+    function serialize(table: Record<string | number, unknown> | readonly unknown[]): string;
     /**
      * Sets the host that is used to check for network connectivity against.
      *
