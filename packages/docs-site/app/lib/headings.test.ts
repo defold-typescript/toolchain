@@ -91,10 +91,36 @@ describe("allPageHeadings", () => {
     ]);
   });
 
-  test("an element carrying data-toc-text contributes that value instead of its text", () => {
+  test("an element carrying data-toc-text contributes that value instead of its text, and is kept as the heading's badge", () => {
     const html =
       '<h3 id="fx"><code><span>f(</span><span class="api-overload-count" data-toc-text="...">2 overloads</span><span>): number</span></code></h3>';
-    expect(allPageHeadings(html)).toEqual([{ text: "f(...): number", id: "fx", level: 3 }]);
+    expect(allPageHeadings(html)).toEqual([
+      {
+        text: "f(...): number",
+        id: "fx",
+        level: 3,
+        badge: { start: 2, end: 5, label: "2 overloads" },
+      },
+    ]);
+  });
+
+  test("the badge offset counts decoded characters after the leading whitespace is trimmed", () => {
+    const html =
+      '<h3 id="gx"> <code><span>g&#x3C;T&#x3E;(</span><span class="api-overload-count" data-toc-text="...">3 &#x3C;overloads&#x3E;</span><span>)</span></code></h3>';
+    expect(allPageHeadings(html)).toEqual([
+      {
+        text: "g<T>(...)",
+        id: "gx",
+        level: 3,
+        badge: { start: 5, end: 8, label: "3 <overloads>" },
+      },
+    ]);
+  });
+
+  test("a heading with no data-toc-text element carries no badge", () => {
+    const [heading] = allPageHeadings('<h3 id="plain"><code>f(): number</code></h3>');
+    expect(heading?.text).toBe("f(): number");
+    expect(heading !== undefined && "badge" in heading).toBe(false);
   });
 
   test("pageHeadings over the same html keeps the h2..h4 table-of-contents bound", () => {
