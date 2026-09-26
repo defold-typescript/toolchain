@@ -1,3 +1,5 @@
+/** @jsxImportSource hono/jsx */
+// Pins the JSX dialect for root `bun test`, which reads no JSX config from the root tsconfig.
 import { useEffect, useState } from "hono/jsx";
 import type { Heading } from "../lib/headings";
 
@@ -94,6 +96,17 @@ export default function Toc({
     setTip({ text, top: rect.top + rect.height / 2, left: rect.left });
   };
   const hideTip = () => setTip(null);
+  // An overload heading's `N overloads` badge replaces the `...` its text holds,
+  // so the entry reads like the heading; tooltips keep the plain text.
+  const entryLabel = (h: Heading) => {
+    if (!h.badge) return h.text;
+    const { start, end, label } = h.badge;
+    return [
+      h.text.slice(0, start),
+      <span class="api-overload-count">{label}</span>,
+      h.text.slice(end),
+    ];
+  };
 
   return (
     <nav aria-label="On this page" class="text-[length:var(--nav-side-size)] leading-5">
@@ -126,7 +139,7 @@ export default function Toc({
                   onBlur={hideTip}
                   class={linkClass}
                 >
-                  {h.text}
+                  {entryLabel(h)}
                 </a>
               ) : (
                 <a
@@ -136,7 +149,7 @@ export default function Toc({
                   title={h.text}
                   class={linkClass}
                 >
-                  {h.text}
+                  {entryLabel(h)}
                 </a>
               )}
             </li>
