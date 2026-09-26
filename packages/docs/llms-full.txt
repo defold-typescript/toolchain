@@ -788,7 +788,7 @@ render.set_render_target(undefined);     // TS error — undefined is not a rend
 
 **Typed alternative.** Obtain the handle from the engine API that returns it (`gui.get_node`, `render.render_target`, `resource.create_buffer`, …) and thread that value through. There is no constructor and no meaningful cast across handle kinds — if you find yourself casting, the call you are feeding it almost certainly wants a different handle.
 
-**Named handle types.** Each handle is also referenceable as a named type alias under its namespace — `render.render_target`, `render.constant_buffer`, `render.texture`, `socket.master`, `socket.client`, `socket.unconnected`, `b2d.b2World`, `b2d.b2Body` — so you can annotate a binding directly (`const rt: render.render_target = render.render_target("rt", {})`). The alias resolves to the same `Opaque<"<token>">` brand the handle-returning function yields, so the annotation and the returned value are the same nominal type.
+**Named handle types.** Each handle is also referenceable as a named type alias under its namespace — `render.render_target`, `render.constant_buffer`, `render.texture`, `socket.master`, `socket.client`, `socket.unconnected`, `b2d.b2World`, `b2d.b2Body` — so you can annotate a binding directly (`const rt: render.render_target = render.render_target("rt", {})`). The alias resolves to the same type the handle-returning function yields — the `Opaque<"<token>">` brand, plus the named constants a `render.constant_buffer` takes (`constants.tint = vmath.vector4(1, 1, 1, 1)`) — so the annotation and the returned value are the same nominal type.
 
 **How we pin this in the type tests.** `packages/types/test-d/ambient.ts` passes a documented `go.PLAYBACK_*` constant to `model.play_anim` and asserts that both a generic `Opaque<"constant">` value and a bare `0` in the same slot carry `@ts-expect-error`. It also binds `render.render_target(...)` to a `render.render_target`-typed variable and asserts a bare `0` cannot be — proving the named alias and the function's return type share one brand. If the brand is dropped or widened to `unknown`, the expected errors disappear and the typecheck gate fails.
 
@@ -9145,11 +9145,11 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### buffer
 
 - function copy_buffer(dst: Opaque<"buffer">, dstoffset: number, src: Opaque<"buffer">, srcoffset: number, count: number): void;
-- function copy_stream(dst: Opaque<"bufferstream"> & { [index: number]: number }, dstoffset: number, src: Opaque<"bufferstream"> & { [index: number]: number }, srcoffset: number, count: number): void;
+- function copy_stream(dst: Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> }, dstoffset: number, src: Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> }, srcoffset: number, count: number): void;
 - function create(element_count: number, declaration: { name?: Hash | string; type?: Opaque<"constant">; count?: number }): Opaque<"buffer">;
 - function get_bytes(buffer: Opaque<"buffer">, stream_name: Hash): string;
 - function get_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string): LuaMultiReturn<[number[] | undefined, buffer.ValueType | undefined]>;
-- function get_stream(buffer: Opaque<"buffer">, stream_name: Hash | string): Opaque<"bufferstream"> & { [index: number]: number };
+- function get_stream(buffer: Opaque<"buffer">, stream_name: Hash | string): Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> };
 - function set_metadata(buf: Opaque<"buffer">, metadata_name: Hash | string, values: number[], value_type: buffer.ValueType): void;
 - buffer.VALUE_TYPE_FLOAT32: number & { readonly __brand: "buffer.VALUE_TYPE_FLOAT32" }
 - buffer.VALUE_TYPE_INT16: number & { readonly __brand: "buffer.VALUE_TYPE_INT16" }
@@ -9311,7 +9311,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - go.property(name: string, value: Quaternion): ScriptProperty<Quaternion>
 - go.set<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, value: P[K], options?: GoPropertyOptions) => void
 - go.set<K extends keyof go.properties>(url: SceneAddress | Hash | Url, property: K, value: go.properties[K], options?: GoPropertyOptions): void
-- go.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion, options?: GoPropertyOptions): void
+- go.set(url: SceneAddress | Hash | Url, property: string | Hash, value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion | Vector4[], options?: GoPropertyOptions): void
 - function set_parent(id?: SceneGameObjectAddress | Hash | Url, parent_id?: SceneGameObjectAddress | Hash | Url, keep_world_transform?: boolean): void;
 - function set_position(position: Vector3, id?: SceneGameObjectAddress | Hash | Url): void;
 - function set_rotation(rotation: Quaternion, id?: SceneGameObjectAddress | Hash | Url): void;
@@ -9944,13 +9944,13 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### render
 
 - function clear(buffers: LuaMap<render.ClearBufferKey, number | Vector4>): void;
-- function constant_buffer(): Opaque<"constant_buffer">;
+- function constant_buffer(): Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };
 - function delete_render_target(render_target: Opaque<"render_target">): void;
 - function disable_material(): void;
 - function disable_state(state: graphics.State): void;
 - function disable_texture(binding: Opaque<"texture"> | string | Hash): void;
-- function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<"constant_buffer"> }): void;
-- function draw(predicate: number, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<"constant_buffer">; sort_order?: number }): void;
+- function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] } }): void;
+- function draw(predicate: number, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }; sort_order?: number }): void;
 - function draw_debug3d(options?: { frustum?: Matrix4; frustum_planes?: number }): void;
 - function enable_material(material_id: string | Hash): void;
 - function enable_state(state: graphics.State): void;
@@ -9989,7 +9989,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - render.SORT_BACK_TO_FRONT: number & { readonly __brand: "render.SORT_BACK_TO_FRONT" }
 - render.SORT_FRONT_TO_BACK: number & { readonly __brand: "render.SORT_FRONT_TO_BACK" }
 - render.SORT_NONE: number & { readonly __brand: "render.SORT_NONE" }
-- type constant_buffer = Opaque<"constant_buffer">
+- type constant_buffer = Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }
 - type render_target = Opaque<"render_target">
 - type texture = Opaque<"texture">
 - type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT

@@ -6,7 +6,7 @@ declare global {
    * Rendering API documentation
    */
   namespace render {
-    type constant_buffer = Opaque<"constant_buffer">;
+    type constant_buffer = Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };
     type render_target = Opaque<"render_target">;
     type texture = Opaque<"texture">;
     type ClearBufferKey = typeof graphics.BUFFER_TYPE_COLOR0_BIT | typeof graphics.BUFFER_TYPE_DEPTH_BIT | typeof graphics.BUFFER_TYPE_STENCIL_BIT;
@@ -87,7 +87,7 @@ declare global {
      * });
      * ```
      */
-    function constant_buffer(): Opaque<"constant_buffer">;
+    function constant_buffer(): Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] };
     /**
      * Deletes a render target created by a render script.
      * You cannot delete a render target resource.
@@ -237,7 +237,7 @@ declare global {
      * render.dispatch_compute(32, 32, 32, { constants });
      * ```
      */
-    function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<"constant_buffer"> }): void;
+    function dispatch_compute(x: number, y: number, z: number, options?: { constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] } }): void;
     /**
      * Draws all objects that match a specified predicate. An optional constant buffer can be
      * provided to override the default constants. If no constants buffer is provided, a default
@@ -292,7 +292,7 @@ declare global {
      * });
      * ```
      */
-    function draw(predicate: number, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<"constant_buffer">; sort_order?: number }): void;
+    function draw(predicate: number, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }; sort_order?: number }): void;
     /**
      * Draws all 3d debug graphics such as lines drawn with "draw_line" messages and physics visualization.
      *

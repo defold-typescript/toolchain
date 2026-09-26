@@ -251,9 +251,15 @@ describe("core-types", () => {
       ["texture", 'Opaque<"texture">'],
       ["render_target", 'Opaque<"render_target">'],
       ["constant", 'Opaque<"constant">'],
-      ["constant_buffer", 'Opaque<"constant_buffer">'],
+      [
+        "constant_buffer",
+        'Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }',
+      ],
       ["buffer", 'Opaque<"buffer">'],
-      ["bufferstream", 'Opaque<"bufferstream"> & { [index: number]: number }'],
+      [
+        "bufferstream",
+        'Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> }',
+      ],
       ["userdata", 'Opaque<"userdata">'],
       ["resource", 'Opaque<"resource">'],
       ["b2World", 'Opaque<"b2World">'],

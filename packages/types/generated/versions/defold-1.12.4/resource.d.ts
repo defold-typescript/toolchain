@@ -771,7 +771,7 @@ declare global {
      *     const buf = resource.get_buffer(res_path);
      *     const stream_positions = buffer.get_stream(buf, "position");
      *
-     *     for (let i = 0; i < stream_positions.length; i++) {
+     *     for (let i = 0; i < stream_positions.length(); i++) {
      *       print(i, stream_positions[i]);
      *     }
      *   },
