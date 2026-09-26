@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import * as path from "node:path";
 import * as ts from "typescript";
 import * as tstl from "typescript-to-lua";
+import { arrayIndexOptionLoweringPlugin } from "./array-index-option-lowering";
 import { type CompanionEmitter, createCompanionEmitPlugin } from "./companion-emit";
 import { editorScriptErasurePlugin } from "./editor-script-erasure";
 import { lifecycleErasurePlugin } from "./lifecycle-erasure";
@@ -43,6 +44,7 @@ function compilerOptions(companionEmit: CompanionEmitter): tstl.CompilerOptions 
       { plugin: windowEventGuardLoweringPlugin },
       { plugin: messageDispatchLoweringPlugin },
       { plugin: timersLoweringPlugin },
+      { plugin: arrayIndexOptionLoweringPlugin },
       { plugin: companionEmit.plugin },
     ],
   };

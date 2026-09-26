@@ -16,6 +16,7 @@ import {
   lookupTranslation,
   luaMultiReturn,
   normalizedFunctionSignature,
+  rewriteParamDoc,
   type SignatureStore,
   type SlotTypes,
   splitExampleSources,
@@ -558,12 +559,14 @@ function projectParams(
   mapType: MapType = mapDocType,
   slots?: SlotTypes,
   kind: "param" | "return" = "param",
+  elementName?: string,
 ): ApiSymbolParam[] {
   return list.map((p, index) => {
     const emitted = slots?.[`${kind}:${index}:${p.name}`];
+    const doc = elementName !== undefined ? rewriteParamDoc(elementName, p.name, p.doc) : p.doc;
     return {
       name: p.name,
-      doc: platformDocText(p.doc),
+      doc: platformDocText(doc),
       types: emitted !== undefined ? [emitted] : normalizeTypes(p.types).map(mapType),
       isOptional: p.isOptional,
       ...(p.fields ? { fields: projectParams(p.fields, mapType) } : {}),
@@ -831,7 +834,9 @@ export function apiModuleMarkdown(
       const example = exampleMarkdownFor(fn, translations);
       if (example) lines.push(example, "");
       for (const p of [...fn.parameters, ...fn.returnValues]) {
-        const pdoc = htmlToDocText(p.doc);
+        const pdoc = htmlToDocText(
+          fn.parameters.includes(p) ? rewriteParamDoc(fn.name, p.name, p.doc) : p.doc,
+        );
         if (!pdoc) continue;
         lines.push(p.name ? `${p.name} — ${pdoc}` : pdoc, "");
       }
@@ -1036,7 +1041,7 @@ export function apiModuleSymbols(
       declarationIdentity: identity,
       docMarkdown: ov === null ? fixtureDoc : overloadDoc(0),
       parameters: primaryEntry
-        ? projectParams(primaryEntry.parameters, mapType, primarySlots, "param")
+        ? projectParams(primaryEntry.parameters, mapType, primarySlots, "param", fn.name)
         : [],
       returnValues: primaryEntry
         ? projectParams(primaryEntry.returnValues, mapType, primarySlots, "return")
@@ -1091,7 +1096,9 @@ export function apiModuleSymbols(
           name: fn.name,
           signature,
           docMarkdown: overloadDoc(k + 1),
-          parameters: entry ? projectParams(entry.parameters, mapType) : [],
+          parameters: entry
+            ? projectParams(entry.parameters, mapType, undefined, "param", fn.name)
+            : [],
           returnValues: entry ? projectParams(entry.returnValues, mapType) : [],
           ...(fn.deprecated !== undefined ? { deprecated: fn.deprecated } : {}),
           ...(fn.global ? { global: true } : {}),

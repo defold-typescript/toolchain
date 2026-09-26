@@ -53,6 +53,7 @@ import {
   NESTED_FIELD_CURATIONS,
   OPTIONAL_SLOT_CORRECTIONS,
   OVERLOAD_COVERED_SKIPS,
+  PARAM_DOC_REWRITES,
   PARAM_TYPE_CORRECTIONS,
   parseTableFields,
   recoverCallbackSignature,
@@ -4459,5 +4460,17 @@ describe("a nested table field's type override", () => {
       expect(lineWith(out, `function ${name}(`)).toContain("playback?: go.Playback;");
     }
     expect(lineWith(out, "function get_atlas(")).toContain("playback: go.Playback;");
+  });
+});
+
+describe("array index option doc", () => {
+  test("gui.get and gui.set document a zero-based options.index", () => {
+    const out = emitDeclarations(parseDefoldApiDoc(guiDoc));
+    for (const key of ["gui.get:param:options", "gui.set:param:options"]) {
+      const rewrite = PARAM_DOC_REWRITES.get(key);
+      expect(rewrite).toBeDefined();
+      expect(out).toContain(rewrite?.to ?? "");
+    }
+    expect(out).not.toContain("(1 based)");
   });
 });
