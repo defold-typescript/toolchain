@@ -9263,7 +9263,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### collectionproxy
 
 - function get_resources(collectionproxy: Url): Hash[];
-- function load(url: string | Hash | Url, options: Record<string | number, unknown> | undefined, callback: (self: unknown, message_id: unknown, message: unknown, sender: unknown) => void): void; [since 1.13.1]
+- function load(url: string | Hash | Url, options: Record<string | number, unknown> | undefined, callback: (self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void): void; [since 1.13.1]
 - function set_collection(url?: string | Hash | Url, prototype?: string): LuaMultiReturn<[boolean, number]>;
 - collectionproxy.RESULT_ALREADY_LOADED: number & { readonly __brand: "collectionproxy.RESULT_ALREADY_LOADED" }
 - collectionproxy.RESULT_LOADING: number & { readonly __brand: "collectionproxy.RESULT_LOADING" }
@@ -9636,8 +9636,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function reset_material(node: Opaque<"node">): void;
 - function reset_nodes(): void;
 - function screen_to_local(node: Opaque<"node">, screen_position: Vector3): Vector3;
-- function set(node: Opaque<"node"> | Url, property: string | Hash | gui.Property, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: { index?: number; key?: Hash }): void; [through 1.13.0] [signature transition]
-- function set(node: Opaque<"node"> | Url, property: string | Hash | gui.Property, value?: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: { index?: number; key?: Hash }): void; [since 1.13.1] [signature transition]
+- function set(node: Opaque<"node"> | Url, property: string | Hash | gui.Property, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: { index?: number; key?: string | Hash }): void; [through 1.13.0] [signature transition]
+- function set(node: Opaque<"node"> | Url, property: string | Hash | gui.Property, value?: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: { index?: number; key?: string | Hash }): void; [since 1.13.1] [signature transition]
 - function set_adjust_mode(node: Opaque<"node">, adjust_mode: gui.AdjustMode): void;
 - function set_alpha(node: Opaque<"node">, alpha: number): void;
 - function set_blend_mode(node: Opaque<"node">, blend_mode: gui.BlendMode): void;
@@ -9819,7 +9819,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### http
 
-- function request(url: string, method: string, callback: (self: unknown, id: unknown, response: unknown) => void, headers?: LuaMap<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean }): void;
+- function request(url: string, method: string, callback: (self: unknown, id: Hash, response: { status: number; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void, headers?: LuaMap<string, string>, post_data?: string, options?: { timeout?: number; path?: string; ignore_cache?: boolean; chunked_transfer?: boolean; report_progress?: boolean }): void;
 
 ### image
 
@@ -10125,8 +10125,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function tohostname(address: string): LuaMultiReturn<[string | undefined, Record<string | number, unknown> | string]>;
 - function toip(address: string): LuaMultiReturn<[string | undefined, Record<string | number, unknown> | string]>;
 - function gettime(): number;
-- function newtry(finalizer: () => void): (...args: unknown[]) => unknown;
-- function protect(func: (...args: unknown[]) => unknown): (arg0: unknown) => void;
+- function newtry(finalizer?: () => void): { <T>(result: LuaMultiReturn<[T | undefined, ...unknown[]]>): T; <T>(value: T | undefined, ...rest: unknown[]): T };
+- function protect(func: (...args: unknown[]) => unknown): (...args: unknown[]) => LuaMultiReturn<[unknown, string | undefined]>;
 - function select(recvt: (client | master | unconnected)[], sendt: (client | master | unconnected)[], timeout?: number): LuaMultiReturn<[(client | master | unconnected)[], (client | master | unconnected)[], string | undefined]>;
 - function skip(d: number, ret1?: unknown, ret2?: unknown, retN?: unknown): LuaMultiReturn<[unknown, unknown, unknown]>;
 - function sleep(time: number): void;
@@ -10169,7 +10169,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### sprite
 
-- function play_flipbook(url: string | Hash | Url, id: string | Hash, complete_function?: (self: unknown, message_id: unknown, message: unknown, sender: unknown) => void, play_properties?: { offset?: number; playback_rate?: number }): void;
+- function play_flipbook(url: string | Hash | Url, id: string | Hash, complete_function?: (self: unknown, message_id: Hash, message: { current_tile: number; id: Hash }, sender: Url) => void, play_properties?: { offset?: number; playback_rate?: number }): void;
 - function reset_constant(url: string | Hash | Url, constant: string | Hash): void; [deprecated since 1.13.0]
 - function set_hflip(url: string | Hash | Url, flip: boolean): void;
 - function set_vflip(url: string | Hash | Url, flip: boolean): void;

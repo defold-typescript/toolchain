@@ -1169,7 +1169,11 @@ declare global {
      *   },
      *
      *   on_message(self, message_id, message) {
-     *     if (message_id === hash("set_view_projection")) {
+     *     if (
+     *       message_id === hash("set_view_projection") &&
+     *       types.is_matrix4(message.view) &&
+     *       types.is_matrix4(message.projection)
+     *     ) {
      *       // camera view and projection arrives here.
      *       self.view = message.view;
      *       self.projection = message.projection;

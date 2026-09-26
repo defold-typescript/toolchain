@@ -9,6 +9,9 @@ import collectionproxyDoc from "../fixtures/collectionproxy_doc.json" with { typ
 import b2dShapeDoc from "../fixtures/defold-1.13.1/b2d_shape_doc.json" with { type: "json" };
 import b2dWorldDoc from "../fixtures/defold-1.13.1/b2d_world_doc.json" with { type: "json" };
 import camera113Doc from "../fixtures/defold-1.13.1/camera_doc.json" with { type: "json" };
+import collectionproxy113Doc from "../fixtures/defold-1.13.1/collectionproxy_doc.json" with {
+  type: "json",
+};
 import computeDoc from "../fixtures/defold-1.13.1/compute_doc.json" with { type: "json" };
 import graphicsDoc from "../fixtures/defold-1.13.1/graphics_doc.json" with { type: "json" };
 import materialDoc from "../fixtures/defold-1.13.1/material_doc.json" with { type: "json" };
@@ -3629,7 +3632,7 @@ describe("url-parameter address retyping", () => {
     // map, so the whole signature must emit exactly as it did unclassified.
     expect(signatureLine(out, "function play_flipbook(url")).toBe(
       "function play_flipbook(url: string | Hash | Url, id: string | Hash, " +
-        "complete_function?: (self: unknown, message_id: unknown, message: unknown, sender: unknown) => void, " +
+        "complete_function?: (self: unknown, message_id: Hash, message: { current_tile: number; id: Hash }, sender: Url) => void, " +
         "play_properties?: { offset?: number; playback_rate?: number }): void;",
     );
     expect(out).not.toContain("SceneComponentAddress");
@@ -4472,5 +4475,50 @@ describe("array index option doc", () => {
       expect(out).toContain(rewrite?.to ?? "");
     }
     expect(out).not.toContain("(1 based)");
+  });
+});
+
+describe("signatures upstream documents in prose", () => {
+  function emittedLine(doc: Parameters<typeof parseDefoldApiDoc>[0], needle: string): string {
+    const out = emitDeclarations(parseDefoldApiDoc(doc));
+    const line = out.split("\n").find((l) => l.includes(needle));
+    if (line === undefined) throw new Error(`no emitted line contains ${needle}`);
+    return line;
+  }
+
+  test("http.request's callback receives the documented response table and a Hash id", () => {
+    expect(emittedLine(httpDoc, "function request(")).toContain(
+      "callback: (self: unknown, id: Hash, response: { status: number; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void",
+    );
+  });
+
+  test("sprite.play_flipbook's complete_function receives the documented completion message", () => {
+    expect(emittedLine(sprite113Doc, "function play_flipbook(")).toContain(
+      "complete_function?: (self: unknown, message_id: Hash, message: { current_tile: number; id: Hash }, sender: Url) => void",
+    );
+  });
+
+  test("collectionproxy.load's callback receives a Hash message id, a record message and a Url sender", () => {
+    expect(emittedLine(collectionproxy113Doc, "function load(")).toContain(
+      "(self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void",
+    );
+  });
+
+  test("socket.protect returns a function yielding nil and an error message", () => {
+    expect(emittedLine(socketDoc, "function protect(").trim()).toBe(
+      "function protect(func: (...args: unknown[]) => unknown): (...args: unknown[]) => LuaMultiReturn<[unknown, string | undefined]>;",
+    );
+  });
+
+  test("socket.newtry returns a try function that unwraps its first argument, and takes no finalizer", () => {
+    expect(emittedLine(socketDoc, "function newtry(").trim()).toBe(
+      "function newtry(finalizer?: () => void): { <T>(result: LuaMultiReturn<[T | undefined, ...unknown[]]>): T; <T>(value: T | undefined, ...rest: unknown[]): T };",
+    );
+  });
+
+  test("gui.set's options.key accepts a property name string as well as a Hash", () => {
+    expect(emittedLine(guiDoc, "function set(")).toContain(
+      "options?: { index?: number; key?: string | Hash }",
+    );
   });
 });

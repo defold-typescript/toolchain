@@ -35,6 +35,7 @@ import {
   runGate,
   sortDiagnostics,
   undeclaredStateOffenders,
+  unknownValueOffenders,
 } from "./example-typecheck";
 
 const surfaces = await exampleSurfaces();
@@ -45,6 +46,9 @@ const { computed, timings, entries } = runGate(store, surfaces);
 const found = surfaces.find((surface) => surface.id === "defold-1.13.1/kinds/script");
 if (!found) throw new Error("the default script-kind surface is missing");
 const scriptSurface = found;
+const foundGui = surfaces.find((surface) => surface.id === "defold-1.13.1/kinds/gui-script");
+if (!foundGui) throw new Error("the default gui-script-kind surface is missing");
+const guiSurface = foundGui;
 
 const FIXED = ["render.clear", "zlib.inflate", "factory.create"] as const;
 
@@ -76,9 +80,12 @@ function gateImplicitAny(): boolean {
   return effectiveImplicitAny(gateCompilerOptions());
 }
 
-function diagnosticsFor(body: string): ExampleDiagnostic[] {
-  const unit = exampleUnit(scriptSurface, "fixture.probe", "0000000000000000", body);
-  return compileSurface(scriptSurface, [unit]).units.get(unit.identity) ?? [];
+function diagnosticsFor(
+  body: string,
+  surface: ExampleSurface = scriptSurface,
+): ExampleDiagnostic[] {
+  const unit = exampleUnit(surface, "fixture.probe", "0000000000000000", body);
+  return compileSurface(surface, [unit]).units.get(unit.identity) ?? [];
 }
 
 describe("the gate against the committed pins", () => {
@@ -402,6 +409,56 @@ describe("the property and argument-type class", () => {
             offenders.length > 20 ? `\n  +${offenders.length - 20} more` : ""
           }\n` +
           "Correct the translation, or the declaration it contradicts; never re-pin to absorb it.",
+      );
+    }
+    expect(offenders).toEqual([]);
+  });
+});
+
+describe("the unknown-value class", () => {
+  const UNKNOWN_VALUE_SHAPES = [
+    [
+      "a read off a named unknown value",
+      'const p = gui.get(gui.get_node("box"), "position");\nconst x = p.x;',
+      18046,
+    ],
+    [
+      "a read off an unknown call result",
+      'const x = gui.get(gui.get_node("box"), "position").x;',
+      2571,
+    ],
+  ] as const;
+
+  test("a read of an unknown value compiles to a diagnostic the closure refuses", () => {
+    for (const [shape, body, code] of UNKNOWN_VALUE_SHAPES) {
+      const diagnostics = diagnosticsFor(body, guiSurface);
+      if (!unknownValueOffenders(diagnostics).some((d) => d.code === code)) {
+        throw new Error(
+          `${shape} compiles to no TS${code} the unknown-value closure refuses; the compiler reported ` +
+            `${
+              diagnostics.length > 0
+                ? diagnostics.map((d) => `TS${d.code} ${d.text}`).join(", ")
+                : "nothing at all"
+            }. Re-point UNKNOWN_VALUE_CODES at the code the shape now carries, or the closure no longer covers it.`,
+        );
+      }
+    }
+  });
+
+  test("no pin records a read of an unknown value", () => {
+    const offenders: string[] = [];
+    for (const [identity, diagnostics] of Object.entries(pins)) {
+      for (const diagnostic of unknownValueOffenders(diagnostics)) {
+        offenders.push(`  ${identity} — TS${diagnostic.code} ${diagnostic.text}`);
+      }
+    }
+    if (offenders.length > 0) {
+      throw new Error(
+        "an authored translation reads a value typed `unknown`:\n" +
+          `${offenders.slice(0, 20).join("\n")}${
+            offenders.length > 20 ? `\n  +${offenders.length - 20} more` : ""
+          }\n` +
+          "Type the declaration upstream documents, or narrow the value in the example body; never re-pin to absorb it.",
       );
     }
     expect(offenders).toEqual([]);
