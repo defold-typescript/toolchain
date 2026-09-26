@@ -29,7 +29,11 @@ describe("global-types drift guard", () => {
     // parse of the real source already proves every method RHS is known; the
     // explicit set check makes the failure message name the offending type.
     expect(() => parseGlobalTypes(coreSource)).not.toThrow();
-    const found = new Set([...coreSource.matchAll(/(Lua\w+Method)</g)].map((m) => m[1] as string));
+    // Member declarations only: a `DEFOLD_TYPE_MAP` value names an operator type
+    // inside a string, which types a handle rather than a documented global.
+    const found = new Set(
+      [...coreSource.matchAll(/^\s+\w+: (Lua\w+Method)</gm)].map((m) => m[1] as string),
+    );
     for (const name of found) expect(KNOWN_OPERATOR_METHODS).toContain(name);
   });
 });

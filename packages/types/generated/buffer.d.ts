@@ -88,10 +88,10 @@ declare global {
      * // copy entire stream
      * const srcstream = buffer.get_stream(srcbuffer, hash("xyz"));
      * const dststream = buffer.get_stream(dstbuffer, hash("xyz"));
-     * buffer.copy_stream(dststream, 0, srcstream, 0, srcstream.length);
+     * buffer.copy_stream(dststream, 0, srcstream, 0, srcstream.length());
      * ```
      */
-    function copy_stream(dst: Opaque<"bufferstream"> & { [index: number]: number }, dstoffset: number, src: Opaque<"bufferstream"> & { [index: number]: number }, srcoffset: number, count: number): void;
+    function copy_stream(dst: Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> }, dstoffset: number, src: Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> }, srcoffset: number, count: number): void;
     /**
      * Create a new data buffer containing a specified set of streams. A data buffer
      * can contain one or more streams with typed data. This is useful for managing
@@ -163,7 +163,7 @@ declare global {
      * @param stream_name - the stream name
      * @returns the data stream
      */
-    function get_stream(buffer: Opaque<"buffer">, stream_name: Hash | string): Opaque<"bufferstream"> & { [index: number]: number };
+    function get_stream(buffer: Opaque<"buffer">, stream_name: Hash | string): Opaque<"bufferstream"> & { [index: number]: number; length: LuaLengthMethod<number> };
     /**
      * Creates or updates a metadata array entry on a buffer.
      * The value type and count given when updating the entry should match those used when first creating it.

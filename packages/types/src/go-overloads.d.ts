@@ -10,8 +10,8 @@ declare global {
   namespace go {
     interface GoPropertyOptions {
       index?: number;
-      key?: Hash;
-      keys?: Record<string | number, unknown>;
+      key?: Hash | string;
+      keys?: (Hash | string)[];
     }
 
     /**
@@ -21,8 +21,8 @@ declare global {
      * @param property - id of the property to retrieve
      * @param options - optional options table
      * - index number index into array property (1 based)
-     * - key hash name of internal property
-     * - keys table array of internal component resources identified by key (e.g. a particle fx emitter, see examples below)
+     * - key hash or string name of internal property
+     * - keys array of hashes or strings identifying internal component resources (e.g. a particle fx emitter, see examples below)
      * @returns the value of the specified property
      * @example
      * ```ts
@@ -52,11 +52,11 @@ declare global {
      *
      * @param url - url of the game object or component having the property
      * @param property - id of the property to set
-     * @param value - the value to set
+     * @param value - the value to set, or an array of vector4 to set a material property array
      * @param options - optional options table
      * - index integer index into array property (1 based)
-     * - key hash name of internal property
-     * - keys table array of internal component resources identified by key (e.g. a particle fx emitter, see examples below)
+     * - key hash or string name of internal property
+     * - keys array of hashes or strings identifying internal component resources (e.g. a particle fx emitter, see examples below)
      * @example
      * ```ts
      * go.set("#sprite", "tint", vmath.vector4(1, 0, 0, 1));
@@ -80,7 +80,7 @@ declare global {
     function set(
       url: SceneAddress | Hash | Url,
       property: string | Hash,
-      value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion,
+      value: number | boolean | Hash | Url | Vector3 | Vector4 | Quaternion | Vector4[],
       options?: GoPropertyOptions,
     ): void;
     /**

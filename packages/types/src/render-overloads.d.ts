@@ -25,5 +25,20 @@ declare global {
       name: string,
       parameters: Record<string | number, unknown>,
     ): Opaque<"render_target">;
+    /**
+     * The rendering context was lost. Rendering is paused and all graphics
+     * resources become invalid. Passed to the `render.set_listener` callback.
+     */
+    const CONTEXT_EVENT_CONTEXT_LOST: number & {
+      readonly __brand: "render.CONTEXT_EVENT_CONTEXT_LOST";
+    };
+    /**
+     * The rendering context was restored. Rendering is still paused and graphics
+     * resources are still invalid, but can be reloaded. Passed to the
+     * `render.set_listener` callback.
+     */
+    const CONTEXT_EVENT_CONTEXT_RESTORED: number & {
+      readonly __brand: "render.CONTEXT_EVENT_CONTEXT_RESTORED";
+    };
   }
 }

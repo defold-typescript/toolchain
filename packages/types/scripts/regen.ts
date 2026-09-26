@@ -556,6 +556,7 @@ const UNIVERSAL_EXTRA_IMPORTS: readonly UniversalExtraImport[] = [
   { specifier: "../../src/window-event-guard" },
   { specifier: "../../src/scene-addresses" },
   { specifier: "../../src/go-overloads" },
+  { specifier: "../../src/graphics-constants" },
   { specifier: "../../src/render-overloads", restrictedTo: "render" },
   { specifier: "../../src/vmath-overloads" },
 ];
