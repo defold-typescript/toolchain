@@ -455,6 +455,22 @@ export const PROPERTY_TYPE_CORRECTIONS: ReadonlyMap<string, PropertyTypeCorrecti
   ],
 ]);
 
+// A property upstream names with a placeholder standing for a numbered family of
+// keys, so its literal name is not a key the engine accepts. The emitted member
+// becomes a template-literal index signature over the whole family. `evidence`
+// is the brief phrase that defines the range; `property-correction-provenance.test.ts`
+// reds when a vendored ref-doc stops saying it. Curated rather than matched on a
+// trailing `N`, so each new upstream placeholder is a deliberate addition.
+export interface PropertyKeyPattern {
+  readonly pattern: string;
+  readonly evidence: string;
+}
+
+// Keyed `<namespace>.<property>`, mirroring PROPERTY_TYPE_CORRECTIONS.
+export const PROPERTY_KEY_PATTERNS: ReadonlyMap<string, PropertyKeyPattern> = new Map([
+  ["model.textureN", { pattern: `texture\${number}`, evidence: "textureN where N is 0-7" }],
+]);
+
 // A parameter the ref-doc metadata marks required while the same element's prose
 // or examples show it being omitted. `is_optional` is the only optionality
 // signal the emitter has, and upstream leaves it `False` on slots its own
@@ -3415,7 +3431,13 @@ function emitPropertyMember(
   mapType: (t: string) => string,
   namespace: string,
 ): string {
-  const key = TS_IDENTIFIER.test(p.name) ? p.name : JSON.stringify(p.name);
+  const keyPattern = PROPERTY_KEY_PATTERNS.get(`${namespace}.${p.name}`);
+  const key =
+    keyPattern !== undefined
+      ? `[key: \`${keyPattern.pattern}\`]`
+      : TS_IDENTIFIER.test(p.name)
+        ? p.name
+        : JSON.stringify(p.name);
   const correction = PROPERTY_TYPE_CORRECTIONS.get(`${namespace}.${p.name}`);
   const ts =
     correction !== undefined
