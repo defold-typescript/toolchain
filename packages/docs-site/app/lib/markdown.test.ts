@@ -854,6 +854,51 @@ describe("overload block headings and form lines (committed artifacts)", () => {
     expect(checked).toBeGreaterThan(10);
   });
 
+  test("each overview item of a grouped function splices its count badge into the colored signature", async () => {
+    let checked = 0;
+    for (const { page, groups } of rendered) {
+      const html = await pageHtml(page);
+      const start = html.indexOf('<div class="api-overview"');
+      const overview = html.slice(start, html.indexOf("</div>", start));
+      for (const group of multi(groups)) {
+        const [head] = group;
+        if (head === undefined) continue;
+        const heading = overloadHeading(group);
+        const slug = slugify(heading);
+        expect(h3Of(html, slug)).toContain(slug);
+        const link = overview.indexOf(`<a href="#${slug}">`);
+        expect({ name: head.name, linked: link >= 0 }).toEqual({ name: head.name, linked: true });
+        const item = overview.slice(link, overview.indexOf("</a>", link));
+        const codes = [...item.matchAll(SIGNATURE_CODE_RE)].map((m) => m[1] ?? "");
+        expect({ name: head.name, codes: codes.length }).toEqual({ name: head.name, codes: 1 });
+        const code = codes[0] ?? "";
+        const badges = [
+          ...code.matchAll(/<span class="api-overload-count"[^>]*>(\d+) overloads<\/span>/g),
+        ];
+        expect({ name: head.name, counts: badges.map((b) => b[1]) }).toEqual({
+          name: head.name,
+          counts: [String(group.length)],
+        });
+        expect({ name: head.name, text: coloredChars(code).text }).toEqual({
+          name: head.name,
+          text: heading.replace("(...)", "()"),
+        });
+        const [before, after] = code.split(badges[0]?.[0] ?? "\u0000");
+        expect({ name: head.name, before: coloredChars(before ?? "").text }).toEqual({
+          name: head.name,
+          before: `${head.name}(`,
+        });
+        expect(coloredChars(after ?? "").text.startsWith(")")).toBe(true);
+        checked += 1;
+      }
+      expect({
+        namespace: page.namespace,
+        badges: overview.match(/class="api-overload-count"/g)?.length ?? 0,
+      }).toEqual({ namespace: page.namespace, badges: multi(groups).length });
+    }
+    expect(checked).toBeGreaterThan(10);
+  });
+
   test("form lines, overview items and the heading color each character as the full signature does", async () => {
     let checked = 0;
     for (const { page, groups } of rendered) {
