@@ -6,6 +6,7 @@ import b2dDoc from "../fixtures/b2d_doc.json" with { type: "json" };
 import bufferDoc from "../fixtures/buffer_doc.json" with { type: "json" };
 import collectionfactoryDoc from "../fixtures/collectionfactory_doc.json" with { type: "json" };
 import collectionproxyDoc from "../fixtures/collectionproxy_doc.json" with { type: "json" };
+import b2dShapeDoc from "../fixtures/defold-1.13.1/b2d_shape_doc.json" with { type: "json" };
 import b2dWorldDoc from "../fixtures/defold-1.13.1/b2d_world_doc.json" with { type: "json" };
 import camera113Doc from "../fixtures/defold-1.13.1/camera_doc.json" with { type: "json" };
 import computeDoc from "../fixtures/defold-1.13.1/compute_doc.json" with { type: "json" };
@@ -38,6 +39,7 @@ import {
   ARBITRARY_TABLE_SLOTS,
   applyFieldAdditions,
   applyFieldOptionalityCorrections,
+  applyFieldTypeOverrides,
   applyNestedFieldCurations,
   buildTableDocResolver,
   CONSTANT_UNION_ALIASES,
@@ -1229,7 +1231,7 @@ describe("emitDeclarations", () => {
     const module = parseDefoldApiDoc(resourceDoc);
     const out = emitDeclarations(module);
     expect(out).toContain(
-      'function create_atlas(path: string, table: { texture?: string | Hash; animations?: { id?: string; width?: number; height?: number; frame_start?: number; frame_end?: number; playback?: Opaque<"constant">; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean }[]; geometries?: { id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean }[]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;',
+      "function create_atlas(path: string, table: { texture?: string | Hash; animations?: { id?: string; width?: number; height?: number; frame_start?: number; frame_end?: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean }[]; geometries?: { id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean }[]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;",
     );
     const createAtlasLine = out.split("\n").find((line) => line.includes("function create_atlas"));
     expect(createAtlasLine?.match(/ id\?:/g)).toHaveLength(2);
@@ -2053,7 +2055,7 @@ describe("supplementary cross-reference table-field recovery", () => {
     const out = emitDeclarations(resourceModule);
     const line = out.split("\n").find((l) => l.includes("function get_atlas(")) ?? "";
     expect(line).toContain(
-      'function get_atlas(path: Hash | string): { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: Opaque<"constant">; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] };',
+      "function get_atlas(path: Hash | string): { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: go.Playback; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] };",
     );
   });
 });
@@ -4334,5 +4336,104 @@ describe("CONSTANT_UNION_ALIASES", () => {
     expect(graphicsOut).toContain(
       `type State = ${row.members.map((m) => `typeof ${m}`).join(" | ")};`,
     );
+  });
+});
+
+describe("the body, shape_index alternative arity", () => {
+  const signaturesOf = (out: string, name: string): string[] =>
+    out
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.startsWith(`function ${name}(`));
+
+  test("a curated b2d.shape element gains a body, shape_index overload in place of shape_id", () => {
+    const module = parseDefoldApiDoc(b2dShapeDoc);
+    const out = emitDeclarations({
+      ...module,
+      functions: [requireFunction(module, "b2d.shape.set_shape")],
+    });
+    const [primary, overload, ...rest] = signaturesOf(out, "set_shape");
+    expect(rest).toEqual([]);
+    expect(primary).toStartWith('function set_shape(shape_id: Opaque<"b2Shape">, definition: {');
+    expect(overload).toBe(
+      (primary ?? "").replace(
+        'shape_id: Opaque<"b2Shape">',
+        'body: Opaque<"b2Body">, shape_index: number',
+      ),
+    );
+  });
+
+  test("every b2d.shape element whose first slot is shape_id gains the overload", () => {
+    const module = parseDefoldApiDoc(b2dShapeDoc);
+    const out = emitDeclarations(module);
+    const shapeSlotted = module.functions.filter((fn) => fn.parameters[0]?.name === "shape_id");
+    expect(shapeSlotted.length).toBeGreaterThan(0);
+    for (const fn of shapeSlotted) {
+      const name = fn.name.slice("b2d.shape.".length);
+      const signatures = signaturesOf(out, name);
+      expect(signatures).toHaveLength(2);
+      expect(signatures[1]).toStartWith(
+        `function ${name}(body: Opaque<"b2Body">, shape_index: number`,
+      );
+    }
+  });
+
+  test("an element outside the curated set emits one signature, whatever its prose says", () => {
+    const outside = parseDefoldApiDoc(
+      JSON.parse(JSON.stringify(b2dShapeDoc).replaceAll("b2d.shape", "b2d.outside")),
+    );
+    const out = emitDeclarations({
+      ...outside,
+      functions: [requireFunction(outside, "b2d.outside.set_shape")],
+    });
+    expect(signaturesOf(out, "set_shape")).toHaveLength(1);
+  });
+
+  test("a curated slot whose upstream prose no longer offers the alternative throws", () => {
+    const reworded = parseDefoldApiDoc(
+      JSON.parse(
+        JSON.stringify(b2dShapeDoc).replaceAll(", or pass <code>body, shape_index</code>", ""),
+      ),
+    );
+    expect(() =>
+      emitDeclarations({
+        ...reworded,
+        functions: [requireFunction(reworded, "b2d.shape.set_shape")],
+      }),
+    ).toThrow("b2d.shape:param:shape_id");
+  });
+});
+
+describe("a nested table field's type override", () => {
+  test("an override keyed to a field inside a table-array slot types that field only", () => {
+    const parsed: TableField[] = [
+      { name: "playback", types: ["constant"] },
+      {
+        name: "animations",
+        types: ["table"],
+        isList: true,
+        fields: [
+          { name: "playback", types: ["constant"] },
+          { name: "fps", types: ["number"] },
+        ],
+      },
+    ];
+    const out = applyFieldTypeOverrides("resource.set_atlas", "param", "table", parsed);
+    expect(out[0]).toEqual({ name: "playback", types: ["constant"] });
+    expect(out[1]?.fields).toEqual([
+      { name: "playback", types: ["constant"], tsType: "go.Playback" },
+      { name: "fps", types: ["number"] },
+    ]);
+    expect(parsed[1]?.fields?.[0]).toEqual({ name: "playback", types: ["constant"] });
+  });
+
+  test("the atlas animations playback field emits as go.Playback on every atlas element", () => {
+    const out = emitDeclarations(parseDefoldApiDoc(resourceDoc));
+    const lineWith = (text: string, needle: string): string =>
+      text.split("\n").find((line) => line.includes(needle)) ?? "";
+    for (const name of ["set_atlas", "create_atlas"]) {
+      expect(lineWith(out, `function ${name}(`)).toContain("playback?: go.Playback;");
+    }
+    expect(lineWith(out, "function get_atlas(")).toContain("playback: go.Playback;");
   });
 });
