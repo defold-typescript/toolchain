@@ -60,6 +60,12 @@ void gear;
 const weld = b2d.joint.create_weld(body, body);
 void weld;
 
+// socket.newtry — socket.protect's example creates a try function with no
+// finalizer, and that try unwraps the `client, err` pair socket.connect returns.
+const try_ = socket.newtry();
+const client: socket.client = try_(socket.connect("myserver.com", 80));
+void client;
+
 // Polarity: a genuinely required slot in front of a corrected one stays
 // required, so the correction is a slot promotion and not a slide to
 // all-optional parameters.

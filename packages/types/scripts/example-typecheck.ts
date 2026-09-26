@@ -387,6 +387,27 @@ export function propertyArgumentOffenders(
   return diagnostics.filter((diagnostic) => PROPERTY_ARGUMENT_CODES.has(diagnostic.code));
 }
 
+/**
+ * The codes TypeScript reports for a member read, call or operator applied to a
+ * value typed `unknown`: `TS18046` when the value is a named binding, `TS2571`
+ * when it is an unnamed expression such as a call result. Each code names the
+ * class on its own, so no message text decides membership.
+ */
+const UNKNOWN_VALUE_CODES: ReadonlySet<number> = new Set([18046, 2571]);
+
+/**
+ * The diagnostics an example's body carries that the unknown-value class
+ * refuses: a declaration leaving a documented value `unknown`, or a translation
+ * using a genuinely unknown value without narrowing it. Both the committed-pin
+ * closure and the compiled probe judge through this one predicate, so neither
+ * can drift from the other.
+ */
+export function unknownValueOffenders(
+  diagnostics: readonly ExampleDiagnostic[],
+): ExampleDiagnostic[] {
+  return diagnostics.filter((diagnostic) => UNKNOWN_VALUE_CODES.has(diagnostic.code));
+}
+
 export interface SurfaceCompilation {
   readonly units: Map<string, ExampleDiagnostic[]>;
   /**

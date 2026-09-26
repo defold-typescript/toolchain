@@ -8,10 +8,14 @@
     "signatures": ["socket.gettime(): number"]
   },
   "socket.newtry": {
-    "signatures": ["socket.newtry(finalizer: () => void): (...args: unknown[]) => unknown"]
+    "signatures": [
+      "socket.newtry(finalizer?: () => void): { <T>(result: LuaMultiReturn<[T | undefined, ...unknown[]]>): T; <T>(value: T | undefined, ...rest: unknown[]): T }"
+    ]
   },
   "socket.protect": {
-    "signatures": ["socket.protect(func: (...args: unknown[]) => unknown): (arg0: unknown) => void"]
+    "signatures": [
+      "socket.protect(func: (...args: unknown[]) => unknown): (...args: unknown[]) => LuaMultiReturn<[unknown, string | undefined]>"
+    ]
   },
   "socket.select": {
     "signatures": [

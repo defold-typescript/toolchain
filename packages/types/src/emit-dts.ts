@@ -254,6 +254,14 @@ export const RETURN_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
 // ref-doc. Upstream adding `nil` to `types` hands the case to the top-level
 // `nil` projection in `mapSlotUnion` and reds the entry, which is then deleted
 // rather than re-pinned.
+//
+// The same table holds a `function` return whose prose documents the returned
+// function's contract, which the bare token cannot carry: `socket.protect`'s
+// safe function "returns nil followed by an error message", and
+// `socket.newtry`'s try function returns its first argument when it is truthy
+// and throws otherwise, the LuaSocket contract its example relies on to unwrap
+// `socket.connect`'s `client, err` pair. `reason` quotes the slot prose the
+// provenance test searches for, as for the `nil` entries.
 export interface ReturnTypeCorrection {
   readonly ts: string;
   readonly upstream: readonly string[];
@@ -268,6 +276,22 @@ export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> 
       ts: 'Opaque<"b2Body"> | undefined',
       upstream: ["b2Body"],
       reason: "the body if successful. Otherwise nil.",
+    },
+  ],
+  [
+    "socket.protect",
+    {
+      ts: "(...args: unknown[]) => LuaMultiReturn<[unknown, string | undefined]>",
+      upstream: ["function(function())"],
+      reason: "returns nil followed by an error message.",
+    },
+  ],
+  [
+    "socket.newtry",
+    {
+      ts: "{ <T>(result: LuaMultiReturn<[T | undefined, ...unknown[]]>): T; <T>(value: T | undefined, ...rest: unknown[]): T }",
+      upstream: ["function"],
+      reason: "the customized try function.",
     },
   ],
 ]);
@@ -555,6 +579,7 @@ export const OPTIONAL_SLOT_CORRECTIONS: ReadonlyMap<string, string> = new Map([
     '"optional maximum translation fraction, defaults to 1"',
   ],
   ["iap.buy:param:options", '"optional parameters as properties"'],
+  ["socket.newtry:param:finalizer", "socket.protect's example `local try = socket.newtry()`"],
   ...(
     [
       "create_distance",
@@ -2008,10 +2033,32 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
 // its `data` is a bare record (only resize carries fields — `isWindowEvent` is the
 // path to typed `data`), mirroring the `msg.post` (send, typed) / `isMessage`
 // (receive, narrow) split.
+//
+// The other entries type what the slot's own prose lists and nothing more.
+// `http.request`'s response fields are the `<ul>` under "The response data.
+// Contains the fields:"; each is conditional ("if not saved on disc", "only if
+// option report_progress is true") except `status`, and `headers` is the same
+// string map the request sends. `sprite.play_flipbook`'s message is the
+// "Information about the completion" list. `collectionproxy.load` documents
+// only that the callback receives `proxy_loading`, `proxy_ready` or
+// `proxy_error` messages and lists no fields, so its message is the bare record
+// `window.set_listener`'s `data` is.
 export const CALLBACK_SIGNATURE_CURATIONS: ReadonlyMap<string, string> = new Map([
   [
     "window.set_listener:param:callback",
     "(self: unknown, event: typeof WINDOW_EVENT_FOCUS_LOST | typeof WINDOW_EVENT_FOCUS_GAINED | typeof WINDOW_EVENT_RESIZED | typeof WINDOW_EVENT_ICONFIED | typeof WINDOW_EVENT_DEICONIFIED, data: Record<string | number, unknown>) => void",
+  ],
+  [
+    "http.request:param:callback",
+    "(self: unknown, id: Hash, response: { status: number; response?: string; headers?: LuaMap<string, string>; path?: string; error?: string; bytes_received?: number; bytes_total?: number; range_start?: number; range_end?: number; document_size?: number }) => void",
+  ],
+  [
+    "sprite.play_flipbook:param:complete_function",
+    "(self: unknown, message_id: Hash, message: { current_tile: number; id: Hash }, sender: Url) => void",
+  ],
+  [
+    "collectionproxy.load:param:callback",
+    "(self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void",
   ],
 ]);
 
@@ -2051,6 +2098,9 @@ export const NESTED_FIELD_CURATIONS: ReadonlyMap<string, readonly TableField[]> 
 // The atlas animation `playback` field is documented as `constant` with the
 // prose "the default value is go.PLAYBACK_ONCE_FORWARD", which names the enum
 // the bare token cannot.
+//
+// `gui.set`'s `options.key` is documented as `hash`, while upstream's own
+// example sets a named font with `{ key = "my_font_name" }`.
 const CONSTANT_VALUE_TS = "Vector4 | Vector3 | Matrix4 | number | (Vector4 | Matrix4)[]";
 const ATTRIBUTE_VALUE_TS = "Vector4 | Vector3 | Matrix4 | number | number[]";
 export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
@@ -2061,6 +2111,7 @@ export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
   ["resource.set_atlas:param:table:animations[].playback", "go.Playback"],
   ["resource.create_atlas:param:table:animations[].playback", "go.Playback"],
   ["resource.get_atlas:return:data:animations[].playback", "go.Playback"],
+  ["gui.set:param:options:key", "string | Hash"],
 ]);
 
 // A field the engine accepts on an option bag whose `<dl>` upstream otherwise

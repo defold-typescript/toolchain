@@ -82,7 +82,7 @@ declare global {
      * // How to load an image from an URL and create a GUI texture from it:
      * const imgurl = "http://www.site.com/image.png";
      * http.request(imgurl, "GET", (self, id, response) => {
-     *   const img = image.load(response.response);
+     *   const img = response.response !== undefined ? image.load(response.response) : undefined;
      *   if (img !== undefined) {
      *     const tx = gui.new_texture("image_node", img.width, img.height, img.type, img.buffer);
      *   }
@@ -122,7 +122,10 @@ declare global {
      * // Load an image from an URL as a buffer and create a texture resource from it:
      * const imgurl = "http://www.site.com/image.png";
      * http.request(imgurl, "GET", (self, id, response) => {
-     *   const img = image.load_buffer(response.response, { flip_vertically: true });
+     *   const img =
+     *     response.response !== undefined
+     *       ? image.load_buffer(response.response, { flip_vertically: true })
+     *       : undefined;
      *   if (img !== undefined) {
      *     const tparams = {
      *       width: img.width,
