@@ -809,4 +809,17 @@ describe("overload forms with differing spans", () => {
     applySinceFilter(root, { from: OLDEST, to: PAGE_TO }, AXIS_CONFIG);
     expect(forms(root).map((li) => visible(li))).toEqual([true, true]);
   });
+
+  test("narrowing hides a form's heading dot but no availability list chip", async () => {
+    const root = await render();
+    const marks = root.querySelectorAll(".api-availability-mark");
+    expect(marks.length).toBeGreaterThan(0);
+
+    applySinceFilter(root, { from: MIDDLE, to: PAGE_TO }, AXIS_CONFIG);
+    const formDots = forms(root).flatMap((li) =>
+      li.querySelectorAll("[class*=api-badge-dot--]").filter((dot) => !visible(dot)),
+    );
+    expect(formDots.length).toBeGreaterThan(0);
+    expect(marks.filter((mark) => !visible(mark)).map((mark) => mark.className)).toEqual([]);
+  });
 });

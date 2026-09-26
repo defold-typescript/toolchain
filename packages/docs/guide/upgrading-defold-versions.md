@@ -82,7 +82,9 @@ questions:
 
 - **The version note is absolute.** It names the release the symbol really
   arrived in or left, which may sit outside the range you selected — `Since
-  Defold 1.13.0` means 1.13.0, whatever the `From` bound says.
+  Defold 1.13.0` means 1.13.0, whatever the `From` bound says. Each note line
+  leads with the `N`/`C`/`D` chip for that fact across every tracked release, so
+  it stays visible when the heading's range-relative chip hides.
 - **No version note means "in every tracked release".** Such a symbol may be far
   older than the oldest release tracked here; the API index states which releases
   those are, and the `From` dropdown names the oldest of them.
