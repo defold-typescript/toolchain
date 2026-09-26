@@ -111,19 +111,22 @@ declare global {
      * ```ts
      * // How to create and initialize a buffer
      * export default defineScript({
-     *   init(self) {
+     *   init() {
      *     const size = 128;
-     *     self.image = buffer.create(size * size, [{ name: hash("rgb"), type: buffer.VALUE_TYPE_UINT8, count: 3 }]);
-     *     self.imagestream = buffer.get_stream(self.image, hash("rgb"));
+     *     const [width, height] = [size, size];
+     *     const [r, g, b] = [0xff, 0x80, 0x10];
+     *     const image = buffer.create(size * size, [{ name: hash("rgb"), type: buffer.VALUE_TYPE_UINT8, count: 3 }]);
+     *     const imagestream = buffer.get_stream(image, hash("rgb"));
      *
-     *     for (let y = 0; y < self.height; y++) {
-     *       for (let x = 0; x < self.width; x++) {
-     *         const index = y * self.width * 3 + x * 3;
-     *         self.imagestream[index + 0] = self.r;
-     *         self.imagestream[index + 1] = self.g;
-     *         self.imagestream[index + 2] = self.b;
+     *     for (let y = 0; y < height; y++) {
+     *       for (let x = 0; x < width; x++) {
+     *         const index = y * width * 3 + x * 3;
+     *         imagestream[index + 0] = r;
+     *         imagestream[index + 1] = g;
+     *         imagestream[index + 2] = b;
      *       }
      *     }
+     *     return { image, imagestream };
      *   },
      * });
      * ```

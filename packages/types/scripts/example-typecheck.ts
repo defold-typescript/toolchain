@@ -342,6 +342,30 @@ export function optionalLoadOffenders(
   );
 }
 
+/**
+ * A property read on the state the script factories infer when `init` declares
+ * none: `self` is `TProps & TInitState`, and with no `properties` field and an
+ * `init` returning nothing the head of that type is `Record<never, never>`.
+ * `TS2339` carries pins unrelated to script state, so the code cannot decide
+ * this one — only the text naming that empty state type does.
+ */
+const UNDECLARED_STATE_TEXT = /does not exist on type 'Record<never, never>/;
+
+/**
+ * The diagnostics an example's body carries that the script-state class
+ * refuses: a field kept on `self` that `init` never returns, the Lua
+ * `self.x = …` shape carried over unchanged. Both the committed-pin closure and
+ * the compiled probes judge through this one predicate, so neither can drift
+ * from the other.
+ */
+export function undeclaredStateOffenders(
+  diagnostics: readonly ExampleDiagnostic[],
+): ExampleDiagnostic[] {
+  return diagnostics.filter(
+    (diagnostic) => diagnostic.code === 2339 && UNDECLARED_STATE_TEXT.test(diagnostic.text),
+  );
+}
+
 export interface SurfaceCompilation {
   readonly units: Map<string, ExampleDiagnostic[]>;
   /**

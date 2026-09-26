@@ -713,6 +713,10 @@ declare global {
      * @example
      * ```ts
      * export default defineScript({
+     *   init() {
+     *     return { some_value: 0 };
+     *   },
+     *
      *   final(self) {
      *     // report finalization
      *     msg.post("my_friend_instance", "im_dead", { my_stats: self.some_value });
@@ -1532,6 +1536,10 @@ declare global {
      * @example
      * ```ts
      * export default defineGuiScript({
+     *   init(): { my_value: number | undefined } {
+     *     return { my_value: undefined };
+     *   },
+     *
      *   on_input(self, action_id, action) {
      *     // check for input
      *     if (action_id === hash("my_action")) {
@@ -1565,6 +1573,10 @@ declare global {
      * @example
      * ```ts
      * export default defineGuiScript({
+     *   init() {
+     *     return { my_original_color: gui.get_color(gui.get_node("my_node")) };
+     *   },
+     *
      *   on_reload(self) {
      *     // restore some color (or similar)
      *     gui.set_color(gui.get_node("my_node"), self.my_original_color);
@@ -2334,15 +2346,17 @@ declare global {
      * // in a counting fashion. It is assumed that the gui component receives messages
      * // from the game when a new score is to be shown.
      * export default defineGuiScript({
-     *   init(self) {
-     *     // fetch the score text node for later use (assumes it is called "score")
-     *     self.score_node = gui.get_node("score");
-     *     // keep track of the current score counted up so far
-     *     self.current_score = 0;
-     *     // keep track of the target score we should count up to
-     *     self.target_score = 0;
-     *     // how fast we will update the score, in score/second
-     *     self.score_update_speed = 1;
+     *   init() {
+     *     return {
+     *       // fetch the score text node for later use (assumes it is called "score")
+     *       score_node: gui.get_node("score"),
+     *       // keep track of the current score counted up so far
+     *       current_score: 0,
+     *       // keep track of the target score we should count up to
+     *       target_score: 0,
+     *       // how fast we will update the score, in score/second
+     *       score_update_speed: 1,
+     *     };
      *   },
      *
      *   update(self, dt) {
@@ -2361,7 +2375,7 @@ declare global {
      *
      *   on_message(self, message_id, message) {
      *     // check the message
-     *     if (message_id === hash("set_score")) {
+     *     if (message_id === hash("set_score") && typeof message.score === "number") {
      *       self.target_score = message.score;
      *     }
      *   },

@@ -469,11 +469,15 @@ declare global {
      * }
      *
      * export default defineScript({
-     *   init(self) {
-     *     self.first_asset = hash("folder_next_to_binary/my_level_asset.bin");
-     *     self.second_asset = hash("/some_absolute_path/my_level.bin");
-     *     self.first_request = sys.load_buffer_async(self.first_asset, my_callback);
-     *     self.second_request = sys.load_buffer_async(self.second_asset, my_callback);
+     *   init() {
+     *     const first_path = "folder_next_to_binary/my_level_asset.bin";
+     *     const second_path = "/some_absolute_path/my_level.bin";
+     *     return {
+     *       first_asset: hash(first_path),
+     *       second_asset: hash(second_path),
+     *       first_request: sys.load_buffer_async(first_path, my_callback),
+     *       second_request: sys.load_buffer_async(second_path, my_callback),
+     *     };
      *   },
      * });
      * ```
