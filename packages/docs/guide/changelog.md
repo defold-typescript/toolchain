@@ -22,6 +22,7 @@ What changed in each published `defold-typescript` toolchain release.
   - **Narrower types** — `sound.get_group_name` takes a hash, [`model.get_mesh_enabled`](/api/model) and `set_mesh_enabled` take the mesh id as a string or hash, and `resource.create_texture_async` takes its path as a string.
   - **[`sys.set_render_enable`](/api/sys) is `sys.set_render_enabled`**, the name the engine registers; the documented name is `nil` at runtime.
   - **Functions no binding registers are gone** — [`b2d.body`](/api/b2d.body) `get_user_data`, `set_user_data` and `get_contact_list` on Defold 1.13, and `reset_mass_data` on 1.12.4.
+- **Return types match the values the engine returns**, so code that assumed a value is always there needs a check: [`sys.get_config_string`](/api/sys) returns `string | undefined` unless you pass a default, [`b2d.world.cast_ray_closest`](/api/b2d.world) and [`b2d.shape.ray_cast`](/api/b2d.shape) return `undefined` on a miss, and [`gui.new_texture`](/api/gui)'s error code is `undefined` on success. [`b2d.body.get_world_center`](/api/b2d.body) returns a `vmath.vector3`, never a `number`.
 
 ### Improved
 

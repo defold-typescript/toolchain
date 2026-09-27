@@ -426,13 +426,6 @@ declare global {
      */
     function get_world(body: Opaque<"b2Body">): Opaque<"b2World">;
     /**
-     * Get the angle in radians.
-     *
-     * @param body - body
-     * @returns the current world rotation angle in radians.
-     */
-    function get_world_center(body: Opaque<"b2Body">): number;
-    /**
      * Get the world position of the center of mass.
      *
      * @param body - body

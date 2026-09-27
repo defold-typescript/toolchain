@@ -7,6 +7,10 @@ components {
   component: "/main/probe.sprite"
 }
 components {
+  id: "tinted"
+  component: "/main/tinted.sprite"
+}
+components {
   id: "model"
   component: "/main/probe.model"
 }

@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { EXTENSION_GOLDEN_MANIFEST } from "../scripts/extension-goldens";
 import { loadApiTargets, MODULE_MANIFEST, VERSIONED_MODULE_MANIFEST } from "../scripts/regen";
 import {
+  MISFILED_DECLARATIONS,
   RETURN_FIELD_OPTIONALITY_CORRECTIONS,
   RETURN_TYPE_CORRECTIONS,
   type ReturnFieldOptionalityCorrection,
@@ -11,6 +12,7 @@ import { type ProvenanceSurface, retainedSurfaces } from "./optional-correction-
 import {
   fieldCorrectionProvenance,
   returnCorrectionProvenance,
+  unfiledDeclarations,
 } from "./return-correction-provenance";
 
 // `<element>:<kind>:<slot>:<field>`, the key shape both correction tables and
@@ -357,6 +359,61 @@ describe("per-target provenance — mixed-version inputs", () => {
         typeDrift: [],
       },
     ]);
+  });
+});
+
+describe("slot-scoped return correction provenance", () => {
+  const entries: readonly [string, ReturnTypeCorrection][] = [
+    [
+      "gui.new_texture",
+      { ts: "number | undefined", upstream: ["number"], reason: "if unsuccessful", slot: "code" },
+    ],
+  ];
+
+  function newTexture(codeTypes: readonly string[], codeDoc: string): FakeElement {
+    return {
+      name: "gui.new_texture",
+      returnvalues: [
+        { name: "success", types: ["boolean"], doc: "texture creation was successful" },
+        { name: "code", types: codeTypes, doc: codeDoc },
+      ],
+    };
+  }
+
+  test("pins and reads the named value, not the first one", () => {
+    const needed = surface("t", "gui", [newTexture(["number"], "a code if unsuccessful")]);
+    expect(returnCorrectionProvenance(entries, [needed])[0]).toMatchObject({
+      neededBy: ["t"],
+      typeDrift: [],
+    });
+    const fixed = surface("t", "gui", [newTexture(["number", "nil"], "a code if unsuccessful")]);
+    expect(returnCorrectionProvenance(entries, [fixed])[0]).toMatchObject({
+      neededBy: [],
+      resolvedIn: ["t"],
+    });
+  });
+});
+
+describe("misfiled declaration provenance", () => {
+  const misfiled = {
+    name: "b2d.body.get_world_center",
+    returnvalues: [{ name: "angle", types: ["number"] }],
+  };
+  const own = {
+    name: "b2d.body.get_world_center",
+    returnvalues: [{ name: "center", types: ["vector3"] }],
+  };
+  const key = "b2d.body.get_world_center:angle";
+
+  test("a key is unfiled once no target declares the misfiled return", () => {
+    expect(unfiledDeclarations([key], [surface("t", "b2d.body", [own, misfiled])])).toEqual([]);
+    expect(unfiledDeclarations([key], [surface("t", "b2d.body", [own])])).toEqual([key]);
+  });
+
+  test("every committed entry is still filed by some retained target", () => {
+    // A red here means upstream dropped or moved the misfiled declaration:
+    // delete the MISFILED_DECLARATIONS entry.
+    expect(unfiledDeclarations([...MISFILED_DECLARATIONS.keys()], SURFACES)).toEqual([]);
   });
 });
 

@@ -10,6 +10,8 @@ export const PROBE_URLS: Readonly<Record<string, string>> = {
   GO: "main:/probe",
   SCRIPT: "main:/probe#script",
   SPRITE: "main:/probe#sprite",
+  // A sprite whose material declares the `tints[4]` array constant.
+  TINTED: "main:/probe#tinted",
   MODEL: "main:/probe#model",
   LABEL: "main:/probe#label",
   MESH: "main:/probe#mesh",
@@ -197,6 +199,8 @@ export const WITNESS_OVERRIDES: Readonly<Record<string, string>> = {
   "gui.delete_node:1": 'gui.clone(gui.get_node("box"))',
   "gui.set_id:1": 'gui.clone(gui.get_node("box"))',
   "gui.get_node:1": '"box"',
+  // Only a text node holds text; any other node returns nil.
+  "gui.get_text:1": 'gui.get_node("text")',
   "gui.play_flipbook:2": '"anim"',
   "gui.set_font:2": '"default"',
   "gui.get_font_resource:1": '"default"',

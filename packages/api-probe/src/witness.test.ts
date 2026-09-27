@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { transpileProject } from "@defold-typescript/transpiler";
 import { BOX2D_BACKENDS } from "./contexts";
+import { describeDiagnostic } from "./negative-witness";
 import { PROBE_DENYLIST } from "./probe-denylist";
 import { generateProbes, PROBE_FILES, type ProbeGeneration } from "./witness";
 
@@ -14,7 +15,9 @@ const [v2] = generations as [ProbeGeneration, ProbeGeneration];
 
 describe("witness generation", () => {
   test("sprite.play_flipbook gets a required-slot call and one with every optional slot", () => {
-    const calls = v2.calls.filter((call) => call.name === "sprite.play_flipbook");
+    const calls = v2.calls.filter(
+      (call) => call.name === "sprite.play_flipbook" && call.negative === undefined,
+    );
     expect(calls.map((call) => [call.variant, call.call])).toEqual([
       ["required", 'sprite.play_flipbook(SPRITE, hash("anim"))'],
       ["optional", 'sprite.play_flipbook(SPRITE, hash("anim"), () => {}, {})'],
@@ -36,7 +39,10 @@ describe("witness generation", () => {
         const result = transpileProject({ files });
         const errors = result.diagnostics
           .filter((d) => d.category !== "warning")
-          .map((d) => `${generation.backend} ${d.file}:${d.line}: ${d.message}`);
+          .map((d) => {
+            const source = files[d.file ?? ""] ?? "";
+            return `${generation.backend} ${describeDiagnostic(source, generation.calls, d)}`;
+          });
         expect(errors).toEqual([]);
       }
     },
