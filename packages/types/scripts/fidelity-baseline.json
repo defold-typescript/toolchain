@@ -15,7 +15,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 51
+    "bindingOpen": 45
   },
   "b2d.chain": {
     "droppedElements": 0,
@@ -33,7 +33,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 24
+    "bindingOpen": 6
   },
   "b2d.joint": {
     "droppedElements": 0,
@@ -51,7 +51,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 36
+    "bindingOpen": 32
   },
   "b2d.world": {
     "droppedElements": 0,
@@ -60,7 +60,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 36
+    "bindingOpen": 8
   },
   "buffer": {
     "droppedElements": 0,
@@ -159,7 +159,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 32
+    "bindingOpen": 29
   },
   "html5": {
     "droppedElements": 0,
@@ -204,7 +204,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 4
+    "bindingOpen": 2
   },
   "json": {
     "droppedElements": 0,
@@ -249,7 +249,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 9
+    "bindingOpen": 7
   },
   "msg": {
     "droppedElements": 0,
@@ -276,7 +276,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 10
+    "bindingOpen": 7
   },
   "profiler": {
     "droppedElements": 0,
@@ -303,7 +303,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 104
+    "bindingOpen": 92
   },
   "resource": {
     "droppedElements": 0,
@@ -312,7 +312,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 71
+    "bindingOpen": 65
   },
   "socket": {
     "droppedElements": 0,
@@ -330,7 +330,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 14
+    "bindingOpen": 9
   },
   "sprite": {
     "droppedElements": 0,
@@ -339,7 +339,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 4
+    "bindingOpen": 3
   },
   "sys": {
     "droppedElements": 0,
