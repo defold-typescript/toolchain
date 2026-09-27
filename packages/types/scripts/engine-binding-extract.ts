@@ -29,6 +29,9 @@ export interface BindingSlot {
   // The binding subtracts 1 from the checked number before using it: the slot
   // is a 1-based position whatever its name or prose says.
   readonly minusOne?: true;
+  // Every read returns a value for any argument (`lua_toboolean`,
+  // `lua_tonumber`, `dmScript::ToVector3`) instead of raising: no kind is wrong.
+  readonly unchecked?: true;
 }
 
 export interface BindingReturns {
@@ -815,6 +818,23 @@ const CHECK_KINDS: ReadonlyMap<string, readonly LuaKind[]> = new Map<string, Lua
   ["CreateCallback", ["function"]],
 ]);
 
+// Readers that convert or return null for an argument of the wrong kind rather
+// than raise on it.
+const UNCHECKED_READS = new Set([
+  "lua_toboolean",
+  "lua_tonumber",
+  "lua_tointeger",
+  "lua_tostring",
+  "lua_tolstring",
+  "lua_touserdata",
+  "ToVector3",
+  "ToVector4",
+  "ToQuat",
+  "ToMatrix4",
+  "ToVector",
+  "ToURL",
+]);
+
 // `dmScript::ResolveURL` reads an absent or nil slot as the calling script's own
 // URL, so a slot it alone reads can be omitted.
 const OPTIONAL_CHECKS = new Set([
@@ -942,6 +962,7 @@ interface SlotRead {
   readonly field?: string;
   readonly manual?: string;
   readonly minusOne?: true;
+  readonly unchecked?: true;
   // A type probe such as `lua_isnumber` answers false for nil and branches,
   // so it never decides whether the slot may be omitted.
   readonly probe?: true;
@@ -1387,7 +1408,10 @@ function analyzeSlots(
         analysis.variadic.push(`${name} at a non-literal index`);
       }
       const shifted = NUMERIC_CHECKS.has(name) && subtractsOne(fn.body, positions, event.call);
-      record(checkKinds, shifted ? { minusOne: true } : {});
+      record(checkKinds, {
+        ...(shifted ? { minusOne: true as const } : {}),
+        ...(UNCHECKED_READS.has(name) ? { unchecked: true as const } : {}),
+      });
       continue;
     }
     if (name === "luaL_checktype") {
@@ -1585,6 +1609,9 @@ function analyzeFunction(
       fields,
       ...(settled ? { manual: settled } : {}),
       ...(reads.some((r) => r.minusOne) ? { minusOne: true as const } : {}),
+      ...(reads.length > 0 && reads.every((r) => r.unchecked && !r.probe)
+        ? { unchecked: true as const }
+        : {}),
     });
   }
   for (let slot = slots.length - 1; slot >= 0; slot--) {

@@ -29,6 +29,16 @@
     "verdict": "accepted",
     "reason": "the Box2D v2 binding reads its point with CheckVec2(L, 1), the slot that already holds the body (an upstream defect); the v3 binding and the declaration take (body, point)"
   },
+  "b2d.fixture.set_density:negative-4": {
+    "outcome": "ok",
+    "verdict": "accepted",
+    "reason": "the Box2D v2 binding reads reset_mass with lua_toboolean behind lua_gettop and lua_isnil checks, so any non-nil value counts as true"
+  },
+  "b2d.fixture.set_shape:negative-4": {
+    "outcome": "ok",
+    "verdict": "accepted",
+    "reason": "the Box2D v2 binding reads reset_mass with lua_toboolean behind lua_gettop and lua_isnil checks, so any non-nil value counts as true"
+  },
   "b2d.joint.get_max_length:required@v3": {
     "outcome": "engine-error",
     "verdict": "accepted",
@@ -139,6 +149,11 @@
     "verdict": "accepted",
     "reason": "the stock engine does not link the compute module, so the `compute` global is nil"
   },
+  "factory.create:negative-4": {
+    "outcome": "ok",
+    "verdict": "accepted",
+    "reason": "the binding reads properties only when lua_istable(L, 4) and ignores any other kind"
+  },
   "factory.set_prototype:required": {
     "outcome": "engine-error",
     "verdict": "accepted",
@@ -164,10 +179,40 @@
     "verdict": "accepted",
     "reason": "the ttf argument must name a .ttf resource in the build, and the probe project bundles none"
   },
+  "go.animate:negative-8": {
+    "outcome": "ok",
+    "verdict": "accepted",
+    "reason": "the binding reads complete_function only when lua_isfunction(L, 8) and ignores any other kind"
+  },
+  "gui.animate:negative-7": {
+    "outcome": "ok",
+    "verdict": "accepted",
+    "reason": "the binding reads complete_function only when lua_isfunction(L, 7) and ignores any other kind"
+  },
+  "gui.animate:negative-8": {
+    "outcome": "ok",
+    "verdict": "accepted",
+    "reason": "the binding reads playback only when lua_isnumber(L, 8) and ignores any other kind"
+  },
   "gui.delete_texture:required": {
     "outcome": "engine-error",
     "verdict": "accepted",
     "reason": "deletes a texture created with gui.new_texture, and the witness names none"
+  },
+  "gui.get:negative-3": {
+    "outcome": "ok",
+    "verdict": "accepted",
+    "reason": "LuaToPropertyOptions reads the options table's fields and ignores an argument that is not a table"
+  },
+  "gui.play_flipbook:negative-3": {
+    "outcome": "ok",
+    "verdict": "accepted",
+    "reason": "the binding reads complete_function only when lua_isfunction(L, 3) and ignores any other kind"
+  },
+  "gui.set_parent:negative-3": {
+    "outcome": "ok",
+    "verdict": "accepted",
+    "reason": "the binding reads keep_scene_transform only when lua_isboolean(L, 3) and ignores any other kind"
   },
   "image.get_astc_header:required": {
     "outcome": "engine-error",
@@ -219,15 +264,80 @@
     "verdict": "accepted",
     "reason": "the builtin cube has no bones, so no bone id resolves"
   },
+  "model.play_anim:negative-5": {
+    "outcome": "ok",
+    "verdict": "accepted",
+    "reason": "the binding reads complete_function only when lua_isfunction(L, 5) and ignores any other kind"
+  },
+  "physics.raycast:negative-4": {
+    "outcome": "ok",
+    "verdict": "accepted",
+    "reason": "the binding reads options only when lua_istable(L, 4) and ignores any other kind"
+  },
   "profiler.view_recorded_frame:required": {
     "outcome": "engine-error",
     "verdict": "accepted",
     "reason": "the profiler recording buffer is empty during a probe run"
   },
+  "render.delete_render_target:negative-1": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the binding refuses anything but a numeric handle with `Invalid render target (nil) supplied`, a type refusal that names no argument"
+  },
+  "render.draw:negative-1": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the binding refuses anything but a predicate userdata with `No render predicate specified.`, a type refusal that names no argument"
+  },
+  "render.draw_debug3d:negative-1": {
+    "outcome": "ok",
+    "verdict": "accepted",
+    "reason": "the binding reads options only when lua_istable(L, 1) and ignores any other kind"
+  },
+  "render.enable_texture:negative-2": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the binding refuses a handle that is neither a number, a hash nor a string with `called with illegal parameters`, a type refusal that names no argument"
+  },
+  "render.enable_texture:negative-3": {
+    "outcome": "ok",
+    "verdict": "accepted",
+    "reason": "the binding reads buffer_type only when lua_isnumber(L, 3) and ignores any other kind"
+  },
+  "render.get_render_target_height:negative-1": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "CheckRenderTarget refuses anything but a number, hash or string with `Invalid render target.`, a type refusal that names no argument"
+  },
+  "render.get_render_target_width:negative-1": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "CheckRenderTarget refuses anything but a number, hash or string with `Invalid render target.`, a type refusal that names no argument"
+  },
+  "render.render_target:negative-1": {
+    "outcome": "bad-argument",
+    "verdict": "accepted",
+    "reason": "a number in slot 1 selects the (name, parameters) form, so the binding raises on the missing parameters table in slot 2"
+  },
+  "render.set_camera:negative-2": {
+    "outcome": "ok",
+    "verdict": "accepted",
+    "reason": "the binding reads options only when lua_istable(L, 2) and ignores any other kind"
+  },
   "render.set_compute:optional": {
     "outcome": "engine-error",
     "verdict": "accepted",
     "reason": "the probe project has no compute program resource"
+  },
+  "render.set_render_target:negative-1": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "CheckRenderTarget refuses anything but a number, hash or string with `Invalid render target.`, a type refusal that names no argument"
+  },
+  "render.set_render_target_size:negative-1": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "CheckRenderTarget refuses anything but a number, hash or string with `Invalid render target.`, a type refusal that names no argument"
   },
   "resource.get_render_target_info:required": {
     "outcome": "engine-error",
@@ -249,9 +359,44 @@
     "verdict": "accepted",
     "reason": "the witness path names no resource in the build"
   },
+  "resource.set_buffer:negative-3": {
+    "outcome": "ok",
+    "verdict": "accepted",
+    "reason": "the binding reads options only when lua_istable(L, 3) and ignores any other kind"
+  },
   "resource.set_sound:required": {
     "outcome": "engine-error",
     "verdict": "accepted",
     "reason": "the witness buffer is not WAV or Ogg data, so the engine does not update the sound"
+  },
+  "sys.get_config_boolean:negative-2": {
+    "outcome": "ok",
+    "verdict": "accepted",
+    "reason": "the binding reads default_value with lua_toboolean whenever it is present, so any value converts to a boolean"
+  },
+  "sys.get_config_string:negative-2": {
+    "outcome": "ok",
+    "verdict": "accepted",
+    "reason": "the binding reads default_value only when lua_isstring(L, 2) and ignores any other kind"
+  },
+  "sys.set_engine_throttle:negative-2": {
+    "outcome": "ok",
+    "verdict": "accepted",
+    "reason": "the probe passes enable = false, since enabling throttling would stop the frames the run reports on, and the binding reads cooldown only when enable is true"
+  },
+  "tilemap.set_tile:negative-6": {
+    "outcome": "ok",
+    "verdict": "accepted",
+    "reason": "the binding reads the slot as a transform bitmask only when lua_isnumber(L, 6), else as flip-h through lua_toboolean, which takes any kind"
+  },
+  "vmath.matrix4:negative-1": {
+    "outcome": "bad-argument",
+    "verdict": "accepted",
+    "reason": "the binding checks the lone argument with CheckMatrix4(L, -1), a relative index Lua's argument error reports as #2"
+  },
+  "vmath.quat:negative-1": {
+    "outcome": "bad-argument",
+    "verdict": "accepted",
+    "reason": "the binding checks the lone argument with CheckQuat(L, -1), a relative index Lua's argument error reports as #2"
   }
 }

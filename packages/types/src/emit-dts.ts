@@ -215,7 +215,24 @@ export const OVERLOAD_COVERED_SKIPS = new Set([
   // sys-overloads.d.ts supplies the disabling form and the form that takes the
   // cooldown the engine requires when enabling.
   "sys.set_engine_throttle",
+  // sys-overloads.d.ts supplies the form without a default, which returns nil
+  // for a missing key, and the form with one, which always returns a string.
+  "sys.get_config_string",
 ]);
+
+// A declaration upstream files under another function's name: its return slot
+// and prose are the named sibling's, so the element keeps only its own
+// declarations. Keyed `<fqn>:<first return name>`, which tells the misfiled
+// declaration from the real one. `return-correction-provenance.test.ts` reds
+// once no retained target still files it, and the entry is then deleted.
+export const MISFILED_DECLARATIONS: ReadonlyMap<string, string> = new Map([
+  // b2d_body_doc.json repeats `get_angle`'s `angle` return under `get_world_center`.
+  ["b2d.body.get_world_center:angle", "b2d.body.get_angle"],
+]);
+
+function isMisfiled(fn: ApiFunction): boolean {
+  return MISFILED_DECLARATIONS.has(`${fn.name}:${fn.returnValues[0]?.name ?? ""}`);
+}
 
 // skipFunction FQNs withheld because no engine binding registers them in the
 // target that documents them, so the declared call would raise. Like
@@ -292,6 +309,9 @@ export interface ReturnTypeCorrection {
   readonly ts: string;
   readonly upstream: readonly string[];
   readonly reason: string;
+  // The named value of a multi-return the correction rewrites; `ts` is then
+  // that value's type. Absent, the correction rewrites a single return.
+  readonly slot?: string;
 }
 
 // Keyed by FQN, mirroring PROPERTY_TYPE_CORRECTIONS.
@@ -302,6 +322,31 @@ export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> 
       ts: 'Opaque<"b2Body"> | undefined',
       upstream: ["b2Body"],
       reason: "the body if successful. Otherwise nil.",
+    },
+  ],
+  [
+    "b2d.shape.ray_cast",
+    {
+      ts: "{ point: Vector3; normal: Vector3; fraction: number; iterations: number } | undefined",
+      upstream: ["table"],
+      reason: "and iterations, or nil",
+    },
+  ],
+  [
+    "b2d.world.cast_ray_closest",
+    {
+      ts: "{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number; node_visits: number; leaf_visits: number } | undefined",
+      upstream: ["table"],
+      reason: "and leaf_visits, or nil",
+    },
+  ],
+  [
+    "gui.new_texture",
+    {
+      ts: "number | undefined",
+      upstream: ["number"],
+      reason: "codes if unsuccessful",
+      slot: "code",
     },
   ],
   [
@@ -3273,6 +3318,7 @@ export function emitDeclarations(module: ApiModule, options?: EmitOptions): stri
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const functions = module.functions
+    .filter((fn) => !isMisfiled(fn))
     .map((fn) => prepareFunction(fn, prefix))
     .filter((entry): entry is PreparedFunction => entry !== null)
     .sort((a, b) =>
@@ -3532,6 +3578,7 @@ export function emitSymbolSignatures(module: ApiModule, options?: EmitOptions): 
   const NO_SLOTS: SlotTypes = {};
 
   for (const fn of module.functions) {
+    if (isMisfiled(fn)) continue;
     const prepared = prepareFunction(fn, prefix);
     if (prepared === null) continue;
     const slotTypes: Record<string, string> = {};
@@ -4269,19 +4316,21 @@ function emitReturn(
       position: index,
       name: rv.name,
       ts:
-        rv.types.length > 0
-          ? mapSlotUnion(
-              rv.types,
-              rv.doc,
-              mapType,
-              false,
-              resolver,
-              constantTokens,
-              elementName,
-              "return",
-              rv.name,
-            )
-          : "unknown",
+        correction?.slot !== undefined && correction.slot === rv.name
+          ? correction.ts
+          : rv.types.length > 0
+            ? mapSlotUnion(
+                rv.types,
+                rv.doc,
+                mapType,
+                false,
+                resolver,
+                constantTokens,
+                elementName,
+                "return",
+                rv.name,
+              )
+            : "unknown",
     }));
     return {
       type: `LuaMultiReturn<[${emitted.map((slot) => slot.ts).join(", ")}]>`,
@@ -4291,7 +4340,7 @@ function emitReturn(
   }
   const first = returnValues[0];
   if (!first) return { type: "void", trailing: "", slots: [] };
-  if (correction !== undefined) {
+  if (correction !== undefined && correction.slot === undefined) {
     return {
       type: correction.ts,
       trailing: "",

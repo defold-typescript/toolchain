@@ -122,7 +122,7 @@ const NAMESPACES: readonly OverloadNamespace[] = [
     namespace: "sys",
     declarationsPath: overloadsPath("sys-overloads.d.ts"),
     storePath: SYS_SIGNATURES_PATH,
-    fqns: ["sys.set_engine_throttle"],
+    fqns: ["sys.get_config_string", "sys.set_engine_throttle"],
     reflow: {
       from: "function set_engine_throttle(enable: boolean, cooldown: number): void;",
       to: "function set_engine_throttle(\n      enable: boolean,\n      cooldown: number,\n    ): void;",
@@ -290,6 +290,7 @@ const OVERLOAD_COUNTS: Record<string, number> = {
   "msg.post": 2,
   "msg.url": 6,
   "render.render_target": 2,
+  "sys.get_config_string": 2,
   "sys.set_engine_throttle": 2,
   "vmath.euler_to_quat": 2,
 };

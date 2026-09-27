@@ -3,11 +3,43 @@ const reported: Record<string, boolean> = {};
 let started = false;
 let serial = 0;
 
-// One `PROBE` line per call: function, variant, outcome and the raised message.
+// The kind a value reports as: `type()`, narrowed for userdata by `types.is_*`.
+function kindOf(value: unknown): string {
+  const kind = type(value);
+  if (kind !== "userdata") return kind;
+  if (types.is_hash(value)) return "hash";
+  if (types.is_url(value)) return "url";
+  if (types.is_vector3(value)) return "vector3";
+  if (types.is_vector4(value)) return "vector4";
+  if (types.is_quat(value)) return "quat";
+  if (types.is_matrix4(value)) return "matrix4";
+  if (types.is_vector(value)) return "vector";
+  return "userdata";
+}
+
+// One `RET` line per value a call returned, trailing nils included.
+export function probeReturn(name: string, variant: string, ...values: unknown[]): void {
+  const count = select("#", ...values);
+  for (let i = 1; i <= count; i++) {
+    const [value] = select(i, ...values);
+    print(`RET\t${name}\t${variant}\t${i}\t${kindOf(value)}`);
+  }
+}
+
+// `results` is what `pcall` returned: the ok flag, then the call's values or
+// the raised message.
+function report(name: string, variant: string, ...results: unknown[]): void {
+  const [ok] = select(1, ...results);
+  if (ok === true) probeReturn(name, variant, ...select(2, ...results));
+  const [err] = select(2, ...results);
+  const message = ok === true ? "" : string.gsub(tostring(err), "[\r\n]", " ")[0];
+  print(`PROBE\t${name}\t${variant}\t${ok === true ? "ok" : "err"}\t${message}`);
+}
+
+// One `PROBE` line per call: function, variant, outcome and the raised message,
+// after the `RET` lines of what an ok call returned.
 export function probe(name: string, variant: string, call: () => unknown): void {
-  const [ok, err] = pcall(call);
-  const message = ok ? "" : string.gsub(tostring(err), "[\r\n]", " ")[0];
-  print(`PROBE\t${name}\t${variant}\t${ok ? "ok" : "err"}\t${message}`);
+  report(name, variant, ...pcall(call));
 }
 
 // A name no earlier call used, for calls that create something by id and

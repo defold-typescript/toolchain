@@ -194,25 +194,6 @@ declare global {
      */
     function get_config_number(key: string, default_value?: number): number;
     /**
-     * Get string config value from the game.project configuration file with optional default value
-     *
-     * @param key - key to get value for. The syntax is SECTION.KEY
-     * @param default_value - (optional) default value to return if the value does not exist
-     * @returns config value as a string. default_value if the config key does not exist. nil if no default value was supplied.
-     * @example
-     * ```ts
-     * // Get user config value
-     * const text = sys.get_config_string("my_game.text", "default text");
-     *
-     * // Start the engine with a bootstrap config override and add a custom config value
-     * // $ dmengine --config=bootstrap.main_collection=/mytest.collectionc --config=mygame.testmode=1
-     *
-     * // Read the custom config value from the command line
-     * const testmode = sys.get_config_int("mygame.testmode");
-     * ```
-     */
-    function get_config_string(key: string, default_value?: string): string;
-    /**
      * Returns the current network connectivity status
      * on mobile platforms.
      * On desktop, this function always return `sys.NETWORK_CONNECTED`.

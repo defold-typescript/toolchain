@@ -76,6 +76,7 @@ function mergeSlot(a: BindingSlot | undefined, b: BindingSlot | undefined): Bind
     fields: union([...a.fields, ...b.fields]).sort(),
     ...(manual === undefined ? {} : { manual }),
     ...(a.minusOne || b.minusOne ? { minusOne: true as const } : {}),
+    ...(a.unchecked && b.unchecked ? { unchecked: true as const } : {}),
   };
 }
 
