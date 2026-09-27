@@ -237,6 +237,15 @@ function readFunction(
 
   for (const signature of signatures) {
     const params = signature.getParameters();
+    // `go.get<P>()(url, key)`: the empty call only applies a type argument and
+    // the transpiler erases it, so the inner call is the one Lua sees.
+    if (
+      params.length === 0 &&
+      (signature.getTypeParameters()?.length ?? 0) > 0 &&
+      signature.getReturnType().getCallSignatures().length > 0
+    ) {
+      continue;
+    }
     let required = 0;
     let variadic = false;
     params.forEach((param, i) => {
@@ -312,8 +321,11 @@ export function readDeclaredSurface(
   for (const namespace of namespaces) {
     const symbol = namespaceSymbol(roots, checker, namespace);
     if (!symbol) continue;
-    for (const member of checker.getExportsOfModule(symbol)) {
-      const fqn = `${namespace}.${member.name}`;
+    for (const exported of checker.getExportsOfModule(symbol)) {
+      const fqn = `${namespace}.${exported.name}`;
+      // A Lua name that is a TypeScript keyword ships as `export { _delete as delete }`.
+      const member =
+        exported.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(exported) : exported;
       if (member.flags & ts.SymbolFlags.Function) {
         functions.set(fqn, readFunction(fqn, member, checker, unmapped));
       } else if (member.flags & ts.SymbolFlags.Variable) {

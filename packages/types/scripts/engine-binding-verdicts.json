@@ -91,150 +91,61 @@
   },
   "*:buffer.copy_stream:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
   "*:buffer.copy_stream:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:buffer.create:manual:2": { "verdict": "manual", "reason": "no kind check" },
   "*:buffer.get_bytes:arity": { "verdict": "open", "extracted": "1..1", "declared": "2..2" },
-  "*:camera.get_aspect_ratio:arity": { "verdict": "open", "extracted": "1..1", "declared": "0..1" },
-  "*:camera.get_aspect_ratio:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
   "*:camera.get_aspect_ratio:too-narrow:1": {
     "verdict": "open",
     "extracted": "hash|number|string|url",
     "declared": "number|url"
-  },
-  "*:camera.get_auto_aspect_ratio:arity": {
-    "verdict": "open",
-    "extracted": "1..1",
-    "declared": "0..1"
-  },
-  "*:camera.get_auto_aspect_ratio:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
   },
   "*:camera.get_auto_aspect_ratio:too-narrow:1": {
     "verdict": "open",
     "extracted": "hash|number|string|url",
     "declared": "number|url"
   },
-  "*:camera.get_enabled:arity": { "verdict": "open", "extracted": "1..1", "declared": "0..1" },
-  "*:camera.get_enabled:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
   "*:camera.get_enabled:too-narrow:1": {
     "verdict": "open",
     "extracted": "hash|number|string|url",
     "declared": "number|url"
-  },
-  "*:camera.get_far_z:arity": { "verdict": "open", "extracted": "1..1", "declared": "0..1" },
-  "*:camera.get_far_z:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
   },
   "*:camera.get_far_z:too-narrow:1": {
     "verdict": "open",
     "extracted": "hash|number|string|url",
     "declared": "number|url"
   },
-  "*:camera.get_fov:arity": { "verdict": "open", "extracted": "1..1", "declared": "0..1" },
-  "*:camera.get_fov:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
   "*:camera.get_fov:too-narrow:1": {
     "verdict": "open",
     "extracted": "hash|number|string|url",
     "declared": "number|url"
-  },
-  "*:camera.get_near_z:arity": { "verdict": "open", "extracted": "1..1", "declared": "0..1" },
-  "*:camera.get_near_z:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
   },
   "*:camera.get_near_z:too-narrow:1": {
     "verdict": "open",
     "extracted": "hash|number|string|url",
     "declared": "number|url"
   },
-  "*:camera.get_orthographic_mode:arity": {
-    "verdict": "open",
-    "extracted": "1..1",
-    "declared": "0..1"
-  },
-  "*:camera.get_orthographic_mode:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
   "*:camera.get_orthographic_mode:too-narrow:1": {
     "verdict": "open",
     "extracted": "hash|number|string|url",
     "declared": "number|url"
-  },
-  "*:camera.get_orthographic_zoom:arity": {
-    "verdict": "open",
-    "extracted": "1..1",
-    "declared": "0..1"
-  },
-  "*:camera.get_orthographic_zoom:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
   },
   "*:camera.get_orthographic_zoom:too-narrow:1": {
     "verdict": "open",
     "extracted": "hash|number|string|url",
     "declared": "number|url"
   },
-  "*:camera.get_projection:arity": { "verdict": "open", "extracted": "1..1", "declared": "0..1" },
-  "*:camera.get_projection:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
   "*:camera.get_projection:too-narrow:1": {
     "verdict": "open",
     "extracted": "hash|number|string|url",
     "declared": "number|url"
-  },
-  "*:camera.get_view:arity": { "verdict": "open", "extracted": "1..1", "declared": "0..1" },
-  "*:camera.get_view:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
   },
   "*:camera.get_view:too-narrow:1": {
     "verdict": "open",
     "extracted": "hash|number|string|url",
     "declared": "number|url"
   },
-  "*:camera.screen_to_world:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "*:camera.screen_to_world:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
   "*:camera.screen_to_world:too-narrow:2": {
     "verdict": "open",
     "extracted": "hash|number|string|url",
     "declared": "number|url"
-  },
-  "*:camera.screen_xy_to_world:arity": {
-    "verdict": "open",
-    "extracted": "3..3",
-    "declared": "2..3"
-  },
-  "*:camera.screen_xy_to_world:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
   },
   "*:camera.screen_xy_to_world:too-narrow:3": {
     "verdict": "open",
@@ -311,41 +222,10 @@
     "extracted": "hash|number|string|url",
     "declared": "number|url"
   },
-  "*:camera.world_to_screen:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "*:camera.world_to_screen:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
   "*:camera.world_to_screen:too-narrow:2": {
     "verdict": "open",
     "extracted": "hash|number|string|url",
     "declared": "number|url"
-  },
-  "*:collectionfactory.create:arity": {
-    "verdict": "open",
-    "extracted": "5..5",
-    "declared": "1..5"
-  },
-  "*:collectionfactory.create:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:collectionfactory.create:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:collectionfactory.create:required-as-optional:4": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:collectionfactory.create:required-as-optional:5": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
   },
   "*:collectionfactory.get_status:arity": {
     "verdict": "open",
@@ -358,8 +238,12 @@
     "declared": "optional"
   },
   "*:collectionfactory.load:arity": { "verdict": "open", "extracted": "2..2", "declared": "0..2" },
-  "*:collectionfactory.load:manual:2": { "verdict": "manual", "reason": "no kind check" },
   "*:collectionfactory.load:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:collectionfactory.load:required-as-optional:2": {
     "verdict": "open",
     "extracted": "required",
     "declared": "optional"
@@ -374,11 +258,6 @@
     "extracted": "required",
     "declared": "optional"
   },
-  "*:collectionfactory.set_prototype:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
   "*:collectionfactory.unload:arity": {
     "verdict": "open",
     "extracted": "1..1",
@@ -389,10 +268,10 @@
     "extracted": "required",
     "declared": "optional"
   },
-  "*:collectionproxy.get_resources:arity": {
+  "*:collectionproxy.get_resources:too-narrow:1": {
     "verdict": "open",
-    "extracted": "0..0",
-    "declared": "1..1"
+    "extracted": "hash|string|url",
+    "declared": "url"
   },
   "*:collectionproxy.set_collection:arity": {
     "verdict": "open",
@@ -404,32 +283,6 @@
     "extracted": "required",
     "declared": "optional"
   },
-  "*:collectionproxy.set_collection:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:factory.create:arity": { "verdict": "open", "extracted": "5..5", "declared": "1..5" },
-  "*:factory.create:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:factory.create:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:factory.create:required-as-optional:4": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:factory.create:required-as-optional:5": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
   "*:factory.get_status:arity": { "verdict": "open", "extracted": "1..1", "declared": "0..1" },
   "*:factory.get_status:required-as-optional:1": {
     "verdict": "open",
@@ -437,8 +290,12 @@
     "declared": "optional"
   },
   "*:factory.load:arity": { "verdict": "open", "extracted": "2..2", "declared": "0..2" },
-  "*:factory.load:manual:2": { "verdict": "manual", "reason": "no kind check" },
   "*:factory.load:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:factory.load:required-as-optional:2": {
     "verdict": "open",
     "extracted": "required",
     "declared": "optional"
@@ -449,34 +306,18 @@
     "extracted": "required",
     "declared": "optional"
   },
-  "*:factory.set_prototype:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
   "*:factory.unload:arity": { "verdict": "open", "extracted": "1..1", "declared": "0..1" },
   "*:factory.unload:required-as-optional:1": {
     "verdict": "open",
     "extracted": "required",
     "declared": "optional"
   },
-  "*:font.prewarm_text:arity": { "verdict": "open", "extracted": "3..3", "declared": "2..3" },
-  "*:font.prewarm_text:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
   "*:go.animate:manual:4": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:go.cancel_animations:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "*:go.cancel_animations:required-as-optional:2": {
+  "*:go.cancel_animations:arity": { "verdict": "open", "extracted": "0..2", "declared": "1..2" },
+  "*:go.cancel_animations:optional-as-required:1": {
     "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:go.delete:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "extracted": "optional",
+    "declared": "required"
   },
   "*:go.final:missing-binding": {
     "verdict": "open",
@@ -487,81 +328,6 @@
     "verdict": "open",
     "extracted": "absent",
     "declared": "declared"
-  },
-  "*:go.get_parent:arity": { "verdict": "open", "extracted": "1..1", "declared": "0..1" },
-  "*:go.get_parent:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:go.get_position:arity": { "verdict": "open", "extracted": "1..1", "declared": "0..1" },
-  "*:go.get_position:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:go.get_rotation:arity": { "verdict": "open", "extracted": "1..1", "declared": "0..1" },
-  "*:go.get_rotation:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:go.get_scale_uniform:arity": { "verdict": "open", "extracted": "1..1", "declared": "0..1" },
-  "*:go.get_scale_uniform:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:go.get_scale:arity": { "verdict": "open", "extracted": "1..1", "declared": "0..1" },
-  "*:go.get_scale:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:go.get_world_position:arity": { "verdict": "open", "extracted": "1..1", "declared": "0..1" },
-  "*:go.get_world_position:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:go.get_world_rotation:arity": { "verdict": "open", "extracted": "1..1", "declared": "0..1" },
-  "*:go.get_world_rotation:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:go.get_world_scale_uniform:arity": {
-    "verdict": "open",
-    "extracted": "1..1",
-    "declared": "0..1"
-  },
-  "*:go.get_world_scale_uniform:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:go.get_world_scale:arity": { "verdict": "open", "extracted": "1..1", "declared": "0..1" },
-  "*:go.get_world_scale:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:go.get_world_transform:arity": { "verdict": "open", "extracted": "1..1", "declared": "0..1" },
-  "*:go.get_world_transform:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:go.get:arity": { "verdict": "open", "extracted": "2..3", "declared": "0..3" },
-  "*:go.get:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:go.get:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
   },
   "*:go.init:missing-binding": { "verdict": "open", "extracted": "absent", "declared": "declared" },
   "*:go.late_update:missing-binding": {
@@ -584,7 +350,6 @@
     "extracted": "absent",
     "declared": "declared"
   },
-  "*:go.property:manual:2": { "verdict": "manual", "reason": "lua_type switch" },
   "*:go.property:return-count": { "verdict": "open", "extracted": "0", "declared": "1" },
   "*:go.set_parent:arity": { "verdict": "open", "extracted": "3..3", "declared": "0..3" },
   "*:go.set_parent:required-as-optional:1": {
@@ -602,86 +367,47 @@
     "extracted": "required",
     "declared": "optional"
   },
-  "*:go.set_position:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "*:go.set_position:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:go.set_rotation:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "*:go.set_rotation:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:go.set_scale_xy:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "*:go.set_scale_xy:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:go.set_scale:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "*:go.set_scale:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:go.set:arity": { "verdict": "open", "extracted": "3..4", "declared": "0..4" },
   "*:go.set:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:go.set:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:go.set:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:go.update_world_transform:arity": {
-    "verdict": "open",
-    "extracted": "1..1",
-    "declared": "0..1"
-  },
-  "*:go.update_world_transform:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
   "*:go.update:missing-binding": {
     "verdict": "open",
     "extracted": "absent",
     "declared": "declared"
   },
-  "*:gui.animate:arity": { "verdict": "open", "extracted": "8..8", "declared": "5..8" },
-  "*:gui.animate:manual:2": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:gui.animate:required-as-optional:6": {
+  "*:go.world_to_local_position:arity": {
     "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
+    "extracted": "1..2",
+    "declared": "2..2"
   },
-  "*:gui.animate:required-as-optional:7": {
+  "*:go.world_to_local_position:optional-as-required:2": {
     "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
+    "extracted": "optional",
+    "declared": "required"
   },
-  "*:gui.animate:required-as-optional:8": {
+  "*:go.world_to_local_transform:arity": {
     "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
+    "extracted": "1..2",
+    "declared": "2..2"
   },
-  "*:gui.cancel_animations:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "*:gui.cancel_animations:required-as-optional:2": {
+  "*:go.world_to_local_transform:optional-as-required:2": {
     "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
+    "extracted": "optional",
+    "declared": "required"
+  },
+  "*:gui.animate:too-narrow:2": {
+    "verdict": "open",
+    "extracted": "hash|string",
+    "declared": "number|string"
   },
   "*:gui.cancel_animations:too-narrow:2": {
     "verdict": "open",
     "extracted": "hash|string",
     "declared": "number|string"
   },
-  "*:gui.delete_texture:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:gui.clone_tree:optional-as-required:1": {
+    "verdict": "open",
+    "extracted": "optional",
+    "declared": "required"
+  },
   "*:gui.EASING_IN:constant-missing-declaration": {
     "verdict": "open",
     "extracted": "registered",
@@ -707,6 +433,11 @@
     "extracted": "absent",
     "declared": "declared"
   },
+  "*:gui.get_tree:optional-as-required:1": {
+    "verdict": "open",
+    "extracted": "optional",
+    "declared": "required"
+  },
   "*:gui.get:field-undeclared:3.key": {
     "verdict": "open",
     "extracted": "read",
@@ -729,18 +460,7 @@
     "declared": "optional"
   },
   "*:gui.move_above:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "*:gui.move_above:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
   "*:gui.move_below:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "*:gui.move_below:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:gui.new_particlefx_node:manual:2": { "verdict": "manual", "reason": "lua_type switch" },
   "*:gui.new_texture:too-loose:4": {
     "verdict": "open",
     "extracted": "string",
@@ -761,40 +481,17 @@
     "extracted": "absent",
     "declared": "declared"
   },
-  "*:gui.play_flipbook:arity": { "verdict": "open", "extracted": "3..4", "declared": "2..4" },
   "*:gui.play_flipbook:field-unread:4.playback_rate": {
     "verdict": "open",
     "extracted": "not read",
     "declared": "declared"
-  },
-  "*:gui.play_flipbook:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:gui.play_particlefx:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "*:gui.play_particlefx:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
   },
   "*:gui.screen_to_local:too-narrow:2": {
     "verdict": "open",
     "extracted": "vector3|vector4",
     "declared": "vector3"
   },
-  "*:gui.set_parent:arity": { "verdict": "open", "extracted": "3..3", "declared": "1..3" },
-  "*:gui.set_parent:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:gui.set_parent:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:gui.set_particlefx:manual:2": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:gui.set_parent:arity": { "verdict": "open", "extracted": "2..3", "declared": "1..3" },
   "*:gui.set_screen_position:too-narrow:2": {
     "verdict": "open",
     "extracted": "vector3|vector4",
@@ -816,12 +513,6 @@
     "extracted": "hash|string|url|userdata",
     "declared": "url|userdata"
   },
-  "*:gui.stop_particlefx:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "*:gui.stop_particlefx:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
   "*:gui.update:missing-binding": {
     "verdict": "open",
     "extracted": "absent",
@@ -832,28 +523,7 @@
     "extracted": "1..1",
     "declared": "0..1"
   },
-  "*:html5.set_interaction_listener:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:http.request:arity": { "verdict": "open", "extracted": "6..6", "declared": "3..6" },
   "*:http.request:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:http.request:required-as-optional:4": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:http.request:required-as-optional:5": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:http.request:required-as-optional:6": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
   "*:image.load_buffer:field-unread:2.flip_vertically": {
     "verdict": "open",
     "extracted": "not read",
@@ -874,34 +544,24 @@
     "extracted": "boolean|table",
     "declared": "table"
   },
-  "*:json.decode:arity": { "verdict": "open", "extracted": "0..1", "declared": "1..2" },
-  "*:json.decode:optional-as-required:1": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
-  },
-  "*:json.encode:arity": { "verdict": "open", "extracted": "0..0", "declared": "1..2" },
-  "*:json.null:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
+  "*:json.decode:arity": { "verdict": "open", "extracted": "1..1", "declared": "1..2" },
+  "*:json.encode:arity": { "verdict": "open", "extracted": "1..0", "declared": "1..2" },
   "*:liveupdate.LIVEUPDATE_NOT_INITIALIZED:constant-missing-declaration": {
     "verdict": "open",
     "extracted": "registered",
     "declared": "absent"
   },
-  "*:model.get_mesh_enabled:too-loose:1": {
+  "*:model.cancel:arity": { "verdict": "open", "extracted": "0..1", "declared": "1..1" },
+  "*:model.cancel:optional-as-required:1": {
     "verdict": "open",
-    "extracted": "string",
-    "declared": "hash|string|url"
+    "extracted": "optional",
+    "declared": "required"
   },
   "*:model.get_mesh_enabled:too-loose:2": {
     "verdict": "open",
-    "extracted": "string",
+    "extracted": "hash|string",
     "declared": "hash|string|url"
   },
-  "*:model.play_anim:arity": { "verdict": "open", "extracted": "4..5", "declared": "3..5" },
   "*:model.play_anim:field-unread:4.offset": {
     "verdict": "open",
     "extracted": "not read",
@@ -912,35 +572,24 @@
     "extracted": "not read",
     "declared": "declared"
   },
-  "*:model.play_anim:required-as-optional:4": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:model.set_mesh_enabled:too-loose:1": {
-    "verdict": "open",
-    "extracted": "string",
-    "declared": "hash|string|url"
-  },
   "*:model.set_mesh_enabled:too-loose:2": {
     "verdict": "open",
-    "extracted": "string",
+    "extracted": "hash|string",
     "declared": "hash|string|url"
   },
   "*:msg.post:too-loose:3": { "verdict": "open", "extracted": "table", "declared": "any" },
   "*:msg.url:arity": { "verdict": "open", "extracted": "1..3", "declared": "0..3" },
   "*:msg.url:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:particlefx.play:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
   "*:particlefx.set_constant:too-narrow:4": {
     "verdict": "open",
     "extracted": "matrix4|vector4",
     "declared": "vector4"
   },
-  "*:particlefx.stop:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "*:particlefx.stop:required-as-optional:2": {
+  "*:particlefx.stop:arity": { "verdict": "open", "extracted": "0..2", "declared": "1..2" },
+  "*:particlefx.stop:optional-as-required:1": {
     "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
+    "extracted": "optional",
+    "declared": "required"
   },
   "*:physics.create_joint:arity": { "verdict": "open", "extracted": "7..7", "declared": "6..7" },
   "*:physics.create_joint:manual:7": { "verdict": "manual", "reason": "lua_type switch" },
@@ -948,12 +597,6 @@
     "verdict": "open",
     "extracted": "hash|string",
     "declared": "string"
-  },
-  "*:physics.raycast:arity": { "verdict": "open", "extracted": "4..4", "declared": "3..4" },
-  "*:physics.raycast:required-as-optional:4": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
   },
   "*:physics.set_event_listener:arity": {
     "verdict": "open",
@@ -966,7 +609,6 @@
     "extracted": "hash|string",
     "declared": "string"
   },
-  "*:physics.set_hflip:arity": { "verdict": "open", "extracted": "0..0", "declared": "2..2" },
   "*:physics.set_joint_properties:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
   "*:physics.set_maskbit:too-narrow:2": {
     "verdict": "open",
@@ -988,17 +630,10 @@
     "extracted": "not read",
     "declared": "declared"
   },
-  "*:physics.set_vflip:arity": { "verdict": "open", "extracted": "0..0", "declared": "2..2" },
-  "*:profiler.enable_ui:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:profiler.enable:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
   "*:profiler.get_lua_ref_count:missing-declaration": {
     "verdict": "open",
     "extracted": "bound",
     "declared": "absent"
-  },
-  "*:profiler.set_ui_vsync_wait_visible:manual:1": {
-    "verdict": "manual",
-    "reason": "lua_type switch"
   },
   "*:render.delete_render_target:too-loose:1": {
     "verdict": "open",
@@ -1015,28 +650,10 @@
     "extracted": "hash|number|string",
     "declared": "hash|number|string|userdata"
   },
-  "*:render.dispatch_compute:arity": { "verdict": "open", "extracted": "4..4", "declared": "3..4" },
-  "*:render.dispatch_compute:required-as-optional:4": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:render.draw_debug3d:arity": { "verdict": "open", "extracted": "1..1", "declared": "0..1" },
   "*:render.draw_debug3d:field-unread:1.frustum_planes": {
     "verdict": "open",
     "extracted": "not read",
     "declared": "declared"
-  },
-  "*:render.draw_debug3d:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:render.draw:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "*:render.draw:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
   },
   "*:render.draw:too-loose:1": { "verdict": "open", "extracted": "userdata", "declared": "number" },
   "*:render.draw:too-narrow:1": {
@@ -1048,12 +665,6 @@
     "verdict": "open",
     "extracted": "table|userdata",
     "declared": "table"
-  },
-  "*:render.enable_texture:arity": { "verdict": "open", "extracted": "3..3", "declared": "2..3" },
-  "*:render.enable_texture:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
   },
   "*:render.enable_texture:too-loose:2": {
     "verdict": "open",
@@ -1085,36 +696,26 @@
     "extracted": "absent",
     "declared": "declared"
   },
-  "*:render.render_target:arity": { "verdict": "open", "extracted": "1..1", "declared": "1..2" },
-  "*:render.render_target:manual:1": { "verdict": "manual", "reason": "no kind check" },
+  "*:render.render_target:arity": { "verdict": "open", "extracted": "0..1", "declared": "1..2" },
+  "*:render.render_target:optional-as-required:1": {
+    "verdict": "open",
+    "extracted": "optional",
+    "declared": "required"
+  },
+  "*:render.render_target:too-loose:1": {
+    "verdict": "open",
+    "extracted": "table",
+    "declared": "string|table"
+  },
   "*:render.set_blend_func:manual": {
     "verdict": "manual",
     "reason": "luaL_checknumber at a non-literal index"
-  },
-  "*:render.set_camera:arity": { "verdict": "open", "extracted": "1..2", "declared": "0..2" },
-  "*:render.set_camera:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
   },
   "*:render.set_camera:too-narrow:1": {
     "verdict": "open",
     "extracted": "hash|number|string|url",
     "declared": "number|string|url"
   },
-  "*:render.set_color_mask:arity": { "verdict": "open", "extracted": "5..5", "declared": "4..4" },
-  "*:render.set_color_mask:manual:2": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:render.set_color_mask:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:render.set_color_mask:manual:4": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:render.set_color_mask:manual:5": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:render.set_compute:arity": { "verdict": "open", "extracted": "1..1", "declared": "0..1" },
-  "*:render.set_compute:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:render.set_depth_mask:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..1" },
-  "*:render.set_depth_mask:manual:2": { "verdict": "manual", "reason": "lua_type switch" },
   "*:render.set_listener:arity": { "verdict": "open", "extracted": "1..1", "declared": "0..1" },
   "*:render.set_listener:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
   "*:render.set_render_target_size:too-loose:1": {
@@ -1217,25 +818,20 @@
     "extracted": "required",
     "declared": "optional"
   },
-  "*:resource.create_texture_async:manual:1": {
-    "verdict": "manual",
-    "reason": "no read of this slot"
+  "*:resource.create_texture_async:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
   },
-  "*:resource.create_texture_async:manual:2": {
-    "verdict": "manual",
-    "reason": "no read of this slot"
+  "*:resource.create_texture_async:too-loose:1": {
+    "verdict": "open",
+    "extracted": "string",
+    "declared": "hash|string"
   },
-  "*:resource.create_texture_async:manual:3": { "verdict": "manual", "reason": "no kind check" },
-  "*:resource.create_texture:arity": { "verdict": "open", "extracted": "0..0", "declared": "2..3" },
   "*:resource.font:missing-binding": {
     "verdict": "open",
     "extracted": "absent",
     "declared": "declared"
-  },
-  "*:resource.get_text_metrics:arity": {
-    "verdict": "open",
-    "extracted": "2..2",
-    "declared": "2..3"
   },
   "*:resource.get_text_metrics:too-narrow:1": {
     "verdict": "open",
@@ -1277,12 +873,6 @@
     "extracted": "not read",
     "declared": "declared"
   },
-  "*:resource.set_buffer:arity": { "verdict": "open", "extracted": "3..3", "declared": "2..3" },
-  "*:resource.set_buffer:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
   "*:resource.texture:missing-binding": {
     "verdict": "open",
     "extracted": "absent",
@@ -1298,7 +888,7 @@
     "extracted": "hash",
     "declared": "hash|string"
   },
-  "*:sound.play:arity": { "verdict": "open", "extracted": "2..3", "declared": "1..3" },
+  "*:sound.play:arity": { "verdict": "open", "extracted": "0..3", "declared": "1..3" },
   "*:sound.play:field-unread:2.gain": {
     "verdict": "open",
     "extracted": "not read",
@@ -1325,10 +915,10 @@
     "declared": "declared"
   },
   "*:sound.play:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:sound.play:required-as-optional:2": {
+  "*:sound.play:optional-as-required:1": {
     "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
+    "extracted": "optional",
+    "declared": "required"
   },
   "*:sound.set_gain:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
   "*:sound.set_gain:required-as-optional:2": {
@@ -1342,11 +932,11 @@
     "extracted": "required",
     "declared": "optional"
   },
-  "*:sound.stop:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "*:sound.stop:required-as-optional:2": {
+  "*:sound.stop:arity": { "verdict": "open", "extracted": "0..2", "declared": "1..2" },
+  "*:sound.stop:optional-as-required:1": {
     "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
+    "extracted": "optional",
+    "declared": "required"
   },
   "*:sprite.play_flipbook:field-unread:4.playback_rate": {
     "verdict": "open",
@@ -1358,61 +948,6 @@
     "verdict": "open",
     "extracted": "bound",
     "declared": "absent"
-  },
-  "*:sys.get_config_boolean:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "*:sys.get_config_boolean:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:sys.get_config_int:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "*:sys.get_config_int:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:sys.get_config_number:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "*:sys.get_config_number:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:sys.get_config_string:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "*:sys.get_config_string:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:sys.reboot:arity": { "verdict": "open", "extracted": "6..6", "declared": "0..6" },
-  "*:sys.reboot:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:sys.reboot:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:sys.reboot:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:sys.reboot:required-as-optional:4": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:sys.reboot:required-as-optional:5": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:sys.reboot:required-as-optional:6": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
   },
   "*:sys.save:return-count": { "verdict": "open", "extracted": "1", "declared": "0" },
   "*:sys.set_debugger_lightweight_hook:missing-declaration": {
@@ -1437,8 +972,6 @@
     "extracted": "bound",
     "declared": "absent"
   },
-  "*:tilemap.get_tile_info:arity": { "verdict": "open", "extracted": "0..0", "declared": "4..4" },
-  "*:tilemap.get_tile:arity": { "verdict": "open", "extracted": "0..0", "declared": "4..4" },
   "*:tilemap.set_tile:arity": { "verdict": "open", "extracted": "6..7", "declared": "5..6" },
   "*:tilemap.set_tile:required-as-optional:6": {
     "verdict": "open",
@@ -1451,12 +984,19 @@
     "extracted": "boolean|number",
     "declared": "number"
   },
+  "*:types.is_hash:arity": { "verdict": "open", "extracted": "0..1", "declared": "1..1" },
   "*:types.is_hash:manual:1": { "verdict": "manual", "reason": "no kind check" },
+  "*:types.is_matrix4:arity": { "verdict": "open", "extracted": "0..1", "declared": "1..1" },
   "*:types.is_matrix4:manual:1": { "verdict": "manual", "reason": "no kind check" },
+  "*:types.is_quat:arity": { "verdict": "open", "extracted": "0..1", "declared": "1..1" },
   "*:types.is_quat:manual:1": { "verdict": "manual", "reason": "no kind check" },
+  "*:types.is_url:arity": { "verdict": "open", "extracted": "0..1", "declared": "1..1" },
   "*:types.is_url:manual:1": { "verdict": "manual", "reason": "no kind check" },
+  "*:types.is_vector:arity": { "verdict": "open", "extracted": "0..1", "declared": "1..1" },
   "*:types.is_vector:manual:1": { "verdict": "manual", "reason": "no kind check" },
+  "*:types.is_vector3:arity": { "verdict": "open", "extracted": "0..1", "declared": "1..1" },
   "*:types.is_vector3:manual:1": { "verdict": "manual", "reason": "no kind check" },
+  "*:types.is_vector4:arity": { "verdict": "open", "extracted": "0..1", "declared": "1..1" },
   "*:types.is_vector4:manual:1": { "verdict": "manual", "reason": "no kind check" },
   "*:vmath.clamp:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
   "*:vmath.clamp:manual:2": { "verdict": "manual", "reason": "lua_type switch" },
@@ -1495,11 +1035,6 @@
   "*:vmath.vector3:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
   "*:vmath.vector4:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
   "*:window.set_listener:arity": { "verdict": "open", "extracted": "1..1", "declared": "0..1" },
-  "*:window.set_listener:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
   "defold-1.12.4:b2d.body.dump:missing-declaration": {
     "verdict": "open",
     "extracted": "bound",
@@ -2259,11 +1794,6 @@
     "extracted": "bound",
     "declared": "absent"
   },
-  "defold-1.13.0:b2d.body.create_chain:arity": {
-    "verdict": "open",
-    "extracted": "1..1",
-    "declared": "2..2"
-  },
   "defold-1.13.0:b2d.body.create_fixture:arity": {
     "verdict": "open",
     "extracted": "2..2",
@@ -2309,65 +1839,15 @@
     "extracted": "absent",
     "declared": "declared"
   },
-  "defold-1.13.0:b2d.body.get_local_center:arity": {
-    "verdict": "open",
-    "extracted": "0..1",
-    "declared": "1..1"
-  },
-  "defold-1.13.0:b2d.body.get_local_center:optional-as-required:1": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
-  },
-  "defold-1.13.0:b2d.body.get_rotational_inertia:arity": {
-    "verdict": "open",
-    "extracted": "0..0",
-    "declared": "1..1"
-  },
   "defold-1.13.0:b2d.body.get_user_data:missing-binding": {
     "verdict": "open",
     "extracted": "absent",
     "declared": "declared"
   },
-  "defold-1.13.0:b2d.body.get_world_center:arity": {
-    "verdict": "open",
-    "extracted": "0..1",
-    "declared": "1..1"
-  },
-  "defold-1.13.0:b2d.body.get_world_center:optional-as-required:1": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
-  },
-  "defold-1.13.0:b2d.body.is_sleeping_allowed:arity": {
-    "verdict": "open",
-    "extracted": "0..1",
-    "declared": "1..1"
-  },
-  "defold-1.13.0:b2d.body.is_sleeping_allowed:optional-as-required:1": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
-  },
   "defold-1.13.0:b2d.body.set_mass_data:too-loose:2": {
     "verdict": "open",
     "extracted": "table",
     "declared": "table|userdata"
-  },
-  "defold-1.13.0:b2d.body.set_sleeping_allowed:arity": {
-    "verdict": "open",
-    "extracted": "0..2",
-    "declared": "2..2"
-  },
-  "defold-1.13.0:b2d.body.set_sleeping_allowed:optional-as-required:1": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
-  },
-  "defold-1.13.0:b2d.body.set_sleeping_allowed:optional-as-required:2": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
   },
   "defold-1.13.0:b2d.body.set_user_data:missing-binding": {
     "verdict": "open",
@@ -2378,10 +1858,15 @@
     "verdict": "manual",
     "reason": "luaL_checkinteger at a non-literal index"
   },
-  "defold-1.13.0:b2d.fixture.set_shape:arity": {
+  "defold-1.13.0:b2d.fixture.set_density:arity": {
     "verdict": "open",
-    "extracted": "4..4",
-    "declared": "3..4"
+    "extracted": "3..4",
+    "declared": "4..4"
+  },
+  "defold-1.13.0:b2d.fixture.set_density:optional-as-required:4": {
+    "verdict": "open",
+    "extracted": "optional",
+    "declared": "required"
   },
   "defold-1.13.0:b2d.fixture.set_shape:field-undeclared:3.shape": {
     "verdict": "open",
@@ -2433,123 +1918,18 @@
     "extracted": "not read",
     "declared": "declared"
   },
-  "defold-1.13.0:b2d.fixture.set_shape:required-as-optional:4": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.0:b2d.joint.create_distance:arity": {
-    "verdict": "open",
-    "extracted": "3..3",
-    "declared": "2..3"
-  },
-  "defold-1.13.0:b2d.joint.create_distance:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
   "defold-1.13.0:b2d.joint.create_filter:arity": {
     "verdict": "open",
     "extracted": "2..2",
     "declared": "2..3"
   },
-  "defold-1.13.0:b2d.joint.create_friction:arity": {
-    "verdict": "open",
-    "extracted": "3..3",
-    "declared": "2..3"
-  },
-  "defold-1.13.0:b2d.joint.create_friction:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.0:b2d.joint.create_gear:arity": {
-    "verdict": "open",
-    "extracted": "3..3",
-    "declared": "2..3"
-  },
-  "defold-1.13.0:b2d.joint.create_gear:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.0:b2d.joint.create_motor:arity": {
-    "verdict": "open",
-    "extracted": "3..3",
-    "declared": "2..3"
-  },
-  "defold-1.13.0:b2d.joint.create_motor:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.0:b2d.joint.create_mouse:arity": {
-    "verdict": "open",
-    "extracted": "3..3",
-    "declared": "2..3"
-  },
-  "defold-1.13.0:b2d.joint.create_mouse:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
   "defold-1.13.0:b2d.joint.create_prismatic:manual": {
     "verdict": "manual",
     "reason": "CheckVector3 at a non-literal index"
   },
-  "defold-1.13.0:b2d.joint.create_prismatic:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.0:b2d.joint.create_pulley:arity": {
-    "verdict": "open",
-    "extracted": "3..3",
-    "declared": "2..3"
-  },
-  "defold-1.13.0:b2d.joint.create_pulley:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.0:b2d.joint.create_revolute:arity": {
-    "verdict": "open",
-    "extracted": "3..3",
-    "declared": "2..3"
-  },
-  "defold-1.13.0:b2d.joint.create_revolute:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.0:b2d.joint.create_rope:arity": {
-    "verdict": "open",
-    "extracted": "3..3",
-    "declared": "2..3"
-  },
-  "defold-1.13.0:b2d.joint.create_rope:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.0:b2d.joint.create_weld:arity": {
-    "verdict": "open",
-    "extracted": "3..3",
-    "declared": "2..3"
-  },
-  "defold-1.13.0:b2d.joint.create_weld:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
   "defold-1.13.0:b2d.joint.create_wheel:manual": {
     "verdict": "manual",
     "reason": "CheckVector3 at a non-literal index"
-  },
-  "defold-1.13.0:b2d.joint.create_wheel:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
   },
   "defold-1.13.0:b2d.shape.are_contact_events_enabled:manual": {
     "verdict": "manual",
@@ -2726,46 +2106,6 @@
     "extracted": "bound",
     "declared": "absent"
   },
-  "defold-1.13.0:b2d.world.cast_mover:arity": {
-    "verdict": "open",
-    "extracted": "4..4",
-    "declared": "3..4"
-  },
-  "defold-1.13.0:b2d.world.cast_mover:required-as-optional:4": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.0:b2d.world.cast_ray_closest:arity": {
-    "verdict": "open",
-    "extracted": "4..4",
-    "declared": "3..4"
-  },
-  "defold-1.13.0:b2d.world.cast_ray_closest:required-as-optional:4": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.0:b2d.world.cast_ray:arity": {
-    "verdict": "open",
-    "extracted": "5..5",
-    "declared": "3..5"
-  },
-  "defold-1.13.0:b2d.world.cast_ray:required-as-optional:4": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.0:b2d.world.cast_ray:required-as-optional:5": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.0:b2d.world.cast_shape:arity": {
-    "verdict": "open",
-    "extracted": "5..5",
-    "declared": "3..5"
-  },
   "defold-1.13.0:b2d.world.cast_shape:field-unread:2.angle": {
     "verdict": "open",
     "extracted": "not read",
@@ -2811,51 +2151,6 @@
     "extracted": "not read",
     "declared": "declared"
   },
-  "defold-1.13.0:b2d.world.cast_shape:required-as-optional:4": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.0:b2d.world.cast_shape:required-as-optional:5": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.0:b2d.world.collide_mover:arity": {
-    "verdict": "open",
-    "extracted": "4..4",
-    "declared": "2..4"
-  },
-  "defold-1.13.0:b2d.world.collide_mover:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.0:b2d.world.collide_mover:required-as-optional:4": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.0:b2d.world.overlap_aabb:arity": {
-    "verdict": "open",
-    "extracted": "4..4",
-    "declared": "2..4"
-  },
-  "defold-1.13.0:b2d.world.overlap_aabb:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.0:b2d.world.overlap_aabb:required-as-optional:4": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.0:b2d.world.overlap_shape:arity": {
-    "verdict": "open",
-    "extracted": "4..4",
-    "declared": "2..4"
-  },
   "defold-1.13.0:b2d.world.overlap_shape:field-unread:2.angle": {
     "verdict": "open",
     "extracted": "not read",
@@ -2900,26 +2195,6 @@
     "verdict": "open",
     "extracted": "not read",
     "declared": "declared"
-  },
-  "defold-1.13.0:b2d.world.overlap_shape:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.0:b2d.world.overlap_shape:required-as-optional:4": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.0:camera.get_orthographic_auto_zoom:arity": {
-    "verdict": "open",
-    "extracted": "1..1",
-    "declared": "0..1"
-  },
-  "defold-1.13.0:camera.get_orthographic_auto_zoom:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
   },
   "defold-1.13.0:camera.get_orthographic_auto_zoom:too-narrow:1": {
     "verdict": "open",
@@ -3061,22 +2336,28 @@
     "extracted": "registered",
     "declared": "absent"
   },
-  "defold-1.13.0:model.set_blend_weights:arity": {
-    "verdict": "open",
-    "extracted": "2..2",
-    "declared": "1..2"
-  },
-  "defold-1.13.0:model.set_blend_weights:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
   "defold-1.13.0:msg.post:too-loose:2": {
     "verdict": "open",
     "extracted": "hash|string",
     "declared": "any"
   },
   "defold-1.13.0:particlefx.play:manual:2": { "verdict": "manual", "reason": "no kind check" },
+  "defold-1.13.0:render.dispatch_compute:arity": {
+    "verdict": "open",
+    "extracted": "4..4",
+    "declared": "3..4"
+  },
+  "defold-1.13.0:render.dispatch_compute:required-as-optional:4": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:render.draw:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
+  "defold-1.13.0:render.draw:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
   "defold-1.13.0:render.set_blend_equation_separate:manual": {
     "verdict": "manual",
     "reason": "luaL_checknumber at a non-literal index"
@@ -3091,11 +2372,6 @@
     "declared": "2..4"
   },
   "defold-1.13.0:sys.load_buffer_async:arity": {
-    "verdict": "open",
-    "extracted": "1..1",
-    "declared": "2..2"
-  },
-  "defold-1.13.1:b2d.body.create_chain:arity": {
     "verdict": "open",
     "extracted": "1..1",
     "declared": "2..2"
@@ -3145,65 +2421,15 @@
     "extracted": "absent",
     "declared": "declared"
   },
-  "defold-1.13.1:b2d.body.get_local_center:arity": {
-    "verdict": "open",
-    "extracted": "0..1",
-    "declared": "1..1"
-  },
-  "defold-1.13.1:b2d.body.get_local_center:optional-as-required:1": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
-  },
-  "defold-1.13.1:b2d.body.get_rotational_inertia:arity": {
-    "verdict": "open",
-    "extracted": "0..0",
-    "declared": "1..1"
-  },
   "defold-1.13.1:b2d.body.get_user_data:missing-binding": {
     "verdict": "open",
     "extracted": "absent",
     "declared": "declared"
   },
-  "defold-1.13.1:b2d.body.get_world_center:arity": {
-    "verdict": "open",
-    "extracted": "0..1",
-    "declared": "1..1"
-  },
-  "defold-1.13.1:b2d.body.get_world_center:optional-as-required:1": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
-  },
-  "defold-1.13.1:b2d.body.is_sleeping_allowed:arity": {
-    "verdict": "open",
-    "extracted": "0..1",
-    "declared": "1..1"
-  },
-  "defold-1.13.1:b2d.body.is_sleeping_allowed:optional-as-required:1": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
-  },
   "defold-1.13.1:b2d.body.set_mass_data:too-loose:2": {
     "verdict": "open",
     "extracted": "table",
     "declared": "table|userdata"
-  },
-  "defold-1.13.1:b2d.body.set_sleeping_allowed:arity": {
-    "verdict": "open",
-    "extracted": "0..2",
-    "declared": "2..2"
-  },
-  "defold-1.13.1:b2d.body.set_sleeping_allowed:optional-as-required:1": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
-  },
-  "defold-1.13.1:b2d.body.set_sleeping_allowed:optional-as-required:2": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
   },
   "defold-1.13.1:b2d.body.set_user_data:missing-binding": {
     "verdict": "open",
@@ -3214,10 +2440,15 @@
     "verdict": "manual",
     "reason": "luaL_checkinteger at a non-literal index"
   },
-  "defold-1.13.1:b2d.fixture.set_shape:arity": {
+  "defold-1.13.1:b2d.fixture.set_density:arity": {
     "verdict": "open",
-    "extracted": "4..4",
-    "declared": "3..4"
+    "extracted": "3..4",
+    "declared": "4..4"
+  },
+  "defold-1.13.1:b2d.fixture.set_density:optional-as-required:4": {
+    "verdict": "open",
+    "extracted": "optional",
+    "declared": "required"
   },
   "defold-1.13.1:b2d.fixture.set_shape:field-undeclared:3.shape": {
     "verdict": "open",
@@ -3269,123 +2500,18 @@
     "extracted": "not read",
     "declared": "declared"
   },
-  "defold-1.13.1:b2d.fixture.set_shape:required-as-optional:4": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.1:b2d.joint.create_distance:arity": {
-    "verdict": "open",
-    "extracted": "3..3",
-    "declared": "2..3"
-  },
-  "defold-1.13.1:b2d.joint.create_distance:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
   "defold-1.13.1:b2d.joint.create_filter:arity": {
     "verdict": "open",
     "extracted": "2..2",
     "declared": "2..3"
   },
-  "defold-1.13.1:b2d.joint.create_friction:arity": {
-    "verdict": "open",
-    "extracted": "3..3",
-    "declared": "2..3"
-  },
-  "defold-1.13.1:b2d.joint.create_friction:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.1:b2d.joint.create_gear:arity": {
-    "verdict": "open",
-    "extracted": "3..3",
-    "declared": "2..3"
-  },
-  "defold-1.13.1:b2d.joint.create_gear:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.1:b2d.joint.create_motor:arity": {
-    "verdict": "open",
-    "extracted": "3..3",
-    "declared": "2..3"
-  },
-  "defold-1.13.1:b2d.joint.create_motor:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.1:b2d.joint.create_mouse:arity": {
-    "verdict": "open",
-    "extracted": "3..3",
-    "declared": "2..3"
-  },
-  "defold-1.13.1:b2d.joint.create_mouse:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
   "defold-1.13.1:b2d.joint.create_prismatic:manual": {
     "verdict": "manual",
     "reason": "CheckVector3 at a non-literal index"
   },
-  "defold-1.13.1:b2d.joint.create_prismatic:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.1:b2d.joint.create_pulley:arity": {
-    "verdict": "open",
-    "extracted": "3..3",
-    "declared": "2..3"
-  },
-  "defold-1.13.1:b2d.joint.create_pulley:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.1:b2d.joint.create_revolute:arity": {
-    "verdict": "open",
-    "extracted": "3..3",
-    "declared": "2..3"
-  },
-  "defold-1.13.1:b2d.joint.create_revolute:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.1:b2d.joint.create_rope:arity": {
-    "verdict": "open",
-    "extracted": "3..3",
-    "declared": "2..3"
-  },
-  "defold-1.13.1:b2d.joint.create_rope:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.1:b2d.joint.create_weld:arity": {
-    "verdict": "open",
-    "extracted": "3..3",
-    "declared": "2..3"
-  },
-  "defold-1.13.1:b2d.joint.create_weld:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
   "defold-1.13.1:b2d.joint.create_wheel:manual": {
     "verdict": "manual",
     "reason": "CheckVector3 at a non-literal index"
-  },
-  "defold-1.13.1:b2d.joint.create_wheel:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
   },
   "defold-1.13.1:b2d.shape.are_contact_events_enabled:manual": {
     "verdict": "manual",
@@ -3562,46 +2688,6 @@
     "extracted": "bound",
     "declared": "absent"
   },
-  "defold-1.13.1:b2d.world.cast_mover:arity": {
-    "verdict": "open",
-    "extracted": "4..4",
-    "declared": "3..4"
-  },
-  "defold-1.13.1:b2d.world.cast_mover:required-as-optional:4": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.1:b2d.world.cast_ray_closest:arity": {
-    "verdict": "open",
-    "extracted": "4..4",
-    "declared": "3..4"
-  },
-  "defold-1.13.1:b2d.world.cast_ray_closest:required-as-optional:4": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.1:b2d.world.cast_ray:arity": {
-    "verdict": "open",
-    "extracted": "5..5",
-    "declared": "3..5"
-  },
-  "defold-1.13.1:b2d.world.cast_ray:required-as-optional:4": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.1:b2d.world.cast_ray:required-as-optional:5": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.1:b2d.world.cast_shape:arity": {
-    "verdict": "open",
-    "extracted": "5..5",
-    "declared": "3..5"
-  },
   "defold-1.13.1:b2d.world.cast_shape:field-unread:2.angle": {
     "verdict": "open",
     "extracted": "not read",
@@ -3647,51 +2733,6 @@
     "extracted": "not read",
     "declared": "declared"
   },
-  "defold-1.13.1:b2d.world.cast_shape:required-as-optional:4": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.1:b2d.world.cast_shape:required-as-optional:5": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.1:b2d.world.collide_mover:arity": {
-    "verdict": "open",
-    "extracted": "4..4",
-    "declared": "2..4"
-  },
-  "defold-1.13.1:b2d.world.collide_mover:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.1:b2d.world.collide_mover:required-as-optional:4": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.1:b2d.world.overlap_aabb:arity": {
-    "verdict": "open",
-    "extracted": "4..4",
-    "declared": "2..4"
-  },
-  "defold-1.13.1:b2d.world.overlap_aabb:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.1:b2d.world.overlap_aabb:required-as-optional:4": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.1:b2d.world.overlap_shape:arity": {
-    "verdict": "open",
-    "extracted": "4..4",
-    "declared": "2..4"
-  },
   "defold-1.13.1:b2d.world.overlap_shape:field-unread:2.angle": {
     "verdict": "open",
     "extracted": "not read",
@@ -3736,26 +2777,6 @@
     "verdict": "open",
     "extracted": "not read",
     "declared": "declared"
-  },
-  "defold-1.13.1:b2d.world.overlap_shape:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.1:b2d.world.overlap_shape:required-as-optional:4": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.1:camera.get_orthographic_auto_zoom:arity": {
-    "verdict": "open",
-    "extracted": "1..1",
-    "declared": "0..1"
-  },
-  "defold-1.13.1:camera.get_orthographic_auto_zoom:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
   },
   "defold-1.13.1:camera.get_orthographic_auto_zoom:too-narrow:1": {
     "verdict": "open",
@@ -3906,17 +2927,18 @@
     "extracted": "registered",
     "declared": "absent"
   },
-  "defold-1.13.1:model.set_blend_weights:arity": {
+  "defold-1.13.1:render.dispatch_compute:arity": {
     "verdict": "open",
-    "extracted": "2..2",
-    "declared": "1..2"
+    "extracted": "4..4",
+    "declared": "3..4"
   },
-  "defold-1.13.1:model.set_blend_weights:required-as-optional:2": {
+  "defold-1.13.1:render.dispatch_compute:required-as-optional:4": {
     "verdict": "open",
     "extracted": "required",
     "declared": "optional"
   },
-  "defold-1.13.1:particlefx.play:required-as-optional:2": {
+  "defold-1.13.1:render.draw:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
+  "defold-1.13.1:render.draw:required-as-optional:2": {
     "verdict": "open",
     "extracted": "required",
     "declared": "optional"
