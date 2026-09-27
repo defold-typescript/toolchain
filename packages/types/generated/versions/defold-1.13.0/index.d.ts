@@ -52,5 +52,6 @@ import "../../../src/go-overloads";
 import "../../../src/component-properties";
 import "../../../src/render-overloads";
 import "../../../src/vmath-overloads";
+import "../../../src/sys-overloads";
 
 export {};

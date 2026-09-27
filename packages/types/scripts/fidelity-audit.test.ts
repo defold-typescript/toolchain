@@ -346,16 +346,10 @@ describe("optionality evidence — slots upstream leaves unmarked", () => {
   });
 
   test("an OPTIONAL_SLOT_CORRECTIONS entry closes the loss it corrects", () => {
-    const params = [required("enable", "", ["boolean"]), required("cooldown")];
-    expect(OPTIONAL_SLOT_CORRECTIONS.has("sys.set_engine_throttle:param:cooldown")).toBe(true);
-    expect(
-      optionalAsRequiredOf(fn("sys.set_engine_throttle", params, "sys.set_engine_throttle(false)")),
-    ).toBe(0);
-    expect(
-      optionalAsRequiredOf(
-        fn("test.set_engine_throttle", params, "test.set_engine_throttle(false)"),
-      ),
-    ).toBe(1);
+    const params = [required("finalizer", "", ["function"])];
+    expect(OPTIONAL_SLOT_CORRECTIONS.has("socket.newtry:param:finalizer")).toBe(true);
+    expect(optionalAsRequiredOf(fn("socket.newtry", params, "socket.newtry()"))).toBe(0);
+    expect(optionalAsRequiredOf(fn("test.newtry", params, "test.newtry()"))).toBe(1);
   });
 
   test("an exempted slot counts nothing, and every exemption states its reason", () => {
@@ -1398,13 +1392,10 @@ describe("promoted default surface coverage and record-table gate", () => {
     // set membership is pinned so a future blanket-suppress cannot slip in.
     expect([...ARBITRARY_TABLE_SLOT_KEYS].sort()).toEqual(
       [
-        "b2d.body.create_chain:param:definition",
-        "b2d.body.create_shape:param:definition",
         "b2d.chain.get_geometry:return:geometry",
         "b2d.body.get_contact_data:return:contacts",
         "b2d.shape.get_contact_data:return:contacts",
         "b2d.world.collide_mover:return:planes",
-        "b2d.world.explode:param:definition",
         "b2d.world.get_counters:return:counters",
         "b2d.world.get_profile:return:profile",
         "b2d.joint.create_filter:param:definition",

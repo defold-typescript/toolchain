@@ -120,7 +120,7 @@ describe("rendered slot types agree with the signature above them", () => {
         s.symbol === "b2d.body.create_fixture" && s.kind === "param" && s.name === "definition",
     );
     if (!definition) throw new Error("b2d.body.create_fixture definition parameter not rendered");
-    expect(definition.rendered).toContain("shape?:");
+    expect(definition.rendered).toContain("{ shape: { type: ");
     expect(definition.rendered).not.toBe("Record<string | number, unknown>");
     expect(definition.signature).toContain(definition.rendered);
     expect(definition.backed).toBe(true);
