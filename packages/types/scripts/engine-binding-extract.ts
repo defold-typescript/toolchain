@@ -26,6 +26,9 @@ export interface BindingSlot {
   readonly optional: boolean;
   readonly fields: string[];
   readonly manual?: string;
+  // The binding subtracts 1 from the checked number before using it: the slot
+  // is a 1-based position whatever its name or prose says.
+  readonly minusOne?: true;
 }
 
 export interface BindingReturns {
@@ -846,6 +849,60 @@ interface SlotRead {
   readonly optional: boolean;
   readonly field?: string;
   readonly manual?: string;
+  readonly minusOne?: true;
+}
+
+const NUMERIC_CHECKS = new Set([
+  "luaL_checknumber",
+  "luaL_checkinteger",
+  "luaL_checkint",
+  "luaL_checklong",
+  "luaL_optnumber",
+  "luaL_optinteger",
+  "luaL_optint",
+  "lua_tonumber",
+  "lua_tointeger",
+]);
+
+function isMinusOne(body: readonly Token[], i: number): boolean {
+  return (
+    body[i]?.text === "-" &&
+    body[i + 1]?.kind === "number" &&
+    body[i + 1]?.text === "1" &&
+    !["*", "/", "."].includes(body[i + 2]?.text ?? "")
+  );
+}
+
+function matchOpen(tokens: readonly Token[], close: number): number {
+  let depth = 0;
+  for (let i = close; i >= 0; i--) {
+    const text = (tokens[i] as Token).text;
+    if (text === ")") depth++;
+    else if (text === "(" && --depth === 0) return i;
+  }
+  return -1;
+}
+
+// `check(L, n) - 1`, or `v = check(L, n)` with a later `v - 1`. Call arguments
+// share their token objects with the body, which is how the call is located.
+function subtractsOne(body: readonly Token[], positions: ReadonlyMap<Token, number>, call: Call) {
+  const first = call.args[0]?.[0];
+  const lastArg = call.args[call.args.length - 1];
+  const last = lastArg?.[lastArg.length - 1];
+  if (!first || !last) return false;
+  const open = (positions.get(first) ?? 0) - 1;
+  const close = (positions.get(last) ?? -2) + 1;
+  if (body[open]?.text !== "(" || body[close]?.text !== ")") return false;
+  if (isMinusOne(body, close + 1)) return true;
+  let j = open - 2;
+  while (body[j]?.text === "::") j -= 2;
+  if (body[j]?.text === ")") j = matchOpen(body, j) - 1;
+  const variable = body[j - 1];
+  if (body[j]?.text !== "=" || variable?.kind !== "ident") return false;
+  for (let k = close + 1; k < body.length; k++) {
+    if (body[k]?.text === variable.text && isMinusOne(body, k + 1)) return true;
+  }
+  return false;
 }
 
 interface Analysis {
@@ -1017,6 +1074,7 @@ function analyzeSlots(
   outerAliases: ReadonlySet<string>,
 ): void {
   const aliases = new Set([...outerAliases, ...topAliasesOf(fn.body)]);
+  const positions = new Map(fn.body.map((token, i) => [token, i]));
   // The argument slot the stack top copies after `lua_pushvalue(L, n)`, until
   // the next push or pop.
   let topCopy: number | null = env.get(TOP_COPY) ?? null;
@@ -1064,7 +1122,8 @@ function analyzeSlots(
     const checkKinds = CHECK_KINDS.get(name);
     if (checkKinds) {
       if (slot === undefined) analysis.variadic.push(`${name} at a non-literal index`);
-      record(checkKinds);
+      const shifted = NUMERIC_CHECKS.has(name) && subtractsOne(fn.body, positions, event.call);
+      record(checkKinds, shifted ? { minusOne: true } : {});
       continue;
     }
     if (name === "luaL_checktype") {
@@ -1195,6 +1254,7 @@ function analyzeFunction(
       optional,
       fields,
       ...(settled ? { manual: settled } : {}),
+      ...(reads.some((r) => r.minusOne) ? { minusOne: true as const } : {}),
     });
   }
   for (let slot = slots.length - 1; slot >= 0; slot--) {

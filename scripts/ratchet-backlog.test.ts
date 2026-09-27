@@ -5,6 +5,10 @@ import { join } from "node:path";
 import { AUTHORED_FLOOR_MANIFEST_FILE } from "../packages/library-types/scripts/authored-parity.ts";
 import { FLOOR_MANIFEST_FILE } from "../packages/library-types/scripts/fidelity-floor.ts";
 import {
+  VERDICTS_DIR,
+  VERDICTS_FILE_NAME,
+} from "../packages/types/scripts/engine-binding-verdicts.ts";
+import {
   PINS_DIR,
   PINS_FILE,
   parseTypecheckPins,
@@ -23,12 +27,19 @@ const LINE_SHAPES: Record<string, RegExp> = {
   "fidelity-floor": /^[A-Za-z0-9._-]+\.json: \S+ [a-zA-Z]+ [0-9.]+ \(target 1\)$/,
   "authored-example-typecheck":
     /^[A-Za-z0-9._-]+\.json: \S+:\S+:[0-9a-f]{16} diagnostics [0-9]+ \(target 0\)$/,
+  "engine-binding-open":
+    /^[A-Za-z0-9._-]+\.json: [^\s:]+:[^\s:]+:[a-z-]+(:\S+)? open \(extracted [^()]*, declared [^()]*\)$/,
 };
 
 // Spelled out rather than imported so relocating either manifest reds this suite.
 const MANIFEST_DIR = join("packages", "library-types");
 
-function tempRoot(fidelity: unknown, authored: unknown, pins: unknown = {}): string {
+function tempRoot(
+  fidelity: unknown,
+  authored: unknown,
+  pins: unknown = {},
+  bindingVerdicts: unknown = {},
+): string {
   const root = mkdtempSync(join(tmpdir(), "ratchet-backlog-"));
   const dir = join(root, MANIFEST_DIR);
   mkdirSync(dir, { recursive: true });
@@ -37,6 +48,12 @@ function tempRoot(fidelity: unknown, authored: unknown, pins: unknown = {}): str
   const pinsDir = join(root, PINS_DIR);
   mkdirSync(pinsDir, { recursive: true });
   writeFileSync(join(pinsDir, PINS_FILE), `${JSON.stringify(pins, null, 2)}\n`);
+  const verdictsDir = join(root, VERDICTS_DIR);
+  mkdirSync(verdictsDir, { recursive: true });
+  writeFileSync(
+    join(verdictsDir, VERDICTS_FILE_NAME),
+    `${JSON.stringify(bindingVerdicts, null, 2)}\n`,
+  );
   return root;
 }
 
@@ -144,6 +161,53 @@ describe("collectOpenSlots — both manifests through the production parsers", (
       expect(collectOpenSlots(root, "fidelity-floor")).toEqual([
         `${FLOOR_MANIFEST_FILE}: fidelity/a.json coverage 0.75 (target 1)`,
       ]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("engine-binding-open — open verdicts as backlog", () => {
+  const atTarget = [
+    { "fidelity/a.json": 1 },
+    { "fidelity/authored/b.json": { callable: 1, field: 1 } },
+    {},
+  ] as const;
+
+  test("one line per open verdict, none for accepted or manual ones", () => {
+    const root = tempRoot(...atTarget, {
+      "*:gui.animate:too-narrow:4": {
+        verdict: "open",
+        extracted: "number|vector",
+        declared: "number",
+      },
+      "*:gui.animate:manual:2": { verdict: "manual", reason: "lua_type switch" },
+      "defold-1.9.8:*:missing-binding": { verdict: "accepted", reason: "not vendored" },
+    });
+    try {
+      expect(collectOpenSlots(root, "engine-binding-open")).toEqual([
+        `${VERDICTS_FILE_NAME}: *:gui.animate:too-narrow:4 open (extracted number|vector, declared number)`,
+      ]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("no open verdict left prints nothing", () => {
+    const root = tempRoot(...atTarget, {
+      "*:gui.animate:manual:2": { verdict: "manual", reason: "lua_type switch" },
+    });
+    try {
+      expect(collectOpenSlots(root)).toEqual([]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("a verdict with no known verdict throws rather than reading as satisfied", () => {
+    const root = tempRoot(...atTarget, { "*:gui.animate:arity": { verdict: "later" } });
+    try {
+      expect(() => collectOpenSlots(root, "engine-binding-open")).toThrow(/verdict/);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

@@ -5,7 +5,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 0
   },
   "b2d.body": {
     "droppedElements": 0,
@@ -13,7 +14,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 53
   },
   "b2d.chain": {
     "droppedElements": 0,
@@ -21,7 +23,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 0
   },
   "b2d.fixture": {
     "droppedElements": 0,
@@ -29,7 +32,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 22
   },
   "b2d.joint": {
     "droppedElements": 0,
@@ -37,7 +41,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 24
   },
   "b2d.shape": {
     "droppedElements": 0,
@@ -45,7 +50,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 34
   },
   "b2d.world": {
     "droppedElements": 0,
@@ -53,7 +59,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 60
   },
   "buffer": {
     "droppedElements": 0,
@@ -61,7 +68,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 1
   },
   "camera": {
     "droppedElements": 0,
@@ -69,7 +77,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 46
   },
   "collectionfactory": {
     "droppedElements": 0,
@@ -77,7 +86,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 9
   },
   "collectionproxy": {
     "droppedElements": 0,
@@ -85,7 +95,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 4
   },
   "compute": {
     "droppedElements": 0,
@@ -93,7 +104,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 0
   },
   "crash": {
     "droppedElements": 0,
@@ -101,7 +113,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 0
   },
   "factory": {
     "droppedElements": 0,
@@ -109,7 +122,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 9
   },
   "font": {
     "droppedElements": 0,
@@ -117,7 +131,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 1
   },
   "go": {
     "droppedElements": 0,
@@ -125,7 +140,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 35
   },
   "graphics": {
     "droppedElements": 0,
@@ -133,7 +149,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 20
   },
   "gui": {
     "droppedElements": 0,
@@ -141,7 +158,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 35
   },
   "html5": {
     "droppedElements": 0,
@@ -149,7 +167,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 1
   },
   "http": {
     "droppedElements": 0,
@@ -157,7 +176,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 3
   },
   "iac": {
     "droppedElements": 0,
@@ -165,7 +185,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 0
   },
   "iap": {
     "droppedElements": 0,
@@ -173,7 +194,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 0
   },
   "image": {
     "droppedElements": 0,
@@ -181,7 +203,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 4
   },
   "json": {
     "droppedElements": 0,
@@ -189,7 +212,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 4
   },
   "label": {
     "droppedElements": 0,
@@ -197,7 +221,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 1
   },
   "liveupdate": {
     "droppedElements": 0,
@@ -205,7 +230,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 7
   },
   "material": {
     "droppedElements": 0,
@@ -213,7 +239,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 34
   },
   "model": {
     "droppedElements": 0,
@@ -221,7 +248,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 12
   },
   "msg": {
     "droppedElements": 0,
@@ -229,7 +257,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 3
   },
   "particlefx": {
     "droppedElements": 0,
@@ -237,7 +266,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 3
   },
   "physics": {
     "droppedElements": 0,
@@ -245,7 +275,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 11
   },
   "profiler": {
     "droppedElements": 0,
@@ -253,7 +284,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 1
   },
   "push": {
     "droppedElements": 0,
@@ -261,7 +293,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 0
   },
   "render": {
     "droppedElements": 0,
@@ -269,7 +302,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 100
   },
   "resource": {
     "droppedElements": 0,
@@ -277,7 +311,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 69
   },
   "socket": {
     "droppedElements": 0,
@@ -285,7 +320,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 0
   },
   "sound": {
     "droppedElements": 0,
@@ -293,7 +329,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 10
   },
   "sprite": {
     "droppedElements": 0,
@@ -301,7 +338,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 4
   },
   "sys": {
     "droppedElements": 0,
@@ -309,7 +347,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 19
   },
   "tilemap": {
     "droppedElements": 0,
@@ -317,7 +356,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 8
   },
   "timer": {
     "droppedElements": 0,
@@ -325,7 +365,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 0
   },
   "types": {
     "droppedElements": 0,
@@ -333,7 +374,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 0
   },
   "vmath": {
     "droppedElements": 0,
@@ -341,7 +383,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 4
   },
   "webview": {
     "droppedElements": 0,
@@ -349,7 +392,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 0
   },
   "window": {
     "droppedElements": 0,
@@ -357,7 +401,8 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 1
   },
   "zlib": {
     "droppedElements": 0,
@@ -365,6 +410,7 @@
     "recordTables": 0,
     "multiReturn": 0,
     "droppedMembers": 0,
-    "optionalAsRequired": 0
+    "optionalAsRequired": 0,
+    "bindingOpen": 0
   }
 }

@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { INDEX_SLOT_CLASSIFICATIONS } from "../src/index-slot-classifications";
 import { retainedSurfaces } from "../src/optional-correction-provenance";
+import { readBindingsForTarget } from "./engine-binding-extract";
 import { EXTENSION_GOLDEN_MANIFEST } from "./extension-goldens";
 import { type IndexSlotHit, scanIndexSlots } from "./index-slot-scan";
 import {
@@ -53,6 +54,29 @@ describe("scanIndexSlots over the defold-1.13.1 ref-doc", () => {
   });
 });
 
+describe("C++ evidence over the vendored defold-1.13.1 bindings", () => {
+  const bindings = readBindingsForTarget("defold-1.13.1");
+
+  test("a checked argument the binding subtracts 1 from is an index slot", () => {
+    const doc = JSON.parse(readFileSync(join(FIXTURES, "tilemap_doc.json"), "utf8"));
+    const hits = new Map(
+      scanIndexSlots(doc, "tilemap", bindings).map((hit) => [hit.key, hit.evidence]),
+    );
+    expect(hits.get("tilemap.set_tile:param:x")).toBe("cxx-minus-one");
+    expect(hits.get("tilemap.set_tile:param:y")).toBe("cxx-minus-one");
+    expect(hits.has("tilemap.set_tile:param:tile")).toBe(true);
+    expect(hits.has("tilemap.set_tile:param:layer")).toBe(false);
+    expect(scanFixture("tilemap_doc.json", "tilemap").has("tilemap.set_tile:param:x")).toBe(false);
+  });
+
+  test("a checked value assigned first and shifted later is found through a helper", () => {
+    const shifted = bindings.functions
+      .filter((fn) => fn.slots.some((slot) => slot.minusOne === true))
+      .map((fn) => `${fn.namespace}.${fn.name}`);
+    expect(shifted).toContain("b2d.fixture.get_aabb");
+  });
+});
+
 const DEFAULT_TARGET = loadApiTargets().find((candidate) => candidate.default === true);
 if (!DEFAULT_TARGET) throw new Error("api-targets.json: no default target");
 
@@ -77,10 +101,27 @@ const SURFACES = [
   })),
 ];
 
+const VENDORED_TARGETS: ReadonlySet<string> = new Set(
+  loadApiTargets()
+    .filter((target) => target.source === null)
+    .map((target) => target.id),
+);
+const bindingsByTarget = new Map<string, ReturnType<typeof readBindingsForTarget>>();
+function vendoredBindings(target: string) {
+  if (!VENDORED_TARGETS.has(target)) return undefined;
+  const cached = bindingsByTarget.get(target) ?? readBindingsForTarget(target);
+  bindingsByTarget.set(target, cached);
+  return cached;
+}
+
 describe("index slot classification gate", () => {
   const sightings = new Map<string, { target: string; evidence: string }[]>();
   for (const surface of SURFACES) {
-    for (const hit of scanIndexSlots(surface.doc, surface.namespace)) {
+    for (const hit of scanIndexSlots(
+      surface.doc,
+      surface.namespace,
+      vendoredBindings(surface.target),
+    )) {
       const list = sightings.get(hit.key) ?? [];
       list.push({ target: surface.target, evidence: hit.evidence });
       sightings.set(hit.key, list);

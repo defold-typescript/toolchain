@@ -1,0 +1,3494 @@
+{
+  "*:b2d.body.get_linear_velocity_from_local_point:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "userdata|vector3",
+    "declared": "userdata"
+  },
+  "*:b2d.body.get_linear_velocity_from_world_point:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "userdata|vector3",
+    "declared": "userdata"
+  },
+  "*:b2d.body.get_local_point:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "userdata|vector3",
+    "declared": "userdata"
+  },
+  "*:b2d.body.get_local_vector:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "userdata|vector3",
+    "declared": "userdata"
+  },
+  "*:b2d.body.get_world_point:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "userdata|vector3",
+    "declared": "userdata"
+  },
+  "*:b2d.body.get_world_vector:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "userdata|vector3",
+    "declared": "userdata"
+  },
+  "*:buffer.copy_stream:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:buffer.copy_stream:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:buffer.create:manual:2": { "verdict": "manual", "reason": "no kind check" },
+  "*:buffer.get_bytes:arity": { "verdict": "open", "extracted": "1..1", "declared": "2..2" },
+  "*:camera.get_aspect_ratio:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:camera.get_aspect_ratio:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string|url",
+    "declared": "number|url"
+  },
+  "*:camera.get_auto_aspect_ratio:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:camera.get_auto_aspect_ratio:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string|url",
+    "declared": "number|url"
+  },
+  "*:camera.get_enabled:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:camera.get_enabled:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string|url",
+    "declared": "number|url"
+  },
+  "*:camera.get_far_z:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:camera.get_far_z:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string|url",
+    "declared": "number|url"
+  },
+  "*:camera.get_fov:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:camera.get_fov:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string|url",
+    "declared": "number|url"
+  },
+  "*:camera.get_near_z:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:camera.get_near_z:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string|url",
+    "declared": "number|url"
+  },
+  "*:camera.get_orthographic_mode:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:camera.get_orthographic_mode:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string|url",
+    "declared": "number|url"
+  },
+  "*:camera.get_orthographic_zoom:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:camera.get_orthographic_zoom:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string|url",
+    "declared": "number|url"
+  },
+  "*:camera.get_projection:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:camera.get_projection:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string|url",
+    "declared": "number|url"
+  },
+  "*:camera.get_view:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:camera.get_view:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string|url",
+    "declared": "number|url"
+  },
+  "*:camera.screen_to_world:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:camera.screen_to_world:too-narrow:2": {
+    "verdict": "open",
+    "extracted": "hash|number|string|url",
+    "declared": "number|url"
+  },
+  "*:camera.screen_xy_to_world:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:camera.screen_xy_to_world:too-narrow:3": {
+    "verdict": "open",
+    "extracted": "hash|number|string|url",
+    "declared": "number|url"
+  },
+  "*:camera.set_aspect_ratio:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:camera.set_aspect_ratio:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string|url",
+    "declared": "number|url"
+  },
+  "*:camera.set_auto_aspect_ratio:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:camera.set_auto_aspect_ratio:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string|url",
+    "declared": "number|url"
+  },
+  "*:camera.set_far_z:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:camera.set_far_z:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string|url",
+    "declared": "number|url"
+  },
+  "*:camera.set_fov:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:camera.set_fov:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string|url",
+    "declared": "number|url"
+  },
+  "*:camera.set_near_z:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:camera.set_near_z:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string|url",
+    "declared": "number|url"
+  },
+  "*:camera.set_orthographic_mode:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:camera.set_orthographic_mode:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string|url",
+    "declared": "number|url"
+  },
+  "*:camera.set_orthographic_zoom:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:camera.set_orthographic_zoom:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string|url",
+    "declared": "number|url"
+  },
+  "*:camera.world_to_screen:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:camera.world_to_screen:too-narrow:2": {
+    "verdict": "open",
+    "extracted": "hash|number|string|url",
+    "declared": "number|url"
+  },
+  "*:collectionfactory.create:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:collectionfactory.create:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:collectionfactory.create:required-as-optional:4": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:collectionfactory.create:required-as-optional:5": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:collectionfactory.get_status:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:collectionfactory.load:manual:2": { "verdict": "manual", "reason": "no kind check" },
+  "*:collectionfactory.load:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:collectionfactory.set_prototype:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:collectionfactory.set_prototype:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:collectionfactory.unload:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:collectionproxy.get_resources:arity": {
+    "verdict": "open",
+    "extracted": "0..0",
+    "declared": "1..1"
+  },
+  "*:collectionproxy.set_collection:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:collectionproxy.set_collection:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:factory.create:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:factory.create:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:factory.create:required-as-optional:4": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:factory.create:required-as-optional:5": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:factory.get_status:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:factory.load:manual:2": { "verdict": "manual", "reason": "no kind check" },
+  "*:factory.load:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:factory.set_prototype:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:factory.set_prototype:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:factory.unload:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:font.prewarm_text:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:go.animate:manual:4": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:go.cancel_animations:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:go.delete:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "*:go.final:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "*:go.fixed_update:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "*:go.get_parent:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:go.get_position:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:go.get_rotation:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:go.get_scale_uniform:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:go.get_scale:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:go.get_world_position:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:go.get_world_rotation:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:go.get_world_scale_uniform:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:go.get_world_scale:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:go.get_world_transform:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:go.get:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:go.get:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:go.init:missing-binding": { "verdict": "open", "extracted": "absent", "declared": "declared" },
+  "*:go.late_update:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "*:go.on_input:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "*:go.on_message:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "*:go.on_reload:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "*:go.property:manual:2": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:go.property:return-count": { "verdict": "open", "extracted": "0", "declared": "1" },
+  "*:go.set_parent:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:go.set_parent:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:go.set_parent:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:go.set_position:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:go.set_rotation:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:go.set_scale_xy:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:go.set_scale:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:go.set:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:go.set:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:go.set:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:go.update_world_transform:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:go.update:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "*:gui.animate:manual:2": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:gui.animate:required-as-optional:6": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:gui.animate:required-as-optional:7": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:gui.animate:required-as-optional:8": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:gui.cancel_animations:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:gui.cancel_animations:too-narrow:2": {
+    "verdict": "open",
+    "extracted": "hash|string",
+    "declared": "number|string"
+  },
+  "*:gui.delete_texture:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:gui.EASING_IN:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "*:gui.EASING_INOUT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "*:gui.EASING_NONE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "*:gui.EASING_OUT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "*:gui.final:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "*:gui.get:field-undeclared:3.key": {
+    "verdict": "open",
+    "extracted": "read",
+    "declared": "not declared"
+  },
+  "*:gui.get:field-undeclared:3.keys": {
+    "verdict": "open",
+    "extracted": "read",
+    "declared": "not declared"
+  },
+  "*:gui.init:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "*:gui.is_enabled:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:gui.move_above:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:gui.move_below:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:gui.new_particlefx_node:manual:2": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:gui.new_texture:too-loose:4": {
+    "verdict": "open",
+    "extracted": "string",
+    "declared": "string|userdata"
+  },
+  "*:gui.on_input:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "*:gui.on_message:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "*:gui.on_reload:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "*:gui.play_flipbook:field-unread:4.playback_rate": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:gui.play_flipbook:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:gui.play_particlefx:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:gui.screen_to_local:too-narrow:2": {
+    "verdict": "open",
+    "extracted": "vector3|vector4",
+    "declared": "vector3"
+  },
+  "*:gui.set_parent:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:gui.set_parent:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:gui.set_particlefx:manual:2": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:gui.set_screen_position:too-narrow:2": {
+    "verdict": "open",
+    "extracted": "vector3|vector4",
+    "declared": "vector3"
+  },
+  "*:gui.set_texture_data:too-loose:4": {
+    "verdict": "open",
+    "extracted": "string",
+    "declared": "string|userdata"
+  },
+  "*:gui.set:field-undeclared:4.keys": {
+    "verdict": "open",
+    "extracted": "read",
+    "declared": "not declared"
+  },
+  "*:gui.set:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:gui.set:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "hash|string|url|userdata",
+    "declared": "url|userdata"
+  },
+  "*:gui.stop_particlefx:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:gui.update:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "*:html5.set_interaction_listener:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:http.request:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:http.request:required-as-optional:4": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:http.request:required-as-optional:5": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:http.request:required-as-optional:6": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:image.load_buffer:field-unread:2.flip_vertically": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:image.load_buffer:too-narrow:2": {
+    "verdict": "open",
+    "extracted": "boolean|table",
+    "declared": "table"
+  },
+  "*:image.load:field-unread:2.flip_vertically": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:image.load:too-narrow:2": {
+    "verdict": "open",
+    "extracted": "boolean|table",
+    "declared": "table"
+  },
+  "*:json.decode:arity": { "verdict": "open", "extracted": "0..1", "declared": "1..2" },
+  "*:json.decode:optional-as-required:1": {
+    "verdict": "open",
+    "extracted": "optional",
+    "declared": "required"
+  },
+  "*:json.encode:arity": { "verdict": "open", "extracted": "0..0", "declared": "1..2" },
+  "*:json.null:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "*:liveupdate.LIVEUPDATE_NOT_INITIALIZED:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "*:model.get_mesh_enabled:too-loose:1": {
+    "verdict": "open",
+    "extracted": "string",
+    "declared": "hash|string|url"
+  },
+  "*:model.get_mesh_enabled:too-loose:2": {
+    "verdict": "open",
+    "extracted": "string",
+    "declared": "hash|string|url"
+  },
+  "*:model.play_anim:field-unread:4.offset": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:model.play_anim:field-unread:4.playback_rate": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:model.play_anim:required-as-optional:4": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:model.set_mesh_enabled:too-loose:1": {
+    "verdict": "open",
+    "extracted": "string",
+    "declared": "hash|string|url"
+  },
+  "*:model.set_mesh_enabled:too-loose:2": {
+    "verdict": "open",
+    "extracted": "string",
+    "declared": "hash|string|url"
+  },
+  "*:msg.post:too-loose:3": { "verdict": "open", "extracted": "table", "declared": "any" },
+  "*:msg.url:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:particlefx.set_constant:too-narrow:4": {
+    "verdict": "open",
+    "extracted": "matrix4|vector4",
+    "declared": "vector4"
+  },
+  "*:particlefx.stop:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:physics.create_joint:manual:7": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:physics.get_maskbit:too-narrow:2": {
+    "verdict": "open",
+    "extracted": "hash|string",
+    "declared": "string"
+  },
+  "*:physics.raycast:required-as-optional:4": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:physics.set_event_listener:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:physics.set_group:too-narrow:2": {
+    "verdict": "open",
+    "extracted": "hash|string",
+    "declared": "string"
+  },
+  "*:physics.set_hflip:arity": { "verdict": "open", "extracted": "0..0", "declared": "2..2" },
+  "*:physics.set_joint_properties:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:physics.set_maskbit:too-narrow:2": {
+    "verdict": "open",
+    "extracted": "hash|string",
+    "declared": "string"
+  },
+  "*:physics.set_shape:field-unread:3.diameter": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:physics.set_shape:field-unread:3.dimensions": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:physics.set_shape:field-unread:3.height": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:physics.set_vflip:arity": { "verdict": "open", "extracted": "0..0", "declared": "2..2" },
+  "*:profiler.enable_ui:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:profiler.enable:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:profiler.get_lua_ref_count:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "*:profiler.set_ui_vsync_wait_visible:manual:1": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "*:render.delete_render_target:too-loose:1": {
+    "verdict": "open",
+    "extracted": "number",
+    "declared": "userdata"
+  },
+  "*:render.delete_render_target:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "number",
+    "declared": "userdata"
+  },
+  "*:render.disable_texture:too-loose:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string",
+    "declared": "hash|number|string|userdata"
+  },
+  "*:render.dispatch_compute:required-as-optional:4": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:render.draw_debug3d:field-unread:1.frustum_planes": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:render.draw_debug3d:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:render.draw:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:render.draw:too-loose:1": { "verdict": "open", "extracted": "userdata", "declared": "number" },
+  "*:render.draw:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "userdata",
+    "declared": "number"
+  },
+  "*:render.draw:too-narrow:2": {
+    "verdict": "open",
+    "extracted": "table|userdata",
+    "declared": "table"
+  },
+  "*:render.enable_texture:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:render.enable_texture:too-loose:2": {
+    "verdict": "open",
+    "extracted": "hash|number|string",
+    "declared": "hash|number|string|userdata"
+  },
+  "*:render.get_render_target_height:too-loose:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string",
+    "declared": "hash|string|userdata"
+  },
+  "*:render.get_render_target_height:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string",
+    "declared": "hash|string|userdata"
+  },
+  "*:render.get_render_target_width:too-loose:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string",
+    "declared": "hash|string|userdata"
+  },
+  "*:render.get_render_target_width:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string",
+    "declared": "hash|string|userdata"
+  },
+  "*:render.RENDER_TARGET_DEFAULT:constant-missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "*:render.render_target:arity": { "verdict": "open", "extracted": "1..1", "declared": "1..2" },
+  "*:render.render_target:manual:1": { "verdict": "manual", "reason": "no kind check" },
+  "*:render.set_blend_func:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checknumber at a non-literal index"
+  },
+  "*:render.set_camera:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:render.set_camera:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string|url",
+    "declared": "number|string|url"
+  },
+  "*:render.set_color_mask:arity": { "verdict": "open", "extracted": "5..5", "declared": "4..4" },
+  "*:render.set_color_mask:manual:2": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:render.set_color_mask:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:render.set_color_mask:manual:4": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:render.set_color_mask:manual:5": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:render.set_compute:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:render.set_depth_mask:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..1" },
+  "*:render.set_depth_mask:manual:2": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:render.set_listener:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:render.set_render_target_size:too-loose:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string",
+    "declared": "hash|string|userdata"
+  },
+  "*:render.set_render_target_size:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string",
+    "declared": "hash|string|userdata"
+  },
+  "*:render.set_render_target:optional-as-required:1": {
+    "verdict": "open",
+    "extracted": "optional",
+    "declared": "required"
+  },
+  "*:render.set_render_target:too-loose:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string",
+    "declared": "hash|number|string|userdata"
+  },
+  "*:render.set_stencil_op:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checknumber at a non-literal index"
+  },
+  "*:render.TEXTURE_BIT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "*:resource.atlas:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "*:resource.buffer:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "*:resource.create_atlas:field-unread:2.animations": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:resource.create_atlas:field-unread:2.indices": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:resource.create_atlas:field-unread:2.texture": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:resource.create_atlas:field-unread:2.uvs": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:resource.create_atlas:field-unread:2.vertices": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:resource.create_buffer:field-unread:2.transfer_ownership": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:resource.create_buffer:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:resource.create_sound_data:field-unread:2.filesize": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:resource.create_sound_data:field-unread:2.partial": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:resource.create_sound_data:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:resource.create_texture_async:manual:1": {
+    "verdict": "manual",
+    "reason": "no read of this slot"
+  },
+  "*:resource.create_texture_async:manual:2": {
+    "verdict": "manual",
+    "reason": "no read of this slot"
+  },
+  "*:resource.create_texture_async:manual:3": { "verdict": "manual", "reason": "no kind check" },
+  "*:resource.create_texture:arity": { "verdict": "open", "extracted": "0..0", "declared": "2..3" },
+  "*:resource.font:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "*:resource.get_text_metrics:arity": {
+    "verdict": "open",
+    "extracted": "2..2",
+    "declared": "2..3"
+  },
+  "*:resource.get_text_metrics:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "hash|string",
+    "declared": "hash"
+  },
+  "*:resource.material:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "*:resource.render_target:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "*:resource.set_atlas:field-unread:2.animations": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:resource.set_atlas:field-unread:2.indices": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:resource.set_atlas:field-unread:2.texture": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:resource.set_atlas:field-unread:2.uvs": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:resource.set_atlas:field-unread:2.vertices": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:resource.set_buffer:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:resource.texture:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "*:resource.tile_source:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "*:sound.get_group_name:too-loose:1": {
+    "verdict": "open",
+    "extracted": "hash",
+    "declared": "hash|string"
+  },
+  "*:sound.play:field-unread:2.gain": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:sound.play:field-unread:2.pan": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:sound.play:field-unread:2.speed": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:sound.play:field-unread:2.start_frame": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:sound.play:field-unread:2.start_time": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:sound.play:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:sound.play:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:sound.set_gain:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:sound.set_pan:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:sound.stop:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:sprite.play_flipbook:field-unread:4.playback_rate": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "*:sprite.play_flipbook:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:sprite.set_scale:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "*:sys.get_config_boolean:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:sys.get_config_int:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:sys.get_config_number:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:sys.get_config_string:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:sys.reboot:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:sys.reboot:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:sys.reboot:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:sys.reboot:required-as-optional:4": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:sys.reboot:required-as-optional:5": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:sys.reboot:required-as-optional:6": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:sys.save:return-count": { "verdict": "open", "extracted": "1", "declared": "0" },
+  "*:sys.set_debugger_lightweight_hook:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "*:sys.set_engine_throttle:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:sys.set_error_handler:return-count": { "verdict": "open", "extracted": "1", "declared": "0" },
+  "*:sys.set_render_enable:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "*:sys.set_render_enabled:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "*:tilemap.get_tile_info:arity": { "verdict": "open", "extracted": "0..0", "declared": "4..4" },
+  "*:tilemap.get_tile:arity": { "verdict": "open", "extracted": "0..0", "declared": "4..4" },
+  "*:tilemap.set_tile:arity": { "verdict": "open", "extracted": "6..7", "declared": "5..6" },
+  "*:tilemap.set_tile:required-as-optional:6": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:tilemap.set_tile:return-count": { "verdict": "open", "extracted": "1", "declared": "0" },
+  "*:tilemap.set_tile:too-narrow:6": {
+    "verdict": "open",
+    "extracted": "boolean|number",
+    "declared": "number"
+  },
+  "*:types.is_hash:manual:1": { "verdict": "manual", "reason": "no kind check" },
+  "*:types.is_matrix4:manual:1": { "verdict": "manual", "reason": "no kind check" },
+  "*:types.is_quat:manual:1": { "verdict": "manual", "reason": "no kind check" },
+  "*:types.is_url:manual:1": { "verdict": "manual", "reason": "no kind check" },
+  "*:types.is_vector:manual:1": { "verdict": "manual", "reason": "no kind check" },
+  "*:types.is_vector3:manual:1": { "verdict": "manual", "reason": "no kind check" },
+  "*:types.is_vector4:manual:1": { "verdict": "manual", "reason": "no kind check" },
+  "*:vmath.clamp:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:vmath.clamp:manual:2": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:vmath.clamp:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:vmath.dot:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:vmath.dot:manual:2": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:vmath.euler_to_quat:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:vmath.euler_to_quat:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:vmath.euler_to_quat:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "*:vmath.length_sqr:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:vmath.length:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:vmath.lerp:manual:2": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:vmath.lerp:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:vmath.matrix4_compose:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:vmath.matrix4_translation:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:vmath.mul_per_elem:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:vmath.mul_per_elem:manual:2": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:vmath.normalize:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:vmath.slerp:manual:2": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:vmath.slerp:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:vmath.vector:optional-as-required:1": {
+    "verdict": "open",
+    "extracted": "optional",
+    "declared": "required"
+  },
+  "*:vmath.vector3:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:vmath.vector4:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "*:window.set_listener:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.12.4:b2d.body.dump:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:b2d.body.get_force:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:b2d.body.get_inertia:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:b2d.body.get_local_center:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:b2d.body.get_next:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:b2d.body.get_world_center:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:b2d.body.is_sleeping_allowed:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:b2d.body.reset_mass_data:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "defold-1.12.4:b2d.body.set_sleeping_allowed:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:camera.acquire_focus:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:camera.release_focus:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:collectionproxy.missing_resources:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:go.delete_all:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:go.get_scale_vector:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:gui.cancel_animation:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:gui.get_text_metrics_from_node:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:gui.get_text_metrics:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:label.get_text_metrics:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:liveupdate.get_current_manifest:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:liveupdate.is_built_with_excluded_files:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:liveupdate.is_using_liveupdate_data:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:liveupdate.store_archive:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:liveupdate.store_manifest:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:liveupdate.store_resource:manual:1": {
+    "verdict": "manual",
+    "reason": "no read of this slot"
+  },
+  "defold-1.12.4:liveupdate.store_resource:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:model.play:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:model.reset_constant:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:model.set_constant:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:msg.post:too-loose:2": {
+    "verdict": "open",
+    "extracted": "hash|string",
+    "declared": "any"
+  },
+  "defold-1.12.4:particlefx.play:manual:2": { "verdict": "manual", "reason": "no kind check" },
+  "defold-1.12.4:physics.ray_cast:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:physics.set_listener:manual:1": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "defold-1.12.4:physics.set_listener:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.BLEND_CONSTANT_ALPHA:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.BLEND_CONSTANT_COLOR:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.BLEND_DST_ALPHA:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.BLEND_DST_COLOR:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.BLEND_ONE_MINUS_CONSTANT_ALPHA:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.BLEND_ONE_MINUS_CONSTANT_COLOR:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.BLEND_ONE_MINUS_DST_ALPHA:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.BLEND_ONE_MINUS_DST_COLOR:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.BLEND_ONE_MINUS_SRC_ALPHA:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.BLEND_ONE_MINUS_SRC_COLOR:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.BLEND_ONE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.BLEND_SRC_ALPHA_SATURATE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.BLEND_SRC_ALPHA:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.BLEND_SRC_COLOR:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.BLEND_ZERO:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.BUFFER_COLOR_BIT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.BUFFER_COLOR0_BIT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.BUFFER_COLOR1_BIT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.BUFFER_COLOR2_BIT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.BUFFER_COLOR3_BIT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.BUFFER_DEPTH_BIT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.BUFFER_STENCIL_BIT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.COMPARE_FUNC_ALWAYS:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.COMPARE_FUNC_EQUAL:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.COMPARE_FUNC_GEQUAL:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.COMPARE_FUNC_GREATER:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.COMPARE_FUNC_LEQUAL:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.COMPARE_FUNC_LESS:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.COMPARE_FUNC_NEVER:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.COMPARE_FUNC_NOTEQUAL:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.disable_render_target:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.draw_debug2d:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.draw:field-unread:2.constants": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.12.4:render.draw:field-unread:2.frustum_planes": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.12.4:render.draw:field-unread:2.sort_order": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.12.4:render.enable_render_target:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.FACE_BACK:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.FACE_FRONT_AND_BACK:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.FACE_FRONT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.FILTER_LINEAR:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.FILTER_NEAREST:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.FORMAT_DEPTH:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.FORMAT_LUMINANCE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.FORMAT_R16F:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.FORMAT_R32F:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.FORMAT_RG16F:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.FORMAT_RG32F:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.FORMAT_RGB:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.FORMAT_RGB16F:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.FORMAT_RGB32F:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.FORMAT_RGBA:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.FORMAT_RGBA16F:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.FORMAT_RGBA32F:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.FORMAT_STENCIL:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.STATE_ALPHA_TEST:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.STATE_BLEND:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.STATE_CULL_FACE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.STATE_DEPTH_TEST:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.STATE_POLYGON_OFFSET_FILL:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.STATE_STENCIL_TEST:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.STENCIL_OP_DECR_WRAP:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.STENCIL_OP_DECR:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.STENCIL_OP_INCR_WRAP:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.STENCIL_OP_INCR:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.STENCIL_OP_INVERT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.STENCIL_OP_KEEP:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.STENCIL_OP_REPLACE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.STENCIL_OP_ZERO:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.WRAP_CLAMP_TO_BORDER:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.WRAP_CLAMP_TO_EDGE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.WRAP_MIRRORED_REPEAT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:render.WRAP_REPEAT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.BUFFER_TYPE_COLOR0_BIT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.BUFFER_TYPE_COLOR1_BIT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.BUFFER_TYPE_COLOR2_BIT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.BUFFER_TYPE_COLOR3_BIT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.BUFFER_TYPE_DEPTH_BIT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.BUFFER_TYPE_STENCIL_BIT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.COMPRESSION_TYPE_BASIS_UASTC:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.COMPRESSION_TYPE_DEFAULT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.create_texture_async:arity": {
+    "verdict": "open",
+    "extracted": "3..3",
+    "declared": "2..4"
+  },
+  "defold-1.12.4:resource.TEXTURE_FORMAT_DEPTH:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_FORMAT_LUMINANCE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_FORMAT_R_BC4:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_FORMAT_R16F:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_FORMAT_R32F:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_FORMAT_RG_BC5:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_FORMAT_RG16F:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_FORMAT_RG32F:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_FORMAT_RGB_BC1:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_FORMAT_RGB_ETC1:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_FORMAT_RGB_PVRTC_4BPPV1:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_FORMAT_RGB:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_FORMAT_RGB16F:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_FORMAT_RGB32F:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_FORMAT_RGBA_ASTC_4X4:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_FORMAT_RGBA_BC3:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_FORMAT_RGBA_BC7:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_FORMAT_RGBA_ETC2:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_FORMAT_RGBA:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_FORMAT_RGBA16F:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_FORMAT_RGBA32F:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_FORMAT_STENCIL:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_TYPE_2D_ARRAY:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_TYPE_2D:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_TYPE_CUBE_MAP:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_TYPE_IMAGE_2D:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_USAGE_FLAG_MEMORYLESS:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_USAGE_FLAG_SAMPLE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:resource.TEXTURE_USAGE_FLAG_STORAGE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.12.4:sprite.reset_constant:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:sprite.set_constant:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:sys.get_config:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:sys.load_buffer_async:arity": {
+    "verdict": "open",
+    "extracted": "1..1",
+    "declared": "2..2"
+  },
+  "defold-1.12.4:tilemap.reset_constant:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:tilemap.set_constant:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.12.4:vmath.matrix4_from_quat:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.0:b2d.body.create_chain:arity": {
+    "verdict": "open",
+    "extracted": "1..1",
+    "declared": "2..2"
+  },
+  "defold-1.13.0:b2d.body.create_fixture:arity": {
+    "verdict": "open",
+    "extracted": "2..2",
+    "declared": "2..3"
+  },
+  "defold-1.13.0:b2d.body.create_fixture:field-undeclared:2.user_data": {
+    "verdict": "open",
+    "extracted": "read",
+    "declared": "not declared"
+  },
+  "defold-1.13.0:b2d.body.create_fixture:field-unread:2.density": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.body.create_fixture:field-unread:2.friction": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.body.create_fixture:field-unread:2.restitution": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.body.create_fixture:field-unread:2.sensor": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.body.create_fixture:too-loose:2": {
+    "verdict": "open",
+    "extracted": "table",
+    "declared": "table|userdata"
+  },
+  "defold-1.13.0:b2d.body.create_shape:return-count": {
+    "verdict": "open",
+    "extracted": "1",
+    "declared": "0"
+  },
+  "defold-1.13.0:b2d.body.get_contact_list:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.body.get_local_center:optional-as-required:1": {
+    "verdict": "open",
+    "extracted": "optional",
+    "declared": "required"
+  },
+  "defold-1.13.0:b2d.body.get_rotational_inertia:arity": {
+    "verdict": "open",
+    "extracted": "0..0",
+    "declared": "1..1"
+  },
+  "defold-1.13.0:b2d.body.get_user_data:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.body.get_world_center:optional-as-required:1": {
+    "verdict": "open",
+    "extracted": "optional",
+    "declared": "required"
+  },
+  "defold-1.13.0:b2d.body.is_sleeping_allowed:optional-as-required:1": {
+    "verdict": "open",
+    "extracted": "optional",
+    "declared": "required"
+  },
+  "defold-1.13.0:b2d.body.set_mass_data:too-loose:2": {
+    "verdict": "open",
+    "extracted": "table",
+    "declared": "table|userdata"
+  },
+  "defold-1.13.0:b2d.body.set_sleeping_allowed:optional-as-required:1": {
+    "verdict": "open",
+    "extracted": "optional",
+    "declared": "required"
+  },
+  "defold-1.13.0:b2d.body.set_sleeping_allowed:optional-as-required:2": {
+    "verdict": "open",
+    "extracted": "optional",
+    "declared": "required"
+  },
+  "defold-1.13.0:b2d.body.set_user_data:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.chain.from_shape:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.0:b2d.fixture.set_shape:field-undeclared:3.shape": {
+    "verdict": "open",
+    "extracted": "read",
+    "declared": "not declared"
+  },
+  "defold-1.13.0:b2d.fixture.set_shape:field-unread:3.angle": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.fixture.set_shape:field-unread:3.center": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.fixture.set_shape:field-unread:3.hx": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.fixture.set_shape:field-unread:3.hy": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.fixture.set_shape:field-unread:3.loop": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.fixture.set_shape:field-unread:3.next_vertex": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.fixture.set_shape:field-unread:3.prev_vertex": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.fixture.set_shape:field-unread:3.v0": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.fixture.set_shape:field-unread:3.v3": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.fixture.set_shape:required-as-optional:4": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:b2d.joint.create_distance:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:b2d.joint.create_filter:arity": {
+    "verdict": "open",
+    "extracted": "2..2",
+    "declared": "2..3"
+  },
+  "defold-1.13.0:b2d.joint.create_friction:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:b2d.joint.create_gear:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:b2d.joint.create_motor:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:b2d.joint.create_mouse:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:b2d.joint.create_prismatic:manual": {
+    "verdict": "manual",
+    "reason": "CheckVector3 at a non-literal index"
+  },
+  "defold-1.13.0:b2d.joint.create_prismatic:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:b2d.joint.create_pulley:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:b2d.joint.create_revolute:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:b2d.joint.create_rope:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:b2d.joint.create_weld:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:b2d.joint.create_wheel:manual": {
+    "verdict": "manual",
+    "reason": "CheckVector3 at a non-literal index"
+  },
+  "defold-1.13.0:b2d.joint.create_wheel:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:b2d.shape.are_contact_events_enabled:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.0:b2d.shape.are_hit_events_enabled:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.0:b2d.shape.are_pre_solve_events_enabled:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.0:b2d.shape.are_sensor_events_enabled:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.0:b2d.shape.enable_contact_events:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; lua_toboolean at a non-literal index"
+  },
+  "defold-1.13.0:b2d.shape.enable_hit_events:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; lua_toboolean at a non-literal index"
+  },
+  "defold-1.13.0:b2d.shape.enable_pre_solve_events:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; lua_toboolean at a non-literal index"
+  },
+  "defold-1.13.0:b2d.shape.enable_sensor_events:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; lua_toboolean at a non-literal index"
+  },
+  "defold-1.13.0:b2d.shape.get_aabb:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.0:b2d.shape.get_body:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.0:b2d.shape.get_closest_point:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.0:b2d.shape.get_contact_capacity:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.0:b2d.shape.get_contact_data:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.0:b2d.shape.get_density:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.0:b2d.shape.get_filter_data:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.0:b2d.shape.get_friction:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.0:b2d.shape.get_mass_data:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.0:b2d.shape.get_material:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.0:b2d.shape.get_restitution:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.0:b2d.shape.get_sensor_capacity:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.0:b2d.shape.get_sensor_overlaps:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.0:b2d.shape.get_shape:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.0:b2d.shape.get_type:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.0:b2d.shape.get_world:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.0:b2d.shape.is_sensor:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.0:b2d.shape.is_valid:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "defold-1.13.0:b2d.shape.is_valid:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:b2d.shape.ray_cast:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; luaL_checknumber at a non-literal index"
+  },
+  "defold-1.13.0:b2d.shape.refilter:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.0:b2d.shape.set_density:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.0:b2d.shape.set_filter_data:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.0:b2d.shape.set_friction:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.0:b2d.shape.set_material:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.0:b2d.shape.set_restitution:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.0:b2d.shape.set_sensor:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.0:b2d.shape.set_shape:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; lua_toboolean at a non-literal index"
+  },
+  "defold-1.13.0:b2d.shape.SHAPE_TYPE_CHAIN:constant-missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.shape.SHAPE_TYPE_GRID:constant-missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.shape.test_point:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.0:b2d.world.cast_mover:required-as-optional:4": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:b2d.world.cast_ray_closest:required-as-optional:4": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:b2d.world.cast_ray:required-as-optional:4": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:b2d.world.cast_ray:required-as-optional:5": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:b2d.world.cast_shape:field-unread:2.angle": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.world.cast_shape:field-unread:2.center": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.world.cast_shape:field-unread:2.hx": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.world.cast_shape:field-unread:2.hy": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.world.cast_shape:field-unread:2.loop": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.world.cast_shape:field-unread:2.next_vertex": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.world.cast_shape:field-unread:2.prev_vertex": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.world.cast_shape:field-unread:2.v0": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.world.cast_shape:field-unread:2.v3": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.world.cast_shape:required-as-optional:4": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:b2d.world.cast_shape:required-as-optional:5": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:b2d.world.collide_mover:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:b2d.world.collide_mover:required-as-optional:4": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:b2d.world.overlap_aabb:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:b2d.world.overlap_aabb:required-as-optional:4": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:b2d.world.overlap_shape:field-unread:2.angle": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.world.overlap_shape:field-unread:2.center": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.world.overlap_shape:field-unread:2.hx": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.world.overlap_shape:field-unread:2.hy": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.world.overlap_shape:field-unread:2.loop": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.world.overlap_shape:field-unread:2.next_vertex": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.world.overlap_shape:field-unread:2.prev_vertex": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.world.overlap_shape:field-unread:2.v0": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.world.overlap_shape:field-unread:2.v3": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.0:b2d.world.overlap_shape:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:b2d.world.overlap_shape:required-as-optional:4": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:camera.get_orthographic_auto_zoom:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:camera.get_orthographic_auto_zoom:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string|url",
+    "declared": "number|url"
+  },
+  "defold-1.13.0:graphics.COORDINATE_SPACE_DEFAULT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:graphics.COORDINATE_SPACE_LOCAL:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:graphics.COORDINATE_SPACE_WORLD:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:graphics.DATA_TYPE_BYTE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:graphics.DATA_TYPE_FLOAT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:graphics.DATA_TYPE_INT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:graphics.DATA_TYPE_SHORT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:graphics.DATA_TYPE_UNSIGNED_BYTE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:graphics.DATA_TYPE_UNSIGNED_INT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:graphics.DATA_TYPE_UNSIGNED_SHORT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:material.CONSTANT_TYPE_NORMAL:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:material.CONSTANT_TYPE_PROJECTION_INVERSE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:material.CONSTANT_TYPE_PROJECTION:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:material.CONSTANT_TYPE_TEXTURE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:material.CONSTANT_TYPE_TIME:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:material.CONSTANT_TYPE_USER_MATRIX4:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:material.CONSTANT_TYPE_USER:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:material.CONSTANT_TYPE_VIEW_INVERSE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:material.CONSTANT_TYPE_VIEW:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:material.CONSTANT_TYPE_VIEWPROJ_INVERSE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:material.CONSTANT_TYPE_VIEWPROJ:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:material.CONSTANT_TYPE_WORLD_INVERSE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:material.CONSTANT_TYPE_WORLD:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:material.CONSTANT_TYPE_WORLDVIEW_INVERSE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:material.CONSTANT_TYPE_WORLDVIEW:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:material.CONSTANT_TYPE_WORLDVIEWPROJ_INVERSE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:material.CONSTANT_TYPE_WORLDVIEWPROJ:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.0:model.set_blend_weights:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.0:msg.post:too-loose:2": {
+    "verdict": "open",
+    "extracted": "hash|string",
+    "declared": "any"
+  },
+  "defold-1.13.0:particlefx.play:manual:2": { "verdict": "manual", "reason": "no kind check" },
+  "defold-1.13.0:render.set_blend_equation_separate:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checknumber at a non-literal index"
+  },
+  "defold-1.13.0:render.set_blend_func_separate:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checknumber at a non-literal index"
+  },
+  "defold-1.13.0:resource.create_texture_async:arity": {
+    "verdict": "open",
+    "extracted": "3..3",
+    "declared": "2..4"
+  },
+  "defold-1.13.0:sys.load_buffer_async:arity": {
+    "verdict": "open",
+    "extracted": "1..1",
+    "declared": "2..2"
+  },
+  "defold-1.13.1:b2d.body.create_chain:arity": {
+    "verdict": "open",
+    "extracted": "1..1",
+    "declared": "2..2"
+  },
+  "defold-1.13.1:b2d.body.create_fixture:arity": {
+    "verdict": "open",
+    "extracted": "2..2",
+    "declared": "2..3"
+  },
+  "defold-1.13.1:b2d.body.create_fixture:field-undeclared:2.user_data": {
+    "verdict": "open",
+    "extracted": "read",
+    "declared": "not declared"
+  },
+  "defold-1.13.1:b2d.body.create_fixture:field-unread:2.density": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.body.create_fixture:field-unread:2.friction": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.body.create_fixture:field-unread:2.restitution": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.body.create_fixture:field-unread:2.sensor": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.body.create_fixture:too-loose:2": {
+    "verdict": "open",
+    "extracted": "table",
+    "declared": "table|userdata"
+  },
+  "defold-1.13.1:b2d.body.create_shape:return-count": {
+    "verdict": "open",
+    "extracted": "1",
+    "declared": "0"
+  },
+  "defold-1.13.1:b2d.body.get_contact_list:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.body.get_local_center:optional-as-required:1": {
+    "verdict": "open",
+    "extracted": "optional",
+    "declared": "required"
+  },
+  "defold-1.13.1:b2d.body.get_rotational_inertia:arity": {
+    "verdict": "open",
+    "extracted": "0..0",
+    "declared": "1..1"
+  },
+  "defold-1.13.1:b2d.body.get_user_data:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.body.get_world_center:optional-as-required:1": {
+    "verdict": "open",
+    "extracted": "optional",
+    "declared": "required"
+  },
+  "defold-1.13.1:b2d.body.is_sleeping_allowed:optional-as-required:1": {
+    "verdict": "open",
+    "extracted": "optional",
+    "declared": "required"
+  },
+  "defold-1.13.1:b2d.body.set_mass_data:too-loose:2": {
+    "verdict": "open",
+    "extracted": "table",
+    "declared": "table|userdata"
+  },
+  "defold-1.13.1:b2d.body.set_sleeping_allowed:optional-as-required:1": {
+    "verdict": "open",
+    "extracted": "optional",
+    "declared": "required"
+  },
+  "defold-1.13.1:b2d.body.set_sleeping_allowed:optional-as-required:2": {
+    "verdict": "open",
+    "extracted": "optional",
+    "declared": "required"
+  },
+  "defold-1.13.1:b2d.body.set_user_data:missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.chain.from_shape:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.1:b2d.fixture.set_shape:field-undeclared:3.shape": {
+    "verdict": "open",
+    "extracted": "read",
+    "declared": "not declared"
+  },
+  "defold-1.13.1:b2d.fixture.set_shape:field-unread:3.angle": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.fixture.set_shape:field-unread:3.center": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.fixture.set_shape:field-unread:3.hx": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.fixture.set_shape:field-unread:3.hy": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.fixture.set_shape:field-unread:3.loop": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.fixture.set_shape:field-unread:3.next_vertex": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.fixture.set_shape:field-unread:3.prev_vertex": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.fixture.set_shape:field-unread:3.v0": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.fixture.set_shape:field-unread:3.v3": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.fixture.set_shape:required-as-optional:4": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:b2d.joint.create_distance:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:b2d.joint.create_filter:arity": {
+    "verdict": "open",
+    "extracted": "2..2",
+    "declared": "2..3"
+  },
+  "defold-1.13.1:b2d.joint.create_friction:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:b2d.joint.create_gear:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:b2d.joint.create_motor:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:b2d.joint.create_mouse:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:b2d.joint.create_prismatic:manual": {
+    "verdict": "manual",
+    "reason": "CheckVector3 at a non-literal index"
+  },
+  "defold-1.13.1:b2d.joint.create_prismatic:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:b2d.joint.create_pulley:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:b2d.joint.create_revolute:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:b2d.joint.create_rope:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:b2d.joint.create_weld:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:b2d.joint.create_wheel:manual": {
+    "verdict": "manual",
+    "reason": "CheckVector3 at a non-literal index"
+  },
+  "defold-1.13.1:b2d.joint.create_wheel:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:b2d.shape.are_contact_events_enabled:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.1:b2d.shape.are_hit_events_enabled:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.1:b2d.shape.are_pre_solve_events_enabled:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.1:b2d.shape.are_sensor_events_enabled:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.1:b2d.shape.enable_contact_events:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; lua_toboolean at a non-literal index"
+  },
+  "defold-1.13.1:b2d.shape.enable_hit_events:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; lua_toboolean at a non-literal index"
+  },
+  "defold-1.13.1:b2d.shape.enable_pre_solve_events:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; lua_toboolean at a non-literal index"
+  },
+  "defold-1.13.1:b2d.shape.enable_sensor_events:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; lua_toboolean at a non-literal index"
+  },
+  "defold-1.13.1:b2d.shape.get_aabb:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.1:b2d.shape.get_body:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.1:b2d.shape.get_closest_point:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.1:b2d.shape.get_contact_capacity:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.1:b2d.shape.get_contact_data:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.1:b2d.shape.get_density:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.1:b2d.shape.get_filter_data:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.1:b2d.shape.get_friction:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.1:b2d.shape.get_mass_data:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.1:b2d.shape.get_material:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.1:b2d.shape.get_restitution:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.1:b2d.shape.get_sensor_capacity:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.1:b2d.shape.get_sensor_overlaps:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.1:b2d.shape.get_shape:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.1:b2d.shape.get_type:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.1:b2d.shape.get_world:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.1:b2d.shape.is_sensor:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.1:b2d.shape.is_valid:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
+  "defold-1.13.1:b2d.shape.is_valid:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:b2d.shape.ray_cast:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; luaL_checknumber at a non-literal index"
+  },
+  "defold-1.13.1:b2d.shape.refilter:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.1:b2d.shape.set_density:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.1:b2d.shape.set_filter_data:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.1:b2d.shape.set_friction:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.1:b2d.shape.set_material:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; luaL_checkinteger at a non-literal index"
+  },
+  "defold-1.13.1:b2d.shape.set_restitution:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.1:b2d.shape.set_sensor:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.1:b2d.shape.set_shape:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checkinteger at a non-literal index; lua_toboolean at a non-literal index"
+  },
+  "defold-1.13.1:b2d.shape.SHAPE_TYPE_CHAIN:constant-missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.shape.SHAPE_TYPE_GRID:constant-missing-binding": {
+    "verdict": "open",
+    "extracted": "absent",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.shape.test_point:missing-declaration": {
+    "verdict": "open",
+    "extracted": "bound",
+    "declared": "absent"
+  },
+  "defold-1.13.1:b2d.world.cast_mover:required-as-optional:4": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:b2d.world.cast_ray_closest:required-as-optional:4": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:b2d.world.cast_ray:required-as-optional:4": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:b2d.world.cast_ray:required-as-optional:5": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:b2d.world.cast_shape:field-unread:2.angle": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.world.cast_shape:field-unread:2.center": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.world.cast_shape:field-unread:2.hx": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.world.cast_shape:field-unread:2.hy": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.world.cast_shape:field-unread:2.loop": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.world.cast_shape:field-unread:2.next_vertex": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.world.cast_shape:field-unread:2.prev_vertex": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.world.cast_shape:field-unread:2.v0": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.world.cast_shape:field-unread:2.v3": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.world.cast_shape:required-as-optional:4": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:b2d.world.cast_shape:required-as-optional:5": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:b2d.world.collide_mover:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:b2d.world.collide_mover:required-as-optional:4": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:b2d.world.overlap_aabb:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:b2d.world.overlap_aabb:required-as-optional:4": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:b2d.world.overlap_shape:field-unread:2.angle": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.world.overlap_shape:field-unread:2.center": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.world.overlap_shape:field-unread:2.hx": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.world.overlap_shape:field-unread:2.hy": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.world.overlap_shape:field-unread:2.loop": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.world.overlap_shape:field-unread:2.next_vertex": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.world.overlap_shape:field-unread:2.prev_vertex": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.world.overlap_shape:field-unread:2.v0": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.world.overlap_shape:field-unread:2.v3": {
+    "verdict": "open",
+    "extracted": "not read",
+    "declared": "declared"
+  },
+  "defold-1.13.1:b2d.world.overlap_shape:required-as-optional:3": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:b2d.world.overlap_shape:required-as-optional:4": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:camera.get_orthographic_auto_zoom:required-as-optional:1": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:camera.get_orthographic_auto_zoom:too-narrow:1": {
+    "verdict": "open",
+    "extracted": "hash|number|string|url",
+    "declared": "number|url"
+  },
+  "defold-1.13.1:collectionproxy.load:manual:2": {
+    "verdict": "manual",
+    "reason": "no read of this slot"
+  },
+  "defold-1.13.1:collectionproxy.load:manual:3": {
+    "verdict": "manual",
+    "reason": "lua_type switch"
+  },
+  "defold-1.13.1:graphics.COORDINATE_SPACE_DEFAULT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:graphics.COORDINATE_SPACE_LOCAL:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:graphics.COORDINATE_SPACE_WORLD:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:graphics.DATA_TYPE_BYTE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:graphics.DATA_TYPE_FLOAT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:graphics.DATA_TYPE_INT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:graphics.DATA_TYPE_SHORT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:graphics.DATA_TYPE_UNSIGNED_BYTE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:graphics.DATA_TYPE_UNSIGNED_INT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:graphics.DATA_TYPE_UNSIGNED_SHORT:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:material.CONSTANT_TYPE_NORMAL:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:material.CONSTANT_TYPE_PROJECTION_INVERSE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:material.CONSTANT_TYPE_PROJECTION:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:material.CONSTANT_TYPE_TEXTURE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:material.CONSTANT_TYPE_TIME:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:material.CONSTANT_TYPE_USER_MATRIX4:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:material.CONSTANT_TYPE_USER:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:material.CONSTANT_TYPE_VIEW_INVERSE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:material.CONSTANT_TYPE_VIEW:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:material.CONSTANT_TYPE_VIEWPROJ_INVERSE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:material.CONSTANT_TYPE_VIEWPROJ:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:material.CONSTANT_TYPE_WORLD_INVERSE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:material.CONSTANT_TYPE_WORLD:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:material.CONSTANT_TYPE_WORLDVIEW_INVERSE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:material.CONSTANT_TYPE_WORLDVIEW:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:material.CONSTANT_TYPE_WORLDVIEWPROJ_INVERSE:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:material.CONSTANT_TYPE_WORLDVIEWPROJ:constant-missing-declaration": {
+    "verdict": "open",
+    "extracted": "registered",
+    "declared": "absent"
+  },
+  "defold-1.13.1:model.set_blend_weights:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:particlefx.play:required-as-optional:2": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.13.1:render.set_blend_equation_separate:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checknumber at a non-literal index"
+  },
+  "defold-1.13.1:render.set_blend_func_separate:manual": {
+    "verdict": "manual",
+    "reason": "luaL_checknumber at a non-literal index"
+  },
+  "defold-1.13.1:resource.create_texture_async:required-as-optional:4": {
+    "verdict": "open",
+    "extracted": "required",
+    "declared": "optional"
+  },
+  "defold-1.9.8:*:missing-binding": {
+    "verdict": "accepted",
+    "reason": "on-demand ref-doc target, bindings not vendored"
+  }
+}
