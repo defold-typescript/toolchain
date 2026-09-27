@@ -1,908 +1,533 @@
 {
   "*:b2d.body.get_linear_velocity_from_local_point:arity": {
-    "verdict": "open",
-    "extracted": "1..2",
-    "declared": "2..2"
+    "verdict": "accepted",
+    "reason": "the Box2D v2 binding reads its point with CheckVec2(L, 1), the slot that already holds the body (an upstream defect); the v3 binding and the declaration take (body, point)"
   },
   "*:b2d.body.get_linear_velocity_from_local_point:optional-as-required:2": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
+    "verdict": "accepted",
+    "reason": "the Box2D v2 binding reads its point with CheckVec2(L, 1), the slot that already holds the body (an upstream defect); the v3 binding and the declaration take (body, point)"
   },
   "*:b2d.body.get_linear_velocity_from_local_point:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "userdata|vector3",
-    "declared": "userdata"
+    "verdict": "accepted",
+    "reason": "the Box2D v2 binding reads its point with CheckVec2(L, 1), the slot that already holds the body (an upstream defect); the v3 binding and the declaration take (body, point)"
   },
   "*:b2d.body.get_linear_velocity_from_world_point:arity": {
-    "verdict": "open",
-    "extracted": "1..2",
-    "declared": "2..2"
+    "verdict": "accepted",
+    "reason": "the Box2D v2 binding reads its point with CheckVec2(L, 1), the slot that already holds the body (an upstream defect); the v3 binding and the declaration take (body, point)"
   },
   "*:b2d.body.get_linear_velocity_from_world_point:optional-as-required:2": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
+    "verdict": "accepted",
+    "reason": "the Box2D v2 binding reads its point with CheckVec2(L, 1), the slot that already holds the body (an upstream defect); the v3 binding and the declaration take (body, point)"
   },
   "*:b2d.body.get_linear_velocity_from_world_point:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "userdata|vector3",
-    "declared": "userdata"
+    "verdict": "accepted",
+    "reason": "the Box2D v2 binding reads its point with CheckVec2(L, 1), the slot that already holds the body (an upstream defect); the v3 binding and the declaration take (body, point)"
   },
   "*:b2d.body.get_local_point:arity": {
-    "verdict": "open",
-    "extracted": "1..2",
-    "declared": "2..2"
+    "verdict": "accepted",
+    "reason": "the Box2D v2 binding reads its point with CheckVec2(L, 1), the slot that already holds the body (an upstream defect); the v3 binding and the declaration take (body, point)"
   },
   "*:b2d.body.get_local_point:optional-as-required:2": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
+    "verdict": "accepted",
+    "reason": "the Box2D v2 binding reads its point with CheckVec2(L, 1), the slot that already holds the body (an upstream defect); the v3 binding and the declaration take (body, point)"
   },
   "*:b2d.body.get_local_point:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "userdata|vector3",
-    "declared": "userdata"
+    "verdict": "accepted",
+    "reason": "the Box2D v2 binding reads its point with CheckVec2(L, 1), the slot that already holds the body (an upstream defect); the v3 binding and the declaration take (body, point)"
   },
   "*:b2d.body.get_local_vector:arity": {
-    "verdict": "open",
-    "extracted": "1..2",
-    "declared": "2..2"
+    "verdict": "accepted",
+    "reason": "the Box2D v2 binding reads its point with CheckVec2(L, 1), the slot that already holds the body (an upstream defect); the v3 binding and the declaration take (body, point)"
   },
   "*:b2d.body.get_local_vector:optional-as-required:2": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
+    "verdict": "accepted",
+    "reason": "the Box2D v2 binding reads its point with CheckVec2(L, 1), the slot that already holds the body (an upstream defect); the v3 binding and the declaration take (body, point)"
   },
   "*:b2d.body.get_local_vector:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "userdata|vector3",
-    "declared": "userdata"
+    "verdict": "accepted",
+    "reason": "the Box2D v2 binding reads its point with CheckVec2(L, 1), the slot that already holds the body (an upstream defect); the v3 binding and the declaration take (body, point)"
   },
   "*:b2d.body.get_world_point:arity": {
-    "verdict": "open",
-    "extracted": "1..2",
-    "declared": "2..2"
+    "verdict": "accepted",
+    "reason": "the Box2D v2 binding reads its point with CheckVec2(L, 1), the slot that already holds the body (an upstream defect); the v3 binding and the declaration take (body, point)"
   },
   "*:b2d.body.get_world_point:optional-as-required:2": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
+    "verdict": "accepted",
+    "reason": "the Box2D v2 binding reads its point with CheckVec2(L, 1), the slot that already holds the body (an upstream defect); the v3 binding and the declaration take (body, point)"
   },
   "*:b2d.body.get_world_point:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "userdata|vector3",
-    "declared": "userdata"
+    "verdict": "accepted",
+    "reason": "the Box2D v2 binding reads its point with CheckVec2(L, 1), the slot that already holds the body (an upstream defect); the v3 binding and the declaration take (body, point)"
   },
   "*:b2d.body.get_world_vector:arity": {
-    "verdict": "open",
-    "extracted": "1..2",
-    "declared": "2..2"
+    "verdict": "accepted",
+    "reason": "the Box2D v2 binding reads its point with CheckVec2(L, 1), the slot that already holds the body (an upstream defect); the v3 binding and the declaration take (body, point)"
   },
   "*:b2d.body.get_world_vector:optional-as-required:2": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
+    "verdict": "accepted",
+    "reason": "the Box2D v2 binding reads its point with CheckVec2(L, 1), the slot that already holds the body (an upstream defect); the v3 binding and the declaration take (body, point)"
   },
   "*:b2d.body.get_world_vector:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "userdata|vector3",
-    "declared": "userdata"
+    "verdict": "accepted",
+    "reason": "the Box2D v2 binding reads its point with CheckVec2(L, 1), the slot that already holds the body (an upstream defect); the v3 binding and the declaration take (body, point)"
   },
   "*:buffer.copy_stream:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
   "*:buffer.copy_stream:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:buffer.get_bytes:arity": { "verdict": "open", "extracted": "1..1", "declared": "2..2" },
-  "*:camera.get_aspect_ratio:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string|url",
-    "declared": "number|url"
-  },
-  "*:camera.get_auto_aspect_ratio:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string|url",
-    "declared": "number|url"
-  },
-  "*:camera.get_enabled:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string|url",
-    "declared": "number|url"
-  },
-  "*:camera.get_far_z:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string|url",
-    "declared": "number|url"
-  },
-  "*:camera.get_fov:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string|url",
-    "declared": "number|url"
-  },
-  "*:camera.get_near_z:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string|url",
-    "declared": "number|url"
-  },
-  "*:camera.get_orthographic_mode:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string|url",
-    "declared": "number|url"
-  },
-  "*:camera.get_orthographic_zoom:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string|url",
-    "declared": "number|url"
-  },
-  "*:camera.get_projection:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string|url",
-    "declared": "number|url"
-  },
-  "*:camera.get_view:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string|url",
-    "declared": "number|url"
-  },
-  "*:camera.screen_to_world:too-narrow:2": {
-    "verdict": "open",
-    "extracted": "hash|number|string|url",
-    "declared": "number|url"
-  },
-  "*:camera.screen_xy_to_world:too-narrow:3": {
-    "verdict": "open",
-    "extracted": "hash|number|string|url",
-    "declared": "number|url"
+  "*:buffer.get_bytes:arity": {
+    "verdict": "accepted",
+    "reason": "the binding never reads the stream_name the ref-doc documents and returns the whole buffer, so the extra argument is ignored"
   },
   "*:camera.set_aspect_ratio:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:camera.set_aspect_ratio:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string|url",
-    "declared": "number|url"
+    "verdict": "accepted",
+    "reason": "the binding resolves the camera with CheckRenderCamera, whose ResolveURL takes nil as the calling script's url; the ref-doc types the slot url|number|nil"
   },
   "*:camera.set_auto_aspect_ratio:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:camera.set_auto_aspect_ratio:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string|url",
-    "declared": "number|url"
+    "verdict": "accepted",
+    "reason": "the binding resolves the camera with CheckRenderCamera, whose ResolveURL takes nil as the calling script's url; the ref-doc types the slot url|number|nil"
   },
   "*:camera.set_far_z:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:camera.set_far_z:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string|url",
-    "declared": "number|url"
+    "verdict": "accepted",
+    "reason": "the binding resolves the camera with CheckRenderCamera, whose ResolveURL takes nil as the calling script's url; the ref-doc types the slot url|number|nil"
   },
   "*:camera.set_fov:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:camera.set_fov:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string|url",
-    "declared": "number|url"
+    "verdict": "accepted",
+    "reason": "the binding resolves the camera with CheckRenderCamera, whose ResolveURL takes nil as the calling script's url; the ref-doc types the slot url|number|nil"
   },
   "*:camera.set_near_z:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:camera.set_near_z:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string|url",
-    "declared": "number|url"
+    "verdict": "accepted",
+    "reason": "the binding resolves the camera with CheckRenderCamera, whose ResolveURL takes nil as the calling script's url; the ref-doc types the slot url|number|nil"
   },
   "*:camera.set_orthographic_mode:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:camera.set_orthographic_mode:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string|url",
-    "declared": "number|url"
+    "verdict": "accepted",
+    "reason": "the binding resolves the camera with CheckRenderCamera, whose ResolveURL takes nil as the calling script's url; the ref-doc types the slot url|number|nil"
   },
   "*:camera.set_orthographic_zoom:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:camera.set_orthographic_zoom:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string|url",
-    "declared": "number|url"
-  },
-  "*:camera.world_to_screen:too-narrow:2": {
-    "verdict": "open",
-    "extracted": "hash|number|string|url",
-    "declared": "number|url"
-  },
-  "*:collectionfactory.get_status:arity": {
-    "verdict": "open",
-    "extracted": "1..1",
-    "declared": "0..1"
-  },
-  "*:collectionfactory.get_status:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:collectionfactory.load:arity": { "verdict": "open", "extracted": "2..2", "declared": "0..2" },
-  "*:collectionfactory.load:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:collectionfactory.load:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:collectionfactory.set_prototype:arity": {
-    "verdict": "open",
-    "extracted": "2..2",
-    "declared": "0..2"
-  },
-  "*:collectionfactory.set_prototype:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:collectionfactory.unload:arity": {
-    "verdict": "open",
-    "extracted": "1..1",
-    "declared": "0..1"
-  },
-  "*:collectionfactory.unload:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:collectionproxy.get_resources:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "hash|string|url",
-    "declared": "url"
-  },
-  "*:collectionproxy.set_collection:arity": {
-    "verdict": "open",
-    "extracted": "2..2",
-    "declared": "0..2"
-  },
-  "*:collectionproxy.set_collection:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:factory.get_status:arity": { "verdict": "open", "extracted": "1..1", "declared": "0..1" },
-  "*:factory.get_status:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:factory.load:arity": { "verdict": "open", "extracted": "2..2", "declared": "0..2" },
-  "*:factory.load:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:factory.load:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:factory.set_prototype:arity": { "verdict": "open", "extracted": "2..2", "declared": "0..2" },
-  "*:factory.set_prototype:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:factory.unload:arity": { "verdict": "open", "extracted": "1..1", "declared": "0..1" },
-  "*:factory.unload:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
+    "verdict": "accepted",
+    "reason": "the binding resolves the camera with CheckRenderCamera, whose ResolveURL takes nil as the calling script's url; the ref-doc types the slot url|number|nil"
   },
   "*:go.animate:manual:4": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:go.cancel_animations:arity": { "verdict": "open", "extracted": "0..2", "declared": "1..2" },
-  "*:go.cancel_animations:optional-as-required:1": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
-  },
   "*:go.final:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
   },
   "*:go.fixed_update:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
   },
-  "*:go.init:missing-binding": { "verdict": "open", "extracted": "absent", "declared": "declared" },
+  "*:go.init:missing-binding": {
+    "verdict": "accepted",
+    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
+  },
   "*:go.late_update:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
   },
   "*:go.on_input:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
   },
   "*:go.on_message:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
   },
   "*:go.on_reload:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
   },
-  "*:go.property:return-count": { "verdict": "open", "extracted": "0", "declared": "1" },
-  "*:go.set_parent:arity": { "verdict": "open", "extracted": "3..3", "declared": "0..3" },
+  "*:go.property:return-count": {
+    "verdict": "accepted",
+    "reason": "the declaration returns a ScriptProperty handle so a script's properties table is typed from its defaults; the engine returns nothing"
+  },
+  "*:go.set_parent:arity": {
+    "verdict": "accepted",
+    "reason": "the binding reads keep_world_transform with lua_toboolean, which reads an absent argument as false, and resolves both ids through ResolveURL, which takes nil"
+  },
   "*:go.set_parent:required-as-optional:1": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
+    "verdict": "accepted",
+    "reason": "the binding reads keep_world_transform with lua_toboolean, which reads an absent argument as false, and resolves both ids through ResolveURL, which takes nil"
   },
   "*:go.set_parent:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
+    "verdict": "accepted",
+    "reason": "the binding reads keep_world_transform with lua_toboolean, which reads an absent argument as false, and resolves both ids through ResolveURL, which takes nil"
   },
   "*:go.set_parent:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
+    "verdict": "accepted",
+    "reason": "the binding reads keep_world_transform with lua_toboolean, which reads an absent argument as false, and resolves both ids through ResolveURL, which takes nil"
   },
   "*:go.set:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
   "*:go.update:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
-  },
-  "*:go.world_to_local_position:arity": {
-    "verdict": "open",
-    "extracted": "1..2",
-    "declared": "2..2"
-  },
-  "*:go.world_to_local_position:optional-as-required:2": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
-  },
-  "*:go.world_to_local_transform:arity": {
-    "verdict": "open",
-    "extracted": "1..2",
-    "declared": "2..2"
-  },
-  "*:go.world_to_local_transform:optional-as-required:2": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
-  },
-  "*:gui.animate:too-narrow:2": {
-    "verdict": "open",
-    "extracted": "hash|string",
-    "declared": "number|string"
-  },
-  "*:gui.cancel_animations:too-narrow:2": {
-    "verdict": "open",
-    "extracted": "hash|string",
-    "declared": "number|string"
+    "verdict": "accepted",
+    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
   },
   "*:gui.clone_tree:optional-as-required:1": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
+    "verdict": "accepted",
+    "reason": "the binding also takes nil for the whole scene, which the ref-doc does not document; the declaration keeps the documented node argument"
   },
   "*:gui.EASING_IN:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a legacy alias of EASING_INCUBIC, EASING_INOUTCUBIC, EASING_LINEAR or EASING_OUTCUBIC the engine keeps for old scripts; the ref-doc documents only the current names"
   },
   "*:gui.EASING_INOUT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a legacy alias of EASING_INCUBIC, EASING_INOUTCUBIC, EASING_LINEAR or EASING_OUTCUBIC the engine keeps for old scripts; the ref-doc documents only the current names"
   },
   "*:gui.EASING_NONE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a legacy alias of EASING_INCUBIC, EASING_INOUTCUBIC, EASING_LINEAR or EASING_OUTCUBIC the engine keeps for old scripts; the ref-doc documents only the current names"
   },
   "*:gui.EASING_OUT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a legacy alias of EASING_INCUBIC, EASING_INOUTCUBIC, EASING_LINEAR or EASING_OUTCUBIC the engine keeps for old scripts; the ref-doc documents only the current names"
   },
   "*:gui.final:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
   },
   "*:gui.get_tree:optional-as-required:1": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
-  },
-  "*:gui.get:field-undeclared:3.key": {
-    "verdict": "open",
-    "extracted": "read",
-    "declared": "not declared"
-  },
-  "*:gui.get:field-undeclared:3.keys": {
-    "verdict": "open",
-    "extracted": "read",
-    "declared": "not declared"
+    "verdict": "accepted",
+    "reason": "the binding also takes nil for the whole scene, which the ref-doc does not document; the declaration keeps the documented node argument"
   },
   "*:gui.init:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
   },
-  "*:gui.move_above:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "*:gui.move_below:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
   "*:gui.new_texture:too-loose:4": {
-    "verdict": "open",
-    "extracted": "string",
-    "declared": "string|userdata"
+    "verdict": "accepted",
+    "reason": "the ref-doc's `constant` alternative for the image type maps to an opaque handle; the binding reads the type with luaL_checkstring"
   },
   "*:gui.on_input:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
   },
   "*:gui.on_message:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
   },
   "*:gui.on_reload:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
-  },
-  "*:gui.screen_to_local:too-narrow:2": {
-    "verdict": "open",
-    "extracted": "vector3|vector4",
-    "declared": "vector3"
-  },
-  "*:gui.set_parent:arity": { "verdict": "open", "extracted": "2..3", "declared": "1..3" },
-  "*:gui.set_screen_position:too-narrow:2": {
-    "verdict": "open",
-    "extracted": "vector3|vector4",
-    "declared": "vector3"
+    "verdict": "accepted",
+    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
   },
   "*:gui.set_texture_data:too-loose:4": {
-    "verdict": "open",
-    "extracted": "string",
-    "declared": "string|userdata"
-  },
-  "*:gui.set:field-undeclared:4.keys": {
-    "verdict": "open",
-    "extracted": "read",
-    "declared": "not declared"
+    "verdict": "accepted",
+    "reason": "the ref-doc's `constant` alternative for the image type maps to an opaque handle; the binding reads the type with luaL_checkstring"
   },
   "*:gui.set:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
   "*:gui.set:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "hash|string|url|userdata",
-    "declared": "url|userdata"
+    "verdict": "accepted",
+    "reason": "a string or hash reaches ResolveURL only on the texture-removal path, which also requires the calling GUI's own url; the declaration keeps url or node"
   },
   "*:gui.update:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
-  },
-  "*:html5.set_interaction_listener:arity": {
-    "verdict": "open",
-    "extracted": "1..1",
-    "declared": "0..1"
+    "verdict": "accepted",
+    "reason": "a script lifecycle callback, declared so a script's own function is typed; the engine calls it and binds nothing under this name"
   },
   "*:http.request:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
   "*:image.load_buffer:too-narrow:2": {
-    "verdict": "open",
-    "extracted": "boolean|table",
-    "declared": "table"
+    "verdict": "accepted",
+    "reason": "the binding still takes the legacy premultiply_alpha boolean in place of the options table, which the ref-doc no longer documents"
   },
   "*:image.load:too-narrow:2": {
-    "verdict": "open",
-    "extracted": "boolean|table",
-    "declared": "table"
+    "verdict": "accepted",
+    "reason": "the binding still takes the legacy premultiply_alpha boolean in place of the options table, which the ref-doc no longer documents"
   },
-  "*:json.decode:arity": { "verdict": "open", "extracted": "1..1", "declared": "1..2" },
-  "*:json.encode:arity": { "verdict": "open", "extracted": "1..1", "declared": "1..2" },
+  "*:json.decode:arity": {
+    "verdict": "accepted",
+    "reason": "the value and options are read by the lua_cjson library, which is not among the vendored binding sources"
+  },
+  "*:json.encode:arity": {
+    "verdict": "accepted",
+    "reason": "the value and options are read by the lua_cjson library, which is not among the vendored binding sources"
+  },
   "*:liveupdate.LIVEUPDATE_NOT_INITIALIZED:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "registered, but no ref-doc element or prose names it; the declarations cover the documented result codes"
   },
-  "*:model.cancel:arity": { "verdict": "open", "extracted": "0..1", "declared": "1..1" },
+  "*:model.cancel:arity": {
+    "verdict": "accepted",
+    "reason": "ResolveURL reads a nil or absent url as the calling script's own, which is never a model component; the declaration keeps the url required"
+  },
   "*:model.cancel:optional-as-required:1": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
+    "verdict": "accepted",
+    "reason": "ResolveURL reads a nil or absent url as the calling script's own, which is never a model component; the declaration keeps the url required"
   },
-  "*:model.get_mesh_enabled:too-loose:2": {
-    "verdict": "open",
-    "extracted": "hash|string",
-    "declared": "hash|string|url"
+  "*:msg.post:too-loose:3": {
+    "verdict": "accepted",
+    "reason": "msg.post's typed overloads narrow the id and payload per message; the generic `any` arm serves user messages"
   },
-  "*:model.set_mesh_enabled:too-loose:2": {
-    "verdict": "open",
-    "extracted": "hash|string",
-    "declared": "hash|string|url"
+  "*:msg.url:arity": {
+    "verdict": "accepted",
+    "reason": "the binding branches on the argument count (none or one resolves an address string, three build one from parts); the overloads mirror exactly those forms"
   },
-  "*:msg.post:too-loose:3": { "verdict": "open", "extracted": "table", "declared": "any" },
-  "*:msg.url:arity": { "verdict": "open", "extracted": "1..3", "declared": "0..3" },
   "*:msg.url:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:particlefx.set_constant:too-narrow:4": {
-    "verdict": "open",
-    "extracted": "matrix4|vector4",
-    "declared": "vector4"
+  "*:particlefx.stop:arity": {
+    "verdict": "accepted",
+    "reason": "ResolveURL reads a nil or absent url as the calling script's own, which is never a particle fx component; the declaration keeps the url required"
   },
-  "*:particlefx.stop:arity": { "verdict": "open", "extracted": "0..2", "declared": "1..2" },
   "*:particlefx.stop:optional-as-required:1": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
+    "verdict": "accepted",
+    "reason": "ResolveURL reads a nil or absent url as the calling script's own, which is never a particle fx component; the declaration keeps the url required"
   },
-  "*:physics.create_joint:arity": { "verdict": "open", "extracted": "7..7", "declared": "6..7" },
+  "*:physics.create_joint:arity": {
+    "verdict": "accepted",
+    "reason": "the properties table is read through a lua_type switch that returns early on nil or none, so the slot is optional"
+  },
   "*:physics.create_joint:manual:7": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:physics.get_maskbit:too-narrow:2": {
-    "verdict": "open",
-    "extracted": "hash|string",
-    "declared": "string"
-  },
   "*:physics.set_event_listener:arity": {
-    "verdict": "open",
-    "extracted": "1..1",
-    "declared": "0..1"
+    "verdict": "accepted",
+    "reason": "the binding switches on lua_type and takes none, nil or a function, so the callback is optional"
   },
   "*:physics.set_event_listener:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:physics.set_group:too-narrow:2": {
-    "verdict": "open",
-    "extracted": "hash|string",
-    "declared": "string"
-  },
   "*:physics.set_joint_properties:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:physics.set_maskbit:too-narrow:2": {
-    "verdict": "open",
-    "extracted": "hash|string",
-    "declared": "string"
-  },
   "*:profiler.get_lua_ref_count:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "*:render.delete_render_target:too-loose:1": {
-    "verdict": "open",
-    "extracted": "number",
-    "declared": "userdata"
+    "verdict": "accepted",
+    "reason": "render targets and predicates are engine handles the declaration brands as opaque, so a plain number cannot stand in for one; the binding reads the handle's number"
   },
   "*:render.delete_render_target:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "number",
-    "declared": "userdata"
+    "verdict": "accepted",
+    "reason": "render targets and predicates are engine handles the declaration brands as opaque, so a plain number cannot stand in for one; the binding reads the handle's number"
   },
   "*:render.disable_texture:too-loose:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string",
-    "declared": "hash|number|string|userdata"
+    "verdict": "accepted",
+    "reason": "render targets and predicates are engine handles the declaration brands as opaque, so a plain number cannot stand in for one; the binding reads the handle's number"
   },
-  "*:render.draw:too-loose:1": { "verdict": "open", "extracted": "userdata", "declared": "number" },
+  "*:render.draw:too-loose:1": {
+    "verdict": "accepted",
+    "reason": "render targets and predicates are engine handles the declaration brands as opaque, so a plain number cannot stand in for one; the binding reads the handle's number"
+  },
   "*:render.draw:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "userdata",
-    "declared": "number"
+    "verdict": "accepted",
+    "reason": "render targets and predicates are engine handles the declaration brands as opaque, so a plain number cannot stand in for one; the binding reads the handle's number"
   },
   "*:render.draw:too-narrow:2": {
-    "verdict": "open",
-    "extracted": "table|userdata",
-    "declared": "table"
+    "verdict": "accepted",
+    "reason": "the binding still takes a constant buffer in place of the options table (deprecated); the declaration types the documented options table"
   },
   "*:render.enable_texture:too-loose:2": {
-    "verdict": "open",
-    "extracted": "hash|number|string",
-    "declared": "hash|number|string|userdata"
+    "verdict": "accepted",
+    "reason": "render targets and predicates are engine handles the declaration brands as opaque, so a plain number cannot stand in for one; the binding reads the handle's number"
   },
   "*:render.get_render_target_height:too-loose:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string",
-    "declared": "hash|string|userdata"
+    "verdict": "accepted",
+    "reason": "render targets and predicates are engine handles the declaration brands as opaque, so a plain number cannot stand in for one; the binding reads the handle's number"
   },
   "*:render.get_render_target_height:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string",
-    "declared": "hash|string|userdata"
+    "verdict": "accepted",
+    "reason": "render targets and predicates are engine handles the declaration brands as opaque, so a plain number cannot stand in for one; the binding reads the handle's number"
   },
   "*:render.get_render_target_width:too-loose:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string",
-    "declared": "hash|string|userdata"
+    "verdict": "accepted",
+    "reason": "render targets and predicates are engine handles the declaration brands as opaque, so a plain number cannot stand in for one; the binding reads the handle's number"
   },
   "*:render.get_render_target_width:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string",
-    "declared": "hash|string|userdata"
+    "verdict": "accepted",
+    "reason": "render targets and predicates are engine handles the declaration brands as opaque, so a plain number cannot stand in for one; the binding reads the handle's number"
   },
   "*:render.RENDER_TARGET_DEFAULT:constant-missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "the engine never registers it, so it reads as nil, which render.set_render_target takes as the default target; the ref-doc documents it as that argument"
   },
-  "*:render.render_target:arity": { "verdict": "open", "extracted": "0..1", "declared": "1..2" },
+  "*:render.render_target:arity": {
+    "verdict": "accepted",
+    "reason": "the legacy (name, table) form moves the table to argument 2 through a reassigned index; the overloads declare both forms"
+  },
   "*:render.render_target:optional-as-required:1": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
+    "verdict": "accepted",
+    "reason": "the legacy (name, table) form moves the table to argument 2 through a reassigned index; the overloads declare both forms"
   },
   "*:render.render_target:too-loose:1": {
-    "verdict": "open",
-    "extracted": "table",
-    "declared": "string|table"
+    "verdict": "accepted",
+    "reason": "the legacy (name, table) form moves the table to argument 2 through a reassigned index; the overloads declare both forms"
   },
   "*:render.set_blend_func:manual": {
     "verdict": "manual",
     "reason": "luaL_checknumber at a non-literal index"
   },
-  "*:render.set_camera:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string|url",
-    "declared": "number|string|url"
+  "*:render.set_listener:arity": {
+    "verdict": "accepted",
+    "reason": "the binding switches on lua_type and takes none, nil or a function, so the callback is optional"
   },
-  "*:render.set_listener:arity": { "verdict": "open", "extracted": "1..1", "declared": "0..1" },
   "*:render.set_listener:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
   "*:render.set_render_target_size:too-loose:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string",
-    "declared": "hash|string|userdata"
+    "verdict": "accepted",
+    "reason": "render targets and predicates are engine handles the declaration brands as opaque, so a plain number cannot stand in for one; the binding reads the handle's number"
   },
   "*:render.set_render_target_size:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string",
-    "declared": "hash|string|userdata"
-  },
-  "*:render.set_render_target:arity": {
-    "verdict": "open",
-    "extracted": "0..2",
-    "declared": "1..2"
-  },
-  "*:render.set_render_target:optional-as-required:1": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
+    "verdict": "accepted",
+    "reason": "render targets and predicates are engine handles the declaration brands as opaque, so a plain number cannot stand in for one; the binding reads the handle's number"
   },
   "*:render.set_render_target:too-loose:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string",
-    "declared": "hash|number|string|userdata"
+    "verdict": "accepted",
+    "reason": "render targets and predicates are engine handles the declaration brands as opaque, so a plain number cannot stand in for one; the binding reads the handle's number"
   },
   "*:render.set_stencil_op:manual": {
     "verdict": "manual",
     "reason": "luaL_checknumber at a non-literal index"
   },
-  "*:render.TEXTURE_BIT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
   "*:resource.atlas:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "registered by an engine source outside the vendored binding selection (the go.property resource-type helpers)"
   },
   "*:resource.buffer:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "registered by an engine source outside the vendored binding selection (the go.property resource-type helpers)"
   },
   "*:resource.create_atlas:field-unread:2.indices": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
   },
   "*:resource.create_atlas:field-unread:2.texture": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "the binding reads texture through CheckTextureResource on a relative stack index the extraction does not resolve"
   },
   "*:resource.create_atlas:field-unread:2.uvs": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
   },
   "*:resource.create_atlas:field-unread:2.vertices": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "*:resource.create_buffer:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "*:resource.create_buffer:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:resource.create_sound_data:arity": {
-    "verdict": "open",
-    "extracted": "2..2",
-    "declared": "1..2"
-  },
-  "*:resource.create_sound_data:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
+    "verdict": "accepted",
+    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
   },
   "*:resource.create_texture_async:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:resource.create_texture_async:too-loose:1": {
-    "verdict": "open",
-    "extracted": "string",
-    "declared": "hash|string"
+    "verdict": "accepted",
+    "reason": "the binding skips a nil buffer; the extraction reports the slot required because the callback after it is required"
   },
   "*:resource.font:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
-  },
-  "*:resource.get_text_metrics:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "hash|string",
-    "declared": "hash"
+    "verdict": "accepted",
+    "reason": "registered by an engine source outside the vendored binding selection (the go.property resource-type helpers)"
   },
   "*:resource.material:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "registered by an engine source outside the vendored binding selection (the go.property resource-type helpers)"
   },
   "*:resource.render_target:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "registered by an engine source outside the vendored binding selection (the go.property resource-type helpers)"
   },
   "*:resource.set_atlas:field-unread:2.indices": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
   },
   "*:resource.set_atlas:field-unread:2.uvs": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
   },
   "*:resource.set_atlas:field-unread:2.vertices": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "the ref-doc flattens each geometry's vertices, uvs and indices to the table's top level; the binding reads them from each geometries entry, which the declaration also types"
   },
   "*:resource.texture:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "registered by an engine source outside the vendored binding selection (the go.property resource-type helpers)"
   },
   "*:resource.tile_source:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "registered by an engine source outside the vendored binding selection (the go.property resource-type helpers)"
   },
-  "*:sound.get_group_name:too-loose:1": {
-    "verdict": "open",
-    "extracted": "hash",
-    "declared": "hash|string"
+  "*:sound.play:arity": {
+    "verdict": "accepted",
+    "reason": "ResolveURL reads a nil or absent url as the calling script's own, which is never a sound component; the declaration keeps the url required"
   },
-  "*:sound.play:arity": { "verdict": "open", "extracted": "0..3", "declared": "1..3" },
   "*:sound.play:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
   "*:sound.play:optional-as-required:1": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
+    "verdict": "accepted",
+    "reason": "ResolveURL reads a nil or absent url as the calling script's own, which is never a sound component; the declaration keeps the url required"
   },
-  "*:sound.set_gain:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "*:sound.set_gain:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
+  "*:sound.stop:arity": {
+    "verdict": "accepted",
+    "reason": "ResolveURL reads a nil or absent url as the calling script's own, which is never a sound component; the declaration keeps the url required"
   },
-  "*:sound.set_pan:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "*:sound.set_pan:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "*:sound.stop:arity": { "verdict": "open", "extracted": "0..2", "declared": "1..2" },
   "*:sound.stop:optional-as-required:1": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
+    "verdict": "accepted",
+    "reason": "ResolveURL reads a nil or absent url as the calling script's own, which is never a sound component; the declaration keeps the url required"
   },
   "*:sprite.play_flipbook:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
   "*:sprite.set_scale:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
-  "*:sys.save:return-count": { "verdict": "open", "extracted": "1", "declared": "0" },
   "*:sys.set_debugger_lightweight_hook:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
-  "*:sys.set_engine_throttle:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
+  "*:sys.set_engine_throttle:arity": {
+    "verdict": "accepted",
+    "reason": "the binding reads cooldown only when enable is true, so disabling the throttle takes one argument"
+  },
   "*:sys.set_engine_throttle:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
+    "verdict": "accepted",
+    "reason": "the binding reads cooldown only when enable is true, so disabling the throttle takes one argument"
   },
-  "*:sys.set_error_handler:return-count": { "verdict": "open", "extracted": "1", "declared": "0" },
-  "*:sys.set_render_enable:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
+  "*:sys.set_error_handler:return-count": {
+    "verdict": "accepted",
+    "reason": "the binding returns early with a stray stack value only when the debug library is missing; the installed handler returns nothing"
   },
-  "*:sys.set_render_enabled:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+  "*:tilemap.set_tile:arity": {
+    "verdict": "accepted",
+    "reason": "argument 6 is a transform bitmask, or the legacy h_flipped boolean read with lua_toboolean (absent reads as false) beside v_flipped; the declaration types the documented bitmask"
   },
-  "*:tilemap.set_tile:arity": { "verdict": "open", "extracted": "6..7", "declared": "5..6" },
   "*:tilemap.set_tile:required-as-optional:6": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
+    "verdict": "accepted",
+    "reason": "argument 6 is a transform bitmask, or the legacy h_flipped boolean read with lua_toboolean (absent reads as false) beside v_flipped; the declaration types the documented bitmask"
   },
-  "*:tilemap.set_tile:return-count": { "verdict": "open", "extracted": "1", "declared": "0" },
   "*:tilemap.set_tile:too-narrow:6": {
-    "verdict": "open",
-    "extracted": "boolean|number",
-    "declared": "number"
+    "verdict": "accepted",
+    "reason": "argument 6 is a transform bitmask, or the legacy h_flipped boolean read with lua_toboolean (absent reads as false) beside v_flipped; the declaration types the documented bitmask"
   },
-  "*:types.is_hash:arity": { "verdict": "open", "extracted": "0..1", "declared": "1..1" },
+  "*:types.is_hash:arity": {
+    "verdict": "accepted",
+    "reason": "the probe answers false for an absent argument; the declaration asks for the value it tests"
+  },
   "*:types.is_hash:manual:1": { "verdict": "manual", "reason": "no kind check" },
-  "*:types.is_matrix4:arity": { "verdict": "open", "extracted": "0..1", "declared": "1..1" },
+  "*:types.is_matrix4:arity": {
+    "verdict": "accepted",
+    "reason": "the probe answers false for an absent argument; the declaration asks for the value it tests"
+  },
   "*:types.is_matrix4:manual:1": { "verdict": "manual", "reason": "no kind check" },
-  "*:types.is_quat:arity": { "verdict": "open", "extracted": "0..1", "declared": "1..1" },
+  "*:types.is_quat:arity": {
+    "verdict": "accepted",
+    "reason": "the probe answers false for an absent argument; the declaration asks for the value it tests"
+  },
   "*:types.is_quat:manual:1": { "verdict": "manual", "reason": "no kind check" },
-  "*:types.is_url:arity": { "verdict": "open", "extracted": "0..1", "declared": "1..1" },
+  "*:types.is_url:arity": {
+    "verdict": "accepted",
+    "reason": "the probe answers false for an absent argument; the declaration asks for the value it tests"
+  },
   "*:types.is_url:manual:1": { "verdict": "manual", "reason": "no kind check" },
-  "*:types.is_vector:arity": { "verdict": "open", "extracted": "0..1", "declared": "1..1" },
+  "*:types.is_vector:arity": {
+    "verdict": "accepted",
+    "reason": "the probe answers false for an absent argument; the declaration asks for the value it tests"
+  },
   "*:types.is_vector:manual:1": { "verdict": "manual", "reason": "no kind check" },
-  "*:types.is_vector3:arity": { "verdict": "open", "extracted": "0..1", "declared": "1..1" },
+  "*:types.is_vector3:arity": {
+    "verdict": "accepted",
+    "reason": "the probe answers false for an absent argument; the declaration asks for the value it tests"
+  },
   "*:types.is_vector3:manual:1": { "verdict": "manual", "reason": "no kind check" },
-  "*:types.is_vector4:arity": { "verdict": "open", "extracted": "0..1", "declared": "1..1" },
+  "*:types.is_vector4:arity": {
+    "verdict": "accepted",
+    "reason": "the probe answers false for an absent argument; the declaration asks for the value it tests"
+  },
   "*:types.is_vector4:manual:1": { "verdict": "manual", "reason": "no kind check" },
   "*:vmath.clamp:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
   "*:vmath.clamp:manual:2": { "verdict": "manual", "reason": "lua_type switch" },
   "*:vmath.clamp:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
   "*:vmath.dot:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
   "*:vmath.dot:manual:2": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:vmath.euler_to_quat:arity": { "verdict": "open", "extracted": "3..3", "declared": "1..3" },
+  "*:vmath.euler_to_quat:arity": {
+    "verdict": "accepted",
+    "reason": "the binding switches on lua_type between the (vector3) and (x, y, z) forms; the overloads mirror both"
+  },
   "*:vmath.euler_to_quat:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
   "*:vmath.euler_to_quat:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
+    "verdict": "accepted",
+    "reason": "the binding switches on lua_type between the (vector3) and (x, y, z) forms; the overloads mirror both"
   },
   "*:vmath.euler_to_quat:required-as-optional:3": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
+    "verdict": "accepted",
+    "reason": "the binding switches on lua_type between the (vector3) and (x, y, z) forms; the overloads mirror both"
   },
   "*:vmath.length_sqr:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
   "*:vmath.length:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
@@ -915,827 +540,632 @@
   "*:vmath.normalize:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
   "*:vmath.slerp:manual:2": { "verdict": "manual", "reason": "lua_type switch" },
   "*:vmath.slerp:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:vmath.vector:arity": { "verdict": "open", "extracted": "0..1", "declared": "1..1" },
-  "*:vmath.vector:optional-as-required:1": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
-  },
   "*:vmath.vector3:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
   "*:vmath.vector4:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:window.set_listener:arity": { "verdict": "open", "extracted": "1..1", "declared": "0..1" },
   "defold-1.12.4:b2d.body.dump:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:b2d.body.get_force:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:b2d.body.get_inertia:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:b2d.body.get_local_center:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:b2d.body.get_next:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:b2d.body.get_world_center:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:b2d.body.is_sleeping_allowed:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
-  },
-  "defold-1.12.4:b2d.body.reset_mass_data:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:b2d.body.set_sleeping_allowed:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:camera.acquire_focus:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:camera.release_focus:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:collectionproxy.missing_resources:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:go.delete_all:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:go.get_scale_vector:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:gui.cancel_animation:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:gui.get_text_metrics_from_node:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:gui.get_text_metrics:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:label.get_text_metrics:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:liveupdate.get_current_manifest:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:liveupdate.is_built_with_excluded_files:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:liveupdate.is_using_liveupdate_data:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:liveupdate.store_archive:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:liveupdate.store_manifest:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:liveupdate.store_resource:manual:1": {
     "verdict": "manual",
     "reason": "no read of this slot"
   },
   "defold-1.12.4:liveupdate.store_resource:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:model.play:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:model.reset_constant:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:model.set_constant:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:msg.post:too-loose:2": {
-    "verdict": "open",
-    "extracted": "hash|string",
-    "declared": "any"
+    "verdict": "accepted",
+    "reason": "msg.post's typed overloads narrow the id and payload per message; the generic `any` arm serves user messages"
   },
   "defold-1.12.4:particlefx.play:manual:2": { "verdict": "manual", "reason": "no kind check" },
   "defold-1.12.4:physics.ray_cast:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:physics.set_listener:manual:1": {
     "verdict": "manual",
     "reason": "lua_type switch"
   },
   "defold-1.12.4:physics.set_listener:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:render.BLEND_CONSTANT_ALPHA:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.BLEND_CONSTANT_COLOR:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.BLEND_DST_ALPHA:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.BLEND_DST_COLOR:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.BLEND_ONE_MINUS_CONSTANT_ALPHA:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.BLEND_ONE_MINUS_CONSTANT_COLOR:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.BLEND_ONE_MINUS_DST_ALPHA:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.BLEND_ONE_MINUS_DST_COLOR:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.BLEND_ONE_MINUS_SRC_ALPHA:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.BLEND_ONE_MINUS_SRC_COLOR:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.BLEND_ONE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.BLEND_SRC_ALPHA_SATURATE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.BLEND_SRC_ALPHA:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.BLEND_SRC_COLOR:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.BLEND_ZERO:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.BUFFER_COLOR_BIT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.BUFFER_COLOR0_BIT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.BUFFER_COLOR1_BIT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.BUFFER_COLOR2_BIT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.BUFFER_COLOR3_BIT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.BUFFER_DEPTH_BIT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.BUFFER_STENCIL_BIT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.COMPARE_FUNC_ALWAYS:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.COMPARE_FUNC_EQUAL:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.COMPARE_FUNC_GEQUAL:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.COMPARE_FUNC_GREATER:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.COMPARE_FUNC_LEQUAL:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.COMPARE_FUNC_LESS:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.COMPARE_FUNC_NEVER:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.COMPARE_FUNC_NOTEQUAL:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.disable_render_target:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:render.draw_debug2d:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:render.enable_render_target:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:render.FACE_BACK:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.FACE_FRONT_AND_BACK:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.FACE_FRONT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.FILTER_LINEAR:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.FILTER_NEAREST:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.FORMAT_DEPTH:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.FORMAT_LUMINANCE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.FORMAT_R16F:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.FORMAT_R32F:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.FORMAT_RG16F:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.FORMAT_RG32F:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.FORMAT_RGB:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.FORMAT_RGB16F:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.FORMAT_RGB32F:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.FORMAT_RGBA:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.FORMAT_RGBA16F:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.FORMAT_RGBA32F:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.FORMAT_STENCIL:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.STATE_ALPHA_TEST:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.STATE_BLEND:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.STATE_CULL_FACE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.STATE_DEPTH_TEST:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.STATE_POLYGON_OFFSET_FILL:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.STATE_STENCIL_TEST:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.STENCIL_OP_DECR_WRAP:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.STENCIL_OP_DECR:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.STENCIL_OP_INCR_WRAP:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.STENCIL_OP_INCR:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.STENCIL_OP_INVERT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.STENCIL_OP_KEEP:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.STENCIL_OP_REPLACE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.STENCIL_OP_ZERO:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.WRAP_CLAMP_TO_BORDER:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.WRAP_CLAMP_TO_EDGE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.WRAP_MIRRORED_REPEAT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:render.WRAP_REPEAT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.BUFFER_TYPE_COLOR0_BIT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.BUFFER_TYPE_COLOR1_BIT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.BUFFER_TYPE_COLOR2_BIT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.BUFFER_TYPE_COLOR3_BIT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.BUFFER_TYPE_DEPTH_BIT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.BUFFER_TYPE_STENCIL_BIT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.COMPRESSION_TYPE_BASIS_UASTC:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.COMPRESSION_TYPE_DEFAULT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.12.4:resource.create_texture_async:arity": {
-    "verdict": "open",
-    "extracted": "3..3",
-    "declared": "2..4"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_FORMAT_DEPTH:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_FORMAT_LUMINANCE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_FORMAT_R_BC4:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_FORMAT_R16F:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_FORMAT_R32F:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_FORMAT_RG_BC5:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_FORMAT_RG16F:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_FORMAT_RG32F:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_FORMAT_RGB_BC1:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_FORMAT_RGB_ETC1:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_FORMAT_RGB_PVRTC_2BPPV1:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_FORMAT_RGB_PVRTC_4BPPV1:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_FORMAT_RGB:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_FORMAT_RGB16F:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_FORMAT_RGB32F:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_FORMAT_RGBA_ASTC_4X4:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_FORMAT_RGBA_BC3:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_FORMAT_RGBA_BC7:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_FORMAT_RGBA_ETC2:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_FORMAT_RGBA_PVRTC_2BPPV1:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_FORMAT_RGBA_PVRTC_4BPPV1:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_FORMAT_RGBA:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_FORMAT_RGBA16F:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_FORMAT_RGBA32F:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_FORMAT_STENCIL:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_TYPE_2D_ARRAY:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_TYPE_2D:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_TYPE_CUBE_MAP:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_TYPE_IMAGE_2D:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_USAGE_FLAG_MEMORYLESS:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_USAGE_FLAG_SAMPLE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:resource.TEXTURE_USAGE_FLAG_STORAGE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "a deprecated alias this release still registers for the graphics.* or resource-type constant the ref-doc documents instead"
   },
   "defold-1.12.4:sprite.reset_constant:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:sprite.set_constant:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:sys.get_config:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
-  },
-  "defold-1.12.4:sys.load_buffer_async:arity": {
-    "verdict": "open",
-    "extracted": "1..1",
-    "declared": "2..2"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:tilemap.reset_constant:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:tilemap.set_constant:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.12.4:vmath.matrix4_from_quat:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound, but this target's ref-doc does not document it (a deprecated or internal function); the declarations cover the documented API"
   },
   "defold-1.13.0:b2d.body.create_fixture:arity": {
-    "verdict": "open",
-    "extracted": "2..2",
-    "declared": "2..3"
+    "verdict": "accepted",
+    "reason": "a second ref-doc entry documents the C++ b2Body::CreateFixture(shape, density) form, which neither Lua binding implements; the table form covers every call"
   },
   "defold-1.13.0:b2d.body.create_fixture:field-undeclared:2.is_sensor": {
-    "verdict": "open",
-    "extracted": "read",
-    "declared": "not declared"
+    "verdict": "accepted",
+    "reason": "a fallback the binding reads only when sensor is absent; the declaration names sensor"
   },
   "defold-1.13.0:b2d.body.create_fixture:field-undeclared:2.user_data": {
-    "verdict": "open",
-    "extracted": "read",
-    "declared": "not declared"
+    "verdict": "accepted",
+    "reason": "read only to raise \"Fixture user_data is not supported\""
   },
   "defold-1.13.0:b2d.body.create_fixture:too-loose:2": {
-    "verdict": "open",
-    "extracted": "table",
-    "declared": "table|userdata"
-  },
-  "defold-1.13.0:b2d.body.create_shape:return-count": {
-    "verdict": "open",
-    "extracted": "1",
-    "declared": "0"
-  },
-  "defold-1.13.0:b2d.body.get_contact_list:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.body.get_user_data:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "a second ref-doc entry documents the C++ b2Body::CreateFixture(shape, density) form, which neither Lua binding implements; the table form covers every call"
   },
   "defold-1.13.0:b2d.body.set_mass_data:too-loose:2": {
-    "verdict": "open",
-    "extracted": "table",
-    "declared": "table|userdata"
-  },
-  "defold-1.13.0:b2d.body.set_user_data:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "a second ref-doc entry documents a b2MassData handle form, which the v3 binding does not implement; the table form covers every call"
   },
   "defold-1.13.0:b2d.chain.from_shape:manual": {
     "verdict": "manual",
     "reason": "luaL_checkinteger at a non-literal index"
   },
-  "defold-1.13.0:b2d.fixture.set_density:arity": {
-    "verdict": "open",
-    "extracted": "3..4",
-    "declared": "4..4"
-  },
-  "defold-1.13.0:b2d.fixture.set_density:optional-as-required:4": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
-  },
   "defold-1.13.0:b2d.fixture.set_shape:field-undeclared:3.shape": {
-    "verdict": "open",
-    "extracted": "read",
-    "declared": "not declared"
+    "verdict": "accepted",
+    "reason": "the binding also takes the shape wrapped as { shape = ... }; the declaration types the documented bare shape table"
+  },
+  "defold-1.13.0:b2d.fixture.set_shape:field-unread:3.center1": {
+    "verdict": "accepted",
+    "reason": "b2d.fixture is the Box2D v2 API, which has no capsule; the shared shape table carries the v3 capsule fields"
+  },
+  "defold-1.13.0:b2d.fixture.set_shape:field-unread:3.center2": {
+    "verdict": "accepted",
+    "reason": "b2d.fixture is the Box2D v2 API, which has no capsule; the shared shape table carries the v3 capsule fields"
   },
   "defold-1.13.0:b2d.joint.create_filter:arity": {
-    "verdict": "open",
-    "extracted": "2..2",
-    "declared": "2..3"
+    "verdict": "accepted",
+    "reason": "the ref-doc documents an optional definition table the binding never reads; passing one is ignored"
   },
   "defold-1.13.0:b2d.joint.create_prismatic:manual": {
     "verdict": "manual",
@@ -1778,9 +1208,8 @@
     "reason": "luaL_checkinteger at a non-literal index; lua_toboolean at a non-literal index"
   },
   "defold-1.13.0:b2d.shape.get_aabb:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.0:b2d.shape.get_body:manual": {
     "verdict": "manual",
@@ -1799,19 +1228,16 @@
     "reason": "luaL_checkinteger at a non-literal index"
   },
   "defold-1.13.0:b2d.shape.get_density:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.0:b2d.shape.get_filter_data:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.0:b2d.shape.get_friction:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.0:b2d.shape.get_mass_data:manual": {
     "verdict": "manual",
@@ -1822,9 +1248,8 @@
     "reason": "luaL_checkinteger at a non-literal index"
   },
   "defold-1.13.0:b2d.shape.get_restitution:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.0:b2d.shape.get_sensor_capacity:manual": {
     "verdict": "manual",
@@ -1839,241 +1264,69 @@
     "reason": "luaL_checkinteger at a non-literal index"
   },
   "defold-1.13.0:b2d.shape.get_type:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.0:b2d.shape.get_world:manual": {
     "verdict": "manual",
     "reason": "luaL_checkinteger at a non-literal index"
   },
   "defold-1.13.0:b2d.shape.is_sensor:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.0:b2d.shape.is_valid:arity": {
-    "verdict": "open",
-    "extracted": "2..2",
-    "declared": "1..2"
+    "verdict": "accepted",
+    "reason": "a shape handle returns before the index is read; the (body, index) form reads both, and the declaration takes either"
   },
   "defold-1.13.0:b2d.shape.is_valid:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
   "defold-1.13.0:b2d.shape.is_valid:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
+    "verdict": "accepted",
+    "reason": "a shape handle returns before the index is read; the (body, index) form reads both, and the declaration takes either"
   },
   "defold-1.13.0:b2d.shape.ray_cast:manual": {
     "verdict": "manual",
     "reason": "luaL_checkinteger at a non-literal index; luaL_checknumber at a non-literal index"
   },
   "defold-1.13.0:b2d.shape.refilter:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.0:b2d.shape.set_density:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.0:b2d.shape.set_filter_data:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.0:b2d.shape.set_friction:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.0:b2d.shape.set_material:manual": {
     "verdict": "manual",
     "reason": "luaL_checkinteger at a non-literal index; luaL_checkinteger at a non-literal index"
   },
   "defold-1.13.0:b2d.shape.set_restitution:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.0:b2d.shape.set_sensor:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.0:b2d.shape.set_shape:manual": {
     "verdict": "manual",
     "reason": "luaL_checkinteger at a non-literal index; lua_toboolean at a non-literal index"
   },
   "defold-1.13.0:b2d.shape.test_point:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
-  },
-  "defold-1.13.0:b2d.world.cast_shape:field-undeclared:2.center1": {
-    "verdict": "open",
-    "extracted": "read",
-    "declared": "not declared"
-  },
-  "defold-1.13.0:b2d.world.cast_shape:field-undeclared:2.center2": {
-    "verdict": "open",
-    "extracted": "read",
-    "declared": "not declared"
-  },
-  "defold-1.13.0:b2d.world.overlap_shape:field-undeclared:2.center1": {
-    "verdict": "open",
-    "extracted": "read",
-    "declared": "not declared"
-  },
-  "defold-1.13.0:b2d.world.overlap_shape:field-undeclared:2.center2": {
-    "verdict": "open",
-    "extracted": "read",
-    "declared": "not declared"
-  },
-  "defold-1.13.0:camera.get_orthographic_auto_zoom:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string|url",
-    "declared": "number|url"
-  },
-  "defold-1.13.0:graphics.COORDINATE_SPACE_DEFAULT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.0:graphics.COORDINATE_SPACE_LOCAL:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.0:graphics.COORDINATE_SPACE_WORLD:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.0:graphics.DATA_TYPE_BYTE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.0:graphics.DATA_TYPE_FLOAT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.0:graphics.DATA_TYPE_INT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.0:graphics.DATA_TYPE_SHORT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.0:graphics.DATA_TYPE_UNSIGNED_BYTE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.0:graphics.DATA_TYPE_UNSIGNED_INT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.0:graphics.DATA_TYPE_UNSIGNED_SHORT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.0:material.CONSTANT_TYPE_NORMAL:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.0:material.CONSTANT_TYPE_PROJECTION_INVERSE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.0:material.CONSTANT_TYPE_PROJECTION:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.0:material.CONSTANT_TYPE_TEXTURE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.0:material.CONSTANT_TYPE_TIME:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.0:material.CONSTANT_TYPE_USER_MATRIX4:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.0:material.CONSTANT_TYPE_USER:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.0:material.CONSTANT_TYPE_VIEW_INVERSE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.0:material.CONSTANT_TYPE_VIEW:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.0:material.CONSTANT_TYPE_VIEWPROJ_INVERSE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.0:material.CONSTANT_TYPE_VIEWPROJ:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.0:material.CONSTANT_TYPE_WORLD_INVERSE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.0:material.CONSTANT_TYPE_WORLD:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.0:material.CONSTANT_TYPE_WORLDVIEW_INVERSE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.0:material.CONSTANT_TYPE_WORLDVIEW:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.0:material.CONSTANT_TYPE_WORLDVIEWPROJ_INVERSE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.0:material.CONSTANT_TYPE_WORLDVIEWPROJ:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.0:msg.post:too-loose:2": {
-    "verdict": "open",
-    "extracted": "hash|string",
-    "declared": "any"
+    "verdict": "accepted",
+    "reason": "msg.post's typed overloads narrow the id and payload per message; the generic `any` arm serves user messages"
   },
   "defold-1.13.0:particlefx.play:manual:2": { "verdict": "manual", "reason": "no kind check" },
   "defold-1.13.0:render.set_blend_equation_separate:manual": {
@@ -2084,84 +1337,45 @@
     "verdict": "manual",
     "reason": "luaL_checknumber at a non-literal index"
   },
-  "defold-1.13.0:resource.create_texture_async:arity": {
-    "verdict": "open",
-    "extracted": "3..3",
-    "declared": "2..4"
-  },
-  "defold-1.13.0:sys.load_buffer_async:arity": {
-    "verdict": "open",
-    "extracted": "1..1",
-    "declared": "2..2"
-  },
   "defold-1.13.1:b2d.body.create_fixture:arity": {
-    "verdict": "open",
-    "extracted": "2..2",
-    "declared": "2..3"
+    "verdict": "accepted",
+    "reason": "a second ref-doc entry documents the C++ b2Body::CreateFixture(shape, density) form, which neither Lua binding implements; the table form covers every call"
   },
   "defold-1.13.1:b2d.body.create_fixture:field-undeclared:2.is_sensor": {
-    "verdict": "open",
-    "extracted": "read",
-    "declared": "not declared"
+    "verdict": "accepted",
+    "reason": "a fallback the binding reads only when sensor is absent; the declaration names sensor"
   },
   "defold-1.13.1:b2d.body.create_fixture:field-undeclared:2.user_data": {
-    "verdict": "open",
-    "extracted": "read",
-    "declared": "not declared"
+    "verdict": "accepted",
+    "reason": "read only to raise \"Fixture user_data is not supported\""
   },
   "defold-1.13.1:b2d.body.create_fixture:too-loose:2": {
-    "verdict": "open",
-    "extracted": "table",
-    "declared": "table|userdata"
-  },
-  "defold-1.13.1:b2d.body.create_shape:return-count": {
-    "verdict": "open",
-    "extracted": "1",
-    "declared": "0"
-  },
-  "defold-1.13.1:b2d.body.get_contact_list:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.body.get_user_data:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "a second ref-doc entry documents the C++ b2Body::CreateFixture(shape, density) form, which neither Lua binding implements; the table form covers every call"
   },
   "defold-1.13.1:b2d.body.set_mass_data:too-loose:2": {
-    "verdict": "open",
-    "extracted": "table",
-    "declared": "table|userdata"
-  },
-  "defold-1.13.1:b2d.body.set_user_data:missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
+    "verdict": "accepted",
+    "reason": "a second ref-doc entry documents a b2MassData handle form, which the v3 binding does not implement; the table form covers every call"
   },
   "defold-1.13.1:b2d.chain.from_shape:manual": {
     "verdict": "manual",
     "reason": "luaL_checkinteger at a non-literal index"
   },
-  "defold-1.13.1:b2d.fixture.set_density:arity": {
-    "verdict": "open",
-    "extracted": "3..4",
-    "declared": "4..4"
-  },
-  "defold-1.13.1:b2d.fixture.set_density:optional-as-required:4": {
-    "verdict": "open",
-    "extracted": "optional",
-    "declared": "required"
-  },
   "defold-1.13.1:b2d.fixture.set_shape:field-undeclared:3.shape": {
-    "verdict": "open",
-    "extracted": "read",
-    "declared": "not declared"
+    "verdict": "accepted",
+    "reason": "the binding also takes the shape wrapped as { shape = ... }; the declaration types the documented bare shape table"
+  },
+  "defold-1.13.1:b2d.fixture.set_shape:field-unread:3.center1": {
+    "verdict": "accepted",
+    "reason": "b2d.fixture is the Box2D v2 API, which has no capsule; the shared shape table carries the v3 capsule fields"
+  },
+  "defold-1.13.1:b2d.fixture.set_shape:field-unread:3.center2": {
+    "verdict": "accepted",
+    "reason": "b2d.fixture is the Box2D v2 API, which has no capsule; the shared shape table carries the v3 capsule fields"
   },
   "defold-1.13.1:b2d.joint.create_filter:arity": {
-    "verdict": "open",
-    "extracted": "2..2",
-    "declared": "2..3"
+    "verdict": "accepted",
+    "reason": "the ref-doc documents an optional definition table the binding never reads; passing one is ignored"
   },
   "defold-1.13.1:b2d.joint.create_prismatic:manual": {
     "verdict": "manual",
@@ -2204,9 +1418,8 @@
     "reason": "luaL_checkinteger at a non-literal index; lua_toboolean at a non-literal index"
   },
   "defold-1.13.1:b2d.shape.get_aabb:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.1:b2d.shape.get_body:manual": {
     "verdict": "manual",
@@ -2225,19 +1438,16 @@
     "reason": "luaL_checkinteger at a non-literal index"
   },
   "defold-1.13.1:b2d.shape.get_density:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.1:b2d.shape.get_filter_data:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.1:b2d.shape.get_friction:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.1:b2d.shape.get_mass_data:manual": {
     "verdict": "manual",
@@ -2248,9 +1458,8 @@
     "reason": "luaL_checkinteger at a non-literal index"
   },
   "defold-1.13.1:b2d.shape.get_restitution:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.1:b2d.shape.get_sensor_capacity:manual": {
     "verdict": "manual",
@@ -2265,101 +1474,65 @@
     "reason": "luaL_checkinteger at a non-literal index"
   },
   "defold-1.13.1:b2d.shape.get_type:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.1:b2d.shape.get_world:manual": {
     "verdict": "manual",
     "reason": "luaL_checkinteger at a non-literal index"
   },
   "defold-1.13.1:b2d.shape.is_sensor:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.1:b2d.shape.is_valid:arity": {
-    "verdict": "open",
-    "extracted": "2..2",
-    "declared": "1..2"
+    "verdict": "accepted",
+    "reason": "a shape handle returns before the index is read; the (body, index) form reads both, and the declaration takes either"
   },
   "defold-1.13.1:b2d.shape.is_valid:manual:1": { "verdict": "manual", "reason": "lua_type switch" },
   "defold-1.13.1:b2d.shape.is_valid:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
+    "verdict": "accepted",
+    "reason": "a shape handle returns before the index is read; the (body, index) form reads both, and the declaration takes either"
   },
   "defold-1.13.1:b2d.shape.ray_cast:manual": {
     "verdict": "manual",
     "reason": "luaL_checkinteger at a non-literal index; luaL_checknumber at a non-literal index"
   },
   "defold-1.13.1:b2d.shape.refilter:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.1:b2d.shape.set_density:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.1:b2d.shape.set_filter_data:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.1:b2d.shape.set_friction:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.1:b2d.shape.set_material:manual": {
     "verdict": "manual",
     "reason": "luaL_checkinteger at a non-literal index; luaL_checkinteger at a non-literal index"
   },
   "defold-1.13.1:b2d.shape.set_restitution:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.1:b2d.shape.set_sensor:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.1:b2d.shape.set_shape:manual": {
     "verdict": "manual",
     "reason": "luaL_checkinteger at a non-literal index; lua_toboolean at a non-literal index"
   },
   "defold-1.13.1:b2d.shape.test_point:missing-declaration": {
-    "verdict": "open",
-    "extracted": "bound",
-    "declared": "absent"
-  },
-  "defold-1.13.1:b2d.world.cast_shape:field-undeclared:2.center1": {
-    "verdict": "open",
-    "extracted": "read",
-    "declared": "not declared"
-  },
-  "defold-1.13.1:b2d.world.cast_shape:field-undeclared:2.center2": {
-    "verdict": "open",
-    "extracted": "read",
-    "declared": "not declared"
-  },
-  "defold-1.13.1:b2d.world.overlap_shape:field-undeclared:2.center1": {
-    "verdict": "open",
-    "extracted": "read",
-    "declared": "not declared"
-  },
-  "defold-1.13.1:b2d.world.overlap_shape:field-undeclared:2.center2": {
-    "verdict": "open",
-    "extracted": "read",
-    "declared": "not declared"
-  },
-  "defold-1.13.1:camera.get_orthographic_auto_zoom:too-narrow:1": {
-    "verdict": "open",
-    "extracted": "hash|number|string|url",
-    "declared": "number|url"
+    "verdict": "accepted",
+    "reason": "bound by the Box2D v3 shape table but undocumented; the declarations cover the documented b2d.shape API"
   },
   "defold-1.13.1:collectionproxy.load:manual:2": {
     "verdict": "manual",
@@ -2369,142 +1542,6 @@
     "verdict": "manual",
     "reason": "lua_type switch"
   },
-  "defold-1.13.1:graphics.COORDINATE_SPACE_DEFAULT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.1:graphics.COORDINATE_SPACE_LOCAL:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.1:graphics.COORDINATE_SPACE_WORLD:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.1:graphics.DATA_TYPE_BYTE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.1:graphics.DATA_TYPE_FLOAT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.1:graphics.DATA_TYPE_INT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.1:graphics.DATA_TYPE_SHORT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.1:graphics.DATA_TYPE_UNSIGNED_BYTE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.1:graphics.DATA_TYPE_UNSIGNED_INT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.1:graphics.DATA_TYPE_UNSIGNED_SHORT:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.1:gui.set:arity": { "verdict": "open", "extracted": "3..4", "declared": "2..4" },
-  "defold-1.13.1:material.CONSTANT_TYPE_NORMAL:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.1:material.CONSTANT_TYPE_PROJECTION_INVERSE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.1:material.CONSTANT_TYPE_PROJECTION:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.1:material.CONSTANT_TYPE_TEXTURE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.1:material.CONSTANT_TYPE_TIME:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.1:material.CONSTANT_TYPE_USER_MATRIX4:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.1:material.CONSTANT_TYPE_USER:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.1:material.CONSTANT_TYPE_VIEW_INVERSE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.1:material.CONSTANT_TYPE_VIEW:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.1:material.CONSTANT_TYPE_VIEWPROJ_INVERSE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.1:material.CONSTANT_TYPE_VIEWPROJ:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.1:material.CONSTANT_TYPE_WORLD_INVERSE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.1:material.CONSTANT_TYPE_WORLD:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.1:material.CONSTANT_TYPE_WORLDVIEW_INVERSE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.1:material.CONSTANT_TYPE_WORLDVIEW:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.1:material.CONSTANT_TYPE_WORLDVIEWPROJ_INVERSE:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
-  "defold-1.13.1:material.CONSTANT_TYPE_WORLDVIEWPROJ:constant-missing-declaration": {
-    "verdict": "open",
-    "extracted": "registered",
-    "declared": "absent"
-  },
   "defold-1.13.1:render.set_blend_equation_separate:manual": {
     "verdict": "manual",
     "reason": "luaL_checknumber at a non-literal index"
@@ -2512,16 +1549,6 @@
   "defold-1.13.1:render.set_blend_func_separate:manual": {
     "verdict": "manual",
     "reason": "luaL_checknumber at a non-literal index"
-  },
-  "defold-1.13.1:resource.create_texture_async:arity": {
-    "verdict": "open",
-    "extracted": "4..4",
-    "declared": "2..4"
-  },
-  "defold-1.13.1:resource.create_texture_async:required-as-optional:4": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
   },
   "defold-1.9.8:*:missing-binding": {
     "verdict": "accepted",

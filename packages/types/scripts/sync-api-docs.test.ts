@@ -606,8 +606,10 @@ describe("sys multi-source merge", () => {
       `defold-${DEFOLD_VERSION}`,
       "sys_doc.json",
     );
-    const module = parseDefoldApiDoc(JSON.parse(readFileSync(path, "utf8")));
-    const names = new Set(module.functions.map((f) => f.name));
+    // Raw element names: the parse renames sys.set_render_enable to the name the
+    // engine registers, but the fixture itself carries upstream's.
+    const doc = JSON.parse(readFileSync(path, "utf8")) as { elements: { name: string }[] };
+    const names = new Set(doc.elements.map((element) => element.name));
     for (const fn of [
       "sys.load_buffer",
       "sys.load_buffer_async",

@@ -137,7 +137,7 @@ declare global {
      * end
      * `
      */
-    function get_maskbit(url: string | Hash | Url, group: string): boolean;
+    function get_maskbit(url: string | Hash | Url, group: string | Hash): boolean;
     /**
      * Gets collision shape data from a collision object
      *
@@ -405,7 +405,7 @@ declare global {
      * end
      * `
      */
-    function set_group(url: string | Hash | Url, group: string): void;
+    function set_group(url: string | Hash | Url, group: string | Hash): void;
     /**
      * Flips the collision shapes horizontally for a collision object
      *
@@ -447,7 +447,7 @@ declare global {
      * end
      * `
      */
-    function set_maskbit(url: string | Hash | Url, group: string, maskbit: boolean): void;
+    function set_maskbit(url: string | Hash | Url, group: string | Hash, maskbit: boolean): void;
     /**
      * Sets collision shape data for a collision object. Please note that updating data in 3D
      * can be quite costly for box and capsules. Because of the physics engine, the cost

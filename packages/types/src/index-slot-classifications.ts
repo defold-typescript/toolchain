@@ -167,15 +167,20 @@ export const INDEX_SLOT_CLASSIFICATIONS: ReadonlyMap<string, IndexSlotClassifica
     "resource.set_texture:param:table:page",
     { class: "passthrough-0", evidence: "slice of the array texture. Zero-based" },
   ],
-  ...["tilemap.set_tile:param:x", "tilemap.set_tile:param:y"].map(
-    (key): [string, IndexSlotClassification] => [
-      key,
-      {
-        class: "passthrough-1",
-        evidence: "the binding subtracts 1 from the checked coordinate",
-      },
-    ],
-  ),
+  ...[
+    "tilemap.set_tile:param:x",
+    "tilemap.set_tile:param:y",
+    "tilemap.get_tile:param:x",
+    "tilemap.get_tile:param:y",
+    "tilemap.get_tile_info:param:x",
+    "tilemap.get_tile_info:param:y",
+  ].map((key): [string, IndexSlotClassification] => [
+    key,
+    {
+      class: "passthrough-1",
+      evidence: "the binding subtracts 1 from the checked coordinate",
+    },
+  ]),
   ...["tilemap.get_tile:return:tile", "tilemap.set_tile:param:tile"].map(
     (key): [string, IndexSlotClassification] => [
       key,

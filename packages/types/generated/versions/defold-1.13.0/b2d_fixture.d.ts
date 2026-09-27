@@ -58,7 +58,7 @@ declare global {
      * polygon shapes use `vertices`, and chain shapes use `vertices`, `loop`, optional `prev_vertex`, and `next_vertex`.
      * Any angle values are in radians.
      */
-    function get_shape(body: Opaque<"b2Body">, fixture_index: number): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 };
+    function get_shape(body: Opaque<"b2Body">, fixture_index: number): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; center1?: Vector3; center2?: Vector3 };
     /**
      * Get the fixture type.
      *
@@ -89,7 +89,7 @@ declare global {
      * @param density - density in kg/m^2
      * @param update_mass - if true, reset body mass data after the change
      */
-    function set_density(body: Opaque<"b2Body">, fixture_index: number, density: number, update_mass: boolean): void;
+    function set_density(body: Opaque<"b2Body">, fixture_index: number, density: number, update_mass?: boolean): void;
     /**
      * Set fixture filter data for a child shape.
      *
@@ -142,7 +142,7 @@ declare global {
      * }
      * ```
      */
-    function set_shape(body: Opaque<"b2Body">, fixture_index: number, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, update_mass?: boolean): void;
+    function set_shape(body: Opaque<"b2Body">, fixture_index: number, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; center1?: Vector3; center2?: Vector3 }, update_mass?: boolean): void;
     /**
      * Test a point against a fixture.
      *

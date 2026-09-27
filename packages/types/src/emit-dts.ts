@@ -219,6 +219,18 @@ export const OVERLOAD_COVERED_SKIPS = new Set([
   "vmath.normalize",
 ]);
 
+// skipFunction FQNs withheld because no engine binding registers them in the
+// target that documents them, so the declared call would raise. Like
+// OVERLOAD_COVERED_SKIPS, the audit leaves them out of `droppedMembers`: the
+// surface loses nothing a script could call. The engine-binding diff reports a
+// missing binding if one is declared again.
+export const UNBOUND_SKIPS = new Set([
+  "b2d.body.get_contact_list",
+  "b2d.body.get_user_data",
+  "b2d.body.set_user_data",
+  "b2d.body.reset_mass_data",
+]);
+
 // Element names whose `table` slot is a prose-only `a table mapping X to Y`
 // shape the field-list parser cannot read, but whose key/value a human curated
 // from the doc. Emitted as `LuaMap<K, V>` because the key is a branded `Hash`,
@@ -247,6 +259,17 @@ export const RETURN_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
   // `returnvalues` is empty while every sibling `editor.tx.*` builder declares
   // one, and `editor.transact()` takes exactly that.
   ["editor.tx.add", 'Opaque<"transaction_step">'],
+  // The engine binding pushes a value the ref-doc never documents:
+  // script_sys.cpp:Sys_Save pushes whether the write succeeded,
+  // script_tilemap.cpp:TileMap_SetTile pushes false for an unknown layer or an
+  // out-of-range cell, and script_box2d_body_v3.cpp:Body_CreateShape pushes the
+  // created shape's info table through PushShapeInfo.
+  ["sys.save", "boolean"],
+  ["tilemap.set_tile", "boolean"],
+  [
+    "b2d.body.create_shape",
+    '{ index: number; shape_id: Opaque<"b2Shape">; type: number; sensor: boolean; density: number; friction: number; restitution: number; material: number; child_count: number; is_chain_segment: boolean }',
+  ],
 ]);
 
 // A function whose `returnvalues` declare a concrete type while the same slot's
@@ -301,26 +324,155 @@ export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> 
   ],
 ]);
 
-// A parameter whose declared `types` reject what the same element's prose, or
-// an upstream example, demonstrably passes — a render target by resource name,
-// a texture unit, a Lua sequence where `table` is declared. Admission rule: only
-// a slot upstream's own prose or example contradicts; a slot that is merely
-// imprecise is not a candidate. Every such slot is too narrow, never wrong, so
-// `adds` is appended to the mapped union rather than replacing it: the URL
-// address alias, array curation and constant mapping stay live, and optionality
-// stays with `isDocOptional`. Each entry records the upstream tokens it
-// contradicts and `param-correction-provenance.test.ts` pins them against every
-// retained vendored ref-doc. Once no retained target still declares those
+// A parameter whose declared `types` disagree with what the same element's
+// prose, an upstream example, or the engine binding demonstrably takes — a render
+// target by resource name, a texture unit, a Lua sequence where `table` is
+// declared, a hash the binding refuses as a string. Admission rule: only a slot
+// that evidence contradicts; a slot that is merely imprecise is not a candidate.
+// The correction edits the mapped union rather than replacing it: `adds` appends
+// what the slot also takes and `removes` drops members the binding raises on, so
+// the URL address alias, array curation and constant mapping stay live, and
+// optionality stays with `isDocOptional`. Each entry records the upstream tokens
+// it contradicts and `param-correction-provenance.test.ts` pins them against
+// every retained vendored ref-doc. Once no retained target still declares those
 // tokens the entry is deleted, never re-pinned.
 export interface ParamTypeCorrection {
-  readonly adds: string;
+  readonly adds?: string;
+  readonly removes?: readonly string[];
   readonly upstream: readonly string[];
   readonly reason: string;
 }
 
+const CAMERA_ADDRESS_REASON =
+  "render_script_camera.cpp:CheckRenderCamera resolves anything but a number handle through ResolveURL, which takes a string or a hash";
+
+const CAMERA_SLOT_FUNCTIONS = [
+  "get_aspect_ratio",
+  "get_auto_aspect_ratio",
+  "get_enabled",
+  "get_far_z",
+  "get_fov",
+  "get_near_z",
+  "get_orthographic_auto_zoom",
+  "get_orthographic_mode",
+  "get_orthographic_zoom",
+  "get_projection",
+  "get_view",
+  "screen_to_world",
+  "screen_xy_to_world",
+  "set_aspect_ratio",
+  "set_auto_aspect_ratio",
+  "set_far_z",
+  "set_fov",
+  "set_near_z",
+  "set_orthographic_mode",
+  "set_orthographic_zoom",
+  "world_to_screen",
+] as const;
+
 // Keyed `<element>:param:<slot>` like OPTIONAL_SLOT_CORRECTIONS, so a
 // same-named slot on another element is untouched.
-export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = new Map([
+export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = new Map<
+  string,
+  ParamTypeCorrection
+>([
+  ...CAMERA_SLOT_FUNCTIONS.map(
+    (name) =>
+      [
+        `camera.${name}:param:camera`,
+        {
+          adds: "string | Hash",
+          upstream: ["url", "number", "nil"],
+          reason: CAMERA_ADDRESS_REASON,
+        },
+      ] as const,
+  ),
+  ...(["set_group", "get_maskbit", "set_maskbit"] as const).map(
+    (name) =>
+      [
+        `physics.${name}:param:group`,
+        {
+          adds: "Hash",
+          upstream: ["string"],
+          reason: `script_physics.cpp reads the ${name} group with CheckHashOrString(L, 2)`,
+        },
+      ] as const,
+  ),
+  [
+    "resource.get_text_metrics:param:url",
+    {
+      adds: "string",
+      upstream: ["hash"],
+      reason: "script_resource.cpp:GetTextMetrics reads the font path with CheckHashOrString(L, 1)",
+    },
+  ],
+  [
+    "collectionproxy.get_resources:param:collectionproxy",
+    {
+      adds: "string | Hash",
+      upstream: ["url"],
+      reason:
+        "script_collectionproxy.cpp:CollectionProxy_GetResourcesInternal resolves the proxy through GetComponentFromLua, which takes a string or a hash",
+    },
+  ],
+  ...(["screen_to_local", "set_screen_position"] as const).map(
+    (name) =>
+      [
+        `gui.${name}:param:screen_position`,
+        {
+          adds: "Vector4",
+          upstream: ["vector3"],
+          reason: "gui_script.cpp:GetPositionFromArgumentIndex takes a vector3 or a vector4",
+        },
+      ] as const,
+  ),
+  [
+    "particlefx.set_constant:param:value",
+    {
+      adds: "Matrix4",
+      upstream: ["vector4"],
+      reason: "script_particlefx.cpp:ParticleFX_SetConstant takes a vector4 or a matrix4 value",
+    },
+  ],
+  ...(["animate", "cancel_animations"] as const).map(
+    (name) =>
+      [
+        `gui.${name}:param:property`,
+        {
+          adds: "Hash",
+          upstream: name === "animate" ? ["string", "constant"] : ["nil", "string", "constant"],
+          reason: `gui_script.cpp reads the ${name} property with CheckHashOrString(L, 2)`,
+        },
+      ] as const,
+  ),
+  [
+    "sound.get_group_name:param:group",
+    {
+      removes: ["string"],
+      upstream: ["string", "hash"],
+      reason: "script_sound.cpp:Sound_GetGroupName reads CheckHash(L, 1), which refuses a string",
+    },
+  ],
+  ...(["get_mesh_enabled", "set_mesh_enabled"] as const).map(
+    (name) =>
+      [
+        `model.${name}:param:mesh_id`,
+        {
+          removes: ["Url"],
+          upstream: ["string", "hash", "url"],
+          reason: `script_model.cpp reads the ${name} mesh id with CheckHashOrString(L, 2), which refuses a url`,
+        },
+      ] as const,
+  ),
+  [
+    "resource.create_texture_async:param:path",
+    {
+      removes: ["Hash"],
+      upstream: ["string", "hash"],
+      reason:
+        "script_resource.cpp:CheckCreateTextureResourceParams reads the path with luaL_checkstring(L, 1), which refuses a hash",
+    },
+  ],
   [
     "render.set_render_target:param:render_target",
     {
@@ -378,9 +530,10 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
   [
     "render.set_camera:param:camera",
     {
-      adds: "string",
+      adds: "string | Hash",
       upstream: ["url", "number", "nil"],
-      reason: 'example `render.set_camera("main:/my_go#camera")`',
+      reason:
+        'example `render.set_camera("main:/my_go#camera")`; render_script.cpp:RenderScript_SetCamera resolves a non-number camera through ResolveURL, which also takes a hash',
     },
   ],
   [
@@ -544,9 +697,10 @@ export const PROPERTY_KEY_RANGES: ReadonlyMap<string, PropertyKeyRange> = new Ma
 // examples skip — so the emitted declaration rejects the call the docs teach.
 //
 // Keyed `<element>:param:<slot>`, the shape `tableSlotKey` builds, so a
-// same-named slot on another element is untouched. The value is the upstream
-// evidence for that one entry: the example call that omits it, or the doc phrase
-// that names it optional. Both emitted shapes follow from one predicate — a
+// same-named slot on another element is untouched. The value is the evidence for
+// that one entry: the example call that omits it, the doc phrase that names it
+// optional, or the engine binding that reads it as omissible
+// (`<file>:<cFunction>`). Both emitted shapes follow from one predicate — a
 // trailing slot becomes `slot?:`, an interior one `slot: T | undefined`.
 //
 // Demonstrated omissions only. `resource.set_texture`'s buffer and
@@ -558,10 +712,6 @@ export const OPTIONAL_SLOT_CORRECTIONS: ReadonlyMap<string, string> = new Map([
     'example `resource.create_texture("/my_custom_texture.texturec", tparams)`; "optional buffer of precreated pixel data"',
   ],
   ["resource.create_texture_async:param:buffer", '"optional buffer of precreated pixel data"'],
-  [
-    "resource.create_texture_async:param:callback",
-    'example `resource.create_texture_async("/my_texture.texturec", tparams, tbuffer)`',
-  ],
   [
     "gui.new_texture:param:flip",
     'example `gui.new_texture("orange_tx", w, h, "rgb", string.rep(orange, w * h))`',
@@ -584,6 +734,30 @@ export const OPTIONAL_SLOT_CORRECTIONS: ReadonlyMap<string, string> = new Map([
     '"optional maximum translation fraction, defaults to 1"',
   ],
   ["iap.buy:param:options", '"optional parameters as properties"'],
+  [
+    "go.world_to_local_position:param:url",
+    "gameobject_script.cpp:Script_WorldToLocalPosition resolves argument 2 with ResolveInstance, which takes the calling instance when it is absent",
+  ],
+  [
+    "go.world_to_local_transform:param:url",
+    "gameobject_script.cpp:Script_WorldToLocalTransfrom resolves argument 2 with ResolveInstance, which takes the calling instance when it is absent",
+  ],
+  [
+    "go.cancel_animations:param:url",
+    "gameobject_script.cpp:Script_CancelAnimations resolves argument 1 with ResolveURL, which takes the calling instance when it is absent",
+  ],
+  [
+    "b2d.fixture.set_density:param:update_mass",
+    "script_box2d_fixture_v2.cpp:Fixture_SetDensity reads argument 4 only when lua_gettop(L) >= 4",
+  ],
+  [
+    "render.set_render_target:param:render_target",
+    "render_script.cpp:RenderScript_SetRenderTarget sets the default target when lua_gettop(L) == 0",
+  ],
+  [
+    "vmath.vector:param:t",
+    "script_vmath.cpp:Vector_new returns an empty vector when lua_gettop(L) == 0",
+  ],
   ["socket.newtry:param:finalizer", "socket.protect's example `local try = socket.newtry()`"],
   ...(
     [
@@ -605,6 +779,151 @@ export const OPTIONAL_SLOT_CORRECTIONS: ReadonlyMap<string, string> = new Map([
       [`b2d.joint.${name}:param:definition`, '"optional definition"'] as readonly [string, string],
   ),
 ]);
+
+// A parameter the ref-doc marks omissible — `[name]` or a `nil` type — that the
+// engine binding refuses to go without, so the emitted declaration accepts a call
+// that raises. It applies only where a ref-doc marks the slot, so it follows each
+// target's own markup, and it overrides OPTIONAL_SLOT_CORRECTIONS: the slot is
+// never emitted with `?`. `nil` records whether the binding still takes an
+// explicit nil there — `lua_isnil` answers false past the stack top, so such a
+// slot must be passed yet may be nil — which emits `slot: T | undefined`.
+//
+// Keyed `<element>:param:<slot>` like OPTIONAL_SLOT_CORRECTIONS. `evidence` is the
+// C++ binding, `<file>:<cFunction>`, and what it does with the slot;
+// `required-correction-provenance.test.ts` deletes an entry once no retained
+// target marks the slot omissible.
+export interface RequiredSlotCorrection {
+  readonly nil: boolean;
+  readonly evidence: string;
+}
+
+const COMPONENT_URL_EVIDENCE =
+  "resolves the url through GetComponentFromLua, which refuses the calling script's own url";
+
+export const REQUIRED_SLOT_CORRECTIONS: ReadonlyMap<string, RequiredSlotCorrection> = new Map<
+  string,
+  RequiredSlotCorrection
+>([
+  ...(["factory", "collectionfactory"] as const).flatMap((namespace) => {
+    const file = namespace === "factory" ? "script_factory.cpp" : "script_collection_factory.cpp";
+    const prefix = namespace === "factory" ? "FactoryComp" : "CollectionFactoryComp";
+    return [
+      ...(
+        [
+          ["get_status", "GetStatus"],
+          ["unload", "Unload"],
+          ["set_prototype", "SetPrototype"],
+          ["load", "Load"],
+        ] as const
+      ).map(
+        ([name, cFunction]) =>
+          [
+            `${namespace}.${name}:param:url`,
+            { nil: false, evidence: `${file}:${prefix}_${cFunction} ${COMPONENT_URL_EVIDENCE}` },
+          ] as const,
+      ),
+      [
+        `${namespace}.load:param:complete_function`,
+        {
+          nil: false,
+          evidence: `${file}:${prefix}_Load raises unless argument 2 is a function`,
+        },
+      ] as const,
+      [
+        `${namespace}.set_prototype:param:prototype`,
+        {
+          nil: true,
+          evidence: `${file}:${prefix}_SetPrototype reads luaL_checkstring(L, 2) unless lua_isnil(L, 2)`,
+        },
+      ] as const,
+    ];
+  }),
+  [
+    "collectionproxy.set_collection:param:url",
+    {
+      nil: false,
+      evidence: `script_collectionproxy.cpp:CollectionProxy_SetCollection ${COMPONENT_URL_EVIDENCE}`,
+    },
+  ],
+  [
+    "collectionproxy.set_collection:param:prototype",
+    {
+      nil: true,
+      evidence:
+        "script_collectionproxy.cpp:CollectionProxy_SetCollection reads luaL_checkstring(L, 2) unless lua_isnil(L, 2)",
+    },
+  ],
+  [
+    "sound.set_gain:param:gain",
+    { nil: false, evidence: "script_sound.cpp:Sound_SetGain reads luaL_checknumber(L, 2)" },
+  ],
+  [
+    "sound.set_pan:param:pan",
+    { nil: false, evidence: "script_sound.cpp:Sound_SetPan reads luaL_checknumber(L, 2)" },
+  ],
+  [
+    "resource.create_buffer:param:table",
+    {
+      nil: false,
+      evidence: "script_resource.cpp:CreateBuffer checks luaL_checktype(L, 2, LUA_TTABLE)",
+    },
+  ],
+  [
+    "resource.create_sound_data:param:options",
+    {
+      nil: false,
+      evidence: "script_resource.cpp:CreateSoundData checks luaL_checktype(L, 2, LUA_TTABLE)",
+    },
+  ],
+  ...(["move_above", "move_below"] as const).map(
+    (name) =>
+      [
+        `gui.${name}:param:reference`,
+        {
+          nil: true,
+          evidence: `gui_script.cpp:Lua${name === "move_above" ? "MoveAbove" : "MoveBelow"} reads a node from argument 2 unless lua_isnil(L, 2)`,
+        },
+      ] as const,
+  ),
+  [
+    "gui.set_parent:param:parent",
+    {
+      nil: true,
+      evidence: "gui_script.cpp:LuaSetParent reads a node from argument 2 unless lua_isnil(L, 2)",
+    },
+  ],
+  [
+    "gui.set:param:value",
+    {
+      nil: true,
+      evidence: "gui_script.cpp:LuaSet converts argument 3 with LuaToVar unless lua_isnil(L, 3)",
+    },
+  ],
+  [
+    "window.set_listener:param:callback",
+    {
+      nil: true,
+      evidence: "script_window.cpp:SetListener checks luaL_checkany(L, 1); nil clears the listener",
+    },
+  ],
+  [
+    "html5.set_interaction_listener:param:callback",
+    {
+      nil: true,
+      evidence:
+        "script_html5_js.cpp:Html5_SetInteractionListener checks luaL_checkany(L, 1); nil clears the listener",
+    },
+  ],
+]);
+
+function requiredSlotCorrection(
+  p: ApiParameter,
+  elementName: string,
+): RequiredSlotCorrection | undefined {
+  return isMarkedOptional(p)
+    ? REQUIRED_SLOT_CORRECTIONS.get(tableSlotKey(elementName, "param", p.name))
+    : undefined;
+}
 
 // A first slot upstream documents as standing in for a second argument list:
 // every `b2d.shape` function takes a shape handle "or pass `body, shape_index`".
@@ -1238,8 +1557,10 @@ export const SOCKET_HANDLE_TOKENS = ["client", "master", "unconnected"] as const
 // b2d submodule curations below so a single shape is defined once.
 //
 // The shape table is a discriminated union of circle/edge/polygon/box/chain
-// forms keyed by `type` (a b2d.shape.SHAPE_TYPE_* constant); every kind-specific
-// field is optional because only one form's fields are present per value.
+// forms, plus the Box2D v3 capsule, keyed by `type` (a b2d.shape.SHAPE_TYPE_*
+// constant); every kind-specific field is optional because only one form's
+// fields are present per value. The capsule's `center1`/`center2` come from
+// script_box2d_shape_v3.cpp, which reads them; the ref-doc prose never names them.
 const B2D_SHAPE_TABLE_FIELDS: readonly TableField[] = [
   { name: "type", types: ["number"] },
   { name: "radius", types: ["number"], optional: true },
@@ -1255,6 +1576,8 @@ const B2D_SHAPE_TABLE_FIELDS: readonly TableField[] = [
   { name: "loop", types: ["boolean"], optional: true },
   { name: "prev_vertex", types: ["vector3"], optional: true },
   { name: "next_vertex", types: ["vector3"], optional: true },
+  { name: "center1", types: ["vector3"], optional: true },
+  { name: "center2", types: ["vector3"], optional: true },
 ];
 // A fixture info entry (index/type/sensor/density/friction/restitution/child_count).
 const B2D_FIXTURE_INFO_FIELDS: readonly TableField[] = [
@@ -2097,9 +2420,11 @@ export const CALLBACK_SIGNATURE_CURATIONS: ReadonlyMap<string, string> = new Map
 // hand-curated. Each geometry is the triangle data (the create-input form
 // get_atlas mirrors via its cross-ref), and `vertices`/`uvs`/`indices` are
 // brace-form number-lists, hence `numberList: true` (emitted `number[]`).
-// Injected onto the already-parsed field list (every sibling stays
-// parser-authoritative), so this is a nested-field curation, not a whole-slot
-// object curation.
+// resource.create_atlas documents a geometry's `id`/`width`/`height`/pivot
+// members, so the three arrays join those: script_resource.cpp reads them from
+// each `geometries` entry. Injected onto the already-parsed field list (every
+// sibling stays parser-authoritative), so this is a nested-field curation, not a
+// whole-slot object curation.
 const ATLAS_GEOMETRY_MEMBERS: readonly TableField[] = [
   { name: "vertices", types: ["table"], numberList: true },
   { name: "uvs", types: ["table"], numberList: true },
@@ -2108,6 +2433,7 @@ const ATLAS_GEOMETRY_MEMBERS: readonly TableField[] = [
 
 export const NESTED_FIELD_CURATIONS: ReadonlyMap<string, readonly TableField[]> = new Map([
   ["resource.set_atlas:param:table:geometries", ATLAS_GEOMETRY_MEMBERS],
+  ["resource.create_atlas:param:table:geometries", ATLAS_GEOMETRY_MEMBERS],
   ["resource.get_atlas:return:data:geometries", ATLAS_GEOMETRY_MEMBERS],
 ]);
 
@@ -2151,24 +2477,53 @@ export const TABLE_FIELD_TYPE_OVERRIDES: ReadonlyMap<string, string> = new Map([
 // upstream omits, leaving the documented fields parser-authoritative so an
 // upstream edit to any of them lands without a hand-maintained restatement.
 //
-// `evidence` pins where upstream itself shows the field. applyFieldAdditions
-// throws once the parse recovers it, so upstream documenting the field reds
-// here and the entry is deleted rather than re-pinned.
+// `evidence` pins where upstream itself shows each field, or the engine binding
+// that reads it. applyFieldAdditions throws once the parse recovers one, so
+// upstream documenting a field reds here and the entry is deleted rather than
+// re-pinned.
 //
 // Keyed `<element>:<kind>:<slot>`, the TABLE_SLOT_CURATIONS shape.
 export interface TableFieldAddition {
-  readonly field: TableField;
+  readonly fields: readonly TableField[];
   readonly evidence: readonly string[];
 }
 
-export const TABLE_SLOT_FIELD_ADDITIONS: ReadonlyMap<string, TableFieldAddition> = new Map([
+const PROPERTY_OPTION_KEYS: TableField = {
+  name: "keys",
+  types: ["table"],
+  optional: true,
+  tsType: "(Hash | string)[]",
+};
+
+export const TABLE_SLOT_FIELD_ADDITIONS: ReadonlyMap<string, TableFieldAddition> = new Map<
+  string,
+  TableFieldAddition
+>([
   [
     "resource.create_texture:param:table",
     {
-      field: { name: "page_count", types: ["number"], optional: true },
+      fields: [{ name: "page_count", types: ["number"], optional: true }],
       evidence: [
         "the array-texture example on this element creates with `page_count = 5`",
         "resource.get_texture_info documents `page_count` as the texture array's page count",
+      ],
+    },
+  ],
+  [
+    "gui.get:param:options",
+    {
+      fields: [{ name: "key", types: ["string", "hash"], optional: true }, PROPERTY_OPTION_KEYS],
+      evidence: [
+        "gui_script.cpp:LuaGet reads its options through dmGameObject::LuaToPropertyOptions, which reads index, key and keys",
+      ],
+    },
+  ],
+  [
+    "gui.set:param:options",
+    {
+      fields: [PROPERTY_OPTION_KEYS],
+      evidence: [
+        "gui_script.cpp:LuaSet reads its options through dmGameObject::LuaToPropertyOptions, which reads index, key and keys",
       ],
     },
   ],
@@ -2277,10 +2632,12 @@ export function applyFieldAdditions(
   const key = tableSlotKey(elementName, slotKind, slotName);
   const addition = TABLE_SLOT_FIELD_ADDITIONS.get(key);
   if (addition === undefined) return [...fields];
-  if (fields.some((field) => field.name === addition.field.name)) {
-    throw new Error(`field addition names a recovered field: ${key}:${addition.field.name}`);
+  for (const added of addition.fields) {
+    if (fields.some((field) => field.name === added.name)) {
+      throw new Error(`field addition names a recovered field: ${key}:${added.name}`);
+    }
   }
-  return [...fields, addition.field];
+  return [...fields, ...addition.fields];
 }
 
 // Pin a parser-recovered field's TS type from TABLE_FIELD_TYPE_OVERRIDES,
@@ -3462,6 +3819,7 @@ export function isMarkedOptional(p: ApiParameter): boolean {
 // second copy of the rule. The fidelity audit reads it too, to tell which slots
 // the emitted surface still makes required.
 export function isDocOptional(p: ApiParameter, elementName: string): boolean {
+  if (requiredSlotCorrection(p, elementName)) return false;
   if (isMarkedOptional(p)) return true;
   return OPTIONAL_SLOT_CORRECTIONS.has(tableSlotKey(elementName, "param", p.name));
 }
@@ -3524,7 +3882,44 @@ function parameterType(
         )
       : "unknown";
   const correction = PARAM_TYPE_CORRECTIONS.get(tableSlotKey(elementName, "param", p.name));
-  return correction === undefined ? mapped : `${mapped} | ${correction.adds}`;
+  if (correction === undefined) return mapped;
+  const kept =
+    correction.removes === undefined ? mapped : withoutUnionMembers(mapped, correction.removes);
+  return correction.adds === undefined ? kept : `${kept} | ${correction.adds}`;
+}
+
+function isFunctionTypeText(ts: string): boolean {
+  let depth = 0;
+  for (let i = 0; i < ts.length - 1; i++) {
+    const c = ts[i];
+    if (c === "(" || c === "[" || c === "{" || c === "<") depth++;
+    else if (c === ")" || c === "]" || c === "}" || (c === ">" && ts[i - 1] !== "=")) depth--;
+    else if (c === "=" && ts[i + 1] === ">" && depth === 0) return true;
+  }
+  return false;
+}
+
+// Drops whole top-level members from a rendered union, leaving nested unions
+// inside brackets, braces or generics untouched.
+function withoutUnionMembers(union: string, removed: readonly string[]): string {
+  const members: string[] = [];
+  let depth = 0;
+  let start = 0;
+  for (let i = 0; i < union.length; i++) {
+    const c = union[i];
+    if (c === "(" || c === "[" || c === "{" || c === "<") depth++;
+    else if (c === ")" || c === "]" || c === "}" || c === ">") depth--;
+    else if (c === "|" && depth === 0) {
+      members.push(union.slice(start, i).trim());
+      start = i + 1;
+    }
+  }
+  members.push(union.slice(start).trim());
+  const kept = members.filter((member) => !removed.includes(member));
+  if (kept.length === members.length) {
+    throw new Error(`withoutUnionMembers: none of ${removed.join(", ")} is a member of ${union}`);
+  }
+  return kept.join(" | ");
 }
 
 const VARARG_PREFIX = "...";
@@ -3599,8 +3994,12 @@ function emitParameter(
   // projection cannot mark it) keeps its optionality as `| undefined` — TSTL
   // lowers `undefined` to `nil`, the faithful call. Trailing optionals keep the
   // `?` form; required params are untouched.
-  const interiorOptional = !optional && isDocOptional(p, elementName) ? " | undefined" : "";
-  return { text: `${name}${optional ? "?" : ""}: ${ts}${interiorOptional}`, ts };
+  const nilRequired = requiredSlotCorrection(p, elementName)?.nil === true;
+  const interiorOptional = !optional && (isDocOptional(p, elementName) || nilRequired);
+  // `(a) => void | undefined` reads as a function returning `void | undefined`.
+  const operand = interiorOptional && isFunctionTypeText(ts) ? `(${ts})` : ts;
+  const text = `${name}${optional ? "?" : ""}: ${operand}${interiorOptional ? " | undefined" : ""}`;
+  return { text, ts };
 }
 
 function emitReturn(
@@ -3857,12 +4256,15 @@ export function applyNestedFieldCurations(
 ): TableField[] {
   if (slotKind === undefined || slotName === undefined) return [...fields];
   return fields.map((field) => {
-    if (field.fields !== undefined) return field;
     const curated = NESTED_FIELD_CURATIONS.get(
       nestedFieldKey(elementName, slotKind, slotName, field.name),
     );
     if (curated === undefined) return field;
-    return { ...field, fields: [...curated], isList: true };
+    // A parsed member list keeps its members; the curation supplies the ones
+    // upstream flattened to the slot's top level.
+    const parsed = field.fields ?? [];
+    const missing = curated.filter((member) => !parsed.some((p) => p.name === member.name));
+    return { ...field, fields: [...parsed, ...missing], isList: true };
   });
 }
 

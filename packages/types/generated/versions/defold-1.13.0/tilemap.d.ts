@@ -50,8 +50,8 @@ declare global {
      *
      * @param url - the tile map
      * @param layer - name of the layer for the tile
-     * @param x - x-coordinate of the tile
-     * @param y - y-coordinate of the tile
+     * @param x - x-coordinate of the tile. 1-based.
+     * @param y - y-coordinate of the tile. 1-based.
      * @returns index of the tile
      * @example
      * ```ts
@@ -71,8 +71,8 @@ declare global {
      *
      * @param url - the tile map
      * @param layer - name of the layer for the tile
-     * @param x - x-coordinate of the tile
-     * @param y - y-coordinate of the tile
+     * @param x - x-coordinate of the tile. 1-based.
+     * @param y - y-coordinate of the tile. 1-based.
      * @returns index of the tile
      * @example
      * ```ts
@@ -171,7 +171,7 @@ declare global {
      * }
      * ```
      */
-    function set_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: number): void;
+    function set_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: number): boolean;
     /**
      * Sets the visibility of the tilemap layer
      *

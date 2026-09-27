@@ -70,6 +70,43 @@ function byVersion(targets: readonly ApiTarget[]): ApiTarget[] {
   });
 }
 
+function constantsOf(
+  modules: readonly ModuleManifestEntry[],
+  namespace: string,
+  prefix: string,
+): string[] {
+  return elementsOf(modules, namespace)
+    .filter((e) => e.type === "CONSTANT" && e.name.startsWith(`${namespace}.${prefix}`))
+    .map((e) => e.name)
+    .sort();
+}
+
+describe("constant families the engine registers and prose names", () => {
+  const current = loadTargetModules(targetById("defold-1.13.1"));
+  const older = loadTargetModules(targetById("defold-1.12.4"));
+
+  test("the vertex attribute data types and coordinate spaces a material doc lists", () => {
+    expect(constantsOf(current, "graphics", "DATA_TYPE_")).toContain("graphics.DATA_TYPE_FLOAT");
+    expect(constantsOf(current, "graphics", "COORDINATE_SPACE_")).toEqual([
+      "graphics.COORDINATE_SPACE_DEFAULT",
+      "graphics.COORDINATE_SPACE_LOCAL",
+      "graphics.COORDINATE_SPACE_WORLD",
+    ]);
+    expect(constantsOf(older, "graphics", "DATA_TYPE_")).toEqual([]);
+  });
+
+  test("the material constant types set_constants lists", () => {
+    expect(constantsOf(current, "material", "CONSTANT_TYPE_")).toContain(
+      "material.CONSTANT_TYPE_VIEWPROJ",
+    );
+  });
+
+  test("a constant named in a function's description table", () => {
+    expect(constantsOf(current, "render", "TEXTURE_BIT")).toEqual(["render.TEXTURE_BIT"]);
+    expect(constantsOf(older, "render", "TEXTURE_BIT")).toEqual(["render.TEXTURE_BIT"]);
+  });
+});
+
 describe("synthesizeProseConstants", () => {
   test("each committed target's graphics module declares exactly the semantic types its material doc evidences", () => {
     for (const target of committedTargets()) {

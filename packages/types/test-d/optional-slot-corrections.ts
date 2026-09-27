@@ -24,16 +24,24 @@ const tparams = {
 const created: Hash = resource.create_texture("/my_custom_texture.texturec", tparams);
 void created;
 
-// resource.create_texture_async — the buffer is omissible, and so is the
-// callback. Both the trailing form and the interior form (an explicit
-// `undefined` buffer with a callback after it) are calls the engine accepts.
-const [asyncHash, requestId] = resource.create_texture_async("/my_texture.texturec", tparams, buf);
+// resource.create_texture_async — the buffer is omissible, but the engine hands
+// argument 4 to dmScript::CreateCallback, which raises without a function, so
+// the buffer is the interior `undefined` form and the callback is required.
+const [asyncHash, requestId] = resource.create_texture_async(
+  "/my_texture.texturec",
+  tparams,
+  buf,
+  (...args: unknown[]) => {
+    void args;
+  },
+);
 void asyncHash;
 void requestId;
-resource.create_texture_async("/my_texture.texturec", tparams);
 resource.create_texture_async("/my_texture.texturec", tparams, undefined, (...args: unknown[]) => {
   void args;
 });
+// @ts-expect-error the callback is required
+resource.create_texture_async("/my_texture.texturec", tparams, buf);
 
 // gui.new_texture / gui.set_texture_data — `flip` is absent from every example.
 const orange = string.rep("ÿ", 3);

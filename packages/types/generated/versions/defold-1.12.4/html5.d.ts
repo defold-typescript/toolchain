@@ -48,7 +48,7 @@ declare global {
      * });
      * ```
      */
-    function set_interaction_listener(callback?: (self: unknown) => void): void;
+    function set_interaction_listener(callback: ((self: unknown) => void) | undefined): void;
   }
 }
 

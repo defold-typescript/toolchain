@@ -7,6 +7,74 @@ declare global {
    */
   namespace material {
     /**
+     * Material constant type, for `material.set_constants`.
+     */
+    const CONSTANT_TYPE_NORMAL: number & { readonly __brand: "material.CONSTANT_TYPE_NORMAL" };
+    /**
+     * Material constant type, for `material.set_constants`.
+     */
+    const CONSTANT_TYPE_PROJECTION: number & { readonly __brand: "material.CONSTANT_TYPE_PROJECTION" };
+    /**
+     * Material constant type, for `material.set_constants`.
+     */
+    const CONSTANT_TYPE_PROJECTION_INVERSE: number & { readonly __brand: "material.CONSTANT_TYPE_PROJECTION_INVERSE" };
+    /**
+     * Material constant type, for `material.set_constants`.
+     */
+    const CONSTANT_TYPE_TEXTURE: number & { readonly __brand: "material.CONSTANT_TYPE_TEXTURE" };
+    /**
+     * Material constant type, for `material.set_constants`.
+     */
+    const CONSTANT_TYPE_TIME: number & { readonly __brand: "material.CONSTANT_TYPE_TIME" };
+    /**
+     * Material constant type, for `material.set_constants`.
+     */
+    const CONSTANT_TYPE_USER: number & { readonly __brand: "material.CONSTANT_TYPE_USER" };
+    /**
+     * Material constant type, for `material.set_constants`.
+     */
+    const CONSTANT_TYPE_USER_MATRIX4: number & { readonly __brand: "material.CONSTANT_TYPE_USER_MATRIX4" };
+    /**
+     * Material constant type, for `material.set_constants`.
+     */
+    const CONSTANT_TYPE_VIEW: number & { readonly __brand: "material.CONSTANT_TYPE_VIEW" };
+    /**
+     * Material constant type, for `material.set_constants`.
+     */
+    const CONSTANT_TYPE_VIEW_INVERSE: number & { readonly __brand: "material.CONSTANT_TYPE_VIEW_INVERSE" };
+    /**
+     * Material constant type, for `material.set_constants`.
+     */
+    const CONSTANT_TYPE_VIEWPROJ: number & { readonly __brand: "material.CONSTANT_TYPE_VIEWPROJ" };
+    /**
+     * Material constant type, for `material.set_constants`.
+     */
+    const CONSTANT_TYPE_VIEWPROJ_INVERSE: number & { readonly __brand: "material.CONSTANT_TYPE_VIEWPROJ_INVERSE" };
+    /**
+     * Material constant type, for `material.set_constants`.
+     */
+    const CONSTANT_TYPE_WORLD: number & { readonly __brand: "material.CONSTANT_TYPE_WORLD" };
+    /**
+     * Material constant type, for `material.set_constants`.
+     */
+    const CONSTANT_TYPE_WORLD_INVERSE: number & { readonly __brand: "material.CONSTANT_TYPE_WORLD_INVERSE" };
+    /**
+     * Material constant type, for `material.set_constants`.
+     */
+    const CONSTANT_TYPE_WORLDVIEW: number & { readonly __brand: "material.CONSTANT_TYPE_WORLDVIEW" };
+    /**
+     * Material constant type, for `material.set_constants`.
+     */
+    const CONSTANT_TYPE_WORLDVIEW_INVERSE: number & { readonly __brand: "material.CONSTANT_TYPE_WORLDVIEW_INVERSE" };
+    /**
+     * Material constant type, for `material.set_constants`.
+     */
+    const CONSTANT_TYPE_WORLDVIEWPROJ: number & { readonly __brand: "material.CONSTANT_TYPE_WORLDVIEWPROJ" };
+    /**
+     * Material constant type, for `material.set_constants`.
+     */
+    const CONSTANT_TYPE_WORLDVIEWPROJ_INVERSE: number & { readonly __brand: "material.CONSTANT_TYPE_WORLDVIEWPROJ_INVERSE" };
+    /**
      * Returns a table of all the shader constants in the material. This function will return all the shader constants
      * that are used in both the vertex and the fragment shaders.
      *

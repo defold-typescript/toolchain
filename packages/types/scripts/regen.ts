@@ -264,6 +264,12 @@ function oneLevelDeeper(importPath: string): string {
 // names — the `<namespace>.` prefix is stripped before matching — and they
 // withhold VARIABLEs as well as FUNCTIONs.
 //
+// On a `b2d.body` entry they withhold what that release documents but neither
+// Box2D binding registers, so the call would raise: `get_user_data`,
+// `set_user_data` and `get_contact_list` from 1.13, `reset_mass_data` from
+// 1.12.4. The engine-binding diff reports a missing binding the moment one is
+// declared again.
+//
 // On the `editor` entry, the editor VM's own `http`/`json`/`zip`/`zlib`/
 // `pprint`/`localization`/`tilemap.tiles` sit in that same upstream document
 // under their own top-level namespaces. They are emitted from their own

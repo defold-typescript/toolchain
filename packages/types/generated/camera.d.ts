@@ -1,5 +1,5 @@
 /** @noSelfInFile */
-import type { Matrix4, Url, Vector3 } from "../src/core-types";
+import type { Hash, Matrix4, Url, Vector3 } from "../src/core-types";
 
 declare global {
   /**
@@ -30,7 +30,7 @@ declare global {
      * @param camera - camera id
      * @returns the effective aspect ratio.
      */
-    function get_aspect_ratio(camera?: Url | number): number;
+    function get_aspect_ratio(camera?: Url | number | string | Hash): number;
     /**
      * Returns whether auto aspect ratio is enabled. When enabled, the camera automatically
      * calculates aspect ratio from render target dimensions. When disabled, uses the
@@ -39,7 +39,7 @@ declare global {
      * @param camera - camera id
      * @returns true if auto aspect ratio is enabled
      */
-    function get_auto_aspect_ratio(camera?: Url | number): boolean;
+    function get_auto_aspect_ratio(camera?: Url | number | string | Hash): boolean;
     /**
      * This function returns a table with all the camera URLs that have been
      * registered in the render context.
@@ -62,28 +62,28 @@ declare global {
      * @param camera - camera id
      * @returns true if the camera is enabled
      */
-    function get_enabled(camera?: Url | number): boolean;
+    function get_enabled(camera?: Url | number | string | Hash): boolean;
     /**
      * get far z
      *
      * @param camera - camera id
      * @returns the far z.
      */
-    function get_far_z(camera?: Url | number): number;
+    function get_far_z(camera?: Url | number | string | Hash): number;
     /**
      * get field of view
      *
      * @param camera - camera id
      * @returns the field of view.
      */
-    function get_fov(camera?: Url | number): number;
+    function get_fov(camera?: Url | number | string | Hash): number;
     /**
      * get near z
      *
      * @param camera - camera id
      * @returns the near z.
      */
-    function get_near_z(camera?: Url | number): number;
+    function get_near_z(camera?: Url | number | string | Hash): number;
     /**
      * Gets the orthographic zoom calculated from the current window and project dimensions
      * in auto-fit and auto-cover modes. Returns 1.0 in fixed mode.
@@ -91,7 +91,7 @@ declare global {
      * @param camera - camera id
      * @returns the calculated orthographic auto zoom.
      */
-    function get_orthographic_auto_zoom(camera?: Url | number): number;
+    function get_orthographic_auto_zoom(camera?: Url | number | string | Hash): number;
     /**
      * get orthographic zoom mode
      *
@@ -99,7 +99,7 @@ declare global {
      * @returns one of camera.ORTHO_MODE_FIXED, camera.ORTHO_MODE_AUTO_FIT or
      * camera.ORTHO_MODE_AUTO_COVER
      */
-    function get_orthographic_mode(camera?: Url | number): number;
+    function get_orthographic_mode(camera?: Url | number | string | Hash): number;
     /**
      * Gets the positive user-controlled orthographic zoom multiplier. In auto-fit and auto-cover
      * modes, this value is multiplied with camera.get_orthographic_auto_zoom(camera).
@@ -107,21 +107,21 @@ declare global {
      * @param camera - camera id
      * @returns the positive zoom multiplier when the camera uses orthographic projection.
      */
-    function get_orthographic_zoom(camera?: Url | number): number;
+    function get_orthographic_zoom(camera?: Url | number | string | Hash): number;
     /**
      * get projection matrix
      *
      * @param camera - camera id
      * @returns the projection matrix.
      */
-    function get_projection(camera?: Url | number): Matrix4;
+    function get_projection(camera?: Url | number | string | Hash): Matrix4;
     /**
      * get view matrix
      *
      * @param camera - camera id
      * @returns the view matrix.
      */
-    function get_view(camera?: Url | number): Matrix4;
+    function get_view(camera?: Url | number | string | Hash): Matrix4;
     /**
      * Converts a screen-space 2D point with view depth to a 3D world point.
      * z is the view depth in world units measured from the camera plane along the camera forward axis.
@@ -154,7 +154,7 @@ declare global {
      * });
      * ```
      */
-    function screen_to_world(pos: Vector3, camera?: Url | number): Vector3;
+    function screen_to_world(pos: Vector3, camera?: Url | number | string | Hash): Vector3;
     /**
      * Converts 2D screen coordinates (x,y) to the 3D world-space point on the camera's near plane for that pixel.
      * If a camera isn't specified, the last enabled camera is used.
@@ -178,7 +178,7 @@ declare global {
      * });
      * ```
      */
-    function screen_xy_to_world(x: number, y: number, camera?: Url | number): Vector3;
+    function screen_xy_to_world(x: number, y: number, camera?: Url | number | string | Hash): Vector3;
     /**
      * Sets the manual aspect ratio for the camera. This value is only used when
      * auto aspect ratio is disabled. To disable auto aspect ratio and use this
@@ -187,7 +187,7 @@ declare global {
      * @param camera - camera id
      * @param aspect_ratio - the manual aspect ratio value.
      */
-    function set_aspect_ratio(camera: Url | number | undefined, aspect_ratio: number): void;
+    function set_aspect_ratio(camera: Url | number | string | Hash | undefined, aspect_ratio: number): void;
     /**
      * Enables or disables automatic aspect ratio calculation. When enabled (true),
      * the camera automatically calculates aspect ratio from render target dimensions.
@@ -196,35 +196,35 @@ declare global {
      * @param camera - camera id
      * @param auto_aspect_ratio - true to enable auto aspect ratio
      */
-    function set_auto_aspect_ratio(camera: Url | number | undefined, auto_aspect_ratio: boolean): void;
+    function set_auto_aspect_ratio(camera: Url | number | string | Hash | undefined, auto_aspect_ratio: boolean): void;
     /**
      * set far z
      *
      * @param camera - camera id
      * @param far_z - the far z.
      */
-    function set_far_z(camera: Url | number | undefined, far_z: number): void;
+    function set_far_z(camera: Url | number | string | Hash | undefined, far_z: number): void;
     /**
      * set field of view
      *
      * @param camera - camera id
      * @param fov - the field of view.
      */
-    function set_fov(camera: Url | number | undefined, fov: number): void;
+    function set_fov(camera: Url | number | string | Hash | undefined, fov: number): void;
     /**
      * set near z
      *
      * @param camera - camera id
      * @param near_z - the near z.
      */
-    function set_near_z(camera: Url | number | undefined, near_z: number): void;
+    function set_near_z(camera: Url | number | string | Hash | undefined, near_z: number): void;
     /**
      * set orthographic zoom mode
      *
      * @param camera - camera id
      * @param mode - camera.ORTHO_MODE_FIXED, camera.ORTHO_MODE_AUTO_FIT or camera.ORTHO_MODE_AUTO_COVER
      */
-    function set_orthographic_mode(camera: Url | number | undefined, mode: number): void;
+    function set_orthographic_mode(camera: Url | number | string | Hash | undefined, mode: number): void;
     /**
      * Sets the positive user-controlled orthographic zoom multiplier. In auto-fit and auto-cover
      * modes, this value is multiplied with camera.get_orthographic_auto_zoom(camera).
@@ -232,7 +232,7 @@ declare global {
      * @param camera - camera id
      * @param orthographic_zoom - the positive zoom multiplier when the camera uses orthographic projection.
      */
-    function set_orthographic_zoom(camera: Url | number | undefined, orthographic_zoom: number): void;
+    function set_orthographic_zoom(camera: Url | number | string | Hash | undefined, orthographic_zoom: number): void;
     /**
      * Converts a 3D world position to screen-space coordinates with view depth.
      * Returns a vector3 where x and y are in screen pixels and z is the view depth in world units
@@ -251,7 +251,7 @@ declare global {
      * const screen_pos = camera.world_to_screen(world_pos);
      * ```
      */
-    function world_to_screen(world_pos: Vector3, camera?: Url | number): Vector3;
+    function world_to_screen(world_pos: Vector3, camera?: Url | number | string | Hash): Vector3;
     interface properties {
       /**
        * The ratio between the frustum width and height. Used when calculating the

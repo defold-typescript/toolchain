@@ -26,6 +26,10 @@ declare global {
      */
     const SORT_NONE: number & { readonly __brand: "render.SORT_NONE" };
     /**
+     * Render target buffer flag that samples a depth or stencil buffer as a texture, for `render.render_target`.
+     */
+    const TEXTURE_BIT: number & { readonly __brand: "render.TEXTURE_BIT" };
+    /**
      * Clear buffers in the currently enabled render target with specified value. If the render target has been created with multiple
      * color attachments, all buffers will be cleared with the same value.
      *
@@ -784,7 +788,7 @@ declare global {
      * });
      * ```
      */
-    function set_camera(camera?: Url | number | string, options?: { use_frustum?: boolean }): void;
+    function set_camera(camera?: Url | number | string | Hash, options?: { use_frustum?: boolean }): void;
     /**
      * Specifies whether the individual color components in the frame buffer is enabled for writing (`true`) or disabled (`false`). For example, if `blue` is `false`, nothing is written to the blue component of any pixel in any of the color buffers, regardless of the drawing operation attempted. Note that writing are either enabled or disabled for entire color components, not the individual bits of a component.
      * The component masks are all initially `true`.
@@ -1036,7 +1040,7 @@ declare global {
      * });
      * ```
      */
-    function set_render_target(render_target: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT, options?: { transient?: graphics.BufferType[] }): void;
+    function set_render_target(render_target?: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT, options?: { transient?: graphics.BufferType[] }): void;
     /**
      * Sets the render target size for a render target created from
      * either a render script, or from a render target resource.

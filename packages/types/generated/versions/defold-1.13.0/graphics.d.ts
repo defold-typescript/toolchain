@@ -92,6 +92,46 @@ declare global {
      * Context feature flag indicating support for vertical sync (vsync).
      */
     const CONTEXT_FEATURE_VSYNC: number & { readonly __brand: "graphics.CONTEXT_FEATURE_VSYNC" };
+    /**
+     * Vertex attribute coordinate space, for `material.set_vertex_attributes`.
+     */
+    const COORDINATE_SPACE_DEFAULT: number & { readonly __brand: "graphics.COORDINATE_SPACE_DEFAULT" };
+    /**
+     * Vertex attribute coordinate space, for `material.set_vertex_attributes`.
+     */
+    const COORDINATE_SPACE_LOCAL: number & { readonly __brand: "graphics.COORDINATE_SPACE_LOCAL" };
+    /**
+     * Vertex attribute coordinate space, for `material.set_vertex_attributes`.
+     */
+    const COORDINATE_SPACE_WORLD: number & { readonly __brand: "graphics.COORDINATE_SPACE_WORLD" };
+    /**
+     * Vertex attribute data type, for `material.set_vertex_attributes`.
+     */
+    const DATA_TYPE_BYTE: number & { readonly __brand: "graphics.DATA_TYPE_BYTE" };
+    /**
+     * Vertex attribute data type, for `material.set_vertex_attributes`.
+     */
+    const DATA_TYPE_FLOAT: number & { readonly __brand: "graphics.DATA_TYPE_FLOAT" };
+    /**
+     * Vertex attribute data type, for `material.set_vertex_attributes`.
+     */
+    const DATA_TYPE_INT: number & { readonly __brand: "graphics.DATA_TYPE_INT" };
+    /**
+     * Vertex attribute data type, for `material.set_vertex_attributes`.
+     */
+    const DATA_TYPE_SHORT: number & { readonly __brand: "graphics.DATA_TYPE_SHORT" };
+    /**
+     * Vertex attribute data type, for `material.set_vertex_attributes`.
+     */
+    const DATA_TYPE_UNSIGNED_BYTE: number & { readonly __brand: "graphics.DATA_TYPE_UNSIGNED_BYTE" };
+    /**
+     * Vertex attribute data type, for `material.set_vertex_attributes`.
+     */
+    const DATA_TYPE_UNSIGNED_INT: number & { readonly __brand: "graphics.DATA_TYPE_UNSIGNED_INT" };
+    /**
+     * Vertex attribute data type, for `material.set_vertex_attributes`.
+     */
+    const DATA_TYPE_UNSIGNED_SHORT: number & { readonly __brand: "graphics.DATA_TYPE_UNSIGNED_SHORT" };
     const FACE_TYPE_BACK: number & { readonly __brand: "graphics.FACE_TYPE_BACK" };
     const FACE_TYPE_FRONT: number & { readonly __brand: "graphics.FACE_TYPE_FRONT" };
     const FACE_TYPE_FRONT_AND_BACK: number & { readonly __brand: "graphics.FACE_TYPE_FRONT_AND_BACK" };

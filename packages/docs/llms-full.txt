@@ -8875,8 +8875,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function compute_aabb(body: Opaque<"b2Body">): { lower: Vector3; upper: Vector3 }; [since 1.13.0]
 - function create_chain(body: Opaque<"b2Body">, definition: Record<string | number, unknown>): LuaMultiReturn<[Opaque<"b2Chain">, { shape_id: number }[]]>; [since 1.13.0]
 - function create_fixture(body: Opaque<"b2Body">, shape: Opaque<"b2Shape">, density: number): void; [since 1.13.0]
-- function create_fixture(body: Opaque<"b2Body">, definition: { shape?: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; friction?: number; restitution?: number; density?: number; sensor?: boolean; filter?: { category_bits?: number; mask_bits?: number; group_index?: number } }): { index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }; [since 1.13.0]
-- function create_shape(body: Opaque<"b2Body">, definition: Record<string | number, unknown>): void; [since 1.13.0]
+- function create_fixture(body: Opaque<"b2Body">, definition: { shape?: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; center1?: Vector3; center2?: Vector3 }; friction?: number; restitution?: number; density?: number; sensor?: boolean; filter?: { category_bits?: number; mask_bits?: number; group_index?: number } }): { index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }; [since 1.13.0]
+- function create_shape(body: Opaque<"b2Body">, definition: Record<string | number, unknown>): { index: number; shape_id: Opaque<"b2Shape">; type: number; sensor: boolean; density: number; friction: number; restitution: number; material: number; child_count: number; is_chain_segment: boolean }; [since 1.13.0]
 - function destroy_fixture(body: Opaque<"b2Body">, fixture_index: number): void; [since 1.13.0]
 - function destroy_shape(body: Opaque<"b2Body">, shape_index: number): void; [since 1.13.0]
 - function dump(body: Opaque<"b2Body">): void; [since 1.13.0]
@@ -8887,7 +8887,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_angular_damping(body: Opaque<"b2Body">): number;
 - function get_angular_velocity(body: Opaque<"b2Body">): number;
 - function get_contact_data(body: Opaque<"b2Body">): Record<string | number, unknown>; [since 1.13.0]
-- function get_contact_list(body: Opaque<"b2Body">): Opaque<"b2ContactEdge">; [since 1.13.0]
+- b2d.body.get_contact_list(body: Opaque<"b2Body">): Opaque<"b2ContactEdge">
 - function get_fixtures(body: Opaque<"b2Body">): { index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }[]; [since 1.13.0]
 - function get_force(body: Opaque<"b2Body">): Vector3; [since 1.13.0]
 - function get_gravity_scale(body: Opaque<"b2Body">): number;
@@ -8913,7 +8913,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_transform(body: Opaque<"b2Body">): Opaque<"b2Transform">; [since 1.13.0]
 - function get_transform(body: Opaque<"b2Body">): { position: Vector3; angle: number }; [since 1.13.0]
 - function get_type(body: Opaque<"b2Body">): (number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_KINEMATIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_STATIC_BODY" });
-- function get_user_data(body: Opaque<"b2Body">): Hash; [since 1.13.0]
+- b2d.body.get_user_data(body: Opaque<"b2Body">): Hash
 - function get_world(body: Opaque<"b2Body">): Opaque<"b2World">;
 - function get_world_center(body: Opaque<"b2Body">): number; [since 1.13.0]
 - function get_world_center(body: Opaque<"b2Body">): Vector3; [since 1.13.0]
@@ -8945,7 +8945,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_target_transform(body: Opaque<"b2Body">, position: Vector3, angle: number, time_step: number): void; [since 1.13.0]
 - function set_transform(body: Opaque<"b2Body">, position: Vector3, angle: number): void;
 - function set_type(body: Opaque<"b2Body">, type: (number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_KINEMATIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_STATIC_BODY" })): void;
-- function set_user_data(body: Opaque<"b2Body">, id: Hash): void; [since 1.13.0]
+- b2d.body.set_user_data(body: Opaque<"b2Body">, id: Hash)
 - b2d.body.B2_DYNAMIC_BODY: number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }
 - b2d.body.B2_KINEMATIC_BODY: number & { readonly __brand: "b2d.body.B2_KINEMATIC_BODY" }
 - b2d.body.B2_STATIC_BODY: number & { readonly __brand: "b2d.body.B2_STATIC_BODY" }
@@ -8976,16 +8976,16 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_filter_data(body: Opaque<"b2Body">, fixture_index: number, child_index: number): { category_bits: number; mask_bits: number; group_index: number }; [since 1.13.0]
 - function get_friction(body: Opaque<"b2Body">, fixture_index: number): number; [since 1.13.0]
 - function get_restitution(body: Opaque<"b2Body">, fixture_index: number): number; [since 1.13.0]
-- function get_shape(body: Opaque<"b2Body">, fixture_index: number): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; [since 1.13.0]
+- function get_shape(body: Opaque<"b2Body">, fixture_index: number): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; center1?: Vector3; center2?: Vector3 }; [since 1.13.0]
 - function get_type(body: Opaque<"b2Body">, fixture_index: number): number; [since 1.13.0]
 - function is_sensor(body: Opaque<"b2Body">, fixture_index: number): boolean; [since 1.13.0]
 - function refilter(body: Opaque<"b2Body">, fixture_index: number, touch_proxies: boolean): void; [since 1.13.0]
-- function set_density(body: Opaque<"b2Body">, fixture_index: number, density: number, update_mass: boolean): void; [since 1.13.0]
+- function set_density(body: Opaque<"b2Body">, fixture_index: number, density: number, update_mass?: boolean): void; [since 1.13.0]
 - function set_filter_data(body: Opaque<"b2Body">, fixture_index: number, child_index: number, filter: { category_bits?: number; mask_bits?: number; group_index?: number }): void; [since 1.13.0]
 - function set_friction(body: Opaque<"b2Body">, fixture_index: number, friction: number): void; [since 1.13.0]
 - function set_restitution(body: Opaque<"b2Body">, fixture_index: number, restitution: number): void; [since 1.13.0]
 - function set_sensor(body: Opaque<"b2Body">, fixture_index: number, enabled: boolean): void; [since 1.13.0]
-- function set_shape(body: Opaque<"b2Body">, fixture_index: number, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, update_mass?: boolean): void; [since 1.13.0]
+- function set_shape(body: Opaque<"b2Body">, fixture_index: number, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; center1?: Vector3; center2?: Vector3 }, update_mass?: boolean): void; [since 1.13.0]
 - function test_point(body: Opaque<"b2Body">, fixture_index: number, point: Vector3): boolean; [since 1.13.0]
 
 ### b2d.joint
@@ -9145,8 +9145,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_sensor_capacity(body: Opaque<"b2Body">, shape_index: number): number;
 - function get_sensor_overlaps(shape_id: Opaque<"b2Shape">): { shape_id: number }[]; [since 1.13.0]
 - function get_sensor_overlaps(body: Opaque<"b2Body">, shape_index: number): { shape_id: number }[];
-- function get_shape(shape_id: Opaque<"b2Shape">): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; [since 1.13.0]
-- function get_shape(body: Opaque<"b2Body">, shape_index: number): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 };
+- function get_shape(shape_id: Opaque<"b2Shape">): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; center1?: Vector3; center2?: Vector3 }; [since 1.13.0]
+- function get_shape(body: Opaque<"b2Body">, shape_index: number): { type: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; center1?: Vector3; center2?: Vector3 };
 - function get_world(shape_id: Opaque<"b2Shape">): Opaque<"b2World">; [since 1.13.0]
 - function get_world(body: Opaque<"b2Body">, shape_index: number): Opaque<"b2World">;
 - function is_valid(shape_id: Opaque<"b2Shape">): boolean; [since 1.13.0]
@@ -9155,8 +9155,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function ray_cast(body: Opaque<"b2Body">, shape_index: number, origin: Vector3, translation: Vector3, max_fraction?: number): { point: Vector3; normal: Vector3; fraction: number; iterations: number };
 - function set_material(shape_id: Opaque<"b2Shape">, material: number): void; [since 1.13.0]
 - function set_material(body: Opaque<"b2Body">, shape_index: number, material: number): void;
-- function set_shape(shape_id: Opaque<"b2Shape">, definition: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, update_mass?: boolean): void; [since 1.13.0]
-- function set_shape(body: Opaque<"b2Body">, shape_index: number, definition: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, update_mass?: boolean): void;
+- function set_shape(shape_id: Opaque<"b2Shape">, definition: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; center1?: Vector3; center2?: Vector3 }, update_mass?: boolean): void; [since 1.13.0]
+- function set_shape(body: Opaque<"b2Body">, shape_index: number, definition: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; center1?: Vector3; center2?: Vector3 }, update_mass?: boolean): void;
 - b2d.shape.SHAPE_TYPE_BOX: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_BOX" } [since 1.13.0]
 - b2d.shape.SHAPE_TYPE_CAPSULE: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_CAPSULE" } [since 1.13.0]
 - b2d.shape.SHAPE_TYPE_CHAIN: number & { readonly __brand: "b2d.shape.SHAPE_TYPE_CHAIN" } [since 1.13.0]
@@ -9174,8 +9174,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function cast_ray(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
 - function cast_ray_closest(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter: { category_bits?: number; mask_bits?: number; group_index?: number }): { fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number; node_visits: number; leaf_visits: number }; [since 1.13.0]
 - function cast_ray_closest(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }): { fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number; node_visits: number; leaf_visits: number } | undefined; [since 1.13.0]
-- function cast_shape(world: Opaque<"b2World">, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, translation: Vector3, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
-- function cast_shape(world: Opaque<"b2World">, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, translation: Vector3, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
+- function cast_shape(world: Opaque<"b2World">, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; center1?: Vector3; center2?: Vector3 }, translation: Vector3, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
+- function cast_shape(world: Opaque<"b2World">, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; center1?: Vector3; center2?: Vector3 }, translation: Vector3, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
 - function collide_mover(world: Opaque<"b2World">, capsule: { center1?: Vector3; center2?: Vector3; radius?: number }, filter?: { category_bits?: number; mask_bits?: number }, max_results?: number): Record<string | number, unknown>; [since 1.13.0]
 - function enable_continuous(world: Opaque<"b2World">, enable: boolean): void; [since 1.13.0]
 - function enable_sleeping(world: Opaque<"b2World">, enable: boolean): void; [since 1.13.0]
@@ -9196,8 +9196,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function is_warm_starting_enabled(world: Opaque<"b2World">): boolean; [since 1.13.0]
 - function overlap_aabb(world: Opaque<"b2World">, aabb: { lower?: Vector3; upper?: Vector3 }, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
 - function overlap_aabb(world: Opaque<"b2World">, aabb: { lower?: Vector3; upper?: Vector3 }, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ shape_id: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
-- function overlap_shape(world: Opaque<"b2World">, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
-- function overlap_shape(world: Opaque<"b2World">, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ shape_id: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
+- function overlap_shape(world: Opaque<"b2World">, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; center1?: Vector3; center2?: Vector3 }, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
+- function overlap_shape(world: Opaque<"b2World">, shape: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; center1?: Vector3; center2?: Vector3 }, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ shape_id: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
 - function rebuild_static_tree(world: Opaque<"b2World">): void; [since 1.13.0]
 - function set_contact_tuning(world: Opaque<"b2World">, hertz: number, damping_ratio: number, pushout: number): void; [since 1.13.0]
 - function set_gravity(world: Opaque<"b2World">, gravity: Vector3): void; [since 1.13.0]
@@ -9228,28 +9228,28 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### camera
 
-- function get_aspect_ratio(camera?: Url | number): number;
-- function get_auto_aspect_ratio(camera?: Url | number): boolean;
+- function get_aspect_ratio(camera?: Url | number | string | Hash): number;
+- function get_auto_aspect_ratio(camera?: Url | number | string | Hash): boolean;
 - function get_cameras(): Url[];
-- function get_enabled(camera?: Url | number): boolean;
-- function get_far_z(camera?: Url | number): number;
-- function get_fov(camera?: Url | number): number;
-- function get_near_z(camera?: Url | number): number;
-- function get_orthographic_auto_zoom(camera?: Url | number): number; [since 1.13.0]
-- function get_orthographic_mode(camera?: Url | number): number;
-- function get_orthographic_zoom(camera?: Url | number): number;
-- function get_projection(camera?: Url | number): Matrix4;
-- function get_view(camera?: Url | number): Matrix4;
-- function screen_to_world(pos: Vector3, camera?: Url | number): Vector3;
-- function screen_xy_to_world(x: number, y: number, camera?: Url | number): Vector3;
-- function set_aspect_ratio(camera: Url | number | undefined, aspect_ratio: number): void;
-- function set_auto_aspect_ratio(camera: Url | number | undefined, auto_aspect_ratio: boolean): void;
-- function set_far_z(camera: Url | number | undefined, far_z: number): void;
-- function set_fov(camera: Url | number | undefined, fov: number): void;
-- function set_near_z(camera: Url | number | undefined, near_z: number): void;
-- function set_orthographic_mode(camera: Url | number | undefined, mode: number): void;
-- function set_orthographic_zoom(camera: Url | number | undefined, orthographic_zoom: number): void;
-- function world_to_screen(world_pos: Vector3, camera?: Url | number): Vector3;
+- function get_enabled(camera?: Url | number | string | Hash): boolean;
+- function get_far_z(camera?: Url | number | string | Hash): number;
+- function get_fov(camera?: Url | number | string | Hash): number;
+- function get_near_z(camera?: Url | number | string | Hash): number;
+- function get_orthographic_auto_zoom(camera?: Url | number | string | Hash): number; [since 1.13.0]
+- function get_orthographic_mode(camera?: Url | number | string | Hash): number;
+- function get_orthographic_zoom(camera?: Url | number | string | Hash): number;
+- function get_projection(camera?: Url | number | string | Hash): Matrix4;
+- function get_view(camera?: Url | number | string | Hash): Matrix4;
+- function screen_to_world(pos: Vector3, camera?: Url | number | string | Hash): Vector3;
+- function screen_xy_to_world(x: number, y: number, camera?: Url | number | string | Hash): Vector3;
+- function set_aspect_ratio(camera: Url | number | string | Hash | undefined, aspect_ratio: number): void;
+- function set_auto_aspect_ratio(camera: Url | number | string | Hash | undefined, auto_aspect_ratio: boolean): void;
+- function set_far_z(camera: Url | number | string | Hash | undefined, far_z: number): void;
+- function set_fov(camera: Url | number | string | Hash | undefined, fov: number): void;
+- function set_near_z(camera: Url | number | string | Hash | undefined, near_z: number): void;
+- function set_orthographic_mode(camera: Url | number | string | Hash | undefined, mode: number): void;
+- function set_orthographic_zoom(camera: Url | number | string | Hash | undefined, orthographic_zoom: number): void;
+- function world_to_screen(world_pos: Vector3, camera?: Url | number | string | Hash): Vector3;
 - camera.ORTHO_MODE_AUTO_COVER: number & { readonly __brand: "camera.ORTHO_MODE_AUTO_COVER" }
 - camera.ORTHO_MODE_AUTO_FIT: number & { readonly __brand: "camera.ORTHO_MODE_AUTO_FIT" }
 - camera.ORTHO_MODE_FIXED: number & { readonly __brand: "camera.ORTHO_MODE_FIXED" }
@@ -9265,10 +9265,10 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### collectionfactory
 
 - function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: LuaMap<Hash, Record<string | number, unknown>> | Record<string, Record<string | number, unknown>>, scale?: number | Vector3): LuaMap<Hash, Hash>;
-- function get_status(url?: string | Hash | Url): collectionfactory.Status;
-- function load(url?: string | Hash | Url, complete_function?: (self: unknown, url: unknown, result: unknown) => void): void;
-- function set_prototype(url?: string | Hash | Url, prototype?: string): void;
-- function unload(url?: string | Hash | Url): void;
+- function get_status(url: string | Hash | Url): collectionfactory.Status;
+- function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;
+- function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;
+- function unload(url: string | Hash | Url): void;
 - collectionfactory.STATUS_LOADED: number & { readonly __brand: "collectionfactory.STATUS_LOADED" }
 - collectionfactory.STATUS_LOADING: number & { readonly __brand: "collectionfactory.STATUS_LOADING" }
 - collectionfactory.STATUS_UNLOADED: number & { readonly __brand: "collectionfactory.STATUS_UNLOADED" }
@@ -9276,9 +9276,9 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 ### collectionproxy
 
-- function get_resources(collectionproxy: Url): Hash[];
+- function get_resources(collectionproxy: Url | string | Hash): Hash[];
 - function load(url: string | Hash | Url, options: Record<string | number, unknown> | undefined, callback: (self: unknown, message_id: Hash, message: Record<string | number, unknown>, sender: Url) => void): void; [since 1.13.1]
-- function set_collection(url?: string | Hash | Url, prototype?: string): LuaMultiReturn<[boolean, number]>;
+- function set_collection(url: string | Hash | Url, prototype: string | undefined): LuaMultiReturn<[boolean, number]>;
 - collectionproxy.RESULT_ALREADY_LOADED: number & { readonly __brand: "collectionproxy.RESULT_ALREADY_LOADED" }
 - collectionproxy.RESULT_LOADING: number & { readonly __brand: "collectionproxy.RESULT_LOADING" }
 - collectionproxy.RESULT_NOT_EXCLUDED: number & { readonly __brand: "collectionproxy.RESULT_NOT_EXCLUDED" }
@@ -9322,10 +9322,10 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### factory
 
 - function create(url: string | Hash | Url, position?: Vector3, rotation?: Quaternion, properties?: Record<string | number, unknown>, scale?: number | Vector3): Hash;
-- function get_status(url?: string | Hash | Url): factory.Status;
-- function load(url?: string | Hash | Url, complete_function?: (self: unknown, url: unknown, result: unknown) => void): void;
-- function set_prototype(url?: string | Hash | Url, prototype?: string): void;
-- function unload(url?: string | Hash | Url): void;
+- function get_status(url: string | Hash | Url): factory.Status;
+- function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;
+- function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;
+- function unload(url: string | Hash | Url): void;
 - factory.STATUS_LOADED: number & { readonly __brand: "factory.STATUS_LOADED" }
 - factory.STATUS_LOADING: number & { readonly __brand: "factory.STATUS_LOADING" }
 - factory.STATUS_UNLOADED: number & { readonly __brand: "factory.STATUS_UNLOADED" }
@@ -9349,7 +9349,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function final(self: Opaque<"userdata">): void;
 - function fixed_update(self: Opaque<"userdata">, dt: number): void;
 - function animate(url: SceneAddress | Hash | Url, property: string | Hash, playback: go.Playback, to: number | Vector3 | Vector4 | Quaternion, easing: Vector | go.Easing, duration: number, delay?: number, complete_function?: (self: unknown, url: unknown, property: unknown) => void): void;
-- function cancel_animations(url: SceneAddress | Hash | Url, property?: string | Hash): void;
+- function cancel_animations(url?: SceneAddress | Hash | Url, property?: string | Hash): void;
 - function _delete(id?: SceneGameObjectAddress | Hash | Url | (SceneGameObjectAddress | Hash | Url)[] | boolean, recursive?: boolean): void;
 - function exists(url: SceneGameObjectAddress | Hash | Url): boolean;
 - go.get<P>(): <K extends keyof P>(url: SceneAddress | Hash | Url, property: K, options?: GoPropertyOptions) => P[K]
@@ -9382,8 +9382,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_scale(scale: number | Vector3, id?: SceneGameObjectAddress | Hash | Url): void;
 - function set_scale_xy(scale: number | Vector3, id?: SceneGameObjectAddress | Hash | Url): void;
 - function update_world_transform(id?: SceneGameObjectAddress | Hash | Url): void;
-- function world_to_local_position(position: Vector3, url: SceneGameObjectAddress | Hash | Url): Vector3;
-- function world_to_local_transform(transformation: Matrix4, url: SceneGameObjectAddress | Hash | Url): Matrix4;
+- function world_to_local_position(position: Vector3, url?: SceneGameObjectAddress | Hash | Url): Vector3;
+- function world_to_local_transform(transformation: Matrix4, url?: SceneGameObjectAddress | Hash | Url): Matrix4;
 - function init(self: Opaque<"userdata">): void;
 - function late_update(self: Opaque<"userdata">, dt: number): void;
 - function on_input(self: Opaque<"userdata">, action_id: Hash, action: { value?: number; pressed?: boolean; released?: boolean; repeated?: boolean; x?: number; y?: number; screen_x?: number; screen_y?: number; dx?: number; dy?: number; screen_dx?: number; screen_dy?: number; gamepad?: number; gamepad_axis?: Vector3; touch?: { id?: number; pressed?: boolean; released?: boolean; tap_count?: number; x?: number; y?: number; dx?: number; dy?: number; acc_x?: number; acc_y?: number; acc_z?: number }[]; text?: string }): boolean | undefined;
@@ -9577,14 +9577,14 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### gui
 
 - function final(self: Opaque<"userdata">): void;
-- function animate(node: Opaque<"node">, property: string | gui.Property, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay?: number, complete_function?: (self: unknown, node: unknown) => void, playback?: gui.Playback): void;
-- function cancel_animations(node: Opaque<"node">, property?: string | gui.Property): void;
+- function animate(node: Opaque<"node">, property: string | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay?: number, complete_function?: (self: unknown, node: unknown) => void, playback?: gui.Playback): void;
+- function cancel_animations(node: Opaque<"node">, property?: string | gui.Property | Hash): void;
 - function cancel_flipbook(node: Opaque<"node">): void;
 - function clone(node: Opaque<"node">): Opaque<"node">;
 - function clone_tree(node: Opaque<"node">): LuaMap<Hash, Opaque<"node">>;
 - function delete_node(node: Opaque<"node">): void;
 - function delete_texture(texture: string | Hash): void;
-- function get(node: Opaque<"node">, property: string | Hash | gui.Property, options?: { index?: number }): unknown;
+- function get(node: Opaque<"node">, property: string | Hash | gui.Property, options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }): unknown;
 - function get_adjust_mode(node: Opaque<"node">): gui.AdjustMode;
 - function get_alpha(node: Opaque<"node">): number;
 - function get_blend_mode(node: Opaque<"node">): gui.BlendMode;
@@ -9636,8 +9636,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_yanchor(node: Opaque<"node">): gui.YAnchor;
 - function hide_keyboard(): void;
 - function is_enabled(node: Opaque<"node">, recursive?: boolean): boolean;
-- function move_above(node: Opaque<"node">, reference?: Opaque<"node">): void;
-- function move_below(node: Opaque<"node">, reference?: Opaque<"node">): void;
+- function move_above(node: Opaque<"node">, reference: Opaque<"node"> | undefined): void;
+- function move_below(node: Opaque<"node">, reference: Opaque<"node"> | undefined): void;
 - function new_box_node(pos: Vector3 | Vector4, size: Vector3): Opaque<"node">;
 - function new_particlefx_node(pos: Vector3 | Vector4, particlefx: Hash | string): Opaque<"node">;
 - function new_pie_node(pos: Vector3 | Vector4, size: Vector3): Opaque<"node">;
@@ -9649,9 +9649,9 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function reset_keyboard(): void;
 - function reset_material(node: Opaque<"node">): void;
 - function reset_nodes(): void;
-- function screen_to_local(node: Opaque<"node">, screen_position: Vector3): Vector3;
-- function set(node: Opaque<"node"> | Url, property: string | Hash | gui.Property, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: { index?: number; key?: string | Hash }): void; [through 1.13.0] [signature transition]
-- function set(node: Opaque<"node"> | Url, property: string | Hash | gui.Property, value?: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: { index?: number; key?: string | Hash }): void; [since 1.13.1] [signature transition]
+- function screen_to_local(node: Opaque<"node">, screen_position: Vector3 | Vector4): Vector3;
+- function set(node: Opaque<"node"> | Url, property: string | Hash | gui.Property, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }): void; [through 1.13.0] [signature transition]
+- function set(node: Opaque<"node"> | Url, property: string | Hash | gui.Property, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash | undefined, options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }): void; [since 1.13.1] [signature transition]
 - function set_adjust_mode(node: Opaque<"node">, adjust_mode: gui.AdjustMode): void;
 - function set_alpha(node: Opaque<"node">, alpha: number): void;
 - function set_blend_mode(node: Opaque<"node">, blend_mode: gui.BlendMode): void;
@@ -9675,7 +9675,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_material(node: Opaque<"node">, material: string | Hash): void;
 - function set_outer_bounds(node: Opaque<"node">, bounds_mode: gui.PieBounds): void;
 - function set_outline(node: Opaque<"node">, color: Vector3 | Vector4): void;
-- function set_parent(node: Opaque<"node">, parent?: Opaque<"node">, keep_scene_transform?: boolean): void;
+- function set_parent(node: Opaque<"node">, parent: Opaque<"node"> | undefined, keep_scene_transform?: boolean): void;
 - function set_particlefx(node: Opaque<"node">, particlefx: Hash | string): void;
 - function set_perimeter_vertices(node: Opaque<"node">, vertices: number): void;
 - function set_pivot(node: Opaque<"node">, pivot: gui.Pivot): void;
@@ -9684,7 +9684,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_rotation(node: Opaque<"node">, rotation: Quaternion | Vector4 | Vector3): void;
 - function set_safe_area_mode(mode: gui.SafeAreaMode): void;
 - function set_scale(node: Opaque<"node">, scale: Vector3 | Vector4): void;
-- function set_screen_position(node: Opaque<"node">, screen_position: Vector3): void;
+- function set_screen_position(node: Opaque<"node">, screen_position: Vector3 | Vector4): void;
 - function set_shadow(node: Opaque<"node">, color: Vector3 | Vector4): void;
 - function set_size(node: Opaque<"node">, size: Vector3 | Vector4): void;
 - function set_size_mode(node: Opaque<"node">, size_mode: gui.SizeMode): void;
@@ -9829,7 +9829,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### html5
 
 - function run(code: string): string;
-- function set_interaction_listener(callback?: (self: unknown) => void): void;
+- function set_interaction_listener(callback: ((self: unknown) => void) | undefined): void;
 
 ### http
 
@@ -9906,11 +9906,11 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_blend_weights(url: string | Hash | Url): number[]; [since 1.13.0]
 - function get_go(url: string | Hash | Url, bone_id: string | Hash): Hash;
 - function get_mesh_aabb(url: string | Hash | Url): LuaMap<Hash, { min: Vector3; max: Vector3 }>;
-- function get_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash | Url): boolean;
+- function get_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash): boolean;
 - function play_anim(url: string | Hash | Url, anim_id: string | Hash, playback: go.Playback, play_properties?: { blend_duration?: number; offset?: number; playback_rate?: number }, complete_function?: (self: unknown, message_id: unknown, message: unknown, sender: unknown) => void): void;
 - function reset_constant(url: string | Hash | Url, constant: string | Hash): void; [deprecated since 1.13.0]
 - function set_blend_weights(url: string | Hash | Url, weights?: number[]): void; [since 1.13.0]
-- function set_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash | Url, enabled: boolean): void;
+- function set_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash, enabled: boolean): void;
 - animation: Hash
 - cursor: number
 - material: Hash [through 1.12.4]
@@ -9932,7 +9932,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 - function play(url: string | Hash | Url, emitter_state_function?: (self: unknown, id: unknown, emitter: unknown, state: unknown) => void): void;
 - function reset_constant(url: string | Hash | Url, emitter: string | Hash, constant: string | Hash): void;
-- function set_constant(url: string | Hash | Url, emitter: string | Hash, constant: string | Hash, value: Vector4): void;
+- function set_constant(url: string | Hash | Url, emitter: string | Hash, constant: string | Hash, value: Vector4 | Matrix4): void;
 - function stop(url: string | Hash | Url, options?: { clear?: boolean }): void;
 - particlefx.EMITTER_STATE_POSTSPAWN: number & { readonly __brand: "particlefx.EMITTER_STATE_POSTSPAWN" }
 - particlefx.EMITTER_STATE_PRESPAWN: number & { readonly __brand: "particlefx.EMITTER_STATE_PRESPAWN" }
@@ -9951,16 +9951,16 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash): { collide_connected: boolean };
 - function get_joint_reaction_force(collisionobject: string | Hash | Url, joint_id: string | Hash): Vector3;
 - function get_joint_reaction_torque(collisionobject: string | Hash | Url, joint_id: string | Hash): number;
-- function get_maskbit(url: string | Hash | Url, group: string): boolean;
+- function get_maskbit(url: string | Hash | Url, group: string | Hash): boolean;
 - function get_shape(url: string | Hash | Url, shape: string | Hash): { type: number; diameter?: number; dimensions?: Vector3; height?: number };
 - function raycast(from: Vector3, to: Vector3, groups: Hash[], options?: { all?: boolean }): { fraction: number; position: Vector3; normal: Vector3; id: Hash; group: Hash; request_id: number }[] | undefined;
 - function raycast_async(from: Vector3, to: Vector3, groups: Hash[], request_id?: number): void;
 - function set_event_listener(callback?: (self: unknown, events: unknown) => void): void;
 - function set_gravity(gravity: Vector3): void;
-- function set_group(url: string | Hash | Url, group: string): void;
+- function set_group(url: string | Hash | Url, group: string | Hash): void;
 - function set_hflip(url: string | Hash | Url, flip: boolean): void;
 - function set_joint_properties(collisionobject: string | Hash | Url, joint_id: string | Hash, properties: { collide_connected?: boolean }): void;
-- function set_maskbit(url: string | Hash | Url, group: string, maskbit: boolean): void;
+- function set_maskbit(url: string | Hash | Url, group: string | Hash, maskbit: boolean): void;
 - function set_shape(url: string | Hash | Url, shape: string | Hash, table: { type?: number; diameter?: number; dimensions?: Vector3; height?: number }): void;
 - function set_vflip(url: string | Hash | Url, flip: boolean): void;
 - function update_mass(collisionobject: string | Hash | Url, mass: number): void;
@@ -10031,7 +10031,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_blend_equation_separate(equation_color: number, equation_alpha: number): void; [since 1.13.0]
 - function set_blend_func(source_factor: number, destination_factor: number): void;
 - function set_blend_func_separate(source_factor_color: number, destination_factor_color: number, source_factor_alpha: number, destination_factor_alpha: number): void; [since 1.13.0]
-- function set_camera(camera?: Url | number | string, options?: { use_frustum?: boolean }): void;
+- function set_camera(camera?: Url | number | string | Hash, options?: { use_frustum?: boolean }): void;
 - function set_color_mask(red: boolean, green: boolean, blue: boolean, alpha: boolean): void;
 - function set_compute(compute?: string | Hash): void;
 - function set_cull_face(face_type: number): void;
@@ -10040,7 +10040,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function set_listener(callback?: (self: unknown, event_type: unknown) => void): void;
 - function set_polygon_offset(factor: number, units: number): void;
 - function set_projection(matrix: Matrix4): void;
-- function set_render_target(render_target: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT, options?: { transient?: graphics.BufferType[] }): void;
+- function set_render_target(render_target?: Opaque<"render_target"> | string | Hash | typeof render.RENDER_TARGET_DEFAULT, options?: { transient?: graphics.BufferType[] }): void;
 - function set_render_target_size(render_target: Opaque<"render_target"> | string | Hash, width: number, height: number): void;
 - function set_stencil_func(func: number, ref: number, mask: number): void;
 - function set_stencil_mask(mask: number): void;
@@ -10062,16 +10062,16 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 
 - function atlas(path?: string): Hash;
 - function buffer(path?: string): Hash;
-- function create_atlas(path: string, table: { texture?: string | Hash; animations?: { id?: string; width?: number; height?: number; frame_start?: number; frame_end?: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean }[]; geometries?: { id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean }[]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;
-- function create_buffer(path: string, table?: { buffer?: Opaque<"buffer">; transfer_ownership?: boolean }): Hash;
-- function create_sound_data(path: string, options?: { data?: string; filesize?: number; partial?: boolean }): Hash;
+- function create_atlas(path: string, table: { texture?: string | Hash; animations?: { id?: string; width?: number; height?: number; frame_start?: number; frame_end?: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean }[]; geometries?: { id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices?: number[]; uvs?: number[]; indices?: number[] }[]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;
+- function create_buffer(path: string, table: { buffer?: Opaque<"buffer">; transfer_ownership?: boolean }): Hash;
+- function create_sound_data(path: string, options: { data?: string; filesize?: number; partial?: boolean }): Hash;
 - function create_texture(path: string, table: { type?: number; width?: number; height?: number; depth?: number; format?: number; flags?: number; max_mipmaps?: number; compression_type?: number; page_count?: number }, buffer?: Opaque<"buffer">): Hash;
-- function create_texture_async(path: string | Hash, table: { type?: number; width?: number; height?: number; depth?: number; format?: number; flags?: number; max_mipmaps?: number; compression_type?: number }, buffer?: Opaque<"buffer">, callback?: (...args: unknown[]) => unknown): LuaMultiReturn<[Hash, number]>;
+- function create_texture_async(path: string, table: { type?: number; width?: number; height?: number; depth?: number; format?: number; flags?: number; max_mipmaps?: number; compression_type?: number }, buffer: Opaque<"buffer"> | undefined, callback: (...args: unknown[]) => unknown): LuaMultiReturn<[Hash, number]>;
 - function font(path?: string): Hash;
 - function get_atlas(path: Hash | string): { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start: number; frame_end: number; playback: go.Playback; fps: number; flip_vertical: boolean; flip_horizontal: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[] };
 - function get_buffer(path: Hash | string): Opaque<"buffer">;
 - function get_render_target_info(path: Hash | string | number): { handle: number; attachments: { handle: number; width: number; height: number; depth: number; mipmaps: number; type: number; buffer_type: number; texture?: Hash }[] };
-- function get_text_metrics(url: Hash, text: string, options?: { width?: number; leading?: number; tracking?: number; line_break?: boolean }): { width: number; height: number; max_ascent: number; max_descent: number };
+- function get_text_metrics(url: Hash | string, text: string, options?: { width?: number; leading?: number; tracking?: number; line_break?: boolean }): { width: number; height: number; max_ascent: number; max_descent: number };
 - function get_texture_info(path: Hash | string | number): { handle: number; width: number; height: number; depth: number; page_count: number; mipmaps: number; flags: number; type: number };
 - function load(path: string): Opaque<"buffer">;
 - function material(path?: string): Hash;
@@ -10164,7 +10164,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 ### sound
 
 - function get_group_gain(group: string | Hash): number;
-- function get_group_name(group: string | Hash): string;
+- function get_group_name(group: Hash): string;
 - function get_groups(): Hash[];
 - function get_peak(group: string | Hash, window: number): LuaMultiReturn<[number, number]>;
 - function get_rms(group: string | Hash, window: number): LuaMultiReturn<[number, number]>;
@@ -10172,9 +10172,9 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function is_phone_call_active(): boolean;
 - function pause(url: string | Hash | Url, pause: boolean): void;
 - function play(url: string | Hash | Url, play_properties?: { delay?: number; gain?: number; pan?: number; speed?: number; start_time?: number; start_frame?: number }, complete_function?: (self: unknown, message_id: unknown, message: unknown, sender: unknown) => void): number;
-- function set_gain(url: string | Hash | Url, gain?: number): void;
+- function set_gain(url: string | Hash | Url, gain: number): void;
 - function set_group_gain(group: string | Hash, gain: number): void;
-- function set_pan(url: string | Hash | Url, pan?: number): void;
+- function set_pan(url: string | Hash | Url, pan: number): void;
 - function stop(url: string | Hash | Url, stop_properties?: { play_id?: number }): void;
 - gain: number
 - pan: number
@@ -10220,12 +10220,12 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function load_resource(filename: string): LuaMultiReturn<[string | undefined, string | undefined]>;
 - function open_url(url: string, attributes?: { target?: string }): boolean;
 - function reboot(arg1?: string, arg2?: string, arg3?: string, arg4?: string, arg5?: string, arg6?: string): void;
-- function save(filename: string, table: Record<string | number, unknown> | readonly unknown[]): void;
+- function save(filename: string, table: Record<string | number, unknown> | readonly unknown[]): boolean;
 - function serialize(table: Record<string | number, unknown> | readonly unknown[]): string;
 - function set_connectivity_host(host: string): void;
 - function set_engine_throttle(enable: boolean, cooldown?: number): void;
 - function set_error_handler(error_handler: (source: unknown, message: unknown, traceback: unknown) => void): void;
-- function set_render_enable(enable: boolean): void;
+- function set_render_enabled(enable: boolean): void;
 - function set_update_frequency(frequency: number): void;
 - function set_vsync_swap_interval(swap_interval: number): void;
 - sys.NETWORK_CONNECTED: number & { readonly __brand: "sys.NETWORK_CONNECTED" }
@@ -10243,7 +10243,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_tile_info(url: string | Hash | Url, layer: string | Hash, x: number, y: number): { index: number; h_flip: boolean; v_flip: boolean; rotate_90: boolean };
 - function get_tiles(url: string | Hash | Url, layer: string | Hash): LuaMap<number, LuaMap<number, number>>;
 - function reset_constant(url: string | Hash | Url, constant: string | Hash): void; [deprecated since 1.13.0]
-- function set_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: number): void;
+- function set_tile(url: string | Hash | Url, layer: string | Hash, x: number, y: number, tile: number, transform_bitmask?: number): boolean;
 - function set_visible(url: string | Hash | Url, layer: string | Hash, visible: boolean): void;
 - tilemap.H_FLIP: number & { readonly __brand: "tilemap.H_FLIP" }
 - tilemap.ROTATE_180: number & { readonly __brand: "tilemap.ROTATE_180" }
@@ -10319,7 +10319,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function rotate(q: Quaternion, v1: Vector3): Vector3;
 - vmath.slerp<T extends Vector3 | Vector4>(t: number, v1: T, v2: T): T
 - vmath.slerp(t: number, q1: Quaternion, q2: Quaternion): Quaternion
-- function vector(t: number[]): Vector;
+- function vector(t?: number[]): Vector;
 - function vector3(): Vector3;
 - function vector3(x: number, y: number, z: number): Vector3;
 - function vector3(n: number): Vector3;
@@ -10337,7 +10337,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_safe_area(): { x: number; y: number; width: number; height: number; inset_left: number; inset_top: number; inset_right: number; inset_bottom: number };
 - function get_size(): LuaMultiReturn<[number, number]>;
 - function set_dim_mode(mode: window.DimModeStateSettable): void;
-- function set_listener(callback?: (self: unknown, event: typeof WINDOW_EVENT_FOCUS_LOST | typeof WINDOW_EVENT_FOCUS_GAINED | typeof WINDOW_EVENT_RESIZED | typeof WINDOW_EVENT_ICONFIED | typeof WINDOW_EVENT_DEICONIFIED, data: Record<string | number, unknown>) => void): void;
+- function set_listener(callback: ((self: unknown, event: typeof WINDOW_EVENT_FOCUS_LOST | typeof WINDOW_EVENT_FOCUS_GAINED | typeof WINDOW_EVENT_RESIZED | typeof WINDOW_EVENT_ICONFIED | typeof WINDOW_EVENT_DEICONIFIED, data: Record<string | number, unknown>) => void) | undefined): void;
 - function set_mouse_lock(flag: boolean): void;
 - function set_position(x: number, y: number): void;
 - function set_size(width: number, height: number): void;

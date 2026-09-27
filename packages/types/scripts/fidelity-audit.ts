@@ -24,6 +24,7 @@ import {
   type TableSlotCuration,
   TS_IDENTIFIER,
   trailingOptionalCutoff,
+  UNBOUND_SKIPS,
 } from "../src/emit-dts";
 import { parseMessagesDoc } from "../src/emit-messages";
 import { readVerdicts } from "./engine-binding-verdicts";
@@ -300,7 +301,23 @@ export const OPTIONALITY_EVIDENCE: Readonly<
 // Slots the evidence flags that are genuinely required, keyed like
 // `OPTIONAL_SLOT_CORRECTIONS`. Each value is the recorded reason, so an
 // exemption is a decision someone can re-check rather than a silent skip.
-export const OPTIONALITY_EVIDENCE_EXEMPTIONS: ReadonlyMap<string, string> = new Map([]);
+export const OPTIONALITY_EVIDENCE_EXEMPTIONS: ReadonlyMap<string, string> = new Map([
+  [
+    "resource.create_texture_async:param:callback",
+    "upstream's example omits the callback, but script_resource.cpp:CreateTextureAsync hands " +
+      "argument 4 to dmScript::CreateCallback, which raises unless it is a function.",
+  ],
+  [
+    "gui.set:param:value",
+    "gui_script.cpp:LuaSet reads argument 3 even when it is absent; REQUIRED_SLOT_CORRECTIONS " +
+      "keeps the documented nil as `value: T | undefined`.",
+  ],
+  [
+    "html5.set_interaction_listener:param:callback",
+    "script_html5_js.cpp:Html5_SetInteractionListener checks luaL_checkany(L, 1); " +
+      "REQUIRED_SLOT_CORRECTIONS keeps the documented nil, which clears the listener.",
+  ],
+]);
 
 // OPTIONAL_SLOT_CORRECTIONS entries whose evidence the axes above cannot
 // attribute, keyed and reasoned the same way. The audit tells same-named
@@ -320,6 +337,23 @@ export const UNATTRIBUTED_OPTIONAL_CORRECTIONS: ReadonlyMap<string, string> = ne
     "the call `socket.newtry()` appears in socket.protect's example, not newtry's own, so " +
       "the example-arity axis never sees it.",
   ],
+  ...(
+    [
+      "go.world_to_local_position:param:url",
+      "go.world_to_local_transform:param:url",
+      "go.cancel_animations:param:url",
+      "b2d.fixture.set_density:param:update_mass",
+      "render.set_render_target:param:render_target",
+      "vmath.vector:param:t",
+    ] as const
+  ).map(
+    (key) =>
+      [
+        key,
+        "the evidence is the engine binding, which reads the slot as omissible; the ref-doc's " +
+          "prose and examples never omit it.",
+      ] as const,
+  ),
 ]);
 
 export interface EvidencedSlot {
@@ -460,7 +494,14 @@ export function declaredArities(
 // because each reason explains one argument count: a second unsupported arity
 // on the same function is new evidence, not something an existing entry covers.
 // Empty is the goal state, not a gap: the gate below asserts both directions.
-export const INEXPRESSIBLE_EXAMPLE_RESIDUALS: ReadonlyMap<string, string> = new Map([]);
+export const INEXPRESSIBLE_EXAMPLE_RESIDUALS: ReadonlyMap<string, string> = new Map([
+  [
+    "resource.create_texture_async:3",
+    "upstream's example omits the callback, which script_resource.cpp:CreateTextureAsync hands " +
+      "to dmScript::CreateCallback; that raises unless argument 4 is a function, so the " +
+      "example fails at runtime and the declaration keeps the callback required.",
+  ],
+]);
 
 export interface InexpressibleCall {
   readonly fqn: string;
@@ -911,8 +952,8 @@ function auditEntry(
     droppedMembers:
       generateModuleDeclaration(entry, {
         knownConstantFqns: NO_KNOWN_CONSTANTS,
-      }).dropped.filter((name) => !OVERLOAD_COVERED_SKIPS.has(name)).length +
-      countDroppedHandleMethods(entry.doc, entry.namespace),
+      }).dropped.filter((name) => !OVERLOAD_COVERED_SKIPS.has(name) && !UNBOUND_SKIPS.has(name))
+        .length + countDroppedHandleMethods(entry.doc, entry.namespace),
     optionalAsRequired,
     bindingOpen: bindingOpen.get(entry.namespace) ?? 0,
   };
