@@ -1,0 +1,1388 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { join, relative } from "node:path";
+import { loadApiTargets } from "./regen";
+import { bindingsDir } from "./sync-engine-bindings";
+
+export type LuaKind =
+  | "number"
+  | "string"
+  | "boolean"
+  | "hash"
+  | "url"
+  | "vector3"
+  | "vector4"
+  | "quat"
+  | "matrix4"
+  | "vector"
+  | "table"
+  | "function"
+  | "buffer"
+  | "userdata"
+  | "nil";
+
+export interface BindingSlot {
+  readonly index: number;
+  readonly kinds: LuaKind[];
+  readonly optional: boolean;
+  readonly fields: string[];
+  readonly manual?: string;
+}
+
+export interface BindingReturns {
+  readonly count: number | "dynamic";
+  readonly kinds: LuaKind[][];
+}
+
+export interface BindingFunction {
+  readonly namespace: string;
+  readonly name: string;
+  readonly cFunction: string;
+  readonly file: string;
+  readonly minArgs: number;
+  readonly maxArgs: number | "variadic";
+  // The exact argument counts the body branches on (`lua_gettop(L) == n`),
+  // or absent when it does not branch on the count.
+  readonly arities?: number[];
+  readonly slots: BindingSlot[];
+  readonly returns: BindingReturns;
+  readonly manual: string[];
+}
+
+export interface BindingExtraction {
+  readonly functions: BindingFunction[];
+  readonly constants: Map<string, string[]>;
+  readonly unresolved: string[];
+}
+
+// Engine namespaces with no C++ binding in the vendored set.
+export const UNBOUND_NAMESPACES: ReadonlyMap<string, string> = new Map([
+  ["socket", "LuaSocket is a vendored C library outside engine/*/src, not a C++ binding file"],
+]);
+
+// ---------------------------------------------------------------------------
+// Lexing and preprocessing
+
+type TokenKind = "ident" | "number" | "string" | "char" | "punct";
+
+interface Token {
+  readonly kind: TokenKind;
+  readonly text: string;
+  // Decoded contents for string tokens.
+  readonly value?: string;
+}
+
+function stripComments(source: string): string {
+  let out = "";
+  let i = 0;
+  while (i < source.length) {
+    const c = source[i];
+    const next = source[i + 1];
+    if (c === "/" && next === "/") {
+      while (i < source.length && source[i] !== "\n") {
+        if (source[i] === "\\" && source[i + 1] === "\n") i++;
+        i++;
+      }
+    } else if (c === "/" && next === "*") {
+      const end = source.indexOf("*/", i + 2);
+      const stop = end === -1 ? source.length : end + 2;
+      out += source.slice(i, stop).replace(/[^\n]/g, "");
+      i = stop;
+    } else if (c === '"' || c === "'") {
+      let j = i + 1;
+      while (j < source.length && source[j] !== c && source[j] !== "\n") {
+        if (source[j] === "\\") j++;
+        j++;
+      }
+      out += source.slice(i, j + 1);
+      i = j + 1;
+    } else {
+      out += c;
+      i++;
+    }
+  }
+  return out;
+}
+
+const PUNCTUATORS = [
+  "...",
+  "<<=",
+  ">>=",
+  "->",
+  "::",
+  "##",
+  "==",
+  "!=",
+  "<=",
+  ">=",
+  "&&",
+  "||",
+  "++",
+  "--",
+  "<<",
+  ">>",
+  "+=",
+  "-=",
+  "*=",
+  "/=",
+  "|=",
+  "&=",
+  "^=",
+];
+
+function decodeString(body: string): string {
+  return body.replace(/\\(.)/g, (_, ch: string) => (ch === "n" ? "\n" : ch === "t" ? "\t" : ch));
+}
+
+function tokenize(line: string): Token[] {
+  const tokens: Token[] = [];
+  let i = 0;
+  while (i < line.length) {
+    const c = line[i] as string;
+    if (/\s/.test(c)) {
+      i++;
+      continue;
+    }
+    if (/[A-Za-z_]/.test(c)) {
+      const m = /^[A-Za-z_]\w*/.exec(line.slice(i)) as RegExpExecArray;
+      tokens.push({ kind: "ident", text: m[0] });
+      i += m[0].length;
+      continue;
+    }
+    if (/\d/.test(c) || (c === "." && /\d/.test(line[i + 1] ?? ""))) {
+      const m = /^(0[xX][0-9a-fA-F]+|\d*\.?\d+(?:[eE][+-]?\d+)?)[uUlLfF]*/.exec(
+        line.slice(i),
+      ) as RegExpExecArray;
+      tokens.push({ kind: "number", text: m[0] });
+      i += m[0].length;
+      continue;
+    }
+    if (c === '"' || c === "'") {
+      let j = i + 1;
+      while (j < line.length && line[j] !== c) {
+        if (line[j] === "\\") j++;
+        j++;
+      }
+      const text = line.slice(i, j + 1);
+      tokens.push(
+        c === '"'
+          ? { kind: "string", text, value: decodeString(line.slice(i + 1, j)) }
+          : { kind: "char", text },
+      );
+      i = j + 1;
+      continue;
+    }
+    const punct = PUNCTUATORS.find((p) => line.startsWith(p, i)) ?? c;
+    tokens.push({ kind: "punct", text: punct });
+    i += punct.length;
+  }
+  return tokens;
+}
+
+interface Macro {
+  readonly params: string[] | null;
+  readonly body: Token[];
+}
+
+interface DirectiveToken {
+  readonly directive: string;
+}
+
+// Collects `#define`/`#undef` in source order and keeps only the first branch of
+// every `#if` group (the `#else` branch of `#if 0`), so both arms of a platform
+// switch never land in one brace-matched body.
+function readLines(source: string): Array<Token[] | DirectiveToken> {
+  const joined = stripComments(source).replace(/\\\r?\n/g, " ");
+  const out: Array<Token[] | DirectiveToken> = [];
+  const stack: Array<{ active: boolean; taken: boolean }> = [];
+  const active = () => stack.every((frame) => frame.active);
+  for (const raw of joined.split("\n")) {
+    const line = raw.trim();
+    const directive = /^#\s*(\w+)\s*(.*)$/.exec(line);
+    if (directive) {
+      const [, name, rest] = directive as unknown as [string, string, string];
+      if (name === "if" || name === "ifdef" || name === "ifndef") {
+        const zero = name === "if" && rest.trim() === "0";
+        stack.push({ active: !zero, taken: !zero });
+      } else if (name === "elif" || name === "else") {
+        const frame = stack[stack.length - 1];
+        if (frame) {
+          frame.active = !frame.taken;
+          frame.taken = true;
+        }
+      } else if (name === "endif") {
+        stack.pop();
+      } else if (active() && (name === "define" || name === "undef")) {
+        out.push({ directive: `${name} ${rest}` });
+      }
+      continue;
+    }
+    if (active() && line.length > 0) out.push(tokenize(line));
+  }
+  return out;
+}
+
+function parseDefine(text: string): [string, Macro] | null {
+  const m = /^(\w+)(\(([^)]*)\))?\s*(.*)$/.exec(text);
+  if (!m) return null;
+  const [, name, hasParams, params, body] = m as unknown as [
+    string,
+    string,
+    string,
+    string,
+    string,
+  ];
+  return [
+    name,
+    {
+      params: hasParams
+        ? params
+            .split(",")
+            .map((p) => p.trim())
+            .filter((p) => p.length > 0)
+        : null,
+      body: tokenize(body),
+    },
+  ];
+}
+
+function collectArgs(tokens: Token[], open: number): { args: Token[][]; end: number } | null {
+  if (tokens[open]?.text !== "(") return null;
+  const args: Token[][] = [[]];
+  let depth = 0;
+  for (let i = open; i < tokens.length; i++) {
+    const t = tokens[i] as Token;
+    if (t.text === "(") {
+      depth++;
+      if (depth === 1) continue;
+    } else if (t.text === ")") {
+      depth--;
+      if (depth === 0)
+        return { args: args.length === 1 && args[0]?.length === 0 ? [] : args, end: i };
+    } else if (t.text === "," && depth === 1) {
+      args.push([]);
+      continue;
+    }
+    (args[args.length - 1] as Token[]).push(t);
+  }
+  return null;
+}
+
+function paste(left: Token, right: Token): Token {
+  const text = left.text + right.text;
+  return tokenize(text)[0] ?? { kind: "ident", text };
+}
+
+function expand(tokens: Token[], macros: Map<string, Macro>, hide: ReadonlySet<string>): Token[] {
+  const out: Token[] = [];
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i] as Token;
+    const macro = t.kind === "ident" && !hide.has(t.text) ? macros.get(t.text) : undefined;
+    if (!macro) {
+      out.push(t);
+      continue;
+    }
+    const inner = new Set(hide).add(t.text);
+    if (macro.params === null) {
+      out.push(...expand(macro.body, macros, inner));
+      continue;
+    }
+    const call = collectArgs(tokens, i + 1);
+    if (!call) {
+      out.push(t);
+      continue;
+    }
+    const params = macro.params;
+    const argOf = (name: string): Token[] | undefined => {
+      const index = params.indexOf(name);
+      return index === -1 ? undefined : (call.args[index] ?? []);
+    };
+    const substituted: Token[] = [];
+    const body = macro.body;
+    for (let j = 0; j < body.length; j++) {
+      const b = body[j] as Token;
+      if (b.text === "#" && body[j + 1]?.kind === "ident" && argOf((body[j + 1] as Token).text)) {
+        const arg = argOf((body[j + 1] as Token).text) as Token[];
+        const value = arg.map((a) => a.text).join("");
+        substituted.push({ kind: "string", text: JSON.stringify(value), value });
+        j++;
+        continue;
+      }
+      if (b.text === "##") {
+        const left = substituted.pop();
+        const nextToken = body[j + 1];
+        j++;
+        if (!left || !nextToken) continue;
+        const right = argOf(nextToken.text) ?? [nextToken];
+        const [head, ...rest] = right;
+        substituted.push(head ? paste(left, head) : left, ...rest);
+        continue;
+      }
+      const arg = b.kind === "ident" ? argOf(b.text) : undefined;
+      if (arg) {
+        substituted.push(...(body[j + 1]?.text === "##" ? arg : expand(arg, macros, hide)));
+      } else {
+        substituted.push(b);
+      }
+    }
+    out.push(...expand(substituted, macros, inner));
+    i = call.end;
+  }
+  return out;
+}
+
+function mergeStrings(tokens: Token[]): Token[] {
+  const out: Token[] = [];
+  for (const t of tokens) {
+    const last = out[out.length - 1];
+    if (t.kind === "string" && last?.kind === "string") {
+      const value = (last.value ?? "") + (t.value ?? "");
+      out[out.length - 1] = { kind: "string", text: JSON.stringify(value), value };
+    } else {
+      out.push(t);
+    }
+  }
+  return out;
+}
+
+function preprocess(source: string): Token[] {
+  const macros = new Map<string, Macro>();
+  const lines = readLines(source);
+  const out: Token[] = [];
+  let pending: Token[] = [];
+  const flush = () => {
+    out.push(...expand(pending, macros, new Set()));
+    pending = [];
+  };
+  for (const line of lines) {
+    if ("directive" in line) {
+      flush();
+      const [kind, rest] = [line.directive.slice(0, 6), line.directive.slice(7)];
+      if (kind === "define") {
+        const parsed = parseDefine(rest);
+        if (parsed) macros.set(parsed[0], parsed[1]);
+      } else {
+        macros.delete(rest.trim());
+      }
+      continue;
+    }
+    pending.push(...line);
+  }
+  flush();
+  return mergeStrings(out);
+}
+
+// ---------------------------------------------------------------------------
+// Source model
+
+interface CFunction {
+  readonly name: string;
+  readonly file: string;
+  readonly takesLuaState: boolean;
+  readonly params: string[];
+  readonly body: Token[];
+}
+
+interface RegTable {
+  readonly name: string;
+  readonly file: string;
+  readonly entries: Array<{ lua: string; cFunction: string }>;
+}
+
+interface SourceFile {
+  readonly file: string;
+  readonly tokens: Token[];
+  readonly functions: CFunction[];
+  readonly tables: RegTable[];
+}
+
+const KEYWORDS = new Set(["if", "for", "while", "switch", "return", "sizeof", "catch"]);
+
+function matchClose(tokens: readonly Token[], open: number): number {
+  const opener = tokens[open]?.text;
+  const closer = opener === "(" ? ")" : opener === "{" ? "}" : "]";
+  let depth = 0;
+  for (let i = open; i < tokens.length; i++) {
+    const text = (tokens[i] as Token).text;
+    if (text === opener) depth++;
+    else if (text === closer && --depth === 0) return i;
+  }
+  return tokens.length - 1;
+}
+
+function splitTopLevel(tokens: readonly Token[], separator: string): Token[][] {
+  const parts: Token[][] = [[]];
+  let depth = 0;
+  for (const t of tokens) {
+    if (t.text === "(" || t.text === "{" || t.text === "[") depth++;
+    else if (t.text === ")" || t.text === "}" || t.text === "]") depth--;
+    if (t.text === separator && depth === 0) parts.push([]);
+    else (parts[parts.length - 1] as Token[]).push(t);
+  }
+  return parts;
+}
+
+function findFunctions(file: string, tokens: readonly Token[]): CFunction[] {
+  const functions: CFunction[] = [];
+  for (let i = 0; i < tokens.length - 1; i++) {
+    const t = tokens[i] as Token;
+    if (t.kind !== "ident" || KEYWORDS.has(t.text) || tokens[i + 1]?.text !== "(") continue;
+    const close = matchClose(tokens, i + 1);
+    let brace = close + 1;
+    while (tokens[brace]?.text === "const") brace++;
+    if (tokens[brace]?.text !== "{") continue;
+    const paramTokens = tokens.slice(i + 2, close);
+    const params = splitTopLevel(paramTokens, ",");
+    const first = params[0] ?? [];
+    const end = matchClose(tokens, brace);
+    functions.push({
+      name: t.text,
+      file,
+      takesLuaState: first.some((p) => p.text === "lua_State") && first.some((p) => p.text === "*"),
+      params: params.map((p) => [...p].reverse().find((x) => x.kind === "ident")?.text ?? ""),
+      body: tokens.slice(brace + 1, end),
+    });
+    i = end;
+  }
+  return functions;
+}
+
+function lastIdent(tokens: readonly Token[]): string | undefined {
+  return [...tokens].reverse().find((t) => t.kind === "ident")?.text;
+}
+
+function findTables(file: string, tokens: readonly Token[]): RegTable[] {
+  const tables: RegTable[] = [];
+  for (let i = 0; i < tokens.length - 4; i++) {
+    const t = tokens[i] as Token;
+    if (t.text !== "luaL_reg" && t.text !== "luaL_Reg") continue;
+    const name = tokens[i + 1] as Token;
+    if (name.kind !== "ident" || tokens[i + 2]?.text !== "[") continue;
+    let open = i + 3;
+    while (open < tokens.length && tokens[open]?.text !== "{" && tokens[open]?.text !== ";") open++;
+    if (tokens[open]?.text !== "{") continue;
+    const end = matchClose(tokens, open);
+    const entries: RegTable["entries"] = [];
+    for (const entry of splitTopLevel(tokens.slice(open + 1, end), ",")) {
+      if (entry[0]?.text !== "{") continue;
+      const [key, value] = splitTopLevel(entry.slice(1, -1), ",");
+      const lua = key?.[0];
+      const cFunction = value ? lastIdent(value) : undefined;
+      if (lua?.kind === "string" && cFunction) entries.push({ lua: lua.value ?? "", cFunction });
+    }
+    tables.push({ name: name.text, file, entries });
+    i = end;
+  }
+  return tables;
+}
+
+function listCpp(dir: string): string[] {
+  return readdirSync(dir, { recursive: true, withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith(".cpp"))
+    .map((entry) => relative(dir, join(entry.parentPath, entry.name)))
+    .sort();
+}
+
+function loadSources(dir: string): SourceFile[] {
+  return listCpp(dir).map((file) => {
+    const tokens = preprocess(readFileSync(join(dir, file), "utf8"));
+    return {
+      file,
+      tokens,
+      functions: findFunctions(file, tokens),
+      tables: findTables(file, tokens),
+    };
+  });
+}
+
+class Index {
+  private readonly functionsByName = new Map<string, CFunction[]>();
+  private readonly tablesByName = new Map<string, RegTable[]>();
+
+  constructor(readonly files: readonly SourceFile[]) {
+    for (const file of files) {
+      for (const fn of file.functions) push(this.functionsByName, fn.name, fn);
+      for (const table of file.tables) push(this.tablesByName, table.name, table);
+    }
+  }
+
+  functionsNamed(name: string, fromFile: string): CFunction[] {
+    const all = this.functionsByName.get(name) ?? [];
+    const local = all.filter((fn) => fn.file === fromFile);
+    return local.length > 0 ? local : all;
+  }
+
+  table(name: string, fromFile: string): RegTable | undefined {
+    const all = this.tablesByName.get(name) ?? [];
+    return all.find((t) => t.file === fromFile) ?? (all.length === 1 ? all[0] : undefined);
+  }
+}
+
+function push<K, V>(map: Map<K, V[]>, key: K, value: V): void {
+  const list = map.get(key);
+  if (list) list.push(value);
+  else map.set(key, [value]);
+}
+
+// ---------------------------------------------------------------------------
+// Calls and guards
+
+interface Call {
+  readonly callee: string;
+  readonly args: Token[][];
+  readonly guards: readonly Guard[];
+}
+
+interface Guard {
+  readonly condition: Token[];
+  readonly positive: boolean;
+}
+
+type Event =
+  | { readonly type: "call"; readonly call: Call }
+  | { readonly type: "return"; readonly value: Token[]; readonly guards: readonly Guard[] };
+
+function scanExpression(tokens: Token[], guards: readonly Guard[], events: Event[]): void {
+  const question = topLevelIndex(tokens, "?");
+  if (question !== -1) {
+    const colon = matchingColon(tokens, question);
+    const condition = tokens.slice(0, question);
+    scanExpression(condition, guards, events);
+    scanExpression(
+      tokens.slice(question + 1, colon),
+      [...guards, { condition, positive: true }],
+      events,
+    );
+    scanExpression(tokens.slice(colon + 1), [...guards, { condition, positive: false }], events);
+    return;
+  }
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i] as Token;
+    if (t.kind !== "ident" || KEYWORDS.has(t.text) || tokens[i + 1]?.text !== "(") continue;
+    const close = matchClose(tokens, i + 1);
+    const args = splitTopLevel(tokens.slice(i + 2, close), ",");
+    let qualified = t.text;
+    for (
+      let q = i - 1;
+      q > 0 && tokens[q]?.text === "::" && tokens[q - 1]?.kind === "ident";
+      q -= 2
+    ) {
+      qualified = `${(tokens[q - 1] as Token).text}::${qualified}`;
+    }
+    events.push({ type: "call", call: { callee: qualified, args, guards } });
+    for (const arg of args) scanExpression(arg, guards, events);
+    i = close;
+  }
+}
+
+function topLevelIndex(tokens: readonly Token[], text: string): number {
+  let depth = 0;
+  for (let i = 0; i < tokens.length; i++) {
+    const t = (tokens[i] as Token).text;
+    if (t === "(" || t === "[" || t === "{") depth++;
+    else if (t === ")" || t === "]" || t === "}") depth--;
+    else if (t === text && depth === 0) return i;
+  }
+  return -1;
+}
+
+function matchingColon(tokens: readonly Token[], question: number): number {
+  let depth = 0;
+  let nested = 0;
+  for (let i = question + 1; i < tokens.length; i++) {
+    const t = (tokens[i] as Token).text;
+    if (t === "(" || t === "[" || t === "{") depth++;
+    else if (t === ")" || t === "]" || t === "}") depth--;
+    else if (depth === 0 && t === "?") nested++;
+    else if (depth === 0 && t === ":") {
+      if (nested === 0) return i;
+      nested--;
+    }
+  }
+  return tokens.length;
+}
+
+// Walks statements in order, recording every call with the conditions that
+// must hold for it to run.
+function walkStatements(tokens: Token[], guards: readonly Guard[], events: Event[]): void {
+  let i = 0;
+  while (i < tokens.length) {
+    i = walkStatement(tokens, i, guards, events);
+  }
+}
+
+function walkStatement(
+  tokens: Token[],
+  i: number,
+  guards: readonly Guard[],
+  events: Event[],
+): number {
+  const t = tokens[i] as Token;
+  if (t.text === "{") {
+    const end = matchClose(tokens, i);
+    walkStatements(tokens.slice(i + 1, end), guards, events);
+    return end + 1;
+  }
+  if (t.text === "if" && tokens[i + 1]?.text === "(") {
+    const close = matchClose(tokens, i + 1);
+    const condition = tokens.slice(i + 2, close);
+    scanExpression(condition, guards, events);
+    const thenEnd = walkStatement(
+      tokens,
+      close + 1,
+      [...guards, { condition, positive: true }],
+      events,
+    );
+    if (tokens[thenEnd]?.text === "else") {
+      return walkStatement(
+        tokens,
+        thenEnd + 1,
+        [...guards, { condition, positive: false }],
+        events,
+      );
+    }
+    return thenEnd;
+  }
+  if (
+    (t.text === "for" || t.text === "while" || t.text === "switch") &&
+    tokens[i + 1]?.text === "("
+  ) {
+    const close = matchClose(tokens, i + 1);
+    const head = tokens.slice(i + 2, close);
+    scanExpression(head, guards, events);
+    const inner = t.text === "switch" ? [...guards, { condition: head, positive: true }] : guards;
+    return walkStatement(tokens, close + 1, inner, events);
+  }
+  if (t.text === "do") {
+    const end = walkStatement(tokens, i + 1, guards, events);
+    return walkStatement(tokens, end + 1, guards, events);
+  }
+  if ((t.text === "case" || t.text === "default") && tokens[i + 1]) {
+    let j = i + 1;
+    while (j < tokens.length && tokens[j]?.text !== ":") j++;
+    return j + 1;
+  }
+  if (t.text === ";") return i + 1;
+  let end = i;
+  let depth = 0;
+  while (end < tokens.length) {
+    const text = (tokens[end] as Token).text;
+    if (text === "(" || text === "[" || text === "{") depth++;
+    else if (text === ")" || text === "]" || text === "}") depth--;
+    else if (text === ";" && depth === 0) break;
+    end++;
+  }
+  const statement = tokens.slice(i, end);
+  if (t.text === "return") {
+    events.push({ type: "return", value: statement.slice(1), guards });
+  }
+  scanExpression(t.text === "return" ? statement.slice(1) : statement, guards, events);
+  return end + 1;
+}
+
+// ---------------------------------------------------------------------------
+// Slot analysis
+
+const CHECK_KINDS: ReadonlyMap<string, readonly LuaKind[]> = new Map<string, LuaKind[]>([
+  ["luaL_checknumber", ["number"]],
+  ["luaL_checkinteger", ["number"]],
+  ["luaL_checkint", ["number"]],
+  ["luaL_checklong", ["number"]],
+  ["luaL_optnumber", ["number"]],
+  ["luaL_optinteger", ["number"]],
+  ["luaL_optint", ["number"]],
+  ["lua_tonumber", ["number"]],
+  ["lua_tointeger", ["number"]],
+  ["luaL_checkstring", ["string"]],
+  ["luaL_checklstring", ["string"]],
+  ["luaL_optstring", ["string"]],
+  ["luaL_optlstring", ["string"]],
+  ["lua_tostring", ["string"]],
+  ["lua_tolstring", ["string"]],
+  ["lua_toboolean", ["boolean"]],
+  ["CheckBoolean", ["boolean"]],
+  ["CheckHash", ["hash"]],
+  ["CheckHashOrString", ["hash", "string"]],
+  ["CheckURL", ["url"]],
+  ["ResolveURL", ["url", "string", "hash"]],
+  ["CheckVector3", ["vector3"]],
+  ["ToVector3", ["vector3"]],
+  ["ToVector4", ["vector4"]],
+  ["ToQuat", ["quat"]],
+  ["ToMatrix4", ["matrix4"]],
+  ["ToVector", ["vector"]],
+  ["ToURL", ["url"]],
+  ["CheckVector4", ["vector4"]],
+  ["CheckQuat", ["quat"]],
+  ["CheckMatrix4", ["matrix4"]],
+  ["CheckVector", ["vector"]],
+  ["CheckBuffer", ["buffer"]],
+  ["CheckBufferUnpack", ["buffer"]],
+  ["CheckBufferNoError", ["buffer"]],
+  ["CheckUserType", ["userdata"]],
+  ["lua_touserdata", ["userdata"]],
+  ["CreateCallback", ["function"]],
+]);
+
+const OPTIONAL_CHECKS = new Set([
+  "luaL_optnumber",
+  "luaL_optinteger",
+  "luaL_optint",
+  "luaL_optstring",
+  "luaL_optlstring",
+]);
+
+const TYPE_CONSTANTS: ReadonlyMap<string, LuaKind> = new Map<string, LuaKind>([
+  ["LUA_TNUMBER", "number"],
+  ["LUA_TSTRING", "string"],
+  ["LUA_TBOOLEAN", "boolean"],
+  ["LUA_TTABLE", "table"],
+  ["LUA_TFUNCTION", "function"],
+  ["LUA_TUSERDATA", "userdata"],
+  ["LUA_TLIGHTUSERDATA", "userdata"],
+  ["LUA_TNIL", "nil"],
+]);
+
+const IS_GUARDS: ReadonlyMap<string, LuaKind> = new Map<string, LuaKind>([
+  ["lua_isnumber", "number"],
+  ["lua_isstring", "string"],
+  ["lua_istable", "table"],
+  ["lua_isfunction", "function"],
+  ["lua_isboolean", "boolean"],
+  ["lua_isuserdata", "userdata"],
+  ["IsURL", "url"],
+  ["IsHash", "hash"],
+  ["IsVector3", "vector3"],
+  ["IsVector4", "vector4"],
+  ["IsQuat", "quat"],
+  ["IsMatrix4", "matrix4"],
+  ["IsVector", "vector"],
+  ["IsBuffer", "buffer"],
+]);
+
+const NIL_GUARDS = new Set(["lua_isnil", "lua_isnoneornil", "lua_isnone"]);
+
+const PUSH_KINDS: ReadonlyMap<string, LuaKind> = new Map<string, LuaKind>([
+  ["lua_pushnumber", "number"],
+  ["lua_pushinteger", "number"],
+  ["lua_pushstring", "string"],
+  ["lua_pushlstring", "string"],
+  ["lua_pushliteral", "string"],
+  ["lua_pushfstring", "string"],
+  ["lua_pushboolean", "boolean"],
+  ["lua_pushnil", "nil"],
+  ["lua_newtable", "table"],
+  ["lua_createtable", "table"],
+  ["lua_pushcfunction", "function"],
+  ["lua_pushcclosure", "function"],
+  ["lua_pushlightuserdata", "userdata"],
+  ["lua_newuserdata", "userdata"],
+  ["PushHash", "hash"],
+  ["PushURL", "url"],
+  ["PushVector3", "vector3"],
+  ["PushVector4", "vector4"],
+  ["PushQuat", "quat"],
+  ["PushMatrix4", "matrix4"],
+  ["PushVector", "vector"],
+  ["PushBuffer", "buffer"],
+]);
+
+const POPS: ReadonlyMap<string, number> = new Map([
+  ["lua_setfield", 1],
+  ["lua_rawseti", 1],
+  ["lua_setmetatable", 1],
+  ["lua_settable", 2],
+  ["lua_rawset", 2],
+]);
+
+const ERROR_CALLS = new Set([
+  "luaL_error",
+  "luaL_argerror",
+  "luaL_typerror",
+  "DM_LUA_ERROR",
+  "ReportPathError",
+]);
+
+const MAX_HELPER_DEPTH = 3;
+
+function baseName(callee: string): string {
+  return callee.slice(callee.lastIndexOf(":") + 1);
+}
+
+type Env = ReadonlyMap<string, number>;
+
+// Env key carrying the caller's stack-top copy into a helper; not a C identifier.
+const TOP_COPY = "#top";
+
+// Calls that push a value read from a table or the stack, replacing the top.
+const STACK_READS = new Set([
+  "lua_getfield",
+  "lua_rawgeti",
+  "lua_gettable",
+  "lua_rawget",
+  "lua_next",
+]);
+
+function intLiteral(tokens: readonly Token[]): number | undefined {
+  if (tokens.length === 1 && tokens[0]?.kind === "number")
+    return Number.parseInt(tokens[0].text, 10);
+  if (tokens.length === 2 && tokens[0]?.text === "-" && tokens[1]?.kind === "number") {
+    return -Number.parseInt(tokens[1].text, 10);
+  }
+  return undefined;
+}
+
+// The absolute stack slot an index argument names, `undefined` for a
+// non-literal index, and `null` for a relative (negative) one.
+function slotOf(tokens: readonly Token[], env: Env): number | null | undefined {
+  const literal = intLiteral(tokens);
+  if (literal !== undefined) return literal > 0 ? literal : null;
+  if (tokens.length === 1 && tokens[0]?.kind === "ident") return env.get(tokens[0].text);
+  return undefined;
+}
+
+interface SlotRead {
+  readonly slot: number;
+  readonly kinds: readonly LuaKind[];
+  readonly optional: boolean;
+  readonly field?: string;
+  readonly manual?: string;
+}
+
+interface Analysis {
+  readonly reads: SlotRead[];
+  readonly variadic: string[];
+  readonly arities: Set<number>;
+  unguardedMax: number;
+}
+
+// A conjunct of a guard condition with its polarity applied.
+interface Atom {
+  readonly tokens: Token[];
+  readonly positive: boolean;
+}
+
+function atomsOf(guard: Guard): Atom[] {
+  let tokens = guard.condition;
+  let positive = guard.positive;
+  while (tokens[0]?.text === "(" && matchClose(tokens, 0) === tokens.length - 1) {
+    tokens = tokens.slice(1, -1);
+  }
+  if (
+    tokens[0]?.text === "!" &&
+    tokens[1]?.text === "(" &&
+    matchClose(tokens, 1) === tokens.length - 1
+  ) {
+    return atomsOf({ condition: tokens.slice(2, -1), positive: !positive });
+  }
+  const joiner = positive ? "&&" : "||";
+  const parts = splitTopLevel(tokens, joiner);
+  if (parts.length > 1) return parts.flatMap((part) => atomsOf({ condition: part, positive }));
+  if (tokens[0]?.text === "!") {
+    tokens = tokens.slice(1);
+    positive = !positive;
+  }
+  return [{ tokens, positive }];
+}
+
+interface CountComparison {
+  readonly op: string;
+  readonly value: number;
+}
+
+const FLIP: Record<string, string> = {
+  ">": "<=",
+  ">=": "<",
+  "<": ">=",
+  "<=": ">",
+  "==": "!=",
+  "!=": "==",
+};
+
+function countComparison(atom: Atom, topAliases: ReadonlySet<string>): CountComparison | null {
+  const tokens = atom.tokens;
+  const opIndex = tokens.findIndex((t) => t.text in FLIP);
+  if (opIndex === -1) return null;
+  const left = tokens.slice(0, opIndex);
+  const right = tokens.slice(opIndex + 1);
+  const isTop = (side: Token[]) =>
+    (side.length === 4 && side[0]?.text === "lua_gettop") ||
+    (side.length === 1 && topAliases.has(side[0]?.text ?? ""));
+  const op = (tokens[opIndex] as Token).text;
+  let value: number | undefined;
+  let normalized: string;
+  if (isTop(left)) {
+    value = intLiteral(right);
+    normalized = op;
+  } else if (isTop(right)) {
+    value = intLiteral(left);
+    normalized =
+      ({ ">": "<", ">=": "<=", "<": ">", "<=": ">=" } as Record<string, string>)[op] ?? op;
+  } else {
+    return null;
+  }
+  if (value === undefined) return null;
+  return { op: atom.positive ? normalized : (FLIP[normalized] as string), value };
+}
+
+function guardedCall(atom: Atom): { name: string; args: Token[][] } | null {
+  let tokens = atom.tokens;
+  while (tokens[0]?.text === "(" && matchClose(tokens, 0) === tokens.length - 1)
+    tokens = tokens.slice(1, -1);
+  let start = 0;
+  while (tokens[start + 1]?.text === "::") start += 2;
+  const head = tokens[start];
+  if (head?.kind !== "ident" || tokens[start + 1]?.text !== "(") return null;
+  const close = matchClose(tokens, start + 1);
+  if (close !== tokens.length - 1) return null;
+  return { name: head.text, args: splitTopLevel(tokens.slice(start + 2, close), ",") };
+}
+
+interface SlotFacts {
+  readonly optional: boolean;
+  readonly kinds: LuaKind[];
+}
+
+// What the guards on a read say about `slot`: whether the read can be skipped
+// by omitting the argument, and which kinds an `is` guard admits there.
+function guardFacts(
+  slot: number,
+  guards: readonly Guard[],
+  env: Env,
+  topAliases: ReadonlySet<string>,
+): SlotFacts {
+  let optional = false;
+  const kinds: LuaKind[] = [];
+  for (const guard of guards) {
+    for (const atom of atomsOf(guard)) {
+      const cmp = countComparison(atom, topAliases);
+      if (cmp) {
+        if ((cmp.op === ">" && cmp.value < slot) || (cmp.op === ">=" && cmp.value <= slot)) {
+          optional = true;
+        }
+        continue;
+      }
+      const call = guardedCall(atom);
+      if (!call || call.args.length < 2) continue;
+      if (slotOf(call.args[1] as Token[], env) !== slot) continue;
+      if (NIL_GUARDS.has(call.name)) optional = true;
+      const kind = IS_GUARDS.get(call.name);
+      if (kind && atom.positive) kinds.push(kind);
+    }
+  }
+  return { optional, kinds };
+}
+
+function exactCounts(
+  guards: readonly Guard[],
+  topAliases: ReadonlySet<string>,
+): number | undefined {
+  for (const guard of guards) {
+    for (const atom of atomsOf(guard)) {
+      const cmp = countComparison(atom, topAliases);
+      if (cmp?.op === "==") return cmp.value;
+    }
+  }
+  return undefined;
+}
+
+function topAliasesOf(body: readonly Token[]): Set<string> {
+  const aliases = new Set<string>();
+  for (let i = 0; i < body.length - 5; i++) {
+    if (
+      body[i]?.kind === "ident" &&
+      body[i + 1]?.text === "=" &&
+      body[i + 2]?.text === "lua_gettop" &&
+      body[i + 3]?.text === "(" &&
+      body[i + 5]?.text === ")"
+    ) {
+      aliases.add((body[i] as Token).text);
+    }
+  }
+  return aliases;
+}
+
+function eventsOf(fn: CFunction): Event[] {
+  const events: Event[] = [];
+  walkStatements(fn.body, [], events);
+  return events;
+}
+
+function analyzeSlots(
+  fn: CFunction,
+  index: Index,
+  env: Env,
+  outerGuards: readonly Guard[],
+  depth: number,
+  analysis: Analysis,
+  outerAliases: ReadonlySet<string>,
+): void {
+  const aliases = new Set([...outerAliases, ...topAliasesOf(fn.body)]);
+  // The argument slot the stack top copies after `lua_pushvalue(L, n)`, until
+  // the next push or pop.
+  let topCopy: number | null = env.get(TOP_COPY) ?? null;
+  for (const event of eventsOf(fn)) {
+    if (event.type !== "call") continue;
+    const { callee, args } = event.call;
+    const guards = [...outerGuards, ...event.call.guards];
+    const name = baseName(callee);
+    const exact = depth === 0 ? exactCounts(guards, aliases) : undefined;
+    if (exact !== undefined) analysis.arities.add(exact);
+    const resolve = (arg: readonly Token[] | undefined): number | null | undefined => {
+      if (!arg) return undefined;
+      const direct = slotOf(arg, env);
+      if (direct !== null) return direct;
+      const relative = intLiteral(arg) as number;
+      if (relative === -1 && topCopy !== null) return topCopy;
+      if (exact !== undefined && exact + relative + 1 > 0) return exact + relative + 1;
+      return null;
+    };
+    const indexArg = args[1];
+    const slot = resolve(indexArg);
+    const takesL = args[0]?.length === 1 && args[0][0]?.text === "L";
+    if (takesL && (PUSH_KINDS.has(name) || STACK_READS.has(name) || name === "lua_pop")) {
+      topCopy = null;
+    }
+    const record = (kinds: readonly LuaKind[], extra: Partial<SlotRead> = {}) => {
+      if (typeof slot !== "number") return;
+      const facts = guardFacts(slot, guards, env, aliases);
+      analysis.reads.push({
+        slot,
+        kinds: [...kinds, ...facts.kinds],
+        optional: OPTIONAL_CHECKS.has(name) || facts.optional,
+        ...extra,
+      });
+      if (exact === undefined && depth === 0) {
+        analysis.unguardedMax = Math.max(analysis.unguardedMax, slot);
+      }
+    };
+    if (!takesL) continue;
+    if (name === "lua_pushvalue") {
+      topCopy = typeof slot === "number" ? slot : null;
+      record([]);
+      continue;
+    }
+    const checkKinds = CHECK_KINDS.get(name);
+    if (checkKinds) {
+      if (slot === undefined) analysis.variadic.push(`${name} at a non-literal index`);
+      record(checkKinds);
+      continue;
+    }
+    if (name === "luaL_checktype") {
+      const kind = TYPE_CONSTANTS.get(args[2]?.[0]?.text ?? "");
+      record(kind ? [kind] : [], kind ? {} : { manual: "luaL_checktype with a non-constant type" });
+      continue;
+    }
+    if (name === "lua_type") {
+      record([], { manual: "lua_type switch" });
+      continue;
+    }
+    if (name === "lua_getfield") {
+      const field = args[2]?.[0];
+      if (field?.kind === "string") record([], { field: field.value ?? "" });
+      continue;
+    }
+    if (IS_GUARDS.has(name) || NIL_GUARDS.has(name)) {
+      record([]);
+      continue;
+    }
+    if (depth >= MAX_HELPER_DEPTH) continue;
+    const helper = index.functionsNamed(name, fn.file).find((f) => f.takesLuaState);
+    if (!helper || helper === fn) continue;
+    const helperEnv = new Map<string, number>();
+    helper.params.forEach((param, i) => {
+      const value = i === 0 ? undefined : resolve(args[i]);
+      if (typeof value === "number") helperEnv.set(param, value);
+    });
+    if (helperEnv.size === 0 && topCopy === null) continue;
+    if (topCopy !== null) helperEnv.set(TOP_COPY, topCopy);
+    analyzeSlots(helper, index, helperEnv, guards, depth + 1, analysis, aliases);
+  }
+}
+
+function union<T>(values: Iterable<T>): T[] {
+  return [...new Set(values)];
+}
+
+function analyzeReturns(fn: CFunction): BindingReturns {
+  const stack: LuaKind[][] = [];
+  const counts: number[] = [];
+  const positions: LuaKind[][] = [];
+  let dynamic = false;
+  for (const event of eventsOf(fn)) {
+    if (event.type === "call") {
+      const name = baseName(event.call.callee);
+      const pushed = PUSH_KINDS.get(name);
+      if (pushed) {
+        stack.push([pushed]);
+        continue;
+      }
+      const pops =
+        name === "lua_pop"
+          ? (intLiteral(event.call.args[1] ?? []) ?? 0)
+          : name === "lua_setfield" && intLiteral(event.call.args[1] ?? []) === -1
+            ? 0
+            : (POPS.get(name) ?? 0);
+      stack.splice(Math.max(0, stack.length - pops), pops);
+      continue;
+    }
+    const value = event.value;
+    const head = value[0]?.kind === "ident" ? guardedCall({ tokens: value, positive: true }) : null;
+    if (head && ERROR_CALLS.has(head.name)) continue;
+    const literal = intLiteral(value);
+    if (literal === undefined) {
+      dynamic = true;
+      continue;
+    }
+    counts.push(literal);
+    const top = literal > 0 ? stack.slice(-literal) : [];
+    for (let i = 0; i < literal; i++) {
+      const kinds = top.length === literal ? (top[i] as LuaKind[]) : [];
+      positions[i] = union([...(positions[i] ?? []), ...kinds]);
+    }
+  }
+  if (dynamic || counts.length === 0) {
+    return { count: counts.length === 0 && !dynamic ? 0 : "dynamic", kinds: positions };
+  }
+  const count = Math.max(...counts);
+  if (new Set(counts).size > 1) {
+    for (let i = Math.min(...counts); i < count; i++) {
+      positions[i] = union([...(positions[i] ?? []), "nil" as LuaKind]);
+    }
+  }
+  return { count, kinds: positions };
+}
+
+function analyzeFunction(
+  namespace: string,
+  name: string,
+  fn: CFunction,
+  index: Index,
+): BindingFunction {
+  const analysis: Analysis = {
+    reads: [],
+    variadic: [],
+    arities: new Set(),
+    unguardedMax: 0,
+  };
+  const env = new Map<string, number>();
+  analyzeSlots(fn, index, env, [], 0, analysis, new Set());
+
+  const bySlot = new Map<number, SlotRead[]>();
+  for (const read of analysis.reads) push(bySlot, read.slot, read);
+  const maxSlot = Math.max(0, ...bySlot.keys());
+  const arities =
+    analysis.arities.size > 0
+      ? union([
+          ...analysis.arities,
+          ...(analysis.unguardedMax > 0 ? [analysis.unguardedMax] : []),
+        ]).sort((a, b) => a - b)
+      : undefined;
+
+  const slots: BindingSlot[] = [];
+  for (let slot = 1; slot <= maxSlot; slot++) {
+    const reads = bySlot.get(slot) ?? [];
+    const manual = reads.find((r) => r.manual)?.manual;
+    const kinds = union(reads.flatMap((r) => r.kinds)).sort() as LuaKind[];
+    const byArity = arities !== undefined && slot > (arities[0] as number);
+    const optional = byArity || (reads.length > 0 && reads.every((r) => r.optional));
+    const fields = union(reads.flatMap((r) => (r.field ? [r.field] : []))).sort();
+    const noRead = reads.length === 0 ? "no read of this slot" : undefined;
+    const settled =
+      manual ?? noRead ?? (kinds.length === 0 && fields.length === 0 ? "no kind check" : undefined);
+    slots.push({
+      index: slot,
+      kinds,
+      optional,
+      fields,
+      ...(settled ? { manual: settled } : {}),
+    });
+  }
+  for (let slot = slots.length - 1; slot >= 0; slot--) {
+    const current = slots[slot] as BindingSlot;
+    const later = slots[slot + 1];
+    if (later && !later.optional && current.optional) {
+      slots[slot] = { ...current, optional: false };
+    }
+  }
+  const required = slots.filter((s) => !s.optional).map((s) => s.index);
+  const minArgs = arities ? (arities[0] as number) : Math.max(0, ...required);
+  const manual = [...analysis.variadic];
+  return {
+    namespace,
+    name,
+    cFunction: fn.name,
+    file: fn.file,
+    minArgs,
+    maxArgs: analysis.variadic.length > 0 ? "variadic" : maxSlot,
+    ...(arities ? { arities } : {}),
+    slots,
+    returns: analyzeReturns(fn),
+    manual,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Registration
+
+type StackValue =
+  | {
+      readonly kind: "table";
+      namespace: string | null;
+      readonly functions: RegTable[];
+      readonly constants: string[];
+    }
+  | { readonly kind: "value" }
+  | { readonly kind: "unknown" };
+
+interface Registered {
+  readonly namespace: string;
+  readonly table: RegTable;
+}
+
+function simulateRegistration(
+  fn: CFunction,
+  index: Index,
+  stack: StackValue[],
+  depth: number,
+  out: { registered: Registered[]; constants: Map<string, string[]>; unresolved: string[] },
+  visiting: Set<CFunction>,
+): void {
+  if (visiting.has(fn) || depth > 6) return;
+  visiting.add(fn);
+  const bind = (value: StackValue & { kind: "table" }, namespace: string) => {
+    value.namespace = namespace;
+    for (const table of value.functions) out.registered.push({ namespace, table });
+    for (const constant of value.constants) push(out.constants, namespace, constant);
+  };
+  for (const event of eventsOf(fn)) {
+    if (event.type !== "call") continue;
+    const { callee, args } = event.call;
+    const name = baseName(callee);
+    if (name === "luaL_register") {
+      const nsArg = args[1] ?? [];
+      const tableName = lastIdent(args[2] ?? []);
+      const table = tableName ? index.table(tableName, fn.file) : undefined;
+      if (!table) {
+        out.unresolved.push(`${fn.file}: luaL_register table ${tableName ?? "?"} not found`);
+        continue;
+      }
+      if (nsArg.length === 1 && nsArg[0]?.kind === "string") {
+        const value: StackValue = {
+          kind: "table",
+          namespace: null,
+          functions: [table],
+          constants: [],
+        };
+        bind(value, nsArg[0].value ?? "");
+        stack.push(value);
+      } else if (nsArg.length === 1 && /^(0|0x0|NULL|nullptr)$/.test(nsArg[0]?.text ?? "")) {
+        const top = stack[stack.length - 1];
+        if (top?.kind === "table") {
+          top.functions.push(table);
+          if (top.namespace) out.registered.push({ namespace: top.namespace, table });
+        } else {
+          out.unresolved.push(`${fn.file}: ${fn.name} registers ${table.name} into no table`);
+        }
+      } else {
+        out.unresolved.push(
+          `${fn.file}: ${fn.name} registers ${table.name} under a non-literal name`,
+        );
+      }
+      continue;
+    }
+    if (name === "lua_newtable" || name === "lua_createtable") {
+      stack.push({ kind: "table", namespace: null, functions: [], constants: [] });
+      continue;
+    }
+    if (PUSH_KINDS.has(name)) {
+      stack.push({ kind: "value" });
+      continue;
+    }
+    if (name === "lua_setfield" && intLiteral(args[1] ?? []) === -2) {
+      const key = args[2]?.[0];
+      const value = stack.pop();
+      const target = stack[stack.length - 1];
+      if (key?.kind !== "string" || target?.kind !== "table" || !value) continue;
+      if (value.kind === "value") {
+        if (target.namespace) push(out.constants, target.namespace, key.value ?? "");
+        else target.constants.push(key.value ?? "");
+      } else if (value.kind === "table" && value.functions.length > 0 && target.namespace) {
+        bind(value, `${target.namespace}.${key.value}`);
+      }
+      continue;
+    }
+    if (name === "lua_pop") {
+      const count = intLiteral(args[1] ?? []) ?? 0;
+      stack.splice(Math.max(0, stack.length - count), count);
+      continue;
+    }
+    if (args[0]?.length === 1 && args[0][0]?.text === "L") {
+      for (const callee of index.functionsNamed(name, fn.file)) {
+        if (callee !== fn) simulateRegistration(callee, index, stack, depth + 1, out, visiting);
+      }
+    }
+  }
+  visiting.delete(fn);
+}
+
+function registersNamed(fn: CFunction): boolean {
+  return eventsOf(fn).some(
+    (event) =>
+      event.type === "call" &&
+      baseName(event.call.callee) === "luaL_register" &&
+      event.call.args[1]?.length === 1 &&
+      event.call.args[1][0]?.kind === "string",
+  );
+}
+
+export function extractBindings(dir: string): BindingExtraction {
+  const files = loadSources(dir);
+  const index = new Index(files);
+  const out = {
+    registered: [] as Registered[],
+    constants: new Map<string, string[]>(),
+    unresolved: [] as string[],
+  };
+  for (const file of files) {
+    for (const fn of file.functions) {
+      if (registersNamed(fn)) simulateRegistration(fn, index, [], 0, out, new Set());
+    }
+  }
+
+  const seen = new Set<string>();
+  const functions: BindingFunction[] = [];
+  for (const { namespace, table } of out.registered) {
+    for (const entry of table.entries) {
+      const key = `${namespace}.${entry.lua}@${table.file}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const fn = index.functionsNamed(entry.cFunction, table.file).find((f) => f.takesLuaState);
+      if (!fn) {
+        out.unresolved.push(
+          `${table.file}: ${namespace}.${entry.lua} -> ${entry.cFunction} not defined`,
+        );
+        continue;
+      }
+      functions.push(analyzeFunction(namespace, entry.lua, fn, index));
+    }
+  }
+  functions.sort(
+    (a, b) =>
+      a.namespace.localeCompare(b.namespace) ||
+      a.name.localeCompare(b.name) ||
+      a.file.localeCompare(b.file),
+  );
+  const constants = new Map(
+    [...out.constants]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([ns, names]) => [ns, union(names).sort()]),
+  );
+  return { functions, constants, unresolved: union(out.unresolved).sort() };
+}
+
+export function readBindingsForTarget(targetId: string): BindingExtraction {
+  const target = loadApiTargets().find((t) => t.id === targetId);
+  if (!target) throw new Error(`unknown API target ${targetId}`);
+  if (target.source !== null) throw new Error(`target ${targetId} has no vendored engine bindings`);
+  return extractBindings(join(bindingsDir(target), "engine"));
+}
