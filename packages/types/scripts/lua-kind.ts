@@ -307,17 +307,21 @@ function readFunction(
   };
 }
 
-// Every function and constant declared directly in each named namespace, read
-// through the checker so overlays, overloads and aliases are resolved.
-export function readDeclaredSurface(
+export interface DeclaredMembers {
+  readonly functions: Map<string, ts.Symbol>;
+  readonly constants: Map<string, ts.Symbol>;
+}
+
+// The symbol behind every function and constant declared directly in each named
+// namespace, keyed by its Lua name.
+export function declaredMembers(
   program: ts.Program,
   namespaces: readonly string[],
-): DeclaredSurface {
+): DeclaredMembers {
   const checker = program.getTypeChecker();
   const roots = globalNamespaces(program, checker);
-  const functions = new Map<string, DeclaredFunction>();
-  const constants = new Set<string>();
-  const unmapped: string[] = [];
+  const functions = new Map<string, ts.Symbol>();
+  const constants = new Map<string, ts.Symbol>();
   for (const namespace of namespaces) {
     const symbol = namespaceSymbol(roots, checker, namespace);
     if (!symbol) continue;
@@ -326,12 +330,25 @@ export function readDeclaredSurface(
       // A Lua name that is a TypeScript keyword ships as `export { _delete as delete }`.
       const member =
         exported.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(exported) : exported;
-      if (member.flags & ts.SymbolFlags.Function) {
-        functions.set(fqn, readFunction(fqn, member, checker, unmapped));
-      } else if (member.flags & ts.SymbolFlags.Variable) {
-        constants.add(fqn);
-      }
+      if (member.flags & ts.SymbolFlags.Function) functions.set(fqn, member);
+      else if (member.flags & ts.SymbolFlags.Variable) constants.set(fqn, member);
     }
   }
-  return { functions, constants, unmapped };
+  return { functions, constants };
+}
+
+// Every function and constant declared directly in each named namespace, read
+// through the checker so overlays, overloads and aliases are resolved.
+export function readDeclaredSurface(
+  program: ts.Program,
+  namespaces: readonly string[],
+): DeclaredSurface {
+  const checker = program.getTypeChecker();
+  const members = declaredMembers(program, namespaces);
+  const functions = new Map<string, DeclaredFunction>();
+  const unmapped: string[] = [];
+  for (const [fqn, member] of members.functions) {
+    functions.set(fqn, readFunction(fqn, member, checker, unmapped));
+  }
+  return { functions, constants: new Set(members.constants.keys()), unmapped };
 }
