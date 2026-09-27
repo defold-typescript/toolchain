@@ -97,7 +97,7 @@ declare global {
      *
      * - `collectionfactory.STATUS_LOADED`
      */
-    function get_status(url?: string | Hash | Url): collectionfactory.Status;
+    function get_status(url: string | Hash | Url): collectionfactory.Status;
     /**
      * Resources loaded are referenced by the collection factory component until the existing (parent) collection is destroyed or collectionfactory.unload is called.
      * Calling this function when the factory is not marked as dynamic loading does nothing.
@@ -117,7 +117,7 @@ declare global {
      * collectionfactory.load("#factory", (self, url, result) => {});
      * ```
      */
-    function load(url?: string | Hash | Url, complete_function?: (self: unknown, url: unknown, result: unknown) => void): void;
+    function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;
     /**
      * Changes the prototype for the collection factory.
      * Setting the prototype to "nil" will revert back to the original prototype.
@@ -132,7 +132,7 @@ declare global {
      * const ids = collectionfactory.create("#factory", go.get_world_position(), vmath.quat());
      * ```
      */
-    function set_prototype(url?: string | Hash | Url, prototype?: string): void;
+    function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;
     /**
      * This decreases the reference count for each resource loaded with collectionfactory.load. If reference is zero, the resource is destroyed.
      * Calling this function when the factory is not marked as dynamic loading does nothing.
@@ -144,7 +144,7 @@ declare global {
      * collectionfactory.unload("#factory");
      * ```
      */
-    function unload(url?: string | Hash | Url): void;
+    function unload(url: string | Hash | Url): void;
   }
 }
 

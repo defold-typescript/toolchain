@@ -44,8 +44,17 @@ describe("declared kinds on the default surface", () => {
 
   test("overloads union per slot, and an overlay-declared options table is optional", () => {
     expect(slot("go.get", 3)).toEqual({ kinds: ["table"], optional: true });
-    expect(declared("go.get").minArgs).toBe(0);
     expect(declared("go.get").maxArgs).toBe(3);
+  });
+
+  test("the empty go.get<P>() call only applies a type argument, so it adds no Lua arity", () => {
+    expect(declared("go.get").minArgs).toBe(2);
+    expect(slot("go.get", 1).optional).toBe(false);
+  });
+
+  test("a function named after a keyword is read through its export alias", () => {
+    expect(declared("go.delete").maxArgs).toBe(2);
+    expect(slot("go.delete", 2)).toEqual({ kinds: ["boolean"], optional: true });
   });
 
   test("a declared unknown maps to any", () => {

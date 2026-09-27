@@ -2559,6 +2559,96 @@
       "identity": {
         "namespace": "graphics",
         "kind": "CONSTANT",
+        "name": "graphics.COORDINATE_SPACE_DEFAULT",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "graphics",
+        "kind": "CONSTANT",
+        "name": "graphics.COORDINATE_SPACE_LOCAL",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "graphics",
+        "kind": "CONSTANT",
+        "name": "graphics.COORDINATE_SPACE_WORLD",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "graphics",
+        "kind": "CONSTANT",
+        "name": "graphics.DATA_TYPE_BYTE",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "graphics",
+        "kind": "CONSTANT",
+        "name": "graphics.DATA_TYPE_FLOAT",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "graphics",
+        "kind": "CONSTANT",
+        "name": "graphics.DATA_TYPE_INT",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "graphics",
+        "kind": "CONSTANT",
+        "name": "graphics.DATA_TYPE_SHORT",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "graphics",
+        "kind": "CONSTANT",
+        "name": "graphics.DATA_TYPE_UNSIGNED_BYTE",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "graphics",
+        "kind": "CONSTANT",
+        "name": "graphics.DATA_TYPE_UNSIGNED_INT",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "graphics",
+        "kind": "CONSTANT",
+        "name": "graphics.DATA_TYPE_UNSIGNED_SHORT",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "graphics",
+        "kind": "CONSTANT",
         "name": "graphics.SEMANTIC_TYPE_BONE_INDICES",
         "signature": ""
       },
@@ -2752,6 +2842,159 @@
         "signature": "[{\"types\":[\"string\"],\"isOptional\":false}]->[{\"types\":[\"number\"],\"isOptional\":false}]"
       },
       "availableIn": ["1.12.4"]
+    },
+    {
+      "identity": {
+        "namespace": "material",
+        "kind": "CONSTANT",
+        "name": "material.CONSTANT_TYPE_NORMAL",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "material",
+        "kind": "CONSTANT",
+        "name": "material.CONSTANT_TYPE_PROJECTION",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "material",
+        "kind": "CONSTANT",
+        "name": "material.CONSTANT_TYPE_PROJECTION_INVERSE",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "material",
+        "kind": "CONSTANT",
+        "name": "material.CONSTANT_TYPE_TEXTURE",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "material",
+        "kind": "CONSTANT",
+        "name": "material.CONSTANT_TYPE_TIME",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "material",
+        "kind": "CONSTANT",
+        "name": "material.CONSTANT_TYPE_USER",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "material",
+        "kind": "CONSTANT",
+        "name": "material.CONSTANT_TYPE_USER_MATRIX4",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "material",
+        "kind": "CONSTANT",
+        "name": "material.CONSTANT_TYPE_VIEW",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "material",
+        "kind": "CONSTANT",
+        "name": "material.CONSTANT_TYPE_VIEW_INVERSE",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "material",
+        "kind": "CONSTANT",
+        "name": "material.CONSTANT_TYPE_VIEWPROJ",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "material",
+        "kind": "CONSTANT",
+        "name": "material.CONSTANT_TYPE_VIEWPROJ_INVERSE",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "material",
+        "kind": "CONSTANT",
+        "name": "material.CONSTANT_TYPE_WORLD",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "material",
+        "kind": "CONSTANT",
+        "name": "material.CONSTANT_TYPE_WORLD_INVERSE",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "material",
+        "kind": "CONSTANT",
+        "name": "material.CONSTANT_TYPE_WORLDVIEW",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "material",
+        "kind": "CONSTANT",
+        "name": "material.CONSTANT_TYPE_WORLDVIEW_INVERSE",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "material",
+        "kind": "CONSTANT",
+        "name": "material.CONSTANT_TYPE_WORLDVIEWPROJ",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
+    },
+    {
+      "identity": {
+        "namespace": "material",
+        "kind": "CONSTANT",
+        "name": "material.CONSTANT_TYPE_WORLDVIEWPROJ_INVERSE",
+        "signature": ""
+      },
+      "availableIn": ["1.13.1", "1.13.0"]
     },
     {
       "identity": {

@@ -203,7 +203,7 @@ declare global {
      * });
      * ```
      */
-    function create_atlas(path: string, table: { texture?: string | Hash; animations?: { id?: string; width?: number; height?: number; frame_start?: number; frame_end?: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean }[]; geometries?: { id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean }[]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;
+    function create_atlas(path: string, table: { texture?: string | Hash; animations?: { id?: string; width?: number; height?: number; frame_start?: number; frame_end?: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean }[]; geometries?: { id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices?: number[]; uvs?: number[]; indices?: number[] }[]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;
     /**
      * This function creates a new buffer resource that can be used in the same way as any buffer created during build time.
      * The function requires a valid buffer created from either buffer.create or another pre-existing buffer resource.
@@ -276,7 +276,7 @@ declare global {
      * });
      * ```
      */
-    function create_buffer(path: string, table?: { buffer?: Opaque<"buffer">; transfer_ownership?: boolean }): Hash;
+    function create_buffer(path: string, table: { buffer?: Opaque<"buffer">; transfer_ownership?: boolean }): Hash;
     /**
      * Creates a sound data resource
      * Supported formats are .oggc, .opusc and .wavc
@@ -309,7 +309,7 @@ declare global {
      * });
      * ```
      */
-    function create_sound_data(path: string, options?: { data?: string; filesize?: number; partial?: boolean }): Hash;
+    function create_sound_data(path: string, options: { data?: string; filesize?: number; partial?: boolean }): Hash;
     /**
      * Creates a new texture resource that can be used in the same way as any texture created during build time.
      * The path used for creating the texture must be unique, trying to create a resource at a path that is already
@@ -671,7 +671,7 @@ declare global {
      * @example
      * Create a texture resource asyncronously without a callback
      * ```ts
-     * // Create a texture resource asyncronously without a callback
+     * // Create a texture resource asyncronously without handling its completion
      * export default defineScript({
      *   init() {
      *     // Create a texture resource async
@@ -697,7 +697,8 @@ declare global {
      *       }
      *     }
      *     // create the texture
-     *     const [tpath, request_id] = resource.create_texture_async("/my_texture.texturec", tparams, tbuffer);
+     *     // the binding requires a callback function, so pass one that does nothing
+     *     const [tpath, request_id] = resource.create_texture_async("/my_texture.texturec", tparams, tbuffer, () => {});
      *     // at this point you can use the resource as-is, but note that the texture will be a blank 1x1 texture
      *     // that will be removed once the new texture has been updated
      *     go.set("#model", "texture0", tpath);
@@ -705,7 +706,7 @@ declare global {
      * });
      * ```
      */
-    function create_texture_async(path: string | Hash, table: { type?: number; width?: number; height?: number; depth?: number; format?: number; flags?: number; max_mipmaps?: number; compression_type?: number }, buffer?: Opaque<"buffer">, callback?: (...args: unknown[]) => unknown): LuaMultiReturn<[Hash, number]>;
+    function create_texture_async(path: string, table: { type?: number; width?: number; height?: number; depth?: number; format?: number; flags?: number; max_mipmaps?: number; compression_type?: number }, buffer: Opaque<"buffer"> | undefined, callback: (...args: unknown[]) => unknown): LuaMultiReturn<[Hash, number]>;
     /**
      * Constructor-like function with two purposes:
      *
@@ -895,7 +896,7 @@ declare global {
      * });
      * ```
      */
-    function get_text_metrics(url: Hash, text: string, options?: { width?: number; leading?: number; tracking?: number; line_break?: boolean }): { width: number; height: number; max_ascent: number; max_descent: number };
+    function get_text_metrics(url: Hash | string, text: string, options?: { width?: number; leading?: number; tracking?: number; line_break?: boolean }): { width: number; height: number; max_ascent: number; max_descent: number };
     /**
      * Gets texture info from a texture resource path or a texture handle
      *

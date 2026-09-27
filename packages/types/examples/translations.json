@@ -1346,7 +1346,7 @@
     },
     {
       "sourceHash": "921632059c7abb58",
-      "ts": "// Create a texture resource asyncronously without a callback\nexport default defineScript({\n  init() {\n    // Create a texture resource async\n    const tparams = {\n      width: 128,\n      height: 128,\n      type: graphics.TEXTURE_TYPE_2D,\n      format: graphics.TEXTURE_FORMAT_RGBA,\n    };\n\n    // Create a new buffer with 4 components\n    const tbuffer = buffer.create(tparams.width * tparams.height, [{ name: hash(\"rgba\"), type: buffer.VALUE_TYPE_UINT8, count: 4 }]);\n    const tstream = buffer.get_stream(tbuffer, hash(\"rgba\"));\n\n    // Fill the buffer stream with some float values\n    for (let y = 0; y < tparams.width; y++) {\n      for (let x = 0; x < tparams.height; x++) {\n        const index = y * 128 * 4 + x * 4;\n        tstream[index + 0] = 255;\n        tstream[index + 1] = 0;\n        tstream[index + 2] = 255;\n        tstream[index + 3] = 255;\n      }\n    }\n    // create the texture\n    const [tpath, request_id] = resource.create_texture_async(\"/my_texture.texturec\", tparams, tbuffer);\n    // at this point you can use the resource as-is, but note that the texture will be a blank 1x1 texture\n    // that will be removed once the new texture has been updated\n    go.set(\"#model\", \"texture0\", tpath);\n  },\n});"
+      "ts": "// Create a texture resource asyncronously without handling its completion\nexport default defineScript({\n  init() {\n    // Create a texture resource async\n    const tparams = {\n      width: 128,\n      height: 128,\n      type: graphics.TEXTURE_TYPE_2D,\n      format: graphics.TEXTURE_FORMAT_RGBA,\n    };\n\n    // Create a new buffer with 4 components\n    const tbuffer = buffer.create(tparams.width * tparams.height, [{ name: hash(\"rgba\"), type: buffer.VALUE_TYPE_UINT8, count: 4 }]);\n    const tstream = buffer.get_stream(tbuffer, hash(\"rgba\"));\n\n    // Fill the buffer stream with some float values\n    for (let y = 0; y < tparams.width; y++) {\n      for (let x = 0; x < tparams.height; x++) {\n        const index = y * 128 * 4 + x * 4;\n        tstream[index + 0] = 255;\n        tstream[index + 1] = 0;\n        tstream[index + 2] = 255;\n        tstream[index + 3] = 255;\n      }\n    }\n    // create the texture\n    // the binding requires a callback function, so pass one that does nothing\n    const [tpath, request_id] = resource.create_texture_async(\"/my_texture.texturec\", tparams, tbuffer, () => {});\n    // at this point you can use the resource as-is, but note that the texture will be a blank 1x1 texture\n    // that will be removed once the new texture has been updated\n    go.set(\"#model\", \"texture0\", tpath);\n  },\n});"
     }
   ],
   "resource.font": [
@@ -1755,10 +1755,10 @@
       "ts": "// Install error handler that just prints the errors\nfunction my_error_handler(source: unknown, message: unknown, traceback: unknown) {\n  print(source); //> lua\n  print(message); //> main/my.script:10: attempt to perform arithmetic on a string value\n  print(traceback); //> stack traceback:\n  //>         main/test.script:10: in function 'boom'\n  //>         main/test.script:15: in function <main/my.script:13>\n}\n\nfunction boom() {\n  return 10 + \"string\";\n}\n\nexport default defineScript({\n  init() {\n    sys.set_error_handler(my_error_handler);\n    boom();\n  },\n});"
     }
   ],
-  "sys.set_render_enable": [
+  "sys.set_render_enabled": [
     {
       "sourceHash": "aa4a8e62d5eddb0b",
-      "ts": "// Disable rendering\nsys.set_render_enable(false);"
+      "ts": "// Disable rendering\nsys.set_render_enabled(false);"
     }
   ],
   "sys.set_update_frequency": [

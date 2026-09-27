@@ -508,10 +508,17 @@ class Index {
     }
   }
 
+  // The caller's own file first, then its directory, so a Box2D v2 source
+  // resolves the v2 helper and never its v3 namesake.
   functionsNamed(name: string, fromFile: string): CFunction[] {
     const all = this.functionsByName.get(name) ?? [];
     const local = all.filter((fn) => fn.file === fromFile);
-    return local.length > 0 ? local : all;
+    if (local.length > 0) return local;
+    const dir = fromFile.slice(0, fromFile.lastIndexOf("/") + 1);
+    const sibling = all.filter(
+      (fn) => fn.file.startsWith(dir) && !fn.file.slice(dir.length).includes("/"),
+    );
+    return sibling.length > 0 ? sibling : all;
   }
 
   table(name: string, fromFile: string): RegTable | undefined {
@@ -533,6 +540,8 @@ interface Call {
   readonly callee: string;
   readonly args: Token[][];
   readonly guards: readonly Guard[];
+  // Evaluated as a branch condition rather than for its value.
+  readonly branches?: true;
 }
 
 interface Guard {
@@ -544,12 +553,25 @@ type Event =
   | { readonly type: "call"; readonly call: Call }
   | { readonly type: "return"; readonly value: Token[]; readonly guards: readonly Guard[] };
 
-function scanExpression(tokens: Token[], guards: readonly Guard[], events: Event[]): void {
+function scanExpression(
+  tokens: Token[],
+  guards: readonly Guard[],
+  events: Event[],
+  branches = false,
+): void {
+  // `bool recursive = top >= 2 && lua_toboolean(L, 2)`: the target takes no
+  // part in the conditions the value is built from.
+  const assign = topLevelIndex(tokens, "=");
+  if (assign !== -1) {
+    scanExpression(tokens.slice(0, assign), guards, events, branches);
+    scanExpression(tokens.slice(assign + 1), guards, events, branches);
+    return;
+  }
   const question = topLevelIndex(tokens, "?");
   if (question !== -1) {
     const colon = matchingColon(tokens, question);
     const condition = tokens.slice(0, question);
-    scanExpression(condition, guards, events);
+    scanExpression(condition, guards, events, true);
     scanExpression(
       tokens.slice(question + 1, colon),
       [...guards, { condition, positive: true }],
@@ -558,11 +580,27 @@ function scanExpression(tokens: Token[], guards: readonly Guard[], events: Event
     scanExpression(tokens.slice(colon + 1), [...guards, { condition, positive: false }], events);
     return;
   }
+  // `a && b` evaluates b only once a holds, and `a || b` only once a fails.
+  for (const [joiner, positive] of [
+    ["||", false],
+    ["&&", true],
+  ] as const) {
+    const parts = splitTopLevel(tokens, joiner);
+    if (parts.length < 2) continue;
+    let scoped = guards;
+    for (const part of parts) {
+      scanExpression(part, scoped, events, branches);
+      scoped = [...scoped, { condition: part, positive }];
+    }
+    return;
+  }
   for (let i = 0; i < tokens.length; i++) {
     const t = tokens[i] as Token;
-    if (t.kind !== "ident" || KEYWORDS.has(t.text) || tokens[i + 1]?.text !== "(") continue;
-    const close = matchClose(tokens, i + 1);
-    const args = splitTopLevel(tokens.slice(i + 2, close), ",");
+    if (t.kind !== "ident" || KEYWORDS.has(t.text)) continue;
+    const open = i + 1 + templateArgumentsLength(tokens, i + 1);
+    if (tokens[open]?.text !== "(") continue;
+    const close = matchClose(tokens, open);
+    const args = splitTopLevel(tokens.slice(open + 1, close), ",");
     let qualified = t.text;
     for (
       let q = i - 1;
@@ -571,10 +609,27 @@ function scanExpression(tokens: Token[], guards: readonly Guard[], events: Event
     ) {
       qualified = `${(tokens[q - 1] as Token).text}::${qualified}`;
     }
-    events.push({ type: "call", call: { callee: qualified, args, guards } });
-    for (const arg of args) scanExpression(arg, guards, events);
+    events.push({
+      type: "call",
+      call: { callee: qualified, args, guards, ...(branches ? { branches: true as const } : {}) },
+    });
+    // An error message's arguments describe the failure; they read nothing the
+    // call accepts.
+    if (!ERROR_CALLS.has(t.text)) for (const arg of args) scanExpression(arg, guards, events);
     i = close;
   }
+}
+
+// The length of `<bool>` in `CheckFieldValue<bool>(...)`: type names only, so a
+// comparison such as `a < b` is never read as one.
+function templateArgumentsLength(tokens: readonly Token[], at: number): number {
+  if (tokens[at]?.text !== "<") return 0;
+  for (let j = at + 1; j < tokens.length; j++) {
+    const text = (tokens[j] as Token).text;
+    if (text === ">") return j - at + 1;
+    if (tokens[j]?.kind !== "ident" && text !== "::" && text !== "*" && text !== ",") return 0;
+  }
+  return 0;
 }
 
 function topLevelIndex(tokens: readonly Token[], text: string): number {
@@ -608,9 +663,43 @@ function matchingColon(tokens: readonly Token[], question: number): number {
 // must hold for it to run.
 function walkStatements(tokens: Token[], guards: readonly Guard[], events: Event[]): void {
   let i = 0;
+  let scoped = guards;
   while (i < tokens.length) {
-    i = walkStatement(tokens, i, guards, events);
+    const early = earlyReturnCondition(tokens, i);
+    i = walkStatement(tokens, i, scoped, events);
+    if (early) scoped = [...scoped, { condition: early, positive: false }];
   }
+}
+
+// The condition of an `if` with no `else` whose branch ends in a plain return,
+// as in `if (lua_isnoneornil(L, i)) return fallback;`: the statements after it
+// run only when the condition failed. An error return is left out, because it
+// refuses the call rather than skipping the rest.
+function earlyReturnCondition(tokens: Token[], i: number): Token[] | undefined {
+  if (tokens[i]?.text !== "if" || tokens[i + 1]?.text !== "(") return undefined;
+  const close = matchClose(tokens, i + 1);
+  let branch: Token[];
+  let after: number;
+  if (tokens[close + 1]?.text === "{") {
+    const end = matchClose(tokens, close + 1);
+    branch = tokens.slice(close + 2, end);
+    after = end + 1;
+  } else {
+    let end = close + 1;
+    while (end < tokens.length && tokens[end]?.text !== ";") end++;
+    branch = tokens.slice(close + 1, end + 1);
+    after = end + 1;
+  }
+  if (tokens[after]?.text === "else") return undefined;
+  const statements = splitTopLevel(branch, ";");
+  let last = statements[statements.length - 2] ?? [];
+  const brace = last.map((t) => t.text).lastIndexOf("}");
+  if (brace !== -1) last = last.slice(brace + 1);
+  if (last[0]?.text !== "return") return undefined;
+  const value = last.slice(1);
+  const head = value[0]?.kind === "ident" ? guardedCall({ tokens: value, positive: true }) : null;
+  if (head && ERROR_CALLS.has(baseName(head.name))) return undefined;
+  return tokens.slice(i + 2, close);
 }
 
 function walkStatement(
@@ -628,7 +717,7 @@ function walkStatement(
   if (t.text === "if" && tokens[i + 1]?.text === "(") {
     const close = matchClose(tokens, i + 1);
     const condition = tokens.slice(i + 2, close);
-    scanExpression(condition, guards, events);
+    scanExpression(condition, guards, events, true);
     const thenEnd = walkStatement(
       tokens,
       close + 1,
@@ -651,7 +740,7 @@ function walkStatement(
   ) {
     const close = matchClose(tokens, i + 1);
     const head = tokens.slice(i + 2, close);
-    scanExpression(head, guards, events);
+    scanExpression(head, guards, events, t.text !== "for");
     const inner = t.text === "switch" ? [...guards, { condition: head, positive: true }] : guards;
     return walkStatement(tokens, close + 1, inner, events);
   }
@@ -726,7 +815,10 @@ const CHECK_KINDS: ReadonlyMap<string, readonly LuaKind[]> = new Map<string, Lua
   ["CreateCallback", ["function"]],
 ]);
 
+// `dmScript::ResolveURL` reads an absent or nil slot as the calling script's own
+// URL, so a slot it alone reads can be omitted.
 const OPTIONAL_CHECKS = new Set([
+  "ResolveURL",
   "luaL_optnumber",
   "luaL_optinteger",
   "luaL_optint",
@@ -816,14 +908,14 @@ type Env = ReadonlyMap<string, number>;
 // Env key carrying the caller's stack-top copy into a helper; not a C identifier.
 const TOP_COPY = "#top";
 
-// Calls that push a value read from a table or the stack, replacing the top.
-const STACK_READS = new Set([
-  "lua_getfield",
-  "lua_rawgeti",
-  "lua_gettable",
-  "lua_rawget",
-  "lua_next",
-]);
+// How a call moves the stack top; a helper is assumed to leave it balanced.
+function stackDelta(name: string, args: readonly Token[][]): number {
+  if (PUSH_KINDS.has(name)) return 1;
+  if (name === "lua_getfield" || name === "lua_rawgeti" || name === "lua_next") return 1;
+  if (name === "lua_gettable" || name === "lua_rawget") return 0;
+  if (name === "lua_pop") return -(intLiteral(args[1] ?? []) ?? 0);
+  return -(POPS.get(name) ?? 0);
+}
 
 function intLiteral(tokens: readonly Token[]): number | undefined {
   if (tokens.length === 1 && tokens[0]?.kind === "number")
@@ -850,6 +942,11 @@ interface SlotRead {
   readonly field?: string;
   readonly manual?: string;
   readonly minusOne?: true;
+  // A type probe such as `lua_isnumber` answers false for nil and branches,
+  // so it never decides whether the slot may be omitted.
+  readonly probe?: true;
+  // Accepts nil but not an absent argument: `lua_isnil` is false past the top.
+  readonly nilable?: true;
 }
 
 const NUMERIC_CHECKS = new Set([
@@ -910,6 +1007,10 @@ interface Analysis {
   readonly variadic: string[];
   readonly arities: Set<number>;
   unguardedMax: number;
+  // Slots an error branch refuses when nil, and the argument count below
+  // which one refuses the call.
+  readonly nilRejected: Set<number>;
+  errorMinArgs: number;
 }
 
 // A conjunct of a guard condition with its polarity applied.
@@ -955,7 +1056,11 @@ const FLIP: Record<string, string> = {
   "!=": "==",
 };
 
-function countComparison(atom: Atom, topAliases: ReadonlySet<string>): CountComparison | null {
+function countComparison(
+  atom: Atom,
+  topAliases: ReadonlySet<string>,
+  env: Env = new Map(),
+): CountComparison | null {
   const tokens = atom.tokens;
   const opIndex = tokens.findIndex((t) => t.text in FLIP);
   if (opIndex === -1) return null;
@@ -967,11 +1072,14 @@ function countComparison(atom: Atom, topAliases: ReadonlySet<string>): CountComp
   const op = (tokens[opIndex] as Token).text;
   let value: number | undefined;
   let normalized: string;
+  // A helper compares the top against the stack index it was handed.
+  const bound = (side: Token[]) =>
+    intLiteral(side) ?? (side.length === 1 ? env.get(side[0]?.text ?? "") : undefined);
   if (isTop(left)) {
-    value = intLiteral(right);
+    value = bound(right);
     normalized = op;
   } else if (isTop(right)) {
-    value = intLiteral(left);
+    value = bound(left);
     normalized =
       ({ ">": "<", ">=": "<=", "<": ">", "<=": ">=" } as Record<string, string>)[op] ?? op;
   } else {
@@ -996,7 +1104,73 @@ function guardedCall(atom: Atom): { name: string; args: Token[][] } | null {
 
 interface SlotFacts {
   readonly optional: boolean;
+  readonly nilable: boolean;
   readonly kinds: LuaKind[];
+}
+
+// An error raised under a single-condition guard, such as
+// `if (lua_isnil(L, 1)) return luaL_error(...)` or `if (top < 2) return
+// luaL_error(...)`, makes the slot it names required whatever reads it later.
+function recordErrorGuard(
+  guards: readonly Guard[],
+  env: Env,
+  topAliases: ReadonlySet<string>,
+  analysis: Analysis,
+): void {
+  for (const slot of rejectedByProbes(guards, env)) analysis.nilRejected.add(slot);
+  if (guards.length !== 1) return;
+  const atoms = atomsOf(guards[0] as Guard);
+  if (atoms.length !== 1) return;
+  const atom = atoms[0] as Atom;
+  const cmp = countComparison(atom, topAliases, env);
+  if (cmp) {
+    const min =
+      cmp.op === "<"
+        ? cmp.value
+        : cmp.op === "<=" || (cmp.op === "==" && cmp.value === 0)
+          ? cmp.value + 1
+          : 0;
+    analysis.errorMinArgs = Math.max(analysis.errorMinArgs, min);
+    return;
+  }
+  const call = guardedCall(atom);
+  if (!call || !atom.positive || !NIL_GUARDS.has(call.name) || call.args.length < 2) return;
+  const slot = slotOf(call.args[1] as Token[], env);
+  if (typeof slot === "number") analysis.nilRejected.add(slot);
+}
+
+// The slots an error refuses because nil fails a type probe on the way to it,
+// as in `if (lua_isstring(L, 1)) ... else return luaL_error(...)` or
+// `if (lua_isboolean(L, 1) && lua_isboolean(L, 2)) ... else luaL_error(...)`.
+// A slot counts only when nil there makes every condition on the error path
+// hold: a negated probe of it in each conjunct of a taken branch, or a probe of
+// it among the conjuncts of a branch not taken.
+function rejectedByProbes(guards: readonly Guard[], env: Env): number[] {
+  if (guards.length === 0) return [];
+  const probes = guards.map((guard) => {
+    let tokens = guard.condition;
+    while (tokens[0]?.text === "(" && matchClose(tokens, 0) === tokens.length - 1) {
+      tokens = tokens.slice(1, -1);
+    }
+    return splitTopLevel(tokens, "&&").map((part) => {
+      const negated = part[0]?.text === "!";
+      const call = guardedCall({ tokens: negated ? part.slice(1) : part, positive: true });
+      if (!call || !IS_GUARDS.has(baseName(call.name))) return undefined;
+      const slot = slotOf(call.args[1] ?? [], env);
+      return typeof slot === "number" ? { slot, negated } : undefined;
+    });
+  });
+  const candidates = new Set(
+    probes.flat().flatMap((probe) => (probe === undefined ? [] : [probe.slot])),
+  );
+  return [...candidates].filter((slot) =>
+    guards.every((guard, i) => {
+      const parts = probes[i] ?? [];
+      return guard.positive
+        ? parts.every((p) => p?.negated && p.slot === slot)
+        : parts.some((p) => p !== undefined && !p.negated && p.slot === slot);
+    }),
+  );
 }
 
 // What the guards on a read say about `slot`: whether the read can be skipped
@@ -1008,12 +1182,18 @@ function guardFacts(
   topAliases: ReadonlySet<string>,
 ): SlotFacts {
   let optional = false;
+  let nilable = false;
   const kinds: LuaKind[] = [];
   for (const guard of guards) {
     for (const atom of atomsOf(guard)) {
-      const cmp = countComparison(atom, topAliases);
+      const cmp = countComparison(atom, topAliases, env);
       if (cmp) {
-        if ((cmp.op === ">" && cmp.value < slot) || (cmp.op === ">=" && cmp.value <= slot)) {
+        if (
+          (cmp.op === ">" && cmp.value < slot) ||
+          (cmp.op === ">=" && cmp.value <= slot) ||
+          (cmp.op === "==" && cmp.value >= slot) ||
+          (cmp.op === "!=" && cmp.value === 0 && slot === 1)
+        ) {
           optional = true;
         }
         continue;
@@ -1021,12 +1201,13 @@ function guardFacts(
       const call = guardedCall(atom);
       if (!call || call.args.length < 2) continue;
       if (slotOf(call.args[1] as Token[], env) !== slot) continue;
-      if (NIL_GUARDS.has(call.name)) optional = true;
+      if (call.name === "lua_isnil") nilable = true;
+      else if (NIL_GUARDS.has(call.name)) optional = true;
       const kind = IS_GUARDS.get(call.name);
       if (kind && atom.positive) kinds.push(kind);
     }
   }
-  return { optional, kinds };
+  return { optional, nilable, kinds };
 }
 
 function exactCounts(
@@ -1064,24 +1245,86 @@ function eventsOf(fn: CFunction): Event[] {
   return events;
 }
 
+// Locals assigned an argument's stack index once, as in
+// `int definition_index = AbsIndex(L, 2);` or `const int self_index = 1;`.
+function indexLocalsOf(body: readonly Token[], env: Env): Map<string, number> {
+  const assigned = new Map<string, number[]>();
+  for (let i = 1; i < body.length - 2; i++) {
+    const name = body[i - 1] as Token;
+    if (name.kind !== "ident" || body[i]?.text !== "=") continue;
+    let value: number | undefined;
+    const call = body[i + 1]?.text;
+    if ((call === "AbsIndex" || call === "lua_absindex") && body[i + 2]?.text === "(") {
+      const close = matchClose(body as Token[], i + 2);
+      const args = splitTopLevel(body.slice(i + 3, close), ",");
+      if (args[0]?.length === 1 && args[0][0]?.text === "L") {
+        value = slotOf(args[1] ?? [], env) ?? undefined;
+      }
+    } else if (/(^|_)index$/.test(name.text) && body[i + 2]?.text === ";") {
+      value = intLiteral([body[i + 1] as Token]);
+    }
+    push(assigned, name.text, value ?? Number.NaN);
+  }
+  const locals = new Map<string, number>();
+  for (const [name, values] of assigned) {
+    const only = values[0] as number;
+    if (values.length === 1 && only > 0 && !env.has(name)) locals.set(name, only);
+  }
+  return locals;
+}
+
+// Locals holding a probe's answer, as in `bool has_options = lua_istable(L, 2);`,
+// mapped to the probe call so a later `if (has_options)` guards like the probe.
+function probeAliasesOf(body: readonly Token[]): Map<string, Token[]> {
+  const aliases = new Map<string, Token[]>();
+  for (let i = 1; i < body.length - 3; i++) {
+    const name = body[i - 1] as Token;
+    const callee = body[i + 1] as Token;
+    if (name.kind !== "ident" || body[i]?.text !== "=" || body[i + 2]?.text !== "(") continue;
+    if (!IS_GUARDS.has(callee.text) && !NIL_GUARDS.has(callee.text)) continue;
+    const close = matchClose(body as Token[], i + 2);
+    if (body[close + 1]?.text !== ";") continue;
+    aliases.set(name.text, body.slice(i + 1, close + 1));
+  }
+  return aliases;
+}
+
+function expandProbeAliases(guards: readonly Guard[], aliases: ReadonlyMap<string, Token[]>) {
+  if (aliases.size === 0) return guards;
+  return guards.map((guard) => ({
+    ...guard,
+    condition: guard.condition.flatMap((t) =>
+      t.kind === "ident" && aliases.has(t.text) ? (aliases.get(t.text) as Token[]) : [t],
+    ),
+  }));
+}
+
 function analyzeSlots(
   fn: CFunction,
   index: Index,
-  env: Env,
+  outerEnv: Env,
   outerGuards: readonly Guard[],
   depth: number,
   analysis: Analysis,
   outerAliases: ReadonlySet<string>,
+  // Followed without any argument index: only its reads at literal positions
+  // are the caller's arguments.
+  borrowed = false,
+  // Helper parameters bound to a string literal, such as a field name.
+  names: ReadonlyMap<string, string> = new Map(),
 ): void {
+  const env: Env = new Map([...outerEnv, ...indexLocalsOf(fn.body, outerEnv)]);
   const aliases = new Set([...outerAliases, ...topAliasesOf(fn.body)]);
+  const probeAliases = probeAliasesOf(fn.body);
   const positions = new Map(fn.body.map((token, i) => [token, i]));
-  // The argument slot the stack top copies after `lua_pushvalue(L, n)`, until
-  // the next push or pop.
+  // The argument slot `lua_pushvalue(L, n)` copied, and how many values sit
+  // above that copy since: `-(copyDepth + 1)` names it until it is popped.
   let topCopy: number | null = env.get(TOP_COPY) ?? null;
+  let copyDepth = 0;
   for (const event of eventsOf(fn)) {
     if (event.type !== "call") continue;
     const { callee, args } = event.call;
-    const guards = [...outerGuards, ...event.call.guards];
+    const guards = expandProbeAliases([...outerGuards, ...event.call.guards], probeAliases);
     const name = baseName(callee);
     const exact = depth === 0 ? exactCounts(guards, aliases) : undefined;
     if (exact !== undefined) analysis.arities.add(exact);
@@ -1090,38 +1333,59 @@ function analyzeSlots(
       const direct = slotOf(arg, env);
       if (direct !== null) return direct;
       const relative = intLiteral(arg) as number;
-      if (relative === -1 && topCopy !== null) return topCopy;
+      if (topCopy !== null && relative === -(copyDepth + 1)) return topCopy;
       if (exact !== undefined && exact + relative + 1 > 0) return exact + relative + 1;
       return null;
     };
     const indexArg = args[1];
     const slot = resolve(indexArg);
-    const takesL = args[0]?.length === 1 && args[0][0]?.text === "L";
-    if (takesL && (PUSH_KINDS.has(name) || STACK_READS.has(name) || name === "lua_pop")) {
-      topCopy = null;
+    // `dmScript::GetMainThread(L)` hands the same stack to the call.
+    const first = args[0] ?? [];
+    const takesL =
+      (first.length === 1 && first[0]?.text === "L") ||
+      (first.some((t) => t.text === "GetMainThread") && first.at(-2)?.text === "L");
+    if (takesL && topCopy !== null && name !== "lua_pushvalue") {
+      copyDepth += stackDelta(name, args);
+      if (copyDepth < 0) topCopy = null;
     }
     const record = (kinds: readonly LuaKind[], extra: Partial<SlotRead> = {}) => {
       if (typeof slot !== "number") return;
       const facts = guardFacts(slot, guards, env, aliases);
+      // A read behind a positive type probe of its own slot runs only when the
+      // argument is present, so it says nothing about omitting it.
+      const probed = facts.kinds.length > 0 ? { probe: true as const } : {};
       analysis.reads.push({
         slot,
         kinds: [...kinds, ...facts.kinds],
-        optional: OPTIONAL_CHECKS.has(name) || facts.optional,
+        ...probed,
         ...extra,
+        optional: OPTIONAL_CHECKS.has(name) || facts.optional || extra.optional === true,
+        ...(facts.nilable || extra.nilable ? { nilable: true as const } : {}),
       });
       if (exact === undefined && depth === 0) {
         analysis.unguardedMax = Math.max(analysis.unguardedMax, slot);
       }
     };
+    if (ERROR_CALLS.has(name)) {
+      recordErrorGuard(guards, env, aliases, analysis);
+      continue;
+    }
     if (!takesL) continue;
     if (name === "lua_pushvalue") {
-      topCopy = typeof slot === "number" ? slot : null;
+      if (typeof slot === "number") {
+        topCopy = slot;
+        copyDepth = 0;
+      } else if (topCopy !== null) {
+        copyDepth += 1;
+      }
       record([]);
       continue;
     }
     const checkKinds = CHECK_KINDS.get(name);
     if (checkKinds) {
-      if (slot === undefined) analysis.variadic.push(`${name} at a non-literal index`);
+      if (slot === undefined && !borrowed) {
+        analysis.variadic.push(`${name} at a non-literal index`);
+      }
       const shifted = NUMERIC_CHECKS.has(name) && subtractsOne(fn.body, positions, event.call);
       record(checkKinds, shifted ? { minusOne: true } : {});
       continue;
@@ -1131,30 +1395,68 @@ function analyzeSlots(
       record(kind ? [kind] : [], kind ? {} : { manual: "luaL_checktype with a non-constant type" });
       continue;
     }
+    // Resolves the URL to a component of one type and raises on any other, so
+    // the calling script's own URL, which `ResolveURL` substitutes for nil, is
+    // refused: the slot is required.
+    if (name === "GetComponentFromLua") {
+      record(["hash", "string", "url"]);
+      continue;
+    }
     if (name === "lua_type") {
       record([], { manual: "lua_type switch" });
       continue;
     }
     if (name === "lua_getfield") {
-      const field = args[2]?.[0];
-      if (field?.kind === "string") record([], { field: field.value ?? "" });
+      const key = args[2];
+      const field =
+        key?.length === 1 && key[0]?.kind === "string"
+          ? key[0].value
+          : key?.length === 1 && key[0]?.kind === "ident"
+            ? names.get(key[0].text)
+            : undefined;
+      if (field !== undefined) record([], { field });
       continue;
     }
-    if (IS_GUARDS.has(name) || NIL_GUARDS.has(name)) {
-      record([]);
+    if (NIL_GUARDS.has(name)) {
+      record([], name === "lua_isnil" ? { nilable: true } : { optional: true });
+      continue;
+    }
+    // A probe that picks a branch names a kind the binding handles; one whose
+    // answer is returned, as in `types.is_hash`, accepts anything.
+    if (IS_GUARDS.has(name)) {
+      record(event.call.branches ? [IS_GUARDS.get(name) as LuaKind] : [], { probe: true });
       continue;
     }
     if (depth >= MAX_HELPER_DEPTH) continue;
     const helper = index.functionsNamed(name, fn.file).find((f) => f.takesLuaState);
     if (!helper || helper === fn) continue;
     const helperEnv = new Map<string, number>();
+    const helperNames = new Map<string, string>();
     helper.params.forEach((param, i) => {
-      const value = i === 0 ? undefined : resolve(args[i]);
+      const arg = args[i];
+      if (arg?.length === 1 && arg[0]?.kind === "string") {
+        helperNames.set(param, arg[0].value ?? "");
+      } else if (arg?.length === 1 && arg[0]?.kind === "ident" && names.has(arg[0].text)) {
+        helperNames.set(param, names.get(arg[0].text) as string);
+      }
+      const value = i === 0 ? undefined : resolve(arg);
       if (typeof value === "number") helperEnv.set(param, value);
     });
-    if (helperEnv.size === 0 && topCopy === null) continue;
-    if (topCopy !== null) helperEnv.set(TOP_COPY, topCopy);
-    analyzeSlots(helper, index, helperEnv, guards, depth + 1, analysis, aliases);
+    if (topCopy !== null && copyDepth === 0) helperEnv.set(TOP_COPY, topCopy);
+    // A helper handed no stack index still reads the caller's arguments at the
+    // absolute positions it names.
+    const indexless = helperEnv.size === 0;
+    analyzeSlots(
+      helper,
+      index,
+      helperEnv,
+      guards,
+      depth + 1,
+      analysis,
+      aliases,
+      indexless,
+      helperNames,
+    );
   }
 }
 
@@ -1211,17 +1513,36 @@ function analyzeReturns(fn: CFunction): BindingReturns {
   return { count, kinds: positions };
 }
 
+// A binding whose whole body is `return Other(L);` reads and returns what the
+// function it forwards to does.
+function forwardedTarget(fn: CFunction, index: Index): CFunction | undefined {
+  const events = eventsOf(fn);
+  const returns = events.filter((event) => event.type === "return");
+  if (returns.length !== 1 || events.length !== 2) return undefined;
+  const value = (returns[0] as { value: Token[] }).value;
+  const call = value[0]?.kind === "ident" ? guardedCall({ tokens: value, positive: true }) : null;
+  if (call?.args.length !== 1 || call.args[0]?.[0]?.text !== "L") return undefined;
+  return index.functionsNamed(baseName(call.name), fn.file).find((f) => f.takesLuaState);
+}
+
 function analyzeFunction(
   namespace: string,
   name: string,
-  fn: CFunction,
+  bound: CFunction,
   index: Index,
 ): BindingFunction {
+  let fn = bound;
+  for (let hops = 0, next = forwardedTarget(fn, index); next && hops < MAX_HELPER_DEPTH; hops++) {
+    fn = next;
+    next = forwardedTarget(fn, index);
+  }
   const analysis: Analysis = {
     reads: [],
     variadic: [],
     arities: new Set(),
     unguardedMax: 0,
+    nilRejected: new Set(),
+    errorMinArgs: 0,
   };
   const env = new Map<string, number>();
   analyzeSlots(fn, index, env, [], 0, analysis, new Set());
@@ -1238,12 +1559,21 @@ function analyzeFunction(
       : undefined;
 
   const slots: BindingSlot[] = [];
+  const nilOnly = new Set<number>();
   for (let slot = 1; slot <= maxSlot; slot++) {
     const reads = bySlot.get(slot) ?? [];
     const manual = reads.find((r) => r.manual)?.manual;
     const kinds = union(reads.flatMap((r) => r.kinds)).sort() as LuaKind[];
     const byArity = arities !== undefined && slot > (arities[0] as number);
-    const optional = byArity || (reads.length > 0 && reads.every((r) => r.optional));
+    const decisive = reads.filter((r) => !r.probe);
+    // A slot read only behind probes of itself is skipped when absent.
+    const allows = (test: (r: SlotRead) => boolean) =>
+      decisive.length > 0 ? decisive.every(test) : reads.length > 0;
+    const omittable = allows((r) => r.optional);
+    const nilAccepted = allows((r) => r.optional || r.nilable === true);
+    const refused = analysis.nilRejected.has(slot) || slot <= analysis.errorMinArgs;
+    const optional = !refused && (byArity || omittable || nilAccepted);
+    if (optional && !byArity && !omittable) nilOnly.add(slot);
     const fields = union(reads.flatMap((r) => (r.field ? [r.field] : []))).sort();
     const noRead = reads.length === 0 ? "no read of this slot" : undefined;
     const settled =
@@ -1264,16 +1594,18 @@ function analyzeFunction(
       slots[slot] = { ...current, optional: false };
     }
   }
-  const required = slots.filter((s) => !s.optional).map((s) => s.index);
-  const minArgs = arities ? (arities[0] as number) : Math.max(0, ...required);
+  const required = slots.filter((s) => !s.optional || nilOnly.has(s.index)).map((s) => s.index);
+  const minArgs = arities
+    ? Math.max(arities[0] as number, analysis.errorMinArgs)
+    : Math.max(0, ...required);
   const manual = [...analysis.variadic];
   return {
     namespace,
     name,
-    cFunction: fn.name,
-    file: fn.file,
+    cFunction: bound.name,
+    file: bound.file,
     minArgs,
-    maxArgs: analysis.variadic.length > 0 ? "variadic" : maxSlot,
+    maxArgs: analysis.variadic.length > 0 ? "variadic" : Math.max(maxSlot, minArgs),
     ...(arities ? { arities } : {}),
     slots,
     returns: analyzeReturns(fn),
@@ -1366,7 +1698,11 @@ function simulateRegistration(
       if (value.kind === "value") {
         if (target.namespace) push(out.constants, target.namespace, key.value ?? "");
         else target.constants.push(key.value ?? "");
-      } else if (value.kind === "table" && value.functions.length > 0 && target.namespace) {
+      } else if (
+        value.kind === "table" &&
+        (value.functions.length > 0 || value.constants.length > 0) &&
+        target.namespace
+      ) {
         bind(value, `${target.namespace}.${key.value}`);
       }
       continue;

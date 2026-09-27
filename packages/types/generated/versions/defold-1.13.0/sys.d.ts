@@ -583,7 +583,7 @@ declare global {
      * sys.save(my_file_path, my_table);
      * ```
      */
-    function save(filename: string, table: Record<string | number, unknown> | readonly unknown[]): void;
+    function save(filename: string, table: Record<string | number, unknown> | readonly unknown[]): boolean;
     /**
      * The buffer can later deserialized by `sys.deserialize`.
      * This function has all the same limitations as `sys.save`.
@@ -668,10 +668,10 @@ declare global {
      * @example
      * ```ts
      * // Disable rendering
-     * sys.set_render_enable(false);
+     * sys.set_render_enabled(false);
      * ```
      */
-    function set_render_enable(enable: boolean): void;
+    function set_render_enabled(enable: boolean): void;
     /**
      * Set game update-frequency (frame cap). This option is equivalent to `display.update_frequency` in
      * the "game.project" settings but set in run-time. If `Vsync` checked in "game.project", the rate will

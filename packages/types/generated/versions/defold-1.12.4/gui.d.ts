@@ -585,7 +585,7 @@ declare global {
      * });
      * ```
      */
-    function animate(node: Opaque<"node">, property: string | gui.Property, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay?: number, complete_function?: (self: unknown, node: unknown) => void, playback?: gui.Playback): void;
+    function animate(node: Opaque<"node">, property: string | gui.Property | Hash, to: number | Vector3 | Vector4 | Quaternion, easing: gui.Easing | Vector, duration: number, delay?: number, complete_function?: (self: unknown, node: unknown) => void, playback?: gui.Playback): void;
     /**
      * If one or more animations of the specified node is currently running (started by `gui.animate`), they will immediately be canceled.
      *
@@ -638,7 +638,7 @@ declare global {
      * gui.cancel_animations(node);
      * ```
      */
-    function cancel_animations(node: Opaque<"node">, property?: string | gui.Property): void;
+    function cancel_animations(node: Opaque<"node">, property?: string | gui.Property | Hash): void;
     /**
      * Cancels any running flipbook animation on the specified node.
      *
@@ -772,7 +772,7 @@ declare global {
      * const node_position = gui.get(node, "position");
      * ```
      */
-    function get(node: Opaque<"node">, property: string | Hash | gui.Property, options?: { index?: number }): unknown;
+    function get(node: Opaque<"node">, property: string | Hash | gui.Property, options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }): unknown;
     /**
      * Returns the adjust mode of a node.
      * The adjust mode defines how the node will adjust itself to screen
@@ -1295,7 +1295,7 @@ declare global {
      * @param node - to move
      * @param reference - reference node above which the first node should be moved
      */
-    function move_above(node: Opaque<"node">, reference?: Opaque<"node">): void;
+    function move_above(node: Opaque<"node">, reference: Opaque<"node"> | undefined): void;
     /**
      * Alters the ordering of the two supplied nodes by moving the first node
      * below the second.
@@ -1304,7 +1304,7 @@ declare global {
      * @param node - to move
      * @param reference - reference node below which the first node should be moved
      */
-    function move_below(node: Opaque<"node">, reference?: Opaque<"node">): void;
+    function move_below(node: Opaque<"node">, reference: Opaque<"node"> | undefined): void;
     /**
      * Dynamically create a new box node.
      *
@@ -1713,7 +1713,7 @@ declare global {
      * @param screen_position - screen position
      * @returns local position
      */
-    function screen_to_local(node: Opaque<"node">, screen_position: Vector3): Vector3;
+    function screen_to_local(node: Opaque<"node">, screen_position: Vector3 | Vector4): Vector3;
     /**
      * Instead of using specific setteres such as gui.set_position or gui.set_scale,
      * you can use gui.set instead and supply the property as a string or a hash.
@@ -1809,7 +1809,7 @@ declare global {
      * });
      * ```
      */
-    function set(node: Opaque<"node"> | Url, property: string | Hash | gui.Property, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: { index?: number; key?: string | Hash }): void;
+    function set(node: Opaque<"node"> | Url, property: string | Hash | gui.Property, value: number | Vector4 | Vector3 | Quaternion | Matrix4 | Hash, options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }): void;
     /**
      * Sets the adjust mode on a node.
      * The adjust mode defines how the node will adjust itself to screen
@@ -2051,7 +2051,7 @@ declare global {
      * @param parent - parent node to set, pass `nil` to remove parent
      * @param keep_scene_transform - optional flag to make the scene position being perserved
      */
-    function set_parent(node: Opaque<"node">, parent?: Opaque<"node">, keep_scene_transform?: boolean): void;
+    function set_parent(node: Opaque<"node">, parent: Opaque<"node"> | undefined, keep_scene_transform?: boolean): void;
     /**
      * Set the paricle fx for a gui node
      *
@@ -2143,7 +2143,7 @@ declare global {
      * @param node - node to set the screen position to
      * @param screen_position - screen position
      */
-    function set_screen_position(node: Opaque<"node">, screen_position: Vector3): void;
+    function set_screen_position(node: Opaque<"node">, screen_position: Vector3 | Vector4): void;
     /**
      * Sets the shadow color of the supplied node.
      * See gui.set_color for info how vectors encode color values.

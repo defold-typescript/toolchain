@@ -116,10 +116,14 @@ void _badCf;
 
 const _cpRes: Hash[] = collectionproxy.get_resources(msg.url());
 collectionproxy.set_collection(msg.url(), "/main.collectionc");
+collectionproxy.set_collection(msg.url(), undefined);
+collectionproxy.get_resources("#proxy");
+
+// @ts-expect-error the binding reads the prototype slot: pass undefined to reset it
 collectionproxy.set_collection(msg.url());
 
-// @ts-expect-error collectionproxy.get_resources requires Url, not a bare string
-collectionproxy.get_resources("not a url");
+// @ts-expect-error collectionproxy.get_resources takes a proxy address, not a number
+collectionproxy.get_resources(42);
 
 // @ts-expect-error collectionproxy.get_resources returns a table (Record), not a string
 const _badCpRes: string = collectionproxy.get_resources(msg.url());
@@ -248,6 +252,9 @@ void _timerCancelled;
 
 const _html5Out: string = html5.run("1 + 1");
 html5.set_interaction_listener(() => {});
+html5.set_interaction_listener(undefined);
+
+// @ts-expect-error the binding checks argument 1 is present: pass undefined to clear
 html5.set_interaction_listener();
 
 // @ts-expect-error html5.run takes a string, not a number

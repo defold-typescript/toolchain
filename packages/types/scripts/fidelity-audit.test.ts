@@ -6,6 +6,7 @@ import {
   ARBITRARY_TABLE_SLOT_KEYS,
   isVarargParameter,
   OPTIONAL_SLOT_CORRECTIONS,
+  UNBOUND_SKIPS,
 } from "../src/emit-dts";
 import verdicts from "./engine-binding-verdicts.json" with { type: "json" };
 import {
@@ -1603,6 +1604,8 @@ describe("declared arities — the argument counts the shipped surface accepts",
       for (const rule of entry.skipFunctions ?? []) {
         if (rule.endsWith(".")) continue;
         const fqn = `${entry.namespace}.${rule}`;
+        // Withheld because no binding registers it: nothing declares it on purpose.
+        if (UNBOUND_SKIPS.has(fqn)) continue;
         if ((arities.get(fqn) ?? []).length === 0) unresolved.push(fqn);
       }
     }

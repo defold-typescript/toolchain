@@ -16,7 +16,8 @@
         {
           "namespace": "b2d.body",
           "fixture": "b2d_body_doc.json",
-          "outFile": "b2d_body.d.ts"
+          "outFile": "b2d_body.d.ts",
+          "skipFunctions": ["get_contact_list", "get_user_data", "set_user_data"]
         },
         {
           "namespace": "b2d.chain",
@@ -346,7 +347,8 @@
         {
           "namespace": "b2d.body",
           "fixture": "b2d_body_doc.json",
-          "outFile": "b2d_body.d.ts"
+          "outFile": "b2d_body.d.ts",
+          "skipFunctions": ["get_contact_list", "get_user_data", "set_user_data"]
         },
         {
           "namespace": "b2d.chain",
@@ -669,7 +671,8 @@
         {
           "namespace": "b2d.body",
           "fixture": "b2d_body_doc.json",
-          "outFile": "b2d_body.d.ts"
+          "outFile": "b2d_body.d.ts",
+          "skipFunctions": ["reset_mass_data"]
         },
         {
           "namespace": "buffer",
