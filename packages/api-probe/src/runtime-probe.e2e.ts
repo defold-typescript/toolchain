@@ -21,12 +21,16 @@ describe(`runtime probe (${process.env.PROBE_TARGET ?? "default target"})`, () =
     expect(failures.unreported).toEqual([]);
   });
 
-  test("no positive call ends in a bad argument the exemptions do not record", () => {
+  test("no positive call ends in a bad argument without an accepted exemption", () => {
     expect(failures.badArguments).toEqual([]);
   });
 
   test("every engine error is exempted with a reason", () => {
     expect(failures.unexempted).toEqual([]);
+  });
+
+  test("no exemption is open", () => {
+    expect(failures.openFindings).toEqual([]);
   });
 
   test("every exemption still reproduces", () => {
