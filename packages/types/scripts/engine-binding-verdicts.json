@@ -453,12 +453,6 @@
     "extracted": "absent",
     "declared": "declared"
   },
-  "*:gui.is_enabled:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "*:gui.is_enabled:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
   "*:gui.move_above:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
   "*:gui.move_below:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
   "*:gui.new_texture:too-loose:4": {
@@ -479,11 +473,6 @@
   "*:gui.on_reload:missing-binding": {
     "verdict": "open",
     "extracted": "absent",
-    "declared": "declared"
-  },
-  "*:gui.play_flipbook:field-unread:4.playback_rate": {
-    "verdict": "open",
-    "extracted": "not read",
     "declared": "declared"
   },
   "*:gui.screen_to_local:too-narrow:2": {
@@ -524,20 +513,10 @@
     "declared": "0..1"
   },
   "*:http.request:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
-  "*:image.load_buffer:field-unread:2.flip_vertically": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
   "*:image.load_buffer:too-narrow:2": {
     "verdict": "open",
     "extracted": "boolean|table",
     "declared": "table"
-  },
-  "*:image.load:field-unread:2.flip_vertically": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
   },
   "*:image.load:too-narrow:2": {
     "verdict": "open",
@@ -545,7 +524,7 @@
     "declared": "table"
   },
   "*:json.decode:arity": { "verdict": "open", "extracted": "1..1", "declared": "1..2" },
-  "*:json.encode:arity": { "verdict": "open", "extracted": "1..0", "declared": "1..2" },
+  "*:json.encode:arity": { "verdict": "open", "extracted": "1..1", "declared": "1..2" },
   "*:liveupdate.LIVEUPDATE_NOT_INITIALIZED:constant-missing-declaration": {
     "verdict": "open",
     "extracted": "registered",
@@ -561,16 +540,6 @@
     "verdict": "open",
     "extracted": "hash|string",
     "declared": "hash|string|url"
-  },
-  "*:model.play_anim:field-unread:4.offset": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "*:model.play_anim:field-unread:4.playback_rate": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
   },
   "*:model.set_mesh_enabled:too-loose:2": {
     "verdict": "open",
@@ -615,21 +584,6 @@
     "extracted": "hash|string",
     "declared": "string"
   },
-  "*:physics.set_shape:field-unread:3.diameter": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "*:physics.set_shape:field-unread:3.dimensions": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "*:physics.set_shape:field-unread:3.height": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
   "*:profiler.get_lua_ref_count:missing-declaration": {
     "verdict": "open",
     "extracted": "bound",
@@ -649,11 +603,6 @@
     "verdict": "open",
     "extracted": "hash|number|string",
     "declared": "hash|number|string|userdata"
-  },
-  "*:render.draw_debug3d:field-unread:1.frustum_planes": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
   },
   "*:render.draw:too-loose:1": { "verdict": "open", "extracted": "userdata", "declared": "number" },
   "*:render.draw:too-narrow:1": {
@@ -762,11 +711,6 @@
     "extracted": "absent",
     "declared": "declared"
   },
-  "*:resource.create_atlas:field-unread:2.animations": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
   "*:resource.create_atlas:field-unread:2.indices": {
     "verdict": "open",
     "extracted": "not read",
@@ -788,11 +732,6 @@
     "declared": "declared"
   },
   "*:resource.create_buffer:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "*:resource.create_buffer:field-unread:2.transfer_ownership": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
   "*:resource.create_buffer:required-as-optional:2": {
     "verdict": "open",
     "extracted": "required",
@@ -802,16 +741,6 @@
     "verdict": "open",
     "extracted": "2..2",
     "declared": "1..2"
-  },
-  "*:resource.create_sound_data:field-unread:2.filesize": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "*:resource.create_sound_data:field-unread:2.partial": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
   },
   "*:resource.create_sound_data:required-as-optional:2": {
     "verdict": "open",
@@ -848,17 +777,7 @@
     "extracted": "absent",
     "declared": "declared"
   },
-  "*:resource.set_atlas:field-unread:2.animations": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
   "*:resource.set_atlas:field-unread:2.indices": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "*:resource.set_atlas:field-unread:2.texture": {
     "verdict": "open",
     "extracted": "not read",
     "declared": "declared"
@@ -889,31 +808,6 @@
     "declared": "hash|string"
   },
   "*:sound.play:arity": { "verdict": "open", "extracted": "0..3", "declared": "1..3" },
-  "*:sound.play:field-unread:2.gain": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "*:sound.play:field-unread:2.pan": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "*:sound.play:field-unread:2.speed": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "*:sound.play:field-unread:2.start_frame": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "*:sound.play:field-unread:2.start_time": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
   "*:sound.play:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
   "*:sound.play:optional-as-required:1": {
     "verdict": "open",
@@ -937,11 +831,6 @@
     "verdict": "open",
     "extracted": "optional",
     "declared": "required"
-  },
-  "*:sprite.play_flipbook:field-unread:4.playback_rate": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
   },
   "*:sprite.play_flipbook:manual:3": { "verdict": "manual", "reason": "lua_type switch" },
   "*:sprite.set_scale:missing-declaration": {
@@ -1353,21 +1242,6 @@
     "verdict": "open",
     "extracted": "bound",
     "declared": "absent"
-  },
-  "defold-1.12.4:render.draw:field-unread:2.constants": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.12.4:render.draw:field-unread:2.frustum_planes": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.12.4:render.draw:field-unread:2.sort_order": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
   },
   "defold-1.12.4:render.enable_render_target:missing-declaration": {
     "verdict": "open",
@@ -1799,30 +1673,15 @@
     "extracted": "2..2",
     "declared": "2..3"
   },
-  "defold-1.13.0:b2d.body.create_fixture:field-undeclared:2.user_data": {
+  "defold-1.13.0:b2d.body.create_fixture:field-undeclared:2.is_sensor": {
     "verdict": "open",
     "extracted": "read",
     "declared": "not declared"
   },
-  "defold-1.13.0:b2d.body.create_fixture:field-unread:2.density": {
+  "defold-1.13.0:b2d.body.create_fixture:field-undeclared:2.user_data": {
     "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.body.create_fixture:field-unread:2.friction": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.body.create_fixture:field-unread:2.restitution": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.body.create_fixture:field-unread:2.sensor": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
+    "extracted": "read",
+    "declared": "not declared"
   },
   "defold-1.13.0:b2d.body.create_fixture:too-loose:2": {
     "verdict": "open",
@@ -1872,51 +1731,6 @@
     "verdict": "open",
     "extracted": "read",
     "declared": "not declared"
-  },
-  "defold-1.13.0:b2d.fixture.set_shape:field-unread:3.angle": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.fixture.set_shape:field-unread:3.center": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.fixture.set_shape:field-unread:3.hx": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.fixture.set_shape:field-unread:3.hy": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.fixture.set_shape:field-unread:3.loop": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.fixture.set_shape:field-unread:3.next_vertex": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.fixture.set_shape:field-unread:3.prev_vertex": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.fixture.set_shape:field-unread:3.v0": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.fixture.set_shape:field-unread:3.v3": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
   },
   "defold-1.13.0:b2d.joint.create_filter:arity": {
     "verdict": "open",
@@ -2091,110 +1905,30 @@
     "verdict": "manual",
     "reason": "luaL_checkinteger at a non-literal index; lua_toboolean at a non-literal index"
   },
-  "defold-1.13.0:b2d.shape.SHAPE_TYPE_CHAIN:constant-missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.shape.SHAPE_TYPE_GRID:constant-missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
-  },
   "defold-1.13.0:b2d.shape.test_point:missing-declaration": {
     "verdict": "open",
     "extracted": "bound",
     "declared": "absent"
   },
-  "defold-1.13.0:b2d.world.cast_shape:field-unread:2.angle": {
+  "defold-1.13.0:b2d.world.cast_shape:field-undeclared:2.center1": {
     "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
+    "extracted": "read",
+    "declared": "not declared"
   },
-  "defold-1.13.0:b2d.world.cast_shape:field-unread:2.center": {
+  "defold-1.13.0:b2d.world.cast_shape:field-undeclared:2.center2": {
     "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
+    "extracted": "read",
+    "declared": "not declared"
   },
-  "defold-1.13.0:b2d.world.cast_shape:field-unread:2.hx": {
+  "defold-1.13.0:b2d.world.overlap_shape:field-undeclared:2.center1": {
     "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
+    "extracted": "read",
+    "declared": "not declared"
   },
-  "defold-1.13.0:b2d.world.cast_shape:field-unread:2.hy": {
+  "defold-1.13.0:b2d.world.overlap_shape:field-undeclared:2.center2": {
     "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.world.cast_shape:field-unread:2.loop": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.world.cast_shape:field-unread:2.next_vertex": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.world.cast_shape:field-unread:2.prev_vertex": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.world.cast_shape:field-unread:2.v0": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.world.cast_shape:field-unread:2.v3": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.world.overlap_shape:field-unread:2.angle": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.world.overlap_shape:field-unread:2.center": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.world.overlap_shape:field-unread:2.hx": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.world.overlap_shape:field-unread:2.hy": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.world.overlap_shape:field-unread:2.loop": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.world.overlap_shape:field-unread:2.next_vertex": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.world.overlap_shape:field-unread:2.prev_vertex": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.world.overlap_shape:field-unread:2.v0": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.0:b2d.world.overlap_shape:field-unread:2.v3": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
+    "extracted": "read",
+    "declared": "not declared"
   },
   "defold-1.13.0:camera.get_orthographic_auto_zoom:too-narrow:1": {
     "verdict": "open",
@@ -2342,22 +2076,6 @@
     "declared": "any"
   },
   "defold-1.13.0:particlefx.play:manual:2": { "verdict": "manual", "reason": "no kind check" },
-  "defold-1.13.0:render.dispatch_compute:arity": {
-    "verdict": "open",
-    "extracted": "4..4",
-    "declared": "3..4"
-  },
-  "defold-1.13.0:render.dispatch_compute:required-as-optional:4": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.0:render.draw:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "defold-1.13.0:render.draw:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
   "defold-1.13.0:render.set_blend_equation_separate:manual": {
     "verdict": "manual",
     "reason": "luaL_checknumber at a non-literal index"
@@ -2381,30 +2099,15 @@
     "extracted": "2..2",
     "declared": "2..3"
   },
-  "defold-1.13.1:b2d.body.create_fixture:field-undeclared:2.user_data": {
+  "defold-1.13.1:b2d.body.create_fixture:field-undeclared:2.is_sensor": {
     "verdict": "open",
     "extracted": "read",
     "declared": "not declared"
   },
-  "defold-1.13.1:b2d.body.create_fixture:field-unread:2.density": {
+  "defold-1.13.1:b2d.body.create_fixture:field-undeclared:2.user_data": {
     "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.body.create_fixture:field-unread:2.friction": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.body.create_fixture:field-unread:2.restitution": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.body.create_fixture:field-unread:2.sensor": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
+    "extracted": "read",
+    "declared": "not declared"
   },
   "defold-1.13.1:b2d.body.create_fixture:too-loose:2": {
     "verdict": "open",
@@ -2454,51 +2157,6 @@
     "verdict": "open",
     "extracted": "read",
     "declared": "not declared"
-  },
-  "defold-1.13.1:b2d.fixture.set_shape:field-unread:3.angle": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.fixture.set_shape:field-unread:3.center": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.fixture.set_shape:field-unread:3.hx": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.fixture.set_shape:field-unread:3.hy": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.fixture.set_shape:field-unread:3.loop": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.fixture.set_shape:field-unread:3.next_vertex": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.fixture.set_shape:field-unread:3.prev_vertex": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.fixture.set_shape:field-unread:3.v0": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.fixture.set_shape:field-unread:3.v3": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
   },
   "defold-1.13.1:b2d.joint.create_filter:arity": {
     "verdict": "open",
@@ -2673,110 +2331,30 @@
     "verdict": "manual",
     "reason": "luaL_checkinteger at a non-literal index; lua_toboolean at a non-literal index"
   },
-  "defold-1.13.1:b2d.shape.SHAPE_TYPE_CHAIN:constant-missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.shape.SHAPE_TYPE_GRID:constant-missing-binding": {
-    "verdict": "open",
-    "extracted": "absent",
-    "declared": "declared"
-  },
   "defold-1.13.1:b2d.shape.test_point:missing-declaration": {
     "verdict": "open",
     "extracted": "bound",
     "declared": "absent"
   },
-  "defold-1.13.1:b2d.world.cast_shape:field-unread:2.angle": {
+  "defold-1.13.1:b2d.world.cast_shape:field-undeclared:2.center1": {
     "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
+    "extracted": "read",
+    "declared": "not declared"
   },
-  "defold-1.13.1:b2d.world.cast_shape:field-unread:2.center": {
+  "defold-1.13.1:b2d.world.cast_shape:field-undeclared:2.center2": {
     "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
+    "extracted": "read",
+    "declared": "not declared"
   },
-  "defold-1.13.1:b2d.world.cast_shape:field-unread:2.hx": {
+  "defold-1.13.1:b2d.world.overlap_shape:field-undeclared:2.center1": {
     "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
+    "extracted": "read",
+    "declared": "not declared"
   },
-  "defold-1.13.1:b2d.world.cast_shape:field-unread:2.hy": {
+  "defold-1.13.1:b2d.world.overlap_shape:field-undeclared:2.center2": {
     "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.world.cast_shape:field-unread:2.loop": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.world.cast_shape:field-unread:2.next_vertex": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.world.cast_shape:field-unread:2.prev_vertex": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.world.cast_shape:field-unread:2.v0": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.world.cast_shape:field-unread:2.v3": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.world.overlap_shape:field-unread:2.angle": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.world.overlap_shape:field-unread:2.center": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.world.overlap_shape:field-unread:2.hx": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.world.overlap_shape:field-unread:2.hy": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.world.overlap_shape:field-unread:2.loop": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.world.overlap_shape:field-unread:2.next_vertex": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.world.overlap_shape:field-unread:2.prev_vertex": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.world.overlap_shape:field-unread:2.v0": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
-  },
-  "defold-1.13.1:b2d.world.overlap_shape:field-unread:2.v3": {
-    "verdict": "open",
-    "extracted": "not read",
-    "declared": "declared"
+    "extracted": "read",
+    "declared": "not declared"
   },
   "defold-1.13.1:camera.get_orthographic_auto_zoom:too-narrow:1": {
     "verdict": "open",
@@ -2926,22 +2504,6 @@
     "verdict": "open",
     "extracted": "registered",
     "declared": "absent"
-  },
-  "defold-1.13.1:render.dispatch_compute:arity": {
-    "verdict": "open",
-    "extracted": "4..4",
-    "declared": "3..4"
-  },
-  "defold-1.13.1:render.dispatch_compute:required-as-optional:4": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
-  },
-  "defold-1.13.1:render.draw:arity": { "verdict": "open", "extracted": "2..2", "declared": "1..2" },
-  "defold-1.13.1:render.draw:required-as-optional:2": {
-    "verdict": "open",
-    "extracted": "required",
-    "declared": "optional"
   },
   "defold-1.13.1:render.set_blend_equation_separate:manual": {
     "verdict": "manual",

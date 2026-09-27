@@ -508,10 +508,17 @@ class Index {
     }
   }
 
+  // The caller's own file first, then its directory, so a Box2D v2 source
+  // resolves the v2 helper and never its v3 namesake.
   functionsNamed(name: string, fromFile: string): CFunction[] {
     const all = this.functionsByName.get(name) ?? [];
     const local = all.filter((fn) => fn.file === fromFile);
-    return local.length > 0 ? local : all;
+    if (local.length > 0) return local;
+    const dir = fromFile.slice(0, fromFile.lastIndexOf("/") + 1);
+    const sibling = all.filter(
+      (fn) => fn.file.startsWith(dir) && !fn.file.slice(dir.length).includes("/"),
+    );
+    return sibling.length > 0 ? sibling : all;
   }
 
   table(name: string, fromFile: string): RegTable | undefined {
@@ -552,6 +559,14 @@ function scanExpression(
   events: Event[],
   branches = false,
 ): void {
+  // `bool recursive = top >= 2 && lua_toboolean(L, 2)`: the target takes no
+  // part in the conditions the value is built from.
+  const assign = topLevelIndex(tokens, "=");
+  if (assign !== -1) {
+    scanExpression(tokens.slice(0, assign), guards, events, branches);
+    scanExpression(tokens.slice(assign + 1), guards, events, branches);
+    return;
+  }
   const question = topLevelIndex(tokens, "?");
   if (question !== -1) {
     const colon = matchingColon(tokens, question);
@@ -581,9 +596,11 @@ function scanExpression(
   }
   for (let i = 0; i < tokens.length; i++) {
     const t = tokens[i] as Token;
-    if (t.kind !== "ident" || KEYWORDS.has(t.text) || tokens[i + 1]?.text !== "(") continue;
-    const close = matchClose(tokens, i + 1);
-    const args = splitTopLevel(tokens.slice(i + 2, close), ",");
+    if (t.kind !== "ident" || KEYWORDS.has(t.text)) continue;
+    const open = i + 1 + templateArgumentsLength(tokens, i + 1);
+    if (tokens[open]?.text !== "(") continue;
+    const close = matchClose(tokens, open);
+    const args = splitTopLevel(tokens.slice(open + 1, close), ",");
     let qualified = t.text;
     for (
       let q = i - 1;
@@ -601,6 +618,18 @@ function scanExpression(
     if (!ERROR_CALLS.has(t.text)) for (const arg of args) scanExpression(arg, guards, events);
     i = close;
   }
+}
+
+// The length of `<bool>` in `CheckFieldValue<bool>(...)`: type names only, so a
+// comparison such as `a < b` is never read as one.
+function templateArgumentsLength(tokens: readonly Token[], at: number): number {
+  if (tokens[at]?.text !== "<") return 0;
+  for (let j = at + 1; j < tokens.length; j++) {
+    const text = (tokens[j] as Token).text;
+    if (text === ">") return j - at + 1;
+    if (tokens[j]?.kind !== "ident" && text !== "::" && text !== "*" && text !== ",") return 0;
+  }
+  return 0;
 }
 
 function topLevelIndex(tokens: readonly Token[], text: string): number {
@@ -879,14 +908,14 @@ type Env = ReadonlyMap<string, number>;
 // Env key carrying the caller's stack-top copy into a helper; not a C identifier.
 const TOP_COPY = "#top";
 
-// Calls that push a value read from a table or the stack, replacing the top.
-const STACK_READS = new Set([
-  "lua_getfield",
-  "lua_rawgeti",
-  "lua_gettable",
-  "lua_rawget",
-  "lua_next",
-]);
+// How a call moves the stack top; a helper is assumed to leave it balanced.
+function stackDelta(name: string, args: readonly Token[][]): number {
+  if (PUSH_KINDS.has(name)) return 1;
+  if (name === "lua_getfield" || name === "lua_rawgeti" || name === "lua_next") return 1;
+  if (name === "lua_gettable" || name === "lua_rawget") return 0;
+  if (name === "lua_pop") return -(intLiteral(args[1] ?? []) ?? 0);
+  return -(POPS.get(name) ?? 0);
+}
 
 function intLiteral(tokens: readonly Token[]): number | undefined {
   if (tokens.length === 1 && tokens[0]?.kind === "number")
@@ -1244,6 +1273,32 @@ function indexLocalsOf(body: readonly Token[], env: Env): Map<string, number> {
   return locals;
 }
 
+// Locals holding a probe's answer, as in `bool has_options = lua_istable(L, 2);`,
+// mapped to the probe call so a later `if (has_options)` guards like the probe.
+function probeAliasesOf(body: readonly Token[]): Map<string, Token[]> {
+  const aliases = new Map<string, Token[]>();
+  for (let i = 1; i < body.length - 3; i++) {
+    const name = body[i - 1] as Token;
+    const callee = body[i + 1] as Token;
+    if (name.kind !== "ident" || body[i]?.text !== "=" || body[i + 2]?.text !== "(") continue;
+    if (!IS_GUARDS.has(callee.text) && !NIL_GUARDS.has(callee.text)) continue;
+    const close = matchClose(body as Token[], i + 2);
+    if (body[close + 1]?.text !== ";") continue;
+    aliases.set(name.text, body.slice(i + 1, close + 1));
+  }
+  return aliases;
+}
+
+function expandProbeAliases(guards: readonly Guard[], aliases: ReadonlyMap<string, Token[]>) {
+  if (aliases.size === 0) return guards;
+  return guards.map((guard) => ({
+    ...guard,
+    condition: guard.condition.flatMap((t) =>
+      t.kind === "ident" && aliases.has(t.text) ? (aliases.get(t.text) as Token[]) : [t],
+    ),
+  }));
+}
+
 function analyzeSlots(
   fn: CFunction,
   index: Index,
@@ -1255,17 +1310,21 @@ function analyzeSlots(
   // Followed without any argument index: only its reads at literal positions
   // are the caller's arguments.
   borrowed = false,
+  // Helper parameters bound to a string literal, such as a field name.
+  names: ReadonlyMap<string, string> = new Map(),
 ): void {
   const env: Env = new Map([...outerEnv, ...indexLocalsOf(fn.body, outerEnv)]);
   const aliases = new Set([...outerAliases, ...topAliasesOf(fn.body)]);
+  const probeAliases = probeAliasesOf(fn.body);
   const positions = new Map(fn.body.map((token, i) => [token, i]));
-  // The argument slot the stack top copies after `lua_pushvalue(L, n)`, until
-  // the next push or pop.
+  // The argument slot `lua_pushvalue(L, n)` copied, and how many values sit
+  // above that copy since: `-(copyDepth + 1)` names it until it is popped.
   let topCopy: number | null = env.get(TOP_COPY) ?? null;
+  let copyDepth = 0;
   for (const event of eventsOf(fn)) {
     if (event.type !== "call") continue;
     const { callee, args } = event.call;
-    const guards = [...outerGuards, ...event.call.guards];
+    const guards = expandProbeAliases([...outerGuards, ...event.call.guards], probeAliases);
     const name = baseName(callee);
     const exact = depth === 0 ? exactCounts(guards, aliases) : undefined;
     if (exact !== undefined) analysis.arities.add(exact);
@@ -1274,15 +1333,16 @@ function analyzeSlots(
       const direct = slotOf(arg, env);
       if (direct !== null) return direct;
       const relative = intLiteral(arg) as number;
-      if (relative === -1 && topCopy !== null) return topCopy;
+      if (topCopy !== null && relative === -(copyDepth + 1)) return topCopy;
       if (exact !== undefined && exact + relative + 1 > 0) return exact + relative + 1;
       return null;
     };
     const indexArg = args[1];
     const slot = resolve(indexArg);
     const takesL = args[0]?.length === 1 && args[0][0]?.text === "L";
-    if (takesL && (PUSH_KINDS.has(name) || STACK_READS.has(name) || name === "lua_pop")) {
-      topCopy = null;
+    if (takesL && topCopy !== null && name !== "lua_pushvalue") {
+      copyDepth += stackDelta(name, args);
+      if (copyDepth < 0) topCopy = null;
     }
     const record = (kinds: readonly LuaKind[], extra: Partial<SlotRead> = {}) => {
       if (typeof slot !== "number") return;
@@ -1308,7 +1368,12 @@ function analyzeSlots(
     }
     if (!takesL) continue;
     if (name === "lua_pushvalue") {
-      topCopy = typeof slot === "number" ? slot : null;
+      if (typeof slot === "number") {
+        topCopy = slot;
+        copyDepth = 0;
+      } else if (topCopy !== null) {
+        copyDepth += 1;
+      }
       record([]);
       continue;
     }
@@ -1338,8 +1403,14 @@ function analyzeSlots(
       continue;
     }
     if (name === "lua_getfield") {
-      const field = args[2]?.[0];
-      if (field?.kind === "string") record([], { field: field.value ?? "" });
+      const key = args[2];
+      const field =
+        key?.length === 1 && key[0]?.kind === "string"
+          ? key[0].value
+          : key?.length === 1 && key[0]?.kind === "ident"
+            ? names.get(key[0].text)
+            : undefined;
+      if (field !== undefined) record([], { field });
       continue;
     }
     if (NIL_GUARDS.has(name)) {
@@ -1356,15 +1427,32 @@ function analyzeSlots(
     const helper = index.functionsNamed(name, fn.file).find((f) => f.takesLuaState);
     if (!helper || helper === fn) continue;
     const helperEnv = new Map<string, number>();
+    const helperNames = new Map<string, string>();
     helper.params.forEach((param, i) => {
-      const value = i === 0 ? undefined : resolve(args[i]);
+      const arg = args[i];
+      if (arg?.length === 1 && arg[0]?.kind === "string") {
+        helperNames.set(param, arg[0].value ?? "");
+      } else if (arg?.length === 1 && arg[0]?.kind === "ident" && names.has(arg[0].text)) {
+        helperNames.set(param, names.get(arg[0].text) as string);
+      }
+      const value = i === 0 ? undefined : resolve(arg);
       if (typeof value === "number") helperEnv.set(param, value);
     });
-    if (topCopy !== null) helperEnv.set(TOP_COPY, topCopy);
+    if (topCopy !== null && copyDepth === 0) helperEnv.set(TOP_COPY, topCopy);
     // A helper handed no stack index still reads the caller's arguments at the
     // absolute positions it names.
     const indexless = helperEnv.size === 0;
-    analyzeSlots(helper, index, helperEnv, guards, depth + 1, analysis, aliases, indexless);
+    analyzeSlots(
+      helper,
+      index,
+      helperEnv,
+      guards,
+      depth + 1,
+      analysis,
+      aliases,
+      indexless,
+      helperNames,
+    );
   }
 }
 
@@ -1513,7 +1601,7 @@ function analyzeFunction(
     cFunction: bound.name,
     file: bound.file,
     minArgs,
-    maxArgs: analysis.variadic.length > 0 ? "variadic" : maxSlot,
+    maxArgs: analysis.variadic.length > 0 ? "variadic" : Math.max(maxSlot, minArgs),
     ...(arities ? { arities } : {}),
     slots,
     returns: analyzeReturns(fn),
@@ -1606,7 +1694,11 @@ function simulateRegistration(
       if (value.kind === "value") {
         if (target.namespace) push(out.constants, target.namespace, key.value ?? "");
         else target.constants.push(key.value ?? "");
-      } else if (value.kind === "table" && value.functions.length > 0 && target.namespace) {
+      } else if (
+        value.kind === "table" &&
+        (value.functions.length > 0 || value.constants.length > 0) &&
+        target.namespace
+      ) {
         bind(value, `${target.namespace}.${key.value}`);
       }
       continue;

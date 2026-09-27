@@ -177,10 +177,39 @@ describe("reads through helpers and locals", () => {
     expect(slot(meshEnabled, 2)).toMatchObject({ kinds: ["hash", "string"] });
   });
 
+  test("a helper name shared by the Box2D v2 and v3 sources resolves within the caller's directory", () => {
+    const v3 = variant("b2d.world", "cast_shape", "script_box2d_world_v3.cpp");
+    const v2 = variant("b2d.world", "cast_shape", "script_box2d_world_v2.cpp");
+    expect(slot(v3, 2)?.fields).toContain("center1");
+    expect(slot(v2, 2)?.fields).not.toContain("center1");
+  });
+
   test("an error message's arguments are not reads of the slot they name", () => {
     const depthMask = binding("render", "set_depth_mask");
     expect(depthMask.maxArgs).toBe(1);
     expect(slot(depthMask, 1)?.manual).toBeUndefined();
+  });
+
+  test("a local holding a probe's answer guards like the probe", () => {
+    const dispatch = binding("render", "dispatch_compute");
+    expect(dispatch.minArgs).toBe(3);
+    expect(slot(dispatch, 4)).toMatchObject({ kinds: ["table"], optional: true });
+  });
+
+  test("an assigned condition guards the reads after its `&&`", () => {
+    expect(slot(binding("gui", "is_enabled"), 2)).toMatchObject({ optional: true });
+  });
+
+  test("a table copied by lua_pushvalue stays readable across balanced pushes and pops", () => {
+    expect(slot(binding("sprite", "play_flipbook"), 4)?.fields).toEqual(
+      expect.arrayContaining(["offset", "playback_rate"]),
+    );
+  });
+
+  test("a field named by a string argument to a helper, templated or not, is read", () => {
+    expect(slot(binding("resource", "create_buffer"), 2)?.fields).toContain("transfer_ownership");
+    const createChain = variant("b2d.body", "create_chain", "script_box2d_chain_v3.cpp");
+    expect(slot(createChain, 2)?.fields).toEqual(expect.arrayContaining(["friction", "loop"]));
   });
 
   test("a probe that picks a branch names a kind the binding handles", () => {
@@ -205,6 +234,12 @@ describe("constants", () => {
   test("reads constants a register function sets through macros", () => {
     expect(extraction.constants.get("go")).toContain("PLAYBACK_ONCE_FORWARD");
     expect(extraction.constants.get("gui")).toContain("EASING_LINEAR");
+  });
+
+  test("a nested table holding only constants is bound to its namespace", () => {
+    expect(extraction.constants.get("b2d.shape")).toEqual(
+      expect.arrayContaining(["SHAPE_TYPE_CHAIN", "SHAPE_TYPE_GRID"]),
+    );
   });
 });
 
