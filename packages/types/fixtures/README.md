@@ -38,6 +38,18 @@ Adding a synced fixture to the published types is still a separate, incremental
 edit: wire its `MODULE_MANIFEST` row in `../scripts/regen.ts` and commit the
 generated `.d.ts`.
 
+## defold-*/engine-bindings/
+
+The engine's Lua binding C++ for each committed target (`source: null` in
+`../api-targets.json`), stored at its upstream path under `engine/`, with a
+`manifest.json` recording the tag, commit and each file's blob sha and sha256.
+`bun run sync-engine-bindings` (from `packages/types/`) rewrites them from
+GitHub (set `GITHUB_TOKEN` to raise the API rate limit).
+`../scripts/sync-engine-bindings.test.ts` fails on any hand edit or partial
+sync, so re-run the script instead of editing a file.
+`../scripts/engine-binding-extract.ts` reads them into per-function slot kinds,
+optionality, table fields, returns and constants. They are not published.
+
 ## vmath_doc.json
 
 - **Defold version**: 1.12.4 (stable)

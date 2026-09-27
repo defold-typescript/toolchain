@@ -62,6 +62,7 @@
     "index.d.ts",
     "fixtures/messages_doc.json",
     "fixtures/defold-*",
+    "!fixtures/defold-*/engine-bindings",
     "examples/translations.json",
     "!src/**/*.test.ts",
     "!scripts/**/*.test.ts",
@@ -72,7 +73,9 @@
     "!scripts/example-pins.ts",
     "!scripts/example-semantics.ts",
     "!scripts/example-surfaces.ts",
-    "!scripts/example-typecheck.ts"
+    "!scripts/example-typecheck.ts",
+    "!scripts/engine-binding-extract.ts",
+    "!scripts/sync-engine-bindings.ts"
   ],
   "publishConfig": {
     "access": "public"
@@ -85,6 +88,7 @@
     "generate-api-signatures": "bun scripts/generate-api-signatures.ts --write",
     "import-defold-release": "bun scripts/import-defold-release.ts",
     "sync-api-docs": "bun scripts/sync-api-docs.ts",
+    "sync-engine-bindings": "bun scripts/sync-engine-bindings.ts",
     "ref-doc-delta": "bun scripts/ref-doc-delta.ts --target defold-1.9.8 --namespace label --present label.get_text --absent label.set_text"
   },
   "dependencies": {
