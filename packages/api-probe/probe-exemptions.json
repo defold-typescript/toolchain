@@ -1,0 +1,467 @@
+{
+  "b2d.body.create_chain:required@v3": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "`definition` is declared an open table; the engine requires `vertices` with at least 2 entries (v3/script_box2d_chain_v3.cpp:CheckVerticesTable)"
+  },
+  "b2d.body.create_fixture:overload1-required": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `definition` is declared optional; the engine requires `definition.shape` with `type`, plus the fields its shape type needs (circle `radius`, edge `v1`/`v2`, polygon `hx`/`hy` or `vertices`) (v2/script_box2d_shape_v2.cpp:CheckShapeDef)"
+  },
+  "b2d.body.create_shape:required@v3": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "`definition` is declared an open table; the engine requires `type`, plus the fields its shape type needs (circle `radius`, edge `v1`/`v2`, polygon `hx`/`hy` or `vertices`) (v3/script_box2d_shape_v3.cpp:CheckShapeCreateDef)"
+  },
+  "b2d.body.get_linear_velocity_from_local_point:required": {
+    "outcome": "bad-argument",
+    "verdict": "accepted",
+    "reason": "the Box2D v2 binding reads its point with CheckVec2(L, 1), the slot that already holds the body (an upstream defect); the v3 binding and the declaration take (body, point)"
+  },
+  "b2d.body.get_linear_velocity_from_world_point:required": {
+    "outcome": "bad-argument",
+    "verdict": "accepted",
+    "reason": "the Box2D v2 binding reads its point with CheckVec2(L, 1), the slot that already holds the body (an upstream defect); the v3 binding and the declaration take (body, point)"
+  },
+  "b2d.body.get_local_point:required": {
+    "outcome": "bad-argument",
+    "verdict": "accepted",
+    "reason": "the Box2D v2 binding reads its point with CheckVec2(L, 1), the slot that already holds the body (an upstream defect); the v3 binding and the declaration take (body, point)"
+  },
+  "b2d.body.get_local_vector:required": {
+    "outcome": "bad-argument",
+    "verdict": "accepted",
+    "reason": "the Box2D v2 binding reads its point with CheckVec2(L, 1), the slot that already holds the body (an upstream defect); the v3 binding and the declaration take (body, point)"
+  },
+  "b2d.body.get_world_point:required": {
+    "outcome": "bad-argument",
+    "verdict": "accepted",
+    "reason": "the Box2D v2 binding reads its point with CheckVec2(L, 1), the slot that already holds the body (an upstream defect); the v3 binding and the declaration take (body, point)"
+  },
+  "b2d.body.get_world_vector:required": {
+    "outcome": "bad-argument",
+    "verdict": "accepted",
+    "reason": "the Box2D v2 binding reads its point with CheckVec2(L, 1), the slot that already holds the body (an upstream defect); the v3 binding and the declaration take (body, point)"
+  },
+  "b2d.body.set_mass_data:overload1-required": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of the table form is declared optional; the engine requires `mass`, `center` and `inertia` (script_box2d_body_v2/v3.cpp:CheckMassData)"
+  },
+  "b2d.body.set_mass_data:overload1-required@v3": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of the table form is declared optional; the engine requires `mass`, `center` and `inertia` (script_box2d_body_v2/v3.cpp:CheckMassData)"
+  },
+  "b2d.fixture.set_filter_data:required": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `filter` is declared optional; the engine requires `category_bits`, `mask_bits` and `group_index` (v2/script_box2d_fixture_v2.cpp:CheckFilterData)"
+  },
+  "b2d.fixture.set_shape:optional": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `shape` is declared optional; the engine requires `type`, plus the fields its shape type needs (circle `radius`, edge `v1`/`v2`, polygon `hx`/`hy` or `vertices`) (v2/script_box2d_fixture_v2.cpp:CheckShapeUpdateDef)"
+  },
+  "b2d.fixture.set_shape:required": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `shape` is declared optional; the engine requires `type`, plus the fields its shape type needs (circle `radius`, edge `v1`/`v2`, polygon `hx`/`hy` or `vertices`) (v2/script_box2d_fixture_v2.cpp:CheckShapeUpdateDef)"
+  },
+  "b2d.joint.get_max_length:required@v3": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the witness is a rope joint, and the Box2D v3 binding cannot create one"
+  },
+  "b2d.joint.get_max_torque:required@v3": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the witness is a friction joint, and the Box2D v3 binding cannot create one"
+  },
+  "b2d.joint.set_max_length:required@v3": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the witness is a rope joint, and the Box2D v3 binding cannot create one"
+  },
+  "b2d.joint.set_max_torque:required@v3": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the witness is a friction joint, and the Box2D v3 binding cannot create one"
+  },
+  "b2d.shape.set_shape:overload1-optional@v3": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `definition` is declared optional; the engine requires `type`, plus the fields its shape type needs (circle `radius`, edge `v1`/`v2`, polygon `hx`/`hy` or `vertices`) (v3/script_box2d_shape_v3.cpp:CheckShapeUpdateDef)"
+  },
+  "b2d.shape.set_shape:overload1-required@v3": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `definition` is declared optional; the engine requires `type`, plus the fields its shape type needs (circle `radius`, edge `v1`/`v2`, polygon `hx`/`hy` or `vertices`) (v3/script_box2d_shape_v3.cpp:CheckShapeUpdateDef)"
+  },
+  "b2d.shape.set_shape:overload2-optional@v3": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `definition` is declared optional; the engine requires `type`, plus the fields its shape type needs (circle `radius`, edge `v1`/`v2`, polygon `hx`/`hy` or `vertices`) (v3/script_box2d_shape_v3.cpp:CheckShapeUpdateDef)"
+  },
+  "b2d.shape.set_shape:overload2-required@v3": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `definition` is declared optional; the engine requires `type`, plus the fields its shape type needs (circle `radius`, edge `v1`/`v2`, polygon `hx`/`hy` or `vertices`) (v3/script_box2d_shape_v3.cpp:CheckShapeUpdateDef)"
+  },
+  "b2d.world.cast_mover:optional@v3": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `capsule` is declared optional; the engine requires `center1`, `center2` and `radius` (v3/script_box2d_world_v3.cpp:CheckCapsule)"
+  },
+  "b2d.world.cast_mover:required@v3": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `capsule` is declared optional; the engine requires `center1`, `center2` and `radius` (v3/script_box2d_world_v3.cpp:CheckCapsule)"
+  },
+  "b2d.world.cast_shape:overload1-required": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `shape` is declared optional; the engine requires `type`, plus the fields its shape type needs (circle `radius`, edge `v1`/`v2`, polygon `hx`/`hy` or `vertices`) (CheckShapeDef, v2 and v3)"
+  },
+  "b2d.world.cast_shape:overload1-required@v3": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `shape` is declared optional; the engine requires `type`, plus the fields its shape type needs (circle `radius`, edge `v1`/`v2`, polygon `hx`/`hy` or `vertices`) (CheckShapeDef, v2 and v3)"
+  },
+  "b2d.world.cast_shape:overload2-required": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `shape` is declared optional; the engine requires `type`, plus the fields its shape type needs (circle `radius`, edge `v1`/`v2`, polygon `hx`/`hy` or `vertices`) (CheckShapeDef, v2 and v3)"
+  },
+  "b2d.world.cast_shape:overload2-required@v3": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `shape` is declared optional; the engine requires `type`, plus the fields its shape type needs (circle `radius`, edge `v1`/`v2`, polygon `hx`/`hy` or `vertices`) (CheckShapeDef, v2 and v3)"
+  },
+  "b2d.world.collide_mover:optional@v3": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `capsule` is declared optional; the engine requires `center1`, `center2` and `radius` (v3/script_box2d_world_v3.cpp:CheckCapsule)"
+  },
+  "b2d.world.collide_mover:required@v3": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `capsule` is declared optional; the engine requires `center1`, `center2` and `radius` (v3/script_box2d_world_v3.cpp:CheckCapsule)"
+  },
+  "b2d.world.explode:required@v3": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "`definition` is declared an open table; the engine requires `position`, `radius`, `falloff` and `impulse_per_length` (v3/script_box2d_world_v3.cpp:World_Explode)"
+  },
+  "b2d.world.overlap_aabb:overload1-required": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "`aabb.lower` and `aabb.upper` are declared optional; the engine requires both (script_box2d_world_v2/v3.cpp:CheckAABB)"
+  },
+  "b2d.world.overlap_aabb:overload1-required@v3": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "`aabb.lower` and `aabb.upper` are declared optional; the engine requires both (script_box2d_world_v2/v3.cpp:CheckAABB)"
+  },
+  "b2d.world.overlap_aabb:overload2-required": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "`aabb.lower` and `aabb.upper` are declared optional; the engine requires both (script_box2d_world_v2/v3.cpp:CheckAABB)"
+  },
+  "b2d.world.overlap_aabb:overload2-required@v3": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "`aabb.lower` and `aabb.upper` are declared optional; the engine requires both (script_box2d_world_v2/v3.cpp:CheckAABB)"
+  },
+  "b2d.world.overlap_shape:overload1-required": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `shape` is declared optional; the engine requires `type`, plus the fields its shape type needs (circle `radius`, edge `v1`/`v2`, polygon `hx`/`hy` or `vertices`) (CheckShapeDef, v2 and v3)"
+  },
+  "b2d.world.overlap_shape:overload1-required@v3": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `shape` is declared optional; the engine requires `type`, plus the fields its shape type needs (circle `radius`, edge `v1`/`v2`, polygon `hx`/`hy` or `vertices`) (CheckShapeDef, v2 and v3)"
+  },
+  "b2d.world.overlap_shape:overload2-required": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `shape` is declared optional; the engine requires `type`, plus the fields its shape type needs (circle `radius`, edge `v1`/`v2`, polygon `hx`/`hy` or `vertices`) (CheckShapeDef, v2 and v3)"
+  },
+  "b2d.world.overlap_shape:overload2-required@v3": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `shape` is declared optional; the engine requires `type`, plus the fields its shape type needs (circle `radius`, edge `v1`/`v2`, polygon `hx`/`hy` or `vertices`) (CheckShapeDef, v2 and v3)"
+  },
+  "buffer.create:required": {
+    "outcome": "engine-error",
+    "verdict": "open",
+    "reason": "every field of a stream declaration is declared optional; the engine requires `type` (script_buffer.cpp:ParseStreamDeclaration)"
+  },
+  "camera.get_aspect_ratio:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "a nil camera resolves to the calling script's own url, and the render script, the only one the camera module registers in, has no camera component"
+  },
+  "camera.get_auto_aspect_ratio:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "a nil camera resolves to the calling script's own url, and the render script, the only one the camera module registers in, has no camera component"
+  },
+  "camera.get_enabled:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "a nil camera resolves to the calling script's own url, and the render script, the only one the camera module registers in, has no camera component"
+  },
+  "camera.get_far_z:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "a nil camera resolves to the calling script's own url, and the render script, the only one the camera module registers in, has no camera component"
+  },
+  "camera.get_fov:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "a nil camera resolves to the calling script's own url, and the render script, the only one the camera module registers in, has no camera component"
+  },
+  "camera.get_near_z:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "a nil camera resolves to the calling script's own url, and the render script, the only one the camera module registers in, has no camera component"
+  },
+  "camera.get_orthographic_auto_zoom:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "a nil camera resolves to the calling script's own url, and the render script, the only one the camera module registers in, has no camera component"
+  },
+  "camera.get_orthographic_mode:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "a nil camera resolves to the calling script's own url, and the render script, the only one the camera module registers in, has no camera component"
+  },
+  "camera.get_orthographic_zoom:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "a nil camera resolves to the calling script's own url, and the render script, the only one the camera module registers in, has no camera component"
+  },
+  "camera.get_projection:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "a nil camera resolves to the calling script's own url, and the render script, the only one the camera module registers in, has no camera component"
+  },
+  "camera.get_view:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "a nil camera resolves to the calling script's own url, and the render script, the only one the camera module registers in, has no camera component"
+  },
+  "collectionfactory.set_prototype:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "an earlier probe call started loading the factory, and the engine refuses a prototype change while it loads"
+  },
+  "compute.get_constants:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the compute module, so the `compute` global is nil"
+  },
+  "compute.get_samplers:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the compute module, so the `compute` global is nil"
+  },
+  "compute.get_textures:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the compute module, so the `compute` global is nil"
+  },
+  "compute.set_constants:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the compute module, so the `compute` global is nil"
+  },
+  "compute.set_samplers:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the compute module, so the `compute` global is nil"
+  },
+  "compute.set_textures:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the compute module, so the `compute` global is nil"
+  },
+  "factory.set_prototype:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "an earlier probe call started loading the factory, and the engine refuses a prototype change while it loads"
+  },
+  "font.add_font:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the ttf argument must name a .ttf resource in the build, and the probe project bundles none"
+  },
+  "font.prewarm_text:optional": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the builtin font is not a dynamic font, so the engine cannot add glyphs to it"
+  },
+  "font.prewarm_text:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the builtin font is not a dynamic font, so the engine cannot add glyphs to it"
+  },
+  "font.remove_font:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the ttf argument must name a .ttf resource in the build, and the probe project bundles none"
+  },
+  "gui.delete_texture:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "deletes a texture created with gui.new_texture, and the witness names none"
+  },
+  "image.get_astc_header:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the witness buffer is not ASTC data, and the probe project ships no .astc file"
+  },
+  "material.get_constants:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the material module, so the `material` global is nil"
+  },
+  "material.get_samplers:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the material module, so the `material` global is nil"
+  },
+  "material.get_textures:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the material module, so the `material` global is nil"
+  },
+  "material.get_vertex_attributes:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the material module, so the `material` global is nil"
+  },
+  "material.set_constants:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the material module, so the `material` global is nil"
+  },
+  "material.set_samplers:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the material module, so the `material` global is nil"
+  },
+  "material.set_textures:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the material module, so the `material` global is nil"
+  },
+  "material.set_vertex_attributes:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the stock engine does not link the material module, so the `material` global is nil"
+  },
+  "model.get_go:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the builtin cube has no bones, so no bone id resolves"
+  },
+  "physics.set_shape:required": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `table` is declared optional; the engine requires `type`, plus `diameter` (sphere), `dimensions` (box) or `diameter` and `height` (capsule) (script_physics.cpp:Physics_SetShape)"
+  },
+  "profiler.view_recorded_frame:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the profiler recording buffer is empty during a probe run"
+  },
+  "render.draw:optional": {
+    "outcome": "engine-error",
+    "verdict": "open",
+    "reason": "`predicate` is declared `number`; the engine requires the predicate handle `render.predicate` returns (render_script.cpp:RenderScript_Draw)"
+  },
+  "render.draw:required": {
+    "outcome": "engine-error",
+    "verdict": "open",
+    "reason": "`predicate` is declared `number`; the engine requires the predicate handle `render.predicate` returns (render_script.cpp:RenderScript_Draw)"
+  },
+  "render.set_compute:optional": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the probe project has no compute program resource"
+  },
+  "resource.create_atlas:required": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `table` is declared optional; the engine requires `texture`, and non-empty `geometries` and `animations` (script_resource.cpp:CheckTextureResource, CheckAtlasArguments)"
+  },
+  "resource.create_buffer:required": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "`table.buffer` is declared optional; the engine requires it (script_resource.cpp:CreateBuffer)"
+  },
+  "resource.create_sound_data:required": {
+    "outcome": "engine-error",
+    "verdict": "open",
+    "reason": "`options.data` is declared optional; the engine requires a buffer or string there (script_resource.cpp:CheckBufferOrString)"
+  },
+  "resource.create_texture:optional": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `table` is declared optional; the engine requires `type`, `format`, `width` and `height` (script_resource.cpp:CheckCreateTextureResourceParams)"
+  },
+  "resource.create_texture:required": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `table` is declared optional; the engine requires `type`, `format`, `width` and `height` (script_resource.cpp:CheckCreateTextureResourceParams)"
+  },
+  "resource.create_texture_async:required": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `table` is declared optional; the engine requires `type`, `format`, `width` and `height` (script_resource.cpp:CheckCreateTextureResourceParams)"
+  },
+  "resource.get_render_target_info:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the probe project has no render target resource"
+  },
+  "resource.load:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "loads a custom resource, and the probe project lists none"
+  },
+  "resource.release:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "releases a resource the script acquired, and the probe acquired none by that path"
+  },
+  "resource.set:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the witness path names no resource in the build"
+  },
+  "resource.set_atlas:required": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `table` is declared optional; the engine requires `texture`, and non-empty `geometries` and `animations` (script_resource.cpp:CheckTextureResource, CheckAtlasArguments)"
+  },
+  "resource.set_sound:required": {
+    "outcome": "engine-error",
+    "verdict": "accepted",
+    "reason": "the witness buffer is not WAV or Ogg data, so the engine does not update the sound"
+  },
+  "resource.set_texture:required": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "every field of `table` is declared optional; the engine requires `type`, `format`, `width` and `height` (script_resource.cpp:SetTexture)"
+  },
+  "sys.set_engine_throttle:required": {
+    "outcome": "bad-argument",
+    "verdict": "open",
+    "reason": "`cooldown` is declared optional; the engine requires it whenever `enable` is true"
+  }
+}

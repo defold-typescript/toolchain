@@ -1,0 +1,85 @@
+script: "/main/probe_gui.ts.gui_script"
+fonts {
+  name: "default"
+  font: "/builtins/fonts/default.font"
+}
+textures {
+  name: "probe"
+  texture: "/main/probe.atlas"
+}
+particlefxs {
+  name: "effect"
+  particlefx: "/main/probe.particlefx"
+}
+material: "/builtins/materials/gui.material"
+layers {
+  name: "probe"
+}
+materials {
+  name: "probe"
+  material: "/builtins/materials/gui.material"
+}
+nodes {
+  position {
+    x: 64.0
+    y: 64.0
+    z: 0.0
+    w: 1.0
+  }
+  size {
+    x: 32.0
+    y: 32.0
+    z: 0.0
+    w: 1.0
+  }
+  type: TYPE_BOX
+  id: "box"
+  texture: "probe/anim"
+}
+nodes {
+  position {
+    x: 64.0
+    y: 64.0
+    z: 0.0
+    w: 1.0
+  }
+  size {
+    x: 32.0
+    y: 32.0
+    z: 0.0
+    w: 1.0
+  }
+  type: TYPE_TEXT
+  id: "text"
+  text: "probe"
+  font: "default"
+}
+nodes {
+  position {
+    x: 64.0
+    y: 64.0
+    z: 0.0
+    w: 1.0
+  }
+  size {
+    x: 32.0
+    y: 32.0
+    z: 0.0
+    w: 1.0
+  }
+  type: TYPE_PIE
+  id: "pie"
+  texture: "probe/anim"
+}
+nodes {
+  position {
+    x: 64.0
+    y: 64.0
+    z: 0.0
+    w: 1.0
+  }
+  type: TYPE_PARTICLEFX
+  id: "particlefx"
+  particlefx: "effect"
+}
+adjust_reference: ADJUST_REFERENCE_PARENT

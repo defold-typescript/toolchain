@@ -12,6 +12,15 @@
         "yaml": "^2.9.0",
       },
     },
+    "packages/api-probe": {
+      "name": "@defold-typescript/api-probe",
+      "version": "0.0.0",
+      "dependencies": {
+        "@defold-typescript/cli": "workspace:*",
+        "@defold-typescript/transpiler": "workspace:*",
+        "@defold-typescript/types": "workspace:*",
+      },
+    },
     "packages/cli": {
       "name": "@defold-typescript/cli",
       "version": "0.0.0",
@@ -158,6 +167,8 @@
     "@capsizecss/metrics": ["@capsizecss/metrics@4.2.0", "", {}, "sha512-BkLX2NonSAVuHrStmxlRG/PVUxq4uQWeQGPY/G/4pi7GRQt/4A+7RzMWR8m85+0Tv7BsuBpR7JoniMS9QwuVRw=="],
 
     "@capsizecss/unpack": ["@capsizecss/unpack@4.0.1", "", { "dependencies": { "fontkitten": "^1.0.3" } }, "sha512-CuNiSqg7+e1cO/GjffyMOm5Tt2jUF9CWHHnvQ/UkqvtkGfHdgwEC0wpmq7fkN3gxwpRnrAN0WzO3vREKmNolMQ=="],
+
+    "@defold-typescript/api-probe": ["@defold-typescript/api-probe@workspace:packages/api-probe"],
 
     "@defold-typescript/cli": ["@defold-typescript/cli@workspace:packages/cli"],
 

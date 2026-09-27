@@ -1,0 +1,9 @@
+size {
+  x: 128.0
+  y: 32.0
+  z: 0.0
+  w: 0.0
+}
+text: "probe"
+font: "/builtins/fonts/default.font"
+material: "/builtins/fonts/label-df.material"

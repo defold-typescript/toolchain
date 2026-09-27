@@ -1,0 +1,14 @@
+animations {
+  id: "anim"
+  images {
+    image: "/builtins/assets/images/logo/logo_256.png"
+  }
+  images {
+    image: "/builtins/assets/images/logo/logo_blue_256.png"
+  }
+  playback: PLAYBACK_LOOP_FORWARD
+  fps: 30
+}
+margin: 0
+extrude_borders: 0
+inner_padding: 0

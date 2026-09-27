@@ -1,0 +1,17 @@
+[project]
+title = api-probe
+
+[bootstrap]
+main_collection = /main/main.collectionc
+render = /main/probe.renderc
+
+[input]
+game_binding = /builtins/input/all.input_bindingc
+
+[display]
+width = 320
+height = 240
+
+[physics]
+type = 2D
+allow_dynamic_transforms = 0

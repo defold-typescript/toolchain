@@ -1,0 +1,5 @@
+script: "/main/probe_render.ts.render_script"
+materials {
+  name: "probe"
+  material: "/builtins/materials/sprite.material"
+}

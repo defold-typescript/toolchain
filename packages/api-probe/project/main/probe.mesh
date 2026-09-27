@@ -1,0 +1,6 @@
+material: "/builtins/materials/model.material"
+vertices: "/main/triangle.buffer"
+textures: "/builtins/assets/images/logo/logo_256.png"
+primitive_type: PRIMITIVE_TRIANGLES
+position_stream: "position"
+normal_stream: "normal"
