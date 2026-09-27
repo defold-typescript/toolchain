@@ -191,7 +191,7 @@
           "namespace": "sys",
           "fixture": "sys_doc.json",
           "outFile": "sys.d.ts",
-          "skipFunctions": ["set_engine_throttle"]
+          "skipFunctions": ["get_config_string", "set_engine_throttle"]
         },
         {
           "namespace": "tilemap",
@@ -523,7 +523,7 @@
           "namespace": "sys",
           "fixture": "sys_doc.json",
           "outFile": "sys.d.ts",
-          "skipFunctions": ["set_engine_throttle"]
+          "skipFunctions": ["get_config_string", "set_engine_throttle"]
         },
         {
           "namespace": "tilemap",
@@ -813,7 +813,7 @@
           "namespace": "sys",
           "fixture": "sys_doc.json",
           "outFile": "sys.d.ts",
-          "skipFunctions": ["set_engine_throttle"]
+          "skipFunctions": ["get_config_string", "set_engine_throttle"]
         },
         {
           "namespace": "tilemap",

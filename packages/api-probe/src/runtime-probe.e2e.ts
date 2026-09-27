@@ -1,5 +1,7 @@
 import { beforeAll, describe, expect, test } from "bun:test";
+import { INDEX_SLOT_CLASSIFICATIONS } from "../../types/src/index-slot-classifications";
 import { evaluateProbe, type ProbeFailures, readExemptions } from "./exemptions";
+import { manualCoverage, PROBED_INDEX_CLASSES } from "./index-probes";
 import { type ProbeRun, runProbe } from "./run-probe";
 
 let run: ProbeRun;
@@ -35,5 +37,40 @@ describe(`runtime probe (${process.env.PROBE_TARGET ?? "default target"})`, () =
 
   test("every exemption still reproduces", () => {
     expect(failures.stale).toEqual([]);
+  });
+
+  test("every negative call raises a bad argument at its own slot", () => {
+    expect(failures.negativeMisfires).toEqual([]);
+  });
+
+  test("no negative call is accepted without an exemption naming the lenient binding", () => {
+    expect(failures.tooNarrow).toEqual([]);
+  });
+
+  test("every ok positive call returns the kinds and count it declares", () => {
+    expect(failures.returnKinds).toEqual([]);
+  });
+
+  test("every probed index slot behaves as its class says", () => {
+    expect(failures.indexSemantics).toEqual([]);
+  });
+
+  test("every lowered or passed-through index slot is probed or listed as unverified", () => {
+    const probed = new Set(run.passes.flatMap((pass) => pass.calls.flatMap((c) => c.index ?? [])));
+    const unverified = new Map(
+      run.passes.flatMap((pass) => pass.indexUnverified.map((u) => [u.key, u.reason] as const)),
+    );
+    for (const key of probed) unverified.delete(key);
+    console.log(
+      `unverified index slots:\n${[...unverified].map(([key, reason]) => `  ${key}: ${reason}`).join("\n")}`,
+    );
+    const classified = [...INDEX_SLOT_CLASSIFICATIONS]
+      .filter(([, c]) => PROBED_INDEX_CLASSES.has(c.class))
+      .map(([key]) => key);
+    expect(classified.filter((key) => !probed.has(key) && !unverified.has(key))).toEqual([]);
+  });
+
+  test("every manual verdict of the static oracle has an ok positive call or a denylist reason", () => {
+    expect(manualCoverage(run.passes, run.target)).toEqual([]);
   });
 });

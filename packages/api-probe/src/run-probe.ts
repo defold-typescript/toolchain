@@ -9,7 +9,8 @@ import { engineDownloadUrl, targetPlatform } from "../../cli/src/debug-launcher"
 import { type EngineProcess, launchEngine } from "../../cli/src/engine-launch";
 import type { ApiTarget } from "../../types/scripts/regen";
 import { BOX2D_BACKENDS, type Box2DBackend } from "./contexts";
-import { type ProbeOutcome, parseProbeLine } from "./outcome";
+import type { Unverified } from "./index-probes";
+import { type ProbeOutcome, parseProbeLog } from "./outcome";
 import { generateProbes, type ProbeCall, probeTarget } from "./witness";
 
 const PROJECT_DIR = resolve(import.meta.dir, "..", "project");
@@ -21,6 +22,7 @@ export interface ProbePass {
   readonly backend: Box2DBackend;
   readonly calls: readonly ProbeCall[];
   readonly outcomes: readonly ProbeOutcome[];
+  readonly indexUnverified: readonly Unverified[];
   readonly done: boolean;
   readonly log: string;
 }
@@ -177,7 +179,8 @@ async function runPass(
   return {
     backend,
     calls: generation.calls,
-    outcomes: output.flatMap((line) => parseProbeLine(line) ?? []),
+    outcomes: parseProbeLog(output),
+    indexUnverified: generation.indexUnverified,
     done: output.some((line) => line.includes("PROBE_DONE")),
     log: output.join("\n"),
   };

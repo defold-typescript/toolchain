@@ -220,6 +220,17 @@ describe("reads through helpers and locals", () => {
   });
 });
 
+describe("unchecked reads", () => {
+  test("a slot read only through lua_toboolean raises on no kind", () => {
+    expect(slot(binding("sprite", "set_hflip"), 2)?.unchecked).toBe(true);
+  });
+
+  test("a slot a raising check reads is checked", () => {
+    expect(slot(binding("sprite", "set_hflip"), 1)?.unchecked).toBeUndefined();
+    expect(slot(binding("sys", "set_engine_throttle"), 1)?.unchecked).toBeUndefined();
+  });
+});
+
 describe("older engine sources", () => {
   const older = readBindingsForTarget("defold-1.12.4");
 

@@ -8915,7 +8915,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_type(body: Opaque<"b2Body">): (number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_KINEMATIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_STATIC_BODY" });
 - b2d.body.get_user_data(body: Opaque<"b2Body">): Hash
 - function get_world(body: Opaque<"b2Body">): Opaque<"b2World">;
-- function get_world_center(body: Opaque<"b2Body">): number; [since 1.13.0]
+- b2d.body.get_world_center(body: Opaque<"b2Body">): number
+- b2d.body.get_world_center(body: Opaque<"b2Body">): Vector3
 - function get_world_center(body: Opaque<"b2Body">): Vector3; [since 1.13.0]
 - function get_world_center_of_mass(body: Opaque<"b2Body">): Vector3;
 - function get_world_point(body: Opaque<"b2Body">, local_vector: Vector3): Vector3;
@@ -9151,8 +9152,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_world(body: Opaque<"b2Body">, shape_index: number): Opaque<"b2World">;
 - function is_valid(shape_id: Opaque<"b2Shape">): boolean; [since 1.13.0]
 - function is_valid(body: Opaque<"b2Body">, shape_index: number): boolean;
-- function ray_cast(shape_id: Opaque<"b2Shape">, origin: Vector3, translation: Vector3, max_fraction?: number): { point: Vector3; normal: Vector3; fraction: number; iterations: number }; [since 1.13.0]
-- function ray_cast(body: Opaque<"b2Body">, shape_index: number, origin: Vector3, translation: Vector3, max_fraction?: number): { point: Vector3; normal: Vector3; fraction: number; iterations: number };
+- function ray_cast(shape_id: Opaque<"b2Shape">, origin: Vector3, translation: Vector3, max_fraction?: number): { point: Vector3; normal: Vector3; fraction: number; iterations: number } | undefined; [since 1.13.0]
+- function ray_cast(body: Opaque<"b2Body">, shape_index: number, origin: Vector3, translation: Vector3, max_fraction?: number): { point: Vector3; normal: Vector3; fraction: number; iterations: number } | undefined;
 - function set_material(shape_id: Opaque<"b2Shape">, material: number): void; [since 1.13.0]
 - function set_material(body: Opaque<"b2Body">, shape_index: number, material: number): void;
 - function set_shape(shape_id: Opaque<"b2Shape">, definition: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, update_mass?: boolean): void; [since 1.13.0]
@@ -9172,7 +9173,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function cast_mover(world: Opaque<"b2World">, capsule: { center1: Vector3; center2: Vector3; radius: number }, translation: Vector3, filter?: { category_bits?: number; mask_bits?: number }): number; [since 1.13.0]
 - function cast_ray(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
 - function cast_ray(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
-- function cast_ray_closest(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter: { category_bits?: number; mask_bits?: number; group_index?: number }): { fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number; node_visits: number; leaf_visits: number }; [since 1.13.0]
+- function cast_ray_closest(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter: { category_bits?: number; mask_bits?: number; group_index?: number }): { fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number; node_visits: number; leaf_visits: number } | undefined; [since 1.13.0]
 - function cast_ray_closest(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }): { fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number; node_visits: number; leaf_visits: number } | undefined; [since 1.13.0]
 - function cast_shape(world: Opaque<"b2World">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, translation: Vector3, filter: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
 - function cast_shape(world: Opaque<"b2World">, shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number } | { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; vertices: Vector3[] } | { type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_EDGE | typeof b2d.shape.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 } | { type: typeof b2d.shape.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }, translation: Vector3, filter?: { category_bits?: number; mask_bits?: number; group_index?: number }, max_results?: number): LuaMultiReturn<[{ fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number }[], { node_visits: number; leaf_visits: number }]>; [since 1.13.0]
@@ -9642,7 +9643,7 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function new_particlefx_node(pos: Vector3 | Vector4, particlefx: Hash | string): Opaque<"node">;
 - function new_pie_node(pos: Vector3 | Vector4, size: Vector3): Opaque<"node">;
 - function new_text_node(pos: Vector3 | Vector4, text: string): Opaque<"node">;
-- function new_texture(texture_id: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string, flip?: boolean): LuaMultiReturn<[boolean, number]>;
+- function new_texture(texture_id: string | Hash, width: number, height: number, type: string | Opaque<"constant">, buffer: string, flip?: boolean): LuaMultiReturn<[boolean, number | undefined]>;
 - function pick_node(node: Opaque<"node">, x: number, y: number): boolean;
 - function play_flipbook(node: Opaque<"node">, animation: string | Hash, complete_function?: (self: unknown, node: unknown) => void, play_properties?: { offset?: number; playback_rate?: number }): void;
 - function play_particlefx(node: Opaque<"node">, emitter_state_function?: (self: unknown, node: unknown, emitter: unknown, state: unknown) => void): void;
@@ -10207,7 +10208,8 @@ guide does not assert those values; consult your own template's `tsconfig.json`.
 - function get_config_boolean(key: string, default_value?: boolean): boolean;
 - function get_config_int(key: string, default_value?: number): number;
 - function get_config_number(key: string, default_value?: number): number;
-- function get_config_string(key: string, default_value?: string): string;
+- sys.get_config_string(key: string): string | undefined
+- sys.get_config_string(key: string, default_value: string): string
 - function get_connectivity(): sys.NetworkConnectivity;
 - function get_engine_info(): { version: string; version_sha1: string; is_debug: boolean };
 - function get_host_path(filename: string): string;

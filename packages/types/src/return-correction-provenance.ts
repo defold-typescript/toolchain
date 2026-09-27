@@ -101,9 +101,10 @@ function returnSlots(doc: unknown, element: string): RawSlot[] {
   );
 }
 
-// The first `returnvalues` entry of each declaration of `element`, one per
-// declaration so a target that declares the element twice is folded, not sliced.
-function firstReturnSlots(doc: unknown, element: string): RawSlot[] {
+// The `returnvalues` entry a correction rewrites in each declaration of
+// `element`: the one named `slot`, or the first. One per declaration, so a
+// target that declares the element twice is folded, not sliced.
+function correctedReturnSlots(doc: unknown, element: string, slot?: string): RawSlot[] {
   if (!isRecord(doc) || !Array.isArray(doc.elements)) return [];
   return doc.elements.flatMap((candidate) => {
     if (
@@ -114,8 +115,9 @@ function firstReturnSlots(doc: unknown, element: string): RawSlot[] {
     ) {
       return [];
     }
-    const first = candidate.returnvalues[0];
-    return isRecord(first) ? [first] : [];
+    const values = candidate.returnvalues.filter(isRecord);
+    const corrected = slot === undefined ? values[0] : values.find((value) => value.name === slot);
+    return corrected === undefined ? [] : [corrected];
   });
 }
 
@@ -261,9 +263,9 @@ export function returnCorrectionProvenance(
     const drift = new Map<string, Set<string>>();
     for (const surface of surfaces) {
       if (surface.namespace !== namespace) continue;
-      // The correction rewrites the first return only, so only that slot is
-      // evidence; a declaration with no returns at all sights nothing.
-      for (const slot of firstReturnSlots(surface.doc, key)) {
+      // The correction rewrites one return only, so only that slot is evidence;
+      // a declaration without it sights nothing.
+      for (const slot of correctedReturnSlots(surface.doc, key, correction.slot)) {
         const tokens = slot.types ?? [];
 
         let verdict: ReturnVerdict;
@@ -302,5 +304,23 @@ export function returnCorrectionProvenance(
       driftedIn,
       typeDrift: driftedIn.flatMap((target) => [...(drift.get(target) ?? [])]).sort(),
     };
+  });
+}
+
+// The `MISFILED_DECLARATIONS` keys no retained target still files: upstream
+// moved or dropped the misfiled declaration, so the entry is due for deletion.
+export function unfiledDeclarations(
+  keys: readonly string[],
+  surfaces: readonly ProvenanceSurface[],
+): string[] {
+  return keys.filter((key) => {
+    const split = key.lastIndexOf(":");
+    const element = key.slice(0, split);
+    const returnName = key.slice(split + 1);
+    return !surfaces.some(
+      (surface) =>
+        surface.namespace === namespaceOf(element) &&
+        correctedReturnSlots(surface.doc, element).some((slot) => slot.name === returnName),
+    );
   });
 }

@@ -1,4 +1,14 @@
 {
+  "sys.get_config_string": {
+    "signatures": [
+      "sys.get_config_string(key: string): string | undefined",
+      "sys.get_config_string(key: string, default_value: string): string"
+    ],
+    "docs": [
+      "Get string config value from the game.project configuration file, or nil when the key does not exist.",
+      "Get string config value from the game.project configuration file with a default value."
+    ]
+  },
   "sys.set_engine_throttle": {
     "signatures": [
       "sys.set_engine_throttle(enable: false): void",

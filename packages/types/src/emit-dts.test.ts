@@ -2157,6 +2157,7 @@ describe("OVERLOAD_COVERED_SKIPS", () => {
       "msg.post",
       "msg.url",
       "render.render_target",
+      "sys.get_config_string",
       "sys.set_engine_throttle",
       "vmath.clamp",
       "vmath.euler_to_quat",
@@ -4419,6 +4420,31 @@ describe("return-side optionality corrections", () => {
   test("a return correction leaves every sibling b2d return alone", () => {
     const out = emitDeclarations(b2d);
     expect(signatureLine(out, "function get_world(")).not.toContain("undefined");
+  });
+
+  test("the ray casts carry the prose-documented nil on a miss", () => {
+    const shape = emitDeclarations(parseDefoldApiDoc(b2dShapeDoc));
+    for (const line of shape.split("\n").filter((l) => l.includes("function ray_cast("))) {
+      expect(line.trim()).toEndWith("iterations: number } | undefined;");
+    }
+    const world = emitDeclarations(parseDefoldApiDoc(b2dWorldDoc));
+    const closest = world.split("\n").filter((l) => l.includes("function cast_ray_closest("));
+    expect(closest).toHaveLength(2);
+    for (const line of closest) expect(line.trim()).toEndWith("leaf_visits: number } | undefined;");
+  });
+
+  test("a slot-scoped correction rewrites one value of a multi-return", () => {
+    expect(
+      signatureLine(emitDeclarations(parseDefoldApiDoc(gui113Doc)), "function new_texture("),
+    ).toEndWith("): LuaMultiReturn<[boolean, number | undefined]>;");
+  });
+
+  test("a declaration upstream files under another function's name is dropped", () => {
+    const lines = emitDeclarations(parseDefoldApiDoc(b2dBody113Doc))
+      .split("\n")
+      .filter((l) => l.includes("function get_world_center("))
+      .map((l) => l.trim());
+    expect(lines).toEqual(['function get_world_center(body: Opaque<"b2Body">): Vector3;']);
   });
 });
 
