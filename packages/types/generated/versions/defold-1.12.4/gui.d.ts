@@ -950,7 +950,7 @@ declare global {
      * Higher index means the node is drawn on top of lower indexed nodes.
      *
      * @param node - the node to retrieve the id from
-     * @returns the index of the node
+     * @returns the index of the node. 0-based.
      * @example
      * ```ts
      * // Compare the index order of two sibling nodes:

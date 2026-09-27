@@ -6,6 +6,7 @@ import b2dDoc from "../fixtures/b2d_doc.json" with { type: "json" };
 import bufferDoc from "../fixtures/buffer_doc.json" with { type: "json" };
 import collectionfactoryDoc from "../fixtures/collectionfactory_doc.json" with { type: "json" };
 import collectionproxyDoc from "../fixtures/collectionproxy_doc.json" with { type: "json" };
+import b2dBody113Doc from "../fixtures/defold-1.13.1/b2d_body_doc.json" with { type: "json" };
 import b2dShapeDoc from "../fixtures/defold-1.13.1/b2d_shape_doc.json" with { type: "json" };
 import b2dWorldDoc from "../fixtures/defold-1.13.1/b2d_world_doc.json" with { type: "json" };
 import camera113Doc from "../fixtures/defold-1.13.1/camera_doc.json" with { type: "json" };
@@ -13,7 +14,9 @@ import collectionproxy113Doc from "../fixtures/defold-1.13.1/collectionproxy_doc
   type: "json",
 };
 import computeDoc from "../fixtures/defold-1.13.1/compute_doc.json" with { type: "json" };
+import crash113Doc from "../fixtures/defold-1.13.1/crash_doc.json" with { type: "json" };
 import graphicsDoc from "../fixtures/defold-1.13.1/graphics_doc.json" with { type: "json" };
+import gui113Doc from "../fixtures/defold-1.13.1/gui_doc.json" with { type: "json" };
 import materialDoc from "../fixtures/defold-1.13.1/material_doc.json" with { type: "json" };
 import model113Doc from "../fixtures/defold-1.13.1/model_doc.json" with { type: "json" };
 import sprite113Doc from "../fixtures/defold-1.13.1/sprite_doc.json" with { type: "json" };
@@ -4517,6 +4520,58 @@ describe("array index option doc", () => {
       expect(out).toContain(rewrite?.to ?? "");
     }
     expect(out).not.toContain("(1 based)");
+  });
+});
+
+describe("engine index base notes", () => {
+  function docBlock(doc: unknown, fnName: string): string {
+    const lines = emitDeclarations(parseDefoldApiDoc(doc)).split("\n");
+    const at = lines.findIndex((line) => line.includes(`function ${fnName}(`));
+    if (at < 0) throw new Error(`no emitted function ${fnName}`);
+    let start = at;
+    while (start > 0 && !lines[start]?.includes("/**")) start -= 1;
+    return lines.slice(start, at).join("\n");
+  }
+
+  function tagLine(block: string, tag: string): string {
+    const line = block.split("\n").find((candidate) => candidate.includes(tag));
+    if (line === undefined) throw new Error(`no ${tag} in\n${block}`);
+    return line;
+  }
+
+  const occurrences = (text: string, needle: string): number => text.split(needle).length - 1;
+
+  test("a slot whose upstream prose states its base gains no second note", () => {
+    const line = tagLine(docBlock(b2dBody113Doc, "destroy_shape"), "@param shape_index");
+    expect(line).toContain("1-based shape index");
+    expect(occurrences(line, "based")).toBe(1);
+  });
+
+  test("a passed-through slot whose prose names no base gains its base", () => {
+    expect(tagLine(docBlock(gui113Doc, "get_index"), "@returns")).toContain(
+      "the index of the node. 0-based.",
+    );
+    expect(tagLine(docBlock(crash113Doc, "get_user_field"), "@param index")).toContain(
+      "user data slot index. 0-based.",
+    );
+  });
+
+  test("a passed-through table field named in the slot prose gains its base", () => {
+    expect(tagLine(docBlock(b2dBody113Doc, "get_fixtures"), "@returns")).toContain(
+      "`index` is 1-based.",
+    );
+  });
+
+  test("an upstream 0-indexed phrase stands as the base, not duplicated", () => {
+    const line = tagLine(docBlock(crash113Doc, "set_user_field"), "@param index");
+    expect(line).toContain("slot index. 0-indexed");
+    expect(line).not.toContain("0-based");
+  });
+
+  test("a lowered options.index keeps the zero-based rewrite and gains no base note", () => {
+    const block = docBlock(goDoc, "get");
+    expect(block).toContain(PARAM_DOC_REWRITES.get("go.get:param:options")?.to ?? "missing");
+    expect(block).not.toContain("`index` is");
   });
 });
 

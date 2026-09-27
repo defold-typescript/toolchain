@@ -99,7 +99,7 @@ declare global {
      * reads user field from a loaded crash dump
      *
      * @param handle - crash dump handle
-     * @param index - user data slot index
+     * @param index - user data slot index. 0-based.
      * @returns user data value recorded in the crash dump
      */
     function get_user_field(handle: number, index: number): string;

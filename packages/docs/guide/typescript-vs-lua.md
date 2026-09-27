@@ -106,6 +106,20 @@ go.set(url, "tint_array", vmath.vector4(1, 0, 0, 1), { index: 0 });
 
 When upgrading, subtract 1 from every existing `index` at these four calls.
 
+**Other engine indexes.** Only `options.index` is converted. Every other index
+argument, returned index and info-table `index` field keeps the base the engine
+documents, and its hover says which, such as "1-based" on `b2d.fixture.*`
+`fixture_index` and "0-based" on the `gui.get_index` return. Pass an index the
+engine returned straight back:
+
+```ts
+declare const body: Opaque<"b2Body">;
+for (const fixture of b2d.body.get_fixtures(body)) {
+  // fixture.index is the engine's own 1-based index; pass it unchanged
+  print(b2d.fixture.get_density(body, fixture.index));
+}
+```
+
 ## Modules: `require` vs `import`
 
 Lua wires files together with `require` and a returned table. TypeScript uses

@@ -150,6 +150,8 @@ declare global {
      *
      * - `indices`
      * table a list of the indices of the geometry in the form {i0, i1, i2, ..., in}. Each tripe in the list represents a triangle.
+     *
+     * `frame_start` is 1-based. `frame_end` is 1-based.
      * @returns Returns the atlas resource path
      * @example
      * ```ts
@@ -1142,6 +1144,8 @@ declare global {
      *
      * - `indices`
      * table a list of the indices of the geometry in the form {i0, i1, i2, ..., in}. Each tripe in the list represents a triangle.
+     *
+     * `frame_start` is 1-based. `frame_end` is 1-based.
      * @example
      * Add a new animation to an existing atlas
      * ```ts
