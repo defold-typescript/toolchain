@@ -25,6 +25,7 @@ import {
   symbolNameKey,
   type TranslationStore,
   varargElementType,
+  withIndexBaseNotes,
 } from "@defold-typescript/types";
 import { slugify } from "./headings";
 import { platformDocText } from "./platform-icons";
@@ -688,10 +689,19 @@ function projectParams(
 ): ApiSymbolParam[] {
   return list.map((p, index) => {
     const emitted = slots?.[`${kind}:${index}:${p.name}`];
-    const doc = elementName !== undefined ? rewriteParamDoc(elementName, p.name, p.doc) : p.doc;
+    const doc =
+      elementName !== undefined
+        ? withIndexBaseNotes(
+            elementName,
+            kind,
+            p.name,
+            p.doc,
+            platformDocText(kind === "param" ? rewriteParamDoc(elementName, p.name, p.doc) : p.doc),
+          )
+        : platformDocText(p.doc);
     return {
       name: p.name,
-      doc: platformDocText(doc),
+      doc,
       types: emitted !== undefined ? [emitted] : normalizeTypes(p.types).map(mapType),
       isOptional: p.isOptional,
       ...(p.fields ? { fields: projectParams(p.fields, mapType) } : {}),
@@ -1005,8 +1015,13 @@ export function apiModuleMarkdown(
       const example = exampleMarkdownFor(fn, translations);
       if (example) lines.push(example, "");
       for (const p of [...fn.parameters, ...fn.returnValues]) {
-        const pdoc = htmlToDocText(
-          fn.parameters.includes(p) ? rewriteParamDoc(fn.name, p.name, p.doc) : p.doc,
+        const kind = fn.parameters.includes(p) ? "param" : "return";
+        const pdoc = withIndexBaseNotes(
+          fn.name,
+          kind,
+          p.name,
+          p.doc,
+          htmlToDocText(kind === "param" ? rewriteParamDoc(fn.name, p.name, p.doc) : p.doc),
         );
         if (!pdoc) continue;
         lines.push(p.name ? `${p.name} — ${pdoc}` : pdoc, "");
@@ -1223,7 +1238,7 @@ export function apiModuleSymbols(
         ? projectParams(primaryEntry.parameters, mapType, primarySlots, "param", fn.name)
         : [],
       returnValues: primaryEntry
-        ? projectParams(primaryEntry.returnValues, mapType, primarySlots, "return")
+        ? projectParams(primaryEntry.returnValues, mapType, primarySlots, "return", fn.name)
         : [],
     };
     const example = rowExample(0);
@@ -1297,7 +1312,9 @@ export function apiModuleSymbols(
           parameters: entry
             ? projectParams(entry.parameters, mapType, undefined, "param", fn.name)
             : [],
-          returnValues: entry ? projectParams(entry.returnValues, mapType) : [],
+          returnValues: entry
+            ? projectParams(entry.returnValues, mapType, undefined, "return", fn.name)
+            : [],
           ...(example ? { exampleMarkdown: example } : {}),
           ...(fn.deprecated !== undefined ? { deprecated: fn.deprecated } : {}),
           ...(fn.global ? { global: true } : {}),

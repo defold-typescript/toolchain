@@ -9,6 +9,12 @@ What changed in each published `defold-typescript` toolchain release.
 > [!TIP]
 > [Upgrading the toolchain](./upgrade.md) and upgrading your [pinned Defold target](./pinning-defold-target.md) are independent moves.
 
+## v0.41.0
+
+### Improved
+
+- **Every engine index names its base in hovers and the API reference**: an index argument, returned index or info-table `index` whose upstream text is silent gains "1-based." or "0-based.", such as `the index of the node. 0-based.` on [`gui.get_index`](/api/gui) and `` `index` is 1-based. `` on [`b2d.body.get_fixtures`](/api/b2d.body). Only `options.index` is converted; see [Other engine indexes](./typescript-vs-lua.md#engine-array-properties-optionsindex).
+
 ## v0.40.0
 
 ### Breaking
