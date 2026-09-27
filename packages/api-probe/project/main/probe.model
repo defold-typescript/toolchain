@@ -1,0 +1,10 @@
+mesh: "/builtins/assets/gltf/cube.gltf"
+name: "unnamed"
+materials {
+  name: "default"
+  material: "/builtins/materials/model.material"
+  textures {
+    sampler: "tex0"
+    texture: "/builtins/assets/images/logo/logo_256.png"
+  }
+}

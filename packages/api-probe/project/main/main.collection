@@ -1,0 +1,28 @@
+name: "main"
+instances {
+  id: "probe"
+  prototype: "/main/probe.go"
+}
+instances {
+  id: "peer"
+  prototype: "/main/peer.go"
+  position {
+    x: 64.0
+    y: 0.0
+    z: 0.0
+  }
+}
+instances {
+  id: "wreck"
+  prototype: "/main/peer.go"
+  position {
+    x: -64.0
+    y: 0.0
+    z: 0.0
+  }
+}
+instances {
+  id: "victim"
+  prototype: "/main/spawn.go"
+}
+scale_along_z: 0
