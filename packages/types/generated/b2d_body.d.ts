@@ -1,5 +1,5 @@
 /** @noSelfInFile */
-import type { Hash, Opaque, Vector3 } from "../src/core-types";
+import type { Opaque, Vector3 } from "../src/core-types";
 
 declare global {
   /**
@@ -144,7 +144,7 @@ declare global {
      * }
      * ```
      */
-    function create_fixture(body: Opaque<"b2Body">, definition: { shape?: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }; friction?: number; restitution?: number; density?: number; sensor?: boolean; filter?: { category_bits?: number; mask_bits?: number; group_index?: number } }): { index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number };
+    function create_fixture(body: Opaque<"b2Body">, definition: { shape?: { type?: number; radius?: number; center?: Vector3; v0?: Vector3; v1?: Vector3; v2?: Vector3; v3?: Vector3; vertices?: Vector3[]; hx?: number; hy?: number; angle?: number; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3; center1?: Vector3; center2?: Vector3 }; friction?: number; restitution?: number; density?: number; sensor?: boolean; filter?: { category_bits?: number; mask_bits?: number; group_index?: number } }): { index: number; type: number; sensor: boolean; density: number; friction: number; restitution: number; child_count: number };
     /**
      * Creates a fixture from a shape and attach it to this body.
      * This is a convenience function. Use b2FixtureDef if you need to set parameters
@@ -167,7 +167,7 @@ declare global {
      * @param body - body
      * @param definition - the shape definition.
      */
-    function create_shape(body: Opaque<"b2Body">, definition: Record<string | number, unknown>): void;
+    function create_shape(body: Opaque<"b2Body">, definition: Record<string | number, unknown>): { index: number; shape_id: Opaque<"b2Shape">; type: number; sensor: boolean; density: number; friction: number; restitution: number; material: number; child_count: number; is_chain_segment: boolean };
     /**
      * Destroy a fixture from a body.
      *
@@ -241,13 +241,6 @@ declare global {
      * @returns array of contact tables
      */
     function get_contact_data(body: Opaque<"b2Body">): Record<string | number, unknown>;
-    /**
-     * Get the list of all contacts attached to this body.
-     *
-     * @param body - body
-     * @returns the first edge
-     */
-    function get_contact_list(body: Opaque<"b2Body">): Opaque<"b2ContactEdge">;
     /**
      * Get the fixtures attached to this body.
      *
@@ -426,13 +419,6 @@ declare global {
      * @returns the body type
      */
     function get_type(body: Opaque<"b2Body">): (number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_KINEMATIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_STATIC_BODY" });
-    /**
-     * Get the user data pointer that was provided in the body definition.
-     *
-     * @param body - body
-     * @returns the game object id this body is connected to
-     */
-    function get_user_data(body: Opaque<"b2Body">): Hash;
     /**
      * Get the parent world of this body.
      *
@@ -668,13 +654,6 @@ declare global {
      * @param type - the body type
      */
     function set_type(body: Opaque<"b2Body">, type: (number & { readonly __brand: "b2d.body.B2_DYNAMIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_KINEMATIC_BODY" }) | (number & { readonly __brand: "b2d.body.B2_STATIC_BODY" })): void;
-    /**
-     * Set the user data. Use this to store your application specific data.
-     *
-     * @param body - body
-     * @param id - the game object id
-     */
-    function set_user_data(body: Opaque<"b2Body">, id: Hash): void;
   }
 }
 

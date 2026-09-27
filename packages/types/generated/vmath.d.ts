@@ -661,7 +661,7 @@ declare global {
      * print(vec[2]); // => 0.5
      * ```
      */
-    function vector(t: number[]): Vector;
+    function vector(t?: number[]): Vector;
     /**
      * Creates a new zero vector with all components set to 0.
      *

@@ -122,6 +122,27 @@ function docSourceKey(element: Record<string, unknown>): { docSource?: "upstream
   return element.docSource === "upstream" ? { docSource: "upstream" } : {};
 }
 
+// A function the ref-doc names differently from the name its engine binding
+// registers, so the documented call raises "attempt to call a nil value". Keyed
+// by the ref-doc FQN; `name` is the registered FQN and `evidence` the
+// registration. The parse renames the element, so the declaration, the signature
+// store, the example translations and every audit read the bound name. An entry
+// is deleted once no retained target documents the old name.
+export interface FunctionNameCorrection {
+  readonly name: string;
+  readonly evidence: string;
+}
+
+export const FUNCTION_NAME_CORRECTIONS: ReadonlyMap<string, FunctionNameCorrection> = new Map([
+  [
+    "sys.set_render_enable",
+    {
+      name: "sys.set_render_enabled",
+      evidence: 'script_engine.cpp registers {"set_render_enabled", EngineSys_SetRenderEnabled}',
+    },
+  ],
+]);
+
 export function parseDefoldApiDoc(input: unknown): ApiModule {
   if (!isRecord(input)) {
     throw new Error(`parseDefoldApiDoc: expected object, got ${describeKind(input)}`);
@@ -150,7 +171,9 @@ export function parseDefoldApiDoc(input: unknown): ApiModule {
     if (!isRecord(element)) continue;
     const type = element.type;
     if (type === "FUNCTION") {
-      functions.push(parseFunction(element));
+      const fn = parseFunction(element);
+      const corrected = FUNCTION_NAME_CORRECTIONS.get(fn.name);
+      functions.push(corrected === undefined ? fn : { ...fn, name: corrected.name });
     } else if (type === "VARIABLE") {
       variables.push(parseVariable(element));
     } else if (type === "CONSTANT") {

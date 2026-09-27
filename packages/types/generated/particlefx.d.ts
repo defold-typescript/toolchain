@@ -1,5 +1,5 @@
 /** @noSelfInFile */
-import type { Hash, Url, Vector4 } from "../src/core-types";
+import type { Hash, Matrix4, Url, Vector4 } from "../src/core-types";
 
 declare global {
   /**
@@ -118,7 +118,7 @@ declare global {
      * });
      * ```
      */
-    function set_constant(url: string | Hash | Url, emitter: string | Hash, constant: string | Hash, value: Vector4): void;
+    function set_constant(url: string | Hash | Url, emitter: string | Hash, constant: string | Hash, value: Vector4 | Matrix4): void;
     /**
      * Stops a particle FX component from playing.
      * Stopping a particle FX does not remove already spawned particles.

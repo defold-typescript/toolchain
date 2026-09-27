@@ -82,7 +82,7 @@ declare global {
      * });
      * ```
      */
-    function get_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash | Url): boolean;
+    function get_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash): boolean;
     /**
      * Plays an animation on a model component with specified playback
      * mode and parameters.
@@ -181,7 +181,7 @@ declare global {
      * });
      * ```
      */
-    function set_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash | Url, enabled: boolean): void;
+    function set_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash, enabled: boolean): void;
     interface properties {
       /**
        * The current animation set on the component. The type of the property is hash.

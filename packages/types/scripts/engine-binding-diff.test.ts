@@ -301,6 +301,15 @@ describe("engine binding verdict gate", () => {
     }
   });
 
+  test("records no open binding mismatch", () => {
+    // Every engine disagreement is corrected in the declarations or accepted
+    // with a named reason; a new mismatch seeds as open and reds here.
+    const open = Object.entries(verdicts)
+      .filter(([, v]) => v.verdict === "open")
+      .map(([key, v]) => `${key} (extracted ${v.extracted}, declared ${v.declared})`);
+    expect(open).toEqual([]);
+  });
+
   test("accepted and manual verdicts name a reason", () => {
     const bare = Object.entries(verdicts)
       .filter(([, v]) => v.verdict !== "open" && !(v.reason ?? "").trim())

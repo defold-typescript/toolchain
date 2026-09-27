@@ -38,7 +38,7 @@ declare global {
      * }
      * ```
      */
-    function get_group_name(group: string | Hash): string;
+    function get_group_name(group: Hash): string;
     /**
      * Get a table of all mixer group names (hashes).
      *
@@ -221,7 +221,7 @@ declare global {
      * sound.set_gain("#sound", 0.9);
      * ```
      */
-    function set_gain(url: string | Hash | Url, gain?: number): void;
+    function set_gain(url: string | Hash | Url, gain: number): void;
     /**
      * Set mixer group gain
      *
@@ -247,7 +247,7 @@ declare global {
      * sound.set_pan("#sound", 0.5); // pan to the right
      * ```
      */
-    function set_pan(url: string | Hash | Url, pan?: number): void;
+    function set_pan(url: string | Hash | Url, pan: number): void;
     /**
      * Stop playing all active voices or just one voice if `play_id` provided
      *

@@ -32,6 +32,7 @@ import pushDoc from "../fixtures/push_doc.json" with { type: "json" };
 import renderDoc from "../fixtures/render_doc.json" with { type: "json" };
 import resourceDoc from "../fixtures/resource_doc.json" with { type: "json" };
 import socketDoc from "../fixtures/socket_doc.json" with { type: "json" };
+import soundDoc from "../fixtures/sound_doc.json" with { type: "json" };
 import spriteDoc from "../fixtures/sprite_doc.json" with { type: "json" };
 import sysDoc from "../fixtures/sys_doc.json" with { type: "json" };
 import tilemapDoc from "../fixtures/tilemap_doc.json" with { type: "json" };
@@ -719,10 +720,16 @@ describe("emitDeclarations", () => {
   describe("a slot PARAM_TYPE_CORRECTIONS names", () => {
     // Driven off the production table, like the optional-slot cases above, and
     // fed the entry's own upstream tokens so the fixture is the contradicted slot.
-    const [correctedKey, correction] = [...PARAM_TYPE_CORRECTIONS.entries()][0] ?? [];
-    if (correctedKey === undefined || correction === undefined) {
-      throw new Error("PARAM_TYPE_CORRECTIONS is empty");
+    // A nil token would make the fixture optional, so the first widening without
+    // one stands for the table.
+    const [correctedKey, correction] =
+      [...PARAM_TYPE_CORRECTIONS.entries()].find(
+        ([, entry]) => entry.adds !== undefined && !entry.upstream.includes("nil"),
+      ) ?? [];
+    if (correctedKey === undefined || correction?.adds === undefined) {
+      throw new Error("PARAM_TYPE_CORRECTIONS has no nil-free widening");
     }
+    const adds = correction.adds;
     const [elementName, slotKind, slotName] = correctedKey.split(":");
     if (elementName === undefined || slotName === undefined || slotKind !== "param") {
       throw new Error(`PARAM_TYPE_CORRECTIONS: malformed key ${correctedKey}`);
@@ -757,21 +764,71 @@ describe("emitDeclarations", () => {
 
     test("leaves the same slot name on another element on its mapped type", () => {
       expect(mapped).toBeDefined();
-      expect(mapped).not.toContain(correction.adds);
+      expect(mapped).not.toContain(adds);
     });
 
     test("appends the entry's members and keeps a trailing optional ?", () => {
       const out = emitDeclarations(moduleWith(elementName, [lead, slot(true)]));
       expect(out).toContain(
-        `function ${localName}(lead: number, ${slotName}?: ${mapped} | ${correction.adds}): void;`,
+        `function ${localName}(lead: number, ${slotName}?: ${mapped} | ${adds}): void;`,
       );
     });
 
     test("appends the entry's members and keeps a required slot required", () => {
       const out = emitDeclarations(moduleWith(elementName, [slot(false), lead]));
       expect(out).toContain(
-        `function ${localName}(${slotName}: ${mapped} | ${correction.adds}, lead: number): void;`,
+        `function ${localName}(${slotName}: ${mapped} | ${adds}, lead: number): void;`,
       );
+    });
+  });
+
+  describe("a PARAM_TYPE_CORRECTIONS entry that removes members", () => {
+    const [correctedKey, correction] =
+      [...PARAM_TYPE_CORRECTIONS.entries()].find(([, entry]) => entry.removes !== undefined) ?? [];
+    if (correctedKey === undefined || correction?.removes === undefined) {
+      throw new Error("PARAM_TYPE_CORRECTIONS removes nothing");
+    }
+    const removes = correction.removes;
+    const [elementName, , slotName] = correctedKey.split(":");
+    if (elementName === undefined || slotName === undefined) {
+      throw new Error(`PARAM_TYPE_CORRECTIONS: malformed key ${correctedKey}`);
+    }
+    const namespace = elementName.slice(0, elementName.lastIndexOf("."));
+    const localName = elementName.slice(elementName.lastIndexOf(".") + 1);
+    const emitted = (name: string) =>
+      emitDeclarations({
+        namespace,
+        brief: "",
+        description: "",
+        functions: [
+          {
+            name,
+            brief: "",
+            description: "",
+            parameters: [
+              { name: slotName, doc: "", types: [...correction.upstream], isOptional: false },
+            ],
+            returnValues: [],
+          },
+        ],
+        variables: [],
+        constants: [],
+        properties: [],
+        typedefs: [],
+      });
+    const slotType = (out: string, local: string) =>
+      new RegExp(`function ${local}\\(${slotName}: (.+)\\): void;`).exec(out)?.[1] ?? "";
+
+    test("drops exactly the named members and keeps the rest", () => {
+      const before = slotType(emitted(`${namespace}.not_${localName}`), `not_${localName}`)
+        .split(" | ")
+        .filter((member) => !removes.includes(member));
+      expect(slotType(emitted(elementName), localName).split(" | ")).toEqual(before);
+      for (const member of removes) {
+        expect(slotType(emitted(`${namespace}.not_${localName}`), `not_${localName}`)).toContain(
+          member,
+        );
+      }
     });
   });
 
@@ -1238,7 +1295,7 @@ describe("emitDeclarations", () => {
     const module = parseDefoldApiDoc(resourceDoc);
     const out = emitDeclarations(module);
     expect(out).toContain(
-      "function create_atlas(path: string, table: { texture?: string | Hash; animations?: { id?: string; width?: number; height?: number; frame_start?: number; frame_end?: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean }[]; geometries?: { id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean }[]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;",
+      "function create_atlas(path: string, table: { texture?: string | Hash; animations?: { id?: string; width?: number; height?: number; frame_start?: number; frame_end?: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean }[]; geometries?: { id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices?: number[]; uvs?: number[]; indices?: number[] }[]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;",
     );
     const createAtlasLine = out.split("\n").find((line) => line.includes("function create_atlas"));
     expect(createAtlasLine?.match(/ id\?:/g)).toHaveLength(2);
@@ -1251,7 +1308,9 @@ describe("emitDeclarations", () => {
     const out = emitDeclarations(module);
     const createLine = out.split("\n").find((l) => l.includes("function create_atlas")) ?? "";
     expect(createLine).toContain("flip_horizontal?: boolean }[]");
-    expect(createLine).toContain("rotated?: boolean }[]");
+    expect(createLine).toContain(
+      "rotated?: boolean; vertices?: number[]; uvs?: number[]; indices?: number[] }[]",
+    );
     const getLine = out.split("\n").find((l) => l.includes("function get_atlas(")) ?? "";
     expect(getLine).toContain("flip_horizontal: boolean }[]");
     expect(getLine).toContain(
@@ -2688,7 +2747,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
       ...module,
       functions: [requireFunction(module, "collectionproxy.get_resources")],
     });
-    expect(out).toContain("function get_resources(collectionproxy: Url): Hash[];");
+    expect(out).toContain("function get_resources(collectionproxy: Url | string | Hash): Hash[];");
     expect(out).not.toContain("Record<string | number, unknown>");
   });
 
@@ -2935,7 +2994,7 @@ describe("socket handle method interfaces", () => {
 });
 
 describe("NESTED_FIELD_CURATIONS", () => {
-  test("holds exactly the two atlas geometries entries, both the same member list", () => {
+  test("holds exactly the three atlas geometries entries, all the same member list", () => {
     const members = [
       { name: "vertices", types: ["table"], numberList: true },
       { name: "uvs", types: ["table"], numberList: true },
@@ -2943,6 +3002,7 @@ describe("NESTED_FIELD_CURATIONS", () => {
     ];
     expect([...NESTED_FIELD_CURATIONS]).toEqual([
       ["resource.set_atlas:param:table:geometries", members],
+      ["resource.create_atlas:param:table:geometries", members],
       ["resource.get_atlas:return:data:geometries", members],
     ]);
   });
@@ -2968,22 +3028,34 @@ describe("NESTED_FIELD_CURATIONS", () => {
     expect(parsed[1]).toEqual({ name: "geometries", types: ["table"] });
   });
 
-  test("leaves a parser-recovered nested field alone (parser won)", () => {
-    const parsed = [
-      { name: "geometries", types: ["table"], fields: [{ name: "id", types: ["string"] }] },
-    ];
-    const out = applyNestedFieldCurations("resource.set_atlas", "param", "table", parsed);
-    expect(out[0]).toBe(parsed[0]);
-  });
-
   test("does nothing for an unkeyed slot", () => {
     const parsed = [{ name: "geometries", types: ["table"] }];
-    expect(applyNestedFieldCurations("resource.create_atlas", "param", "table", parsed)).toEqual(
+    expect(applyNestedFieldCurations("resource.set_texture", "param", "table", parsed)).toEqual(
       parsed,
     );
   });
 
-  test("drives the injection through emitDeclarations onto set_atlas/get_atlas only", () => {
+  test("keeps a parsed member list and appends only the members it lacks", () => {
+    const parsed = [
+      {
+        name: "geometries",
+        types: ["table"],
+        fields: [
+          { name: "id", types: ["string"] },
+          { name: "uvs", types: ["table"], numberList: true },
+        ],
+      },
+    ];
+    const out = applyNestedFieldCurations("resource.create_atlas", "param", "table", parsed);
+    expect(out[0]?.fields?.map((field) => field.name)).toEqual([
+      "id",
+      "uvs",
+      "vertices",
+      "indices",
+    ]);
+  });
+
+  test("drives the injection through emitDeclarations onto the three atlas slots", () => {
     const module = parseDefoldApiDoc(resourceDoc);
     const out = emitDeclarations(module);
     const setLine = out.split("\n").find((l) => l.includes("function set_atlas(")) ?? "";
@@ -2994,10 +3066,10 @@ describe("NESTED_FIELD_CURATIONS", () => {
     expect(getLine).toContain(
       "geometries: { vertices: number[]; uvs: number[]; indices: number[] }[]",
     );
-    // create_atlas is not curated — its parser-grouped geometries shape is untouched.
+    // create_atlas keeps its parser-grouped members and gains the arrays.
     const createLine = out.split("\n").find((l) => l.includes("function create_atlas")) ?? "";
     expect(createLine).toContain(
-      "geometries?: { id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean }[]",
+      "geometries?: { id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices?: number[]; uvs?: number[]; indices?: number[] }[]",
     );
   });
 });
@@ -3062,7 +3134,7 @@ describe("HOMOGENEOUS_ARRAY_SLOTS", () => {
         },
       ]),
     );
-    expect(vmathOut).toContain("function vector(t: number[]): void;");
+    expect(vmathOut).toContain("function vector(t?: number[]): void;");
 
     const soundOut = emitDeclarations(
       moduleOf("sound", [
@@ -3245,7 +3317,9 @@ describe("camera/font residual fidelity recovery", () => {
         },
       ]),
     );
-    expect(out).toContain("function set_fov(camera: Url | number | undefined, fov: number): void;");
+    expect(out).toContain(
+      "function set_fov(camera: Url | number | string | Hash | undefined, fov: number): void;",
+    );
   });
 
   test("a trailing-optional camera param keeps the ? form, no | undefined", () => {
@@ -3267,7 +3341,7 @@ describe("camera/font residual fidelity recovery", () => {
         },
       ]),
     );
-    expect(out).toContain("function get_fov(camera?: Url | number): void;");
+    expect(out).toContain("function get_fov(camera?: Url | number | string | Hash): void;");
     expect(out).not.toContain("| undefined");
   });
 });
@@ -3651,10 +3725,11 @@ describe("url-parameter address retyping", () => {
   test("a triple-typed slot the committed table leaves unclassified keeps its string member", () => {
     const module = parseDefoldApiDoc(modelDoc);
     const out = emitDeclarations(module, { urlParameters: committed });
-    // `model.get_mesh_enabled` carries the `string | hash | url` triple on both
-    // slots, and the table classifies neither: the triple alone must not retype.
+    // `model.get_mesh_enabled` carries the `string | hash | url` triple on its
+    // url slot, and the table does not classify it: the triple alone must not
+    // retype. (`mesh_id` drops `Url` through PARAM_TYPE_CORRECTIONS.)
     expect(signatureLine(out, "function get_mesh_enabled(")).toBe(
-      "function get_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash | Url): boolean;",
+      "function get_mesh_enabled(url: string | Hash | Url, mesh_id: string | Hash): boolean;",
     );
   });
 
@@ -4112,7 +4187,7 @@ describe("documented constant slot expansion", () => {
       ].map((name) => `gui.PROP_${name}`),
     );
     expect(signatureLine(guiOut, "function cancel_animations(")).toBe(
-      `function cancel_animations(node: Opaque<"node">, property?: string | ${props}): void;`,
+      `function cancel_animations(node: Opaque<"node">, property?: string | ${props} | Hash): void;`,
     );
     expect(signatureLine(guiOut, "function get(")).toContain(
       `property: string | Hash | ${props}, options?:`,
@@ -4134,7 +4209,7 @@ describe("documented constant slot expansion", () => {
       ),
     };
     expect(signatureLine(emitDeclarations(module), "function cancel_animations(")).toBe(
-      `function cancel_animations(node: Opaque<"node">, property?: string | ${brand("gui.PROP_COLOR")}): void;`,
+      `function cancel_animations(node: Opaque<"node">, property?: string | ${brand("gui.PROP_COLOR")} | Hash): void;`,
     );
   });
 
@@ -4249,7 +4324,11 @@ describe("TABLE_SLOT_FIELD_ADDITIONS", () => {
     // The exact ordered addition keys. Each entry's own evidence is pinned on
     // the entry; this guards that no addition is silently added, removed, or
     // reordered — the shape the sibling TABLE_SLOT_CURATIONS suite asserts.
-    expect([...TABLE_SLOT_FIELD_ADDITIONS.keys()]).toEqual(["resource.create_texture:param:table"]);
+    expect([...TABLE_SLOT_FIELD_ADDITIONS.keys()]).toEqual([
+      "resource.create_texture:param:table",
+      "gui.get:param:options",
+      "gui.set:param:options",
+    ]);
   });
 
   test("emits page_count beside the fields the ref-doc documents, addition last", () => {
@@ -4615,7 +4694,70 @@ describe("signatures upstream documents in prose", () => {
 
   test("gui.set's options.key accepts a property name string as well as a Hash", () => {
     expect(emittedLine(guiDoc, "function set(")).toContain(
-      "options?: { index?: number; key?: string | Hash }",
+      "options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }",
+    );
+  });
+});
+
+describe("corrections the engine bindings demand", () => {
+  // One representative slot per correction class, emitted from the real
+  // fixture, so a correction keyed to a slot the emitter never reads reds here.
+  function line(doc: unknown, marker: string): string {
+    const out = emitDeclarations(parseDefoldApiDoc(doc));
+    const found = out.split("\n").find((l) => l.includes(marker));
+    if (found === undefined) throw new Error(`no emitted line contains ${marker}`);
+    return found.trim();
+  }
+
+  test("a slot the binding refuses to go without is required", () => {
+    expect(line(collectionfactoryDoc, "function load(")).toBe(
+      "function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;",
+    );
+  });
+
+  test("a slot the binding reads past lua_isnil must be passed but may be undefined", () => {
+    expect(line(guiDoc, "function move_above(")).toBe(
+      'function move_above(node: Opaque<"node">, reference: Opaque<"node"> | undefined): void;',
+    );
+    expect(line(windowDoc, "function set_listener(")).toContain(
+      "callback: ((self: unknown, event: ",
+    );
+    expect(line(windowDoc, "function set_listener(")).toContain(") => void) | undefined): void;");
+  });
+
+  test("a slot the binding reads as omissible is optional", () => {
+    expect(line(goDoc, "function world_to_local_position(")).toBe(
+      "export function world_to_local_position(position: Vector3, url?: string | Hash | Url): Vector3;",
+    );
+  });
+
+  test("a type the binding also takes is added, and one it raises on is removed", () => {
+    expect(line(camera113Doc, "function get_fov(")).toBe(
+      "function get_fov(camera?: Url | number | string | Hash): number;",
+    );
+    expect(line(soundDoc, "function get_group_name(")).toBe(
+      "function get_group_name(group: Hash): string;",
+    );
+  });
+
+  test("a value the binding returns undocumented is declared", () => {
+    expect(line(sysDoc, "function save(")).toBe(
+      "function save(filename: string, table: Record<string | number, unknown> | readonly unknown[]): boolean;",
+    );
+  });
+
+  test("a function is declared under the name the binding registers", () => {
+    const out = emitDeclarations(parseDefoldApiDoc(sysDoc));
+    expect(out).toContain("function set_render_enabled(enable: boolean): void;");
+    expect(out).not.toContain("function set_render_enable(");
+  });
+
+  test("a table field the binding reads is declared", () => {
+    expect(line(guiDoc, "function get(")).toContain(
+      "options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }",
+    );
+    expect(line(b2dWorldDoc, "function cast_shape(")).toContain(
+      "center1?: Vector3; center2?: Vector3 }",
     );
   });
 });

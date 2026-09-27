@@ -15,7 +15,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 45
+    "bindingOpen": 0
   },
   "b2d.chain": {
     "droppedElements": 0,
@@ -33,7 +33,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 6
+    "bindingOpen": 0
   },
   "b2d.joint": {
     "droppedElements": 0,
@@ -42,7 +42,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 2
+    "bindingOpen": 0
   },
   "b2d.shape": {
     "droppedElements": 0,
@@ -51,7 +51,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 32
+    "bindingOpen": 0
   },
   "b2d.world": {
     "droppedElements": 0,
@@ -60,7 +60,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 8
+    "bindingOpen": 0
   },
   "buffer": {
     "droppedElements": 0,
@@ -69,7 +69,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 1
+    "bindingOpen": 0
   },
   "camera": {
     "droppedElements": 0,
@@ -78,7 +78,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 31
+    "bindingOpen": 0
   },
   "collectionfactory": {
     "droppedElements": 0,
@@ -87,7 +87,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 9
+    "bindingOpen": 0
   },
   "collectionproxy": {
     "droppedElements": 0,
@@ -96,7 +96,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 4
+    "bindingOpen": 0
   },
   "compute": {
     "droppedElements": 0,
@@ -123,7 +123,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 9
+    "bindingOpen": 0
   },
   "font": {
     "droppedElements": 0,
@@ -141,7 +141,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 21
+    "bindingOpen": 0
   },
   "graphics": {
     "droppedElements": 0,
@@ -150,7 +150,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 20
+    "bindingOpen": 0
   },
   "gui": {
     "droppedElements": 0,
@@ -159,7 +159,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 29
+    "bindingOpen": 0
   },
   "html5": {
     "droppedElements": 0,
@@ -168,7 +168,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 1
+    "bindingOpen": 0
   },
   "http": {
     "droppedElements": 0,
@@ -204,7 +204,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 2
+    "bindingOpen": 0
   },
   "json": {
     "droppedElements": 0,
@@ -213,7 +213,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 2
+    "bindingOpen": 0
   },
   "label": {
     "droppedElements": 0,
@@ -222,7 +222,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 1
+    "bindingOpen": 0
   },
   "liveupdate": {
     "droppedElements": 0,
@@ -231,7 +231,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 7
+    "bindingOpen": 0
   },
   "material": {
     "droppedElements": 0,
@@ -240,7 +240,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 34
+    "bindingOpen": 0
   },
   "model": {
     "droppedElements": 0,
@@ -249,7 +249,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 7
+    "bindingOpen": 0
   },
   "msg": {
     "droppedElements": 0,
@@ -258,7 +258,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 4
+    "bindingOpen": 0
   },
   "particlefx": {
     "droppedElements": 0,
@@ -267,7 +267,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 3
+    "bindingOpen": 0
   },
   "physics": {
     "droppedElements": 0,
@@ -276,7 +276,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 7
+    "bindingOpen": 0
   },
   "profiler": {
     "droppedElements": 0,
@@ -285,7 +285,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 1
+    "bindingOpen": 0
   },
   "push": {
     "droppedElements": 0,
@@ -303,7 +303,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 92
+    "bindingOpen": 0
   },
   "resource": {
     "droppedElements": 0,
@@ -312,7 +312,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 65
+    "bindingOpen": 0
   },
   "socket": {
     "droppedElements": 0,
@@ -330,7 +330,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 9
+    "bindingOpen": 0
   },
   "sprite": {
     "droppedElements": 0,
@@ -339,7 +339,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 3
+    "bindingOpen": 0
   },
   "sys": {
     "droppedElements": 0,
@@ -348,7 +348,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 10
+    "bindingOpen": 0
   },
   "tilemap": {
     "droppedElements": 0,
@@ -357,7 +357,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 6
+    "bindingOpen": 0
   },
   "timer": {
     "droppedElements": 0,
@@ -375,7 +375,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 7
+    "bindingOpen": 0
   },
   "vmath": {
     "droppedElements": 0,
@@ -384,7 +384,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 6
+    "bindingOpen": 0
   },
   "webview": {
     "droppedElements": 0,
@@ -402,7 +402,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 1
+    "bindingOpen": 0
   },
   "zlib": {
     "droppedElements": 0,

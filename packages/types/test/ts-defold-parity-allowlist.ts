@@ -89,6 +89,12 @@ export const PARITY_ALLOWLIST: ParityAllowEntry[] = [
     reason:
       "generic message payloads are modeled via the typed message-dispatch surface, not a msg.generic_message alias.",
   },
+  {
+    pattern: "sys.set_render_enable",
+    category: "intentional",
+    reason:
+      "the engine registers the function as sys.set_render_enabled, which the surface declares; the documented name is nil at runtime.",
+  },
 ];
 
 /** A `<ns>.*` pattern matches the namespace itself and any dotted descendant; any other pattern is an exact key. */

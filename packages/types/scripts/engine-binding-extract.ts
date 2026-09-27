@@ -1339,7 +1339,11 @@ function analyzeSlots(
     };
     const indexArg = args[1];
     const slot = resolve(indexArg);
-    const takesL = args[0]?.length === 1 && args[0][0]?.text === "L";
+    // `dmScript::GetMainThread(L)` hands the same stack to the call.
+    const first = args[0] ?? [];
+    const takesL =
+      (first.length === 1 && first[0]?.text === "L") ||
+      (first.some((t) => t.text === "GetMainThread") && first.at(-2)?.text === "L");
     if (takesL && topCopy !== null && name !== "lua_pushvalue") {
       copyDepth += stackDelta(name, args);
       if (copyDepth < 0) topCopy = null;

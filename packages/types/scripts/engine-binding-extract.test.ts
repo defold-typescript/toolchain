@@ -220,6 +220,18 @@ describe("reads through helpers and locals", () => {
   });
 });
 
+describe("older engine sources", () => {
+  const older = readBindingsForTarget("defold-1.12.4");
+
+  test("a callback created on dmScript::GetMainThread(L) is a read of the caller's slot", () => {
+    const load = older.functions.find(
+      (f) => f.namespace === "sys" && f.name === "load_buffer_async",
+    );
+    expect(load?.minArgs).toBe(2);
+    expect(load?.slots.find((s) => s.index === 2)).toMatchObject({ kinds: ["function"] });
+  });
+});
+
 describe("returns", () => {
   test("vmath.length pushes one number", () => {
     expect(binding("vmath", "length").returns).toEqual({ count: 1, kinds: [["number"]] });
