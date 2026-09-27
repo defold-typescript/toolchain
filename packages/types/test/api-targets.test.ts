@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
+import { readBindingsForTarget } from "../scripts/engine-binding-extract";
 import { buildFidelityReport } from "../scripts/fidelity-audit";
 import {
   type ApiTarget,
@@ -15,6 +16,7 @@ import {
   VERSIONED_MODULE_MANIFEST,
 } from "../scripts/regen";
 import { DEFOLD_VERSION, SYNC_MANIFEST, type ZipAccessor } from "../scripts/sync-api-docs";
+import { UNBOUND_SKIPS } from "../src/emit-dts";
 
 const PACKAGE_ROOT = resolve(import.meta.dir, "..");
 const GENERATED = resolve(PACKAGE_ROOT, "generated");
@@ -170,6 +172,33 @@ describe("api-targets registry", () => {
         expect(committed).toBe(fresh);
       }
     }
+  });
+
+  test("every engine-unbound skip names a function its target documents and does not bind", () => {
+    const problems: string[] = [];
+    let checked = 0;
+    for (const target of loadApiTargets().filter((t) => t.source == null)) {
+      const bound = new Set(
+        readBindingsForTarget(target.id).functions.map((fn) => `${fn.namespace}.${fn.name}`),
+      );
+      for (const entry of loadTargetModules(target)) {
+        const documented = new Set(
+          (entry.doc as { elements: { name: string }[] }).elements.map((e) => e.name),
+        );
+        const emitted = generateModuleDeclaration(entry).contents;
+        for (const rule of entry.skipFunctions ?? []) {
+          const fqn = `${entry.namespace}.${rule}`;
+          if (!UNBOUND_SKIPS.has(fqn)) continue;
+          checked++;
+          if (!documented.has(fqn)) problems.push(`${target.id}: ${fqn} is not documented`);
+          if (bound.has(fqn)) problems.push(`${target.id}: ${fqn} is bound — declare it again`);
+          if (emitted.includes(`function ${rule}(`))
+            problems.push(`${target.id}: ${fqn} is emitted`);
+        }
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
+    expect(problems).toEqual([]);
   });
 
   test("the promoted surface has no unknown tokens or uncovered dropped declarations", () => {

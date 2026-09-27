@@ -244,13 +244,6 @@ declare global {
      */
     function is_sleeping_enabled(body: Opaque<"b2Body">): boolean;
     /**
-     * This resets the mass properties to the sum of the mass properties of the fixtures.
-     * This normally does not need to be called unless you called SetMassData to override
-     *
-     * @param body - body
-     */
-    function reset_mass_data(body: Opaque<"b2Body">): void;
-    /**
      * Set the active state of the body. An inactive body is not
      * simulated and cannot be collided with or woken up.
      * If you pass a flag of true, all fixtures will be added to the

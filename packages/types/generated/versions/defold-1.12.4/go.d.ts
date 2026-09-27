@@ -287,7 +287,7 @@ declare global {
      * go.cancel_animations("#sprite");
      * ```
      */
-    export function cancel_animations(url: SceneAddress | Hash | Url, property?: string | Hash): void;
+    export function cancel_animations(url?: SceneAddress | Hash | Url, property?: string | Hash): void;
     /**
      * Delete one or more game objects identified by id. Deletion is asynchronous meaning that
      * the game object(s) are scheduled for deletion which will happen at the end of the current
@@ -1043,7 +1043,7 @@ declare global {
      * const new_position = go.world_to_local_position(test_pos, "/child");
      * ```
      */
-    export function world_to_local_position(position: Vector3, url: SceneGameObjectAddress | Hash | Url): Vector3;
+    export function world_to_local_position(position: Vector3, url?: SceneGameObjectAddress | Hash | Url): Vector3;
     /**
      * The function uses world transformation calculated at the end of previous frame.
      *
@@ -1058,7 +1058,7 @@ declare global {
      * const result_transform = go.world_to_local_transform(test_transform, "/child");
      * ```
      */
-    export function world_to_local_transform(transformation: Matrix4, url: SceneGameObjectAddress | Hash | Url): Matrix4;
+    export function world_to_local_transform(transformation: Matrix4, url?: SceneGameObjectAddress | Hash | Url): Matrix4;
     export { _delete as delete };
     export interface properties {
       /**

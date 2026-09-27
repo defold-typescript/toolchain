@@ -72,7 +72,7 @@ declare global {
      *
      * - `factory.STATUS_LOADED`
      */
-    function get_status(url?: string | Hash | Url): factory.Status;
+    function get_status(url: string | Hash | Url): factory.Status;
     /**
      * Resources are referenced by the factory component until the existing (parent) collection is destroyed or factory.unload is called.
      * Calling this function when the factory is not marked as dynamic loading does nothing.
@@ -92,7 +92,7 @@ declare global {
      * factory.load("#factory", (self, url, result) => {});
      * ```
      */
-    function load(url?: string | Hash | Url, complete_function?: (self: unknown, url: unknown, result: unknown) => void): void;
+    function load(url: string | Hash | Url, complete_function: (self: unknown, url: unknown, result: unknown) => void): void;
     /**
      * Changes the prototype for the factory.
      *
@@ -106,7 +106,7 @@ declare global {
      * const id = factory.create("#factory", go.get_world_position(), vmath.quat());
      * ```
      */
-    function set_prototype(url?: string | Hash | Url, prototype?: string): void;
+    function set_prototype(url: string | Hash | Url, prototype: string | undefined): void;
     /**
      * This decreases the reference count for each resource loaded with factory.load. If reference is zero, the resource is destroyed.
      * Calling this function when the factory is not marked as dynamic loading does nothing.
@@ -118,7 +118,7 @@ declare global {
      * factory.unload("#factory");
      * ```
      */
-    function unload(url?: string | Hash | Url): void;
+    function unload(url: string | Hash | Url): void;
   }
 }
 

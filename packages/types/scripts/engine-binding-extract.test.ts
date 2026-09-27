@@ -18,6 +18,14 @@ function slot(fn: BindingFunction, index: number) {
   return fn.slots.find((s) => s.index === index);
 }
 
+function variant(namespace: string, name: string, file: string): BindingFunction {
+  const found = extraction.functions.find(
+    (f) => f.namespace === namespace && f.name === name && f.file.endsWith(file),
+  );
+  if (!found) throw new Error(`${namespace}.${name} is not bound in ${file}`);
+  return found;
+}
+
 describe("registration", () => {
   test("reads a module's register table", () => {
     const sprite = extraction.functions.filter((f) => f.namespace === "sprite").map((f) => f.name);
@@ -86,6 +94,144 @@ describe("arity", () => {
   });
 });
 
+describe("optionality", () => {
+  test("a slot dmScript::ResolveURL alone reads may be omitted", () => {
+    const getFov = binding("camera", "get_fov");
+    expect(getFov.minArgs).toBe(0);
+    expect(slot(getFov, 1)).toMatchObject({ optional: true });
+  });
+
+  test("a helper guarding its read with `index <= top && !lua_isnil` leaves the slot optional", () => {
+    const screenToWorld = binding("camera", "screen_to_world");
+    expect(screenToWorld.minArgs).toBe(1);
+    expect(slot(screenToWorld, 2)).toMatchObject({ optional: true });
+  });
+
+  test("a helper comparing the top against the index it was handed leaves the slot optional", () => {
+    const getPosition = binding("go", "get_position");
+    expect(getPosition.minArgs).toBe(0);
+    expect(getPosition.maxArgs).toBe(1);
+  });
+
+  test("lua_isnil admits nil but not an absent argument", () => {
+    const moveAbove = binding("gui", "move_above");
+    expect(slot(moveAbove, 2)).toMatchObject({ optional: true });
+    expect(moveAbove.minArgs).toBe(2);
+  });
+
+  test("an error raised when a slot is nil, or when too few arguments came, makes it required", () => {
+    expect(slot(binding("go", "exists"), 1)).toMatchObject({ optional: false });
+    expect(binding("particlefx", "play").minArgs).toBe(1);
+    expect(binding("json", "decode").minArgs).toBe(1);
+  });
+
+  test("a nonzero argument count guard reads slot 1 only when it is present", () => {
+    expect(binding("go", "delete").minArgs).toBe(0);
+  });
+
+  test("statements after `if (lua_isnoneornil(L, i)) return fallback;` run only when the slot is present", () => {
+    for (const file of ["script_box2d_world_v2.cpp", "script_box2d_world_v3.cpp"]) {
+      const castRay = variant("b2d.world", "cast_ray", file);
+      expect(castRay.minArgs).toBe(3);
+      expect(slot(castRay, 4)).toMatchObject({ kinds: ["table"], optional: true });
+      expect(slot(castRay, 5)).toMatchObject({ kinds: ["number"], optional: true });
+    }
+  });
+
+  test("a slot read only behind a type probe of itself is skipped when absent", () => {
+    const animate = binding("gui", "animate");
+    expect(animate.minArgs).toBe(5);
+    expect(slot(animate, 7)).toMatchObject({ kinds: ["function"], optional: true });
+  });
+
+  test("an error on the failed branch of a probe chain makes every probed slot required", () => {
+    const colorMask = binding("render", "set_color_mask");
+    expect(colorMask.minArgs).toBe(4);
+    expect(colorMask.slots.map((s) => s.optional)).toEqual([false, false, false, false]);
+  });
+
+  test("dmScript::GetComponentFromLua refuses the calling script's own URL", () => {
+    expect(slot(binding("factory", "get_status"), 1)).toMatchObject({
+      kinds: ["hash", "string", "url"],
+      optional: false,
+    });
+  });
+});
+
+describe("reads through helpers and locals", () => {
+  test("a binding that only forwards to another reads what that one reads", () => {
+    const localCenter = variant("b2d.body", "get_local_center", "script_box2d_body_v3.cpp");
+    expect(localCenter.minArgs).toBe(1);
+    expect(slot(localCenter, 1)).toMatchObject({ kinds: ["userdata"], optional: false });
+  });
+
+  test("a local holding AbsIndex(L, n) names slot n", () => {
+    const createChain = variant("b2d.body", "create_chain", "script_box2d_chain_v3.cpp");
+    expect(createChain.minArgs).toBe(2);
+    expect(slot(createChain, 2)?.fields).toContain("vertices");
+  });
+
+  test("a helper handed only out-pointers still reads the caller's literal slots", () => {
+    const meshEnabled = binding("model", "get_mesh_enabled");
+    expect(slot(meshEnabled, 1)).toMatchObject({ kinds: ["hash", "string", "url"] });
+    expect(slot(meshEnabled, 2)).toMatchObject({ kinds: ["hash", "string"] });
+  });
+
+  test("a helper name shared by the Box2D v2 and v3 sources resolves within the caller's directory", () => {
+    const v3 = variant("b2d.world", "cast_shape", "script_box2d_world_v3.cpp");
+    const v2 = variant("b2d.world", "cast_shape", "script_box2d_world_v2.cpp");
+    expect(slot(v3, 2)?.fields).toContain("center1");
+    expect(slot(v2, 2)?.fields).not.toContain("center1");
+  });
+
+  test("an error message's arguments are not reads of the slot they name", () => {
+    const depthMask = binding("render", "set_depth_mask");
+    expect(depthMask.maxArgs).toBe(1);
+    expect(slot(depthMask, 1)?.manual).toBeUndefined();
+  });
+
+  test("a local holding a probe's answer guards like the probe", () => {
+    const dispatch = binding("render", "dispatch_compute");
+    expect(dispatch.minArgs).toBe(3);
+    expect(slot(dispatch, 4)).toMatchObject({ kinds: ["table"], optional: true });
+  });
+
+  test("an assigned condition guards the reads after its `&&`", () => {
+    expect(slot(binding("gui", "is_enabled"), 2)).toMatchObject({ optional: true });
+  });
+
+  test("a table copied by lua_pushvalue stays readable across balanced pushes and pops", () => {
+    expect(slot(binding("sprite", "play_flipbook"), 4)?.fields).toEqual(
+      expect.arrayContaining(["offset", "playback_rate"]),
+    );
+  });
+
+  test("a field named by a string argument to a helper, templated or not, is read", () => {
+    expect(slot(binding("resource", "create_buffer"), 2)?.fields).toContain("transfer_ownership");
+    const createChain = variant("b2d.body", "create_chain", "script_box2d_chain_v3.cpp");
+    expect(slot(createChain, 2)?.fields).toEqual(expect.arrayContaining(["friction", "loop"]));
+  });
+
+  test("a probe that picks a branch names a kind the binding handles", () => {
+    expect(slot(binding("go", "property"), 2)?.kinds).toEqual(
+      expect.arrayContaining(["boolean", "hash", "number", "url"]),
+    );
+    expect(slot(binding("types", "is_hash"), 1)?.kinds).toEqual([]);
+  });
+});
+
+describe("older engine sources", () => {
+  const older = readBindingsForTarget("defold-1.12.4");
+
+  test("a callback created on dmScript::GetMainThread(L) is a read of the caller's slot", () => {
+    const load = older.functions.find(
+      (f) => f.namespace === "sys" && f.name === "load_buffer_async",
+    );
+    expect(load?.minArgs).toBe(2);
+    expect(load?.slots.find((s) => s.index === 2)).toMatchObject({ kinds: ["function"] });
+  });
+});
+
 describe("returns", () => {
   test("vmath.length pushes one number", () => {
     expect(binding("vmath", "length").returns).toEqual({ count: 1, kinds: [["number"]] });
@@ -100,6 +246,12 @@ describe("constants", () => {
   test("reads constants a register function sets through macros", () => {
     expect(extraction.constants.get("go")).toContain("PLAYBACK_ONCE_FORWARD");
     expect(extraction.constants.get("gui")).toContain("EASING_LINEAR");
+  });
+
+  test("a nested table holding only constants is bound to its namespace", () => {
+    expect(extraction.constants.get("b2d.shape")).toEqual(
+      expect.arrayContaining(["SHAPE_TYPE_CHAIN", "SHAPE_TYPE_GRID"]),
+    );
   });
 });
 

@@ -11,9 +11,27 @@ What changed in each published `defold-typescript` toolchain release.
 
 ## v0.41.0
 
+### Breaking
+
+- **Calls the engine's own Lua bindings reject no longer compile.** Each form below compiled before and raised when the script ran; the type error now points at the spelling that works.
+  - **Required arguments** — [`factory`](/api/factory) and [`collectionfactory`](/api/collectionfactory) `get_status`, `load`, `unload` and `set_prototype` need the component url, and `load` its completion callback; [`collectionproxy.set_collection`](/api/collectionproxy) needs its url; [`sound.set_gain`](/api/sound) and `set_pan` need the value; [`resource.create_buffer`](/api/resource) and `create_sound_data` need their table; and `resource.create_texture_async` needs its callback.
+  - **Pass `undefined` rather than leaving the argument out** — the binding reads it even when absent: `gui.move_above` and `move_below` take `reference`, `gui.set_parent` takes `parent` and `gui.set` takes `value` ([gui](/api/gui)), `set_prototype` and `collectionproxy.set_collection` take `prototype`, and [`window.set_listener`](/api/window) and [`html5.set_interaction_listener`](/api/html5) take the callback. Write `gui.move_above(node, undefined)` or `window.set_listener(undefined)`.
+  - **Narrower types** — `sound.get_group_name` takes a hash, [`model.get_mesh_enabled`](/api/model) and `set_mesh_enabled` take the mesh id as a string or hash, and `resource.create_texture_async` takes its path as a string.
+  - **[`sys.set_render_enable`](/api/sys) is `sys.set_render_enabled`**, the name the engine registers; the documented name is `nil` at runtime.
+  - **Functions no binding registers are gone** — [`b2d.body`](/api/b2d.body) `get_user_data`, `set_user_data` and `get_contact_list` on Defold 1.13, and `reset_mass_data` on 1.12.4.
+
 ### Improved
 
 - **Every engine index names its base in hovers and the API reference**: an index argument, returned index or info-table `index` whose upstream text is silent gains "1-based." or "0-based.", such as `the index of the node. 0-based.` on [`gui.get_index`](/api/gui), `` `index` is 1-based. `` on [`b2d.body.get_fixtures`](/api/b2d.body) and the `x` and `y` coordinates of [`tilemap.set_tile`](/api/tilemap). Only `options.index` is converted; see [Other engine indexes](./typescript-vs-lua.md#engine-array-properties-optionsindex).
+
+### Fixed
+
+- **Declarations stricter than the engine's own Lua bindings accept what the engine takes:**
+  - **Optional arguments** — [`go.world_to_local_position`](/api/go), `world_to_local_transform` and `go.cancel_animations` may leave out the url to act on the calling object, `render.set_render_target()` restores the default target, [`vmath.vector()`](/api/vmath) makes an empty vector, and [`b2d.fixture.set_density`](/api/b2d.fixture) may leave out `update_mass`.
+  - **Wider types** — every [camera](/api/camera) function takes the camera as a url string or a hash, and so does [`render.set_camera`](/api/render); [`physics.set_group`](/api/physics), `get_maskbit` and `set_maskbit` take the group as a hash; `resource.get_text_metrics` takes the font path as a string; `collectionproxy.get_resources` takes the proxy as a url string or a hash; `gui.screen_to_local` and `set_screen_position` take a `vmath.vector4`; [`particlefx.set_constant`](/api/particlefx) takes a `vmath.matrix4`; and `gui.animate` and `cancel_animations` take the property as a hash.
+  - **Return values** — `sys.save` and [`tilemap.set_tile`](/api/tilemap) return a boolean, and `b2d.body.create_shape` returns the created shape's `index`, `shape_id`, `type` and material fields.
+  - **Table fields** — the `gui.get` and `gui.set` options take `key` and `keys`, each `resource.create_atlas` geometry takes `vertices`, `uvs` and `indices`, and Box2D shape tables take a capsule's `center1` and `center2`.
+  - **Constants** — [`graphics.DATA_TYPE_*`](/api/graphics), `graphics.COORDINATE_SPACE_*` and [`material.CONSTANT_TYPE_*`](/api/material) on Defold 1.13, and `render.TEXTURE_BIT`, are declared; the engine defines them, and the reference names them only in prose.
 
 ## v0.40.0
 
