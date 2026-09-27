@@ -7,6 +7,7 @@ import {
   isVarargParameter,
   OPTIONAL_SLOT_CORRECTIONS,
 } from "../src/emit-dts";
+import verdicts from "./engine-binding-verdicts.json" with { type: "json" };
 import {
   buildFidelityReport,
   countDroppedHandleMethods,
@@ -471,6 +472,26 @@ describe("records-collection outer-layer counting", () => {
   });
 });
 
+describe("engine binding open counter", () => {
+  test("bindingOpen counts the open verdicts of exactly that namespace", () => {
+    const report = buildFidelityReport(ENGINE_MODULE_MANIFEST);
+    const expected = new Map<string, number>();
+    for (const [key, verdict] of Object.entries(verdicts)) {
+      if (verdict.verdict !== "open") continue;
+      const name = key.split(":")[1] ?? "";
+      const namespace = name.slice(0, name.lastIndexOf("."));
+      expected.set(namespace, (expected.get(namespace) ?? 0) + 1);
+    }
+    const counted = new Map(
+      Object.entries(report)
+        .filter(([, entry]) => entry.bindingOpen > 0)
+        .map(([namespace, entry]) => [namespace, entry.bindingOpen]),
+    );
+    expect(counted).toEqual(expected);
+    expect(requireEntry(report, "b2d").bindingOpen).toBe(expected.get("b2d") ?? 0);
+  });
+});
+
 describe("fidelity drift gate", () => {
   test("live report over MODULE_MANIFEST equals the committed baseline", () => {
     const report = buildFidelityReport(MODULE_MANIFEST);
@@ -802,7 +823,9 @@ describe("slot-level array-of-object recovery", () => {
 describe("cross-namespace constant FQN resolution", () => {
   test("graphics is an all-zero entry and render's graphics.* tokens resolve to []", () => {
     const report = buildFidelityReport(MODULE_MANIFEST);
-    const graphics = requireEntry(report, "graphics");
+    // bindingOpen counts engine-binding verdicts, not ref-doc losses.
+    const { bindingOpen, ...graphics } = requireEntry(report, "graphics");
+    expect(bindingOpen).toBeGreaterThanOrEqual(0);
     expect(graphics).toEqual({
       droppedElements: 0,
       unknownTokens: [],

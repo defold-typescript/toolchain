@@ -75,7 +75,11 @@
     "!scripts/example-surfaces.ts",
     "!scripts/example-typecheck.ts",
     "!scripts/engine-binding-extract.ts",
-    "!scripts/sync-engine-bindings.ts"
+    "!scripts/sync-engine-bindings.ts",
+    "!scripts/engine-binding-diff.ts",
+    "!scripts/engine-binding-verdicts.ts",
+    "!scripts/engine-binding-verdicts.json",
+    "!scripts/lua-kind.ts"
   ],
   "publishConfig": {
     "access": "public"
