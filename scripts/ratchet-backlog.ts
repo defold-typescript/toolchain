@@ -19,6 +19,12 @@ import {
   parseFloors,
 } from "../packages/library-types/scripts/fidelity-floor.ts";
 import {
+  openVerdictSlots,
+  parseVerdicts,
+  VERDICTS_DIR,
+  VERDICTS_FILE_NAME,
+} from "../packages/types/scripts/engine-binding-verdicts.ts";
+import {
   PINS_DIR,
   PINS_FILE,
   parseTypecheckPins,
@@ -67,6 +73,13 @@ export const RATCHET_SOURCES: readonly RatchetSource[] = [
     file: PINS_FILE,
     parse: parseTypecheckPins,
     collect: pinSlots,
+  },
+  {
+    id: "engine-binding-open",
+    dir: VERDICTS_DIR,
+    file: VERDICTS_FILE_NAME,
+    parse: parseVerdicts,
+    collect: openVerdictSlots,
   },
 ];
 

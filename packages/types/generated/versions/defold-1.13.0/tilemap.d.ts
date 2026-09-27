@@ -153,8 +153,8 @@ declare global {
      *
      * @param url - the tile map
      * @param layer - name of the layer for the tile
-     * @param x - x-coordinate of the tile
-     * @param y - y-coordinate of the tile
+     * @param x - x-coordinate of the tile. 1-based.
+     * @param y - y-coordinate of the tile. 1-based.
      * @param tile - index of new tile to set. 0 resets the cell
      * @param transform_bitmask - optional flip and/or rotation should be applied to the tile
      * @example
