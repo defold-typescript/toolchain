@@ -15,7 +15,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 53
+    "bindingOpen": 73
   },
   "b2d.chain": {
     "droppedElements": 0,
@@ -33,7 +33,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 22
+    "bindingOpen": 24
   },
   "b2d.joint": {
     "droppedElements": 0,
@@ -42,7 +42,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 24
+    "bindingOpen": 42
   },
   "b2d.shape": {
     "droppedElements": 0,
@@ -51,7 +51,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 34
+    "bindingOpen": 36
   },
   "b2d.world": {
     "droppedElements": 0,
@@ -60,7 +60,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 60
+    "bindingOpen": 74
   },
   "buffer": {
     "droppedElements": 0,
@@ -78,7 +78,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 46
+    "bindingOpen": 61
   },
   "collectionfactory": {
     "droppedElements": 0,
@@ -87,7 +87,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 9
+    "bindingOpen": 14
   },
   "collectionproxy": {
     "droppedElements": 0,
@@ -96,7 +96,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 4
+    "bindingOpen": 5
   },
   "compute": {
     "droppedElements": 0,
@@ -123,7 +123,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 9
+    "bindingOpen": 14
   },
   "font": {
     "droppedElements": 0,
@@ -132,7 +132,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 1
+    "bindingOpen": 2
   },
   "go": {
     "droppedElements": 0,
@@ -141,7 +141,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 35
+    "bindingOpen": 54
   },
   "graphics": {
     "droppedElements": 0,
@@ -159,7 +159,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 35
+    "bindingOpen": 45
   },
   "html5": {
     "droppedElements": 0,
@@ -168,7 +168,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 1
+    "bindingOpen": 2
   },
   "http": {
     "droppedElements": 0,
@@ -177,7 +177,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 3
+    "bindingOpen": 4
   },
   "iac": {
     "droppedElements": 0,
@@ -249,7 +249,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 12
+    "bindingOpen": 15
   },
   "msg": {
     "droppedElements": 0,
@@ -258,7 +258,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 3
+    "bindingOpen": 4
   },
   "particlefx": {
     "droppedElements": 0,
@@ -267,7 +267,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 3
+    "bindingOpen": 5
   },
   "physics": {
     "droppedElements": 0,
@@ -276,7 +276,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 11
+    "bindingOpen": 14
   },
   "profiler": {
     "droppedElements": 0,
@@ -303,7 +303,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 100
+    "bindingOpen": 108
   },
   "resource": {
     "droppedElements": 0,
@@ -312,7 +312,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 69
+    "bindingOpen": 73
   },
   "socket": {
     "droppedElements": 0,
@@ -330,7 +330,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 10
+    "bindingOpen": 14
   },
   "sprite": {
     "droppedElements": 0,
@@ -348,7 +348,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 19
+    "bindingOpen": 25
   },
   "tilemap": {
     "droppedElements": 0,
@@ -384,7 +384,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 4
+    "bindingOpen": 6
   },
   "webview": {
     "droppedElements": 0,
@@ -402,7 +402,7 @@
     "multiReturn": 0,
     "droppedMembers": 0,
     "optionalAsRequired": 0,
-    "bindingOpen": 1
+    "bindingOpen": 2
   },
   "zlib": {
     "droppedElements": 0,
