@@ -293,14 +293,6 @@
     "verdict": "accepted",
     "reason": "render targets and predicates are engine handles the declaration brands as opaque, so a plain number cannot stand in for one; the binding reads the handle's number"
   },
-  "*:render.draw:too-loose:1": {
-    "verdict": "accepted",
-    "reason": "render targets and predicates are engine handles the declaration brands as opaque, so a plain number cannot stand in for one; the binding reads the handle's number"
-  },
-  "*:render.draw:too-narrow:1": {
-    "verdict": "accepted",
-    "reason": "render targets and predicates are engine handles the declaration brands as opaque, so a plain number cannot stand in for one; the binding reads the handle's number"
-  },
   "*:render.draw:too-narrow:2": {
     "verdict": "accepted",
     "reason": "the binding still takes a constant buffer in place of the options table (deprecated); the declaration types the documented options table"

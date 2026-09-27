@@ -175,11 +175,6 @@ export const ARBITRARY_TABLE_SLOTS = new Set([
 // not a loss. The audit skips counting these; the emitter already leaves an
 // uncurated slot as `Record`. Add deliberately, one rationale per line.
 export const ARBITRARY_TABLE_SLOT_KEYS = new Set([
-  // "the chain definition" / "the shape definition" / "explosion definition" —
-  // create-side option tables with no documented field list at this slot.
-  "b2d.body.create_chain:param:definition",
-  "b2d.body.create_shape:param:definition",
-  "b2d.world.explode:param:definition",
   "b2d.joint.create_filter:param:definition", // "optional definition table"
   // opaque Box2D result structs: the doc names no fields.
   "b2d.chain.get_geometry:return:geometry", // "chain geometry table"
@@ -217,6 +212,9 @@ export const OVERLOAD_COVERED_SKIPS = new Set([
   "vmath.slerp",
   "vmath.mul_per_elem",
   "vmath.normalize",
+  // sys-overloads.d.ts supplies the disabling form and the form that takes the
+  // cooldown the engine requires when enabling.
+  "sys.set_engine_throttle",
 ]);
 
 // skipFunction FQNs withheld because no engine binding registers them in the
@@ -304,6 +302,14 @@ export const RETURN_TYPE_CORRECTIONS: ReadonlyMap<string, ReturnTypeCorrection> 
       ts: 'Opaque<"b2Body"> | undefined',
       upstream: ["b2Body"],
       reason: "the body if successful. Otherwise nil.",
+    },
+  ],
+  [
+    "render.predicate",
+    {
+      ts: 'Opaque<"render_predicate">',
+      upstream: ["number"],
+      reason: "new predicate",
     },
   ],
   [
@@ -537,6 +543,16 @@ export const PARAM_TYPE_CORRECTIONS: ReadonlyMap<string, ParamTypeCorrection> = 
     },
   ],
   [
+    "render.draw:param:predicate",
+    {
+      adds: 'Opaque<"render_predicate">',
+      removes: ["number"],
+      upstream: ["number"],
+      reason:
+        "render_script.cpp:RenderScript_Draw reads the predicate with RenderScriptPredicate_Check, the userdata render.predicate returns",
+    },
+  ],
+  [
     "go.delete:param:id",
     {
       adds: "boolean",
@@ -720,7 +736,6 @@ export const OPTIONAL_SLOT_CORRECTIONS: ReadonlyMap<string, string> = new Map([
     "gui.set_texture_data:param:flip",
     'example `gui.set_texture_data("dynamic_tx", w, h, "rgb", string.rep(orange, w * h))`',
   ],
-  ["sys.set_engine_throttle:param:cooldown", "example `sys.set_engine_throttle(false)`"],
   [
     "b2d.fixture.set_shape:param:update_mass",
     '2 of 3 examples omit it; "The body mass is not updated unless update_mass is true"',
@@ -1548,7 +1563,10 @@ export type TableSlotCuration =
   // keyed by an arbitrary name (constant/sampler/attribute). The parser recovers
   // the inner args fields; emit wraps them as `Record<string, { <fields> }>`,
   // restoring the keyed-by-name layer the flat object curation drops.
-  | { kind: "keyed-object" };
+  | { kind: "keyed-object" }
+  // A slot whose faithful shape no field list can carry, such as a union
+  // discriminated on `type`. `ts` is emitted verbatim, already mapped.
+  | { kind: "verbatim"; ts: string };
 
 export const SOCKET_HANDLE_TOKENS = ["client", "master", "unconnected"] as const;
 
@@ -1579,6 +1597,24 @@ const B2D_SHAPE_TABLE_FIELDS: readonly TableField[] = [
   { name: "center1", types: ["vector3"], optional: true },
   { name: "center2", types: ["vector3"], optional: true },
 ];
+// The shape table a Box2D binding reads, one arm per `type`. CheckShapeDef
+// (v2/script_box2d_shape_v2.cpp, v3/script_box2d_shape_v3.cpp) raises without
+// `type` and without the fields that type reads with luaL_checknumber or
+// CheckVec2; the rest go through TryGet*Field. A polygon takes `hx`/`hy` or
+// `vertices`. `SHAPE_TYPE_BOX` is the polygon value and `SHAPE_TYPE_EDGE` the v3
+// segment value, so each shares its arm. Chain is v2 only, capsule v3 only.
+// The box arm leads: a v2 fixture keeps its shape type, and the runtime probe
+// witnesses a union by its first arm against a box collision shape.
+const B2D_SHAPE = "typeof b2d.shape";
+const B2D_SHAPE_DEFINITION_TS = [
+  `{ type: ${B2D_SHAPE}.SHAPE_TYPE_POLYGON | ${B2D_SHAPE}.SHAPE_TYPE_BOX; hx: number; hy: number; center?: Vector3; angle?: number }`,
+  `{ type: ${B2D_SHAPE}.SHAPE_TYPE_POLYGON | ${B2D_SHAPE}.SHAPE_TYPE_BOX; vertices: Vector3[] }`,
+  `{ type: ${B2D_SHAPE}.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 }`,
+  `{ type: ${B2D_SHAPE}.SHAPE_TYPE_CAPSULE; radius: number; center1: Vector3; center2: Vector3 }`,
+  `{ type: ${B2D_SHAPE}.SHAPE_TYPE_EDGE | ${B2D_SHAPE}.SHAPE_TYPE_SEGMENT; v1: Vector3; v2: Vector3; v0?: Vector3; v3?: Vector3 }`,
+  `{ type: ${B2D_SHAPE}.SHAPE_TYPE_CHAIN; vertices: Vector3[]; loop?: boolean; prev_vertex?: Vector3; next_vertex?: Vector3 }`,
+].join(" | ");
+const B2D_SHAPE_DEFINITION: TableSlotCuration = { kind: "verbatim", ts: B2D_SHAPE_DEFINITION_TS };
 // A fixture info entry (index/type/sensor/density/friction/restitution/child_count).
 const B2D_FIXTURE_INFO_FIELDS: readonly TableField[] = [
   { name: "index", types: ["number"] },
@@ -1654,8 +1690,19 @@ const PHYSICS_SHAPE_TABLE_FIELDS: readonly TableField[] = [
   { name: "dimensions", types: ["vector3"], optional: true },
   { name: "height", types: ["number"], optional: true },
 ];
+// The same record as `physics.set_shape` takes it: script_physics.cpp:
+// Physics_SetShape reads `type` and then each field its kind needs with
+// luaL_checknumber or CheckVector3, so each kind is its own arm.
+const PHYSICS_SHAPE_DEFINITION_TS = [
+  "{ type: typeof physics.SHAPE_TYPE_SPHERE; diameter: number }",
+  "{ type: typeof physics.SHAPE_TYPE_BOX; dimensions: Vector3 }",
+  "{ type: typeof physics.SHAPE_TYPE_CAPSULE; diameter: number; height: number }",
+].join(" | ");
 
-export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new Map([
+export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new Map<
+  string,
+  TableSlotCuration
+>([
   // buffer.create's `declaration` is "a table where each entry (table) describes
   // a stream", and upstream's example passes a list of stream records whose
   // `type` is a buffer.VALUE_TYPE_* constant.
@@ -2106,12 +2153,56 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
     {
       kind: "object",
       fields: [
-        { name: "shape", types: ["table"], fields: [...B2D_SHAPE_TABLE_FIELDS] },
+        { name: "shape", types: ["table"], tsType: B2D_SHAPE_DEFINITION_TS },
         { name: "friction", types: ["number"] },
         { name: "restitution", types: ["number"] },
         { name: "density", types: ["number"] },
         { name: "sensor", types: ["boolean"] },
         { name: "filter", types: ["table"], fields: [...B2D_FILTER_DATA_FIELDS] },
+      ],
+    },
+  ],
+  // The creation-time definitions the v3 bindings document in their C++ doc
+  // comments rather than the ref-doc: Body_CreateChain
+  // (v3/script_box2d_chain_v3.cpp), CheckShapeCreateDef
+  // (v3/script_box2d_shape_v3.cpp) and World_Explode
+  // (v3/script_box2d_world_v3.cpp).
+  [
+    "b2d.body.create_chain:param:definition",
+    {
+      kind: "object",
+      fields: [
+        { name: "vertices", types: ["table"], tsType: "Vector3[]" },
+        { name: "loop", types: ["boolean"] },
+        { name: "prev_vertex", types: ["vector3"] },
+        { name: "next_vertex", types: ["vector3"] },
+        { name: "friction", types: ["number"] },
+        { name: "restitution", types: ["number"] },
+        { name: "material", types: ["number"] },
+        { name: "filter", types: ["table"], fields: [...B2D_FILTER_DATA_FIELDS] },
+        { name: "enable_sensor_events", types: ["boolean"] },
+      ],
+    },
+  ],
+  // The shape table sits in `definition.shape` or is the definition itself, and
+  // a filter, when given, needs all three members CheckFilterData reads.
+  [
+    "b2d.body.create_shape:param:definition",
+    {
+      kind: "verbatim",
+      ts: `({ shape: ${B2D_SHAPE_DEFINITION_TS} } | ${B2D_SHAPE_DEFINITION_TS}) & { density?: number; friction?: number; restitution?: number; material?: number; sensor?: boolean; filter?: { category_bits: number; mask_bits: number; group_index: number } }`,
+    },
+  ],
+  [
+    "b2d.world.explode:param:definition",
+    {
+      kind: "object",
+      fields: [
+        { name: "position", types: ["vector3"] },
+        { name: "radius", types: ["number"] },
+        { name: "falloff", types: ["number"] },
+        { name: "impulse_per_length", types: ["number"] },
+        { name: "mask_bits", types: ["number"] },
       ],
     },
   ],
@@ -2149,10 +2240,10 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   ["b2d.fixture.get_filter_data:return:filter", { kind: "object", fields: B2D_FILTER_DATA_FIELDS }],
   ["b2d.fixture.set_filter_data:param:filter", { kind: "object", fields: B2D_FILTER_DATA_FIELDS }],
   ["b2d.fixture.get_shape:return:shape", { kind: "object", fields: B2D_SHAPE_TABLE_FIELDS }],
-  ["b2d.fixture.set_shape:param:shape", { kind: "object", fields: B2D_SHAPE_TABLE_FIELDS }],
+  ["b2d.fixture.set_shape:param:shape", B2D_SHAPE_DEFINITION],
   // b2d.shape
   ["b2d.shape.get_shape:return:shape", { kind: "object", fields: B2D_SHAPE_TABLE_FIELDS }],
-  ["b2d.shape.set_shape:param:definition", { kind: "object", fields: B2D_SHAPE_TABLE_FIELDS }],
+  ["b2d.shape.set_shape:param:definition", B2D_SHAPE_DEFINITION],
   ["b2d.shape.get_mass_data:return:data", { kind: "object", fields: B2D_MASS_DATA_FIELDS }],
   [
     "b2d.shape.get_sensor_overlaps:return:overlaps",
@@ -2335,7 +2426,7 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   ],
   ["b2d.world.overlap_aabb:return:hits", { kind: "array-object", fields: B2D_SHAPE_INFO_FIELDS }],
   ["b2d.world.overlap_aabb:return:stats", { kind: "object", fields: B2D_QUERY_STATS_FIELDS }],
-  ["b2d.world.overlap_shape:param:shape", { kind: "object", fields: B2D_SHAPE_TABLE_FIELDS }],
+  ["b2d.world.overlap_shape:param:shape", B2D_SHAPE_DEFINITION],
   ["b2d.world.overlap_shape:param:filter", { kind: "object", fields: B2D_QUERY_FILTER_FIELDS }],
   [
     "b2d.world.overlap_shape:return:fixtures",
@@ -2362,7 +2453,7 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
       ],
     },
   ],
-  ["b2d.world.cast_shape:param:shape", { kind: "object", fields: B2D_SHAPE_TABLE_FIELDS }],
+  ["b2d.world.cast_shape:param:shape", B2D_SHAPE_DEFINITION],
   ["b2d.world.cast_shape:param:filter", { kind: "object", fields: B2D_QUERY_FILTER_FIELDS }],
   ["b2d.world.cast_shape:return:hits", { kind: "array-object", fields: B2D_CAST_HIT_FIELDS }],
   ["b2d.world.cast_shape:return:stats", { kind: "object", fields: B2D_QUERY_STATS_FIELDS }],
@@ -2371,7 +2462,7 @@ export const TABLE_SLOT_CURATIONS: ReadonlyMap<string, TableSlotCuration> = new 
   ["b2d.world.collide_mover:param:capsule", { kind: "object", fields: B2D_CAPSULE_FIELDS }],
   ["b2d.world.collide_mover:param:filter", { kind: "object", fields: B2D_MOVER_FILTER_FIELDS }],
   ["physics.get_shape:return:table", { kind: "object", fields: PHYSICS_SHAPE_TABLE_FIELDS }],
-  ["physics.set_shape:param:table", { kind: "object", fields: PHYSICS_SHAPE_TABLE_FIELDS }],
+  ["physics.set_shape:param:table", { kind: "verbatim", ts: PHYSICS_SHAPE_DEFINITION_TS }],
 ]);
 
 // Slot-keyed (`element:param:name`, mirroring TABLE_SLOT_CURATIONS) replacements
@@ -2618,6 +2709,154 @@ export function applyFieldOptionalityCorrections(
   return corrected;
 }
 
+// A param-side table field the engine binding refuses to go without. A `<dl>`
+// carries no per-field optionality, so every field of an input option bag is
+// emitted `?`; an entry here keeps one field required. Keyed
+// `<element>:param:<slot>:<field>`, the TABLE_FIELD_TYPE_OVERRIDES shape, with
+// `<field>.<member>` or `<field>[].<member>` one level down. The value is the
+// evidence: the C++ binding, `<file>:<cFunction>`, and how it reads the field.
+const CHECK_SHAPE_DEF = "CheckShapeDef reads the shape table with luaL_checkinteger(type)";
+const V2_FILTER_DATA =
+  "v2/script_box2d_fixture_v2.cpp:CheckFilterData reads each with luaL_checkinteger";
+const V3_FILTER_DATA =
+  "v3/script_box2d_chain_v3.cpp:CheckFilterData reads each with luaL_checknumber or luaL_checkinteger";
+const TEXTURE_PARAMS =
+  "script_resource.cpp:CheckCreateTextureResourceParams reads CheckTableInteger";
+const ATLAS_ARGUMENTS =
+  "script_resource.cpp:CheckAtlasArguments raises unless the atlas has at least one geometry and one animation";
+
+const filterDataFields = (slot: string, evidence: string) =>
+  (["category_bits", "mask_bits", "group_index"] as const).map(
+    (field) => [`${slot}:filter.${field}`, evidence] as const,
+  );
+
+export const REQUIRED_FIELD_CORRECTIONS: ReadonlyMap<string, string> = new Map<string, string>([
+  ...(["mass", "center", "inertia"] as const).map(
+    (field) =>
+      [
+        `b2d.body.set_mass_data:param:data:${field}`,
+        "script_box2d_body_v2/v3.cpp:CheckMassData reads mass and inertia with luaL_checknumber and center with CheckVec2",
+      ] as const,
+  ),
+  ...(["category_bits", "mask_bits", "group_index"] as const).map(
+    (field) => [`b2d.fixture.set_filter_data:param:filter:${field}`, V2_FILTER_DATA] as const,
+  ),
+  [
+    "b2d.body.create_fixture:param:definition:shape",
+    `v2/script_box2d_fixture_v2.cpp:CheckFixtureDef passes definition.shape to ${CHECK_SHAPE_DEF}`,
+  ],
+  ...filterDataFields("b2d.body.create_fixture:param:definition", V2_FILTER_DATA),
+  [
+    "b2d.body.create_chain:param:definition:vertices",
+    "v3/script_box2d_chain_v3.cpp:Body_CreateChain reads vertices with CheckVerticesTable, at least 2 (4 for a loop)",
+  ],
+  ...filterDataFields("b2d.body.create_chain:param:definition", V3_FILTER_DATA),
+  ...(["cast_mover", "collide_mover"] as const).flatMap((name) =>
+    (["center1", "center2", "radius"] as const).map(
+      (field) =>
+        [
+          `b2d.world.${name}:param:capsule:${field}`,
+          "v3/script_box2d_world_v3.cpp:CheckCapsule reads center1 and center2 with CheckVec2 and radius with luaL_checknumber",
+        ] as const,
+    ),
+  ),
+  ...(["lower", "upper"] as const).map(
+    (field) =>
+      [
+        `b2d.world.overlap_aabb:param:aabb:${field}`,
+        "script_box2d_world_v2/v3.cpp:CheckAABB reads lower and upper with CheckVec2",
+      ] as const,
+  ),
+  ...(["position", "radius", "falloff", "impulse_per_length"] as const).map(
+    (field) =>
+      [
+        `b2d.world.explode:param:definition:${field}`,
+        "v3/script_box2d_world_v3.cpp:World_Explode reads position with CheckVec2 and the rest with luaL_checknumber",
+      ] as const,
+  ),
+  [
+    "buffer.create:param:declaration:type",
+    "script_buffer.cpp:ParseStreamDeclaration raises on a stream with no value type",
+  ],
+  ...(["create_texture", "create_texture_async"] as const).flatMap((name) =>
+    (["type", "format", "width", "height"] as const).map(
+      (field) => [`resource.${name}:param:table:${field}`, TEXTURE_PARAMS] as const,
+    ),
+  ),
+  ...(["type", "format", "width", "height"] as const).map(
+    (field) =>
+      [
+        `resource.set_texture:param:table:${field}`,
+        "script_resource.cpp:SetTexture reads CheckTableInteger",
+      ] as const,
+  ),
+  ...(["create_atlas", "set_atlas"] as const).flatMap((name) => [
+    [
+      `resource.${name}:param:table:texture`,
+      "script_resource.cpp:CheckTextureResource reads the texture with CheckHashOrString",
+    ] as const,
+    [`resource.${name}:param:table:geometries`, ATLAS_ARGUMENTS] as const,
+    [`resource.${name}:param:table:animations`, ATLAS_ARGUMENTS] as const,
+    ...(["vertices", "uvs", "indices"] as const).map(
+      (field) =>
+        [
+          `resource.${name}:param:table:geometries[].${field}`,
+          "script_resource.cpp:CheckAtlasArguments checks each geometry stream with luaL_checktype(LUA_TTABLE)",
+        ] as const,
+    ),
+    ...(["id", "width", "height"] as const).map(
+      (field) =>
+        [
+          `resource.${name}:param:table:animations[].${field}`,
+          "script_resource.cpp:CheckAtlasArguments raises on an animation with no id, width or height",
+        ] as const,
+    ),
+  ]),
+  [
+    "resource.create_buffer:param:table:buffer",
+    "script_resource.cpp:CreateBuffer reads the buffer with dmScript::CheckBuffer",
+  ],
+  [
+    "resource.create_sound_data:param:options:data",
+    "script_resource.cpp:CreateSoundData reads the data with CheckBufferOrString",
+  ],
+]);
+
+// Mark the fields REQUIRED_FIELD_CORRECTIONS names for this slot required,
+// leaving every other field and every type untouched. An entry keyed to this
+// slot that names no field throws, so a renamed field cannot leave a stale
+// correction looking applied. Returns a new array; never mutates its input.
+export function applyRequiredFieldCorrections(
+  elementName: string,
+  slotKind: "param" | "return" | undefined,
+  slotName: string | undefined,
+  fields: readonly TableField[],
+): TableField[] {
+  if (slotKind !== "param" || slotName === undefined) return [...fields];
+  const prefix = `${tableSlotKey(elementName, slotKind, slotName)}:`;
+  const applied = new Set<string>();
+  const mark = (field: TableField, path: string): TableField => {
+    if (!REQUIRED_FIELD_CORRECTIONS.has(`${prefix}${path}`)) return field;
+    applied.add(path);
+    return { ...field, required: true };
+  };
+  const corrected = fields.map((field) => {
+    const own = mark(field, field.name);
+    if (own.fields === undefined) return own;
+    const parent = `${field.name}${field.isList === true ? "[]" : ""}`;
+    return { ...own, fields: own.fields.map((child) => mark(child, `${parent}.${child.name}`)) };
+  });
+  const stale = [...REQUIRED_FIELD_CORRECTIONS.keys()].filter(
+    (key) => key.startsWith(prefix) && !applied.has(key.slice(prefix.length)),
+  );
+  if (stale.length > 0) {
+    throw new Error(
+      `required-field correction names no recovered field: ${stale.sort().join(", ")}`,
+    );
+  }
+  return corrected;
+}
+
 // Append the member TABLE_SLOT_FIELD_ADDITIONS supplies for this slot, after
 // every field the parser recovered. Throws on an addition whose field the parse
 // already produced: upstream has documented it, and the entry is stale.
@@ -2806,6 +3045,9 @@ export interface TableField {
   isList?: boolean;
   numberList?: boolean;
   optional?: boolean;
+  // Set only by REQUIRED_FIELD_CORRECTIONS: the engine raises without the field,
+  // so it keeps no `?` even on a param-side option bag.
+  required?: boolean;
   // A hand-curated field whose faithful TS shape is not a plain token union
   // (e.g. a nested vector array, or a documented value union with an array
   // branch): inlineTableType emits this verbatim and the audit treats it as
@@ -3885,7 +4127,8 @@ function parameterType(
   if (correction === undefined) return mapped;
   const kept =
     correction.removes === undefined ? mapped : withoutUnionMembers(mapped, correction.removes);
-  return correction.adds === undefined ? kept : `${kept} | ${correction.adds}`;
+  if (correction.adds === undefined) return kept;
+  return kept === "" ? correction.adds : `${kept} | ${correction.adds}`;
 }
 
 function isFunctionTypeText(ts: string): boolean {
@@ -4174,8 +4417,16 @@ function mapSlotUnion(
         }
       } else if (element !== undefined) {
         ts = arrayTypeFromTokens(element, mapType);
+      } else if (curation?.kind === "verbatim") {
+        ts = curation.ts;
       } else if (curation?.kind === "object" || curation?.kind === "array-object") {
-        const object = inlineTableType(curation.fields, mapType, optionalFields);
+        const fields = applyRequiredFieldCorrections(
+          elementName,
+          slotKind,
+          slotName,
+          curation.fields,
+        );
+        const object = inlineTableType(fields, mapType, optionalFields);
         ts = curation.kind === "array-object" ? `${object}[]` : object;
       } else if (curation?.kind === "keyed-object") {
         // The doc's `<dl>` describes the value shape; parse it and re-key by an
@@ -4201,7 +4452,12 @@ function mapSlotUnion(
           const added = applyFieldAdditions(elementName, slotKind, slotName, parsed);
           const nested = applyNestedFieldCurations(elementName, slotKind, slotName, added);
           const typed = applyFieldTypeOverrides(elementName, slotKind, slotName, nested);
-          const fields = applyFieldOptionalityCorrections(elementName, slotKind, slotName, typed);
+          const fields = applyRequiredFieldCorrections(
+            elementName,
+            slotKind,
+            slotName,
+            applyFieldOptionalityCorrections(elementName, slotKind, slotName, typed),
+          );
           const object = inlineTableType(fields, mapType, optionalFields);
           ts = isSlotLevelList(doc) ? `${object}[]` : object;
         } else {
@@ -4307,7 +4563,9 @@ export function inlineTableType(
     // A field is optional when the whole slot is param-side (optionalFields) or
     // when the curation marks that individual field optional (a return-side
     // variant field present only for some shape kinds, e.g. a b2d shape table).
-    return `${key}${optionalFields || field.optional === true ? "?" : ""}: ${ts}`;
+    // A param-side field the engine requires stays required.
+    const optional = (optionalFields && field.required !== true) || field.optional === true;
+    return `${key}${optional ? "?" : ""}: ${ts}`;
   });
   return `{ ${members.join("; ")} }`;
 }

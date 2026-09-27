@@ -131,7 +131,7 @@ declare global {
      * });
      * ```
      */
-    function create(element_count: number, declaration: { name?: Hash | string; type?: buffer.ValueType; count?: number }[]): Opaque<"buffer">;
+    function create(element_count: number, declaration: { name?: Hash | string; type: buffer.ValueType; count?: number }[]): Opaque<"buffer">;
     /**
      * Get a copy of all the bytes from a specified stream as a Lua string.
      *

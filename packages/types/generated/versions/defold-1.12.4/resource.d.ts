@@ -203,7 +203,7 @@ declare global {
      * });
      * ```
      */
-    function create_atlas(path: string, table: { texture?: string | Hash; animations?: { id?: string; width?: number; height?: number; frame_start?: number; frame_end?: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean }[]; geometries?: { id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices?: number[]; uvs?: number[]; indices?: number[] }[]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;
+    function create_atlas(path: string, table: { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start?: number; frame_end?: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean }[]; geometries: { id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;
     /**
      * This function creates a new buffer resource that can be used in the same way as any buffer created during build time.
      * The function requires a valid buffer created from either buffer.create or another pre-existing buffer resource.
@@ -276,7 +276,7 @@ declare global {
      * });
      * ```
      */
-    function create_buffer(path: string, table: { buffer?: Opaque<"buffer">; transfer_ownership?: boolean }): Hash;
+    function create_buffer(path: string, table: { buffer: Opaque<"buffer">; transfer_ownership?: boolean }): Hash;
     /**
      * Creates a sound data resource
      * Supported formats are .oggc, .opusc and .wavc
@@ -309,7 +309,7 @@ declare global {
      * });
      * ```
      */
-    function create_sound_data(path: string, options: { data?: string; filesize?: number; partial?: boolean }): Hash;
+    function create_sound_data(path: string, options: { data: string; filesize?: number; partial?: boolean }): Hash;
     /**
      * Creates a new texture resource that can be used in the same way as any texture created during build time.
      * The path used for creating the texture must be unique, trying to create a resource at a path that is already
@@ -512,7 +512,7 @@ declare global {
      * });
      * ```
      */
-    function create_texture(path: string, table: { type?: number; width?: number; height?: number; depth?: number; format?: number; flags?: number; max_mipmaps?: number; compression_type?: number; page_count?: number }, buffer?: Opaque<"buffer">): Hash;
+    function create_texture(path: string, table: { type: number; width: number; height: number; depth?: number; format: number; flags?: number; max_mipmaps?: number; compression_type?: number; page_count?: number }, buffer?: Opaque<"buffer">): Hash;
     /**
      * Creates a new texture resource that can be used in the same way as any texture created during build time.
      * The path used for creating the texture must be unique, trying to create a resource at a path that is already
@@ -706,7 +706,7 @@ declare global {
      * });
      * ```
      */
-    function create_texture_async(path: string, table: { type?: number; width?: number; height?: number; depth?: number; format?: number; flags?: number; max_mipmaps?: number; compression_type?: number }, buffer: Opaque<"buffer"> | undefined, callback: (...args: unknown[]) => unknown): LuaMultiReturn<[Hash, number]>;
+    function create_texture_async(path: string, table: { type: number; width: number; height: number; depth?: number; format: number; flags?: number; max_mipmaps?: number; compression_type?: number }, buffer: Opaque<"buffer"> | undefined, callback: (...args: unknown[]) => unknown): LuaMultiReturn<[Hash, number]>;
     /**
      * Constructor-like function with two purposes:
      *
@@ -1199,7 +1199,7 @@ declare global {
      * });
      * ```
      */
-    function set_atlas(path: Hash | string, table: { texture?: string | Hash; animations?: { id?: string; width?: number; height?: number; frame_start?: number; frame_end?: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean }[]; geometries?: { vertices?: number[]; uvs?: number[]; indices?: number[] }[]; vertices?: number[]; uvs?: number[]; indices?: number[] }): void;
+    function set_atlas(path: Hash | string, table: { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start?: number; frame_end?: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean }[]; geometries: { vertices: number[]; uvs: number[]; indices: number[] }[]; vertices?: number[]; uvs?: number[]; indices?: number[] }): void;
     /**
      * Sets the buffer of a resource. By default, setting the resource buffer will either copy the data from the incoming buffer object
      * to the buffer stored in the destination resource, or make a new buffer object if the sizes between the source buffer and the destination buffer
@@ -1493,7 +1493,7 @@ declare global {
      * }
      * ```
      */
-    function set_texture(path: Hash | string, table: { type?: number; width?: number; height?: number; format?: number; x?: number; y?: number; z?: number; page?: number; mipmap?: number; compression_type?: number }, buffer: Opaque<"buffer">): void;
+    function set_texture(path: Hash | string, table: { type: number; width: number; height: number; format: number; x?: number; y?: number; z?: number; page?: number; mipmap?: number; compression_type?: number }, buffer: Opaque<"buffer">): void;
     /**
      * Constructor-like function with two purposes:
      *

@@ -168,6 +168,14 @@ const JOINT_ACCESSORS: Readonly<Record<string, readonly string[]>> = {
 const ATLAS = '"/main/probe.a.texturesetc"';
 const FONT = '"/builtins/fonts/default.fontc"';
 const BUFFER_RESOURCE = '"/main/triangle.bufferc"';
+// Keeps the probe atlas's `anim`, which sprite and gui probes play afterwards.
+const ATLAS_PARAMS =
+  '{ texture: "/main/probe.texturec", geometries: [{ vertices: [0, 0, 0, 16, 16, 16], uvs: [0, 0, 0, 16, 16, 16], indices: [0, 1, 2] }], animations: [{ id: "anim", width: 16, height: 16, frame_start: 1, frame_end: 2 }] }';
+const TEXTURE_PARAMS =
+  "{ type: graphics.TEXTURE_TYPE_2D, width: 16, height: 16, format: graphics.TEXTURE_FORMAT_RGBA }";
+const TEXTURE_BUFFER =
+  'buffer.create(16 * 16, [{ name: hash("rgba"), type: buffer.VALUE_TYPE_UINT8, count: 4 }])';
+const CAPSULE = "{ center1: vmath.vector3(0, 0, 0), center2: vmath.vector3(0, 16, 0), radius: 4 }";
 
 // Slots whose witness must name a real resource: `<ns.fn>:<slot>` or
 // `<ns>.*:<slot>`, 1-based. Every expression names something that exists in
@@ -215,8 +223,12 @@ export const WITNESS_OVERRIDES: Readonly<Record<string, string>> = {
   "physics.get_maskbit:2": '"default"',
   "physics.get_shape:2": '"box"',
   "physics.set_shape:2": '"box"',
+  "physics.set_shape:3": "{ type: physics.SHAPE_TYPE_BOX, dimensions: vmath.vector3(16, 16, 16) }",
   "b2d.body.destroy_fixture:1": "b2d.get_body(WRECK_COLLISION)!",
   "b2d.body.destroy_shape:1": "b2d.get_body(WRECK_COLLISION)!",
+  "b2d.body.create_chain:2": "{ vertices: [vmath.vector3(0, 0, 0), vmath.vector3(16, 0, 0)] }",
+  "b2d.world.cast_mover:2": CAPSULE,
+  "b2d.world.collide_mover:2": CAPSULE,
   "buffer.copy_buffer:2": "0",
   "buffer.copy_buffer:4": "0",
   "buffer.get_stream:2": 'hash("position")',
@@ -234,16 +246,28 @@ export const WITNESS_OVERRIDES: Readonly<Record<string, string>> = {
   "resource.create_atlas:1": 'fresh("/probe_atlas", ".texturesetc")',
   "resource.create_buffer:1": 'fresh("/probe_buffer", ".bufferc")',
   "resource.create_sound_data:1": 'fresh("/probe_sound", ".wavc")',
+  "resource.create_sound_data:2": '{ data: sys.load_resource("/main/probe.wav")[0]! }',
   "resource.create_texture:1": 'fresh("/probe_texture", ".texturec")',
+  "resource.create_texture:2": TEXTURE_PARAMS,
+  "resource.create_texture:3": TEXTURE_BUFFER,
   "resource.create_texture_async:1": 'fresh("/probe_texture", ".texturec")',
+  "resource.create_texture_async:2": TEXTURE_PARAMS,
+  "resource.create_texture_async:3": TEXTURE_BUFFER,
+  "resource.set_texture:1": '"/main/probe.texturec"',
+  "resource.set_texture:2": TEXTURE_PARAMS,
+  "resource.set_texture:3": TEXTURE_BUFFER,
+  "resource.create_atlas:2": ATLAS_PARAMS,
   "resource.get_atlas:1": ATLAS,
   "resource.set_atlas:1": ATLAS,
+  "resource.set_atlas:2": ATLAS_PARAMS,
   "resource.get_buffer:1": BUFFER_RESOURCE,
   "resource.set_buffer:1": BUFFER_RESOURCE,
   "resource.get_text_metrics:1": FONT,
   "resource.get_texture_info:1": '"/main/probe.texturec"',
   "resource.set_sound:1": '"/main/probe.wavc"',
   "sys.deserialize:1": "sys.serialize({})",
+  // Enabling throttling would stop the frames the probe reports on.
+  "sys.set_engine_throttle:1": "false",
   "sys.save:1": '"probe.sav"',
   "sys.load:1": '"probe.sav"',
   "sys.load_buffer:1": '"game.project"',
@@ -289,7 +313,7 @@ export const HANDLE_WITNESSES: Readonly<
   b2MassData: { go: ["b2d.body.get_mass_data(b2d.get_body(COLLISION)!)"] },
   b2Shape: {
     go: [
-      "b2d.body.create_shape(b2d.get_body(WRECK_COLLISION)!, { type: b2d.shape.SHAPE_TYPE_CIRCLE, radius: 4 }).shape_id",
+      "b2d.body.create_shape(b2d.get_body(WRECK_COLLISION)!, { shape: { type: b2d.shape.SHAPE_TYPE_CIRCLE, radius: 4 } }).shape_id",
     ],
   },
   b2Chain: {
@@ -300,6 +324,7 @@ export const HANDLE_WITNESSES: Readonly<
   buffer: { go: [BUFFER], gui: [BUFFER], render: [BUFFER] },
   bufferstream: { go: [`buffer.get_stream(${BUFFER}, hash("position"))`] },
   constant_buffer: { render: ["render.constant_buffer()"] },
+  render_predicate: { render: ['render.predicate(["probe"])'] },
   render_target: {
     render: [
       'render.render_target("probe", { [graphics.BUFFER_TYPE_COLOR0_BIT]: { format: graphics.TEXTURE_FORMAT_RGBA, width: 16, height: 16 } })',

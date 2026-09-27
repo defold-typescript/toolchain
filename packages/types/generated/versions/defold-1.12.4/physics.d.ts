@@ -482,7 +482,7 @@ declare global {
      * end
      * `
      */
-    function set_shape(url: string | Hash | Url, shape: string | Hash, table: { type?: number; diameter?: number; dimensions?: Vector3; height?: number }): void;
+    function set_shape(url: string | Hash | Url, shape: string | Hash, table: { type: typeof physics.SHAPE_TYPE_SPHERE; diameter: number } | { type: typeof physics.SHAPE_TYPE_BOX; dimensions: Vector3 } | { type: typeof physics.SHAPE_TYPE_CAPSULE; diameter: number; height: number }): void;
     /**
      * Flips the collision shapes vertically for a collision object
      *

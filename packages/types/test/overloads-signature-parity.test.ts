@@ -7,6 +7,7 @@ import {
   loadSignatureFile,
   MSG_SIGNATURES_PATH,
   RENDER_SIGNATURES_PATH,
+  SYS_SIGNATURES_PATH,
   VMATH_SIGNATURES_PATH,
 } from "../scripts/signature-store-fs";
 
@@ -115,6 +116,26 @@ const NAMESPACES: readonly OverloadNamespace[] = [
       fqn: "render.render_target",
       from: "Creates a new render target according to the supplied specification table.",
       to: "Creates a render target according to the supplied specification table.",
+    },
+  },
+  {
+    namespace: "sys",
+    declarationsPath: overloadsPath("sys-overloads.d.ts"),
+    storePath: SYS_SIGNATURES_PATH,
+    fqns: ["sys.set_engine_throttle"],
+    reflow: {
+      from: "function set_engine_throttle(enable: boolean, cooldown: number): void;",
+      to: "function set_engine_throttle(\n      enable: boolean,\n      cooldown: number,\n    ): void;",
+    },
+    driftSignature: {
+      fqn: "sys.set_engine_throttle",
+      from: "function set_engine_throttle(enable: false): void;",
+      to: "function set_engine_throttle(enable: boolean): void;",
+    },
+    driftDoc: {
+      fqn: "sys.set_engine_throttle",
+      from: "Disables engine throttling.",
+      to: "Turns engine throttling off.",
     },
   },
 ];
@@ -269,6 +290,7 @@ const OVERLOAD_COUNTS: Record<string, number> = {
   "msg.post": 2,
   "msg.url": 6,
   "render.render_target": 2,
+  "sys.set_engine_throttle": 2,
   "vmath.euler_to_quat": 2,
 };
 

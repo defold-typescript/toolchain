@@ -1,0 +1,12 @@
+{
+  "sys.set_engine_throttle": {
+    "signatures": [
+      "sys.set_engine_throttle(enable: false): void",
+      "sys.set_engine_throttle(enable: boolean, cooldown: number): void"
+    ],
+    "docs": [
+      "Disables engine throttling.",
+      "Enables engine throttling. The engine reads `cooldown` whenever `enable` is true."
+    ]
+  }
+}

@@ -48,6 +48,7 @@ import "../../src/message-guard";
 import "../../src/msg-overloads";
 import "../../src/render-overloads";
 import "../../src/scene-addresses";
+import "../../src/sys-overloads";
 import "../../src/vmath-overloads";
 import "../../src/window-event-guard";
 import "../builtin-messages";

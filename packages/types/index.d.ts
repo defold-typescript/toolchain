@@ -53,6 +53,7 @@ import "./generated/timer";
 import "./generated/types";
 import "./generated/vmath";
 import "./src/vmath-overloads";
+import "./src/sys-overloads";
 import "./generated/window";
 import "./generated/zlib";
 
