@@ -59,13 +59,23 @@ describe("diffFunction", () => {
     expect(diffFunction(binding(), declared())).toEqual([]);
   });
 
-  test("arity compares the highest slot either side reads", () => {
+  test("arity compares both bounds", () => {
     const found = diffFunction(
       binding(),
       declared({ slots: [dslot(1), dslot(2, { optional: true })] }),
     );
     expect(found).toEqual([
       { name: "test.fn", rule: "arity", extracted: "1..1", declared: "1..2" },
+    ]);
+  });
+
+  test("equal maximum arity does not hide a different minimum", () => {
+    const found = diffFunction(
+      binding({ slots: [bslot(1), bslot(2, { optional: true })] }),
+      declared({ minArgs: 2, slots: [dslot(1), dslot(2, { optional: true })] }),
+    );
+    expect(found).toEqual([
+      { name: "test.fn", rule: "arity", extracted: "1..2", declared: "2..2" },
     ]);
   });
 
@@ -128,6 +138,7 @@ describe("diffFunction", () => {
       declared({ slots: [dslot(1), dslot(2)] }),
     );
     expect(optionalInEngine).toEqual([
+      { name: "test.fn", rule: "arity", extracted: "1..2", declared: "2..2" },
       {
         name: "test.fn",
         rule: "optional-as-required",
@@ -141,6 +152,7 @@ describe("diffFunction", () => {
       declared({ slots: [dslot(1), dslot(2, { optional: true })] }),
     );
     expect(requiredInEngine).toEqual([
+      { name: "test.fn", rule: "arity", extracted: "2..2", declared: "1..2" },
       {
         name: "test.fn",
         rule: "required-as-optional",
@@ -222,6 +234,44 @@ describe("diffTarget", () => {
       bslot(2, { optional: true }),
     ]);
     expect(merged[0]?.maxArgs).toBe(2);
+  });
+
+  test("a slot any variant omits merges optional in either order", () => {
+    const one = binding({ slots: [bslot(1)] });
+    const two = binding({
+      slots: [bslot(1), bslot(2, { kinds: ["table"], fields: ["x"], manual: "no kind check" })],
+    });
+    const forward = mergeBindings([one, two]);
+    const backward = mergeBindings([two, one]);
+    for (const merged of [forward, backward]) {
+      expect(merged).toHaveLength(1);
+      expect(merged[0]?.slots[1]).toEqual({
+        index: 2,
+        kinds: ["table"],
+        optional: true,
+        fields: ["x"],
+        manual: "no kind check",
+      });
+      expect(merged[0]?.minArgs).toBe(1);
+      expect(merged[0]?.maxArgs).toBe(2);
+    }
+    expect(forward[0]?.slots).toEqual(backward[0]?.slots);
+  });
+
+  test("duplicate variants taking one or two arguments differ from a declaration requiring two", () => {
+    const one = binding({ slots: [bslot(1)] });
+    const two = binding({ slots: [bslot(1), bslot(2)] });
+    const surface = {
+      functions: new Map([["test.fn", declared({ slots: [dslot(1), dslot(2)] })]]),
+      constants: new Set<string>(),
+      unmapped: [],
+    };
+    const diff = (functions: BindingFunction[]) =>
+      diffTarget({ functions, constants: new Map() }, surface, ["test"]);
+    const forward = diff([one, two]);
+    const backward = diff([two, one]);
+    expect(rules(forward)).toEqual(["test.fn:arity", "test.fn:optional-as-required:2"]);
+    expect(forward).toEqual(backward);
   });
 });
 

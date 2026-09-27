@@ -66,7 +66,7 @@ function union<T>(values: Iterable<T>): T[] {
 }
 
 function mergeSlot(a: BindingSlot | undefined, b: BindingSlot | undefined): BindingSlot {
-  if (!a) return b as BindingSlot;
+  if (!a) return { ...(b as BindingSlot), optional: true };
   if (!b) return { ...a, optional: true };
   const manual = a.manual ?? b.manual;
   return {
@@ -149,7 +149,7 @@ export function diffFunction(binding: BindingFunction, declared: DeclaredFunctio
       extracted: binding.manual.join("; "),
       declared: declaredArity,
     });
-  } else if (binding.maxArgs !== declared.maxArgs) {
+  } else if (binding.minArgs !== declared.minArgs || binding.maxArgs !== declared.maxArgs) {
     out.push({
       name,
       rule: "arity",
