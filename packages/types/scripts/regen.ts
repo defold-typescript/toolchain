@@ -568,6 +568,7 @@ const UNIVERSAL_EXTRA_IMPORTS: readonly UniversalExtraImport[] = [
   { specifier: "../../src/component-properties" },
   { specifier: "../../src/render-overloads", restrictedTo: "render" },
   { specifier: "../../src/vmath-overloads" },
+  { specifier: "../../src/sys-overloads" },
 ];
 
 const SRC_IMPORT_PREFIX = "../../src/";

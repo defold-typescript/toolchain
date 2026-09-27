@@ -48,6 +48,7 @@ import {
   applyFieldOptionalityCorrections,
   applyFieldTypeOverrides,
   applyNestedFieldCurations,
+  applyRequiredFieldCorrections,
   buildTableDocResolver,
   CONSTANT_UNION_ALIASES,
   collectHandleMethodGroups,
@@ -1295,12 +1296,12 @@ describe("emitDeclarations", () => {
     const module = parseDefoldApiDoc(resourceDoc);
     const out = emitDeclarations(module);
     expect(out).toContain(
-      "function create_atlas(path: string, table: { texture?: string | Hash; animations?: { id?: string; width?: number; height?: number; frame_start?: number; frame_end?: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean }[]; geometries?: { id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices?: number[]; uvs?: number[]; indices?: number[] }[]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;",
+      "function create_atlas(path: string, table: { texture: string | Hash; animations: { id: string; width: number; height: number; frame_start?: number; frame_end?: number; playback?: go.Playback; fps?: number; flip_vertical?: boolean; flip_horizontal?: boolean }[]; geometries: { id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]; vertices?: number[]; uvs?: number[]; indices?: number[] }): Hash;",
     );
     const createAtlasLine = out.split("\n").find((line) => line.includes("function create_atlas"));
-    expect(createAtlasLine?.match(/ id\?:/g)).toHaveLength(2);
-    expect(createAtlasLine?.match(/ width\?:/g)).toHaveLength(2);
-    expect(createAtlasLine?.match(/ height\?:/g)).toHaveLength(2);
+    expect(createAtlasLine?.match(/ id\??:/g)).toHaveLength(2);
+    expect(createAtlasLine?.match(/ width\??:/g)).toHaveLength(2);
+    expect(createAtlasLine?.match(/ height\??:/g)).toHaveLength(2);
   });
 
   test("emits 'a list of' atlas table fields as arrays while geometries recovers a nested array", () => {
@@ -1309,7 +1310,7 @@ describe("emitDeclarations", () => {
     const createLine = out.split("\n").find((l) => l.includes("function create_atlas")) ?? "";
     expect(createLine).toContain("flip_horizontal?: boolean }[]");
     expect(createLine).toContain(
-      "rotated?: boolean; vertices?: number[]; uvs?: number[]; indices?: number[] }[]",
+      "rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]",
     );
     const getLine = out.split("\n").find((l) => l.includes("function get_atlas(")) ?? "";
     expect(getLine).toContain("flip_horizontal: boolean }[]");
@@ -1320,7 +1321,7 @@ describe("emitDeclarations", () => {
     const setLine = out.split("\n").find((l) => l.includes("function set_atlas(")) ?? "";
     expect(setLine).toContain("flip_horizontal?: boolean }[]");
     expect(setLine).toContain(
-      "geometries?: { vertices?: number[]; uvs?: number[]; indices?: number[] }[]",
+      "geometries: { vertices: number[]; uvs: number[]; indices: number[] }[]",
     );
     expect(setLine).not.toContain("geometries?: Record");
   });
@@ -1426,7 +1427,7 @@ describe("emitDeclarations", () => {
     const module = parseDefoldApiDoc(physicsDoc);
     const out = emitDeclarations(module);
     const line = out.split("\n").find((l) => l.includes("function set_shape(")) ?? "";
-    expect(line).toContain("type?: number");
+    expect(line).toContain("type: typeof physics.SHAPE_TYPE_SPHERE");
     expect(line).not.toContain("Record<");
   });
 
@@ -1439,12 +1440,12 @@ describe("emitDeclarations", () => {
     );
   });
 
-  test("emits physics.set_shape's data param with the same field set, every field optional", () => {
+  test("emits physics.set_shape's data param as one arm per shape kind", () => {
     const module = parseDefoldApiDoc(physicsDoc);
     const out = emitDeclarations(module);
     const line = out.split("\n").find((l) => l.includes("function set_shape(")) ?? "";
     expect(line).toContain(
-      "table: { type?: number; diameter?: number; dimensions?: Vector3; height?: number }",
+      "table: { type: typeof physics.SHAPE_TYPE_SPHERE; diameter: number } | { type: typeof physics.SHAPE_TYPE_BOX; dimensions: Vector3 } | { type: typeof physics.SHAPE_TYPE_CAPSULE; diameter: number; height: number }",
     );
   });
 
@@ -2012,9 +2013,9 @@ describe("number-list table-field recovery", () => {
     // The top-level vertices/uvs/indices number-lists stay byte-identical; only
     // the curated geometries field flips from Record to the nested array.
     expect(setLine).toContain(
-      "geometries?: { vertices?: number[]; uvs?: number[]; indices?: number[] }[]; vertices?: number[]; uvs?: number[]; indices?: number[] }",
+      "geometries: { vertices: number[]; uvs: number[]; indices: number[] }[]; vertices?: number[]; uvs?: number[]; indices?: number[] }",
     );
-    expect(setLine).not.toContain("geometries?: Record");
+    expect(setLine).not.toContain("geometries: Record");
     const getLine = out.split("\n").find((l) => l.includes("function get_atlas(")) ?? "";
     expect(getLine).toContain(
       "geometries: { vertices: number[]; uvs: number[]; indices: number[] }[]",
@@ -2148,7 +2149,7 @@ describe("recoverCallbackSignature", () => {
 });
 
 describe("OVERLOAD_COVERED_SKIPS", () => {
-  test("is exactly the FQNs served by the hand-written go/msg/render/vmath overloads, in sort order", () => {
+  test("is exactly the FQNs served by the hand-written go/msg/render/sys/vmath overloads, in sort order", () => {
     expect([...OVERLOAD_COVERED_SKIPS].sort()).toEqual([
       "go.get",
       "go.property",
@@ -2156,6 +2157,7 @@ describe("OVERLOAD_COVERED_SKIPS", () => {
       "msg.post",
       "msg.url",
       "render.render_target",
+      "sys.set_engine_throttle",
       "vmath.clamp",
       "vmath.euler_to_quat",
       "vmath.lerp",
@@ -2292,6 +2294,101 @@ describe("MAPPING_TABLE_SLOTS", () => {
   });
 });
 
+describe("engine-required param fields", () => {
+  function signatureLine(out: string, marker: string): string {
+    const line = out.split("\n").find((candidate) => candidate.includes(marker));
+    if (line === undefined) throw new Error(`no emitted line contains ${marker}`);
+    return line.trim();
+  }
+
+  test("a parsed option bag keeps the fields the binding reads unconditionally required", () => {
+    const line = signatureLine(
+      emitDeclarations(parseDefoldApiDoc(resourceDoc)),
+      "function create_texture(",
+    );
+    for (const field of ["type", "width", "height", "format"]) {
+      expect(line).toContain(` ${field}: number`);
+    }
+    for (const field of ["depth", "flags", "max_mipmaps"]) {
+      expect(line).toContain(`${field}?: number`);
+    }
+  });
+
+  test("a list member one level down is required inside its element", () => {
+    const line = signatureLine(
+      emitDeclarations(parseDefoldApiDoc(resourceDoc)),
+      "function create_atlas(",
+    );
+    expect(line).toContain("animations: { id: string; width: number; height: number;");
+    expect(line).toContain("fps?: number");
+    expect(line).toContain("texture: string | Hash");
+  });
+
+  test("a curated object and its nested fields take the correction too", () => {
+    const out = emitDeclarations(parseDefoldApiDoc(b2dBody113Doc));
+    expect(signatureLine(out, 'function set_mass_data(body: Opaque<"b2Body">, data: {')).toContain(
+      "data: { mass: number; center: Vector3; inertia: number }",
+    );
+    const fixture = signatureLine(
+      out,
+      'function create_fixture(body: Opaque<"b2Body">, definition',
+    );
+    expect(fixture).toContain(
+      "filter?: { category_bits: number; mask_bits: number; group_index: number }",
+    );
+    expect(fixture).toContain("friction?: number");
+    expect(fixture).toContain("definition: { shape: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON");
+  });
+
+  test("a Box2D shape slot is a union discriminated on type", () => {
+    const line = signatureLine(
+      emitDeclarations(parseDefoldApiDoc(b2dShapeDoc)),
+      "function set_shape(shape_id",
+    );
+    expect(line).toContain(
+      "definition: { type: typeof b2d.shape.SHAPE_TYPE_POLYGON | typeof b2d.shape.SHAPE_TYPE_BOX; hx: number; hy: number;",
+    );
+    expect(line).toContain(
+      "{ type: typeof b2d.shape.SHAPE_TYPE_CIRCLE; radius: number; center?: Vector3 }",
+    );
+    expect(line).not.toContain("type?:");
+  });
+
+  test("physics.set_shape takes one arm per collision shape kind", () => {
+    const line = signatureLine(
+      emitDeclarations(parseDefoldApiDoc(physicsDoc)),
+      "function set_shape(",
+    );
+    expect(line).toContain("{ type: typeof physics.SHAPE_TYPE_BOX; dimensions: Vector3 }");
+    expect(line).toContain(
+      "{ type: typeof physics.SHAPE_TYPE_CAPSULE; diameter: number; height: number }",
+    );
+  });
+
+  test("render.draw takes the predicate handle render.predicate returns", () => {
+    const out = emitDeclarations(parseDefoldApiDoc(renderDoc));
+    expect(signatureLine(out, "function predicate(")).toContain('): Opaque<"render_predicate">;');
+    expect(signatureLine(out, "function draw(")).toContain(
+      'draw(predicate: Opaque<"render_predicate">,',
+    );
+  });
+
+  test("a return slot is never corrected", () => {
+    const fields: TableField[] = [{ name: "buffer", types: ["buffer"] }];
+    expect(
+      applyRequiredFieldCorrections("resource.create_buffer", "return", "table", fields),
+    ).toEqual(fields);
+  });
+
+  test("a correction naming a field the slot does not carry is a hard error", () => {
+    expect(() =>
+      applyRequiredFieldCorrections("resource.create_buffer", "param", "table", [
+        { name: "transfer_ownership", types: ["boolean"] },
+      ]),
+    ).toThrow(/resource\.create_buffer:param:table:buffer/);
+  });
+});
+
 describe("TABLE_SLOT_CURATIONS", () => {
   test("holds exactly the mixed-slot table recoveries", () => {
     // The exact ordered curation keys. Full per-entry field shapes are validated
@@ -2345,6 +2442,9 @@ describe("TABLE_SLOT_CURATIONS", () => {
       "b2d.get_version:return:info",
       "b2d.body.compute_aabb:return:aabb",
       "b2d.body.create_fixture:param:definition",
+      "b2d.body.create_chain:param:definition",
+      "b2d.body.create_shape:param:definition",
+      "b2d.world.explode:param:definition",
       "b2d.body.create_fixture:return:fixture",
       "b2d.body.create_chain:return:segments",
       "b2d.body.get_fixtures:return:fixtures",
@@ -2438,13 +2538,14 @@ describe("TABLE_SLOT_CURATIONS", () => {
     });
   });
 
-  test("physics get_shape and set_shape share one shape-record constant", () => {
+  test("physics.set_shape splits get_shape's shape record into one arm per kind", () => {
     const getShape = TABLE_SLOT_CURATIONS.get("physics.get_shape:return:table");
     const setShape = TABLE_SLOT_CURATIONS.get("physics.set_shape:param:table");
-    if (getShape?.kind !== "object" || setShape?.kind !== "object") {
-      throw new Error("both physics shape slots must be object curations");
+    if (getShape?.kind !== "object" || setShape?.kind !== "verbatim") {
+      throw new Error("get_shape must be an object curation and set_shape a verbatim union");
     }
-    expect(setShape.fields).toBe(getShape.fields);
+    for (const field of getShape.fields) expect(setShape.ts).toContain(`${field.name}: `);
+    expect(setShape.ts.split(" | { type: ")).toHaveLength(3);
   });
 
   test("keyed-object curation re-keys the parser-recovered args table by name", () => {
@@ -2549,7 +2650,7 @@ describe("TABLE_SLOT_CURATIONS", () => {
       functions: [requireFunction(module, "buffer.create")],
     });
     expect(out).toContain(
-      'function create(element_count: number, declaration: { name?: Hash | string; type?: buffer.ValueType; count?: number }[]): Opaque<"buffer">;',
+      'function create(element_count: number, declaration: { name?: Hash | string; type: buffer.ValueType; count?: number }[]): Opaque<"buffer">;',
     );
   });
 
@@ -2757,7 +2858,9 @@ describe("TABLE_SLOT_CURATIONS", () => {
       ...module,
       functions: [requireFunction(module, "render.predicate")],
     });
-    expect(out).toContain("function predicate(tags: (string | Hash)[]): number;");
+    expect(out).toContain(
+      'function predicate(tags: (string | Hash)[]): Opaque<"render_predicate">;',
+    );
     expect(out).not.toContain("Record<string | number, unknown>");
   });
 
@@ -3061,7 +3164,7 @@ describe("NESTED_FIELD_CURATIONS", () => {
     const setLine = out.split("\n").find((l) => l.includes("function set_atlas(")) ?? "";
     const getLine = out.split("\n").find((l) => l.includes("function get_atlas(")) ?? "";
     expect(setLine).toContain(
-      "geometries?: { vertices?: number[]; uvs?: number[]; indices?: number[] }[]",
+      "geometries: { vertices: number[]; uvs: number[]; indices: number[] }[]",
     );
     expect(getLine).toContain(
       "geometries: { vertices: number[]; uvs: number[]; indices: number[] }[]",
@@ -3069,7 +3172,7 @@ describe("NESTED_FIELD_CURATIONS", () => {
     // create_atlas keeps its parser-grouped members and gains the arrays.
     const createLine = out.split("\n").find((l) => l.includes("function create_atlas")) ?? "";
     expect(createLine).toContain(
-      "geometries?: { id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices?: number[]; uvs?: number[]; indices?: number[] }[]",
+      "geometries: { id?: string; width?: number; height?: number; pivot_x?: number; pivot_y?: number; rotated?: boolean; vertices: number[]; uvs: number[]; indices: number[] }[]",
     );
   });
 });
@@ -4334,7 +4437,7 @@ describe("TABLE_SLOT_FIELD_ADDITIONS", () => {
   test("emits page_count beside the fields the ref-doc documents, addition last", () => {
     const out = emitDeclarations(parseDefoldApiDoc(resourceDoc));
     expect(out).toContain(
-      'function create_texture(path: string, table: { type?: number; width?: number; height?: number; depth?: number; format?: number; flags?: number; max_mipmaps?: number; compression_type?: number; page_count?: number }, buffer?: Opaque<"buffer">): Hash;',
+      'function create_texture(path: string, table: { type: number; width: number; height: number; depth?: number; format: number; flags?: number; max_mipmaps?: number; compression_type?: number; page_count?: number }, buffer?: Opaque<"buffer">): Hash;',
     );
   });
 
@@ -4757,7 +4860,7 @@ describe("corrections the engine bindings demand", () => {
       "options?: { index?: number; key?: string | Hash; keys?: (Hash | string)[] }",
     );
     expect(line(b2dWorldDoc, "function cast_shape(")).toContain(
-      "center1?: Vector3; center2?: Vector3 }",
+      "radius: number; center1: Vector3; center2: Vector3 }",
     );
   });
 });

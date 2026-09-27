@@ -304,7 +304,7 @@ declare global {
      * });
      * ```
      */
-    function draw(predicate: number, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }; sort_order?: number }): void;
+    function draw(predicate: Opaque<"render_predicate">, options?: { frustum?: Matrix4; frustum_planes?: number; constants?: Opaque<"constant_buffer"> & { [name: string]: Vector4 | Matrix4 | Vector4[] | Matrix4[] }; sort_order?: number }): void;
     /**
      * Draws all 3d debug graphics such as lines drawn with "draw_line" messages and physics visualization.
      *
@@ -647,7 +647,7 @@ declare global {
      * const p = render.predicate([hash("opaque"), hash("smoke")]);
      * ```
      */
-    function predicate(tags: (string | Hash)[]): number;
+    function predicate(tags: (string | Hash)[]): Opaque<"render_predicate">;
     /**
      * Specifies the arithmetic used when computing pixel values that are written to the frame
      * buffer. In RGBA mode, pixels can be drawn using a function that blends the source RGBA

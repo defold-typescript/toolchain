@@ -725,6 +725,8 @@ function auditEntry(
           );
           continue;
         }
+        // A verbatim slot emits authored, already-mapped TS, as a `tsType` field does.
+        if (tableSlotCuration?.kind === "verbatim") continue;
         if (tableSlotCuration?.kind === "object" || tableSlotCuration?.kind === "array-object") {
           for (const field of tableSlotCuration.fields) {
             if (field.fields !== undefined) {

@@ -55,7 +55,7 @@ void updated;
 sys.set_engine_throttle(false);
 
 // b2d.fixture.set_shape — "The body mass is not updated unless update_mass is true".
-b2d.fixture.set_shape(body, 2, { type: 0, radius: 1 });
+b2d.fixture.set_shape(body, 2, { type: b2d.shape.SHAPE_TYPE_CIRCLE, radius: 1 });
 
 // b2d.shape.ray_cast — "optional maximum translation fraction, defaults to 1".
 const hit = b2d.shape.ray_cast(shapeId, vmath.vector3(0), vmath.vector3(1, 0, 0));

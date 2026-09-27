@@ -456,7 +456,7 @@ declare global {
      *   function my_callback(self: unknown, request_id: unknown, result: unknown) {
      *     const { status, buf } = result as { status: number; buf: Opaque<"buffer"> };
      *     if (status === sys.REQUEST_STATUS_FINISHED) {
-     *       resource.set_texture("/my_texture", {}, buf); // texture args
+     *       resource.set_texture("/my_texture", { type: graphics.TEXTURE_TYPE_2D, width: 128, height: 128, format: graphics.TEXTURE_FORMAT_RGBA }, buf);
      *     }
      *   }
      *
@@ -610,21 +610,6 @@ declare global {
      * ```
      */
     function set_connectivity_host(host: string): void;
-    /**
-     * Enables engine throttling.
-     *
-     * @param enable - true if throttling should be enabled
-     * @param cooldown - the time period to do update + render for (seconds)
-     * @example
-     * ```ts
-     * // Disable throttling
-     * sys.set_engine_throttle(false);
-     *
-     * // Enable throttling
-     * sys.set_engine_throttle(true, 1.5);
-     * ```
-     */
-    function set_engine_throttle(enable: boolean, cooldown?: number): void;
     /**
      * Set the Lua error handler function.
      * The error handler is a function which is called whenever a lua runtime error occurs.

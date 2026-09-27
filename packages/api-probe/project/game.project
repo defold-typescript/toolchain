@@ -1,5 +1,6 @@
 [project]
 title = api-probe
+custom_resources = /main/probe.wav
 
 [bootstrap]
 main_collection = /main/main.collectionc
