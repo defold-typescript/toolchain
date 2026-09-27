@@ -2376,6 +2376,13 @@ describe("apiModuleSymbols", () => {
     }
   });
 
+  test("a passed-through index names its base in the parameter and return rows", () => {
+    const page = fixturePage("gui");
+    const getIndex = apiModuleSymbols(page, {}, {}).find((s) => s.name === "gui.get_index");
+    expect(getIndex?.returnValues[0]?.doc).toBe("the index of the node. 0-based.");
+    expect(apiModuleMarkdown(page)).toContain("index — the index of the node. 0-based.");
+  });
+
   test("no rendered zero-argument row on any real page carries a parameter table", () => {
     const pages = loadApiSurface(REAL_TYPES_DIR, REAL_LIBRARY_TYPES_DIR);
     expect(pages.length).toBeGreaterThan(0);

@@ -226,6 +226,8 @@ declare global {
      * - `distance` The offset from the currently displayed frame (this is truncated between zero and the number of recorded frames)
      *
      * - `frame` The frame index in the recording buffer (1 is first recorded frame)
+     *
+     * `frame` is 1-based.
      * @example
      * ```ts
      * // Go back one frame
