@@ -94,8 +94,8 @@ declare global {
        * Output is not buffered. For small strings, it is always better to concatenate them in Lua (with the `..` operator) and send the result in one call instead of calling the method several times.
        *
        * @param data - the string to be sent.
-       * @param i - optional starting index of the string.
-       * @param j - optional end index of string.
+       * @param i - optional starting index of the string. 1-based.
+       * @param j - optional end index of string. 1-based.
        */
       send(data: string, i?: number, j?: number): LuaMultiReturn<[number | undefined, string | undefined, number | undefined]>;
       /**

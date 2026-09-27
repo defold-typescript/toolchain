@@ -16,11 +16,13 @@ import { resolve, sep } from "node:path";
 import { type ExampleSurface, exampleSurfaces } from "../scripts/example-surfaces";
 import { compileSurface, exampleUnit } from "../scripts/example-typecheck";
 
-const GUIDE = resolve(import.meta.dir, "..", "..", "docs", "guide", "typescript-gotchas.md");
+const GUIDE_DIR = resolve(import.meta.dir, "..", "..", "docs", "guide");
 const GENERATED_ROOT = resolve(import.meta.dir, "..", "generated");
 
 /** A fence the guide presents as working code, addressed by its lead-in. */
 interface FenceSelection {
+  /** The guide page, relative to the guide directory. */
+  readonly page: string;
   /** Literal guide text the fence follows; renaming it reds this gate. */
   readonly lead: string;
   /** Which `ts` fence after the lead-in, counting from 0. */
@@ -35,7 +37,8 @@ interface FenceSelection {
 }
 
 const SELECTED: readonly FenceSelection[] = [
-  { lead: "**Naming the enum.**", nth: 0, kind: "gui-script" },
+  { page: "typescript-gotchas.md", lead: "**Naming the enum.**", nth: 0, kind: "gui-script" },
+  { page: "typescript-vs-lua.md", lead: "**Other engine indexes.**", nth: 0, kind: "script" },
 ];
 
 const surfaces = await exampleSurfaces();
@@ -64,12 +67,13 @@ function fencesAfter(guide: string, lead: string): string[] {
   return bodies;
 }
 
-function selectedFence(guide: string, selection: FenceSelection): string {
+function selectedFence(selection: FenceSelection): string {
+  const guide = readFileSync(resolve(GUIDE_DIR, selection.page), "utf8");
   const bodies = fencesAfter(guide, selection.lead);
   const body = bodies[selection.nth];
   expect(
     body,
-    `no ts fence #${selection.nth} follows ${selection.lead} in typescript-gotchas.md`,
+    `no ts fence #${selection.nth} follows ${selection.lead} in ${selection.page}`,
   ).toBeString();
   return body as string;
 }
@@ -84,20 +88,16 @@ function diagnosticsFor(surface: ExampleSurface, bodies: readonly string[]): str
 }
 
 describe("guide fences presented as working code", () => {
-  const guide = readFileSync(GUIDE, "utf8");
-
   test("every selected fence resolves to a fence body", () => {
     expect(SELECTED.length).toBeGreaterThan(0);
     for (const selection of SELECTED) {
-      expect(selectedFence(guide, selection).trim()).not.toBe("");
+      expect(selectedFence(selection).trim()).not.toBe("");
     }
   });
 
   test("every selected fence compiles against the surface its kind ships", () => {
     for (const selection of SELECTED) {
-      const [found] = diagnosticsFor(shippedSurface(selection.kind), [
-        selectedFence(guide, selection),
-      ]);
+      const [found] = diagnosticsFor(shippedSurface(selection.kind), [selectedFence(selection)]);
       expect(found, `${selection.lead} fence`).toEqual([]);
     }
   });

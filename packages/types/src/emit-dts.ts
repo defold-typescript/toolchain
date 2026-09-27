@@ -17,6 +17,7 @@ import {
 } from "./doc-comment";
 import type { TranslationStore } from "./example-store";
 import { hashExampleSource, lookupExampleTranslations, lookupTranslation } from "./example-store";
+import { withIndexBaseNotes } from "./index-slot-classifications";
 import { classifyUrlParameter, type UrlParameterTable } from "./url-parameters";
 
 export interface EmitOptions {
@@ -3361,7 +3362,13 @@ function functionDocLines(
 ): string[] {
   const params = fn.parameters.map((p, index) => ({
     name: emittedParamName(p, index),
-    doc: rewriteParamDoc(fn.name, p.name, htmlToDocText(p.doc)),
+    doc: withIndexBaseNotes(
+      fn.name,
+      "param",
+      p.name,
+      p.doc,
+      rewriteParamDoc(fn.name, p.name, htmlToDocText(p.doc)),
+    ),
   }));
   const onlyReturn = fn.returnValues.length === 1 ? fn.returnValues[0] : undefined;
   const lua = htmlToCodeText(fn.examples ?? "");
@@ -3397,7 +3404,17 @@ function functionDocLines(
   const parts: DocCommentParts = {
     summary: htmlToDocText(summaryFor(fn.brief, fn.description)),
     params,
-    ...(onlyReturn ? { returns: htmlToDocText(onlyReturn.doc) } : {}),
+    ...(onlyReturn
+      ? {
+          returns: withIndexBaseNotes(
+            fn.name,
+            "return",
+            onlyReturn.name,
+            onlyReturn.doc,
+            htmlToDocText(onlyReturn.doc),
+          ),
+        }
+      : {}),
     ...exampleParts,
   };
   return indentDocLines(parts, indent);

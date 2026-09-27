@@ -7,6 +7,7 @@ import {
   type ApiParameter,
   hashExampleSource,
   htmlToCodeText,
+  INDEX_SLOT_CLASSIFICATIONS,
   lookupTranslation,
   parseDefoldApiDoc,
   splitExampleSources,
@@ -254,5 +255,17 @@ describe("array index option lowering", () => {
       }
     }
     expect(compared).toBeGreaterThan(0);
+  });
+});
+
+describe("lowered index slot policy", () => {
+  test("the lowered classifications are exactly the options.index of the lowering allowlist", () => {
+    const lowered = [...INDEX_SLOT_CLASSIFICATIONS.entries()]
+      .filter(([, classification]) => classification.class === "lowered")
+      .map(([key]) => key);
+    expect(new Set(lowered.map((key) => key.slice(0, key.indexOf(":"))))).toEqual(
+      new Set(ONE_BASED_INDEX_OPTION_APIS),
+    );
+    for (const key of lowered) expect(key).toEndWith(":param:options:index");
   });
 });
