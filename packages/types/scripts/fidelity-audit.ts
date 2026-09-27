@@ -26,6 +26,7 @@ import {
   trailingOptionalCutoff,
 } from "../src/emit-dts";
 import { parseMessagesDoc } from "../src/emit-messages";
+import { readVerdicts } from "./engine-binding-verdicts";
 import { EXTENSION_GOLDEN_MANIFEST } from "./extension-goldens";
 import {
   collectConstantFqns,
@@ -63,6 +64,7 @@ export interface FidelityEntry {
   multiReturn: number;
   droppedMembers: number;
   optionalAsRequired: number;
+  bindingOpen: number;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -549,9 +551,23 @@ export function exampleScanReach(entry: Pick<ModuleManifestEntry, "doc">): {
   return { withCalls, withoutCalls };
 }
 
+// Open engine-binding verdicts per namespace, read from each key's
+// `<target>:<ns.fn>:...` name segment.
+function openBindingCounts(): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const [key, verdict] of Object.entries(readVerdicts())) {
+    if (verdict.verdict !== "open") continue;
+    const name = key.split(":")[1] ?? "";
+    const namespace = name.slice(0, name.lastIndexOf("."));
+    counts.set(namespace, (counts.get(namespace) ?? 0) + 1);
+  }
+  return counts;
+}
+
 function auditEntry(
   entry: ModuleManifestEntry,
   knownConstantFqns: ReadonlySet<string>,
+  bindingOpen: ReadonlyMap<string, number>,
 ): FidelityEntry {
   const skipFunctions = new Set(entry.skipFunctions ?? []);
   const elements = elementsOf(entry.doc);
@@ -898,6 +914,7 @@ function auditEntry(
       }).dropped.filter((name) => !OVERLOAD_COVERED_SKIPS.has(name)).length +
       countDroppedHandleMethods(entry.doc, entry.namespace),
     optionalAsRequired,
+    bindingOpen: bindingOpen.get(entry.namespace) ?? 0,
   };
 }
 
@@ -915,9 +932,10 @@ export function buildFidelityReport(
 ): Record<string, FidelityEntry> {
   const report: Record<string, FidelityEntry> = {};
   const knownConstantFqns = collectConstantFqns(manifest);
+  const bindingOpen = openBindingCounts();
   for (const namespace of [...manifest.map((e) => e.namespace)].sort()) {
     const entry = manifest.find((e) => e.namespace === namespace);
-    if (entry) report[namespace] = auditEntry(entry, knownConstantFqns);
+    if (entry) report[namespace] = auditEntry(entry, knownConstantFqns, bindingOpen);
   }
   return report;
 }

@@ -4,9 +4,15 @@ import {
   splitSlotFields,
   ZERO_BASED_PHRASE,
 } from "../src/index-slot-classifications";
+import type { BindingExtraction } from "./engine-binding-extract";
 import { loadApiTargets } from "./regen";
 
-export type IndexSlotEvidence = "name" | "prose-1-based" | "prose-0-based" | "prose-index";
+export type IndexSlotEvidence =
+  | "name"
+  | "prose-1-based"
+  | "prose-0-based"
+  | "prose-index"
+  | "cxx-minus-one";
 
 export interface IndexSlotHit {
   readonly key: string;
@@ -62,7 +68,30 @@ function scanFunction(fn: ApiFunction, hits: IndexSlotHit[]): void {
   for (const slot of fn.returnValues) scanSlot(`${fn.name}:return:${slot.name}`, slot, hits);
 }
 
-export function scanIndexSlots(doc: unknown, namespace: string): IndexSlotHit[] {
+// A binding that subtracts 1 from a checked argument, keyed to the ref-doc
+// parameter at that stack position.
+function scanBindings(
+  functions: readonly ApiFunction[],
+  namespace: string,
+  bindings: Pick<BindingExtraction, "functions">,
+  hits: IndexSlotHit[],
+): void {
+  for (const binding of bindings.functions) {
+    if (binding.namespace !== namespace) continue;
+    const name = `${namespace}.${binding.name}`;
+    for (const slot of binding.slots) {
+      if (slot.minusOne !== true) continue;
+      const param = functions.find((fn) => fn.name === name)?.parameters[slot.index - 1];
+      if (param) hits.push({ key: `${name}:param:${param.name}`, evidence: "cxx-minus-one" });
+    }
+  }
+}
+
+export function scanIndexSlots(
+  doc: unknown,
+  namespace: string,
+  bindings?: Pick<BindingExtraction, "functions">,
+): IndexSlotHit[] {
   if (LUA_STDLIB_NAMESPACES.has(namespace)) return [];
   const module = parseDefoldApiDoc(doc);
   const hits: IndexSlotHit[] = [];
@@ -70,6 +99,7 @@ export function scanIndexSlots(doc: unknown, namespace: string): IndexSlotHit[] 
   for (const typedef of module.typedefs) {
     for (const fn of typedef.functions ?? []) scanFunction(fn, hits);
   }
+  if (bindings) scanBindings(module.functions, namespace, bindings, hits);
   const unique = new Map<string, IndexSlotHit>();
   for (const hit of hits) if (!unique.has(hit.key)) unique.set(hit.key, hit);
   return [...unique.values()];
