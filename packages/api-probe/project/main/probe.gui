@@ -19,6 +19,10 @@ materials {
   name: "probe"
   material: "/builtins/materials/gui.material"
 }
+materials {
+  name: "tinted"
+  material: "/main/probe.material"
+}
 nodes {
   position {
     x: 64.0
@@ -81,5 +85,23 @@ nodes {
   type: TYPE_PARTICLEFX
   id: "particlefx"
   particlefx: "effect"
+}
+nodes {
+  position {
+    x: 64.0
+    y: 64.0
+    z: 0.0
+    w: 1.0
+  }
+  size {
+    x: 32.0
+    y: 32.0
+    z: 0.0
+    w: 1.0
+  }
+  type: TYPE_BOX
+  id: "tinted"
+  texture: "probe/anim"
+  material: "tinted"
 }
 adjust_reference: ADJUST_REFERENCE_PARENT

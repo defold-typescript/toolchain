@@ -48,7 +48,7 @@ declare global {
      * @param filter - optional query filter with `category_bits`, `mask_bits`, and optional `group_index`
      * @returns hit table with `fixture`, `shape`, `point`, `normal`, `fraction`, `node_visits`, and `leaf_visits`, or nil
      */
-    function cast_ray_closest(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter: { category_bits?: number; mask_bits?: number; group_index?: number }): { fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number; node_visits: number; leaf_visits: number };
+    function cast_ray_closest(world: Opaque<"b2World">, origin: Vector3, translation: Vector3, filter: { category_bits?: number; mask_bits?: number; group_index?: number }): { fixture: number; shape: number; point: Vector3; normal: Vector3; fraction: number; node_visits: number; leaf_visits: number } | undefined;
     /**
      * The translation is the ray displacement from `origin`.
      *

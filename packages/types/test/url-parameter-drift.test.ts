@@ -44,8 +44,17 @@ const skippedFqns = new Set(
 // covers a family upstream can extend, so the expected membership is read off
 // the same ref-doc source the emitter consumes rather than restated. A fifth
 // reader joins this set the moment it appears in the source.
+// Every slot the ref-doc declares, including those a skipped function hands to
+// the authored overloads, which still read a config key.
+const documentedSlots = new Map<string, UrlParameterSlot>(
+  collectParameterSlots(sources.map(({ module }) => ({ module }))).map((slot) => [
+    `${slot.fqn}#${slot.parameter}`,
+    slot,
+  ]),
+);
+
 const CONFIG_READER_FQN = /^sys\.get_config_[a-z0-9_]+$/;
-const configReaderSlots = [...slots.values()]
+const configReaderSlots = [...documentedSlots.values()]
   .filter((slot) => CONFIG_READER_FQN.test(slot.fqn) && slot.parameter === "key")
   .map((slot) => `${slot.fqn}#${slot.parameter}`)
   .sort();
@@ -166,7 +175,7 @@ describe("url-parameters.json generated entries", () => {
       .sort();
     expect(configKeys).toEqual(configReaderSlots);
     for (const key of configReaderSlots) {
-      expect(slots.get(key)?.types).toEqual(["string"]);
+      expect(documentedSlots.get(key)?.types).toEqual(["string"]);
     }
   });
 

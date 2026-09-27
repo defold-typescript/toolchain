@@ -59,7 +59,7 @@ b2d.fixture.set_shape(body, 2, { type: b2d.shape.SHAPE_TYPE_CIRCLE, radius: 1 })
 
 // b2d.shape.ray_cast — "optional maximum translation fraction, defaults to 1".
 const hit = b2d.shape.ray_cast(shapeId, vmath.vector3(0), vmath.vector3(1, 0, 0));
-void hit.fraction;
+void hit?.fraction;
 
 // Every b2d.joint constructor opens its definition doc with "optional
 // definition"; the two-argument form is the shape all twelve share.

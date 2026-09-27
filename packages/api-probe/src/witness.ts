@@ -1,7 +1,18 @@
 import { resolve } from "node:path";
 import ts from "typescript";
-import { comparedNamespaces } from "../../types/scripts/engine-binding-diff";
-import { declaredMembers, surfaceProgram } from "../../types/scripts/lua-kind";
+import { comparedNamespaces, mergeBindings } from "../../types/scripts/engine-binding-diff";
+import {
+  type BindingFunction,
+  type LuaKind,
+  readBindingsForTarget,
+} from "../../types/scripts/engine-binding-extract";
+import {
+  type DeclaredKinds,
+  declaredKinds,
+  declaredMembers,
+  surfaceProgram,
+  UnmappedLuaKindError,
+} from "../../types/scripts/lua-kind";
 import { type ApiTarget, loadApiTargets } from "../../types/scripts/regen";
 import {
   type Box2DBackend,
@@ -16,15 +27,42 @@ import {
   type ScriptKind,
   WITNESS_OVERRIDES,
 } from "./contexts";
+import { indexProbeCalls, type SignatureArgs, type Unverified } from "./index-probes";
+import { negativeWitness } from "./negative-witness";
 import { PROBE_DENYLIST } from "./probe-denylist";
 
 const CORE_TYPES_FILE = resolve(import.meta.dir, "../../types/src/core-types.ts");
+
+// The values a signature declares it returns: one entry per position, and
+// whether a rest element allows more.
+export interface DeclaredReturns {
+  readonly kinds: readonly DeclaredKinds[];
+  readonly variadic: boolean;
+}
+
+// A call built to fail: one slot holds a kind the binding refuses.
+export interface NegativeTarget {
+  readonly slot: number;
+  readonly kind: LuaKind;
+  // The binding file, relative to the vendored engine sources.
+  readonly binding: string;
+}
 
 export interface ProbeCall {
   readonly name: string;
   readonly variant: string;
   readonly kind: ScriptKind;
   readonly call: string;
+  readonly returns?: DeclaredReturns;
+  readonly negative?: NegativeTarget;
+  // The `INDEX_SLOT_CLASSIFICATIONS` key an index probe checks.
+  readonly index?: string;
+}
+
+export interface SkippedSlot {
+  readonly name: string;
+  readonly slot: number;
+  readonly reason: string;
 }
 
 export interface Unwitnessed {
@@ -38,6 +76,10 @@ export interface ProbeGeneration {
   readonly functions: readonly string[];
   readonly calls: readonly ProbeCall[];
   readonly unwitnessed: readonly Unwitnessed[];
+  // Slots that get no negative call.
+  readonly skipped: readonly SkippedSlot[];
+  // Lowered and passed-through index slots this pass does not probe.
+  readonly indexUnverified: readonly Unverified[];
   // `probe_go.ts`, `probe_gui.ts` and `probe_render.ts`, relative to `main/`.
   readonly files: Readonly<Record<string, string>>;
 }
@@ -306,22 +348,68 @@ function slotWitness(param: Param, slot: number, scope: Omit<Scope, "slot">): st
   return witness(type, full);
 }
 
+function kindsOf(type: ts.Type, checker: ts.TypeChecker): DeclaredKinds {
+  try {
+    return declaredKinds(type, checker);
+  } catch (error) {
+    if (error instanceof UnmappedLuaKindError) return "any";
+    throw error;
+  }
+}
+
+// `LuaMultiReturn<[A, B?]>` declares one value per tuple element, `void` none,
+// and any other type one.
+export function declaredReturns(signature: ts.Signature, checker: ts.TypeChecker): DeclaredReturns {
+  const returned = signature.getReturnType();
+  if (returned.flags & ts.TypeFlags.Void) return { kinds: [], variadic: false };
+  const tuple =
+    returned.aliasSymbol?.name === "LuaMultiReturn" ? returned.aliasTypeArguments?.[0] : undefined;
+  if (tuple === undefined) return { kinds: [kindsOf(returned, checker)], variadic: false };
+  if (!checker.isTupleType(tuple)) return { kinds: [], variadic: true };
+  const target = (tuple as ts.TypeReference).target as ts.TupleType;
+  const elements = checker.getTypeArguments(tuple as ts.TypeReference);
+  const kinds: DeclaredKinds[] = [];
+  let variadic = false;
+  elements.forEach((element, i) => {
+    const flags = target.elementFlags[i] ?? ts.ElementFlags.Required;
+    if (flags & ts.ElementFlags.Variable) {
+      variadic = true;
+      return;
+    }
+    const elementKinds = kindsOf(element, checker);
+    kinds.push(
+      flags & ts.ElementFlags.Optional && elementKinds !== "any"
+        ? [...new Set<LuaKind>([...elementKinds, "nil"])].sort()
+        : elementKinds,
+    );
+  });
+  return { kinds, variadic };
+}
+
+interface FunctionCalls {
+  calls: ProbeCall[];
+  unwitnessed: Unwitnessed[];
+  skipped: SkippedSlot[];
+  signature?: SignatureArgs;
+}
+
 function callsFor(
   fqn: string,
   symbol: ts.Symbol,
   checker: ts.TypeChecker,
   constants: ReadonlySet<string>,
   urls: Set<string>,
-): { calls: ProbeCall[]; unwitnessed: Unwitnessed[] } {
+  binding: BindingFunction | undefined,
+): FunctionCalls {
   const namespace = fqn.slice(0, fqn.lastIndexOf("."));
   const context = contextFor(namespace);
   const signatures = checker
     .getTypeOfSymbol(symbol)
     .getCallSignatures()
     .filter((signature) => !isTypeApplication(signature));
-  const calls: ProbeCall[] = [];
-  const unwitnessed: Unwitnessed[] = [];
+  const out: FunctionCalls = { calls: [], unwitnessed: [], skipped: [] };
   const seen = new Set<string>();
+  const negated = new Set<number>();
   signatures.forEach((signature, index) => {
     const overload = signatures.length > 1 ? `overload${index + 1}` : undefined;
     const name = overload === undefined ? fqn : `${fqn}:${overload}`;
@@ -332,27 +420,75 @@ function callsFor(
     const variants: [string, number][] = [["required", required]];
     const present = params.filter((param) => !param.rest).length;
     if (present > required) variants.push(["optional", present]);
+    const returns = declaredReturns(signature, checker);
+    const witnessAll = (count: number) => {
+      const handles = new Map<string, number>();
+      return params
+        .slice(0, count)
+        .map((param, i) => slotWitness(param, i + 1, { ...scope, handles }));
+    };
     try {
       for (const [variant, count] of variants) {
-        const handles = new Map<string, number>();
-        const args = params
-          .slice(0, count)
-          .map((param, i) => slotWitness(param, i + 1, { ...scope, handles }));
-        const call = `${fqn}(${args.join(", ")})`;
+        const call = `${fqn}(${witnessAll(count).join(", ")})`;
         if (seen.has(call)) continue;
         seen.add(call);
         const label = overload === undefined ? variant : `${overload}-${variant}`;
-        calls.push({ name: fqn, variant: label, kind: context.kind, call });
+        out.calls.push({ name: fqn, variant: label, kind: context.kind, call, returns });
       }
+      // Each slot gets its negative call from the first probed signature that
+      // declares it: a kind every signature refuses is a kind that one refuses.
+      if (params.slice(0, present).every((_, i) => negated.has(i + 1))) return;
+      const positive = witnessAll(present);
+      out.signature ??= {
+        names: signature.getParameters().map((param) => param.name),
+        args: positive,
+      };
+      params.slice(0, present).forEach((param, i) => {
+        const slot = i + 1;
+        if (negated.has(slot)) return;
+        negated.add(slot);
+        const type = param.optional ? checker.getNonNullableType(param.type) : param.type;
+        const extracted = binding?.slots.find((candidate) => candidate.index === slot);
+        const chosen = negativeWitness(kindsOf(type, checker), extracted);
+        if ("skipped" in chosen) {
+          out.skipped.push({ name: fqn, slot, reason: chosen.skipped });
+          return;
+        }
+        const args = positive.slice(0, Math.max(required, slot));
+        args[i] = chosen.expression;
+        out.calls.push({
+          name: fqn,
+          variant: `negative-${slot}`,
+          kind: context.kind,
+          call: `${fqn}(${args.join(", ")})`,
+          negative: { slot, kind: chosen.kind, binding: (binding as BindingFunction).file },
+        });
+      });
     } catch (error) {
       if (!(error instanceof NoWitness)) throw error;
-      unwitnessed.push({ name, reason: error.message });
+      out.unwitnessed.push({ name, reason: error.message });
     }
   });
-  return { calls, unwitnessed };
+  return out;
 }
 
-function renderFile(kind: ScriptKind, calls: readonly ProbeCall[], used: ReadonlySet<string>) {
+function renderProbe(call: ProbeCall): string {
+  const name = JSON.stringify(call.name);
+  const variant = JSON.stringify(call.variant);
+  if (call.negative === undefined) return `    probe(${name}, ${variant}, () => ${call.call});`;
+  return [
+    `    probe(${name}, ${variant}, () =>`,
+    "      // @ts-expect-error",
+    `      ${call.call},`,
+    "    );",
+  ].join("\n");
+}
+
+export function renderFile(
+  kind: ScriptKind,
+  calls: readonly ProbeCall[],
+  used: ReadonlySet<string>,
+): string {
   const urls = new Set(used);
   for (const statement of PRELUDES[kind]) {
     for (const id of Object.keys(PROBE_URLS)) {
@@ -365,10 +501,12 @@ function renderFile(kind: ScriptKind, calls: readonly ProbeCall[], used: Readonl
   const declarations = [...urls]
     .sort()
     .map((id) => `    const ${id} = msg.url(${JSON.stringify(PROBE_URLS[id])});`);
-  const probes = calls.map(
-    (call) =>
-      `    probe(${JSON.stringify(call.name)}, ${JSON.stringify(call.variant)}, () => ${call.call});`,
-  );
+  // A negative call the engine wrongly accepts can change what later calls
+  // see, so every negative call runs after every positive one.
+  const probes = [
+    ...calls.filter((call) => call.negative === undefined),
+    ...calls.filter((call) => call.negative !== undefined),
+  ].map(renderProbe);
   // A material left enabled at the end of the frame crashes the engine's
   // command parse, so the render script resets it once its probes ran.
   const cleanup = kind === "render" ? ["    render.disable_material();"] : [];
@@ -427,12 +565,23 @@ export function generateProbes(
   backend: Box2DBackend = "v2",
 ): ProbeGeneration {
   const tags = box2dBackends(target.id);
+  const bindings = new Map(
+    mergeBindings(
+      readBindingsForTarget(target.id).functions.filter(
+        (binding) =>
+          runsOn(`${binding.namespace}.${binding.name}`, backend, tags) &&
+          (backend === "v2" ? !binding.file.includes("/v3/") : !binding.file.includes("/v2/")),
+      ),
+    ).map((binding) => [`${binding.namespace}.${binding.name}`, binding]),
+  );
   const program = surfaceProgram(target);
   const checker = program.getTypeChecker();
   const members = declaredMembers(program, comparedNamespaces(target));
   const constants = new Set(members.constants.keys());
   const calls: ProbeCall[] = [];
   const unwitnessed: Unwitnessed[] = [];
+  const skipped: SkippedSlot[] = [];
+  const signatures = new Map<string, SignatureArgs>();
   const urlsByKind = new Map<ScriptKind, Set<string>>(
     SCRIPT_KINDS.map((kind) => [kind, new Set<string>()]),
   );
@@ -442,11 +591,20 @@ export function generateProbes(
     if (denied(fqn)) continue;
     const kind = contextFor(fqn.slice(0, fqn.lastIndexOf("."))).kind;
     const urls = new Set<string>();
-    const generated = callsFor(fqn, symbol, checker, constants, urls);
+    const generated = callsFor(fqn, symbol, checker, constants, urls, bindings.get(fqn));
     calls.push(...generated.calls);
     unwitnessed.push(...generated.unwitnessed);
+    skipped.push(...generated.skipped);
+    if (generated.signature !== undefined) signatures.set(fqn, generated.signature);
     if (generated.calls.length > 0) {
       for (const id of urls) urlsByKind.get(kind)?.add(id);
+    }
+  }
+  const index = indexProbeCalls(signatures);
+  calls.push(...index.calls);
+  for (const call of index.calls) {
+    for (const id of Object.keys(PROBE_URLS)) {
+      if (new RegExp(`\\b${id}\\b`).test(call.call)) urlsByKind.get(call.kind)?.add(id);
     }
   }
   const files: Record<string, string> = {};
@@ -457,5 +615,14 @@ export function generateProbes(
       urlsByKind.get(kind) ?? new Set(),
     );
   }
-  return { target, backend, functions, calls, unwitnessed, files };
+  return {
+    target,
+    backend,
+    functions,
+    calls,
+    unwitnessed,
+    skipped,
+    indexUnverified: index.unverified,
+    files,
+  };
 }

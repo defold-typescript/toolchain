@@ -153,6 +153,208 @@ describe("evaluateProbe", () => {
   });
 });
 
+function negative(name: string, slot: number): ProbeCall {
+  return {
+    name,
+    variant: `negative-${slot}`,
+    kind: "go",
+    call: `${name}({})`,
+    negative: { slot, kind: "table", binding: "gamesys/src/x.cpp" },
+  };
+}
+
+function negativeOutcome(
+  name: string,
+  slot: number,
+  result: ProbeOutcome["outcome"],
+  raisedAt?: number,
+): ProbeOutcome {
+  return {
+    name,
+    variant: `negative-${slot}`,
+    outcome: result,
+    ...(raisedAt === undefined ? {} : { slot: raisedAt }),
+    message: result === "ok" ? "" : "raised",
+  };
+}
+
+describe("evaluateProbe on negative calls", () => {
+  test("a negative call the engine accepts is too narrow or lenient, naming the binding", () => {
+    const failures = evaluateProbe(
+      [{ backend: "v2", calls: [negative("a.f", 2)], outcomes: [negativeOutcome("a.f", 2, "ok")] }],
+      {},
+    );
+    expect(failures.tooNarrow).toEqual([
+      "a.f:negative-2: the engine accepts a table in slot 2; the declaration is too narrow or gamesys/src/x.cpp is lenient",
+    ]);
+  });
+
+  test("a bad argument naming the call's own slot, or no slot, is the expected outcome", () => {
+    const failures = evaluateProbe(
+      [
+        {
+          backend: "v2",
+          calls: [negative("a.f", 2), negative("a.g", 1)],
+          outcomes: [
+            negativeOutcome("a.f", 2, "bad-argument", 2),
+            negativeOutcome("a.g", 1, "bad-argument"),
+          ],
+        },
+      ],
+      {},
+    );
+    expect(failures).toEqual({
+      unreported: [],
+      badArguments: [],
+      unexempted: [],
+      stale: [],
+      openFindings: [],
+      tooNarrow: [],
+      negativeMisfires: [],
+      returnKinds: [],
+      indexSemantics: [],
+    });
+  });
+
+  test("a negative call raising at another slot, or an engine error, misfires", () => {
+    const failures = evaluateProbe(
+      [
+        {
+          backend: "v2",
+          calls: [negative("a.f", 2), negative("a.g", 1)],
+          outcomes: [
+            negativeOutcome("a.f", 2, "bad-argument", 1),
+            negativeOutcome("a.g", 1, "engine-error"),
+          ],
+        },
+      ],
+      {},
+    );
+    expect(failures.negativeMisfires).toEqual([
+      "a.f:negative-2 slot 1: raised bad-argument, expected a bad argument #2: raised",
+      "a.g:negative-1: raised engine-error, expected a bad argument #1: raised",
+    ]);
+  });
+
+  test("an accepted ok exemption clears a lenient binding and goes stale once it raises", () => {
+    const lenient = { "a.f:negative-2": accepted("ok") };
+    const accepts = evaluateProbe(
+      [{ backend: "v2", calls: [negative("a.f", 2)], outcomes: [negativeOutcome("a.f", 2, "ok")] }],
+      lenient,
+    );
+    expect(accepts.tooNarrow).toEqual([]);
+    expect(accepts.stale).toEqual([]);
+    const raises = evaluateProbe(
+      [
+        {
+          backend: "v2",
+          calls: [negative("a.f", 2)],
+          outcomes: [negativeOutcome("a.f", 2, "bad-argument", 2)],
+        },
+      ],
+      lenient,
+    );
+    expect(raises.stale).toEqual(["a.f:negative-2: now raises on its slot; delete the exemption"]);
+  });
+});
+
+describe("evaluateProbe on a negative call its function's exemption covers", () => {
+  const unlinked = "main/probe_go.ts.script:12: attempt to index global 'compute' (a nil value)";
+
+  test("a negative call failing like its exempted positive call inherits the exemption", () => {
+    const failures = evaluateProbe(
+      [
+        {
+          backend: "v2",
+          calls: [call("compute.get_samplers"), negative("compute.get_samplers", 1)],
+          outcomes: [
+            outcome("compute.get_samplers", "engine-error", unlinked),
+            {
+              ...negativeOutcome("compute.get_samplers", 1, "engine-error"),
+              message: unlinked.replace(":12:", ":40:"),
+            },
+          ],
+        },
+      ],
+      { "compute.get_samplers:required": accepted("engine-error") },
+    );
+    expect(failures.negativeMisfires).toEqual([]);
+    expect(failures.unexempted).toEqual([]);
+  });
+
+  test("a different message, or an ok positive call, inherits nothing", () => {
+    const failures = evaluateProbe(
+      [
+        {
+          backend: "v2",
+          calls: [call("compute.get_samplers"), negative("compute.get_samplers", 1)],
+          outcomes: [
+            outcome("compute.get_samplers", "engine-error", unlinked),
+            { ...negativeOutcome("compute.get_samplers", 1, "engine-error"), message: "other" },
+          ],
+        },
+      ],
+      { "compute.get_samplers:required": accepted("engine-error") },
+    );
+    expect(failures.negativeMisfires).toEqual([
+      "compute.get_samplers:negative-1: raised engine-error, expected a bad argument #1: other",
+    ]);
+  });
+});
+
+describe("evaluateProbe on index probes", () => {
+  test("an index probe that raises is an index semantics failure, not an engine error", () => {
+    const probe: ProbeCall = {
+      name: "go.set",
+      variant: "index-options-index",
+      kind: "go",
+      call: "{}",
+      index: "go.set:param:options:index",
+    };
+    const failures = evaluateProbe(
+      [
+        {
+          backend: "v2",
+          calls: [probe],
+          outcomes: [
+            {
+              name: "go.set",
+              variant: "index-options-index",
+              outcome: "engine-error",
+              message: "{ index: 0 } missed the first element",
+            },
+          ],
+        },
+      ],
+      {},
+    );
+    expect(failures.indexSemantics).toEqual([
+      "go.set:index-options-index (go.set:param:options:index): { index: 0 } missed the first element",
+    ]);
+    expect(failures.unexempted).toEqual([]);
+  });
+});
+
+describe("evaluateProbe on returns", () => {
+  test("an ok positive call whose values differ from its declared returns fails", () => {
+    const returning: ProbeCall = {
+      ...call("go.get_id"),
+      returns: { kinds: [["hash"]], variadic: false },
+    };
+    const failures = evaluateProbe(
+      [
+        {
+          backend: "v2",
+          calls: [returning],
+          outcomes: [{ ...outcome("go.get_id", "ok"), returns: ["number"] }],
+        },
+      ],
+      {},
+    );
+    expect(failures.returnKinds).toEqual(["go.get_id:required: value 1 is number, declared hash"]);
+  });
+});
+
 describe("parseExemptions", () => {
   const valid: Exemption = { outcome: "engine-error", verdict: "accepted", reason: "engine" };
 
@@ -172,7 +374,6 @@ describe("parseExemptions", () => {
     ["verdict Accepted", { ...valid, verdict: "Accepted" }],
     ["verdict missing", { outcome: valid.outcome, reason: valid.reason }],
     ["outcome denied", { ...valid, outcome: "denied" }],
-    ["outcome ok", { ...valid, outcome: "ok" }],
     ["empty reason", { ...valid, reason: "" }],
     ["blank reason", { ...valid, reason: "   " }],
     ["extra field", { ...valid, note: "x" }],
