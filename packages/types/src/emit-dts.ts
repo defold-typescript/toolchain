@@ -17,7 +17,7 @@ import {
 } from "./doc-comment";
 import type { TranslationStore } from "./example-store";
 import { hashExampleSource, lookupExampleTranslations, lookupTranslation } from "./example-store";
-import { withIndexBaseNotes } from "./index-slot-classifications";
+import { indexBaseNotes, withIndexBaseNotes } from "./index-slot-classifications";
 import { classifyUrlParameter, type UrlParameterTable } from "./url-parameters";
 
 export interface EmitOptions {
@@ -4057,8 +4057,10 @@ function emitMethod(
 // fallback applies to non-identifier names and a vararg drops its dots, matching
 // `emitParameter` and `emitRestParameter`) so the tag resolves on hover; a
 // parameter folded into a rest element union keeps its own tag, so the prose
-// documenting it survives. A single documented return becomes `@returns`. Returns `[]`
-// for a fully-undocumented function, leaving its emission byte-identical.
+// documenting it survives. A single documented return becomes `@returns`; a
+// multi-return function gains one only when a slot carries a classified index
+// (see `multiReturnDoc`). Returns `[]` for a fully-undocumented function,
+// leaving its emission byte-identical.
 function functionDocLines(
   fn: ApiFunction,
   translations: TranslationStore,
@@ -4075,6 +4077,7 @@ function functionDocLines(
     ),
   }));
   const onlyReturn = fn.returnValues.length === 1 ? fn.returnValues[0] : undefined;
+  const tupleReturns = multiReturnDoc(fn);
   const lua = htmlToCodeText(fn.examples ?? "");
   // A blob carrying several examples documents them as several, but only when
   // every segment has an authored body: a partial resolve would drop the rest.
@@ -4118,10 +4121,33 @@ function functionDocLines(
             htmlToDocText(onlyReturn.doc),
           ),
         }
-      : {}),
+      : tupleReturns !== undefined
+        ? { returns: tupleReturns }
+        : {}),
     ...exampleParts,
   };
   return indentDocLines(parts, indent);
+}
+
+// A multi-return function documents its tuple slot by slot, in tuple order, so
+// the hover can name each classified index's base. Every other multi-return
+// function keeps no `@returns`, leaving its emission byte-identical.
+function multiReturnDoc(fn: ApiFunction): string | undefined {
+  if (fn.returnValues.length < 2) return undefined;
+  const classified = fn.returnValues.some(
+    (slot) => indexBaseNotes(fn.name, "return", slot.name, slot.doc).length > 0,
+  );
+  if (!classified) return undefined;
+  const bullets = fn.returnValues.map((slot) => {
+    const doc = withIndexBaseNotes(fn.name, "return", slot.name, slot.doc, htmlToDocText(slot.doc));
+    const [first = "", ...rest] = doc.split("\n");
+    return [
+      `- \`${slot.name}\` — ${first}`,
+      ...rest.map((line) => (line === "" ? "" : `  ${line}`)),
+    ];
+  });
+  const names = fn.returnValues.map((slot) => slot.name).join(", ");
+  return [`\`[${names}]\`:`, ...bullets.flat()].join("\n");
 }
 
 // Summary-only doc lines for a member that carries no params or returns

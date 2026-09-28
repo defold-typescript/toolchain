@@ -27,7 +27,7 @@ What changed in each published `defold-typescript` toolchain release.
 
 ### Improved
 
-- **Every engine index names its base in hovers and the API reference**: an index argument, returned index or info-table `index` whose upstream text is silent gains "1-based." or "0-based.", such as `the index of the node. 0-based.` on [`gui.get_index`](/api/gui), `` `index` is 1-based. `` on [`b2d.body.get_fixtures`](/api/b2d.body) and the `x` and `y` coordinates of [`tilemap.set_tile`](/api/tilemap). Only `options.index` is converted; see [Other engine indexes](./typescript-vs-lua.md#engine-array-properties-optionsindex).
+- **Every engine index names its base in hovers and the API reference**: an index argument, returned index, returned tuple slot or info-table `index` whose upstream text is silent gains "1-based." or "0-based.", such as `the index of the node. 0-based.` on [`gui.get_index`](/api/gui), `` `index` is 1-based. `` on [`b2d.body.get_fixtures`](/api/b2d.body), the `index` and `lastindex` slots of [`socket`](/api/socket) `client.send` and the `x` and `y` coordinates of [`tilemap.set_tile`](/api/tilemap). Only `options.index` is converted; see [Other engine indexes](./typescript-vs-lua.md#engine-array-properties-optionsindex).
 
 ### Fixed
 

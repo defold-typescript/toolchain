@@ -4841,6 +4841,39 @@ describe("engine index base notes", () => {
     expect(block).toContain(PARAM_DOC_REWRITES.get("go.get:param:options")?.to ?? "missing");
     expect(block).not.toContain("`index` is");
   });
+
+  function memberBlock(doc: unknown, signaturePrefix: string): { block: string; line: string } {
+    const lines = emitDeclarations(parseDefoldApiDoc(doc)).split("\n");
+    const at = lines.findIndex((line) => line.trim().startsWith(signaturePrefix));
+    if (at < 0) throw new Error(`no emitted member ${signaturePrefix}`);
+    let start = at;
+    while (start > 0 && !lines[start]?.includes("/**")) start -= 1;
+    return { block: lines.slice(start, at).join("\n"), line: lines[at] ?? "" };
+  }
+
+  function slotBullet(block: string, slot: string): string {
+    const line = block.split("\n").find((candidate) => candidate.includes(`- \`${slot}\` — `));
+    if (line === undefined) throw new Error(`no ${slot} bullet in\n${block}`);
+    return line;
+  }
+
+  test("a multi-return function names the base of each classified tuple slot", () => {
+    const { block } = memberBlock(socketDoc, "send(data: string");
+    expect(block).toContain("@returns");
+    expect(slotBullet(block, "index").trimEnd()).toEndWith("1-based.");
+    expect(slotBullet(block, "lastindex").trimEnd()).toEndWith("1-based.");
+    expect(slotBullet(block, "error")).not.toContain("based");
+  });
+
+  test("a multi-return function's tuple type is unchanged by its slot docs", () => {
+    expect(memberBlock(socketDoc, "send(data: string").line.trim()).toBe(
+      "send(data: string, i?: number, j?: number): LuaMultiReturn<[number | undefined, string | undefined, number | undefined]>;",
+    );
+  });
+
+  test("a multi-return function with no classified slot gains no @returns", () => {
+    expect(memberBlock(socketDoc, "receive(pattern?").block).not.toContain("@returns");
+  });
 });
 
 describe("signatures upstream documents in prose", () => {
