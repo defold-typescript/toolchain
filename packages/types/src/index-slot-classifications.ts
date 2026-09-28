@@ -354,18 +354,27 @@ export function splitSlotFields(html: string): SlotDocFields {
   };
 }
 
-// The base a position's class names, stated whatever its prose says, since
-// upstream prose phrases its base in too many ways to read reliably.
-function nativeBase(key: string): string | undefined {
-  const classification = INDEX_SLOT_CLASSIFICATIONS.get(key)?.class;
-  if (classification === "native-1") return "1-based; passed to Defold unchanged.";
-  if (classification === "native-0") return "0-based; passed to Defold unchanged.";
-  return undefined;
-}
+// The marker that leads every note naming a native base, so a 1-based position
+// stands out from a 0-based one at a glance.
+export const INDEX_BASE_MARKERS: Readonly<Record<"native-1" | "native-0", string>> = {
+  "native-1": "⚠️",
+  "native-0": "0️⃣",
+};
 
-function fieldNote(key: string, field: string): string | undefined {
-  const base = nativeBase(key);
-  return base === undefined ? undefined : `\`${field}\` is ${base}`;
+const BASE_SENTENCES: Readonly<Record<"native-1" | "native-0", string>> = {
+  "native-1": "1-based; passed to Defold unchanged.",
+  "native-0": "0-based; passed to Defold unchanged.",
+};
+
+// The base a position's class names, stated whatever its prose says, since
+// upstream prose phrases its base in too many ways to read reliably. `subject`
+// names the table field the note is about, when it is about one.
+function nativeBaseNote(key: string, subject?: string): string | undefined {
+  const classification = INDEX_SLOT_CLASSIFICATIONS.get(key)?.class;
+  if (classification !== "native-1" && classification !== "native-0") return undefined;
+  const sentence = BASE_SENTENCES[classification];
+  const body = subject === undefined ? sentence : `\`${subject}\` is ${sentence}`;
+  return `**${INDEX_BASE_MARKERS[classification]} ${body}**`;
 }
 
 // The sentences a slot's doc gains so each index it holds, the slot itself or
@@ -377,13 +386,13 @@ export function indexBaseNotes(
 ): string[] {
   const key = `${elementName}:${kind}:${slotName}`;
   const notes: string[] = [];
-  const own = nativeBase(key);
+  const own = nativeBaseNote(key);
   if (own !== undefined) notes.push(own);
   const prefix = `${key}:`;
   for (const fieldKey of INDEX_SLOT_CLASSIFICATIONS.keys()) {
     if (!fieldKey.startsWith(prefix)) continue;
     const path = fieldKey.slice(prefix.length);
-    const note = fieldNote(fieldKey, path.slice(path.lastIndexOf(":") + 1));
+    const note = nativeBaseNote(fieldKey, path.slice(path.lastIndexOf(":") + 1));
     if (note !== undefined) notes.push(note);
   }
   return notes;
