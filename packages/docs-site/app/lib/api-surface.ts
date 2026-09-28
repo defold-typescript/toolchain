@@ -12,7 +12,7 @@ import {
   hashExampleSource,
   htmlToCodeText,
   htmlToDocText,
-  lookupExampleTranslations,
+  lookupExampleSegments,
   lookupSignature,
   lookupTranslation,
   luaMultiReturn,
@@ -942,19 +942,10 @@ export function exampleMarkdownFor(
   if (!fn.examples) return undefined;
   const segments = splitExampleSources(fn.examples);
   const perSegment =
-    segments.length > 1
-      ? lookupExampleTranslations(
-          translations,
-          fn.name,
-          segments.map((segment) => hashExampleSource(segment.code)),
-        )
-      : null;
+    segments.length > 1 ? lookupExampleSegments(translations, fn.name, segments) : null;
   if (perSegment !== null) {
     return perSegment
-      .map((body, index) => {
-        const prose = segments[index]?.prose ?? "";
-        return prose === "" ? tsFence(body) : `${prose}\n\n${tsFence(body)}`;
-      })
+      .map(({ ts: body, prose }) => (prose === "" ? tsFence(body) : `${prose}\n\n${tsFence(body)}`))
       .join("\n\n");
   }
   const lua = htmlToCodeText(fn.examples);
